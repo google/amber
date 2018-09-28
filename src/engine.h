@@ -1,0 +1,115 @@
+// Copyright 2018 The Amber Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef ENGINE_H_
+#define ENGINE_H_
+
+#include <memory>
+#include <vector>
+
+#include "amber/amber.h"
+#include "amber/result.h"
+#include "src/buffer_data.h"
+#include "src/command.h"
+#include "src/feature.h"
+#include "src/format.h"
+#include "src/shader_data.h"
+
+namespace amber {
+
+enum class PipelineType : uint8_t {
+  kCompute = 0,
+  kGraphics,
+};
+
+class Engine {
+ public:
+  static std::unique_ptr<Engine> Create(EngineType type);
+
+  virtual ~Engine();
+
+  // Initialize the engine.
+  virtual Result Initialize() = 0;
+
+  // Initialize the engine with the provided device. The device is _not_ owned
+  // by the engine and should not be destroyed.
+  virtual Result InitializeWithDevice(void* default_device) = 0;
+
+  // Shutdown the engine and cleanup any resources.
+  virtual Result Shutdown() = 0;
+
+  // Enable |feature|. If the feature requires a pixel format it will be
+  // provided in |format|, otherwise |format| is a nullptr.
+  virtual Result AddRequirement(Feature feature, const Format* format) = 0;
+
+  // Create graphics pipeline.
+  virtual Result CreatePipeline(PipelineType type) = 0;
+
+  // Set the shader of |type| to the binary |data|.
+  virtual Result SetShader(ShaderType type,
+                           const std::vector<uint32_t>& data) = 0;
+
+  // Provides the data for a given buffer to be bound at the given location.
+  virtual Result SetBuffer(BufferType type,
+                           uint8_t location,
+                           const Format& format,
+                           const std::vector<Value>& data) = 0;
+
+  // Execute the clear color command
+  virtual Result ExecuteClearColor(const ClearColorCommand* cmd) = 0;
+
+  // Execute the clear stencil command
+  virtual Result ExecuteClearStencil(const ClearStencilCommand* cmd) = 0;
+
+  // Execute the clear depth command
+  virtual Result ExecuteClearDepth(const ClearDepthCommand* cmd) = 0;
+
+  // Execute the clear command
+  virtual Result ExecuteClear(const ClearCommand* cmd) = 0;
+
+  // Execute the draw rect command
+  virtual Result ExecuteDrawRect(const DrawRectCommand* cmd) = 0;
+
+  // Execute the draw arrays command
+  virtual Result ExecuteDrawArrays(const DrawArraysCommand* cmd) = 0;
+
+  // Execute the compute command
+  virtual Result ExecuteCompute(const ComputeCommand* cmd) = 0;
+
+  // Execute the entry point command
+  virtual Result ExecuteEntryPoint(const EntryPointCommand* cmd) = 0;
+
+  // Execute the patch command
+  virtual Result ExecutePatchParameterVertices(
+      const PatchParameterVerticesCommand* cmd) = 0;
+
+  // Execute the probe command
+  virtual Result ExecuteProbe(const ProbeCommand* cmd) = 0;
+
+  // Execute the probe ssbo command
+  virtual Result ExecuteProbeSSBO(const ProbeSSBOCommand* cmd) = 0;
+
+  // Execute the buffer command
+  virtual Result ExecuteBuffer(const BufferCommand* cmd) = 0;
+
+  // Execute the tolerance command
+  virtual Result ExecuteTolerance(const ToleranceCommand* cmd) = 0;
+
+ protected:
+  Engine();
+};
+
+}  // namespace amber
+
+#endif  // ENGINE_H_
