@@ -86,7 +86,7 @@ class EngineStub : public Engine {
   void FailClearColorCommand() { fail_clear_color_command_ = true; }
   bool DidClearColorCommand() { return did_clear_color_command_ = true; }
   ClearColorCommand* GetLastClearColorCommand() { return last_clear_color_; }
-  Result ExecuteClearColor(const ClearColorCommand* cmd) override {
+  Result DoClearColor(const ClearColorCommand* cmd) override {
     did_clear_color_command_ = true;
 
     if (fail_clear_color_command_)
@@ -98,7 +98,7 @@ class EngineStub : public Engine {
 
   void FailClearStencilCommand() { fail_clear_stencil_command_ = true; }
   bool DidClearStencilCommand() const { return did_clear_stencil_command_; }
-  Result ExecuteClearStencil(const ClearStencilCommand*) override {
+  Result DoClearStencil(const ClearStencilCommand*) override {
     did_clear_stencil_command_ = true;
 
     if (fail_clear_stencil_command_)
@@ -109,7 +109,7 @@ class EngineStub : public Engine {
 
   void FailClearDepthCommand() { fail_clear_depth_command_ = true; }
   bool DidClearDepthCommand() const { return did_clear_depth_command_; }
-  Result ExecuteClearDepth(const ClearDepthCommand*) override {
+  Result DoClearDepth(const ClearDepthCommand*) override {
     did_clear_depth_command_ = true;
 
     if (fail_clear_depth_command_)
@@ -120,7 +120,7 @@ class EngineStub : public Engine {
 
   void FailClearCommand() { fail_clear_command_ = true; }
   bool DidClearCommand() const { return did_clear_command_; }
-  Result ExecuteClear(const ClearCommand*) override {
+  Result DoClear(const ClearCommand*) override {
     did_clear_command_ = true;
 
     if (fail_clear_command_)
@@ -130,7 +130,7 @@ class EngineStub : public Engine {
 
   void FailDrawRectCommand() { fail_draw_rect_command_ = true; }
   bool DidDrawRectCommand() const { return did_draw_rect_command_; }
-  Result ExecuteDrawRect(const DrawRectCommand*) override {
+  Result DoDrawRect(const DrawRectCommand*) override {
     did_draw_rect_command_ = true;
 
     if (fail_draw_rect_command_)
@@ -140,7 +140,7 @@ class EngineStub : public Engine {
 
   void FailDrawArraysCommand() { fail_draw_arrays_command_ = true; }
   bool DidDrawArraysCommand() const { return did_draw_arrays_command_; }
-  Result ExecuteDrawArrays(const DrawArraysCommand*) override {
+  Result DoDrawArrays(const DrawArraysCommand*) override {
     did_draw_arrays_command_ = true;
 
     if (fail_draw_arrays_command_)
@@ -150,7 +150,7 @@ class EngineStub : public Engine {
 
   void FailComputeCommand() { fail_compute_command_ = true; }
   bool DidComputeCommand() const { return did_compute_command_; }
-  Result ExecuteCompute(const ComputeCommand*) override {
+  Result DoCompute(const ComputeCommand*) override {
     did_compute_command_ = true;
 
     if (fail_compute_command_)
@@ -160,7 +160,7 @@ class EngineStub : public Engine {
 
   void FailEntryPointCommand() { fail_entry_point_command_ = true; }
   bool DidEntryPointCommand() const { return did_entry_point_command_; }
-  Result ExecuteEntryPoint(const EntryPointCommand*) override {
+  Result DoEntryPoint(const EntryPointCommand*) override {
     did_entry_point_command_ = true;
 
     if (fail_entry_point_command_)
@@ -170,7 +170,7 @@ class EngineStub : public Engine {
 
   void FailPatchParameterVerticesCommand() { fail_patch_command_ = true; }
   bool DidPatchParameterVerticesCommand() const { return did_patch_command_; }
-  Result ExecutePatchParameterVertices(
+  Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand*) override {
     did_patch_command_ = true;
 
@@ -181,7 +181,7 @@ class EngineStub : public Engine {
 
   void FailProbeCommand() { fail_probe_command_ = true; }
   bool DidProbeCommand() const { return did_probe_commmand_; }
-  Result ExecuteProbe(const ProbeCommand*) override {
+  Result DoProbe(const ProbeCommand*) override {
     did_probe_commmand_ = true;
 
     if (fail_probe_command_)
@@ -191,7 +191,7 @@ class EngineStub : public Engine {
 
   void FailProbeSSBOCommand() { fail_probe_ssbo_command_ = true; }
   bool DidProbeSSBOCommand() const { return did_probe_ssbo_command_; }
-  Result ExecuteProbeSSBO(const ProbeSSBOCommand*) override {
+  Result DoProbeSSBO(const ProbeSSBOCommand*) override {
     did_probe_ssbo_command_ = true;
 
     if (fail_probe_ssbo_command_)
@@ -201,7 +201,7 @@ class EngineStub : public Engine {
 
   void FailBufferCommand() { fail_buffer_command_ = true; }
   bool DidBufferCommand() const { return did_buffer_command_; }
-  Result ExecuteBuffer(const BufferCommand*) override {
+  Result DoBuffer(const BufferCommand*) override {
     did_buffer_command_ = true;
 
     if (fail_buffer_command_)
@@ -211,7 +211,7 @@ class EngineStub : public Engine {
 
   void FailToleranceCommand() { fail_tolerance_command_ = true; }
   bool DidToleranceCommand() const { return did_tolerance_command_; }
-  Result ExecuteTolerance(const ToleranceCommand*) override {
+  Result DoTolerance(const ToleranceCommand*) override {
     did_tolerance_command_ = true;
 
     if (fail_tolerance_command_)
@@ -297,22 +297,22 @@ class EngineCountingStub : public Engine {
     return {};
   }
 
-  Result ExecuteClearColor(const ClearColorCommand*) override { return {}; }
-  Result ExecuteClearStencil(const ClearStencilCommand*) override { return {}; }
-  Result ExecuteClearDepth(const ClearDepthCommand*) override { return {}; }
-  Result ExecuteClear(const ClearCommand*) override { return {}; }
-  Result ExecuteDrawRect(const DrawRectCommand*) override { return {}; }
-  Result ExecuteDrawArrays(const DrawArraysCommand*) override { return {}; }
-  Result ExecuteCompute(const ComputeCommand*) override { return {}; }
-  Result ExecuteEntryPoint(const EntryPointCommand*) override { return {}; }
-  Result ExecutePatchParameterVertices(
+  Result DoClearColor(const ClearColorCommand*) override { return {}; }
+  Result DoClearStencil(const ClearStencilCommand*) override { return {}; }
+  Result DoClearDepth(const ClearDepthCommand*) override { return {}; }
+  Result DoClear(const ClearCommand*) override { return {}; }
+  Result DoDrawRect(const DrawRectCommand*) override { return {}; }
+  Result DoDrawArrays(const DrawArraysCommand*) override { return {}; }
+  Result DoCompute(const ComputeCommand*) override { return {}; }
+  Result DoEntryPoint(const EntryPointCommand*) override { return {}; }
+  Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand*) override {
     return {};
   }
-  Result ExecuteProbe(const ProbeCommand*) override { return {}; }
-  Result ExecuteProbeSSBO(const ProbeSSBOCommand*) override { return {}; }
-  Result ExecuteBuffer(const BufferCommand*) override { return {}; }
-  Result ExecuteTolerance(const ToleranceCommand*) override { return {}; }
+  Result DoProbe(const ProbeCommand*) override { return {}; }
+  Result DoProbeSSBO(const ProbeSSBOCommand*) override { return {}; }
+  Result DoBuffer(const BufferCommand*) override { return {}; }
+  Result DoTolerance(const ToleranceCommand*) override { return {}; }
 
  private:
   int32_t stage_count_ = 0;

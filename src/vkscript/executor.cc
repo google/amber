@@ -113,32 +113,31 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
 
     for (const auto& cmd : node->AsTest()->GetCommands()) {
       if (cmd->IsClear()) {
-        r = engine->ExecuteClear(cmd->AsClear());
+        r = engine->DoClear(cmd->AsClear());
       } else if (cmd->IsClearColor()) {
-        r = engine->ExecuteClearColor(cmd->AsClearColor());
+        r = engine->DoClearColor(cmd->AsClearColor());
       } else if (cmd->IsClearDepth()) {
-        r = engine->ExecuteClearDepth(cmd->AsClearDepth());
+        r = engine->DoClearDepth(cmd->AsClearDepth());
       } else if (cmd->IsClearStencil()) {
-        r = engine->ExecuteClearStencil(cmd->AsClearStencil());
+        r = engine->DoClearStencil(cmd->AsClearStencil());
       } else if (cmd->IsDrawRect()) {
-        r = engine->ExecuteDrawRect(cmd->AsDrawRect());
+        r = engine->DoDrawRect(cmd->AsDrawRect());
       } else if (cmd->IsDrawArrays()) {
-        r = engine->ExecuteDrawArrays(cmd->AsDrawArrays());
+        r = engine->DoDrawArrays(cmd->AsDrawArrays());
       } else if (cmd->IsCompute()) {
-        r = engine->ExecuteCompute(cmd->AsCompute());
+        r = engine->DoCompute(cmd->AsCompute());
       } else if (cmd->IsEntryPoint()) {
-        r = engine->ExecuteEntryPoint(cmd->AsEntryPoint());
+        r = engine->DoEntryPoint(cmd->AsEntryPoint());
       } else if (cmd->IsPatchParameterVertices()) {
-        r = engine->ExecutePatchParameterVertices(
-            cmd->AsPatchParameterVertices());
+        r = engine->DoPatchParameterVertices(cmd->AsPatchParameterVertices());
       } else if (cmd->IsProbe()) {
-        r = engine->ExecuteProbe(cmd->AsProbe());
+        r = engine->DoProbe(cmd->AsProbe());
       } else if (cmd->IsProbeSSBO()) {
-        r = engine->ExecuteProbeSSBO(cmd->AsProbeSSBO());
+        r = engine->DoProbeSSBO(cmd->AsProbeSSBO());
       } else if (cmd->IsBuffer()) {
-        r = engine->ExecuteBuffer(cmd->AsBuffer());
+        r = engine->DoBuffer(cmd->AsBuffer());
       } else if (cmd->IsTolerance()) {
-        r = engine->ExecuteTolerance(cmd->AsTolerance());
+        r = engine->DoTolerance(cmd->AsTolerance());
       } else {
         return Result("Unknown command type");
       }

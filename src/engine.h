@@ -67,44 +67,44 @@ class Engine {
                            const std::vector<Value>& data) = 0;
 
   // Execute the clear color command
-  virtual Result ExecuteClearColor(const ClearColorCommand* cmd) = 0;
+  virtual Result DoClearColor(const ClearColorCommand* cmd) = 0;
 
   // Execute the clear stencil command
-  virtual Result ExecuteClearStencil(const ClearStencilCommand* cmd) = 0;
+  virtual Result DoClearStencil(const ClearStencilCommand* cmd) = 0;
 
   // Execute the clear depth command
-  virtual Result ExecuteClearDepth(const ClearDepthCommand* cmd) = 0;
+  virtual Result DoClearDepth(const ClearDepthCommand* cmd) = 0;
 
   // Execute the clear command
-  virtual Result ExecuteClear(const ClearCommand* cmd) = 0;
+  virtual Result DoClear(const ClearCommand* cmd) = 0;
 
   // Execute the draw rect command
-  virtual Result ExecuteDrawRect(const DrawRectCommand* cmd) = 0;
+  virtual Result DoDrawRect(const DrawRectCommand* cmd) = 0;
 
   // Execute the draw arrays command
-  virtual Result ExecuteDrawArrays(const DrawArraysCommand* cmd) = 0;
+  virtual Result DoDrawArrays(const DrawArraysCommand* cmd) = 0;
 
   // Execute the compute command
-  virtual Result ExecuteCompute(const ComputeCommand* cmd) = 0;
+  virtual Result DoCompute(const ComputeCommand* cmd) = 0;
 
   // Execute the entry point command
-  virtual Result ExecuteEntryPoint(const EntryPointCommand* cmd) = 0;
+  virtual Result DoEntryPoint(const EntryPointCommand* cmd) = 0;
 
   // Execute the patch command
-  virtual Result ExecutePatchParameterVertices(
+  virtual Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) = 0;
 
   // Execute the probe command
-  virtual Result ExecuteProbe(const ProbeCommand* cmd) = 0;
+  virtual Result DoProbe(const ProbeCommand* cmd) = 0;
 
   // Execute the probe ssbo command
-  virtual Result ExecuteProbeSSBO(const ProbeSSBOCommand* cmd) = 0;
+  virtual Result DoProbeSSBO(const ProbeSSBOCommand* cmd) = 0;
 
   // Execute the buffer command
-  virtual Result ExecuteBuffer(const BufferCommand* cmd) = 0;
+  virtual Result DoBuffer(const BufferCommand* cmd) = 0;
 
   // Execute the tolerance command
-  virtual Result ExecuteTolerance(const ToleranceCommand* cmd) = 0;
+  virtual Result DoTolerance(const ToleranceCommand* cmd) = 0;
 
  protected:
   Engine();

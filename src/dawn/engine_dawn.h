@@ -41,20 +41,20 @@ class EngineDawn : public Engine {
                    uint8_t location,
                    const Format& format,
                    const std::vector<Value>& data) override;
-  Result ExecuteClearColor(const ClearColorCommand* cmd) override;
-  Result ExecuteClearStencil(const ClearStencilCommand* cmd) override;
-  Result ExecuteClearDepth(const ClearDepthCommand* cmd) override;
-  Result ExecuteClear(const ClearCommand* cmd) override;
-  Result ExecuteDrawRect(const DrawRectCommand* cmd) override;
-  Result ExecuteDrawArrays(const DrawArraysCommand* cmd) override;
-  Result ExecuteCompute(const ComputeCommand* cmd) override;
-  Result ExecuteEntryPoint(const EntryPointCommand* cmd) override;
-  Result ExecutePatchParameterVertices(
+  Result DoClearColor(const ClearColorCommand* cmd) override;
+  Result DoClearStencil(const ClearStencilCommand* cmd) override;
+  Result DoClearDepth(const ClearDepthCommand* cmd) override;
+  Result DoClear(const ClearCommand* cmd) override;
+  Result DoDrawRect(const DrawRectCommand* cmd) override;
+  Result DoDrawArrays(const DrawArraysCommand* cmd) override;
+  Result DoCompute(const ComputeCommand* cmd) override;
+  Result DoEntryPoint(const EntryPointCommand* cmd) override;
+  Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) override;
-  Result ExecuteProbe(const ProbeCommand* cmd) override;
-  Result ExecuteProbeSSBO(const ProbeSSBOCommand* cmd) override;
-  Result ExecuteBuffer(const BufferCommand* cmd) override;
-  Result ExecuteTolerance(const ToleranceCommand* cmd) override;
+  Result DoProbe(const ProbeCommand* cmd) override;
+  Result DoProbeSSBO(const ProbeSSBOCommand* cmd) override;
+  Result DoBuffer(const BufferCommand* cmd) override;
+  Result DoTolerance(const ToleranceCommand* cmd) override;
 
  private:
   ::dawn::Device device_;

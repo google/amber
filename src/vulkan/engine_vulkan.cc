@@ -202,7 +202,7 @@ Result EngineVulkan::SetBuffer(BufferType type,
   return {};
 }
 
-Result EngineVulkan::ExecuteClearColor(const ClearColorCommand* command) {
+Result EngineVulkan::DoClearColor(const ClearColorCommand* command) {
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::Clear Color Command for Non-Graphics Pipeline");
 
@@ -210,68 +210,68 @@ Result EngineVulkan::ExecuteClearColor(const ClearColorCommand* command) {
       command->GetR(), command->GetG(), command->GetB(), command->GetA());
 }
 
-Result EngineVulkan::ExecuteClearStencil(const ClearStencilCommand* command) {
+Result EngineVulkan::DoClearStencil(const ClearStencilCommand* command) {
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::Clear Stencil Command for Non-Graphics Pipeline");
 
   return pipeline_->AsGraphics()->SetClearStencil(command->GetValue());
 }
 
-Result EngineVulkan::ExecuteClearDepth(const ClearDepthCommand* command) {
+Result EngineVulkan::DoClearDepth(const ClearDepthCommand* command) {
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::Clear Depth Command for Non-Graphics Pipeline");
 
   return pipeline_->AsGraphics()->SetClearDepth(command->GetValue());
 }
 
-Result EngineVulkan::ExecuteClear(const ClearCommand*) {
+Result EngineVulkan::DoClear(const ClearCommand*) {
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::Clear Command for Non-Graphics Pipeline");
 
   return pipeline_->AsGraphics()->Clear();
 }
 
-Result EngineVulkan::ExecuteDrawRect(const DrawRectCommand*) {
-  return Result("Vulkan::ExecuteDrawRect Not Implemented");
+Result EngineVulkan::DoDrawRect(const DrawRectCommand*) {
+  return Result("Vulkan::DoDrawRect Not Implemented");
 }
 
-Result EngineVulkan::ExecuteDrawArrays(const DrawArraysCommand*) {
+Result EngineVulkan::DoDrawArrays(const DrawArraysCommand*) {
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::DrawArrays for Non-Graphics Pipeline");
 
   return pipeline_->AsGraphics()->Draw();
 }
 
-Result EngineVulkan::ExecuteCompute(const ComputeCommand*) {
-  return Result("Vulkan::ExecuteCompute Not Implemented");
+Result EngineVulkan::DoCompute(const ComputeCommand*) {
+  return Result("Vulkan::DoCompute Not Implemented");
 }
 
-Result EngineVulkan::ExecuteEntryPoint(const EntryPointCommand*) {
-  return Result("Vulkan::ExecuteEntryPoint Not Implemented");
+Result EngineVulkan::DoEntryPoint(const EntryPointCommand*) {
+  return Result("Vulkan::DoEntryPoint Not Implemented");
 }
 
-Result EngineVulkan::ExecutePatchParameterVertices(
+Result EngineVulkan::DoPatchParameterVertices(
     const PatchParameterVerticesCommand*) {
-  return Result("Vulkan::ExecutePatch Not Implemented");
+  return Result("Vulkan::DoPatch Not Implemented");
 }
 
-Result EngineVulkan::ExecuteProbe(const ProbeCommand* command) {
+Result EngineVulkan::DoProbe(const ProbeCommand* command) {
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::Probe FrameBuffer for Non-Graphics Pipeline");
 
   return pipeline_->AsGraphics()->Probe(command);
 }
 
-Result EngineVulkan::ExecuteProbeSSBO(const ProbeSSBOCommand*) {
-  return Result("Vulkan::ExecuteProbeSSBO Not Implemented");
+Result EngineVulkan::DoProbeSSBO(const ProbeSSBOCommand*) {
+  return Result("Vulkan::DoProbeSSBO Not Implemented");
 }
 
-Result EngineVulkan::ExecuteBuffer(const BufferCommand*) {
-  return Result("Vulkan::ExecuteBuffer Not Implemented");
+Result EngineVulkan::DoBuffer(const BufferCommand*) {
+  return Result("Vulkan::DoBuffer Not Implemented");
 }
 
-Result EngineVulkan::ExecuteTolerance(const ToleranceCommand*) {
-  return Result("Vulkan::ExecuteTolerance Not Implemented");
+Result EngineVulkan::DoTolerance(const ToleranceCommand*) {
+  return Result("Vulkan::DoTolerance Not Implemented");
 }
 
 }  // namespace vulkan

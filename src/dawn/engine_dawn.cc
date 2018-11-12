@@ -69,57 +69,57 @@ Result EngineDawn::SetBuffer(BufferType,
   return Result("Dawn:SetBuffer not implemented");
 }
 
-Result EngineDawn::ExecuteClearColor(const ClearColorCommand*) {
-  return Result("Dawn:ExecuteClearColor not implemented");
+Result EngineDawn::DoClearColor(const ClearColorCommand*) {
+  return Result("Dawn:DoClearColor not implemented");
 }
 
-Result EngineDawn::ExecuteClearStencil(const ClearStencilCommand*) {
-  return Result("Dawn:ExecuteClearStencil not implemented");
+Result EngineDawn::DoClearStencil(const ClearStencilCommand*) {
+  return Result("Dawn:DoClearStencil not implemented");
 }
 
-Result EngineDawn::ExecuteClearDepth(const ClearDepthCommand*) {
-  return Result("Dawn:ExecuteClearDepth not implemented");
+Result EngineDawn::DoClearDepth(const ClearDepthCommand*) {
+  return Result("Dawn:DoClearDepth not implemented");
 }
 
-Result EngineDawn::ExecuteClear(const ClearCommand*) {
-  return Result("Dawn:ExecuteClear not implemented");
+Result EngineDawn::DoClear(const ClearCommand*) {
+  return Result("Dawn:DoClear not implemented");
 }
 
-Result EngineDawn::ExecuteDrawRect(const DrawRectCommand*) {
-  return Result("Dawn:ExecuteDrawRect not implemented");
+Result EngineDawn::DoDrawRect(const DrawRectCommand*) {
+  return Result("Dawn:DoDrawRect not implemented");
 }
 
-Result EngineDawn::ExecuteDrawArrays(const DrawArraysCommand*) {
-  return Result("Dawn:ExecuteDrawArrays not implemented");
+Result EngineDawn::DoDrawArrays(const DrawArraysCommand*) {
+  return Result("Dawn:DoDrawArrays not implemented");
 }
 
-Result EngineDawn::ExecuteCompute(const ComputeCommand*) {
-  return Result("Dawn:ExecuteCompute not implemented");
+Result EngineDawn::DoCompute(const ComputeCommand*) {
+  return Result("Dawn:DoCompute not implemented");
 }
 
-Result EngineDawn::ExecuteEntryPoint(const EntryPointCommand*) {
-  return Result("Dawn:ExecuteEntryPoint not implemented");
+Result EngineDawn::DoEntryPoint(const EntryPointCommand*) {
+  return Result("Dawn:DoEntryPoint not implemented");
 }
 
-Result EngineDawn::ExecutePatchParameterVertices(
+Result EngineDawn::DoPatchParameterVertices(
     const PatchParameterVerticesCommand*) {
-  return Result("Dawn:ExecutePatch not implemented");
+  return Result("Dawn:DoPatch not implemented");
 }
 
-Result EngineDawn::ExecuteProbe(const ProbeCommand*) {
-  return Result("Dawn:ExecutePatch not implemented");
+Result EngineDawn::DoProbe(const ProbeCommand*) {
+  return Result("Dawn:DoPatch not implemented");
 }
 
-Result EngineDawn::ExecuteProbeSSBO(const ProbeSSBOCommand*) {
-  return Result("Dawn:ExecuteProbeSSBO not implemented");
+Result EngineDawn::DoProbeSSBO(const ProbeSSBOCommand*) {
+  return Result("Dawn:DoProbeSSBO not implemented");
 }
 
-Result EngineDawn::ExecuteBuffer(const BufferCommand*) {
-  return Result("Dawn:ExecuteBuffer not implemented");
+Result EngineDawn::DoBuffer(const BufferCommand*) {
+  return Result("Dawn:DoBuffer not implemented");
 }
 
-Result EngineDawn::ExecuteTolerance(const ToleranceCommand*) {
-  return Result("Dawn:ExecuteTolerance not implemented");
+Result EngineDawn::DoTolerance(const ToleranceCommand*) {
+  return Result("Dawn:DoTolerance not implemented");
 }
 
 }  // namespace dawn
