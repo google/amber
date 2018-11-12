@@ -43,6 +43,13 @@ set(AMBER_SOURCES
     vkscript/section_parser.cc
 )
 
+if (${Vulkan_FOUND})
+  add_subdirectory(vulkan)
+endif()
+if (${Dawn_FOUND})
+  add_subdirectory(dawn)
+endif()
+
 add_library(libamber ${AMBER_SOURCES})
 amber_default_compile_options(libamber)
 set_target_properties(libamber PROPERTIES OUTPUT_NAME "amber")
@@ -51,7 +58,9 @@ target_link_libraries(libamber SPIRV-Tools shaderc SPIRV pthread)
 
 if (${Vulkan_FOUND})
   target_link_libraries(libamber libamberenginevulkan)
-  add_subdirectory(vulkan)
+endif()
+if (${Dawn_FOUND})
+  target_link_libraries(libamber libamberenginedawn)
 endif()
 
 set(TEST_SRCS

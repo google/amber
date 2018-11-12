@@ -23,6 +23,10 @@
 #pragma clang diagnostic pop
 #endif  // AMBER_ENGINE_VULKAN
 
+#if AMBER_ENGINE_DAWN
+#include "src/dawn/engine_dawn.h"
+#endif  // AMBER_ENGINE_DAWN
+
 namespace amber {
 
 // static
@@ -33,6 +37,11 @@ std::unique_ptr<Engine> Engine::Create(EngineType type) {
 #if AMBER_ENGINE_VULKAN
       engine = MakeUnique<vulkan::EngineVulkan>();
 #endif  // AMBER_ENGINE_VULKAN
+      break;
+    case EngineType::kDawn:
+#if AMBER_ENGINE_DAWN
+      engine = MakeUnique<dawn::EngineDawn>();
+#endif  // AMBER_ENGINE_DAWN
       break;
   }
   return engine;

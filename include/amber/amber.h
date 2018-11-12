@@ -23,6 +23,7 @@ namespace amber {
 
 enum class EngineType : uint8_t {
   kVulkan = 0,
+  kDawn,
 };
 
 struct Options {
