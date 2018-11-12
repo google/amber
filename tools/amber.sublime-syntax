@@ -1,0 +1,65 @@
+%YAML 1.2
+---
+name: amber
+file_extensions: [amber]
+scope: source.amber
+contexts:
+  main:
+    # Strings begin and end with quotes, and use backslashes as an escape
+    # character
+    - match: '"'
+      scope: punctuation.definition.string.begin.amber
+      push: double_quoted_string
+
+    # Comments begin with a '#' and finish at the end of the line
+    - match: '#'
+      scope: punctuation.definition.comment.amber
+      push: line_comment
+
+    # Keywords
+    - match: '\b(END|SHADER|BUFFER|DATA_TYPE|SIZE|DIMS|DATA|FILL|SERIES_FROM)\b'
+      scope: keyword.control.amber
+    - match: '\b(PASSTHROUGH|PIPELINE|ATTACH|ENTRY_POINT|DESCRIPTOR_SET|INC_BY)\b'
+      scope: keyword.control.amber
+    - match: '\b(BINDING|IDX|TO|RUN|DRAW_RECT|POS|DRAW_ARRAY|IN|AS|START_IDX)\b'
+      scope: keyword.control.amber
+    - match: '\b(COUNT|CLEAR_COLOR|CLEAR|EXPECT|TYPE|FRAMEBUFFER|SHADER_OPTIMIZATION)\b'
+      scope: keyword.control.amber
+
+    - match: '\b(vertex|fragment|compute|geometry|tessellation_evaluation|tessellation_control)\b'
+      scope: constant.character.escape.amber
+    - match: '\b(framebuffer|graphics)\b'
+      scope: constant.character.escape.amber
+    - match: '\b(uniform|storage|index|sampled|storage|color|depth)\b'
+      scope: constant.character.escape.amber
+    - match: '\b(EQ|NE|LT|LE|GT|GE|EQ_RGB|EQ_RGBA)\b'
+      scope: constant.character.esape.amber
+    - match: '\b(GLSL|HLSL|SPIRV-ASM|SPIRV-HEX|OPENCL-C)\b'
+      scope: constant.character.escape.amber
+
+    - match: '\b(point_list|line_list|line_list_with_adjacency|line_strip)\b'
+      scope: entity.name.type.amber
+    - match: '\b(line_strip_with_adjacency|triangle_list|triangle_list_with_adjacency)\b'
+      scope: entity.name.type.amber
+    - match: '\b(triangle_strip|triangle_strip_with_adjacency|triangle_fan|patch_list)\b'
+      scope: entity.name.type.amber
+
+    - match: '\b(u?int\d*|float|double|vec\d*|mat\d*)\b'
+      scope: entity.name.type.amber
+
+    # Numbers
+    - match: '\b(-)?[0-9.]+\b'
+      scope: constant.numeric.amber
+
+  double_quoted_string:
+    - meta_scope: string.quoted.double.amber
+    - match: '\\.'
+      scope: constant.character.escape.amber
+    - match: '"'
+      scope: punctuation.definition.string.end.amber
+      pop: true
+
+  line_comment:
+    - meta_scope: comment.line.amber
+    - match: $
+      pop: true

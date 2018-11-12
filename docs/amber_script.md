@@ -107,7 +107,7 @@ Floating point data uses floating point addition to generate increasting values.
 Likewise, integer data uses integer addition to generate increasing values.
 
 ```
-SERIES <start> <inc>
+SERIES_FROM <start> INC_BY <inc>
 ```
 
 ### Pipelines
