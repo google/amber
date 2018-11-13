@@ -16,7 +16,7 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 
 set(AMBER_SOURCES
     amber.cc
-    ${CMAKE_BINARY_DIR}/src/build-versions.h
+    ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
 )
 
 add_executable(amber ${AMBER_SOURCES})
@@ -25,7 +25,7 @@ set_target_properties(amber PROPERTIES OUTPUT_NAME "amber")
 target_link_libraries(amber libamber)
 
 add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/src/build-versions.h
+    OUTPUT ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
     COMMAND
       ${PYTHON_EXE}
         ${CMAKE_CURRENT_SOURCE_DIR}/../tools/update_build_version.py
