@@ -90,8 +90,7 @@ Please see the [CONTRIBUTING](CONTRIBUTING.md) and
 [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) files on how to contribute to Amber.
 
 
-
-[Dawn](https://dawn.googlesource.com/dawn/)
-[Talvos](https://talvos.github.io/)
-[Vulkan-Headers](https://github.com/KhronosGroup/Vulkan-Headers)
-[VkRunner](https://github.com/igalia/vkrunner)
+[Dawn]: https://dawn.googlesource.com/dawn/
+[Talvos]: https://talvos.github.io/
+[Vulkan-Headers]: https://github.com/KhronosGroup/Vulkan-Headers
+[VkRunner]: https://github.com/igalia/vkrunner
