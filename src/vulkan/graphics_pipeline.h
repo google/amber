@@ -66,7 +66,7 @@ class GraphicsPipeline : public Pipeline {
   Result SetClearStencil(uint32_t stencil);
   Result SetClearDepth(float depth);
 
-  Result Draw();
+  Result Draw(const DrawArraysCommand* command);
 
  private:
   enum class RenderPassState : uint8_t {
@@ -74,7 +74,7 @@ class GraphicsPipeline : public Pipeline {
     kInactive,
   };
 
-  Result CreateVkGraphicsPipeline();
+  Result CreateVkGraphicsPipeline(VkPrimitiveTopology topology);
 
   Result CreateRenderPass();
   void ActivateRenderPassIfNeeded();
