@@ -187,6 +187,7 @@ void Image::ChangeLayout(VkCommandBuffer command,
                               VK_ACCESS_TRANSFER_WRITE_BIT;
       break;
     default:
+      barrier.srcAccessMask = 0;
       break;
   }
 
@@ -218,6 +219,7 @@ void Image::ChangeLayout(VkCommandBuffer command,
                               VK_ACCESS_TRANSFER_WRITE_BIT;
       break;
     default:
+      barrier.dstAccessMask = 0;
       break;
   }
 
