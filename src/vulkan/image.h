@@ -41,6 +41,12 @@ class Image : public Resource {
 
   // TODO(jaebaek): Implement CopyToDevice
 
+  void ChangeLayout(VkCommandBuffer command,
+                    VkImageLayout old_layout,
+                    VkImageLayout new_layout,
+                    VkPipelineStageFlags from,
+                    VkPipelineStageFlags to);
+
   // Resource
   VkDeviceMemory GetHostAccessMemory() const override {
     if (is_image_host_accessible_)

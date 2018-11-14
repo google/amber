@@ -14,6 +14,7 @@
 
 #include "src/vulkan/frame_buffer.h"
 
+#include <cassert>
 #include <limits>
 
 #include "src/make_unique.h"
@@ -69,6 +70,52 @@ Result FrameBuffer::Initialize(
   }
 
   return {};
+}
+
+void FrameBuffer::ChangeFrameImageLayout(VkCommandBuffer command,
+                                         FrameImageState layout) {
+  if (layout == FrameImageState::kInit) {
+    assert(false &&
+           "FrameBuffer::ChangeFrameImageLayout new layout cannot be kInit");
+    return;
+  }
+
+  if (layout == frame_image_layout_)
+    return;
+
+  if (layout == FrameImageState::kProbe) {
+    if (frame_image_layout_ != FrameImageState::kClearOrDraw) {
+      assert(false &&
+             "FrameBuffer::ChangeFrameImageLayout new layout cannot be kProbe "
+             "from kInit");
+      return;
+    }
+    // Note that we set the final layout of RenderPass as
+    // VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, thus we must not change
+    // image layout of frame buffer from color attachment to transfer
+    // source here.
+    frame_image_layout_ = FrameImageState::kProbe;
+    return;
+  }
+
+  VkImageLayout old_layout = frame_image_layout_ == FrameImageState::kInit
+                                 ? VK_IMAGE_LAYOUT_UNDEFINED
+                                 : VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+
+  if (color_image_) {
+    color_image_->ChangeLayout(command, old_layout,
+                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                               VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+  }
+  if (depth_image_) {
+    depth_image_->ChangeLayout(command, old_layout,
+                               VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                               VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+  }
+  frame_image_layout_ = layout;
+  return;
 }
 
 void FrameBuffer::Shutdown() {
