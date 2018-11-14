@@ -20,6 +20,12 @@
 namespace amber {
 namespace vulkan {
 
+enum class FrameImageState : uint8_t {
+  kInit = 0,
+  kClearOrDraw,
+  kProbe,
+};
+
 class FrameBuffer {
  public:
   FrameBuffer(VkDevice device, uint32_t width, uint32_t height);
@@ -31,12 +37,15 @@ class FrameBuffer {
                     const VkPhysicalDeviceMemoryProperties& properties);
   void Shutdown();
 
+  void ChangeFrameImageLayout(VkCommandBuffer command, FrameImageState layout);
+
   VkFramebuffer GetFrameBuffer() const { return frame_; }
   const void* GetColorBufferPtr() const {
     return color_image_->HostAccessibleMemoryPtr();
   }
   VkImage GetColorImage() const { return color_image_->GetVkImage(); }
   Result CopyColorImageToHost(VkCommandBuffer command) {
+    ChangeFrameImageLayout(command, FrameImageState::kProbe);
     return color_image_->CopyToHost(command);
   }
 
@@ -51,6 +60,7 @@ class FrameBuffer {
   uint32_t width_ = 0;
   uint32_t height_ = 0;
   uint32_t depth_ = 1;
+  FrameImageState frame_image_layout_ = FrameImageState::kInit;
 };
 
 }  // namespace vulkan

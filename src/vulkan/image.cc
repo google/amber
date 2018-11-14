@@ -147,5 +147,82 @@ Result Image::CopyToHost(VkCommandBuffer command) {
   return {};
 }
 
+void Image::ChangeLayout(VkCommandBuffer command,
+                         VkImageLayout old_layout,
+                         VkImageLayout new_layout,
+                         VkPipelineStageFlags from,
+                         VkPipelineStageFlags to) {
+  VkImageMemoryBarrier barrier = {};
+  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier.oldLayout = old_layout;
+  barrier.newLayout = new_layout;
+  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.image = image_;
+  barrier.subresourceRange = {
+      VK_IMAGE_ASPECT_COLOR_BIT, /* aspectMask */
+      0,                         /* baseMipLevel */
+      1,                         /* levelCount */
+      0,                         /* baseArrayLayer */
+      1,                         /* layerCount */
+  };
+
+  switch (old_layout) {
+    case VK_IMAGE_LAYOUT_PREINITIALIZED:
+      // Based on Vulkan spec, image in VK_IMAGE_LAYOUT_PREINITIALIZED is not
+      // accessible by GPU.
+      barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+      break;
+    case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+      barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+      break;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+      barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+      break;
+    case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+      // An image becomes "transfer dst" only when we send a buffer data to
+      // it.
+      barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT |
+                              VK_ACCESS_SHADER_WRITE_BIT |
+                              VK_ACCESS_TRANSFER_WRITE_BIT;
+      break;
+    default:
+      break;
+  }
+
+  switch (new_layout) {
+    case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+      barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+      break;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+      barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+      break;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+      barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+      break;
+    case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+      barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+      break;
+    case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+      barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+      // An image becomes "host readable transfer src" only when we directly
+      // probe it from CPU.
+      if (is_image_host_accessible_)
+        barrier.dstAccessMask |= VK_ACCESS_HOST_READ_BIT;
+      break;
+    case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+      // An image becomes "transfer dst" only when we send a buffer data to
+      // it.
+      barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT |
+                              VK_ACCESS_SHADER_WRITE_BIT |
+                              VK_ACCESS_TRANSFER_WRITE_BIT;
+      break;
+    default:
+      break;
+  }
+
+  vkCmdPipelineBarrier(command, from, to, 0, 0, NULL, 0, NULL, 1, &barrier);
+}
+
 }  // namespace vulkan
 }  // namespace amber

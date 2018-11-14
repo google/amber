@@ -408,6 +408,9 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   if (!r.IsSuccess())
     return r;
 
+  frame_->ChangeFrameImageLayout(command_->GetCommandBuffer(),
+                                 FrameImageState::kClearOrDraw);
+
   // TODO(jaebaek): When multiple clear and draw commands exist, handle
   //                begin/end render pass properly.
   ActivateRenderPassIfNeeded();
@@ -443,6 +446,9 @@ Result GraphicsPipeline::Draw() {
   r = command_->BeginIfNotInRecording();
   if (!r.IsSuccess())
     return r;
+
+  frame_->ChangeFrameImageLayout(command_->GetCommandBuffer(),
+                                 FrameImageState::kClearOrDraw);
 
   ActivateRenderPassIfNeeded();
 
