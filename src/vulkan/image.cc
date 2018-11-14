@@ -144,6 +144,7 @@ Result Image::CopyToHost(VkCommandBuffer command) {
   vkCmdCopyImageToBuffer(command, image_, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                          GetHostAccessibleBuffer(), 1, &copy_region);
 
+  MemoryBarrier(command);
   return {};
 }
 
