@@ -41,10 +41,19 @@ class Parser : public amber::Parser {
  private:
   std::string make_error(const std::string& err);
   Result ToShaderType(const std::string& str, ShaderType* type);
+  Result ToBufferType(const std::string& str, BufferType* type);
   Result ToShaderFormat(const std::string& str, ShaderFormat* fmt);
+  Result ToDatumType(const std::string& str, DatumType* type);
   Result ToPipelineType(const std::string& str, PipelineType* type);
   Result ValidateEndOfStatement(const std::string& name);
 
+  Result ParseBuffer();
+  Result ParseBufferInitializer(Buffer*);
+  Result ParseBufferInitializerSize(Buffer*);
+  Result ParseBufferInitializerFill(Buffer*, uint32_t);
+  Result ParseBufferInitializerSeries(Buffer*, uint32_t);
+  Result ParseBufferInitializerData(Buffer*);
+  Result ParseBufferFramebuffer(Buffer*);
   Result ParseShaderBlock();
   Result ParsePipelineBlock();
   Result ParsePipelineAttach(Pipeline*);

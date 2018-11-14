@@ -15,6 +15,7 @@
 set(AMBER_SOURCES
     amber.cc
     amber_impl.cc
+    amberscript/buffer.cc
     amberscript/executor.cc
     amberscript/parser.cc
     amberscript/pipeline.cc
@@ -64,8 +65,10 @@ if (${Dawn_FOUND})
 endif()
 
 set(TEST_SRCS
+    amberscript/buffer_test.cc
     amberscript/parser_test.cc
     amberscript/pipeline_test.cc
+    amberscript/script_test.cc
     command_data_test.cc
     result_test.cc
     shader_compiler_test.cc
