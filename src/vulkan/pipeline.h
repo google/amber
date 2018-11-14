@@ -21,9 +21,13 @@
 #include "amber/result.h"
 #include "src/engine.h"
 #include "src/vulkan/command.h"
+#include "src/vulkan/descriptor.h"
 #include "vulkan/vulkan.h"
 
 namespace amber {
+
+class BufferCommand;
+
 namespace vulkan {
 
 class GraphicsPipeline;
@@ -37,6 +41,8 @@ class Pipeline {
 
   GraphicsPipeline* AsGraphics();
 
+  Result AddDescriptor(const BufferCommand*);
+
   virtual void Shutdown();
 
  protected:
@@ -44,21 +50,37 @@ class Pipeline {
            VkDevice device,
            const VkPhysicalDeviceMemoryProperties& properties);
   Result InitializeCommandBuffer(VkCommandPool pool, VkQueue queue);
+  Result CreateVkDescriptorRelatedObjects();
 
-  Result CreatePipelineLayout();
+  Result SendDescriptorDataToGPUIfNeeded();
+  void BindVkPipeline();
+  void BindVkDescriptorSets();
 
   VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
   VkPipeline pipeline_ = VK_NULL_HANDLE;
   VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
 
-  std::vector<VkDescriptorSetLayout> descriptor_set_layout_;
+  std::vector<VkDescriptorSetLayout> descriptor_set_layouts_;
+  std::vector<VkDescriptorPool> descriptor_pools_;
+  std::vector<VkDescriptorSet> descriptor_sets_;
 
   VkDevice device_ = VK_NULL_HANDLE;
   VkPhysicalDeviceMemoryProperties memory_properties_;
   std::unique_ptr<CommandBuffer> command_;
 
  private:
+  Result CreatePipelineLayout();
+
+  Result CreateDescriptorSetLayouts();
+  Result CreateDescriptorPools();
+  Result CreateDescriptorSets();
+
+  void DestoryDescriptorSetLayouts();
+  void DestoryDescriptorPools();
+  Result DestoryDescriptorSets();
+
   PipelineType pipeline_type_;
+  std::vector<std::unique_ptr<Descriptor>> descriptors_;
 };
 
 }  // namespace vulkan

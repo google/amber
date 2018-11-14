@@ -199,7 +199,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   if (pipeline_ != VK_NULL_HANDLE)
     return Result("Vulkan::Pipeline already created");
 
-  Result r = CreatePipelineLayout();
+  Result r = CreateVkDescriptorRelatedObjects();
   if (!r.IsSuccess())
     return r;
 
@@ -470,11 +470,15 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
       return r;
   }
 
-  Result r = SendBufferDataIfNeeded();
+  Result r = command_->BeginIfNotInRecording();
   if (!r.IsSuccess())
     return r;
 
-  r = command_->BeginIfNotInRecording();
+  r = SendBufferDataIfNeeded();
+  if (!r.IsSuccess())
+    return r;
+
+  r = SendDescriptorDataToGPUIfNeeded();
   if (!r.IsSuccess())
     return r;
 
@@ -483,8 +487,8 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
 
   ActivateRenderPassIfNeeded();
 
-  vkCmdBindPipeline(command_->GetCommandBuffer(),
-                    VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
+  BindVkDescriptorSets();
+  BindVkPipeline();
 
   if (vertex_buffer_)
     vertex_buffer_->BindToCommandBuffer(command_->GetCommandBuffer());

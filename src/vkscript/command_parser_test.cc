@@ -2588,6 +2588,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithFloat) {
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(2U, cmd->GetOffset());
+  EXPECT_EQ(12U, cmd->GetSize());
   ASSERT_TRUE(cmd->IsSubdata());
 
   const auto& type = cmd->GetDatumType();
@@ -2620,6 +2621,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithDescriptorSet) {
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(2U, cmd->GetOffset());
   ASSERT_TRUE(cmd->IsSubdata());
+  EXPECT_EQ(12U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsFloat());
@@ -2651,6 +2653,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithInts) {
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(2U, cmd->GetOffset());
   ASSERT_TRUE(cmd->IsSubdata());
+  EXPECT_EQ(6U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsInt16());
@@ -2682,6 +2685,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithMultipleVectors) {
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(2U, cmd->GetOffset());
   ASSERT_TRUE(cmd->IsSubdata());
+  EXPECT_EQ(12U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsInt16());
@@ -2782,6 +2786,7 @@ TEST_F(CommandParserTest, Uniform) {
   auto* cmd = cmds[0]->AsBuffer();
   EXPECT_TRUE(cmd->IsPushConstant());
   EXPECT_EQ(2U, cmd->GetOffset());
+  EXPECT_EQ(12U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsFloat());
@@ -2810,6 +2815,7 @@ TEST_F(CommandParserTest, UniformWithContinuation) {
   auto* cmd = cmds[0]->AsBuffer();
   EXPECT_TRUE(cmd->IsPushConstant());
   EXPECT_EQ(2U, cmd->GetOffset());
+  EXPECT_EQ(24U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsFloat());
@@ -2877,6 +2883,7 @@ TEST_F(CommandParserTest, UniformUBO) {
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(2U, cmd->GetBinding());
   EXPECT_EQ(1U, cmd->GetOffset());
+  EXPECT_EQ(12U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsFloat());
@@ -2907,6 +2914,7 @@ TEST_F(CommandParserTest, UniformUBOWithDescriptorSet) {
   EXPECT_EQ(3U, cmd->GetDescriptorSet());
   EXPECT_EQ(2U, cmd->GetBinding());
   EXPECT_EQ(1U, cmd->GetOffset());
+  EXPECT_EQ(12U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsFloat());
