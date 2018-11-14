@@ -15,12 +15,12 @@ TODO(dneto): What characters are valid in a name?
 ### Number literals
 
 Literal numbers are normally presented in decimal form.  They are interpreted
-as integers or floating point depending on context: a command parameter is predefined
-as either integral or floating point, or the data type is user-specified (such
-as for buffer data).
+as integers or floating point depending on context: a command parameter is
+predefined as either integral or floating point, or the data type is
+user-specified (such as for buffer data).
 
-Hex values: Whenever an integer is expected, you may use a hexadecimal number, which
-is the characters `0x` followed by hexadecimal digits.
+Hex values: Whenever an integer is expected, you may use a hexadecimal number,
+which is the characters `0x` followed by hexadecimal digits.
 
 ### Shaders
 
@@ -65,7 +65,7 @@ END
  * float
  * double
  * vec[2,3,4]\<type>
- * mat[2,3,4]\<type>    -- useful?
+ * mat[2,3,4]x[2,3,4]\<type>    -- useful?
 
 TODO(dneto): Support half-precision floating point.
 
@@ -77,7 +77,6 @@ Sized arrays and structures are not currently representable.
  * vertex
  * index
  * sampled
- * storage
  * color
  * depth
 
@@ -90,10 +89,12 @@ BUFFER <buffer_type> <name> DATA_TYPE <type> DATA
 <value>+
 END
 
-BUFFER <buffer_type> <name> DATA_TYPE <type> SIZE <size_in_bytes> <initializer>
+BUFFER <buffer_type> <name> DATA_TYPE <type> SIZE <size_in_items> <initializer>
 
 BUFFER framebuffer <name> DIMS <width_in_pixels> <height_in_pixels>
 ```
+
+TODO(dsinclair): Does framebuffer need a format attached to it?
 
 #### Buffer Initializers
 Fill the buffer with a single value.
@@ -177,7 +178,7 @@ Bind a provided framebuffer.
 Descriptor sets can be bound as:
 
 ```
-  DESCRIPTOR_SET <id> BINDING <id> IDX <0> TO <buffer_name>
+  DESCRIPTOR_SET <id> BINDING <id> IDX <val> TO <buffer_name>
 ```
 
 ### Run a pipeline.
@@ -330,7 +331,7 @@ PIPELINE graphics kGreenPipeline
   ENTRY_POINT kFragmentShader green
 END  # pipeline
 
-RUN kRedPipeline DRAW_RECT POS 0 0  SIZE 256 256
+RUN kRedPipeline DRAW_RECT POS 0 0 SIZE 256 256
 RUN kGreenPipeline DRAW_RECT POS 128 128 SIZE 256 256
 
 EXPECT kFrameBuffer IDX 0 0 SIZE 127 127 EQ_RGB 255 0 0

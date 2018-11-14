@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 
+#include "src/amberscript/buffer.h"
 #include "src/amberscript/pipeline.h"
 #include "src/amberscript/shader.h"
 #include "src/script.h"
@@ -55,6 +56,19 @@ class Script : public amber::Script {
     return pipelines_;
   }
 
+  Result AddBuffer(std::unique_ptr<Buffer> buffer) {
+    if (name_to_buffer_.count(buffer->GetName()) > 0)
+      return Result("duplicate buffer name provided");
+
+    buffers_.push_back(std::move(buffer));
+    name_to_buffer_[buffers_.back()->GetName()] = buffers_.back().get();
+    return {};
+  }
+
+  const std::vector<std::unique_ptr<Buffer>>& GetBuffers() const {
+    return buffers_;
+  }
+
   Shader* GetShader(const std::string& name) const {
     auto it = name_to_shader_.find(name);
     return it == name_to_shader_.end() ? nullptr : it->second;
@@ -65,11 +79,18 @@ class Script : public amber::Script {
     return it == name_to_pipeline_.end() ? nullptr : it->second;
   }
 
+  Buffer* GetBuffer(const std::string& name) const {
+    auto it = name_to_buffer_.find(name);
+    return it == name_to_buffer_.end() ? nullptr : it->second;
+  }
+
  private:
   std::map<std::string, Shader*> name_to_shader_;
   std::map<std::string, Pipeline*> name_to_pipeline_;
+  std::map<std::string, Buffer*> name_to_buffer_;
   std::vector<std::unique_ptr<Shader>> shaders_;
   std::vector<std::unique_ptr<Pipeline>> pipelines_;
+  std::vector<std::unique_ptr<Buffer>> buffers_;
 };
 
 }  // namespace amberscript
