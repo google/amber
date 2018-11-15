@@ -6,7 +6,7 @@ vars = {
 
   'glslang_revision': '7274bbc27c07406b7f670fde997af560386a1d77',
   'googletest_revision': 'd5932506d6eed73ac80b9bcc47ed723c8c74eb1e',
-  'shaderc_revision': '823901b2803d9d70c4e0975daa8600c6500b5274',
+  'shaderc_revision': 'eb743ec9cb31303e0abefeeb74886ab134dced6f',
   'spirv_headers_revision': 'a2c529b5dda18838ab4b52f816acfebd774eaab3',
   'spirv_tools_revision': '2b1f6b373ca9ee776e969948b883d93c8b4f304c',
 }
