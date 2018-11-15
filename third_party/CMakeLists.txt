@@ -110,15 +110,18 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
       -Wno-covered-switch
       -Wno-covered-switch-default
       -Wno-deprecated
+      -Wno-disabled-macro-expansion
       -Wno-double-promotion
       -Wno-extra-semi
       -Wno-float-equal
+      -Wno-global-constructors
       -Wno-inconsistent-missing-destructor-override
       -Wno-missing-field-initializers
       -Wno-missing-prototypes
       -Wno-newline-eof
       -Wno-old-style-cast
       -Wno-reserved-id-macro
+      -Wno-shadow
       -Wno-shadow-uncaptured-local
       -Wno-shadow-field-in-constructor
       -Wno-sign-conversion
