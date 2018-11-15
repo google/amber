@@ -8,7 +8,7 @@ vars = {
   'googletest_revision': 'd5932506d6eed73ac80b9bcc47ed723c8c74eb1e',
   'shaderc_revision': 'eb743ec9cb31303e0abefeeb74886ab134dced6f',
   'spirv_headers_revision': 'a2c529b5dda18838ab4b52f816acfebd774eaab3',
-  'spirv_tools_revision': '2b1f6b373ca9ee776e969948b883d93c8b4f304c',
+  'spirv_tools_revision': 'c37388f1addd697d3e67ee441d9dfe5c739f3979',
 }
 
 deps = {
