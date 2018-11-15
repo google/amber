@@ -4,7 +4,7 @@ vars = {
   'google_git':  'https://github.com/google',
   'khronos_git': 'https://github.com/KhronosGroup',
 
-  'glslang_revision': '7274bbc27c07406b7f670fde997af560386a1d77',
+  'glslang_revision': '579ccece451292a402cd5410091197df3cd9e741',
   'googletest_revision': 'd5932506d6eed73ac80b9bcc47ed723c8c74eb1e',
   'shaderc_revision': 'eb743ec9cb31303e0abefeeb74886ab134dced6f',
   'spirv_headers_revision': 'a2c529b5dda18838ab4b52f816acfebd774eaab3',
