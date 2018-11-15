@@ -182,7 +182,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline() {
   VkVertexInputBindingDescription vertex_binding_desc = {};
   if (vertex_buffer_) {
     vertex_binding_desc = vertex_buffer_->GetVertexInputBinding();
-    auto vertex_attr_desc = vertex_buffer_->GetVertexInputAttr();
+    const auto& vertex_attr_desc = vertex_buffer_->GetVertexInputAttr();
 
     vertex_input_info.pVertexBindingDescriptions = &vertex_binding_desc;
     vertex_input_info.vertexAttributeDescriptionCount =
