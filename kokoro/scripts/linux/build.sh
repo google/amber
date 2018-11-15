@@ -58,9 +58,9 @@ echo $(date): Build everything...
 ninja
 echo $(date): Build completed.
 
-echo $(date): Starting ctest...
-ctest -j4 --output-on-failure --timeout 300
-echo $(date): ctest completed.
+echo $(date): Starting amber_unittests...
+amber_unittests
+echo $(date): amber_unittests completed.
 
 echo $(date): Starting integration tests..
 ../../test/run_tests.py
