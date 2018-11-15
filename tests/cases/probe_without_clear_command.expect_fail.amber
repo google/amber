@@ -28,3 +28,7 @@ main()
 
 [test]
 relative probe rect rgba (0.0, 0.0, 1.0, 1.0) (0.1, 0.2, 0.3, 0.4)
+
+# Expected result: assert failure with the following message
+# "FrameBuffer::ChangeFrameImageLayout new layout cannot be kProbe "
+# "from kInit"
