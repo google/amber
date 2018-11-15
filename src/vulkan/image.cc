@@ -75,11 +75,10 @@ Result Image::Initialize(VkImageUsageFlags usage) {
   if (!r.IsSuccess())
     return r;
 
-  if (CheckMemoryHostAccessible(allocate_result.memory_type_index)) {
-    is_image_host_accessible_ = true;
-    return MapMemory(memory_);
-  }
-
+  // For images, we always make a secondary buffer. When the tiling of an image
+  // is optimal, read/write data from CPU does not show correct values. We need
+  // a secondary buffer to convert the GPU-optimial data to CPU-readable data
+  // and vice versa.
   is_image_host_accessible_ = false;
   return Resource::Initialize();
 }
