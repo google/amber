@@ -68,6 +68,7 @@ void Buffer::CopyToDevice(VkCommandBuffer command) {
   region.size = GetSize();
 
   vkCmdCopyBuffer(command, GetHostAccessibleBuffer(), buffer_, 1, &region);
+  MemoryBarrier(command);
 }
 
 void Buffer::Shutdown() {

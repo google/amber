@@ -71,6 +71,10 @@ class Resource {
   Result MapMemory(VkDeviceMemory memory);
   void UnMapMemory(VkDeviceMemory memory);
 
+  // Make all memory operations before calling this method effective i.e.,
+  // prevent hazards caused by out-of-order execution.
+  void MemoryBarrier(VkCommandBuffer command);
+
  private:
   uint32_t ChooseMemory(uint32_t memory_type_bits,
                         VkMemoryPropertyFlags flags,
