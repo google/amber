@@ -2,16 +2,20 @@
 
 Amber is a multi-API shader test framework.
 
-Amber lets you capture and communicate shader bugs with the fluidity and ease of a scripting flow:
+Amber lets you capture and communicate shader bugs with the fluidity and ease of
+a scripting flow:
 
 * No graphics API programming is required.
   * WIP: Supports Vulkan and [Dawn][Dawn] graphics APIs.
-* A single text string (or file) maps to a single graphics API pipeline test case.  The text includes:
+* A single text string (or file) maps to a single graphics API pipeline test
+  case. The text includes:
   * Input data, including buffers and images.
   * Shaders.
   * Expectations for the result of running the pipeline.
-* Shaders can be expressed in binary form (as hex), in SPIR-V assembly, or in a higher level shader language.
-* After executing the pipeline, result buffers and images can be saved to output files.
+* Shaders can be expressed in binary form (as hex), in SPIR-V assembly, or in a
+  higher level shader language.
+* After executing the pipeline, result buffers and images can be saved to output
+  files.
 
 Amber is influenced by [Talvos][Talvos] and [VkRunner][VkRunner].
 The [VkScript](docs/vk_script.md) syntax matches the format used by VkRunner.
@@ -20,7 +24,7 @@ This is not an officially supported Google product.
 
 ## Requirements
 
- * Recommended: Configure at least one target graphics API.  See below.
+ * Recommended: Configure at least one target graphics API. See below.
  * Git
  * CMake
  * Ninja (or other build tool)
@@ -69,13 +73,16 @@ A Vulkan implementation is found by CMake in the following priority order:
 
 ### Using Dawn as a backend
 
-We assume you have built [Dawn][Dawn] from source, and have access to both the source
-and build trees.  To build a Dawn backend for Amber, set the following CMake variables
-when configuring Amber:
+We assume you have built [Dawn][Dawn] from source, and have access to both the
+source and build trees. To build a Dawn backend for Amber, set the following
+CMake variables when configuring Amber:
 
-  * `Dawn_INCLUDE_DIR`: The directory containing `dawn/dawn_export.h` (in the source tree).
-  * `Dawn_GEN_INCLUDE_DIR`: The directory containing generated header `dawn/dawncpp.h` (in the build output tree).
-  * `Dawn_LIBRARY_DIR`: The directory containing the `dawn_native` library (in the build output tree).
+  * `Dawn_INCLUDE_DIR`: The directory containing `dawn/dawn_export.h`
+    (in the source tree).
+  * `Dawn_GEN_INCLUDE_DIR`: The directory containing generated header
+    `dawn/dawncpp.h` (in the build output tree).
+  * `Dawn_LIBRARY_DIR`: The directory containing the `dawn_native` library (in
+    the build output tree).
 
 ## Amber Sample
 
