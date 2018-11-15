@@ -13,7 +13,7 @@
 # limitations under the License.
 
 if(WIN32)
-  option(g`_force_shared_crt
+  option(g_force_shared_crt
     "Use shared (DLL) run-time lib even when Google Test is built as static lib."
     ON)
 endif()
@@ -146,6 +146,82 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(SHADERC_BUILD_FIXES
       -Wno-missing-field-initializers
       -Wno-pedantic)
+endif()
+
+if (MSVC)
+  set(GTEST_BUILD_FIXES
+	/W3
+	/wd4061
+	/wd4365
+	/wd4514
+	/wd4571
+	/wd4623
+	/wd4625
+	/wd4626
+	/wd4668
+	/wd4710
+	/wd4774
+	/wd4820
+	/wd5026
+	/wd5027
+	/wd5039
+	/wd5045
+  )
+
+  set(GLSLANG_BUILD_FIXES
+	/W3
+	/wd4242
+	/wd4244
+	/wd4571
+	/wd4623
+	/wd4625
+	/wd4626
+	/wd4702
+	/wd4774
+	/wd4820
+	/wd4946
+	/wd4996
+	/wd5026
+	/wd5027
+	/wd5045
+  )
+
+  set(SPIRV_TOOLS_BUILD_FIXES
+    /W3
+	/wd4365
+	/wd4389
+	/wd4571
+	/wd4623
+	/wd4625
+	/wd4626
+	/wd4702
+	/wd4706
+	/wd4710
+	/wd4774
+	/wd4820
+	/wd4826
+	/wd4868
+	/wd5026
+	/wd5027
+	/wd5045
+  )
+
+set(SHADERC_BUILD_FIXES
+	/W3
+	/wd4365
+	/wd4571
+	/wd4623
+	/wd4625
+	/wd4626
+	/wd4702
+	/wd4774
+	/wd4820
+	/wd4996
+	/wd5026
+	/wd5027
+	/wd5039
+	/wd5045
+  )
 endif()
 
 set(CXX_BACK ${CMAKE_CXX_FLAGS})
