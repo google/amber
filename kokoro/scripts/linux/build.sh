@@ -59,9 +59,9 @@ ninja
 echo $(date): Build completed.
 
 echo $(date): Starting amber_unittests...
-amber_unittests
+./amber_unittests
 echo $(date): amber_unittests completed.
 
-echo $(date): Starting integration tests..
-../../test/run_tests.py
-echo $(date): integration tests completed.
+#echo $(date): Starting integration tests..
+#../../test/run_tests.py
+#echo $(date): integration tests completed.
