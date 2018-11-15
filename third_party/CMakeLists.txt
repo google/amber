@@ -110,15 +110,18 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
       -Wno-covered-switch
       -Wno-covered-switch-default
       -Wno-deprecated
+      -Wno-disabled-macro-expansion
       -Wno-double-promotion
       -Wno-extra-semi
       -Wno-float-equal
+      -Wno-global-constructors
       -Wno-inconsistent-missing-destructor-override
       -Wno-missing-field-initializers
       -Wno-missing-prototypes
       -Wno-newline-eof
       -Wno-old-style-cast
       -Wno-reserved-id-macro
+      -Wno-shadow
       -Wno-shadow-uncaptured-local
       -Wno-shadow-field-in-constructor
       -Wno-sign-conversion
@@ -167,7 +170,7 @@ set(CXX_BACK ${CMAKE_CXX_FLAGS})
 SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "${GLSLANG_BUILD_FIXES}")
 STRING(REGEX REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(ENABLE_HLSL ON)
-set(BUILD_TESTING OFF)
+set(BUILD_TESTING FALSE)
 set(ENABLE_GLSLANG_BINARIES OFF)
 set(ENABLE_SPVREMAPPER OFF)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glslang)
