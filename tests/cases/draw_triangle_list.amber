@@ -58,7 +58,7 @@ void main() {
          127  127      0 255   0
          127 -128      0 255   0
 
-#          Blue for quater frame
+#         Blue for quarter frame
 #         R8   G8     R8  G8  B8
         -128    0      0   0 255
            0  127      0   0 255
@@ -68,7 +68,7 @@ void main() {
            0  127      0   0 255
            0    0      0   0 255
 
-#   Mixed color for quater frame
+#  Mixed color for quarter frame
 #         R8   G8     R8  G8  B8
            0    0    128 128 128
          127  127    128 128 128
