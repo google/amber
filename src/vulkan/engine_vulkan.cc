@@ -15,6 +15,7 @@
 #include "src/vulkan/engine_vulkan.h"
 
 #include <algorithm>
+#include <cassert>
 
 #include "src/make_unique.h"
 #include "src/vulkan/format_data.h"
@@ -44,7 +45,7 @@ VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
       return VK_SHADER_STAGE_COMPUTE_BIT;
   }
 
-  // Unreachable
+  assert(false && "Vulkan::Unknown shader stage");
   return VK_SHADER_STAGE_FRAGMENT_BIT;
 }
 
@@ -235,11 +236,11 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand*) {
   return Result("Vulkan::DoDrawRect Not Implemented");
 }
 
-Result EngineVulkan::DoDrawArrays(const DrawArraysCommand*) {
+Result EngineVulkan::DoDrawArrays(const DrawArraysCommand* command) {
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::DrawArrays for Non-Graphics Pipeline");
 
-  return pipeline_->AsGraphics()->Draw();
+  return pipeline_->AsGraphics()->Draw(command);
 }
 
 Result EngineVulkan::DoCompute(const ComputeCommand*) {

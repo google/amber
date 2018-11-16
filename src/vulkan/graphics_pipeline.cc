@@ -14,6 +14,7 @@
 
 #include "src/vulkan/graphics_pipeline.h"
 
+#include <cassert>
 #include <cmath>
 
 #include "src/command.h"
@@ -72,6 +73,38 @@ const float kEpsilon = 0.002f;
 bool IsFloatPixelEqualInt(float pixel, uint8_t expected) {
   // TODO(jaebaek): Change kEpsilon to tolerance.
   return std::fabs(pixel - static_cast<float>(expected) / 255.0f) < kEpsilon;
+}
+
+VkPrimitiveTopology ToVkTopology(Topology topology) {
+  switch (topology) {
+    case Topology::kPointList:
+      return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+    case Topology::kLineList:
+      return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    case Topology::kLineStrip:
+      return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+    case Topology::kTriangleList:
+      return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    case Topology::kTriangleStrip:
+      return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+    case Topology::kTriangleFan:
+      return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+    case Topology::kLineListWithAdjacency:
+      return VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY;
+    case Topology::kLineStripWithAdjacency:
+      return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY;
+    case Topology::kTriangleListWithAdjacency:
+      return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY;
+    case Topology::kTriangleStripWithAdjacency:
+      return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY;
+    case Topology::kPatchList:
+      return VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+    default:
+      break;
+  }
+
+  assert(false && "Vulkan::Unknown topology");
+  return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 }
 
 }  // namespace
@@ -166,7 +199,8 @@ GraphicsPipeline::GetPipelineColorBlendAttachmentState() {
   return colorblend_attachment;
 }
 
-Result GraphicsPipeline::CreateVkGraphicsPipeline() {
+Result GraphicsPipeline::CreateVkGraphicsPipeline(
+    VkPrimitiveTopology topology) {
   if (pipeline_ != VK_NULL_HANDLE)
     return Result("Vulkan::Pipeline already created");
 
@@ -202,7 +236,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline() {
   input_assembly_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
   // TODO(jaebaek): Handle the given index if exists.
-  input_assembly_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+  input_assembly_info.topology = topology;
   input_assembly_info.primitiveRestartEnable = VK_FALSE;
 
   VkViewport viewport = {0,
@@ -431,10 +465,10 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   return {};
 }
 
-Result GraphicsPipeline::Draw() {
+Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
   // TODO(jaebaek): Handle primitive topology.
   if (pipeline_ == VK_NULL_HANDLE) {
-    Result r = CreateVkGraphicsPipeline();
+    Result r = CreateVkGraphicsPipeline(ToVkTopology(command->GetTopology()));
     if (!r.IsSuccess())
       return r;
   }
@@ -455,15 +489,15 @@ Result GraphicsPipeline::Draw() {
   vkCmdBindPipeline(command_->GetCommandBuffer(),
                     VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
 
-  uint32_t vertex_count = 0;
-  uint32_t instance_count = 0;
-  if (vertex_buffer_) {
+  if (vertex_buffer_)
     vertex_buffer_->BindToCommandBuffer(command_->GetCommandBuffer());
-    vertex_count = static_cast<uint32_t>(vertex_buffer_->GetVertexCount());
-    instance_count = 1;
-  }
 
-  vkCmdDraw(command_->GetCommandBuffer(), vertex_count, instance_count, 0, 0);
+  uint32_t instance_count = command->GetInstanceCount();
+  if (instance_count == 0 && command->GetVertexCount() != 0)
+    instance_count = 1;
+
+  vkCmdDraw(command_->GetCommandBuffer(), command->GetVertexCount(),
+            instance_count, command->GetFirstVertexIndex(), 0);
 
   return {};
 }
