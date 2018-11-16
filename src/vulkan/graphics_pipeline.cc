@@ -76,7 +76,7 @@ bool IsFloatPixelEqualInt(float pixel, uint8_t expected) {
 }
 
 VkPrimitiveTopology ToVkTopology(Topology topology) {
-  switch(topology) {
+  switch (topology) {
     case Topology::kPointList:
       return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
     case Topology::kLineList:
@@ -199,7 +199,8 @@ GraphicsPipeline::GetPipelineColorBlendAttachmentState() {
   return colorblend_attachment;
 }
 
-Result GraphicsPipeline::CreateVkGraphicsPipeline(VkPrimitiveTopology topology) {
+Result GraphicsPipeline::CreateVkGraphicsPipeline(
+    VkPrimitiveTopology topology) {
   if (pipeline_ != VK_NULL_HANDLE)
     return Result("Vulkan::Pipeline already created");
 
@@ -495,8 +496,8 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
   if (instance_count == 0 && command->GetVertexCount() != 0)
     instance_count = 1;
 
-  vkCmdDraw(command_->GetCommandBuffer(), command->GetVertexCount(), instance_count,
-            command->GetFirstVertexIndex(), 0);
+  vkCmdDraw(command_->GetCommandBuffer(), command->GetVertexCount(),
+            instance_count, command->GetFirstVertexIndex(), 0);
 
   return {};
 }
