@@ -81,22 +81,30 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
       -Wpedantic
       -pedantic-errors)
 elseif(MSVC)
+  # We don't want to have to copy the C Runtime DLL everywhere the executable
+  # goes.  So compile code to assume the CRT is statically linked, i.e. use
+  # /MT* options.  For debug builds use /MTd, and for release builds use /MT.
+  if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MTd)
+  else()
+    set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MT)
+  endif()
   set(CUSTOM_CXX_FLAGS
       ${CUSTOM_CXX_FLAGS}
-	  /EHsc
-	  /MTd  # TODO(dsinclair): Make this BUILD_TYPE dependent
+      /bigobj
+      /EHsc
       /W3
       /WX
-	  /wd4068
-	  /wd4514
-	  /wd4571
-	  /wd4625
-	  /wd4626
-	  /wd4710
-	  /wd4774
-	  /wd4820
-	  /wd5026
-	  /wd5027
+      /wd4068
+      /wd4514
+      /wd4571
+      /wd4625
+      /wd4626
+      /wd4710
+      /wd4774
+      /wd4820
+      /wd5026
+      /wd5027
   )
 endif()
 
