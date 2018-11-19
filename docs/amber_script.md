@@ -71,27 +71,16 @@ TODO(dneto): Support half-precision floating point.
 
 Sized arrays and structures are not currently representable.
 
-#### Buffer Types
- * uniform
- * storage
- * vertex
- * index
- * sampled
- * color
- * depth
-
 ```
 // Filling the buffer with a given set of data. The values must provide
 // <size_in_bytes> of <type> data. The data can be provided as the type or
 // as a hex value.
 
-BUFFER <buffer_type> <name> DATA_TYPE <type> DATA
+BUFFER <name> DATA_TYPE <type> DATA
 <value>+
 END
 
-BUFFER <buffer_type> <name> DATA_TYPE <type> SIZE <size_in_items> <initializer>
-
-BUFFER framebuffer <name> DIMS <width_in_pixels> <height_in_pixels>
+BUFFER <name> DATA_TYPE <type> SIZE <size_in_items> <initializer>
 ```
 
 TODO(dsinclair): Does framebuffer need a format attached to it?
@@ -156,6 +145,29 @@ is to run no optimization passes.
 
 #### Bindings
 
+##### Framebuffer Formats
+ * R32G32B32A32_UINT
+
+Bind a provided framebuffer.
+
+```
+  FRAMEBUFFER <width> <height>
+  FRAMEBUFFER <width> <height> <fb_format>
+```
+
+#### Buffer Types
+ * uniform
+ * storage
+ * sampled
+ * color
+ * depth
+
+Descriptor sets can be bound as:
+
+```
+  DESCRIPTOR_SET <id> BINDING <id> IDX <val> TO <buffer_name> AS <buffer_type>
+```
+
 ##### Topologies
  * point\_list
  * line\_list
@@ -168,18 +180,6 @@ is to run no optimization passes.
  * triangle\_strip\_with\_adjacency
  * triangle\_fan
  * patch\_list
-
-Bind a provided framebuffer.
-
-```
-  FRAMEBUFFER <buffer_of_type_framebuffer_name>
-```
-
-Descriptor sets can be bound as:
-
-```
-  DESCRIPTOR_SET <id> BINDING <id> IDX <val> TO <buffer_name>
-```
 
 ### Run a pipeline.
 
@@ -242,11 +242,11 @@ void main() {
 }
 END  # shader
 
-BUFFER storage kComputeBuffer TYPE vec2<int32> SIZE 524288 FILL 0
+BUFFER kComputeBuffer TYPE vec2<int32> SIZE 524288 FILL 0
 
 PIPELINE compute kComputePipeline
   ATTACH kComputeShader
-  DESCRIPTOR_SET 0 BINDING 3 IDX 0 TO kComputeBuffer
+  DESCRIPTOR_SET 0 BINDING 3 IDX 0 TO kComputeBuffer AS storage
 END  # pipeline
 
 RUN kComputePipeline 256 256 1
@@ -307,8 +307,6 @@ SHADER fragment kFragmentShader SPIRV-ASM
                OpFunctionEnd
 END  # shader
 
-BUFFER framebuffer kFrameBuffer DIMS 256 256
-
 PIPELINE graphics kRedPipeline
   ATTACH kVertexShader
   SHADER_OPTIMIZATION kVertexShader
@@ -319,7 +317,7 @@ PIPELINE graphics kRedPipeline
 
   ATTACH kFragmentShader
 
-  FRAMEBUFFER kFrameBuffer
+  FRAMEBUFFER 256 256
   ENTRY_POINT kFragmentShader red
 END  # pipeline
 
@@ -327,7 +325,7 @@ PIPELINE graphics kGreenPipeline
   ATTACH kVertexShader
   ATTACH kFragmentShader
 
-  FRAMEBUFFER kFrameBuffer
+  FRAMEBUFFER 256 256
   ENTRY_POINT kFragmentShader green
 END  # pipeline
 
@@ -371,7 +369,7 @@ PIPELINE graphics kGraphicsPipeline
   ATTACH kFragmentShader
 END  # pipeline
 
-BUFFER vertex kData TYPE vec3<int32> DATA
+BUFFER kData TYPE vec3<int32> DATA
 # Top-left red
 -1 -1  0xff0000ff
  0 -1  0xff0000ff
@@ -394,7 +392,7 @@ BUFFER vertex kData TYPE vec3<int32> DATA
  1  1  0xff800080
 END
 
-BUFFER index kIndices TYPE int32 DATA
+BUFFER kIndices TYPE int32 DATA
 0  1  2    2  1  3
 4  5  6    6  5  7
 8  9  10   10 9  11
@@ -405,6 +403,6 @@ CLEAR_COLOR kGraphicsPipeline 255 0 0 255
 CLEAR kGraphicsPipeline
 
 RUN kGraphicsPipeline \
-  DRAW_ARRAY kIndices IN kBuffer AS triangle_list \
+  DRAW_ARRAY kIndices IN kData AS triangle_list \
   START_IDX 0 COUNT 24
  ```
