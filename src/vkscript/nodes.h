@@ -122,35 +122,23 @@ class VertexDataNode : public Node {
     std::unique_ptr<Format> format;
   };
 
-  class Cell {
-   public:
-    Cell();
-    Cell(const Cell&);
-    ~Cell();
-
-    size_t size() const { return data_.size(); }
-    void AppendValue(Value&& v) { data_.emplace_back(std::move(v)); }
-    const Value& GetValue(size_t idx) const { return data_[idx]; }
-
-   private:
-    std::vector<Value> data_;
-  };
-
   VertexDataNode();
   ~VertexDataNode() override;
 
-  const std::vector<Header>& GetHeaders() const { return headers_; }
-  void SetHeaders(std::vector<Header> headers) {
-    headers_ = std::move(headers);
+  void SetSegment(Header&& header, std::unique_ptr<Buffer> buffer);
+  size_t SegmentCount() const { return data_.size(); }
+
+  const Header& GetHeader(size_t i) const { return data_[i].header_; }
+  const std::vector<Value>& GetSegment(size_t i) const {
+    return data_[i].buffer_->GetData();
   }
 
-  void AddRow(std::vector<Cell> row) { rows_.push_back(std::move(row)); }
-
-  const std::vector<std::vector<Cell>>& GetRows() const { return rows_; }
-
  private:
-  std::vector<Header> headers_;
-  std::vector<std::vector<Cell>> rows_;
+  struct NodeData {
+    Header header_;
+    std::unique_ptr<Buffer> buffer_;
+  };
+  std::vector<NodeData> data_;
 };
 
 class TestNode : public Node {

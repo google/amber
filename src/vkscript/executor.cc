@@ -73,18 +73,10 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
       continue;
 
     const auto data = node->AsVertexData();
-    const auto& headers = data->GetHeaders();
-    const auto& rows = data->GetRows();
-    for (size_t i = 0; i < headers.size(); ++i) {
-      std::vector<Value> values;
-      for (const auto& row : rows) {
-        const auto& cell = row[i];
-        for (size_t z = 0; z < cell.size(); ++z)
-          values.push_back(cell.GetValue(z));
-      }
-
-      r = engine->SetBuffer(BufferType::kVertex, headers[i].location,
-                            *(headers[i].format), values);
+    for (size_t i = 0; i < data->SegmentCount(); ++i) {
+      const auto& header = data->GetHeader(i);
+      r = engine->SetBuffer(BufferType::kVertex, header.location,
+                            *(header.format), data->GetSegment(i));
       if (!r.IsSuccess())
         return r;
     }

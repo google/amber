@@ -85,11 +85,10 @@ VertexDataNode::VertexDataNode() : Node(NodeType::kVertexData) {}
 
 VertexDataNode::~VertexDataNode() = default;
 
-VertexDataNode::Cell::Cell() = default;
-
-VertexDataNode::Cell::Cell(const VertexDataNode::Cell&) = default;
-
-VertexDataNode::Cell::~Cell() = default;
+void VertexDataNode::SetSegment(Header&& header,
+                                std::unique_ptr<Buffer> buffer) {
+  data_.push_back({std::move(header), std::move(buffer)});
+}
 
 }  // namespace vkscript
 }  // namespace amber

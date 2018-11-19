@@ -312,17 +312,19 @@ TEST_F(VkScriptParserTest, VertexDataHeaderFormatString) {
   ASSERT_TRUE(nodes[0]->IsVertexData());
 
   auto* data = nodes[0]->AsVertexData();
-  EXPECT_TRUE(data->GetRows().empty());
 
-  auto& headers = data->GetHeaders();
+  ASSERT_EQ(2U, data->SegmentCount());
 
-  ASSERT_EQ(2U, headers.size());
-  EXPECT_EQ(static_cast<size_t>(0U), headers[0].location);
-  EXPECT_EQ(FormatType::kR32G32_SFLOAT, headers[0].format->GetFormatType());
+  auto& header_0 = data->GetHeader(0);
+  EXPECT_EQ(static_cast<size_t>(0U), header_0.location);
+  EXPECT_EQ(FormatType::kR32G32_SFLOAT, header_0.format->GetFormatType());
+  EXPECT_TRUE(data->GetSegment(0).empty());
 
-  EXPECT_EQ(1U, headers[1].location);
+  auto& header_1 = data->GetHeader(1);
+  EXPECT_EQ(1U, header_1.location);
   EXPECT_EQ(FormatType::kA8B8G8R8_UNORM_PACK32,
-            headers[1].format->GetFormatType());
+            header_1.format->GetFormatType());
+  EXPECT_TRUE(data->GetSegment(1).empty());
 }
 
 TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
@@ -337,23 +339,25 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   ASSERT_TRUE(nodes[0]->IsVertexData());
 
   auto* data = nodes[0]->AsVertexData();
-  EXPECT_TRUE(data->GetRows().empty());
 
-  auto& headers = data->GetHeaders();
+  ASSERT_EQ(2U, data->SegmentCount());
 
-  ASSERT_EQ(2U, headers.size());
-  EXPECT_EQ(static_cast<size_t>(0U), headers[0].location);
-  EXPECT_EQ(FormatType::kR32G32_SFLOAT, headers[0].format->GetFormatType());
+  auto& header_0 = data->GetHeader(0);
+  EXPECT_EQ(static_cast<size_t>(0U), header_0.location);
+  EXPECT_EQ(FormatType::kR32G32_SFLOAT, header_0.format->GetFormatType());
+  EXPECT_TRUE(data->GetSegment(0).empty());
 
-  auto& comps1 = headers[0].format->GetComponents();
+  auto& comps1 = header_0.format->GetComponents();
   ASSERT_EQ(2U, comps1.size());
   EXPECT_EQ(FormatMode::kSFloat, comps1[0].mode);
   EXPECT_EQ(FormatMode::kSFloat, comps1[1].mode);
 
-  EXPECT_EQ(1U, headers[1].location);
-  EXPECT_EQ(FormatType::kR32G32B32_SINT, headers[1].format->GetFormatType());
+  auto& header_1 = data->GetHeader(1);
+  EXPECT_EQ(1U, header_1.location);
+  EXPECT_EQ(FormatType::kR32G32B32_SINT, header_1.format->GetFormatType());
+  EXPECT_TRUE(data->GetSegment(1).empty());
 
-  auto& comps2 = headers[1].format->GetComponents();
+  auto& comps2 = header_1.format->GetComponents();
   ASSERT_EQ(3U, comps2.size());
   EXPECT_EQ(FormatMode::kSInt, comps2[0].mode);
   EXPECT_EQ(FormatMode::kSInt, comps2[1].mode);
@@ -411,60 +415,23 @@ TEST_F(VkScriptParserTest, VertexDataRows) {
   ASSERT_TRUE(nodes[0]->IsVertexData());
 
   auto* data = nodes[0]->AsVertexData();
-  auto& headers = data->GetHeaders();
-  ASSERT_EQ(2U, headers.size());
+  ASSERT_EQ(2U, data->SegmentCount());
 
-  // Rows is a vector of vector of cells
-  auto& rows = data->GetRows();
-  ASSERT_EQ(2U, rows.size());
+  std::vector<float> seg_0 = {-1.f, -1.f, 0.25f, 0.25f, -1.f, 0.25f};
+  const auto& values_0 = data->GetSegment(0);
+  ASSERT_EQ(seg_0.size(), values_0.size());
+  for (size_t i = 0; i < seg_0.size(); ++i) {
+    ASSERT_TRUE(values_0[i].IsFloat());
+    EXPECT_FLOAT_EQ(seg_0[i], values_0[i].AsFloat());
+  }
 
-  // A row is a vector of Cells
-  const auto& row1 = rows[0];
-  ASSERT_EQ(2U, row1.size());
-
-  const auto& row1_cell1 = row1[0];
-  ASSERT_EQ(3U, row1_cell1.size());
-
-  ASSERT_TRUE(row1_cell1.GetValue(0).IsFloat());
-  EXPECT_FLOAT_EQ(-1, row1_cell1.GetValue(0).AsFloat());
-  ASSERT_TRUE(row1_cell1.GetValue(1).IsFloat());
-  EXPECT_FLOAT_EQ(-1, row1_cell1.GetValue(1).AsFloat());
-  ASSERT_TRUE(row1_cell1.GetValue(2).IsFloat());
-  EXPECT_FLOAT_EQ(0.25, row1_cell1.GetValue(2).AsFloat());
-
-  const auto& row1_cell2 = row1[1];
-  ASSERT_EQ(3U, row1_cell2.size());
-
-  ASSERT_TRUE(row1_cell2.GetValue(0).IsInteger());
-  EXPECT_FLOAT_EQ(255, row1_cell2.GetValue(0).AsUint8());
-  ASSERT_TRUE(row1_cell2.GetValue(1).IsInteger());
-  EXPECT_FLOAT_EQ(0, row1_cell2.GetValue(1).AsUint8());
-  ASSERT_TRUE(row1_cell2.GetValue(2).IsInteger());
-  EXPECT_FLOAT_EQ(0, row1_cell2.GetValue(2).AsUint8());
-
-  // Second row.
-  const auto& row2 = rows[1];
-  ASSERT_EQ(2U, row2.size());
-
-  const auto& row2_cell1 = row2[0];
-  ASSERT_EQ(3U, row2_cell1.size());
-
-  ASSERT_TRUE(row2_cell1.GetValue(0).IsFloat());
-  EXPECT_FLOAT_EQ(0.25, row2_cell1.GetValue(0).AsFloat());
-  ASSERT_TRUE(row2_cell1.GetValue(1).IsFloat());
-  EXPECT_FLOAT_EQ(-1, row2_cell1.GetValue(1).AsFloat());
-  ASSERT_TRUE(row2_cell1.GetValue(2).IsFloat());
-  EXPECT_FLOAT_EQ(0.25, row2_cell1.GetValue(2).AsFloat());
-
-  const auto& row2_cell2 = row2[1];
-  ASSERT_EQ(3U, row2_cell2.size());
-
-  ASSERT_TRUE(row2_cell2.GetValue(0).IsInteger());
-  EXPECT_FLOAT_EQ(255, row2_cell2.GetValue(0).AsUint8());
-  ASSERT_TRUE(row2_cell2.GetValue(1).IsInteger());
-  EXPECT_FLOAT_EQ(0, row2_cell2.GetValue(1).AsUint8());
-  ASSERT_TRUE(row2_cell2.GetValue(2).IsInteger());
-  EXPECT_FLOAT_EQ(255, row2_cell2.GetValue(2).AsUint8());
+  std::vector<uint8_t> seg_1 = {255, 0, 0, 255, 0, 255};
+  const auto& values_1 = data->GetSegment(1);
+  ASSERT_EQ(seg_1.size(), values_1.size());
+  for (size_t i = 0; i < seg_1.size(); ++i) {
+    ASSERT_TRUE(values_1[i].IsInteger());
+    EXPECT_EQ(seg_1[i], values_1[i].AsUint8());
+  }
 }
 
 TEST_F(VkScriptParserTest, VertexDataShortRow) {
@@ -509,30 +476,16 @@ TEST_F(VkScriptParserTest, VertexDataRowsWithHex) {
   ASSERT_TRUE(nodes[0]->IsVertexData());
 
   auto* data = nodes[0]->AsVertexData();
-  auto& headers = data->GetHeaders();
-  ASSERT_EQ(1U, headers.size());
+  ASSERT_EQ(1U, data->SegmentCount());
 
-  auto& rows = data->GetRows();
-  ASSERT_EQ(2U, rows.size());
+  std::vector<uint32_t> seg_0 = {0xff0000ff, 0xffff0000};
+  const auto& values_0 = data->GetSegment(0);
+  ASSERT_EQ(seg_0.size(), values_0.size());
 
-  // Each row has 1 cell.
-  auto& row1 = rows[0];
-  ASSERT_EQ(1U, row1.size());
-
-  auto& row1_cell1 = row1[0];
-  ASSERT_EQ(1U, row1_cell1.size());
-
-  ASSERT_TRUE(row1_cell1.GetValue(0).IsInteger());
-  EXPECT_EQ(0xff0000ff, row1_cell1.GetValue(0).AsUint32());
-
-  auto& row2 = rows[1];
-  ASSERT_EQ(1U, row1.size());
-
-  const auto& row2_cell1 = row2[0];
-  ASSERT_EQ(1U, row2_cell1.size());
-
-  ASSERT_TRUE(row2_cell1.GetValue(0).IsInteger());
-  EXPECT_EQ(0xffff0000, row2_cell1.GetValue(0).AsUint32());
+  for (size_t i = 0; i < seg_0.size(); ++i) {
+    ASSERT_TRUE(values_0[i].IsInteger());
+    EXPECT_EQ(seg_0[i], values_0[i].AsUint32());
+  }
 }
 
 TEST_F(VkScriptParserTest, VertexDataRowsWithHexWrongColumn) {
