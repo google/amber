@@ -113,7 +113,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
 
 std::string ReadFile(const std::string& input_file) {
   FILE* file = nullptr;
-#if _MSC_VER > 0
+#if defined(_MSC_VER)
   fopen_s(&file, input_file.c_str(), "rb");
 #else
   file = fopen(input_file.c_str(), "rb");
