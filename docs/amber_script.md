@@ -53,6 +53,9 @@ END
 
 ### Buffers
 
+An AmberScript buffer represents a set of contiguous bits. This can be used for
+either image buffers or, what the target API would refer to as a buffer.
+
 #### Data Types
  * int8
  * int16
@@ -148,11 +151,15 @@ is to run no optimization passes.
 ##### Framebuffer Formats
  * R32G32B32A32_UINT
 
-Bind a provided framebuffer.
+Bind a provided framebuffer. The third example `FRAMEBUFFER <name>` requires
+that `<name>` was declared in a previous `PIPELINE` and provided with the
+needed `DIMS`. If the `FORMAT` is missing it is defaulted to
+`R32G32B32A32_UINT`.
 
 ```
-  FRAMEBUFFER <width> <height>
-  FRAMEBUFFER <width> <height> <fb_format>
+  FRAMEBUFFER <name> DIMS <width> <height>
+  FRAMEBUFFER <name> DIMS <width> <height> FORMAT <fb_format>
+  FRAMEBUFFER <name>
 ```
 
 #### Buffer Types
@@ -162,10 +169,23 @@ Bind a provided framebuffer.
  * color
  * depth
 
-Descriptor sets can be bound as:
+TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
+
+
+Bindings can be written as:
 
 ```
-  DESCRIPTOR_SET <id> BINDING <id> IDX <val> TO <buffer_name> AS <buffer_type>
+  BIND BUFFER <buffer_name> AS <buffer_type> DESCRIPTOR_SET <id> \
+       BINDING <id> IDX <val>
+
+  BIND SAMPLER <sampler_name>
+```
+
+Vertex buffers and index buffers can be attached to a pipeline as:
+
+```
+  VERTEX_DATA <buffer_name>
+  INDEX_DATA <buffer_name>
 ```
 
 ##### Topologies
@@ -183,6 +203,9 @@ Descriptor sets can be bound as:
 
 ### Run a pipeline.
 
+When running a `DRAW_ARRAY` command you must attach the vertex data and index
+data to the `PIPELINE` with the `VERTEX_DATA` and `INDEX_DATA` commands.
+
 ```
 RUN <pipeline_name> <x> <y> <z>
 
@@ -190,9 +213,7 @@ RUN <pipeline_name> \
   DRAW_RECT POS <x_in_pixels> <y_in_pixels> \
   SIZE <width_in_pixels> <height_in_pixels>
 
-RUN <pipeline_name> \
-  DRAW_ARRAY <indices_buffer> IN <data_buffer> \
-  AS <topology> START_IDX <value> COUNT <value>
+RUN <pipeline_name> DRAW_ARRAY AS <topology> START_IDX <value> COUNT <value>
 ```
 
 ### Commands
@@ -246,7 +267,7 @@ BUFFER kComputeBuffer TYPE vec2<int32> SIZE 524288 FILL 0
 
 PIPELINE compute kComputePipeline
   ATTACH kComputeShader
-  DESCRIPTOR_SET 0 BINDING 3 IDX 0 TO kComputeBuffer AS storage
+  BIND BUFFER kComputeBuffer AS storage DESCRIPTOR_SET 0 BINDING 3 IDX 0
 END  # pipeline
 
 RUN kComputePipeline 256 256 1
@@ -317,7 +338,7 @@ PIPELINE graphics kRedPipeline
 
   ATTACH kFragmentShader
 
-  FRAMEBUFFER 256 256
+  FRAMEBUFFER kFramebuffer 256 256
   ENTRY_POINT kFragmentShader red
 END  # pipeline
 
@@ -325,7 +346,7 @@ PIPELINE graphics kGreenPipeline
   ATTACH kVertexShader
   ATTACH kFragmentShader
 
-  FRAMEBUFFER 256 256
+  FRAMEBUFFER kFramebuffer
   ENTRY_POINT kFragmentShader green
 END  # pipeline
 
@@ -364,11 +385,6 @@ SHADER fragment kFragmentShader GLSL
   }
 END  # shader
 
-PIPELINE graphics kGraphicsPipeline
-  ATTACH kVertexShader
-  ATTACH kFragmentShader
-END  # pipeline
-
 BUFFER kData TYPE vec3<int32> DATA
 # Top-left red
 -1 -1  0xff0000ff
@@ -399,10 +415,16 @@ BUFFER kIndices TYPE int32 DATA
 12 13 14   14 13 15
 END
 
+PIPELINE graphics kGraphicsPipeline
+  ATTACH kVertexShader
+  ATTACH kFragmentShader
+
+  VERTEX_DATA kData
+  INDEX_DATA kIndices
+END  # pipeline
+
 CLEAR_COLOR kGraphicsPipeline 255 0 0 255
 CLEAR kGraphicsPipeline
 
-RUN kGraphicsPipeline \
-  DRAW_ARRAY kIndices IN kData AS triangle_list \
-  START_IDX 0 COUNT 24
+RUN kGraphicsPipeline DRAW_ARRAY AS triangle_list START_IDX 0 COUNT 24
  ```
