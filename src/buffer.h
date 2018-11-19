@@ -12,29 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_AMBERSCRIPT_BUFFER_H_
-#define SRC_AMBERSCRIPT_BUFFER_H_
+#ifndef SRC_BUFFER_H_
+#define SRC_BUFFER_H_
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
+#include "src/buffer_data.h"
 #include "src/datum_type.h"
 #include "src/value.h"
 
 namespace amber {
-namespace amberscript {
-
-enum class BufferType : uint8_t {
-  kColor = 0,
-  kDepth,
-  kFramebuffer,
-  kIndex,
-  kSampled,
-  kStorage,
-  kUniform,
-  kVertex
-};
 
 class Buffer {
  public:
@@ -64,7 +53,6 @@ class Buffer {
   size_t size_ = 0;
 };
 
-}  // namespace amberscript
 }  // namespace amber
 
 #endif  // SRC_AMBERSCRIPT_BUFFER_H_

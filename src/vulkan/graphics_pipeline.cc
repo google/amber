@@ -326,7 +326,7 @@ void GraphicsPipeline::SetBuffer(BufferType type,
                                  const Format& format,
                                  const std::vector<Value>& values) {
   // TODO(jaebaek): Handle indices data.
-  if (type != BufferType::kVertexData)
+  if (type != BufferType::kVertex)
     return;
 
   if (!vertex_buffer_)

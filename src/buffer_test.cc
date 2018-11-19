@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/amberscript/buffer.h"
+#include "src/buffer.h"
 #include "gtest/gtest.h"
 
 namespace amber {
-namespace amberscript {
 
 using BufferTest = testing::Test;
 
@@ -50,5 +49,4 @@ TEST_F(BufferTest, BufferSizeMatrix) {
   EXPECT_EQ(2 * 10 * 3 * 2, b.GetSizeInBytes());
 }
 
-}  // namespace amberscript
 }  // namespace amber

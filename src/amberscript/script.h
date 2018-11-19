@@ -19,9 +19,9 @@
 #include <memory>
 #include <vector>
 
-#include "src/amberscript/buffer.h"
 #include "src/amberscript/pipeline.h"
 #include "src/amberscript/shader.h"
+#include "src/buffer.h"
 #include "src/script.h"
 
 namespace amber {

@@ -83,7 +83,7 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
           values.push_back(cell.GetValue(z));
       }
 
-      r = engine->SetBuffer(BufferType::kVertexData, headers[i].location,
+      r = engine->SetBuffer(BufferType::kVertex, headers[i].location,
                             *(headers[i].format), values);
       if (!r.IsSuccess())
         return r;
@@ -95,13 +95,8 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
     if (!node->IsIndices())
       continue;
 
-    std::vector<Value> values;
-    for (uint16_t index : node->AsIndices()->Indices()) {
-      values.push_back(Value());
-      values.back().SetIntValue(index);
-    }
-
-    r = engine->SetBuffer(BufferType::kIndices, 0, Format(), values);
+    r = engine->SetBuffer(BufferType::kIndex, 0, Format(),
+                          node->AsIndices()->Indices());
     if (!r.IsSuccess())
       return r;
   }

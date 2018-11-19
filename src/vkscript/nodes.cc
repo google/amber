@@ -71,8 +71,8 @@ void RequireNode::AddRequirement(Feature feature,
   requirements_.emplace_back(feature, std::move(format));
 }
 
-IndicesNode::IndicesNode(const std::vector<uint16_t>& indices)
-    : Node(NodeType::kIndices), indices_(indices) {}
+IndicesNode::IndicesNode(std::unique_ptr<Buffer> buffer)
+    : Node(NodeType::kIndices), buffer_(std::move(buffer)) {}
 
 IndicesNode::~IndicesNode() = default;
 
