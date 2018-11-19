@@ -286,7 +286,6 @@ Result Parser::ProcessIndicesBlock(const std::string& data) {
     auto b = MakeUnique<Buffer>(BufferType::kIndex);
     b->SetData(std::move(indices));
     script_.AddIndexBuffer(std::move(b));
-    ;
   }
 
   return {};
