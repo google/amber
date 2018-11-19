@@ -32,6 +32,7 @@ struct Options {
   bool parse_only = false;
   bool show_help = false;
   bool show_version_info = false;
+  amber::EngineType engine = amber::EngineType::kVulkan;
 };
 
 const char kUsage[] = R"(Usage: amber [options] SCRIPT
@@ -41,6 +42,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT
   -i <filename>  -- Write rendering to <filename> as a PPM image.
   -b <filename>  -- Write contents of a UBO or SSBO to <filename>.
   -B <buffer>    -- Index of buffer to write. Defaults buffer 0.
+  -e <engine>    -- Specify graphics engine: vulkan, dawn. Default is vulkan.
   -V, --version  -- Output version information for Amber and libraries.
   -h             -- This help text.
 )";
@@ -74,6 +76,24 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
 
       if (opts->buffer_binding_index < 0) {
         std::cerr << "Invalid value for -B, must be 0 or greater." << std::endl;
+        return false;
+      }
+
+    } else if (arg == "-e") {
+      ++i;
+      if (i >= args.size()) {
+        std::cerr << "Missing value for -e argument." << std::endl;
+        return false;
+      }
+      const std::string& engine = args[i];
+      if (engine == "vulkan") {
+        opts->engine = amber::EngineType::kVulkan;
+      } else if (engine == "dawn") {
+        opts->engine = amber::EngineType::kDawn;
+      } else {
+        std::cerr
+            << "Invalid value for -e argument. Must be one of: vulkan dawn"
+            << std::endl;
         return false;
       }
 
@@ -156,6 +176,7 @@ int main(int argc, const char** argv) {
 
   amber::Amber vk;
   amber::Options amber_options;
+  amber_options.engine = options.engine;
   amber_options.parse_only = options.parse_only;
   amber::Result result = vk.Execute(data, amber_options);
   if (!result.IsSuccess()) {
@@ -164,7 +185,7 @@ int main(int argc, const char** argv) {
   }
 
   if (!options.buffer_filename.empty()) {
-    // TOOD(dsinclair): Write buffer file
+    // TODO(dsinclair): Write buffer file
     assert(false);
   }
 
