@@ -151,7 +151,7 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
   } else {
     tok = MakeUnique<Token>(TokenType::kInteger);
 
-    uint64_t val = strtoull(tok_str.c_str(), &final_pos, 10);
+    uint64_t val = uint64_t(std::strtoull(tok_str.c_str(), &final_pos, 10));
     tok->SetUint64Value(static_cast<uint64_t>(val));
   }
   if (tok_str.size() > 1 && tok_str[0] == '-')
