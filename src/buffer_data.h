@@ -17,7 +17,16 @@
 
 namespace amber {
 
-enum class BufferType { kFramebuffer = 0, kVertexData, kIndices };
+enum class BufferType : uint8_t {
+  kColor = 0,
+  kDepth,
+  kFramebuffer,
+  kIndex,
+  kSampled,
+  kStorage,
+  kUniform,
+  kVertex
+};
 
 }  // namespace amber
 

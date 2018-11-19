@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 
+#include "src/buffer.h"
 #include "src/command.h"
 #include "src/feature.h"
 #include "src/format.h"
@@ -105,13 +106,13 @@ class RequireNode : public Node {
 
 class IndicesNode : public Node {
  public:
-  IndicesNode(const std::vector<uint16_t>& indices);
+  IndicesNode(std::unique_ptr<Buffer> buffer);
   ~IndicesNode() override;
 
-  const std::vector<uint16_t>& Indices() const { return indices_; }
+  const std::vector<Value>& Indices() const { return buffer_->GetData(); }
 
  private:
-  std::vector<uint16_t> indices_;
+  std::unique_ptr<Buffer> buffer_;
 };
 
 class VertexDataNode : public Node {

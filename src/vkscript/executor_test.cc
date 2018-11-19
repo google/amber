@@ -931,7 +931,7 @@ TEST_F(VkScriptExecutorTest, VertexData) {
 
   EXPECT_EQ(FormatType::kR32G32B32_SFLOAT,
             stub->GetBufferFormat(0)->GetFormatType());
-  EXPECT_EQ(BufferType::kVertexData, stub->GetBufferType(0));
+  EXPECT_EQ(BufferType::kVertex, stub->GetBufferType(0));
   EXPECT_EQ(9U, stub->GetBufferLocation(0));
 
   const auto& data1 = stub->GetBufferValues(0);
@@ -944,7 +944,7 @@ TEST_F(VkScriptExecutorTest, VertexData) {
 
   EXPECT_EQ(FormatType::kR8G8B8_UNORM,
             stub->GetBufferFormat(1)->GetFormatType());
-  EXPECT_EQ(BufferType::kVertexData, stub->GetBufferType(1));
+  EXPECT_EQ(BufferType::kVertex, stub->GetBufferType(1));
   EXPECT_EQ(1U, stub->GetBufferLocation(1));
 
   const auto& data2 = stub->GetBufferValues(1);
@@ -973,7 +973,7 @@ TEST_F(VkScriptExecutorTest, IndexBuffer) {
   auto stub = ToStub(engine.get());
   ASSERT_EQ(1U, stub->GetBufferCallCount());
 
-  EXPECT_EQ(BufferType::kIndices, stub->GetBufferType(0));
+  EXPECT_EQ(BufferType::kIndex, stub->GetBufferType(0));
 
   const auto& data = stub->GetBufferValues(0);
   std::vector<uint8_t> results = {1, 2, 3, 4, 5, 6};
