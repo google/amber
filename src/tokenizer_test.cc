@@ -370,7 +370,8 @@ TEST_F(TokenizerTest, TokenToDoubleFromInt64Min) {
 
   Result r = next->ConvertToDouble();
   ASSERT_TRUE(r.IsSuccess());
-  EXPECT_DOUBLE_EQ(static_cast<double>(std::numeric_limits<int64_t>::min()), next->AsDouble());
+  EXPECT_DOUBLE_EQ(static_cast<double>(std::numeric_limits<int64_t>::min()),
+                   next->AsDouble());
 }
 
 TEST_F(TokenizerTest, TokenToDoubleFromInt64Max) {
@@ -381,7 +382,8 @@ TEST_F(TokenizerTest, TokenToDoubleFromInt64Max) {
 
   Result r = next->ConvertToDouble();
   ASSERT_TRUE(r.IsSuccess());
-  EXPECT_DOUBLE_EQ(static_cast<double>(std::numeric_limits<int64_t>::max()), next->AsDouble());
+  EXPECT_DOUBLE_EQ(static_cast<double>(std::numeric_limits<int64_t>::max()),
+                   next->AsDouble());
 }
 
 TEST_F(TokenizerTest, TokenToDoubleFromString) {

@@ -35,7 +35,9 @@ Result Token::ConvertToDouble() {
     return Result("Invalid conversion to double");
 
   if (IsInteger()) {
-    if (is_negative_ || uint_value_ <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
+    if (is_negative_ ||
+        uint_value_ <=
+            static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
       double_value_ = static_cast<double>(AsInt64());
     } else {
       return Result("uint64_t value too big to fit in double");
