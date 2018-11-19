@@ -1663,7 +1663,7 @@ TEST_F(CommandParserTest, MaxDepthBounds) {
   CommandParser cp;
   Result r = cp.Parse(data);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
-  EXPECT_FLOAT_EQ(3.f, cp.PipelineDataForTesting()->GetMaxDepthBounds());
+  EXPECT_FLOAT_EQ(3.4f, cp.PipelineDataForTesting()->GetMaxDepthBounds());
 }
 
 struct FloatTest {
