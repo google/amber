@@ -313,7 +313,7 @@ TEST_F(TokenizerTest, TokenToDoubleFromDouble) {
 
   Result r = next->ConvertToDouble();
   ASSERT_TRUE(r.IsSuccess());
-  EXPECT_FLOAT_EQ(-1.234, next->AsFloat());
+  EXPECT_FLOAT_EQ(-1.234f, next->AsFloat());
 }
 
 TEST_F(TokenizerTest, TokenToDoubleFromInt) {
@@ -324,7 +324,7 @@ TEST_F(TokenizerTest, TokenToDoubleFromInt) {
 
   Result r = next->ConvertToDouble();
   ASSERT_TRUE(r.IsSuccess());
-  EXPECT_FLOAT_EQ(-1.0, next->AsFloat());
+  EXPECT_FLOAT_EQ(-1.0f, next->AsFloat());
 }
 
 TEST_F(TokenizerTest, DashToken) {
@@ -370,7 +370,8 @@ TEST_F(TokenizerTest, TokenToDoubleFromInt64Min) {
 
   Result r = next->ConvertToDouble();
   ASSERT_TRUE(r.IsSuccess());
-  EXPECT_FLOAT_EQ(std::numeric_limits<int64_t>::min(), next->AsDouble());
+  EXPECT_DOUBLE_EQ(static_cast<double>(std::numeric_limits<int64_t>::min()),
+                   next->AsDouble());
 }
 
 TEST_F(TokenizerTest, TokenToDoubleFromInt64Max) {
@@ -381,7 +382,8 @@ TEST_F(TokenizerTest, TokenToDoubleFromInt64Max) {
 
   Result r = next->ConvertToDouble();
   ASSERT_TRUE(r.IsSuccess());
-  EXPECT_FLOAT_EQ(std::numeric_limits<int64_t>::max(), next->AsDouble());
+  EXPECT_DOUBLE_EQ(static_cast<double>(std::numeric_limits<int64_t>::max()),
+                   next->AsDouble());
 }
 
 TEST_F(TokenizerTest, TokenToDoubleFromString) {
@@ -403,7 +405,7 @@ TEST_F(TokenizerTest, TokenToDoubleFromHex) {
 
   Result r = next->ConvertToDouble();
   ASSERT_TRUE(r.IsSuccess());
-  EXPECT_FLOAT_EQ(0xff00f0ff, next->AsFloat());
+  EXPECT_FLOAT_EQ(static_cast<float>(0xff00f0ff), next->AsFloat());
 }
 
 TEST_F(TokenizerTest, TokenToDoubleFromEOS) {
