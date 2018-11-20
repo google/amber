@@ -331,16 +331,18 @@ Result Parser::ProcessVertexDataBlock(const std::string& data) {
     token = tokenizer.NextToken();
   }
 
-  auto node = MakeUnique<VertexDataNode>();
+  // Create a number of vectors equal to the number of headers.
+  std::vector<std::vector<Value>> values;
+  values.resize(headers.size());
 
   // Process data lines
   for (; !token->IsEOS(); token = tokenizer.NextToken()) {
     if (token->IsEOL())
       continue;
 
-    std::vector<VertexDataNode::Cell> row;
-    for (const auto& header : headers) {
-      row.emplace_back();
+    for (size_t j = 0; j < headers.size(); ++j) {
+      const auto& header = headers[j];
+      auto& value_data = values[j];
 
       if (header.format->GetPackSize() > 0) {
         if (!token->IsHex())
@@ -348,7 +350,7 @@ Result Parser::ProcessVertexDataBlock(const std::string& data) {
 
         Value v;
         v.SetIntValue(token->AsHex());
-        row.back().AppendValue(std::move(v));
+        value_data.push_back(v);
       } else {
         auto& comps = header.format->GetComponents();
         for (size_t i = 0; i < comps.size();
@@ -372,14 +374,16 @@ Result Parser::ProcessVertexDataBlock(const std::string& data) {
             return Result("Invalid vertex data value");
           }
 
-          row.back().AppendValue(std::move(v));
+          value_data.push_back(v);
         }
       }
     }
-    node->AddRow(std::move(row));
   }
 
-  node->SetHeaders(std::move(headers));
+  auto node = MakeUnique<VertexDataNode>();
+  for (size_t i = 0; i < headers.size(); ++i)
+    node->SetSegment(std::move(headers[i]), std::move(values[i]));
+
   script_.AddVertexData(std::move(node));
 
   return {};
