@@ -18,6 +18,7 @@
 #include "dawn/dawncpp.h"
 
 #include "src/engine.h"
+#include "src/shader_data.h"
 
 namespace amber {
 namespace dawn {
@@ -58,6 +59,8 @@ class EngineDawn : public Engine {
 
  private:
   ::dawn::Device device_;
+  enum { kNumShaderTypes = unsigned(ShaderType::kTessellationEvaluation) + 1 };
+  ::dawn::ShaderModule shader_[kNumShaderTypes];
 };
 
 }  // namespace dawn

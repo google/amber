@@ -66,18 +66,18 @@ find_library(Dawn_native_LIBRARY
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Dawn
   DEFAULT_MSG
-  Dawn_INCLUDE_DIR Dawn_GEN_INCLUDE_DIR Dawn_LIBRARY Dawn_native_LIBRARY)
+  Dawn_INCLUDE_DIR Dawn_GEN_INCLUDE_DIR
+  Dawn_LIBRARY Dawn_native_LIBRARY
+  )
 
 if(${Dawn_FOUND} AND NOT TARGET Dawn::dawn)
-  add_library(Dawn::dawn_native UNKNOWN IMPORTED)
-  set_target_properties(Dawn::dawn_native PROPERTIES
+  add_library(Dawn::dawn UNKNOWN IMPORTED)
+  set_target_properties(Dawn::dawn PROPERTIES
     IMPORTED_LOCATION "${Dawn_LIBRARY}"
     INTERFACE_INCLUDE_DIRECTORIES "${Dawn_INCLUDE_DIR};${Dawn_GEN_INCLUDE_DIR}")
 endif()
 if(${Dawn_FOUND} AND NOT TARGET Dawn::dawn_native)
   add_library(Dawn::dawn_native UNKNOWN IMPORTED)
-  # The dawn_native library transitively depends on dawn
-  target_link_libraries(Dawn::dawn_native Dawn::dawn)
   set_target_properties(Dawn::dawn_native PROPERTIES
     IMPORTED_LOCATION "${Dawn_native_LIBRARY}"
     INTERFACE_INCLUDE_DIRECTORIES "${Dawn_INCLUDE_DIR};${Dawn_GEN_INCLUDE_DIR}")
