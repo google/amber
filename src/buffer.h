@@ -49,7 +49,7 @@ class Buffer {
   // Sets the data into the buffer. The size will also be updated to be the size
   // of the data provided.
   void SetData(std::vector<Value>&& data) {
-    size_ = data.size();
+    size_ = data.size() / datum_type_.ColumnCount() / datum_type_.RowCount();
     data_ = std::move(data);
   }
   const std::vector<Value>& GetData() const { return data_; }
