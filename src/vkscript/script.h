@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+#include "src/buffer.h"
 #include "src/command.h"
 #include "src/make_unique.h"
 #include "src/script.h"
@@ -37,7 +38,7 @@ class Script : public amber::Script {
 
   void AddRequireNode(std::unique_ptr<RequireNode> node);
   void AddShader(ShaderType, std::vector<uint32_t>);
-  void AddIndices(const std::vector<uint16_t>& indices);
+  void AddIndexBuffer(std::unique_ptr<Buffer> b);
   void AddVertexData(std::unique_ptr<VertexDataNode> node);
   void SetTestCommands(std::vector<std::unique_ptr<Command>> commands);
 

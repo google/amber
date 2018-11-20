@@ -14,6 +14,7 @@
 
 #include "src/tokenizer.h"
 
+#include <cctype>
 #include <cstdlib>
 #include <limits>
 #include <sstream>
@@ -34,10 +35,13 @@ Result Token::ConvertToDouble() {
     return Result("Invalid conversion to double");
 
   if (IsInteger()) {
-    if (is_negative_ || uint_value_ <= std::numeric_limits<int64_t>::max())
+    if (is_negative_ ||
+        uint_value_ <=
+            static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
       double_value_ = static_cast<double>(AsInt64());
-    else
+    } else {
       return Result("uint64_t value too big to fit in double");
+    }
 
     uint_value_ = 0;
   } else if (IsHex()) {
@@ -147,7 +151,7 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
   } else {
     tok = MakeUnique<Token>(TokenType::kInteger);
 
-    uint64_t val = strtoull(tok_str.c_str(), &final_pos, 10);
+    uint64_t val = uint64_t(std::strtoull(tok_str.c_str(), &final_pos, 10));
     tok->SetUint64Value(static_cast<uint64_t>(val));
   }
   if (tok_str.size() > 1 && tok_str[0] == '-')
@@ -155,9 +159,9 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
 
   // If the number isn't the whole token then move back so we can then parse
   // the string portion.
-  long diff = final_pos - tok_str.c_str();
+  auto diff = size_t(final_pos - tok_str.c_str());
   if (diff > 0)
-    current_position_ -= (tok_str.length() - static_cast<size_t>(diff));
+    current_position_ -= tok_str.length() - diff;
 
   return tok;
 }

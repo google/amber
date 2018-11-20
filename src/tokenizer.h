@@ -15,6 +15,7 @@
 #ifndef SRC_TOKENIZER_H_
 #define SRC_TOKENIZER_H_
 
+#include <cstdlib>
 #include <memory>
 #include <string>
 
@@ -76,7 +77,7 @@ class Token {
   double AsDouble() const { return double_value_; }
 
   uint64_t AsHex() const {
-    return strtoull(string_value_.c_str(), nullptr, 16);
+    return uint64_t(std::strtoull(string_value_.c_str(), nullptr, 16));
   }
 
  private:

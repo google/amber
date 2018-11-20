@@ -18,6 +18,7 @@
 #include <cassert>
 #include <limits>
 
+#include "src/make_unique.h"
 #include "src/shader_compiler.h"
 #include "src/tokenizer.h"
 #include "src/vkscript/command_parser.h"
@@ -262,7 +263,7 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
 }
 
 Result Parser::ProcessIndicesBlock(const std::string& data) {
-  std::vector<uint16_t> indices;
+  std::vector<Value> indices;
 
   Tokenizer tokenizer(data);
   for (auto token = tokenizer.NextToken(); !token->IsEOS();
@@ -277,11 +278,15 @@ Result Parser::ProcessIndicesBlock(const std::string& data) {
       return Result("Value too large in indices block");
     }
 
-    indices.push_back(token->AsUint16());
+    indices.push_back(Value());
+    indices.back().SetIntValue(token->AsUint16());
   }
 
-  if (!indices.empty())
-    script_.AddIndices(indices);
+  if (!indices.empty()) {
+    auto b = MakeUnique<Buffer>(BufferType::kIndex);
+    b->SetData(std::move(indices));
+    script_.AddIndexBuffer(std::move(b));
+  }
 
   return {};
 }

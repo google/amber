@@ -12,14 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/amberscript/buffer.h"
+#include "src/buffer.h"
 
 namespace amber {
-namespace amberscript {
 
 Buffer::Buffer(BufferType type) : buffer_type_(type) {}
 
 Buffer::~Buffer() = default;
 
-}  // namespace amberscript
 }  // namespace amber

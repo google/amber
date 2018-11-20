@@ -4,11 +4,11 @@ vars = {
   'google_git':  'https://github.com/google',
   'khronos_git': 'https://github.com/KhronosGroup',
 
-  'glslang_revision': '579ccece451292a402cd5410091197df3cd9e741',
+  'glslang_revision': 'd2a7b07a64811bb4a734bd66ef4e0b4c7d7fe1af',
   'googletest_revision': 'd5932506d6eed73ac80b9bcc47ed723c8c74eb1e',
-  'shaderc_revision': 'eb743ec9cb31303e0abefeeb74886ab134dced6f',
-  'spirv_headers_revision': 'a2c529b5dda18838ab4b52f816acfebd774eaab3',
-  'spirv_tools_revision': 'c37388f1addd697d3e67ee441d9dfe5c739f3979',
+  'shaderc_revision': '75441559fdb99856be9c02c0abd9c8e23b405033',
+  'spirv_headers_revision': '7cb43009d543e90698dd300eb26dfd6d9a9bb100',
+  'spirv_tools_revision': 'b0c143c8eb23ea68fc815882b891a13814e9663b',
 }
 
 deps = {

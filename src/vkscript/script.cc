@@ -38,8 +38,8 @@ void Script::AddShader(ShaderType type, std::vector<uint32_t> shader) {
   test_nodes_.push_back(MakeUnique<ShaderNode>(type, std::move(shader)));
 }
 
-void Script::AddIndices(const std::vector<uint16_t>& indices) {
-  test_nodes_.push_back(MakeUnique<IndicesNode>(indices));
+void Script::AddIndexBuffer(std::unique_ptr<Buffer> buffer) {
+  test_nodes_.push_back(MakeUnique<IndicesNode>(std::move(buffer)));
 }
 
 void Script::AddVertexData(std::unique_ptr<VertexDataNode> node) {

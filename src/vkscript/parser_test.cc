@@ -237,9 +237,12 @@ TEST_F(VkScriptParserTest, IndicesBlock) {
   auto& indices = nodes[0]->AsIndices()->Indices();
   ASSERT_EQ(3U, indices.size());
 
-  EXPECT_EQ(1, indices[0]);
-  EXPECT_EQ(2, indices[1]);
-  EXPECT_EQ(3, indices[2]);
+  EXPECT_TRUE(indices[0].IsInteger());
+  EXPECT_EQ(1, indices[0].AsUint16());
+  EXPECT_TRUE(indices[1].IsInteger());
+  EXPECT_EQ(2, indices[1].AsUint16());
+  EXPECT_TRUE(indices[2].IsInteger());
+  EXPECT_EQ(3, indices[2].AsUint16());
 }
 
 TEST_F(VkScriptParserTest, IndicesBlockMultipleLines) {
@@ -263,7 +266,8 @@ TEST_F(VkScriptParserTest, IndicesBlockMultipleLines) {
   auto& indices = nodes[0]->AsIndices()->Indices();
   ASSERT_EQ(results.size(), indices.size());
   for (size_t i = 0; i < results.size(); ++i) {
-    EXPECT_EQ(results[i], indices[i]);
+    EXPECT_TRUE(indices[i].IsInteger());
+    EXPECT_EQ(results[i], indices[i].AsUint16());
   }
 }
 
@@ -384,7 +388,7 @@ clear)";
   EXPECT_EQ(10U, cmds[1]->AsClearDepth()->GetValue());
 
   ASSERT_TRUE(cmds[2]->IsClearStencil());
-  EXPECT_FLOAT_EQ(2, cmds[2]->AsClearStencil()->GetValue());
+  EXPECT_EQ(2U, cmds[2]->AsClearStencil()->GetValue());
 
   EXPECT_TRUE(cmds[3]->IsClear());
 }

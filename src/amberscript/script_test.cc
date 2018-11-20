@@ -14,9 +14,9 @@
 
 #include "src/amberscript/script.h"
 #include "gtest/gtest.h"
-#include "src/amberscript/buffer.h"
 #include "src/amberscript/pipeline.h"
 #include "src/amberscript/shader.h"
+#include "src/buffer.h"
 #include "src/make_unique.h"
 
 namespace amber {

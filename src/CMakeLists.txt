@@ -15,12 +15,12 @@
 set(AMBER_SOURCES
     amber.cc
     amber_impl.cc
-    amberscript/buffer.cc
     amberscript/executor.cc
     amberscript/parser.cc
     amberscript/pipeline.cc
     amberscript/script.cc
     amberscript/shader.cc
+    buffer.cc
     command.cc
     command_data.cc
     datum_type.cc
@@ -55,7 +55,10 @@ add_library(libamber ${AMBER_SOURCES})
 amber_default_compile_options(libamber)
 set_target_properties(libamber PROPERTIES OUTPUT_NAME "amber")
 # TODO(dsinclair): Remove pthread when building on windows.
-target_link_libraries(libamber SPIRV-Tools shaderc SPIRV pthread)
+target_link_libraries(libamber SPIRV-Tools shaderc SPIRV)
+if (NOT MSVC)
+	target_link_libraries(libamber pthread)
+endif()
 
 if (${Vulkan_FOUND})
   target_link_libraries(libamber libamberenginevulkan)
@@ -65,10 +68,10 @@ if (${Dawn_FOUND})
 endif()
 
 set(TEST_SRCS
-    amberscript/buffer_test.cc
     amberscript/parser_test.cc
     amberscript/pipeline_test.cc
     amberscript/script_test.cc
+    buffer_test.cc
     command_data_test.cc
     result_test.cc
     shader_compiler_test.cc
@@ -86,8 +89,11 @@ if (${Vulkan_FOUND})
 endif()
 
 add_executable(amber_unittests ${TEST_SRCS})
-target_compile_options(amber_unittests PRIVATE
-    -Wno-global-constructors)
+
+if (NOT MSVC)
+	target_compile_options(amber_unittests PRIVATE
+	    -Wno-global-constructors)
+endif()
 
 target_include_directories(amber_unittests PRIVATE
     ${gtest_SOURCE_DIR}/include)

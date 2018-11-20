@@ -12,12 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.1)
+if (POLICY CMP0048)
+  cmake_policy(SET CMP0048 NEW)
+endif()
+if (POLICY CMP0054)
+  # Avoid dereferencing variables or interpret keywords that have been
+  # quoted or bracketed.
+  # https://cmake.org/cmake/help/v3.1/policy/CMP0054.html
+  cmake_policy(SET CMP0054 NEW)
+endif()
 
 project(amber)
 enable_testing()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_STANDARD 11)
 
 include(CheckIncludeFile)
 include(GNUInstallDirs)
@@ -32,17 +43,10 @@ include(src/vulkan/find_vulkan.cmake)
 add_definitions(-DAMBER_ENGINE_VULKAN=$<BOOL:${Vulkan_FOUND}>)
 add_definitions(-DAMBER_ENGINE_DAWN=$<BOOL:${Dawn_FOUND}>)
 
-
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   message(STATUS "No build type selected, default to Debug")
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
-
-set(CUSTOM_CXX_FLAGS
-    -std=c++11
-    -Wall
-    -Werror
-    -Wextra)
 
 if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") OR
     (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") AND
@@ -52,25 +56,58 @@ endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(CUSTOM_CXX_FLAGS
-      ${CUSTOM_CXX_FLAGS}
-      -Weverything
-      -Wno-c++98-compat
-      -Wno-c++98-compat-pedantic
-      -Wno-padded
-      -Wno-switch-enum
-      -Wno-unknown-pragmas
-      -Wno-unknown-warning-option)
+    ${CUSTOM_CXX_FLAGS}
+    -std=c++11
+    -fvisibility=hidden
+    -Wall
+    -Werror
+    -Weverything
+    -Wextra
+    -Wno-c++98-compat
+    -Wno-c++98-compat-pedantic
+    -Wno-padded
+    -Wno-switch-enum
+    -Wno-unknown-pragmas
+    -Wno-unknown-warning-option)
 
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(CUSTOM_CXX_FLAGS
-      ${CUSTOM_CXX_FLAGS}
-      -Wno-unknown-pragmas
-      -Wpedantic
-      -pedantic-errors)
+    ${CUSTOM_CXX_FLAGS}
+    -std=c++11
+    -fvisibility=hidden
+    -Wall
+    -Werror
+    -Wextra
+    -Wno-unknown-pragmas
+    -Wpedantic
+    -pedantic-errors)
 elseif(MSVC)
+  # We don't want to have to copy the C Runtime DLL everywhere the executable
+  # goes.  So compile code to assume the CRT is statically linked, i.e. use
+  # /MT* options.  For debug builds use /MTd, and for release builds use /MT.
+  if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MTd)
+  else()
+    set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MT)
+  endif()
+
   set(CUSTOM_CXX_FLAGS
-      ${CUSTOM_CXX_FLAGS}
-      /WX)
+    ${CUSTOM_CXX_FLAGS}
+    /bigobj
+    /EHsc
+    /W3
+    /WX
+    /wd4068
+    /wd4514
+    /wd4571
+    /wd4625
+    /wd4626
+    /wd4710
+    /wd4774
+    /wd4820
+    /wd5026
+    /wd5027
+  )
 endif()
 
 SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "${CUSTOM_CXX_FLAGS}")
@@ -93,9 +130,9 @@ function(amber_default_compile_options TARGET)
   if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
       set_target_properties(${TARGET} PROPERTIES LINK_FLAGS
-          -static
-          -static-libgcc
-          -static-libstdc++)
+        -static
+        -static-libgcc
+        -static-libstdc++)
     endif()
   endif()
 endfunction()
