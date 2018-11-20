@@ -36,13 +36,22 @@ class Buffer {
   std::string GetName() const { return name_; }
 
   void SetDatumType(const DatumType& type) { datum_type_ = type; }
+  // Returns the |DatumType| describing the buffer data.
   const DatumType& GetDatumType() const { return datum_type_; }
 
   void SetSize(size_t size) { size_ = size; }
+  // Returns the size of the buffer.
   size_t GetSize() const { return size_; }
+
+  // Returns the number of bytes needed for the data in the buffer.
   size_t GetSizeInBytes() const { return size_ * datum_type_.SizeInBytes(); }
 
-  void SetData(std::vector<Value>&& data) { data_ = std::move(data); }
+  // Sets the data into the buffer. The size will also be updated to be the size
+  // of the data provided.
+  void SetData(std::vector<Value>&& data) {
+    size_ = data.size() / datum_type_.ColumnCount() / datum_type_.RowCount();
+    data_ = std::move(data);
+  }
   const std::vector<Value>& GetData() const { return data_; }
 
  private:

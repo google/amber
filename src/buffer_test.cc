@@ -36,6 +36,37 @@ TEST_F(BufferTest, BufferSize) {
   EXPECT_EQ(2 * 10, b.GetSizeInBytes());
 }
 
+TEST_F(BufferTest, BufferSizeFromData) {
+  DatumType type;
+  type.SetType(DataType::kInt16);
+
+  std::vector<Value> values;
+  values.resize(5);
+
+  Buffer b(BufferType::kColor);
+  b.SetDatumType(type);
+  b.SetData(std::move(values));
+
+  EXPECT_EQ(5, b.GetSize());
+  EXPECT_EQ(2 * 5, b.GetSizeInBytes());
+}
+
+TEST_F(BufferTest, BufferSizeFromDataOverrideSize) {
+  DatumType type;
+  type.SetType(DataType::kInt16);
+
+  std::vector<Value> values;
+  values.resize(5);
+
+  Buffer b(BufferType::kColor);
+  b.SetDatumType(type);
+  b.SetSize(20);
+  b.SetData(std::move(values));
+
+  EXPECT_EQ(5, b.GetSize());
+  EXPECT_EQ(2 * 5, b.GetSizeInBytes());
+}
+
 TEST_F(BufferTest, BufferSizeMatrix) {
   DatumType type;
   type.SetType(DataType::kInt16);
