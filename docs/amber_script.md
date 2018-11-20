@@ -172,13 +172,16 @@ needed `DIMS`. If the `FORMAT` is missing it is defaulted to
 TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
 
-Bindings can be written as:
+When adding a buffer binding, the `IDX` parameter is optional and will default
+to 0.
 
 ```
   BIND BUFFER <buffer_name> AS <buffer_type> DESCRIPTOR_SET <id> \
+       BINDING <id>
+  BIND BUFFER <buffer_name> AS <buffer_type> DESCRIPTOR_SET <id> \
        BINDING <id> IDX <val>
 
-  BIND SAMPLER <sampler_name>
+  BIND SAMPLER <sampler_name> DESCRIPTOR_SET <id> BINDING <id>
 ```
 
 Vertex buffers and index buffers can be attached to a pipeline as:
@@ -203,8 +206,16 @@ Vertex buffers and index buffers can be attached to a pipeline as:
 
 ### Run a pipeline.
 
-When running a `DRAW_ARRAY` command you must attach the vertex data and index
-data to the `PIPELINE` with the `VERTEX_DATA` and `INDEX_DATA` commands.
+When running a `DRAW_ARRAY` command, you must attache the vertex data to the
+`PIPELINE` with the `VERTEX_DATA` command.
+
+To run an indexed draw, attach the index data to the `PIPELINE` with an
+`INDEX_DATA` command.
+
+For the commands which take a `START_IDX` and a `COUNT` they can be left off the
+command (although, `START_IDX` is required if `COUNT` is provided). The default
+value for `START_IDX` is 0. The default value for `COUNT` is the item count of
+vertex buffer minus the `START_IDX`.
 
 ```
 RUN <pipeline_name> <x> <y> <z>
@@ -213,7 +224,14 @@ RUN <pipeline_name> \
   DRAW_RECT POS <x_in_pixels> <y_in_pixels> \
   SIZE <width_in_pixels> <height_in_pixels>
 
+RUN <pipeline_name> DRAW_ARRAY AS <topology>
+RUN <pipeline_name> DRAW_ARRAY AS <topology> START_IDX <value>
 RUN <pipeline_name> DRAW_ARRAY AS <topology> START_IDX <value> COUNT <value>
+
+RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology>
+RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology> START_IDX <value>
+RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology> \
+  START_IDX <value> COUNT <value>
 ```
 
 ### Commands
@@ -267,7 +285,7 @@ BUFFER kComputeBuffer TYPE vec2<int32> SIZE 524288 FILL 0
 
 PIPELINE compute kComputePipeline
   ATTACH kComputeShader
-  BIND BUFFER kComputeBuffer AS storage DESCRIPTOR_SET 0 BINDING 3 IDX 0
+  BIND BUFFER kComputeBuffer AS storage DESCRIPTOR_SET 0 BINDING 3
 END  # pipeline
 
 RUN kComputePipeline 256 256 1
@@ -338,7 +356,7 @@ PIPELINE graphics kRedPipeline
 
   ATTACH kFragmentShader
 
-  FRAMEBUFFER kFramebuffer 256 256
+  FRAMEBUFFER kFramebuffer DIMS 256 256
   ENTRY_POINT kFragmentShader red
 END  # pipeline
 
