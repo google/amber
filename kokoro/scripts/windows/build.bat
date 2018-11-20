@@ -61,7 +61,4 @@ amber_unittests
 if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
 echo "Tests Completed %DATE% %TIME%"
 
-:: Clean up some directories.
-rm -rf %SRC%\build
-
 exit /b %ERRORLEVEL%
