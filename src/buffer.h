@@ -39,8 +39,12 @@ class Buffer {
   const DatumType& GetDatumType() const { return datum_type_; }
 
   void SetSize(size_t size) { size_ = size; }
-  size_t GetSize() const { return size_; }
-  size_t GetSizeInBytes() const { return size_ * datum_type_.SizeInBytes(); }
+  size_t GetSize() const {
+    if (size_ == 0 && !data_.empty())
+      return data_.size();
+    return size_;
+  }
+  size_t GetSizeInBytes() const { return GetSize() * datum_type_.SizeInBytes(); }
 
   void SetData(std::vector<Value>&& data) { data_ = std::move(data); }
   const std::vector<Value>& GetData() const { return data_; }

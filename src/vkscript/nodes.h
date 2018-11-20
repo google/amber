@@ -128,15 +128,15 @@ class VertexDataNode : public Node {
   void SetSegment(Header&& header, std::unique_ptr<Buffer> buffer);
   size_t SegmentCount() const { return data_.size(); }
 
-  const Header& GetHeader(size_t i) const { return data_[i].header_; }
+  const Header& GetHeader(size_t i) const { return data_[i].header; }
   const std::vector<Value>& GetSegment(size_t i) const {
-    return data_[i].buffer_->GetData();
+    return data_[i].buffer->GetData();
   }
 
  private:
   struct NodeData {
-    Header header_;
-    std::unique_ptr<Buffer> buffer_;
+    Header header;
+    std::unique_ptr<Buffer> buffer;
   };
   std::vector<NodeData> data_;
 };
