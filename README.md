@@ -42,6 +42,12 @@ cmake -GNinja ../..
 ninja
 ```
 
+## Build Bots
+
+There are a number of build bots to verify Amber continues to compile and run
+on the various targets. Due to bot limitations, the integration tests are not
+being run on the bots, just the unit tests.
+
 ## Backends
 
 Amber is designed to run against different graphics APIs.
