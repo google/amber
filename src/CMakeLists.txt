@@ -55,7 +55,10 @@ add_library(libamber ${AMBER_SOURCES})
 amber_default_compile_options(libamber)
 set_target_properties(libamber PROPERTIES OUTPUT_NAME "amber")
 # TODO(dsinclair): Remove pthread when building on windows.
-target_link_libraries(libamber SPIRV-Tools shaderc SPIRV pthread)
+target_link_libraries(libamber SPIRV-Tools shaderc SPIRV)
+if (NOT MSVC)
+	target_link_libraries(libamber pthread)
+endif()
 
 if (${Vulkan_FOUND})
   target_link_libraries(libamber libamberenginevulkan)
@@ -86,8 +89,11 @@ if (${Vulkan_FOUND})
 endif()
 
 add_executable(amber_unittests ${TEST_SRCS})
-target_compile_options(amber_unittests PRIVATE
-    -Wno-global-constructors)
+
+if (NOT MSVC)
+	target_compile_options(amber_unittests PRIVATE
+	    -Wno-global-constructors)
+endif()
 
 target_include_directories(amber_unittests PRIVATE
     ${gtest_SOURCE_DIR}/include)

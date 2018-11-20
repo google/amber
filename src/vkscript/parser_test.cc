@@ -392,7 +392,7 @@ clear)";
   EXPECT_EQ(10U, cmds[1]->AsClearDepth()->GetValue());
 
   ASSERT_TRUE(cmds[2]->IsClearStencil());
-  EXPECT_FLOAT_EQ(2, cmds[2]->AsClearStencil()->GetValue());
+  EXPECT_EQ(2U, cmds[2]->AsClearStencil()->GetValue());
 
   EXPECT_TRUE(cmds[3]->IsClear());
 }
