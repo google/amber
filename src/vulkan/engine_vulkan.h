@@ -37,7 +37,7 @@ class EngineVulkan : public Engine {
   Result Initialize() override;
   Result InitializeWithDevice(void* default_device) override;
   Result Shutdown() override;
-  Result AddRequirement(Feature feature, const Format*) override;
+  Result AddRequirement(Feature feature, const Format*, uint32_t) override;
   Result CreatePipeline(PipelineType type) override;
   Result SetShader(ShaderType type, const std::vector<uint32_t>& data) override;
   Result SetBuffer(BufferType type,
@@ -63,6 +63,8 @@ class EngineVulkan : public Engine {
   Result InitDeviceAndCreateCommand();
 
   std::vector<VkPipelineShaderStageCreateInfo> GetShaderStageInfo();
+
+  uint32_t fence_timeout_ms_ = 100;
 
   std::unique_ptr<Device> device_;
   std::unique_ptr<CommandPool> pool_;

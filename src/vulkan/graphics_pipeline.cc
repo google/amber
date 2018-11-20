@@ -115,11 +115,13 @@ GraphicsPipeline::GraphicsPipeline(
     const VkPhysicalDeviceMemoryProperties& properties,
     VkFormat color_format,
     VkFormat depth_stencil_format,
+    uint32_t fence_timeout_ms,
     std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info)
     : Pipeline(type, device, properties),
       color_format_(color_format),
       depth_stencil_format_(depth_stencil_format),
-      shader_stage_info_(shader_stage_info) {}
+      shader_stage_info_(shader_stage_info),
+      fence_timeout_ms_(fence_timeout_ms) {}
 
 GraphicsPipeline::~GraphicsPipeline() = default;
 
@@ -518,7 +520,7 @@ Result GraphicsPipeline::SubmitProbeCommand() {
   if (!r.IsSuccess())
     return r;
 
-  return command_->SubmitAndReset();
+  return command_->SubmitAndReset(fence_timeout_ms_);
 }
 
 Result GraphicsPipeline::VerifyPixels(const uint32_t x,
@@ -619,7 +621,7 @@ void GraphicsPipeline::Shutdown() {
 
   Result r = command_->End();
   if (r.IsSuccess())
-    command_->SubmitAndReset();
+    command_->SubmitAndReset(fence_timeout_ms_);
 
   Pipeline::Shutdown();
   frame_->Shutdown();

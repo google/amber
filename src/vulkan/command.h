@@ -61,7 +61,7 @@ class CommandBuffer {
   Result BeginIfNotInRecording();
 
   Result End();
-  Result SubmitAndReset();
+  Result SubmitAndReset(uint32_t timeout_ms);
 
  private:
   VkDevice device_ = VK_NULL_HANDLE;
