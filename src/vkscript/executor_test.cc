@@ -43,7 +43,9 @@ class EngineStub : public Engine {
 
   void FailRequirements() { fail_requirements_ = true; }
   const std::vector<Require>& GetRequirements() const { return requirements_; }
-  Result AddRequirement(Feature feature, const Format* format) override {
+  Result AddRequirement(Feature feature,
+                        const Format* format,
+                        uint32_t) override {
     if (fail_requirements_)
       return Result("requirements failed");
 
@@ -276,7 +278,7 @@ class EngineCountingStub : public Engine {
 
   int32_t GetRequireStageIdx() const { return require_stage_; }
   uint32_t GetRequireCount() const { return require_stage_count_; }
-  Result AddRequirement(Feature, const Format*) override {
+  Result AddRequirement(Feature, const Format*, uint32_t) override {
     ++require_stage_count_;
     require_stage_ = stage_count_++;
     return {};

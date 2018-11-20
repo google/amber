@@ -93,7 +93,7 @@ Result CommandBuffer::End() {
   return {};
 }
 
-Result CommandBuffer::SubmitAndReset() {
+Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (state_ != CommandBufferState::kExecutable)
     return Result("Vulkan::Submit CommandBuffer from Not Valid State");
 
@@ -107,8 +107,8 @@ Result CommandBuffer::SubmitAndReset() {
   if (vkQueueSubmit(queue_, 1, &submit_info, fence_) != VK_SUCCESS)
     return Result("Vulkan::Calling vkQueueSubmit Fail");
 
-  VkResult r =
-      vkWaitForFences(device_, 1, &fence_, VK_TRUE, 100000000 /* nanosecond */);
+  VkResult r = vkWaitForFences(device_, 1, &fence_, VK_TRUE,
+                               timeout_ms * 1000 * 1000 /* nanosecond */);
   if (r == VK_TIMEOUT)
     return Result("Vulkan::Calling vkWaitForFences Timeout");
   if (r != VK_SUCCESS)

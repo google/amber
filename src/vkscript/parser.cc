@@ -144,6 +144,8 @@ Feature NameToFeature(const std::string& name) {
     return Feature::kFramebuffer;
   if (name == "depthstencil")
     return Feature::kDepthStencil;
+  if (name == "fence_timeout")
+    return Feature::kFenceTimeout;
   return Feature::kUnknown;
 }
 
@@ -247,6 +249,12 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
         return Result("Failed to parse depthstencil format");
 
       node->AddRequirement(feature, std::move(fmt));
+    } else if (feature == Feature::kFenceTimeout) {
+      token = tokenizer.NextToken();
+      if (!token->IsInteger())
+        return Result("Missing fence_timeout value");
+
+      node->AddRequirement(feature, token->AsUint32());
     } else {
       node->AddRequirement(feature);
     }

@@ -40,6 +40,7 @@ class GraphicsPipeline : public Pipeline {
                    const VkPhysicalDeviceMemoryProperties& properties,
                    VkFormat color_format,
                    VkFormat depth_stencil_format,
+                   uint32_t fence_timeout_ms,
                    std::vector<VkPipelineShaderStageCreateInfo>);
   ~GraphicsPipeline() override;
 
@@ -102,6 +103,7 @@ class GraphicsPipeline : public Pipeline {
 
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
 
+  uint32_t fence_timeout_ms_ = 100;
   uint32_t frame_width_ = 0;
   uint32_t frame_height_ = 0;
 

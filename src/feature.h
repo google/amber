@@ -76,6 +76,7 @@ enum class Feature {
   kInheritedQueries,
   kFramebuffer,
   kDepthStencil,
+  kFenceTimeout,
 };
 
 }  // namespace amber

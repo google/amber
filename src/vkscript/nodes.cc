@@ -58,6 +58,9 @@ RequireNode::Requirement::Requirement(Feature feature,
                                       std::unique_ptr<Format> format)
     : feature_(feature), format_(std::move(format)) {}
 
+RequireNode::Requirement::Requirement(Feature feature, uint32_t value)
+    : feature_(feature), uint32_value_(value) {}
+
 RequireNode::Requirement::Requirement(Requirement&&) = default;
 
 RequireNode::Requirement::~Requirement() = default;
@@ -69,6 +72,10 @@ void RequireNode::AddRequirement(Feature feature) {
 void RequireNode::AddRequirement(Feature feature,
                                  std::unique_ptr<Format> format) {
   requirements_.emplace_back(feature, std::move(format));
+}
+
+void RequireNode::AddRequirement(Feature feature, uint32_t value) {
+  requirements_.emplace_back(feature, value);
 }
 
 IndicesNode::IndicesNode(std::unique_ptr<Buffer> buffer)
