@@ -17,8 +17,8 @@
 
 #if AMBER_DAWN_METAL
 
-#include "dawn/dawncpp.h"
 #include "amber/result.h"
+#include "dawn/dawncpp.h"
 
 namespace amber {
 namespace dawn {

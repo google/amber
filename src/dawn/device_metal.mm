@@ -16,7 +16,6 @@
 
 #include <Metal/Metal.h>
 #include <iostream>
-
 #include "amber/result.h"
 #include "dawn/dawncpp.h"
 #include "dawn_native/DawnNative.h"
@@ -31,14 +30,16 @@ void PrintDeviceError(const char* message, dawn::CallbackUserdata) {
 namespace amber {
 namespace dawn {
 
-amber::Result CreateMetalDevice(::dawn::Device* device_ptr) {
-  if (!device_ptr)
+Result CreateMetalDevice(::dawn::Device* device_ptr) {
+  if (!device_ptr) {
     return Result("::amber::dawn::CreateMetalDevice: invalid device parameter");
+  }
   dawnDevice cDevice =
       ::dawn_native::metal::CreateDevice(MTLCreateSystemDefaultDevice());
-  if (!cDevice)
+  if (!cDevice) {
     return Result(
         "::amber::dawn::CreateMetalDevice: Failed to create metal device");
+  }
   dawnProcTable procs = ::dawn_native::GetProcs();
   dawnSetProcs(&procs);
   procs.deviceSetErrorCallback(cDevice, PrintDeviceError, 0);
