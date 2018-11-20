@@ -136,6 +136,9 @@ class VertexDataNode : public Node {
  private:
   struct NodeData {
     Header header;
+
+    // Note, the |DatumType| of the buffer is not valid for a VertexData node.
+    // The format in the |header| must be used instead.
     std::unique_ptr<Buffer> buffer;
   };
   std::vector<NodeData> data_;
