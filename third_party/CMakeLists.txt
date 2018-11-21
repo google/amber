@@ -252,6 +252,7 @@ set(ENABLE_SPVREMAPPER OFF)
 # Tell Glslang to statically link the C Runtime library.
 set(LLVM_USE_CRT_DEBUG MTd)
 set(LLVM_USE_CRT_RELEASE MT)
+set(LLVM_USE_CRT_RELWITHDEBINFO MTd)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glslang)
 set(CMAKE_CXX_FLAGS ${CXX_BACK})
 
