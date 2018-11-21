@@ -23,8 +23,6 @@ namespace dawn {
 
 namespace {
 
-using ::testing::Eq;
-
 using DawnComputePipelineInfoTest = testing::Test;
 
 TEST_F(DawnComputePipelineInfoTest, DefaultConvertsToFalse) {
@@ -45,15 +43,15 @@ TEST_F(DawnRenderPipelineInfoTest, DefaultConvertsToFalse) {
 TEST_F(DawnRenderPipelineInfoTest, DefaultClearColorIsAllZeroes) {
   RenderPipelineInfo rpi;
   const ClearColorCommand& color = rpi.GetClearColorValue();
-  EXPECT_EQ(color.GetR(), 0.0f);
-  EXPECT_EQ(color.GetG(), 0.0f);
-  EXPECT_EQ(color.GetB(), 0.0f);
-  EXPECT_EQ(color.GetA(), 0.0f);
+  EXPECT_FLOAT_EQ(color.GetR(), 0.0f);
+  EXPECT_FLOAT_EQ(color.GetG(), 0.0f);
+  EXPECT_FLOAT_EQ(color.GetB(), 0.0f);
+  EXPECT_FLOAT_EQ(color.GetA(), 0.0f);
 }
 
 TEST_F(DawnRenderPipelineInfoTest, DefaultClearDepthIsOne) {
   RenderPipelineInfo rpi;
-  EXPECT_EQ(1.0f, rpi.GetClearDepthValue());
+  EXPECT_FLOAT_EQ(1.0f, rpi.GetClearDepthValue());
 }
 
 TEST_F(DawnRenderPipelineInfoTest, DefaultClearStencilIsZero) {
@@ -70,16 +68,16 @@ TEST_F(DawnRenderPipelineInfoTest, SetClearColor) {
   ccc.SetA(-4.0f);
   rpi.SetClearColorValue(ccc);
   const ClearColorCommand& color = rpi.GetClearColorValue();
-  EXPECT_EQ(1.0f, color.GetR());
-  EXPECT_EQ(2.0f, color.GetG());
-  EXPECT_EQ(3.0f, color.GetB());
-  EXPECT_EQ(-4.0f, color.GetA());
+  EXPECT_FLOAT_EQ(1.0f, color.GetR());
+  EXPECT_FLOAT_EQ(2.0f, color.GetG());
+  EXPECT_FLOAT_EQ(3.0f, color.GetB());
+  EXPECT_FLOAT_EQ(-4.0f, color.GetA());
 }
 
 TEST_F(DawnRenderPipelineInfoTest, SetClearDepth) {
   RenderPipelineInfo rpi;
   rpi.SetClearDepthValue(-12.0f);
-  EXPECT_EQ(-12.0f, rpi.GetClearDepthValue());
+  EXPECT_FLOAT_EQ(-12.0f, rpi.GetClearDepthValue());
 }
 
 TEST_F(DawnRenderPipelineInfoTest, SetClearStencil) {

@@ -43,7 +43,7 @@ class RenderPipelineInfo {
   void SetClearDepthValue(float depth) { clear_depth_value_ = depth; }
   float GetClearDepthValue() const { return clear_depth_value_; }
 
-  void SetClearStencilValue(float depth) { clear_stencil_value_ = depth; }
+  void SetClearStencilValue(uint32_t value) { clear_stencil_value_ = value; }
   uint32_t GetClearStencilValue() const { return clear_stencil_value_; }
 
  private:
