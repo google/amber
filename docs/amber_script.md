@@ -52,8 +52,13 @@ types, but in that case must only provide a single shader type in the module.
  * OPENCL-C (with clspv)  --- potentially?  -- future
 
 ```
+// Creates a passthrough vertex shader. The shader passes the vec4 at input
+// location 0 through to the `gl_Position`.
 SHADER vertex <shader_name> PASSTHROUGH
 
+// Creates a shader of |shader_type| with the given |shader_name|. The shader
+// will be of |shader_format|. The shader should then be inlined before the
+// |END| tag.
 SHADER <shader_type> <shader_name> <shader_format>
 ...
 END
@@ -83,31 +88,33 @@ TODO(dneto): Support half-precision floating point.
 Sized arrays and structures are not currently representable.
 
 ```
-// Filling the buffer with a given set of data. The values must provide
-// <size_in_bytes> of <type> data. The data can be provided as the type or
-// as a hex value.
-
+// Filling the buffer with a given set of data. The values must be
+// of <type> data. The data can be provided as the type or as a hex value.
 BUFFER <name> DATA_TYPE <type> DATA
 <value>+
 END
 
+// Defines a buffer which is filled with data as specified by the `initializer`.
 BUFFER <name> DATA_TYPE <type> SIZE <size_in_items> <initializer>
+
+// Creates a buffer which will store the given `FORMAT` of data. These
+// buffers are used as image and depth buffers in the `PIPELINE` commands.
+// The buffer will be sized based on the `RENDER_SIZE` of the `PIPELINE`.
+BUFFER <name> FORMAT <format_string>
 ```
 
 TODO(dsinclair): Does framebuffer need a format attached to it?
 
 #### Buffer Initializers
-Fill the buffer with a single value.
 
 ```
+// Fill the buffer with a single value.
 FILL <value>
-```
 
-Fill the buffer with an increasing value from \<start> increasing by \<inc>.
-Floating point data uses floating point addition to generate increasting values.
-Likewise, integer data uses integer addition to generate increasing values.
-
-```
+// Fill the buffer with an increasing value from \<start> increasing by \<inc>.
+// Floating point data uses floating point addition to generate increasting
+// values. Likewise, integer data uses integer addition to generate increasing
+// values.
 SERIES_FROM <start> INC_BY <inc>
 ```
 
@@ -117,10 +124,9 @@ SERIES_FROM <start> INC_BY <inc>
  * compute
  * graphics
 
-The PIPELINE command creates a pipeline. This can be either compute or graphics.
-Shaders are attached to the pipeline at pipeline creation time.
-
 ```
+// The PIPELINE command creates a pipeline. This can be either compute or
+// graphics. Shaders are attached to the pipeline at pipeline creation time.
 PIPELINE <pipeline_type> <pipeline_name>
 ...
 END
@@ -129,10 +135,6 @@ END
 ### Pipeline Content
 
 The following commands are all specified within the `PIPELINE` command.
-
-Shaders can be added into pipelines with the `ATTACH` call. Shaders may be
-attached to multiple pipelines at the same time.
-
 ```
   # Attach the shader provided by |name_of_shader| to the pipeline and set
   # the entry point to be |name|. The provided shader for ATTACH must _not_ be
@@ -149,18 +151,15 @@ attached to multiple pipelines at the same time.
   ATTACH <name_of_multi_shader> TYPE <shader_type> ENTRY_POINT <name>
 ```
 
-Set the SPIRV-Tools optimization passes to use for a given shader. The default
-is to run no optimization passes.
 ```
+  // Set the SPIRV-Tools optimization passes to use for a given shader. The
+  // default is to run no optimization passes.
   SHADER_OPTIMIZATION <shader_name>
     <optimization_name>+
   END
 ```
 
 #### Bindings
-
-##### Framebuffer Formats
- * R32G32B32A32_UINT
 
 Bind a provided framebuffer. The third example `FRAMEBUFFER <name>` requires
 that `<name>` was declared in a previous `PIPELINE` and provided with the
@@ -183,22 +182,24 @@ needed `DIMS`. If the `FORMAT` is missing it is defaulted to
 TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
 
-When adding a buffer binding, the `IDX` parameter is optional and will default
-to 0.
-
 ```
+  // Bind the buffer of the given |buffer_type| at the given descritor set
+  // and binding. The buffer will use a start index of 0.
   BIND BUFFER <buffer_name> AS <buffer_type> DESCRIPTOR_SET <id> \
        BINDING <id>
+  // Bind the buffer of the given |buffer_type| at the given descriptor set
+  // and binding and start index at the given value.
   BIND BUFFER <buffer_name> AS <buffer_type> DESCRIPTOR_SET <id> \
        BINDING <id> IDX <val>
 
+  // Bind the sampler at the given descriptor set and binding.
   BIND SAMPLER <sampler_name> DESCRIPTOR_SET <id> BINDING <id>
 ```
 
-Vertex buffers and index buffers can be attached to a pipeline as:
-
 ```
+  // Attach a vertex data buffer to the pipeline
   VERTEX_DATA <buffer_name>
+  // Attach an index data buffer to the pipeline
   INDEX_DATA <buffer_name>
 ```
 
@@ -229,26 +230,55 @@ value for `START_IDX` is 0. The default value for `COUNT` is the item count of
 vertex buffer minus the `START_IDX`.
 
 ```
+// Run the given |pipeline_name| which must be a `compute` pipeline. The
+// pipeline will be run with the given |x|, |y|, |z| values.
 RUN <pipeline_name> <x> <y> <z>
 
+// Run the given |pipeline_name| which must be a `graphics` pipeline. The
+// rectangle at |x|, |y|, |width|x|height| will be rendered.
 RUN <pipeline_name> \
   DRAW_RECT POS <x_in_pixels> <y_in_pixels> \
   SIZE <width_in_pixels> <height_in_pixels>
 
+// Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
+// data must be attached to the pipeline. A start index of 0 will be used
+// and a count of the number of elements in the vertex buffer.
 RUN <pipeline_name> DRAW_ARRAY AS <topology>
-RUN <pipeline_name> DRAW_ARRAY AS <topology> START_IDX <value>
-RUN <pipeline_name> DRAW_ARRAY AS <topology> START_IDX <value> COUNT <value>
+// Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
+// data must be attached to the pipeline. A start index of |value| will be used
+// and a count of the number of elements in the vertex buffer.
+RUN <pipeline_name DRAW_ARRAY AS <topology> START_IDX <value>
+// Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
+// data must be attached to the pipeline. A start index of |value| will be used
+// and a count |count_value| will be used.
+RUN <pipeline> DRAW_ARRAY AS <topology> START_IDX <value> COUNT <count_value>
 
+// Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
+// data and  index data must be attached to the pipeline. The vertices will be
+// drawn using the given |topology|. A start index of 0 will be used and the
+// count will be determined by the size of the index data buffer.
 RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology>
+// Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
+// data and  index data must be attached to the pipeline. The vertices will be
+// drawn using the given |topology|. A start index of |value| will be used and
+// the count will be determined by the size of the index data buffer.
 RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology> START_IDX <value>
+// Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
+// data and  index data must be attached to the pipeline. The vertices will be
+// drawn using the given |topology|. A start index of |value| will be used and
+// the count of |count_value| items will be processed.
 RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology> \
-  START_IDX <value> COUNT <value>
+  START_IDX <value> COUNT <count_value>
 ```
 
 ### Commands
 ```
+// Sets the clear colour to use for |pipeline| which must be a `graphics`
+// pipeline. The colours are integers from 0 - 255.
 CLEAR_COLOR <pipeline> <r (0 - 255)> <g (0 - 255)> <b (0 - 255)>
 
+// Instructs the |pipeline| which must be a `graphics` pipeline to execute the
+// clear command.
 CLEAR <pipeline>
 ```
 
@@ -265,9 +295,13 @@ CLEAR <pipeline>
  * EQ\_RGBA
 
 ```
+// Checks that |buffer_name| at |x|, |y| has the given |value|s when compared
+// with the given |comparator|.
 EXPECT <buffer_name> IDX <x> <y> <comparator> <value>+
 
-EXPECT <framebuffer_name> IDX <x_in_pixels> <y_in_pixels> \
+// Checks that |buffer_name| at |x|, |y| for |width|x|height| pixels has the
+// given |r|, |g|, |b| values. Each r, g, b value is an integer from 0-255.
+EXPECT <buffer_name> IDX <x_in_pixels> <y_in_pixels> \
   SIZE <width_in_pixels> <height_in_pixels> \
   EQ_RGB <r (0 - 255)> <g (0 - 255)> <b (0 - 255)>
 ```
@@ -455,3 +489,134 @@ CLEAR kGraphicsPipeline
 
 RUN kGraphicsPipeline DRAW_ARRAY AS triangle_list START_IDX 0 COUNT 24
  ```
+
+### Image Formats
+  * A1R5G5B5_UNORM_PACK16
+  * A2B10G10R10_SINT_PACK32
+  * A2B10G10R10_SNORM_PACK32
+  * A2B10G10R10_SSCALED_PACK32
+  * A2B10G10R10_UINT_PACK32
+  * A2B10G10R10_UNORM_PACK32
+  * A2B10G10R10_USCALED_PACK32
+  * A2R10G10B10_SINT_PACK32
+  * A2R10G10B10_SNORM_PACK32
+  * A2R10G10B10_SSCALED_PACK32
+  * A2R10G10B10_UINT_PACK32
+  * A2R10G10B10_UNORM_PACK32
+  * A2R10G10B10_USCALED_PACK32
+  * A8B8G8R8_SINT_PACK32
+  * A8B8G8R8_SNORM_PACK32
+  * A8B8G8R8_SRGB_PACK32
+  * A8B8G8R8_SSCALED_PACK32
+  * A8B8G8R8_UINT_PACK32
+  * A8B8G8R8_UNORM_PACK32
+  * A8B8G8R8_USCALED_PACK32
+  * B10G11R11_UFLOAT_PACK32
+  * B4G4R4A4_UNORM_PACK16
+  * B5G5R5A1_UNORM_PACK16
+  * B5G6R5_UNORM_PACK16
+  * B8G8R8A8_SINT
+  * B8G8R8A8_SNORM
+  * B8G8R8A8_SRGB
+  * B8G8R8A8_SSCALED
+  * B8G8R8A8_UINT
+  * B8G8R8A8_UNORM
+  * B8G8R8A8_USCALED
+  * B8G8R8_SINT
+  * B8G8R8_SNORM
+  * B8G8R8_SRGB
+  * B8G8R8_SSCALED
+  * B8G8R8_UINT
+  * B8G8R8_UNORM
+  * B8G8R8_USCALED
+  * D16_UNORM
+  * D16_UNORM_S8_UINT
+  * D24_UNORM_S8_UINT
+  * D32_SFLOAT
+  * D32_SFLOAT_S8_UINT
+  * R16G16B16A16_SFLOAT
+  * R16G16B16A16_SINT
+  * R16G16B16A16_SNORM
+  * R16G16B16A16_SSCALED
+  * R16G16B16A16_UINT
+  * R16G16B16A16_UNORM
+  * R16G16B16A16_USCALED
+  * R16G16B16_SFLOAT
+  * R16G16B16_SINT
+  * R16G16B16_SNORM
+  * R16G16B16_SSCALED
+  * R16G16B16_UINT
+  * R16G16B16_UNORM
+  * R16G16B16_USCALED
+  * R16G16_SFLOAT
+  * R16G16_SINT
+  * R16G16_SNORM
+  * R16G16_SSCALED
+  * R16G16_UINT
+  * R16G16_UNORM
+  * R16G16_USCALED
+  * R16_SFLOAT
+  * R16_SINT
+  * R16_SNORM
+  * R16_SSCALED
+  * R16_UINT
+  * R16_UNORM
+  * R16_USCALED
+  * R32G32B32A32_SFLOAT
+  * R32G32B32A32_SINT
+  * R32G32B32A32_UINT
+  * R32G32B32_SFLOAT
+  * R32G32B32_SINT
+  * R32G32B32_UINT
+  * R32G32_SFLOAT
+  * R32G32_SINT
+  * R32G32_UINT
+  * R32_SFLOAT
+  * R32_SINT
+  * R32_UINT
+  * R4G4B4A4_UNORM_PACK16
+  * R4G4_UNORM_PACK8
+  * R5G5B5A1_UNORM_PACK16
+  * R5G6B5_UNORM_PACK16
+  * R64G64B64A64_SFLOAT
+  * R64G64B64A64_SINT
+  * R64G64B64A64_UINT
+  * R64G64B64_SFLOAT
+  * R64G64B64_SINT
+  * R64G64B64_UINT
+  * R64G64_SFLOAT
+  * R64G64_SINT
+  * R64G64_UINT
+  * R64_SFLOAT
+  * R64_SINT
+  * R64_UINT
+  * R8G8B8A8_SINT
+  * R8G8B8A8_SNORM
+  * R8G8B8A8_SRGB
+  * R8G8B8A8_SSCALED
+  * R8G8B8A8_UINT
+  * R8G8B8A8_UNORM
+  * R8G8B8A8_USCALED
+  * R8G8B8_SINT
+  * R8G8B8_SNORM
+  * R8G8B8_SRGB
+  * R8G8B8_SSCALED
+  * R8G8B8_UINT
+  * R8G8B8_UNORM
+  * R8G8B8_USCALED
+  * R8G8_SINT
+  * R8G8_SNORM
+  * R8G8_SRGB
+  * R8G8_SSCALED
+  * R8G8_UINT
+  * R8G8_UNORM
+  * R8G8_USCALED
+  * R8_SINT
+  * R8_SNORM
+  * R8_SRGB
+  * R8_SSCALED
+  * R8_UINT
+  * R8_UNORM
+  * R8_USCALED
+  * S8_UINT
+  * X8_D24_UNORM_PACK32
