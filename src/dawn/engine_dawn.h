@@ -15,9 +15,11 @@
 #ifndef SRC_DAWN_ENGINE_DAWN_H_
 #define SRC_DAWN_ENGINE_DAWN_H_
 
+#include <unordered_map>
 #include "dawn/dawncpp.h"
-
+#include "src/cast_hash.h"
 #include "src/engine.h"
+#include "src/shader_data.h"
 
 namespace amber {
 namespace dawn {
@@ -58,6 +60,8 @@ class EngineDawn : public Engine {
 
  private:
   ::dawn::Device device_;
+  std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
+      module_for_type_;
 };
 
 }  // namespace dawn

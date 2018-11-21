@@ -15,6 +15,7 @@
 #include "src/dawn/engine_dawn.h"
 
 #include "dawn/dawncpp.h"
+#include "src/dawn/device_metal.h"
 
 namespace amber {
 namespace dawn {
@@ -27,10 +28,11 @@ Result EngineDawn::Initialize() {
   if (device_)
     return Result("Dawn:Initialize device_ already exists");
 
-  // The constructor already gives us a default device.  So there is nothing
-  // left to do.
+#if AMBER_DAWN_METAL
+  return CreateMetalDevice(&device_);
+#endif  // AMBER_DAWN_METAL
 
-  return {};
+  return Result("Dawn::Initialize: Can't make a device: Unknown backend");
 }
 
 Result EngineDawn::InitializeWithDevice(void* default_device) {
@@ -58,8 +60,24 @@ Result EngineDawn::AddRequirement(Feature, const Format*) {
   return Result("Dawn:AddRequirement not implemented");
 }
 
-Result EngineDawn::SetShader(ShaderType, const std::vector<uint32_t>&) {
-  return Result("Dawn:SetShader not implemented");
+Result EngineDawn::SetShader(ShaderType type,
+                             const std::vector<uint32_t>& code) {
+  ::dawn::ShaderModuleDescriptor descriptor;
+  descriptor.nextInChain = nullptr;
+  descriptor.code = code.data();
+  descriptor.codeSize = uint32_t(code.size());
+  if (!device_) {
+    return Result("Dawn::SetShader: device is not created");
+  }
+  auto shader = device_.CreateShaderModule(&descriptor);
+  if (!shader) {
+    return Result("Dawn::SetShader: failed to create shader");
+  }
+  if (module_for_type_.count(type)) {
+    Result("Dawn::SetShader: module for type already exists");
+  }
+  module_for_type_[type] = shader;
+  return {};
 }
 
 Result EngineDawn::SetBuffer(BufferType,
