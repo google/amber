@@ -159,18 +159,13 @@ The following commands are all specified within the `PIPELINE` command.
   END
 ```
 
-#### Bindings
-
-Bind a provided framebuffer. The third example `FRAMEBUFFER <name>` requires
-that `<name>` was declared in a previous `PIPELINE` and provided with the
-needed `DIMS`. If the `FORMAT` is missing it is defaulted to
-`R32G32B32A32_UINT`.
-
 ```
-  FRAMEBUFFER <name> DIMS <width> <height>
-  FRAMEBUFFER <name> DIMS <width> <height> FORMAT <fb_format>
-  FRAMEBUFFER <name>
+  # Set the size of the render buffers. |width| and |height| are integers and
+  # default to 250x250.
+  FRAMEBUFFER_SIZE _width_ _height_
 ```
+
+### Pipeline Buffers
 
 #### Buffer Types
  * uniform
@@ -181,10 +176,22 @@ needed `DIMS`. If the `FORMAT` is missing it is defaulted to
 
 TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
+A `pipeline` can have buffers bound. This includes buffers to contain image
+attachment content, depth/stencil content, uniform buffers, etc.
 
 ```
-  # Bind the buffer of the given |buffer_type| at the given descritor set
-  # and binding. The buffer will use a index of 0.
+  # Attach |buffer_name| as an image attachment at slot |idx|. The provided
+  # buffer must be a `FORMAT` buffer. If no image attachments are provided
+  # a single attachment with format `R8G8B8A8_UINT` will be created.
+  BIND BUFFER <buffer_name> AS image IDX <idx>
+
+  # Attach |buffer_name| as the depth/stencil buffer. The provided buffer must
+  # be a `FORMAT` buffer. If no depth/stencil buffer is specified a default
+  # buffer of format `D32_SFLOAT_S8_UINT` will be created.
+  BIND BUFFER <buffer_name> AS depth_stencil
+
+  # Bind the buffer of the given |buffer_type| at the given descriptor set
+  # and binding. The buffer will use a start index of 0.
   BIND BUFFER <buffer_name> AS <buffer_type> DESCRIPTOR_SET <id> \
        BINDING <id>
   # Bind the buffer of the given |buffer_type| at the given descriptor set
@@ -404,6 +411,8 @@ SHADER fragment kFragmentShader SPIRV-ASM
                OpFunctionEnd
 END  # shader
 
+BUFFER kImgBuffer FORMAT R8G8B8A8_UINT
+
 PIPELINE graphics kRedPipeline
   ATTACH kVertexShader ENTRY_POINT main
   SHADER_OPTIMIZATION kVertexShader
@@ -411,24 +420,25 @@ PIPELINE graphics kRedPipeline
     merge-return
     eliminate-dead-code-aggressive
   END
-
   ATTACH kFragmentShader ENTRY_POINT red
 
-  FRAMEBUFFER kFramebuffer DIMS 256 256
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER kImgBuffer AS image IDX 0
 END  # pipeline
 
 PIPELINE graphics kGreenPipeline
   ATTACH kVertexShader
   ATTACH kFragmentShader ENTRY_POINT green
 
-  FRAMEBUFFER kFramebuffer
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER kImgBuffer AS image IDX 0
 END  # pipeline
 
 RUN kRedPipeline DRAW_RECT POS 0 0 SIZE 256 256
 RUN kGreenPipeline DRAW_RECT POS 128 128 SIZE 256 256
 
-EXPECT kFrameBuffer IDX 0 0 SIZE 127 127 EQ_RGB 255 0 0
-EXPECT kFrameBuffer IDX 128 128 SIZE 128 128 EQ_RGB 0 255 0
+EXPECT kImgBuffer IDX 0 0 SIZE 127 127 EQ_RGB 255 0 0
+EXPECT kImgBuffer IDX 128 128 SIZE 128 128 EQ_RGB 0 255 0
 ```
 
 ### Buffers
