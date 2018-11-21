@@ -259,13 +259,13 @@ Sets the clear color. Defaults to (0, 0, 0, 0).
 ### Clear Depth
  * `clear depth _value_`
 
-Sets the depth clear value. Defaults to 1.0.
+Sets the depth clear value. The _value_ is a float and defaults to 1.0.
 
 
 ### Clear Stencil
  * `clear stencil _value_`
 
-Sets the stencil clear value. Defaults to 0.0.
+Sets the stencil clear value. The _value_ is an integer and defaults to 0.
 
 
 ### Clear
