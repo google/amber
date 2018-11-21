@@ -31,10 +31,18 @@ which is the characters `0x` followed by hexadecimal digits.
  * tessellation\_evaluation
  * tessellation\_control
  * compute
+ * multi
 
 The compute pipeline can only contain compute shaders. The graphics pipeline
 can not contain compute shaders, and must contain a vertex shader and a fragment
 shader.
+
+The provided `multi` shader can only be used with `SPIRV-ASM` and `SPIRV-HEX`
+and allows for providing multiple shaders in a single module (so the `vertex`
+and `fragment` shaders can be provided together.)
+
+Note, `SPIRV-ASM` and `SPIRV-HEX` can also be used with each of the other shader
+types, but in that case must only provide a single shader type in the module.
 
 #### Shader Format
  * GLSL  (with glslang)
@@ -134,8 +142,13 @@ Shaders can be added into pipelines with the `ATTACH` call. Shaders may be
 attached to multiple pipelines at the same time.
 
 ```
+  # The provided shader for ATTACH must _not_ be a 'multi' shader.
   ATTACH <name_of_vertex_shader>
   ATTACH <name_of_fragment_shader>
+
+  # Attach a 'multi' shader to the pipeline of |shader_type|. The provided
+  # shader _must_ be a 'multi' shader.
+  ATTACH <name_of_multi_shader> TYPE <shader_type>
 ```
 
 Set the SPIRV-Tools optimization passes to use for a given shader. The default
