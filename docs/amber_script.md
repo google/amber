@@ -128,27 +128,25 @@ END
 
 ### Pipeline Content
 
-The following commands are all specified within the `PIPELINE` command. If you
-have multiple entry points for a given shader, you'd create multiple pipelines
-each with a different `ENTRY_POINT`.
-
-Bind the entry point to use for a given shader. The default entry point is main.
-
-```
-  ENTRY_POINT <shader_name> <entry_point_name>
-```
+The following commands are all specified within the `PIPELINE` command.
 
 Shaders can be added into pipelines with the `ATTACH` call. Shaders may be
 attached to multiple pipelines at the same time.
 
 ```
-  # The provided shader for ATTACH must _not_ be a 'multi' shader.
-  ATTACH <name_of_vertex_shader>
-  ATTACH <name_of_fragment_shader>
+  # Attach the shader provided by |name_of_shader| to the pipeline and set
+  # the entry point to be |name|. The provided shader for ATTACH must _not_ be
+  # a 'multi' shader.
+  ATTACH <name_of_shader> ENTRY_POINT <name>
 
-  # Attach a 'multi' shader to the pipeline of |shader_type|. The provided
-  # shader _must_ be a 'multi' shader.
-  ATTACH <name_of_multi_shader> TYPE <shader_type>
+  # Attach the shader provided by |name_of_shader| to the pipeline and set
+  # the entry point to be 'main'. The provided shader for ATTACH must _not_ be
+  # a 'multi' shader.
+  ATTACH <name_of_shader>
+
+  # Attach a 'multi' shader to the pipeline of |shader_type| and use the entry
+  # point with |name|. The provided shader _must_ be a 'multi' shader.
+  ATTACH <name_of_multi_shader> TYPE <shader_type> ENTRY_POINT <name>
 ```
 
 Set the SPIRV-Tools optimization passes to use for a given shader. The default
@@ -360,25 +358,23 @@ SHADER fragment kFragmentShader SPIRV-ASM
 END  # shader
 
 PIPELINE graphics kRedPipeline
-  ATTACH kVertexShader
+  ATTACH kVertexShader ENTRY_POINT main
   SHADER_OPTIMIZATION kVertexShader
     eliminate-dead-branches
     merge-return
     eliminate-dead-code-aggressive
   END
 
-  ATTACH kFragmentShader
+  ATTACH kFragmentShader ENTRY_POINT red
 
   FRAMEBUFFER kFramebuffer DIMS 256 256
-  ENTRY_POINT kFragmentShader red
 END  # pipeline
 
 PIPELINE graphics kGreenPipeline
   ATTACH kVertexShader
-  ATTACH kFragmentShader
+  ATTACH kFragmentShader ENTRY_POINT green
 
   FRAMEBUFFER kFramebuffer
-  ENTRY_POINT kFragmentShader green
 END  # pipeline
 
 RUN kRedPipeline DRAW_RECT POS 0 0 SIZE 256 256
