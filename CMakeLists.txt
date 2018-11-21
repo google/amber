@@ -87,8 +87,13 @@ elseif(MSVC)
   # /MT* options.  For debug builds use /MTd, and for release builds use /MT.
   if(CMAKE_BUILD_TYPE MATCHES "Debug")
     set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MTd)
+    message(STATUS "Setting /MTd")
+  elseif(CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
+    set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MT)
+    message(STATUS "Setting /MT")
   else()
     set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MT)
+    message(STATUS "Setting /MT")
   endif()
 
   set(CUSTOM_CXX_FLAGS
