@@ -13,7 +13,7 @@
 # limitations under the License.
 
 if(WIN32)
-  option(g_force_shared_crt
+  option(gtest_force_shared_crt
     "Use shared (DLL) run-time lib even when Google Test is built as static lib."
     ON)
 endif()
@@ -252,7 +252,7 @@ set(ENABLE_SPVREMAPPER OFF)
 # Tell Glslang to statically link the C Runtime library.
 set(LLVM_USE_CRT_DEBUG MTd)
 set(LLVM_USE_CRT_RELEASE MT)
-set(LLVM_USE_CRT_RELWITHDEBINFO MD)
+set(LLVM_USE_CRT_RELWITHDEBINFO MTd)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glslang)
 set(CMAKE_CXX_FLAGS ${CXX_BACK})
 
