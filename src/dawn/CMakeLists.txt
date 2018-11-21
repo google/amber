@@ -23,7 +23,7 @@ if(APPLE)
   find_library(METAL_LIB Metal)
   list(APPEND AMBER_EXTRA_LIBS ${METAL_LIB})
 else()
-  add_definition(-DAMBER_DAWN_METAL=0)
+  add_definitions(-DAMBER_DAWN_METAL=0)
 endif(APPLE)
 
 add_library(libamberenginedawn ${DAWN_ENGINE_SOURCES})

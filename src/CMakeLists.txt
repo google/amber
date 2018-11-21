@@ -87,6 +87,9 @@ set(TEST_SRCS
 if (${Vulkan_FOUND})
     list(APPEND TEST_SRCS vulkan/bit_copy_test.cc)
 endif()
+if (${Dawn_FOUND})
+    list(APPEND TEST_SRCS dawn/pipeline_info_test.cc)
+endif()
 
 add_executable(amber_unittests ${TEST_SRCS})
 
@@ -96,7 +99,7 @@ if (NOT MSVC)
 endif()
 
 target_include_directories(amber_unittests PRIVATE
-    ${gtest_SOURCE_DIR}/include)
-target_link_libraries(amber_unittests libamber gtest_main)
+    ${gmock_SOURCE_DIR}/include)
+target_link_libraries(amber_unittests libamber gmock_main)
 amber_default_compile_options(amber_unittests)
 add_test(NAME amber_unittests COMMAND amber_unittests)
