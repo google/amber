@@ -71,11 +71,12 @@ Result EngineDawn::SetShader(ShaderType type,
   }
   auto shader = device_.CreateShaderModule(&descriptor);
   if (!shader) {
-    return Result("Dawn::SetShader failed to create shader");
+    return Result("Dawn::SetShader: failed to create shader");
   }
-  // It's ok to create a new shader for a given type.  It overwrites the old
-  // one.
-  shader_[int(type)] = shader;
+  if (module_for_type_.count(type)) {
+    Result("Dawn::SetShader: module for type already exists");
+  }
+  module_for_type_[type] = shader;
   return {};
 }
 

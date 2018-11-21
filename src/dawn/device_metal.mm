@@ -21,14 +21,14 @@
 #include "dawn_native/DawnNative.h"
 #include "dawn_native/MetalBackend.h"
 
+namespace amber {
+namespace dawn {
+
 namespace {
-void PrintDeviceError(const char* message, dawn::CallbackUserdata) {
+void PrintDeviceError(const char* message, ::dawn::CallbackUserdata) {
   std::cout << "Dawn device error: " << message << std::endl;
 }
 }  // namespace
-
-namespace amber {
-namespace dawn {
 
 Result CreateMetalDevice(::dawn::Device* device_ptr) {
   if (!device_ptr) {
