@@ -50,7 +50,7 @@ class RenderPipelineInfo {
   ::dawn::ShaderModule vertex_shader_;
   ::dawn::ShaderModule fragment_shader_;
   ClearColorCommand clear_color_value_;
-  float clear_depth_value_ = 0.0;
+  float clear_depth_value_ = 1.0f;
   uint32_t clear_stencil_value_ = 0;
 
   // TODO(dneto): Record index data

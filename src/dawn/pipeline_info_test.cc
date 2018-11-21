@@ -51,9 +51,9 @@ TEST_F(DawnRenderPipelineInfoTest, DefaultClearColorIsAllZeroes) {
   EXPECT_EQ(color.GetA(), 0.0f);
 }
 
-TEST_F(DawnRenderPipelineInfoTest, DefaultClearDepthIsZero) {
+TEST_F(DawnRenderPipelineInfoTest, DefaultClearDepthIsOne) {
   RenderPipelineInfo rpi;
-  EXPECT_EQ(0.0f, rpi.GetClearDepthValue());
+  EXPECT_EQ(1.0f, rpi.GetClearDepthValue());
 }
 
 TEST_F(DawnRenderPipelineInfoTest, DefaultClearStencilIsZero) {
