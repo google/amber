@@ -61,6 +61,33 @@ TEST_F(DawnRenderPipelineInfoTest, DefaultClearStencilIsZero) {
   EXPECT_EQ(uint32_t(0), rpi.GetClearStencilValue());
 }
 
+TEST_F(DawnRenderPipelineInfoTest, SetClearColor) {
+  RenderPipelineInfo rpi;
+  ClearColorCommand ccc;
+  ccc.SetR(1.0f);
+  ccc.SetG(2.0f);
+  ccc.SetB(3.0f);
+  ccc.SetA(-4.0f);
+  rpi.SetClearColorValue(ccc);
+  const ClearColorCommand& color = rpi.GetClearColorValue();
+  EXPECT_EQ(1.0f, color.GetR());
+  EXPECT_EQ(2.0f, color.GetG());
+  EXPECT_EQ(3.0f, color.GetB());
+  EXPECT_EQ(-4.0f, color.GetA());
+}
+
+TEST_F(DawnRenderPipelineInfoTest, SetClearDepth) {
+  RenderPipelineInfo rpi;
+  rpi.SetClearDepthValue(-12.0f);
+  EXPECT_EQ(-12.0f, rpi.GetClearDepthValue());
+}
+
+TEST_F(DawnRenderPipelineInfoTest, SetClearStencil) {
+  RenderPipelineInfo rpi;
+  rpi.SetClearStencilValue(2172);
+  EXPECT_EQ(2172, rpi.GetClearStencilValue());
+}
+
 }  // namespace
 }  // namespace dawn
 }  // namespace amber
