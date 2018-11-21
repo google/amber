@@ -85,7 +85,7 @@ elseif(MSVC)
   # We don't want to have to copy the C Runtime DLL everywhere the executable
   # goes.  So compile code to assume the CRT is statically linked, i.e. use
   # /MT* options.  For debug builds use /MTd, and for release builds use /MT.
-  if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  if(CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
     set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MTd)
   else()
     set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MT)
