@@ -14,6 +14,8 @@
 
 #include "src/dawn/engine_dawn.h"
 
+#include <utility>
+
 #include "dawn/dawncpp.h"
 #include "src/dawn/device_metal.h"
 
@@ -52,11 +54,37 @@ Result EngineDawn::Shutdown() {
   return {};
 }
 
-Result EngineDawn::CreatePipeline(PipelineType) {
-  return Result("Dawn:CreatePipeline not implemented");
+Result EngineDawn::CreatePipeline(PipelineType type) {
+  switch (type) {
+    case PipelineType::kCompute: {
+      auto module = module_for_type_[ShaderType::kCompute];
+      if (!module)
+        return Result("CreatePipeline: no compute shader provided");
+      compute_pipeline_info_ = std::move(ComputePipelineInfo(module));
+      break;
+    }
+
+    case PipelineType::kGraphics: {
+      // TODO(dneto): Handle other shader types as well.  They are optional.
+      auto vs = module_for_type_[ShaderType::kVertex];
+      auto fs = module_for_type_[ShaderType::kFragment];
+      if (!vs) {
+        return Result(
+            "CreatePipeline: no vertex shader provided for graphics pipeline");
+      }
+      if (!fs) {
+        return Result(
+            "CreatePipeline: no vertex shader provided for graphics pipeline");
+      }
+      render_pipeline_info_ = std::move(RenderPipelineInfo(vs, fs));
+      break;
+    }
+  }
+
+  return {};
 }
 
-Result EngineDawn::AddRequirement(Feature, const Format*) {
+Result EngineDawn::AddRequirement(Feature, const Format*, uint32_t) {
   return Result("Dawn:AddRequirement not implemented");
 }
 
@@ -87,16 +115,25 @@ Result EngineDawn::SetBuffer(BufferType,
   return Result("Dawn:SetBuffer not implemented");
 }
 
-Result EngineDawn::DoClearColor(const ClearColorCommand*) {
-  return Result("Dawn:DoClearColor not implemented");
+Result EngineDawn::DoClearColor(const ClearColorCommand* command) {
+  if (!render_pipeline_info_.IsConfigured())
+    return Result("DoClearColor: pipeline has not yet been created");
+  render_pipeline_info_.SetClearColorValue(*command);
+  return {};
 }
 
-Result EngineDawn::DoClearStencil(const ClearStencilCommand*) {
-  return Result("Dawn:DoClearStencil not implemented");
+Result EngineDawn::DoClearStencil(const ClearStencilCommand* command) {
+  if (!render_pipeline_info_.IsConfigured())
+    return Result("DoClearStencil: pipeline has not yet been created");
+  render_pipeline_info_.SetClearStencilValue(command->GetValue());
+  return {};
 }
 
-Result EngineDawn::DoClearDepth(const ClearDepthCommand*) {
-  return Result("Dawn:DoClearDepth not implemented");
+Result EngineDawn::DoClearDepth(const ClearDepthCommand* command) {
+  if (!render_pipeline_info_.IsConfigured())
+    return Result("DoClearDepth: pipeline has not yet been created");
+  render_pipeline_info_.SetClearDepthValue(command->GetValue());
+  return {};
 }
 
 Result EngineDawn::DoClear(const ClearCommand*) {

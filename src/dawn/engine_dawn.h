@@ -18,6 +18,8 @@
 #include <unordered_map>
 #include "dawn/dawncpp.h"
 #include "src/cast_hash.h"
+#include "src/command.h"
+#include "src/dawn/pipeline_info.h"
 #include "src/engine.h"
 #include "src/shader_data.h"
 
@@ -36,8 +38,12 @@ class EngineDawn : public Engine {
   // disguised as a pointer-to-void.
   Result InitializeWithDevice(void* default_device) override;
   Result Shutdown() override;
+  // Record info for a pipeline.  The Dawn render pipeline will be created
+  // later.  Assumes necessary shader modules have been created.  A compute
+  // pipeline requires a compute shader.  A graphics pipeline requires a vertex
+  // and a fragment shader.
   Result CreatePipeline(PipelineType) override;
-  Result AddRequirement(Feature feature, const Format*) override;
+  Result AddRequirement(Feature feature, const Format*, uint32_t) override;
   Result SetShader(ShaderType type, const std::vector<uint32_t>& data) override;
   Result SetBuffer(BufferType type,
                    uint8_t location,
@@ -62,6 +68,10 @@ class EngineDawn : public Engine {
   ::dawn::Device device_;
   std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
       module_for_type_;
+  // Accumulated data for the current compute pipeline.
+  ComputePipelineInfo compute_pipeline_info_;
+  // Accumulated data for the current render pipeline.
+  RenderPipelineInfo render_pipeline_info_;
 };
 
 }  // namespace dawn
