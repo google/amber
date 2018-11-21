@@ -12,12 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(WIN32)
-  option(gtest_force_shared_crt
-    "Use shared (DLL) run-time lib even when Google Test is built as static lib."
-    ON)
-endif()
-
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # Turn off warnings to make gtest happy
   set(GTEST_BUILD_FIXES
@@ -252,7 +246,7 @@ set(ENABLE_SPVREMAPPER OFF)
 # Tell Glslang to statically link the C Runtime library.
 set(LLVM_USE_CRT_DEBUG MTd)
 set(LLVM_USE_CRT_RELEASE MT)
-set(LLVM_USE_CRT_RELWITHDEBINFO MTd)
+set(LLVM_USE_CRT_RELWITHDEBINFO MT)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glslang)
 set(CMAKE_CXX_FLAGS ${CXX_BACK})
 
