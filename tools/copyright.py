@@ -64,7 +64,7 @@ def filtered_descendants(glob):
     """Returns glob-matching filenames under the current directory, but skips
     some irrelevant paths."""
     return find('.', glob, ['third_party', 'external', 'build*', 'out*',
-                            'CompilerIdCXX'])
+                            'CompilerIdCXX', 'clang-format-diff.py'])
 
 
 def skip(line):
