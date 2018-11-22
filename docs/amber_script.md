@@ -198,7 +198,7 @@ TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
 ```
   # Set |buffer_name| as the vertex data at location |val|.
-  VERTEX_DATA <buffer_name> IDX <val>
+  VERTEX_DATA <buffer_name> LOCATION <val>
 
   # Set |buffer_name| as the index data to use for `INDEXED` draw commands.
   INDEX_DATA <buffer_name>
@@ -520,8 +520,8 @@ PIPELINE graphics kGraphicsPipeline
   ATTACH kVertexShader
   ATTACH kFragmentShader
 
-  VERTEX_DATA kPosData IDX 0
-  VERTEX_DATA kColorData IDX 1
+  VERTEX_DATA kPosData LOCATION 0
+  VERTEX_DATA kColorData LOCATION 1
   INDEX_DATA kIndices
 END  # pipeline
 
