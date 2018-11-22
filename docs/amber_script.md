@@ -219,7 +219,7 @@ TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
 ### Run a pipeline.
 
-When running a `DRAW_ARRAY` command, you must attache the vertex data to the
+When running a `DRAW_ARRAY` command, you must attach the vertex data to the
 `PIPELINE` with the `VERTEX_DATA` command.
 
 To run an indexed draw, attach the index data to the `PIPELINE` with an
