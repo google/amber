@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/amberscript/script.h"
+#include <utility>
+
 #include "gtest/gtest.h"
 #include "src/amberscript/pipeline.h"
+#include "src/amberscript/script.h"
 #include "src/amberscript/shader.h"
 #include "src/buffer.h"
 #include "src/make_unique.h"

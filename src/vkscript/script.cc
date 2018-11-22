@@ -14,6 +14,8 @@
 
 #include "src/vkscript/script.h"
 
+#include <utility>
+
 #include "src/make_unique.h"
 #include "src/vkscript/nodes.h"
 

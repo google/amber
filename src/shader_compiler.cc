@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iterator>
+#include <string>
+#include <utility>
 
 #include "spirv-tools/libspirv.hpp"
 #include "spirv-tools/linker.hpp"
@@ -97,7 +99,7 @@ Result ShaderCompiler::ParseHex(const std::string& data,
   uint32_t tmp = 0;
   while (used < data.length()) {
     char* new_pos = nullptr;
-    long v = std::strtol(str, &new_pos, 16);
+    uint64_t v = static_cast<uint64_t>(std::strtol(str, &new_pos, 16));
 
     ++converted;
 

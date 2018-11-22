@@ -1,4 +1,5 @@
 out
+third_party/cpplint
 third_party/glslang
 third_party/googletest
 third_party/shaderc

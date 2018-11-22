@@ -807,7 +807,8 @@ TEST_P(CommandParserProbeTest, ProbeRect) {
 
 INSTANTIATE_TEST_CASE_P(ProbeTests,
                         CommandParserProbeTest,
-                        testing::Values(false, true), );
+                        testing::Values(false,
+                                        true), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, ProbeAllRGB) {
   std::string data = "probe all rgb 0.2 0.3 0.4";
@@ -1136,8 +1137,10 @@ INSTANTIATE_TEST_CASE_P(
                          Topology::kTriangleListWithAdjacency},
         TopologyTestData{"VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP",
                          Topology::kTriangleStrip},
-        TopologyTestData{"VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY",
-                         Topology::kTriangleStripWithAdjacency}), );
+        TopologyTestData{
+            "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY",
+            Topology::
+                kTriangleStripWithAdjacency}), );  // NOLINT(whitespace/parens)
 
 struct PipelineDataInvalidTest {
   const char* name;
@@ -1207,7 +1210,8 @@ INSTANTIATE_TEST_CASE_P(
         PipelineDataInvalidTest{"polygonMode", "VK_POLYGON_MODE_POINT"},
         PipelineDataInvalidTest{"cullMode", "VK_CULL_MODE_BACK_BIT"},
         PipelineDataInvalidTest{"frontFace", "VK_FRONT_FACE_COUNTER_CLOCKWISE"},
-        PipelineDataInvalidTest{"logicOp", "VK_LOGIC_OP_NO_OP"}), );
+        PipelineDataInvalidTest{
+            "logicOp", "VK_LOGIC_OP_NO_OP"}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, BooleanTrue) {
   struct {
@@ -1475,18 +1479,20 @@ TEST_P(CommandParserBooleanTests, ExtraParam) {
             r.Error());
 }
 
-INSTANTIATE_TEST_CASE_P(BooleanTests,
-                        CommandParserBooleanTests,
-                        testing::Values(BooleanTest{"primitiveRestartEnable"},
-                                        BooleanTest{"depthClampEnable"},
-                                        BooleanTest{"rasterizerDiscardEnable"},
-                                        BooleanTest{"depthBiasEnable"},
-                                        BooleanTest{"logicOpEnable"},
-                                        BooleanTest{"blendEnable"},
-                                        BooleanTest{"depthTestEnable"},
-                                        BooleanTest{"depthWriteEnable"},
-                                        BooleanTest{"depthBoundsTestEnable"},
-                                        BooleanTest{"stencilTestEnable"}), );
+INSTANTIATE_TEST_CASE_P(
+    BooleanTests,
+    CommandParserBooleanTests,
+    testing::Values(BooleanTest{"primitiveRestartEnable"},
+                    BooleanTest{"depthClampEnable"},
+                    BooleanTest{"rasterizerDiscardEnable"},
+                    BooleanTest{"depthBiasEnable"},
+                    BooleanTest{"logicOpEnable"},
+                    BooleanTest{"blendEnable"},
+                    BooleanTest{"depthTestEnable"},
+                    BooleanTest{"depthWriteEnable"},
+                    BooleanTest{"depthBoundsTestEnable"},
+                    BooleanTest{
+                        "stencilTestEnable"}), );  // NOLINT(whitespace/parens)
 
 struct PolygonModeTestData {
   const char* name;
@@ -1512,7 +1518,9 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         PolygonModeTestData{"VK_POLYGON_MODE_FILL", PolygonMode::kFill},
         PolygonModeTestData{"VK_POLYGON_MODE_LINE", PolygonMode::kLine},
-        PolygonModeTestData{"VK_POLYGON_MODE_POINT", PolygonMode::kPoint}), );
+        PolygonModeTestData{
+            "VK_POLYGON_MODE_POINT",
+            PolygonMode::kPoint}), );  // NOLINT(whitespace/parens)
 
 struct CullModeTestData {
   const char* name;
@@ -1543,8 +1551,9 @@ INSTANTIATE_TEST_CASE_P(
                          CullMode::kFrontAndBack},
         CullModeTestData{"VK_CULL_MODE_FRONT_BIT | VK_CULL_MODE_BACK_BIT",
                          CullMode::kFrontAndBack},
-        CullModeTestData{"VK_CULL_MODE_FRONT_AND_BACK",
-                         CullMode::kFrontAndBack}), );
+        CullModeTestData{
+            "VK_CULL_MODE_FRONT_AND_BACK",
+            CullMode::kFrontAndBack}), );  // NOLINT(whitespace/parens)
 
 struct FrontFaceTestData {
   const char* name;
@@ -1567,10 +1576,12 @@ TEST_P(CommandDataPipelineFrontFaceParser, FrontFace) {
 INSTANTIATE_TEST_CASE_P(
     FrontFaceTests,
     CommandDataPipelineFrontFaceParser,
-    testing::Values(FrontFaceTestData{"VK_FRONT_FACE_COUNTER_CLOCKWISE",
-                                      FrontFace::kCounterClockwise},
-                    FrontFaceTestData{"VK_FRONT_FACE_CLOCKWISE",
-                                      FrontFace::kClockwise}), );
+    testing::Values(
+        FrontFaceTestData{"VK_FRONT_FACE_COUNTER_CLOCKWISE",
+                          FrontFace::kCounterClockwise},
+        FrontFaceTestData{
+            "VK_FRONT_FACE_CLOCKWISE",
+            FrontFace::kClockwise}), );  // NOLINT(whitespace/parens)
 
 struct LogicOpTestData {
   const char* name;
@@ -1609,7 +1620,8 @@ INSTANTIATE_TEST_CASE_P(
         LogicOpTestData{"VK_LOGIC_OP_COPY_INVERTED", LogicOp::kCopyInverted},
         LogicOpTestData{"VK_LOGIC_OP_OR_INVERTED", LogicOp::kOrInverted},
         LogicOpTestData{"VK_LOGIC_OP_NAND", LogicOp::kNand},
-        LogicOpTestData{"VK_LOGIC_OP_SET", LogicOp::kSet}), );
+        LogicOpTestData{"VK_LOGIC_OP_SET",
+                        LogicOp::kSet}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, DepthBiasConstantFactor) {
   std::string data = "depthBiasConstantFactor 3.4";
@@ -1706,14 +1718,16 @@ TEST_P(CommandParserFloatTests, ExtraParam) {
             r.Error());
 }
 
-INSTANTIATE_TEST_CASE_P(FloatTests,
-                        CommandParserFloatTests,
-                        testing::Values(FloatTest{"depthBiasConstantFactor"},
-                                        FloatTest{"lineWidth"},
-                                        FloatTest{"depthBiasClamp"},
-                                        FloatTest{"depthBiasSlopeFactor"},
-                                        FloatTest{"minDepthBounds"},
-                                        FloatTest{"maxDepthBounds"}), );
+INSTANTIATE_TEST_CASE_P(
+    FloatTests,
+    CommandParserFloatTests,
+    testing::Values(FloatTest{"depthBiasConstantFactor"},
+                    FloatTest{"lineWidth"},
+                    FloatTest{"depthBiasClamp"},
+                    FloatTest{"depthBiasSlopeFactor"},
+                    FloatTest{"minDepthBounds"},
+                    FloatTest{
+                        "maxDepthBounds"}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, SrcColorBlendFactor) {
   std::string data = "srcColorBlendFactor VK_BLEND_FACTOR_DST_COLOR";
@@ -1803,8 +1817,9 @@ INSTANTIATE_TEST_CASE_P(
         BlendFactorData{"VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR",
                         BlendFactor::kOneMinusSrc1Color},
         BlendFactorData{"VK_BLEND_FACTOR_SRC1_ALPHA", BlendFactor::kSrc1Alpha},
-        BlendFactorData{"VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA",
-                        BlendFactor::kOneMinusSrc1Alpha}), );
+        BlendFactorData{
+            "VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA",
+            BlendFactor::kOneMinusSrc1Alpha}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, BlendFactorParsingInvalid) {
   CommandParser cp;
@@ -1855,13 +1870,15 @@ TEST_P(CommandParserBlendFactorTests, ExtraParam) {
             r.Error());
 }
 
-INSTANTIATE_TEST_CASE_P(BlendFactorTests,
-                        CommandParserBlendFactorTests,
-                        testing::Values(BlendFactorTest{"srcColorBlendFactor"},
-                                        BlendFactorTest{"dstColorBlendFactor"},
-                                        BlendFactorTest{"srcAlphaBlendFactor"},
-                                        BlendFactorTest{
-                                            "dstAlphaBlendFactor"}), );
+INSTANTIATE_TEST_CASE_P(
+    BlendFactorTests,
+    CommandParserBlendFactorTests,
+    testing::Values(
+        BlendFactorTest{"srcColorBlendFactor"},
+        BlendFactorTest{"dstColorBlendFactor"},
+        BlendFactorTest{"srcAlphaBlendFactor"},
+        BlendFactorTest{
+            "dstAlphaBlendFactor"}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, ColorBlendOp) {
   std::string data = "colorBlendOp VK_BLEND_OP_XOR_EXT";
@@ -1929,7 +1946,8 @@ INSTANTIATE_TEST_CASE_P(
         BlendOpData{"VK_BLEND_OP_SOFTLIGHT_EXT", BlendOp::kSoftLight},
         BlendOpData{"VK_BLEND_OP_DIFFERENCE_EXT", BlendOp::kDifference},
         BlendOpData{"VK_BLEND_OP_EXCLUSION_EXT", BlendOp::kExclusion},
-        BlendOpData{"VK_BLEND_OP_INVERT_EXT", BlendOp::kInvert}), );
+        BlendOpData{"VK_BLEND_OP_INVERT_EXT",
+                    BlendOp::kInvert}), );  // NOLINT(whitespace/parens)
 
 INSTANTIATE_TEST_CASE_P(
     BlendOpParsingTests2,
@@ -1957,7 +1975,8 @@ INSTANTIATE_TEST_CASE_P(
         BlendOpData{"VK_BLEND_OP_INVERT_OVG_EXT", BlendOp::kInvertOvg},
         BlendOpData{"VK_BLEND_OP_RED_EXT", BlendOp::kRed},
         BlendOpData{"VK_BLEND_OP_GREEN_EXT", BlendOp::kGreen},
-        BlendOpData{"VK_BLEND_OP_BLUE_EXT", BlendOp::kBlue}), );
+        BlendOpData{"VK_BLEND_OP_BLUE_EXT",
+                    BlendOp::kBlue}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, BlendOpParsingInvalid) {
   CommandParser cp;
@@ -2008,10 +2027,12 @@ TEST_P(CommandParserBlendOpTests, ExtraParam) {
             r.Error());
 }
 
-INSTANTIATE_TEST_CASE_P(BlendOpTests,
-                        CommandParserBlendOpTests,
-                        testing::Values(BlendOpTest{"colorBlendOp"},
-                                        BlendOpTest{"alphaBlendOp"}), );
+INSTANTIATE_TEST_CASE_P(
+    BlendOpTests,
+    CommandParserBlendOpTests,
+    testing::Values(BlendOpTest{"colorBlendOp"},
+                    BlendOpTest{
+                        "alphaBlendOp"}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, DepthCompareOp) {
   std::string data = "depthCompareOp VK_COMPARE_OP_EQUAL";
@@ -2070,7 +2091,8 @@ INSTANTIATE_TEST_CASE_P(
         CompareOpData{"VK_COMPARE_OP_NOT_EQUAL", CompareOp::kNotEqual},
         CompareOpData{"VK_COMPARE_OP_GREATER_OR_EQUAL",
                       CompareOp::kGreaterOrEqual},
-        CompareOpData{"VK_COMPARE_OP_ALWAYS", CompareOp::kAlways}), );
+        CompareOpData{"VK_COMPARE_OP_ALWAYS",
+                      CompareOp::kAlways}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, CompareOpParsingInvalid) {
   CommandParser cp;
@@ -2122,11 +2144,13 @@ TEST_P(CommandParserCompareOpTests, ExtraParam) {
             r.Error());
 }
 
-INSTANTIATE_TEST_CASE_P(CompareOpTests,
-                        CommandParserCompareOpTests,
-                        testing::Values(CompareOpTest{"depthCompareOp"},
-                                        CompareOpTest{"front.compareOp"},
-                                        CompareOpTest{"back.compareOp"}), );
+INSTANTIATE_TEST_CASE_P(
+    CompareOpTests,
+    CommandParserCompareOpTests,
+    testing::Values(CompareOpTest{"depthCompareOp"},
+                    CompareOpTest{"front.compareOp"},
+                    CompareOpTest{
+                        "back.compareOp"}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, FrontFailOp) {
   std::string data = "front.failOp VK_STENCIL_OP_REPLACE";
@@ -2203,18 +2227,20 @@ TEST_P(CommandParserStencilOpParsing, Parse) {
 INSTANTIATE_TEST_CASE_P(
     CompareOpParsingTests,
     CommandParserStencilOpParsing,
-    testing::Values(StencilOpData{"VK_STENCIL_OP_KEEP", StencilOp::kKeep},
-                    StencilOpData{"VK_STENCIL_OP_ZERO", StencilOp::kZero},
-                    StencilOpData{"VK_STENCIL_OP_REPLACE", StencilOp::kReplace},
-                    StencilOpData{"VK_STENCIL_OP_INCREMENT_AND_CLAMP",
-                                  StencilOp::kIncrementAndClamp},
-                    StencilOpData{"VK_STENCIL_OP_DECREMENT_AND_CLAMP",
-                                  StencilOp::kDecrementAndClamp},
-                    StencilOpData{"VK_STENCIL_OP_INVERT", StencilOp::kInvert},
-                    StencilOpData{"VK_STENCIL_OP_INCREMENT_AND_WRAP",
-                                  StencilOp::kIncrementAndWrap},
-                    StencilOpData{"VK_STENCIL_OP_DECREMENT_AND_WRAP",
-                                  StencilOp::kDecrementAndWrap}), );
+    testing::Values(
+        StencilOpData{"VK_STENCIL_OP_KEEP", StencilOp::kKeep},
+        StencilOpData{"VK_STENCIL_OP_ZERO", StencilOp::kZero},
+        StencilOpData{"VK_STENCIL_OP_REPLACE", StencilOp::kReplace},
+        StencilOpData{"VK_STENCIL_OP_INCREMENT_AND_CLAMP",
+                      StencilOp::kIncrementAndClamp},
+        StencilOpData{"VK_STENCIL_OP_DECREMENT_AND_CLAMP",
+                      StencilOp::kDecrementAndClamp},
+        StencilOpData{"VK_STENCIL_OP_INVERT", StencilOp::kInvert},
+        StencilOpData{"VK_STENCIL_OP_INCREMENT_AND_WRAP",
+                      StencilOp::kIncrementAndWrap},
+        StencilOpData{
+            "VK_STENCIL_OP_DECREMENT_AND_WRAP",
+            StencilOp::kDecrementAndWrap}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, StencilOpParsingInvalid) {
   CommandParser cp;
@@ -2266,14 +2292,16 @@ TEST_P(CommandParserStencilOpTests, ExtraParam) {
             r.Error());
 }
 
-INSTANTIATE_TEST_CASE_P(StencilOpTests,
-                        CommandParserStencilOpTests,
-                        testing::Values(StencilOpTest{"front.passOp"},
-                                        StencilOpTest{"front.failOp"},
-                                        StencilOpTest{"front.depthFailOp"},
-                                        StencilOpTest{"back.passOp"},
-                                        StencilOpTest{"back.failOp"},
-                                        StencilOpTest{"back.depthFailOp"}), );
+INSTANTIATE_TEST_CASE_P(
+    StencilOpTests,
+    CommandParserStencilOpTests,
+    testing::Values(StencilOpTest{"front.passOp"},
+                    StencilOpTest{"front.failOp"},
+                    StencilOpTest{"front.depthFailOp"},
+                    StencilOpTest{"back.passOp"},
+                    StencilOpTest{"back.failOp"},
+                    StencilOpTest{
+                        "back.depthFailOp"}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, FrontCompareMask) {
   std::string data = "front.compareMask 123";
@@ -2368,10 +2396,12 @@ TEST_P(CommandParserReferenceTests, FrontReferenceInvalidParameters) {
             r.Error());
 }
 
-INSTANTIATE_TEST_CASE_P(ReferenceTest,
-                        CommandParserReferenceTests,
-                        testing::Values(ReferenceData{"front.reference"},
-                                        ReferenceData{"back.reference"}), );
+INSTANTIATE_TEST_CASE_P(
+    ReferenceTest,
+    CommandParserReferenceTests,
+    testing::Values(ReferenceData{"front.reference"},
+                    ReferenceData{
+                        "back.reference"}), );  // NOLINT(whitespace/parens)
 
 struct ColorMaskData {
   const char* input;
@@ -2400,10 +2430,10 @@ INSTANTIATE_TEST_CASE_P(
         ColorMaskData{"VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | "
                       "VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT",
                       kColorMaskR | kColorMaskG | kColorMaskB | kColorMaskA},
-        ColorMaskData{
-            "VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_B_BIT | "
-            "VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT",
-            kColorMaskR | kColorMaskG | kColorMaskB | kColorMaskA}), );
+        ColorMaskData{"VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_B_BIT | "
+                      "VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT",
+                      kColorMaskR | kColorMaskG | kColorMaskB |
+                          kColorMaskA}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, ColorWriteMaskInvalid) {
   std::string data = "colorWriteMask INVALID";
@@ -3474,7 +3504,9 @@ INSTANTIATE_TEST_CASE_P(
         ComparatorTest{"<", ProbeSSBOCommand::Comparator::kLess},
         ComparatorTest{"<=", ProbeSSBOCommand::Comparator::kLessOrEqual},
         ComparatorTest{">", ProbeSSBOCommand::Comparator::kGreater},
-        ComparatorTest{">=", ProbeSSBOCommand::Comparator::kGreaterOrEqual}), );
+        ComparatorTest{">=",
+                       ProbeSSBOCommand::Comparator::
+                           kGreaterOrEqual}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, ComparatorInvalid) {
   CommandParser cp;

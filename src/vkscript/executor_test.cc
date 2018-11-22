@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/vkscript/executor.h"
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "gtest/gtest.h"
 #include "src/engine.h"
 #include "src/make_unique.h"
+#include "src/vkscript/executor.h"
 #include "src/vkscript/parser.h"
 
 namespace amber {

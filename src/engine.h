@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ENGINE_H_
-#define ENGINE_H_
+#ifndef SRC_ENGINE_H_
+#define SRC_ENGINE_H_
 
 #include <memory>
 #include <vector>
@@ -115,4 +115,4 @@ class Engine {
 
 }  // namespace amber
 
-#endif  // ENGINE_H_
+#endif  // SRC_ENGINE_H_

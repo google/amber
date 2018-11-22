@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "src/buffer_data.h"
@@ -64,4 +65,4 @@ class Buffer {
 
 }  // namespace amber
 
-#endif  // SRC_AMBERSCRIPT_BUFFER_H_
+#endif  // SRC_BUFFER_H_

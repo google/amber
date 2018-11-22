@@ -15,6 +15,8 @@
 #ifndef SRC_VKSCRIPT_DATUM_TYPE_PARSER_H_
 #define SRC_VKSCRIPT_DATUM_TYPE_PARSER_H_
 
+#include <string>
+
 #include "amber/result.h"
 #include "src/datum_type.h"
 

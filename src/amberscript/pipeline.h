@@ -30,7 +30,7 @@ class Pipeline {
  public:
   class ShaderInfo {
    public:
-    ShaderInfo(const Shader*);
+    explicit ShaderInfo(const Shader*);
     ShaderInfo(const ShaderInfo&);
     ~ShaderInfo();
 
@@ -52,7 +52,7 @@ class Pipeline {
     std::string entry_point_;
   };
 
-  Pipeline(PipelineType type);
+  explicit Pipeline(PipelineType type);
   ~Pipeline();
 
   PipelineType GetType() const { return pipeline_type_; }

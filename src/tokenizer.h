@@ -34,7 +34,7 @@ enum class TokenType : uint8_t {
 
 class Token {
  public:
-  Token(TokenType type);
+  explicit Token(TokenType type);
   ~Token();
 
   bool IsHex() const { return type_ == TokenType::kHex; }
@@ -90,7 +90,7 @@ class Token {
 
 class Tokenizer {
  public:
-  Tokenizer(const std::string& data);
+  explicit Tokenizer(const std::string& data);
   ~Tokenizer();
 
   std::unique_ptr<Token> NextToken();

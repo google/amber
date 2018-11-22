@@ -16,6 +16,8 @@
 #define SRC_VKSCRIPT_COMMAND_PARSER_H_
 
 #include <memory>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "amber/result.h"

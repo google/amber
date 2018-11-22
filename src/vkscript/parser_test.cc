@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/vkscript/parser.h"
+#include <vector>
+
 #include "gtest/gtest.h"
 #include "src/feature.h"
 #include "src/format.h"
 #include "src/vkscript/nodes.h"
+#include "src/vkscript/parser.h"
 
 namespace amber {
 namespace vkscript {

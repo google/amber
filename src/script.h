@@ -31,7 +31,7 @@ class Script {
   }
 
  protected:
-  Script(ScriptType);
+  explicit Script(ScriptType);
 
  private:
   ScriptType script_type_;

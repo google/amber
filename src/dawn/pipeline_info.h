@@ -64,7 +64,7 @@ class ComputePipelineInfo {
       : compute_shader_(comp) {}
 
   // Returns true if this render pipeline is configured at all.
-  bool IsConfigured() const { return bool(compute_shader_); }
+  bool IsConfigured() const { return static_cast<bool>(compute_shader_); }
 
  private:
   ::dawn::ShaderModule compute_shader_;

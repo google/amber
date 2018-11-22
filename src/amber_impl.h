@@ -15,6 +15,8 @@
 #ifndef SRC_AMBER_IMPL_H_
 #define SRC_AMBER_IMPL_H_
 
+#include <string>
+
 #include "amber/amber.h"
 #include "amber/result.h"
 
