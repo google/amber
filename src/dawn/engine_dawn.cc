@@ -161,20 +161,15 @@ Result EngineDawn::DoPatchParameterVertices(
   return Result("Dawn:DoPatch not implemented");
 }
 
-Result EngineDawn::DoProbe(const ProbeCommand*) {
-  return Result("Dawn:DoPatch not implemented");
-}
-
-Result EngineDawn::DoProbeSSBO(const ProbeSSBOCommand*) {
-  return Result("Dawn:DoProbeSSBO not implemented");
-}
-
 Result EngineDawn::DoBuffer(const BufferCommand*) {
   return Result("Dawn:DoBuffer not implemented");
 }
 
-Result EngineDawn::DoTolerance(const ToleranceCommand*) {
-  return Result("Dawn:DoTolerance not implemented");
+Result EngineDawn::DoProcessCommands(uint32_t*,
+                                     uint32_t*,
+                                     uint32_t*,
+                                     const void**) {
+  return Result("Dawn:DoProcessCommands not implemented");
 }
 
 }  // namespace dawn

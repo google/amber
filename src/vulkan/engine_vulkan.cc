@@ -264,23 +264,32 @@ Result EngineVulkan::DoPatchParameterVertices(
   return Result("Vulkan::DoPatch Not Implemented");
 }
 
-Result EngineVulkan::DoProbe(const ProbeCommand* command) {
+Result EngineVulkan::DoProcessCommands(uint32_t* stride,
+                                       uint32_t* width,
+                                       uint32_t* height,
+                                       const void** buf) {
+  assert(width);
+  assert(height);
+  assert(stride);
+  assert(buf);
+
   if (!pipeline_->IsGraphics())
-    return Result("Vulkan::Probe FrameBuffer for Non-Graphics Pipeline");
+    return Result("Vulkan::ProcessCommands for Non-Graphics Pipeline");
 
-  return pipeline_->AsGraphics()->Probe(command);
-}
+  auto graphics = pipeline_->AsGraphics();
+  Result r = graphics->ProcessCommands();
 
-Result EngineVulkan::DoProbeSSBO(const ProbeSSBOCommand*) {
-  return Result("Vulkan::DoProbeSSBO Not Implemented");
+  auto frame = graphics->GetFrame();
+  *width = frame->GetWidth();
+  *height = frame->GetHeight();
+  *stride = VkFormatToByteSize(graphics->GetColorFormat());
+  *buf = frame->GetColorBufferPtr();
+
+  return r;
 }
 
 Result EngineVulkan::DoBuffer(const BufferCommand*) {
   return Result("Vulkan::DoBuffer Not Implemented");
-}
-
-Result EngineVulkan::DoTolerance(const ToleranceCommand*) {
-  return Result("Vulkan::DoTolerance Not Implemented");
 }
 
 }  // namespace vulkan

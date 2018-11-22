@@ -12,28 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VKSCRIPT_EXECUTOR_H_
-#define SRC_VKSCRIPT_EXECUTOR_H_
-
 #include "amber/result.h"
-#include "src/executor.h"
-#include "src/verifier.h"
+#include "src/command.h"
 
 namespace amber {
-namespace vkscript {
 
-class Executor : public amber::Executor {
+class Verifier {
  public:
-  Executor();
-  ~Executor() override;
+  Verifier();
+  ~Verifier();
 
-  Result Execute(Engine* engine, const amber::Script* script) override;
-
- private:
-  Verifier verifier_;
+  Result Probe(const ProbeCommand*,
+               uint32_t stride,
+               uint32_t frame_width,
+               uint32_t frame_height,
+               const void* buf);
+  Result ProbeSSBO(const ProbeSSBOCommand*);
+  Result Tolerance(const ToleranceCommand*);
 };
 
-}  // namespace vkscript
 }  // namespace amber
-
-#endif  // SRC_VKSCRIPT_EXECUTOR_H_

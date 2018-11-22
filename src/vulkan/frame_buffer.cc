@@ -72,30 +72,28 @@ Result FrameBuffer::Initialize(
   return {};
 }
 
-void FrameBuffer::ChangeFrameImageLayout(VkCommandBuffer command,
-                                         FrameImageState layout) {
+Result FrameBuffer::ChangeFrameImageLayout(VkCommandBuffer command,
+                                           FrameImageState layout) {
   if (layout == FrameImageState::kInit) {
-    assert(false &&
-           "FrameBuffer::ChangeFrameImageLayout new layout cannot be kInit");
-    return;
+    return Result(
+        "FrameBuffer::ChangeFrameImageLayout new layout cannot be kInit");
   }
 
   if (layout == frame_image_layout_)
-    return;
+    return {};
 
   if (layout == FrameImageState::kProbe) {
     if (frame_image_layout_ != FrameImageState::kClearOrDraw) {
-      assert(false &&
-             "FrameBuffer::ChangeFrameImageLayout new layout cannot be kProbe "
-             "from kInit");
-      return;
+      return Result(
+          "FrameBuffer::ChangeFrameImageLayout new layout cannot be kProbe "
+          "from kInit");
     }
     // Note that we set the final layout of RenderPass as
     // VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, thus we must not change
     // image layout of frame buffer from color attachment to transfer
     // source here.
     frame_image_layout_ = FrameImageState::kProbe;
-    return;
+    return {};
   }
 
   VkImageLayout old_layout = frame_image_layout_ == FrameImageState::kInit
@@ -115,7 +113,7 @@ void FrameBuffer::ChangeFrameImageLayout(VkCommandBuffer command,
                                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
   }
   frame_image_layout_ = layout;
-  return;
+  return {};
 }
 
 void FrameBuffer::Shutdown() {

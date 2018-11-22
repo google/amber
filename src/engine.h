@@ -97,17 +97,14 @@ class Engine {
   virtual Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) = 0;
 
-  // Execute the probe command
-  virtual Result DoProbe(const ProbeCommand* cmd) = 0;
-
-  // Execute the probe ssbo command
-  virtual Result DoProbeSSBO(const ProbeSSBOCommand* cmd) = 0;
-
   // Execute the buffer command
   virtual Result DoBuffer(const BufferCommand* cmd) = 0;
 
-  // Execute the tolerance command
-  virtual Result DoTolerance(const ToleranceCommand* cmd) = 0;
+  // Run all queued commands and copy result data to the host.
+  virtual Result DoProcessCommands(uint32_t* stride,
+                                   uint32_t* width,
+                                   uint32_t* height,
+                                   const void** buf) = 0;
 
  protected:
   Engine();
