@@ -137,8 +137,9 @@ Result EngineDawn::DoClearDepth(const ClearDepthCommand* command) {
   return {};
 }
 
-Result EngineDawn::DoClear(const ClearCommand*) {
-  return Result("Dawn:DoClear not implemented");
+Result EngineDawn::DoClear(const ClearCommand* cmd) {
+  pending_work_.emplace_back(*cmd);
+  return {};
 }
 
 Result EngineDawn::DoDrawRect(const DrawRectCommand*) {
