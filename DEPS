@@ -4,6 +4,7 @@ vars = {
   'google_git':  'https://github.com/google',
   'khronos_git': 'https://github.com/KhronosGroup',
 
+  'cpplint_revision': '9f41862c0efa7681e2147910d39629c73a2b2702',
   'glslang_revision': 'd2a7b07a64811bb4a734bd66ef4e0b4c7d7fe1af',
   'googletest_revision': 'd5932506d6eed73ac80b9bcc47ed723c8c74eb1e',
   'shaderc_revision': '75441559fdb99856be9c02c0abd9c8e23b405033',
@@ -12,6 +13,9 @@ vars = {
 }
 
 deps = {
+  'third_party/cpplint': vars['google_git'] + '/styleguide.git@' +
+      vars['cpplint_revision'],
+
   'third_party/googletest': vars['google_git'] + '/googletest.git@' +
       vars['googletest_revision'],
 
