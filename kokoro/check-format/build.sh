@@ -32,6 +32,9 @@ echo $(date): Check formatting...
 ./tools/check_code_format.sh;
 echo $(date): check completed.
 
+# Remove the formatter
+rm tools/clang-format-diff.py
+
 echo $(date): Check copyright...
 ./tools/copyright.py --check;
 echo $(date): check completed.
