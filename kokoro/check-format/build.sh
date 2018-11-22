@@ -19,6 +19,9 @@ set -x  # display commands
 BUILD_ROOT=$PWD
 SRC=$PWD/github/amber
 
+cd $SRC
+./tools/git-sync-deps
+
 # Get clang-format-5.0.0.
 # Once kokoro upgrades the Ubuntu VMs, we can use 'apt-get install clang-format'
 curl -L http://releases.llvm.org/5.0.0/clang+llvm-5.0.0-linux-x86_64-ubuntu14.04.tar.xz -o clang-llvm.tar.xz
