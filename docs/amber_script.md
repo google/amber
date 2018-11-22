@@ -172,7 +172,9 @@ The following commands are all specified within the `PIPELINE` command.
  * storage
  * sampled
  * color
- * depth
+ * depth_stencil
+
+TODO(dsinclair): Reserve `input` as a buffer type for input attachments.
 
 TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
@@ -180,10 +182,10 @@ A `pipeline` can have buffers bound. This includes buffers to contain image
 attachment content, depth/stencil content, uniform buffers, etc.
 
 ```
-  # Attach |buffer_name| as an image attachment at slot |idx|. The provided
-  # buffer must be a `FORMAT` buffer. If no image attachments are provided
-  # a single attachment with format `R8G8B8A8_UINT` will be created.
-  BIND BUFFER <buffer_name> AS image IDX <idx>
+  # Attach |buffer_name| as an output colour attachment at location |idx|.
+  # The provided buffer must be a `FORMAT` buffer. If no colour attachments are
+  # provided a single attachment with format `R8G8B8A8_UINT` will be created.
+  BIND BUFFER <buffer_name> AS color LOCATION <idx>
 
   # Attach |buffer_name| as the depth/stencil buffer. The provided buffer must
   # be a `FORMAT` buffer. If no depth/stencil buffer is specified a default
