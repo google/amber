@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#
 # Copyright 2018 The Amber Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

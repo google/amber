@@ -31,3 +31,7 @@ curl -L http://llvm.org/svn/llvm-project/cfe/trunk/tools/clang-format/clang-form
 echo $(date): Check formatting...
 ./tools/check_code_format.sh;
 echo $(date): check completed.
+
+echo $(date): Check copyright...
+./tools/copyright.py --check;
+echo $(date): check completed.
