@@ -22,6 +22,16 @@ SRC=$PWD/github/amber
 cd $SRC
 ./tools/git-sync-deps
 
+echo $(date): Check copyright...
+./tools/copyright.py --check;
+echo $(date): check completed.
+
+echo $(date): Linting...
+./tools/run-lint.sh;
+echo $(date): check complete.
+
+# Check format adds a bunch of stuff to the repo so do that check last.
+
 # Get clang-format-5.0.0.
 # Once kokoro upgrades the Ubuntu VMs, we can use 'apt-get install clang-format'
 curl -L http://releases.llvm.org/5.0.0/clang+llvm-5.0.0-linux-x86_64-ubuntu14.04.tar.xz -o clang-llvm.tar.xz
@@ -34,14 +44,3 @@ curl -L http://llvm.org/svn/llvm-project/cfe/trunk/tools/clang-format/clang-form
 echo $(date): Check formatting...
 ./tools/check_code_format.sh;
 echo $(date): check completed.
-
-# Remove the formatter
-rm tools/clang-format-diff.py
-
-echo $(date): Check copyright...
-./tools/copyright.py --check;
-echo $(date): check completed.
-
-echo $(date): Linting...
-./tools/run-lint.sh;
-echo $(date): check complete.
