@@ -39,10 +39,6 @@ echo $(date): Check copyright...
 ./tools/copyright.py --check;
 echo $(date): check completed.
 
-echo $(date): Linting src and samples...
-third_party/cpplint/cpplint/cpplint.py `find . -type f -regextype awk -regex "./(src|samples).*"`
-echo $(date): check done.
-
-echo $(date): Linting include...
-third_party/cpplint/cpplint/cpplint.py --root include `find include -type f`
-echo $(date): check done.
+echo $(date): Linting...
+./tools/run-lint;
+echo $(date): check complete.
