@@ -40,5 +40,5 @@ echo $(date): Check copyright...
 echo $(date): check completed.
 
 echo $(date): Linting...
-./tools/run-lint;
+./tools/run-lint.sh;
 echo $(date): check complete.
