@@ -28,7 +28,7 @@ struct Options {
 
   std::string image_filename;
   std::string buffer_filename;
-  uint16_t buffer_binding_index = 0;
+  int64_t buffer_binding_index = 0;
   bool parse_only = false;
   bool show_help = false;
   bool show_version_info = false;
@@ -72,9 +72,10 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         std::cerr << "Missing value for -B argument." << std::endl;
         return false;
       }
-      opts->buffer_binding_index = strtol(args[i].c_str(), nullptr, 10);
+      opts->buffer_binding_index =
+          static_cast<int64_t>(strtol(args[i].c_str(), nullptr, 10));
 
-      if (opts->buffer_binding_index < 0) {
+      if (opts->buffer_binding_index < 0U) {
         std::cerr << "Invalid value for -B, must be 0 or greater." << std::endl;
         return false;
       }
@@ -124,7 +125,7 @@ std::string ReadFile(const std::string& input_file) {
   }
 
   fseek(file, 0, SEEK_END);
-  uint64_t tell_file_size = ftell(file);
+  uint64_t tell_file_size = static_cast<uint64_t>(ftell(file));
   if (tell_file_size <= 0) {
     std::cerr << "Input file of incorrect size: " << input_file << std::endl;
     return {};

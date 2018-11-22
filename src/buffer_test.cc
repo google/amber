@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/buffer.h"
+#include <utility>
+
 #include "gtest/gtest.h"
+#include "src/buffer.h"
 
 namespace amber {
 

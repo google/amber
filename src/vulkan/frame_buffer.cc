@@ -16,6 +16,7 @@
 
 #include <cassert>
 #include <limits>
+#include <vector>
 
 #include "src/make_unique.h"
 

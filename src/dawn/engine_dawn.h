@@ -16,6 +16,8 @@
 #define SRC_DAWN_ENGINE_DAWN_H_
 
 #include <unordered_map>
+#include <vector>
+
 #include "dawn/dawncpp.h"
 #include "src/cast_hash.h"
 #include "src/command.h"

@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "src/buffer.h"
@@ -52,7 +53,7 @@ class Node {
   VertexDataNode* AsVertexData();
 
  protected:
-  Node(NodeType type);
+  explicit Node(NodeType type);
 
  private:
   NodeType node_type_;
@@ -75,7 +76,7 @@ class RequireNode : public Node {
  public:
   class Requirement {
    public:
-    Requirement(Feature feature);
+    explicit Requirement(Feature feature);
     Requirement(Feature feature, std::unique_ptr<Format> format);
     Requirement(Feature feature, uint32_t value);
     Requirement(Requirement&&);
@@ -110,7 +111,7 @@ class RequireNode : public Node {
 
 class IndicesNode : public Node {
  public:
-  IndicesNode(std::unique_ptr<Buffer> buffer);
+  explicit IndicesNode(std::unique_ptr<Buffer> buffer);
   ~IndicesNode() override;
 
   const std::vector<Value>& Indices() const { return buffer_->GetData(); }
@@ -147,7 +148,7 @@ class VertexDataNode : public Node {
 
 class TestNode : public Node {
  public:
-  TestNode(std::vector<std::unique_ptr<Command>> cmds);
+  explicit TestNode(std::vector<std::unique_ptr<Command>> cmds);
   ~TestNode() override;
 
   const std::vector<std::unique_ptr<Command>>& GetCommands() const {

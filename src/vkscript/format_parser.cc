@@ -150,7 +150,7 @@ void FormatParser::ProcessChunk(Format* fmt, const std::string& data) {
     char* next_str;
     const char* str = data.c_str() + cur_pos;
 
-    uint64_t val = std::strtol(str, &next_str, 10);
+    uint64_t val = static_cast<uint64_t>(std::strtol(str, &next_str, 10));
     AddPiece(type, static_cast<uint8_t>(val));
 
     cur_pos += static_cast<size_t>(next_str - str);

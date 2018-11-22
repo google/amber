@@ -14,6 +14,9 @@
 
 #include "src/amber_impl.h"
 
+#include <memory>
+#include <string>
+
 #include "src/amberscript/executor.h"
 #include "src/amberscript/parser.h"
 #include "src/engine.h"

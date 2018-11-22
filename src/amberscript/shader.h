@@ -24,7 +24,7 @@ namespace amberscript {
 
 class Shader {
  public:
-  Shader(ShaderType type);
+  explicit Shader(ShaderType type);
   ~Shader();
 
   ShaderType GetType() const { return shader_type_; }
