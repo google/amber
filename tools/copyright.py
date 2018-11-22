@@ -132,7 +132,7 @@ def alert_if_no_copyright(glob, comment_prefix):
 
 def main():
     glob_comment_pairs = [('*.h', '//'), ('*.hpp', '//'), ('*.cc', '//'),
-                          ('*.py', '#'), ('*.cpp', '//')]
+                          ('*.py', '#'), ('*.cpp', '//'), ('*.mm', '//')]
     if '--check' in sys.argv:
         count = 0
         for pair in glob_comment_pairs:
