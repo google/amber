@@ -15,6 +15,8 @@
 #ifndef SRC_VULKAN_FRAME_BUFFER_H_
 #define SRC_VULKAN_FRAME_BUFFER_H_
 
+#include <memory>
+
 #include "src/vulkan/image.h"
 
 namespace amber {

@@ -15,6 +15,7 @@
 #include "src/dawn/engine_dawn.h"
 
 #include <utility>
+#include <vector>
 
 #include "dawn/dawncpp.h"
 #include "src/dawn/device_metal.h"

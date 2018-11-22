@@ -16,6 +16,8 @@
 
 #include <cassert>
 #include <limits>
+#include <utility>
+#include <vector>
 
 #include "src/make_unique.h"
 #include "src/tokenizer.h"

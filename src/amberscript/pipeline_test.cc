@@ -97,11 +97,13 @@ TEST_P(AmberScriptPipelineComputePipelineTest,
 INSTANTIATE_TEST_CASE_P(
     AmberScriptPipelineComputePipelineTests,
     AmberScriptPipelineComputePipelineTest,
-    testing::Values(ShaderTypeData{ShaderType::kVertex},
-                    ShaderTypeData{ShaderType::kFragment},
-                    ShaderTypeData{ShaderType::kGeometry},
-                    ShaderTypeData{ShaderType::kTessellationEvaluation},
-                    ShaderTypeData{ShaderType::kTessellationControl}), );
+    testing::Values(
+        ShaderTypeData{ShaderType::kVertex},
+        ShaderTypeData{ShaderType::kFragment},
+        ShaderTypeData{ShaderType::kGeometry},
+        ShaderTypeData{ShaderType::kTessellationEvaluation},
+        ShaderTypeData{
+            ShaderType::kTessellationControl}), );  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptPipelineTest, SettingComputeShaderToGraphicsPipeline) {
   Shader c(ShaderType::kCompute);

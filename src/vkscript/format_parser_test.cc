@@ -1192,7 +1192,7 @@ TEST_F(FormatParserTest, Formats) {
       EXPECT_EQ(fmt.components[i].num_bits, comps[i].num_bits) << fmt.name;
     }
   }
-}
+}  // NOLINT(readability/fn_size)
 
 TEST_F(FormatParserTest, InvalidFormat) {
   FormatParser parser;

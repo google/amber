@@ -33,8 +33,8 @@ syn keyword amberBlockCmd DESCRIPTOR_SET BINDING IDX TO EXPECT PASSTHROUGH
 syn keyword amberBlockCmd DATA_TYPE DIMS DATA SERIES_FROM DRAW_ARRAY IN START_IDX
 syn keyword amberBlockCmd COUNT CLEAR CLEAR_COLOR AS POS DRAW_RECT INC_BY
 syn keyword amberBlockCmd FRAMEBUFFER ENTRY_POINT SHADER_OPTIMIZATION
-syn keyword amberBlockCmd FORMAT RENDER_SIZE BIND SAMPLER VERTEX_DATA INDEX_DATA
-syn keyword amberBlockCmd INDEXED
+syn keyword amberBlockCmd FORMAT FRAMEBUFFER_SIZE BIND SAMPLER VERTEX_DATA INDEX_DATA
+syn keyword amberBlockCmd INDEXED IMAGE_ATTACHMENT DEPTH_STENCIL_ATTACHMENT
 
 syn keyword amberComparator EQ NE LT LE GT GE EQ_RGB EQ_RGBA
 
@@ -49,7 +49,7 @@ syn keyword amberTopology triangle_list_with_adjacench triangle_strip
 syn keyword amberTopology triangle_strip_with_adjacency triangle_fan patch_list
 
 syn keyword amberBufferType uniform storage vertex index sampled storage color
-syn keyword amberBufferType framebuffer depth
+syn keyword amberBufferType framebuffer depth image depth_stencil
 
 let b:current_syntax = "amber"
 hi def link amberTodo Todo

@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "src/command_data.h"
@@ -93,14 +94,14 @@ class Command {
   ToleranceCommand* AsTolerance();
 
  protected:
-  Command(Type type);
+  explicit Command(Type type);
 
   Type command_type_;
 };
 
 class DrawRectCommand : public Command {
  public:
-  DrawRectCommand(PipelineData data);
+  explicit DrawRectCommand(PipelineData data);
   ~DrawRectCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
@@ -135,7 +136,7 @@ class DrawRectCommand : public Command {
 
 class DrawArraysCommand : public Command {
  public:
-  DrawArraysCommand(PipelineData data);
+  explicit DrawArraysCommand(PipelineData data);
   ~DrawArraysCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
@@ -170,7 +171,7 @@ class DrawArraysCommand : public Command {
 
 class ComputeCommand : public Command {
  public:
-  ComputeCommand(PipelineData data);
+  explicit ComputeCommand(PipelineData data);
   ~ComputeCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
@@ -301,7 +302,7 @@ class BufferCommand : public Command {
     kPushConstant,
   };
 
-  BufferCommand(BufferType type);
+  explicit BufferCommand(BufferType type);
   ~BufferCommand() override;
 
   bool IsSSBO() const { return buffer_type_ == BufferType::kSSBO; }

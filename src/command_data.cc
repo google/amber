@@ -17,7 +17,7 @@
 namespace amber {
 
 Topology NameToTopology(const std::string& name) {
-  const static struct {
+  static const struct {
     const char* name;
     Topology val;
   } topologies[] = {

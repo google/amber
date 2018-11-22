@@ -15,7 +15,8 @@
 #ifndef SRC_SHADER_COMPILER_H_
 #define SRC_SHADER_COMPILER_H_
 
-#include <tuple>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "amber/result.h"

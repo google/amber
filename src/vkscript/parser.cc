@@ -17,6 +17,9 @@
 #include <algorithm>
 #include <cassert>
 #include <limits>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 #include "src/make_unique.h"
 #include "src/shader_compiler.h"

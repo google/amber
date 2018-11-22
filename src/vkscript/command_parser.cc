@@ -17,6 +17,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <limits>
+#include <string>
+#include <utility>
 
 #include "src/command_data.h"
 #include "src/make_unique.h"

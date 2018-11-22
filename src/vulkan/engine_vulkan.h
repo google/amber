@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 #include "src/cast_hash.h"
 #include "src/engine.h"

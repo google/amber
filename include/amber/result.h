@@ -23,7 +23,7 @@ namespace amber {
 class Result {
  public:
   Result();
-  Result(const std::string& err);
+  explicit Result(const std::string& err);
   Result(const Result&);
   ~Result();
 

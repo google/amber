@@ -15,6 +15,7 @@
 #include "src/vkscript/nodes.h"
 
 #include <cassert>
+#include <utility>
 
 namespace amber {
 namespace vkscript {
