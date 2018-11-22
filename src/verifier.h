@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef SRC_VERIFIER_H_
+#define SRC_VERIFIER_H_
+
 #include "amber/result.h"
 #include "src/command.h"
 
@@ -32,3 +35,5 @@ class Verifier {
 };
 
 }  // namespace amber
+
+#endif  // SRC_VERIFIER_H_
