@@ -184,11 +184,11 @@ TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
 ```
   # Bind the buffer of the given |buffer_type| at the given descritor set
-  # and binding. The buffer will use a start index of 0.
+  # and binding. The buffer will use a index of 0.
   BIND BUFFER <buffer_name> AS <buffer_type> DESCRIPTOR_SET <id> \
        BINDING <id>
   # Bind the buffer of the given |buffer_type| at the given descriptor set
-  # and binding and start index at the given value.
+  # and binding and index at the given value.
   BIND BUFFER <buffer_name> AS <buffer_type> DESCRIPTOR_SET <id> \
        BINDING <id> IDX <val>
 
@@ -231,8 +231,8 @@ vertex buffer minus the `START_IDX`.
 
 ```
 # Run the given |pipeline_name| which must be a `compute` pipeline. The
-# pipeline will be run with the given workgroup |x|, |y|, |z| dimensions.
-# Each of the x, y and z values must be a uint32.
+# pipeline will be run with the given number of workgroups in the |x|, |y|, |z|
+# dimensions. Each of the x, y and z values must be a uint32.
 RUN <pipeline_name> <x> <y> <z>
 
 # Run the given |pipeline_name| which must be a `graphics` pipeline. The
@@ -247,12 +247,14 @@ RUN <pipeline_name> \
 RUN <pipeline_name> DRAW_ARRAY AS <topology>
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data must be attached to the pipeline. A start index of |value| will be used
-# and a count of the number of elements in the vertex buffer.
-RUN <pipeline_name DRAW_ARRAY AS <topology> START_IDX <value>
+# and a count of the number of items from |value| to the end of the vertex
+# buffer.
+RUN <pipeline_name> DRAW_ARRAY AS <topology> START_IDX <value>
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data must be attached to the pipeline. A start index of |value| will be used
 # and a count |count_value| will be used.
-RUN <pipeline> DRAW_ARRAY AS <topology> START_IDX <value> COUNT <count_value>
+RUN <pipeline_name> DRAW_ARRAY AS <topology> START_IDX <value> \
+  COUNT <count_value>
 
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data and  index data must be attached to the pipeline. The vertices will be
@@ -276,7 +278,9 @@ RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology> \
 ```
 # Sets the clear colour to use for |pipeline| which must be a `graphics`
 # pipeline. The colours are integers from 0 - 255.
-CLEAR_COLOR <pipeline> <r (0 - 255)> <g (0 - 255)> <b (0 - 255)>
+# TODO(dsinclair): Do we need to allow different types here to handle different
+#                  buffer formats?
+CLEAR_COLOR <pipeline> <r (0 - 255)> <g (0 - 255)> <b (0 - 255)> <a (0 - 255)>
 
 # Instructs the |pipeline| which must be a `graphics` pipeline to execute the
 # clear command.
@@ -287,7 +291,9 @@ CLEAR <pipeline>
 
 #### Comparators
  * EQ
+ * EQ\_FLOAT
  * NE
+ * NE\_FLOAT
  * LT
  * LE
  * GT
@@ -299,6 +305,12 @@ CLEAR <pipeline>
 # Checks that |buffer_name| at |x|, |y| has the given |value|s when compared
 # with the given |comparator|.
 EXPECT <buffer_name> IDX <x> <y> <comparator> <value>+
+
+# Checks that |buffer_name| at |x|, |y| has values within |tolerance| of |value|
+# when compared with the given |comparator|. The |tolerance| can be specified
+# as 1-4 float values separated by spaces.
+EXPECT <buffer_name> IDX <x> <y> TOLERANCE <tolerance>{1,4} <comparator> \
+    <value>+
 
 # Checks that |buffer_name| at |x|, |y| for |width|x|height| pixels has the
 # given |r|, |g|, |b| values. Each r, g, b value is an integer from 0-255.
