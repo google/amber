@@ -197,9 +197,10 @@ TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 ```
 
 ```
-  # Attach a vertex data buffer to the pipeline
-  VERTEX_DATA <buffer_name>
-  # Attach an index data buffer to the pipeline
+  # Set |buffer_name| as the vertex data at location |val|.
+  VERTEX_DATA <buffer_name> IDX <val>
+
+  # Set |buffer_name| as the index data to use for `INDEXED` draw commands.
   INDEX_DATA <buffer_name>
 ```
 
@@ -459,27 +460,53 @@ SHADER fragment kFragmentShader GLSL
   }
 END  # shader
 
-BUFFER kData TYPE vec3<int32> DATA
-# Top-left red
--1 -1  0xff0000ff
- 0 -1  0xff0000ff
--1  0  0xff0000ff
- 0  0  0xff0000ff
-# Top-right green
- 0 -1  0xff00ff00
- 1 -1  0xff00ff00
- 0  0  0xff00ff00
- 1  0  0xff00ff00
-# Bottom-left blue
--1  0  0xffff0000
- 0  0  0xffff0000
--1  1  0xffff0000
- 0  1  0xffff0000
-# Bottom-right purple
- 0  0  0xff800080
- 1  0  0xff800080
- 0  1  0xff800080
- 1  1  0xff800080
+BUFFER kPosData TYPE vec2<int32> DATA
+# Top-left
+-1 -1  
+ 0 -1  
+-1  0
+ 0  0
+# Top-right
+ 0 -1  
+ 1 -1  
+ 0  0
+ 1  0
+# Bottom-left
+-1  0
+ 0  0
+-1  1
+ 0  1
+# Bottom-right
+ 0  0
+ 1  0
+ 0  1
+ 1  1
+END
+
+BUFFER kColorData TYPE uint32 DATA
+# red
+0xff0000ff
+0xff0000ff
+0xff0000ff
+0xff0000ff
+
+# green
+0xff00ff00
+0xff00ff00
+0xff00ff00
+0xff00ff00
+
+# blue
+0xffff0000
+0xffff0000
+0xffff0000
+0xffff0000
+
+# purple
+0xff800080
+0xff800080
+0xff800080
+0xff800080
 END
 
 BUFFER kIndices TYPE int32 DATA
@@ -493,7 +520,8 @@ PIPELINE graphics kGraphicsPipeline
   ATTACH kVertexShader
   ATTACH kFragmentShader
 
-  VERTEX_DATA kData
+  VERTEX_DATA kPosData IDX 0
+  VERTEX_DATA kColorData IDX 1
   INDEX_DATA kIndices
 END  # pipeline
 
