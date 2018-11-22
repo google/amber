@@ -99,7 +99,22 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
       continue;
 
     for (const auto& cmd : node->AsTest()->GetCommands()) {
-      if (cmd->IsClear()) {
+      if (cmd->IsProbe()) {
+        const void* buf = nullptr;
+        uint32_t width = 0;
+        uint32_t height = 0;
+        uint32_t stride = 0;
+        r = engine->DoProcessCommands(&stride, &width, &height, &buf);
+        if (!r.IsSuccess())
+          return r;
+
+        r = verifier_.Probe(cmd->AsProbe(), stride, width, height, buf);
+      } else if (cmd->IsProbeSSBO()) {
+        r = verifier_.ProbeSSBO(cmd->AsProbeSSBO());
+      } else if (cmd->IsTolerance()) {
+        r = verifier_.Tolerance(cmd->AsTolerance());
+
+      } else if (cmd->IsClear()) {
         r = engine->DoClear(cmd->AsClear());
       } else if (cmd->IsClearColor()) {
         r = engine->DoClearColor(cmd->AsClearColor());
@@ -117,14 +132,8 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
         r = engine->DoEntryPoint(cmd->AsEntryPoint());
       } else if (cmd->IsPatchParameterVertices()) {
         r = engine->DoPatchParameterVertices(cmd->AsPatchParameterVertices());
-      } else if (cmd->IsProbe()) {
-        r = engine->DoProbe(cmd->AsProbe());
-      } else if (cmd->IsProbeSSBO()) {
-        r = engine->DoProbeSSBO(cmd->AsProbeSSBO());
       } else if (cmd->IsBuffer()) {
         r = engine->DoBuffer(cmd->AsBuffer());
-      } else if (cmd->IsTolerance()) {
-        r = engine->DoTolerance(cmd->AsTolerance());
       } else {
         return Result("Unknown command type");
       }

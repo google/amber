@@ -34,6 +34,7 @@ set(AMBER_SOURCES
     shader_compiler.cc
     tokenizer.cc
     value.cc
+    verifier.cc
     vkscript/command_parser.cc
     vkscript/datum_type_parser.cc
     vkscript/executor.cc

@@ -58,16 +58,17 @@ class GraphicsPipeline : public Pipeline {
   Result Clear();
   Result ClearBuffer(const VkClearValue& clear_value,
                      VkImageAspectFlags aspect);
-  Result Probe(const ProbeCommand*);
-
   VkFormat GetColorFormat() const { return color_format_; }
   VkFormat GetDepthStencilFormat() const { return depth_stencil_format_; }
+  Result ProcessCommands();
 
   Result SetClearColor(float r, float g, float b, float a);
   Result SetClearStencil(uint32_t stencil);
   Result SetClearDepth(float depth);
 
   Result Draw(const DrawArraysCommand* command);
+
+  const FrameBuffer* GetFrame() const { return frame_.get(); }
 
  private:
   enum class RenderPassState : uint8_t {

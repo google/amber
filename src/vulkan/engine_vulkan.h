@@ -55,10 +55,11 @@ class EngineVulkan : public Engine {
   Result DoEntryPoint(const EntryPointCommand* cmd) override;
   Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) override;
-  Result DoProbe(const ProbeCommand* cmd) override;
-  Result DoProbeSSBO(const ProbeSSBOCommand* cmd) override;
   Result DoBuffer(const BufferCommand* cmd) override;
-  Result DoTolerance(const ToleranceCommand* cmd) override;
+  Result DoProcessCommands(uint32_t* stride,
+                           uint32_t* width,
+                           uint32_t* height,
+                           const void** buf) override;
 
  private:
   Result InitDeviceAndCreateCommand();

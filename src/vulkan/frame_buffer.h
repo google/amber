@@ -39,7 +39,8 @@ class FrameBuffer {
                     const VkPhysicalDeviceMemoryProperties& properties);
   void Shutdown();
 
-  void ChangeFrameImageLayout(VkCommandBuffer command, FrameImageState layout);
+  Result ChangeFrameImageLayout(VkCommandBuffer command,
+                                FrameImageState layout);
 
   VkFramebuffer GetFrameBuffer() const { return frame_; }
   const void* GetColorBufferPtr() const {

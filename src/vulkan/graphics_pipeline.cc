@@ -68,13 +68,6 @@ const VkPipelineMultisampleStateCreateInfo kMultisampleInfo = {
     VK_FALSE,                       /* alphaToOneEnable */
 };
 
-const float kEpsilon = 0.002f;
-
-bool IsFloatPixelEqualInt(float pixel, uint8_t expected) {
-  // TODO(jaebaek): Change kEpsilon to tolerance.
-  return std::fabs(pixel - static_cast<float>(expected) / 255.0f) < kEpsilon;
-}
-
 VkPrimitiveTopology ToVkTopology(Topology topology) {
   switch (topology) {
     case Topology::kPointList:
@@ -444,8 +437,10 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   if (!r.IsSuccess())
     return r;
 
-  frame_->ChangeFrameImageLayout(command_->GetCommandBuffer(),
-                                 FrameImageState::kClearOrDraw);
+  r = frame_->ChangeFrameImageLayout(command_->GetCommandBuffer(),
+                                     FrameImageState::kClearOrDraw);
+  if (!r.IsSuccess())
+    return r;
 
   // TODO(jaebaek): When multiple clear and draw commands exist, handle
   //                begin/end render pass properly.
@@ -504,7 +499,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
   return {};
 }
 
-Result GraphicsPipeline::SubmitProbeCommand() {
+Result GraphicsPipeline::ProcessCommands() {
   Result r = command_->BeginIfNotInRecording();
   if (!r.IsSuccess())
     return r;
@@ -521,99 +516,6 @@ Result GraphicsPipeline::SubmitProbeCommand() {
     return r;
 
   return command_->SubmitAndReset(fence_timeout_ms_);
-}
-
-Result GraphicsPipeline::VerifyPixels(const uint32_t x,
-                                      const uint32_t y,
-                                      const uint32_t width,
-                                      const uint32_t height,
-                                      const ProbeCommand* command) {
-  const uint32_t stride = VkFormatToByteSize(color_format_);
-
-  // TODO(jaebaek): Support all VkFormat
-  const uint8_t* ptr = static_cast<const uint8_t*>(frame_->GetColorBufferPtr());
-  uint32_t count_of_invalid_pixels = 0;
-  uint32_t first_invalid_i = 0;
-  uint32_t first_invalid_j = 0;
-  for (uint32_t j = 0; j < height; ++j) {
-    const uint8_t* p = ptr + stride * frame_->GetWidth() * (j + y) + stride * x;
-    for (uint32_t i = 0; i < width; ++i) {
-      // TODO(jaebaek): Get actual pixel values based on frame buffer formats.
-      if (!IsFloatPixelEqualInt(command->GetR(), p[stride * i]) ||
-          !IsFloatPixelEqualInt(command->GetG(), p[stride * i + 1]) ||
-          !IsFloatPixelEqualInt(command->GetB(), p[stride * i + 2]) ||
-          (command->IsRGBA() &&
-           !IsFloatPixelEqualInt(command->GetA(), p[stride * i + 3]))) {
-        if (!count_of_invalid_pixels) {
-          first_invalid_i = i;
-          first_invalid_j = j;
-        }
-        ++count_of_invalid_pixels;
-      }
-    }
-  }
-
-  if (count_of_invalid_pixels) {
-    const uint8_t* p =
-        ptr + stride * frame_->GetWidth() * (first_invalid_j + y) + stride * x;
-    return Result(
-        "Probe failed at: " + std::to_string(first_invalid_i + x) + ", " +
-        std::to_string(first_invalid_j + y) + "\n" +
-        "  Expected RGBA: " + std::to_string(command->GetR() * 255) + ", " +
-        std::to_string(command->GetG() * 255) + ", " +
-        std::to_string(command->GetB() * 255) +
-        (command->IsRGBA() ? ", " + std::to_string(command->GetA() * 255) +
-                                 "\n  Actual RGBA: "
-                           : "\n  Actual RGB: ") +
-        std::to_string(static_cast<int>(p[stride * first_invalid_i])) + ", " +
-        std::to_string(static_cast<int>(p[stride * first_invalid_i + 1])) +
-        ", " +
-        std::to_string(static_cast<int>(p[stride * first_invalid_i + 2])) +
-        (command->IsRGBA() ? ", " + std::to_string(static_cast<int>(
-                                        p[stride * first_invalid_i + 3]))
-                           : "") +
-        "\n" + "Probe failed in " + std::to_string(count_of_invalid_pixels) +
-        " pixels");
-  }
-
-  return {};
-}
-
-Result GraphicsPipeline::Probe(const ProbeCommand* command) {
-  uint32_t x = 0;
-  uint32_t y = 0;
-  uint32_t width = 0;
-  uint32_t height = 0;
-  const uint32_t frame_width = frame_->GetWidth();
-  const uint32_t frame_height = frame_->GetHeight();
-
-  if (command->IsWholeWindow()) {
-    width = frame_width;
-    height = frame_height;
-  } else if (command->IsRelative()) {
-    x = static_cast<uint32_t>(frame_width * command->GetX());
-    y = static_cast<uint32_t>(frame_height * command->GetY());
-    width = static_cast<uint32_t>(frame_width * command->GetWidth());
-    height = static_cast<uint32_t>(frame_height * command->GetHeight());
-  } else {
-    x = static_cast<uint32_t>(command->GetX());
-    y = static_cast<uint32_t>(command->GetY());
-    width = static_cast<uint32_t>(command->GetWidth());
-    height = static_cast<uint32_t>(command->GetHeight());
-  }
-
-  if (x + width > frame_width || y + height > frame_height) {
-    return Result(
-        "Vulkan::Probe Position(" + std::to_string(x + width - 1) + ", " +
-        std::to_string(y + height - 1) + ") is out of framebuffer scope (" +
-        std::to_string(frame_width) + "," + std::to_string(frame_height) + ")");
-  }
-
-  Result r = SubmitProbeCommand();
-  if (!r.IsSuccess())
-    return r;
-
-  return VerifyPixels(x, y, width, height, command);
 }
 
 void GraphicsPipeline::Shutdown() {
