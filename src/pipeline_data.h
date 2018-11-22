@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_PIPELINE_H_
-#define SRC_PIPELINE_H_
+#ifndef SRC_PIPELINE_DATA_H_
+#define SRC_PIPELINE_DATA_H_
 
 #include <limits>
 
@@ -214,4 +214,4 @@ class PipelineData {
 
 }  // namespace amber
 
-#endif  // SRC_PIPELINE_H_
+#endif  // SRC_PIPELINE_DATA_H_

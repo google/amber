@@ -140,13 +140,14 @@ TEST_P(AmberScriptParserShaderPassThroughTest, ShaderPassThroughWithoutVertex) {
       "allowed",
       r.Error());
 }
-INSTANTIATE_TEST_CASE_P(AmberScriptParserShaderPassThroughTests,
-                        AmberScriptParserShaderPassThroughTest,
-                        testing::Values(NameData{"fragment"},
-                                        NameData{"geometry"},
-                                        NameData{"tessellation_evaluation"},
-                                        NameData{"tessellation_control"},
-                                        NameData{"compute"}), );
+INSTANTIATE_TEST_CASE_P(
+    AmberScriptParserShaderPassThroughTests,
+    AmberScriptParserShaderPassThroughTest,
+    testing::Values(NameData{"fragment"},
+                    NameData{"geometry"},
+                    NameData{"tessellation_evaluation"},
+                    NameData{"tessellation_control"},
+                    NameData{"compute"}), );  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptParserTest, ShaderPassThroughUnknownShaderType) {
   std::string in = "SHADER UNKNOWN my_shader PASSTHROUGH";
@@ -326,7 +327,9 @@ INSTANTIATE_TEST_CASE_P(
                                    ShaderType::kTessellationEvaluation},
                     ShaderTypeData{"tessellation_control",
                                    ShaderType::kTessellationControl},
-                    ShaderTypeData{"compute", ShaderType::kCompute}), );
+                    ShaderTypeData{
+                        "compute",
+                        ShaderType::kCompute}), );  // NOLINT(whitespace/parens)
 
 using AmberScriptParserShaderFormatTest =
     testing::TestWithParam<ShaderFormatData>;
@@ -358,9 +361,12 @@ TEST_P(AmberScriptParserShaderFormatTest, ShaderFormats) {
 INSTANTIATE_TEST_CASE_P(
     AmberScriptParserTestsShaderFormat,
     AmberScriptParserShaderFormatTest,
-    testing::Values(ShaderFormatData{"GLSL", ShaderFormat::kGlsl},
-                    ShaderFormatData{"SPIRV-ASM", ShaderFormat::kSpirvAsm},
-                    ShaderFormatData{"SPIRV-HEX", ShaderFormat::kSpirvHex}), );
+    testing::Values(
+        ShaderFormatData{"GLSL", ShaderFormat::kGlsl},
+        ShaderFormatData{"SPIRV-ASM", ShaderFormat::kSpirvAsm},
+        ShaderFormatData{
+            "SPIRV-HEX",
+            ShaderFormat::kSpirvHex}), );  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptParserTest, DuplicateShaderName) {
   std::string in = R"(
@@ -629,13 +635,15 @@ END)";
 INSTANTIATE_TEST_CASE_P(
     AmberScriptParserPipelineAttachTests,
     AmberScriptParserPipelineAttachTest,
-    testing::Values(ShaderTypeData{"vertex", ShaderType::kVertex},
-                    ShaderTypeData{"fragment", ShaderType::kFragment},
-                    ShaderTypeData{"geometry", ShaderType::kGeometry},
-                    ShaderTypeData{"tessellation_evaluation",
-                                   ShaderType::kTessellationEvaluation},
-                    ShaderTypeData{"tessellation_control",
-                                   ShaderType::kTessellationControl}), );
+    testing::Values(
+        ShaderTypeData{"vertex", ShaderType::kVertex},
+        ShaderTypeData{"fragment", ShaderType::kFragment},
+        ShaderTypeData{"geometry", ShaderType::kGeometry},
+        ShaderTypeData{"tessellation_evaluation",
+                       ShaderType::kTessellationEvaluation},
+        ShaderTypeData{
+            "tessellation_control",
+            ShaderType::kTessellationControl}), );  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptParserTest, PipelineEntryPoint) {
   std::string in = R"(
@@ -1598,7 +1606,9 @@ INSTANTIATE_TEST_CASE_P(
                     BufferTypeData{"index", BufferType::kIndex},
                     BufferTypeData{"sampled", BufferType::kSampled},
                     BufferTypeData{"color", BufferType::kColor},
-                    BufferTypeData{"depth", BufferType::kDepth}), );
+                    BufferTypeData{
+                        "depth",
+                        BufferType::kDepth}), );  // NOLINT(whitespace/parens)
 
 using AmberScriptParserBufferDataTypeTest = testing::TestWithParam<BufferData>;
 TEST_P(AmberScriptParserBufferDataTypeTest, BufferTypes) {
@@ -1639,7 +1649,8 @@ INSTANTIATE_TEST_CASE_P(
                     BufferData{"vec4<uint32>", DataType::kUint32, 4, 1},
                     BufferData{"mat2x4<int32>", DataType::kInt32, 2, 4},
                     BufferData{"mat3x3<float>", DataType::kFloat, 3, 3},
-                    BufferData{"mat4x2<uint16>", DataType::kUint16, 4, 2}), );
+                    BufferData{"mat4x2<uint16>", DataType::kUint16, 4,
+                               2}), );  // NOLINT(whitespace/parens)
 
 using AmberScriptParserBufferDataTypeInvalidTest =
     testing::TestWithParam<NameData>;
@@ -1654,31 +1665,32 @@ TEST_P(AmberScriptParserBufferDataTypeInvalidTest, BufferTypes) {
   ASSERT_FALSE(r.IsSuccess()) << test_data.name;
   EXPECT_EQ("1: invalid data_type provided", r.Error()) << test_data.name;
 }
-INSTANTIATE_TEST_CASE_P(AmberScriptParserBufferDataTypeInvalidTest,
-                        AmberScriptParserBufferDataTypeInvalidTest,
-                        testing::Values(NameData{"int17"},
-                                        NameData{"uintt0"},
-                                        NameData{"vec7<uint8>"},
-                                        NameData{"vec27<uint8>"},
-                                        NameData{"vec2<vec2<float>>"},
-                                        NameData{"vec2<mat2x2<float>>"},
-                                        NameData{"vec2float>"},
-                                        NameData{"vec2<uint32"},
-                                        NameData{"vec2<uint4>"},
-                                        NameData{"vec2<>"},
-                                        NameData{"vec2"},
-                                        NameData{"mat1x1<double>"},
-                                        NameData{"mat5x2<double>"},
-                                        NameData{"mat2x5<double>"},
-                                        NameData{"mat22x22<double>"},
-                                        NameData{"matx5<double>"},
-                                        NameData{"mat2<double>"},
-                                        NameData{"mat2x<double>"},
-                                        NameData{"mat2x2<vec4<float>>"},
-                                        NameData{"mat2x2<mat3x3<double>>"},
-                                        NameData{"mat2x2<unit7>"},
-                                        NameData{"mat2x2"},
-                                        NameData{"mat2x2<>"}), );
+INSTANTIATE_TEST_CASE_P(
+    AmberScriptParserBufferDataTypeInvalidTest,
+    AmberScriptParserBufferDataTypeInvalidTest,
+    testing::Values(NameData{"int17"},
+                    NameData{"uintt0"},
+                    NameData{"vec7<uint8>"},
+                    NameData{"vec27<uint8>"},
+                    NameData{"vec2<vec2<float>>"},
+                    NameData{"vec2<mat2x2<float>>"},
+                    NameData{"vec2float>"},
+                    NameData{"vec2<uint32"},
+                    NameData{"vec2<uint4>"},
+                    NameData{"vec2<>"},
+                    NameData{"vec2"},
+                    NameData{"mat1x1<double>"},
+                    NameData{"mat5x2<double>"},
+                    NameData{"mat2x5<double>"},
+                    NameData{"mat22x22<double>"},
+                    NameData{"matx5<double>"},
+                    NameData{"mat2<double>"},
+                    NameData{"mat2x<double>"},
+                    NameData{"mat2x2<vec4<float>>"},
+                    NameData{"mat2x2<mat3x3<double>>"},
+                    NameData{"mat2x2<unit7>"},
+                    NameData{"mat2x2"},
+                    NameData{"mat2x2<>"}), );  // NOLINT(whitespace/parens)
 
 }  // namespace amberscript
 }  // namespace amber

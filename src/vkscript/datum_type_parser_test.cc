@@ -85,7 +85,8 @@ INSTANTIATE_TEST_CASE_P(
                     DatumTypeData{"u8vec2", DataType::kUint8, 1, 2},
                     DatumTypeData{"u8vec3", DataType::kUint8, 1, 3},
                     DatumTypeData{"u8vec4", DataType::kUint8, 1, 4},
-                    DatumTypeData{"i16vec2", DataType::kInt16, 1, 2}), );
+                    DatumTypeData{"i16vec2", DataType::kInt16, 1,
+                                  2}), );  // NOLINT(whitespace/parens)
 
 INSTANTIATE_TEST_CASE_P(
     DatumTypeParserTest2,
@@ -124,7 +125,8 @@ INSTANTIATE_TEST_CASE_P(
                     DatumTypeData{"dmat4", DataType::kDouble, 4, 4},
                     DatumTypeData{"dmat4x2", DataType::kDouble, 4, 2},
                     DatumTypeData{"dmat4x3", DataType::kDouble, 4, 3},
-                    DatumTypeData{"dmat4x4", DataType::kDouble, 4, 4}), );
+                    DatumTypeData{"dmat4x4", DataType::kDouble, 4,
+                                  4}), );  // NOLINT(whitespace/parens)
 
 }  // namespace vkscript
 }  // namespace amber

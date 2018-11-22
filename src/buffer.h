@@ -64,4 +64,4 @@ class Buffer {
 
 }  // namespace amber
 
-#endif  // SRC_AMBERSCRIPT_BUFFER_H_
+#endif  // SRC_BUFFER_H_

@@ -15,9 +15,9 @@
 #ifndef AMBER_AMBER_H_
 #define AMBER_AMBER_H_
 
-#include "amber/result.h"
-
 #include <string>
+
+#include "amber/result.h"
 
 namespace amber {
 

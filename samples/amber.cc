@@ -28,7 +28,7 @@ struct Options {
 
   std::string image_filename;
   std::string buffer_filename;
-  long buffer_binding_index = 0;
+  uint16_t buffer_binding_index = 0;
   bool parse_only = false;
   bool show_help = false;
   bool show_version_info = false;
@@ -124,7 +124,7 @@ std::string ReadFile(const std::string& input_file) {
   }
 
   fseek(file, 0, SEEK_END);
-  long tell_file_size = ftell(file);
+  uint64_t tell_file_size = ftell(file);
   if (tell_file_size <= 0) {
     std::cerr << "Input file of incorrect size: " << input_file << std::endl;
     return {};

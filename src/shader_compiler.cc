@@ -97,7 +97,7 @@ Result ShaderCompiler::ParseHex(const std::string& data,
   uint32_t tmp = 0;
   while (used < data.length()) {
     char* new_pos = nullptr;
-    long v = std::strtol(str, &new_pos, 16);
+    uint64_t v = std::strtol(str, &new_pos, 16);
 
     ++converted;
 
