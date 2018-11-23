@@ -14,6 +14,8 @@
 
 #include "src/vulkan/storage_buffer_descriptor.h"
 
+#include <vector>
+
 #include "src/make_unique.h"
 
 namespace amber {

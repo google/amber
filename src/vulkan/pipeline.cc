@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <utility>
 
 #include "src/command.h"
 #include "src/make_unique.h"
@@ -143,15 +144,8 @@ Result Pipeline::CreateDescriptorPools() {
   return {};
 }
 
-Result Pipeline::DestoryDescriptorSets() {
-  for (size_t i = 0; i < descriptor_sets_.size(); ++i) {
-    if (vkFreeDescriptorSets(device_, descriptor_pools_[i], 1,
-                             &descriptor_sets_[i]) != VK_SUCCESS) {
-      return Result("Vulkan::Calling vkFreeDescriptorSets Fail");
-    }
-  }
+void Pipeline::DestoryDescriptorSets() {
   descriptor_sets_.clear();
-  return {};
 }
 
 Result Pipeline::CreateDescriptorSets() {

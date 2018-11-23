@@ -16,6 +16,7 @@
 #define SRC_VULKAN_STORAGE_BUFFER_DESCRIPTOR_H_
 
 #include <memory>
+#include <vector>
 
 #include "amber/result.h"
 #include "src/datum_type.h"
