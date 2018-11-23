@@ -67,6 +67,11 @@ class EngineDawn : public Engine {
                            uint32_t* height,
                            const void** buf) override;
 
+  // Methods for tests.
+  const std::vector<Command>& GetPendingWorkForTest() const {
+    return pending_work_;
+  }
+
  private:
   ::dawn::Device device_;
   std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
@@ -75,6 +80,10 @@ class EngineDawn : public Engine {
   ComputePipelineInfo compute_pipeline_info_;
   // Accumulated data for the current render pipeline.
   RenderPipelineInfo render_pipeline_info_;
+
+  // The work that is yet to be done.  Various Do* methods add to this.  The
+  // work is actually performed when DoProcessCommands is called.
+  std::vector<Command> pending_work_;
 };
 
 }  // namespace dawn
