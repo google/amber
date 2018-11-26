@@ -30,6 +30,7 @@ class BufferCommand;
 
 namespace vulkan {
 
+class ComputePipeline;
 class GraphicsPipeline;
 
 class Pipeline {
@@ -40,15 +41,19 @@ class Pipeline {
   bool IsCompute() const { return pipeline_type_ == PipelineType::kCompute; }
 
   GraphicsPipeline* AsGraphics();
+  ComputePipeline* AsCompute();
 
   Result AddDescriptor(const BufferCommand*);
 
   virtual void Shutdown();
 
  protected:
-  Pipeline(PipelineType type,
-           VkDevice device,
-           const VkPhysicalDeviceMemoryProperties& properties);
+  Pipeline(
+      PipelineType type,
+      VkDevice device,
+      const VkPhysicalDeviceMemoryProperties& properties,
+      uint32_t fence_timeout_ms,
+      const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
   Result InitializeCommandBuffer(VkCommandPool pool, VkQueue queue);
   Result CreateVkDescriptorRelatedObjects();
 
@@ -68,6 +73,13 @@ class Pipeline {
   VkPhysicalDeviceMemoryProperties memory_properties_;
   std::unique_ptr<CommandBuffer> command_;
 
+  const std::vector<VkPipelineShaderStageCreateInfo>& GetShaderStageInfo()
+      const {
+    return shader_stage_info_;
+  }
+
+  uint32_t GetFenceTimeout() const { return fence_timeout_ms_; }
+
  private:
   Result CreatePipelineLayout();
 
@@ -80,6 +92,10 @@ class Pipeline {
 
   PipelineType pipeline_type_;
   std::vector<std::unique_ptr<Descriptor>> descriptors_;
+
+  uint32_t fence_timeout_ms_ = 100;
+
+  std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
 };
 
 }  // namespace vulkan
