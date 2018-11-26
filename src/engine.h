@@ -63,7 +63,9 @@ class Engine {
   virtual Result SetShader(ShaderType type,
                            const std::vector<uint32_t>& data) = 0;
 
-  // Provides the data for a given buffer to be bound at the given location.
+  // Provides the data for a given buffer to be bound at the given location
+  // This is used to declare and populate vertex and index inputs to a graphics
+  // pipeline.
   virtual Result SetBuffer(BufferType type,
                            uint8_t location,
                            const Format& format,
@@ -97,7 +99,9 @@ class Engine {
   virtual Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) = 0;
 
-  // Execute the buffer command
+  // Execute the buffer command.
+  // This declares an Amber buffer to be bound to a descriptor.
+  // This covers both Vulkan buffers and images.
   virtual Result DoBuffer(const BufferCommand* cmd) = 0;
 
   // Run all queued commands and copy result data to the host.
