@@ -93,13 +93,13 @@ class Descriptor {
   Result UpdateDescriptorSetForBuffer(
       VkDescriptorSet descriptor_set,
       VkDescriptorType descriptor_type,
-      const VkDescriptorBufferInfo* buffer_info);
+      const VkDescriptorBufferInfo& buffer_info);
   Result UpdateDescriptorSetForImage(VkDescriptorSet descriptor_set,
                                      VkDescriptorType descriptor_type,
-                                     const VkDescriptorImageInfo* image_info);
+                                     const VkDescriptorImageInfo& image_info);
   Result UpdateDescriptorSetForBufferView(VkDescriptorSet descriptor_set,
                                           VkDescriptorType descriptor_type,
-                                          const VkBufferView* texel_view);
+                                          const VkBufferView& texel_view);
 
   void SetDataSent() { is_data_already_sent_ = true; }
 
@@ -107,6 +107,10 @@ class Descriptor {
   uint32_t binding_ = 0;
 
  private:
+  VkWriteDescriptorSet GetWriteDescriptorSet(
+      VkDescriptorSet descriptor_set,
+      VkDescriptorType descriptor_type) const;
+
   DescriptorType type_ = DescriptorType::kSampledImage;
   bool is_data_already_sent_ = false;
   VkDevice device_ = VK_NULL_HANDLE;

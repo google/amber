@@ -116,7 +116,7 @@ Result StorageBufferDescriptor::UpdateDescriptorSet(
   buffer_info.range = VK_WHOLE_SIZE;
 
   return Descriptor::UpdateDescriptorSetForBuffer(
-      descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, &buffer_info);
+      descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, buffer_info);
 }
 
 void StorageBufferDescriptor::Shutdown() {

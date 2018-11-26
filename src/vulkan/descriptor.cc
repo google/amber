@@ -60,10 +60,9 @@ Descriptor::Descriptor(DescriptorType type,
 
 Descriptor::~Descriptor() = default;
 
-Result Descriptor::UpdateDescriptorSetForBuffer(
+VkWriteDescriptorSet Descriptor::GetWriteDescriptorSet(
     VkDescriptorSet descriptor_set,
-    VkDescriptorType descriptor_type,
-    const VkDescriptorBufferInfo* buffer_info) {
+    VkDescriptorType descriptor_type) const {
   VkWriteDescriptorSet write = {};
   write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   write.dstSet = descriptor_set;
@@ -71,12 +70,21 @@ Result Descriptor::UpdateDescriptorSetForBuffer(
   write.dstArrayElement = 0;
   write.descriptorCount = 1;
   write.descriptorType = descriptor_type;
+  return write;
+}
+
+Result Descriptor::UpdateDescriptorSetForBuffer(
+    VkDescriptorSet descriptor_set,
+    VkDescriptorType descriptor_type,
+    const VkDescriptorBufferInfo& buffer_info) {
+  VkWriteDescriptorSet write =
+      GetWriteDescriptorSet(descriptor_set, descriptor_type);
   switch (descriptor_type) {
     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
     case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
     case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
-      write.pBufferInfo = buffer_info;
+      write.pBufferInfo = &buffer_info;
       break;
     default:
       return Result(
@@ -91,8 +99,9 @@ Result Descriptor::UpdateDescriptorSetForBuffer(
 Result Descriptor::UpdateDescriptorSetForImage(
     VkDescriptorSet descriptor_set,
     VkDescriptorType descriptor_type,
-    const VkDescriptorImageInfo* image_info) {
-  VkWriteDescriptorSet write = {};
+    const VkDescriptorImageInfo& image_info) {
+  VkWriteDescriptorSet write =
+      GetWriteDescriptorSet(descriptor_set, descriptor_type);
   write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   write.dstSet = descriptor_set;
   write.dstBinding = binding_;
@@ -105,7 +114,7 @@ Result Descriptor::UpdateDescriptorSetForImage(
     case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
     case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
     case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
-      write.pImageInfo = image_info;
+      write.pImageInfo = &image_info;
       break;
     default:
       return Result(
@@ -119,8 +128,9 @@ Result Descriptor::UpdateDescriptorSetForImage(
 Result Descriptor::UpdateDescriptorSetForBufferView(
     VkDescriptorSet descriptor_set,
     VkDescriptorType descriptor_type,
-    const VkBufferView* texel_view) {
-  VkWriteDescriptorSet write = {};
+    const VkBufferView& texel_view) {
+  VkWriteDescriptorSet write =
+      GetWriteDescriptorSet(descriptor_set, descriptor_type);
   write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   write.dstSet = descriptor_set;
   write.dstBinding = binding_;
@@ -130,7 +140,7 @@ Result Descriptor::UpdateDescriptorSetForBufferView(
   switch (descriptor_type) {
     case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
     case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
-      write.pTexelBufferView = texel_view;
+      write.pTexelBufferView = &texel_view;
       break;
     default:
       return Result(
