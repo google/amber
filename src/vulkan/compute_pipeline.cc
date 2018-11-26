@@ -36,9 +36,11 @@ Result ComputePipeline::Initialize(VkCommandPool pool, VkQueue queue) {
 
 Result ComputePipeline::CreateVkComputePipeline() {
   const auto& shader_stage_info = GetShaderStageInfo();
-  if (shader_stage_info.size() != 1)
+  if (shader_stage_info.size() != 1) {
     return Result(
-        "Vulkan::Number of given shaders to compute pipeline is not 1");
+        "Vulkan::CreateVkComputePipeline number of shaders given to compute "
+        "pipeline is not 1");
+  }
 
   Result r = CreateVkDescriptorRelatedObjects();
   if (!r.IsSuccess())
@@ -77,10 +79,6 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
 
   vkCmdDispatch(command_->GetCommandBuffer(), x, y, z);
   return {};
-}
-
-void ComputePipeline::Shutdown() {
-  Pipeline::Shutdown();
 }
 
 }  // namespace vulkan

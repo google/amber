@@ -31,14 +31,11 @@ class ComputePipeline : public Pipeline {
       const VkPhysicalDeviceMemoryProperties& properties,
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
+  ~ComputePipeline() override;
 
   Result Initialize(VkCommandPool pool, VkQueue queue);
 
   Result Compute(uint32_t x, uint32_t y, uint32_t z);
-
-  // Pipeline
-  ~ComputePipeline() override;
-  void Shutdown() override;
 
  private:
   Result CreateVkComputePipeline();

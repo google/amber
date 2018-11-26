@@ -61,6 +61,13 @@ class Pipeline {
   void BindVkPipeline();
   void BindVkDescriptorSets();
 
+  const std::vector<VkPipelineShaderStageCreateInfo>& GetShaderStageInfo()
+      const {
+    return shader_stage_info_;
+  }
+
+  uint32_t GetFenceTimeout() const { return fence_timeout_ms_; }
+
   VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
   VkPipeline pipeline_ = VK_NULL_HANDLE;
   VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
@@ -72,13 +79,6 @@ class Pipeline {
   VkDevice device_ = VK_NULL_HANDLE;
   VkPhysicalDeviceMemoryProperties memory_properties_;
   std::unique_ptr<CommandBuffer> command_;
-
-  const std::vector<VkPipelineShaderStageCreateInfo>& GetShaderStageInfo()
-      const {
-    return shader_stage_info_;
-  }
-
-  uint32_t GetFenceTimeout() const { return fence_timeout_ms_; }
 
  private:
   Result CreatePipelineLayout();

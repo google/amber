@@ -41,6 +41,7 @@ class GraphicsPipeline : public Pipeline {
                    VkFormat depth_stencil_format,
                    uint32_t fence_timeout_ms,
                    const std::vector<VkPipelineShaderStageCreateInfo>&);
+  ~GraphicsPipeline() override;
 
   Result Initialize(uint32_t width,
                     uint32_t height,
@@ -68,7 +69,6 @@ class GraphicsPipeline : public Pipeline {
   const FrameBuffer* GetFrame() const { return frame_.get(); }
 
   // Pipeline
-  ~GraphicsPipeline() override;
   void Shutdown() override;
 
  private:

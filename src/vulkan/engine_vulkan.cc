@@ -257,7 +257,7 @@ Result EngineVulkan::DoDrawArrays(const DrawArraysCommand* command) {
 
 Result EngineVulkan::DoCompute(const ComputeCommand* command) {
   if (pipeline_->IsGraphics())
-    return Result("Vulkan::Compute command for graphics pipeline");
+    return Result("Vulkan: Compute called for graphics pipeline.");
 
   return pipeline_->AsCompute()->Compute(command->GetX(), command->GetY(),
                                          command->GetZ());
