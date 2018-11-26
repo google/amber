@@ -12,31 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/dawn/sleep.h"
+#ifndef SRC_SLEEP_H_
+#define SRC_SLEEP_H_
 
-#include "src/dawn/platform.h"
-
-#if AMBER_PLATFORM_WINDOWS
-#include <windows.h>
-#elif AMBER_PLATFORM_POSIX
-#include <unistd.h>
-#else
-#error "Unknown platform"
-#endif
+#include <cstdint>
 
 namespace amber {
-namespace dawn {
 
-void USleep(unsigned microseconds) {
-#if AMBER_PLATFORM_WINDOWS
-  // The Windows call uses milliseconds.
-  Sleep(static_cast<DWORD>((microseconds + 999) / 1000);
-#elif AMBER_PLATFORM_POSIX
-  usleep(microseconds);
-#else
-#error "Implement amber::dawn::USleep"
-#endif
-}
+// Pause execution for the given number of microseconds, or longer.
+void USleep(uint32_t microseconds);
 
-}  // namespace dawn
 }  // namespace amber
+
+#endif  // SRC_SLEEP_H_

@@ -30,6 +30,7 @@ set(AMBER_SOURCES
     parser.cc
     pipeline_data.cc
     result.cc
+    sleep.cc
     script.cc
     shader_compiler.cc
     tokenizer.cc

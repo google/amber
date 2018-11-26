@@ -14,7 +14,6 @@
 
 set(DAWN_ENGINE_SOURCES
     engine_dawn.cc
-    sleep.cc
 )
 
 set(AMBER_EXTRA_LIBS "")
