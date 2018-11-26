@@ -92,10 +92,8 @@ class Pipeline {
 
   PipelineType pipeline_type_;
   std::vector<std::unique_ptr<Descriptor>> descriptors_;
-
-  uint32_t fence_timeout_ms_ = 100;
-
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
+  uint32_t fence_timeout_ms_ = 100;
 };
 
 }  // namespace vulkan
