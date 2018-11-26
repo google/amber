@@ -108,16 +108,15 @@ void StorageBufferDescriptor::SendDataToGPUIfNeeded(VkCommandBuffer command) {
   SetDataSent();
 }
 
-void StorageBufferDescriptor::UpdateDescriptorSet(
+Result StorageBufferDescriptor::UpdateDescriptorSet(
     VkDescriptorSet descriptor_set) {
   VkDescriptorBufferInfo buffer_info = {};
   buffer_info.buffer = buffer_->GetVkBuffer();
   buffer_info.offset = 0;
   buffer_info.range = VK_WHOLE_SIZE;
 
-  Descriptor::UpdateDescriptorSet(descriptor_set,
-                                  VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, nullptr,
-                                  &buffer_info, nullptr);
+  return Descriptor::UpdateDescriptorSetForBuffer(
+      descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, &buffer_info);
 }
 
 void StorageBufferDescriptor::Shutdown() {

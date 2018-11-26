@@ -48,7 +48,6 @@ Result Pipeline::InitializeCommandBuffer(VkCommandPool pool, VkQueue queue) {
 
 void Pipeline::Shutdown() {
   // TODO(jaebaek): destroy pipeline_cache_ and pipeline_
-  DestoryDescriptorSets();
   DestoryDescriptorPools();
   DestoryDescriptorSetLayouts();
   command_->Shutdown();
@@ -65,7 +64,8 @@ void Pipeline::DestoryDescriptorSetLayouts() {
 Result Pipeline::CreateDescriptorSetLayouts() {
   std::sort(descriptors_.begin(), descriptors_.end());
 
-  for (size_t i = 0; i < descriptors_.size();) {
+  size_t i = 0;
+  while (i < descriptors_.size()) {
     std::vector<VkDescriptorSetLayoutBinding> bindings;
     for (const uint32_t current_desc = descriptors_[i]->GetDescriptorSet();
          i < descriptors_.size() &&
@@ -106,7 +106,8 @@ void Pipeline::DestoryDescriptorPools() {
 }
 
 Result Pipeline::CreateDescriptorPools() {
-  for (size_t i = 0; i < descriptors_.size();) {
+  size_t i = 0;
+  while (i < descriptors_.size()) {
     std::vector<VkDescriptorPoolSize> pool_sizes;
     for (const uint32_t current_desc = descriptors_[i]->GetDescriptorSet();
          i < descriptors_.size() &&
@@ -118,7 +119,7 @@ Result Pipeline::CreateDescriptorPools() {
                           return size.type == type;
                         });
       if (it != pool_sizes.end()) {
-        ++(it->descriptorCount);
+        it->descriptorCount += 1;
         continue;
       }
 
@@ -142,10 +143,6 @@ Result Pipeline::CreateDescriptorPools() {
   }
 
   return {};
-}
-
-void Pipeline::DestoryDescriptorSets() {
-  descriptor_sets_.clear();
 }
 
 Result Pipeline::CreateDescriptorSets() {
@@ -206,7 +203,9 @@ Result Pipeline::CreateVkDescriptorRelatedObjects() {
          i < descriptors_.size() &&
          current_desc == descriptors_[i]->GetDescriptorSet();
          ++i) {
-      descriptors_[i]->UpdateDescriptorSet(descriptor_sets_[j]);
+      r = descriptors_[i]->UpdateDescriptorSet(descriptor_sets_[j]);
+      if (!r.IsSuccess())
+        return r;
     }
   }
 

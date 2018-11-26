@@ -77,7 +77,6 @@ class Pipeline {
 
   void DestoryDescriptorSetLayouts();
   void DestoryDescriptorPools();
-  void DestoryDescriptorSets();
 
   PipelineType pipeline_type_;
   std::vector<std::unique_ptr<Descriptor>> descriptors_;

@@ -41,7 +41,7 @@ class StorageBufferDescriptor : public Descriptor {
 
   // Descriptor
   void SendDataToGPUIfNeeded(VkCommandBuffer command) override;
-  void UpdateDescriptorSet(VkDescriptorSet descriptor_set) override;
+  Result UpdateDescriptorSet(VkDescriptorSet descriptor_set) override;
   void Shutdown() override;
 
  private:

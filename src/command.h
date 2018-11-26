@@ -324,18 +324,16 @@ class BufferCommand : public Command {
   uint32_t GetOffset() const { return offset_; }
 
   void SetSize(uint32_t size) { size_ = size; }
-  uint32_t GetSize() const {
-    if (size_ == 0 && !values_.empty()) {
-      return static_cast<uint32_t>(values_.size() * datum_type_.SizeInBytes()) /
-             datum_type_.ColumnCount() / datum_type_.RowCount();
-    }
-    return size_;
-  }
+  uint32_t GetSize() const { return size_; }
 
   void SetDatumType(const DatumType& type) { datum_type_ = type; }
   const DatumType& GetDatumType() const { return datum_type_; }
 
-  void SetValues(std::vector<Value>&& values) { values_ = std::move(values); }
+  void SetValues(std::vector<Value>&& values) {
+    values_ = std::move(values);
+    size_ = static_cast<uint32_t>(values_.size() * datum_type_.SizeInBytes()) /
+            datum_type_.ColumnCount() / datum_type_.RowCount();
+  }
   const std::vector<Value>& GetValues() const { return values_; }
 
  private:

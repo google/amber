@@ -291,7 +291,7 @@ Result EngineVulkan::DoProcessCommands(uint32_t* stride,
 
 Result EngineVulkan::DoBuffer(const BufferCommand* command) {
   if (!command->IsSSBO())
-    return Result("Vulkan::ExecuteBuffer non-SSBO descriptor not implemented");
+    return Result("Vulkan::DoBuffer non-SSBO descriptor not implemented");
 
   return pipeline_->AddDescriptor(command);
 }
