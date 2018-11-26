@@ -16,6 +16,7 @@
 #define SRC_DAWN_PIPELINE_INFO_H_
 
 #include <cstdint>
+#include <utility>
 
 #include "amber/result.h"
 #include "dawn/dawncpp.h"
@@ -24,50 +25,39 @@
 namespace amber {
 namespace dawn {
 
-class RenderPipelineInfo {
- public:
+struct RenderPipelineInfo {
   RenderPipelineInfo() {}
   RenderPipelineInfo(::dawn::ShaderModule vert, ::dawn::ShaderModule frag)
-      : vertex_shader_(vert), fragment_shader_(frag) {}
+      : vertex_shader(vert), fragment_shader(frag) {}
 
-  // Returns true if this render pipeline is configured at all.
-  bool IsConfigured() const { return vertex_shader_ && fragment_shader_; }
+  ::dawn::ShaderModule vertex_shader;
+  ::dawn::ShaderModule fragment_shader;
+  ClearColorCommand clear_color_value;
+  float clear_depth_value = 1.0f;
+  uint32_t clear_stencil_value = 0;
 
-  void SetClearColorValue(const ClearColorCommand& value) {
-    clear_color_value_ = value;
-  }
-  const ClearColorCommand& GetClearColorValue() const {
-    return clear_color_value_;
-  }
-
-  void SetClearDepthValue(float depth) { clear_depth_value_ = depth; }
-  float GetClearDepthValue() const { return clear_depth_value_; }
-
-  void SetClearStencilValue(uint32_t value) { clear_stencil_value_ = value; }
-  uint32_t GetClearStencilValue() const { return clear_stencil_value_; }
-
- private:
-  ::dawn::ShaderModule vertex_shader_;
-  ::dawn::ShaderModule fragment_shader_;
-  ClearColorCommand clear_color_value_;
-  float clear_depth_value_ = 1.0f;
-  uint32_t clear_stencil_value_ = 0;
+  // The framebuffer color render target.  This resides on the GPU.
+  ::dawn::Texture fb_texture;
+  // The buffer to which we will copy the rendered pixel values, for
+  // use on the host.
+  ::dawn::Buffer fb_buffer;
+  // The number of bytes between each row of texels in framebuffer host-side
+  // buffer.
+  uint32_t fb_row_stride = 0;
+  // The number of data bytes in the framebuffer host-side buffer.
+  uint32_t fb_size = 0;
+  bool fb_is_mapped = false;
 
   // TODO(dneto): Record index data
   // TODO(dneto): Record buffer data
 };
 
-class ComputePipelineInfo {
- public:
+struct ComputePipelineInfo {
   ComputePipelineInfo() {}
   explicit ComputePipelineInfo(::dawn::ShaderModule comp)
-      : compute_shader_(comp) {}
+      : compute_shader(comp) {}
 
-  // Returns true if this render pipeline is configured at all.
-  bool IsConfigured() const { return static_cast<bool>(compute_shader_); }
-
- private:
-  ::dawn::ShaderModule compute_shader_;
+  ::dawn::ShaderModule compute_shader;
 };
 
 }  // namespace dawn

@@ -67,23 +67,31 @@ class EngineDawn : public Engine {
                            uint32_t* height,
                            const void** buf) override;
 
-  // Methods for tests.
-  const std::vector<Command>& GetPendingWorkForTest() const {
-    return pending_work_;
-  }
-
  private:
+  // Creates a command buffer builder if it doesn't already exist.
+  Result EnsureCommandBufferBuilderExists();
+  // Destroys the current command buffer builder.
+  void ResetCommandBufferBuilder();
+  // Creates Dawn objects necessary for a render pipeline.  This creates
+  // a framebuffer texture, a framebuffer buffer, and a command buffer
+  // builder.  Returns a result code.
+  Result EnsureRenderObjectsExist();
+  // If they don't already exist, creats the framebuffer texture for use
+  // on the device, the buffer on the host that will eventually hold the
+  // resulting pixes for use in checking expectations, and bookkeeping info
+  // for that host-side buffer.
+  Result EnsureFramebufferExists();
+
   ::dawn::Device device_;
+  ::dawn::Queue queue_;
+  ::dawn::CommandBufferBuilder cbb_;
+
   std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
       module_for_type_;
   // Accumulated data for the current compute pipeline.
   ComputePipelineInfo compute_pipeline_info_;
   // Accumulated data for the current render pipeline.
   RenderPipelineInfo render_pipeline_info_;
-
-  // The work that is yet to be done.  Various Do* methods add to this.  The
-  // work is actually performed when DoProcessCommands is called.
-  std::vector<Command> pending_work_;
 };
 
 }  // namespace dawn

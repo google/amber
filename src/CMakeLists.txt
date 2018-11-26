@@ -90,7 +90,6 @@ if (${Vulkan_FOUND})
     list(APPEND TEST_SRCS vulkan/bit_copy_test.cc)
 endif()
 if (${Dawn_FOUND})
-    list(APPEND TEST_SRCS dawn/engine_dawn_test.cc)
     list(APPEND TEST_SRCS dawn/pipeline_info_test.cc)
 endif()
 
