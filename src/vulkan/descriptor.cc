@@ -102,12 +102,6 @@ Result Descriptor::UpdateDescriptorSetForImage(
     const VkDescriptorImageInfo& image_info) {
   VkWriteDescriptorSet write =
       GetWriteDescriptorSet(descriptor_set, descriptor_type);
-  write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  write.dstSet = descriptor_set;
-  write.dstBinding = binding_;
-  write.dstArrayElement = 0;
-  write.descriptorCount = 1;
-  write.descriptorType = descriptor_type;
   switch (descriptor_type) {
     case VK_DESCRIPTOR_TYPE_SAMPLER:
     case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
@@ -131,12 +125,6 @@ Result Descriptor::UpdateDescriptorSetForBufferView(
     const VkBufferView& texel_view) {
   VkWriteDescriptorSet write =
       GetWriteDescriptorSet(descriptor_set, descriptor_type);
-  write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  write.dstSet = descriptor_set;
-  write.dstBinding = binding_;
-  write.dstArrayElement = 0;
-  write.descriptorCount = 1;
-  write.descriptorType = descriptor_type;
   switch (descriptor_type) {
     case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
     case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
