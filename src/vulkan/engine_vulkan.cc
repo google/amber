@@ -18,6 +18,7 @@
 #include <cassert>
 
 #include "src/make_unique.h"
+#include "src/vulkan/descriptor.h"
 #include "src/vulkan/format_data.h"
 #include "src/vulkan/graphics_pipeline.h"
 
@@ -288,8 +289,11 @@ Result EngineVulkan::DoProcessCommands(uint32_t* stride,
   return r;
 }
 
-Result EngineVulkan::DoBuffer(const BufferCommand*) {
-  return Result("Vulkan::DoBuffer Not Implemented");
+Result EngineVulkan::DoBuffer(const BufferCommand* command) {
+  if (!command->IsSSBO())
+    return Result("Vulkan::DoBuffer non-SSBO descriptor not implemented");
+
+  return pipeline_->AddDescriptor(command);
 }
 
 }  // namespace vulkan

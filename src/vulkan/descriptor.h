@@ -41,7 +41,10 @@ VkDescriptorType ToVkDescriptorType(DescriptorType type);
 
 class Descriptor {
  public:
-  Descriptor(DescriptorType type, uint32_t desc_set, uint32_t binding);
+  Descriptor(DescriptorType type,
+             VkDevice device,
+             uint32_t desc_set,
+             uint32_t binding);
 
   ~Descriptor();
 
@@ -80,10 +83,37 @@ class Descriptor {
     return type_ == DescriptorType::kDynamicStorageBuffer;
   }
 
- private:
-  DescriptorType type_ = DescriptorType::kSampledImage;
+  bool IsDataAlreadySent() { return is_data_already_sent_; }
+
+  virtual Result UpdateDescriptorSet(VkDescriptorSet descriptor_set) = 0;
+  virtual void SendDataToGPUIfNeeded(VkCommandBuffer command) = 0;
+  virtual void Shutdown() = 0;
+
+ protected:
+  Result UpdateDescriptorSetForBuffer(
+      VkDescriptorSet descriptor_set,
+      VkDescriptorType descriptor_type,
+      const VkDescriptorBufferInfo& buffer_info);
+  Result UpdateDescriptorSetForImage(VkDescriptorSet descriptor_set,
+                                     VkDescriptorType descriptor_type,
+                                     const VkDescriptorImageInfo& image_info);
+  Result UpdateDescriptorSetForBufferView(VkDescriptorSet descriptor_set,
+                                          VkDescriptorType descriptor_type,
+                                          const VkBufferView& texel_view);
+
+  void SetDataSent() { is_data_already_sent_ = true; }
+
   uint32_t descriptor_set_ = 0;
   uint32_t binding_ = 0;
+
+ private:
+  VkWriteDescriptorSet GetWriteDescriptorSet(
+      VkDescriptorSet descriptor_set,
+      VkDescriptorType descriptor_type) const;
+
+  DescriptorType type_ = DescriptorType::kSampledImage;
+  bool is_data_already_sent_ = false;
+  VkDevice device_ = VK_NULL_HANDLE;
 };
 
 }  // namespace vulkan
