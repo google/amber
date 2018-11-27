@@ -15,6 +15,7 @@
 #ifndef SRC_DAWN_ENGINE_DAWN_H_
 #define SRC_DAWN_ENGINE_DAWN_H_
 
+#include <cstdint>
 #include <unordered_map>
 #include <vector>
 
@@ -69,22 +70,22 @@ class EngineDawn : public Engine {
 
  private:
   // Creates a command buffer builder if it doesn't already exist.
-  Result EnsureCommandBufferBuilderExists();
+  Result CreateCommandBufferBuilderIfNeeded();
   // Destroys the current command buffer builder.
-  void ResetCommandBufferBuilder();
+  void DestroyCommandBufferBuilder();
   // Creates Dawn objects necessary for a render pipeline.  This creates
   // a framebuffer texture, a framebuffer buffer, and a command buffer
   // builder.  Returns a result code.
-  Result EnsureRenderObjectsExist();
-  // If they don't already exist, creats the framebuffer texture for use
+  Result CreateRenderObjectsIfNeeded();
+  // If they don't already exist, creates the framebuffer texture for use
   // on the device, the buffer on the host that will eventually hold the
-  // resulting pixes for use in checking expectations, and bookkeeping info
+  // resulting pixels for use in checking expectations, and bookkeeping info
   // for that host-side buffer.
-  Result EnsureFramebufferExists();
+  Result CreateFramebufferIfNeeded();
 
   ::dawn::Device device_;
   ::dawn::Queue queue_;
-  ::dawn::CommandBufferBuilder cbb_;
+  ::dawn::CommandBufferBuilder command_buffer_builder_;
 
   std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
       module_for_type_;

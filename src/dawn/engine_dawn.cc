@@ -15,6 +15,8 @@
 #include "src/dawn/engine_dawn.h"
 
 #include <algorithm>
+#include <cassert>
+#include <cstdint>
 #include <utility>
 #include <vector>
 
@@ -29,19 +31,22 @@ namespace {
 
 // The dimensions of the framebuffer.  The code also assumes the framebuffer
 // is 2D and does not have any array layers.
-enum { kFramebufferWidth = 250, kFramebufferHeight = 250 };
+const uint32_t kFramebufferWidth = 250, kFramebufferHeight = 250;
 // The pipeline output color attachment slot expected for the framebuffer.
-enum { kFramebufferSlot = 0 };
+const uint32_t kFramebufferSlot = 0;
 // The minimum multiple row pitch observed on Dawn on Metal.  Increase this
 // as needed for other Dawn backends.
-enum { kImageRowPitch = 256 };
+const uint32_t kImageRowPitch = 256;
 const auto kFramebufferFormat = ::dawn::TextureFormat::R8G8B8A8Unorm;
 
 // Creates a device-side texture for the framebuffer, and returns it through
-// |result_ptr|. Returns a result code.
+// |result_ptr|.  Assumes the device exists and is valid.  Assumes result_ptr
+// is not null.  Returns a result code.
 Result MakeFramebufferTexture(const ::dawn::Device& device,
                               ::dawn::TextureFormat format,
                               ::dawn::Texture* result_ptr) {
+  assert(device);
+  assert(result_ptr);
   ::dawn::TextureDescriptor descriptor;
   descriptor.dimension = ::dawn::TextureDimension::e2D;
   descriptor.size.width = kFramebufferWidth;
@@ -52,7 +57,10 @@ Result MakeFramebufferTexture(const ::dawn::Device& device,
   descriptor.levelCount = 1;
   descriptor.usage = ::dawn::TextureUsageBit::TransferSrc |
                      ::dawn::TextureUsageBit::OutputAttachment;
+  // TODO(dneto): Get a better message by using the Dawn error callback.
   *result_ptr = device.CreateTexture(&descriptor);
+  if (*result_ptr)
+    return Result("Dawn: Failed to allocate a framebuffer texture");
   return {};
 }
 
@@ -62,17 +70,24 @@ Result MakeFramebufferTexture(const ::dawn::Device& device,
 Result MakeFramebufferBuffer(const ::dawn::Device& device,
                              ::dawn::TextureFormat format,
                              ::dawn::Buffer* result_ptr,
+                             uint32_t* texel_stride_ptr,
                              uint32_t* row_stride_ptr,
                              uint32_t* size_ptr) {
+  assert(device);
+  assert(result_ptr);
+  assert(texel_stride_ptr);
+  assert(row_stride_ptr);
+  assert(size_ptr);
+
   ::dawn::BufferDescriptor descriptor;
   // TODO(dneto): Handle other formats.
   if (format != ::dawn::TextureFormat::R8G8B8A8Unorm) {
-    Result("Dawn::MakeFramebufferBuffer: Unhandled framebuffer format");
+    return Result("Dawn::MakeFramebufferBuffer: Unhandled framebuffer format");
   }
   // Number of bytes for each texel in the default format.
-  const uint32_t texel_size = 4;
+  const uint32_t default_texel_bytes = 4;
 
-  uint32_t row_stride = texel_size * kFramebufferWidth;
+  uint32_t row_stride = default_texel_bytes * kFramebufferWidth;
   {
     // Round up the stride to the minimum image row pitch.
     const uint32_t spillover = row_stride % kImageRowPitch;
@@ -85,6 +100,7 @@ Result MakeFramebufferBuffer(const ::dawn::Device& device,
   descriptor.usage =
       ::dawn::BufferUsageBit::TransferDst | ::dawn::BufferUsageBit::MapRead;
   *result_ptr = device.CreateBuffer(&descriptor);
+  *texel_stride_ptr = default_texel_bytes;
   *row_stride_ptr = row_stride;
   *size_ptr = descriptor.size;
   return {};
@@ -98,8 +114,9 @@ struct MapResult {
 
 // Handles the update from an asynchronous buffer map request, updating the
 // state of the MapResult object hidden inside the |userdata| parameter.
-// On a successfulmapping outcome, set the data pointer in the map result.
-// Otherwise set the map result object to an error.
+// On a successful mapping outcome, set the data pointer in the map result.
+// Otherwise set the map result object to an error, and the data member is
+// not changed.
 void HandleBufferMapCallback(dawnBufferMapAsyncStatus status,
                              const void* data,
                              dawnCallbackUserdata userdata) {
@@ -109,21 +126,23 @@ void HandleBufferMapCallback(dawnBufferMapAsyncStatus status,
       map_result.data = data;
       break;
     case DAWN_BUFFER_MAP_ASYNC_STATUS_ERROR:
-      map_result.result = Result{"Buffer map for reading failed: error"};
+      map_result.result = Result("Buffer map for reading failed: error");
       break;
     case DAWN_BUFFER_MAP_ASYNC_STATUS_UNKNOWN:
     case DAWN_BUFFER_MAP_ASYNC_STATUS_FORCE32:
-      map_result.result = Result{"Buffer map for reading failed: unknown"};
+      map_result.result = Result("Buffer map for reading failed: unknown");
       break;
     case DAWN_BUFFER_MAP_ASYNC_STATUS_CONTEXT_LOST:
-      map_result.result = Result{"Buffer map for reading failed: context lost"};
+      map_result.result = Result("Buffer map for reading failed: context lost");
       break;
   }
 }
 
-// Maps the given buffer and sends its data pointer back through |data_ptr|.
-// Assumes the buffer has usage bit dawn::BufferUsageBit::MapRead set.
-// Returns a result code.  This can fail if the context is lost, for example.
+// Maps the given buffer.  Assumes the buffer has usage bit
+// dawn::BufferUsageBit::MapRead set.  Returns a MapResult structure, with the
+// status saved in the .result member and the host pointer to the mapped data
+// in the |.data| member. Mapping a buffer can fail if the context is lost, for
+// example. In the failure case, the .data member of the result will be null.
 MapResult MapBuffer(const ::dawn::Device& device,
                     const ::dawn::Buffer& buf,
                     uint32_t size) {
@@ -132,16 +151,16 @@ MapResult MapBuffer(const ::dawn::Device& device,
                    static_cast<dawnCallbackUserdata>(
                        reinterpret_cast<uintptr_t>(&map_result)));
   device.Tick();
-  // Wait until the callback has been processed.
-  unsigned const max_iters = 100;
-  unsigned const one_second = 1000000;
-  for (unsigned iters = 0, min_interval = 1, max_interval = one_second,
-                interval = min_interval;
+  // Wait until the callback has been processed.  Use an exponential backoff
+  // interval, but cap it at one second intervals.  But never loop forever.
+  const int max_iters = 100;
+  const int one_second_in_us = 1000000;
+  for (int iters = 0, interval = 1;
        !map_result.data && map_result.result.IsSuccess();
-       iters++, interval = std::min(2 * interval, max_interval)) {
+       iters++, interval = std::min(2 * interval, one_second_in_us)) {
     device.Tick();
     if (iters > max_iters) {
-      map_result.result = Result{"MapBuffer timed out after 100 iterations"};
+      map_result.result = Result("MapBuffer timed out after 100 iterations");
       break;
     }
     USleep(interval);
@@ -259,8 +278,8 @@ Result EngineDawn::DoClearDepth(const ClearDepthCommand* command) {
   return {};
 }
 
-Result EngineDawn::DoClear(const ClearCommand* cmd) {
-  Result result = EnsureRenderObjectsExist();
+Result EngineDawn::DoClear(const ClearCommand*) {
+  Result result = CreateRenderObjectsIfNeeded();
   if (!result.IsSuccess())
     return result;
 
@@ -276,7 +295,7 @@ Result EngineDawn::DoClear(const ClearCommand* cmd) {
                                         clear_color.GetG(), clear_color.GetB(),
                                         clear_color.GetA())
           .GetResult();
-  cbb_.BeginRenderPass(rpd).EndPass();
+  command_buffer_builder_.BeginRenderPass(rpd).EndPass();
   return {};
 }
 
@@ -305,18 +324,15 @@ Result EngineDawn::DoBuffer(const BufferCommand*) {
   return Result("Dawn:DoBuffer not implemented");
 }
 
-Result EngineDawn::DoProcessCommands(uint32_t* stride,
+Result EngineDawn::DoProcessCommands(uint32_t* texel_stride,
                                      uint32_t* width,
                                      uint32_t* height,
                                      const void** buf_ptr) {
-  if (!stride)
-    Result("Dawn::DoProcessCommands: stride return parameter not set");
-  if (!width)
-    Result("Dawn::DoProcessCommands: width return parameter not set");
-  if (!height)
-    Result("Dawn::DoProcessCommands: height return parameter not set");
-  if (!buf_ptr)
-    Result("Dawn::DoProcessCommands: buffer return parameter not set");
+  assert(texel_stride);
+  // TODO(dneto): Need to pass back a row_stride.
+  assert(width);
+  assert(height);
+  assert(buf_ptr);
 
   Result result;
 
@@ -332,21 +348,25 @@ Result EngineDawn::DoProcessCommands(uint32_t* stride,
         "any graphics pipeline commands?");
   }
 
-  result = EnsureCommandBufferBuilderExists();
+  result = CreateCommandBufferBuilderIfNeeded();
   if (!result.IsSuccess())
     return result;
 
-  cbb_.CopyTextureToBuffer(render_pipeline_info_.fb_texture, 0, 0, 0,
-                           kFramebufferWidth, kFramebufferHeight, 1, 0, 0,
-                           fb_buffer, 0 /* buffer offset */,
-                           render_pipeline_info_.fb_row_stride);
+  {
+    const int x = 0, y = 0, z = 0, depth = 1, level = 0, slice = 0,
+              buffer_offset = 0;
+    command_buffer_builder_.CopyTextureToBuffer(
+        render_pipeline_info_.fb_texture, x, y, z, kFramebufferWidth,
+        kFramebufferHeight, depth, level, slice, fb_buffer, buffer_offset,
+        render_pipeline_info_.fb_row_stride);
+  }
 
   // Make sure we have a queue.
   if (!queue_)
     queue_ = device_.CreateQueue();
 
   // Now run the commands.
-  auto command_buffer = cbb_.GetResult();
+  auto command_buffer = command_buffer_builder_.GetResult();
 
   if (render_pipeline_info_.fb_is_mapped) {
     fb_buffer.Unmap();
@@ -356,44 +376,46 @@ Result EngineDawn::DoProcessCommands(uint32_t* stride,
   queue_.Submit(1, &command_buffer);
 
   // And any further commands start afresh.
-  ResetCommandBufferBuilder();
+  DestroyCommandBufferBuilder();
 
   MapResult map = MapBuffer(device_, fb_buffer, render_pipeline_info_.fb_size);
-  if (map.result.IsSuccess()) {
-    render_pipeline_info_.fb_is_mapped = true;
-  }
+  render_pipeline_info_.fb_is_mapped = map.result.IsSuccess();
 
+  *texel_stride = render_pipeline_info_.fb_texel_stride;
+  *width = kFramebufferWidth;
+  *height = kFramebufferHeight;
   *buf_ptr = map.data;
   return map.result;
 }
 
-Result EngineDawn::EnsureCommandBufferBuilderExists() {
-  if (!cbb_) {
-    if (!device_) {
-      return Result{
-          "EngineDawn: Can't create command buffer builder: device is not "
-          "initialized"};
-    }
-    cbb_ = device_.CreateCommandBufferBuilder();
-    if (!cbb_) {
-      return Result{"EngineDawn: Can't create command buffer builder"};
-    }
+Result EngineDawn::CreateCommandBufferBuilderIfNeeded() {
+  if (command_buffer_builder_)
+    return {};
+
+  // Create the command buffer builder because it doesn't exist yet.
+  if (!device_) {
+    return Result(
+        "EngineDawn: Can't create command buffer builder: device is not "
+        "initialized");
   }
-  return {};
+  command_buffer_builder_ = device_.CreateCommandBufferBuilder();
+  if (command_buffer_builder_)
+    return {};
+  return Result("EngineDawn: Can't create command buffer builder");
 }
 
-void EngineDawn::ResetCommandBufferBuilder() {
-  cbb_ = ::dawn::CommandBufferBuilder();
+void EngineDawn::DestroyCommandBufferBuilder() {
+  command_buffer_builder_ = ::dawn::CommandBufferBuilder();
 }
 
-Result EngineDawn::EnsureRenderObjectsExist() {
-  Result result = EnsureCommandBufferBuilderExists();
+Result EngineDawn::CreateRenderObjectsIfNeeded() {
+  Result result = CreateCommandBufferBuilderIfNeeded();
   if (!result.IsSuccess())
     return result;
-  return EnsureFramebufferExists();
+  return CreateFramebufferIfNeeded();
 }
 
-Result EngineDawn::EnsureFramebufferExists() {
+Result EngineDawn::CreateFramebufferIfNeeded() {
   Result result;
   {
     ::dawn::Texture fb_texture;
@@ -405,13 +427,15 @@ Result EngineDawn::EnsureFramebufferExists() {
 
   {
     ::dawn::Buffer fb_buffer;
+    uint32_t texel_stride = 0;
     uint32_t row_stride = 0;
     uint32_t size = 0;
     result = MakeFramebufferBuffer(device_, kFramebufferFormat, &fb_buffer,
-                                   &row_stride, &size);
+                                   &texel_stride, &row_stride, &size);
     if (!result.IsSuccess())
       return result;
     render_pipeline_info_.fb_buffer = std::move(fb_buffer);
+    render_pipeline_info_.fb_texel_stride = texel_stride;
     render_pipeline_info_.fb_row_stride = row_stride;
     render_pipeline_info_.fb_size = size;
     render_pipeline_info_.fb_is_mapped = false;

@@ -41,6 +41,9 @@ struct RenderPipelineInfo {
   // The buffer to which we will copy the rendered pixel values, for
   // use on the host.
   ::dawn::Buffer fb_buffer;
+  // The number of bytes between successive texels in framebuffer host-side
+  // buffer.
+  uint32_t fb_texel_stride = 0;
   // The number of bytes between each row of texels in framebuffer host-side
   // buffer.
   uint32_t fb_row_stride = 0;
