@@ -60,8 +60,8 @@ Result MakeFramebufferTexture(const ::dawn::Device& device,
   // TODO(dneto): Get a better message by using the Dawn error callback.
   *result_ptr = device.CreateTexture(&descriptor);
   if (*result_ptr)
-    return Result("Dawn: Failed to allocate a framebuffer texture");
-  return {};
+    return {};
+  return Result("Dawn: Failed to allocate a framebuffer texture");
 }
 
 // Creates a host-side buffer for the framebuffer, and returns it through
