@@ -16,6 +16,7 @@ set(VULKAN_ENGINE_SOURCES
     bit_copy.cc
     buffer.cc
     command.cc
+    compute_pipeline.cc
     descriptor.cc
     device.cc
     engine_vulkan.cc

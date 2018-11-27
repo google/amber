@@ -103,18 +103,19 @@ VkPrimitiveTopology ToVkTopology(Topology topology) {
 }  // namespace
 
 GraphicsPipeline::GraphicsPipeline(
-    PipelineType type,
     VkDevice device,
     const VkPhysicalDeviceMemoryProperties& properties,
     VkFormat color_format,
     VkFormat depth_stencil_format,
     uint32_t fence_timeout_ms,
-    std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info)
-    : Pipeline(type, device, properties),
+    const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
+    : Pipeline(PipelineType::kGraphics,
+               device,
+               properties,
+               fence_timeout_ms,
+               shader_stage_info),
       color_format_(color_format),
-      depth_stencil_format_(depth_stencil_format),
-      shader_stage_info_(shader_stage_info),
-      fence_timeout_ms_(fence_timeout_ms) {}
+      depth_stencil_format_(depth_stencil_format) {}
 
 GraphicsPipeline::~GraphicsPipeline() = default;
 
@@ -250,10 +251,12 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   viewport_info.scissorCount = 1;
   viewport_info.pScissors = &scissor;
 
+  const auto& shader_stage_info = GetShaderStageInfo();
+
   VkGraphicsPipelineCreateInfo pipeline_info = {};
   pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-  pipeline_info.stageCount = static_cast<uint32_t>(shader_stage_info_.size());
-  pipeline_info.pStages = shader_stage_info_.data();
+  pipeline_info.stageCount = static_cast<uint32_t>(shader_stage_info.size());
+  pipeline_info.pStages = shader_stage_info.data();
   pipeline_info.pVertexInputState = &vertex_input_info;
   pipeline_info.pInputAssemblyState = &input_assembly_info;
   pipeline_info.pViewportState = &viewport_info;
@@ -519,7 +522,7 @@ Result GraphicsPipeline::ProcessCommands() {
   if (!r.IsSuccess())
     return r;
 
-  return command_->SubmitAndReset(fence_timeout_ms_);
+  return command_->SubmitAndReset(GetFenceTimeout());
 }
 
 void GraphicsPipeline::Shutdown() {
@@ -527,7 +530,7 @@ void GraphicsPipeline::Shutdown() {
 
   Result r = command_->End();
   if (r.IsSuccess())
-    command_->SubmitAndReset(fence_timeout_ms_);
+    command_->SubmitAndReset(GetFenceTimeout());
 
   Pipeline::Shutdown();
   frame_->Shutdown();

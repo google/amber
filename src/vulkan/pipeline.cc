@@ -20,21 +20,33 @@
 
 #include "src/command.h"
 #include "src/make_unique.h"
+#include "src/vulkan/compute_pipeline.h"
 #include "src/vulkan/graphics_pipeline.h"
 #include "src/vulkan/storage_buffer_descriptor.h"
 
 namespace amber {
 namespace vulkan {
 
-Pipeline::Pipeline(PipelineType type,
-                   VkDevice device,
-                   const VkPhysicalDeviceMemoryProperties& properties)
-    : device_(device), memory_properties_(properties), pipeline_type_(type) {}
+Pipeline::Pipeline(
+    PipelineType type,
+    VkDevice device,
+    const VkPhysicalDeviceMemoryProperties& properties,
+    uint32_t fence_timeout_ms,
+    const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
+    : device_(device),
+      memory_properties_(properties),
+      pipeline_type_(type),
+      fence_timeout_ms_(fence_timeout_ms),
+      shader_stage_info_(shader_stage_info) {}
 
 Pipeline::~Pipeline() = default;
 
 GraphicsPipeline* Pipeline::AsGraphics() {
   return static_cast<GraphicsPipeline*>(this);
+}
+
+ComputePipeline* Pipeline::AsCompute() {
+  return static_cast<ComputePipeline*>(this);
 }
 
 Result Pipeline::InitializeCommandBuffer(VkCommandPool pool, VkQueue queue) {
@@ -47,11 +59,16 @@ Result Pipeline::InitializeCommandBuffer(VkCommandPool pool, VkQueue queue) {
 }
 
 void Pipeline::Shutdown() {
+  Result r = command_->End();
+  if (r.IsSuccess())
+    command_->SubmitAndReset(fence_timeout_ms_);
+
   // TODO(jaebaek): destroy pipeline_cache_ and pipeline_
   DestoryDescriptorPools();
   DestoryDescriptorSetLayouts();
   command_->Shutdown();
   vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
+  vkDestroyPipeline(device_, pipeline_, nullptr);
 }
 
 void Pipeline::DestoryDescriptorSetLayouts() {
