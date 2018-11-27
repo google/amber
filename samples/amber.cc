@@ -104,6 +104,9 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->show_version_info = true;
     } else if (arg == "-p") {
       opts->parse_only = true;
+    } else if (arg.size() > 0 && arg[0] == '-') {
+      std::cerr << "Unrecognized option " << arg << std::endl;
+      return false;
     } else {
       opts->input_filename = args[i];
     }
