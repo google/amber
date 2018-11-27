@@ -16,6 +16,7 @@
 
 #include <cassert>
 #include <limits>
+#include <string>
 #include <utility>
 #include <vector>
 
