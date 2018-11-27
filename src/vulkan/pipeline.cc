@@ -36,8 +36,8 @@ Pipeline::Pipeline(
     : device_(device),
       memory_properties_(properties),
       pipeline_type_(type),
-      fence_timeout_ms_(fence_timeout_ms),
-      shader_stage_info_(shader_stage_info) {}
+      shader_stage_info_(shader_stage_info),
+      fence_timeout_ms_(fence_timeout_ms) {}
 
 Pipeline::~Pipeline() = default;
 
