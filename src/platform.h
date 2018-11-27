@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_DAWN_PLATFORM_H_
-#define SRC_DAWN_PLATFORM_H_
+#ifndef SRC_PLATFORM_H_
+#define SRC_PLATFORM_H_
 
 namespace amber {
 namespace dawn {
@@ -49,4 +49,4 @@ namespace dawn {
 }  // namespace dawn
 }  // namespace amber
 
-#endif  // SRC_DAWN_PLATFORM_H_
+#endif  // SRC_PLATFORM_H_
