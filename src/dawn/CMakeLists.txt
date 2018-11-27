@@ -31,5 +31,5 @@ amber_default_compile_options(libamberenginedawn)
 set_target_properties(libamberenginedawn PROPERTIES
     OUTPUT_NAME "amberenginedawn"
 )
-target_link_libraries(libamberenginedawn Dawn::dawn_native Dawn::dawn
+target_link_libraries(libamberenginedawn libamber Dawn::dawn_native Dawn::dawn
   ${AMBER_EXTRA_LIBS})

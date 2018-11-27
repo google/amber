@@ -25,9 +25,9 @@ namespace {
 
 using DawnComputePipelineInfoTest = testing::Test;
 
-TEST_F(DawnComputePipelineInfoTest, DefaultConvertsToFalse) {
+TEST_F(DawnComputePipelineInfoTest, DefaultValueHasNoShader) {
   ComputePipelineInfo cpi;
-  EXPECT_EQ(false, cpi.IsConfigured());
+  EXPECT_FALSE(static_cast<bool>(cpi.compute_shader));
 }
 
 // We can't create Dawn shader modules without a Dawn device.
@@ -35,55 +35,21 @@ TEST_F(DawnComputePipelineInfoTest, DefaultConvertsToFalse) {
 
 using DawnRenderPipelineInfoTest = testing::Test;
 
-TEST_F(DawnRenderPipelineInfoTest, DefaultConvertsToFalse) {
+TEST_F(DawnRenderPipelineInfoTest, DefaultValuesForMembers) {
   RenderPipelineInfo rpi;
-  EXPECT_EQ(false, rpi.IsConfigured());
-}
-
-TEST_F(DawnRenderPipelineInfoTest, DefaultClearColorIsAllZeroes) {
-  RenderPipelineInfo rpi;
-  const ClearColorCommand& color = rpi.GetClearColorValue();
-  EXPECT_FLOAT_EQ(color.GetR(), 0.0f);
-  EXPECT_FLOAT_EQ(color.GetG(), 0.0f);
-  EXPECT_FLOAT_EQ(color.GetB(), 0.0f);
-  EXPECT_FLOAT_EQ(color.GetA(), 0.0f);
-}
-
-TEST_F(DawnRenderPipelineInfoTest, DefaultClearDepthIsOne) {
-  RenderPipelineInfo rpi;
-  EXPECT_FLOAT_EQ(1.0f, rpi.GetClearDepthValue());
-}
-
-TEST_F(DawnRenderPipelineInfoTest, DefaultClearStencilIsZero) {
-  RenderPipelineInfo rpi;
-  EXPECT_EQ(uint32_t(0), rpi.GetClearStencilValue());
-}
-
-TEST_F(DawnRenderPipelineInfoTest, SetClearColor) {
-  RenderPipelineInfo rpi;
-  ClearColorCommand ccc;
-  ccc.SetR(1.0f);
-  ccc.SetG(2.0f);
-  ccc.SetB(3.0f);
-  ccc.SetA(-4.0f);
-  rpi.SetClearColorValue(ccc);
-  const ClearColorCommand& color = rpi.GetClearColorValue();
-  EXPECT_FLOAT_EQ(1.0f, color.GetR());
-  EXPECT_FLOAT_EQ(2.0f, color.GetG());
-  EXPECT_FLOAT_EQ(3.0f, color.GetB());
-  EXPECT_FLOAT_EQ(-4.0f, color.GetA());
-}
-
-TEST_F(DawnRenderPipelineInfoTest, SetClearDepth) {
-  RenderPipelineInfo rpi;
-  rpi.SetClearDepthValue(-12.0f);
-  EXPECT_FLOAT_EQ(-12.0f, rpi.GetClearDepthValue());
-}
-
-TEST_F(DawnRenderPipelineInfoTest, SetClearStencil) {
-  RenderPipelineInfo rpi;
-  rpi.SetClearStencilValue(2172);
-  EXPECT_EQ(2172, rpi.GetClearStencilValue());
+  EXPECT_FALSE(static_cast<bool>(rpi.vertex_shader));
+  EXPECT_FALSE(static_cast<bool>(rpi.fragment_shader));
+  EXPECT_FLOAT_EQ(0.0f, rpi.clear_color_value.GetR());
+  EXPECT_FLOAT_EQ(0.0f, rpi.clear_color_value.GetG());
+  EXPECT_FLOAT_EQ(0.0f, rpi.clear_color_value.GetB());
+  EXPECT_FLOAT_EQ(0.0f, rpi.clear_color_value.GetA());
+  EXPECT_FLOAT_EQ(1.0f, rpi.clear_depth_value);
+  EXPECT_EQ(0u, rpi.clear_stencil_value);
+  EXPECT_FALSE(static_cast<bool>(rpi.fb_texture));
+  EXPECT_FALSE(static_cast<bool>(rpi.fb_buffer));
+  EXPECT_EQ(0u, rpi.fb_row_stride);
+  EXPECT_EQ(0u, rpi.fb_size);
+  EXPECT_FALSE(rpi.fb_is_mapped);
 }
 
 }  // namespace

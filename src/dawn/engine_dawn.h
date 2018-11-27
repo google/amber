@@ -15,6 +15,7 @@
 #ifndef SRC_DAWN_ENGINE_DAWN_H_
 #define SRC_DAWN_ENGINE_DAWN_H_
 
+#include <cstdint>
 #include <unordered_map>
 #include <vector>
 
@@ -67,23 +68,31 @@ class EngineDawn : public Engine {
                            uint32_t* height,
                            const void** buf) override;
 
-  // Methods for tests.
-  const std::vector<Command>& GetPendingWorkForTest() const {
-    return pending_work_;
-  }
-
  private:
+  // Creates a command buffer builder if it doesn't already exist.
+  Result CreateCommandBufferBuilderIfNeeded();
+  // Destroys the current command buffer builder.
+  void DestroyCommandBufferBuilder();
+  // Creates Dawn objects necessary for a render pipeline.  This creates
+  // a framebuffer texture, a framebuffer buffer, and a command buffer
+  // builder.  Returns a result code.
+  Result CreateRenderObjectsIfNeeded();
+  // If they don't already exist, creates the framebuffer texture for use
+  // on the device, the buffer on the host that will eventually hold the
+  // resulting pixels for use in checking expectations, and bookkeeping info
+  // for that host-side buffer.
+  Result CreateFramebufferIfNeeded();
+
   ::dawn::Device device_;
+  ::dawn::Queue queue_;
+  ::dawn::CommandBufferBuilder command_buffer_builder_;
+
   std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
       module_for_type_;
   // Accumulated data for the current compute pipeline.
   ComputePipelineInfo compute_pipeline_info_;
   // Accumulated data for the current render pipeline.
   RenderPipelineInfo render_pipeline_info_;
-
-  // The work that is yet to be done.  Various Do* methods add to this.  The
-  // work is actually performed when DoProcessCommands is called.
-  std::vector<Command> pending_work_;
 };
 
 }  // namespace dawn
