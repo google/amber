@@ -12,14 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/amberscript/shader.h"
+#include "src/sleep.h"
+
+#include "src/platform.h"
+
+#if AMBER_PLATFORM_WINDOWS
+#include <windows.h>
+#elif AMBER_PLATFORM_POSIX
+#include <unistd.h>
+#else
+#error "Unknown platform"
+#endif
 
 namespace amber {
-namespace amberscript {
 
-Shader::Shader(ShaderType type) : shader_type_(type) {}
+void USleep(uint32_t microseconds) {
+#if AMBER_PLATFORM_WINDOWS
+  // The Windows call uses milliseconds.
+  Sleep(static_cast<DWORD>((microseconds + 999) / 1000));
+#elif AMBER_PLATFORM_POSIX
+  usleep(microseconds);
+#else
+#error "Implement amber::USleep"
+#endif
+}
 
-Shader::~Shader() = default;
-
-}  // namespace amberscript
 }  // namespace amber

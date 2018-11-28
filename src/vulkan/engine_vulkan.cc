@@ -18,6 +18,8 @@
 #include <cassert>
 
 #include "src/make_unique.h"
+#include "src/vulkan/compute_pipeline.h"
+#include "src/vulkan/descriptor.h"
 #include "src/vulkan/format_data.h"
 #include "src/vulkan/graphics_pipeline.h"
 
@@ -120,8 +122,13 @@ Result EngineVulkan::AddRequirement(Feature feature,
 }
 
 Result EngineVulkan::CreatePipeline(PipelineType type) {
-  if (type == PipelineType::kCompute)
-    return Result("Vulkan::Compute Pipeline Not Implemented");
+  if (type == PipelineType::kCompute) {
+    pipeline_ = MakeUnique<ComputePipeline>(
+        device_->GetDevice(), device_->GetPhysicalMemoryProperties(),
+        fence_timeout_ms_, GetShaderStageInfo());
+    return pipeline_->AsCompute()->Initialize(pool_->GetCommandPool(),
+                                              device_->GetQueue());
+  }
 
   VkFormat frame_buffer_format = kDefaultColorFormat;
   auto it_frame_buffer =
@@ -145,7 +152,7 @@ Result EngineVulkan::CreatePipeline(PipelineType type) {
   }
 
   pipeline_ = MakeUnique<GraphicsPipeline>(
-      type, device_->GetDevice(), device_->GetPhysicalMemoryProperties(),
+      device_->GetDevice(), device_->GetPhysicalMemoryProperties(),
       frame_buffer_format, depth_stencil_format, fence_timeout_ms_,
       GetShaderStageInfo());
 
@@ -156,9 +163,6 @@ Result EngineVulkan::CreatePipeline(PipelineType type) {
 
 Result EngineVulkan::SetShader(ShaderType type,
                                const std::vector<uint32_t>& data) {
-  if (type == ShaderType::kCompute)
-    return Result("Vulkan::Compute Pipeline Not Implemented");
-
   VkShaderModuleCreateInfo info = {};
   info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   info.codeSize = data.size() * sizeof(uint32_t);
@@ -251,8 +255,12 @@ Result EngineVulkan::DoDrawArrays(const DrawArraysCommand* command) {
   return pipeline_->AsGraphics()->Draw(command);
 }
 
-Result EngineVulkan::DoCompute(const ComputeCommand*) {
-  return Result("Vulkan::DoCompute Not Implemented");
+Result EngineVulkan::DoCompute(const ComputeCommand* command) {
+  if (pipeline_->IsGraphics())
+    return Result("Vulkan: Compute called for graphics pipeline.");
+
+  return pipeline_->AsCompute()->Compute(command->GetX(), command->GetY(),
+                                         command->GetZ());
 }
 
 Result EngineVulkan::DoEntryPoint(const EntryPointCommand*) {
@@ -288,8 +296,11 @@ Result EngineVulkan::DoProcessCommands(uint32_t* stride,
   return r;
 }
 
-Result EngineVulkan::DoBuffer(const BufferCommand*) {
-  return Result("Vulkan::DoBuffer Not Implemented");
+Result EngineVulkan::DoBuffer(const BufferCommand* command) {
+  if (!command->IsSSBO())
+    return Result("Vulkan::DoBuffer non-SSBO descriptor not implemented");
+
+  return pipeline_->AddDescriptor(command);
 }
 
 }  // namespace vulkan

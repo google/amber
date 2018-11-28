@@ -329,7 +329,11 @@ class BufferCommand : public Command {
   void SetDatumType(const DatumType& type) { datum_type_ = type; }
   const DatumType& GetDatumType() const { return datum_type_; }
 
-  void SetValues(std::vector<Value>&& values) { values_ = std::move(values); }
+  void SetValues(std::vector<Value>&& values) {
+    values_ = std::move(values);
+    size_ = static_cast<uint32_t>(values_.size() * datum_type_.SizeInBytes()) /
+            datum_type_.ColumnCount() / datum_type_.RowCount();
+  }
   const std::vector<Value>& GetValues() const { return values_; }
 
  private:

@@ -28,10 +28,6 @@ IndicesNode* Node::AsIndices() {
   return static_cast<IndicesNode*>(this);
 }
 
-ShaderNode* Node::AsShader() {
-  return static_cast<ShaderNode*>(this);
-}
-
 RequireNode* Node::AsRequire() {
   return static_cast<RequireNode*>(this);
 }
@@ -43,11 +39,6 @@ TestNode* Node::AsTest() {
 VertexDataNode* Node::AsVertexData() {
   return static_cast<VertexDataNode*>(this);
 }
-
-ShaderNode::ShaderNode(ShaderType type, std::vector<uint32_t> shader)
-    : Node(NodeType::kShader), type_(type), shader_(std::move(shader)) {}
-
-ShaderNode::~ShaderNode() = default;
 
 RequireNode::RequireNode() : Node(NodeType::kRequire) {}
 

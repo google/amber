@@ -22,7 +22,6 @@
 #include <vector>
 
 #include "src/amberscript/pipeline.h"
-#include "src/amberscript/shader.h"
 #include "src/buffer.h"
 #include "src/script.h"
 
@@ -34,18 +33,6 @@ class Script : public amber::Script {
   Script();
   ~Script() override;
 
-  Result AddShader(std::unique_ptr<Shader> shader) {
-    if (name_to_shader_.count(shader->GetName()) > 0)
-      return Result("duplicate shader name provided");
-
-    shaders_.push_back(std::move(shader));
-    name_to_shader_[shaders_.back()->GetName()] = shaders_.back().get();
-    return {};
-  }
-  const std::vector<std::unique_ptr<Shader>>& GetShaders() const {
-    return shaders_;
-  }
-
   Result AddPipeline(std::unique_ptr<Pipeline> pipeline) {
     if (name_to_pipeline_.count(pipeline->GetName()) > 0)
       return Result("duplicate pipeline name provided");
@@ -54,6 +41,12 @@ class Script : public amber::Script {
     name_to_pipeline_[pipelines_.back()->GetName()] = pipelines_.back().get();
     return {};
   }
+
+  Pipeline* GetPipeline(const std::string& name) const {
+    auto it = name_to_pipeline_.find(name);
+    return it == name_to_pipeline_.end() ? nullptr : it->second;
+  }
+
   const std::vector<std::unique_ptr<Pipeline>>& GetPipelines() const {
     return pipelines_;
   }
@@ -67,30 +60,18 @@ class Script : public amber::Script {
     return {};
   }
 
-  const std::vector<std::unique_ptr<Buffer>>& GetBuffers() const {
-    return buffers_;
-  }
-
-  Shader* GetShader(const std::string& name) const {
-    auto it = name_to_shader_.find(name);
-    return it == name_to_shader_.end() ? nullptr : it->second;
-  }
-
-  Pipeline* GetPipeline(const std::string& name) const {
-    auto it = name_to_pipeline_.find(name);
-    return it == name_to_pipeline_.end() ? nullptr : it->second;
-  }
-
   Buffer* GetBuffer(const std::string& name) const {
     auto it = name_to_buffer_.find(name);
     return it == name_to_buffer_.end() ? nullptr : it->second;
   }
 
+  const std::vector<std::unique_ptr<Buffer>>& GetBuffers() const {
+    return buffers_;
+  }
+
  private:
-  std::map<std::string, Shader*> name_to_shader_;
   std::map<std::string, Pipeline*> name_to_pipeline_;
   std::map<std::string, Buffer*> name_to_buffer_;
-  std::vector<std::unique_ptr<Shader>> shaders_;
   std::vector<std::unique_ptr<Pipeline>> pipelines_;
   std::vector<std::unique_ptr<Buffer>> buffers_;
 };

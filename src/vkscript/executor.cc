@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "src/engine.h"
+#include "src/shader_compiler.h"
 #include "src/vkscript/nodes.h"
 #include "src/vkscript/script.h"
 
@@ -49,16 +50,21 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
 
   // Process Shader nodes
   PipelineType pipeline_type = PipelineType::kGraphics;
-  for (const auto& node : script->Nodes()) {
-    if (!node->IsShader())
-      continue;
+  for (const auto& shader : script->GetShaders()) {
+    ShaderCompiler sc;
 
-    const auto shader = node->AsShader();
-    Result r = engine->SetShader(shader->GetShaderType(), shader->GetData());
+    Result r;
+    std::vector<uint32_t> data;
+    std::tie(r, data) =
+        sc.Compile(shader->GetType(), shader->GetFormat(), shader->GetData());
     if (!r.IsSuccess())
       return r;
 
-    if (shader->GetShaderType() == ShaderType::kCompute)
+    r = engine->SetShader(shader->GetType(), data);
+    if (!r.IsSuccess())
+      return r;
+
+    if (shader->GetType() == ShaderType::kCompute)
       pipeline_type = PipelineType::kCompute;
   }
 

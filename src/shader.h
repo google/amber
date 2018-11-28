@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_AMBERSCRIPT_SHADER_H_
-#define SRC_AMBERSCRIPT_SHADER_H_
+#ifndef SRC_SHADER_H_
+#define SRC_SHADER_H_
 
 #include <string>
 
 #include "src/shader_data.h"
 
 namespace amber {
-namespace amberscript {
 
 class Shader {
  public:
@@ -45,7 +44,6 @@ class Shader {
   std::string name_;
 };
 
-}  // namespace amberscript
 }  // namespace amber
 
-#endif  // SRC_AMBERSCRIPT_SHADER_H_
+#endif  // SRC_SHADER_H_

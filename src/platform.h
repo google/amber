@@ -12,33 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/dawn/engine_dawn.h"
-
-#include "gtest/gtest.h"
+#ifndef SRC_PLATFORM_H_
+#define SRC_PLATFORM_H_
 
 namespace amber {
 namespace dawn {
 
-namespace {
+#if defined(_WIN32) || defined(_WIN64)
+#define AMBER_PLATFORM_WINDOWS 1
+#elif defined(__linux__)
+#define AMBER_PLATFORM_LINUX 1
+#define AMBER_PLATFORM_POSIX 1
+#elif defined(__APPLE__)
+#define AMBER_PLATFORM_APPLE 1
+#define AMBER_PLATFORM_POSIX 1
+#else
+#error "Unknown platform."
+#endif
 
-using EngineDawnTest = testing::Test;
+#if !defined(AMBER_PLATFORM_WINDOWS)
+#define AMBER_PLATFORM_WINDOWS 0
+#endif
 
-TEST_F(EngineDawnTest, PendingWorkDefaultIsEmpty) {
-  EngineDawn e;
-  auto& pending = e.GetPendingWorkForTest();
-  EXPECT_TRUE(pending.empty());
-}
+#if !defined(AMBER_PLATFORM_LINUX)
+#define AMBER_PLATFORM_LINUX 0
+#endif
 
-TEST_F(EngineDawnTest, ClearAppendsToPendingWork) {
-  EngineDawn e;
-  {
-    ClearCommand cc;
-    e.DoClear(&cc);
-  }
-  auto& pending = e.GetPendingWorkForTest();
-  EXPECT_EQ(1u, pending.size());
-  EXPECT_TRUE(pending[0].IsClear());
-}
-}  // namespace
+#if !defined(AMBER_PLATFORM_APPLE)
+#define AMBER_PLATFORM_APPLE 0
+#endif
+
+#if !defined(AMBER_PLATFORM_POSIX)
+#define AMBER_PLATFORM_POSIX 0
+#endif
+
 }  // namespace dawn
 }  // namespace amber
+
+#endif  // SRC_PLATFORM_H_

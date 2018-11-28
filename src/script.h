@@ -16,6 +16,14 @@
 #define SRC_SCRIPT_H_
 
 #include <cstdint>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "amber/result.h"
+#include "src/shader.h"
 
 namespace amber {
 
@@ -30,11 +38,31 @@ class Script {
     return script_type_ == ScriptType::kAmberScript;
   }
 
+  Result AddShader(std::unique_ptr<Shader> shader) {
+    if (name_to_shader_.count(shader->GetName()) > 0)
+      return Result("duplicate shader name provided");
+
+    shaders_.push_back(std::move(shader));
+    name_to_shader_[shaders_.back()->GetName()] = shaders_.back().get();
+    return {};
+  }
+
+  Shader* GetShader(const std::string& name) const {
+    auto it = name_to_shader_.find(name);
+    return it == name_to_shader_.end() ? nullptr : it->second;
+  }
+
+  const std::vector<std::unique_ptr<Shader>>& GetShaders() const {
+    return shaders_;
+  }
+
  protected:
   explicit Script(ScriptType);
 
  private:
   ScriptType script_type_;
+  std::map<std::string, Shader*> name_to_shader_;
+  std::vector<std::unique_ptr<Shader>> shaders_;
 };
 
 }  // namespace amber

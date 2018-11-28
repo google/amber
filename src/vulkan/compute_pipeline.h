@@ -12,37 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AMBER_RESULT_H_
-#define AMBER_RESULT_H_
+#ifndef SRC_VULKAN_COMPUTE_PIPELINE_H_
+#define SRC_VULKAN_COMPUTE_PIPELINE_H_
 
-#include <string>
 #include <vector>
 
+#include "amber/result.h"
+#include "src/vulkan/pipeline.h"
+#include "vulkan/vulkan.h"
+
 namespace amber {
+namespace vulkan {
 
-/// Holds the results for an operation.
-class Result {
+class ComputePipeline : public Pipeline {
  public:
-  /// Creates a result which succeeded.
-  Result();
-  /// Creates a result which failed and will return |err|.
-  explicit Result(const std::string& err);
-  Result(const Result&);
-  ~Result();
+  ComputePipeline(
+      VkDevice device,
+      const VkPhysicalDeviceMemoryProperties& properties,
+      uint32_t fence_timeout_ms,
+      const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
+  ~ComputePipeline() override;
 
-  Result& operator=(const Result&);
+  Result Initialize(VkCommandPool pool, VkQueue queue);
 
-  /// Returns true if the result is a success.
-  bool IsSuccess() const { return succeeded_; }
-
-  /// Returns the error string if |IsSuccess| is false.
-  const std::string& Error() const { return error_; }
+  Result Compute(uint32_t x, uint32_t y, uint32_t z);
 
  private:
-  bool succeeded_;
-  std::string error_;
+  Result CreateVkComputePipeline();
 };
 
+}  // namespace vulkan
 }  // namespace amber
 
-#endif  // AMBER_RESULT_H_
+#endif  // SRC_VULKAN_COMPUTE_PIPELINE_H_

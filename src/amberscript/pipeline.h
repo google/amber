@@ -19,7 +19,7 @@
 #include <vector>
 
 #include "amber/result.h"
-#include "src/amberscript/shader.h"
+#include "src/shader.h"
 
 namespace amber {
 namespace amberscript {

@@ -35,20 +35,18 @@ namespace vulkan {
 
 class GraphicsPipeline : public Pipeline {
  public:
-  GraphicsPipeline(PipelineType type,
-                   VkDevice device,
+  GraphicsPipeline(VkDevice device,
                    const VkPhysicalDeviceMemoryProperties& properties,
                    VkFormat color_format,
                    VkFormat depth_stencil_format,
                    uint32_t fence_timeout_ms,
-                   std::vector<VkPipelineShaderStageCreateInfo>);
+                   const std::vector<VkPipelineShaderStageCreateInfo>&);
   ~GraphicsPipeline() override;
 
   Result Initialize(uint32_t width,
                     uint32_t height,
                     VkCommandPool pool,
                     VkQueue queue);
-  void Shutdown() override;
 
   void SetBuffer(BufferType type,
                  uint8_t location,
@@ -69,6 +67,9 @@ class GraphicsPipeline : public Pipeline {
   Result Draw(const DrawArraysCommand* command);
 
   const FrameBuffer* GetFrame() const { return frame_.get(); }
+
+  // Pipeline
+  void Shutdown() override;
 
  private:
   enum class RenderPassState : uint8_t {
@@ -104,7 +105,6 @@ class GraphicsPipeline : public Pipeline {
 
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
 
-  uint32_t fence_timeout_ms_ = 100;
   uint32_t frame_width_ = 0;
   uint32_t frame_height_ = 0;
 
