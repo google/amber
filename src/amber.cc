@@ -14,7 +14,17 @@
 
 #include "amber/amber.h"
 
-#include "src/amber_impl.h"
+#include <memory>
+#include <string>
+
+#include "src/amberscript/executor.h"
+#include "src/amberscript/parser.h"
+#include "src/engine.h"
+#include "src/executor.h"
+#include "src/make_unique.h"
+#include "src/parser.h"
+#include "src/vkscript/executor.h"
+#include "src/vkscript/parser.h"
 
 namespace amber {
 
@@ -23,8 +33,40 @@ Amber::Amber() = default;
 Amber::~Amber() = default;
 
 amber::Result Amber::Execute(const std::string& input, const Options& opts) {
-  AmberImpl impl;
-  return impl.Execute(input, opts);
+  std::unique_ptr<Parser> parser;
+  std::unique_ptr<Executor> executor;
+  if (input.substr(0, 7) == "#!amber") {
+    parser = MakeUnique<amberscript::Parser>();
+    executor = MakeUnique<amberscript::Executor>();
+  } else {
+    parser = MakeUnique<vkscript::Parser>();
+    executor = MakeUnique<vkscript::Executor>();
+  }
+
+  Result r = parser->Parse(input);
+  if (!r.IsSuccess())
+    return r;
+
+  if (opts.parse_only)
+    return {};
+
+  auto engine = Engine::Create(opts.engine);
+  if (!engine)
+    return Result("Failed to create engine");
+
+  if (opts.default_device)
+    r = engine->InitializeWithDevice(opts.default_device);
+  else
+    r = engine->Initialize();
+
+  if (!r.IsSuccess())
+    return r;
+
+  r = executor->Execute(engine.get(), parser->GetScript());
+  if (!r.IsSuccess())
+    return r;
+
+  return engine->Shutdown();
 }
 
 }  // namespace amber
