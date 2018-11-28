@@ -20,29 +20,27 @@
 
 namespace amber {
 
+/// Holds the results for an operation.
 class Result {
  public:
+  /// Creates a result which succeeded.
   Result();
+  /// Creates a result which failed and will return |err|.
   explicit Result(const std::string& err);
   Result(const Result&);
   ~Result();
 
   Result& operator=(const Result&);
 
+  /// Returns true if the result is a success.
   bool IsSuccess() const { return succeeded_; }
+
+  /// Returns the error string if |IsSuccess| is false.
   const std::string& Error() const { return error_; }
-
-  void SetImageData(const std::vector<uint8_t>& data) { image_data_ = data; }
-  const std::vector<uint8_t>& ImageData() const { return image_data_; }
-
-  void SetBufferData(const std::vector<uint8_t>& data) { buffer_data_ = data; }
-  const std::vector<uint8_t>& BufferData() const { return buffer_data_; }
 
  private:
   bool succeeded_;
   std::string error_;
-  std::vector<uint8_t> image_data_;
-  std::vector<uint8_t> buffer_data_;
 };
 
 }  // namespace amber

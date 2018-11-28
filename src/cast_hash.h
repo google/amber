@@ -17,12 +17,12 @@
 
 namespace amber {
 
-// A hash implementation for types that can trivially be up-cast to a size_t.
-// For example, use this as a hasher for an enum whose underlying type is
-// an integer no wider than size_t.
-//
-// The need for this was a defect in the C++11 library, and has been fixed
-// in C++14.  http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2148
+/// A hash implementation for types that can trivially be up-cast to a size_t.
+/// For example, use this as a hasher for an enum whose underlying type is
+/// an integer no wider than size_t.
+///
+/// The need for this was a defect in the C++11 library, and has been fixed
+/// in C++14.  http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2148
 template <typename T>
 struct CastHash {
   size_t operator()(const T& value) const { return static_cast<size_t>(value); }
