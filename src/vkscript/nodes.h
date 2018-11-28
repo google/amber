@@ -32,7 +32,6 @@ namespace vkscript {
 
 class IndicesNode;
 class RequireNode;
-class ShaderNode;
 class TestNode;
 class VertexDataNode;
 
@@ -42,13 +41,11 @@ class Node {
 
   bool IsIndices() const { return node_type_ == NodeType::kIndices; }
   bool IsRequire() const { return node_type_ == NodeType::kRequire; }
-  bool IsShader() const { return node_type_ == NodeType::kShader; }
   bool IsTest() const { return node_type_ == NodeType::kTest; }
   bool IsVertexData() const { return node_type_ == NodeType::kVertexData; }
 
   IndicesNode* AsIndices();
   RequireNode* AsRequire();
-  ShaderNode* AsShader();
   TestNode* AsTest();
   VertexDataNode* AsVertexData();
 
@@ -57,19 +54,6 @@ class Node {
 
  private:
   NodeType node_type_;
-};
-
-class ShaderNode : public Node {
- public:
-  ShaderNode(ShaderType type, std::vector<uint32_t> shader);
-  ~ShaderNode() override;
-
-  ShaderType GetShaderType() const { return type_; }
-  const std::vector<uint32_t>& GetData() const { return shader_; }
-
- private:
-  ShaderType type_;
-  std::vector<uint32_t> shader_;
 };
 
 class RequireNode : public Node {

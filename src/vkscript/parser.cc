@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "src/make_unique.h"
-#include "src/shader_compiler.h"
+#include "src/shader.h"
 #include "src/tokenizer.h"
 #include "src/vkscript/command_parser.h"
 #include "src/vkscript/format_parser.h"
@@ -193,18 +193,17 @@ Result Parser::ProcessSection(const SectionParser::Section& section) {
 }
 
 Result Parser::ProcessShaderBlock(const SectionParser::Section& section) {
-  ShaderCompiler sc;
-
   assert(SectionParser::HasShader(section.section_type));
 
-  Result r;
-  std::vector<uint32_t> shader;
-  std::tie(r, shader) =
-      sc.Compile(section.shader_type, section.format, section.contents);
+  auto shader = MakeUnique<Shader>(section.shader_type);
+  // Generate a unique name for the shader.
+  shader->SetName("vk_shader_" + std::to_string(script_.GetShaders().size()));
+  shader->SetFormat(section.format);
+  shader->SetData(section.contents);
+
+  Result r = script_.AddShader(std::move(shader));
   if (!r.IsSuccess())
     return r;
-
-  script_.AddShader(section.shader_type, std::move(shader));
 
   return {};
 }
