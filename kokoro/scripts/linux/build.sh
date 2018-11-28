@@ -40,7 +40,7 @@ then
 fi
 
 # Install vulkan development dependencies
-sudo apt install libvulkan-dev
+sudo apt-get install vulkan vulkan-utils
 
 # Get ninja
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
