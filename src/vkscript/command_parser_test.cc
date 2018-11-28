@@ -2983,13 +2983,7 @@ TEST_F(CommandParserTest, ToleranceSingleFloatValue) {
   Result r = cp.Parse(data);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsTolerance());
-
-  auto* cmd = cmds[0]->AsTolerance();
-  const auto& tolerances = cmd->GetTolerances();
-
+  auto& tolerances = cp.TolerancesForTesting();
   ASSERT_EQ(1U, tolerances.size());
   EXPECT_FALSE(tolerances[0].is_percent);
   EXPECT_DOUBLE_EQ(0.5, tolerances[0].value);
@@ -3002,13 +2996,7 @@ TEST_F(CommandParserTest, ToleranceSingleFloatPercent) {
   Result r = cp.Parse(data);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsTolerance());
-
-  auto* cmd = cmds[0]->AsTolerance();
-  const auto& tolerances = cmd->GetTolerances();
-
+  auto& tolerances = cp.TolerancesForTesting();
   ASSERT_EQ(1U, tolerances.size());
   EXPECT_TRUE(tolerances[0].is_percent);
   EXPECT_DOUBLE_EQ(0.5, tolerances[0].value);
@@ -3021,13 +3009,7 @@ TEST_F(CommandParserTest, ToleranceSingleIntValue) {
   Result r = cp.Parse(data);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsTolerance());
-
-  auto* cmd = cmds[0]->AsTolerance();
-  const auto& tolerances = cmd->GetTolerances();
-
+  auto& tolerances = cp.TolerancesForTesting();
   ASSERT_EQ(1U, tolerances.size());
   EXPECT_FALSE(tolerances[0].is_percent);
   EXPECT_DOUBLE_EQ(5.0, tolerances[0].value);
@@ -3040,13 +3022,7 @@ TEST_F(CommandParserTest, ToleranceSingleIntPercent) {
   Result r = cp.Parse(data);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsTolerance());
-
-  auto* cmd = cmds[0]->AsTolerance();
-  const auto& tolerances = cmd->GetTolerances();
-
+  auto& tolerances = cp.TolerancesForTesting();
   ASSERT_EQ(1U, tolerances.size());
   EXPECT_TRUE(tolerances[0].is_percent);
   EXPECT_DOUBLE_EQ(5.0, tolerances[0].value);
@@ -3059,13 +3035,7 @@ TEST_F(CommandParserTest, ToleranceMultiFloatValue) {
   Result r = cp.Parse(data);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsTolerance());
-
-  auto* cmd = cmds[0]->AsTolerance();
-  const auto& tolerances = cmd->GetTolerances();
-
+  auto& tolerances = cp.TolerancesForTesting();
   std::vector<double> results = {0.5, 2.4, 3.9, 99.7};
   ASSERT_EQ(results.size(), tolerances.size());
   for (size_t i = 0; i < results.size(); ++i) {
@@ -3081,13 +3051,7 @@ TEST_F(CommandParserTest, ToleranceMultiFloatValueWithPercent) {
   Result r = cp.Parse(data);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsTolerance());
-
-  auto* cmd = cmds[0]->AsTolerance();
-  const auto& tolerances = cmd->GetTolerances();
-
+  auto& tolerances = cp.TolerancesForTesting();
   std::vector<double> results = {0.5, 2.4, 3.9, 99.7};
   ASSERT_EQ(results.size(), tolerances.size());
   for (size_t i = 0; i < results.size(); ++i) {
@@ -3107,13 +3071,7 @@ TEST_F(CommandParserTest, ToleranceMultiIntValue) {
   Result r = cp.Parse(data);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsTolerance());
-
-  auto* cmd = cmds[0]->AsTolerance();
-  const auto& tolerances = cmd->GetTolerances();
-
+  auto& tolerances = cp.TolerancesForTesting();
   std::vector<double> results = {5.0, 4.0, 3.0, 99.0};
   ASSERT_EQ(results.size(), tolerances.size());
   for (size_t i = 0; i < results.size(); ++i) {
@@ -3129,13 +3087,7 @@ TEST_F(CommandParserTest, ToleranceMultiIntValueWithPercent) {
   Result r = cp.Parse(data);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsTolerance());
-
-  auto* cmd = cmds[0]->AsTolerance();
-  const auto& tolerances = cmd->GetTolerances();
-
+  auto& tolerances = cp.TolerancesForTesting();
   std::vector<double> results = {5.0, 4.0, 3.0, 99.0};
   ASSERT_EQ(results.size(), tolerances.size());
   for (size_t i = 0; i < results.size(); ++i) {
@@ -3236,18 +3188,62 @@ TEST_F(CommandParserTest, ToleranceWithCommas) {
   Result r = cp.Parse(data);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsTolerance());
-
-  auto* cmd = cmds[0]->AsTolerance();
-  const auto& tolerances = cmd->GetTolerances();
-
+  auto& tolerances = cp.TolerancesForTesting();
   std::vector<double> results = {1.0, 2.0, 3.0, 4.0};
   ASSERT_EQ(results.size(), tolerances.size());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FALSE(tolerances[0].is_percent);
     EXPECT_DOUBLE_EQ(results[i], tolerances[i].value);
+  }
+}
+
+TEST_F(CommandParserTest, ProbeSSBOWithTolerance) {
+  std::string data = R"(
+tolerance 2 3 4 5
+probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2)";
+
+  CommandParser cp;
+  Result r = cp.Parse(data);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto& cmds = cp.Commands();
+  ASSERT_EQ(1U, cmds.size());
+  ASSERT_TRUE(cmds[0]->IsProbeSSBO());
+
+  auto* cmd = cmds[0]->AsProbeSSBO();
+  ASSERT_TRUE(cmd->HasTolerances());
+
+  auto& tolerances = cmd->GetTolerances();
+  std::vector<double> vals = {2, 3, 4, 5};
+  ASSERT_EQ(vals.size(), tolerances.size());
+  for (size_t i = 0; i < vals.size(); ++i) {
+    EXPECT_FALSE(tolerances[i].is_percent);
+    EXPECT_FLOAT_EQ(vals[i], tolerances[i].value);
+  }
+}
+
+TEST_F(CommandParserTest, ProbeWithTolerance) {
+std::string data = R"(
+tolerance 2% 3% 4% 5%
+probe all rgba 0.2 0.3 0.4 0.5)";
+
+  CommandParser cp;
+  Result r = cp.Parse(data);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto& cmds = cp.Commands();
+  ASSERT_EQ(1U, cmds.size());
+  ASSERT_TRUE(cmds[0]->IsProbe());
+
+  auto* cmd = cmds[0]->AsProbe();
+  ASSERT_TRUE(cmd->HasTolerances());
+
+  auto& tolerances = cmd->GetTolerances();
+  std::vector<double> vals = {2, 3, 4, 5};
+  ASSERT_EQ(vals.size(), tolerances.size());
+  for (size_t i = 0; i < vals.size(); ++i) {
+    EXPECT_TRUE(tolerances[i].is_percent);
+    EXPECT_FLOAT_EQ(vals[i], tolerances[i].value);
   }
 }
 

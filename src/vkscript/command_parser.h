@@ -74,6 +74,7 @@ class CommandParser {
                                    ProbeSSBOCommand::Comparator* op) {
     return ParseComparator(name, op);
   }
+  const std::vector<Probe::Tolerance>& TolerancesForTesting() const { return current_tolerances_; }
 
  private:
   Result TokenToFloat(Token* token, float* val) const;
@@ -153,6 +154,7 @@ class CommandParser {
   PipelineData pipeline_data_;
   std::unique_ptr<Tokenizer> tokenizer_;
   std::vector<std::unique_ptr<Command>> commands_;
+  std::vector<Probe::Tolerance> current_tolerances_;
 };
 
 }  // namespace vkscript

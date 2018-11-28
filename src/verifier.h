@@ -31,7 +31,6 @@ class Verifier {
                uint32_t frame_height,
                const void* buf);
   Result ProbeSSBO(const ProbeSSBOCommand*);
-  Result Tolerance(const ToleranceCommand*);
 };
 
 }  // namespace amber

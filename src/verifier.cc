@@ -117,8 +117,4 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand*) {
   return Result("Verifier::ProbeSSBO Not Implemented");
 }
 
-Result Verifier::Tolerance(const ToleranceCommand*) {
-  return Result("Verifier::Tolerance Not Implemented");
-}
-
 }  // namespace amber
