@@ -39,6 +39,9 @@ then
   BUILD_TYPE="RelWithDebInfo"
 fi
 
+# Install vulkan development dependencies
+sudo apt install libvulkan-dev
+
 # Get ninja
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
 unzip -q ninja-linux.zip
