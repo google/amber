@@ -36,10 +36,6 @@ void Script::AddRequireNode(std::unique_ptr<RequireNode> node) {
   test_nodes_.push_back(std::move(tn));
 }
 
-void Script::AddShader(ShaderType type, std::vector<uint32_t> shader) {
-  test_nodes_.push_back(MakeUnique<ShaderNode>(type, std::move(shader)));
-}
-
 void Script::AddIndexBuffer(std::unique_ptr<Buffer> buffer) {
   test_nodes_.push_back(MakeUnique<IndicesNode>(std::move(buffer)));
 }

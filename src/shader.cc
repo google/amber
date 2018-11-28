@@ -12,14 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/amberscript/shader.h"
+#include "src/shader.h"
 
 namespace amber {
-namespace amberscript {
 
 Shader::Shader(ShaderType type) : shader_type_(type) {}
 
 Shader::~Shader() = default;
 
-}  // namespace amberscript
 }  // namespace amber

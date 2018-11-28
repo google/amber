@@ -418,12 +418,13 @@ void main() {}
 )";
 
   Parser parser;
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
+  Result r = parser.Parse(input);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto engine = MakeEngine();
 
   Executor ex;
-  Result r = ex.Execute(engine.get(), parser.GetScript());
+  r = ex.Execute(engine.get(), parser.GetScript());
   ASSERT_TRUE(r.IsSuccess());
 
   auto shader_types = ToStub(engine.get())->GetShaderTypesSeen();

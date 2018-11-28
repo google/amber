@@ -19,7 +19,6 @@ set(AMBER_SOURCES
     amberscript/parser.cc
     amberscript/pipeline.cc
     amberscript/script.cc
-    amberscript/shader.cc
     buffer.cc
     command.cc
     command_data.cc
@@ -32,6 +31,7 @@ set(AMBER_SOURCES
     result.cc
     sleep.cc
     script.cc
+    shader.cc
     shader_compiler.cc
     tokenizer.cc
     value.cc
