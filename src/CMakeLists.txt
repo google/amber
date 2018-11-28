@@ -14,7 +14,6 @@
 
 set(AMBER_SOURCES
     amber.cc
-    amber_impl.cc
     amberscript/executor.cc
     amberscript/parser.cc
     amberscript/pipeline.cc
