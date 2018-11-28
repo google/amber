@@ -205,7 +205,7 @@ class Probe : public Command {
   const std::vector<Tolerance>& GetTolerances() const { return tolerances_; }
 
  protected:
-  Probe(Type type);
+  explicit Probe(Type type);
 
  private:
   std::vector<Tolerance> tolerances_;

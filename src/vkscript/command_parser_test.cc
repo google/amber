@@ -3218,12 +3218,12 @@ probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2)";
   ASSERT_EQ(vals.size(), tolerances.size());
   for (size_t i = 0; i < vals.size(); ++i) {
     EXPECT_FALSE(tolerances[i].is_percent);
-    EXPECT_FLOAT_EQ(vals[i], tolerances[i].value);
+    EXPECT_DOUBLE_EQ(vals[i], tolerances[i].value);
   }
 }
 
 TEST_F(CommandParserTest, ProbeWithTolerance) {
-std::string data = R"(
+  std::string data = R"(
 tolerance 2% 3% 4% 5%
 probe all rgba 0.2 0.3 0.4 0.5)";
 
@@ -3243,7 +3243,7 @@ probe all rgba 0.2 0.3 0.4 0.5)";
   ASSERT_EQ(vals.size(), tolerances.size());
   for (size_t i = 0; i < vals.size(); ++i) {
     EXPECT_TRUE(tolerances[i].is_percent);
-    EXPECT_FLOAT_EQ(vals[i], tolerances[i].value);
+    EXPECT_DOUBLE_EQ(vals[i], tolerances[i].value);
   }
 }
 
