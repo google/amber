@@ -17,14 +17,23 @@
 
 namespace amber {
 
+/// Types of buffers which can be created.
 enum class BufferType : uint8_t {
+  /// A color buffer.
   kColor = 0,
+  /// A depth/stencil buffer.
   kDepth,
+  /// A framebuffer.
   kFramebuffer,
+  /// An index buffer.
   kIndex,
+  /// A sampled buffer.
   kSampled,
+  /// A storage buffer.
   kStorage,
+  /// A uniform buffer.
   kUniform,
+  /// A vertex buffer.
   kVertex
 };
 
