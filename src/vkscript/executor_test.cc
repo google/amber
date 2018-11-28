@@ -825,39 +825,6 @@ ssbo 0 24)";
   EXPECT_EQ("buffer command failed", r.Error());
 }
 
-TEST_F(VkScriptExecutorTest, DISABLED_ToleranceCommand) {
-  std::string input = R"(
-[test]
-tolerance 2 4 5 8)";
-
-  Parser parser;
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
-
-  auto engine = MakeEngine();
-
-  Executor ex;
-  Result r = ex.Execute(engine.get(), parser.GetScript());
-  ASSERT_TRUE(r.IsSuccess());
-  // ASSERT_TRUE(ToStub(engine.get())->DidToleranceCommand());
-}
-
-TEST_F(VkScriptExecutorTest, DISABLED_ToleranceCommandFailure) {
-  std::string input = R"(
-[test]
-tolerance 2 3 4 5)";
-
-  Parser parser;
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
-
-  auto engine = MakeEngine();
-  // ToStub(engine.get())->FailToleranceCommand();
-
-  Executor ex;
-  Result r = ex.Execute(engine.get(), parser.GetScript());
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("tolerance command failed", r.Error());
-}
-
 TEST_F(VkScriptExecutorTest, DISABLED_ProbeSSBOCommand) {
   std::string input = R"(
 [test]

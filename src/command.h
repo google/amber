@@ -40,7 +40,6 @@ class PatchParameterVerticesCommand;
 class ProbeCommand;
 class ProbeSSBOCommand;
 class BufferCommand;
-class ToleranceCommand;
 
 class Command {
  public:
@@ -57,8 +56,7 @@ class Command {
     kPipelineProperties,
     kProbe,
     kProbeSSBO,
-    kBuffer,
-    kTolerance,
+    kBuffer
   };
 
   virtual ~Command();
@@ -69,7 +67,6 @@ class Command {
   bool IsProbe() const { return command_type_ == Type::kProbe; }
   bool IsProbeSSBO() const { return command_type_ == Type::kProbeSSBO; }
   bool IsBuffer() const { return command_type_ == Type::kBuffer; }
-  bool IsTolerance() const { return command_type_ == Type::kTolerance; }
   bool IsClear() const { return command_type_ == Type::kClear; }
   bool IsClearColor() const { return command_type_ == Type::kClearColor; }
   bool IsClearDepth() const { return command_type_ == Type::kClearDepth; }
@@ -91,7 +88,6 @@ class Command {
   ProbeCommand* AsProbe();
   ProbeSSBOCommand* AsProbeSSBO();
   BufferCommand* AsBuffer();
-  ToleranceCommand* AsTolerance();
 
  protected:
   explicit Command(Type type);
@@ -193,7 +189,29 @@ class ComputeCommand : public Command {
   uint32_t z_ = 0;
 };
 
-class ProbeCommand : public Command {
+class Probe : public Command {
+ public:
+  struct Tolerance {
+    Tolerance(bool percent, double val) : is_percent(percent), value(val) {}
+
+    bool is_percent = false;
+    double value = 0.0;
+  };
+
+  ~Probe() override;
+
+  bool HasTolerances() const { return !tolerances_.empty(); }
+  void SetTolerances(std::vector<Tolerance> t) { tolerances_ = t; }
+  const std::vector<Tolerance>& GetTolerances() const { return tolerances_; }
+
+ protected:
+  explicit Probe(Type type);
+
+ private:
+  std::vector<Tolerance> tolerances_;
+};
+
+class ProbeCommand : public Probe {
  public:
   ProbeCommand();
   ~ProbeCommand() override;
@@ -252,7 +270,7 @@ class ProbeCommand : public Command {
   float a_ = 0.0;
 };
 
-class ProbeSSBOCommand : public Command {
+class ProbeSSBOCommand : public Probe {
  public:
   enum class Comparator {
     kEqual,
@@ -345,31 +363,6 @@ class BufferCommand : public Command {
   uint32_t offset_ = 0;
   DatumType datum_type_;
   std::vector<Value> values_;
-};
-
-class ToleranceCommand : public Command {
- public:
-  struct Tolerance {
-    Tolerance(bool percent, double val) : is_percent(percent), value(val) {}
-
-    bool is_percent = false;
-    double value = 0.0;
-  };
-
-  ToleranceCommand();
-  ~ToleranceCommand() override;
-
-  void AddPercentTolerance(double value) {
-    tolerances_.emplace_back(Tolerance{true, value});
-  }
-  void AddValueTolerance(double value) {
-    tolerances_.emplace_back(Tolerance{false, value});
-  }
-
-  const std::vector<Tolerance>& GetTolerances() const { return tolerances_; }
-
- private:
-  std::vector<Tolerance> tolerances_;
 };
 
 class ClearCommand : public Command {

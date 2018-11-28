@@ -627,7 +627,7 @@ Result CommandParser::ProcessUniform() {
 }
 
 Result CommandParser::ProcessTolerance() {
-  auto cmd = MakeUnique<ToleranceCommand>();
+  current_tolerances_.clear();
 
   auto token = tokenizer_->NextToken();
   size_t found_tokens = 0;
@@ -648,10 +648,10 @@ Result CommandParser::ProcessTolerance() {
         if (token->AsString() != "%")
           return Result("Invalid value for tolerance command");
 
-        cmd->AddPercentTolerance(value);
+        current_tolerances_.push_back(Probe::Tolerance{true, value});
         token = tokenizer_->NextToken();
       } else {
-        cmd->AddValueTolerance(value);
+        current_tolerances_.push_back(Probe::Tolerance{false, value});
       }
     } else {
       return Result("Invalid value for tolerance command");
@@ -667,7 +667,6 @@ Result CommandParser::ProcessTolerance() {
   if (!token->IsEOS() && !token->IsEOL())
     return Result("Extra parameter for tolerance command");
 
-  commands_.push_back(std::move(cmd));
   return {};
 }
 
@@ -727,6 +726,7 @@ Result CommandParser::ProcessProbe(bool relative) {
     return ProcessProbeSSBO();
 
   auto cmd = MakeUnique<ProbeCommand>();
+  cmd->SetTolerances(current_tolerances_);
   if (relative)
     cmd->SetRelative();
 
@@ -1788,6 +1788,7 @@ Result CommandParser::ParseComparator(const std::string& name,
 
 Result CommandParser::ProcessProbeSSBO() {
   auto cmd = MakeUnique<ProbeSSBOCommand>();
+  cmd->SetTolerances(current_tolerances_);
 
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())

@@ -68,10 +68,6 @@ ProbeSSBOCommand* Command::AsProbeSSBO() {
   return static_cast<ProbeSSBOCommand*>(this);
 }
 
-ToleranceCommand* Command::AsTolerance() {
-  return static_cast<ToleranceCommand*>(this);
-}
-
 DrawRectCommand::DrawRectCommand(PipelineData data)
     : Command(Type::kDrawRect), data_(data) {}
 
@@ -87,7 +83,11 @@ ComputeCommand::ComputeCommand(PipelineData data)
 
 ComputeCommand::~ComputeCommand() = default;
 
-ProbeCommand::ProbeCommand() : Command(Type::kProbe) {}
+Probe::Probe(Type type) : Command(type) {}
+
+Probe::~Probe() = default;
+
+ProbeCommand::ProbeCommand() : Probe(Type::kProbe) {}
 
 ProbeCommand::~ProbeCommand() = default;
 
@@ -96,13 +96,9 @@ BufferCommand::BufferCommand(BufferType type)
 
 BufferCommand::~BufferCommand() = default;
 
-ProbeSSBOCommand::ProbeSSBOCommand() : Command(Type::kProbeSSBO) {}
+ProbeSSBOCommand::ProbeSSBOCommand() : Probe(Type::kProbeSSBO) {}
 
 ProbeSSBOCommand::~ProbeSSBOCommand() = default;
-
-ToleranceCommand::ToleranceCommand() : Command(Type::kTolerance) {}
-
-ToleranceCommand::~ToleranceCommand() = default;
 
 ClearCommand::ClearCommand() : Command(Type::kClear) {}
 

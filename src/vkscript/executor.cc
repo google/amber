@@ -117,8 +117,6 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
         r = verifier_.Probe(cmd->AsProbe(), stride, width, height, buf);
       } else if (cmd->IsProbeSSBO()) {
         r = verifier_.ProbeSSBO(cmd->AsProbeSSBO());
-      } else if (cmd->IsTolerance()) {
-        r = verifier_.Tolerance(cmd->AsTolerance());
 
       } else if (cmd->IsClear()) {
         r = engine->DoClear(cmd->AsClear());
