@@ -195,10 +195,11 @@ class EngineStub : public Engine {
     return {};
   }
 
-  Result DoProcessCommands(uint32_t*,
-                           uint32_t*,
-                           uint32_t*,
-                           const void**) override {
+  Result DoProcessCommands() override { return {}; }
+  Result GetFrameBufferInfo(ResourceInfo*) override { return {}; }
+  Result GetDescriptorInfo(const uint32_t,
+                           const uint32_t,
+                           ResourceInfo*) override {
     return {};
   }
 
@@ -287,10 +288,11 @@ class EngineCountingStub : public Engine {
     return {};
   }
   Result DoBuffer(const BufferCommand*) override { return {}; }
-  Result DoProcessCommands(uint32_t*,
-                           uint32_t*,
-                           uint32_t*,
-                           const void**) override {
+  Result DoProcessCommands() override { return {}; }
+  Result GetFrameBufferInfo(ResourceInfo*) override { return {}; }
+  Result GetDescriptorInfo(const uint32_t,
+                           const uint32_t,
+                           ResourceInfo*) override {
     return {};
   }
 

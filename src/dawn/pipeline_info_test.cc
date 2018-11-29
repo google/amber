@@ -49,7 +49,7 @@ TEST_F(DawnRenderPipelineInfoTest, DefaultValuesForMembers) {
   EXPECT_FALSE(static_cast<bool>(rpi.fb_buffer));
   EXPECT_EQ(0u, rpi.fb_row_stride);
   EXPECT_EQ(0u, rpi.fb_size);
-  EXPECT_FALSE(rpi.fb_is_mapped);
+  EXPECT_EQ(nullptr, rpi.fb_data);
 }
 
 }  // namespace

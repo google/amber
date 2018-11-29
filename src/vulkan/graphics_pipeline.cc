@@ -528,10 +528,6 @@ Result GraphicsPipeline::ProcessCommands() {
 void GraphicsPipeline::Shutdown() {
   DeactivateRenderPassIfNeeded();
 
-  Result r = command_->End();
-  if (r.IsSuccess())
-    command_->SubmitAndReset(GetFenceTimeout());
-
   Pipeline::Shutdown();
   frame_->Shutdown();
   vkDestroyRenderPass(device_, render_pass_, nullptr);
