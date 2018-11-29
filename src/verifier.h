@@ -30,7 +30,9 @@ class Verifier {
                uint32_t frame_width,
                uint32_t frame_height,
                const void* buf);
-  Result ProbeSSBO(const ProbeSSBOCommand*, size_t, const void*);
+  Result ProbeSSBO(const ProbeSSBOCommand*,
+                   size_t size,
+                   const void* cpu_memory);
 };
 
 }  // namespace amber

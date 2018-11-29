@@ -77,6 +77,7 @@ set(TEST_SRCS
     result_test.cc
     shader_compiler_test.cc
     tokenizer_test.cc
+    verifier_test.cc
     vkscript/command_parser_test.cc
     vkscript/datum_type_parser_test.cc
     vkscript/executor_test.cc
