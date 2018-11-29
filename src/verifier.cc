@@ -15,6 +15,7 @@
 #include "src/verifier.h"
 
 #include <cmath>
+#include <string>
 
 namespace amber {
 namespace {
