@@ -16,15 +16,153 @@
 
 #include <cmath>
 #include <string>
+#include <vector>
+
+#include "src/command.h"
 
 namespace amber {
 namespace {
 
-const float kEpsilon = 0.002f;
+const double kEpsilon = 0.000001;
+const double kDefaultTexelTolerance = 0.002;
 
-bool IsFloatPixelEqualInt(float pixel, uint8_t expected) {
-  // TODO(jaebaek): Change kEpsilon to tolerance.
-  return std::fabs(pixel - static_cast<float>(expected) / 255.0f) < kEpsilon;
+// It returns true if the difference is within the given error.
+// If |is_tolerance_percent| is true, the actual tolerance will be
+// relative value i.e., |tolerance| * fabs(real - expected).
+// Otherwise, this method uses the absolute value i.e., |tolerance|.
+bool IsEqualWithTolerance(const double real,
+                          const double expected,
+                          double tolerance,
+                          const bool is_tolerance_percent = true) {
+  double difference = std::fabs(real - expected);
+  if (difference == 0.0)
+    return true;
+  if (is_tolerance_percent)
+    tolerance *= difference;
+  return difference < tolerance;
+}
+
+template <typename T>
+Result CheckValue(const ProbeSSBOCommand* command,
+                  const uint8_t* memory,
+                  const std::vector<Value>& values) {
+  const auto comp = command->GetComparator();
+  const auto& tolerance = command->GetTolerances();
+  const T* ptr = reinterpret_cast<const T*>(memory);
+  for (size_t i = 0; i < values.size(); ++i) {
+    const T val = values[i].IsInteger() ? static_cast<T>(values[i].AsUint64())
+                                        : static_cast<T>(values[i].AsDouble());
+    switch (comp) {
+      case ProbeSSBOCommand::Comparator::kEqual:
+        if (values[i].IsInteger()) {
+          if (static_cast<uint64_t>(*ptr) != static_cast<uint64_t>(val)) {
+            return Result("Verifier failed: " + std::to_string(*ptr) +
+                          " == " + std::to_string(val) + ", at index " +
+                          std::to_string(i));
+          }
+        } else {
+          if (!IsEqualWithTolerance(static_cast<const double>(*ptr),
+                                    static_cast<const double>(val), kEpsilon)) {
+            return Result("Verifier failed: " + std::to_string(*ptr) +
+                          " == " + std::to_string(val) + ", at index " +
+                          std::to_string(i));
+          }
+        }
+        break;
+      case ProbeSSBOCommand::Comparator::kNotEqual:
+        if (values[i].IsInteger()) {
+          if (static_cast<uint64_t>(*ptr) == static_cast<uint64_t>(val)) {
+            return Result("Verifier failed: " + std::to_string(*ptr) +
+                          " != " + std::to_string(val) + ", at index " +
+                          std::to_string(i));
+          }
+        } else {
+          if (IsEqualWithTolerance(static_cast<const double>(*ptr),
+                                   static_cast<const double>(val), kEpsilon)) {
+            return Result("Verifier failed: " + std::to_string(*ptr) +
+                          " != " + std::to_string(val) + ", at index " +
+                          std::to_string(i));
+          }
+        }
+        break;
+      case ProbeSSBOCommand::Comparator::kFuzzyEqual:
+        if (!IsEqualWithTolerance(
+                static_cast<const double>(*ptr), static_cast<const double>(val),
+                command->HasTolerances() ? tolerance[0].value : kEpsilon,
+                command->HasTolerances() ? tolerance[0].is_percent : true)) {
+          return Result("Verifier failed: " + std::to_string(*ptr) +
+                        " ~= " + std::to_string(val) + ", at index " +
+                        std::to_string(i));
+        }
+        break;
+      case ProbeSSBOCommand::Comparator::kLess:
+        if (*ptr >= val) {
+          return Result("Verifier failed: " + std::to_string(*ptr) + " < " +
+                        std::to_string(val) + ", at index " +
+                        std::to_string(i));
+        }
+        break;
+      case ProbeSSBOCommand::Comparator::kLessOrEqual:
+        if (*ptr > val) {
+          return Result("Verifier failed: " + std::to_string(*ptr) +
+                        " <= " + std::to_string(val) + ", at index " +
+                        std::to_string(i));
+        }
+        break;
+      case ProbeSSBOCommand::Comparator::kGreater:
+        if (*ptr <= val) {
+          return Result("Verifier failed: " + std::to_string(*ptr) + " > " +
+                        std::to_string(val) + ", at index " +
+                        std::to_string(i));
+        }
+        break;
+      case ProbeSSBOCommand::Comparator::kGreaterOrEqual:
+        if (*ptr < val) {
+          return Result("Verifier failed: " + std::to_string(*ptr) +
+                        " >= " + std::to_string(val) + ", at index " +
+                        std::to_string(i));
+        }
+        break;
+    }
+    ++ptr;
+  }
+  return {};
+}
+
+void SetupToleranceForTexels(const ProbeCommand* command,
+                             double* tolerance,
+                             bool* is_tolerance_percent) {
+  if (command->HasTolerances()) {
+    const auto& tol = command->GetTolerances();
+    if (tol.size() == 4) {
+      tolerance[0] = tol[0].value;
+      tolerance[1] = tol[1].value;
+      tolerance[2] = tol[2].value;
+      tolerance[3] = tol[3].value;
+      is_tolerance_percent[0] = tol[0].is_percent;
+      is_tolerance_percent[1] = tol[1].is_percent;
+      is_tolerance_percent[2] = tol[2].is_percent;
+      is_tolerance_percent[3] = tol[3].is_percent;
+    } else {
+      tolerance[0] = tol[0].value;
+      tolerance[1] = tol[0].value;
+      tolerance[2] = tol[0].value;
+      tolerance[3] = tol[0].value;
+      is_tolerance_percent[0] = tol[0].is_percent;
+      is_tolerance_percent[1] = tol[0].is_percent;
+      is_tolerance_percent[2] = tol[0].is_percent;
+      is_tolerance_percent[3] = tol[0].is_percent;
+    }
+  } else {
+    tolerance[0] = kDefaultTexelTolerance;
+    tolerance[1] = kDefaultTexelTolerance;
+    tolerance[2] = kDefaultTexelTolerance;
+    tolerance[3] = kDefaultTexelTolerance;
+    is_tolerance_percent[0] = false;
+    is_tolerance_percent[1] = false;
+    is_tolerance_percent[2] = false;
+    is_tolerance_percent[3] = false;
+  }
 }
 
 }  // namespace
@@ -65,6 +203,10 @@ Result Verifier::Probe(const ProbeCommand* command,
         std::to_string(frame_width) + "," + std::to_string(frame_height) + ")");
   }
 
+  double tolerance[4] = {};
+  bool is_tolerance_percent[4] = {};
+  SetupToleranceForTexels(command, tolerance, is_tolerance_percent);
+
   // TODO(jaebaek): Support all VkFormat
   const uint8_t* ptr = static_cast<const uint8_t*>(buf);
   uint32_t count_of_invalid_pixels = 0;
@@ -74,11 +216,23 @@ Result Verifier::Probe(const ProbeCommand* command,
     const uint8_t* p = ptr + stride * frame_width * (j + y) + stride * x;
     for (uint32_t i = 0; i < width; ++i) {
       // TODO(jaebaek): Get actual pixel values based on frame buffer formats.
-      if (!IsFloatPixelEqualInt(command->GetR(), p[stride * i]) ||
-          !IsFloatPixelEqualInt(command->GetG(), p[stride * i + 1]) ||
-          !IsFloatPixelEqualInt(command->GetB(), p[stride * i + 2]) ||
+      if (!IsEqualWithTolerance(
+              static_cast<const double>(command->GetR()),
+              static_cast<const double>(p[stride * i]) / 255.0, tolerance[0],
+              is_tolerance_percent[0]) ||
+          !IsEqualWithTolerance(
+              static_cast<const double>(command->GetG()),
+              static_cast<const double>(p[stride * i + 1]) / 255.0,
+              tolerance[1], is_tolerance_percent[1]) ||
+          !IsEqualWithTolerance(
+              static_cast<const double>(command->GetB()),
+              static_cast<const double>(p[stride * i + 2]) / 255.0,
+              tolerance[2], is_tolerance_percent[2]) ||
           (command->IsRGBA() &&
-           !IsFloatPixelEqualInt(command->GetA(), p[stride * i + 3]))) {
+           !IsEqualWithTolerance(
+               static_cast<const double>(command->GetA()),
+               static_cast<const double>(p[stride * i + 3]) / 255.0,
+               tolerance[3], is_tolerance_percent[3]))) {
         if (!count_of_invalid_pixels) {
           first_invalid_i = i;
           first_invalid_j = j;
@@ -114,8 +268,48 @@ Result Verifier::Probe(const ProbeCommand* command,
   return {};
 }
 
-Result Verifier::ProbeSSBO(const ProbeSSBOCommand*, size_t, const void*) {
-  return Result("Verifier::ProbeSSBO Not Implemented");
+Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
+                           size_t size_in_bytes,
+                           const void* cpu_memory) {
+  const auto& values = command->GetValues();
+  const auto& datum_type = command->GetDatumType();
+  size_t bytes_per_elem = datum_type.SizeInBytes() / datum_type.RowCount() /
+                          datum_type.ColumnCount();
+  size_t offset = static_cast<size_t>(command->GetOffset());
+
+  if (values.size() * bytes_per_elem + offset > size_in_bytes) {
+    return Result(
+        "Verifier::ProbeSSBO has more expected values than SSBO size");
+  }
+
+  if (offset % bytes_per_elem != 0) {
+    return Result(
+        "Verifier::ProbeSSBO given offset is not multiple of bytes_per_elem");
+  }
+
+  const uint8_t* ptr = static_cast<const uint8_t*>(cpu_memory) + offset;
+  if (datum_type.IsInt8())
+    return CheckValue<int8_t>(command, ptr, values);
+  if (datum_type.IsUint8())
+    return CheckValue<uint8_t>(command, ptr, values);
+  if (datum_type.IsInt16())
+    return CheckValue<int16_t>(command, ptr, values);
+  if (datum_type.IsUint16())
+    return CheckValue<uint16_t>(command, ptr, values);
+  if (datum_type.IsInt32())
+    return CheckValue<int32_t>(command, ptr, values);
+  if (datum_type.IsUint32())
+    return CheckValue<uint32_t>(command, ptr, values);
+  if (datum_type.IsInt64())
+    return CheckValue<int64_t>(command, ptr, values);
+  if (datum_type.IsUint64())
+    return CheckValue<uint64_t>(command, ptr, values);
+  if (datum_type.IsFloat())
+    return CheckValue<float>(command, ptr, values);
+  if (datum_type.IsDouble())
+    return CheckValue<double>(command, ptr, values);
+
+  return Result("Verifier::ProbeSSBO unknown datum type");
 }
 
 }  // namespace amber
