@@ -55,10 +55,9 @@ endif()
 add_library(libamber ${AMBER_SOURCES})
 amber_default_compile_options(libamber)
 set_target_properties(libamber PROPERTIES OUTPUT_NAME "amber")
-# TODO(dsinclair): Remove pthread when building on windows.
 target_link_libraries(libamber SPIRV-Tools shaderc SPIRV)
-if (NOT MSVC)
-	target_link_libraries(libamber pthread)
+if (NOT MSVC AND NOT ANDROID)
+  target_link_libraries(libamber pthread)
 endif()
 
 if (${Vulkan_FOUND})
