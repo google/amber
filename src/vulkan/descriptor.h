@@ -89,7 +89,7 @@ class Descriptor {
   virtual Result UpdateDescriptorSet(VkDescriptorSet descriptor_set) = 0;
   virtual void SendDataToDeviceIfNeeded(VkCommandBuffer command) = 0;
   virtual Result SendDataToHostIfNeeded(VkCommandBuffer command) = 0;
-  virtual void GetResourceInfo(ResourceInfo* info) = 0;
+  virtual ResourceInfo GetResourceInfo() = 0;
   virtual void Shutdown() = 0;
 
  protected:

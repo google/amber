@@ -44,7 +44,7 @@ class StorageBufferDescriptor : public Descriptor {
   void SendDataToDeviceIfNeeded(VkCommandBuffer command) override;
   Result SendDataToHostIfNeeded(VkCommandBuffer command) override;
   Result UpdateDescriptorSet(VkDescriptorSet descriptor_set) override;
-  void GetResourceInfo(ResourceInfo* info);
+  ResourceInfo GetResourceInfo() override;
   void Shutdown() override;
 
  private:

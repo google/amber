@@ -315,7 +315,7 @@ Result Pipeline::GetDescriptorInfo(const uint32_t descriptor_set,
   for (size_t i = 0; i < descriptors_.size(); ++i) {
     if (descriptors_[i]->GetDescriptorSet() == descriptor_set &&
         descriptors_[i]->GetBinding() == binding) {
-      descriptors_[i]->GetResourceInfo(info);
+      *info = descriptors_[i]->GetResourceInfo();
       return {};
     }
   }

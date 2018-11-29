@@ -126,10 +126,12 @@ Result StorageBufferDescriptor::UpdateDescriptorSet(
       descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, buffer_info);
 }
 
-void StorageBufferDescriptor::GetResourceInfo(ResourceInfo* info) {
-  info->type = ResourceInfoType::kBuffer;
-  info->size_in_bytes = buffer_->GetSizeInBytes();
-  info->cpu_memory = buffer_->HostAccessibleMemoryPtr();
+ResourceInfo StorageBufferDescriptor::GetResourceInfo() {
+  ResourceInfo info = {};
+  info.type = ResourceInfoType::kBuffer;
+  info.size_in_bytes = buffer_->GetSizeInBytes();
+  info.cpu_memory = buffer_->HostAccessibleMemoryPtr();
+  return info;
 }
 
 void StorageBufferDescriptor::Shutdown() {
