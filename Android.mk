@@ -5,7 +5,6 @@ LOCAL_MODULE:=amber
 LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti
 LOCAL_SRC_FILES:= \
     src/amber.cc \
-    src/amber_impl.cc \
     src/amberscript/executor.cc \
     src/amberscript/parser.cc \
     src/amberscript/pipeline.cc \
