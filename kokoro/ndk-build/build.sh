@@ -18,7 +18,6 @@ set -x  # display commands
 
 BUILD_ROOT=$PWD
 SRC=$PWD/github/amber
-SRC=$PWD
 
 # NDK Path
 export ANDROID_NDK=/opt/android-ndk-r15c
