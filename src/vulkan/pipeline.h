@@ -46,6 +46,7 @@ class Pipeline {
   Result AddDescriptor(const BufferCommand*);
 
   virtual void Shutdown();
+  virtual Result ProcessCommands() = 0;
 
  protected:
   Pipeline(

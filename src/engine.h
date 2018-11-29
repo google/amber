@@ -33,6 +33,34 @@ enum class PipelineType : uint8_t {
   kGraphics,
 };
 
+enum class ResourceInfoType : uint8_t {
+  kBuffer = 0,
+  kImage,
+};
+
+struct ResourceInfo {
+  ResourceInfoType type = ResourceInfoType::kBuffer;
+
+  struct {
+    uint32_t texel_stride = 0;  // Number of bytes for a single texel.
+    uint32_t width = 0;
+    uint32_t height = 0;
+    uint32_t depth = 0;
+  } image_info;
+
+  // The size in bytes of Vulkan memory pointed by |cpu_memory|.
+  // For the case when it is an image resource, |size_in_bytes| must
+  // be |image_info.width * image_info.height * image_info.depth *
+  // image_info.texel_stride|.
+  size_t size_in_bytes = 0;
+
+  // If the primitive type of resource is the same with the type
+  // of actual data, the alignment must be properly determined by
+  // Vulkan's internal memory allocation. In these cases, script
+  // writers can assume that there is no alignment issues.
+  const void* cpu_memory = nullptr;
+};
+
 class Engine {
  public:
   static std::unique_ptr<Engine> Create(EngineType type);
@@ -104,11 +132,24 @@ class Engine {
   // This covers both Vulkan buffers and images.
   virtual Result DoBuffer(const BufferCommand* cmd) = 0;
 
-  // Run all queued commands and copy result data to the host.
-  virtual Result DoProcessCommands(uint32_t* stride,
-                                   uint32_t* width,
-                                   uint32_t* height,
-                                   const void** buf) = 0;
+  // Run all queued commands and copy frame buffer data to the host
+  // if graphics pipeline.
+  virtual Result DoProcessCommands() = 0;
+
+  // Get stride, width, height, and memory pointer of frame buffer.
+  // This is only valid if the buffer of framebuffer is mapped into
+  // the host address space. In particular, if we have run
+  // DoProcessCommands() and since then no graphics pipeline drawing
+  // commands have occurred e.g., DoClear, DoDrawArrays, DoDrawRect.
+  virtual Result GetFrameBufferInfo(ResourceInfo* info) = 0;
+
+  // Copy the contents of the resource bound to the given descriptor
+  // and get the resource information e.g., size for buffer, width,
+  // height, depth for image of descriptor given as |descriptor_set|
+  // and |binding|.
+  virtual Result GetDescriptorInfo(const uint32_t descriptor_set,
+                                   const uint32_t binding,
+                                   ResourceInfo* info) = 0;
 
  protected:
   Engine();

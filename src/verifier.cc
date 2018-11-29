@@ -113,7 +113,7 @@ Result Verifier::Probe(const ProbeCommand* command,
   return {};
 }
 
-Result Verifier::ProbeSSBO(const ProbeSSBOCommand*) {
+Result Verifier::ProbeSSBO(const ProbeSSBOCommand*, size_t, const void*) {
   return Result("Verifier::ProbeSSBO Not Implemented");
 }
 

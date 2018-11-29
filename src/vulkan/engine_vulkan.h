@@ -56,10 +56,11 @@ class EngineVulkan : public Engine {
   Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) override;
   Result DoBuffer(const BufferCommand* cmd) override;
-  Result DoProcessCommands(uint32_t* stride,
-                           uint32_t* width,
-                           uint32_t* height,
-                           const void** buf) override;
+  Result DoProcessCommands() override;
+  Result GetFrameBufferInfo(ResourceInfo* info) override;
+  Result GetDescriptorInfo(const uint32_t descriptor_set,
+                           const uint32_t binding,
+                           ResourceInfo* info) override;
 
  private:
   Result InitDeviceAndCreateCommand();

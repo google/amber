@@ -58,7 +58,6 @@ class GraphicsPipeline : public Pipeline {
                      VkImageAspectFlags aspect);
   VkFormat GetColorFormat() const { return color_format_; }
   VkFormat GetDepthStencilFormat() const { return depth_stencil_format_; }
-  Result ProcessCommands();
 
   Result SetClearColor(float r, float g, float b, float a);
   Result SetClearStencil(uint32_t stencil);
@@ -70,6 +69,7 @@ class GraphicsPipeline : public Pipeline {
 
   // Pipeline
   void Shutdown() override;
+  Result ProcessCommands() override;
 
  private:
   enum class RenderPassState : uint8_t {

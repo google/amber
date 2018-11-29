@@ -272,28 +272,35 @@ Result EngineVulkan::DoPatchParameterVertices(
   return Result("Vulkan::DoPatch Not Implemented");
 }
 
-Result EngineVulkan::DoProcessCommands(uint32_t* stride,
-                                       uint32_t* width,
-                                       uint32_t* height,
-                                       const void** buf) {
-  assert(width);
-  assert(height);
-  assert(stride);
-  assert(buf);
+Result EngineVulkan::DoProcessCommands() {
+  return pipeline_->ProcessCommands();
+}
+
+Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
+  assert(info);
 
   if (!pipeline_->IsGraphics())
-    return Result("Vulkan::ProcessCommands for Non-Graphics Pipeline");
+    return Result("Vulkan::GetFrameBufferInfo for Non-Graphics Pipeline");
 
-  auto graphics = pipeline_->AsGraphics();
-  Result r = graphics->ProcessCommands();
+  const auto graphics = pipeline_->AsGraphics();
+  const auto frame = graphics->GetFrame();
+  auto bytes_per_texel = VkFormatToByteSize(graphics->GetColorFormat());
+  info->type = ResourceInfoType::kImage;
+  info->image_info.width = frame->GetWidth();
+  info->image_info.height = frame->GetHeight();
+  info->image_info.depth = 1U;
+  info->image_info.texel_stride = bytes_per_texel;
+  info->size_in_bytes =
+      frame->GetWidth() * frame->GetHeight() * bytes_per_texel;
+  info->cpu_memory = frame->GetColorBufferPtr();
 
-  auto frame = graphics->GetFrame();
-  *width = frame->GetWidth();
-  *height = frame->GetHeight();
-  *stride = VkFormatToByteSize(graphics->GetColorFormat());
-  *buf = frame->GetColorBufferPtr();
+  return {};
+}
 
-  return r;
+Result EngineVulkan::GetDescriptorInfo(const uint32_t,
+                                       const uint32_t,
+                                       ResourceInfo*) {
+  return Result("EngineVulkan::GetDescriptorInfo not implemented");
 }
 
 Result EngineVulkan::DoBuffer(const BufferCommand* command) {

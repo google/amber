@@ -106,18 +106,32 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
 
     for (const auto& cmd : node->AsTest()->GetCommands()) {
       if (cmd->IsProbe()) {
-        const void* buf = nullptr;
-        uint32_t width = 0;
-        uint32_t height = 0;
-        uint32_t stride = 0;
-        r = engine->DoProcessCommands(&stride, &width, &height, &buf);
+        ResourceInfo info;
+        r = engine->GetFrameBufferInfo(&info);
         if (!r.IsSuccess())
           return r;
 
-        r = verifier_.Probe(cmd->AsProbe(), stride, width, height, buf);
-      } else if (cmd->IsProbeSSBO()) {
-        r = verifier_.ProbeSSBO(cmd->AsProbeSSBO());
+        r = engine->DoProcessCommands();
+        if (!r.IsSuccess())
+          return r;
 
+        r = verifier_.Probe(cmd->AsProbe(), info.image_info.texel_stride,
+                            info.image_info.width, info.image_info.height,
+                            info.cpu_memory);
+      } else if (cmd->IsProbeSSBO()) {
+        auto probe_ssbo = cmd->AsProbeSSBO();
+        ResourceInfo info;
+        r = engine->GetDescriptorInfo(probe_ssbo->GetDescriptorSet(),
+                                      probe_ssbo->GetBinding(), &info);
+        if (!r.IsSuccess())
+          return r;
+
+        r = engine->DoProcessCommands();
+        if (!r.IsSuccess())
+          return r;
+
+        r = verifier_.ProbeSSBO(probe_ssbo, info.size_in_bytes,
+                                info.cpu_memory);
       } else if (cmd->IsClear()) {
         r = engine->DoClear(cmd->AsClear());
       } else if (cmd->IsClearColor()) {

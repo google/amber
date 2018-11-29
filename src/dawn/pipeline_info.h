@@ -49,7 +49,7 @@ struct RenderPipelineInfo {
   uint32_t fb_row_stride = 0;
   // The number of data bytes in the framebuffer host-side buffer.
   uint32_t fb_size = 0;
-  bool fb_is_mapped = false;
+  const void* fb_data = nullptr;
 
   // TODO(dneto): Record index data
   // TODO(dneto): Record buffer data

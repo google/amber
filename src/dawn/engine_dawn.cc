@@ -324,16 +324,7 @@ Result EngineDawn::DoBuffer(const BufferCommand*) {
   return Result("Dawn:DoBuffer not implemented");
 }
 
-Result EngineDawn::DoProcessCommands(uint32_t* texel_stride,
-                                     uint32_t* width,
-                                     uint32_t* height,
-                                     const void** buf_ptr) {
-  assert(texel_stride);
-  // TODO(dneto): Need to pass back a row_stride.
-  assert(width);
-  assert(height);
-  assert(buf_ptr);
-
+Result EngineDawn::DoProcessCommands() {
   Result result;
 
   // TODO(dneto): How to distinguish the compute case: It won't have a
@@ -368,9 +359,9 @@ Result EngineDawn::DoProcessCommands(uint32_t* texel_stride,
   // Now run the commands.
   auto command_buffer = command_buffer_builder_.GetResult();
 
-  if (render_pipeline_info_.fb_is_mapped) {
+  if (render_pipeline_info_.fb_data != nullptr) {
     fb_buffer.Unmap();
-    render_pipeline_info_.fb_is_mapped = false;
+    render_pipeline_info_.fb_data = nullptr;
   }
 
   queue_.Submit(1, &command_buffer);
@@ -379,12 +370,7 @@ Result EngineDawn::DoProcessCommands(uint32_t* texel_stride,
   DestroyCommandBufferBuilder();
 
   MapResult map = MapBuffer(device_, fb_buffer, render_pipeline_info_.fb_size);
-  render_pipeline_info_.fb_is_mapped = map.result.IsSuccess();
-
-  *texel_stride = render_pipeline_info_.fb_texel_stride;
-  *width = kFramebufferWidth;
-  *height = kFramebufferHeight;
-  *buf_ptr = map.data;
+  render_pipeline_info_.fb_data = map.data;
   return map.result;
 }
 
@@ -438,9 +424,32 @@ Result EngineDawn::CreateFramebufferIfNeeded() {
     render_pipeline_info_.fb_texel_stride = texel_stride;
     render_pipeline_info_.fb_row_stride = row_stride;
     render_pipeline_info_.fb_size = size;
-    render_pipeline_info_.fb_is_mapped = false;
+    render_pipeline_info_.fb_data = nullptr;
   }
   return {};
+}
+
+Result EngineDawn::GetFrameBufferInfo(ResourceInfo* info) {
+  assert(info);
+
+  if (render_pipeline_info_.fb_data == nullptr)
+    return Result("Dawn: FrameBuffer is not mapped");
+
+  // TODO(dneto): Need to pass back a row_stride.
+  info->image_info.texel_stride = render_pipeline_info_.fb_texel_stride;
+  info->image_info.width = kFramebufferWidth;
+  info->image_info.height = kFramebufferHeight;
+  info->image_info.depth = 1U;
+  info->size_in_bytes = render_pipeline_info_.fb_texel_stride *
+                        kFramebufferWidth * kFramebufferHeight;
+  info->cpu_memory = render_pipeline_info_.fb_data;
+  return {};
+}
+
+Result EngineDawn::GetDescriptorInfo(const uint32_t,
+                                     const uint32_t,
+                                     ResourceInfo*) {
+  return Result("Dawn:GetDescriptorInfo not implemented");
 }
 
 }  // namespace dawn

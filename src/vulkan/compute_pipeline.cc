@@ -81,5 +81,17 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
   return {};
 }
 
+Result ComputePipeline::ProcessCommands() {
+  Result r = command_->BeginIfNotInRecording();
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->End();
+  if (!r.IsSuccess())
+    return r;
+
+  return command_->SubmitAndReset(GetFenceTimeout());
+}
+
 }  // namespace vulkan
 }  // namespace amber
