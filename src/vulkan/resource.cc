@@ -47,9 +47,11 @@ VkMemoryBarrier kMemoryBarrierForAll = {
 }  // namespace
 
 Resource::Resource(VkDevice device,
-                   size_t size,
+                   size_t size_in_bytes,
                    const VkPhysicalDeviceMemoryProperties& properties)
-    : device_(device), size_(size), physical_memory_properties_(properties) {}
+    : device_(device),
+      size_in_bytes_(size_in_bytes),
+      physical_memory_properties_(properties) {}
 
 Resource::~Resource() = default;
 
@@ -84,7 +86,7 @@ Result Resource::CreateVkBuffer(VkBuffer* buffer, VkBufferUsageFlags usage) {
   VkBufferCreateInfo buffer_info = {};
   buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  buffer_info.size = size_;
+  buffer_info.size = size_in_bytes_;
   buffer_info.usage = usage;
 
   if (vkCreateBuffer(device_, &buffer_info, nullptr, buffer) != VK_SUCCESS)

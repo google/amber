@@ -36,6 +36,8 @@ Result Buffer::Initialize(const VkBufferUsageFlags usage) {
 
   if (CheckMemoryHostAccessible(allocate_result.memory_type_index)) {
     is_buffer_host_accessible_ = true;
+    is_buffer_host_coherent_ =
+        CheckMemoryHostCoherent(allocate_result.memory_type_index);
     return MapMemory(memory_);
   }
 
@@ -65,10 +67,25 @@ void Buffer::CopyToDevice(VkCommandBuffer command) {
   VkBufferCopy region = {};
   region.srcOffset = 0;
   region.dstOffset = 0;
-  region.size = GetSize();
+  region.size = GetSizeInBytes();
 
   vkCmdCopyBuffer(command, GetHostAccessibleBuffer(), buffer_, 1, &region);
   MemoryBarrier(command);
+}
+
+Result Buffer::CopyToHost(VkCommandBuffer command) {
+  if (is_buffer_host_accessible_) {
+    return FlushAndInvalidateMemoryIfNeeded();
+  }
+
+  VkBufferCopy region = {};
+  region.srcOffset = 0;
+  region.dstOffset = 0;
+  region.size = GetSizeInBytes();
+
+  vkCmdCopyBuffer(command, buffer_, GetHostAccessibleBuffer(), 1, &region);
+  MemoryBarrier(command);
+  return {};
 }
 
 void Buffer::Shutdown() {
@@ -88,6 +105,24 @@ void Buffer::Shutdown() {
     vkFreeMemory(GetDevice(), memory_, nullptr);
     memory_ = VK_NULL_HANDLE;
   }
+}
+
+Result Buffer::FlushAndInvalidateMemoryIfNeeded() {
+  if (is_buffer_host_coherent_)
+    return {};
+
+  VkMappedMemoryRange range = {};
+  range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+  range.memory = GetHostAccessMemory();
+  range.offset = 0;
+  range.size = VK_WHOLE_SIZE;
+  if (vkFlushMappedMemoryRanges(GetDevice(), 1, &range) != VK_SUCCESS)
+    return Result("Vulkan: vkFlushMappedMemoryRanges fail");
+
+  if (vkInvalidateMappedMemoryRanges(GetDevice(), 1, &range) != VK_SUCCESS)
+    return Result("Vulkan: vkInvalidateMappedMemoryRanges fail");
+
+  return {};
 }
 
 }  // namespace vulkan

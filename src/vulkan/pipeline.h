@@ -45,6 +45,16 @@ class Pipeline {
 
   Result AddDescriptor(const BufferCommand*);
 
+  // Copy the contents of the resource bound to the given descriptor
+  // to host memory.
+  Result CopyDescriptorToHost(const uint32_t descriptor_set,
+                              const uint32_t binding);
+
+  // Get the information of the resource bound to the given descriptor.
+  Result GetDescriptorInfo(const uint32_t descriptor_set,
+                           const uint32_t binding,
+                           ResourceInfo* info);
+
   virtual void Shutdown();
   virtual Result ProcessCommands() = 0;
 
@@ -58,7 +68,7 @@ class Pipeline {
   Result InitializeCommandBuffer(VkCommandPool pool, VkQueue queue);
   Result CreateVkDescriptorRelatedObjects();
 
-  Result SendDescriptorDataToGPUIfNeeded();
+  Result SendDescriptorDataToDeviceIfNeeded();
   void BindVkPipeline();
   void BindVkDescriptorSets();
 
