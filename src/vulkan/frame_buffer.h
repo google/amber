@@ -47,6 +47,10 @@ class FrameBuffer {
     return color_image_->HostAccessibleMemoryPtr();
   }
   VkImage GetColorImage() const { return color_image_->GetVkImage(); }
+
+  // Only record the command for copying the image that backs this
+  // framebuffer to the host accessible buffer. The actual submission
+  // of the command must be done later.
   Result CopyColorImageToHost(VkCommandBuffer command) {
     ChangeFrameImageLayout(command, FrameImageState::kProbe);
     return color_image_->CopyToHost(command);

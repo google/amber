@@ -39,7 +39,8 @@ set(Dawn_FOUND FALSE)
 #
 #     -DDawn_INCLUDE_DIR=<directory containing dawn/dawn_export.h>
 #     -DDawn_GEN_INCLUDE_DIR=<directory containing dawn/dawn.h>
-#     -DDawn_LIBRARY_DIR=<directory containing dawn_native>
+#     -DDawn_LIBRARY_DIR=<directory containing dawn_native library
+#                         e.g., libdawn_native.a>
 
 
 find_path(Dawn_INCLUDE_DIR
