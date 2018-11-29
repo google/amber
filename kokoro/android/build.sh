@@ -18,18 +18,18 @@ set -x  # Display commands as run
 BUILD_ROOT=$PWD
 SRC=$PWD/github/amber
 BUILD_TYPE=Release
-TARGET_ARCH="armeabi-v7a with NEON"
-TARGET_API="android-14"
+
 export ANDROID_NDK=/opt/android-ndk-r15c
+ANDROID_STL=c++_static
+ANDROID_PLATFORM="android-14"
+ANDROID_ABI="armeabi-v7a with NEON"
+
+TOOLCHAIN_PATH=$ANDROID_NDK/build/cmake/android.toolchain.cmake
 
 # Get NINJA.
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
 unzip -q ninja-linux.zip
 export PATH="$PWD:$PATH"
-
-# Get Android CMake
-git clone --depth=1 https://github.com/taka-no-me/android-cmake.git android-cmake
-export TOOLCHAIN_PATH=$PWD/android-cmake/android.toolchain.cmake
 
 cd $SRC
 ./tools/git-sync-deps
@@ -41,9 +41,10 @@ BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
 echo $(date): Starting build...
 cmake -GNinja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DANDROID_NATIVE_API_LEVEL=$TARGET_API \
-    -DANDROID_ABI=$TARGET_ARCH \
+    -DANDROID_ABI=$ANDROID_ABI \
+    -DANDROID_PLATFORM=$ANDROID_PLATFORM \
     -DANDROID_NDK=$ANDROID_NDK \
+    -DANDROID_STL=$ANDROID_STL \
     -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_PATH \
      ..
 
