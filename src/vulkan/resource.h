@@ -63,14 +63,14 @@ class Resource {
                                                 VkMemoryPropertyFlags flags,
                                                 bool force_flags);
 
-  bool CheckMemoryHostAccessible(uint32_t memory_type_index) {
+  bool IsMemoryHostAccessible(uint32_t memory_type_index) {
     return (physical_memory_properties_.memoryTypes[memory_type_index]
                 .propertyFlags &
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) ==
            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
   }
 
-  bool CheckMemoryHostCoherent(uint32_t memory_type_index) {
+  bool IsMemoryHostCoherent(uint32_t memory_type_index) {
     return (physical_memory_properties_.memoryTypes[memory_type_index]
                 .propertyFlags &
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) ==

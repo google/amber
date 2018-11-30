@@ -34,10 +34,10 @@ Result Buffer::Initialize(const VkBufferUsageFlags usage) {
   if (!allocate_result.r.IsSuccess())
     return allocate_result.r;
 
-  if (CheckMemoryHostAccessible(allocate_result.memory_type_index)) {
+  if (IsMemoryHostAccessible(allocate_result.memory_type_index)) {
     is_buffer_host_accessible_ = true;
     is_buffer_host_coherent_ =
-        CheckMemoryHostCoherent(allocate_result.memory_type_index);
+        IsMemoryHostCoherent(allocate_result.memory_type_index);
     return MapMemory(memory_);
   }
 
@@ -60,9 +60,9 @@ Result Buffer::CreateVkBufferView(VkFormat format) {
   return {};
 }
 
-void Buffer::CopyToDevice(VkCommandBuffer command) {
+Result Buffer::CopyToDevice(VkCommandBuffer command) {
   if (is_buffer_host_accessible_)
-    return;
+    return FlushMemoryIfNeeded();
 
   VkBufferCopy region = {};
   region.srcOffset = 0;
@@ -71,12 +71,12 @@ void Buffer::CopyToDevice(VkCommandBuffer command) {
 
   vkCmdCopyBuffer(command, GetHostAccessibleBuffer(), buffer_, 1, &region);
   MemoryBarrier(command);
+  return {};
 }
 
 Result Buffer::CopyToHost(VkCommandBuffer command) {
-  if (is_buffer_host_accessible_) {
-    return FlushAndInvalidateMemoryIfNeeded();
-  }
+  if (is_buffer_host_accessible_)
+    return InvalidateMemoryIfNeeded();
 
   VkBufferCopy region = {};
   region.srcOffset = 0;
@@ -107,7 +107,22 @@ void Buffer::Shutdown() {
   }
 }
 
-Result Buffer::FlushAndInvalidateMemoryIfNeeded() {
+Result Buffer::InvalidateMemoryIfNeeded() {
+  if (is_buffer_host_coherent_)
+    return {};
+
+  VkMappedMemoryRange range = {};
+  range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+  range.memory = GetHostAccessMemory();
+  range.offset = 0;
+  range.size = VK_WHOLE_SIZE;
+  if (vkInvalidateMappedMemoryRanges(GetDevice(), 1, &range) != VK_SUCCESS)
+    return Result("Vulkan: vkInvalidateMappedMemoryRanges fail");
+
+  return {};
+}
+
+Result Buffer::FlushMemoryIfNeeded() {
   if (is_buffer_host_coherent_)
     return {};
 
@@ -118,9 +133,6 @@ Result Buffer::FlushAndInvalidateMemoryIfNeeded() {
   range.size = VK_WHOLE_SIZE;
   if (vkFlushMappedMemoryRanges(GetDevice(), 1, &range) != VK_SUCCESS)
     return Result("Vulkan: vkFlushMappedMemoryRanges fail");
-
-  if (vkInvalidateMappedMemoryRanges(GetDevice(), 1, &range) != VK_SUCCESS)
-    return Result("Vulkan: vkInvalidateMappedMemoryRanges fail");
 
   return {};
 }
