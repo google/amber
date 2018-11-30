@@ -16,8 +16,11 @@
 
 #include <algorithm>
 #include <cassert>
+#include <string>
 
 #include "amber/amber_vulkan.h"
+#include "src/feature.h"
+#include "src/format_data.h"
 #include "src/make_unique.h"
 #include "src/vulkan/compute_pipeline.h"
 #include "src/vulkan/descriptor.h"
@@ -109,20 +112,29 @@ Result EngineVulkan::Shutdown() {
 Result EngineVulkan::AddRequirement(Feature feature,
                                     const Format* fmt,
                                     uint32_t val) {
-  auto it = std::find_if(requirements_.begin(), requirements_.end(),
-                         [&feature](const EngineVulkan::Requirement& req) {
-                           return req.feature == feature;
-                         });
-  if (it != requirements_.end())
-    return Result("Vulkan::Feature Already Exists");
+  if (std::find(features_.begin(), features_.end(), feature) != features_.end())
+    return Result("Vulkan::AddRequirement feature was already handled");
+
+  features_.push_back(feature);
 
   if (feature == Feature::kFenceTimeout) {
     fence_timeout_ms_ = val;
     return {};
   }
 
-  requirements_.push_back({feature, fmt});
-  return {};
+  if (feature == Feature::kFramebuffer) {
+    if (fmt != nullptr)
+      color_frame_format_ = MakeUnique<Format>(*fmt);
+    return {};
+  }
+
+  if (feature == Feature::kDepthStencil) {
+    if (fmt != nullptr)
+      depth_frame_format_ = MakeUnique<Format>(*fmt);
+    return {};
+  }
+
+  return Result("Vulkan::AddRequirement features and extensions must be handled by Initialize()");
 }
 
 Result EngineVulkan::CreatePipeline(PipelineType type) {
@@ -135,25 +147,12 @@ Result EngineVulkan::CreatePipeline(PipelineType type) {
   }
 
   VkFormat frame_buffer_format = kDefaultColorFormat;
-  auto it_frame_buffer =
-      std::find_if(requirements_.begin(), requirements_.end(),
-                   [](const EngineVulkan::Requirement& req) {
-                     return req.feature == Feature::kFramebuffer;
-                   });
-  if (it_frame_buffer != requirements_.end()) {
-    frame_buffer_format = ToVkFormat(it_frame_buffer->format->GetFormatType());
-  }
+  if (color_frame_format_)
+    frame_buffer_format = ToVkFormat(color_frame_format_->GetFormatType());
 
   VkFormat depth_stencil_format = VK_FORMAT_UNDEFINED;
-  auto it_depth_stencil =
-      std::find_if(requirements_.begin(), requirements_.end(),
-                   [](const EngineVulkan::Requirement& req) {
-                     return req.feature == Feature::kDepthStencil;
-                   });
-  if (it_depth_stencil != requirements_.end()) {
-    depth_stencil_format =
-        ToVkFormat(it_depth_stencil->format->GetFormatType());
-  }
+  if (depth_frame_format_)
+    depth_stencil_format = ToVkFormat(depth_frame_format_->GetFormatType());
 
   pipeline_ = MakeUnique<GraphicsPipeline>(
       device_->GetDevice(), device_->GetPhysicalMemoryProperties(),

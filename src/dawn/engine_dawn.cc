@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -234,10 +235,6 @@ Result EngineDawn::CreatePipeline(PipelineType type) {
   }
 
   return {};
-}
-
-Result EngineDawn::AddRequirement(Feature, const Format*, uint32_t) {
-  return Result("Dawn:AddRequirement not implemented");
 }
 
 Result EngineDawn::SetShader(ShaderType type,

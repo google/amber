@@ -90,13 +90,6 @@ class Engine {
   // Shutdown the engine and cleanup any resources.
   virtual Result Shutdown() = 0;
 
-  // Enable |feature|. If the feature requires a pixel format it will be
-  // provided in |format|, otherwise |format| is a nullptr. If the feature
-  // requires a uint32 value it will be set in the |uint32_t|.
-  virtual Result AddRequirement(Feature feature,
-                                const Format* format,
-                                uint32_t) = 0;
-
   // Create graphics pipeline.
   virtual Result CreatePipeline(PipelineType type) = 0;
 
