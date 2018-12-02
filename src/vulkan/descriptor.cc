@@ -93,6 +93,7 @@ Result Descriptor::UpdateDescriptorSetForBuffer(
   }
 
   vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
+  is_descriptor_set_update_needed_ = false;
   return {};
 }
 
@@ -116,6 +117,7 @@ Result Descriptor::UpdateDescriptorSetForImage(
   }
 
   vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
+  is_descriptor_set_update_needed_ = false;
   return {};
 }
 
@@ -137,7 +139,15 @@ Result Descriptor::UpdateDescriptorSetForBufferView(
   }
 
   vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
+  is_descriptor_set_update_needed_ = false;
   return {};
+}
+
+void Descriptor::PushData(DataType type,
+                          uint32_t offset,
+                          size_t size_in_bytes,
+                          const std::vector<Value>& values) {
+  push_data_info_.push_back({type, offset, size_in_bytes, values});
 }
 
 }  // namespace vulkan

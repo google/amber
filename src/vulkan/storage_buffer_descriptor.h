@@ -31,19 +31,17 @@ namespace vulkan {
 
 class StorageBufferDescriptor : public Descriptor {
  public:
-  StorageBufferDescriptor(VkDevice device,
-                          uint32_t desc_set,
-                          uint32_t binding,
-                          size_t size,
-                          const VkPhysicalDeviceMemoryProperties& properties);
+  StorageBufferDescriptor(VkDevice device, uint32_t desc_set, uint32_t binding);
   ~StorageBufferDescriptor();
 
-  Result Initialize(DataType type, const std::vector<Value>& values);
+  void FillBufferWithData(const PushDataInfo& info);
 
   // Descriptor
-  void SendDataToDeviceIfNeeded(VkCommandBuffer command) override;
+  Result UpdateResourceIfNeeded(
+      VkCommandBuffer command,
+      const VkPhysicalDeviceMemoryProperties& properties) override;
   Result SendDataToHostIfNeeded(VkCommandBuffer command) override;
-  Result UpdateDescriptorSet(VkDescriptorSet descriptor_set) override;
+  Result UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
   ResourceInfo GetResourceInfo() override;
   void Shutdown() override;
 

@@ -16,8 +16,10 @@
 #define SRC_VULKAN_DESCRIPTOR_H_
 
 #include <memory>
+#include <vector>
 
 #include "amber/result.h"
+#include "src/datum_type.h"
 #include "src/engine.h"
 #include "vulkan/vulkan.h"
 
@@ -39,6 +41,15 @@ enum class DescriptorType : uint8_t {
 };
 
 VkDescriptorType ToVkDescriptorType(DescriptorType type);
+
+struct PushDataInfo {
+  DataType type;
+  uint32_t offset;
+  size_t size_in_bytes;
+  std::vector<Value> values;
+
+  // TODO(jaebaek): Add info for image
+};
 
 class Descriptor {
  public:
@@ -84,10 +95,34 @@ class Descriptor {
     return type_ == DescriptorType::kDynamicStorageBuffer;
   }
 
-  bool IsDataAlreadySent() { return is_data_already_sent_; }
+  bool HasDataNotSent() { return !push_data_info_.empty(); }
 
-  virtual Result UpdateDescriptorSet(VkDescriptorSet descriptor_set) = 0;
-  virtual void SendDataToDeviceIfNeeded(VkCommandBuffer command) = 0;
+  void PushData(DataType type,
+                uint32_t offset,
+                size_t size_in_bytes,
+                const std::vector<Value>& values);
+
+  // Call vkUpdateDescriptorSets() to update the backing resource
+  // for this descriptor only when the backing resource was newly
+  // created or changed. The child class i.e., each descriptor type
+  // must use UpdateDescriptorSetForBuffer(), UpdateDescriptorSetForImage(),
+  // UpdateDescriptorSetForBufferView() correctly according to its
+  // backing resource type.
+  virtual Result UpdateDescriptorSetIfNeeded(VkDescriptorSet) = 0;
+
+  // Create new vulkan resource if needed i.e., if it was not created
+  // yet or if we need bigger one. In addition, record commands
+  // for copying the existing resource data to the new one if it
+  // recreated it and send the updated data. Note that it only
+  // records those commands and the actual submission of the command
+  // must be done later.
+  virtual Result UpdateResourceIfNeeded(
+      VkCommandBuffer command,
+      const VkPhysicalDeviceMemoryProperties& properties) = 0;
+
+  // Only record the copy command for sending the bound resource
+  // data to the host accessible memory. The actual submission of
+  // the command must be done later.
   virtual Result SendDataToHostIfNeeded(VkCommandBuffer command) = 0;
   virtual ResourceInfo GetResourceInfo() = 0;
   virtual void Shutdown() = 0;
@@ -104,7 +139,20 @@ class Descriptor {
                                           VkDescriptorType descriptor_type,
                                           const VkBufferView& texel_view);
 
-  void SetDataSent() { is_data_already_sent_ = true; }
+  VkDevice GetDevice() const { return device_; }
+
+  const std::vector<PushDataInfo>& GetPushDataInfo() const {
+    return push_data_info_;
+  }
+
+  void ClearPushDataInfo() { push_data_info_.clear(); }
+
+  void SetUpdateDescriptorSetNeeded() {
+    is_descriptor_set_update_needed_ = true;
+  }
+  bool IsDescriptorSetUpdateNeeded() {
+    return is_descriptor_set_update_needed_;
+  }
 
   uint32_t descriptor_set_ = 0;
   uint32_t binding_ = 0;
@@ -115,8 +163,9 @@ class Descriptor {
       VkDescriptorType descriptor_type) const;
 
   DescriptorType type_ = DescriptorType::kSampledImage;
-  bool is_data_already_sent_ = false;
   VkDevice device_ = VK_NULL_HANDLE;
+  std::vector<PushDataInfo> push_data_info_;
+  bool is_descriptor_set_update_needed_ = false;
 };
 
 }  // namespace vulkan
