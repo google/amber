@@ -481,7 +481,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
   if (!r.IsSuccess())
     return r;
 
-  r = SendDescriptorDataToGPUIfNeeded();
+  r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
     return r;
 

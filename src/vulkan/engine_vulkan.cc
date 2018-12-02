@@ -297,10 +297,16 @@ Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
   return {};
 }
 
-Result EngineVulkan::GetDescriptorInfo(const uint32_t,
-                                       const uint32_t,
-                                       ResourceInfo*) {
-  return Result("EngineVulkan::GetDescriptorInfo not implemented");
+Result EngineVulkan::GetDescriptorInfo(const uint32_t descriptor_set,
+                                       const uint32_t binding,
+                                       ResourceInfo* info) {
+  assert(info);
+  Result r = pipeline_->CopyDescriptorToHost(descriptor_set, binding);
+  if (!r.IsSuccess())
+    return r;
+
+  pipeline_->GetDescriptorInfo(descriptor_set, binding, info);
+  return {};
 }
 
 Result EngineVulkan::DoBuffer(const BufferCommand* command) {

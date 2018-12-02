@@ -16,6 +16,7 @@
 
 #include <vector>
 
+#include "src/engine.h"
 #include "src/make_unique.h"
 
 namespace amber {
@@ -98,7 +99,8 @@ Result StorageBufferDescriptor::Initialize(DataType type,
   return {};
 }
 
-void StorageBufferDescriptor::SendDataToGPUIfNeeded(VkCommandBuffer command) {
+void StorageBufferDescriptor::SendDataToDeviceIfNeeded(
+    VkCommandBuffer command) {
   // TODO(jaebaek): VkRunner script allows data updating after initialiation.
   //                Support updating data.
   if (IsDataAlreadySent())
@@ -106,6 +108,11 @@ void StorageBufferDescriptor::SendDataToGPUIfNeeded(VkCommandBuffer command) {
 
   buffer_->CopyToDevice(command);
   SetDataSent();
+}
+
+Result StorageBufferDescriptor::SendDataToHostIfNeeded(
+    VkCommandBuffer command) {
+  return buffer_->CopyToHost(command);
 }
 
 Result StorageBufferDescriptor::UpdateDescriptorSet(
@@ -117,6 +124,14 @@ Result StorageBufferDescriptor::UpdateDescriptorSet(
 
   return Descriptor::UpdateDescriptorSetForBuffer(
       descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, buffer_info);
+}
+
+ResourceInfo StorageBufferDescriptor::GetResourceInfo() {
+  ResourceInfo info = {};
+  info.type = ResourceInfoType::kBuffer;
+  info.size_in_bytes = buffer_->GetSizeInBytes();
+  info.cpu_memory = buffer_->HostAccessibleMemoryPtr();
+  return info;
 }
 
 void StorageBufferDescriptor::Shutdown() {

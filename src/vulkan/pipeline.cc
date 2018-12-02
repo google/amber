@@ -15,10 +15,12 @@
 #include "src/vulkan/pipeline.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <utility>
 
 #include "src/command.h"
+#include "src/engine.h"
 #include "src/make_unique.h"
 #include "src/vulkan/compute_pipeline.h"
 #include "src/vulkan/graphics_pipeline.h"
@@ -247,7 +249,7 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
   return {};
 }
 
-Result Pipeline::SendDescriptorDataToGPUIfNeeded() {
+Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
   if (descriptors_.size() == 0)
     return {};
 
@@ -267,7 +269,7 @@ Result Pipeline::SendDescriptorDataToGPUIfNeeded() {
     return r;
 
   for (const auto& desc : descriptors_)
-    desc->SendDataToGPUIfNeeded(command_->GetCommandBuffer());
+    desc->SendDataToDeviceIfNeeded(command_->GetCommandBuffer());
 
   return {};
 }
@@ -285,6 +287,42 @@ void Pipeline::BindVkPipeline() {
                     IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
                                  : VK_PIPELINE_BIND_POINT_COMPUTE,
                     pipeline_);
+}
+
+Result Pipeline::CopyDescriptorToHost(const uint32_t descriptor_set,
+                                      const uint32_t binding) {
+  Result r = command_->BeginIfNotInRecording();
+  if (!r.IsSuccess())
+    return r;
+
+  for (size_t i = 0; i < descriptors_.size(); ++i) {
+    if (descriptors_[i]->GetDescriptorSet() == descriptor_set &&
+        descriptors_[i]->GetBinding() == binding) {
+      return descriptors_[i]->SendDataToHostIfNeeded(
+          command_->GetCommandBuffer());
+    }
+  }
+
+  return Result("Vulkan::Pipeline descriptor with descriptor set: " +
+                std::to_string(descriptor_set) +
+                ", binding: " + std::to_string(binding) + " does not exist");
+}
+
+Result Pipeline::GetDescriptorInfo(const uint32_t descriptor_set,
+                                   const uint32_t binding,
+                                   ResourceInfo* info) {
+  assert(info);
+  for (size_t i = 0; i < descriptors_.size(); ++i) {
+    if (descriptors_[i]->GetDescriptorSet() == descriptor_set &&
+        descriptors_[i]->GetBinding() == binding) {
+      *info = descriptors_[i]->GetResourceInfo();
+      return {};
+    }
+  }
+
+  return Result("Vulkan::Pipeline descriptor with descriptor set: " +
+                std::to_string(descriptor_set) +
+                ", binding: " + std::to_string(binding) + " does not exist");
 }
 
 }  // namespace vulkan

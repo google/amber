@@ -20,6 +20,7 @@
 
 #include "amber/result.h"
 #include "src/datum_type.h"
+#include "src/engine.h"
 #include "src/value.h"
 #include "src/vulkan/buffer.h"
 #include "src/vulkan/descriptor.h"
@@ -40,8 +41,10 @@ class StorageBufferDescriptor : public Descriptor {
   Result Initialize(DataType type, const std::vector<Value>& values);
 
   // Descriptor
-  void SendDataToGPUIfNeeded(VkCommandBuffer command) override;
+  void SendDataToDeviceIfNeeded(VkCommandBuffer command) override;
+  Result SendDataToHostIfNeeded(VkCommandBuffer command) override;
   Result UpdateDescriptorSet(VkDescriptorSet descriptor_set) override;
+  ResourceInfo GetResourceInfo() override;
   void Shutdown() override;
 
  private:

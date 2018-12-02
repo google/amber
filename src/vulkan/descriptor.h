@@ -18,6 +18,7 @@
 #include <memory>
 
 #include "amber/result.h"
+#include "src/engine.h"
 #include "vulkan/vulkan.h"
 
 namespace amber {
@@ -86,7 +87,9 @@ class Descriptor {
   bool IsDataAlreadySent() { return is_data_already_sent_; }
 
   virtual Result UpdateDescriptorSet(VkDescriptorSet descriptor_set) = 0;
-  virtual void SendDataToGPUIfNeeded(VkCommandBuffer command) = 0;
+  virtual void SendDataToDeviceIfNeeded(VkCommandBuffer command) = 0;
+  virtual Result SendDataToHostIfNeeded(VkCommandBuffer command) = 0;
+  virtual ResourceInfo GetResourceInfo() = 0;
   virtual void Shutdown() = 0;
 
  protected:

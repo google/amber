@@ -36,9 +36,6 @@ class Image : public Resource {
   VkImage GetVkImage() const { return image_; }
   VkImageView GetVkImageView() const { return view_; }
 
-  // TODO(jaebaek): Determine copy all or partial data
-  Result CopyToHost(VkCommandBuffer command);
-
   // TODO(jaebaek): Implement CopyToDevice
 
   void ChangeLayout(VkCommandBuffer command,
@@ -49,11 +46,13 @@ class Image : public Resource {
 
   // Resource
   VkDeviceMemory GetHostAccessMemory() const override {
-    if (is_image_host_accessible_)
-      return memory_;
-
     return Resource::GetHostAccessMemory();
   }
+
+  // Only record the command for copying this image to its secondary
+  // host-accessible buffer. The actual submission of the command
+  // must be done later.
+  Result CopyToHost(VkCommandBuffer command) override;
 
   void Shutdown() override;
 
@@ -65,7 +64,6 @@ class Image : public Resource {
   VkImage image_ = VK_NULL_HANDLE;
   VkImageView view_ = VK_NULL_HANDLE;
   VkDeviceMemory memory_ = VK_NULL_HANDLE;
-  bool is_image_host_accessible_ = false;
 };
 
 }  // namespace vulkan

@@ -31,9 +31,13 @@ class Resource {
     return host_accessible_memory_;
   }
 
+  virtual Result CopyToHost(VkCommandBuffer command) = 0;
+
   virtual void Shutdown();
 
   void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
+
+  size_t GetSizeInBytes() const { return size_in_bytes_; }
 
  protected:
   Resource(VkDevice device,
@@ -44,8 +48,6 @@ class Resource {
 
   VkDevice GetDevice() const { return device_; }
   VkBuffer GetHostAccessibleBuffer() const { return host_accessible_buffer_; }
-
-  size_t GetSize() const { return size_; }
 
   struct AllocateResult {
     Result r;
@@ -61,11 +63,18 @@ class Resource {
                                                 VkMemoryPropertyFlags flags,
                                                 bool force_flags);
 
-  bool CheckMemoryHostAccessible(uint32_t memory_type_index) {
+  bool IsMemoryHostAccessible(uint32_t memory_type_index) {
     return (physical_memory_properties_.memoryTypes[memory_type_index]
                 .propertyFlags &
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) ==
            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+  }
+
+  bool IsMemoryHostCoherent(uint32_t memory_type_index) {
+    return (physical_memory_properties_.memoryTypes[memory_type_index]
+                .propertyFlags &
+            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) ==
+           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
   }
 
   Result MapMemory(VkDeviceMemory memory);
@@ -91,7 +100,7 @@ class Resource {
   const VkMemoryRequirements GetVkImageMemoryRequirements(VkImage image) const;
 
   VkDevice device_ = VK_NULL_HANDLE;
-  size_t size_ = 0;
+  size_t size_in_bytes_ = 0;
   VkPhysicalDeviceMemoryProperties physical_memory_properties_;
 
   VkBuffer host_accessible_buffer_ = VK_NULL_HANDLE;

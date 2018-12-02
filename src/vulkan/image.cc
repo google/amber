@@ -79,7 +79,6 @@ Result Image::Initialize(VkImageUsageFlags usage) {
   // is optimal, read/write data from CPU does not show correct values. We need
   // a secondary buffer to convert the GPU-optimial data to CPU-readable data
   // and vice versa.
-  is_image_host_accessible_ = false;
   return Resource::Initialize();
 }
 
@@ -123,9 +122,6 @@ void Image::Shutdown() {
 }
 
 Result Image::CopyToHost(VkCommandBuffer command) {
-  if (is_image_host_accessible_)
-    return {};
-
   VkBufferImageCopy copy_region = {};
   copy_region.bufferOffset = 0;
   copy_region.bufferRowLength = 0;
@@ -206,10 +202,6 @@ void Image::ChangeLayout(VkCommandBuffer command,
       break;
     case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
       barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-      // An image becomes "host readable transfer src" only when we directly
-      // probe it from CPU.
-      if (is_image_host_accessible_)
-        barrier.dstAccessMask |= VK_ACCESS_HOST_READ_BIT;
       break;
     case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
       // An image becomes "transfer dst" only when we send a buffer data to

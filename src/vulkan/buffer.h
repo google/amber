@@ -34,8 +34,14 @@ class Buffer : public Resource {
   Result CreateVkBufferView(VkFormat format);
   VkBufferView GetVkBufferView() const { return view_; }
 
-  // TODO(jaebaek): Determine copy all or partial data
-  void CopyToDevice(VkCommandBuffer command);
+  // If this buffer is host accessible and has coherent memory, this
+  // method does nothing. If this buffer is host accessible but it does
+  // not have coherent memory, this method flush the memory to make the
+  // writes from host effective to device. Otherwise, this method records
+  // the command for copying the secondary host-accessible buffer to
+  // this device local buffer. Note that it only records the command and
+  // the actual submission must be done later.
+  Result CopyToDevice(VkCommandBuffer command);
 
   // Resource
   VkDeviceMemory GetHostAccessMemory() const override {
@@ -45,13 +51,26 @@ class Buffer : public Resource {
     return Resource::GetHostAccessMemory();
   }
 
+  // If this buffer is host accessible and has coherent memory, this
+  // method does nothing. If this buffer is host accessible but it does
+  // not have coherent memory, this method invalidate the memory to make the
+  // writes from device visible to host. Otherwise, this method records
+  // the command for copying this buffer to its secondary host-accessible
+  // buffer. Note that it only records the command and the actual
+  // submission must be done later.
+  Result CopyToHost(VkCommandBuffer command) override;
+
   void Shutdown() override;
 
  private:
+  Result InvalidateMemoryIfNeeded();
+  Result FlushMemoryIfNeeded();
+
   VkBuffer buffer_ = VK_NULL_HANDLE;
   VkBufferView view_ = VK_NULL_HANDLE;
   VkDeviceMemory memory_ = VK_NULL_HANDLE;
   bool is_buffer_host_accessible_ = false;
+  bool is_buffer_host_coherent_ = false;
 };
 
 }  // namespace vulkan
