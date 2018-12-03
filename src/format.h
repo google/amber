@@ -40,11 +40,13 @@ class Format {
   void SetFormatType(FormatType type) { type_ = type; }
   FormatType GetFormatType() const { return type_; }
 
-  void SetPackSize(uint8_t size) { pack_size_ = size; }
-  uint8_t GetPackSize() const { return pack_size_; }
+  void SetPackSize(uint8_t size_in_bytes) {
+    pack_size_in_bytes_ = size_in_bytes;
+  }
+  uint8_t GetPackSize() const { return pack_size_in_bytes_; }
 
-  void AddComponent(FormatComponentType type, FormatMode mode, uint8_t size) {
-    components_.emplace_back(type, mode, size);
+  void AddComponent(FormatComponentType type, FormatMode mode, uint8_t bits) {
+    components_.emplace_back(type, mode, bits);
   }
   const std::vector<Component>& GetComponents() const { return components_; }
 
@@ -58,7 +60,7 @@ class Format {
 
  private:
   FormatType type_;
-  uint8_t pack_size_ = 0;
+  uint8_t pack_size_in_bytes_ = 0;
   std::vector<Component> components_;
 };
 
