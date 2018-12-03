@@ -107,13 +107,18 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
     for (const auto& cmd : node->AsTest()->GetCommands()) {
       if (cmd->IsProbe()) {
         ResourceInfo info;
-        r = engine->GetFrameBufferInfo(&info);
-        if (!r.IsSuccess())
-          return r;
 
         r = engine->DoProcessCommands();
         if (!r.IsSuccess())
           return r;
+
+        // This must come after processing commands because we require
+        // the frambuffer buffer to be mapped into host memory and have
+        // a valid host-side pointer.
+        r = engine->GetFrameBufferInfo(&info);
+        if (!r.IsSuccess())
+          return r;
+        assert(info.cpu_memory != nullptr);
 
         r = verifier_.Probe(cmd->AsProbe(), info.image_info.texel_stride,
                             info.image_info.width, info.image_info.height,
