@@ -284,14 +284,18 @@ Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
 
   const auto graphics = pipeline_->AsGraphics();
   const auto frame = graphics->GetFrame();
-  auto bytes_per_texel = VkFormatToByteSize(graphics->GetColorFormat());
+  const auto bytes_per_texel = VkFormatToByteSize(graphics->GetColorFormat());
   info->type = ResourceInfoType::kImage;
   info->image_info.width = frame->GetWidth();
   info->image_info.height = frame->GetHeight();
   info->image_info.depth = 1U;
   info->image_info.texel_stride = bytes_per_texel;
-  info->size_in_bytes =
-      frame->GetWidth() * frame->GetHeight() * bytes_per_texel;
+  // When copying the image to the host buffer, we specify a row length of 0
+  // which results in tight packing of rows.  So the row stride is the product
+  // of the texel stride and the number of texels in a row.
+  const auto row_stride = bytes_per_texel * frame->GetWidth();
+  info->image_info.row_stride = row_stride;
+  info->size_in_bytes = row_stride * frame->GetHeight();
   info->cpu_memory = frame->GetColorBufferPtr();
 
   return {};

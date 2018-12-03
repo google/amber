@@ -41,8 +41,12 @@ enum class ResourceInfoType : uint8_t {
 struct ResourceInfo {
   ResourceInfoType type = ResourceInfoType::kBuffer;
 
+  // Key metrics of a 2D image.
+  // For higher dimensions or arrayed images, we would need more strides.
+  // For example, see VkSubresourceLayout.
   struct {
     uint32_t texel_stride = 0;  // Number of bytes for a single texel.
+    uint32_t row_stride = 0;  // Number of bytes between successive pixel rows.
     uint32_t width = 0;
     uint32_t height = 0;
     uint32_t depth = 0;
@@ -50,8 +54,7 @@ struct ResourceInfo {
 
   // The size in bytes of Vulkan memory pointed by |cpu_memory|.
   // For the case when it is an image resource, |size_in_bytes| must
-  // be |image_info.width * image_info.height * image_info.depth *
-  // image_info.texel_stride|.
+  // be |image_info.row_stride * image_info.height * image_info.depth|.
   size_t size_in_bytes = 0;
 
   // If the primitive type of resource is the same with the type

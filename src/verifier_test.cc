@@ -62,8 +62,8 @@ TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
   };
 
   Verifier verifier;
-  Result r =
-      verifier.Probe(&probe, 4, 3, 3, static_cast<const void*>(frame_buffer));
+  Result r = verifier.Probe(&probe, 4, 12, 3, 3,
+                            static_cast<const void*>(frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -103,8 +103,8 @@ TEST_F(VerifierTest, ProbeFrameBufferRelative) {
   }
 
   Verifier verifier;
-  Result r =
-      verifier.Probe(&probe, 4, 10, 10, static_cast<const void*>(frame_buffer));
+  Result r = verifier.Probe(&probe, 4, 40, 10, 10,
+                            static_cast<const void*>(frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -143,8 +143,8 @@ TEST_F(VerifierTest, ProbeFrameBuffer) {
   }
 
   Verifier verifier;
-  Result r =
-      verifier.Probe(&probe, 4, 10, 10, static_cast<const void*>(frame_buffer));
+  Result r = verifier.Probe(&probe, 4, 40, 10, 10,
+                            static_cast<const void*>(frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -182,9 +182,25 @@ TEST_F(VerifierTest, ProbeFrameBufferRGB) {
   };
 
   Verifier verifier;
-  Result r =
-      verifier.Probe(&probe, 4, 3, 3, static_cast<const void*>(frame_buffer));
+  Result r = verifier.Probe(&probe, 4, 12, 3, 3,
+                            static_cast<const void*>(frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeFrameBufferBadRowStride) {
+  ProbeCommand probe;
+  probe.SetWholeWindow();
+
+  const uint8_t frame_buffer[4] = {128, 64, 51, 255};
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, 4, 3, 1, 1,
+                            static_cast<const void*>(frame_buffer));
+  EXPECT_FALSE(r.IsSuccess());
+  EXPECT_STREQ(
+      "Verifier::Probe Row stride of 3 is too small for 1 texels of 4 bytes "
+      "each",
+      r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint8Single) {

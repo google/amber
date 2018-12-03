@@ -44,8 +44,8 @@ struct RenderPipelineInfo {
   // The number of bytes between successive texels in framebuffer host-side
   // buffer.
   uint32_t fb_texel_stride = 0;
-  // The number of bytes between each row of texels in framebuffer host-side
-  // buffer.
+  // The number of bytes between successive rows of texels in framebuffer
+  // host-side buffer.
   uint32_t fb_row_stride = 0;
   // The number of data bytes in the framebuffer host-side buffer.
   uint32_t fb_size = 0;
