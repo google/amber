@@ -250,10 +250,10 @@ Result Verifier::Probe(const ProbeCommand* command,
   }
 
   if (count_of_invalid_pixels) {
-    const uint8_t* p =
-        ptr + row_stride * (first_invalid_j + y) + texel_stride * x;
+    const uint8_t* p = ptr + row_stride * (first_invalid_j + y) +
+                       texel_stride * (x + first_invalid_i);
     return Result(
-        "Probe failed at: " + std::to_string(first_invalid_i + x) + ", " +
+        "Probe failed at: " + std::to_string(x + first_invalid_i) + ", " +
         std::to_string(first_invalid_j + y) + "\n" +
         "  Expected RGBA: " + std::to_string(command->GetR() * 255) + ", " +
         std::to_string(command->GetG() * 255) + ", " +
@@ -261,15 +261,10 @@ Result Verifier::Probe(const ProbeCommand* command,
         (command->IsRGBA() ? ", " + std::to_string(command->GetA() * 255) +
                                  "\n  Actual RGBA: "
                            : "\n  Actual RGB: ") +
-        std::to_string(static_cast<int>(p[texel_stride * first_invalid_i])) +
-        ", " +
-        std::to_string(
-            static_cast<int>(p[texel_stride * first_invalid_i + 1])) +
-        ", " +
-        std::to_string(
-            static_cast<int>(p[texel_stride * first_invalid_i + 2])) +
-        (command->IsRGBA() ? ", " + std::to_string(static_cast<int>(
-                                        p[texel_stride * first_invalid_i + 3]))
+        std::to_string(static_cast<int>(p[0])) + ", " +
+        std::to_string(static_cast<int>(p[1])) + ", " +
+        std::to_string(static_cast<int>(p[2])) +
+        (command->IsRGBA() ? ", " + std::to_string(static_cast<int>(p[3]))
                            : "") +
         "\n" + "Probe failed in " + std::to_string(count_of_invalid_pixels) +
         " pixels");
