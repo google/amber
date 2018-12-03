@@ -28,18 +28,21 @@ const double kDefaultTexelTolerance = 0.002;
 
 // It returns true if the difference is within the given error.
 // If |is_tolerance_percent| is true, the actual tolerance will be
-// relative value i.e., |tolerance| * fabs(real - expected).
+// relative value i.e., |tolerance| / 100 * fabs(expected).
 // Otherwise, this method uses the absolute value i.e., |tolerance|.
 bool IsEqualWithTolerance(const double real,
                           const double expected,
                           double tolerance,
                           const bool is_tolerance_percent = true) {
   double difference = std::fabs(real - expected);
-  if (difference == 0.0)
-    return true;
-  if (is_tolerance_percent)
-    tolerance *= difference;
-  return difference < tolerance;
+  if (is_tolerance_percent) {
+    if (difference > tolerance / 100.0 * std::fabs(expected))
+      return false;
+  } else {
+    if (difference > tolerance)
+      return false;
+  }
+  return true;
 }
 
 template <typename T>

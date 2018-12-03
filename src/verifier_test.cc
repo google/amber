@@ -482,7 +482,400 @@ TEST_F(VerifierTest, ProbeSSBODoubleMany) {
   EXPECT_TRUE(r.IsSuccess());
 }
 
-// TODO(jaebaek): Test all ProbeSSBOCommand::Comparator and
-//                all primitive types and tolerance.
+TEST_F(VerifierTest, ProbeSSBOEqualFail) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {2.8, 0.72, 9.0, 1234.55};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_FALSE(r.IsSuccess());
+  EXPECT_EQ("Verifier failed: 2.800000 == 2.900000, at index 0", r.Error());
+}
+
+TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteTolerance) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
+
+  std::vector<Probe::Tolerance> tolerances;
+  tolerances.emplace_back(false, 0.1);
+  probe_ssbo.SetTolerances(tolerances);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo_more[4] = {2.999, 0.829, 10.099, 1234.659};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo_more);
+  EXPECT_TRUE(r.IsSuccess());
+
+  const double ssbo_less[4] = {2.801, 0.631, 9.901, 1234.461};
+
+  r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo_less);
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteToleranceFail) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
+
+  std::vector<Probe::Tolerance> tolerances;
+  tolerances.emplace_back(false, 0.1);
+  probe_ssbo.SetTolerances(tolerances);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {3.001, 0.831, 10.101, 1234.661};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_FALSE(r.IsSuccess());
+  EXPECT_EQ("Verifier failed: 3.001000 ~= 2.900000, at index 0", r.Error());
+}
+
+TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeTolerance) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
+
+  std::vector<Probe::Tolerance> tolerances;
+  tolerances.emplace_back(true, 0.1);
+  probe_ssbo.SetTolerances(tolerances);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo_more[4] = {2.9028, 0.73072, 10.009, 1235.79455};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo_more);
+  EXPECT_TRUE(r.IsSuccess());
+
+  const double ssbo_less[4] = {2.8972, 0.72928, 9.991, 1233.32545};
+
+  r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo_less);
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeToleranceFail) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
+
+  std::vector<Probe::Tolerance> tolerances;
+  tolerances.emplace_back(true, 0.1);
+  probe_ssbo.SetTolerances(tolerances);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {2.903, 0.73074, 10.011, 1235.79457};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_FALSE(r.IsSuccess());
+  EXPECT_EQ("Verifier failed: 2.903000 ~= 2.900000, at index 0", r.Error());
+}
+
+TEST_F(VerifierTest, ProbeSSBONotEqual) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kNotEqual);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {3.9, 0.83, 10.1, 1234.57};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeSSBONotEqualFail) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kNotEqual);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {2.9, 0.73, 10.0, 1234.56};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_FALSE(r.IsSuccess());
+  EXPECT_EQ("Verifier failed: 2.900000 != 2.900000, at index 0", r.Error());
+}
+
+TEST_F(VerifierTest, ProbeSSBOLess) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLess);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {1.9, 0.63, 9.99, 1234.559};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeSSBOLessFail) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLess);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {3.9, 0.83, 10.1, 1234.57};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_FALSE(r.IsSuccess());
+  EXPECT_EQ("Verifier failed: 3.900000 < 2.900000, at index 0", r.Error());
+}
+
+TEST_F(VerifierTest, ProbeSSBOLessOrEqual) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLessOrEqual);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {1.9, 0.73, 9.99, 1234.560};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeSSBOLessOrEqualFail) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLessOrEqual);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {1.9, 0.73, 9.99, 1234.561};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_FALSE(r.IsSuccess());
+  EXPECT_EQ("Verifier failed: 1234.561000 <= 1234.560000, at index 3",
+            r.Error());
+}
+
+TEST_F(VerifierTest, ProbeSSBOGreater) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kGreater);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {3.9, 0.83, 10.1, 1234.57};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeSSBOGreaterFail) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kGreater);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {3.9, 0.73, 10.1, 1234.57};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_FALSE(r.IsSuccess());
+  EXPECT_EQ("Verifier failed: 0.730000 > 0.730000, at index 1", r.Error());
+}
+
+TEST_F(VerifierTest, ProbeSSBOGreaterOrEqual) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kGreaterOrEqual);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {3.9, 0.73, 10.1, 1234.56};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeSSBOGreaterOrEqualFail) {
+  ProbeSSBOCommand probe_ssbo;
+
+  DatumType datum_type;
+  datum_type.SetType(DataType::kDouble);
+  probe_ssbo.SetDatumType(datum_type);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kGreaterOrEqual);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  const double ssbo[4] = {3.9, 0.73, 10.1, 1234.559};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  EXPECT_FALSE(r.IsSuccess());
+  EXPECT_EQ("Verifier failed: 1234.559000 >= 1234.560000, at index 3",
+            r.Error());
+}
 
 }  // namespace amber
