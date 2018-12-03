@@ -26,7 +26,8 @@ class Verifier {
   ~Verifier();
 
   Result Probe(const ProbeCommand*,
-               uint32_t stride,
+               uint32_t texel_stride,
+               uint32_t row_stride,
                uint32_t frame_width,
                uint32_t frame_height,
                const void* buf);

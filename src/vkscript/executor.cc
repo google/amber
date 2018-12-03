@@ -121,8 +121,8 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
         assert(info.cpu_memory != nullptr);
 
         r = verifier_.Probe(cmd->AsProbe(), info.image_info.texel_stride,
-                            info.image_info.width, info.image_info.height,
-                            info.cpu_memory);
+                            info.image_info.row_stride, info.image_info.width,
+                            info.image_info.height, info.cpu_memory);
       } else if (cmd->IsProbeSSBO()) {
         auto probe_ssbo = cmd->AsProbeSSBO();
         ResourceInfo info;

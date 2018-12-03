@@ -172,7 +172,8 @@ Verifier::Verifier() = default;
 Verifier::~Verifier() = default;
 
 Result Verifier::Probe(const ProbeCommand* command,
-                       uint32_t stride,
+                       uint32_t texel_stride,
+                       uint32_t row_stride,
                        uint32_t frame_width,
                        uint32_t frame_height,
                        const void* buf) {
@@ -198,9 +199,15 @@ Result Verifier::Probe(const ProbeCommand* command,
 
   if (x + width > frame_width || y + height > frame_height) {
     return Result(
-        "Vulkan::Probe Position(" + std::to_string(x + width - 1) + ", " +
+        "Verifier::Probe Position(" + std::to_string(x + width - 1) + ", " +
         std::to_string(y + height - 1) + ") is out of framebuffer scope (" +
         std::to_string(frame_width) + "," + std::to_string(frame_height) + ")");
+  }
+  if (row_stride < frame_width * texel_stride) {
+    return Result("Verifier::Probe Row stride of " +
+                  std::to_string(row_stride) + " is too small for " +
+                  std::to_string(frame_width) + " texels of " +
+                  std::to_string(texel_stride) + " bytes each");
   }
 
   double tolerance[4] = {};
@@ -213,25 +220,25 @@ Result Verifier::Probe(const ProbeCommand* command,
   uint32_t first_invalid_i = 0;
   uint32_t first_invalid_j = 0;
   for (uint32_t j = 0; j < height; ++j) {
-    const uint8_t* p = ptr + stride * frame_width * (j + y) + stride * x;
+    const uint8_t* p = ptr + row_stride * (j + y) + texel_stride * x;
     for (uint32_t i = 0; i < width; ++i) {
       // TODO(jaebaek): Get actual pixel values based on frame buffer formats.
       if (!IsEqualWithTolerance(
               static_cast<const double>(command->GetR()),
-              static_cast<const double>(p[stride * i]) / 255.0, tolerance[0],
-              is_tolerance_percent[0]) ||
+              static_cast<const double>(p[texel_stride * i]) / 255.0,
+              tolerance[0], is_tolerance_percent[0]) ||
           !IsEqualWithTolerance(
               static_cast<const double>(command->GetG()),
-              static_cast<const double>(p[stride * i + 1]) / 255.0,
+              static_cast<const double>(p[texel_stride * i + 1]) / 255.0,
               tolerance[1], is_tolerance_percent[1]) ||
           !IsEqualWithTolerance(
               static_cast<const double>(command->GetB()),
-              static_cast<const double>(p[stride * i + 2]) / 255.0,
+              static_cast<const double>(p[texel_stride * i + 2]) / 255.0,
               tolerance[2], is_tolerance_percent[2]) ||
           (command->IsRGBA() &&
            !IsEqualWithTolerance(
                static_cast<const double>(command->GetA()),
-               static_cast<const double>(p[stride * i + 3]) / 255.0,
+               static_cast<const double>(p[texel_stride * i + 3]) / 255.0,
                tolerance[3], is_tolerance_percent[3]))) {
         if (!count_of_invalid_pixels) {
           first_invalid_i = i;
@@ -243,10 +250,10 @@ Result Verifier::Probe(const ProbeCommand* command,
   }
 
   if (count_of_invalid_pixels) {
-    const uint8_t* p =
-        ptr + stride * frame_width * (first_invalid_j + y) + stride * x;
+    const uint8_t* p = ptr + row_stride * (first_invalid_j + y) +
+                       texel_stride * (x + first_invalid_i);
     return Result(
-        "Probe failed at: " + std::to_string(first_invalid_i + x) + ", " +
+        "Probe failed at: " + std::to_string(x + first_invalid_i) + ", " +
         std::to_string(first_invalid_j + y) + "\n" +
         "  Expected RGBA: " + std::to_string(command->GetR() * 255) + ", " +
         std::to_string(command->GetG() * 255) + ", " +
@@ -254,12 +261,10 @@ Result Verifier::Probe(const ProbeCommand* command,
         (command->IsRGBA() ? ", " + std::to_string(command->GetA() * 255) +
                                  "\n  Actual RGBA: "
                            : "\n  Actual RGB: ") +
-        std::to_string(static_cast<int>(p[stride * first_invalid_i])) + ", " +
-        std::to_string(static_cast<int>(p[stride * first_invalid_i + 1])) +
-        ", " +
-        std::to_string(static_cast<int>(p[stride * first_invalid_i + 2])) +
-        (command->IsRGBA() ? ", " + std::to_string(static_cast<int>(
-                                        p[stride * first_invalid_i + 3]))
+        std::to_string(static_cast<int>(p[0])) + ", " +
+        std::to_string(static_cast<int>(p[1])) + ", " +
+        std::to_string(static_cast<int>(p[2])) +
+        (command->IsRGBA() ? ", " + std::to_string(static_cast<int>(p[3]))
                            : "") +
         "\n" + "Probe failed in " + std::to_string(count_of_invalid_pixels) +
         " pixels");

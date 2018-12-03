@@ -36,7 +36,7 @@ const uint32_t kFramebufferWidth = 250, kFramebufferHeight = 250;
 const uint32_t kFramebufferSlot = 0;
 // The minimum multiple row pitch observed on Dawn on Metal.  Increase this
 // as needed for other Dawn backends.
-const uint32_t kImageRowPitch = 256;
+const uint32_t kMinimumImageRowPitch = 256;
 const auto kFramebufferFormat = ::dawn::TextureFormat::R8G8B8A8Unorm;
 
 // Creates a device-side texture for the framebuffer, and returns it through
@@ -90,10 +90,10 @@ Result MakeFramebufferBuffer(const ::dawn::Device& device,
   uint32_t row_stride = default_texel_bytes * kFramebufferWidth;
   {
     // Round up the stride to the minimum image row pitch.
-    const uint32_t spillover = row_stride % kImageRowPitch;
+    const uint32_t spillover = row_stride % kMinimumImageRowPitch;
     if (spillover > 0)
-      row_stride += (kImageRowPitch - spillover);
-    assert(0 == (row_stride % kImageRowPitch));
+      row_stride += (kMinimumImageRowPitch - spillover);
+    assert(0 == (row_stride % kMinimumImageRowPitch));
   }
 
   descriptor.size = row_stride * kFramebufferHeight;
@@ -435,13 +435,13 @@ Result EngineDawn::GetFrameBufferInfo(ResourceInfo* info) {
   if (render_pipeline_info_.fb_data == nullptr)
     return Result("Dawn: FrameBuffer is not mapped");
 
-  // TODO(dneto): Need to pass back a row_stride.
   info->image_info.texel_stride = render_pipeline_info_.fb_texel_stride;
+  info->image_info.row_stride = render_pipeline_info_.fb_row_stride;
   info->image_info.width = kFramebufferWidth;
   info->image_info.height = kFramebufferHeight;
   info->image_info.depth = 1U;
-  info->size_in_bytes = render_pipeline_info_.fb_texel_stride *
-                        kFramebufferWidth * kFramebufferHeight;
+  info->size_in_bytes =
+      render_pipeline_info_.fb_row_stride * kFramebufferHeight;
   info->cpu_memory = render_pipeline_info_.fb_data;
   return {};
 }

@@ -124,6 +124,8 @@ void Image::Shutdown() {
 Result Image::CopyToHost(VkCommandBuffer command) {
   VkBufferImageCopy copy_region = {};
   copy_region.bufferOffset = 0;
+  // Row length of 0 results in tight packing of rows, so the row stride
+  // is the number of texels times the texel stride.
   copy_region.bufferRowLength = 0;
   copy_region.bufferImageHeight = 0;
   copy_region.imageSubresource = {
