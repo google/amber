@@ -78,7 +78,7 @@ class Script {
   const std::vector<std::unique_ptr<Command>>& GetCommands() const {
     return commands_;
   }
-  
+
  protected:
   explicit Script(ScriptType);
 
