@@ -23,6 +23,8 @@
 
 namespace amber {
 
+/// The shader map is a map from the name of a shader to the spirv-binary
+/// which is the compiled represntation of that named shader.
 using ShaderMap = std::map<std::string, std::vector<uint32_t>>;
 
 enum class EngineType : uint8_t {
