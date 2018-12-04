@@ -34,7 +34,7 @@ class StorageBufferDescriptor : public Descriptor {
   StorageBufferDescriptor(VkDevice device, uint32_t desc_set, uint32_t binding);
   ~StorageBufferDescriptor();
 
-  void FillBufferWithData(const PushDataInfo& info);
+  void FillBufferWithData(const SSBOData& data);
 
   // Descriptor
   Result UpdateResourceIfNeeded(

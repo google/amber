@@ -255,9 +255,9 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
     desc = descriptors_.back().get();
   }
 
-  desc->PushData(buffer_command->GetDatumType().GetType(),
-                 buffer_command->GetOffset(), buffer_command->GetSize(),
-                 buffer_command->GetValues());
+  desc->AddToSSBODataQueue(
+      buffer_command->GetDatumType().GetType(), buffer_command->GetOffset(),
+      buffer_command->GetSize(), buffer_command->GetValues());
 
   return {};
 }

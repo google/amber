@@ -42,14 +42,11 @@ enum class DescriptorType : uint8_t {
 
 VkDescriptorType ToVkDescriptorType(DescriptorType type);
 
-struct PushDataInfo {
+struct SSBOData {
   DataType type;
   uint32_t offset;
   size_t size_in_bytes;
   std::vector<Value> values;
-
-  // TODO(jaebaek): Add info how we fill data for image e.g., row stride,
-  //                image format, height, depth.
 };
 
 class Descriptor {
@@ -96,27 +93,24 @@ class Descriptor {
     return type_ == DescriptorType::kDynamicStorageBuffer;
   }
 
-  bool HasDataNotSent() { return !push_data_info_.empty(); }
+  bool HasDataNotSent() { return !ssbo_data_queue_.empty(); }
 
-  void PushData(DataType type,
-                uint32_t offset,
-                size_t size_in_bytes,
-                const std::vector<Value>& values);
+  void AddToSSBODataQueue(DataType type,
+                          uint32_t offset,
+                          size_t size_in_bytes,
+                          const std::vector<Value>& values);
 
   // Call vkUpdateDescriptorSets() to update the backing resource
   // for this descriptor only when the backing resource was newly
-  // created or changed. The child class i.e., each descriptor type
-  // must use UpdateDescriptorSetForBuffer(), UpdateDescriptorSetForImage(),
-  // UpdateDescriptorSetForBufferView() correctly according to its
-  // backing resource type.
+  // created or changed.
   virtual Result UpdateDescriptorSetIfNeeded(VkDescriptorSet) = 0;
 
   // Create new vulkan resource if needed i.e., if it was not created
-  // yet or if we need bigger one. In addition, record commands
-  // for copying the existing resource data to the new one if it
-  // recreated it and send the updated data. Note that it only
-  // records those commands and the actual submission of the command
-  // must be done later.
+  // yet or if we need bigger one. If we recreated bigger one, it also
+  // copies the old one's data to the new one. In addition, it copies
+  // data in |ssbo_data_queue_| to the resource. Note that it only
+  // records those copy commands and the actual submission of the
+  // command must be done later.
   virtual Result UpdateResourceIfNeeded(
       VkCommandBuffer command,
       const VkPhysicalDeviceMemoryProperties& properties) = 0;
@@ -142,11 +136,11 @@ class Descriptor {
 
   VkDevice GetDevice() const { return device_; }
 
-  const std::vector<PushDataInfo>& GetPushDataInfo() const {
-    return push_data_info_;
+  const std::vector<SSBOData>& GetSSBODataQueue() const {
+    return ssbo_data_queue_;
   }
 
-  void ClearPushDataInfo() { push_data_info_.clear(); }
+  void ClearSSBODataQueue() { ssbo_data_queue_.clear(); }
 
   void SetUpdateDescriptorSetNeeded() {
     is_descriptor_set_update_needed_ = true;
@@ -162,10 +156,11 @@ class Descriptor {
   VkWriteDescriptorSet GetWriteDescriptorSet(
       VkDescriptorSet descriptor_set,
       VkDescriptorType descriptor_type) const;
+  void UpdateVkDescriptorSet(const VkWriteDescriptorSet& write);
 
   DescriptorType type_ = DescriptorType::kSampledImage;
   VkDevice device_ = VK_NULL_HANDLE;
-  std::vector<PushDataInfo> push_data_info_;
+  std::vector<SSBOData> ssbo_data_queue_;
   bool is_descriptor_set_update_needed_ = false;
 };
 

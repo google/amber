@@ -92,8 +92,7 @@ Result Descriptor::UpdateDescriptorSetForBuffer(
           "buffer");
   }
 
-  vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
-  is_descriptor_set_update_needed_ = false;
+  UpdateVkDescriptorSet(write);
   return {};
 }
 
@@ -116,8 +115,7 @@ Result Descriptor::UpdateDescriptorSetForImage(
           "Vulkan::UpdateDescriptorSetForImage not descriptor based on image");
   }
 
-  vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
-  is_descriptor_set_update_needed_ = false;
+  UpdateVkDescriptorSet(write);
   return {};
 }
 
@@ -138,16 +136,20 @@ Result Descriptor::UpdateDescriptorSetForBufferView(
           "view");
   }
 
-  vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
-  is_descriptor_set_update_needed_ = false;
+  UpdateVkDescriptorSet(write);
   return {};
 }
 
-void Descriptor::PushData(DataType type,
-                          uint32_t offset,
-                          size_t size_in_bytes,
-                          const std::vector<Value>& values) {
-  push_data_info_.push_back({type, offset, size_in_bytes, values});
+void Descriptor::UpdateVkDescriptorSet(const VkWriteDescriptorSet& write) {
+  vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
+  is_descriptor_set_update_needed_ = false;
+}
+
+void Descriptor::AddToSSBODataQueue(DataType type,
+                                    uint32_t offset,
+                                    size_t size_in_bytes,
+                                    const std::vector<Value>& values) {
+  ssbo_data_queue_.push_back({type, offset, size_in_bytes, values});
 }
 
 }  // namespace vulkan

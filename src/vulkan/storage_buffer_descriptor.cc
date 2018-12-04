@@ -45,31 +45,31 @@ StorageBufferDescriptor::StorageBufferDescriptor(VkDevice device,
 StorageBufferDescriptor::~StorageBufferDescriptor() = default;
 
 // TODO(jaebaek): Add unittests for this method.
-void StorageBufferDescriptor::FillBufferWithData(const PushDataInfo& info) {
+void StorageBufferDescriptor::FillBufferWithData(const SSBOData& data) {
   uint8_t* ptr =
-      static_cast<uint8_t*>(buffer_->HostAccessibleMemoryPtr()) + info.offset;
-  switch (info.type) {
+      static_cast<uint8_t*>(buffer_->HostAccessibleMemoryPtr()) + data.offset;
+  switch (data.type) {
     case DataType::kInt8:
     case DataType::kUint8:
-      SetValueForBuffer<uint8_t>(ptr, info.values);
+      SetValueForBuffer<uint8_t>(ptr, data.values);
       break;
     case DataType::kInt16:
     case DataType::kUint16:
-      SetValueForBuffer<uint16_t>(ptr, info.values);
+      SetValueForBuffer<uint16_t>(ptr, data.values);
       break;
     case DataType::kInt32:
     case DataType::kUint32:
-      SetValueForBuffer<uint32_t>(ptr, info.values);
+      SetValueForBuffer<uint32_t>(ptr, data.values);
       break;
     case DataType::kInt64:
     case DataType::kUint64:
-      SetValueForBuffer<uint64_t>(ptr, info.values);
+      SetValueForBuffer<uint64_t>(ptr, data.values);
       break;
     case DataType::kFloat:
-      SetValueForBuffer<float>(ptr, info.values);
+      SetValueForBuffer<float>(ptr, data.values);
       break;
     case DataType::kDouble:
-      SetValueForBuffer<double>(ptr, info.values);
+      SetValueForBuffer<double>(ptr, data.values);
       break;
   }
 }
@@ -77,20 +77,20 @@ void StorageBufferDescriptor::FillBufferWithData(const PushDataInfo& info) {
 Result StorageBufferDescriptor::UpdateResourceIfNeeded(
     VkCommandBuffer command,
     const VkPhysicalDeviceMemoryProperties& properties) {
-  const auto& push_data_info = GetPushDataInfo();
+  const auto& ssbo_data_queue = GetSSBODataQueue();
 
-  if (push_data_info.empty())
+  if (ssbo_data_queue.empty())
     return {};
 
-  auto push_data_info_with_last_offset = std::max_element(
-      push_data_info.begin(), push_data_info.end(),
-      [](const PushDataInfo& a, const PushDataInfo& b) {
+  auto ssbo_data_with_last_offset = std::max_element(
+      ssbo_data_queue.begin(), ssbo_data_queue.end(),
+      [](const SSBOData& a, const SSBOData& b) {
         return static_cast<size_t>(a.offset) + a.size_in_bytes <
                static_cast<size_t>(b.offset) + b.size_in_bytes;
       });
   size_t new_size_in_bytes =
-      static_cast<size_t>(push_data_info_with_last_offset->offset) +
-      push_data_info_with_last_offset->size_in_bytes;
+      static_cast<size_t>(ssbo_data_with_last_offset->offset) +
+      ssbo_data_with_last_offset->size_in_bytes;
 
   if (!buffer_) {
     // Create buffer
@@ -121,10 +121,10 @@ Result StorageBufferDescriptor::UpdateResourceIfNeeded(
     SetUpdateDescriptorSetNeeded();
   }
 
-  for (const auto& info : push_data_info) {
+  for (const auto& info : ssbo_data_queue) {
     FillBufferWithData(info);
   }
-  ClearPushDataInfo();
+  ClearSSBODataQueue();
 
   buffer_->CopyToDevice(command);
   return {};
