@@ -36,7 +36,8 @@ class EngineDawn : public Engine {
 
   // Engine
   // Initialize with a default device.
-  Result Initialize() override;
+  Result Initialize(const std::vector<Feature>& features,
+                    const std::vector<std::string>& extensions) override;
   // Initialize with a given device, specified as a pointer-to-::dawn::Device
   // disguised as a pointer-to-void.
   Result InitializeWithDevice(void* default_device) override;

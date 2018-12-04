@@ -35,7 +35,8 @@ class EngineVulkan : public Engine {
   ~EngineVulkan() override;
 
   // Engine
-  Result Initialize() override;
+  Result Initialize(const std::vector<Feature>& features,
+                    const std::vector<std::string>& extensions) override;
   Result InitializeWithDevice(void* default_device) override;
   Result Shutdown() override;
   Result AddRequirement(Feature feature, const Format*, uint32_t) override;
@@ -80,6 +81,8 @@ class EngineVulkan : public Engine {
     const Format* format;
   };
 
+  std::vector<Feature> features_;
+  std::vector<std::string> extensions_;
   std::vector<Requirement> requirements_;
   std::vector<Requirement>::iterator FindFeature(Feature feature);
 };

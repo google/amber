@@ -39,7 +39,10 @@ class EngineStub : public Engine {
   ~EngineStub() override = default;
 
   // Engine
-  Result Initialize() override { return {}; }
+  Result Initialize(const std::vector<Feature>&,
+                    const std::vector<std::string>&) override {
+    return {};
+  }
 
   Result InitializeWithDevice(void*) override { return {}; }
 
@@ -246,7 +249,10 @@ class EngineCountingStub : public Engine {
   ~EngineCountingStub() override = default;
 
   // Engine
-  Result Initialize() override { return {}; }
+  Result Initialize(const std::vector<Feature>&,
+                    const std::vector<std::string>&) override {
+    return {};
+  }
 
   Result InitializeWithDevice(void*) override { return {}; }
 
@@ -324,59 +330,10 @@ class VkScriptExecutorTest : public testing::Test {
 
 }  // namespace
 
-TEST_F(VkScriptExecutorTest, ExecutesRequirements) {
-  std::string input = R"(
-[require]
-robustBufferAccess
-logicOp)";
-
-  Parser parser;
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
-
-  auto engine = MakeEngine();
-
-  Executor ex;
-  Result r = ex.Execute(engine.get(), parser.GetScript());
-  ASSERT_TRUE(r.IsSuccess());
-
-  auto requirements = ToStub(engine.get())->GetRequirements();
-  ASSERT_EQ(2U, requirements.size());
-  EXPECT_EQ(Feature::kRobustBufferAccess, requirements[0].feature);
-  EXPECT_EQ(Feature::kLogicOp, requirements[1].feature);
-}
-
-TEST_F(VkScriptExecutorTest, ExecutesAllRequirementsFirst) {
-  std::string input = R"(
-[require]
-robustBufferAccess
-logicOp
-[vertex shader passthrough]
-[require]
-framebuffer R32G32B32A32_SINT
-)";
-
-  Parser parser;
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
-
-  auto engine = MakeCountingEngine();
-
-  Executor ex;
-  Result r = ex.Execute(engine.get(), parser.GetScript());
-  ASSERT_TRUE(r.IsSuccess());
-
-  auto count = ToCountingStub(engine.get());
-  // All requires run first (3 requirements), so they get in before shader
-  EXPECT_EQ(2U, count->GetRequireStageIdx());
-  EXPECT_EQ(3U, count->GetShaderStageIdx());
-  EXPECT_EQ(3U, count->GetRequireCount());
-  EXPECT_EQ(1U, count->GetShaderCount());
-}
-
 TEST_F(VkScriptExecutorTest, ExecuteRequirementsFailed) {
   std::string input = R"(
 [require]
-robustBufferAccess
-logicOp)";
+framebuffer R32G32B32A32_SINT)";
 
   Parser parser;
   ASSERT_TRUE(parser.Parse(input).IsSuccess());

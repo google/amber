@@ -228,7 +228,7 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
       if (it != str.end())
         return Result("Unknown feature or extension: " + str);
 
-      node->AddExtension(str);
+      script_.AddRequiredExtension(str);
     } else if (feature == Feature::kFramebuffer) {
       token = tokenizer.NextToken();
       if (!token->IsString())
@@ -258,7 +258,7 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
 
       node->AddRequirement(feature, token->AsUint32());
     } else {
-      node->AddRequirement(feature);
+      script_.AddRequiredFeature(feature);
     }
 
     token = tokenizer.NextToken();
@@ -266,7 +266,7 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
       return Result("Failed to parser requirements block: invalid token");
   }
 
-  if (!node->Requirements().empty() || !node->Extensions().empty())
+  if (!node->Requirements().empty())
     script_.AddRequireNode(std::move(node));
 
   return {};

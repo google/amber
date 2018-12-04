@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "src/feature.h"
 #include "src/shader.h"
 
 namespace amber {
@@ -56,10 +57,29 @@ class Script {
     return shaders_;
   }
 
+  void AddRequiredFeature(Feature feature) {
+    engine_info_.required_features.push_back(feature);
+  }
+  const std::vector<Feature>& RequiredFeatures() const {
+    return engine_info_.required_features;
+  }
+
+  void AddRequiredExtension(const std::string& ext) {
+    engine_info_.required_extensions.push_back(ext);
+  }
+  const std::vector<std::string>& RequiredExtensions() const {
+    return engine_info_.required_extensions;
+  }
+
  protected:
   explicit Script(ScriptType);
 
  private:
+  struct {
+    std::vector<Feature> required_features;
+    std::vector<std::string> required_extensions;
+  } engine_info_;
+
   ScriptType script_type_;
   std::map<std::string, Shader*> name_to_shader_;
   std::vector<std::unique_ptr<Shader>> shaders_;

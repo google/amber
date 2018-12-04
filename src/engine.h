@@ -70,8 +70,10 @@ class Engine {
 
   virtual ~Engine();
 
-  // Initialize the engine.
-  virtual Result Initialize() = 0;
+  // Initialize the engine. The |features| list is a set of required features
+  // for the device. The |extensions| list is a list of required extensions.
+  virtual Result Initialize(const std::vector<Feature>& features,
+                            const std::vector<std::string>& extensions) = 0;
 
   // Initialize the engine with the provided device. The device is _not_ owned
   // by the engine and should not be destroyed.

@@ -79,18 +79,13 @@ class RequireNode : public Node {
   RequireNode();
   ~RequireNode() override;
 
-  void AddRequirement(Feature feature);
   void AddRequirement(Feature feature, std::unique_ptr<Format> format);
   void AddRequirement(Feature feature, uint32_t value);
 
   const std::vector<Requirement>& Requirements() const { return requirements_; }
 
-  void AddExtension(const std::string& ext) { extensions_.push_back(ext); }
-  const std::vector<std::string>& Extensions() const { return extensions_; }
-
  private:
   std::vector<Requirement> requirements_;
-  std::vector<std::string> extensions_;
 };
 
 class IndicesNode : public Node {
