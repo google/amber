@@ -68,7 +68,9 @@ class EngineVulkan : public Engine {
                            ResourceInfo* info) override;
 
  private:
-  Result InitDeviceAndCreateCommand();
+  VkPhysicalDeviceFeatures RequiredFeatures(
+      const std::vector<Feature>& required_features);
+  Result InitDeviceAndCreateCommand(const VkPhysicalDeviceFeatures&);
 
   std::vector<VkPipelineShaderStageCreateInfo> GetShaderStageInfo();
 

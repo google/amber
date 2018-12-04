@@ -20,8 +20,24 @@
 #include "src/make_unique.h"
 
 namespace amber {
-
 namespace vulkan {
+namespace {
+
+bool AreAllRequiredFeaturesSupported(
+    const VkPhysicalDeviceFeatures& features,
+    const VkPhysicalDeviceFeatures& required_features) {
+  const VkBool32* supported = reinterpret_cast<const VkBool32*>(&features);
+  const VkBool32* required =
+      reinterpret_cast<const VkBool32*>(&required_features);
+  for (size_t i = 0; i < (sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32));
+       ++i) {
+    if (required[i] == VK_TRUE && supported[i] == VK_FALSE)
+      return false;
+  }
+  return true;
+}
+
+}  // namespace
 
 Device::Device() = default;
 Device::Device(VkDevice device) : device_(device), destroy_device_(false) {}
@@ -34,17 +50,17 @@ void Device::Shutdown() {
   }
 }
 
-Result Device::Initialize() {
+Result Device::Initialize(const VkPhysicalDeviceFeatures& features) {
   if (device_ == VK_NULL_HANDLE) {
     Result r = CreateInstance();
     if (!r.IsSuccess())
       return r;
 
-    r = ChoosePhysicalDevice();
+    r = ChoosePhysicalDevice(features);
     if (!r.IsSuccess())
       return r;
 
-    r = CreateDevice();
+    r = CreateDevice(features);
     if (!r.IsSuccess())
       return r;
   }
@@ -102,7 +118,8 @@ Result Device::CreateInstance() {
   return {};
 }
 
-Result Device::ChoosePhysicalDevice() {
+Result Device::ChoosePhysicalDevice(
+    const VkPhysicalDeviceFeatures& required_features) {
   uint32_t count;
   std::vector<VkPhysicalDevice> physical_devices;
 
@@ -114,9 +131,11 @@ Result Device::ChoosePhysicalDevice() {
     return Result("Vulkan::Calling vkEnumeratePhysicalDevices Fail");
 
   for (uint32_t i = 0; i < count; ++i) {
-    VkPhysicalDeviceProperties property;
-    vkGetPhysicalDeviceProperties(physical_devices[i], &property);
-    // TODO(jaebaek): Check physical device property
+    VkPhysicalDeviceFeatures features = {};
+    vkGetPhysicalDeviceFeatures(physical_devices[i], &features);
+
+    if (!AreAllRequiredFeaturesSupported(features, required_features))
+      continue;
 
     if (ChooseQueueFamilyIndex(physical_devices[i])) {
       physical_device_ = physical_devices[i];
@@ -129,7 +148,7 @@ Result Device::ChoosePhysicalDevice() {
   return Result("Vulkan::No physical device supports Vulkan");
 }
 
-Result Device::CreateDevice() {
+Result Device::CreateDevice(const VkPhysicalDeviceFeatures& features) {
   VkDeviceQueueCreateInfo queue_info;
   const float priorities[] = {1.0f};
 
@@ -142,7 +161,8 @@ Result Device::CreateDevice() {
   info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   info.pQueueCreateInfos = &queue_info;
   info.queueCreateInfoCount = 1;
-  // TODO(jaebaek): Enable layers, extensions, features
+  // TODO(jaebaek): Enable layers, extensions
+  info.pEnabledFeatures = &features;
 
   if (vkCreateDevice(physical_device_, &info, nullptr, &device_) != VK_SUCCESS)
     return Result("Vulkan::Calling vkCreateDevice Fail");
@@ -151,5 +171,4 @@ Result Device::CreateDevice() {
 }
 
 }  // namespace vulkan
-
 }  // namespace amber

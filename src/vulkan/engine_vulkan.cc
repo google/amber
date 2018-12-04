@@ -57,8 +57,9 @@ EngineVulkan::EngineVulkan() : Engine() {}
 
 EngineVulkan::~EngineVulkan() = default;
 
-Result EngineVulkan::InitDeviceAndCreateCommand() {
-  Result r = device_->Initialize();
+Result EngineVulkan::InitDeviceAndCreateCommand(
+    const VkPhysicalDeviceFeatures& features) {
+  Result r = device_->Initialize(features);
   if (!r.IsSuccess())
     return r;
 
@@ -72,13 +73,193 @@ Result EngineVulkan::InitDeviceAndCreateCommand() {
   return {};
 }
 
-Result EngineVulkan::Initialize(const std::vector<Feature>&,
+VkPhysicalDeviceFeatures EngineVulkan::RequiredFeatures(
+    const std::vector<Feature>& required_features) {
+  VkPhysicalDeviceFeatures features = {};
+  for (const auto& feature : required_features) {
+    switch (feature) {
+      case Feature::kRobustBufferAccess:
+        features.robustBufferAccess = VK_TRUE;
+        break;
+      case Feature::kFullDrawIndexUint32:
+        features.fullDrawIndexUint32 = VK_TRUE;
+        break;
+      case Feature::kImageCubeArray:
+        features.imageCubeArray = VK_TRUE;
+        break;
+      case Feature::kIndependentBlend:
+        features.independentBlend = VK_TRUE;
+        break;
+      case Feature::kGeometryShader:
+        features.geometryShader = VK_TRUE;
+        break;
+      case Feature::kTessellationShader:
+        features.tessellationShader = VK_TRUE;
+        break;
+      case Feature::kSampleRateShading:
+        features.sampleRateShading = VK_TRUE;
+        break;
+      case Feature::kDualSrcBlend:
+        features.dualSrcBlend = VK_TRUE;
+        break;
+      case Feature::kLogicOp:
+        features.logicOp = VK_TRUE;
+        break;
+      case Feature::kMultiDrawIndirect:
+        features.multiDrawIndirect = VK_TRUE;
+        break;
+      case Feature::kDrawIndirectFirstInstance:
+        features.drawIndirectFirstInstance = VK_TRUE;
+        break;
+      case Feature::kDepthClamp:
+        features.depthClamp = VK_TRUE;
+        break;
+      case Feature::kDepthBiasClamp:
+        features.depthBiasClamp = VK_TRUE;
+        break;
+      case Feature::kFillModeNonSolid:
+        features.fillModeNonSolid = VK_TRUE;
+        break;
+      case Feature::kDepthBounds:
+        features.depthBounds = VK_TRUE;
+        break;
+      case Feature::kWideLines:
+        features.wideLines = VK_TRUE;
+        break;
+      case Feature::kLargePoints:
+        features.largePoints = VK_TRUE;
+        break;
+      case Feature::kAlphaToOne:
+        features.alphaToOne = VK_TRUE;
+        break;
+      case Feature::kMultiViewport:
+        features.multiViewport = VK_TRUE;
+        break;
+      case Feature::kSamplerAnisotropy:
+        features.samplerAnisotropy = VK_TRUE;
+        break;
+      case Feature::kTextureCompressionETC2:
+        features.textureCompressionETC2 = VK_TRUE;
+        break;
+      case Feature::kTextureCompressionASTC_LDR:
+        features.textureCompressionASTC_LDR = VK_TRUE;
+        break;
+      case Feature::kTextureCompressionBC:
+        features.textureCompressionBC = VK_TRUE;
+        break;
+      case Feature::kOcclusionQueryPrecise:
+        features.occlusionQueryPrecise = VK_TRUE;
+        break;
+      case Feature::kPipelineStatisticsQuery:
+        features.pipelineStatisticsQuery = VK_TRUE;
+        break;
+      case Feature::kVertexPipelineStoresAndAtomics:
+        features.vertexPipelineStoresAndAtomics = VK_TRUE;
+        break;
+      case Feature::kFragmentStoresAndAtomics:
+        features.fragmentStoresAndAtomics = VK_TRUE;
+        break;
+      case Feature::kShaderTessellationAndGeometryPointSize:
+        features.shaderTessellationAndGeometryPointSize = VK_TRUE;
+        break;
+      case Feature::kShaderImageGatherExtended:
+        features.shaderImageGatherExtended = VK_TRUE;
+        break;
+      case Feature::kShaderStorageImageExtendedFormats:
+        features.shaderStorageImageExtendedFormats = VK_TRUE;
+        break;
+      case Feature::kShaderStorageImageMultisample:
+        features.shaderStorageImageMultisample = VK_TRUE;
+        break;
+      case Feature::kShaderStorageImageReadWithoutFormat:
+        features.shaderStorageImageReadWithoutFormat = VK_TRUE;
+        break;
+      case Feature::kShaderStorageImageWriteWithoutFormat:
+        features.shaderStorageImageWriteWithoutFormat = VK_TRUE;
+        break;
+      case Feature::kShaderUniformBufferArrayDynamicIndexing:
+        features.shaderUniformBufferArrayDynamicIndexing = VK_TRUE;
+        break;
+      case Feature::kShaderSampledImageArrayDynamicIndexing:
+        features.shaderSampledImageArrayDynamicIndexing = VK_TRUE;
+        break;
+      case Feature::kShaderStorageBufferArrayDynamicIndexing:
+        features.shaderStorageBufferArrayDynamicIndexing = VK_TRUE;
+        break;
+      case Feature::kShaderStorageImageArrayDynamicIndexing:
+        features.shaderStorageImageArrayDynamicIndexing = VK_TRUE;
+        break;
+      case Feature::kShaderClipDistance:
+        features.shaderClipDistance = VK_TRUE;
+        break;
+      case Feature::kShaderCullDistance:
+        features.shaderCullDistance = VK_TRUE;
+        break;
+      case Feature::kShaderFloat64:
+        features.shaderFloat64 = VK_TRUE;
+        break;
+      case Feature::kShaderInt64:
+        features.shaderInt64 = VK_TRUE;
+        break;
+      case Feature::kShaderInt16:
+        features.shaderInt16 = VK_TRUE;
+        break;
+      case Feature::kShaderResourceResidency:
+        features.shaderResourceResidency = VK_TRUE;
+        break;
+      case Feature::kShaderResourceMinLod:
+        features.shaderResourceMinLod = VK_TRUE;
+        break;
+      case Feature::kSparseBinding:
+        features.sparseBinding = VK_TRUE;
+        break;
+      case Feature::kSparseResidencyBuffer:
+        features.sparseResidencyBuffer = VK_TRUE;
+        break;
+      case Feature::kSparseResidencyImage2D:
+        features.sparseResidencyImage2D = VK_TRUE;
+        break;
+      case Feature::kSparseResidencyImage3D:
+        features.sparseResidencyImage3D = VK_TRUE;
+        break;
+      case Feature::kSparseResidency2Samples:
+        features.sparseResidency2Samples = VK_TRUE;
+        break;
+      case Feature::kSparseResidency4Samples:
+        features.sparseResidency4Samples = VK_TRUE;
+        break;
+      case Feature::kSparseResidency8Samples:
+        features.sparseResidency8Samples = VK_TRUE;
+        break;
+      case Feature::kSparseResidency16Samples:
+        features.sparseResidency16Samples = VK_TRUE;
+        break;
+      case Feature::kSparseResidencyAliased:
+        features.sparseResidencyAliased = VK_TRUE;
+        break;
+      case Feature::kVariableMultisampleRate:
+        features.variableMultisampleRate = VK_TRUE;
+        break;
+      case Feature::kInheritedQueries:
+        features.inheritedQueries = VK_TRUE;
+        break;
+      case Feature::kFramebuffer:
+      case Feature::kDepthStencil:
+      case Feature::kFenceTimeout:
+      case Feature::kUnknown:
+        break;
+    }
+  }
+  return features;
+}
+
+Result EngineVulkan::Initialize(const std::vector<Feature>& features,
                                 const std::vector<std::string>&) {
   if (device_)
     return Result("Vulkan::Set device_ already exists");
 
   device_ = MakeUnique<Device>();
-  return InitDeviceAndCreateCommand();
+  return InitDeviceAndCreateCommand(RequiredFeatures(features));
 }
 
 Result EngineVulkan::InitializeWithConfig(EngineConfig* config,
@@ -92,7 +273,7 @@ Result EngineVulkan::InitializeWithConfig(EngineConfig* config,
     return Result("Vulkan::InitializeWithConfig device handle is null.");
 
   device_ = MakeUnique<Device>(vk_config->device);
-  return InitDeviceAndCreateCommand();
+  return InitDeviceAndCreateCommand({});
 }
 
 Result EngineVulkan::Shutdown() {
