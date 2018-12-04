@@ -60,7 +60,7 @@ class Buffer : public Resource {
   // submission must be done later.
   Result CopyToHost(VkCommandBuffer command) override;
 
-  // Copy all data from |src.buffer_| to |buffer_| and wait until
+  // Copy all data from |src| to |this| and wait until
   // the memory update is effective by calling vkCmdPipelineBarrier().
   // Note that this method only records the copy command and the
   // actual submission of the command must be done later.

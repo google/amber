@@ -48,7 +48,8 @@ struct PushDataInfo {
   size_t size_in_bytes;
   std::vector<Value> values;
 
-  // TODO(jaebaek): Add info for image
+  // TODO(jaebaek): Add info how we fill data for image e.g., row stride,
+  //                image format, height, depth.
 };
 
 class Descriptor {
