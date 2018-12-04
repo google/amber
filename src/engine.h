@@ -78,7 +78,7 @@ class Engine {
 
   // Initialize the engine with the provided device. The device is _not_ owned
   // by the engine and should not be destroyed. The |features| and |extensions|
-  // are passed into InitializeWithConfig for validatino purposes only. If
+  // are passed into InitializeWithConfig for validation purposes only. If
   // possible the engine should verify the provided config specifies the
   // constraints in |features| and |extensions| and fail if those constrains
   // are not met.
