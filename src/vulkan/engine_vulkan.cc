@@ -112,11 +112,6 @@ Result EngineVulkan::Shutdown() {
 Result EngineVulkan::AddRequirement(Feature feature,
                                     const Format* fmt,
                                     uint32_t val) {
-  if (std::find(features_.begin(), features_.end(), feature) != features_.end())
-    return Result("Vulkan::AddRequirement feature was already handled");
-
-  features_.push_back(feature);
-
   if (feature == Feature::kFenceTimeout) {
     fence_timeout_ms_ = val;
     return {};
