@@ -16,6 +16,7 @@
 #define SRC_DAWN_ENGINE_DAWN_H_
 
 #include <cstdint>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
