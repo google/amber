@@ -188,7 +188,7 @@ TEST_F(ShaderCompilerTest, ReturnsCachedShader) {
   // we don't compile this so the test will pass.
   std::string contents = "Just Random\nText()\nThat doesn't work.";
 
-  static const std::string kShaderName = "CachedShader";
+  static const char kShaderName[] = "CachedShader";
   Shader shader(ShaderType::kVertex);
   shader.SetName(kShaderName);
   shader.SetFormat(ShaderFormat::kGlsl);
