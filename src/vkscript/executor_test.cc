@@ -19,7 +19,6 @@
 
 #include "gtest/gtest.h"
 #include "src/engine.h"
-#include "src/feature.h"
 #include "src/make_unique.h"
 #include "src/vkscript/executor.h"
 #include "src/vkscript/parser.h"
