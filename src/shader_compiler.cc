@@ -37,7 +37,8 @@ ShaderCompiler::ShaderCompiler() = default;
 ShaderCompiler::~ShaderCompiler() = default;
 
 std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
-    Shader* shader, const ShaderMap& shader_map) const {
+    Shader* shader,
+    const ShaderMap& shader_map) const {
   auto it = shader_map.find(shader->GetName());
   if (it != shader_map.end())
     return {{}, it->second};

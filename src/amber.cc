@@ -38,7 +38,8 @@ amber::Result Amber::Execute(const std::string& input, const Options& opts) {
 }
 
 amber::Result Amber::ExecuteWithShaderData(const std::string& input,
-      const Options& opts, const ShaderMap& shader_data) {
+                                           const Options& opts,
+                                           const ShaderMap& shader_data) {
   std::unique_ptr<Parser> parser;
   std::unique_ptr<Executor> executor;
   if (input.substr(0, 7) == "#!amber") {

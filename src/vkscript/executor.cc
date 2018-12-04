@@ -29,8 +29,9 @@ Executor::Executor() : amber::Executor() {}
 
 Executor::~Executor() = default;
 
-Result Executor::Execute(Engine* engine, const amber::Script* src_script,
-    const ShaderMap& shader_map) {
+Result Executor::Execute(Engine* engine,
+                         const amber::Script* src_script,
+                         const ShaderMap& shader_map) {
   if (!src_script->IsVkScript())
     return Result("VkScript Executor called with non-vkscript source");
 
