@@ -134,7 +134,9 @@ Result EngineVulkan::AddRequirement(Feature feature,
     return {};
   }
 
-  return Result("Vulkan::AddRequirement features and extensions must be handled by Initialize()");
+  return Result(
+      "Vulkan::AddRequirement features and extensions must be handled by "
+      "Initialize()");
 }
 
 Result EngineVulkan::CreatePipeline(PipelineType type) {

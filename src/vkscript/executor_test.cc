@@ -48,11 +48,11 @@ class EngineStub : public Engine {
 
   Result Shutdown() override { return {}; }
 
-  const std::vector<Require>& GetRequirements() const { return requirements_; }
   Result AddRequirement(Feature feature,
-                        const Format* format,
-                        uint32_t) override {
-    if (std::find(features_.begin(), features_.end(), feature) != features_.end())
+                        const Format* fmt,
+                        uint32_t val) override {
+    if (std::find(features_.begin(), features_.end(), feature) !=
+        features_.end())
       return Result("Vulkan::AddRequirement feature was already handled");
 
     features_.push_back(feature);
@@ -74,7 +74,9 @@ class EngineStub : public Engine {
       return {};
     }
 
-    return Result("Vulkan::AddRequirement features and extensions must be handled by Initialize()");
+    return Result(
+        "Vulkan::AddRequirement features and extensions must be handled by "
+        "Initialize()");
     return {};
   }
 
@@ -281,6 +283,13 @@ class VkScriptExecutorTest : public testing::Test {
   ~VkScriptExecutorTest() = default;
 
   std::unique_ptr<Engine> MakeEngine() { return MakeUnique<EngineStub>(); }
+  std::unique_ptr<Engine> MakeAndInitializeEngine(const Parser& parser) {
+    auto engine = MakeUnique<EngineStub>();
+    const auto* script = parser.GetScript();
+    engine->Initialize(script->RequiredFeatures(),
+                       script->RequiredExtensions());
+    return engine;
+  }
   EngineStub* ToStub(Engine* engine) {
     return static_cast<EngineStub*>(engine);
   }
@@ -297,7 +306,7 @@ logicOp)";
   Parser parser;
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
-  auto engine = MakeEngine();
+  auto engine = MakeAndInitializeEngine(parser);
 
   Executor ex;
   Result r = ex.Execute(engine.get(), parser.GetScript());
@@ -311,7 +320,7 @@ logicOp)";
   const auto& extensions = ToStub(engine.get())->GetExtensions();
   ASSERT_EQ(0U, extensions.size());
 
-  EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
+  EXPECT_EQ(0U, ToStub(engine.get())->GetFenceTimeoutMs());
 
   const auto* color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
   const auto* depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
@@ -328,7 +337,7 @@ VK_KHR_variable_pointers)";
   Parser parser;
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
-  auto engine = MakeEngine();
+  auto engine = MakeAndInitializeEngine(parser);
 
   Executor ex;
   Result r = ex.Execute(engine.get(), parser.GetScript());
@@ -342,7 +351,7 @@ VK_KHR_variable_pointers)";
   EXPECT_EQ("VK_KHR_storage_buffer_storage_class", extensions[0]);
   EXPECT_EQ("VK_KHR_variable_pointers", extensions[1]);
 
-  EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
+  EXPECT_EQ(0U, ToStub(engine.get())->GetFenceTimeoutMs());
 
   const auto* color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
   const auto* depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
@@ -359,7 +368,7 @@ depthstencil D24_UNORM_S8_UINT)";
   Parser parser;
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
-  auto engine = MakeEngine();
+  auto engine = MakeAndInitializeEngine(parser);
 
   Executor ex;
   Result r = ex.Execute(engine.get(), parser.GetScript());
@@ -373,7 +382,7 @@ depthstencil D24_UNORM_S8_UINT)";
   const auto& extensions = ToStub(engine.get())->GetExtensions();
   ASSERT_EQ(0U, extensions.size());
 
-  EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
+  EXPECT_EQ(0U, ToStub(engine.get())->GetFenceTimeoutMs());
 
   const auto* color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
   const auto* depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
@@ -391,7 +400,7 @@ fence_timeout 12345)";
   Parser parser;
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
-  auto engine = MakeEngine();
+  auto engine = MakeAndInitializeEngine(parser);
 
   Executor ex;
   Result r = ex.Execute(engine.get(), parser.GetScript());
@@ -426,7 +435,7 @@ fence_timeout 12345)";
   Parser parser;
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
-  auto engine = MakeEngine();
+  auto engine = MakeAndInitializeEngine(parser);
 
   Executor ex;
   Result r = ex.Execute(engine.get(), parser.GetScript(), ShaderMap());
@@ -464,7 +473,7 @@ fence_timeout 123)";
   Parser parser;
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
-  auto engine = MakeEngine();
+  auto engine = MakeAndInitializeEngine(parser);
 
   Executor ex;
   Result r = ex.Execute(engine.get(), parser.GetScript());
@@ -476,7 +485,10 @@ TEST_F(VkScriptExecutorTest, EngineAddRequirementFailed) {
   auto engine = MakeEngine();
   Result r = engine->AddRequirement(Feature::kRobustBufferAccess, nullptr, 0U);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Vulkan::AddRequirement features and extensions must be handled by Initialize()", r.Error());
+  EXPECT_EQ(
+      "Vulkan::AddRequirement features and extensions must be handled by "
+      "Initialize()",
+      r.Error());
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesShaders) {
