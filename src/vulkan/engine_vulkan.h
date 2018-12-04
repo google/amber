@@ -80,8 +80,8 @@ class EngineVulkan : public Engine {
 
   std::unordered_map<ShaderType, VkShaderModule, CastHash<ShaderType>> modules_;
 
-  std::unique_ptr<Format> color_frame_format_;
-  std::unique_ptr<Format> depth_frame_format_;
+  VkFormat color_frame_format_ = VK_FORMAT_R8G8B8A8_UNORM;
+  VkFormat depth_frame_format_ = VK_FORMAT_UNDEFINED;
 };
 
 }  // namespace vulkan

@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "gtest/gtest.h"
@@ -58,13 +59,13 @@ class EngineStub : public Engine {
 
     if (feature == Feature::kFramebuffer) {
       if (fmt != nullptr)
-        color_frame_format_ = MakeUnique<Format>(*fmt);
+        color_frame_format_ = fmt->GetFormatType();
       return {};
     }
 
     if (feature == Feature::kDepthStencil) {
       if (fmt != nullptr)
-        depth_frame_format_ = MakeUnique<Format>(*fmt);
+        depth_frame_format_ = fmt->GetFormatType();
       return {};
     }
 
@@ -75,12 +76,8 @@ class EngineStub : public Engine {
 
   const std::vector<Feature>& GetFeatures() const { return features_; }
   const std::vector<std::string>& GetExtensions() const { return extensions_; }
-  const Format* GetColorFrameFormat() const {
-    return color_frame_format_ ? color_frame_format_.get() : nullptr;
-  }
-  const Format* GetDepthFrameFormat() const {
-    return depth_frame_format_ ? depth_frame_format_.get() : nullptr;
-  }
+  FormatType GetColorFrameFormat() const { return color_frame_format_; }
+  FormatType GetDepthFrameFormat() const { return depth_frame_format_; }
   uint32_t GetFenceTimeoutMs() { return fence_timeout_ms_; }
 
   Result CreatePipeline(PipelineType) override { return {}; }
@@ -261,8 +258,8 @@ class EngineStub : public Engine {
   std::vector<std::vector<Value>> buffer_values_;
 
   std::vector<ShaderType> shaders_seen_;
-  std::unique_ptr<Format> color_frame_format_;
-  std::unique_ptr<Format> depth_frame_format_;
+  FormatType color_frame_format_ = FormatType::kUnknown;
+  FormatType depth_frame_format_ = FormatType::kUnknown;
   uint32_t fence_timeout_ms_ = 0;
   std::vector<Feature> features_;
   std::vector<std::string> extensions_;
@@ -317,10 +314,10 @@ logicOp)";
 
   EXPECT_EQ(0U, ToStub(engine.get())->GetFenceTimeoutMs());
 
-  const auto* color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
-  const auto* depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
-  EXPECT_EQ(nullptr, color_frame_format);
-  EXPECT_EQ(nullptr, depth_frame_format);
+  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
+  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
+  EXPECT_EQ(FormatType::kUnknown, color_frame_format);
+  EXPECT_EQ(FormatType::kUnknown, depth_frame_format);
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredExtensions) {
@@ -350,10 +347,10 @@ VK_KHR_variable_pointers)";
 
   EXPECT_EQ(0U, ToStub(engine.get())->GetFenceTimeoutMs());
 
-  const auto* color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
-  const auto* depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
-  EXPECT_EQ(nullptr, color_frame_format);
-  EXPECT_EQ(nullptr, depth_frame_format);
+  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
+  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
+  EXPECT_EQ(FormatType::kUnknown, color_frame_format);
+  EXPECT_EQ(FormatType::kUnknown, depth_frame_format);
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredFrameBuffers) {
@@ -381,12 +378,10 @@ depthstencil D24_UNORM_S8_UINT)";
 
   EXPECT_EQ(0U, ToStub(engine.get())->GetFenceTimeoutMs());
 
-  const auto* color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
-  const auto* depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
-  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
-            color_frame_format->GetFormatType());
-  EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT,
-            depth_frame_format->GetFormatType());
+  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
+  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT, color_frame_format);
+  EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT, depth_frame_format);
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredFenceTimeout) {
@@ -413,10 +408,10 @@ fence_timeout 12345)";
 
   EXPECT_EQ(12345U, ToStub(engine.get())->GetFenceTimeoutMs());
 
-  const auto* color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
-  const auto* depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
-  EXPECT_EQ(nullptr, color_frame_format);
-  EXPECT_EQ(nullptr, depth_frame_format);
+  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
+  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
+  EXPECT_EQ(FormatType::kUnknown, color_frame_format);
+  EXPECT_EQ(FormatType::kUnknown, depth_frame_format);
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredAll) {
@@ -453,12 +448,10 @@ fence_timeout 12345)";
 
   EXPECT_EQ(12345U, ToStub(engine.get())->GetFenceTimeoutMs());
 
-  const auto* color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
-  const auto* depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
-  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
-            color_frame_format->GetFormatType());
-  EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT,
-            depth_frame_format->GetFormatType());
+  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
+  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT, color_frame_format);
+  EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT, depth_frame_format);
 }
 
 TEST_F(VkScriptExecutorTest, EngineAddRequirementFailed) {

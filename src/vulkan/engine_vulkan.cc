@@ -33,7 +33,6 @@ namespace {
 
 const uint32_t kFramebufferWidth = 250;
 const uint32_t kFramebufferHeight = 250;
-const VkFormat kDefaultColorFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
 VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
   switch (type) {
@@ -119,13 +118,13 @@ Result EngineVulkan::AddRequirement(Feature feature,
 
   if (feature == Feature::kFramebuffer) {
     if (fmt != nullptr)
-      color_frame_format_ = MakeUnique<Format>(*fmt);
+      color_frame_format_ = ToVkFormat(fmt->GetFormatType());
     return {};
   }
 
   if (feature == Feature::kDepthStencil) {
     if (fmt != nullptr)
-      depth_frame_format_ = MakeUnique<Format>(*fmt);
+      depth_frame_format_ = ToVkFormat(fmt->GetFormatType());
     return {};
   }
 
@@ -143,17 +142,9 @@ Result EngineVulkan::CreatePipeline(PipelineType type) {
                                               device_->GetQueue());
   }
 
-  VkFormat frame_buffer_format = kDefaultColorFormat;
-  if (color_frame_format_)
-    frame_buffer_format = ToVkFormat(color_frame_format_->GetFormatType());
-
-  VkFormat depth_stencil_format = VK_FORMAT_UNDEFINED;
-  if (depth_frame_format_)
-    depth_stencil_format = ToVkFormat(depth_frame_format_->GetFormatType());
-
   pipeline_ = MakeUnique<GraphicsPipeline>(
       device_->GetDevice(), device_->GetPhysicalMemoryProperties(),
-      frame_buffer_format, depth_stencil_format, fence_timeout_ms_,
+      color_frame_format_, depth_frame_format_, fence_timeout_ms_,
       GetShaderStageInfo());
 
   return pipeline_->AsGraphics()->Initialize(
