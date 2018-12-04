@@ -39,7 +39,10 @@ class EngineStub : public Engine {
   ~EngineStub() override = default;
 
   // Engine
-  Result Initialize() override { return {}; }
+  Result Initialize(const std::vector<Feature>&,
+                    const std::vector<std::string>&) override {
+    return {};
+  }
 
   Result InitializeWithDevice(void*) override { return {}; }
 
@@ -240,143 +243,23 @@ class EngineStub : public Engine {
   ClearColorCommand* last_clear_color_ = nullptr;
 };
 
-class EngineCountingStub : public Engine {
- public:
-  EngineCountingStub() : Engine() {}
-  ~EngineCountingStub() override = default;
-
-  // Engine
-  Result Initialize() override { return {}; }
-
-  Result InitializeWithDevice(void*) override { return {}; }
-
-  Result Shutdown() override { return {}; }
-
-  int32_t GetRequireStageIdx() const { return require_stage_; }
-  uint32_t GetRequireCount() const { return require_stage_count_; }
-  Result AddRequirement(Feature, const Format*, uint32_t) override {
-    ++require_stage_count_;
-    require_stage_ = stage_count_++;
-    return {};
-  }
-  Result CreatePipeline(PipelineType) override { return {}; }
-
-  int32_t GetShaderStageIdx() const { return shader_stage_; }
-  uint32_t GetShaderCount() const { return shader_stage_count_; }
-  Result SetShader(ShaderType, const std::vector<uint32_t>&) override {
-    ++shader_stage_count_;
-    shader_stage_ = stage_count_++;
-    return {};
-  }
-  Result SetBuffer(BufferType,
-                   uint8_t,
-                   const Format&,
-                   const std::vector<Value>&) override {
-    return {};
-  }
-
-  Result DoClearColor(const ClearColorCommand*) override { return {}; }
-  Result DoClearStencil(const ClearStencilCommand*) override { return {}; }
-  Result DoClearDepth(const ClearDepthCommand*) override { return {}; }
-  Result DoClear(const ClearCommand*) override { return {}; }
-  Result DoDrawRect(const DrawRectCommand*) override { return {}; }
-  Result DoDrawArrays(const DrawArraysCommand*) override { return {}; }
-  Result DoCompute(const ComputeCommand*) override { return {}; }
-  Result DoEntryPoint(const EntryPointCommand*) override { return {}; }
-  Result DoPatchParameterVertices(
-      const PatchParameterVerticesCommand*) override {
-    return {};
-  }
-  Result DoBuffer(const BufferCommand*) override { return {}; }
-  Result DoProcessCommands() override { return {}; }
-  Result GetFrameBufferInfo(ResourceInfo*) override { return {}; }
-  Result GetDescriptorInfo(const uint32_t,
-                           const uint32_t,
-                           ResourceInfo*) override {
-    return {};
-  }
-
- private:
-  int32_t stage_count_ = 0;
-  int32_t require_stage_ = -1;
-  int32_t shader_stage_ = -1;
-  uint32_t require_stage_count_ = 0;
-  uint32_t shader_stage_count_ = 0;
-};
-
 class VkScriptExecutorTest : public testing::Test {
  public:
   VkScriptExecutorTest() = default;
   ~VkScriptExecutorTest() = default;
 
   std::unique_ptr<Engine> MakeEngine() { return MakeUnique<EngineStub>(); }
-  std::unique_ptr<Engine> MakeCountingEngine() {
-    return MakeUnique<EngineCountingStub>();
-  }
   EngineStub* ToStub(Engine* engine) {
     return static_cast<EngineStub*>(engine);
-  }
-
-  EngineCountingStub* ToCountingStub(Engine* engine) {
-    return static_cast<EngineCountingStub*>(engine);
   }
 };
 
 }  // namespace
 
-TEST_F(VkScriptExecutorTest, ExecutesRequirements) {
-  std::string input = R"(
-[require]
-robustBufferAccess
-logicOp)";
-
-  Parser parser;
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
-
-  auto engine = MakeEngine();
-
-  Executor ex;
-  Result r = ex.Execute(engine.get(), parser.GetScript());
-  ASSERT_TRUE(r.IsSuccess());
-
-  auto requirements = ToStub(engine.get())->GetRequirements();
-  ASSERT_EQ(2U, requirements.size());
-  EXPECT_EQ(Feature::kRobustBufferAccess, requirements[0].feature);
-  EXPECT_EQ(Feature::kLogicOp, requirements[1].feature);
-}
-
-TEST_F(VkScriptExecutorTest, ExecutesAllRequirementsFirst) {
-  std::string input = R"(
-[require]
-robustBufferAccess
-logicOp
-[vertex shader passthrough]
-[require]
-framebuffer R32G32B32A32_SINT
-)";
-
-  Parser parser;
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
-
-  auto engine = MakeCountingEngine();
-
-  Executor ex;
-  Result r = ex.Execute(engine.get(), parser.GetScript());
-  ASSERT_TRUE(r.IsSuccess());
-
-  auto count = ToCountingStub(engine.get());
-  // All requires run first (3 requirements), so they get in before shader
-  EXPECT_EQ(2U, count->GetRequireStageIdx());
-  EXPECT_EQ(3U, count->GetShaderStageIdx());
-  EXPECT_EQ(3U, count->GetRequireCount());
-  EXPECT_EQ(1U, count->GetShaderCount());
-}
-
 TEST_F(VkScriptExecutorTest, ExecuteRequirementsFailed) {
   std::string input = R"(
 [require]
-robustBufferAccess
-logicOp)";
+framebuffer R32G32B32A32_SINT)";
 
   Parser parser;
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
