@@ -27,7 +27,7 @@ class Executor : public amber::Executor {
   Executor();
   ~Executor() override;
 
-  Result Execute(Engine* engine, const amber::Script* script) override;
+  Result Execute(Engine*, const amber::Script*, const ShaderMap&) override;
 
  private:
   Verifier verifier_;

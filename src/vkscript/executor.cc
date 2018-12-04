@@ -29,7 +29,9 @@ Executor::Executor() : amber::Executor() {}
 
 Executor::~Executor() = default;
 
-Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
+Result Executor::Execute(Engine* engine,
+                         const amber::Script* src_script,
+                         const ShaderMap& shader_map) {
   if (!src_script->IsVkScript())
     return Result("VkScript Executor called with non-vkscript source");
 
@@ -55,8 +57,7 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
 
     Result r;
     std::vector<uint32_t> data;
-    std::tie(r, data) =
-        sc.Compile(shader->GetType(), shader->GetFormat(), shader->GetData());
+    std::tie(r, data) = sc.Compile(shader.get(), shader_map);
     if (!r.IsSuccess())
       return r;
 

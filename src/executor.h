@@ -25,7 +25,7 @@ class Executor {
  public:
   virtual ~Executor();
 
-  virtual Result Execute(Engine*, const Script*) = 0;
+  virtual Result Execute(Engine*, const Script*, const ShaderMap&) = 0;
 
  protected:
   Executor();

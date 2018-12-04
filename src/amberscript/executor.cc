@@ -21,7 +21,9 @@ Executor::Executor() : amber::Executor() {}
 
 Executor::~Executor() = default;
 
-Result Executor::Execute(Engine*, const amber::Script* src_script) {
+Result Executor::Execute(Engine*,
+                         const amber::Script* src_script,
+                         const ShaderMap&) {
   if (!src_script->IsAmberScript())
     return Result("AmberScript executor called with non-amber script source");
 

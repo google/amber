@@ -37,9 +37,12 @@ ShaderCompiler::ShaderCompiler() = default;
 ShaderCompiler::~ShaderCompiler() = default;
 
 std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
-    ShaderType type,
-    ShaderFormat fmt,
-    const std::string& data) const {
+    Shader* shader,
+    const ShaderMap& shader_map) const {
+  auto it = shader_map.find(shader->GetName());
+  if (it != shader_map.end())
+    return {{}, it->second};
+
   std::string spv_errors;
   // TODO(dsinclair): Vulkan env should be an option.
   spvtools::SpirvTools tools(SPV_ENV_UNIVERSAL_1_0);
@@ -67,17 +70,17 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
   });
 
   std::vector<uint32_t> results;
-  if (fmt == ShaderFormat::kGlsl) {
-    Result r = CompileGlsl(type, data, &results);
+  if (shader->GetFormat() == ShaderFormat::kGlsl) {
+    Result r = CompileGlsl(shader, &results);
     if (!r.IsSuccess())
       return {r, {}};
-  } else if (fmt == ShaderFormat::kSpirvAsm) {
-    if (!tools.Assemble(data, &results,
+  } else if (shader->GetFormat() == ShaderFormat::kSpirvAsm) {
+    if (!tools.Assemble(shader->GetData(), &results,
                         spvtools::SpirvTools::kDefaultAssembleOption)) {
       return {Result("Shader assembly failed: " + spv_errors), {}};
     }
-  } else if (fmt == ShaderFormat::kSpirvHex) {
-    Result r = ParseHex(data, &results);
+  } else if (shader->GetFormat() == ShaderFormat::kSpirvHex) {
+    Result r = ParseHex(shader->GetData(), &results);
     if (!r.IsSuccess())
       return {Result("Unable to parse shader hex."), {}};
   } else {
@@ -117,30 +120,29 @@ Result ShaderCompiler::ParseHex(const std::string& data,
   return {};
 }
 
-Result ShaderCompiler::CompileGlsl(ShaderType shader_type,
-                                   const std::string& data,
+Result ShaderCompiler::CompileGlsl(Shader* shader,
                                    std::vector<uint32_t>* result) const {
   shaderc::Compiler compiler;
   shaderc::CompileOptions options;
 
   shaderc_shader_kind kind;
-  if (shader_type == ShaderType::kCompute)
+  if (shader->GetType() == ShaderType::kCompute)
     kind = shaderc_compute_shader;
-  else if (shader_type == ShaderType::kFragment)
+  else if (shader->GetType() == ShaderType::kFragment)
     kind = shaderc_fragment_shader;
-  else if (shader_type == ShaderType::kGeometry)
+  else if (shader->GetType() == ShaderType::kGeometry)
     kind = shaderc_geometry_shader;
-  else if (shader_type == ShaderType::kVertex)
+  else if (shader->GetType() == ShaderType::kVertex)
     kind = shaderc_vertex_shader;
-  else if (shader_type == ShaderType::kTessellationControl)
+  else if (shader->GetType() == ShaderType::kTessellationControl)
     kind = shaderc_tess_control_shader;
-  else if (shader_type == ShaderType::kTessellationEvaluation)
+  else if (shader->GetType() == ShaderType::kTessellationEvaluation)
     kind = shaderc_tess_evaluation_shader;
   else
     return Result("Unknown shader type");
 
   shaderc::SpvCompilationResult module =
-      compiler.CompileGlslToSpv(data, kind, "-", options);
+      compiler.CompileGlslToSpv(shader->GetData(), kind, "-", options);
 
   if (module.GetCompilationStatus() != shaderc_compilation_status_success)
     return Result(module.GetErrorMessage());
