@@ -48,9 +48,13 @@ class EngineStub : public Engine {
 
   Result Shutdown() override { return {}; }
 
+  void FailRequirements() { fail_requirements_ = true; }
   Result AddRequirement(Feature feature,
                         const Format* fmt,
                         uint32_t val) override {
+    if (fail_requirements_)
+      return Result("requirements failed");
+
     if (feature == Feature::kFenceTimeout) {
       fence_timeout_ms_ = val;
       return {};
@@ -227,6 +231,7 @@ class EngineStub : public Engine {
   }
 
  private:
+  bool fail_requirements_ = false;
   bool fail_shader_command_ = false;
   bool fail_clear_command_ = false;
   bool fail_clear_color_command_ = false;
@@ -286,6 +291,23 @@ class VkScriptExecutorTest : public testing::Test {
 
 }  // namespace
 
+TEST_F(VkScriptExecutorTest, ExecuteRequirementsFailed) {
+  std::string input = R"(
+[require]
+framebuffer R32G32B32A32_SINT)";
+
+  Parser parser;
+  ASSERT_TRUE(parser.Parse(input).IsSuccess());
+
+  auto engine = MakeEngine();
+  ToStub(engine.get())->FailRequirements();
+
+  Executor ex;
+  Result r = ex.Execute(engine.get(), parser.GetScript(), ShaderMap());
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("requirements failed", r.Error());
+}
+
 TEST_F(VkScriptExecutorTest, ExecutesRequiredFeatures) {
   std::string input = R"(
 [require]
@@ -300,7 +322,7 @@ logicOp)";
                                         script->RequiredExtensions());
 
   Executor ex;
-  Result r = ex.Execute(engine.get(), parser.GetScript());
+  Result r = ex.Execute(engine.get(), parser.GetScript(), ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
 
   const auto& features = ToStub(engine.get())->GetFeatures();
@@ -333,7 +355,7 @@ VK_KHR_variable_pointers)";
                                         script->RequiredExtensions());
 
   Executor ex;
-  Result r = ex.Execute(engine.get(), parser.GetScript());
+  Result r = ex.Execute(engine.get(), parser.GetScript(), ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
 
   const auto& features = ToStub(engine.get())->GetFeatures();
@@ -366,7 +388,7 @@ depthstencil D24_UNORM_S8_UINT)";
                                         script->RequiredExtensions());
 
   Executor ex;
-  Result r = ex.Execute(engine.get(), parser.GetScript());
+  Result r = ex.Execute(engine.get(), parser.GetScript(), ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
 
   const auto& features = ToStub(engine.get())->GetFeatures();
@@ -396,7 +418,7 @@ fence_timeout 12345)";
                                         script->RequiredExtensions());
 
   Executor ex;
-  Result r = ex.Execute(engine.get(), parser.GetScript());
+  Result r = ex.Execute(engine.get(), parser.GetScript(), ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
 
   const auto& features = ToStub(engine.get())->GetFeatures();
