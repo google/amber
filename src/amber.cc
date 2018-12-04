@@ -33,6 +33,13 @@ Amber::Amber() = default;
 Amber::~Amber() = default;
 
 amber::Result Amber::Execute(const std::string& input, const Options& opts) {
+  ShaderMap map;
+  return ExecuteWithShaderData(input, opts, map);
+}
+
+amber::Result Amber::ExecuteWithShaderData(const std::string& input,
+                                           const Options& opts,
+                                           const ShaderMap& shader_data) {
   std::unique_ptr<Parser> parser;
   std::unique_ptr<Executor> executor;
   if (input.substr(0, 7) == "#!amber") {
@@ -68,7 +75,7 @@ amber::Result Amber::Execute(const std::string& input, const Options& opts) {
   if (!r.IsSuccess())
     return r;
 
-  r = executor->Execute(engine.get(), script);
+  r = executor->Execute(engine.get(), script, shader_data);
   if (!r.IsSuccess())
     return r;
 

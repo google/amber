@@ -15,12 +15,18 @@
 #ifndef AMBER_AMBER_H_
 #define AMBER_AMBER_H_
 
+#include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "amber/result.h"
 
 namespace amber {
+
+/// The shader map is a map from the name of a shader to the spirv-binary
+/// which is the compiled representation of that named shader.
+using ShaderMap = std::map<std::string, std::vector<uint32_t>>;
 
 enum class EngineType : uint8_t {
   /// Use the Vulkan backend, if available
@@ -50,6 +56,13 @@ class Amber {
   /// Executes the given |data| script with the provided |opts|. Returns a
   /// |Result| which indicates if the execution succeded.
   amber::Result Execute(const std::string& data, const Options& opts);
+
+  /// Executes the given |data| script with the provided |opts|. Will use
+  /// |shader_map| to lookup shader data before attempting to compile the
+  /// shader if possible.
+  amber::Result ExecuteWithShaderData(const std::string& data,
+                                      const Options& opts,
+                                      const ShaderMap& shader_data);
 };
 
 }  // namespace amber
