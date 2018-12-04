@@ -15,6 +15,7 @@
 #ifndef AMBER_AMBER_H_
 #define AMBER_AMBER_H_
 
+#include <memory>
 #include <string>
 
 #include "amber/result.h"
