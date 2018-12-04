@@ -119,6 +119,8 @@ void Image::Shutdown() {
   view_ = VK_NULL_HANDLE;
   image_ = VK_NULL_HANDLE;
   memory_ = VK_NULL_HANDLE;
+
+  Resource::Shutdown();
 }
 
 Result Image::CopyToHost(VkCommandBuffer command) {

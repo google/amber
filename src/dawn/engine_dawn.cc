@@ -186,15 +186,17 @@ Result EngineDawn::Initialize(const std::vector<Feature>&,
   return Result("Dawn::Initialize: Can't make a device: Unknown backend");
 }
 
-Result EngineDawn::InitializeWithDevice(void* default_device) {
+Result EngineDawn::InitializeWithConfig(EngineConfig* config,
+                                        const std::vector<Feature>&,
+                                        const std::vector<std::string>&) {
   if (device_)
-    return Result("Dawn:InitializeWithDevice device_ already exists");
+    return Result("Dawn:InitializeWithconfig device_ already exists");
 
-  auto* dawn_device_ptr = static_cast<::dawn::Device*>(default_device);
-  if (dawn_device_ptr == nullptr)
-    return Result("Dawn:InitializeWithDevice given a null pointer");
+  DawnEngineConfig* dawn_config = static_cast<DawnEngineConfig*>(config);
+  if (dawn_config->device == nullptr)
+    return Result("Dawn:InitializeWithConfig device is a null pointer");
 
-  device_ = *dawn_device_ptr;
+  device_ = *dawn_config->device;
   return {};
 }
 

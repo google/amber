@@ -63,14 +63,10 @@ amber::Result Amber::ExecuteWithShaderData(const std::string& input,
 
   const auto* script = parser->GetScript();
 
-  if (opts.default_device) {
-    // TODO(dsinclair): Should these be errors?
-    if (!script->RequiredFeatures().empty())
-      return Result("Required features provided with external device");
-    if (!script->RequiredFeatures().empty())
-      return Result("Required extensions provided with external device");
-
-    r = engine->InitializeWithDevice(opts.default_device);
+  if (opts.config) {
+    r = engine->InitializeWithConfig(opts.config.get(),
+                                     script->RequiredFeatures(),
+                                     script->RequiredExtensions());
   } else {
     r = engine->Initialize(script->RequiredFeatures(),
                            script->RequiredExtensions());

@@ -81,15 +81,17 @@ Result EngineVulkan::Initialize(const std::vector<Feature>&,
   return InitDeviceAndCreateCommand();
 }
 
-Result EngineVulkan::InitializeWithDevice(void* default_device) {
+Result EngineVulkan::InitializeWithConfig(EngineConfig* config,
+                                          const std::vector<Feature>&,
+                                          const std::vector<std::string>&) {
   if (device_)
     return Result("Vulkan::Set device_ already exists");
 
-  VkDevice device = static_cast<VkDevice>(default_device);
-  if (device == VK_NULL_HANDLE)
-    return Result("Vulkan::Set VK_NULL_HANDLE is given");
+  VulkanEngineConfig* vk_config = static_cast<VulkanEngineConfig*>(config);
+  if (vk_config->device == VK_NULL_HANDLE)
+    return Result("Vulkan::InitializeWithConfig device handle is null.");
 
-  device_ = MakeUnique<Device>(device);
+  device_ = MakeUnique<Device>(vk_config->device);
   return InitDeviceAndCreateCommand();
 }
 
