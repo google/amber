@@ -229,7 +229,7 @@ Result EngineVulkan::DoClear(const ClearCommand*) {
 
 Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   if (!pipeline_->IsGraphics())
-    return Result("Vulkan::DrawArrays for Non-Graphics Pipeline");
+    return Result("Vulkan::DrawRect for Non-Graphics Pipeline");
 
   auto* graphics = pipeline_->AsGraphics();
 
@@ -249,10 +249,10 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   if (command->IsOrtho()) {
     const float frame_width = static_cast<float>(graphics->GetWidth());
     const float frame_height = static_cast<float>(graphics->GetHeight());
-    x = x / frame_width * 2.0f - 1.0f;
-    y = y / frame_height * 2.0f - 1.0f;
-    width = width / frame_width * 2.0f - 1.0f;
-    height = height / frame_height * 2.0f - 1.0f;
+    x = ((x / frame_width) * 2.0f) - 1.0f;
+    y = ((y / frame_height) * 2.0f) - 1.0f;
+    width = ((width / frame_width) * 2.0f) - 1.0f;
+    height = ((height / frame_height) * 2.0f) - 1.0f;
   }
 
   std::vector<Value> values(8);
@@ -278,7 +278,7 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   draw.SetTopology(command->IsPatch() ? Topology::kPatchList
                                       : Topology::kTriangleStrip);
   draw.SetFirstVertexIndex(0);
-  draw.SetVertexCount(6);
+  draw.SetVertexCount(4);
   draw.SetInstanceCount(1);
 
   return graphics->Draw(&draw);
