@@ -530,6 +530,8 @@ void GraphicsPipeline::Shutdown() {
 
   Pipeline::Shutdown();
   frame_->Shutdown();
+  if (vertex_buffer_)
+    vertex_buffer_->Shutdown();
   vkDestroyRenderPass(device_, render_pass_, nullptr);
 }
 

@@ -79,7 +79,6 @@ class Pipeline {
 
   uint32_t GetFenceTimeout() const { return fence_timeout_ms_; }
 
-  VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
   VkPipeline pipeline_ = VK_NULL_HANDLE;
   VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
 

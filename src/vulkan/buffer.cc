@@ -105,6 +105,9 @@ void Buffer::Shutdown() {
     vkFreeMemory(GetDevice(), memory_, nullptr);
     memory_ = VK_NULL_HANDLE;
   }
+
+  if (!is_buffer_host_accessible_)
+    Resource::Shutdown();
 }
 
 Result Buffer::InvalidateMemoryIfNeeded() {

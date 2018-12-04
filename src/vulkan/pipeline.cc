@@ -65,11 +65,12 @@ void Pipeline::Shutdown() {
   if (r.IsSuccess())
     command_->SubmitAndReset(fence_timeout_ms_);
 
-  // TODO(jaebaek): destroy pipeline_cache_ and pipeline_
   DestoryDescriptorPools();
   DestoryDescriptorSetLayouts();
   command_->Shutdown();
   vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
+  for (size_t i = 0; i < descriptors_.size(); ++i)
+    descriptors_[i]->Shutdown();
   vkDestroyPipeline(device_, pipeline_, nullptr);
 }
 
