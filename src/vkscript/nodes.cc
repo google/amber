@@ -32,10 +32,6 @@ RequireNode* Node::AsRequire() {
   return static_cast<RequireNode*>(this);
 }
 
-TestNode* Node::AsTest() {
-  return static_cast<TestNode*>(this);
-}
-
 VertexDataNode* Node::AsVertexData() {
   return static_cast<VertexDataNode*>(this);
 }
@@ -74,11 +70,6 @@ IndicesNode::IndicesNode(std::unique_ptr<Buffer> buffer)
     : Node(NodeType::kIndices), buffer_(std::move(buffer)) {}
 
 IndicesNode::~IndicesNode() = default;
-
-TestNode::TestNode(std::vector<std::unique_ptr<Command>> cmds)
-    : Node(NodeType::kTest), commands_(std::move(cmds)) {}
-
-TestNode::~TestNode() = default;
 
 VertexDataNode::VertexDataNode() : Node(NodeType::kVertexData) {}
 

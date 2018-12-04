@@ -374,11 +374,7 @@ clear)";
   Result r = parser.ProcessTestBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& nodes = ToVkScript(parser.GetScript())->Nodes();
-  ASSERT_EQ(1U, nodes.size());
-  ASSERT_TRUE(nodes[0]->IsTest());
-
-  const auto& cmds = nodes[0]->AsTest()->GetCommands();
+  const auto& cmds = parser.GetScript()->GetCommands();
   ASSERT_EQ(4U, cmds.size());
 
   ASSERT_TRUE(cmds[0]->IsClearColor());
