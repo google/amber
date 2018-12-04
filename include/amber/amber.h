@@ -57,7 +57,8 @@ class Amber {
   /// |shader_map| to lookup shader data before attempting to compile the
   /// shader if possible.
   amber::Result ExecuteWithShaderData(const std::string& data,
-      const Options& opts, const ShaderMap& shader_data);
+                                      const Options& opts,
+                                      const ShaderMap& shader_data);
 };
 
 }  // namespace amber
