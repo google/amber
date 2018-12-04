@@ -32,7 +32,6 @@ namespace vkscript {
 
 class IndicesNode;
 class RequireNode;
-class TestNode;
 class VertexDataNode;
 
 class Node {
@@ -41,12 +40,10 @@ class Node {
 
   bool IsIndices() const { return node_type_ == NodeType::kIndices; }
   bool IsRequire() const { return node_type_ == NodeType::kRequire; }
-  bool IsTest() const { return node_type_ == NodeType::kTest; }
   bool IsVertexData() const { return node_type_ == NodeType::kVertexData; }
 
   IndicesNode* AsIndices();
   RequireNode* AsRequire();
-  TestNode* AsTest();
   VertexDataNode* AsVertexData();
 
  protected:
@@ -123,19 +120,6 @@ class VertexDataNode : public Node {
     std::vector<Value> buffer;
   };
   std::vector<NodeData> data_;
-};
-
-class TestNode : public Node {
- public:
-  explicit TestNode(std::vector<std::unique_ptr<Command>> cmds);
-  ~TestNode() override;
-
-  const std::vector<std::unique_ptr<Command>>& GetCommands() const {
-    return commands_;
-  }
-
- private:
-  std::vector<std::unique_ptr<Command>> commands_;
 };
 
 }  // namespace vkscript
