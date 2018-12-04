@@ -131,8 +131,7 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
       if (!r.IsSuccess())
         return r;
 
-      r = verifier_.ProbeSSBO(probe_ssbo, info.size_in_bytes,
-                              info.cpu_memory);
+      r = verifier_.ProbeSSBO(probe_ssbo, info.size_in_bytes, info.cpu_memory);
     } else if (cmd->IsClear()) {
       r = engine->DoClear(cmd->AsClear());
     } else if (cmd->IsClearColor()) {

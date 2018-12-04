@@ -57,7 +57,7 @@ class Script {
     return shaders_;
   }
 
-  void SetCommands(std::vector<std::unique_ptr<Command>> cmds)  {
+  void SetCommands(std::vector<std::unique_ptr<Command>> cmds) {
     commands_ = std::move(cmds);
   }
   const std::vector<std::unique_ptr<Command>>& GetCommands() const {
