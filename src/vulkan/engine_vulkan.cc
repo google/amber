@@ -105,8 +105,7 @@ Result EngineVulkan::Shutdown() {
   return {};
 }
 
-Result EngineVulkan::AddRequirement(Feature feature,
-                                    const Format* fmt) {
+Result EngineVulkan::AddRequirement(Feature feature, const Format* fmt) {
   auto it = std::find_if(requirements_.begin(), requirements_.end(),
                          [&feature](const EngineVulkan::Requirement& req) {
                            return req.feature == feature;
