@@ -53,10 +53,6 @@ RequireNode::Requirement::Requirement(Requirement&&) = default;
 
 RequireNode::Requirement::~Requirement() = default;
 
-void RequireNode::AddRequirement(Feature feature) {
-  requirements_.emplace_back(feature);
-}
-
 void RequireNode::AddRequirement(Feature feature,
                                  std::unique_ptr<Format> format) {
   requirements_.emplace_back(feature, std::move(format));

@@ -54,15 +54,25 @@ amber::Result Amber::Execute(const std::string& input, const Options& opts) {
   if (!engine)
     return Result("Failed to create engine");
 
-  if (opts.default_device)
+  const auto* script = parser->GetScript();
+
+  if (opts.default_device) {
+    // TODO(dsinclair): Should these be errors?
+    if (!script->RequiredFeatures().empty())
+      return Result("Required features provided with external device");
+    if (!script->RequiredFeatures().empty())
+      return Result("Required extensions provided with external device");
+
     r = engine->InitializeWithDevice(opts.default_device);
-  else
-    r = engine->Initialize();
+  } else {
+    r = engine->Initialize(script->RequiredFeatures(),
+                           script->RequiredExtensions());
+  }
 
   if (!r.IsSuccess())
     return r;
 
-  r = executor->Execute(engine.get(), parser->GetScript());
+  r = executor->Execute(engine.get(), script);
   if (!r.IsSuccess())
     return r;
 

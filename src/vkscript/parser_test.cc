@@ -114,13 +114,9 @@ TEST_F(VkScriptParserTest, RequireBlockNoArgumentFeatures) {
     Result r = parser.ProcessRequireBlockForTesting(feature.name);
     ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-    auto& nodes = ToVkScript(parser.GetScript())->Nodes();
-    ASSERT_EQ(1U, nodes.size());
-    ASSERT_TRUE(nodes[0]->IsRequire());
-
-    auto req = nodes[0]->AsRequire();
-    ASSERT_EQ(1U, req->Requirements().size());
-    EXPECT_EQ(feature.feature, req->Requirements()[0].GetFeature());
+    auto& feats = ToVkScript(parser.GetScript())->RequiredFeatures();
+    ASSERT_EQ(1U, feats.size());
+    EXPECT_EQ(feature.feature, feats[0]);
   }
 }
 
@@ -132,14 +128,8 @@ VK_KHR_variable_pointers)";
   Result r = parser.ProcessRequireBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& nodes = ToVkScript(parser.GetScript())->Nodes();
-  ASSERT_EQ(1U, nodes.size());
-  ASSERT_TRUE(nodes[0]->IsRequire());
-
-  auto req = nodes[0]->AsRequire();
-  ASSERT_EQ(2U, req->Extensions().size());
-
-  const auto& exts = req->Extensions();
+  auto& exts = parser.GetScript()->RequiredExtensions();
+  ASSERT_EQ(2U, exts.size());
   EXPECT_EQ("VK_KHR_storage_buffer_storage_class", exts[0]);
   EXPECT_EQ("VK_KHR_variable_pointers", exts[1]);
 }
@@ -210,19 +200,18 @@ inheritedQueries # line comment
   ASSERT_TRUE(nodes[0]->IsRequire());
 
   auto* req = nodes[0]->AsRequire();
-  ASSERT_EQ(4U, req->Requirements().size());
+  ASSERT_EQ(2U, req->Requirements().size());
   EXPECT_EQ(Feature::kDepthStencil, req->Requirements()[0].GetFeature());
   auto format = req->Requirements()[0].GetFormat();
   EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT, format->GetFormatType());
 
-  EXPECT_EQ(Feature::kSparseResidency4Samples,
-            req->Requirements()[1].GetFeature());
-
-  EXPECT_EQ(Feature::kFramebuffer, req->Requirements()[2].GetFeature());
-  format = req->Requirements()[2].GetFormat();
+  EXPECT_EQ(Feature::kFramebuffer, req->Requirements()[1].GetFeature());
+  format = req->Requirements()[1].GetFormat();
   EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT, format->GetFormatType());
 
-  EXPECT_EQ(Feature::kInheritedQueries, req->Requirements()[3].GetFeature());
+  auto& feats = script->RequiredFeatures();
+  EXPECT_EQ(Feature::kSparseResidency4Samples, feats[0]);
+  EXPECT_EQ(Feature::kInheritedQueries, feats[1]);
 }
 
 TEST_F(VkScriptParserTest, IndicesBlock) {

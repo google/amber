@@ -72,7 +72,8 @@ Result EngineVulkan::InitDeviceAndCreateCommand() {
   return {};
 }
 
-Result EngineVulkan::Initialize() {
+Result EngineVulkan::Initialize(const std::vector<Feature>&,
+                                const std::vector<std::string>&) {
   if (device_)
     return Result("Vulkan::Set device_ already exists");
 
