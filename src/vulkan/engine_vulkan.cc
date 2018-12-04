@@ -98,8 +98,6 @@ Result EngineVulkan::Shutdown() {
     vkDestroyShaderModule(device_->GetDevice(), it->second, nullptr);
 
   pipeline_->Shutdown();
-  // TODO(jaebaek): Do not call Shutdown() if the device is not created by
-  //                engine i.e., given.
   pool_->Shutdown();
   device_->Shutdown();
   return {};
