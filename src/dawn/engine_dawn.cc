@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "amber/amber_dawn.h"
 #include "dawn/dawncpp.h"
 #include "src/dawn/device_metal.h"
 #include "src/sleep.h"
