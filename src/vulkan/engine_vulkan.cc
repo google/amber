@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cassert>
 
+#include "amber/amber_vulkan.h"
 #include "src/make_unique.h"
 #include "src/vulkan/compute_pipeline.h"
 #include "src/vulkan/descriptor.h"
