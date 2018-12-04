@@ -45,9 +45,5 @@ void Script::AddVertexData(std::unique_ptr<VertexDataNode> node) {
   test_nodes_.push_back(std::move(tn));
 }
 
-void Script::SetTestCommands(std::vector<std::unique_ptr<Command>> cmds) {
-  test_nodes_.push_back(MakeUnique<TestNode>(std::move(cmds)));
-}
-
 }  // namespace vkscript
 }  // namespace amber

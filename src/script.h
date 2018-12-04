@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "src/command.h"
 #include "src/engine.h"
 #include "src/feature.h"
 #include "src/shader.h"
@@ -75,6 +76,13 @@ class Script {
   EngineData& GetEngineData() { return engine_data_; }
   const EngineData& GetEngineData() const { return engine_data_; }
 
+  void SetCommands(std::vector<std::unique_ptr<Command>> cmds) {
+    commands_ = std::move(cmds);
+  }
+  const std::vector<std::unique_ptr<Command>>& GetCommands() const {
+    return commands_;
+  }
+
  protected:
   explicit Script(ScriptType);
 
@@ -85,9 +93,10 @@ class Script {
   } engine_info_;
 
   ScriptType script_type_;
+  EngineData engine_data_;
   std::map<std::string, Shader*> name_to_shader_;
   std::vector<std::unique_ptr<Shader>> shaders_;
-  EngineData engine_data_;
+  std::vector<std::unique_ptr<Command>> commands_;
 };
 
 }  // namespace amber

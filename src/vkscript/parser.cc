@@ -409,7 +409,7 @@ Result Parser::ProcessTestBlock(const std::string& data) {
   if (!r.IsSuccess())
     return r;
 
-  script_.SetTestCommands(cp.TakeCommands());
+  script_.SetCommands(cp.TakeCommands());
 
   return {};
 }

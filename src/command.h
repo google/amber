@@ -201,7 +201,7 @@ class Probe : public Command {
   ~Probe() override;
 
   bool HasTolerances() const { return !tolerances_.empty(); }
-  void SetTolerances(std::vector<Tolerance> t) { tolerances_ = t; }
+  void SetTolerances(const std::vector<Tolerance>& t) { tolerances_ = t; }
   const std::vector<Tolerance>& GetTolerances() const { return tolerances_; }
 
  protected:

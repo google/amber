@@ -38,7 +38,10 @@ class EngineVulkan : public Engine {
   // Engine
   Result Initialize(const std::vector<Feature>& features,
                     const std::vector<std::string>& extensions) override;
-  Result InitializeWithDevice(void* default_device) override;
+  Result InitializeWithConfig(
+      EngineConfig* config,
+      const std::vector<Feature>& features,
+      const std::vector<std::string>& extensions) override;
   Result Shutdown() override;
   Result AddRequirement(Feature feature, const Format*) override;
   Result CreatePipeline(PipelineType type) override;
