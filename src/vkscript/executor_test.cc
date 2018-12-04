@@ -50,9 +50,7 @@ class EngineStub : public Engine {
 
   void FailRequirements() { fail_requirements_ = true; }
   const std::vector<Require>& GetRequirements() const { return requirements_; }
-  Result AddRequirement(Feature feature,
-                        const Format* format,
-                        uint32_t) override {
+  Result AddRequirement(Feature feature, const Format* format) override {
     if (fail_requirements_)
       return Result("requirements failed");
 

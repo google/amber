@@ -233,7 +233,7 @@ Result EngineDawn::CreatePipeline(PipelineType type) {
   return {};
 }
 
-Result EngineDawn::AddRequirement(Feature, const Format*, uint32_t) {
+Result EngineDawn::AddRequirement(Feature, const Format*) {
   return Result("Dawn:AddRequirement not implemented");
 }
 

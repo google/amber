@@ -68,9 +68,10 @@ amber::Result Amber::Execute(const std::string& input, const Options& opts) {
     r = engine->Initialize(script->RequiredFeatures(),
                            script->RequiredExtensions());
   }
-
   if (!r.IsSuccess())
     return r;
+
+  engine->SetEngineData(script->GetEngineData());
 
   r = executor->Execute(engine.get(), script);
   if (!r.IsSuccess())

@@ -104,8 +104,7 @@ Result EngineVulkan::Shutdown() {
 }
 
 Result EngineVulkan::AddRequirement(Feature feature,
-                                    const Format* fmt,
-                                    uint32_t val) {
+                                    const Format* fmt) {
   auto it = std::find_if(requirements_.begin(), requirements_.end(),
                          [&feature](const EngineVulkan::Requirement& req) {
                            return req.feature == feature;
@@ -113,20 +112,17 @@ Result EngineVulkan::AddRequirement(Feature feature,
   if (it != requirements_.end())
     return Result("Vulkan::Feature Already Exists");
 
-  if (feature == Feature::kFenceTimeout) {
-    fence_timeout_ms_ = val;
-    return {};
-  }
-
   requirements_.push_back({feature, fmt});
   return {};
 }
 
 Result EngineVulkan::CreatePipeline(PipelineType type) {
+  const auto& engine_data = GetEngineData();
+
   if (type == PipelineType::kCompute) {
     pipeline_ = MakeUnique<ComputePipeline>(
         device_->GetDevice(), device_->GetPhysicalMemoryProperties(),
-        fence_timeout_ms_, GetShaderStageInfo());
+        engine_data.fence_timeout_ms, GetShaderStageInfo());
     return pipeline_->AsCompute()->Initialize(pool_->GetCommandPool(),
                                               device_->GetQueue());
   }
@@ -154,7 +150,7 @@ Result EngineVulkan::CreatePipeline(PipelineType type) {
 
   pipeline_ = MakeUnique<GraphicsPipeline>(
       device_->GetDevice(), device_->GetPhysicalMemoryProperties(),
-      frame_buffer_format, depth_stencil_format, fence_timeout_ms_,
+      frame_buffer_format, depth_stencil_format, engine_data.fence_timeout_ms,
       GetShaderStageInfo());
 
   return pipeline_->AsGraphics()->Initialize(

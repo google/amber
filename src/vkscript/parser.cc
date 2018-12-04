@@ -256,7 +256,7 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
       if (!token->IsInteger())
         return Result("Missing fence_timeout value");
 
-      node->AddRequirement(feature, token->AsUint32());
+      script_.GetEngineData().fence_timeout_ms = token->AsUint32();
     } else {
       script_.AddRequiredFeature(feature);
     }

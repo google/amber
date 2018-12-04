@@ -39,6 +39,12 @@ enum class ResourceInfoType : uint8_t {
   kImage,
 };
 
+/// EngineData stores information used during engine execution.
+struct EngineData {
+  /// The timeout to use for fences, in milliseconds.
+  uint32_t fence_timeout_ms = 100;
+};
+
 struct ResourceInfo {
   ResourceInfoType type = ResourceInfoType::kBuffer;
 
@@ -87,8 +93,7 @@ class Engine {
   // provided in |format|, otherwise |format| is a nullptr. If the feature
   // requires a uint32 value it will be set in the |uint32_t|.
   virtual Result AddRequirement(Feature feature,
-                                const Format* format,
-                                uint32_t) = 0;
+                                const Format* format) = 0;
 
   // Create graphics pipeline.
   virtual Result CreatePipeline(PipelineType type) = 0;
@@ -157,8 +162,17 @@ class Engine {
                                    const uint32_t binding,
                                    ResourceInfo* info) = 0;
 
+  /// Sets the engine data to use.
+  void SetEngineData(const EngineData& data) { engine_data_ = data; }
+
  protected:
   Engine();
+
+  /// Retrieves the engine data.
+  const EngineData& GetEngineData() const { return engine_data_; }
+
+ private:
+  EngineData engine_data_;
 };
 
 }  // namespace amber

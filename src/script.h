@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "src/engine.h"
 #include "src/feature.h"
 #include "src/shader.h"
 
@@ -71,6 +72,9 @@ class Script {
     return engine_info_.required_extensions;
   }
 
+  EngineData& GetEngineData() { return engine_data_; }
+  const EngineData& GetEngineData() const { return engine_data_; }
+
  protected:
   explicit Script(ScriptType);
 
@@ -83,6 +87,7 @@ class Script {
   ScriptType script_type_;
   std::map<std::string, Shader*> name_to_shader_;
   std::vector<std::unique_ptr<Shader>> shaders_;
+  EngineData engine_data_;
 };
 
 }  // namespace amber

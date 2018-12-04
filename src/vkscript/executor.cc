@@ -41,8 +41,8 @@ Result Executor::Execute(Engine* engine, const amber::Script* src_script) {
       continue;
 
     for (const auto& require : node->AsRequire()->Requirements()) {
-      Result r = engine->AddRequirement(
-          require.GetFeature(), require.GetFormat(), require.GetUint32Value());
+      Result r = engine->AddRequirement(require.GetFeature(),
+                                        require.GetFormat());
       if (!r.IsSuccess())
         return r;
     }
