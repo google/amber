@@ -36,11 +36,11 @@ bool IsEqualWithTolerance(const double real,
                           const bool is_tolerance_percent = true) {
   double difference = std::fabs(real - expected);
   if (is_tolerance_percent) {
-    if (difference > tolerance / 100.0 * std::fabs(expected))
+    if (difference > ((tolerance / 100.0) * std::fabs(expected))) {
       return false;
-  } else {
-    if (difference > tolerance)
-      return false;
+    }
+  } else if (difference > tolerance) {
+    return false;
   }
   return true;
 }
