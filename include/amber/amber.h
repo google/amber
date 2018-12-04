@@ -28,13 +28,15 @@ enum class EngineType : uint8_t {
   kDawn,
 };
 
+/// Override point of engines to add their own configuration.
+struct EngineConfig {
+};
+
 struct Options {
   /// Sets the engine to be created. Default Vulkan.
   EngineType engine = EngineType::kVulkan;
-  /// Holds the device for the given engine. If the device is a |nullptr|
-  /// a device will be created. If a |default_device| is provided it must
-  /// outlive the Amber instance and clean is the callers responsibility.
-  void* default_device = nullptr;
+  /// Holds engine specific configuration.
+  std::unique_ptr<EngineConfig> config;
   /// Set true to only parse the given script, does not execute the engine.
   bool parse_only = false;
 };
