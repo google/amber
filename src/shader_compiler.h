@@ -19,7 +19,9 @@
 #include <utility>
 #include <vector>
 
+#include "amber/amber.h"
 #include "amber/result.h"
+#include "src/shader.h"
 #include "src/shader_data.h"
 
 namespace amber {
@@ -30,12 +32,11 @@ class ShaderCompiler {
   ~ShaderCompiler();
 
   std::pair<Result, std::vector<uint32_t>>
-  Compile(ShaderType type, ShaderFormat fmt, const std::string& data) const;
+  Compile(Shader* shader, const ShaderMap& shader_map) const;
 
  private:
   Result ParseHex(const std::string& data, std::vector<uint32_t>* result) const;
-  Result CompileGlsl(ShaderType shader_type,
-                     const std::string& data,
+  Result CompileGlsl(Shader* shader,
                      std::vector<uint32_t>* result) const;
 };
 

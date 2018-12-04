@@ -28,7 +28,7 @@ class Executor : public amber::Executor {
   Executor();
   ~Executor() override;
 
-  Result Execute(Engine*, const amber::Script*) override;
+  Result Execute(Engine*, const amber::Script*, const ShaderMap&) override;
 };
 
 }  // namespace amberscript

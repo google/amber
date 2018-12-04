@@ -91,58 +91,78 @@ void main() {
   gl_Position = position;
 })";
 
+  Shader shader(ShaderType::kVertex);
+  shader.SetName("TestShader");
+  shader.SetFormat(ShaderFormat::kGlsl);
+  shader.SetData(contents);
+
   ShaderCompiler sc;
   Result r;
-  std::vector<uint32_t> shader;
-  std::tie(r, shader) =
-      sc.Compile(ShaderType::kVertex, ShaderFormat::kGlsl, contents);
+  std::vector<uint32_t> binary;
+  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
-  EXPECT_FALSE(shader.empty());
-  EXPECT_EQ(0x07230203, shader[0]);  // Verify SPIR-V header present.
+  EXPECT_FALSE(binary.empty());
+  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
 }
 
 TEST_F(ShaderCompilerTest, CompilesSpirvAsm) {
+  Shader shader(ShaderType::kVertex);
+  shader.SetName("TestShader");
+  shader.SetFormat(ShaderFormat::kSpirvAsm);
+  shader.SetData(kPassThroughShader);
+
   ShaderCompiler sc;
   Result r;
-  std::vector<uint32_t> shader;
-  std::tie(r, shader) = sc.Compile(ShaderType::kVertex, ShaderFormat::kSpirvAsm,
-                                   kPassThroughShader);
+  std::vector<uint32_t> binary;
+  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
-  EXPECT_FALSE(shader.empty());
-  EXPECT_EQ(0x07230203, shader[0]);  // Verify SPIR-V header present.
+  EXPECT_FALSE(binary.empty());
+  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
 }
 
 TEST_F(ShaderCompilerTest, CompilesSpirvHex) {
+  Shader shader(ShaderType::kVertex);
+  shader.SetName("TestShader");
+  shader.SetFormat(ShaderFormat::kSpirvHex);
+  shader.SetData(kHexShader);
+
   ShaderCompiler sc;
   Result r;
-  std::vector<uint32_t> shader;
-  std::tie(r, shader) =
-      sc.Compile(ShaderType::kVertex, ShaderFormat::kSpirvHex, kHexShader);
+  std::vector<uint32_t> binary;
+  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
-  EXPECT_FALSE(shader.empty());
-  EXPECT_EQ(0x07230203, shader[0]);  // Verify SPIR-V header present.
+  EXPECT_FALSE(binary.empty());
+  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
 }
 
 TEST_F(ShaderCompilerTest, InvalidSpirvHex) {
   std::string contents = kHexShader;
   contents[3] = '0';
 
+  Shader shader(ShaderType::kVertex);
+  shader.SetName("BadTestShader");
+  shader.SetFormat(ShaderFormat::kSpirvHex);
+  shader.SetData(contents);
+
   ShaderCompiler sc;
   Result r;
-  std::vector<uint32_t> shader;
-  std::tie(r, shader) =
-      sc.Compile(ShaderType::kVertex, ShaderFormat::kSpirvHex, contents);
+  std::vector<uint32_t> binary;
+  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("Invalid shader: error: line 0: Invalid SPIR-V magic number.\n",
             r.Error());
 }
 
 TEST_F(ShaderCompilerTest, InvalidHex) {
+  Shader shader(ShaderType::kVertex);
+  shader.SetName("BadTestShader");
+  shader.SetFormat(ShaderFormat::kSpirvHex);
+  shader.SetData("aaaaaaaaaa");
+
   ShaderCompiler sc;
   Result r;
-  std::vector<uint32_t> shader;
-  std::tie(r, shader) =
-      sc.Compile(ShaderType::kVertex, ShaderFormat::kSpirvHex, "aaaaaaaaa");
+  std::vector<uint32_t> binary;
+  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("Invalid shader: error: line 0: Invalid SPIR-V magic number.\n",
             r.Error());
@@ -151,12 +171,44 @@ TEST_F(ShaderCompilerTest, InvalidHex) {
 TEST_F(ShaderCompilerTest, FailsOnInvalidShader) {
   std::string contents = "Just Random\nText()\nThat doesn't work.";
 
+  Shader shader(ShaderType::kVertex);
+  shader.SetName("BadTestShader");
+  shader.SetFormat(ShaderFormat::kGlsl);
+  shader.SetData(contents);
+
   ShaderCompiler sc;
   Result r;
-  std::vector<uint32_t> shader;
-  std::tie(r, shader) =
-      sc.Compile(ShaderType::kVertex, ShaderFormat::kGlsl, contents);
+  std::vector<uint32_t> binary;
+  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
+}
+
+TEST_F(ShaderCompilerTest, ReturnsCachedShader) {
+  // This shader would normally fail, but because we pull it from the cache,
+  // we don't compile this so the test will pass.
+  std::string contents = "Just Random\nText()\nThat doesn't work.";
+
+  static const std::string kShaderName = "CachedShader";
+  Shader shader(ShaderType::kVertex);
+  shader.SetName(kShaderName);
+  shader.SetFormat(ShaderFormat::kGlsl);
+  shader.SetData(contents);
+
+  std::vector<uint32_t> src_bytes = {1, 2, 3, 4, 5};
+
+  ShaderMap map;
+  map[kShaderName] = src_bytes;
+
+  ShaderCompiler sc;
+  Result r;
+  std::vector<uint32_t> binary;
+  std::tie(r, binary) = sc.Compile(&shader, map);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  ASSERT_EQ(binary.size(), src_bytes.size());
+  for (size_t i = 0; i < src_bytes.size(); ++i) {
+    EXPECT_EQ(src_bytes[i], binary[i]);
+  }
 }
 
 }  // namespace amber
