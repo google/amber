@@ -82,7 +82,8 @@ Result EngineVulkan::Initialize(const std::vector<Feature>&,
 }
 
 Result EngineVulkan::InitializeWithConfig(EngineConfig* config,
-    const std::vector<Feature>&, const std::vector<std::string>&) {
+                                          const std::vector<Feature>&,
+                                          const std::vector<std::string>&) {
   if (device_)
     return Result("Vulkan::Set device_ already exists");
 

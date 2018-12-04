@@ -30,8 +30,7 @@ enum class EngineType : uint8_t {
 };
 
 /// Override point of engines to add their own configuration.
-struct EngineConfig {
-};
+struct EngineConfig {};
 
 struct Options {
   /// Sets the engine to be created. Default Vulkan.

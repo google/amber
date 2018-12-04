@@ -58,7 +58,8 @@ amber::Result Amber::Execute(const std::string& input, const Options& opts) {
 
   if (opts.config) {
     r = engine->InitializeWithConfig(opts.config.get(),
-          script->RequiredFeatures(), script->RequiredExtensions());
+                                     script->RequiredFeatures(),
+                                     script->RequiredExtensions());
   } else {
     r = engine->Initialize(script->RequiredFeatures(),
                            script->RequiredExtensions());

@@ -40,7 +40,8 @@ class EngineDawn : public Engine {
   Result Initialize(const std::vector<Feature>& features,
                     const std::vector<std::string>& extensions) override;
   // Initialize with given configuration data.
-  Result InitializeWithConfig(EngineConfig* config,
+  Result InitializeWithConfig(
+      EngineConfig* config,
       const std::vector<Feature>& features,
       const std::vector<std::string>& extensions) override;
   Result Shutdown() override;

@@ -187,7 +187,8 @@ Result EngineDawn::Initialize(const std::vector<Feature>&,
 }
 
 Result EngineDawn::InitializeWithConfig(EngineConfig* config,
-    const std::vector<Feature>&, const std::vector<std::string>&) {
+                                        const std::vector<Feature>&,
+                                        const std::vector<std::string>&) {
   if (device_)
     return Result("Dawn:InitializeWithconfig device_ already exists");
 

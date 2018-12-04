@@ -82,7 +82,8 @@ class Engine {
   // possible the engine should verify the provided config specifies the
   // constraints in |features| and |extensions| and fail if those constrains
   // are not met.
-  virtual Result InitializeWithConfig(EngineConfig* config,
+  virtual Result InitializeWithConfig(
+      EngineConfig* config,
       const std::vector<Feature>& features,
       const std::vector<std::string>& extensions) = 0;
 

@@ -45,8 +45,10 @@ class EngineStub : public Engine {
   }
 
   Result InitializeWithConfig(EngineConfig*,
-      const std::vector<Feature>&,
-      const std::vector<std::string>&) override { return {}; }
+                              const std::vector<Feature>&,
+                              const std::vector<std::string>&) override {
+    return {};
+  }
 
   Result Shutdown() override { return {}; }
 
