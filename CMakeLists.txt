@@ -33,15 +33,36 @@ set(CMAKE_CXX_STANDARD 11)
 include(CheckIncludeFile)
 include(GNUInstallDirs)
 
+option(AMBER_SKIP_TESTS
+  "Skip building tests along with the library" ${AMBER_SKIP_TESTS})
+option(AMBER_SKIP_SPIRV_TOOLS
+  "Skip building spirv-tools into the library" ${AMBER_SKIP_SPIRV_TOOLS})
+option(AMBER_SKIP_SHADERC
+  "Skip building shaderc into the library" ${AMBER_SKIP_SHADERC})
+
+if (${AMBER_SKIP_SPIRV_TOOLS})
+  set(AMBER_SKIP_SHADERC TRUE)
+endif()
+
+message(STATUS "Amber skipping SPIRV-Tools: ${AMBER_SKIP_SPIRV_TOOLS}")
+message(STATUS "Amber skipping ShaderC: ${AMBER_SKIP_SHADERC}")
+message(STATUS "Amber skipping tests: ${AMBER_SKIP_TESTS}")
+
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}")
-include_directories("${PROJECT_SOURCE_DIR}/third_party/spirv-tools/include")
+
+if (NOT ${AMBER_SKIP_SPIRV_TOOLS})
+  include_directories("${PROJECT_SOURCE_DIR}/third_party/spirv-tools/include")
+endif()
 
 include(src/dawn/find_dawn.cmake)
 include(src/vulkan/find_vulkan.cmake)
 
 add_definitions(-DAMBER_ENGINE_VULKAN=$<BOOL:${Vulkan_FOUND}>)
 add_definitions(-DAMBER_ENGINE_DAWN=$<BOOL:${Dawn_FOUND}>)
+
+add_definitions(-DAMBER_DISABLE_SPIRV_TOOLS=$<BOOL:${AMBER_SKIP_SPIRV_TOOLS}>)
+add_definitions(-DAMBER_DISABLE_SHADERC=$<BOOL:${AMBER_SKIP_SHADERC}>)
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   message(STATUS "No build type selected, default to Debug")

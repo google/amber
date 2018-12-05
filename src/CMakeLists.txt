@@ -55,7 +55,15 @@ endif()
 add_library(libamber ${AMBER_SOURCES})
 amber_default_compile_options(libamber)
 set_target_properties(libamber PROPERTIES OUTPUT_NAME "amber")
-target_link_libraries(libamber SPIRV-Tools shaderc SPIRV)
+
+if (NOT ${AMBER_SKIP_SPIRV_TOOLS})
+  target_link_libraries(libamber SPIRV-Tools)
+endif()
+
+if (NOT ${AMBER_SKIP_SHADERC})
+  target_link_libraries(libamber shaderc SPIRV)
+endif()
+
 if (NOT MSVC AND NOT ANDROID)
   target_link_libraries(libamber pthread)
 endif()
@@ -67,7 +75,8 @@ if (${Dawn_FOUND})
   target_link_libraries(libamber libamberenginedawn)
 endif()
 
-set(TEST_SRCS
+if (NOT ${AMBER_SKIP_TESTS})
+  set(TEST_SRCS
     amberscript/parser_test.cc
     amberscript/pipeline_test.cc
     amberscript/script_test.cc
@@ -83,24 +92,25 @@ set(TEST_SRCS
     vkscript/format_parser_test.cc
     vkscript/parser_test.cc
     vkscript/section_parser_test.cc
-)
+  )
 
-if (${Vulkan_FOUND})
+  if (${Vulkan_FOUND})
     list(APPEND TEST_SRCS vulkan/bit_copy_test.cc)
-endif()
-if (${Dawn_FOUND})
+  endif()
+  if (${Dawn_FOUND})
     list(APPEND TEST_SRCS dawn/pipeline_info_test.cc)
+  endif()
+
+  add_executable(amber_unittests ${TEST_SRCS})
+
+  if (NOT MSVC)
+  	target_compile_options(amber_unittests PRIVATE
+  	    -Wno-global-constructors)
+  endif()
+
+  target_include_directories(amber_unittests PRIVATE
+      ${gmock_SOURCE_DIR}/include)
+  target_link_libraries(amber_unittests libamber gmock_main)
+  amber_default_compile_options(amber_unittests)
+  add_test(NAME amber_unittests COMMAND amber_unittests)
 endif()
-
-add_executable(amber_unittests ${TEST_SRCS})
-
-if (NOT MSVC)
-	target_compile_options(amber_unittests PRIVATE
-	    -Wno-global-constructors)
-endif()
-
-target_include_directories(amber_unittests PRIVATE
-    ${gmock_SOURCE_DIR}/include)
-target_link_libraries(amber_unittests libamber gmock_main)
-amber_default_compile_options(amber_unittests)
-add_test(NAME amber_unittests COMMAND amber_unittests)

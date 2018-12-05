@@ -20,15 +20,19 @@
 #include <string>
 #include <utility>
 
+#ifndef AMBER_DISABLE_SPIRV_TOOLS
 #include "spirv-tools/libspirv.hpp"
 #include "spirv-tools/linker.hpp"
+#endif  // AMBER_DISABLE_SPIRV_TOOLS
 
+#ifndef AMBER_DISABLE_SHADERC
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wold-style-cast"
 #pragma clang diagnostic ignored "-Wshadow-uncaptured-local"
 #pragma clang diagnostic ignored "-Wweak-vtables"
 #include "third_party/shaderc/libshaderc/include/shaderc/shaderc.hpp"
 #pragma clang diagnostic pop
+#endif  // AMBER_DISABLE_SHADERC
 
 namespace amber {
 
@@ -43,6 +47,7 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
   if (it != shader_map.end())
     return {{}, it->second};
 
+#ifndef AMBER_DISABLE_SPIRV_TOOLS
   std::string spv_errors;
   // TODO(dsinclair): Vulkan env should be an option.
   spvtools::SpirvTools tools(SPV_ENV_UNIVERSAL_1_0);
@@ -68,28 +73,39 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
         break;
     }
   });
+#endif  // AMBER_DISABLE_SPIRV_TOOLS
 
   std::vector<uint32_t> results;
-  if (shader->GetFormat() == ShaderFormat::kGlsl) {
+
+  if (shader->GetFormat() == ShaderFormat::kSpirvHex) {
+    Result r = ParseHex(shader->GetData(), &results);
+    if (!r.IsSuccess())
+      return {Result("Unable to parse shader hex."), {}};
+
+#ifndef AMBER_DISABLE_SHADERC
+  } else if (shader->GetFormat() == ShaderFormat::kGlsl) {
     Result r = CompileGlsl(shader, &results);
     if (!r.IsSuccess())
       return {r, {}};
+#endif  // AMBER_DISABLE_SHADERC
+
+#ifndef AMBER_DISABLE_SPIRV_TOOLS
   } else if (shader->GetFormat() == ShaderFormat::kSpirvAsm) {
     if (!tools.Assemble(shader->GetData(), &results,
                         spvtools::SpirvTools::kDefaultAssembleOption)) {
       return {Result("Shader assembly failed: " + spv_errors), {}};
     }
-  } else if (shader->GetFormat() == ShaderFormat::kSpirvHex) {
-    Result r = ParseHex(shader->GetData(), &results);
-    if (!r.IsSuccess())
-      return {Result("Unable to parse shader hex."), {}};
+#endif  // AMBER_DISABLE_SPIRV_TOOLS
+
   } else {
     return {Result("Invalid shader format"), results};
   }
 
+#ifndef AMBER_DISABLE_SPIRV_TOOLS
   spvtools::ValidatorOptions options;
   if (!tools.Validate(results.data(), results.size(), options))
     return {Result("Invalid shader: " + spv_errors), {}};
+#endif  // AMBER_DISABLE_SPIRV_TOOLS
 
   return {{}, results};
 }
@@ -120,6 +136,7 @@ Result ShaderCompiler::ParseHex(const std::string& data,
   return {};
 }
 
+#ifndef AMBER_DISABLE_SHADERC
 Result ShaderCompiler::CompileGlsl(Shader* shader,
                                    std::vector<uint32_t>* result) const {
   shaderc::Compiler compiler;
@@ -150,5 +167,6 @@ Result ShaderCompiler::CompileGlsl(Shader* shader,
   std::copy(module.cbegin(), module.cend(), std::back_inserter(*result));
   return {};
 }
+#endif  // AMBER_DISABLE_SHADERC
 
 }  // namespace amber
