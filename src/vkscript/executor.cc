@@ -36,6 +36,7 @@ Result Executor::Execute(Engine* engine,
     return Result("VkScript Executor called with non-vkscript source");
 
   const Script* script = ToVkScript(src_script);
+  engine->SetEngineData(script->GetEngineData());
 
   // Process Requirement nodes
   for (const auto& node : script->Nodes()) {

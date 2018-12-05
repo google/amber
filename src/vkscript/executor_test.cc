@@ -49,7 +49,7 @@ class EngineStub : public Engine {
   Result Shutdown() override { return {}; }
 
   void FailRequirements() { fail_requirements_ = true; }
-  Result AddRequirement(Feature feature, const Format* format) override {
+  Result AddRequirement(Feature feature, const Format* fmt) override {
     if (fail_requirements_)
       return Result("requirements failed");
 
@@ -74,7 +74,7 @@ class EngineStub : public Engine {
   const std::vector<std::string>& GetExtensions() const { return extensions_; }
   FormatType GetColorFrameFormat() const { return color_frame_format_; }
   FormatType GetDepthFrameFormat() const { return depth_frame_format_; }
-  uint32_t GetFenceTimeoutMs() { return EngineData().fence_timeout_ms; }
+  uint32_t GetFenceTimeoutMs() { return GetEngineData().fence_timeout_ms; }
 
   Result CreatePipeline(PipelineType) override { return {}; }
 
@@ -469,7 +469,7 @@ fence_timeout 12345)";
 
 TEST_F(VkScriptExecutorTest, EngineAddRequirementFailed) {
   auto engine = MakeEngine();
-  Result r = engine->AddRequirement(Feature::kRobustBufferAccess, nullptr, 0U);
+  Result r = engine->AddRequirement(Feature::kRobustBufferAccess, nullptr);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
       "Vulkan::AddRequirement features and extensions must be handled by "
