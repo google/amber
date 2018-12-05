@@ -237,6 +237,10 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   if (!r.IsSuccess())
     return r;
 
+  // |format| is not Format for frame buffer but for vertex buffer.
+  // Since draw rect command contains its vertex information and it
+  // does not include a format of vertex buffer, we can choose any
+  // one that is suitable. We use VK_FORMAT_R32G32_SFLOAT for it.
   Format format;
   format.SetFormatType(FormatType::kR32G32_SFLOAT);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
