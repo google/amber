@@ -29,10 +29,11 @@ std::vector<ShaderInfo> Script::GetShaderInfo() const {
 
     // TODO(dsinclair): The optimization passes should be retrieved from the
     // pipeline and returned here instead of an empy array.
-    ret.emplace_back(ShaderInfo{
-      shader->GetFormat(), shader->GetType(), shader->GetName(),
-      shader->GetData(), {}
-    });
+    ret.emplace_back(ShaderInfo{shader->GetFormat(),
+                                shader->GetType(),
+                                shader->GetName(),
+                                shader->GetData(),
+                                {}});
   }
   return ret;
 }
