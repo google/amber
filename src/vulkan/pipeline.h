@@ -66,7 +66,7 @@ class Pipeline {
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
   Result InitializeCommandBuffer(VkCommandPool pool, VkQueue queue);
-  Result CreateVkDescriptorRelatedObjects();
+  Result CreateVkDescriptorRelatedObjectsIfNeeded();
   Result UpdateDescriptorSetsIfNeeded();
 
   Result SendDescriptorDataToDeviceIfNeeded();
@@ -105,6 +105,7 @@ class Pipeline {
   std::vector<std::unique_ptr<Descriptor>> descriptors_;
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
   uint32_t fence_timeout_ms_ = 100;
+  bool descriptor_related_objects_already_created_ = false;
 };
 
 }  // namespace vulkan

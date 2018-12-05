@@ -48,10 +48,10 @@ class GraphicsPipeline : public Pipeline {
                     VkCommandPool pool,
                     VkQueue queue);
 
-  void SetBuffer(BufferType type,
-                 uint8_t location,
-                 const Format& format,
-                 const std::vector<Value>& values);
+  Result SetBuffer(BufferType type,
+                   uint8_t location,
+                   const Format& format,
+                   const std::vector<Value>& values);
 
   Result Clear();
   Result ClearBuffer(const VkClearValue& clear_value,
@@ -66,6 +66,11 @@ class GraphicsPipeline : public Pipeline {
   Result Draw(const DrawArraysCommand* command);
 
   const FrameBuffer* GetFrame() const { return frame_.get(); }
+
+  Result ResetPipelineAndVertexBuffer();
+
+  uint32_t GetWidth() const { return frame_width_; }
+  uint32_t GetHeight() const { return frame_height_; }
 
   // Pipeline
   void Shutdown() override;
