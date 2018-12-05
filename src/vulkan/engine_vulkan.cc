@@ -228,8 +228,65 @@ Result EngineVulkan::DoClear(const ClearCommand*) {
   return pipeline_->AsGraphics()->Clear();
 }
 
-Result EngineVulkan::DoDrawRect(const DrawRectCommand*) {
-  return Result("Vulkan::DoDrawRect Not Implemented");
+Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
+  if (!pipeline_->IsGraphics())
+    return Result("Vulkan::DrawRect for Non-Graphics Pipeline");
+
+  auto* graphics = pipeline_->AsGraphics();
+
+  Result r = graphics->ResetPipelineAndVertexBuffer();
+  if (!r.IsSuccess())
+    return r;
+
+  // |format| is not Format for frame buffer but for vertex buffer.
+  // Since draw rect command contains its vertex information and it
+  // does not include a format of vertex buffer, we can choose any
+  // one that is suitable. We use VK_FORMAT_R32G32_SFLOAT for it.
+  Format format;
+  format.SetFormatType(FormatType::kR32G32_SFLOAT);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
+
+  float x = command->GetX();
+  float y = command->GetY();
+  float width = command->GetWidth();
+  float height = command->GetHeight();
+  if (command->IsOrtho()) {
+    const float frame_width = static_cast<float>(graphics->GetWidth());
+    const float frame_height = static_cast<float>(graphics->GetHeight());
+    x = ((x / frame_width) * 2.0f) - 1.0f;
+    y = ((y / frame_height) * 2.0f) - 1.0f;
+    width = ((width / frame_width) * 2.0f) - 1.0f;
+    height = ((height / frame_height) * 2.0f) - 1.0f;
+  }
+
+  std::vector<Value> values(8);
+  // Bottom left
+  values[0].SetDoubleValue(static_cast<double>(x));
+  values[1].SetDoubleValue(static_cast<double>(y + height));
+  // Top left
+  values[2].SetDoubleValue(static_cast<double>(x));
+  values[3].SetDoubleValue(static_cast<double>(y));
+  // Bottom right
+  values[4].SetDoubleValue(static_cast<double>(x + width));
+  values[5].SetDoubleValue(static_cast<double>(y + height));
+  // Top right
+  values[6].SetDoubleValue(static_cast<double>(x + width));
+  values[7].SetDoubleValue(static_cast<double>(y));
+
+  r = graphics->SetBuffer(BufferType::kVertex, 0, format, values);
+  if (!r.IsSuccess())
+    return r;
+
+  PipelineData data;
+  DrawArraysCommand draw(data);
+  draw.SetTopology(command->IsPatch() ? Topology::kPatchList
+                                      : Topology::kTriangleStrip);
+  draw.SetFirstVertexIndex(0);
+  draw.SetVertexCount(4);
+  draw.SetInstanceCount(1);
+
+  return graphics->Draw(&draw);
 }
 
 Result EngineVulkan::DoDrawArrays(const DrawArraysCommand* command) {

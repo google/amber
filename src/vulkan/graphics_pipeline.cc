@@ -200,7 +200,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   if (pipeline_ != VK_NULL_HANDLE)
     return Result("Vulkan::Pipeline already created");
 
-  Result r = CreateVkDescriptorRelatedObjects();
+  Result r = CreateVkDescriptorRelatedObjectsIfNeeded();
   if (!r.IsSuccess())
     return r;
 
@@ -319,18 +319,25 @@ Result GraphicsPipeline::Initialize(uint32_t width,
   return {};
 }
 
-void GraphicsPipeline::SetBuffer(BufferType type,
-                                 uint8_t location,
-                                 const Format& format,
-                                 const std::vector<Value>& values) {
+Result GraphicsPipeline::SetBuffer(BufferType type,
+                                   uint8_t location,
+                                   const Format& format,
+                                   const std::vector<Value>& values) {
   // TODO(jaebaek): Handle indices data.
   if (type != BufferType::kVertex)
-    return;
+    return {};
 
   if (!vertex_buffer_)
     vertex_buffer_ = MakeUnique<VertexBuffer>(device_);
 
+  DeactivateRenderPassIfNeeded();
+
+  Result r = command_->BeginIfNotInRecording();
+  if (!r.IsSuccess())
+    return r;
+
   vertex_buffer_->SetData(location, format, values);
+  return {};
 }
 
 Result GraphicsPipeline::SendBufferDataIfNeeded() {
@@ -461,6 +468,30 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
 
   vkCmdClearAttachments(command_->GetCommandBuffer(), 1, &clear_attachment, 1,
                         &clear_rect);
+
+  return {};
+}
+
+Result GraphicsPipeline::ResetPipelineAndVertexBuffer() {
+  DeactivateRenderPassIfNeeded();
+
+  Result r = command_->End();
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->SubmitAndReset(GetFenceTimeout());
+  if (!r.IsSuccess())
+    return r;
+
+  if (vertex_buffer_) {
+    vertex_buffer_->Shutdown();
+    vertex_buffer_.reset(nullptr);
+  }
+
+  if (pipeline_ != VK_NULL_HANDLE) {
+    vkDestroyPipeline(device_, pipeline_, nullptr);
+    pipeline_ = VK_NULL_HANDLE;
+  }
 
   return {};
 }

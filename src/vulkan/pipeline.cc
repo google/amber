@@ -199,7 +199,10 @@ Result Pipeline::CreatePipelineLayout() {
   return {};
 }
 
-Result Pipeline::CreateVkDescriptorRelatedObjects() {
+Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
+  if (descriptor_related_objects_already_created_)
+    return {};
+
   // TODO(jaebaek): Update SSBO dynamically.
   Result r = CreateDescriptorSetLayouts();
   if (!r.IsSuccess())
@@ -230,6 +233,7 @@ Result Pipeline::UpdateDescriptorSetsIfNeeded() {
     }
   }
 
+  descriptor_related_objects_already_created_ = true;
   return {};
 }
 

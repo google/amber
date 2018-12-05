@@ -42,7 +42,7 @@ Result ComputePipeline::CreateVkComputePipeline() {
         "pipeline is not 1");
   }
 
-  Result r = CreateVkDescriptorRelatedObjects();
+  Result r = CreateVkDescriptorRelatedObjectsIfNeeded();
   if (!r.IsSuccess())
     return r;
 
