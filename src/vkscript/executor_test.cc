@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "gtest/gtest.h"
@@ -28,19 +29,14 @@ namespace {
 
 class EngineStub : public Engine {
  public:
-  struct Require {
-    Require(Feature feat, Format* fmt) : feature(feat), format(fmt) {}
-
-    Feature feature;
-    Format* format;
-  };
-
   EngineStub() : Engine() {}
   ~EngineStub() override = default;
 
   // Engine
-  Result Initialize(const std::vector<Feature>&,
-                    const std::vector<std::string>&) override {
+  Result Initialize(const std::vector<Feature>& features,
+                    const std::vector<std::string>& extensions) override {
+    features_ = features;
+    extensions_ = extensions;
     return {};
   }
 
@@ -53,16 +49,40 @@ class EngineStub : public Engine {
   Result Shutdown() override { return {}; }
 
   void FailRequirements() { fail_requirements_ = true; }
-  const std::vector<Require>& GetRequirements() const { return requirements_; }
   Result AddRequirement(Feature feature,
-                        const Format* format,
-                        uint32_t) override {
+                        const Format* fmt,
+                        uint32_t val) override {
     if (fail_requirements_)
       return Result("requirements failed");
 
-    requirements_.emplace_back(feature, const_cast<Format*>(format));
-    return {};
+    if (feature == Feature::kFenceTimeout) {
+      fence_timeout_ms_ = val;
+      return {};
+    }
+
+    if (feature == Feature::kFramebuffer) {
+      if (fmt != nullptr)
+        color_frame_format_ = fmt->GetFormatType();
+      return {};
+    }
+
+    if (feature == Feature::kDepthStencil) {
+      if (fmt != nullptr)
+        depth_frame_format_ = fmt->GetFormatType();
+      return {};
+    }
+
+    return Result(
+        "Vulkan::AddRequirement features and extensions must be handled by "
+        "Initialize()");
   }
+
+  const std::vector<Feature>& GetFeatures() const { return features_; }
+  const std::vector<std::string>& GetExtensions() const { return extensions_; }
+  FormatType GetColorFrameFormat() const { return color_frame_format_; }
+  FormatType GetDepthFrameFormat() const { return depth_frame_format_; }
+  uint32_t GetFenceTimeoutMs() { return fence_timeout_ms_; }
+
   Result CreatePipeline(PipelineType) override { return {}; }
 
   void FailShaderCommand() { fail_shader_command_ = true; }
@@ -242,7 +262,11 @@ class EngineStub : public Engine {
   std::vector<std::vector<Value>> buffer_values_;
 
   std::vector<ShaderType> shaders_seen_;
-  std::vector<Require> requirements_;
+  FormatType color_frame_format_ = FormatType::kUnknown;
+  FormatType depth_frame_format_ = FormatType::kUnknown;
+  uint32_t fence_timeout_ms_ = 0;
+  std::vector<Feature> features_;
+  std::vector<std::string> extensions_;
 
   ClearColorCommand* last_clear_color_ = nullptr;
 };
@@ -253,6 +277,13 @@ class VkScriptExecutorTest : public testing::Test {
   ~VkScriptExecutorTest() = default;
 
   std::unique_ptr<Engine> MakeEngine() { return MakeUnique<EngineStub>(); }
+  std::unique_ptr<Engine> MakeAndInitializeEngine(
+      const std::vector<Feature>& features,
+      const std::vector<std::string>& extensions) {
+    auto engine = MakeUnique<EngineStub>();
+    engine->Initialize(features, extensions);
+    return std::move(engine);
+  }
   EngineStub* ToStub(Engine* engine) {
     return static_cast<EngineStub*>(engine);
   }
@@ -277,25 +308,181 @@ framebuffer R32G32B32A32_SINT)";
   EXPECT_EQ("requirements failed", r.Error());
 }
 
-TEST_F(VkScriptExecutorTest, ExecutesRequirementsWithFormat) {
+TEST_F(VkScriptExecutorTest, ExecutesRequiredFeatures) {
   std::string input = R"(
 [require]
-framebuffer R32G32B32A32_SINT)";
+robustBufferAccess
+logicOp)";
 
   Parser parser;
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
-  auto engine = MakeEngine();
+  const auto* script = parser.GetScript();
+  auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
+                                        script->RequiredExtensions());
 
   Executor ex;
   Result r = ex.Execute(engine.get(), parser.GetScript(), ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
 
-  auto requirements = ToStub(engine.get())->GetRequirements();
-  ASSERT_EQ(1U, requirements.size());
-  EXPECT_EQ(Feature::kFramebuffer, requirements[0].feature);
-  EXPECT_EQ(FormatType::kR32G32B32A32_SINT,
-            requirements[0].format->GetFormatType());
+  const auto& features = ToStub(engine.get())->GetFeatures();
+  ASSERT_EQ(2U, features.size());
+  EXPECT_EQ(Feature::kRobustBufferAccess, features[0]);
+  EXPECT_EQ(Feature::kLogicOp, features[1]);
+
+  const auto& extensions = ToStub(engine.get())->GetExtensions();
+  ASSERT_EQ(0U, extensions.size());
+
+  EXPECT_EQ(0U, ToStub(engine.get())->GetFenceTimeoutMs());
+
+  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
+  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
+  EXPECT_EQ(FormatType::kUnknown, color_frame_format);
+  EXPECT_EQ(FormatType::kUnknown, depth_frame_format);
+}
+
+TEST_F(VkScriptExecutorTest, ExecutesRequiredExtensions) {
+  std::string input = R"(
+[require]
+VK_KHR_storage_buffer_storage_class
+VK_KHR_variable_pointers)";
+
+  Parser parser;
+  ASSERT_TRUE(parser.Parse(input).IsSuccess());
+
+  const auto* script = parser.GetScript();
+  auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
+                                        script->RequiredExtensions());
+
+  Executor ex;
+  Result r = ex.Execute(engine.get(), parser.GetScript(), ShaderMap());
+  ASSERT_TRUE(r.IsSuccess());
+
+  const auto& features = ToStub(engine.get())->GetFeatures();
+  ASSERT_EQ(0U, features.size());
+
+  const auto& extensions = ToStub(engine.get())->GetExtensions();
+  ASSERT_EQ(2U, extensions.size());
+  EXPECT_EQ("VK_KHR_storage_buffer_storage_class", extensions[0]);
+  EXPECT_EQ("VK_KHR_variable_pointers", extensions[1]);
+
+  EXPECT_EQ(0U, ToStub(engine.get())->GetFenceTimeoutMs());
+
+  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
+  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
+  EXPECT_EQ(FormatType::kUnknown, color_frame_format);
+  EXPECT_EQ(FormatType::kUnknown, depth_frame_format);
+}
+
+TEST_F(VkScriptExecutorTest, ExecutesRequiredFrameBuffers) {
+  std::string input = R"(
+[require]
+framebuffer R32G32B32A32_SFLOAT
+depthstencil D24_UNORM_S8_UINT)";
+
+  Parser parser;
+  ASSERT_TRUE(parser.Parse(input).IsSuccess());
+
+  const auto* script = parser.GetScript();
+  auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
+                                        script->RequiredExtensions());
+
+  Executor ex;
+  Result r = ex.Execute(engine.get(), parser.GetScript(), ShaderMap());
+  ASSERT_TRUE(r.IsSuccess());
+
+  const auto& features = ToStub(engine.get())->GetFeatures();
+  ASSERT_EQ(0U, features.size());
+
+  const auto& extensions = ToStub(engine.get())->GetExtensions();
+  ASSERT_EQ(0U, extensions.size());
+
+  EXPECT_EQ(0U, ToStub(engine.get())->GetFenceTimeoutMs());
+
+  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
+  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT, color_frame_format);
+  EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT, depth_frame_format);
+}
+
+TEST_F(VkScriptExecutorTest, ExecutesRequiredFenceTimeout) {
+  std::string input = R"(
+[require]
+fence_timeout 12345)";
+
+  Parser parser;
+  ASSERT_TRUE(parser.Parse(input).IsSuccess());
+
+  const auto* script = parser.GetScript();
+  auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
+                                        script->RequiredExtensions());
+
+  Executor ex;
+  Result r = ex.Execute(engine.get(), parser.GetScript(), ShaderMap());
+  ASSERT_TRUE(r.IsSuccess());
+
+  const auto& features = ToStub(engine.get())->GetFeatures();
+  ASSERT_EQ(0U, features.size());
+
+  const auto& extensions = ToStub(engine.get())->GetExtensions();
+  ASSERT_EQ(0U, extensions.size());
+
+  EXPECT_EQ(12345U, ToStub(engine.get())->GetFenceTimeoutMs());
+
+  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
+  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
+  EXPECT_EQ(FormatType::kUnknown, color_frame_format);
+  EXPECT_EQ(FormatType::kUnknown, depth_frame_format);
+}
+
+TEST_F(VkScriptExecutorTest, ExecutesRequiredAll) {
+  std::string input = R"(
+[require]
+robustBufferAccess
+logicOp
+VK_KHR_storage_buffer_storage_class
+VK_KHR_variable_pointers
+framebuffer R32G32B32A32_SFLOAT
+depthstencil D24_UNORM_S8_UINT
+fence_timeout 12345)";
+
+  Parser parser;
+  ASSERT_TRUE(parser.Parse(input).IsSuccess());
+
+  const auto* script = parser.GetScript();
+  auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
+                                        script->RequiredExtensions());
+
+  Executor ex;
+  Result r = ex.Execute(engine.get(), parser.GetScript(), ShaderMap());
+  ASSERT_TRUE(r.IsSuccess());
+
+  const auto& features = ToStub(engine.get())->GetFeatures();
+  ASSERT_EQ(2U, features.size());
+  EXPECT_EQ(Feature::kRobustBufferAccess, features[0]);
+  EXPECT_EQ(Feature::kLogicOp, features[1]);
+
+  const auto& extensions = ToStub(engine.get())->GetExtensions();
+  ASSERT_EQ(2U, extensions.size());
+  EXPECT_EQ("VK_KHR_storage_buffer_storage_class", extensions[0]);
+  EXPECT_EQ("VK_KHR_variable_pointers", extensions[1]);
+
+  EXPECT_EQ(12345U, ToStub(engine.get())->GetFenceTimeoutMs());
+
+  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
+  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT, color_frame_format);
+  EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT, depth_frame_format);
+}
+
+TEST_F(VkScriptExecutorTest, EngineAddRequirementFailed) {
+  auto engine = MakeEngine();
+  Result r = engine->AddRequirement(Feature::kRobustBufferAccess, nullptr, 0U);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ(
+      "Vulkan::AddRequirement features and extensions must be handled by "
+      "Initialize()",
+      r.Error());
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesShaders) {
