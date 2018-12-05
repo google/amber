@@ -74,7 +74,7 @@ void StorageBufferDescriptor::FillBufferWithData(const SSBOData& data) {
   }
 }
 
-Result StorageBufferDescriptor::UpdateResourceIfNeeded(
+Result StorageBufferDescriptor::CreateOrResizeIfNeeded(
     VkCommandBuffer command,
     const VkPhysicalDeviceMemoryProperties& properties) {
   const auto& ssbo_data_queue = GetSSBODataQueue();
@@ -121,13 +121,21 @@ Result StorageBufferDescriptor::UpdateResourceIfNeeded(
     SetUpdateDescriptorSetNeeded();
   }
 
-  for (const auto& info : ssbo_data_queue) {
-    FillBufferWithData(info);
+  return {};
+}
+
+void StorageBufferDescriptor::UpdateResourceIfNeeded(VkCommandBuffer command) {
+  const auto& ssbo_data_queue = GetSSBODataQueue();
+
+  if (ssbo_data_queue.empty())
+    return;
+
+  for (const auto& data : ssbo_data_queue) {
+    FillBufferWithData(data);
   }
   ClearSSBODataQueue();
 
   buffer_->CopyToDevice(command);
-  return {};
 }
 
 Result StorageBufferDescriptor::SendDataToHostIfNeeded(

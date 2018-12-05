@@ -282,10 +282,12 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     return r;
 
   for (const auto& desc : descriptors_) {
-    r = desc->UpdateResourceIfNeeded(command_->GetCommandBuffer(),
+    r = desc->CreateOrResizeIfNeeded(command_->GetCommandBuffer(),
                                      memory_properties_);
     if (!r.IsSuccess())
       return r;
+
+    desc->UpdateResourceIfNeeded(command_->GetCommandBuffer());
   }
 
   return {};

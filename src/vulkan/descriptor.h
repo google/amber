@@ -106,14 +106,18 @@ class Descriptor {
   virtual Result UpdateDescriptorSetIfNeeded(VkDescriptorSet) = 0;
 
   // Create new vulkan resource if needed i.e., if it was not created
-  // yet or if we need bigger one. If we recreated bigger one, it also
-  // copies the old one's data to the new one. In addition, it copies
-  // data in |ssbo_data_queue_| to the resource. Note that it only
-  // records those copy commands and the actual submission of the
-  // command must be done later.
-  virtual Result UpdateResourceIfNeeded(
+  // yet or if we need bigger one. If we recreated it for bigger size,
+  // it records the command for copying the old one's data to the new
+  // one. Note that it only records the command and the actual
+  // submission must be done later.
+  virtual Result CreateOrResizeIfNeeded(
       VkCommandBuffer command,
       const VkPhysicalDeviceMemoryProperties& properties) = 0;
+
+  // Record a command for copying data in |ssbo_data_queue_| to the
+  // resource. Note that it only records the command and the actual
+  // submission must be done later.
+  virtual void UpdateResourceIfNeeded(VkCommandBuffer command) = 0;
 
   // Only record the copy command for sending the bound resource
   // data to the host accessible memory. The actual submission of

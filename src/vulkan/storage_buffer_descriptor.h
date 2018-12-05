@@ -37,9 +37,10 @@ class StorageBufferDescriptor : public Descriptor {
   void FillBufferWithData(const SSBOData& data);
 
   // Descriptor
-  Result UpdateResourceIfNeeded(
+  Result CreateOrResizeIfNeeded(
       VkCommandBuffer command,
       const VkPhysicalDeviceMemoryProperties& properties) override;
+  void UpdateResourceIfNeeded(VkCommandBuffer command) override;
   Result SendDataToHostIfNeeded(VkCommandBuffer command) override;
   Result UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
   ResourceInfo GetResourceInfo() override;
