@@ -44,13 +44,14 @@ class EngineDawn : public Engine {
       EngineConfig* config,
       const std::vector<Feature>& features,
       const std::vector<std::string>& extensions) override;
+
   Result Shutdown() override;
   // Record info for a pipeline.  The Dawn render pipeline will be created
   // later.  Assumes necessary shader modules have been created.  A compute
   // pipeline requires a compute shader.  A graphics pipeline requires a vertex
   // and a fragment shader.
   Result CreatePipeline(PipelineType) override;
-  Result AddRequirement(Feature feature, const Format*, uint32_t) override;
+  Result AddRequirement(Feature feature, const Format*) override;
   Result SetShader(ShaderType type, const std::vector<uint32_t>& data) override;
   Result SetBuffer(BufferType type,
                    uint8_t location,

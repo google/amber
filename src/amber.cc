@@ -71,7 +71,6 @@ amber::Result Amber::ExecuteWithShaderData(const std::string& input,
     r = engine->Initialize(script->RequiredFeatures(),
                            script->RequiredExtensions());
   }
-
   if (!r.IsSuccess())
     return r;
 

@@ -49,16 +49,9 @@ class EngineStub : public Engine {
   Result Shutdown() override { return {}; }
 
   void FailRequirements() { fail_requirements_ = true; }
-  Result AddRequirement(Feature feature,
-                        const Format* fmt,
-                        uint32_t val) override {
+  Result AddRequirement(Feature feature, const Format* fmt) override {
     if (fail_requirements_)
       return Result("requirements failed");
-
-    if (feature == Feature::kFenceTimeout) {
-      fence_timeout_ms_ = val;
-      return {};
-    }
 
     if (feature == Feature::kFramebuffer) {
       if (fmt != nullptr)
@@ -81,7 +74,7 @@ class EngineStub : public Engine {
   const std::vector<std::string>& GetExtensions() const { return extensions_; }
   FormatType GetColorFrameFormat() const { return color_frame_format_; }
   FormatType GetDepthFrameFormat() const { return depth_frame_format_; }
-  uint32_t GetFenceTimeoutMs() { return fence_timeout_ms_; }
+  uint32_t GetFenceTimeoutMs() { return GetEngineData().fence_timeout_ms; }
 
   Result CreatePipeline(PipelineType) override { return {}; }
 
@@ -264,7 +257,6 @@ class EngineStub : public Engine {
   std::vector<ShaderType> shaders_seen_;
   FormatType color_frame_format_ = FormatType::kUnknown;
   FormatType depth_frame_format_ = FormatType::kUnknown;
-  uint32_t fence_timeout_ms_ = 0;
   std::vector<Feature> features_;
   std::vector<std::string> extensions_;
 
@@ -333,7 +325,7 @@ logicOp)";
   const auto& extensions = ToStub(engine.get())->GetExtensions();
   ASSERT_EQ(0U, extensions.size());
 
-  EXPECT_EQ(0U, ToStub(engine.get())->GetFenceTimeoutMs());
+  EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
 
   auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
   auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
@@ -366,7 +358,7 @@ VK_KHR_variable_pointers)";
   EXPECT_EQ("VK_KHR_storage_buffer_storage_class", extensions[0]);
   EXPECT_EQ("VK_KHR_variable_pointers", extensions[1]);
 
-  EXPECT_EQ(0U, ToStub(engine.get())->GetFenceTimeoutMs());
+  EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
 
   auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
   auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
@@ -397,7 +389,7 @@ depthstencil D24_UNORM_S8_UINT)";
   const auto& extensions = ToStub(engine.get())->GetExtensions();
   ASSERT_EQ(0U, extensions.size());
 
-  EXPECT_EQ(0U, ToStub(engine.get())->GetFenceTimeoutMs());
+  EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
 
   auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
   auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
@@ -477,7 +469,7 @@ fence_timeout 12345)";
 
 TEST_F(VkScriptExecutorTest, EngineAddRequirementFailed) {
   auto engine = MakeEngine();
-  Result r = engine->AddRequirement(Feature::kRobustBufferAccess, nullptr, 0U);
+  Result r = engine->AddRequirement(Feature::kRobustBufferAccess, nullptr);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
       "Vulkan::AddRequirement features and extensions must be handled by "

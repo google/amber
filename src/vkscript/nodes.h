@@ -59,25 +59,21 @@ class RequireNode : public Node {
    public:
     explicit Requirement(Feature feature);
     Requirement(Feature feature, std::unique_ptr<Format> format);
-    Requirement(Feature feature, uint32_t value);
     Requirement(Requirement&&);
     ~Requirement();
 
     Feature GetFeature() const { return feature_; }
     const Format* GetFormat() const { return format_.get(); }
-    uint32_t GetUint32Value() const { return uint32_value_; }
 
    private:
     Feature feature_;
     std::unique_ptr<Format> format_;
-    uint32_t uint32_value_;
   };
 
   RequireNode();
   ~RequireNode() override;
 
   void AddRequirement(Feature feature, std::unique_ptr<Format> format);
-  void AddRequirement(Feature feature, uint32_t value);
 
   const std::vector<Requirement>& Requirements() const { return requirements_; }
 

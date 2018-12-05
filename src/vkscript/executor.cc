@@ -36,6 +36,7 @@ Result Executor::Execute(Engine* engine,
     return Result("VkScript Executor called with non-vkscript source");
 
   const Script* script = ToVkScript(src_script);
+  engine->SetEngineData(script->GetEngineData());
 
   // Process Requirement nodes
   for (const auto& node : script->Nodes()) {
@@ -43,8 +44,8 @@ Result Executor::Execute(Engine* engine,
       continue;
 
     for (const auto& require : node->AsRequire()->Requirements()) {
-      Result r = engine->AddRequirement(
-          require.GetFeature(), require.GetFormat(), require.GetUint32Value());
+      Result r =
+          engine->AddRequirement(require.GetFeature(), require.GetFormat());
       if (!r.IsSuccess())
         return r;
     }

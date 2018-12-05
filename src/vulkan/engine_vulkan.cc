@@ -105,14 +105,7 @@ Result EngineVulkan::Shutdown() {
   return {};
 }
 
-Result EngineVulkan::AddRequirement(Feature feature,
-                                    const Format* fmt,
-                                    uint32_t val) {
-  if (feature == Feature::kFenceTimeout) {
-    fence_timeout_ms_ = val;
-    return {};
-  }
-
+Result EngineVulkan::AddRequirement(Feature feature, const Format* fmt) {
   if (feature == Feature::kFramebuffer) {
     if (fmt != nullptr)
       color_frame_format_ = ToVkFormat(fmt->GetFormatType());
@@ -131,17 +124,19 @@ Result EngineVulkan::AddRequirement(Feature feature,
 }
 
 Result EngineVulkan::CreatePipeline(PipelineType type) {
+  const auto& engine_data = GetEngineData();
+
   if (type == PipelineType::kCompute) {
     pipeline_ = MakeUnique<ComputePipeline>(
         device_->GetDevice(), device_->GetPhysicalMemoryProperties(),
-        fence_timeout_ms_, GetShaderStageInfo());
+        engine_data.fence_timeout_ms, GetShaderStageInfo());
     return pipeline_->AsCompute()->Initialize(pool_->GetCommandPool(),
                                               device_->GetQueue());
   }
 
   pipeline_ = MakeUnique<GraphicsPipeline>(
       device_->GetDevice(), device_->GetPhysicalMemoryProperties(),
-      color_frame_format_, depth_frame_format_, fence_timeout_ms_,
+      color_frame_format_, depth_frame_format_, engine_data.fence_timeout_ms,
       GetShaderStageInfo());
 
   return pipeline_->AsGraphics()->Initialize(
