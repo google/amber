@@ -20,4 +20,21 @@ Script::Script(ScriptType type) : script_type_(type) {}
 
 Script::~Script() = default;
 
+std::vector<ShaderInfo> Script::GetShaderInfo() const {
+  std::vector<ShaderInfo> ret;
+  for (const auto& shader : shaders_) {
+    // TODO(dsinclair): The name returned should be the
+    // `pipeline_name + shader_name` instead of just shader name when we have
+    // pipelines everywhere
+
+    // TODO(dsinclair): The optimization passes should be retrieved from the
+    // pipeline and returned here instead of an empy array.
+    ret.emplace_back(ShaderInfo{
+      shader->GetFormat(), shader->GetType(), shader->GetName(),
+      shader->GetData(), {}
+    });
+  }
+  return ret;
+}
+
 }  // namespace amber

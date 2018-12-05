@@ -75,6 +75,7 @@ set(TEST_SRCS
     buffer_test.cc
     command_data_test.cc
     result_test.cc
+    script_test.cc
     shader_compiler_test.cc
     tokenizer_test.cc
     verifier_test.cc
