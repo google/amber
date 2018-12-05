@@ -12,33 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_SHADER_COMPILER_H_
-#define SRC_SHADER_COMPILER_H_
+#ifndef AMBER_SHADER_INFO_H_
+#define AMBER_SHADER_INFO_H_
 
 #include <string>
-#include <utility>
-#include <vector>
-
-#include "amber/amber.h"
-#include "amber/result.h"
-#include "src/shader.h"
 
 namespace amber {
 
-class ShaderCompiler {
- public:
-  ShaderCompiler();
-  ~ShaderCompiler();
+enum class ShaderFormat : uint8_t {
+  kDefault = 0,
+  kText,
+  kGlsl,
+  kSpirvAsm,
+  kSpirvHex,
+};
 
-  std::pair<Result, std::vector<uint32_t>> Compile(
-      Shader* shader,
-      const ShaderMap& shader_map) const;
+enum class ShaderType : uint8_t {
+  kCompute = 0,
+  kGeometry,
+  kFragment,
+  kVertex,
+  kTessellationControl,
+  kTessellationEvaluation,
+};
 
- private:
-  Result ParseHex(const std::string& data, std::vector<uint32_t>* result) const;
-  Result CompileGlsl(Shader* shader, std::vector<uint32_t>* result) const;
+struct ShaderInfo {
+  ShaderFormat format;
+  ShaderType type;
+  std::string shader_name;
+  std::string shader_data;
 };
 
 }  // namespace amber
 
-#endif  // SRC_SHADER_COMPILER_H_
+#endif  // AMBER_SHADER_INFO_H_

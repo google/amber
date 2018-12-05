@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 #include "src/shader_compiler.h"
-#include "src/vkscript/section_parser.h"  // For the passthrough vertex shader
+#include "src/shader_data.h"
 
 namespace amber {
 namespace {

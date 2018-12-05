@@ -25,7 +25,6 @@
 #include "src/command.h"
 #include "src/feature.h"
 #include "src/format.h"
-#include "src/shader_data.h"
 
 namespace amber {
 

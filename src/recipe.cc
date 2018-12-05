@@ -10,30 +10,23 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License.
 
-#ifndef SRC_PARSER_H_
-#define SRC_PARSER_H_
-
-#include <memory>
-#include <string>
-
-#include "amber/result.h"
-#include "src/script.h"
+#include "amber/recipe.h"
 
 namespace amber {
 
-class Parser {
- public:
-  virtual ~Parser();
+RecipeImpl::RecipeImpl() = default;
 
-  virtual Result Parse(const std::string& data) = 0;
-  virtual std::unique_ptr<Script> GetScript() = 0;
+RecipeImpl::~RecipeImpl() = default;
 
- protected:
-  Parser();
-};
+Recipe::Recipe() = default;
+
+Recipe::~Recipe() = default;
+
+std::vector<ShaderInfo> Recipe::GetShaderInfo() const {
+  if (!impl_)
+    return {};
+  return impl_->GetShaderInfo();
+}
 
 }  // namespace amber
-
-#endif  // SRC_PARSER_H_
