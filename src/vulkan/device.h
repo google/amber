@@ -16,8 +16,10 @@
 #define SRC_VULKAN_DEVICE_H_
 
 #include <memory>
+#include <vector>
 
 #include "amber/result.h"
+#include "src/feature.h"
 #include "vulkan/vulkan.h"
 
 namespace amber {
@@ -30,7 +32,7 @@ class Device {
   explicit Device(VkDevice device);
   ~Device();
 
-  Result Initialize();
+  Result Initialize(const std::vector<Feature>& required_features);
   void Shutdown();
 
   VkDevice GetDevice() const { return device_; }
@@ -45,7 +47,7 @@ class Device {
 
   // Get a physical device by checking if the physical device has a proper
   // queue family.
-  Result ChoosePhysicalDevice();
+  Result ChoosePhysicalDevice(const std::vector<Feature>& required_features);
 
   // Return true if |physical_device| has a queue family that supports both
   // graphics and compute or only a compute pipeline. If the proper queue
@@ -55,7 +57,7 @@ class Device {
   bool ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device);
 
   // Create a logical device.
-  Result CreateDevice();
+  Result CreateDevice(const std::vector<Feature>& required_features);
 
   VkInstance instance_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
