@@ -50,7 +50,6 @@ amber::Result Amber::Parse(const std::string& input, amber::Recipe* recipe) {
   return {};
 }
 
-
 amber::Result Amber::Execute(const amber::Recipe* recipe, const Options& opts) {
   ShaderMap map;
   return ExecuteWithShaderData(recipe, opts, map);

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "src/vkscript/section_parser.h"
 #include "gtest/gtest.h"
 #include "src/shader_data.h"
-#include "src/vkscript/section_parser.h"
 
 namespace amber {
 namespace vkscript {
