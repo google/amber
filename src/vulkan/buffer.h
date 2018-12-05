@@ -25,7 +25,7 @@ namespace vulkan {
 class Buffer : public Resource {
  public:
   Buffer(VkDevice device,
-         size_t size,
+         size_t size_in_bytes,
          const VkPhysicalDeviceMemoryProperties& properties);
   ~Buffer() override;
 
@@ -59,6 +59,12 @@ class Buffer : public Resource {
   // buffer. Note that it only records the command and the actual
   // submission must be done later.
   Result CopyToHost(VkCommandBuffer command) override;
+
+  // Copy all data from |src| to |this| and wait until
+  // the memory update is effective by calling vkCmdPipelineBarrier().
+  // Note that this method only records the copy command and the
+  // actual submission of the command must be done later.
+  void CopyFromBuffer(VkCommandBuffer command, const Buffer& src);
 
   void Shutdown() override;
 

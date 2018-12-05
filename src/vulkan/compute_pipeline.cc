@@ -60,17 +60,21 @@ Result ComputePipeline::CreateVkComputePipeline() {
 }
 
 Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
+  Result r = command_->BeginIfNotInRecording();
+  if (!r.IsSuccess())
+    return r;
+
+  r = SendDescriptorDataToDeviceIfNeeded();
+  if (!r.IsSuccess())
+    return r;
+
   if (pipeline_ == VK_NULL_HANDLE) {
     Result r = CreateVkComputePipeline();
     if (!r.IsSuccess())
       return r;
   }
 
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  r = SendDescriptorDataToDeviceIfNeeded();
+  r = UpdateDescriptorSetsIfNeeded();
   if (!r.IsSuccess())
     return r;
 
