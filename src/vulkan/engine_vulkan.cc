@@ -106,9 +106,6 @@ Result EngineVulkan::Shutdown() {
 }
 
 Result EngineVulkan::AddRequirement(Feature feature, const Format* fmt) {
-Result EngineVulkan::AddRequirement(Feature feature,
-                                    const Format* fmt,
-                                    uint32_t val) {
   if (feature == Feature::kFramebuffer) {
     if (fmt != nullptr)
       color_frame_format_ = ToVkFormat(fmt->GetFormatType());
