@@ -22,9 +22,9 @@
 #include "src/command.h"
 #include "src/engine.h"
 #include "src/make_unique.h"
+#include "src/vulkan/buffer_descriptor.h"
 #include "src/vulkan/compute_pipeline.h"
 #include "src/vulkan/graphics_pipeline.h"
-#include "src/vulkan/storage_buffer_descriptor.h"
 
 namespace amber {
 namespace vulkan {
@@ -238,8 +238,8 @@ Result Pipeline::UpdateDescriptorSetsIfNeeded() {
 }
 
 Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
-  if (!buffer_command->IsSSBO())
-    return Result("Vulkan::AddDescriptor non-SSBO not implemented");
+  if (buffer_command->IsPushConstant())
+    return Result("Vulkan::AddDescriptor push constant not implemented");
 
   Descriptor* desc = nullptr;
   for (size_t i = 0; i < descriptors_.size(); ++i) {
@@ -251,17 +251,37 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
   }
 
   if (desc == nullptr) {
-    auto ssbo = MakeUnique<StorageBufferDescriptor>(
-        device_, buffer_command->GetDescriptorSet(),
+    auto desc_type = buffer_command->IsSSBO() ? DescriptorType::kStorageBuffer
+                                              : DescriptorType::kUniformBuffer;
+    auto buffer_desc = MakeUnique<BufferDescriptor>(
+        desc_type, device_, buffer_command->GetDescriptorSet(),
         buffer_command->GetBinding());
-    descriptors_.push_back(std::move(ssbo));
+    descriptors_.push_back(std::move(buffer_desc));
 
     desc = descriptors_.back().get();
   }
 
-  desc->AddToSSBODataQueue(
-      buffer_command->GetDatumType().GetType(), buffer_command->GetOffset(),
-      buffer_command->GetSize(), buffer_command->GetValues());
+  if (buffer_command->IsSSBO()) {
+    if (!desc->IsStorageBuffer())
+      return Result(
+          "Vulkan::AddDescriptor BufferCommand for SSBO uses wrong descriptor "
+          "set and binding");
+
+    desc->AddToBufferDataQueue(
+        buffer_command->GetDatumType().GetType(), buffer_command->GetOffset(),
+        buffer_command->GetSize(), buffer_command->GetValues());
+  }
+
+  if (buffer_command->IsUniform()) {
+    if (!desc->IsUniformBuffer())
+      return Result(
+          "Vulkan::AddDescriptor BufferCommand for UBO uses wrong descriptor "
+          "set and binding");
+
+    desc->AddToBufferDataQueue(
+        buffer_command->GetDatumType().GetType(), buffer_command->GetOffset(),
+        buffer_command->GetSize(), buffer_command->GetValues());
+  }
 
   return {};
 }
