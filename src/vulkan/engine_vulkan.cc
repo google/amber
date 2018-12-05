@@ -30,7 +30,6 @@ namespace {
 
 const uint32_t kFramebufferWidth = 250;
 const uint32_t kFramebufferHeight = 250;
-const VkFormat kDefaultColorFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
 VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
   switch (type) {
@@ -107,15 +106,24 @@ Result EngineVulkan::Shutdown() {
 }
 
 Result EngineVulkan::AddRequirement(Feature feature, const Format* fmt) {
-  auto it = std::find_if(requirements_.begin(), requirements_.end(),
-                         [&feature](const EngineVulkan::Requirement& req) {
-                           return req.feature == feature;
-                         });
-  if (it != requirements_.end())
-    return Result("Vulkan::Feature Already Exists");
+Result EngineVulkan::AddRequirement(Feature feature,
+                                    const Format* fmt,
+                                    uint32_t val) {
+  if (feature == Feature::kFramebuffer) {
+    if (fmt != nullptr)
+      color_frame_format_ = ToVkFormat(fmt->GetFormatType());
+    return {};
+  }
 
-  requirements_.push_back({feature, fmt});
-  return {};
+  if (feature == Feature::kDepthStencil) {
+    if (fmt != nullptr)
+      depth_frame_format_ = ToVkFormat(fmt->GetFormatType());
+    return {};
+  }
+
+  return Result(
+      "Vulkan::AddRequirement features and extensions must be handled by "
+      "Initialize()");
 }
 
 Result EngineVulkan::CreatePipeline(PipelineType type) {
@@ -129,30 +137,9 @@ Result EngineVulkan::CreatePipeline(PipelineType type) {
                                               device_->GetQueue());
   }
 
-  VkFormat frame_buffer_format = kDefaultColorFormat;
-  auto it_frame_buffer =
-      std::find_if(requirements_.begin(), requirements_.end(),
-                   [](const EngineVulkan::Requirement& req) {
-                     return req.feature == Feature::kFramebuffer;
-                   });
-  if (it_frame_buffer != requirements_.end()) {
-    frame_buffer_format = ToVkFormat(it_frame_buffer->format->GetFormatType());
-  }
-
-  VkFormat depth_stencil_format = VK_FORMAT_UNDEFINED;
-  auto it_depth_stencil =
-      std::find_if(requirements_.begin(), requirements_.end(),
-                   [](const EngineVulkan::Requirement& req) {
-                     return req.feature == Feature::kDepthStencil;
-                   });
-  if (it_depth_stencil != requirements_.end()) {
-    depth_stencil_format =
-        ToVkFormat(it_depth_stencil->format->GetFormatType());
-  }
-
   pipeline_ = MakeUnique<GraphicsPipeline>(
       device_->GetDevice(), device_->GetPhysicalMemoryProperties(),
-      frame_buffer_format, depth_stencil_format, engine_data.fence_timeout_ms,
+      color_frame_format_, depth_frame_format_, engine_data.fence_timeout_ms,
       GetShaderStageInfo());
 
   return pipeline_->AsGraphics()->Initialize(

@@ -78,15 +78,8 @@ class EngineVulkan : public Engine {
 
   std::unordered_map<ShaderType, VkShaderModule, CastHash<ShaderType>> modules_;
 
-  struct Requirement {
-    Feature feature;
-    const Format* format;
-  };
-
-  std::vector<Feature> features_;
-  std::vector<std::string> extensions_;
-  std::vector<Requirement> requirements_;
-  std::vector<Requirement>::iterator FindFeature(Feature feature);
+  VkFormat color_frame_format_ = VK_FORMAT_R8G8B8A8_UNORM;
+  VkFormat depth_frame_format_ = VK_FORMAT_UNDEFINED;
 };
 
 }  // namespace vulkan
