@@ -31,10 +31,7 @@ add_custom_command(
         ${CMAKE_CURRENT_SOURCE_DIR}/../tools/update_build_version.py
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${spirv-tools_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/spirv-headers
-        ${glslang_SOURCE_DIR}
-        ${shaderc_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../third_party
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.."
     COMMENT "Update build-versions.h in the build directory"
 )

@@ -41,7 +41,7 @@ option(AMBER_SKIP_SHADERC
   "Skip building shaderc into the library" ${AMBER_SKIP_SHADERC})
 
 if (${AMBER_SKIP_SPIRV_TOOLS})
-  set(AMBER_SKIP_SHADERC TRUE)
+  set(AMBER_SKIP_SHADERC True)
 endif()
 
 message(STATUS "Amber skipping SPIRV-Tools: ${AMBER_SKIP_SPIRV_TOOLS}")
@@ -61,8 +61,13 @@ include(src/vulkan/find_vulkan.cmake)
 add_definitions(-DAMBER_ENGINE_VULKAN=$<BOOL:${Vulkan_FOUND}>)
 add_definitions(-DAMBER_ENGINE_DAWN=$<BOOL:${Dawn_FOUND}>)
 
-add_definitions(-DAMBER_DISABLE_SPIRV_TOOLS=$<BOOL:${AMBER_SKIP_SPIRV_TOOLS}>)
-add_definitions(-DAMBER_DISABLE_SHADERC=$<BOOL:${AMBER_SKIP_SHADERC}>)
+if (${AMBER_SKIP_SPIRV_TOOLS})
+  add_definitions(-DAMBER_DISABLE_SPIRV_TOOLS=$<BOOL:${AMBER_SKIP_SPIRV_TOOLS}>)
+endif()
+
+if (${AMBER_SKIP_SHADERC})
+  add_definitions(-DAMBER_DISABLE_SHADERC=$<BOOL:${AMBER_SKIP_SHADERC}>)
+endif()
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   message(STATUS "No build type selected, default to Debug")
