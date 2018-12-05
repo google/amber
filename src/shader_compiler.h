@@ -22,7 +22,6 @@
 #include "amber/amber.h"
 #include "amber/result.h"
 #include "src/shader.h"
-#include "src/shader_data.h"
 
 namespace amber {
 

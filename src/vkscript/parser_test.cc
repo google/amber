@@ -34,7 +34,7 @@ TEST_F(VkScriptParserTest, EmptyRequireBlock) {
 
   auto script = parser.GetScript();
   ASSERT_TRUE(script->IsVkScript());
-  EXPECT_TRUE(ToVkScript(script)->Nodes().empty());
+  EXPECT_TRUE(ToVkScript(script.get())->Nodes().empty());
 }
 
 TEST_F(VkScriptParserTest, RequireBlockNoArgumentFeatures) {
@@ -114,7 +114,8 @@ TEST_F(VkScriptParserTest, RequireBlockNoArgumentFeatures) {
     Result r = parser.ProcessRequireBlockForTesting(feature.name);
     ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-    auto& feats = ToVkScript(parser.GetScript())->RequiredFeatures();
+    auto script = parser.GetScript();
+    auto& feats = ToVkScript(script.get())->RequiredFeatures();
     ASSERT_EQ(1U, feats.size());
     EXPECT_EQ(feature.feature, feats[0]);
   }
@@ -128,7 +129,8 @@ VK_KHR_variable_pointers)";
   Result r = parser.ProcessRequireBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& exts = parser.GetScript()->RequiredExtensions();
+  auto script = parser.GetScript();
+  auto& exts = script->RequiredExtensions();
   ASSERT_EQ(2U, exts.size());
   EXPECT_EQ("VK_KHR_storage_buffer_storage_class", exts[0]);
   EXPECT_EQ("VK_KHR_variable_pointers", exts[1]);
@@ -141,7 +143,8 @@ TEST_F(VkScriptParserTest, RequireBlockFramebuffer) {
   Result r = parser.ProcessRequireBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess());
 
-  auto script = ToVkScript(parser.GetScript());
+  auto amber_script = parser.GetScript();
+  auto script = ToVkScript(amber_script.get());
   EXPECT_EQ(1U, script->Nodes().size());
 
   auto& nodes = script->Nodes();
@@ -163,7 +166,8 @@ TEST_F(VkScriptParserTest, RequireBlockDepthStencil) {
   Result r = parser.ProcessRequireBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto script = ToVkScript(parser.GetScript());
+  auto amber_script = parser.GetScript();
+  auto script = ToVkScript(amber_script.get());
   EXPECT_EQ(1U, script->Nodes().size());
 
   auto& nodes = script->Nodes();
@@ -192,7 +196,8 @@ inheritedQueries # line comment
   Result r = parser.ProcessRequireBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto script = ToVkScript(parser.GetScript());
+  auto amber_script = parser.GetScript();
+  auto script = ToVkScript(amber_script.get());
   EXPECT_EQ(1U, script->Nodes().size());
 
   auto& nodes = script->Nodes();
@@ -221,7 +226,8 @@ TEST_F(VkScriptParserTest, IndicesBlock) {
   Result r = parser.ProcessIndicesBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& nodes = ToVkScript(parser.GetScript())->Nodes();
+  auto script = parser.GetScript();
+  auto& nodes = ToVkScript(script.get())->Nodes();
   ASSERT_EQ(1U, nodes.size());
   ASSERT_TRUE(nodes[0]->IsIndices());
 
@@ -250,7 +256,8 @@ TEST_F(VkScriptParserTest, IndicesBlockMultipleLines) {
   Result r = parser.ProcessIndicesBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& nodes = ToVkScript(parser.GetScript())->Nodes();
+  auto amber_script = parser.GetScript();
+  auto& nodes = ToVkScript(amber_script.get())->Nodes();
   ASSERT_EQ(1U, nodes.size());
   ASSERT_TRUE(nodes[0]->IsIndices());
 
@@ -287,7 +294,8 @@ TEST_F(VkScriptParserTest, VertexDataEmpty) {
   Result r = parser.ProcessVertexDataBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess());
 
-  auto& nodes = ToVkScript(parser.GetScript())->Nodes();
+  auto amber_script = parser.GetScript();
+  auto& nodes = ToVkScript(amber_script.get())->Nodes();
   EXPECT_TRUE(nodes.empty());
 }
 
@@ -298,7 +306,8 @@ TEST_F(VkScriptParserTest, VertexDataHeaderFormatString) {
   Result r = parser.ProcessVertexDataBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& nodes = ToVkScript(parser.GetScript())->Nodes();
+  auto amber_script = parser.GetScript();
+  auto& nodes = ToVkScript(amber_script.get())->Nodes();
   ASSERT_EQ(1U, nodes.size());
   ASSERT_TRUE(nodes[0]->IsVertexData());
 
@@ -324,7 +333,8 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   Result r = parser.ProcessVertexDataBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& nodes = ToVkScript(parser.GetScript())->Nodes();
+  auto amber_script = parser.GetScript();
+  auto& nodes = ToVkScript(amber_script.get())->Nodes();
   ASSERT_EQ(1U, nodes.size());
   ASSERT_TRUE(nodes[0]->IsVertexData());
 
@@ -363,7 +373,8 @@ clear)";
   Result r = parser.ProcessTestBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  const auto& cmds = parser.GetScript()->GetCommands();
+  auto script = parser.GetScript();
+  const auto& cmds = script->GetCommands();
   ASSERT_EQ(4U, cmds.size());
 
   ASSERT_TRUE(cmds[0]->IsClearColor());
@@ -395,7 +406,8 @@ TEST_F(VkScriptParserTest, VertexDataRows) {
   Result r = parser.ProcessVertexDataBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& nodes = ToVkScript(parser.GetScript())->Nodes();
+  auto script = parser.GetScript();
+  auto& nodes = ToVkScript(script.get())->Nodes();
   ASSERT_EQ(1U, nodes.size());
   ASSERT_TRUE(nodes[0]->IsVertexData());
 
@@ -456,7 +468,8 @@ TEST_F(VkScriptParserTest, VertexDataRowsWithHex) {
   Result r = parser.ProcessVertexDataBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto& nodes = ToVkScript(parser.GetScript())->Nodes();
+  auto script = parser.GetScript();
+  auto& nodes = ToVkScript(script.get())->Nodes();
   ASSERT_EQ(1U, nodes.size());
   ASSERT_TRUE(nodes[0]->IsVertexData());
 

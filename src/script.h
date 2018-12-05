@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "amber/recipe.h"
 #include "amber/result.h"
 #include "src/command.h"
 #include "src/engine.h"
@@ -32,14 +33,16 @@ namespace amber {
 
 enum class ScriptType : uint8_t { kVkScript = 0, kAmberScript };
 
-class Script {
+class Script : public RecipeImpl {
  public:
-  virtual ~Script();
+  ~Script() override;
 
   bool IsVkScript() const { return script_type_ == ScriptType::kVkScript; }
   bool IsAmberScript() const {
     return script_type_ == ScriptType::kAmberScript;
   }
+
+  std::vector<ShaderInfo> GetShaderInfo() const override { return {}; }
 
   Result AddShader(std::unique_ptr<Shader> shader) {
     if (name_to_shader_.count(shader->GetName()) > 0)

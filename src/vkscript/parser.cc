@@ -154,7 +154,7 @@ Feature NameToFeature(const std::string& name) {
 
 }  // namespace
 
-Parser::Parser() : amber::Parser() {}
+Parser::Parser() : amber::Parser(), script_(MakeUnique<vkscript::Script>()) {}
 
 Parser::~Parser() = default;
 
@@ -197,11 +197,11 @@ Result Parser::ProcessShaderBlock(const SectionParser::Section& section) {
 
   auto shader = MakeUnique<Shader>(section.shader_type);
   // Generate a unique name for the shader.
-  shader->SetName("vk_shader_" + std::to_string(script_.GetShaders().size()));
+  shader->SetName("vk_shader_" + std::to_string(script_->GetShaders().size()));
   shader->SetFormat(section.format);
   shader->SetData(section.contents);
 
-  Result r = script_.AddShader(std::move(shader));
+  Result r = script_->AddShader(std::move(shader));
   if (!r.IsSuccess())
     return r;
 
@@ -228,7 +228,7 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
       if (it != str.end())
         return Result("Unknown feature or extension: " + str);
 
-      script_.AddRequiredExtension(str);
+      script_->AddRequiredExtension(str);
     } else if (feature == Feature::kFramebuffer) {
       token = tokenizer.NextToken();
       if (!token->IsString())
@@ -256,9 +256,9 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
       if (!token->IsInteger())
         return Result("Missing fence_timeout value");
 
-      script_.GetEngineData().fence_timeout_ms = token->AsUint32();
+      script_->GetEngineData().fence_timeout_ms = token->AsUint32();
     } else {
-      script_.AddRequiredFeature(feature);
+      script_->AddRequiredFeature(feature);
     }
 
     token = tokenizer.NextToken();
@@ -267,7 +267,7 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
   }
 
   if (!node->Requirements().empty())
-    script_.AddRequireNode(std::move(node));
+    script_->AddRequireNode(std::move(node));
 
   return {};
 }
@@ -299,7 +299,7 @@ Result Parser::ProcessIndicesBlock(const std::string& data) {
     auto b = MakeUnique<Buffer>(BufferType::kIndex);
     b->SetDatumType(type);
     b->SetData(std::move(indices));
-    script_.AddIndexBuffer(std::move(b));
+    script_->AddIndexBuffer(std::move(b));
   }
 
   return {};
@@ -398,7 +398,7 @@ Result Parser::ProcessVertexDataBlock(const std::string& data) {
   for (size_t i = 0; i < headers.size(); ++i)
     node->SetSegment(std::move(headers[i]), std::move(values[i]));
 
-  script_.AddVertexData(std::move(node));
+  script_->AddVertexData(std::move(node));
 
   return {};
 }
@@ -409,7 +409,7 @@ Result Parser::ProcessTestBlock(const std::string& data) {
   if (!r.IsSuccess())
     return r;
 
-  script_.SetCommands(cp.TakeCommands());
+  script_->SetCommands(cp.TakeCommands());
 
   return {};
 }

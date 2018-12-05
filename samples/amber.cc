@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "amber/amber.h"
-
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
 
+#include "amber/amber.h"
+#include "amber/recipe.h"
 #include "src/build-versions.h"
 
 namespace {
@@ -183,11 +183,20 @@ int main(int argc, const char** argv) {
   if (data.empty())
     return 1;
 
-  amber::Amber vk;
+  amber::Amber am;
+  amber::Recipe recipe;
+  amber::Result result = am.Parse(data, &recipe);
+  if (!result.IsSuccess()) {
+    std::cerr << result.Error() << std::endl;
+    return 1;
+  }
+
+  if (options.parse_only)
+    return 0;
+
   amber::Options amber_options;
   amber_options.engine = options.engine;
-  amber_options.parse_only = options.parse_only;
-  amber::Result result = vk.Execute(data, amber_options);
+  result = am.Execute(&recipe, amber_options);
   if (!result.IsSuccess()) {
     std::cerr << result.Error() << std::endl;
     return 1;

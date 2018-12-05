@@ -17,7 +17,7 @@
 
 #include <string>
 
-#include "src/shader_data.h"
+#include "amber/shader_info.h"
 
 namespace amber {
 

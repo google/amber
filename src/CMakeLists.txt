@@ -27,6 +27,7 @@ set(AMBER_SOURCES
     format.cc
     parser.cc
     pipeline_data.cc
+    recipe.cc
     result.cc
     sleep.cc
     script.cc

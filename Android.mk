@@ -18,6 +18,7 @@ LOCAL_SRC_FILES:= \
     src/format.cc \
     src/parser.cc \
     src/pipeline_data.cc \
+    src/recipe.cc \
     src/result.cc \
     src/script.cc \
     src/shader.cc \

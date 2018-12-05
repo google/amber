@@ -25,7 +25,6 @@
 #include "src/command.h"
 #include "src/dawn/pipeline_info.h"
 #include "src/engine.h"
-#include "src/shader_data.h"
 
 namespace amber {
 namespace dawn {
