@@ -16,6 +16,7 @@
 #define AMBER_SHADER_INFO_H_
 
 #include <string>
+#include <vector>
 
 namespace amber {
 
@@ -41,6 +42,7 @@ struct ShaderInfo {
   ShaderType type;
   std::string shader_name;
   std::string shader_data;
+  std::vector<std::string> optimizations;
 };
 
 }  // namespace amber
