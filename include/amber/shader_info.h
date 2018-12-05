@@ -40,8 +40,13 @@ enum class ShaderType : uint8_t {
 struct ShaderInfo {
   ShaderFormat format;
   ShaderType type;
+  /// This is a unique name for this shader. The name is produced from the
+  /// input script, possibly with extra prefix contents. This name, if used
+  /// in the ShaderMap will map to this specific shader.
   std::string shader_name;
-  std::string shader_data;
+  /// This is the shader source, the source is in the |format| given above.
+  std::string shader_source;
+  /// A list of SPIR-V optimization passes to execute on the shader.
   std::vector<std::string> optimizations;
 };
 
