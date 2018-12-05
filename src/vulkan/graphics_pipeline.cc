@@ -466,22 +466,28 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
 }
 
 Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
-  // TODO(jaebaek): Handle primitive topology.
-  if (pipeline_ == VK_NULL_HANDLE) {
-    Result r = CreateVkGraphicsPipeline(ToVkTopology(command->GetTopology()));
-    if (!r.IsSuccess())
-      return r;
-  }
-
   Result r = command_->BeginIfNotInRecording();
   if (!r.IsSuccess())
     return r;
 
-  r = SendBufferDataIfNeeded();
+  DeactivateRenderPassIfNeeded();
+
+  r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
     return r;
 
-  r = SendDescriptorDataToDeviceIfNeeded();
+  // TODO(jaebaek): Handle primitive topology.
+  if (pipeline_ == VK_NULL_HANDLE) {
+    r = CreateVkGraphicsPipeline(ToVkTopology(command->GetTopology()));
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  r = UpdateDescriptorSetsIfNeeded();
+  if (!r.IsSuccess())
+    return r;
+
+  r = SendBufferDataIfNeeded();
   if (!r.IsSuccess())
     return r;
 

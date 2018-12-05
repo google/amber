@@ -67,6 +67,7 @@ class Pipeline {
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
   Result InitializeCommandBuffer(VkCommandPool pool, VkQueue queue);
   Result CreateVkDescriptorRelatedObjects();
+  Result UpdateDescriptorSetsIfNeeded();
 
   Result SendDescriptorDataToDeviceIfNeeded();
   void BindVkPipeline();

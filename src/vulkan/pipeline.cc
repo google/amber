@@ -213,17 +213,18 @@ Result Pipeline::CreateVkDescriptorRelatedObjects() {
   if (!r.IsSuccess())
     return r;
 
-  r = CreatePipelineLayout();
-  if (!r.IsSuccess())
-    return r;
+  return CreatePipelineLayout();
+}
 
+Result Pipeline::UpdateDescriptorSetsIfNeeded() {
   for (size_t i = 0, j = 0;
        i < descriptors_.size() && j < descriptor_sets_.size(); ++j) {
     for (const uint32_t current_desc = descriptors_[i]->GetDescriptorSet();
          i < descriptors_.size() &&
          current_desc == descriptors_[i]->GetDescriptorSet();
          ++i) {
-      r = descriptors_[i]->UpdateDescriptorSet(descriptor_sets_[j]);
+      Result r =
+          descriptors_[i]->UpdateDescriptorSetIfNeeded(descriptor_sets_[j]);
       if (!r.IsSuccess())
         return r;
     }
@@ -236,16 +237,27 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
   if (!buffer_command->IsSSBO())
     return Result("Vulkan::AddDescriptor non-SSBO not implemented");
 
-  auto ssbo = MakeUnique<StorageBufferDescriptor>(
-      device_, buffer_command->GetDescriptorSet(), buffer_command->GetBinding(),
-      buffer_command->GetSize(), memory_properties_);
+  Descriptor* desc = nullptr;
+  for (size_t i = 0; i < descriptors_.size(); ++i) {
+    if (descriptors_[i]->GetDescriptorSet() ==
+            buffer_command->GetDescriptorSet() &&
+        descriptors_[i]->GetBinding() == buffer_command->GetBinding()) {
+      desc = descriptors_[i].get();
+    }
+  }
 
-  Result r = ssbo->Initialize(buffer_command->GetDatumType().GetType(),
-                              buffer_command->GetValues());
-  if (!r.IsSuccess())
-    return r;
+  if (desc == nullptr) {
+    auto ssbo = MakeUnique<StorageBufferDescriptor>(
+        device_, buffer_command->GetDescriptorSet(),
+        buffer_command->GetBinding());
+    descriptors_.push_back(std::move(ssbo));
 
-  descriptors_.push_back(std::move(ssbo));
+    desc = descriptors_.back().get();
+  }
+
+  desc->AddToSSBODataQueue(
+      buffer_command->GetDatumType().GetType(), buffer_command->GetOffset(),
+      buffer_command->GetSize(), buffer_command->GetValues());
 
   return {};
 }
@@ -256,7 +268,7 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
 
   bool data_send_needed = false;
   for (const auto& desc : descriptors_) {
-    if (!desc->IsDataAlreadySent()) {
+    if (desc->HasDataNotSent()) {
       data_send_needed = true;
       break;
     }
@@ -269,8 +281,14 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
   if (!r.IsSuccess())
     return r;
 
-  for (const auto& desc : descriptors_)
-    desc->SendDataToDeviceIfNeeded(command_->GetCommandBuffer());
+  for (const auto& desc : descriptors_) {
+    r = desc->CreateOrResizeIfNeeded(command_->GetCommandBuffer(),
+                                     memory_properties_);
+    if (!r.IsSuccess())
+      return r;
+
+    desc->UpdateResourceIfNeeded(command_->GetCommandBuffer());
+  }
 
   return {};
 }

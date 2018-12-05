@@ -18,9 +18,9 @@ namespace amber {
 namespace vulkan {
 
 Buffer::Buffer(VkDevice device,
-               size_t size,
+               size_t size_in_bytes,
                const VkPhysicalDeviceMemoryProperties& properties)
-    : Resource(device, size, properties) {}
+    : Resource(device, size_in_bytes, properties) {}
 
 Buffer::~Buffer() = default;
 
@@ -86,6 +86,16 @@ Result Buffer::CopyToHost(VkCommandBuffer command) {
   vkCmdCopyBuffer(command, buffer_, GetHostAccessibleBuffer(), 1, &region);
   MemoryBarrier(command);
   return {};
+}
+
+void Buffer::CopyFromBuffer(VkCommandBuffer command, const Buffer& src) {
+  VkBufferCopy region = {};
+  region.srcOffset = 0;
+  region.dstOffset = 0;
+  region.size = src.GetSizeInBytes();
+
+  vkCmdCopyBuffer(command, src.buffer_, buffer_, 1, &region);
+  MemoryBarrier(command);
 }
 
 void Buffer::Shutdown() {

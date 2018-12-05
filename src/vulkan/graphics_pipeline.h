@@ -83,6 +83,7 @@ class GraphicsPipeline : public Pipeline {
   void ActivateRenderPassIfNeeded();
   void DeactivateRenderPassIfNeeded();
 
+  // Send vertex and index buffers.
   Result SendBufferDataIfNeeded();
 
   // TODO(jaebaek): Implement image/ssbo probe.
