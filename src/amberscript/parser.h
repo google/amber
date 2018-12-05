@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "amber/result.h"
 #include "src/amberscript/script.h"
