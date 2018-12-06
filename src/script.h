@@ -42,7 +42,7 @@ class Script : public RecipeImpl {
     return script_type_ == ScriptType::kAmberScript;
   }
 
-  std::vector<ShaderInfo> GetShaderInfo() const override { return {}; }
+  std::vector<ShaderInfo> GetShaderInfo() const override;
 
   Result AddShader(std::unique_ptr<Shader> shader) {
     if (name_to_shader_.count(shader->GetName()) > 0)
