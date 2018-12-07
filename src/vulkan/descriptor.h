@@ -115,8 +115,8 @@ class Descriptor {
       const VkPhysicalDeviceMemoryProperties& properties) = 0;
 
   // Record a command for copying data in |buffer_data_queue_| to the
-  // resource. Note that it only records the command and the actual
-  // submission must be done later.
+  // resource in device. Note that it only records the command and the
+  // actual submission must be done later.
   virtual void UpdateResourceIfNeeded(VkCommandBuffer command) = 0;
 
   // Only record the copy command for sending the bound resource
@@ -140,11 +140,11 @@ class Descriptor {
 
   VkDevice GetDevice() const { return device_; }
 
-  const std::vector<BufferData>& GetSSBODataQueue() const {
+  const std::vector<BufferData>& GetBufferDataQueue() const {
     return buffer_data_queue_;
   }
 
-  void ClearSSBODataQueue() { buffer_data_queue_.clear(); }
+  void ClearBufferDataQueue() { buffer_data_queue_.clear(); }
 
   void SetUpdateDescriptorSetNeeded() {
     is_descriptor_set_update_needed_ = true;
@@ -164,7 +164,14 @@ class Descriptor {
 
   DescriptorType type_ = DescriptorType::kSampledImage;
   VkDevice device_ = VK_NULL_HANDLE;
+
+  // Each element of this queue contains information of what parts
+  // of buffer must be updates with what values. This queue will be
+  // consumed and cleared by UpdateResourceIfNeeded().
+  // UpdateResourceIfNeeded() updates the actual buffer in device
+  // using this queued information.
   std::vector<BufferData> buffer_data_queue_;
+
   bool is_descriptor_set_update_needed_ = false;
 };
 

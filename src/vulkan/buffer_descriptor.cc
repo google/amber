@@ -82,20 +82,20 @@ void BufferDescriptor::FillBufferWithData(const BufferData& data) {
 Result BufferDescriptor::CreateOrResizeIfNeeded(
     VkCommandBuffer command,
     const VkPhysicalDeviceMemoryProperties& properties) {
-  const auto& ssbo_data_queue = GetSSBODataQueue();
+  const auto& buffer_data_queue = GetBufferDataQueue();
 
-  if (ssbo_data_queue.empty())
+  if (buffer_data_queue.empty())
     return {};
 
-  auto ssbo_data_with_last_offset = std::max_element(
-      ssbo_data_queue.begin(), ssbo_data_queue.end(),
+  auto buffer_data_with_last_offset = std::max_element(
+      buffer_data_queue.begin(), buffer_data_queue.end(),
       [](const BufferData& a, const BufferData& b) {
         return static_cast<size_t>(a.offset) + a.size_in_bytes <
                static_cast<size_t>(b.offset) + b.size_in_bytes;
       });
   size_t new_size_in_bytes =
-      static_cast<size_t>(ssbo_data_with_last_offset->offset) +
-      ssbo_data_with_last_offset->size_in_bytes;
+      static_cast<size_t>(buffer_data_with_last_offset->offset) +
+      buffer_data_with_last_offset->size_in_bytes;
 
   if (!buffer_) {
     // Create buffer
@@ -130,15 +130,15 @@ Result BufferDescriptor::CreateOrResizeIfNeeded(
 }
 
 void BufferDescriptor::UpdateResourceIfNeeded(VkCommandBuffer command) {
-  const auto& ssbo_data_queue = GetSSBODataQueue();
+  const auto& buffer_data_queue = GetBufferDataQueue();
 
-  if (ssbo_data_queue.empty())
+  if (buffer_data_queue.empty())
     return;
 
-  for (const auto& data : ssbo_data_queue) {
+  for (const auto& data : buffer_data_queue) {
     FillBufferWithData(data);
   }
-  ClearSSBODataQueue();
+  ClearBufferDataQueue();
 
   buffer_->CopyToDevice(command);
 }

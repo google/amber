@@ -29,6 +29,8 @@
 namespace amber {
 namespace vulkan {
 
+// Among Vulkan descriptor types, this class handles Storage Buffer
+// a.k.a. SSBO and Uniform Buffer a.k.a. UBO.
 class BufferDescriptor : public Descriptor {
  public:
   BufferDescriptor(DescriptorType type,
@@ -37,6 +39,8 @@ class BufferDescriptor : public Descriptor {
                    uint32_t binding);
   ~BufferDescriptor();
 
+  // |data| contains information of what parts of |buffer_| must be
+  // updated as what values. This method conducts the update.
   void FillBufferWithData(const BufferData& data);
 
   // Descriptor

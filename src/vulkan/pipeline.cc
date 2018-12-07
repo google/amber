@@ -238,8 +238,8 @@ Result Pipeline::UpdateDescriptorSetsIfNeeded() {
 }
 
 Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
-  if (buffer_command->IsPushConstant())
-    return Result("Vulkan::AddDescriptor push constant not implemented");
+  if (!buffer_command->IsSSBO() && !buffer_command->IsUniform())
+    return Result("Pipeline::AddDescriptor not supported buffer type");
 
   Descriptor* desc = nullptr;
   for (size_t i = 0; i < descriptors_.size(); ++i) {
@@ -262,10 +262,11 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
   }
 
   if (buffer_command->IsSSBO()) {
-    if (!desc->IsStorageBuffer())
+    if (!desc->IsStorageBuffer()) {
       return Result(
           "Vulkan::AddDescriptor BufferCommand for SSBO uses wrong descriptor "
           "set and binding");
+    }
 
     desc->AddToBufferDataQueue(
         buffer_command->GetDatumType().GetType(), buffer_command->GetOffset(),
@@ -273,10 +274,11 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
   }
 
   if (buffer_command->IsUniform()) {
-    if (!desc->IsUniformBuffer())
+    if (!desc->IsUniformBuffer()) {
       return Result(
           "Vulkan::AddDescriptor BufferCommand for UBO uses wrong descriptor "
           "set and binding");
+    }
 
     desc->AddToBufferDataQueue(
         buffer_command->GetDatumType().GetType(), buffer_command->GetOffset(),
