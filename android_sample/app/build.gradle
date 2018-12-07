@@ -1,0 +1,62 @@
+apply plugin: 'com.android.application'
+
+def ndkDir
+if (project.rootProject.file('local.properties').exists()) {
+    Properties properties = new Properties()
+        properties.load(project.rootProject.file('local.properties').newDataInputStream())
+        ndkDir = properties.getProperty('ndk.dir')
+}
+if (!ndkDir) {
+    ndkDir=System.getenv("ANDROID_NDK_HOME")
+}
+
+if(!ndkDir || ndkDir.empty) {
+    throw new GradleException('Environment Variable ANDROID_NDK_HOME for NDK path need to be setup')
+}
+
+android {
+    compileSdkVersion 24
+
+    defaultConfig {
+        applicationId  "com.google.amber"
+        minSdkVersion    24
+        targetSdkVersion 24
+        versionCode 1
+        versionName "0.0.1"
+
+        // Shader compilation directives, put glsl shaders to app/src/main/shaders
+        // android studio will pick them up and compile them into APK/assets/shaders
+        // KNOWN ISSUE:  if shaders having errors, it takes long time for gradle to timeout
+        //               but it will eventually time out and complain about shader compiling
+        shaders {
+            glslcArgs.addAll(['-c', '-g'])
+        }
+        externalNativeBuild {
+            cmake {
+                // armeabi is not supported, not building for mips
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                arguments '-DANDROID_TOOLCHAIN=clang', '-DANDROID_STL=c++_static'
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path 'CMakeLists.txt'
+        }
+    }
+
+    sourceSets.main.jniLibs.srcDirs file(ndkDir).absolutePath +
+            '/sources/third_party/vulkan/src/build-android/jniLibs'
+
+    buildTypes {
+        release {
+            minifyEnabled = false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+}
