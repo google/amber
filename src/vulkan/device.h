@@ -32,7 +32,8 @@ class Device {
   explicit Device(VkDevice device);
   ~Device();
 
-  Result Initialize(const std::vector<Feature>& required_features);
+  Result Initialize(const std::vector<Feature>& required_features,
+                    const std::vector<std::string>& required_extensions);
   void Shutdown();
 
   VkDevice GetDevice() const { return device_; }
@@ -46,8 +47,10 @@ class Device {
   Result CreateInstance();
 
   // Get a physical device by checking if the physical device has a proper
-  // queue family.
-  Result ChoosePhysicalDevice(const std::vector<Feature>& required_features);
+  // queue family, required features, and required extensions.
+  Result ChoosePhysicalDevice(
+      const std::vector<Feature>& required_features,
+      const std::vector<std::string>& required_extensions);
 
   // Return true if |physical_device| has a queue family that supports both
   // graphics and compute or only a compute pipeline. If the proper queue
@@ -56,8 +59,10 @@ class Device {
   // queue family does not exist.
   bool ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device);
 
-  // Create a logical device.
-  Result CreateDevice(const std::vector<Feature>& required_features);
+  // Create a logical device with enabled features |required_features|
+  // and enabled extensions|required_extensions|.
+  Result CreateDevice(const std::vector<Feature>& required_features,
+                      const std::vector<std::string>& required_extensions);
 
   VkInstance instance_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
