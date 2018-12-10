@@ -72,9 +72,7 @@ class Buffer {
 
   /// Sets the data into the buffer. The size will also be updated to be the
   /// size of the data provided.
-  virtual void SetData(std::vector<Value>&& data) {
-    data_ = std::move(data);
-  }
+  virtual void SetData(std::vector<Value>&& data) { data_ = std::move(data); }
   /// Returns the vector of Values stored in the buffer.
   const std::vector<Value>& GetData() const { return data_; }
 

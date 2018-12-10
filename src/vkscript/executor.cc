@@ -89,10 +89,10 @@ Result Executor::Execute(Engine* engine,
     }
 
     r = engine->SetBuffer(
-          buf->GetBufferType(),
-          buf->GetLocation(),
-          buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
-          buf->GetData());
+        buf->GetBufferType(),
+        buf->GetLocation(),
+        buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
+        buf->GetData());
     if (!r.IsSuccess())
       return r;
   }
