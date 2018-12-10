@@ -85,7 +85,7 @@ class GraphicsPipeline : public Pipeline {
   Result CreateVkGraphicsPipeline(VkPrimitiveTopology topology);
 
   Result CreateRenderPass();
-  void ActivateRenderPassIfNeeded();
+  Result ActivateRenderPassIfNeeded();
   void DeactivateRenderPassIfNeeded();
 
   // Send vertex and index buffers.
