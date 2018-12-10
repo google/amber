@@ -60,11 +60,6 @@ class Descriptor {
 
   uint32_t GetDescriptorSet() const { return descriptor_set_; }
   uint32_t GetBinding() const { return binding_; }
-  bool operator<(const Descriptor& r) {
-    if (descriptor_set_ == r.descriptor_set_)
-      return binding_ < r.binding_;
-    return descriptor_set_ < r.descriptor_set_;
-  }
 
   DescriptorType GetType() const { return type_; }
 

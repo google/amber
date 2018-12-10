@@ -82,6 +82,7 @@ const char kHexShader[] =
 
 using ShaderCompilerTest = testing::Test;
 
+#if AMBER_ENABLE_SHADERC
 TEST_F(ShaderCompilerTest, CompilesGlsl) {
   std::string contents = R"(
 #version 420
@@ -104,27 +105,14 @@ void main() {
   EXPECT_FALSE(binary.empty());
   EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
 }
+#endif  // AMBER_ENABLE_SHADERC
 
+#if AMBER_ENABLE_SPIRV_TOOLS
 TEST_F(ShaderCompilerTest, CompilesSpirvAsm) {
   Shader shader(ShaderType::kVertex);
   shader.SetName("TestShader");
   shader.SetFormat(ShaderFormat::kSpirvAsm);
   shader.SetData(kPassThroughShader);
-
-  ShaderCompiler sc;
-  Result r;
-  std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
-  ASSERT_TRUE(r.IsSuccess());
-  EXPECT_FALSE(binary.empty());
-  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
-}
-
-TEST_F(ShaderCompilerTest, CompilesSpirvHex) {
-  Shader shader(ShaderType::kVertex);
-  shader.SetName("TestShader");
-  shader.SetFormat(ShaderFormat::kSpirvHex);
-  shader.SetData(kHexShader);
 
   ShaderCompiler sc;
   Result r;
@@ -166,6 +154,22 @@ TEST_F(ShaderCompilerTest, InvalidHex) {
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("Invalid shader: error: line 0: Invalid SPIR-V magic number.\n",
             r.Error());
+}
+#endif  // AMBER_ENABLE_SPIRV_TOOLS
+
+TEST_F(ShaderCompilerTest, CompilesSpirvHex) {
+  Shader shader(ShaderType::kVertex);
+  shader.SetName("TestShader");
+  shader.SetFormat(ShaderFormat::kSpirvHex);
+  shader.SetData(kHexShader);
+
+  ShaderCompiler sc;
+  Result r;
+  std::vector<uint32_t> binary;
+  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  ASSERT_TRUE(r.IsSuccess());
+  EXPECT_FALSE(binary.empty());
+  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
 }
 
 TEST_F(ShaderCompilerTest, FailsOnInvalidShader) {
