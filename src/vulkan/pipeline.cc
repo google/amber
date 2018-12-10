@@ -261,29 +261,21 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
     desc = descriptors_.back().get();
   }
 
-  if (buffer_command->IsSSBO()) {
-    if (!desc->IsStorageBuffer()) {
-      return Result(
-          "Vulkan::AddDescriptor BufferCommand for SSBO uses wrong descriptor "
-          "set and binding");
-    }
-
-    desc->AddToBufferDataQueue(
-        buffer_command->GetDatumType().GetType(), buffer_command->GetOffset(),
-        buffer_command->GetSize(), buffer_command->GetValues());
+  if (buffer_command->IsSSBO() && !desc->IsStorageBuffer()) {
+    return Result(
+        "Vulkan::AddDescriptor BufferCommand for SSBO uses wrong descriptor "
+        "set and binding");
   }
 
-  if (buffer_command->IsUniform()) {
-    if (!desc->IsUniformBuffer()) {
-      return Result(
-          "Vulkan::AddDescriptor BufferCommand for UBO uses wrong descriptor "
-          "set and binding");
-    }
-
-    desc->AddToBufferDataQueue(
-        buffer_command->GetDatumType().GetType(), buffer_command->GetOffset(),
-        buffer_command->GetSize(), buffer_command->GetValues());
+  if (buffer_command->IsUniform() && !desc->IsUniformBuffer()) {
+    return Result(
+        "Vulkan::AddDescriptor BufferCommand for UBO uses wrong descriptor set "
+        "and binding");
   }
+
+  desc->AddToBufferDataQueue(
+      buffer_command->GetDatumType().GetType(), buffer_command->GetOffset(),
+      buffer_command->GetSize(), buffer_command->GetValues());
 
   return {};
 }
