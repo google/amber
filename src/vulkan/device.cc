@@ -15,6 +15,7 @@
 #include "src/vulkan/device.h"
 
 #include <memory>
+#include <set>
 #include <vector>
 
 #include "src/make_unique.h"
@@ -204,8 +205,13 @@ VkPhysicalDeviceFeatures RequestedFeatures(
 }
 
 bool AreAllRequiredFeaturesSupported(
-    const VkPhysicalDeviceFeatures& available_features,
+    const VkPhysicalDevice& physical_device,
     const std::vector<Feature>& required_features) {
+  if (required_features.empty())
+    return true;
+
+  VkPhysicalDeviceFeatures available_features = {};
+  vkGetPhysicalDeviceFeatures(physical_device, &available_features);
   for (const auto& feature : required_features) {
     switch (feature) {
       case Feature::kRobustBufferAccess:
@@ -444,6 +450,40 @@ bool AreAllRequiredFeaturesSupported(
   return true;
 }
 
+bool AreAllExtensionsSupported(
+    const VkPhysicalDevice& physical_device,
+    const std::vector<std::string>& required_extensions) {
+  if (required_extensions.empty())
+    return true;
+
+  uint32_t available_extension_count = 0;
+  std::vector<VkExtensionProperties> available_extension_properties;
+
+  if (vkEnumerateDeviceExtensionProperties(physical_device, nullptr,
+                                           &available_extension_count,
+                                           nullptr) != VK_SUCCESS) {
+    return false;
+  }
+
+  if (available_extension_count == 0)
+    return false;
+
+  available_extension_properties.resize(available_extension_count);
+  if (vkEnumerateDeviceExtensionProperties(
+          physical_device, nullptr, &available_extension_count,
+          available_extension_properties.data()) != VK_SUCCESS) {
+    return false;
+  }
+
+  std::set<std::string> required_extension_set(required_extensions.begin(),
+                                               required_extensions.end());
+  for (const auto& property : available_extension_properties) {
+    required_extension_set.erase(property.extensionName);
+  }
+
+  return required_extension_set.empty();
+}
+
 }  // namespace
 
 Device::Device() = default;
@@ -457,17 +497,18 @@ void Device::Shutdown() {
   }
 }
 
-Result Device::Initialize(const std::vector<Feature>& required_features) {
+Result Device::Initialize(const std::vector<Feature>& required_features,
+                          const std::vector<std::string>& required_extensions) {
   if (device_ == VK_NULL_HANDLE) {
     Result r = CreateInstance();
     if (!r.IsSuccess())
       return r;
 
-    r = ChoosePhysicalDevice(required_features);
+    r = ChoosePhysicalDevice(required_features, required_extensions);
     if (!r.IsSuccess())
       return r;
 
-    r = CreateDevice(required_features);
+    r = CreateDevice(required_features, required_extensions);
     if (!r.IsSuccess())
       return r;
   }
@@ -526,7 +567,8 @@ Result Device::CreateInstance() {
 }
 
 Result Device::ChoosePhysicalDevice(
-    const std::vector<Feature>& required_features) {
+    const std::vector<Feature>& required_features,
+    const std::vector<std::string>& required_extensions) {
   uint32_t count;
   std::vector<VkPhysicalDevice> physical_devices;
 
@@ -538,11 +580,14 @@ Result Device::ChoosePhysicalDevice(
     return Result("Vulkan::Calling vkEnumeratePhysicalDevices Fail");
 
   for (uint32_t i = 0; i < count; ++i) {
-    VkPhysicalDeviceFeatures available_features = {};
-    vkGetPhysicalDeviceFeatures(physical_devices[i], &available_features);
-
-    if (!AreAllRequiredFeaturesSupported(available_features, required_features))
+    if (!AreAllRequiredFeaturesSupported(physical_devices[i],
+                                         required_features)) {
       continue;
+    }
+
+    if (!AreAllExtensionsSupported(physical_devices[i], required_extensions)) {
+      continue;
+    }
 
     if (ChooseQueueFamilyIndex(physical_devices[i])) {
       physical_device_ = physical_devices[i];
@@ -555,7 +600,9 @@ Result Device::ChoosePhysicalDevice(
   return Result("Vulkan::No physical device supports Vulkan");
 }
 
-Result Device::CreateDevice(const std::vector<Feature>& required_features) {
+Result Device::CreateDevice(
+    const std::vector<Feature>& required_features,
+    const std::vector<std::string>& required_extensions) {
   VkDeviceQueueCreateInfo queue_info;
   const float priorities[] = {1.0f};
 
@@ -568,10 +615,16 @@ Result Device::CreateDevice(const std::vector<Feature>& required_features) {
   info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   info.pQueueCreateInfos = &queue_info;
   info.queueCreateInfoCount = 1;
-  // TODO(jaebaek): Enable layers, extensions
+  // TODO(jaebaek): Enable layers
   VkPhysicalDeviceFeatures requested_features =
       RequestedFeatures(required_features);
   info.pEnabledFeatures = &requested_features;
+
+  std::vector<const char*> enabled_extensions;
+  for (size_t i = 0; i < required_extensions.size(); ++i)
+    enabled_extensions.push_back(required_extensions[i].c_str());
+  info.enabledExtensionCount = static_cast<uint32_t>(enabled_extensions.size());
+  info.ppEnabledExtensionNames = enabled_extensions.data();
 
   if (vkCreateDevice(physical_device_, &info, nullptr, &device_) != VK_SUCCESS)
     return Result("Vulkan::Calling vkCreateDevice Fail");
