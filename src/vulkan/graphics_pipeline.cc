@@ -516,11 +516,30 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
   if (!r.IsSuccess())
     return r;
 
+  r = command_->End();
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->SubmitAndReset(GetFenceTimeout());
+  if (!r.IsSuccess())
+    return r;
+
   if (pipeline_ == VK_NULL_HANDLE) {
     r = CreateVkGraphicsPipeline(ToVkTopology(command->GetTopology()));
     if (!r.IsSuccess())
       return r;
   }
+
+  // Note that a command updating a descriptor set and a command using
+  // it must be submitted separately, because using a descriptor set
+  // while updating it is not safe.
+  r = UpdateDescriptorSetsIfNeeded();
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->BeginIfNotInRecording();
+  if (!r.IsSuccess())
+    return r;
 
   r = UpdateDescriptorSetsIfNeeded();
   if (!r.IsSuccess())
