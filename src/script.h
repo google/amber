@@ -24,6 +24,7 @@
 
 #include "amber/recipe.h"
 #include "amber/result.h"
+#include "src/buffer.h"
 #include "src/command.h"
 #include "src/engine.h"
 #include "src/feature.h"
@@ -62,6 +63,19 @@ class Script : public RecipeImpl {
     return shaders_;
   }
 
+  Result AddBuffer(std::unique_ptr<Buffer> buffer) {
+    if (name_to_buffer_.count(buffer->GetName()) > 0)
+      return Result("duplicate buffer name provided");
+
+    buffers_.push_back(std::move(buffer));
+    name_to_buffer_[buffers_.back()->GetName()] = buffers_.back().get();
+    return {};
+  }
+
+  const std::vector<std::unique_ptr<Buffer>>& GetBuffers() const {
+    return buffers_;
+  }
+
   void AddRequiredFeature(Feature feature) {
     engine_info_.required_features.push_back(feature);
   }
@@ -98,8 +112,10 @@ class Script : public RecipeImpl {
   ScriptType script_type_;
   EngineData engine_data_;
   std::map<std::string, Shader*> name_to_shader_;
+  std::map<std::string, Buffer*> name_to_buffer_;
   std::vector<std::unique_ptr<Shader>> shaders_;
   std::vector<std::unique_ptr<Command>> commands_;
+  std::vector<std::unique_ptr<Buffer>> buffers_;
 };
 
 }  // namespace amber
