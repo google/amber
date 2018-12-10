@@ -67,7 +67,6 @@ void Pipeline::Shutdown() {
 
   DestroyDescriptorPools();
   DestroyDescriptorSetLayouts();
-  DestroyEmptyDescriptorSetLayouts();
   command_->Shutdown();
   vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
   for (size_t i = 0; i < descriptors_.size(); ++i)
@@ -82,8 +81,10 @@ void Pipeline::DestroyDescriptorSetLayouts() {
   descriptor_set_layouts_.clear();
 }
 
-Result Pipeline::CreateDescriptorSetLayouts() {
-  // Sort |descriptors_| in the order of |descriptors_set_| and |binding_|.
+void Pipeline::SortDescriptorsBySetAndBinding() {
+  if (!need_sort_descriptors_)
+    return;
+
   std::sort(descriptors_.begin(), descriptors_.end(),
             [](const std::unique_ptr<Descriptor>& a,
                const std::unique_ptr<Descriptor>& b) {
@@ -91,8 +92,14 @@ Result Pipeline::CreateDescriptorSetLayouts() {
                 return a->GetBinding() < b->GetBinding();
               return a->GetDescriptorSet() < b->GetDescriptorSet();
             });
+  need_sort_descriptors_ = false;
+}
+
+Result Pipeline::CreateDescriptorSetLayouts() {
+  SortDescriptorsBySetAndBinding();
 
   size_t i = 0;
+  uint32_t next_desc = 0;
   while (i < descriptors_.size()) {
     std::vector<VkDescriptorSetLayoutBinding> bindings;
     const uint32_t current_desc = descriptors_[i]->GetDescriptorSet();
@@ -107,37 +114,18 @@ Result Pipeline::CreateDescriptorSetLayouts() {
       ++i;
     }
 
-    VkDescriptorSetLayoutCreateInfo desc_info = {};
-    desc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    desc_info.bindingCount = static_cast<uint32_t>(bindings.size());
-    desc_info.pBindings = bindings.data();
-
-    VkDescriptorSetLayout desc_layout = VK_NULL_HANDLE;
-    if (vkCreateDescriptorSetLayout(device_, &desc_info, nullptr,
-                                    &desc_layout) != VK_SUCCESS) {
-      return Result("Vulkan::Calling vkCreateDescriptorSetLayout Fail");
-    }
-    descriptor_set_layouts_.push_back(desc_layout);
-    descriptor_set_numbers_.push_back(current_desc);
-  }
-
-  return {};
-}
-
-void Pipeline::DestroyEmptyDescriptorSetLayouts() {
-  for (size_t i = 0; i < empty_descriptor_set_layouts_.size(); ++i) {
-    vkDestroyDescriptorSetLayout(device_, empty_descriptor_set_layouts_[i],
-                                 nullptr);
-  }
-  empty_descriptor_set_layouts_.clear();
-}
-
-Result Pipeline::CreateEmptyDescriptorSetLayouts() {
-  uint32_t desc = 0;
-  for (size_t i = 0; i < descriptor_set_numbers_.size(); ++i) {
-    while (desc < descriptor_set_numbers_[i]) {
+    while (next_desc <= current_desc) {
       VkDescriptorSetLayoutCreateInfo desc_info = {};
       desc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+
+      // If two descriptor sets are discontinuous, we must put empty
+      // descriptor set layouts between them.
+      auto desc_set_type = DescriptorSetLayoutType::kEmpty;
+      if (next_desc == current_desc) {
+        desc_info.bindingCount = bindings.size();
+        desc_info.pBindings = bindings.data();
+        desc_set_type = DescriptorSetLayoutType::kNonEmpty;
+      }
 
       VkDescriptorSetLayout desc_layout = VK_NULL_HANDLE;
       if (vkCreateDescriptorSetLayout(device_, &desc_info, nullptr,
@@ -145,10 +133,10 @@ Result Pipeline::CreateEmptyDescriptorSetLayouts() {
         return Result("Vulkan::Calling vkCreateDescriptorSetLayout Fail");
       }
 
-      empty_descriptor_set_layouts_.push_back(desc_layout);
-      ++desc;
+      descriptor_set_layouts_.push_back(desc_layout);
+      descriptor_set_layout_types_.push_back(desc_set_type);
+      ++next_desc;
     }
-    ++desc;
   }
 
   return {};
@@ -162,6 +150,8 @@ void Pipeline::DestroyDescriptorPools() {
 }
 
 Result Pipeline::CreateDescriptorPools() {
+  SortDescriptorsBySetAndBinding();
+
   size_t i = 0;
   while (i < descriptors_.size()) {
     std::vector<VkDescriptorPoolSize> pool_sizes;
@@ -202,55 +192,35 @@ Result Pipeline::CreateDescriptorPools() {
 }
 
 Result Pipeline::CreateDescriptorSets() {
-  for (size_t i = 0; i < descriptor_set_layouts_.size(); ++i) {
-    VkDescriptorSetAllocateInfo desc_set_info = {};
-    desc_set_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    desc_set_info.descriptorPool = descriptor_pools_[i];
-    desc_set_info.descriptorSetCount = 1;
-    desc_set_info.pSetLayouts = &descriptor_set_layouts_[i];
+  for (size_t desc = 0, pool = 0; desc < descriptor_set_layout_types_.size() &&
+                                  pool < descriptor_pools_.size();
+       ++desc) {
+    if (descriptor_set_layout_types_[desc] ==
+        DescriptorSetLayoutType::kNonEmpty) {
+      VkDescriptorSetAllocateInfo desc_set_info = {};
+      desc_set_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+      desc_set_info.descriptorPool = descriptor_pools_[pool];
+      desc_set_info.descriptorSetCount = 1;
+      desc_set_info.pSetLayouts = &descriptor_set_layouts_[desc];
 
-    VkDescriptorSet desc_set = VK_NULL_HANDLE;
-    if (vkAllocateDescriptorSets(device_, &desc_set_info, &desc_set) !=
-        VK_SUCCESS) {
-      return Result("Vulkan::Calling vkAllocateDescriptorSets Fail");
+      VkDescriptorSet desc_set = VK_NULL_HANDLE;
+      if (vkAllocateDescriptorSets(device_, &desc_set_info, &desc_set) !=
+          VK_SUCCESS) {
+        return Result("Vulkan::Calling vkAllocateDescriptorSets Fail");
+      }
+      descriptor_sets_.push_back(desc_set);
+      ++pool;
     }
-    descriptor_sets_.push_back(desc_set);
   }
 
   return {};
 }
 
 Result Pipeline::CreatePipelineLayout() {
-  // Put all elements of |descriptor_set_layouts_| and
-  // |empty_descriptor_set_layouts_| together. Note that their
-  // order and the order of actually used descriptor sets must
-  // exactly match.
-  std::vector<VkDescriptorSetLayout> layouts;
-  uint32_t desc = 0;
-  size_t empty_descriptor_set_layouts_index = 0;
-  for (size_t i = 0; i < descriptor_set_numbers_.size(); ++i) {
-    while (desc < descriptor_set_numbers_[i]) {
-      if (empty_descriptor_set_layouts_index >=
-          empty_descriptor_set_layouts_.size()) {
-        return Result(
-            "Pipeline::CreatePipelineLayout required empty descriptor set "
-            "layouts are more than actual ones");
-      }
-
-      layouts.push_back(
-          empty_descriptor_set_layouts_[empty_descriptor_set_layouts_index]);
-      ++empty_descriptor_set_layouts_index;
-      ++desc;
-    }
-    layouts.push_back(descriptor_set_layouts_[i]);
-    ++desc;
-  }
-
   VkPipelineLayoutCreateInfo pipeline_layout_info = {};
   pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipeline_layout_info.setLayoutCount =
-      static_cast<uint32_t>(layouts.size());
-  pipeline_layout_info.pSetLayouts = layouts.data();
+  pipeline_layout_info.setLayoutCount = static_cast<uint32_t>(descriptor_set_layouts_.size());
+  pipeline_layout_info.pSetLayouts = descriptor_set_layouts_.data();
   // TODO(jaebaek): Push constant for pipeline_layout_info.
 
   if (vkCreatePipelineLayout(device_, &pipeline_layout_info, nullptr,
@@ -269,10 +239,6 @@ Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
   if (!r.IsSuccess())
     return r;
 
-  r = CreateEmptyDescriptorSetLayouts();
-  if (!r.IsSuccess())
-    return r;
-
   r = CreateDescriptorPools();
   if (!r.IsSuccess())
     return r;
@@ -285,6 +251,8 @@ Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
 }
 
 Result Pipeline::UpdateDescriptorSetsIfNeeded() {
+  SortDescriptorsBySetAndBinding();
+
   for (size_t i = 0, j = 0;
        i < descriptors_.size() && j < descriptor_sets_.size(); ++j) {
     for (const uint32_t current_desc = descriptors_[i]->GetDescriptorSet();
@@ -322,6 +290,7 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
         desc_type, device_, buffer_command->GetDescriptorSet(),
         buffer_command->GetBinding());
     descriptors_.push_back(std::move(buffer_desc));
+    need_sort_descriptors_ = true;
 
     desc = descriptors_.back().get();
   }
@@ -397,12 +366,18 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
 }
 
 void Pipeline::BindVkDescriptorSets() {
-  for (size_t desc = 0; desc < descriptor_set_numbers_.size(); ++desc) {
-    vkCmdBindDescriptorSets(command_->GetCommandBuffer(),
-                            IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                                         : VK_PIPELINE_BIND_POINT_COMPUTE,
-                            pipeline_layout_, descriptor_set_numbers_[desc], 1,
-                            &descriptor_sets_[desc], 0, nullptr);
+  for (size_t desc = 0, set = 0; desc < descriptor_set_layout_types_.size() &&
+                                 set < descriptor_sets_.size();
+       ++desc) {
+    if (descriptor_set_layout_types_[desc] ==
+        DescriptorSetLayoutType::kNonEmpty) {
+      vkCmdBindDescriptorSets(command_->GetCommandBuffer(),
+                              IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                                           : VK_PIPELINE_BIND_POINT_COMPUTE,
+                              pipeline_layout_, desc, 1, &descriptor_sets_[set],
+                              0, nullptr);
+      ++set;
+    }
   }
 }
 

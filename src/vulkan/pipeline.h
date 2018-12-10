@@ -88,6 +88,11 @@ class Pipeline {
   std::unique_ptr<CommandBuffer> command_;
 
  private:
+  enum class DescriptorSetLayoutType : uint8_t {
+    kEmpty = 0,
+    kNonEmpty,
+  };
+
   Result CreatePipelineLayout();
 
   Result CreateDescriptorSetLayouts();
@@ -97,24 +102,19 @@ class Pipeline {
   void DestroyDescriptorSetLayouts();
   void DestroyDescriptorPools();
 
-  // When actually used descriptor sets are discontinuous, we must
-  // put empty descriptor set layouts between them when building
-  // pipeline layout. This method creates those empty descriptor set
-  // layouts that are not actually used but just for shaping
-  // pipeline layout correctly.
-  Result CreateEmptyDescriptorSetLayouts();
-  void DestroyEmptyDescriptorSetLayouts();
+  // Sort |descriptors_| in the order of |descriptors_set_| and |binding_|.
+  void SortDescriptorsBySetAndBinding();
 
   PipelineType pipeline_type_;
   std::vector<std::unique_ptr<Descriptor>> descriptors_;
-  std::vector<uint32_t> descriptor_set_numbers_;
+  std::vector<DescriptorSetLayoutType> descriptor_set_layout_types_;
   std::vector<VkDescriptorSetLayout> descriptor_set_layouts_;
-  std::vector<VkDescriptorSetLayout> empty_descriptor_set_layouts_;
   std::vector<VkDescriptorPool> descriptor_pools_;
   std::vector<VkDescriptorSet> descriptor_sets_;
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
   uint32_t fence_timeout_ms_ = 100;
   bool descriptor_related_objects_already_created_ = false;
+  bool need_sort_descriptors_ = true;
 };
 
 }  // namespace vulkan
