@@ -172,7 +172,6 @@ TEST_F(ShaderCompilerTest, CompilesSpirvHex) {
   EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
 }
 
-
 TEST_F(ShaderCompilerTest, FailsOnInvalidShader) {
   std::string contents = "Just Random\nText()\nThat doesn't work.";
 
