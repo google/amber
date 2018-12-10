@@ -48,28 +48,6 @@ class EngineStub : public Engine {
 
   Result Shutdown() override { return {}; }
 
-  void FailRequirements() { fail_requirements_ = true; }
-  Result AddRequirement(Feature feature, const Format* fmt) override {
-    if (fail_requirements_)
-      return Result("requirements failed");
-
-    if (feature == Feature::kFramebuffer) {
-      if (fmt != nullptr)
-        color_frame_format_ = fmt->GetFormatType();
-      return {};
-    }
-
-    if (feature == Feature::kDepthStencil) {
-      if (fmt != nullptr)
-        depth_frame_format_ = fmt->GetFormatType();
-      return {};
-    }
-
-    return Result(
-        "Vulkan::AddRequirement features and extensions must be handled by "
-        "Initialize()");
-  }
-
   const std::vector<Feature>& GetFeatures() const { return features_; }
   const std::vector<std::string>& GetExtensions() const { return extensions_; }
   FormatType GetColorFrameFormat() const { return color_frame_format_; }
@@ -101,6 +79,14 @@ class EngineStub : public Engine {
                    uint8_t location,
                    const Format& format,
                    const std::vector<Value>& data) override {
+    if (type == BufferType::kColor || type == BufferType::kDepth) {
+      if (type == BufferType::kColor)
+        color_frame_format_ = format.GetFormatType();
+      else if (type == BufferType::kDepth)
+        depth_frame_format_ = format.GetFormatType();
+      return {};
+    }
+
     ++buffer_call_count_;
     buffer_types_.push_back(type);
     buffer_locations_.push_back(location);
@@ -224,7 +210,6 @@ class EngineStub : public Engine {
   }
 
  private:
-  bool fail_requirements_ = false;
   bool fail_shader_command_ = false;
   bool fail_clear_command_ = false;
   bool fail_clear_color_command_ = false;
@@ -282,24 +267,6 @@ class VkScriptExecutorTest : public testing::Test {
 };
 
 }  // namespace
-
-TEST_F(VkScriptExecutorTest, ExecuteRequirementsFailed) {
-  std::string input = R"(
-[require]
-framebuffer R32G32B32A32_SINT)";
-
-  Parser parser;
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
-
-  auto engine = MakeEngine();
-  ToStub(engine.get())->FailRequirements();
-  auto script = parser.GetScript();
-
-  Executor ex;
-  Result r = ex.Execute(engine.get(), ToVkScript(script.get()), ShaderMap());
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("requirements failed", r.Error());
-}
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredFeatures) {
   std::string input = R"(
@@ -466,16 +433,6 @@ fence_timeout 12345)";
   auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
   EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT, color_frame_format);
   EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT, depth_frame_format);
-}
-
-TEST_F(VkScriptExecutorTest, EngineAddRequirementFailed) {
-  auto engine = MakeEngine();
-  Result r = engine->AddRequirement(Feature::kRobustBufferAccess, nullptr);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(
-      "Vulkan::AddRequirement features and extensions must be handled by "
-      "Initialize()",
-      r.Error());
 }
 
 #if AMBER_ENABLE_SHADERC

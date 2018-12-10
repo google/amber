@@ -26,7 +26,6 @@
 #include "src/tokenizer.h"
 #include "src/vkscript/command_parser.h"
 #include "src/vkscript/format_parser.h"
-#include "src/vkscript/nodes.h"
 
 namespace amber {
 namespace vkscript {
@@ -209,8 +208,6 @@ Result Parser::ProcessShaderBlock(const SectionParser::Section& section) {
 }
 
 Result Parser::ProcessRequireBlock(const std::string& data) {
-  auto node = MakeUnique<RequireNode>();
-
   Tokenizer tokenizer(data);
   for (auto token = tokenizer.NextToken(); !token->IsEOS();
        token = tokenizer.NextToken()) {
@@ -273,10 +270,6 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
     if (!token->IsEOS() && !token->IsEOL())
       return Result("Failed to parser requirements block: invalid token");
   }
-
-  if (!node->Requirements().empty())
-    script_->AddRequireNode(std::move(node));
-
   return {};
 }
 

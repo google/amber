@@ -60,7 +60,7 @@ Result Executor::Execute(Engine* engine,
   for (const auto& buf : script->GetBuffers()) {
     // Image and depth are handled earler. They will be moved to the pipeline
     // object when it exists.
-    if (buf->GetBufferType() != BufferType::kImage &&
+    if (buf->GetBufferType() != BufferType::kColor &&
         buf->GetBufferType() != BufferType::kDepth) {
       continue;
     }
@@ -83,7 +83,7 @@ Result Executor::Execute(Engine* engine,
   for (const auto& buf : script->GetBuffers()) {
     // Image and depth are handled earler. They will be moved to the pipeline
     // object when it exists.
-    if (buf->GetBufferType() == BufferType::kImage ||
+    if (buf->GetBufferType() == BufferType::kColor ||
         buf->GetBufferType() == BufferType::kDepth) {
       continue;
     }
