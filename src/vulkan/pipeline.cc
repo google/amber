@@ -65,8 +65,9 @@ void Pipeline::Shutdown() {
   if (r.IsSuccess())
     command_->SubmitAndReset(fence_timeout_ms_);
 
-  DestoryDescriptorPools();
-  DestoryDescriptorSetLayouts();
+  DestroyDescriptorPools();
+  DestroyDescriptorSetLayouts();
+  DestroyEmptyDescriptorSetLayouts();
   command_->Shutdown();
   vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
   for (size_t i = 0; i < descriptors_.size(); ++i)
@@ -74,7 +75,7 @@ void Pipeline::Shutdown() {
   vkDestroyPipeline(device_, pipeline_, nullptr);
 }
 
-void Pipeline::DestoryDescriptorSetLayouts() {
+void Pipeline::DestroyDescriptorSetLayouts() {
   for (size_t i = 0; i < descriptor_set_layouts_.size(); ++i) {
     vkDestroyDescriptorSetLayout(device_, descriptor_set_layouts_[i], nullptr);
   }
@@ -82,24 +83,28 @@ void Pipeline::DestoryDescriptorSetLayouts() {
 }
 
 Result Pipeline::CreateDescriptorSetLayouts() {
-  std::sort(descriptors_.begin(), descriptors_.end());
+  // Sort |descriptors_| in the order of |descriptors_set_| and |binding_|.
+  std::sort(descriptors_.begin(), descriptors_.end(),
+            [](const std::unique_ptr<Descriptor>& a,
+               const std::unique_ptr<Descriptor>& b) {
+              if (a->GetDescriptorSet() == b->GetDescriptorSet())
+                return a->GetBinding() < b->GetBinding();
+              return a->GetDescriptorSet() < b->GetDescriptorSet();
+            });
 
   size_t i = 0;
   while (i < descriptors_.size()) {
     std::vector<VkDescriptorSetLayoutBinding> bindings;
-    for (const uint32_t current_desc = descriptors_[i]->GetDescriptorSet();
-         i < descriptors_.size() &&
-         current_desc == descriptors_[i]->GetDescriptorSet();
-         ++i) {
+    const uint32_t current_desc = descriptors_[i]->GetDescriptorSet();
+    while (i < descriptors_.size() &&
+           current_desc == descriptors_[i]->GetDescriptorSet()) {
       bindings.emplace_back();
       bindings.back().binding = descriptors_[i]->GetBinding();
       bindings.back().descriptorType =
           ToVkDescriptorType(descriptors_[i]->GetType());
       bindings.back().descriptorCount = 1;
-      // TODO(jaebaek): Amber script must contain which stages use each
-      //                descriptor. Set .stageFlags attribute based on it.
       bindings.back().stageFlags = VK_SHADER_STAGE_ALL;
-      // TODO(jaebaek): Properly set .pImmutableSamplers attribute.
+      ++i;
     }
 
     VkDescriptorSetLayoutCreateInfo desc_info = {};
@@ -113,12 +118,43 @@ Result Pipeline::CreateDescriptorSetLayouts() {
       return Result("Vulkan::Calling vkCreateDescriptorSetLayout Fail");
     }
     descriptor_set_layouts_.push_back(desc_layout);
+    descriptor_set_numbers_.push_back(current_desc);
   }
 
   return {};
 }
 
-void Pipeline::DestoryDescriptorPools() {
+void Pipeline::DestroyEmptyDescriptorSetLayouts() {
+  for (size_t i = 0; i < empty_descriptor_set_layouts_.size(); ++i) {
+    vkDestroyDescriptorSetLayout(device_, empty_descriptor_set_layouts_[i],
+                                 nullptr);
+  }
+  empty_descriptor_set_layouts_.clear();
+}
+
+Result Pipeline::CreateEmptyDescriptorSetLayouts() {
+  uint32_t desc = 0;
+  for (size_t i = 0; i < descriptor_set_numbers_.size(); ++i) {
+    while (desc < descriptor_set_numbers_[i]) {
+      VkDescriptorSetLayoutCreateInfo desc_info = {};
+      desc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+
+      VkDescriptorSetLayout desc_layout = VK_NULL_HANDLE;
+      if (vkCreateDescriptorSetLayout(device_, &desc_info, nullptr,
+                                      &desc_layout) != VK_SUCCESS) {
+        return Result("Vulkan::Calling vkCreateDescriptorSetLayout Fail");
+      }
+
+      empty_descriptor_set_layouts_.push_back(desc_layout);
+      ++desc;
+    }
+    ++desc;
+  }
+
+  return {};
+}
+
+void Pipeline::DestroyDescriptorPools() {
   for (size_t i = 0; i < descriptor_pools_.size(); ++i) {
     vkDestroyDescriptorPool(device_, descriptor_pools_[i], nullptr);
   }
@@ -185,11 +221,36 @@ Result Pipeline::CreateDescriptorSets() {
 }
 
 Result Pipeline::CreatePipelineLayout() {
+  // Put all elements of |descriptor_set_layouts_| and
+  // |empty_descriptor_set_layouts_| together. Note that their
+  // order and the order of actually used descriptor sets must
+  // exactly match.
+  std::vector<VkDescriptorSetLayout> layouts;
+  uint32_t desc = 0;
+  size_t empty_descriptor_set_layouts_index = 0;
+  for (size_t i = 0; i < descriptor_set_numbers_.size(); ++i) {
+    while (desc < descriptor_set_numbers_[i]) {
+      if (empty_descriptor_set_layouts_index >=
+          empty_descriptor_set_layouts_.size()) {
+        return Result(
+            "Pipeline::CreatePipelineLayout required empty descriptor set "
+            "layouts are more than actual ones");
+      }
+
+      layouts.push_back(
+          empty_descriptor_set_layouts_[empty_descriptor_set_layouts_index]);
+      ++empty_descriptor_set_layouts_index;
+      ++desc;
+    }
+    layouts.push_back(descriptor_set_layouts_[i]);
+    ++desc;
+  }
+
   VkPipelineLayoutCreateInfo pipeline_layout_info = {};
   pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipeline_layout_info.setLayoutCount =
-      static_cast<uint32_t>(descriptor_set_layouts_.size());
-  pipeline_layout_info.pSetLayouts = descriptor_set_layouts_.data();
+      static_cast<uint32_t>(layouts.size());
+  pipeline_layout_info.pSetLayouts = layouts.data();
   // TODO(jaebaek): Push constant for pipeline_layout_info.
 
   if (vkCreatePipelineLayout(device_, &pipeline_layout_info, nullptr,
@@ -204,8 +265,11 @@ Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
   if (descriptor_related_objects_already_created_)
     return {};
 
-  // TODO(jaebaek): Update SSBO dynamically.
   Result r = CreateDescriptorSetLayouts();
+  if (!r.IsSuccess())
+    return r;
+
+  r = CreateEmptyDescriptorSetLayouts();
   if (!r.IsSuccess())
     return r;
 
@@ -333,12 +397,13 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
 }
 
 void Pipeline::BindVkDescriptorSets() {
-  vkCmdBindDescriptorSets(command_->GetCommandBuffer(),
-                          IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                                       : VK_PIPELINE_BIND_POINT_COMPUTE,
-                          pipeline_layout_, 0,
-                          static_cast<uint32_t>(descriptor_sets_.size()),
-                          descriptor_sets_.data(), 0, nullptr);
+  for (size_t desc = 0; desc < descriptor_set_numbers_.size(); ++desc) {
+    vkCmdBindDescriptorSets(command_->GetCommandBuffer(),
+                            IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                                         : VK_PIPELINE_BIND_POINT_COMPUTE,
+                            pipeline_layout_, descriptor_set_numbers_[desc], 1,
+                            &descriptor_sets_[desc], 0, nullptr);
+  }
 }
 
 void Pipeline::BindVkPipeline() {

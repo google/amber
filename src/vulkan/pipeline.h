@@ -83,10 +83,6 @@ class Pipeline {
   VkPipeline pipeline_ = VK_NULL_HANDLE;
   VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
 
-  std::vector<VkDescriptorSetLayout> descriptor_set_layouts_;
-  std::vector<VkDescriptorPool> descriptor_pools_;
-  std::vector<VkDescriptorSet> descriptor_sets_;
-
   VkDevice device_ = VK_NULL_HANDLE;
   VkPhysicalDeviceMemoryProperties memory_properties_;
   std::unique_ptr<CommandBuffer> command_;
@@ -98,11 +94,24 @@ class Pipeline {
   Result CreateDescriptorPools();
   Result CreateDescriptorSets();
 
-  void DestoryDescriptorSetLayouts();
-  void DestoryDescriptorPools();
+  void DestroyDescriptorSetLayouts();
+  void DestroyDescriptorPools();
+
+  // When actually used descriptor sets are discontinuous, we must
+  // put empty descriptor set layouts between them when building
+  // pipeline layout. This method creates those empty descriptor set
+  // layouts that are not actually used but just for shaping
+  // pipeline layout correctly.
+  Result CreateEmptyDescriptorSetLayouts();
+  void DestroyEmptyDescriptorSetLayouts();
 
   PipelineType pipeline_type_;
   std::vector<std::unique_ptr<Descriptor>> descriptors_;
+  std::vector<uint32_t> descriptor_set_numbers_;
+  std::vector<VkDescriptorSetLayout> descriptor_set_layouts_;
+  std::vector<VkDescriptorSetLayout> empty_descriptor_set_layouts_;
+  std::vector<VkDescriptorPool> descriptor_pools_;
+  std::vector<VkDescriptorSet> descriptor_sets_;
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
   uint32_t fence_timeout_ms_ = 100;
   bool descriptor_related_objects_already_created_ = false;
