@@ -366,17 +366,18 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
 }
 
 void Pipeline::BindVkDescriptorSets() {
-  for (size_t desc = 0, set = 0; desc < descriptor_set_layout_types_.size() &&
-                                 set < descriptor_sets_.size();
+  for (size_t desc = 0, non_empty_desc = 0;
+       desc < descriptor_set_layout_types_.size() &&
+       non_empty_desc < descriptor_sets_.size();
        ++desc) {
     if (descriptor_set_layout_types_[desc] ==
         DescriptorSetLayoutType::kNonEmpty) {
       vkCmdBindDescriptorSets(command_->GetCommandBuffer(),
                               IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
                                            : VK_PIPELINE_BIND_POINT_COMPUTE,
-                              pipeline_layout_, desc, 1, &descriptor_sets_[set],
-                              0, nullptr);
-      ++set;
+                              pipeline_layout_, desc, 1,
+                              &descriptor_sets_[non_empty_desc], 0, nullptr);
+      ++non_empty_desc;
     }
   }
 }
