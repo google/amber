@@ -163,14 +163,14 @@ int main(int argc, const char** argv) {
 
   if (options.show_version_info) {
     std::cout << "Amber        : " << AMBER_VERSION << std::endl;
-#ifndef AMBER_DISABLE_SPIRV_TOOLS
+#if AMBER_ENABLE_SPIRV_TOOLS
     std::cout << "SPIRV-Tools  : " << SPIRV_TOOLS_VERSION << std::endl;
     std::cout << "SPIRV-Headers: " << SPIRV_HEADERS_VERSION << std::endl;
-#endif  // AMBER_DISABLE_SPIRV_TOOLS
-#ifndef AMBER_DISABLE_SHADERC
+#endif  // AMBER_ENABLE_SPIRV_TOOLS
+#if AMBER_ENABLE_SHADERC
     std::cout << "GLSLang      : " << GLSLANG_VERSION << std::endl;
     std::cout << "Shaderc      : " << SHADERC_VERSION << std::endl;
-#endif  // AMBER_DISABLE_SHADERC
+#endif  // AMBER_ENABLE_SHADERC
   }
 
   if (options.show_help) {

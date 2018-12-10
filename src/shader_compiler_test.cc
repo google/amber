@@ -82,7 +82,7 @@ const char kHexShader[] =
 
 using ShaderCompilerTest = testing::Test;
 
-#ifndef AMBER_DISABLE_SHADERC
+#if AMBER_ENABLE_SHADERC
 TEST_F(ShaderCompilerTest, CompilesGlsl) {
   std::string contents = R"(
 #version 420
@@ -105,9 +105,9 @@ void main() {
   EXPECT_FALSE(binary.empty());
   EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
 }
-#endif  // AMBER_DISABLE_SHADERC
+#endif  // AMBER_ENABLE_SHADERC
 
-#ifndef AMBER_DISABLE_SPIRV_TOOLS
+#if AMBER_ENABLE_SPIRV_TOOLS
 TEST_F(ShaderCompilerTest, CompilesSpirvAsm) {
   Shader shader(ShaderType::kVertex);
   shader.SetName("TestShader");
@@ -155,7 +155,7 @@ TEST_F(ShaderCompilerTest, InvalidHex) {
   EXPECT_EQ("Invalid shader: error: line 0: Invalid SPIR-V magic number.\n",
             r.Error());
 }
-#endif  // AMBER_DISABLE_SPIRV_TOOLS
+#endif  // AMBER_ENABLE_SPIRV_TOOLS
 
 TEST_F(ShaderCompilerTest, CompilesSpirvHex) {
   Shader shader(ShaderType::kVertex);

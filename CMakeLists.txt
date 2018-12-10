@@ -38,20 +38,34 @@ option(AMBER_SKIP_TESTS
 option(AMBER_SKIP_SPIRV_TOOLS
   "Skip building spirv-tools into the library" ${AMBER_SKIP_SPIRV_TOOLS})
 option(AMBER_SKIP_SHADERC
-  "Skip building shaderc into the library" ${AMBER_SKIP_SHADERC})
+  "Skip building Shaderc into the library" ${AMBER_SKIP_SHADERC})
 
 if (${AMBER_SKIP_SPIRV_TOOLS})
-  set(AMBER_SKIP_SHADERC True)
+  set(AMBER_ENABLE_SPIRV_TOOLS FALSE)
+  set(AMBER_ENABLE_SHADERC FALSE)
+else()
+  set(AMBER_ENABLE_SPIRV_TOOLS TRUE)
+
+  if (${AMBER_SKIP_SHADERC})
+    set(AMBER_ENABLE_SHADERC FALSE)
+  else()
+    set(AMBER_ENABLE_SHADERC TRUE)
+  endif()
+endif()
+if (${AMBER_SKIP_TESTS})
+  set(AMBER_ENABLE_TESTS FALSE)
+else()
+  set(AMBER_ENABLE_TESTS TRUE)
 endif()
 
-message(STATUS "Amber skipping SPIRV-Tools: ${AMBER_SKIP_SPIRV_TOOLS}")
-message(STATUS "Amber skipping ShaderC: ${AMBER_SKIP_SHADERC}")
-message(STATUS "Amber skipping tests: ${AMBER_SKIP_TESTS}")
+message(STATUS "Amber enable SPIRV-Tools: ${AMBER_ENABLE_SPIRV_TOOLS}")
+message(STATUS "Amber enable Shaderc: ${AMBER_ENABLE_SHADERC}")
+message(STATUS "Amber enable tests: ${AMBER_ENABLE_TESTS}")
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}")
 
-if (NOT ${AMBER_SKIP_SPIRV_TOOLS})
+if (${AMBER_ENABLE_SPIRV_TOOLS})
   include_directories("${PROJECT_SOURCE_DIR}/third_party/spirv-tools/include")
 endif()
 
@@ -60,14 +74,8 @@ include(src/vulkan/find_vulkan.cmake)
 
 add_definitions(-DAMBER_ENGINE_VULKAN=$<BOOL:${Vulkan_FOUND}>)
 add_definitions(-DAMBER_ENGINE_DAWN=$<BOOL:${Dawn_FOUND}>)
-
-if (${AMBER_SKIP_SPIRV_TOOLS})
-  add_definitions(-DAMBER_DISABLE_SPIRV_TOOLS=$<BOOL:${AMBER_SKIP_SPIRV_TOOLS}>)
-endif()
-
-if (${AMBER_SKIP_SHADERC})
-  add_definitions(-DAMBER_DISABLE_SHADERC=$<BOOL:${AMBER_SKIP_SHADERC}>)
-endif()
+add_definitions(-DAMBER_ENABLE_SPIRV_TOOLS=$<BOOL:${AMBER_ENABLE_SPIRV_TOOLS}>)
+add_definitions(-DAMBER_ENABLE_SHADERC=$<BOOL:${AMBER_ENABLE_SHADERC}>)
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   message(STATUS "No build type selected, default to Debug")

@@ -57,11 +57,11 @@ add_library(libamber ${AMBER_SOURCES})
 amber_default_compile_options(libamber)
 set_target_properties(libamber PROPERTIES OUTPUT_NAME "amber")
 
-if (NOT ${AMBER_SKIP_SPIRV_TOOLS})
+if (${AMBER_ENABLE_SPIRV_TOOLS})
   target_link_libraries(libamber SPIRV-Tools)
 endif()
 
-if (NOT ${AMBER_SKIP_SHADERC})
+if (${AMBER_ENABLE_SHADERC})
   target_link_libraries(libamber shaderc SPIRV)
 endif()
 
@@ -76,7 +76,7 @@ if (${Dawn_FOUND})
   target_link_libraries(libamber libamberenginedawn)
 endif()
 
-if (NOT ${AMBER_SKIP_TESTS})
+if (${AMBER_ENABLE_TESTS})
   set(TEST_SRCS
     amberscript/parser_test.cc
     amberscript/pipeline_test.cc
