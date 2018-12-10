@@ -478,6 +478,7 @@ TEST_F(VkScriptExecutorTest, EngineAddRequirementFailed) {
       r.Error());
 }
 
+#if AMBER_ENABLE_SHADERC
 TEST_F(VkScriptExecutorTest, ExecutesShaders) {
   std::string input = R"(
 [vertex shader passthrough]
@@ -523,6 +524,7 @@ void main() {}
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("shader command failed", r.Error());
 }
+#endif  // AMBER_ENABLE_SHADERC
 
 TEST_F(VkScriptExecutorTest, ClearCommand) {
   std::string input = R"(
