@@ -19,23 +19,6 @@
 
 namespace amber {
 
-enum class ShaderFormat : uint8_t {
-  kDefault = 0,
-  kText,
-  kGlsl,
-  kSpirvAsm,
-  kSpirvHex,
-};
-
-enum class ShaderType : uint8_t {
-  kCompute = 0,
-  kGeometry,
-  kFragment,
-  kVertex,
-  kTessellationControl,
-  kTessellationEvaluation,
-};
-
 const char kPassThroughShader[] = R"(; SPIR-V
 ; Version: 1.0
 ; Generator: Khronos Glslang Reference Front End; 7

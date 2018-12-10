@@ -15,7 +15,9 @@
 #ifndef SRC_VKSCRIPT_PARSER_H_
 #define SRC_VKSCRIPT_PARSER_H_
 
+#include <memory>
 #include <string>
+#include <utility>
 
 #include "amber/result.h"
 #include "src/parser.h"
@@ -32,7 +34,9 @@ class Parser : public amber::Parser {
 
   // amber::Parser
   Result Parse(const std::string& data) override;
-  const amber::Script* GetScript() const override { return &script_; }
+  std::unique_ptr<amber::Script> GetScript() override {
+    return std::move(script_);
+  }
 
   Result ProcessRequireBlockForTesting(const std::string& block) {
     return ProcessRequireBlock(block);
@@ -55,7 +59,7 @@ class Parser : public amber::Parser {
   Result ProcessVertexDataBlock(const std::string&);
   Result ProcessTestBlock(const std::string&);
 
-  vkscript::Script script_;
+  std::unique_ptr<vkscript::Script> script_;
 };
 
 }  // namespace vkscript

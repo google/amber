@@ -21,12 +21,14 @@
 #include <vector>
 
 #include "src/make_unique.h"
+#include "src/shader_data.h"
 #include "src/tokenizer.h"
 
 namespace amber {
 namespace amberscript {
 
-Parser::Parser() : amber::Parser() {}
+Parser::Parser()
+    : amber::Parser(), script_(MakeUnique<amberscript::Script>()) {}
 
 Parser::~Parser() = default;
 
@@ -230,7 +232,7 @@ Result Parser::ParseShaderBlock() {
     shader->SetFormat(ShaderFormat::kSpirvAsm);
     shader->SetData(kPassThroughShader);
 
-    r = script_.AddShader(std::move(shader));
+    r = script_->AddShader(std::move(shader));
     if (!r.IsSuccess())
       return r;
 
@@ -258,7 +260,7 @@ Result Parser::ParseShaderBlock() {
   if (!token->IsString() || token->AsString() != "END")
     return Result("SHADER missing END command");
 
-  r = script_.AddShader(std::move(shader));
+  r = script_->AddShader(std::move(shader));
   if (!r.IsSuccess())
     return r;
 
@@ -317,7 +319,7 @@ Result Parser::ParsePipelineBlock() {
   if (!r.IsSuccess())
     return r;
 
-  r = script_.AddPipeline(std::move(pipeline));
+  r = script_->AddPipeline(std::move(pipeline));
   if (!r.IsSuccess())
     return r;
 
@@ -329,7 +331,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
   if (!token->IsString())
     return Result("invalid token in ATTACH command");
 
-  auto* shader = script_.GetShader(token->AsString());
+  auto* shader = script_->GetShader(token->AsString());
   if (!shader)
     return Result("unknown shader in ATTACH command");
 
@@ -345,7 +347,7 @@ Result Parser::ParsePipelineEntryPoint(Pipeline* pipeline) {
   if (!token->IsString())
     return Result("missing shader name in ENTRY_POINT command");
 
-  auto* shader = script_.GetShader(token->AsString());
+  auto* shader = script_->GetShader(token->AsString());
   if (!shader)
     return Result("unknown shader in ENTRY_POINT command");
 
@@ -365,7 +367,7 @@ Result Parser::ParsePipelineShaderOptimizations(Pipeline* pipeline) {
   if (!token->IsString())
     return Result("missing shader name in SHADER_OPTIMIZATION command");
 
-  auto* shader = script_.GetShader(token->AsString());
+  auto* shader = script_->GetShader(token->AsString());
   if (!shader)
     return Result("unknown shader in SHADER_OPTIMIZATION command");
 
@@ -465,7 +467,7 @@ Result Parser::ParseBuffer() {
     return Result("unknown BUFFER command provided: " + cmd);
   }
 
-  r = script_.AddBuffer(std::move(buffer));
+  r = script_->AddBuffer(std::move(buffer));
   if (!r.IsSuccess())
     return r;
 

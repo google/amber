@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "amber/result.h"
-#include "src/shader_data.h"
+#include "amber/shader_info.h"
 
 namespace amber {
 namespace vkscript {

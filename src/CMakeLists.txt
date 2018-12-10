@@ -27,6 +27,7 @@ set(AMBER_SOURCES
     format.cc
     parser.cc
     pipeline_data.cc
+    recipe.cc
     result.cc
     sleep.cc
     script.cc
@@ -83,6 +84,7 @@ if (NOT ${AMBER_SKIP_TESTS})
     buffer_test.cc
     command_data_test.cc
     result_test.cc
+    script_test.cc
     shader_compiler_test.cc
     tokenizer_test.cc
     verifier_test.cc

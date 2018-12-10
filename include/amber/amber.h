@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "amber/recipe.h"
 #include "amber/result.h"
 
 namespace amber {
@@ -43,8 +44,6 @@ struct Options {
   EngineType engine = EngineType::kVulkan;
   /// Holds engine specific configuration.
   std::unique_ptr<EngineConfig> config;
-  /// Set true to only parse the given script, does not execute the engine.
-  bool parse_only = false;
 };
 
 /// Main interface to the Amber environment.
@@ -53,14 +52,17 @@ class Amber {
   Amber();
   ~Amber();
 
-  /// Executes the given |data| script with the provided |opts|. Returns a
-  /// |Result| which indicates if the execution succeded.
-  amber::Result Execute(const std::string& data, const Options& opts);
+  /// Parse the given |data| into the |recipe|.
+  amber::Result Parse(const std::string& data, amber::Recipe* recipe);
 
-  /// Executes the given |data| script with the provided |opts|. Will use
+  /// Executes the given |recipe| with the provided |opts|. Returns a
+  /// |Result| which indicates if the execution succeded.
+  amber::Result Execute(const amber::Recipe* recipe, const Options& opts);
+
+  /// Executes the given |recipe| with the provided |opts|. Will use
   /// |shader_map| to lookup shader data before attempting to compile the
   /// shader if possible.
-  amber::Result ExecuteWithShaderData(const std::string& data,
+  amber::Result ExecuteWithShaderData(const amber::Recipe* recipe,
                                       const Options& opts,
                                       const ShaderMap& shader_data);
 };

@@ -107,8 +107,9 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (vkQueueSubmit(queue_, 1, &submit_info, fence_) != VK_SUCCESS)
     return Result("Vulkan::Calling vkQueueSubmit Fail");
 
-  VkResult r = vkWaitForFences(device_, 1, &fence_, VK_TRUE,
-                               timeout_ms * 1000 * 1000 /* nanosecond */);
+  VkResult r = vkWaitForFences(
+      device_, 1, &fence_, VK_TRUE,
+      static_cast<uint64_t>(timeout_ms) * 1000ULL * 1000ULL /* nanosecond */);
   if (r == VK_TIMEOUT)
     return Result("Vulkan::Calling vkWaitForFences Timeout");
   if (r != VK_SUCCESS)
