@@ -227,19 +227,22 @@ TEST_F(VkScriptParserTest, IndicesBlock) {
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
-  auto& nodes = ToVkScript(script.get())->Nodes();
-  ASSERT_EQ(1U, nodes.size());
-  ASSERT_TRUE(nodes[0]->IsIndices());
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+  ASSERT_EQ(BufferType::kIndex, buffers[0]->GetBufferType());
 
-  auto& indices = nodes[0]->AsIndices()->Indices();
-  ASSERT_EQ(3U, indices.size());
+  auto buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetDatumType().IsUint16());
+  EXPECT_EQ(3U, buffer->GetSize());
+  auto& data = buffer->GetData();
+  ASSERT_EQ(3U, data.size());
 
-  EXPECT_TRUE(indices[0].IsInteger());
-  EXPECT_EQ(1, indices[0].AsUint16());
-  EXPECT_TRUE(indices[1].IsInteger());
-  EXPECT_EQ(2, indices[1].AsUint16());
-  EXPECT_TRUE(indices[2].IsInteger());
-  EXPECT_EQ(3, indices[2].AsUint16());
+  EXPECT_TRUE(data[0].IsInteger());
+  EXPECT_EQ(1, data[0].AsUint16());
+  EXPECT_TRUE(data[1].IsInteger());
+  EXPECT_EQ(2, data[1].AsUint16());
+  EXPECT_TRUE(data[2].IsInteger());
+  EXPECT_EQ(3, data[2].AsUint16());
 }
 
 TEST_F(VkScriptParserTest, IndicesBlockMultipleLines) {
@@ -256,16 +259,16 @@ TEST_F(VkScriptParserTest, IndicesBlockMultipleLines) {
   Result r = parser.ProcessIndicesBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto amber_script = parser.GetScript();
-  auto& nodes = ToVkScript(amber_script.get())->Nodes();
-  ASSERT_EQ(1U, nodes.size());
-  ASSERT_TRUE(nodes[0]->IsIndices());
+  auto script = parser.GetScript();
+  auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+  ASSERT_EQ(buffers[0]->GetBufferType(), BufferType::kIndex);
 
-  auto& indices = nodes[0]->AsIndices()->Indices();
-  ASSERT_EQ(results.size(), indices.size());
+  auto& data = buffers[0]->GetData();
+  ASSERT_EQ(results.size(), data.size());
   for (size_t i = 0; i < results.size(); ++i) {
-    EXPECT_TRUE(indices[i].IsInteger());
-    EXPECT_EQ(results[i], indices[i].AsUint16());
+    EXPECT_TRUE(data[i].IsInteger());
+    EXPECT_EQ(results[i], data[i].AsUint16());
   }
 }
 

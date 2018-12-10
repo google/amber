@@ -297,9 +297,12 @@ Result Parser::ProcessIndicesBlock(const std::string& data) {
     type.SetType(DataType::kUint16);
 
     auto b = MakeUnique<Buffer>(BufferType::kIndex);
+    b->SetName("indices");
     b->SetDatumType(type);
     b->SetData(std::move(indices));
-    script_->AddIndexBuffer(std::move(b));
+    Result r = script_->AddBuffer(std::move(b));
+    if (!r.IsSuccess())
+      return r;
   }
 
   return {};

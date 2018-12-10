@@ -30,7 +30,6 @@
 namespace amber {
 namespace vkscript {
 
-class IndicesNode;
 class RequireNode;
 class VertexDataNode;
 
@@ -38,11 +37,9 @@ class Node {
  public:
   virtual ~Node();
 
-  bool IsIndices() const { return node_type_ == NodeType::kIndices; }
   bool IsRequire() const { return node_type_ == NodeType::kRequire; }
   bool IsVertexData() const { return node_type_ == NodeType::kVertexData; }
 
-  IndicesNode* AsIndices();
   RequireNode* AsRequire();
   VertexDataNode* AsVertexData();
 
@@ -79,17 +76,6 @@ class RequireNode : public Node {
 
  private:
   std::vector<Requirement> requirements_;
-};
-
-class IndicesNode : public Node {
- public:
-  explicit IndicesNode(std::unique_ptr<Buffer> buffer);
-  ~IndicesNode() override;
-
-  const std::vector<Value>& Indices() const { return buffer_->GetData(); }
-
- private:
-  std::unique_ptr<Buffer> buffer_;
 };
 
 class VertexDataNode : public Node {

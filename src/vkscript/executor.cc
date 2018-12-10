@@ -90,13 +90,8 @@ Result Executor::Execute(Engine* engine,
     }
   }
 
-  // Process Indices nodes
-  for (const auto& node : script->Nodes()) {
-    if (!node->IsIndices())
-      continue;
-
-    r = engine->SetBuffer(BufferType::kIndex, 0, Format(),
-                          node->AsIndices()->Indices());
+  for (const auto& buf : script->GetBuffers()) {
+    r = engine->SetBuffer(buf->GetBufferType(), 0, Format(), buf->GetData());
     if (!r.IsSuccess())
       return r;
   }

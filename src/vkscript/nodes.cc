@@ -24,10 +24,6 @@ Node::Node(NodeType type) : node_type_(type) {}
 
 Node::~Node() = default;
 
-IndicesNode* Node::AsIndices() {
-  return static_cast<IndicesNode*>(this);
-}
-
 RequireNode* Node::AsRequire() {
   return static_cast<RequireNode*>(this);
 }
@@ -54,11 +50,6 @@ void RequireNode::AddRequirement(Feature feature,
                                  std::unique_ptr<Format> format) {
   requirements_.emplace_back(feature, std::move(format));
 }
-
-IndicesNode::IndicesNode(std::unique_ptr<Buffer> buffer)
-    : Node(NodeType::kIndices), buffer_(std::move(buffer)) {}
-
-IndicesNode::~IndicesNode() = default;
 
 VertexDataNode::VertexDataNode() : Node(NodeType::kVertexData) {}
 

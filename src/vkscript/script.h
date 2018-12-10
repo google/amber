@@ -37,7 +37,6 @@ class Script : public amber::Script {
   ~Script() override;
 
   void AddRequireNode(std::unique_ptr<RequireNode> node);
-  void AddIndexBuffer(std::unique_ptr<Buffer> b);
   void AddVertexData(std::unique_ptr<VertexDataNode> node);
 
   const std::vector<std::unique_ptr<Node>>& Nodes() const {
