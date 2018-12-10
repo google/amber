@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/vulkan/storage_buffer_descriptor.h"
+#include "src/vulkan/buffer_descriptor.h"
 
 #include <algorithm>
+#include <cassert>
 #include <utility>
 #include <vector>
 
@@ -37,15 +38,19 @@ void SetValueForBuffer(void* memory, const std::vector<Value>& values) {
 
 }  // namespace
 
-StorageBufferDescriptor::StorageBufferDescriptor(VkDevice device,
-                                                 uint32_t desc_set,
-                                                 uint32_t binding)
-    : Descriptor(DescriptorType::kStorageBuffer, device, desc_set, binding) {}
+BufferDescriptor::BufferDescriptor(DescriptorType type,
+                                   VkDevice device,
+                                   uint32_t desc_set,
+                                   uint32_t binding)
+    : Descriptor(type, device, desc_set, binding) {
+  assert(type == DescriptorType::kStorageBuffer ||
+         type == DescriptorType::kUniformBuffer);
+}
 
-StorageBufferDescriptor::~StorageBufferDescriptor() = default;
+BufferDescriptor::~BufferDescriptor() = default;
 
 // TODO(jaebaek): Add unittests for this method.
-void StorageBufferDescriptor::FillBufferWithData(const SSBOData& data) {
+void BufferDescriptor::FillBufferWithData(const BufferData& data) {
   uint8_t* ptr =
       static_cast<uint8_t*>(buffer_->HostAccessibleMemoryPtr()) + data.offset;
   switch (data.type) {
@@ -74,29 +79,29 @@ void StorageBufferDescriptor::FillBufferWithData(const SSBOData& data) {
   }
 }
 
-Result StorageBufferDescriptor::CreateOrResizeIfNeeded(
+Result BufferDescriptor::CreateOrResizeIfNeeded(
     VkCommandBuffer command,
     const VkPhysicalDeviceMemoryProperties& properties) {
-  const auto& ssbo_data_queue = GetSSBODataQueue();
+  const auto& buffer_data_queue = GetBufferDataQueue();
 
-  if (ssbo_data_queue.empty())
+  if (buffer_data_queue.empty())
     return {};
 
-  auto ssbo_data_with_last_offset = std::max_element(
-      ssbo_data_queue.begin(), ssbo_data_queue.end(),
-      [](const SSBOData& a, const SSBOData& b) {
+  auto buffer_data_with_last_offset = std::max_element(
+      buffer_data_queue.begin(), buffer_data_queue.end(),
+      [](const BufferData& a, const BufferData& b) {
         return static_cast<size_t>(a.offset) + a.size_in_bytes <
                static_cast<size_t>(b.offset) + b.size_in_bytes;
       });
   size_t new_size_in_bytes =
-      static_cast<size_t>(ssbo_data_with_last_offset->offset) +
-      ssbo_data_with_last_offset->size_in_bytes;
+      static_cast<size_t>(buffer_data_with_last_offset->offset) +
+      buffer_data_with_last_offset->size_in_bytes;
 
   if (!buffer_) {
     // Create buffer
     buffer_ = MakeUnique<Buffer>(GetDevice(), new_size_in_bytes, properties);
 
-    Result r = buffer_->Initialize(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+    Result r = buffer_->Initialize(GetVkBufferUsage() |
                                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT);
     if (!r.IsSuccess())
@@ -108,7 +113,7 @@ Result StorageBufferDescriptor::CreateOrResizeIfNeeded(
     auto new_buffer =
         MakeUnique<Buffer>(GetDevice(), new_size_in_bytes, properties);
 
-    Result r = new_buffer->Initialize(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+    Result r = new_buffer->Initialize(GetVkBufferUsage() |
                                       VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
                                       VK_BUFFER_USAGE_TRANSFER_DST_BIT);
     if (!r.IsSuccess())
@@ -124,26 +129,25 @@ Result StorageBufferDescriptor::CreateOrResizeIfNeeded(
   return {};
 }
 
-void StorageBufferDescriptor::UpdateResourceIfNeeded(VkCommandBuffer command) {
-  const auto& ssbo_data_queue = GetSSBODataQueue();
+void BufferDescriptor::UpdateResourceIfNeeded(VkCommandBuffer command) {
+  const auto& buffer_data_queue = GetBufferDataQueue();
 
-  if (ssbo_data_queue.empty())
+  if (buffer_data_queue.empty())
     return;
 
-  for (const auto& data : ssbo_data_queue) {
+  for (const auto& data : buffer_data_queue) {
     FillBufferWithData(data);
   }
-  ClearSSBODataQueue();
+  ClearBufferDataQueue();
 
   buffer_->CopyToDevice(command);
 }
 
-Result StorageBufferDescriptor::SendDataToHostIfNeeded(
-    VkCommandBuffer command) {
+Result BufferDescriptor::SendDataToHostIfNeeded(VkCommandBuffer command) {
   return buffer_->CopyToHost(command);
 }
 
-Result StorageBufferDescriptor::UpdateDescriptorSetIfNeeded(
+Result BufferDescriptor::UpdateDescriptorSetIfNeeded(
     VkDescriptorSet descriptor_set) {
   if (!IsDescriptorSetUpdateNeeded())
     return {};
@@ -154,10 +158,10 @@ Result StorageBufferDescriptor::UpdateDescriptorSetIfNeeded(
   buffer_info.range = VK_WHOLE_SIZE;
 
   return Descriptor::UpdateDescriptorSetForBuffer(
-      descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, buffer_info);
+      descriptor_set, GetVkDescriptorType(), buffer_info);
 }
 
-ResourceInfo StorageBufferDescriptor::GetResourceInfo() {
+ResourceInfo BufferDescriptor::GetResourceInfo() {
   ResourceInfo info = {};
   info.type = ResourceInfoType::kBuffer;
   info.size_in_bytes = buffer_->GetSizeInBytes();
@@ -165,7 +169,7 @@ ResourceInfo StorageBufferDescriptor::GetResourceInfo() {
   return info;
 }
 
-void StorageBufferDescriptor::Shutdown() {
+void BufferDescriptor::Shutdown() {
   buffer_->Shutdown();
 }
 
