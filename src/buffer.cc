@@ -22,7 +22,9 @@ Buffer::~Buffer() = default;
 
 DataBuffer* Buffer::AsDataBuffer() { return static_cast<DataBuffer*>(this); }
 
-FormatBuffer* Buffer::AsFormatBuffer() { return static_cast<FormatBuffer*>(this); }
+FormatBuffer* Buffer::AsFormatBuffer() {
+  return static_cast<FormatBuffer*>(this);
+}
 
 DataBuffer::DataBuffer(BufferType type) : Buffer(type) {}
 

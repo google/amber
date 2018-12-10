@@ -16,6 +16,7 @@
 #define SRC_BUFFER_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>

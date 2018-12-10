@@ -55,6 +55,25 @@ Result Executor::Execute(Engine* engine,
       pipeline_type = PipelineType::kCompute;
   }
 
+  // Handle Image and Depth buffers early so they are available when we call
+  // the CreatePipeline method.
+  for (const auto& buf : script->GetBuffers()) {
+    // Image and depth are handled earler. They will be moved to the pipeline
+    // object when it exists.
+    if (buf->GetBufferType() != BufferType::kImage &&
+        buf->GetBufferType() != BufferType::kDepth) {
+      continue;
+    }
+
+    Result r = engine->SetBuffer(
+          buf->GetBufferType(),
+          buf->GetLocation(),
+          buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
+          buf->GetData());
+    if (!r.IsSuccess())
+      return r;
+  }
+
   // TODO(jaebaek): Support multiple pipelines.
   Result r = engine->CreatePipeline(pipeline_type);
   if (!r.IsSuccess())
@@ -62,6 +81,13 @@ Result Executor::Execute(Engine* engine,
 
   // Process Buffers
   for (const auto& buf : script->GetBuffers()) {
+    // Image and depth are handled earler. They will be moved to the pipeline
+    // object when it exists.
+    if (buf->GetBufferType() == BufferType::kImage ||
+        buf->GetBufferType() == BufferType::kDepth) {
+      continue;
+    }
+
     r = engine->SetBuffer(
           buf->GetBufferType(),
           buf->GetLocation(),
