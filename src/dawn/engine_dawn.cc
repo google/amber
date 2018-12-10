@@ -236,10 +236,6 @@ Result EngineDawn::CreatePipeline(PipelineType type) {
   return {};
 }
 
-Result EngineDawn::AddRequirement(Feature, const Format*) {
-  return Result("Dawn:AddRequirement not implemented");
-}
-
 Result EngineDawn::SetShader(ShaderType type,
                              const std::vector<uint32_t>& code) {
   ::dawn::ShaderModuleDescriptor descriptor;

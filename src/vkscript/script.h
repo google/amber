@@ -27,22 +27,10 @@
 namespace amber {
 namespace vkscript {
 
-class Node;
-class RequireNode;
-
 class Script : public amber::Script {
  public:
   Script();
   ~Script() override;
-
-  void AddRequireNode(std::unique_ptr<RequireNode> node);
-
-  const std::vector<std::unique_ptr<Node>>& Nodes() const {
-    return test_nodes_;
-  }
-
- private:
-  std::vector<std::unique_ptr<Node>> test_nodes_;
 };
 
 }  // namespace vkscript

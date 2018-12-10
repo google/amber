@@ -239,7 +239,11 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
       if (fmt == nullptr)
         return Result("Failed to parse framebuffer format");
 
-      node->AddRequirement(feature, std::move(fmt));
+      auto framebuffer = MakeUnique<FormatBuffer>(BufferType::kColor);
+      framebuffer->SetName("framebuffer");
+      framebuffer->SetFormat(std::move(fmt));
+      framebuffer->SetLocation(0);  // Only one image attachment in vkscript
+      pipeline_->AddImageAttachment(std::move(framebuffer));
     } else if (feature == Feature::kDepthStencil) {
       token = tokenizer.NextToken();
       if (!token->IsString())
@@ -250,7 +254,11 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
       if (fmt == nullptr)
         return Result("Failed to parse depthstencil format");
 
-      node->AddRequirement(feature, std::move(fmt));
+      auto depthbuffer = MakeUnique<FormatBuffer>(BufferType::kDepth);
+      depthbuffer->SetName("depth_stencil_buffer");
+      depthbuffer->SetFormat(std::move(fmt));
+      depthbuffer->SetLocation(0);
+      pipeline_->AddDepthStencilAttachment(std::move(depthbuffer));
     } else if (feature == Feature::kFenceTimeout) {
       token = tokenizer.NextToken();
       if (!token->IsInteger())

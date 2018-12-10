@@ -108,24 +108,6 @@ Result EngineVulkan::Shutdown() {
   return {};
 }
 
-Result EngineVulkan::AddRequirement(Feature feature, const Format* fmt) {
-  if (feature == Feature::kFramebuffer) {
-    if (fmt != nullptr)
-      color_frame_format_ = ToVkFormat(fmt->GetFormatType());
-    return {};
-  }
-
-  if (feature == Feature::kDepthStencil) {
-    if (fmt != nullptr)
-      depth_frame_format_ = ToVkFormat(fmt->GetFormatType());
-    return {};
-  }
-
-  return Result(
-      "Vulkan::AddRequirement features and extensions must be handled by "
-      "Initialize()");
-}
-
 Result EngineVulkan::CreatePipeline(PipelineType type) {
   const auto& engine_data = GetEngineData();
 
