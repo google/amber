@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VULKAN_STORAGE_BUFFER_DESCRIPTOR_H_
-#define SRC_VULKAN_STORAGE_BUFFER_DESCRIPTOR_H_
+#ifndef SRC_VULKAN_BUFFER_DESCRIPTOR_H_
+#define SRC_VULKAN_BUFFER_DESCRIPTOR_H_
 
 #include <memory>
 #include <vector>
@@ -29,12 +29,19 @@
 namespace amber {
 namespace vulkan {
 
-class StorageBufferDescriptor : public Descriptor {
+// Among Vulkan descriptor types, this class handles Storage Buffer
+// a.k.a. SSBO and Uniform Buffer a.k.a. UBO.
+class BufferDescriptor : public Descriptor {
  public:
-  StorageBufferDescriptor(VkDevice device, uint32_t desc_set, uint32_t binding);
-  ~StorageBufferDescriptor();
+  BufferDescriptor(DescriptorType type,
+                   VkDevice device,
+                   uint32_t desc_set,
+                   uint32_t binding);
+  ~BufferDescriptor();
 
-  void FillBufferWithData(const SSBOData& data);
+  // |data| contains information of what parts of |buffer_| must be
+  // updated as what values. This method conducts the update.
+  void FillBufferWithData(const BufferData& data);
 
   // Descriptor
   Result CreateOrResizeIfNeeded(
@@ -47,10 +54,22 @@ class StorageBufferDescriptor : public Descriptor {
   void Shutdown() override;
 
  private:
+  VkBufferUsageFlagBits GetVkBufferUsage() const {
+    return GetType() == DescriptorType::kStorageBuffer
+               ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+               : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+  }
+
+  VkDescriptorType GetVkDescriptorType() const {
+    return GetType() == DescriptorType::kStorageBuffer
+               ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
+               : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  }
+
   std::unique_ptr<Buffer> buffer_;
 };
 
 }  // namespace vulkan
 }  // namespace amber
 
-#endif  // SRC_VULKAN_STORAGE_BUFFER_DESCRIPTOR_H_
+#endif  // SRC_VULKAN_BUFFER_DESCRIPTOR_H_

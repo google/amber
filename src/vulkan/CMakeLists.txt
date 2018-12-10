@@ -15,6 +15,7 @@
 set(VULKAN_ENGINE_SOURCES
     bit_copy.cc
     buffer.cc
+    buffer_descriptor.cc
     command.cc
     compute_pipeline.cc
     descriptor.cc
@@ -26,7 +27,6 @@ set(VULKAN_ENGINE_SOURCES
     image.cc
     pipeline.cc
     graphics_pipeline.cc
-    storage_buffer_descriptor.cc
     vertex_buffer.cc
 )
 
