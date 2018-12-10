@@ -136,9 +136,9 @@ Result ShaderCompiler::ParseHex(const std::string& data,
   return {};
 }
 
+#if AMBER_ENABLE_SHADERC
 Result ShaderCompiler::CompileGlsl(Shader* shader,
                                    std::vector<uint32_t>* result) const {
-#if AMBER_ENABLE_SHADERC
   shaderc::Compiler compiler;
   shaderc::CompileOptions options;
 
@@ -165,8 +165,12 @@ Result ShaderCompiler::CompileGlsl(Shader* shader,
     return Result(module.GetErrorMessage());
 
   std::copy(module.cbegin(), module.cend(), std::back_inserter(*result));
-#endif  // AMBER_ENABLE_SHADERC
   return {};
 }
+#else
+Result ShaderCompiler::CompileGlsl(Shader*, std::vector<uint32_t>*) const {
+  return {};
+}
+#endif  // AMBER_ENABLE_SHADERC
 
 }  // namespace amber
