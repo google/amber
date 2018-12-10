@@ -131,6 +131,10 @@ Result GraphicsPipeline::CreateRenderPass() {
   if (color_format_ != VK_FORMAT_UNDEFINED) {
     attachment_desc.push_back(kDefaultAttachmentDesc);
     attachment_desc.back().format = color_format_;
+    attachment_desc.back().initialLayout =
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    attachment_desc.back().finalLayout =
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     color_refer.attachment = static_cast<uint32_t>(attachment_desc.size() - 1);
     color_refer.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -142,6 +146,10 @@ Result GraphicsPipeline::CreateRenderPass() {
   if (depth_stencil_format_ != VK_FORMAT_UNDEFINED) {
     attachment_desc.push_back(kDefaultAttachmentDesc);
     attachment_desc.back().format = depth_stencil_format_;
+    attachment_desc.back().initialLayout =
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    attachment_desc.back().finalLayout =
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     depth_refer.attachment = static_cast<uint32_t>(attachment_desc.size() - 1);
     depth_refer.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -358,9 +366,14 @@ Result GraphicsPipeline::SendBufferDataIfNeeded() {
                                         memory_properties_);
 }
 
-void GraphicsPipeline::ActivateRenderPassIfNeeded() {
+Result GraphicsPipeline::ActivateRenderPassIfNeeded() {
   if (render_pass_state_ == RenderPassState::kActive)
-    return;
+    return {};
+
+  Result r = frame_->ChangeFrameImageLayout(command_->GetCommandBuffer(),
+                                            FrameImageState::kClearOrDraw);
+  if (!r.IsSuccess())
+    return r;
 
   VkRenderPassBeginInfo render_begin_info = {};
   render_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -370,6 +383,7 @@ void GraphicsPipeline::ActivateRenderPassIfNeeded() {
   vkCmdBeginRenderPass(command_->GetCommandBuffer(), &render_begin_info,
                        VK_SUBPASS_CONTENTS_INLINE);
   render_pass_state_ = RenderPassState::kActive;
+  return {};
 }
 
 void GraphicsPipeline::DeactivateRenderPassIfNeeded() {
@@ -447,14 +461,9 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   if (!r.IsSuccess())
     return r;
 
-  r = frame_->ChangeFrameImageLayout(command_->GetCommandBuffer(),
-                                     FrameImageState::kClearOrDraw);
+  r = ActivateRenderPassIfNeeded();
   if (!r.IsSuccess())
     return r;
-
-  // TODO(jaebaek): When multiple clear and draw commands exist, handle
-  //                begin/end render pass properly.
-  ActivateRenderPassIfNeeded();
 
   VkClearAttachment clear_attachment = {};
   clear_attachment.aspectMask = aspect;
@@ -507,7 +516,6 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
   if (!r.IsSuccess())
     return r;
 
-  // TODO(jaebaek): Handle primitive topology.
   if (pipeline_ == VK_NULL_HANDLE) {
     r = CreateVkGraphicsPipeline(ToVkTopology(command->GetTopology()));
     if (!r.IsSuccess())
@@ -522,10 +530,9 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
   if (!r.IsSuccess())
     return r;
 
-  frame_->ChangeFrameImageLayout(command_->GetCommandBuffer(),
-                                 FrameImageState::kClearOrDraw);
-
-  ActivateRenderPassIfNeeded();
+  r = ActivateRenderPassIfNeeded();
+  if (!r.IsSuccess())
+    return r;
 
   BindVkDescriptorSets();
   BindVkPipeline();
@@ -548,7 +555,9 @@ Result GraphicsPipeline::ProcessCommands() {
   if (!r.IsSuccess())
     return r;
 
-  ActivateRenderPassIfNeeded();
+  r = ActivateRenderPassIfNeeded();
+  if (!r.IsSuccess())
+    return r;
   DeactivateRenderPassIfNeeded();
 
   r = frame_->CopyColorImageToHost(command_->GetCommandBuffer());

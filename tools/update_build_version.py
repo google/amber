@@ -42,26 +42,31 @@ def command_output(cmd, directory):
 
 
 def describe(directory):
+  if not os.path.exists(directory):
+    return "-"
   return command_output(
       ['git', 'log', '-1', '--format=%h'], directory).rstrip().decode()
 
 
 def get_version_string(project, directory):
-  return "#define {}_VERSION \"{}\"".format(project.upper(), describe(directory))
+  name = project.upper().replace('-', '_')
+  return "#define {}_VERSION \"{}\"".format(name, describe(directory))
 
 
 def main():
-  if len(sys.argv) != 7:
-    print('usage: {} <outdir> <amber-dir> <spirv-tools-dir> <spirv-headers> <glslang-dir> <shaderc-dir>'.format(
+  if len(sys.argv) != 4:
+    print('usage: {} <outdir> <amber-dir> <third_party>'.format(
       sys.argv[0]))
     sys.exit(1)
 
   outdir = sys.argv[1]
+  srcdir = sys.argv[3]
 
-  projects = ['amber', 'spirv_tools', 'spirv_headers', 'glslang', 'shaderc']
-  new_content = ''.join([
-    '{}\n'.format(get_version_string(p, d))
-    for (p, d) in zip(projects, sys.argv[2:])
+  projects = ['spirv-tools', 'spirv-headers', 'glslang', 'shaderc']
+  new_content = get_version_string('amber', sys.argv[2]) + "\n"
+  new_content = new_content + ''.join([
+    '{}\n'.format(get_version_string(p, srcdir + p))
+    for p in projects
   ])
 
   file = outdir + "/" + OUTFILE

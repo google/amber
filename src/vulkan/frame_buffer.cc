@@ -89,10 +89,22 @@ Result FrameBuffer::ChangeFrameImageLayout(VkCommandBuffer command,
           "FrameBuffer::ChangeFrameImageLayout new layout cannot be kProbe "
           "from kInit");
     }
-    // Note that we set the final layout of RenderPass as
-    // VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, thus we must not change
-    // image layout of frame buffer from color attachment to transfer
-    // source here.
+
+    if (color_image_) {
+      color_image_->ChangeLayout(command,
+                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                 VK_PIPELINE_STAGE_TRANSFER_BIT);
+    }
+    if (depth_image_) {
+      depth_image_->ChangeLayout(
+          command, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+          VK_PIPELINE_STAGE_TRANSFER_BIT);
+    }
+
     frame_image_layout_ = FrameImageState::kProbe;
     return {};
   }
@@ -113,7 +125,7 @@ Result FrameBuffer::ChangeFrameImageLayout(VkCommandBuffer command,
                                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
   }
-  frame_image_layout_ = layout;
+  frame_image_layout_ = FrameImageState::kClearOrDraw;
   return {};
 }
 

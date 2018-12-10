@@ -42,6 +42,21 @@ cmake -GNinja ../..
 ninja
 ```
 
+### Optional Components
+
+Amber, by default, enables testing, SPIRV-Tools and Shaderc. Each of these can
+be disabled by using the appropriate flags to CMake. Note, disabling SPIRV-Tools
+will disable Shaderc automatically.
+
+The available flags which can be defined are:
+ * AMBER_SKIP_TESTS
+ * AMBER_SKIP_SPIRV_TOOLS
+ * AMBER_SKIP_SHADERC
+
+```
+cmake -DAMBER_SKIP_TESTS=True -DAMBER_SKIP_SPIRV_TOOLS=True -GNinja ../..
+```
+
 ## Build Bots
 
 There are a number of build bots to verify Amber continues to compile and run
