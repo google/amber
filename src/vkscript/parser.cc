@@ -296,7 +296,7 @@ Result Parser::ProcessIndicesBlock(const std::string& data) {
     DatumType type;
     type.SetType(DataType::kUint16);
 
-    auto b = MakeUnique<Buffer>(BufferType::kIndex);
+    auto b = MakeUnique<DataBuffer>(BufferType::kIndex);
     b->SetName("indices");
     b->SetDatumType(type);
     b->SetData(std::move(indices));
@@ -321,7 +321,11 @@ Result Parser::ProcessVertexDataBlock(const std::string& data) {
     return {};
 
   // Process the header line.
-  std::vector<VertexDataNode::Header> headers;
+  struct Header {
+    uint8_t location;
+    std::unique_ptr<Format> format;
+  };
+  std::vector<Header> headers;
   while (!token->IsEOL() && !token->IsEOS()) {
     // Because of the way the tokenizer works we'll see a number then a string
     // the string will start with a slash which we have to remove.
@@ -397,11 +401,14 @@ Result Parser::ProcessVertexDataBlock(const std::string& data) {
     }
   }
 
-  auto node = MakeUnique<VertexDataNode>();
-  for (size_t i = 0; i < headers.size(); ++i)
-    node->SetSegment(std::move(headers[i]), std::move(values[i]));
-
-  script_->AddVertexData(std::move(node));
+  for (size_t i = 0; i < headers.size(); ++i) {
+    auto buffer = MakeUnique<FormatBuffer>(BufferType::kVertex);
+    buffer->SetName("Vertices" + std::to_string(i));
+    buffer->SetFormat(std::move(headers[i].format));
+    buffer->SetLocation(headers[i].location);
+    buffer->SetData(std::move(values[i]));
+    script_->AddBuffer(std::move(buffer));
+  }
 
   return {};
 }

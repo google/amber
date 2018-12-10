@@ -21,31 +21,31 @@ namespace amber {
 
 using BufferTest = testing::Test;
 
-TEST_F(BufferTest, BufferEmptyByDefault) {
-  Buffer b(BufferType::kColor);
+TEST_F(BufferTest, DataBufferEmptyByDefault) {
+  DataBuffer b(BufferType::kColor);
   EXPECT_EQ(static_cast<size_t>(0U), b.GetSize());
   EXPECT_EQ(static_cast<size_t>(0U), b.GetSizeInBytes());
 }
 
-TEST_F(BufferTest, BufferSize) {
+TEST_F(BufferTest, DataBufferSize) {
   DatumType type;
   type.SetType(DataType::kInt16);
 
-  Buffer b(BufferType::kColor);
+  DataBuffer b(BufferType::kColor);
   b.SetDatumType(type);
   b.SetSize(10);
   EXPECT_EQ(10, b.GetSize());
   EXPECT_EQ(2 * 10, b.GetSizeInBytes());
 }
 
-TEST_F(BufferTest, BufferSizeFromData) {
+TEST_F(BufferTest, DataBufferSizeFromData) {
   DatumType type;
   type.SetType(DataType::kInt16);
 
   std::vector<Value> values;
   values.resize(5);
 
-  Buffer b(BufferType::kColor);
+  DataBuffer b(BufferType::kColor);
   b.SetDatumType(type);
   b.SetData(std::move(values));
 
@@ -53,14 +53,14 @@ TEST_F(BufferTest, BufferSizeFromData) {
   EXPECT_EQ(2 * 5, b.GetSizeInBytes());
 }
 
-TEST_F(BufferTest, BufferSizeFromDataOverrideSize) {
+TEST_F(BufferTest, DataBufferSizeFromDataOverrideSize) {
   DatumType type;
   type.SetType(DataType::kInt16);
 
   std::vector<Value> values;
   values.resize(5);
 
-  Buffer b(BufferType::kColor);
+  DataBuffer b(BufferType::kColor);
   b.SetDatumType(type);
   b.SetSize(20);
   b.SetData(std::move(values));
@@ -69,13 +69,13 @@ TEST_F(BufferTest, BufferSizeFromDataOverrideSize) {
   EXPECT_EQ(2 * 5, b.GetSizeInBytes());
 }
 
-TEST_F(BufferTest, BufferSizeMatrix) {
+TEST_F(BufferTest, DataBufferSizeMatrix) {
   DatumType type;
   type.SetType(DataType::kInt16);
   type.SetRowCount(2);
   type.SetColumnCount(3);
 
-  Buffer b(BufferType::kColor);
+  DataBuffer b(BufferType::kColor);
   b.SetDatumType(type);
   b.SetSize(10);
   EXPECT_EQ(10, b.GetSize());
