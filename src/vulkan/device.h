@@ -16,6 +16,7 @@
 #define SRC_VULKAN_DEVICE_H_
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "amber/result.h"
