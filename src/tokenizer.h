@@ -80,6 +80,13 @@ class Token {
     return uint64_t(std::strtoull(string_value_.c_str(), nullptr, 16));
   }
 
+  /// The OriginalString is set for integer and double values to store the
+  /// unparsed number which we can return in error messages.
+  void SetOriginalString(const std::string& orig_string) {
+    string_value_ = orig_string;
+  }
+  std::string ToOriginalString() const { return string_value_; }
+
  private:
   TokenType type_;
   std::string string_value_;

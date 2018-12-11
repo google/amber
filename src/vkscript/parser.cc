@@ -218,10 +218,10 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
        token = tokenizer.NextToken()) {
     if (token->IsEOL())
       continue;
-
     if (!token->IsString()) {
-      return Result(
-          make_error(tokenizer, "Failed to parse requirements block."));
+      return Result(make_error(
+          tokenizer,
+          "Invalid token in requirements block: " + token->ToOriginalString()));
     }
 
     std::string str = token->AsString();
@@ -244,7 +244,8 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       auto fmt = fmt_parser.Parse(token->AsString());
       if (fmt == nullptr) {
         return Result(
-            make_error(tokenizer, "Failed to parse framebuffer format"));
+            make_error(tokenizer, "Failed to parse framebuffer format: " +
+                                      token->ToOriginalString()));
       }
 
       auto framebuffer = MakeUnique<FormatBuffer>(BufferType::kColor);
@@ -261,7 +262,8 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       auto fmt = fmt_parser.Parse(token->AsString());
       if (fmt == nullptr) {
         return Result(
-            make_error(tokenizer, "Failed to parse depthstencil format"));
+            make_error(tokenizer, "Failed to parse depthstencil format: " +
+                                      token->ToOriginalString()));
       }
 
       auto depthbuffer = MakeUnique<FormatBuffer>(BufferType::kDepth);
@@ -282,7 +284,8 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
     token = tokenizer.NextToken();
     if (!token->IsEOS() && !token->IsEOL()) {
       return Result(make_error(
-          tokenizer, "Failed to parser requirements block: invalid token"));
+          tokenizer, "Failed to parser requirements block: invalid token: " +
+                         token->ToOriginalString()));
     }
   }
   return {};
@@ -299,10 +302,12 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
       continue;
 
     if (!token->IsInteger())
-      return Result(make_error(tokenizer, "Invalid value in indices block"));
+      return Result(make_error(tokenizer, "Invalid value in indices block: " +
+                                              token->ToOriginalString()));
     if (token->AsUint64() >
         static_cast<uint64_t>(std::numeric_limits<uint16_t>::max())) {
-      return Result(make_error(tokenizer, "Value too large in indices block"));
+      return Result(make_error(tokenizer, "Value too large in indices block: " +
+                                              token->ToOriginalString()));
     }
 
     indices.push_back(Value());
@@ -349,7 +354,8 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
     // the string will start with a slash which we have to remove.
     if (!token->IsInteger()) {
       return Result(
-          make_error(tokenizer, "Unable to process vertex data header"));
+          make_error(tokenizer, "Unable to process vertex data header: " +
+                                    token->ToOriginalString()));
     }
 
     uint8_t loc = token->AsUint8();
@@ -357,18 +363,21 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
     token = tokenizer.NextToken();
     if (!token->IsString()) {
       return Result(
-          make_error(tokenizer, "Unable to process vertex data header"));
+          make_error(tokenizer, "Unable to process vertex data header: " +
+                                    token->ToOriginalString()));
     }
 
     std::string fmt_name = token->AsString();
     if (fmt_name.size() < 2)
-      return Result(make_error(tokenizer, "Vertex data format too short"));
+      return Result(make_error(tokenizer, "Vertex data format too short: " +
+                                              token->ToOriginalString()));
 
     FormatParser parser;
     auto fmt = parser.Parse(fmt_name.substr(1, fmt_name.length()));
     if (!fmt) {
       return Result(
-          make_error(tokenizer, "Invalid format in vertex data header"));
+          make_error(tokenizer, "Invalid format in vertex data header: " +
+                                    fmt_name.substr(1, fmt_name.length())));
     }
 
     headers.push_back({loc, std::move(fmt)});
@@ -392,7 +401,8 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
       if (header.format->GetPackSize() > 0) {
         if (!token->IsHex())
           return Result(
-              make_error(tokenizer, "Invalid packed value in Vertex Data"));
+              make_error(tokenizer, "Invalid packed value in Vertex Data: " +
+                                        token->ToOriginalString()));
 
         Value v;
         v.SetIntValue(token->AsHex());
@@ -418,7 +428,8 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
           } else if (token->IsInteger()) {
             v.SetIntValue(token->AsUint64());
           } else {
-            return Result(make_error(tokenizer, "Invalid vertex data value"));
+            return Result(make_error(tokenizer, "Invalid vertex data value: " +
+                                                    token->ToOriginalString()));
           }
 
           value_data.push_back(v);

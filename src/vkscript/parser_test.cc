@@ -289,7 +289,7 @@ TEST_F(VkScriptParserTest, IndicesBlockBadValue) {
   Parser parser;
   Result r = parser.ProcessSectionForTesting(section);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("0: Invalid value in indices block", r.Error());
+  EXPECT_EQ("0: Invalid value in indices block: a", r.Error());
 }
 
 TEST_F(VkScriptParserTest, IndicesBlockValueTooLarge) {
@@ -303,7 +303,7 @@ TEST_F(VkScriptParserTest, IndicesBlockValueTooLarge) {
   Parser parser;
   Result r = parser.ProcessSectionForTesting(section);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("0: Value too large in indices block", r.Error());
+  EXPECT_EQ("0: Value too large in indices block: 100000000000", r.Error());
 }
 
 TEST_F(VkScriptParserTest, VertexDataEmpty) {
@@ -500,7 +500,7 @@ TEST_F(VkScriptParserTest, VertexDataIncorrectValue) {
   Parser parser;
   Result r = parser.ProcessSectionForTesting(section);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("2: Invalid vertex data value", r.Error());
+  EXPECT_EQ("2: Invalid vertex data value: StringValue", r.Error());
 }
 
 TEST_F(VkScriptParserTest, VertexDataRowsWithHex) {
@@ -549,7 +549,7 @@ TEST_F(VkScriptParserTest, VertexDataRowsWithHexWrongColumn) {
   Parser parser;
   Result r = parser.ProcessSectionForTesting(section);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("2: Invalid vertex data value", r.Error());
+  EXPECT_EQ("2: Invalid vertex data value: 0xffff0000", r.Error());
 }
 
 }  // namespace vkscript
