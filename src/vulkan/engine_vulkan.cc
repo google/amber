@@ -103,6 +103,10 @@ Result EngineVulkan::Shutdown() {
     vkDestroyShaderModule(device_->GetDevice(), it->second, nullptr);
 
   pipeline_->Shutdown();
+
+  if (vertex_buffer_)
+    vertex_buffer_->Shutdown();
+
   pool_->Shutdown();
   device_->Shutdown();
   return {};
@@ -185,12 +189,14 @@ Result EngineVulkan::SetBuffer(BufferType type,
   if (!pipeline_)
     return Result("Vulkan::SetBuffer no Pipeline exists");
 
-  // TODO(jaebaek): Doublecheck those buffers are only for the graphics
-  //                pipeline.
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::SetBuffer for Non-Graphics Pipeline");
 
-  pipeline_->AsGraphics()->SetBuffer(type, location, format, values);
+  if (!vertex_buffer_)
+    vertex_buffer_ = MakeUnique<VertexBuffer>(device_->GetDevice());
+
+  pipeline_->AsGraphics()->SetVertexBuffer(type, location, format, values,
+                                           vertex_buffer_.get());
   return {};
 }
 
@@ -229,7 +235,7 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
 
   auto* graphics = pipeline_->AsGraphics();
 
-  Result r = graphics->ResetPipelineAndVertexBuffer();
+  Result r = graphics->ResetPipeline();
   if (!r.IsSuccess())
     return r;
 
@@ -269,7 +275,10 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   values[6].SetDoubleValue(static_cast<double>(x + width));
   values[7].SetDoubleValue(static_cast<double>(y));
 
-  r = graphics->SetBuffer(BufferType::kVertex, 0, format, values);
+  auto vertex_buffer = MakeUnique<VertexBuffer>(device_->GetDevice());
+
+  r = graphics->SetVertexBuffer(BufferType::kVertex, 0, format, values,
+                                vertex_buffer.get());
   if (!r.IsSuccess())
     return r;
 
@@ -281,14 +290,23 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   draw.SetVertexCount(4);
   draw.SetInstanceCount(1);
 
-  return graphics->Draw(&draw);
+  r = graphics->Draw(&draw, vertex_buffer.get());
+  if (!r.IsSuccess())
+    return r;
+
+  r = graphics->ResetPipeline();
+  if (!r.IsSuccess())
+    return r;
+
+  vertex_buffer->Shutdown();
+  return {};
 }
 
 Result EngineVulkan::DoDrawArrays(const DrawArraysCommand* command) {
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::DrawArrays for Non-Graphics Pipeline");
 
-  return pipeline_->AsGraphics()->Draw(command);
+  return pipeline_->AsGraphics()->Draw(command, vertex_buffer_.get());
 }
 
 Result EngineVulkan::DoCompute(const ComputeCommand* command) {

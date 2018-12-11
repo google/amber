@@ -36,7 +36,7 @@ class VertexBuffer {
 
   Result SendVertexData(VkCommandBuffer command,
                         const VkPhysicalDeviceMemoryProperties& properties);
-  bool VertexDataSent() { return !is_vertex_data_pending_; }
+  bool VertexDataSent() const { return !is_vertex_data_pending_; }
 
   void SetData(uint8_t location,
                const Format& format,

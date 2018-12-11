@@ -25,6 +25,7 @@
 #include "src/vulkan/command.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/pipeline.h"
+#include "src/vulkan/vertex_buffer.h"
 #include "vulkan/vulkan.h"
 
 namespace amber {
@@ -75,6 +76,7 @@ class EngineVulkan : public Engine {
   std::unique_ptr<Device> device_;
   std::unique_ptr<CommandPool> pool_;
   std::unique_ptr<Pipeline> pipeline_;
+  std::unique_ptr<VertexBuffer> vertex_buffer_;
 
   std::unordered_map<ShaderType, VkShaderModule, CastHash<ShaderType>> modules_;
 

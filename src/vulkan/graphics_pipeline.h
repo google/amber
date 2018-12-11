@@ -48,10 +48,11 @@ class GraphicsPipeline : public Pipeline {
                     VkCommandPool pool,
                     VkQueue queue);
 
-  Result SetBuffer(BufferType type,
-                   uint8_t location,
-                   const Format& format,
-                   const std::vector<Value>& values);
+  Result SetVertexBuffer(BufferType type,
+                         uint8_t location,
+                         const Format& format,
+                         const std::vector<Value>& values,
+                         VertexBuffer* vertex_buffer);
 
   Result Clear();
   Result ClearBuffer(const VkClearValue& clear_value,
@@ -63,11 +64,11 @@ class GraphicsPipeline : public Pipeline {
   Result SetClearStencil(uint32_t stencil);
   Result SetClearDepth(float depth);
 
-  Result Draw(const DrawArraysCommand* command);
+  Result Draw(const DrawArraysCommand* command, VertexBuffer* vertex_buffer);
 
   const FrameBuffer* GetFrame() const { return frame_.get(); }
 
-  Result ResetPipelineAndVertexBuffer();
+  Result ResetPipeline();
 
   uint32_t GetWidth() const { return frame_width_; }
   uint32_t GetHeight() const { return frame_height_; }
@@ -82,14 +83,15 @@ class GraphicsPipeline : public Pipeline {
     kInactive,
   };
 
-  Result CreateVkGraphicsPipeline(VkPrimitiveTopology topology);
+  Result CreateVkGraphicsPipeline(VkPrimitiveTopology topology,
+                                  const VertexBuffer* vertex_buffer);
 
   Result CreateRenderPass();
   Result ActivateRenderPassIfNeeded();
   void DeactivateRenderPassIfNeeded();
 
   // Send vertex and index buffers.
-  Result SendBufferDataIfNeeded();
+  Result SendBufferDataIfNeeded(VertexBuffer* vertex_buffer);
 
   // TODO(jaebaek): Implement image/ssbo probe.
   Result SubmitProbeCommand();
@@ -120,8 +122,6 @@ class GraphicsPipeline : public Pipeline {
   float clear_color_a_ = 0;
   uint32_t clear_stencil_ = 0;
   float clear_depth_ = 1.0f;
-
-  std::unique_ptr<VertexBuffer> vertex_buffer_;
 };
 
 }  // namespace vulkan
