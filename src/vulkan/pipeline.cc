@@ -65,76 +65,46 @@ void Pipeline::Shutdown() {
   if (r.IsSuccess())
     command_->SubmitAndReset(fence_timeout_ms_);
 
-  for (size_t i = 0; i < descriptor_sets_.size(); ++i) {
-    vkDestroyDescriptorSetLayout(device_, descriptor_sets_[i].layout, nullptr);
-    if (descriptor_sets_[i].empty)
+  for (auto& info : descriptor_set_info_) {
+    vkDestroyDescriptorSetLayout(device_, info.layout, nullptr);
+    if (info.empty)
       continue;
 
-    vkDestroyDescriptorPool(device_, descriptor_sets_[i].pool, nullptr);
+    vkDestroyDescriptorPool(device_, info.pool, nullptr);
+
+    for (auto& desc : info.descriptors_)
+      desc->Shutdown();
   }
 
   command_->Shutdown();
   vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
-  for (size_t i = 0; i < descriptors_.size(); ++i)
-    descriptors_[i]->Shutdown();
   vkDestroyPipeline(device_, pipeline_, nullptr);
 }
 
-void Pipeline::SortDescriptorsBySetAndBinding() {
-  if (!need_sort_descriptors_)
-    return;
-
-  std::sort(descriptors_.begin(), descriptors_.end(),
-            [](const std::unique_ptr<Descriptor>& a,
-               const std::unique_ptr<Descriptor>& b) {
-              if (a->GetDescriptorSet() == b->GetDescriptorSet())
-                return a->GetBinding() < b->GetBinding();
-              return a->GetDescriptorSet() < b->GetDescriptorSet();
-            });
-  need_sort_descriptors_ = false;
-}
-
 Result Pipeline::CreateDescriptorSetLayouts() {
-  SortDescriptorsBySetAndBinding();
+  for (auto& info : descriptor_set_info_) {
+    VkDescriptorSetLayoutCreateInfo desc_info = {};
+    desc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
-  size_t i = 0;
-  uint32_t next_desc = 0;
-  while (i < descriptors_.size()) {
+    // If two descriptor sets are discontinuous, we must put empty
+    // descriptor set layouts between them.
     std::vector<VkDescriptorSetLayoutBinding> bindings;
-    const uint32_t current_desc = descriptors_[i]->GetDescriptorSet();
-    while (i < descriptors_.size() &&
-           current_desc == descriptors_[i]->GetDescriptorSet()) {
-      bindings.emplace_back();
-      bindings.back().binding = descriptors_[i]->GetBinding();
-      bindings.back().descriptorType =
-          ToVkDescriptorType(descriptors_[i]->GetType());
-      bindings.back().descriptorCount = 1;
-      bindings.back().stageFlags = VK_SHADER_STAGE_ALL;
-      ++i;
+    if (!info.empty) {
+      for (auto& desc : info.descriptors_) {
+        bindings.emplace_back();
+        bindings.back().binding = desc->GetBinding();
+        bindings.back().descriptorType = ToVkDescriptorType(desc->GetType());
+        bindings.back().descriptorCount = 1;
+        bindings.back().stageFlags = VK_SHADER_STAGE_ALL;
+      }
+
+      desc_info.bindingCount = bindings.size();
+      desc_info.pBindings = bindings.data();
     }
 
-    while (next_desc <= current_desc) {
-      VkDescriptorSetLayoutCreateInfo desc_info = {};
-      desc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-
-      // If two descriptor sets are discontinuous, we must put empty
-      // descriptor set layouts between them.
-      DescriptorSet descriptor_set = {};
-      if (next_desc == current_desc) {
-        desc_info.bindingCount = bindings.size();
-        desc_info.pBindings = bindings.data();
-        descriptor_set.empty = false;
-      }
-
-      VkDescriptorSetLayout desc_layout = VK_NULL_HANDLE;
-      if (vkCreateDescriptorSetLayout(device_, &desc_info, nullptr,
-                                      &desc_layout) != VK_SUCCESS) {
-        return Result("Vulkan::Calling vkCreateDescriptorSetLayout Fail");
-      }
-
-      descriptor_set.layout = desc_layout;
-      descriptor_sets_.push_back(descriptor_set);
-      ++next_desc;
+    if (vkCreateDescriptorSetLayout(device_, &desc_info, nullptr,
+                                    &info.layout) != VK_SUCCESS) {
+      return Result("Vulkan::Calling vkCreateDescriptorSetLayout Fail");
     }
   }
 
@@ -142,29 +112,25 @@ Result Pipeline::CreateDescriptorSetLayouts() {
 }
 
 Result Pipeline::CreateDescriptorPools() {
-  SortDescriptorsBySetAndBinding();
+  for (auto& info : descriptor_set_info_) {
+    if (info.empty)
+      continue;
 
-  size_t i = 0;
-  while (i < descriptors_.size()) {
     std::vector<VkDescriptorPoolSize> pool_sizes;
-    const uint32_t current_desc = descriptors_[i]->GetDescriptorSet();
-    while (i < descriptors_.size() &&
-           current_desc == descriptors_[i]->GetDescriptorSet()) {
-      auto type = ToVkDescriptorType(descriptors_[i]->GetType());
+    for (auto& desc : info.descriptors_) {
+      auto type = ToVkDescriptorType(desc->GetType());
       auto it = find_if(pool_sizes.begin(), pool_sizes.end(),
                         [&type](const VkDescriptorPoolSize& size) {
                           return size.type == type;
                         });
       if (it != pool_sizes.end()) {
         it->descriptorCount += 1;
-        ++i;
         continue;
       }
 
       pool_sizes.emplace_back();
       pool_sizes.back().type = type;
       pool_sizes.back().descriptorCount = 1;
-      ++i;
     }
 
     VkDescriptorPoolCreateInfo pool_info = {};
@@ -173,47 +139,32 @@ Result Pipeline::CreateDescriptorPools() {
     pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
     pool_info.pPoolSizes = pool_sizes.data();
 
-    VkDescriptorPool desc_pool = VK_NULL_HANDLE;
-    if (vkCreateDescriptorPool(device_, &pool_info, nullptr, &desc_pool) !=
+    if (vkCreateDescriptorPool(device_, &pool_info, nullptr, &info.pool) !=
         VK_SUCCESS) {
       return Result("Vulkan::Calling vkCreateDescriptorPool Fail");
     }
-
-    if (static_cast<uint32_t>(descriptor_sets_.size()) <= current_desc) {
-      return Result(
-          "Pipeline::CreateDescriptorPools: More descriptor sets requested "
-          "than descriptor set layouts provided");
-    }
-
-    if (descriptor_sets_[current_desc].empty) {
-      return Result(
-          "Pipeline::CreateDescriptorPools: Used a descriptor set with an "
-          "empty layout");
-    }
-
-    descriptor_sets_[current_desc].pool = desc_pool;
   }
 
   return {};
 }
 
 Result Pipeline::CreateDescriptorSets() {
-  for (size_t i = 0; i < descriptor_sets_.size(); ++i) {
-    if (descriptor_sets_[i].empty)
+  for (size_t i = 0; i < descriptor_set_info_.size(); ++i) {
+    if (descriptor_set_info_[i].empty)
       continue;
 
     VkDescriptorSetAllocateInfo desc_set_info = {};
     desc_set_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    desc_set_info.descriptorPool = descriptor_sets_[i].pool;
+    desc_set_info.descriptorPool = descriptor_set_info_[i].pool;
     desc_set_info.descriptorSetCount = 1;
-    desc_set_info.pSetLayouts = &descriptor_sets_[i].layout;
+    desc_set_info.pSetLayouts = &descriptor_set_info_[i].layout;
 
     VkDescriptorSet desc_set = VK_NULL_HANDLE;
     if (vkAllocateDescriptorSets(device_, &desc_set_info, &desc_set) !=
         VK_SUCCESS) {
       return Result("Vulkan::Calling vkAllocateDescriptorSets Fail");
     }
-    descriptor_sets_[i].vk_desc_set = desc_set;
+    descriptor_set_info_[i].vk_desc_set = desc_set;
   }
 
   return {};
@@ -221,7 +172,7 @@ Result Pipeline::CreateDescriptorSets() {
 
 Result Pipeline::CreatePipelineLayout() {
   std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
-  for (const auto& desc_set : descriptor_sets_)
+  for (const auto& desc_set : descriptor_set_info_)
     descriptor_set_layouts.push_back(desc_set.layout);
 
   VkPipelineLayoutCreateInfo pipeline_layout_info = {};
@@ -255,52 +206,51 @@ Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
   if (!r.IsSuccess())
     return r;
 
-  return CreatePipelineLayout();
-}
-
-Result Pipeline::UpdateDescriptorSetsIfNeeded() {
-  SortDescriptorsBySetAndBinding();
-
-  size_t i = 0;
-  while (i < descriptors_.size()) {
-    for (const uint32_t current_desc = descriptors_[i]->GetDescriptorSet();
-         i < descriptors_.size() &&
-         current_desc == descriptors_[i]->GetDescriptorSet();
-         ++i) {
-      if (static_cast<uint32_t>(descriptor_sets_.size()) <= current_desc) {
-        return Result(
-            "Pipeline::UpdateDescriptorSetsIfNeeded: More descriptor sets "
-            "requested than descriptor set layouts provided");
-      }
-
-      if (descriptor_sets_[current_desc].empty) {
-        return Result(
-            "Pipeline::UpdateDescriptorSetsIfNeeded: Used a descriptor set "
-            "with an empty layout");
-      }
-
-      Result r = descriptors_[i]->UpdateDescriptorSetIfNeeded(
-          descriptor_sets_[current_desc].vk_desc_set);
-      if (!r.IsSuccess())
-        return r;
-    }
-  }
+  r = CreatePipelineLayout();
+  if (!r.IsSuccess())
+    return r;
 
   descriptor_related_objects_already_created_ = true;
   return {};
 }
 
+Result Pipeline::UpdateDescriptorSetsIfNeeded() {
+  for (auto& info : descriptor_set_info_) {
+    if (info.empty)
+      continue;
+
+    for (auto& desc : info.descriptors_) {
+      Result r = desc->UpdateDescriptorSetIfNeeded(info.vk_desc_set);
+      if (!r.IsSuccess())
+        return r;
+    }
+  }
+
+  return {};
+}
+
 Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
+  if (buffer_command == nullptr)
+    return Result("Pipeline::AddDescriptor BufferCommand is nullptr");
+
   if (!buffer_command->IsSSBO() && !buffer_command->IsUniform())
     return Result("Pipeline::AddDescriptor not supported buffer type");
 
-  Descriptor* desc = nullptr;
-  for (size_t i = 0; i < descriptors_.size(); ++i) {
-    if (descriptors_[i]->GetDescriptorSet() ==
-            buffer_command->GetDescriptorSet() &&
-        descriptors_[i]->GetBinding() == buffer_command->GetBinding()) {
-      desc = descriptors_[i].get();
+  const uint32_t desc_set = buffer_command->GetDescriptorSet();
+  if (desc_set >= descriptor_set_info_.size()) {
+    for (size_t i = descriptor_set_info_.size();
+         i <= static_cast<size_t>(desc_set); ++i) {
+      descriptor_set_info_.emplace_back();
     }
+  }
+
+  descriptor_set_info_[desc_set].empty = false;
+
+  auto& descriptors = descriptor_set_info_[desc_set].descriptors_;
+  Descriptor* desc = nullptr;
+  for (auto& descriptor : descriptors) {
+    if (descriptor->GetBinding() == buffer_command->GetBinding())
+      desc = descriptor.get();
   }
 
   if (desc == nullptr) {
@@ -309,10 +259,9 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
     auto buffer_desc = MakeUnique<BufferDescriptor>(
         desc_type, device_, buffer_command->GetDescriptorSet(),
         buffer_command->GetBinding());
-    descriptors_.push_back(std::move(buffer_desc));
-    need_sort_descriptors_ = true;
+    descriptors.push_back(std::move(buffer_desc));
 
-    desc = descriptors_.back().get();
+    desc = descriptors.back().get();
   }
 
   if (buffer_command->IsSSBO() && !desc->IsStorageBuffer()) {
@@ -335,15 +284,20 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
 }
 
 Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
-  if (descriptors_.size() == 0)
-    return {};
-
   bool data_send_needed = false;
-  for (const auto& desc : descriptors_) {
-    if (desc->HasDataNotSent()) {
-      data_send_needed = true;
-      break;
+  for (auto& info : descriptor_set_info_) {
+    if (info.empty)
+      continue;
+
+    for (auto& desc : info.descriptors_) {
+      if (desc->HasDataNotSent()) {
+        data_send_needed = true;
+        break;
+      }
     }
+
+    if (data_send_needed)
+      break;
   }
 
   if (!data_send_needed)
@@ -353,11 +307,16 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
   if (!r.IsSuccess())
     return r;
 
-  for (const auto& desc : descriptors_) {
-    r = desc->CreateOrResizeIfNeeded(command_->GetCommandBuffer(),
-                                     memory_properties_);
-    if (!r.IsSuccess())
-      return r;
+  for (auto& info : descriptor_set_info_) {
+    if (info.empty)
+      continue;
+
+    for (auto& desc : info.descriptors_) {
+      r = desc->CreateOrResizeIfNeeded(command_->GetCommandBuffer(),
+                                       memory_properties_);
+      if (!r.IsSuccess())
+        return r;
+    }
   }
 
   r = command_->End();
@@ -378,23 +337,27 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
   if (!r.IsSuccess())
     return r;
 
-  for (const auto& desc : descriptors_) {
-    desc->UpdateResourceIfNeeded(command_->GetCommandBuffer());
+  for (auto& info : descriptor_set_info_) {
+    if (info.empty)
+      continue;
+
+    for (auto& desc : info.descriptors_)
+      desc->UpdateResourceIfNeeded(command_->GetCommandBuffer());
   }
 
   return {};
 }
 
 void Pipeline::BindVkDescriptorSets() {
-  for (size_t i = 0; i < descriptor_sets_.size(); ++i) {
-    if (descriptor_sets_[i].empty)
+  for (size_t i = 0; i < descriptor_set_info_.size(); ++i) {
+    if (descriptor_set_info_[i].empty)
       continue;
 
     vkCmdBindDescriptorSets(command_->GetCommandBuffer(),
                             IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
                                          : VK_PIPELINE_BIND_POINT_COMPUTE,
                             pipeline_layout_, i, 1,
-                            &descriptor_sets_[i].vk_desc_set, 0, nullptr);
+                            &descriptor_set_info_[i].vk_desc_set, 0, nullptr);
   }
 }
 
@@ -407,15 +370,20 @@ void Pipeline::BindVkPipeline() {
 
 Result Pipeline::CopyDescriptorToHost(const uint32_t descriptor_set,
                                       const uint32_t binding) {
+  if (descriptor_set_info_.size() <= descriptor_set) {
+    return Result(
+        "Pipeline::CopyDescriptorToHost no Descriptor class has given "
+        "descriptor set: " +
+        std::to_string(descriptor_set));
+  }
+
   Result r = command_->BeginIfNotInRecording();
   if (!r.IsSuccess())
     return r;
 
-  for (size_t i = 0; i < descriptors_.size(); ++i) {
-    if (descriptors_[i]->GetDescriptorSet() == descriptor_set &&
-        descriptors_[i]->GetBinding() == binding) {
-      return descriptors_[i]->SendDataToHostIfNeeded(
-          command_->GetCommandBuffer());
+  for (auto& desc : descriptor_set_info_[descriptor_set].descriptors_) {
+    if (desc->GetBinding() == binding) {
+      return desc->SendDataToHostIfNeeded(command_->GetCommandBuffer());
     }
   }
 
@@ -428,10 +396,17 @@ Result Pipeline::GetDescriptorInfo(const uint32_t descriptor_set,
                                    const uint32_t binding,
                                    ResourceInfo* info) {
   assert(info);
-  for (size_t i = 0; i < descriptors_.size(); ++i) {
-    if (descriptors_[i]->GetDescriptorSet() == descriptor_set &&
-        descriptors_[i]->GetBinding() == binding) {
-      *info = descriptors_[i]->GetResourceInfo();
+
+  if (descriptor_set_info_.size() <= descriptor_set) {
+    return Result(
+        "Pipeline::CopyDescriptorToHost no Descriptor class has given "
+        "descriptor set: " +
+        std::to_string(descriptor_set));
+  }
+
+  for (auto& desc : descriptor_set_info_[descriptor_set].descriptors_) {
+    if (desc->GetBinding() == binding) {
+      *info = desc->GetResourceInfo();
       return {};
     }
   }
