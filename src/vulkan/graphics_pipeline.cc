@@ -541,10 +541,6 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
   if (!r.IsSuccess())
     return r;
 
-  r = UpdateDescriptorSetsIfNeeded();
-  if (!r.IsSuccess())
-    return r;
-
   r = SendBufferDataIfNeeded();
   if (!r.IsSuccess())
     return r;

@@ -93,10 +93,6 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
   if (!r.IsSuccess())
     return r;
 
-  r = UpdateDescriptorSetsIfNeeded();
-  if (!r.IsSuccess())
-    return r;
-
   BindVkDescriptorSets();
   BindVkPipeline();
 
