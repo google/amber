@@ -173,8 +173,8 @@ Result EngineVulkan::SetBuffer(BufferType type,
                                const std::vector<Value>& values) {
   // Handle image and depth attachments special as they come in before
   // the pipeline is created.
-  if (type == BufferType::kImage || type == BufferType::kDepth) {
-    if (type == BufferType::kImage)
+  if (type == BufferType::kColor || type == BufferType::kDepth) {
+    if (type == BufferType::kColor)
       color_frame_format_ = ToVkFormat(format.GetFormatType());
     else if (type == BufferType::kDepth)
       depth_frame_format_ = ToVkFormat(format.GetFormatType());
