@@ -75,23 +75,11 @@ Result Executor::Execute(Engine* engine,
   if (!r.IsSuccess())
     return r;
 
-  // Process VertexData nodes
-  for (const auto& node : script->Nodes()) {
-    if (!node->IsVertexData())
-      continue;
-
-    const auto data = node->AsVertexData();
-    for (size_t i = 0; i < data->SegmentCount(); ++i) {
-      const auto& header = data->GetHeader(i);
-      r = engine->SetBuffer(BufferType::kVertex, header.location,
-                            *(header.format), data->GetSegment(i));
-      if (!r.IsSuccess())
-        return r;
-    }
-  }
-
   for (const auto& buf : script->GetBuffers()) {
-    r = engine->SetBuffer(buf->GetBufferType(), 0, Format(), buf->GetData());
+    r = engine->SetBuffer(
+        buf->GetBufferType(), buf->GetLocation(),
+        buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
+        buf->GetData());
     if (!r.IsSuccess())
       return r;
   }

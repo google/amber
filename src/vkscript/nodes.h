@@ -31,17 +31,14 @@ namespace amber {
 namespace vkscript {
 
 class RequireNode;
-class VertexDataNode;
 
 class Node {
  public:
   virtual ~Node();
 
   bool IsRequire() const { return node_type_ == NodeType::kRequire; }
-  bool IsVertexData() const { return node_type_ == NodeType::kVertexData; }
 
   RequireNode* AsRequire();
-  VertexDataNode* AsVertexData();
 
  protected:
   explicit Node(NodeType type);
@@ -76,32 +73,6 @@ class RequireNode : public Node {
 
  private:
   std::vector<Requirement> requirements_;
-};
-
-class VertexDataNode : public Node {
- public:
-  struct Header {
-    uint8_t location;
-    std::unique_ptr<Format> format;
-  };
-
-  VertexDataNode();
-  ~VertexDataNode() override;
-
-  void SetSegment(Header&& header, std::vector<Value>&& data);
-  size_t SegmentCount() const { return data_.size(); }
-
-  const Header& GetHeader(size_t idx) const { return data_[idx].header; }
-  const std::vector<Value>& GetSegment(size_t idx) const {
-    return data_[idx].buffer;
-  }
-
- private:
-  struct NodeData {
-    Header header;
-    std::vector<Value> buffer;
-  };
-  std::vector<NodeData> data_;
 };
 
 }  // namespace vkscript

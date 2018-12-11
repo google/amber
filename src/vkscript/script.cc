@@ -36,10 +36,5 @@ void Script::AddRequireNode(std::unique_ptr<RequireNode> node) {
   test_nodes_.push_back(std::move(tn));
 }
 
-void Script::AddVertexData(std::unique_ptr<VertexDataNode> node) {
-  std::unique_ptr<Node> tn(node.release());
-  test_nodes_.push_back(std::move(tn));
-}
-
 }  // namespace vkscript
 }  // namespace amber
