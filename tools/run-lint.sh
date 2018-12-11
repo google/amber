@@ -15,5 +15,5 @@
 
 set -e  # fail on error
 
-./third_party/cpplint/cpplint/cpplint.py `find . -type f -regextype awk -regex "./(src|samples).*"`
+./third_party/cpplint/cpplint/cpplint.py `find src samples -type f`
 ./third_party/cpplint/cpplint/cpplint.py --root include `find ./include -type f`

@@ -432,7 +432,7 @@ Result Parser::ParseBuffer() {
   if (!r.IsSuccess())
     return r;
 
-  auto buffer = MakeUnique<Buffer>(type);
+  auto buffer = MakeUnique<DataBuffer>(type);
 
   token = tokenizer_->NextToken();
   if (!token->IsString())
@@ -474,7 +474,7 @@ Result Parser::ParseBuffer() {
   return {};
 }
 
-Result Parser::ParseBufferFramebuffer(Buffer* buffer) {
+Result Parser::ParseBufferFramebuffer(DataBuffer* buffer) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
     return Result("BUFFER framebuffer missing DIMS values");
@@ -506,7 +506,7 @@ Result Parser::ParseBufferFramebuffer(Buffer* buffer) {
   return ValidateEndOfStatement("BUFFER framebuffer command");
 }
 
-Result Parser::ParseBufferInitializer(Buffer* buffer) {
+Result Parser::ParseBufferInitializer(DataBuffer* buffer) {
   auto token = tokenizer_->NextToken();
   if (!token->IsString())
     return Result("BUFFER invalid data type");
@@ -530,7 +530,7 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
   return Result("unknown initializer for BUFFER");
 }
 
-Result Parser::ParseBufferInitializerSize(Buffer* buffer) {
+Result Parser::ParseBufferInitializerSize(DataBuffer* buffer) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
     return Result("BUFFER size missing");
@@ -552,7 +552,7 @@ Result Parser::ParseBufferInitializerSize(Buffer* buffer) {
   return Result("invalid BUFFER initializer provided");
 }
 
-Result Parser::ParseBufferInitializerFill(Buffer* buffer,
+Result Parser::ParseBufferInitializerFill(DataBuffer* buffer,
                                           uint32_t size_in_items) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
@@ -578,7 +578,7 @@ Result Parser::ParseBufferInitializerFill(Buffer* buffer,
   return ValidateEndOfStatement("BUFFER fill command");
 }
 
-Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
+Result Parser::ParseBufferInitializerSeries(DataBuffer* buffer,
                                             uint32_t size_in_items) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
@@ -627,7 +627,7 @@ Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
   return ValidateEndOfStatement("BUFFER series_from command");
 }
 
-Result Parser::ParseBufferInitializerData(Buffer* buffer) {
+Result Parser::ParseBufferInitializerData(DataBuffer* buffer) {
   auto token = tokenizer_->NextToken();
   if (!token->IsEOL())
     return Result("extra parameters after BUFFER data command");

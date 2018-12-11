@@ -28,10 +28,6 @@ RequireNode* Node::AsRequire() {
   return static_cast<RequireNode*>(this);
 }
 
-VertexDataNode* Node::AsVertexData() {
-  return static_cast<VertexDataNode*>(this);
-}
-
 RequireNode::RequireNode() : Node(NodeType::kRequire) {}
 
 RequireNode::~RequireNode() = default;
@@ -49,14 +45,6 @@ RequireNode::Requirement::~Requirement() = default;
 void RequireNode::AddRequirement(Feature feature,
                                  std::unique_ptr<Format> format) {
   requirements_.emplace_back(feature, std::move(format));
-}
-
-VertexDataNode::VertexDataNode() : Node(NodeType::kVertexData) {}
-
-VertexDataNode::~VertexDataNode() = default;
-
-void VertexDataNode::SetSegment(Header&& header, std::vector<Value>&& data) {
-  data_.push_back({std::move(header), std::move(data)});
 }
 
 }  // namespace vkscript
