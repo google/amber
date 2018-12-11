@@ -95,6 +95,8 @@ class Tokenizer {
 
   std::unique_ptr<Token> NextToken();
   std::string ExtractToNext(const std::string& str);
+
+  void SetCurrentLine(size_t line) { current_line_ = line; }
   size_t GetCurrentLine() const { return current_line_; }
 
  private:

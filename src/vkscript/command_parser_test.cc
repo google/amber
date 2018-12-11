@@ -29,8 +29,8 @@ clear color 255 128 1 100 # set clear color
 clear
 # done)";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -65,8 +65,8 @@ TEST_F(CommandParserTest, DISABLED_UnknownCommand) {}
 TEST_F(CommandParserTest, DrawRect) {
   std::string data = "draw rect 1.2 2.3 200 400.2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -85,8 +85,8 @@ TEST_F(CommandParserTest, DrawRect) {
 TEST_F(CommandParserTest, DrawRectWithOrth) {
   std::string data = "draw rect ortho 1.2 2.3 200 400.2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -105,8 +105,8 @@ TEST_F(CommandParserTest, DrawRectWithOrth) {
 TEST_F(CommandParserTest, DrawRectWithPatch) {
   std::string data = "draw rect patch 1.2 2.3 200 400.2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -125,8 +125,8 @@ TEST_F(CommandParserTest, DrawRectWithPatch) {
 TEST_F(CommandParserTest, DrawRectWithOrthAndPatch) {
   std::string data = "draw rect ortho patch 1.2 2.3 200 400.2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -145,26 +145,26 @@ TEST_F(CommandParserTest, DrawRectWithOrthAndPatch) {
 TEST_F(CommandParserTest, DrawRectTooShort) {
   std::string data = "draw rect 1.2 2.3 400.2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid conversion to double", r.Error());
+  EXPECT_EQ("1: Invalid conversion to double", r.Error());
 }
 
 TEST_F(CommandParserTest, DrawRectExtraParameters) {
   std::string data = "draw rect ortho patch 1.2 2.3 200 400.2 EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Extra parameter to draw rect command", r.Error());
+  EXPECT_EQ("1: Extra parameter to draw rect command", r.Error());
 }
 
 TEST_F(CommandParserTest, DrawArrays) {
   std::string data = "draw arrays GL_LINES 2 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -183,8 +183,8 @@ TEST_F(CommandParserTest, DrawArrays) {
 TEST_F(CommandParserTest, DrawArraysIndexed) {
   std::string data = "draw arrays indexed TRIANGLE_FAN 2 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -203,17 +203,17 @@ TEST_F(CommandParserTest, DrawArraysIndexed) {
 TEST_F(CommandParserTest, DrawArraysExtraParams) {
   std::string data = "draw arrays indexed TRIANGLE_FAN 2 4 EXTRA_PARAM";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Extra parameter to draw arrays command", r.Error());
+  EXPECT_EQ("1: Extra parameter to draw arrays command", r.Error());
 }
 
 TEST_F(CommandParserTest, DrawArraysInstanced) {
   std::string data = "draw arrays instanced LINE_LIST_WITH_ADJACENCY 2 9";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -233,18 +233,18 @@ TEST_F(CommandParserTest, DrawArraysInstancedExtraParams) {
   std::string data =
       "draw arrays instanced LINE_LIST_WITH_ADJACENCY 2 9 4 EXTRA_COMMAND";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Extra parameter to draw arrays command", r.Error());
+  EXPECT_EQ("1: Extra parameter to draw arrays command", r.Error());
 }
 
 TEST_F(CommandParserTest, DrawArraysIndexedAndInstanced) {
   std::string data =
       "draw arrays indexed instanced LINE_LIST_WITH_ADJACENCY 3 9";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -263,8 +263,8 @@ TEST_F(CommandParserTest, DrawArraysIndexedAndInstanced) {
 TEST_F(CommandParserTest, DrawArraysInstancedWithCount) {
   std::string data = "draw arrays instanced LINE_LIST_WITH_ADJACENCY 3 9 12";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -283,44 +283,44 @@ TEST_F(CommandParserTest, DrawArraysInstancedWithCount) {
 TEST_F(CommandParserTest, DrawArraysBadTopology) {
   std::string data = "draw arrays UNKNOWN_TOPO 1 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Unknown parameter to draw arrays: UNKNOWN_TOPO", r.Error());
+  EXPECT_EQ("1: Unknown parameter to draw arrays: UNKNOWN_TOPO", r.Error());
 }
 
 TEST_F(CommandParserTest, DrawArraysTooShort) {
   std::string data = "draw arrays PATCH_LIST 1";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing integer vertex count value for draw arrays", r.Error());
+  EXPECT_EQ("1: Missing integer vertex count value for draw arrays", r.Error());
 }
 
 TEST_F(CommandParserTest, DrawArraysInstanceCountWithoutInstanced) {
   std::string data = "draw arrays PATCH_LIST 1 2 3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Extra parameter to draw arrays command", r.Error());
+  EXPECT_EQ("1: Extra parameter to draw arrays command", r.Error());
 }
 
 TEST_F(CommandParserTest, DrawArraysMissingTopology) {
   std::string data = "draw arrays 1 2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing draw arrays topology", r.Error());
+  EXPECT_EQ("1: Missing draw arrays topology", r.Error());
 }
 
 TEST_F(CommandParserTest, Compute) {
   std::string data = "compute 1 2 3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -336,53 +336,53 @@ TEST_F(CommandParserTest, Compute) {
 TEST_F(CommandParserTest, ComputeTooShort) {
   std::string data = "compute 1 2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing integer value for compute Z entry", r.Error());
+  EXPECT_EQ("1: Missing integer value for compute Z entry", r.Error());
 }
 
 TEST_F(CommandParserTest, ComputeInvalidX) {
   std::string data = "compute 1.2 2 3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing integer value for compute X entry", r.Error());
+  EXPECT_EQ("1: Missing integer value for compute X entry", r.Error());
 }
 
 TEST_F(CommandParserTest, ComputeInvalidY) {
   std::string data = "compute 1 a 3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing integer value for compute Y entry", r.Error());
+  EXPECT_EQ("1: Missing integer value for compute Y entry", r.Error());
 }
 
 TEST_F(CommandParserTest, ComputeInvalidZ) {
   std::string data = "compute 1 2 1.5";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing integer value for compute Z entry", r.Error());
+  EXPECT_EQ("1: Missing integer value for compute Z entry", r.Error());
 }
 
 TEST_F(CommandParserTest, ComputeExtraCommands) {
   std::string data = "compute 1 2 3 EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Extra parameter to compute command", r.Error());
+  EXPECT_EQ("1: Extra parameter to compute command", r.Error());
 }
 
 TEST_F(CommandParserTest, Clear) {
   std::string data = "clear";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -393,17 +393,17 @@ TEST_F(CommandParserTest, Clear) {
 TEST_F(CommandParserTest, ClearExtraParams) {
   std::string data = "clear EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Extra parameter to clear command", r.Error());
+  EXPECT_EQ("1: Extra parameter to clear command", r.Error());
 }
 
 TEST_F(CommandParserTest, ClearDepth) {
   std::string data = "clear depth 0.8";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -417,26 +417,26 @@ TEST_F(CommandParserTest, ClearDepth) {
 TEST_F(CommandParserTest, ClearDepthMissingValue) {
   std::string data = "clear depth";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid conversion to double", r.Error());
+  EXPECT_EQ("1: Invalid conversion to double", r.Error());
 }
 
 TEST_F(CommandParserTest, ClearDepthExtraParameters) {
   std::string data = "clear depth 0.2 EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Extra parameter to clear depth command", r.Error());
+  EXPECT_EQ("1: Extra parameter to clear depth command", r.Error());
 }
 
 TEST_F(CommandParserTest, ClearStencil) {
   std::string data = "clear stencil 8";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -450,35 +450,35 @@ TEST_F(CommandParserTest, ClearStencil) {
 TEST_F(CommandParserTest, ClearStencilMissingValue) {
   std::string data = "clear stencil";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing stencil value for clear stencil command", r.Error());
+  EXPECT_EQ("1: Missing stencil value for clear stencil command", r.Error());
 }
 
 TEST_F(CommandParserTest, ClearStencilExtraParameters) {
   std::string data = "clear stencil 2 EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Extra parameter to clear stencil command", r.Error());
+  EXPECT_EQ("1: Extra parameter to clear stencil command", r.Error());
 }
 
 TEST_F(CommandParserTest, ClearStencilNotInteger) {
   std::string data = "clear stencil 2.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid stencil value for clear stencil command", r.Error());
+  EXPECT_EQ("1: Invalid stencil value for clear stencil command", r.Error());
 }
 
 TEST_F(CommandParserTest, ClearColor) {
   std::string data = "clear color 0.8 0.4 0.2 1.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -495,62 +495,62 @@ TEST_F(CommandParserTest, ClearColor) {
 TEST_F(CommandParserTest, ClearColorMissingParams) {
   std::string data = "clear color 0.8 0.4 0.2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid conversion to double", r.Error());
+  EXPECT_EQ("1: Invalid conversion to double", r.Error());
 }
 
 TEST_F(CommandParserTest, ClearColorExtraParams) {
   std::string data = "clear color 0.8 0.4 0.2 1.3 EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Extra parameter to clear color command", r.Error());
+  EXPECT_EQ("1: Extra parameter to clear color command", r.Error());
 }
 
 TEST_F(CommandParserTest, ClearColorBadR) {
   std::string data = "clear color a 0.4 0.2 0.4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid conversion to double", r.Error());
+  EXPECT_EQ("1: Invalid conversion to double", r.Error());
 }
 
 TEST_F(CommandParserTest, ClearColorBadG) {
   std::string data = "clear color 0.2 a 0.2 0.4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid conversion to double", r.Error());
+  EXPECT_EQ("1: Invalid conversion to double", r.Error());
 }
 
 TEST_F(CommandParserTest, ClearColorBadB) {
   std::string data = "clear color 0.2 0.4 a 0.2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid conversion to double", r.Error());
+  EXPECT_EQ("1: Invalid conversion to double", r.Error());
 }
 
 TEST_F(CommandParserTest, ClearColorBadA) {
   std::string data = "clear color 0.2 0.4 0.2 a";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid conversion to double", r.Error());
+  EXPECT_EQ("1: Invalid conversion to double", r.Error());
 }
 
 TEST_F(CommandParserTest, PatchParameterVertices) {
   std::string data = "patch parameter vertices 9";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -564,46 +564,49 @@ TEST_F(CommandParserTest, PatchParameterVertices) {
 TEST_F(CommandParserTest, PatchParameterVerticesMissingParameter) {
   std::string data = "patch vertices 5";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing parameter flag to patch command", r.Error());
+  EXPECT_EQ("1: Missing parameter flag to patch command", r.Error());
 }
 
 TEST_F(CommandParserTest, PatchParameterVerticesMissingVertices) {
   std::string data = "patch parameter 5";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing vertices flag to patch command", r.Error());
+  EXPECT_EQ("1: Missing vertices flag to patch command", r.Error());
 }
 
 TEST_F(CommandParserTest, PatchParameterVerticesMissingParam) {
   std::string data = "patch parameter vertices";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid count parameter for patch parameter vertices", r.Error());
+  EXPECT_EQ("1: Invalid count parameter for patch parameter vertices",
+            r.Error());
 }
 
 TEST_F(CommandParserTest, PatchParameterVerticesInvalidParam) {
   std::string data = "patch parameter vertices invalid";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid count parameter for patch parameter vertices", r.Error());
+  EXPECT_EQ("1: Invalid count parameter for patch parameter vertices",
+            r.Error());
 }
 
 TEST_F(CommandParserTest, PatchParameterVerticesExtraParam) {
   std::string data = "patch parameter vertices 3 EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Extra parameter for patch parameter vertices command", r.Error());
+  EXPECT_EQ("1: Extra parameter for patch parameter vertices command",
+            r.Error());
 }
 
 struct EntryInfo {
@@ -623,8 +626,8 @@ TEST_F(CommandParserTest, EntryPoint) {
   for (const auto& ep : kEntryPoints) {
     std::string data = std::string(ep.name) + " entrypoint main";
 
-    CommandParser cp;
-    Result r = cp.Parse(data);
+    CommandParser cp(1, data);
+    Result r = cp.Parse();
     ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
     auto& cmds = cp.Commands();
@@ -641,10 +644,10 @@ TEST_F(CommandParserTest, EntryPointNameMissing) {
   for (const auto& ep : kEntryPoints) {
     std::string data = std::string(ep.name) + " entrypoint";
 
-    CommandParser cp;
-    Result r = cp.Parse(data);
+    CommandParser cp(1, data);
+    Result r = cp.Parse();
     ASSERT_FALSE(r.IsSuccess());
-    EXPECT_EQ("Missing entrypoint name", r.Error());
+    EXPECT_EQ("1: Missing entrypoint name", r.Error());
   }
 }
 
@@ -656,10 +659,10 @@ TEST_F(CommandParserTest, EntryPointEntryPointMissing) {
 
     std::string data = std::string(ep.name) + " main";
 
-    CommandParser cp;
-    Result r = cp.Parse(data);
+    CommandParser cp(1, data);
+    Result r = cp.Parse();
     ASSERT_FALSE(r.IsSuccess());
-    EXPECT_EQ("Unknown command: " + std::string(ep.name), r.Error());
+    EXPECT_EQ("1: Unknown command: " + std::string(ep.name), r.Error());
   }
 }
 
@@ -667,10 +670,10 @@ TEST_F(CommandParserTest, EntryPointExtraParam) {
   for (const auto& ep : kEntryPoints) {
     std::string data = std::string(ep.name) + " entrypoint main EXTRA";
 
-    CommandParser cp;
-    Result r = cp.Parse(data);
+    CommandParser cp(1, data);
+    Result r = cp.Parse();
     ASSERT_FALSE(r.IsSuccess());
-    EXPECT_EQ("Extra parameter for entrypoint command", r.Error());
+    EXPECT_EQ("1: Extra parameter for entrypoint command", r.Error());
   }
 }
 
@@ -678,40 +681,40 @@ TEST_F(CommandParserTest, EntryPointInvalidValue) {
   for (const auto& ep : kEntryPoints) {
     std::string data = std::string(ep.name) + " entrypoint 123";
 
-    CommandParser cp;
-    Result r = cp.Parse(data);
+    CommandParser cp(1, data);
+    Result r = cp.Parse();
     ASSERT_FALSE(r.IsSuccess());
-    EXPECT_EQ("Entrypoint name must be a string", r.Error());
+    EXPECT_EQ("1: Entrypoint name must be a string", r.Error());
   }
 }
 
 TEST_F(CommandParserTest, TessellationEntryPointRequiresASuffix) {
   std::string data = "tessellation entrypoint main";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Tessellation entrypoint must have <evaluation|control> in name",
+  EXPECT_EQ("1: Tessellation entrypoint must have <evaluation|control> in name",
             r.Error());
 }
 
 TEST_F(CommandParserTest, TessellationEntryPointRequiresAKnownSuffix) {
   std::string data = "tessellation unknown entrypoint main";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Tessellation entrypoint must have <evaluation|control> in name",
+  EXPECT_EQ("1: Tessellation entrypoint must have <evaluation|control> in name",
             r.Error());
 }
 
 TEST_F(CommandParserTest, InvalidEntryPoint) {
   std::string data = "unknown entrypoint main";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Unknown command: unknown", r.Error());
+  EXPECT_EQ("1: Unknown command: unknown", r.Error());
 }
 
 using CommandParserProbeTest = testing::TestWithParam<bool>;
@@ -722,8 +725,8 @@ TEST_P(CommandParserProbeTest, ProbeRgb) {
   std::string data = (is_relative ? std::string("relative ") : std::string()) +
                      "probe rgb 25 30 0.2 0.4 0.6";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << data << std::endl << r.Error();
 
   auto& cmds = cp.Commands();
@@ -751,8 +754,8 @@ TEST_P(CommandParserProbeTest, ProbeRgba) {
   std::string data = (is_relative ? std::string("relative ") : std::string()) +
                      "probe rgba 25 30 1 255 9 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << data << std::endl << r.Error();
 
   auto& cmds = cp.Commands();
@@ -781,8 +784,8 @@ TEST_P(CommandParserProbeTest, ProbeRect) {
   std::string data = (is_relative ? std::string("relative ") : std::string()) +
                      "probe rect rgba 25 30 200 400 1 255 9 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << data << std::endl << r.Error();
 
   auto& cmds = cp.Commands();
@@ -813,8 +816,8 @@ INSTANTIATE_TEST_CASE_P(ProbeTests,
 TEST_F(CommandParserTest, ProbeAllRGB) {
   std::string data = "probe all rgb 0.2 0.3 0.4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -834,8 +837,8 @@ TEST_F(CommandParserTest, ProbeAllRGB) {
 TEST_F(CommandParserTest, ProbeAllRGBA) {
   std::string data = "probe all rgba 0.2 0.3 0.4 0.5";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -856,8 +859,8 @@ TEST_F(CommandParserTest, ProbeAllRGBA) {
 TEST_F(CommandParserTest, ProbeCommandRectBrackets) {
   std::string data = "relative probe rect rgb (0.5, 0.6, 0.3, 0.4) 1 2 3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -882,8 +885,8 @@ TEST_F(CommandParserTest, ProbeCommandRectBrackets) {
 TEST_F(CommandParserTest, ProbeCommandColorBrackets) {
   std::string data = "relative probe rect rgb 0.5 0.6 0.3 0.4 (1, 2, 3)";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -908,8 +911,8 @@ TEST_F(CommandParserTest, ProbeCommandColorBrackets) {
 TEST_F(CommandParserTest, ProbeCommandColorOptionalCommas) {
   std::string data = "relative probe rect rgb 0.5, 0.6, 0.3 0.4 1 2 3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -1034,65 +1037,65 @@ TEST_F(CommandParserTest, ProbeErrors) {
   };
 
   for (const auto& probe : probes) {
-    CommandParser cp;
-    Result r = cp.Parse(probe.str);
+    CommandParser cp(1, probe.str);
+    Result r = cp.Parse();
     EXPECT_FALSE(r.IsSuccess()) << probe.str;
-    EXPECT_EQ(probe.err, r.Error()) << probe.str;
+    EXPECT_EQ(std::string("1: ") + probe.err, r.Error()) << probe.str;
   }
 }
 
 TEST_F(CommandParserTest, RelativeWithoutProbe) {
   std::string data = "relative unknown";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("relative must be used with probe", r.Error());
+  EXPECT_EQ("1: relative must be used with probe", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeWithInvalidRGBA) {
   std::string data = "probe 1";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid token in probe command", r.Error());
+  EXPECT_EQ("1: Invalid token in probe command", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeWithRectAndInvalidRGB) {
   std::string data = "probe rect 1";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid token in probe command", r.Error());
+  EXPECT_EQ("1: Invalid token in probe command", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeWithRectMissingFormat) {
   std::string data = "probe rect unknown";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid format specified to probe command", r.Error());
+  EXPECT_EQ("1: Invalid format specified to probe command", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeAllMissingFormat) {
   std::string data = "probe all unknown";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid format specified to probe command", r.Error());
+  EXPECT_EQ("1: Invalid format specified to probe command", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeAlWithInvalidRGB) {
   std::string data = "probe all unknown";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid format specified to probe command", r.Error());
+  EXPECT_EQ("1: Invalid format specified to probe command", r.Error());
 }
 
 struct TopologyTestData {
@@ -1107,8 +1110,8 @@ TEST_P(CommandDataPipelineTopologyParser, Topology) {
 
   std::string data = "topology " + std::string(test_data.name);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(test_data.value, cp.PipelineDataForTesting()->GetTopology());
 }
@@ -1154,10 +1157,10 @@ TEST_P(CommandDataPipelineDataInvalidParser, InvalidPipelineParamValue) {
 
   std::string data = std::string(test_data.name) + " 123";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Invalid value for ") + test_data.name + " command",
+  EXPECT_EQ(std::string("1: Invalid value for ") + test_data.name + " command",
             r.Error());
 }
 
@@ -1166,10 +1169,10 @@ TEST_P(CommandDataPipelineDataInvalidParser, MissingTopologyValue) {
 
   std::string data = test_data.name;
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Missing value for ") + test_data.name + " command",
+  EXPECT_EQ(std::string("1: Missing value for ") + test_data.name + " command",
             r.Error());
 }
 
@@ -1178,10 +1181,10 @@ TEST_P(CommandDataPipelineDataInvalidParser, UnknownPipelineParamValue) {
 
   std::string data = std::string(test_data.name) + " UNKNOWN";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Unknown value for ") + test_data.name + " command",
+  EXPECT_EQ(std::string("1: Unknown value for ") + test_data.name + " command",
             r.Error());
 }
 
@@ -1195,11 +1198,12 @@ TEST_P(CommandDataPipelineDataInvalidParser, ExtraPipelineParamValue) {
   std::string data =
       std::string(test_data.name) + " " + test_data.arg + " EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Extra parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Extra parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -1219,7 +1223,7 @@ TEST_F(CommandParserTest, BooleanTrue) {
   } data[] = {{"TRUE"}, {"true"}, {"TRuE"}};
 
   for (const auto& d : data) {
-    CommandParser cp;
+    CommandParser cp(1, "unused");
 
     bool value = false;
     Result r = cp.ParseBooleanForTesting(d.name, &value);
@@ -1234,7 +1238,7 @@ TEST_F(CommandParserTest, BooleanFalse) {
   } data[] = {{"FALSE"}, {"false"}, {"FAlsE"}};
 
   for (const auto& d : data) {
-    CommandParser cp;
+    CommandParser cp(1, "unused");
 
     bool value = true;
     Result r = cp.ParseBooleanForTesting(d.name, &value);
@@ -1249,7 +1253,7 @@ TEST_F(CommandParserTest, BooleanInvalid) {
   } data[] = {{""}, {"Invalid"}};
 
   for (const auto& d : data) {
-    CommandParser cp;
+    CommandParser cp(1, "unused");
 
     bool value = true;
     Result r = cp.ParseBooleanForTesting(d.name, &value);
@@ -1261,8 +1265,8 @@ TEST_F(CommandParserTest, BooleanInvalid) {
 TEST_F(CommandParserTest, PrimitiveRestartEnable) {
   std::string data = "primitiveRestartEnable true";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnablePrimitiveRestart());
 }
@@ -1270,8 +1274,8 @@ TEST_F(CommandParserTest, PrimitiveRestartEnable) {
 TEST_F(CommandParserTest, PrimitiveRestartDisable) {
   std::string data = "primitiveRestartEnable false";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnablePrimitiveRestart());
 }
@@ -1279,8 +1283,8 @@ TEST_F(CommandParserTest, PrimitiveRestartDisable) {
 TEST_F(CommandParserTest, DepthClampEnable) {
   std::string data = "depthClampEnable true";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableDepthClamp());
 }
@@ -1288,8 +1292,8 @@ TEST_F(CommandParserTest, DepthClampEnable) {
 TEST_F(CommandParserTest, DepthClampDisable) {
   std::string data = "depthClampEnable false";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableDepthClamp());
 }
@@ -1297,8 +1301,8 @@ TEST_F(CommandParserTest, DepthClampDisable) {
 TEST_F(CommandParserTest, RasterizerDiscardEnable) {
   std::string data = "rasterizerDiscardEnable true";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableRasterizerDiscard());
 }
@@ -1306,8 +1310,8 @@ TEST_F(CommandParserTest, RasterizerDiscardEnable) {
 TEST_F(CommandParserTest, RasterizerDiscardDisable) {
   std::string data = "rasterizerDiscardEnable false";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableRasterizerDiscard());
 }
@@ -1315,8 +1319,8 @@ TEST_F(CommandParserTest, RasterizerDiscardDisable) {
 TEST_F(CommandParserTest, DepthBiasEnable) {
   std::string data = "depthBiasEnable true";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableDepthBias());
 }
@@ -1324,8 +1328,8 @@ TEST_F(CommandParserTest, DepthBiasEnable) {
 TEST_F(CommandParserTest, DepthBiasDisable) {
   std::string data = "depthBiasEnable false";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableDepthBias());
 }
@@ -1333,8 +1337,8 @@ TEST_F(CommandParserTest, DepthBiasDisable) {
 TEST_F(CommandParserTest, LogicOpEnable) {
   std::string data = "logicOpEnable true";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableLogicOp());
 }
@@ -1342,8 +1346,8 @@ TEST_F(CommandParserTest, LogicOpEnable) {
 TEST_F(CommandParserTest, LogicOpDisable) {
   std::string data = "logicOpEnable false";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableLogicOp());
 }
@@ -1351,8 +1355,8 @@ TEST_F(CommandParserTest, LogicOpDisable) {
 TEST_F(CommandParserTest, BlendEnable) {
   std::string data = "blendEnable true";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableBlend());
 }
@@ -1360,8 +1364,8 @@ TEST_F(CommandParserTest, BlendEnable) {
 TEST_F(CommandParserTest, BlendDisable) {
   std::string data = "blendEnable false";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableBlend());
 }
@@ -1369,8 +1373,8 @@ TEST_F(CommandParserTest, BlendDisable) {
 TEST_F(CommandParserTest, DepthTestEnable) {
   std::string data = "depthTestEnable true";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableDepthTest());
 }
@@ -1378,8 +1382,8 @@ TEST_F(CommandParserTest, DepthTestEnable) {
 TEST_F(CommandParserTest, DepthTestDisable) {
   std::string data = "depthTestEnable false";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableDepthTest());
 }
@@ -1387,8 +1391,8 @@ TEST_F(CommandParserTest, DepthTestDisable) {
 TEST_F(CommandParserTest, DepthWriteEnable) {
   std::string data = "depthWriteEnable true";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableDepthWrite());
 }
@@ -1396,8 +1400,8 @@ TEST_F(CommandParserTest, DepthWriteEnable) {
 TEST_F(CommandParserTest, DepthWriteDisable) {
   std::string data = "depthWriteEnable false";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableDepthWrite());
 }
@@ -1405,8 +1409,8 @@ TEST_F(CommandParserTest, DepthWriteDisable) {
 TEST_F(CommandParserTest, DepthBoundsTestEnable) {
   std::string data = "depthBoundsTestEnable true";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableDepthBoundsTest());
 }
@@ -1414,8 +1418,8 @@ TEST_F(CommandParserTest, DepthBoundsTestEnable) {
 TEST_F(CommandParserTest, DepthBoundsTestDisable) {
   std::string data = "depthBoundsTestEnable false";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableDepthBoundsTest());
 }
@@ -1423,8 +1427,8 @@ TEST_F(CommandParserTest, DepthBoundsTestDisable) {
 TEST_F(CommandParserTest, StencilTestEnable) {
   std::string data = "stencilTestEnable true";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableStencilTest());
 }
@@ -1432,8 +1436,8 @@ TEST_F(CommandParserTest, StencilTestEnable) {
 TEST_F(CommandParserTest, StencilTestDisable) {
   std::string data = "stencilTestEnable false";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableStencilTest());
 }
@@ -1448,10 +1452,10 @@ TEST_P(CommandParserBooleanTests, MissingParam) {
 
   std::string data = std::string(test_data.name);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Missing value for ") + test_data.name + " command",
+  EXPECT_EQ(std::string("1: Missing value for ") + test_data.name + " command",
             r.Error());
 }
 
@@ -1460,10 +1464,10 @@ TEST_P(CommandParserBooleanTests, IllegalParam) {
 
   std::string data = std::string(test_data.name) + " 123";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Invalid value for ") + test_data.name + " command",
+  EXPECT_EQ(std::string("1: Invalid value for ") + test_data.name + " command",
             r.Error());
 }
 
@@ -1472,11 +1476,12 @@ TEST_P(CommandParserBooleanTests, ExtraParam) {
 
   std::string data = std::string(test_data.name) + " true EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Extra parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Extra parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -1506,8 +1511,8 @@ TEST_P(CommandDataPipelinePolygonModeParser, PolygonMode) {
 
   std::string data = "polygonMode " + std::string(test_data.name);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(test_data.value, cp.PipelineDataForTesting()->GetPolygonMode());
 }
@@ -1534,8 +1539,8 @@ TEST_P(CommandDataPipelineCullModeParser, CullMode) {
 
   std::string data = "cullMode " + std::string(test_data.name);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(test_data.value, cp.PipelineDataForTesting()->GetCullMode());
 }
@@ -1567,8 +1572,8 @@ TEST_P(CommandDataPipelineFrontFaceParser, FrontFace) {
 
   std::string data = "frontFace " + std::string(test_data.name);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(test_data.value, cp.PipelineDataForTesting()->GetFrontFace());
 }
@@ -1595,8 +1600,8 @@ TEST_P(CommandDataPipelineLogicOpParser, LogicOp) {
 
   std::string data = "logicOp " + std::string(test_data.name);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(test_data.value, cp.PipelineDataForTesting()->GetLogicOp());
 }
@@ -1626,8 +1631,8 @@ INSTANTIATE_TEST_CASE_P(
 TEST_F(CommandParserTest, DepthBiasConstantFactor) {
   std::string data = "depthBiasConstantFactor 3.4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FLOAT_EQ(3.4f,
                   cp.PipelineDataForTesting()->GetDepthBiasConstantFactor());
@@ -1636,8 +1641,8 @@ TEST_F(CommandParserTest, DepthBiasConstantFactor) {
 TEST_F(CommandParserTest, DepthBiasClamp) {
   std::string data = "depthBiasClamp 3.4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FLOAT_EQ(3.4f, cp.PipelineDataForTesting()->GetDepthBiasClamp());
 }
@@ -1645,8 +1650,8 @@ TEST_F(CommandParserTest, DepthBiasClamp) {
 TEST_F(CommandParserTest, DepthBiasSlopeFactor) {
   std::string data = "depthBiasSlopeFactor 3.4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FLOAT_EQ(3.4f, cp.PipelineDataForTesting()->GetDepthBiasSlopeFactor());
 }
@@ -1654,8 +1659,8 @@ TEST_F(CommandParserTest, DepthBiasSlopeFactor) {
 TEST_F(CommandParserTest, LineWidth) {
   std::string data = "lineWidth 3.4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FLOAT_EQ(3.4f, cp.PipelineDataForTesting()->GetLineWidth());
 }
@@ -1663,8 +1668,8 @@ TEST_F(CommandParserTest, LineWidth) {
 TEST_F(CommandParserTest, MinDepthBounds) {
   std::string data = "minDepthBounds 3.4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FLOAT_EQ(3.4f, cp.PipelineDataForTesting()->GetMinDepthBounds());
 }
@@ -1672,8 +1677,8 @@ TEST_F(CommandParserTest, MinDepthBounds) {
 TEST_F(CommandParserTest, MaxDepthBounds) {
   std::string data = "maxDepthBounds 3.4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FLOAT_EQ(3.4f, cp.PipelineDataForTesting()->GetMaxDepthBounds());
 }
@@ -1688,10 +1693,10 @@ TEST_P(CommandParserFloatTests, MissingParam) {
 
   std::string data = std::string(test_data.name);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Missing value for ") + test_data.name + " command",
+  EXPECT_EQ(std::string("1: Missing value for ") + test_data.name + " command",
             r.Error());
 }
 
@@ -1700,10 +1705,10 @@ TEST_P(CommandParserFloatTests, IllegalParam) {
 
   std::string data = std::string(test_data.name) + " INVALID";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid conversion to double", r.Error());
+  EXPECT_EQ("1: Invalid conversion to double", r.Error());
 }
 
 TEST_P(CommandParserFloatTests, ExtraParam) {
@@ -1711,11 +1716,12 @@ TEST_P(CommandParserFloatTests, ExtraParam) {
 
   std::string data = std::string(test_data.name) + " 3.2 EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Extra parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Extra parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -1732,8 +1738,8 @@ INSTANTIATE_TEST_CASE_P(
 TEST_F(CommandParserTest, SrcColorBlendFactor) {
   std::string data = "srcColorBlendFactor VK_BLEND_FACTOR_DST_COLOR";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(BlendFactor::kDstColor,
             cp.PipelineDataForTesting()->GetSrcColorBlendFactor());
@@ -1742,8 +1748,8 @@ TEST_F(CommandParserTest, SrcColorBlendFactor) {
 TEST_F(CommandParserTest, DstColorBlendFactor) {
   std::string data = "dstColorBlendFactor VK_BLEND_FACTOR_DST_COLOR";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(BlendFactor::kDstColor,
             cp.PipelineDataForTesting()->GetDstColorBlendFactor());
@@ -1752,8 +1758,8 @@ TEST_F(CommandParserTest, DstColorBlendFactor) {
 TEST_F(CommandParserTest, SrcAlphaBlendFactor) {
   std::string data = "srcAlphaBlendFactor VK_BLEND_FACTOR_DST_COLOR";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(BlendFactor::kDstColor,
             cp.PipelineDataForTesting()->GetSrcAlphaBlendFactor());
@@ -1762,8 +1768,8 @@ TEST_F(CommandParserTest, SrcAlphaBlendFactor) {
 TEST_F(CommandParserTest, DstAlphaBlendFactor) {
   std::string data = "dstAlphaBlendFactor VK_BLEND_FACTOR_DST_COLOR";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(BlendFactor::kDstColor,
             cp.PipelineDataForTesting()->GetDstAlphaBlendFactor());
@@ -1778,7 +1784,7 @@ using CommandParserBlendFactorParsing = testing::TestWithParam<BlendFactorData>;
 TEST_P(CommandParserBlendFactorParsing, Parse) {
   const auto& test_data = GetParam();
 
-  CommandParser cp;
+  CommandParser cp(1, "unused");
   BlendFactor factor = BlendFactor::kZero;
   Result r = cp.ParseBlendFactorNameForTesting(test_data.name, &factor);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -1822,7 +1828,7 @@ INSTANTIATE_TEST_CASE_P(
             BlendFactor::kOneMinusSrc1Alpha}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, BlendFactorParsingInvalid) {
-  CommandParser cp;
+  CommandParser cp(1, "unused");
   BlendFactor factor = BlendFactor::kZero;
   Result r = cp.ParseBlendFactorNameForTesting("INVALID", &factor);
   ASSERT_FALSE(r.IsSuccess());
@@ -1839,11 +1845,12 @@ TEST_P(CommandParserBlendFactorTests, MissingParam) {
 
   std::string data = std::string(test_data.name);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Missing parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Missing parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 TEST_P(CommandParserBlendFactorTests, IllegalParam) {
@@ -1851,11 +1858,12 @@ TEST_P(CommandParserBlendFactorTests, IllegalParam) {
 
   std::string data = std::string(test_data.name) + " 1.23";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Invalid parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Invalid parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 TEST_P(CommandParserBlendFactorTests, ExtraParam) {
@@ -1863,11 +1871,12 @@ TEST_P(CommandParserBlendFactorTests, ExtraParam) {
 
   std::string data = std::string(test_data.name) + " VK_BLEND_FACTOR_ONE EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Extra parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Extra parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -1883,8 +1892,8 @@ INSTANTIATE_TEST_CASE_P(
 TEST_F(CommandParserTest, ColorBlendOp) {
   std::string data = "colorBlendOp VK_BLEND_OP_XOR_EXT";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(BlendOp::kXor, cp.PipelineDataForTesting()->GetColorBlendOp());
 }
@@ -1892,8 +1901,8 @@ TEST_F(CommandParserTest, ColorBlendOp) {
 TEST_F(CommandParserTest, AlphaBlendOp) {
   std::string data = "alphaBlendOp VK_BLEND_OP_XOR_EXT";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(BlendOp::kXor, cp.PipelineDataForTesting()->GetAlphaBlendOp());
 }
@@ -1907,7 +1916,7 @@ using CommandParserBlendOpParsing = testing::TestWithParam<BlendOpData>;
 TEST_P(CommandParserBlendOpParsing, Parse) {
   const auto& test_data = GetParam();
 
-  CommandParser cp;
+  CommandParser cp(1, "unused");
   BlendOp op = BlendOp::kAdd;
   Result r = cp.ParseBlendOpNameForTesting(test_data.name, &op);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -1979,7 +1988,7 @@ INSTANTIATE_TEST_CASE_P(
                     BlendOp::kBlue}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, BlendOpParsingInvalid) {
-  CommandParser cp;
+  CommandParser cp(1, "unused");
   BlendOp op = BlendOp::kAdd;
   Result r = cp.ParseBlendOpNameForTesting("INVALID", &op);
   ASSERT_FALSE(r.IsSuccess());
@@ -1996,11 +2005,12 @@ TEST_P(CommandParserBlendOpTests, MissingParam) {
 
   std::string data = std::string(test_data.name);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Missing parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Missing parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 TEST_P(CommandParserBlendOpTests, IllegalParam) {
@@ -2008,11 +2018,12 @@ TEST_P(CommandParserBlendOpTests, IllegalParam) {
 
   std::string data = std::string(test_data.name) + " 1.23";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Invalid parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Invalid parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 TEST_P(CommandParserBlendOpTests, ExtraParam) {
@@ -2020,11 +2031,12 @@ TEST_P(CommandParserBlendOpTests, ExtraParam) {
 
   std::string data = std::string(test_data.name) + " VK_BLEND_OP_MAX EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Extra parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Extra parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -2037,8 +2049,8 @@ INSTANTIATE_TEST_CASE_P(
 TEST_F(CommandParserTest, DepthCompareOp) {
   std::string data = "depthCompareOp VK_COMPARE_OP_EQUAL";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(CompareOp::kEqual,
             cp.PipelineDataForTesting()->GetDepthCompareOp());
@@ -2047,8 +2059,8 @@ TEST_F(CommandParserTest, DepthCompareOp) {
 TEST_F(CommandParserTest, FrontCompareOp) {
   std::string data = "front.compareOp VK_COMPARE_OP_EQUAL";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(CompareOp::kEqual,
             cp.PipelineDataForTesting()->GetFrontCompareOp());
@@ -2057,8 +2069,8 @@ TEST_F(CommandParserTest, FrontCompareOp) {
 TEST_F(CommandParserTest, BackCompareOp) {
   std::string data = "back.compareOp VK_COMPARE_OP_EQUAL";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(CompareOp::kEqual, cp.PipelineDataForTesting()->GetBackCompareOp());
 }
@@ -2072,7 +2084,7 @@ using CommandParserCompareOpParsing = testing::TestWithParam<CompareOpData>;
 TEST_P(CommandParserCompareOpParsing, Parse) {
   const auto& test_data = GetParam();
 
-  CommandParser cp;
+  CommandParser cp(1, "unused");
   CompareOp op = CompareOp::kNever;
   Result r = cp.ParseCompareOpNameForTesting(test_data.name, &op);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -2095,7 +2107,7 @@ INSTANTIATE_TEST_CASE_P(
                       CompareOp::kAlways}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, CompareOpParsingInvalid) {
-  CommandParser cp;
+  CommandParser cp(1, "unused");
   CompareOp op = CompareOp::kNever;
   Result r = cp.ParseCompareOpNameForTesting("INVALID", &op);
   ASSERT_FALSE(r.IsSuccess());
@@ -2112,11 +2124,12 @@ TEST_P(CommandParserCompareOpTests, MissingParam) {
 
   std::string data = std::string(test_data.name);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Missing parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Missing parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 TEST_P(CommandParserCompareOpTests, IllegalParam) {
@@ -2124,11 +2137,12 @@ TEST_P(CommandParserCompareOpTests, IllegalParam) {
 
   std::string data = std::string(test_data.name) + " 1.23";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Invalid parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Invalid parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 TEST_P(CommandParserCompareOpTests, ExtraParam) {
@@ -2137,11 +2151,12 @@ TEST_P(CommandParserCompareOpTests, ExtraParam) {
   std::string data =
       std::string(test_data.name) + " VK_COMPARE_OP_ALWAYS EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Extra parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Extra parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -2155,8 +2170,8 @@ INSTANTIATE_TEST_CASE_P(
 TEST_F(CommandParserTest, FrontFailOp) {
   std::string data = "front.failOp VK_STENCIL_OP_REPLACE";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(StencilOp::kReplace, cp.PipelineDataForTesting()->GetFrontFailOp());
 }
@@ -2164,8 +2179,8 @@ TEST_F(CommandParserTest, FrontFailOp) {
 TEST_F(CommandParserTest, FrontPassOp) {
   std::string data = "front.passOp VK_STENCIL_OP_REPLACE";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(StencilOp::kReplace, cp.PipelineDataForTesting()->GetFrontPassOp());
 }
@@ -2173,8 +2188,8 @@ TEST_F(CommandParserTest, FrontPassOp) {
 TEST_F(CommandParserTest, FrontDepthFailOp) {
   std::string data = "front.depthFailOp VK_STENCIL_OP_REPLACE";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(StencilOp::kReplace,
             cp.PipelineDataForTesting()->GetFrontDepthFailOp());
@@ -2183,8 +2198,8 @@ TEST_F(CommandParserTest, FrontDepthFailOp) {
 TEST_F(CommandParserTest, BackFailOp) {
   std::string data = "back.failOp VK_STENCIL_OP_REPLACE";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(StencilOp::kReplace, cp.PipelineDataForTesting()->GetBackFailOp());
 }
@@ -2192,8 +2207,8 @@ TEST_F(CommandParserTest, BackFailOp) {
 TEST_F(CommandParserTest, BackPassOp) {
   std::string data = "back.passOp VK_STENCIL_OP_REPLACE";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(StencilOp::kReplace, cp.PipelineDataForTesting()->GetBackPassOp());
 }
@@ -2201,8 +2216,8 @@ TEST_F(CommandParserTest, BackPassOp) {
 TEST_F(CommandParserTest, BackDepthFailOp) {
   std::string data = "back.depthFailOp VK_STENCIL_OP_REPLACE";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(StencilOp::kReplace,
             cp.PipelineDataForTesting()->GetBackDepthFailOp());
@@ -2217,7 +2232,7 @@ using CommandParserStencilOpParsing = testing::TestWithParam<StencilOpData>;
 TEST_P(CommandParserStencilOpParsing, Parse) {
   const auto& test_data = GetParam();
 
-  CommandParser cp;
+  CommandParser cp(1, "unused");
   StencilOp op = StencilOp::kKeep;
   Result r = cp.ParseStencilOpNameForTesting(test_data.name, &op);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -2243,7 +2258,7 @@ INSTANTIATE_TEST_CASE_P(
             StencilOp::kDecrementAndWrap}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, StencilOpParsingInvalid) {
-  CommandParser cp;
+  CommandParser cp(1, "unused");
   StencilOp op = StencilOp::kKeep;
   Result r = cp.ParseStencilOpNameForTesting("INVALID", &op);
   ASSERT_FALSE(r.IsSuccess());
@@ -2260,11 +2275,12 @@ TEST_P(CommandParserStencilOpTests, MissingParam) {
 
   std::string data = std::string(test_data.name);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Missing parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Missing parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 TEST_P(CommandParserStencilOpTests, IllegalParam) {
@@ -2272,11 +2288,12 @@ TEST_P(CommandParserStencilOpTests, IllegalParam) {
 
   std::string data = std::string(test_data.name) + " 1.23";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Invalid parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Invalid parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 TEST_P(CommandParserStencilOpTests, ExtraParam) {
@@ -2285,11 +2302,12 @@ TEST_P(CommandParserStencilOpTests, ExtraParam) {
   std::string data =
       std::string(test_data.name) + " VK_STENCIL_OP_REPLACE EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Extra parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Extra parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -2306,44 +2324,44 @@ INSTANTIATE_TEST_CASE_P(
 TEST_F(CommandParserTest, FrontCompareMask) {
   std::string data = "front.compareMask 123";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("front.compareMask not implemented", r.Error());
+  EXPECT_EQ("1: front.compareMask not implemented", r.Error());
 }
 
 TEST_F(CommandParserTest, FrontWriteMask) {
   std::string data = "front.writeMask 123";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("front.writeMask not implemented", r.Error());
+  EXPECT_EQ("1: front.writeMask not implemented", r.Error());
 }
 
 TEST_F(CommandParserTest, BackCompareMask) {
   std::string data = "back.compareMask 123";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("back.compareMask not implemented", r.Error());
+  EXPECT_EQ("1: back.compareMask not implemented", r.Error());
 }
 
 TEST_F(CommandParserTest, BackWriteMask) {
   std::string data = "back.writeMask 123";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("back.writeMask not implemented", r.Error());
+  EXPECT_EQ("1: back.writeMask not implemented", r.Error());
 }
 
 TEST_F(CommandParserTest, FrontReference) {
   std::string data = "front.reference 10";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(10U, cp.PipelineDataForTesting()->GetFrontReference());
 }
@@ -2351,8 +2369,8 @@ TEST_F(CommandParserTest, FrontReference) {
 TEST_F(CommandParserTest, BackReference) {
   std::string data = "back.reference 10";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(10U, cp.PipelineDataForTesting()->GetBackReference());
 }
@@ -2367,33 +2385,36 @@ TEST_P(CommandParserReferenceTests, FrontReferenceMissingValue) {
   const auto& test_data = GetParam();
   std::string data = std::string(test_data.name);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Missing parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Missing parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 TEST_P(CommandParserReferenceTests, FrontReferenceExtraParameters) {
   const auto& test_data = GetParam();
   std::string data = std::string(test_data.name) + " 10 EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Extra parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Extra parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 TEST_P(CommandParserReferenceTests, FrontReferenceInvalidParameters) {
   const auto& test_data = GetParam();
   std::string data = std::string(test_data.name) + " INVALID";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ(std::string("Invalid parameter for ") + test_data.name + " command",
-            r.Error());
+  EXPECT_EQ(
+      std::string("1: Invalid parameter for ") + test_data.name + " command",
+      r.Error());
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -2413,8 +2434,8 @@ TEST_P(CommandParserColorMaskTests, ColorWriteMask) {
   const auto& test_data = GetParam();
   std::string data = "colorWriteMask " + std::string(test_data.input);
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(test_data.result, cp.PipelineDataForTesting()->GetColorWriteMask());
 }
@@ -2438,28 +2459,28 @@ INSTANTIATE_TEST_CASE_P(
 TEST_F(CommandParserTest, ColorWriteMaskInvalid) {
   std::string data = "colorWriteMask INVALID";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Unknown parameter for colorWriteMask command", r.Error());
+  EXPECT_EQ("1: Unknown parameter for colorWriteMask command", r.Error());
 }
 
 TEST_F(CommandParserTest, ColorWriteMaskInvalidAfterValid) {
   std::string data = "colorWriteMask VK_COLOR_COMPONENT_G_BIT | INVALID";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Unknown parameter for colorWriteMask command", r.Error());
+  EXPECT_EQ("1: Unknown parameter for colorWriteMask command", r.Error());
 }
 
 TEST_F(CommandParserTest, ColorWriteMaskMissingParam) {
   std::string data = "colorWriteMask";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing parameter for colorWriteMask command", r.Error());
+  EXPECT_EQ("1: Missing parameter for colorWriteMask command", r.Error());
 }
 
 TEST_F(CommandParserTest, ColorWriteMaskExtraParam) {
@@ -2467,17 +2488,17 @@ TEST_F(CommandParserTest, ColorWriteMaskExtraParam) {
       "colorWriteMask VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_B_BIT "
       "EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Unknown parameter for colorWriteMask command", r.Error());
+  EXPECT_EQ("1: Unknown parameter for colorWriteMask command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBO) {
   std::string data = "ssbo 5 40";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -2494,8 +2515,8 @@ TEST_F(CommandParserTest, SSBO) {
 TEST_F(CommandParserTest, SSBOWithDescriptorSet) {
   std::string data = "ssbo 9:5 40";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -2512,71 +2533,71 @@ TEST_F(CommandParserTest, SSBOWithDescriptorSet) {
 TEST_F(CommandParserTest, SSBOExtraParameter) {
   std::string data = "ssbo 5 40 EXTRA";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Extra parameter for ssbo command", r.Error());
+  EXPECT_EQ("1: Extra parameter for ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOInvalidFloatBinding) {
   std::string data = "ssbo 5.0 40";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid binding value for ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid binding value for ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOInvalidBinding) {
   std::string data = "ssbo abc 40";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid binding value for ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid binding value for ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOInvalidFloatSize) {
   std::string data = "ssbo 5 40.0";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid size value for ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid size value for ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOInvalidSize) {
   std::string data = "ssbo 5 abc";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid value for ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid value for ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOMissingSize) {
   std::string data = "ssbo 5";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing size value for ssbo command", r.Error());
+  EXPECT_EQ("1: Missing size value for ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOMissingBinding) {
   std::string data = "ssbo";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing binding and size values for ssbo command", r.Error());
+  EXPECT_EQ("1: Missing binding and size values for ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithFloat) {
   std::string data = "ssbo 6 subdata vec3 2 2.3 4.2 1.2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -2607,8 +2628,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithFloat) {
 TEST_F(CommandParserTest, SSBOSubdataWithDescriptorSet) {
   std::string data = "ssbo 5:6 subdata vec3 2 2.3 4.2 1.2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -2639,8 +2660,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithDescriptorSet) {
 TEST_F(CommandParserTest, SSBOSubdataWithInts) {
   std::string data = "ssbo 6 subdata i16vec3 2 2 4 1";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -2671,8 +2692,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithInts) {
 TEST_F(CommandParserTest, SSBOSubdataWithMultipleVectors) {
   std::string data = "ssbo 6 subdata i16vec3 2 2 4 1 3 6 8";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -2703,80 +2724,82 @@ TEST_F(CommandParserTest, SSBOSubdataWithMultipleVectors) {
 TEST_F(CommandParserTest, SSBOSubdataMissingBinding) {
   std::string data = "ssbo subdata i16vec3 2 2 3 2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid binding value for ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid binding value for ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithInvalidBinding) {
   std::string data = "ssbo INVALID subdata i16vec3 2 2 3 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid binding value for ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid binding value for ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOSubdataMissingSubdataCommand) {
   std::string data = "ssbo 6 INVALID i16vec3 2 2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid value for ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid value for ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithBadType) {
   std::string data = "ssbo 0 subdata INVALID 2 2 3 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid type provided: INVALID", r.Error());
+  EXPECT_EQ("1: Invalid type provided: INVALID", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithInvalidFloatOffset) {
   std::string data = "ssbo 0 subdata vec2 2.0 3 2 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid offset for ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid offset for ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithInvalidStringOffset) {
   std::string data = "ssbo 0 subdata vec2 asdf 3 2 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid offset for ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid offset for ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithMissingData) {
   std::string data = "ssbo 6 subdata i16vec3 2 2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Incorrect number of values provided to ssbo command", r.Error());
+  EXPECT_EQ("1: Incorrect number of values provided to ssbo command",
+            r.Error());
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithMissingAllData) {
   std::string data = "ssbo 6 subdata i16vec3 2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Incorrect number of values provided to ssbo command", r.Error());
+  EXPECT_EQ("1: Incorrect number of values provided to ssbo command",
+            r.Error());
 }
 
 TEST_F(CommandParserTest, Uniform) {
   std::string data = "uniform vec3 2 2.1 3.2 4.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -2804,8 +2827,8 @@ TEST_F(CommandParserTest, Uniform) {
 TEST_F(CommandParserTest, UniformWithContinuation) {
   std::string data = "uniform vec3 2 2.1 3.2 4.3 \\\n5.4 6.7 8.9";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -2833,45 +2856,45 @@ TEST_F(CommandParserTest, UniformWithContinuation) {
 TEST_F(CommandParserTest, UniformInvalidType) {
   std::string data = "uniform INVALID 0 2.1 3.2 4.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid type provided: INVALID", r.Error());
+  EXPECT_EQ("1: Invalid type provided: INVALID", r.Error());
 }
 
 TEST_F(CommandParserTest, UniformInvalidFloatOffset) {
   std::string data = "uniform vec3 5.5 2.1 3.2 4.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid offset value for uniform command", r.Error());
+  EXPECT_EQ("1: Invalid offset value for uniform command", r.Error());
 }
 
 TEST_F(CommandParserTest, UniformInvalidStringOffset) {
   std::string data = "uniform vec3 INVALID 2.1 3.2 4.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid offset value for uniform command", r.Error());
+  EXPECT_EQ("1: Invalid offset value for uniform command", r.Error());
 }
 
 TEST_F(CommandParserTest, UniformMissingValues) {
   std::string data = "uniform vec3 2 2.1 3.2 4.3 5.5";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Incorrect number of values provided to uniform command",
+  EXPECT_EQ("1: Incorrect number of values provided to uniform command",
             r.Error());
 }
 
 TEST_F(CommandParserTest, UniformUBO) {
   std::string data = "uniform ubo 2 vec3 1 2.1 3.2 4.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -2901,8 +2924,8 @@ TEST_F(CommandParserTest, UniformUBO) {
 TEST_F(CommandParserTest, UniformUBOWithDescriptorSet) {
   std::string data = "uniform ubo 3:2 vec3 1 2.1 3.2 4.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -2932,63 +2955,63 @@ TEST_F(CommandParserTest, UniformUBOWithDescriptorSet) {
 TEST_F(CommandParserTest, UniformUBOInvalidFloatBinding) {
   std::string data = "uniform ubo 0.0 vec3 0 2.1 3.2 4.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid binding value for uniform ubo command", r.Error());
+  EXPECT_EQ("1: Invalid binding value for uniform ubo command", r.Error());
 }
 
 TEST_F(CommandParserTest, UniformUBOInvalidStringBinding) {
   std::string data = "uniform ubo INVALID vec3 0 2.1 3.2 4.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid binding value for uniform ubo command", r.Error());
+  EXPECT_EQ("1: Invalid binding value for uniform ubo command", r.Error());
 }
 
 TEST_F(CommandParserTest, UniformUBOInvalidType) {
   std::string data = "uniform ubo 0 INVALID 0 2.1 3.2 4.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid type provided: INVALID", r.Error());
+  EXPECT_EQ("1: Invalid type provided: INVALID", r.Error());
 }
 
 TEST_F(CommandParserTest, UniformUBOInvalidFloatOffset) {
   std::string data = "uniform ubo 0 vec3 5.5 2.1 3.2 4.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid offset value for uniform command", r.Error());
+  EXPECT_EQ("1: Invalid offset value for uniform command", r.Error());
 }
 
 TEST_F(CommandParserTest, UniformUBOInvalidStringOffset) {
   std::string data = "uniform ubo 0 vec3 INVALID 2.1 3.2 4.3";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid offset value for uniform command", r.Error());
+  EXPECT_EQ("1: Invalid offset value for uniform command", r.Error());
 }
 
 TEST_F(CommandParserTest, UniformUBOMissingValues) {
   std::string data = "uniform ubo 0 vec3 2 2.1 3.2 4.3 5.5";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Incorrect number of values provided to uniform command",
+  EXPECT_EQ("1: Incorrect number of values provided to uniform command",
             r.Error());
 }
 
 TEST_F(CommandParserTest, ToleranceSingleFloatValue) {
   std::string data = "tolerance 0.5";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& tolerances = cp.TolerancesForTesting();
@@ -3000,8 +3023,8 @@ TEST_F(CommandParserTest, ToleranceSingleFloatValue) {
 TEST_F(CommandParserTest, ToleranceSingleFloatPercent) {
   std::string data = "tolerance 0.5%";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& tolerances = cp.TolerancesForTesting();
@@ -3013,8 +3036,8 @@ TEST_F(CommandParserTest, ToleranceSingleFloatPercent) {
 TEST_F(CommandParserTest, ToleranceSingleIntValue) {
   std::string data = "tolerance 5";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& tolerances = cp.TolerancesForTesting();
@@ -3026,8 +3049,8 @@ TEST_F(CommandParserTest, ToleranceSingleIntValue) {
 TEST_F(CommandParserTest, ToleranceSingleIntPercent) {
   std::string data = "tolerance 5%";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& tolerances = cp.TolerancesForTesting();
@@ -3039,8 +3062,8 @@ TEST_F(CommandParserTest, ToleranceSingleIntPercent) {
 TEST_F(CommandParserTest, ToleranceMultiFloatValue) {
   std::string data = "tolerance 0.5 2.4 3.9 99.7";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& tolerances = cp.TolerancesForTesting();
@@ -3055,8 +3078,8 @@ TEST_F(CommandParserTest, ToleranceMultiFloatValue) {
 TEST_F(CommandParserTest, ToleranceMultiFloatValueWithPercent) {
   std::string data = "tolerance 0.5% 2.4 3.9% 99.7";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& tolerances = cp.TolerancesForTesting();
@@ -3075,8 +3098,8 @@ TEST_F(CommandParserTest, ToleranceMultiFloatValueWithPercent) {
 TEST_F(CommandParserTest, ToleranceMultiIntValue) {
   std::string data = "tolerance 5 4 3 99";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& tolerances = cp.TolerancesForTesting();
@@ -3091,8 +3114,8 @@ TEST_F(CommandParserTest, ToleranceMultiIntValue) {
 TEST_F(CommandParserTest, ToleranceMultiIntValueWithPercent) {
   std::string data = "tolerance 5% 4 3% 99";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& tolerances = cp.TolerancesForTesting();
@@ -3111,89 +3134,89 @@ TEST_F(CommandParserTest, ToleranceMultiIntValueWithPercent) {
 TEST_F(CommandParserTest, ToleranceInvalidValue1) {
   std::string data = "tolerance INVALID";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid value for tolerance command", r.Error());
+  EXPECT_EQ("1: Invalid value for tolerance command", r.Error());
 }
 
 TEST_F(CommandParserTest, ToleranceInvalidJustPercent) {
   std::string data = "tolerance %";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid value for tolerance command", r.Error());
+  EXPECT_EQ("1: Invalid value for tolerance command", r.Error());
 }
 
 TEST_F(CommandParserTest, ToleranceInvalidValue2) {
   std::string data = "tolerance 1 INVALID 3 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid value for tolerance command", r.Error());
+  EXPECT_EQ("1: Invalid value for tolerance command", r.Error());
 }
 
 TEST_F(CommandParserTest, ToleranceInvalidValue3) {
   std::string data = "tolerance 1 2 INVALID 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid value for tolerance command", r.Error());
+  EXPECT_EQ("1: Invalid value for tolerance command", r.Error());
 }
 
 TEST_F(CommandParserTest, ToleranceInvalidValue4) {
   std::string data = "tolerance 1 2 3 INVALID";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid value for tolerance command", r.Error());
+  EXPECT_EQ("1: Invalid value for tolerance command", r.Error());
 }
 
 TEST_F(CommandParserTest, ToleranceMissingValues) {
   std::string data = "tolerance";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Missing value for tolerance command", r.Error());
+  EXPECT_EQ("1: Missing value for tolerance command", r.Error());
 }
 
 TEST_F(CommandParserTest, ToleranceTooManyValues) {
   std::string data = "tolerance 1 2 3 4 5";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Extra parameter for tolerance command", r.Error());
+  EXPECT_EQ("1: Extra parameter for tolerance command", r.Error());
 }
 
 TEST_F(CommandParserTest, ToleranceInvalidWithNumber) {
   std::string data = "tolerance 1INVALID";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid value for tolerance command", r.Error());
+  EXPECT_EQ("1: Invalid value for tolerance command", r.Error());
 }
 
 TEST_F(CommandParserTest, ToleranceInvalidWithMissingValue) {
   std::string data = "tolerance 1, , 3, 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid number of tolerance parameters provided", r.Error());
+  EXPECT_EQ("1: Invalid number of tolerance parameters provided", r.Error());
 }
 
 TEST_F(CommandParserTest, ToleranceWithCommas) {
   std::string data = "tolerance 1,2, 3 ,4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& tolerances = cp.TolerancesForTesting();
@@ -3210,8 +3233,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithTolerance) {
 tolerance 2 3 4 5
 probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2)";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -3235,8 +3258,8 @@ TEST_F(CommandParserTest, ProbeWithTolerance) {
 tolerance 2% 3% 4% 5%
 probe all rgba 0.2 0.3 0.4 0.5)";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -3258,8 +3281,8 @@ probe all rgba 0.2 0.3 0.4 0.5)";
 TEST_F(CommandParserTest, ProbeSSBOWithDescriptorSet) {
   std::string data = "probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -3289,8 +3312,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithDescriptorSet) {
 TEST_F(CommandParserTest, ProbeSSBOWithFloats) {
   std::string data = "probe ssbo vec3 6 2 >= 2.3 4.2 1.2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -3321,8 +3344,8 @@ TEST_F(CommandParserTest, MultiProbeSSBOWithFloats) {
   std::string data =
       "probe ssbo vec3 6 2 >= 2.3 4.2 1.2\nprobe ssbo vec3 6 2 >= 2.3 4.2 1.2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -3351,8 +3374,8 @@ TEST_F(CommandParserTest, MultiProbeSSBOWithFloats) {
 TEST_F(CommandParserTest, ProbeSSBOWithInts) {
   std::string data = "probe ssbo i16vec3 6 2 <= 2 4 1";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -3381,8 +3404,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithInts) {
 TEST_F(CommandParserTest, ProbeSSBOWithMultipleVectors) {
   std::string data = "probe ssbo i16vec3 6 2 == 2 4 1 3 6 8";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
@@ -3411,74 +3434,74 @@ TEST_F(CommandParserTest, ProbeSSBOWithMultipleVectors) {
 TEST_F(CommandParserTest, ProbeSSBOMissingBinding) {
   std::string data = "probe ssbo i16vec3 2 == 2 3 2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid value for probe ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid value for probe ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithInvalidBinding) {
   std::string data = "probe ssbo i16vec3 INVALID 2 == 2 3 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid binding value for probe ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid binding value for probe ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithBadType) {
   std::string data = "probe ssbo INVALID 0 2 == 2 3 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid type provided: INVALID", r.Error());
+  EXPECT_EQ("1: Invalid type provided: INVALID", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithInvalidFloatOffset) {
   std::string data = "probe ssbo vec2 0 2.0 == 3 2 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid offset for probe ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid offset for probe ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithInvalidStringOffset) {
   std::string data = "probe ssbo vec2 0 INVALID == 3 2 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid value for probe ssbo command", r.Error());
+  EXPECT_EQ("1: Invalid value for probe ssbo command", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithInvalidComparator) {
   std::string data = "probe ssbo vec2 6 2 INVALID 3 2 4";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid comparator", r.Error());
+  EXPECT_EQ("1: Invalid comparator", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithMissingData) {
   std::string data = "probe ssbo i16vec3 6 2 == 2";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Incorrect number of values provided to probe ssbo command",
+  EXPECT_EQ("1: Incorrect number of values provided to probe ssbo command",
             r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithMissingAllData) {
   std::string data = "probe ssbo i16vec3 6 2 ==";
 
-  CommandParser cp;
-  Result r = cp.Parse(data);
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Incorrect number of values provided to probe ssbo command",
+  EXPECT_EQ("1: Incorrect number of values provided to probe ssbo command",
             r.Error());
 }
 
@@ -3491,7 +3514,7 @@ using CommandParserComparatorTests = testing::TestWithParam<ComparatorTest>;
 TEST_P(CommandParserComparatorTests, Comparator) {
   const auto& test_data = GetParam();
 
-  CommandParser cp;
+  CommandParser cp(1, "unused");
   ProbeSSBOCommand::Comparator result;
   Result r = cp.ParseComparatorForTesting(test_data.name, &result);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -3513,7 +3536,7 @@ INSTANTIATE_TEST_CASE_P(
                            kGreaterOrEqual}), );  // NOLINT(whitespace/parens)
 
 TEST_F(CommandParserTest, ComparatorInvalid) {
-  CommandParser cp;
+  CommandParser cp(1, "unused");
   ProbeSSBOCommand::Comparator result;
   Result r = cp.ParseComparatorForTesting("INVALID", &result);
   ASSERT_FALSE(r.IsSuccess());

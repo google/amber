@@ -90,9 +90,7 @@ Result Image::CreateVkImageView() {
   image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
   image_view_info.format = image_info_.format;
   image_view_info.components = {
-      VK_COMPONENT_SWIZZLE_R,
-      VK_COMPONENT_SWIZZLE_G,
-      VK_COMPONENT_SWIZZLE_B,
+      VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B,
       VK_COMPONENT_SWIZZLE_A,
   };
   image_view_info.subresourceRange = {

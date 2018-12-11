@@ -1261,10 +1261,7 @@ TEST_F(FormatParserTest, GlslStringInvalid) {
   struct {
     const char* name;
   } strs[] = {
-      {"flot/vec3"},
-      {"float/vec1"},
-      {"float/vec22"},
-      {"float/dvec0"},
+      {"flot/vec3"}, {"float/vec1"}, {"float/vec22"}, {"float/dvec0"},
   };
 
   for (const auto& str : strs) {
