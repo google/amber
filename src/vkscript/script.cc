@@ -17,7 +17,6 @@
 #include <utility>
 
 #include "src/make_unique.h"
-#include "src/vkscript/nodes.h"
 
 namespace amber {
 
@@ -30,11 +29,6 @@ namespace vkscript {
 Script::Script() : amber::Script(ScriptType::kVkScript) {}
 
 Script::~Script() = default;
-
-void Script::AddRequireNode(std::unique_ptr<RequireNode> node) {
-  std::unique_ptr<Node> tn(node.release());
-  test_nodes_.push_back(std::move(tn));
-}
 
 }  // namespace vkscript
 }  // namespace amber

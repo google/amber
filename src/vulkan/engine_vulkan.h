@@ -43,7 +43,6 @@ class EngineVulkan : public Engine {
       const std::vector<Feature>& features,
       const std::vector<std::string>& extensions) override;
   Result Shutdown() override;
-  Result AddRequirement(Feature feature, const Format*) override;
   Result CreatePipeline(PipelineType type) override;
   Result SetShader(ShaderType type, const std::vector<uint32_t>& data) override;
   Result SetBuffer(BufferType type,

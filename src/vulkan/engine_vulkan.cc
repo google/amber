@@ -108,24 +108,6 @@ Result EngineVulkan::Shutdown() {
   return {};
 }
 
-Result EngineVulkan::AddRequirement(Feature feature, const Format* fmt) {
-  if (feature == Feature::kFramebuffer) {
-    if (fmt != nullptr)
-      color_frame_format_ = ToVkFormat(fmt->GetFormatType());
-    return {};
-  }
-
-  if (feature == Feature::kDepthStencil) {
-    if (fmt != nullptr)
-      depth_frame_format_ = ToVkFormat(fmt->GetFormatType());
-    return {};
-  }
-
-  return Result(
-      "Vulkan::AddRequirement features and extensions must be handled by "
-      "Initialize()");
-}
-
 Result EngineVulkan::CreatePipeline(PipelineType type) {
   const auto& engine_data = GetEngineData();
 
@@ -189,6 +171,17 @@ Result EngineVulkan::SetBuffer(BufferType type,
                                uint8_t location,
                                const Format& format,
                                const std::vector<Value>& values) {
+  // Handle image and depth attachments special as they come in before
+  // the pipeline is created.
+  if (type == BufferType::kColor || type == BufferType::kDepth) {
+    if (type == BufferType::kColor)
+      color_frame_format_ = ToVkFormat(format.GetFormatType());
+    else if (type == BufferType::kDepth)
+      depth_frame_format_ = ToVkFormat(format.GetFormatType());
+
+    return {};
+  }
+
   if (!pipeline_)
     return Result("Vulkan::SetBuffer no Pipeline exists");
 

@@ -17,25 +17,12 @@
 #include "gtest/gtest.h"
 #include "src/feature.h"
 #include "src/format.h"
-#include "src/vkscript/nodes.h"
 #include "src/vkscript/parser.h"
 
 namespace amber {
 namespace vkscript {
 
 using VkScriptParserTest = testing::Test;
-
-TEST_F(VkScriptParserTest, EmptyRequireBlock) {
-  std::string block = "";
-
-  Parser parser;
-  Result r = parser.ProcessRequireBlockForTesting(block);
-  ASSERT_TRUE(r.IsSuccess());
-
-  auto script = parser.GetScript();
-  ASSERT_TRUE(script->IsVkScript());
-  EXPECT_TRUE(ToVkScript(script.get())->Nodes().empty());
-}
 
 TEST_F(VkScriptParserTest, RequireBlockNoArgumentFeatures) {
   struct {
@@ -143,20 +130,13 @@ TEST_F(VkScriptParserTest, RequireBlockFramebuffer) {
   Result r = parser.ProcessRequireBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess());
 
-  auto amber_script = parser.GetScript();
-  auto script = ToVkScript(amber_script.get());
-  EXPECT_EQ(1U, script->Nodes().size());
-
-  auto& nodes = script->Nodes();
-  ASSERT_EQ(1U, nodes.size());
-  ASSERT_TRUE(nodes[0]->IsRequire());
-
-  auto* req = nodes[0]->AsRequire();
-  ASSERT_EQ(1U, req->Requirements().size());
-  EXPECT_EQ(Feature::kFramebuffer, req->Requirements()[0].GetFeature());
-
-  auto format = req->Requirements()[0].GetFormat();
-  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT, format->GetFormatType());
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+  EXPECT_EQ(BufferType::kColor, buffers[0]->GetBufferType());
+  EXPECT_TRUE(buffers[0]->IsFormatBuffer());
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+            buffers[0]->AsFormatBuffer()->GetFormat().GetFormatType());
 }
 
 TEST_F(VkScriptParserTest, RequireBlockDepthStencil) {
@@ -166,20 +146,13 @@ TEST_F(VkScriptParserTest, RequireBlockDepthStencil) {
   Result r = parser.ProcessRequireBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto amber_script = parser.GetScript();
-  auto script = ToVkScript(amber_script.get());
-  EXPECT_EQ(1U, script->Nodes().size());
-
-  auto& nodes = script->Nodes();
-  ASSERT_EQ(1U, nodes.size());
-  ASSERT_TRUE(nodes[0]->IsRequire());
-
-  auto* req = nodes[0]->AsRequire();
-  ASSERT_EQ(1U, req->Requirements().size());
-  EXPECT_EQ(Feature::kDepthStencil, req->Requirements()[0].GetFeature());
-
-  auto format = req->Requirements()[0].GetFormat();
-  EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT, format->GetFormatType());
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+  EXPECT_EQ(BufferType::kDepth, buffers[0]->GetBufferType());
+  EXPECT_TRUE(buffers[0]->IsFormatBuffer());
+  EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT,
+            buffers[0]->AsFormatBuffer()->GetFormat().GetFormatType());
 }
 
 TEST_F(VkScriptParserTest, RequireBlockMultipleLines) {
@@ -196,23 +169,18 @@ inheritedQueries # line comment
   Result r = parser.ProcessRequireBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto amber_script = parser.GetScript();
-  auto script = ToVkScript(amber_script.get());
-  EXPECT_EQ(1U, script->Nodes().size());
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(2U, buffers.size());
+  EXPECT_EQ(BufferType::kDepth, buffers[0]->GetBufferType());
+  EXPECT_TRUE(buffers[0]->IsFormatBuffer());
+  EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT,
+            buffers[0]->AsFormatBuffer()->GetFormat().GetFormatType());
 
-  auto& nodes = script->Nodes();
-  ASSERT_EQ(1U, nodes.size());
-  ASSERT_TRUE(nodes[0]->IsRequire());
-
-  auto* req = nodes[0]->AsRequire();
-  ASSERT_EQ(2U, req->Requirements().size());
-  EXPECT_EQ(Feature::kDepthStencil, req->Requirements()[0].GetFeature());
-  auto format = req->Requirements()[0].GetFormat();
-  EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT, format->GetFormatType());
-
-  EXPECT_EQ(Feature::kFramebuffer, req->Requirements()[1].GetFeature());
-  format = req->Requirements()[1].GetFormat();
-  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT, format->GetFormatType());
+  EXPECT_EQ(BufferType::kColor, buffers[1]->GetBufferType());
+  EXPECT_TRUE(buffers[1]->IsFormatBuffer());
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+            buffers[1]->AsFormatBuffer()->GetFormat().GetFormatType());
 
   auto& feats = script->RequiredFeatures();
   EXPECT_EQ(Feature::kSparseResidency4Samples, feats[0]);
@@ -300,9 +268,8 @@ TEST_F(VkScriptParserTest, VertexDataEmpty) {
   Result r = parser.ProcessVertexDataBlockForTesting(block);
   ASSERT_TRUE(r.IsSuccess());
 
-  auto amber_script = parser.GetScript();
-  auto& nodes = ToVkScript(amber_script.get())->Nodes();
-  EXPECT_TRUE(nodes.empty());
+  auto script = parser.GetScript();
+  EXPECT_TRUE(script->GetBuffers().empty());
 }
 
 TEST_F(VkScriptParserTest, VertexDataHeaderFormatString) {

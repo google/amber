@@ -19,7 +19,6 @@
 
 #include "src/engine.h"
 #include "src/shader_compiler.h"
-#include "src/vkscript/nodes.h"
 #include "src/vkscript/script.h"
 
 namespace amber {
@@ -30,26 +29,12 @@ Executor::Executor() : amber::Executor() {}
 Executor::~Executor() = default;
 
 Result Executor::Execute(Engine* engine,
-                         const amber::Script* src_script,
+                         const amber::Script* script,
                          const ShaderMap& shader_map) {
-  if (!src_script->IsVkScript())
+  if (!script->IsVkScript())
     return Result("VkScript Executor called with non-vkscript source");
 
-  const Script* script = ToVkScript(src_script);
   engine->SetEngineData(script->GetEngineData());
-
-  // Process Requirement nodes
-  for (const auto& node : script->Nodes()) {
-    if (!node->IsRequire())
-      continue;
-
-    for (const auto& require : node->AsRequire()->Requirements()) {
-      Result r =
-          engine->AddRequirement(require.GetFeature(), require.GetFormat());
-      if (!r.IsSuccess())
-        return r;
-    }
-  }
 
   // Process Shader nodes
   PipelineType pipeline_type = PipelineType::kGraphics;
@@ -70,12 +55,38 @@ Result Executor::Execute(Engine* engine,
       pipeline_type = PipelineType::kCompute;
   }
 
+  // Handle Image and Depth buffers early so they are available when we call
+  // the CreatePipeline method.
+  for (const auto& buf : script->GetBuffers()) {
+    // Image and depth are handled earler. They will be moved to the pipeline
+    // object when it exists.
+    if (buf->GetBufferType() != BufferType::kColor &&
+        buf->GetBufferType() != BufferType::kDepth) {
+      continue;
+    }
+
+    Result r = engine->SetBuffer(
+        buf->GetBufferType(), buf->GetLocation(),
+        buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
+        buf->GetData());
+    if (!r.IsSuccess())
+      return r;
+  }
+
   // TODO(jaebaek): Support multiple pipelines.
   Result r = engine->CreatePipeline(pipeline_type);
   if (!r.IsSuccess())
     return r;
 
+  // Process Buffers
   for (const auto& buf : script->GetBuffers()) {
+    // Image and depth are handled earler. They will be moved to the pipeline
+    // object when it exists.
+    if (buf->GetBufferType() == BufferType::kColor ||
+        buf->GetBufferType() == BufferType::kDepth) {
+      continue;
+    }
+
     r = engine->SetBuffer(
         buf->GetBufferType(), buf->GetLocation(),
         buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),

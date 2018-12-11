@@ -26,7 +26,6 @@
 #include "src/tokenizer.h"
 #include "src/vkscript/command_parser.h"
 #include "src/vkscript/format_parser.h"
-#include "src/vkscript/nodes.h"
 
 namespace amber {
 namespace vkscript {
@@ -209,8 +208,6 @@ Result Parser::ProcessShaderBlock(const SectionParser::Section& section) {
 }
 
 Result Parser::ProcessRequireBlock(const std::string& data) {
-  auto node = MakeUnique<RequireNode>();
-
   Tokenizer tokenizer(data);
   for (auto token = tokenizer.NextToken(); !token->IsEOS();
        token = tokenizer.NextToken()) {
@@ -239,7 +236,11 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
       if (fmt == nullptr)
         return Result("Failed to parse framebuffer format");
 
-      node->AddRequirement(feature, std::move(fmt));
+      auto framebuffer = MakeUnique<FormatBuffer>(BufferType::kColor);
+      framebuffer->SetName("framebuffer");
+      framebuffer->SetFormat(std::move(fmt));
+      framebuffer->SetLocation(0);  // Only one image attachment in vkscript
+      script_->AddBuffer(std::move(framebuffer));
     } else if (feature == Feature::kDepthStencil) {
       token = tokenizer.NextToken();
       if (!token->IsString())
@@ -250,7 +251,11 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
       if (fmt == nullptr)
         return Result("Failed to parse depthstencil format");
 
-      node->AddRequirement(feature, std::move(fmt));
+      auto depthbuffer = MakeUnique<FormatBuffer>(BufferType::kDepth);
+      depthbuffer->SetName("depth_stencil_buffer");
+      depthbuffer->SetFormat(std::move(fmt));
+      depthbuffer->SetLocation(0);
+      script_->AddBuffer(std::move(depthbuffer));
     } else if (feature == Feature::kFenceTimeout) {
       token = tokenizer.NextToken();
       if (!token->IsInteger())
@@ -265,10 +270,6 @@ Result Parser::ProcessRequireBlock(const std::string& data) {
     if (!token->IsEOS() && !token->IsEOL())
       return Result("Failed to parser requirements block: invalid token");
   }
-
-  if (!node->Requirements().empty())
-    script_->AddRequireNode(std::move(node));
-
   return {};
 }
 

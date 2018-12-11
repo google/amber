@@ -40,7 +40,6 @@ set(AMBER_SOURCES
     vkscript/datum_type_parser.cc
     vkscript/executor.cc
     vkscript/format_parser.cc
-    vkscript/nodes.cc
     vkscript/parser.cc
     vkscript/script.cc
     vkscript/section_parser.cc
