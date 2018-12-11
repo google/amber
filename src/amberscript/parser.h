@@ -51,12 +51,12 @@ class Parser : public amber::Parser {
   Result ValidateEndOfStatement(const std::string& name);
 
   Result ParseBuffer();
-  Result ParseBufferInitializer(Buffer*);
-  Result ParseBufferInitializerSize(Buffer*);
-  Result ParseBufferInitializerFill(Buffer*, uint32_t);
-  Result ParseBufferInitializerSeries(Buffer*, uint32_t);
-  Result ParseBufferInitializerData(Buffer*);
-  Result ParseBufferFramebuffer(Buffer*);
+  Result ParseBufferInitializer(DataBuffer*);
+  Result ParseBufferInitializerSize(DataBuffer*);
+  Result ParseBufferInitializerFill(DataBuffer*, uint32_t);
+  Result ParseBufferInitializerSeries(DataBuffer*, uint32_t);
+  Result ParseBufferInitializerData(DataBuffer*);
+  Result ParseBufferFramebuffer(DataBuffer*);
   Result ParseShaderBlock();
   Result ParsePipelineBlock();
   Result ParsePipelineAttach(Pipeline*);

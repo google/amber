@@ -29,7 +29,6 @@ namespace vkscript {
 
 class Node;
 class RequireNode;
-class VertexDataNode;
 
 class Script : public amber::Script {
  public:
@@ -37,7 +36,6 @@ class Script : public amber::Script {
   ~Script() override;
 
   void AddRequireNode(std::unique_ptr<RequireNode> node);
-  void AddVertexData(std::unique_ptr<VertexDataNode> node);
 
   const std::vector<std::unique_ptr<Node>>& Nodes() const {
     return test_nodes_;
