@@ -304,7 +304,27 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
                                      memory_properties_);
     if (!r.IsSuccess())
       return r;
+  }
 
+  r = command_->End();
+  if (!r.IsSuccess())
+    return r;
+
+  // Note that if a buffer for a descriptor is host accessible and
+  // does not need to record a command to copy data to device, it
+  // directly writes data to the buffer. The direct write must be
+  // done after resizing backed buffer i.e., copying data to the new
+  // buffer from the old one. Thus, we must submit commands here to
+  // guarantee this.
+  r = command_->SubmitAndReset(GetFenceTimeout());
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->BeginIfNotInRecording();
+  if (!r.IsSuccess())
+    return r;
+
+  for (const auto& desc : descriptors_) {
     desc->UpdateResourceIfNeeded(command_->GetCommandBuffer());
   }
 
