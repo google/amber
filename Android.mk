@@ -5,10 +5,7 @@ LOCAL_MODULE:=amber
 LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti
 LOCAL_SRC_FILES:= \
     src/amber.cc \
-    src/amberscript/executor.cc \
     src/amberscript/parser.cc \
-    src/amberscript/pipeline.cc \
-    src/amberscript/script.cc \
     src/buffer.cc \
     src/command.cc \
     src/command_data.cc \
@@ -17,6 +14,7 @@ LOCAL_SRC_FILES:= \
     src/executor.cc \
     src/format.cc \
     src/parser.cc \
+    src/pipeline.cc \
     src/pipeline_data.cc \
     src/recipe.cc \
     src/result.cc \
@@ -28,10 +26,8 @@ LOCAL_SRC_FILES:= \
     src/verifier.cc \
     src/vkscript/command_parser.cc \
     src/vkscript/datum_type_parser.cc \
-    src/vkscript/executor.cc \
     src/vkscript/format_parser.cc \
     src/vkscript/parser.cc \
-    src/vkscript/script.cc \
     src/vkscript/section_parser.cc
 LOCAL_STATIC_LIBRARIES:=glslang SPIRV-Tools shaderc
 LOCAL_C_INCLUDES:=$(LOCAL_PATH)/include

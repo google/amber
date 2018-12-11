@@ -28,7 +28,7 @@ namespace amber {
 namespace amberscript {
 
 Parser::Parser()
-    : amber::Parser(), script_(MakeUnique<amberscript::Script>()) {}
+    : amber::Parser(), script_(MakeUnique<Script>()) {}
 
 Parser::~Parser() = default;
 

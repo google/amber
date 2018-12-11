@@ -14,10 +14,7 @@
 
 set(AMBER_SOURCES
     amber.cc
-    amberscript/executor.cc
     amberscript/parser.cc
-    amberscript/pipeline.cc
-    amberscript/script.cc
     buffer.cc
     command.cc
     command_data.cc
@@ -26,6 +23,7 @@ set(AMBER_SOURCES
     executor.cc
     format.cc
     parser.cc
+    pipeline.cc
     pipeline_data.cc
     recipe.cc
     result.cc
@@ -38,10 +36,8 @@ set(AMBER_SOURCES
     verifier.cc
     vkscript/command_parser.cc
     vkscript/datum_type_parser.cc
-    vkscript/executor.cc
     vkscript/format_parser.cc
     vkscript/parser.cc
-    vkscript/script.cc
     vkscript/section_parser.cc
 )
 
@@ -78,10 +74,10 @@ endif()
 if (${AMBER_ENABLE_TESTS})
   set(TEST_SRCS
     amberscript/parser_test.cc
-    amberscript/pipeline_test.cc
-    amberscript/script_test.cc
     buffer_test.cc
     command_data_test.cc
+    executor_test.cc
+    pipeline_test.cc
     result_test.cc
     script_test.cc
     shader_compiler_test.cc
@@ -89,7 +85,6 @@ if (${AMBER_ENABLE_TESTS})
     verifier_test.cc
     vkscript/command_parser_test.cc
     vkscript/datum_type_parser_test.cc
-    vkscript/executor_test.cc
     vkscript/format_parser_test.cc
     vkscript/parser_test.cc
     vkscript/section_parser_test.cc

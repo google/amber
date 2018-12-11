@@ -17,13 +17,11 @@
 #include <memory>
 #include <string>
 
-#include "src/amberscript/executor.h"
 #include "src/amberscript/parser.h"
 #include "src/engine.h"
 #include "src/executor.h"
 #include "src/make_unique.h"
 #include "src/parser.h"
-#include "src/vkscript/executor.h"
 #include "src/vkscript/parser.h"
 
 namespace amber {
@@ -81,13 +79,8 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   if (!r.IsSuccess())
     return r;
 
-  std::unique_ptr<Executor> executor;
-  if (script->IsVkScript())
-    executor = MakeUnique<vkscript::Executor>();
-  else
-    executor = MakeUnique<amberscript::Executor>();
-
-  r = executor->Execute(engine.get(), script, shader_data);
+  Executor executor;
+  r = executor.Execute(engine.get(), script, shader_data);
   if (!r.IsSuccess())
     return r;
 

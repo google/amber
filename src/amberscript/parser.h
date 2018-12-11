@@ -20,7 +20,6 @@
 #include <utility>
 
 #include "amber/result.h"
-#include "src/amberscript/script.h"
 #include "src/parser.h"
 #include "src/script.h"
 
@@ -37,7 +36,7 @@ class Parser : public amber::Parser {
 
   // amber::Parser
   Result Parse(const std::string& data) override;
-  std::unique_ptr<amber::Script> GetScript() override {
+  std::unique_ptr<Script> GetScript() override {
     return std::move(script_);
   }
 
@@ -63,7 +62,7 @@ class Parser : public amber::Parser {
   Result ParsePipelineEntryPoint(Pipeline*);
   Result ParsePipelineShaderOptimizations(Pipeline*);
 
-  std::unique_ptr<amberscript::Script> script_;
+  std::unique_ptr<Script> script_;
   std::unique_ptr<Tokenizer> tokenizer_;
 };
 
