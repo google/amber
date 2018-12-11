@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/amberscript/pipeline.h"
+#include "src/pipeline.h"
 
 #include <algorithm>
 #include <set>
 
 namespace amber {
-namespace amberscript {
 
 Pipeline::ShaderInfo::ShaderInfo(const Shader* shader)
     : shader_(shader), entry_point_("main") {}
@@ -140,5 +139,4 @@ Result Pipeline::ValidateCompute() const {
   return {};
 }
 
-}  // namespace amberscript
 }  // namespace amber

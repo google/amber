@@ -21,8 +21,8 @@
 
 #include "amber/result.h"
 #include "src/parser.h"
+#include "src/script.h"
 #include "src/tokenizer.h"
-#include "src/vkscript/script.h"
 #include "src/vkscript/section_parser.h"
 
 namespace amber {
@@ -35,9 +35,7 @@ class Parser : public amber::Parser {
 
   // amber::Parser
   Result Parse(const std::string& data) override;
-  std::unique_ptr<amber::Script> GetScript() override {
-    return std::move(script_);
-  }
+  std::unique_ptr<Script> GetScript() override { return std::move(script_); }
 
   Result ProcessSectionForTesting(const SectionParser::Section& section) {
     return ProcessSection(section);
@@ -52,7 +50,7 @@ class Parser : public amber::Parser {
   Result ProcessVertexDataBlock(const SectionParser::Section& section);
   Result ProcessTestBlock(const SectionParser::Section& section);
 
-  std::unique_ptr<vkscript::Script> script_;
+  std::unique_ptr<Script> script_;
 };
 
 }  // namespace vkscript

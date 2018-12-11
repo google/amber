@@ -28,22 +28,35 @@
 #include "src/command.h"
 #include "src/engine.h"
 #include "src/feature.h"
+#include "src/pipeline.h"
 #include "src/shader.h"
 
 namespace amber {
 
-enum class ScriptType : uint8_t { kVkScript = 0, kAmberScript };
-
 class Script : public RecipeImpl {
  public:
+  Script();
   ~Script() override;
 
-  bool IsVkScript() const { return script_type_ == ScriptType::kVkScript; }
-  bool IsAmberScript() const {
-    return script_type_ == ScriptType::kAmberScript;
+  std::vector<ShaderInfo> GetShaderInfo() const override;
+
+  Result AddPipeline(std::unique_ptr<Pipeline> pipeline) {
+    if (name_to_pipeline_.count(pipeline->GetName()) > 0)
+      return Result("duplicate pipeline name provided");
+
+    pipelines_.push_back(std::move(pipeline));
+    name_to_pipeline_[pipelines_.back()->GetName()] = pipelines_.back().get();
+    return {};
   }
 
-  std::vector<ShaderInfo> GetShaderInfo() const override;
+  Pipeline* GetPipeline(const std::string& name) const {
+    auto it = name_to_pipeline_.find(name);
+    return it == name_to_pipeline_.end() ? nullptr : it->second;
+  }
+
+  const std::vector<std::unique_ptr<Pipeline>>& GetPipelines() const {
+    return pipelines_;
+  }
 
   Result AddShader(std::unique_ptr<Shader> shader) {
     if (name_to_shader_.count(shader->GetName()) > 0)
@@ -70,6 +83,11 @@ class Script : public RecipeImpl {
     buffers_.push_back(std::move(buffer));
     name_to_buffer_[buffers_.back()->GetName()] = buffers_.back().get();
     return {};
+  }
+
+  Buffer* GetBuffer(const std::string& name) const {
+    auto it = name_to_buffer_.find(name);
+    return it == name_to_buffer_.end() ? nullptr : it->second;
   }
 
   const std::vector<std::unique_ptr<Buffer>>& GetBuffers() const {
@@ -100,22 +118,20 @@ class Script : public RecipeImpl {
     return commands_;
   }
 
- protected:
-  explicit Script(ScriptType);
-
  private:
   struct {
     std::vector<Feature> required_features;
     std::vector<std::string> required_extensions;
   } engine_info_;
 
-  ScriptType script_type_;
   EngineData engine_data_;
   std::map<std::string, Shader*> name_to_shader_;
   std::map<std::string, Buffer*> name_to_buffer_;
+  std::map<std::string, Pipeline*> name_to_pipeline_;
   std::vector<std::unique_ptr<Shader>> shaders_;
   std::vector<std::unique_ptr<Command>> commands_;
   std::vector<std::unique_ptr<Buffer>> buffers_;
+  std::vector<std::unique_ptr<Pipeline>> pipelines_;
 };
 
 }  // namespace amber

@@ -107,7 +107,7 @@ TEST_F(VkScriptParserTest, RequireBlockNoArgumentFeatures) {
     ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
     auto script = parser.GetScript();
-    auto& feats = ToVkScript(script.get())->RequiredFeatures();
+    auto& feats = script->RequiredFeatures();
     ASSERT_EQ(1U, feats.size());
     EXPECT_EQ(feature.feature, feats[0]);
   }
