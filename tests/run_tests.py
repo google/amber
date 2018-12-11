@@ -59,6 +59,7 @@ class TestRunner:
         return False
 
     except Exception as e:
+      print e.output
       if not tc.IsExpectedFail():
         print e
       return False
