@@ -70,7 +70,6 @@ TEST_F(ScriptTest, GetShaderInfoNoShaders) {
   EXPECT_TRUE(info.empty());
 }
 
-
 TEST_F(ScriptTest, AddShader) {
   auto shader = MakeUnique<Shader>(ShaderType::kVertex);
   shader->SetName("My Shader");
