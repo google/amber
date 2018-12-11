@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/amberscript/pipeline.h"
+#include "src/pipeline.h"
 #include "gtest/gtest.h"
 
 namespace amber {
-namespace amberscript {
 namespace {
 
 struct ShaderTypeData {
@@ -329,5 +328,4 @@ TEST_F(AmberScriptPipelineTest, SetEntryPointMulitpleTimes) {
   EXPECT_EQ("multiple entry points given for the same shader", r.Error());
 }
 
-}  // namespace amberscript
 }  // namespace amber

@@ -60,7 +60,7 @@ TEST_F(AmberScriptParserTest, EmptyInput) {
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
-  ASSERT_TRUE(script->IsAmberScript());
+  ASSERT_TRUE(script != nullptr);
 }
 
 TEST_F(AmberScriptParserTest, InvalidStartToken) {
@@ -90,8 +90,7 @@ TEST_F(AmberScriptParserTest, ShaderPassThrough) {
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& shaders = script->GetShaders();
   ASSERT_EQ(1U, shaders.size());
 
@@ -197,8 +196,7 @@ SHADER geometry shader_name GLSL
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& shaders = script->GetShaders();
   ASSERT_EQ(1U, shaders.size());
 
@@ -312,8 +310,7 @@ void main() {
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& shaders = script->GetShaders();
   ASSERT_EQ(1U, shaders.size());
 
@@ -354,8 +351,7 @@ TEST_P(AmberScriptParserShaderFormatTest, ShaderFormats) {
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& shaders = script->GetShaders();
   ASSERT_EQ(1U, shaders.size());
 
@@ -407,8 +403,7 @@ END
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   EXPECT_EQ(2U, script->GetShaders().size());
 
   const auto& pipelines = script->GetPipelines();
@@ -672,8 +667,7 @@ END
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& pipelines = script->GetPipelines();
   ASSERT_EQ(1U, pipelines.size());
 
@@ -819,8 +813,7 @@ END
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& pipelines = script->GetPipelines();
   ASSERT_EQ(1U, pipelines.size());
 
@@ -949,8 +942,7 @@ END)";
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
 
@@ -980,8 +972,7 @@ TEST_F(AmberScriptParserTest, BufferFill) {
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
 
@@ -1010,8 +1001,7 @@ TEST_F(AmberScriptParserTest, BufferFillFloat) {
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
 
@@ -1041,8 +1031,7 @@ TEST_F(AmberScriptParserTest, BufferSeries) {
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
 
@@ -1073,8 +1062,7 @@ TEST_F(AmberScriptParserTest, BufferSeriesFloat) {
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
 
@@ -1103,8 +1091,7 @@ TEST_F(AmberScriptParserTest, BufferFramebuffer) {
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
 
@@ -1131,8 +1118,7 @@ END)";
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(2U, buffers.size());
 
@@ -1179,8 +1165,7 @@ BUFFER index my_index_buffer DATA_TYPE vec2<int32> SIZE 5 FILL 2)";
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
 
@@ -1216,8 +1201,7 @@ END
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
 
@@ -1253,8 +1237,7 @@ END
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
 
@@ -1633,8 +1616,7 @@ TEST_P(AmberScriptParserBufferTypeTest, BufferTypes) {
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
 
@@ -1665,8 +1647,7 @@ TEST_P(AmberScriptParserBufferDataTypeTest, BufferTypes) {
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << test_data.name << " :" << r.Error();
 
-  auto parent_script = parser.GetScript();
-  auto script = ToAmberScript(parent_script.get());
+  auto script = parser.GetScript();
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
 

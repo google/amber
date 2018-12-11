@@ -16,7 +16,7 @@
 
 namespace amber {
 
-Script::Script(ScriptType type) : script_type_(type) {}
+Script::Script() = default;
 
 Script::~Script() = default;
 

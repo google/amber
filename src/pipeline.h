@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_AMBERSCRIPT_PIPELINE_H_
-#define SRC_AMBERSCRIPT_PIPELINE_H_
+#ifndef SRC_PIPELINE_H_
+#define SRC_PIPELINE_H_
 
 #include <string>
 #include <vector>
@@ -22,7 +22,6 @@
 #include "src/shader.h"
 
 namespace amber {
-namespace amberscript {
 
 enum class PipelineType { kCompute = 0, kGraphics };
 
@@ -79,7 +78,6 @@ class Pipeline {
   std::vector<ShaderInfo> shaders_;
 };
 
-}  // namespace amberscript
 }  // namespace amber
 
-#endif  // SRC_AMBERSCRIPT_PIPELINE_H_
+#endif  // SRC_PIPELINE_H_

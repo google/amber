@@ -18,17 +18,19 @@
 #include "amber/result.h"
 #include "src/engine.h"
 #include "src/script.h"
+#include "src/verifier.h"
 
 namespace amber {
 
 class Executor {
  public:
-  virtual ~Executor();
-
-  virtual Result Execute(Engine*, const Script*, const ShaderMap&) = 0;
-
- protected:
   Executor();
+  ~Executor();
+
+  Result Execute(Engine*, const Script*, const ShaderMap&);
+
+ private:
+  Verifier verifier_;
 };
 
 }  // namespace amber
