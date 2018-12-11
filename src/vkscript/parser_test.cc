@@ -136,7 +136,7 @@ TEST_F(VkScriptParserTest, RequireBlockFramebuffer) {
   EXPECT_EQ(BufferType::kColor, buffers[0]->GetBufferType());
   EXPECT_TRUE(buffers[0]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
-      buffers[0]->AsFormatBuffer()->GetFormat().GetFormatType());
+            buffers[0]->AsFormatBuffer()->GetFormat().GetFormatType());
 }
 
 TEST_F(VkScriptParserTest, RequireBlockDepthStencil) {
@@ -152,7 +152,7 @@ TEST_F(VkScriptParserTest, RequireBlockDepthStencil) {
   EXPECT_EQ(BufferType::kDepth, buffers[0]->GetBufferType());
   EXPECT_TRUE(buffers[0]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT,
-      buffers[0]->AsFormatBuffer()->GetFormat().GetFormatType());
+            buffers[0]->AsFormatBuffer()->GetFormat().GetFormatType());
 }
 
 TEST_F(VkScriptParserTest, RequireBlockMultipleLines) {
@@ -175,12 +175,12 @@ inheritedQueries # line comment
   EXPECT_EQ(BufferType::kDepth, buffers[0]->GetBufferType());
   EXPECT_TRUE(buffers[0]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT,
-      buffers[0]->AsFormatBuffer()->GetFormat().GetFormatType());
+            buffers[0]->AsFormatBuffer()->GetFormat().GetFormatType());
 
   EXPECT_EQ(BufferType::kColor, buffers[1]->GetBufferType());
   EXPECT_TRUE(buffers[1]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
-      buffers[1]->AsFormatBuffer()->GetFormat().GetFormatType());
+            buffers[1]->AsFormatBuffer()->GetFormat().GetFormatType());
 
   auto& feats = script->RequiredFeatures();
   EXPECT_EQ(Feature::kSparseResidency4Samples, feats[0]);

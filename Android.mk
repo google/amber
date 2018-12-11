@@ -30,7 +30,6 @@ LOCAL_SRC_FILES:= \
     src/vkscript/datum_type_parser.cc \
     src/vkscript/executor.cc \
     src/vkscript/format_parser.cc \
-    src/vkscript/nodes.cc \
     src/vkscript/parser.cc \
     src/vkscript/script.cc \
     src/vkscript/section_parser.cc
