@@ -65,13 +65,12 @@ void Pipeline::Shutdown() {
   if (r.IsSuccess())
     command_->SubmitAndReset(fence_timeout_ms_);
 
-  for (size_t desc = 0; desc < descriptor_sets_.size(); ++desc) {
-    vkDestroyDescriptorSetLayout(device_, descriptor_sets_[desc].layout,
-                                 nullptr);
-    if (descriptor_sets_[desc].empty)
+  for (size_t i = 0; i < descriptor_sets_.size(); ++i) {
+    vkDestroyDescriptorSetLayout(device_, descriptor_sets_[i].layout, nullptr);
+    if (descriptor_sets_[i].empty)
       continue;
 
-    vkDestroyDescriptorPool(device_, descriptor_sets_[desc].pool, nullptr);
+    vkDestroyDescriptorPool(device_, descriptor_sets_[i].pool, nullptr);
   }
 
   command_->Shutdown();
@@ -182,14 +181,14 @@ Result Pipeline::CreateDescriptorPools() {
 
     if (static_cast<uint32_t>(descriptor_sets_.size()) <= current_desc) {
       return Result(
-          "Pipeline::CreateDescriptorPools more actually used descriptor sets "
-          "than descriptor set layouts");
+          "Pipeline::CreateDescriptorPools: More descriptor sets requested "
+          "than descriptor set layouts provided");
     }
 
     if (descriptor_sets_[current_desc].empty) {
       return Result(
-          "Pipeline::CreateDescriptorPools actually used descriptor set has "
-          "empty descriptor set layout");
+          "Pipeline::CreateDescriptorPools: Used a descriptor set with an "
+          "empty layout");
     }
 
     descriptor_sets_[current_desc].pool = desc_pool;
@@ -199,22 +198,22 @@ Result Pipeline::CreateDescriptorPools() {
 }
 
 Result Pipeline::CreateDescriptorSets() {
-  for (size_t desc = 0; desc < descriptor_sets_.size(); ++desc) {
-    if (descriptor_sets_[desc].empty)
+  for (size_t i = 0; i < descriptor_sets_.size(); ++i) {
+    if (descriptor_sets_[i].empty)
       continue;
 
     VkDescriptorSetAllocateInfo desc_set_info = {};
     desc_set_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    desc_set_info.descriptorPool = descriptor_sets_[desc].pool;
+    desc_set_info.descriptorPool = descriptor_sets_[i].pool;
     desc_set_info.descriptorSetCount = 1;
-    desc_set_info.pSetLayouts = &descriptor_sets_[desc].layout;
+    desc_set_info.pSetLayouts = &descriptor_sets_[i].layout;
 
     VkDescriptorSet desc_set = VK_NULL_HANDLE;
     if (vkAllocateDescriptorSets(device_, &desc_set_info, &desc_set) !=
         VK_SUCCESS) {
       return Result("Vulkan::Calling vkAllocateDescriptorSets Fail");
     }
-    descriptor_sets_[desc].vk_desc_set = desc_set;
+    descriptor_sets_[i].vk_desc_set = desc_set;
   }
 
   return {};
@@ -270,14 +269,14 @@ Result Pipeline::UpdateDescriptorSetsIfNeeded() {
          ++i) {
       if (static_cast<uint32_t>(descriptor_sets_.size()) <= current_desc) {
         return Result(
-            "Pipeline::UpdateDescriptorSetsIfNeeded more actually used "
-            "descriptor sets than descriptor set layouts");
+            "Pipeline::UpdateDescriptorSetsIfNeeded: More descriptor sets "
+            "requested than descriptor set layouts provided");
       }
 
       if (descriptor_sets_[current_desc].empty) {
         return Result(
-            "Pipeline::UpdateDescriptorSetsIfNeeded actually used descriptor "
-            "set has empty descriptor set layout");
+            "Pipeline::UpdateDescriptorSetsIfNeeded: Used a descriptor set "
+            "with an empty layout");
       }
 
       Result r = descriptors_[i]->UpdateDescriptorSetIfNeeded(
@@ -387,15 +386,15 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
 }
 
 void Pipeline::BindVkDescriptorSets() {
-  for (size_t desc = 0; desc < descriptor_sets_.size(); ++desc) {
-    if (descriptor_sets_[desc].empty)
+  for (size_t i = 0; i < descriptor_sets_.size(); ++i) {
+    if (descriptor_sets_[i].empty)
       continue;
 
     vkCmdBindDescriptorSets(command_->GetCommandBuffer(),
                             IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
                                          : VK_PIPELINE_BIND_POINT_COMPUTE,
-                            pipeline_layout_, desc, 1,
-                            &descriptor_sets_[desc].vk_desc_set, 0, nullptr);
+                            pipeline_layout_, i, 1,
+                            &descriptor_sets_[i].vk_desc_set, 0, nullptr);
   }
 }
 
