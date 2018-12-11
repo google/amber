@@ -47,9 +47,16 @@ ShaderType ShaderNameToType(const std::string& name) {
 
 }  // namespace
 
-CommandParser::CommandParser() = default;
+CommandParser::CommandParser(size_t current_line, const std::string& data)
+    : tokenizer_(MakeUnique<Tokenizer>(data)) {
+  tokenizer_->SetCurrentLine(current_line);
+}
 
 CommandParser::~CommandParser() = default;
+
+std::string CommandParser::make_error(const std::string& err) {
+  return std::to_string(tokenizer_->GetCurrentLine()) + ": " + err;
+}
 
 Result CommandParser::ParseBoolean(const std::string& str, bool* result) {
   assert(result);
@@ -70,17 +77,15 @@ Result CommandParser::ParseBoolean(const std::string& str, bool* result) {
   return Result("Invalid value passed as a boolean string");
 }
 
-Result CommandParser::Parse(const std::string& data) {
-  tokenizer_ = MakeUnique<Tokenizer>(data);
-
+Result CommandParser::Parse() {
   for (auto token = tokenizer_->NextToken(); !token->IsEOS();
        token = tokenizer_->NextToken()) {
     if (token->IsEOL())
       continue;
 
     if (!token->IsString()) {
-      return Result(
-          "Command not recognized. Received something other then a string.");
+      return Result(make_error(
+          "Command not recognized. Received something other then a string."));
     }
 
     std::string cmd_name = token->AsString();
@@ -88,7 +93,7 @@ Result CommandParser::Parse(const std::string& data) {
     if (cmd_name == "draw") {
       token = tokenizer_->NextToken();
       if (!token->IsString())
-        return Result("Invalid draw command in test");
+        return Result(make_error("Invalid draw command in test"));
 
       cmd_name = token->AsString();
       if (cmd_name == "rect")
@@ -96,7 +101,7 @@ Result CommandParser::Parse(const std::string& data) {
       else if (cmd_name == "arrays")
         r = ProcessDrawArrays();
       else
-        return Result("Unknown draw command: " + cmd_name);
+        r = Result("Unknown draw command: " + cmd_name);
 
     } else if (cmd_name == "clear") {
       r = ProcessClear();
@@ -113,7 +118,7 @@ Result CommandParser::Parse(const std::string& data) {
     } else if (cmd_name == "relative") {
       token = tokenizer_->NextToken();
       if (!token->IsString() || token->AsString() != "probe")
-        return Result("relative must be used with probe");
+        return Result(make_error("relative must be used with probe"));
 
       r = ProcessProbe(true);
     } else if (cmd_name == "compute") {
@@ -126,14 +131,15 @@ Result CommandParser::Parse(const std::string& data) {
         if (!token->IsString() || (token->AsString() != "control" &&
                                    token->AsString() != "evaluation")) {
           return Result(
-              "Tessellation entrypoint must have <evaluation|control> in name");
+              make_error("Tessellation entrypoint must have "
+                         "<evaluation|control> in name"));
         }
         shader_name += " " + token->AsString();
       }
 
       token = tokenizer_->NextToken();
       if (!token->IsString() || token->AsString() != "entrypoint")
-        return Result("Unknown command: " + shader_name);
+        return Result(make_error("Unknown command: " + shader_name));
 
       r = ProcessEntryPoint(shader_name);
 
@@ -225,11 +231,11 @@ Result CommandParser::Parse(const std::string& data) {
     } else if (cmd_name == "colorWriteMask") {
       r = ProcessColorWriteMask();
     } else {
-      return Result("Unknown command: " + cmd_name);
+      r = Result("Unknown command: " + cmd_name);
     }
 
     if (!r.IsSuccess())
-      return r;
+      return Result(make_error(r.Error()));
   }
 
   return {};

@@ -128,13 +128,14 @@ Result SectionParser::NameToNodeType(const std::string& data,
 void SectionParser::AddSection(NodeType section_type,
                                ShaderType shader_type,
                                ShaderFormat fmt,
+                               size_t line_count,
                                const std::string& contents) {
   if (section_type == NodeType::kComment)
     return;
 
   if (fmt == ShaderFormat::kDefault) {
     sections_.push_back({section_type, shader_type, ShaderFormat::kSpirvAsm,
-                         kPassThroughShader});
+                         line_count, kPassThroughShader});
     return;
   }
 
@@ -148,12 +149,13 @@ void SectionParser::AddSection(NodeType section_type,
   }
 
   sections_.push_back(
-      {section_type, shader_type, fmt, contents.substr(0, size)});
+      {section_type, shader_type, fmt, line_count, contents.substr(0, size)});
 }
 
 Result SectionParser::SplitSections(const std::string& data) {
   std::stringstream ss(data);
   size_t line_count = 0;
+  size_t section_start = 0;
   bool in_section = false;
 
   NodeType current_type = NodeType::kComment;
@@ -171,6 +173,7 @@ Result SectionParser::SplitSections(const std::string& data) {
       if (line[0] != '[')
         return Result(std::to_string(line_count) + ": Invalid character");
 
+      section_start = line_count;
       in_section = true;
     }
 
@@ -180,7 +183,9 @@ Result SectionParser::SplitSections(const std::string& data) {
     }
 
     if (line[0] == '[') {
-      AddSection(current_type, current_shader, current_fmt, section_contents);
+      AddSection(current_type, current_shader, current_fmt, section_start,
+                 section_contents);
+      section_start = line_count;
       section_contents = "";
 
       size_t name_end = line.rfind("]");
@@ -197,7 +202,8 @@ Result SectionParser::SplitSections(const std::string& data) {
       section_contents += line + "\n";
     }
   }
-  AddSection(current_type, current_shader, current_fmt, section_contents);
+  AddSection(current_type, current_shader, current_fmt, section_start,
+             section_contents);
 
   return {};
 }
