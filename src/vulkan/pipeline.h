@@ -88,9 +88,11 @@ class Pipeline {
   std::unique_ptr<CommandBuffer> command_;
 
  private:
-  enum class DescriptorSetLayoutType : uint8_t {
-    kEmpty = 0,
-    kNonEmpty,
+  struct DescriptorSet {
+    bool empty = true;
+    VkDescriptorSetLayout layout = VK_NULL_HANDLE;
+    VkDescriptorPool pool = VK_NULL_HANDLE;
+    VkDescriptorSet vk_desc_set = VK_NULL_HANDLE;
   };
 
   Result CreatePipelineLayout();
@@ -99,18 +101,12 @@ class Pipeline {
   Result CreateDescriptorPools();
   Result CreateDescriptorSets();
 
-  void DestroyDescriptorSetLayouts();
-  void DestroyDescriptorPools();
-
   // Sort |descriptors_| in the order of |descriptors_set_| and |binding_|.
   void SortDescriptorsBySetAndBinding();
 
   PipelineType pipeline_type_;
   std::vector<std::unique_ptr<Descriptor>> descriptors_;
-  std::vector<DescriptorSetLayoutType> descriptor_set_layout_types_;
-  std::vector<VkDescriptorSetLayout> descriptor_set_layouts_;
-  std::vector<VkDescriptorPool> descriptor_pools_;
-  std::vector<VkDescriptorSet> descriptor_sets_;
+  std::vector<DescriptorSet> descriptor_sets_;
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
   uint32_t fence_timeout_ms_ = 100;
   bool descriptor_related_objects_already_created_ = false;
