@@ -25,13 +25,9 @@
 #include "src/command.h"
 #include "src/feature.h"
 #include "src/format.h"
+#include "src/pipeline.h"
 
 namespace amber {
-
-enum class PipelineType : uint8_t {
-  kCompute = 0,
-  kGraphics,
-};
 
 enum class ResourceInfoType : uint8_t {
   kBuffer = 0,
