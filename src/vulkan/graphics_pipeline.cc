@@ -482,9 +482,13 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
 }
 
 Result GraphicsPipeline::ResetPipelineAndVertexBuffer() {
+  Result r = command_->BeginIfNotInRecording();
+  if (!r.IsSuccess())
+    return r;
+
   DeactivateRenderPassIfNeeded();
 
-  Result r = command_->End();
+  r = command_->End();
   if (!r.IsSuccess())
     return r;
 
