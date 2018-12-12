@@ -198,6 +198,7 @@ Result EngineVulkan::SetBuffer(BufferType type,
 
     pipeline_->AsGraphics()->SetVertexBuffer(location, format, values,
                                              vertex_buffer_.get());
+    return {};
   }
 
   return Result("Vulkan::SetBuffer non-vertex buffer type not implemented");
