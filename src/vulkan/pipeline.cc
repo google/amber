@@ -86,21 +86,18 @@ Result Pipeline::CreateDescriptorSetLayouts() {
     VkDescriptorSetLayoutCreateInfo desc_info = {};
     desc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
-    // If two descriptor sets are discontinuous, we must put empty
-    // descriptor set layouts between them.
+    // If there are no descriptors for this descriptor set we only
+    // need to create its layout and there will be no bindings.
     std::vector<VkDescriptorSetLayoutBinding> bindings;
-    if (!info.empty) {
-      for (auto& desc : info.descriptors_) {
-        bindings.emplace_back();
-        bindings.back().binding = desc->GetBinding();
-        bindings.back().descriptorType = ToVkDescriptorType(desc->GetType());
-        bindings.back().descriptorCount = 1;
-        bindings.back().stageFlags = VK_SHADER_STAGE_ALL;
-      }
-
-      desc_info.bindingCount = bindings.size();
-      desc_info.pBindings = bindings.data();
+    for (auto& desc : info.descriptors_) {
+      bindings.emplace_back();
+      bindings.back().binding = desc->GetBinding();
+      bindings.back().descriptorType = ToVkDescriptorType(desc->GetType());
+      bindings.back().descriptorCount = 1;
+      bindings.back().stageFlags = VK_SHADER_STAGE_ALL;
     }
+    desc_info.bindingCount = bindings.size();
+    desc_info.pBindings = bindings.data();
 
     if (vkCreateDescriptorSetLayout(device_, &desc_info, nullptr,
                                     &info.layout) != VK_SUCCESS) {
@@ -216,9 +213,6 @@ Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
 
 Result Pipeline::UpdateDescriptorSetsIfNeeded() {
   for (auto& info : descriptor_set_info_) {
-    if (info.empty)
-      continue;
-
     for (auto& desc : info.descriptors_) {
       Result r = desc->UpdateDescriptorSetIfNeeded(info.vk_desc_set);
       if (!r.IsSuccess())
@@ -286,9 +280,6 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
 Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
   bool data_send_needed = false;
   for (auto& info : descriptor_set_info_) {
-    if (info.empty)
-      continue;
-
     for (auto& desc : info.descriptors_) {
       if (desc->HasDataNotSent()) {
         data_send_needed = true;
@@ -308,9 +299,6 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     return r;
 
   for (auto& info : descriptor_set_info_) {
-    if (info.empty)
-      continue;
-
     for (auto& desc : info.descriptors_) {
       r = desc->CreateOrResizeIfNeeded(command_->GetCommandBuffer(),
                                        memory_properties_);
@@ -338,9 +326,6 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     return r;
 
   for (auto& info : descriptor_set_info_) {
-    if (info.empty)
-      continue;
-
     for (auto& desc : info.descriptors_)
       desc->UpdateResourceIfNeeded(command_->GetCommandBuffer());
   }
