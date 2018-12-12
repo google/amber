@@ -198,6 +198,7 @@ Result EngineVulkan::SetBuffer(BufferType type,
 
     pipeline_->AsGraphics()->SetVertexBuffer(location, format, values,
                                              vertex_buffer_.get());
+    return {};
   }
 
   return Result("Vulkan::SetBuffer non-vertex buffer type not implemented");
@@ -280,8 +281,7 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
 
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_->GetDevice());
 
-  r = graphics->SetVertexBuffer(BufferType::kVertex, 0, format, values,
-                                vertex_buffer.get());
+  r = graphics->SetVertexBuffer(0, format, values, vertex_buffer.get());
   if (!r.IsSuccess())
     return r;
 
