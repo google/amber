@@ -83,29 +83,31 @@ class Pipeline {
   VkPipeline pipeline_ = VK_NULL_HANDLE;
   VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
 
-  std::vector<VkDescriptorSetLayout> descriptor_set_layouts_;
-  std::vector<VkDescriptorPool> descriptor_pools_;
-  std::vector<VkDescriptorSet> descriptor_sets_;
-
   VkDevice device_ = VK_NULL_HANDLE;
   VkPhysicalDeviceMemoryProperties memory_properties_;
   std::unique_ptr<CommandBuffer> command_;
 
  private:
+  struct DescriptorSetInfo {
+    bool empty = true;
+    VkDescriptorSetLayout layout = VK_NULL_HANDLE;
+    VkDescriptorPool pool = VK_NULL_HANDLE;
+    VkDescriptorSet vk_desc_set = VK_NULL_HANDLE;
+    std::vector<std::unique_ptr<Descriptor>> descriptors_;
+  };
+
   Result CreatePipelineLayout();
 
   Result CreateDescriptorSetLayouts();
   Result CreateDescriptorPools();
   Result CreateDescriptorSets();
 
-  void DestoryDescriptorSetLayouts();
-  void DestoryDescriptorPools();
-
   PipelineType pipeline_type_;
-  std::vector<std::unique_ptr<Descriptor>> descriptors_;
+  std::vector<DescriptorSetInfo> descriptor_set_info_;
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
   uint32_t fence_timeout_ms_ = 100;
   bool descriptor_related_objects_already_created_ = false;
+  bool need_sort_descriptors_ = true;
 };
 
 }  // namespace vulkan
