@@ -14,6 +14,7 @@
 
 #include "src/vulkan/device.h"
 
+#include <cstring>
 #include <memory>
 #include <set>
 #include <vector>
@@ -23,6 +24,23 @@
 namespace amber {
 namespace vulkan {
 namespace {
+
+const std::vector<const char*> kRequiredValidationLayers = {
+#ifdef __ANDROID__
+    // Note that the order of enabled layers is important. It is
+    // based on Android NDK Vulkan document. Don't change it.
+    "VK_LAYER_GOOGLE_threading",      "VK_LAYER_LUNARG_parameter_validation",
+    "VK_LAYER_LUNARG_object_tracker", "VK_LAYER_LUNARG_core_validation",
+    "VK_LAYER_LUNARG_device_limits",  "VK_LAYER_LUNARG_image",
+    "VK_LAYER_LUNARG_swapchain",      "VK_LAYER_GOOGLE_unique_objects",
+#else   // __ANDROID__
+    // We assume that it runs with LunarG Vulkan SDK if it is not
+    // Android.
+    "VK_LAYER_LUNARG_standard_validation",
+#endif  // __ANDROID__
+};
+
+const char* kExtensionForValidationLayer = "VK_EXT_debug_report";
 
 VkPhysicalDeviceFeatures RequestedFeatures(
     const std::vector<Feature>& required_features) {
@@ -484,6 +502,54 @@ bool AreAllExtensionsSupported(
   return required_extension_set.empty();
 }
 
+bool AreAllValidationLayersSupported() {
+  std::vector<VkLayerProperties> available_layer_properties;
+  uint32_t available_layer_count = 0;
+  if (vkEnumerateInstanceLayerProperties(&available_layer_count, nullptr) !=
+      VK_SUCCESS) {
+    return false;
+  }
+  available_layer_properties.resize(available_layer_count);
+  if (vkEnumerateInstanceLayerProperties(&available_layer_count,
+                                         available_layer_properties.data()) !=
+      VK_SUCCESS) {
+    return false;
+  }
+
+  std::set<std::string> required_layer_set(kRequiredValidationLayers.begin(),
+                                           kRequiredValidationLayers.end());
+  for (const auto& property : available_layer_properties) {
+    required_layer_set.erase(property.layerName);
+  }
+
+  return required_layer_set.empty();
+}
+
+bool AreAllValidationExtensionsSupported() {
+  for (const auto& layer : kRequiredValidationLayers) {
+    uint32_t available_extension_count = 0;
+    std::vector<VkExtensionProperties> extension_properties;
+
+    if (vkEnumerateInstanceExtensionProperties(
+            layer, &available_extension_count, nullptr) != VK_SUCCESS) {
+      return false;
+    }
+    extension_properties.resize(available_extension_count);
+    if (vkEnumerateInstanceExtensionProperties(
+            layer, &available_extension_count, extension_properties.data()) !=
+        VK_SUCCESS) {
+      return false;
+    }
+
+    for (const auto& ext : extension_properties) {
+      if (!strcmp(kExtensionForValidationLayer, ext.extensionName))
+        return true;
+    }
+  }
+
+  return false;
+}
+
 }  // namespace
 
 Device::Device() = default;
@@ -551,16 +617,26 @@ bool Device::ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device) {
 }
 
 Result Device::CreateInstance() {
-  VkApplicationInfo appInfo = {};
-  appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.apiVersion = VK_MAKE_VERSION(1, 0, 0);
+  VkApplicationInfo app_info = {};
+  app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  app_info.apiVersion = VK_MAKE_VERSION(1, 0, 0);
 
-  VkInstanceCreateInfo instInfo = {};
-  instInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-  instInfo.pApplicationInfo = &appInfo;
-  // TODO(jaebaek): Enable layers, extensions
+  if (!AreAllValidationLayersSupported())
+    return Result("Vulkan: validation layers are not supported");
 
-  if (vkCreateInstance(&instInfo, nullptr, &instance_) != VK_SUCCESS)
+  if (!AreAllValidationExtensionsSupported())
+    return Result("Vulkan: extensions of validation layers are not supported");
+
+  VkInstanceCreateInfo instance_info = {};
+  instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  instance_info.pApplicationInfo = &app_info;
+  instance_info.enabledLayerCount =
+      static_cast<uint32_t>(kRequiredValidationLayers.size());
+  instance_info.ppEnabledLayerNames = kRequiredValidationLayers.data();
+  instance_info.enabledExtensionCount = 1U;
+  instance_info.ppEnabledExtensionNames = &kExtensionForValidationLayer;
+
+  if (vkCreateInstance(&instance_info, nullptr, &instance_) != VK_SUCCESS)
     return Result("Vulkan::Calling vkCreateInstance Fail");
 
   return {};
