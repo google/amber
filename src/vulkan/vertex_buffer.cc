@@ -29,7 +29,8 @@ VertexBuffer::VertexBuffer(VkDevice device) : device_(device) {}
 VertexBuffer::~VertexBuffer() = default;
 
 void VertexBuffer::Shutdown() {
-  buffer_->Shutdown();
+  if (buffer_)
+    buffer_->Shutdown();
 }
 
 void VertexBuffer::SetData(uint8_t location,
