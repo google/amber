@@ -192,12 +192,15 @@ Result EngineVulkan::SetBuffer(BufferType type,
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::SetBuffer for Non-Graphics Pipeline");
 
-  if (!vertex_buffer_)
-    vertex_buffer_ = MakeUnique<VertexBuffer>(device_->GetDevice());
+  if (type == BufferType::kVertex) {
+    if (!vertex_buffer_)
+      vertex_buffer_ = MakeUnique<VertexBuffer>(device_->GetDevice());
 
-  pipeline_->AsGraphics()->SetVertexBuffer(type, location, format, values,
-                                           vertex_buffer_.get());
-  return {};
+    pipeline_->AsGraphics()->SetVertexBuffer(location, format, values,
+                                             vertex_buffer_.get());
+  }
+
+  return Result("Vulkan::SetBuffer non-vertex buffer type not implemented");
 }
 
 Result EngineVulkan::DoClearColor(const ClearColorCommand* command) {

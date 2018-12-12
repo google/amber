@@ -328,19 +328,11 @@ Result GraphicsPipeline::Initialize(uint32_t width,
   return {};
 }
 
-Result GraphicsPipeline::SetVertexBuffer(BufferType type,
-                                         uint8_t location,
+Result GraphicsPipeline::SetVertexBuffer(uint8_t location,
                                          const Format& format,
                                          const std::vector<Value>& values,
                                          VertexBuffer* vertex_buffer) {
-  // TODO(jaebaek): Handle indices data.
-  if (type != BufferType::kVertex) {
-    return Result(
-        "GraphicsPipeline::SetVertexBuffer: non-vertex buffer type not "
-        "implemented");
-  }
-
-  if (vertex_buffer == nullptr) {
+  if (!vertex_buffer) {
     return Result(
         "GraphicsPipeline::SetVertexBuffer: vertex buffer is nullptr");
   }
@@ -355,8 +347,9 @@ Result GraphicsPipeline::SetVertexBuffer(BufferType type,
   return {};
 }
 
-Result GraphicsPipeline::SendBufferDataIfNeeded(VertexBuffer* vertex_buffer) {
-  if (vertex_buffer == nullptr)
+Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
+    VertexBuffer* vertex_buffer) {
+  if (!vertex_buffer)
     return {};
 
   if (vertex_buffer->VertexDataSent())
@@ -552,7 +545,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  r = SendBufferDataIfNeeded(vertex_buffer);
+  r = SendVertexBufferDataIfNeeded(vertex_buffer);
   if (!r.IsSuccess())
     return r;
 

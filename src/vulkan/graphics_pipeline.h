@@ -48,8 +48,7 @@ class GraphicsPipeline : public Pipeline {
                     VkCommandPool pool,
                     VkQueue queue);
 
-  Result SetVertexBuffer(BufferType type,
-                         uint8_t location,
+  Result SetVertexBuffer(uint8_t location,
                          const Format& format,
                          const std::vector<Value>& values,
                          VertexBuffer* vertex_buffer);
@@ -90,8 +89,7 @@ class GraphicsPipeline : public Pipeline {
   Result ActivateRenderPassIfNeeded();
   void DeactivateRenderPassIfNeeded();
 
-  // Send vertex and index buffers.
-  Result SendBufferDataIfNeeded(VertexBuffer* vertex_buffer);
+  Result SendVertexBufferDataIfNeeded(VertexBuffer* vertex_buffer);
 
   // TODO(jaebaek): Implement image/ssbo probe.
   Result SubmitProbeCommand();
