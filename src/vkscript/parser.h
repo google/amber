@@ -35,7 +35,6 @@ class Parser : public amber::Parser {
 
   // amber::Parser
   Result Parse(const std::string& data) override;
-  std::unique_ptr<Script> GetScript() override { return std::move(script_); }
 
   Result ProcessSectionForTesting(const SectionParser::Section& section) {
     return ProcessSection(section);
@@ -49,8 +48,6 @@ class Parser : public amber::Parser {
   Result ProcessIndicesBlock(const SectionParser::Section& section);
   Result ProcessVertexDataBlock(const SectionParser::Section& section);
   Result ProcessTestBlock(const SectionParser::Section& section);
-
-  std::unique_ptr<Script> script_;
 };
 
 }  // namespace vkscript

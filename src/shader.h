@@ -21,8 +21,10 @@
 
 namespace amber {
 
+/// Stores information for a shader described in a script.
 class Shader {
  public:
+  /// Create a shader of |type|.
   explicit Shader(ShaderType type);
   ~Shader();
 

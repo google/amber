@@ -94,6 +94,7 @@ class DataBuffer : public Buffer {
   explicit DataBuffer(BufferType type);
   ~DataBuffer() override;
 
+  // Buffer
   bool IsDataBuffer() const override { return true; }
   size_t GetSizeInBytes() const override {
     return GetSize() * datum_type_.SizeInBytes();
@@ -118,6 +119,7 @@ class FormatBuffer : public Buffer {
   explicit FormatBuffer(BufferType type);
   ~FormatBuffer() override;
 
+  // Buffer
   bool IsFormatBuffer() const override { return true; }
   size_t GetSizeInBytes() const override {
     return GetSize() * format_->GetByteSize();

@@ -152,7 +152,7 @@ Feature NameToFeature(const std::string& name) {
 
 }  // namespace
 
-Parser::Parser() : amber::Parser(), script_(MakeUnique<Script>()) {}
+Parser::Parser() : amber::Parser() {}
 
 Parser::~Parser() = default;
 

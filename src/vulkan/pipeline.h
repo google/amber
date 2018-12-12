@@ -107,7 +107,6 @@ class Pipeline {
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
   uint32_t fence_timeout_ms_ = 100;
   bool descriptor_related_objects_already_created_ = false;
-  bool need_sort_descriptors_ = true;
 };
 
 }  // namespace vulkan
