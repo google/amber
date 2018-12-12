@@ -104,7 +104,7 @@ Result Pipeline::CreateDescriptorSetLayouts() {
 
     VkDescriptorSetLayoutCreateInfo desc_info = {};
     desc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    desc_info.bindingCount = bindings.size();
+    desc_info.bindingCount = static_cast<uint32_t>(bindings.size());
     desc_info.pBindings = bindings.data();
 
     VkDescriptorSetLayout desc_layout = VK_NULL_HANDLE;
@@ -151,7 +151,7 @@ Result Pipeline::CreateDescriptorPools() {
     VkDescriptorPoolCreateInfo pool_info = {};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.maxSets = 1;
-    pool_info.poolSizeCount = pool_sizes.size();
+    pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
     pool_info.pPoolSizes = pool_sizes.data();
 
     VkDescriptorPool desc_pool = VK_NULL_HANDLE;
@@ -187,7 +187,8 @@ Result Pipeline::CreateDescriptorSets() {
 Result Pipeline::CreatePipelineLayout() {
   VkPipelineLayoutCreateInfo pipeline_layout_info = {};
   pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipeline_layout_info.setLayoutCount = descriptor_set_layouts_.size();
+  pipeline_layout_info.setLayoutCount =
+      static_cast<uint32_t>(descriptor_set_layouts_.size());
   pipeline_layout_info.pSetLayouts = descriptor_set_layouts_.data();
   // TODO(jaebaek): Push constant for pipeline_layout_info.
 
@@ -335,7 +336,8 @@ void Pipeline::BindVkDescriptorSets() {
   vkCmdBindDescriptorSets(command_->GetCommandBuffer(),
                           IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
                                        : VK_PIPELINE_BIND_POINT_COMPUTE,
-                          pipeline_layout_, 0, descriptor_sets_.size(),
+                          pipeline_layout_, 0,
+                          static_cast<uint32_t>(descriptor_sets_.size()),
                           descriptor_sets_.data(), 0, nullptr);
 }
 

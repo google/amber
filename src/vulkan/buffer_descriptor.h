@@ -37,7 +37,7 @@ class BufferDescriptor : public Descriptor {
                    VkDevice device,
                    uint32_t desc_set,
                    uint32_t binding);
-  ~BufferDescriptor();
+  ~BufferDescriptor() override;
 
   // |data| contains information of what parts of |buffer_| must be
   // updated as what values. This method conducts the update.

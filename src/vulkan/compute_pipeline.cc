@@ -77,7 +77,7 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
     return r;
 
   if (pipeline_ == VK_NULL_HANDLE) {
-    Result r = CreateVkComputePipeline();
+    r = CreateVkComputePipeline();
     if (!r.IsSuccess())
       return r;
   }

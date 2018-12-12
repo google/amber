@@ -291,7 +291,7 @@ logicOp)";
   EXPECT_EQ(Feature::kLogicOp, features[1]);
 
   const auto& extensions = ToStub(engine.get())->GetExtensions();
-  ASSERT_EQ(0U, extensions.size());
+  ASSERT_EQ(static_cast<size_t>(0U), extensions.size());
 
   EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
 
@@ -319,7 +319,7 @@ VK_KHR_variable_pointers)";
   ASSERT_TRUE(r.IsSuccess());
 
   const auto& features = ToStub(engine.get())->GetFeatures();
-  ASSERT_EQ(0U, features.size());
+  ASSERT_EQ(static_cast<size_t>(0U), features.size());
 
   const auto& extensions = ToStub(engine.get())->GetExtensions();
   ASSERT_EQ(2U, extensions.size());
@@ -352,10 +352,10 @@ depthstencil D24_UNORM_S8_UINT)";
   ASSERT_TRUE(r.IsSuccess());
 
   const auto& features = ToStub(engine.get())->GetFeatures();
-  ASSERT_EQ(0U, features.size());
+  ASSERT_EQ(static_cast<size_t>(0U), features.size());
 
   const auto& extensions = ToStub(engine.get())->GetExtensions();
-  ASSERT_EQ(0U, extensions.size());
+  ASSERT_EQ(static_cast<size_t>(0U), extensions.size());
 
   EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
 
@@ -382,10 +382,10 @@ fence_timeout 12345)";
   ASSERT_TRUE(r.IsSuccess());
 
   const auto& features = ToStub(engine.get())->GetFeatures();
-  ASSERT_EQ(0U, features.size());
+  ASSERT_EQ(static_cast<size_t>(0U), features.size());
 
   const auto& extensions = ToStub(engine.get())->GetExtensions();
-  ASSERT_EQ(0U, extensions.size());
+  ASSERT_EQ(static_cast<size_t>(0U), extensions.size());
 
   EXPECT_EQ(12345U, ToStub(engine.get())->GetFenceTimeoutMs());
 
