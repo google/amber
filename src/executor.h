@@ -22,12 +22,17 @@
 
 namespace amber {
 
+/// The executor is responsible for running the given script against an engine.
 class Executor {
  public:
+  /// Create a new executor.
   Executor();
   ~Executor();
 
-  Result Execute(Engine*, const Script*, const ShaderMap&);
+  /// Executes |script| against |engine|. For each shader described in |script|
+  /// if the shader name exists in |map| the value for that map'd key will be
+  /// used as the shader binary.
+  Result Execute(Engine* engine, const Script* script, const ShaderMap& map);
 
  private:
   Verifier verifier_;

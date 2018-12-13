@@ -14,9 +14,11 @@
 
 #include "src/parser.h"
 
+#include "src/make_unique.h"
+
 namespace amber {
 
-Parser::Parser() = default;
+Parser::Parser() : script_(MakeUnique<Script>()) {}
 
 Parser::~Parser() = default;
 

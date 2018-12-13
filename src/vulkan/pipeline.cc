@@ -96,7 +96,7 @@ Result Pipeline::CreateDescriptorSetLayouts() {
       bindings.back().descriptorCount = 1;
       bindings.back().stageFlags = VK_SHADER_STAGE_ALL;
     }
-    desc_info.bindingCount = bindings.size();
+    desc_info.bindingCount = static_cast<uint32_t>(bindings.size());
     desc_info.pBindings = bindings.data();
 
     if (vkCreateDescriptorSetLayout(device_, &desc_info, nullptr,
@@ -341,7 +341,7 @@ void Pipeline::BindVkDescriptorSets() {
     vkCmdBindDescriptorSets(command_->GetCommandBuffer(),
                             IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
                                          : VK_PIPELINE_BIND_POINT_COMPUTE,
-                            pipeline_layout_, i, 1,
+                            pipeline_layout_, static_cast<uint32_t>(i), 1,
                             &descriptor_set_info_[i].vk_desc_set, 0, nullptr);
   }
 }

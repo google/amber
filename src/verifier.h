@@ -20,18 +20,25 @@
 
 namespace amber {
 
+/// The verifier is used to validate if a probe command is successful or not.
 class Verifier {
  public:
+  /// Create a verifier.
   Verifier();
   ~Verifier();
 
-  Result Probe(const ProbeCommand*,
+  /// Check |command| against |buf|. The result will be success if the probe
+  /// passes correctly.
+  Result Probe(const ProbeCommand* command,
                uint32_t texel_stride,
                uint32_t row_stride,
                uint32_t frame_width,
                uint32_t frame_height,
                const void* buf);
-  Result ProbeSSBO(const ProbeSSBOCommand*,
+
+  /// Check |command| against |cpu_memory|. The result will be success if the
+  /// probe passes correctly.
+  Result ProbeSSBO(const ProbeSSBOCommand* command,
                    size_t size,
                    const void* cpu_memory);
 };
