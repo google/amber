@@ -106,15 +106,13 @@ void Buffer::Shutdown() {
     view_ = VK_NULL_HANDLE;
   }
 
-  if (buffer_ != VK_NULL_HANDLE) {
-    vkDestroyBuffer(GetDevice(), buffer_, nullptr);
-    buffer_ = VK_NULL_HANDLE;
-  }
+  if (is_buffer_host_accessible_)
+    UnMapMemory(memory_);
 
-  if (memory_ != VK_NULL_HANDLE) {
-    vkFreeMemory(GetDevice(), memory_, nullptr);
-    memory_ = VK_NULL_HANDLE;
-  }
+  vkDestroyBuffer(GetDevice(), buffer_, nullptr);
+  vkFreeMemory(GetDevice(), memory_, nullptr);
+  buffer_ = VK_NULL_HANDLE;
+  memory_ = VK_NULL_HANDLE;
 
   if (!is_buffer_host_accessible_)
     Resource::Shutdown();
