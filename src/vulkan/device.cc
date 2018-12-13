@@ -25,20 +25,23 @@ namespace amber {
 namespace vulkan {
 namespace {
 
-const std::vector<const char*> kRequiredValidationLayers = {
+const char* const kRequiredValidationLayers[] = {
 #ifdef __ANDROID__
     // Note that the order of enabled layers is important. It is
-    // based on Android NDK Vulkan document. Don't change it.
+    // based on Android NDK Vulkan document.
     "VK_LAYER_GOOGLE_threading",      "VK_LAYER_LUNARG_parameter_validation",
     "VK_LAYER_LUNARG_object_tracker", "VK_LAYER_LUNARG_core_validation",
     "VK_LAYER_LUNARG_device_limits",  "VK_LAYER_LUNARG_image",
     "VK_LAYER_LUNARG_swapchain",      "VK_LAYER_GOOGLE_unique_objects",
 #else   // __ANDROID__
-    // We assume that it runs with LunarG Vulkan SDK if it is not
-    // Android.
+    // TODO(jaebaek): Handle cases running with other validation
+    //                layers e.g., MoltenVK.
     "VK_LAYER_LUNARG_standard_validation",
 #endif  // __ANDROID__
 };
+
+const size_t kNumberOfRequiredValidationLayers =
+    sizeof(kRequiredValidationLayers) / sizeof(const char*);
 
 const char* kExtensionForValidationLayer = "VK_EXT_debug_report";
 
@@ -516,8 +519,9 @@ bool AreAllValidationLayersSupported() {
     return false;
   }
 
-  std::set<std::string> required_layer_set(kRequiredValidationLayers.begin(),
-                                           kRequiredValidationLayers.end());
+  std::set<std::string> required_layer_set(
+      kRequiredValidationLayers,
+      &kRequiredValidationLayers[kNumberOfRequiredValidationLayers]);
   for (const auto& property : available_layer_properties) {
     required_layer_set.erase(property.layerName);
   }
@@ -630,9 +634,8 @@ Result Device::CreateInstance() {
   VkInstanceCreateInfo instance_info = {};
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_info.pApplicationInfo = &app_info;
-  instance_info.enabledLayerCount =
-      static_cast<uint32_t>(kRequiredValidationLayers.size());
-  instance_info.ppEnabledLayerNames = kRequiredValidationLayers.data();
+  instance_info.enabledLayerCount = kNumberOfRequiredValidationLayers;
+  instance_info.ppEnabledLayerNames = kRequiredValidationLayers;
   instance_info.enabledExtensionCount = 1U;
   instance_info.ppEnabledExtensionNames = &kExtensionForValidationLayer;
 
