@@ -35,12 +35,17 @@ Result ComputePipeline::Initialize(VkCommandPool pool, VkQueue queue) {
 }
 
 Result ComputePipeline::CreateVkComputePipeline() {
-  const auto& shader_stage_info = GetShaderStageInfo();
+  auto shader_stage_info = GetShaderStageInfo();
   if (shader_stage_info.size() != 1) {
     return Result(
         "Vulkan::CreateVkComputePipeline number of shaders given to compute "
         "pipeline is not 1");
   }
+
+  if (shader_stage_info[0].stage != VK_SHADER_STAGE_COMPUTE_BIT)
+    return Result("Vulkan: Non compute shader for compute pipeline");
+
+  shader_stage_info[0].pName = GetEntryPointName(VK_SHADER_STAGE_COMPUTE_BIT);
 
   Result r = CreateVkDescriptorRelatedObjectsIfNeeded();
   if (!r.IsSuccess())

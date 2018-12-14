@@ -109,8 +109,6 @@ class GraphicsPipeline : public Pipeline {
   VkFormat color_format_;
   VkFormat depth_stencil_format_;
 
-  std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
-
   uint32_t frame_width_ = 0;
   uint32_t frame_height_ = 0;
 
