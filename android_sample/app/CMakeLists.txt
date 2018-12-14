@@ -9,7 +9,8 @@ add_library( app-glue STATIC ${APP_GLUE_DIR}/android_native_app_glue.c)
 set(SRC_DIR src/main/jni)
 
 add_library(amber_android SHARED
-            ${SRC_DIR}/AndroidMain.cpp)
+            ${SRC_DIR}/main.cpp
+            ${SRC_DIR}/amber_script.cpp)
 
 include_directories(${SRC_DIR})
 

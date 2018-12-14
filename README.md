@@ -42,6 +42,16 @@ cmake -GNinja ../..
 ninja
 ```
 
+### Android
+
+* Set up Android SDK path by adding `sdk.dir = path/to/Android/SDK` to
+`local.properties` or run `export ANDROID_SDK_HOME=path/to/Android/SDK` in your
+shell.
+* Set up Android NDK path by adding `ndk.dir = path/to/Android/NDK` to
+`local.properties` or run `export ANDROID_NDK_HOME=path/to/Android/NDK` in your
+shell.
+* Run `./gradlew build`.
+
 ### Optional Components
 
 Amber, by default, enables testing, SPIRV-Tools and Shaderc. Each of these can

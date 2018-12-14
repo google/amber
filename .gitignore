@@ -9,3 +9,10 @@ third_party/spirv-headers
 
 # Vim swap files
 [._]*.s[a-w][a-z]
+
+# Android
+android_sample/.gradle/
+android_sample/app/.externalNativeBuild/
+android_sample/app/build/
+android_sample/build/
+android_sample/local.properties
