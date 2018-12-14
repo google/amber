@@ -12,18 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VULKAN_LOG_H_
-#define SRC_VULKAN_LOG_H_
+#include "src/vulkan/log.h"
 
 #include <string>
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#else  // __ANDROID__
+#include <iostream>
+#endif  // __ANDROID__
+
 namespace amber {
 namespace vulkan {
+namespace {
 
-// This method is used for debug reports from Vulkan validation layers.
-void LogError(const std::string& msg);
+#ifdef __ANDROID__
+const char* kTAG = "Amber";
+#endif  // __ANDROID__
+
+}  // namespace
+
+void LogError(const std::string& msg) {
+#ifdef __ANDROID__
+  ((void)__android_log_print(ANDROID_LOG_ERROR, kTAG, "%s", msg.c_str()));
+#else   // __ANDROID__
+  std::cerr << msg << std::endl << std::flush;
+#endif  // __ANDROID__
+}
 
 }  // namespace vulkan
 }  // namespace amber
-
-#endif  // SRC_VULKAN_LOG_H_

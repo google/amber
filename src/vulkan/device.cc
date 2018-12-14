@@ -35,8 +35,6 @@ const char* const kRequiredValidationLayers[] = {
     "VK_LAYER_LUNARG_object_tracker", "VK_LAYER_LUNARG_core_validation",
     "VK_LAYER_GOOGLE_unique_objects",
 #else   // __ANDROID__
-    // TODO(jaebaek): Handle cases running with other validation
-    //                layers e.g., MoltenVK.
     "VK_LAYER_LUNARG_standard_validation",
 #endif  // __ANDROID__
 };
@@ -54,19 +52,20 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flag,
                                              const char* layerPrefix,
                                              const char* msg,
                                              void*) {
-  const char* flag_message = nullptr;
+  std::string flag_message;
   switch (flag) {
     case VK_DEBUG_REPORT_ERROR_BIT_EXT:
-      flag_message = "Error";
+      flag_message = "[ERROR]";
       break;
     case VK_DEBUG_REPORT_WARNING_BIT_EXT:
-      flag_message = "Warning";
+      flag_message = "[WARNING]";
       break;
     default:
-      flag_message = "No flag";
+      flag_message = "[UNKNOWN]";
       break;
   }
-  LOGE("[%s] validation layer (%s): %s", flag_message, layerPrefix, msg);
+
+  LogError(flag_message + " validation layer (" + layerPrefix + "):\n" + msg);
   return VK_FALSE;
 }
 
