@@ -103,7 +103,6 @@ std::vector<std::string> AmberScriptLoader::GetShaderNamesForAmberScript(
     if (IsStartedWith(file_name_in_string,
                       script_name + kShaderNameSignature)) {
       shaders.push_back(file_name_in_string);
-      break;
     }
   }
   AAssetDir_close(asset);
