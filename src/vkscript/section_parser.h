@@ -40,6 +40,7 @@ class SectionParser {
     NodeType section_type;
     ShaderType shader_type;  // Only valid when section_type == kShader
     ShaderFormat format;
+    size_t starting_line_number;
     std::string contents;
   };
 
@@ -67,6 +68,7 @@ class SectionParser {
   void AddSection(NodeType section_type,
                   ShaderType shader_type,
                   ShaderFormat fmt,
+                  size_t starting_line_number,
                   const std::string& contents);
   Result NameToNodeType(const std::string& name,
                         NodeType* section_type,

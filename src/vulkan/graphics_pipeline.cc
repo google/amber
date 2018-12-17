@@ -204,7 +204,8 @@ GraphicsPipeline::GetPipelineColorBlendAttachmentState() {
 }
 
 Result GraphicsPipeline::CreateVkGraphicsPipeline(
-    VkPrimitiveTopology topology) {
+    VkPrimitiveTopology topology,
+    const VertexBuffer* vertex_buffer) {
   if (pipeline_ != VK_NULL_HANDLE)
     return Result("Vulkan::Pipeline already created");
 
@@ -218,9 +219,9 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   vertex_input_info.vertexBindingDescriptionCount = 1;
 
   VkVertexInputBindingDescription vertex_binding_desc = {};
-  if (vertex_buffer_) {
-    vertex_binding_desc = vertex_buffer_->GetVertexInputBinding();
-    const auto& vertex_attr_desc = vertex_buffer_->GetVertexInputAttr();
+  if (vertex_buffer != nullptr) {
+    vertex_binding_desc = vertex_buffer->GetVertexInputBinding();
+    const auto& vertex_attr_desc = vertex_buffer->GetVertexInputAttr();
 
     vertex_input_info.pVertexBindingDescriptions = &vertex_binding_desc;
     vertex_input_info.vertexAttributeDescriptionCount =
@@ -327,16 +328,14 @@ Result GraphicsPipeline::Initialize(uint32_t width,
   return {};
 }
 
-Result GraphicsPipeline::SetBuffer(BufferType type,
-                                   uint8_t location,
-                                   const Format& format,
-                                   const std::vector<Value>& values) {
-  // TODO(jaebaek): Handle indices data.
-  if (type != BufferType::kVertex)
-    return {};
-
-  if (!vertex_buffer_)
-    vertex_buffer_ = MakeUnique<VertexBuffer>(device_);
+Result GraphicsPipeline::SetVertexBuffer(uint8_t location,
+                                         const Format& format,
+                                         const std::vector<Value>& values,
+                                         VertexBuffer* vertex_buffer) {
+  if (!vertex_buffer) {
+    return Result(
+        "GraphicsPipeline::SetVertexBuffer: vertex buffer is nullptr");
+  }
 
   DeactivateRenderPassIfNeeded();
 
@@ -344,15 +343,16 @@ Result GraphicsPipeline::SetBuffer(BufferType type,
   if (!r.IsSuccess())
     return r;
 
-  vertex_buffer_->SetData(location, format, values);
+  vertex_buffer->SetData(location, format, values);
   return {};
 }
 
-Result GraphicsPipeline::SendBufferDataIfNeeded() {
-  if (!vertex_buffer_)
+Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
+    VertexBuffer* vertex_buffer) {
+  if (!vertex_buffer)
     return {};
 
-  if (vertex_buffer_->VertexDataSent())
+  if (vertex_buffer->VertexDataSent())
     return {};
 
   Result r = command_->BeginIfNotInRecording();
@@ -362,8 +362,8 @@ Result GraphicsPipeline::SendBufferDataIfNeeded() {
   DeactivateRenderPassIfNeeded();
 
   // TODO(jaebaek): Send indices data too.
-  return vertex_buffer_->SendVertexData(command_->GetCommandBuffer(),
-                                        memory_properties_);
+  return vertex_buffer->SendVertexData(command_->GetCommandBuffer(),
+                                       memory_properties_);
 }
 
 Result GraphicsPipeline::ActivateRenderPassIfNeeded() {
@@ -481,21 +481,23 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   return {};
 }
 
-Result GraphicsPipeline::ResetPipelineAndVertexBuffer() {
+Result GraphicsPipeline::ResetPipeline() {
+  if (pipeline_ == VK_NULL_HANDLE)
+    return {};
+
+  Result r = command_->BeginIfNotInRecording();
+  if (!r.IsSuccess())
+    return r;
+
   DeactivateRenderPassIfNeeded();
 
-  Result r = command_->End();
+  r = command_->End();
   if (!r.IsSuccess())
     return r;
 
   r = command_->SubmitAndReset(GetFenceTimeout());
   if (!r.IsSuccess())
     return r;
-
-  if (vertex_buffer_) {
-    vertex_buffer_->Shutdown();
-    vertex_buffer_.reset(nullptr);
-  }
 
   if (pipeline_ != VK_NULL_HANDLE) {
     vkDestroyPipeline(device_, pipeline_, nullptr);
@@ -505,7 +507,8 @@ Result GraphicsPipeline::ResetPipelineAndVertexBuffer() {
   return {};
 }
 
-Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
+Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
+                              VertexBuffer* vertex_buffer) {
   Result r = command_->BeginIfNotInRecording();
   if (!r.IsSuccess())
     return r;
@@ -516,17 +519,33 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
   if (!r.IsSuccess())
     return r;
 
+  r = command_->End();
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->SubmitAndReset(GetFenceTimeout());
+  if (!r.IsSuccess())
+    return r;
+
   if (pipeline_ == VK_NULL_HANDLE) {
-    r = CreateVkGraphicsPipeline(ToVkTopology(command->GetTopology()));
+    r = CreateVkGraphicsPipeline(ToVkTopology(command->GetTopology()),
+                                 vertex_buffer);
     if (!r.IsSuccess())
       return r;
   }
 
+  // Note that a command updating a descriptor set and a command using
+  // it must be submitted separately, because using a descriptor set
+  // while updating it is not safe.
   r = UpdateDescriptorSetsIfNeeded();
   if (!r.IsSuccess())
     return r;
 
-  r = SendBufferDataIfNeeded();
+  r = command_->BeginIfNotInRecording();
+  if (!r.IsSuccess())
+    return r;
+
+  r = SendVertexBufferDataIfNeeded(vertex_buffer);
   if (!r.IsSuccess())
     return r;
 
@@ -537,8 +556,8 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command) {
   BindVkDescriptorSets();
   BindVkPipeline();
 
-  if (vertex_buffer_)
-    vertex_buffer_->BindToCommandBuffer(command_->GetCommandBuffer());
+  if (vertex_buffer != nullptr)
+    vertex_buffer->BindToCommandBuffer(command_->GetCommandBuffer());
 
   uint32_t instance_count = command->GetInstanceCount();
   if (instance_count == 0 && command->GetVertexCount() != 0)
@@ -576,8 +595,6 @@ void GraphicsPipeline::Shutdown() {
 
   Pipeline::Shutdown();
   frame_->Shutdown();
-  if (vertex_buffer_)
-    vertex_buffer_->Shutdown();
   vkDestroyRenderPass(device_, render_pass_, nullptr);
 }
 

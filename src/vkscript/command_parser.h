@@ -34,10 +34,10 @@ namespace vkscript {
 
 class CommandParser {
  public:
-  CommandParser();
+  CommandParser(size_t current_line, const std::string& data);
   ~CommandParser();
 
-  Result Parse(const std::string& data);
+  Result Parse();
 
   void AddCommand(std::unique_ptr<Command> command) {
     commands_.push_back(std::move(command));
@@ -79,6 +79,7 @@ class CommandParser {
   }
 
  private:
+  std::string make_error(const std::string& err);
   Result TokenToFloat(Token* token, float* val) const;
   Result TokenToDouble(Token* token, double* val) const;
   Result ParseBoolean(const std::string& str, bool* result);

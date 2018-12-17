@@ -302,7 +302,8 @@ void main() {
 }
 )";
 
-  std::string in = "SHADER " + std::string(test_data.name) + R"( my_shader GLSL
+  std::string in = "SHADER " + std::string(test_data.name) +
+                   R"( my_shader GLSL
 )" + shader_result +
                    "END";
 

@@ -22,6 +22,7 @@
 #include "amber/result.h"
 #include "src/parser.h"
 #include "src/script.h"
+#include "src/tokenizer.h"
 #include "src/vkscript/section_parser.h"
 
 namespace amber {
@@ -34,30 +35,19 @@ class Parser : public amber::Parser {
 
   // amber::Parser
   Result Parse(const std::string& data) override;
-  std::unique_ptr<Script> GetScript() override { return std::move(script_); }
 
-  Result ProcessRequireBlockForTesting(const std::string& block) {
-    return ProcessRequireBlock(block);
-  }
-  Result ProcessIndicesBlockForTesting(const std::string& block) {
-    return ProcessIndicesBlock(block);
-  }
-  Result ProcessVertexDataBlockForTesting(const std::string& block) {
-    return ProcessVertexDataBlock(block);
-  }
-  Result ProcessTestBlockForTesting(const std::string& block) {
-    return ProcessTestBlock(block);
+  Result ProcessSectionForTesting(const SectionParser::Section& section) {
+    return ProcessSection(section);
   }
 
  private:
+  std::string make_error(const Tokenizer& tokenizer, const std::string& err);
   Result ProcessSection(const SectionParser::Section& section);
   Result ProcessShaderBlock(const SectionParser::Section& section);
-  Result ProcessRequireBlock(const std::string&);
-  Result ProcessIndicesBlock(const std::string&);
-  Result ProcessVertexDataBlock(const std::string&);
-  Result ProcessTestBlock(const std::string&);
-
-  std::unique_ptr<Script> script_;
+  Result ProcessRequireBlock(const SectionParser::Section& section);
+  Result ProcessIndicesBlock(const SectionParser::Section& section);
+  Result ProcessVertexDataBlock(const SectionParser::Section& section);
+  Result ProcessTestBlock(const SectionParser::Section& section);
 };
 
 }  // namespace vkscript

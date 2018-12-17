@@ -97,8 +97,13 @@ TEST_F(VkScriptParserTest, RequireBlockNoArgumentFeatures) {
   };
 
   for (const auto& feature : features) {
+    SectionParser::Section section;
+    section.section_type = NodeType::kRequire;
+    section.contents = feature.name;
+    section.starting_line_number = 0;
+
     Parser parser;
-    Result r = parser.ProcessRequireBlockForTesting(feature.name);
+    Result r = parser.ProcessSectionForTesting(section);
     ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
     auto script = parser.GetScript();
@@ -112,8 +117,13 @@ TEST_F(VkScriptParserTest, RequireBlockExtensions) {
   std::string block = R"(VK_KHR_storage_buffer_storage_class
 VK_KHR_variable_pointers)";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kRequire;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessRequireBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
@@ -126,8 +136,13 @@ VK_KHR_variable_pointers)";
 TEST_F(VkScriptParserTest, RequireBlockFramebuffer) {
   std::string block = "framebuffer R32G32B32A32_SFLOAT";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kRequire;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessRequireBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_TRUE(r.IsSuccess());
 
   auto script = parser.GetScript();
@@ -142,8 +157,13 @@ TEST_F(VkScriptParserTest, RequireBlockFramebuffer) {
 TEST_F(VkScriptParserTest, RequireBlockDepthStencil) {
   std::string block = "depthstencil D24_UNORM_S8_UINT";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kRequire;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessRequireBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
@@ -165,8 +185,13 @@ framebuffer R32G32B32A32_SFLOAT
 inheritedQueries # line comment
 )";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kRequire;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessRequireBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
@@ -190,8 +215,13 @@ inheritedQueries # line comment
 TEST_F(VkScriptParserTest, IndicesBlock) {
   std::string block = "1 2 3";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kIndices;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessIndicesBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
@@ -224,10 +254,15 @@ TEST_F(VkScriptParserTest, IndicesBlockMultipleLines) {
 7 8 9  10 11 12
 )";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kIndices;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   std::vector<uint16_t> results = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 
   Parser parser;
-  Result r = parser.ProcessIndicesBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
@@ -246,26 +281,41 @@ TEST_F(VkScriptParserTest, IndicesBlockMultipleLines) {
 TEST_F(VkScriptParserTest, IndicesBlockBadValue) {
   std::string block = "1 a 3";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kIndices;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessIndicesBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid value in indices block", r.Error());
+  EXPECT_EQ("0: Invalid value in indices block: a", r.Error());
 }
 
 TEST_F(VkScriptParserTest, IndicesBlockValueTooLarge) {
   std::string block = "100000000000 3";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kIndices;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessIndicesBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Value too large in indices block", r.Error());
+  EXPECT_EQ("0: Value too large in indices block: 100000000000", r.Error());
 }
 
 TEST_F(VkScriptParserTest, VertexDataEmpty) {
   std::string block = "\n#comment\n";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kVertexData;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessVertexDataBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_TRUE(r.IsSuccess());
 
   auto script = parser.GetScript();
@@ -275,8 +325,13 @@ TEST_F(VkScriptParserTest, VertexDataEmpty) {
 TEST_F(VkScriptParserTest, VertexDataHeaderFormatString) {
   std::string block = "0/R32G32_SFLOAT 1/A8B8G8R8_UNORM_PACK32";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kVertexData;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessVertexDataBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
@@ -299,8 +354,13 @@ TEST_F(VkScriptParserTest, VertexDataHeaderFormatString) {
 TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   std::string block = "0/float/vec2 1/int/vec3";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kVertexData;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessVertexDataBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
@@ -335,8 +395,13 @@ clear depth 10
 clear stencil 2
 clear)";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kTest;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessTestBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
@@ -368,8 +433,13 @@ TEST_F(VkScriptParserTest, VertexDataRows) {
 0.25  -1 0.25       255 0 255
 )";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kVertexData;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessVertexDataBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
@@ -404,10 +474,15 @@ TEST_F(VkScriptParserTest, VertexDataShortRow) {
 0.25  -1 0.25       255 0
 )";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kVertexData;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessVertexDataBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Too few cells in given vertex data row", r.Error());
+  EXPECT_EQ("4: Too few cells in given vertex data row", r.Error());
 }
 
 TEST_F(VkScriptParserTest, VertexDataIncorrectValue) {
@@ -417,10 +492,15 @@ TEST_F(VkScriptParserTest, VertexDataIncorrectValue) {
 0.25  -1 0.25       255 0 0
 )";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kVertexData;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessVertexDataBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid vertex data value", r.Error());
+  EXPECT_EQ("2: Invalid vertex data value: StringValue", r.Error());
 }
 
 TEST_F(VkScriptParserTest, VertexDataRowsWithHex) {
@@ -430,8 +510,13 @@ TEST_F(VkScriptParserTest, VertexDataRowsWithHex) {
 0xffff0000
 )";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kVertexData;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessVertexDataBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
@@ -456,10 +541,15 @@ TEST_F(VkScriptParserTest, VertexDataRowsWithHexWrongColumn) {
 0.25  -1 0.25       255 0
 )";
 
+  SectionParser::Section section;
+  section.section_type = NodeType::kVertexData;
+  section.contents = block;
+  section.starting_line_number = 0;
+
   Parser parser;
-  Result r = parser.ProcessVertexDataBlockForTesting(block);
+  Result r = parser.ProcessSectionForTesting(section);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Invalid vertex data value", r.Error());
+  EXPECT_EQ("2: Invalid vertex data value: 0xffff0000", r.Error());
 }
 
 }  // namespace vkscript

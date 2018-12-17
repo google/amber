@@ -47,9 +47,16 @@ ShaderType ShaderNameToType(const std::string& name) {
 
 }  // namespace
 
-CommandParser::CommandParser() = default;
+CommandParser::CommandParser(size_t current_line, const std::string& data)
+    : tokenizer_(MakeUnique<Tokenizer>(data)) {
+  tokenizer_->SetCurrentLine(current_line);
+}
 
 CommandParser::~CommandParser() = default;
+
+std::string CommandParser::make_error(const std::string& err) {
+  return std::to_string(tokenizer_->GetCurrentLine()) + ": " + err;
+}
 
 Result CommandParser::ParseBoolean(const std::string& str, bool* result) {
   assert(result);
@@ -67,20 +74,19 @@ Result CommandParser::ParseBoolean(const std::string& str, bool* result) {
     *result = false;
     return {};
   }
-  return Result("Invalid value passed as a boolean string");
+  return Result("Invalid value passed as a boolean string: " + str);
 }
 
-Result CommandParser::Parse(const std::string& data) {
-  tokenizer_ = MakeUnique<Tokenizer>(data);
-
+Result CommandParser::Parse() {
   for (auto token = tokenizer_->NextToken(); !token->IsEOS();
        token = tokenizer_->NextToken()) {
     if (token->IsEOL())
       continue;
 
     if (!token->IsString()) {
-      return Result(
-          "Command not recognized. Received something other then a string.");
+      return Result(make_error(
+          "Command not recognized. Received something other then a string: " +
+          token->ToOriginalString()));
     }
 
     std::string cmd_name = token->AsString();
@@ -88,7 +94,8 @@ Result CommandParser::Parse(const std::string& data) {
     if (cmd_name == "draw") {
       token = tokenizer_->NextToken();
       if (!token->IsString())
-        return Result("Invalid draw command in test");
+        return Result(make_error("Invalid draw command in test: " +
+                                 token->ToOriginalString()));
 
       cmd_name = token->AsString();
       if (cmd_name == "rect")
@@ -96,7 +103,7 @@ Result CommandParser::Parse(const std::string& data) {
       else if (cmd_name == "arrays")
         r = ProcessDrawArrays();
       else
-        return Result("Unknown draw command: " + cmd_name);
+        r = Result("Unknown draw command: " + cmd_name);
 
     } else if (cmd_name == "clear") {
       r = ProcessClear();
@@ -113,7 +120,8 @@ Result CommandParser::Parse(const std::string& data) {
     } else if (cmd_name == "relative") {
       token = tokenizer_->NextToken();
       if (!token->IsString() || token->AsString() != "probe")
-        return Result("relative must be used with probe");
+        return Result(make_error("relative must be used with probe: " +
+                                 token->ToOriginalString()));
 
       r = ProcessProbe(true);
     } else if (cmd_name == "compute") {
@@ -126,14 +134,16 @@ Result CommandParser::Parse(const std::string& data) {
         if (!token->IsString() || (token->AsString() != "control" &&
                                    token->AsString() != "evaluation")) {
           return Result(
-              "Tessellation entrypoint must have <evaluation|control> in name");
+              make_error("Tessellation entrypoint must have "
+                         "<evaluation|control> in name: " +
+                         token->ToOriginalString()));
         }
         shader_name += " " + token->AsString();
       }
 
       token = tokenizer_->NextToken();
       if (!token->IsString() || token->AsString() != "entrypoint")
-        return Result("Unknown command: " + shader_name);
+        return Result(make_error("Unknown command: " + shader_name));
 
       r = ProcessEntryPoint(shader_name);
 
@@ -225,11 +235,11 @@ Result CommandParser::Parse(const std::string& data) {
     } else if (cmd_name == "colorWriteMask") {
       r = ProcessColorWriteMask();
     } else {
-      return Result("Unknown command: " + cmd_name);
+      r = Result("Unknown command: " + cmd_name);
     }
 
     if (!r.IsSuccess())
-      return r;
+      return Result(make_error(r.Error()));
   }
 
   return {};
@@ -277,7 +287,8 @@ Result CommandParser::ProcessDrawRect() {
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter to draw rect command");
+    return Result("Extra parameter to draw rect command: " +
+                  token->ToOriginalString());
 
   commands_.push_back(std::move(cmd));
   return {};
@@ -313,19 +324,22 @@ Result CommandParser::ProcessDrawArrays() {
     return Result("Missing draw arrays topology");
 
   if (!token->IsInteger())
-    return Result("Missing integer first vertex value for draw arrays");
+    return Result("Missing integer first vertex value for draw arrays: " +
+                  token->ToOriginalString());
   cmd->SetFirstVertexIndex(token->AsUint32());
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger())
-    return Result("Missing integer vertex count value for draw arrays");
+    return Result("Missing integer vertex count value for draw arrays: " +
+                  token->ToOriginalString());
   cmd->SetVertexCount(token->AsUint32());
 
   token = tokenizer_->NextToken();
   if (cmd->IsInstanced()) {
     if (!token->IsEOL() && !token->IsEOS()) {
       if (!token->IsInteger())
-        return Result("Invalid instance count for draw arrays");
+        return Result("Invalid instance count for draw arrays: " +
+                      token->ToOriginalString());
 
       cmd->SetInstanceCount(token->AsUint32());
     }
@@ -333,7 +347,8 @@ Result CommandParser::ProcessDrawArrays() {
   }
 
   if (!token->IsEOL() && !token->IsEOS())
-    return Result("Extra parameter to draw arrays command");
+    return Result("Extra parameter to draw arrays command: " +
+                  token->ToOriginalString());
 
   commands_.push_back(std::move(cmd));
   return {};
@@ -349,22 +364,26 @@ Result CommandParser::ProcessCompute() {
     return ProcessEntryPoint("compute");
 
   if (!token->IsInteger())
-    return Result("Missing integer value for compute X entry");
+    return Result("Missing integer value for compute X entry: " +
+                  token->ToOriginalString());
   cmd->SetX(token->AsUint32());
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger())
-    return Result("Missing integer value for compute Y entry");
+    return Result("Missing integer value for compute Y entry: " +
+                  token->ToOriginalString());
   cmd->SetY(token->AsUint32());
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger())
-    return Result("Missing integer value for compute Z entry");
+    return Result("Missing integer value for compute Z entry: " +
+                  token->ToOriginalString());
   cmd->SetZ(token->AsUint32());
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter to compute command");
+    return Result("Extra parameter to compute command: " +
+                  token->ToOriginalString());
 
   commands_.push_back(std::move(cmd));
   return {};
@@ -392,9 +411,11 @@ Result CommandParser::ProcessClear() {
 
       token = tokenizer_->NextToken();
       if (token->IsEOL() || token->IsEOS())
-        return Result("Missing stencil value for clear stencil command");
+        return Result("Missing stencil value for clear stencil command: " +
+                      token->ToOriginalString());
       if (!token->IsInteger())
-        return Result("Invalid stencil value for clear stencil command");
+        return Result("Invalid stencil value for clear stencil command: " +
+                      token->ToOriginalString());
 
       cmd->AsClearStencil()->SetValue(token->AsUint32());
     } else if (str == "color") {
@@ -424,7 +445,8 @@ Result CommandParser::ProcessClear() {
         return r;
       cmd->AsClearColor()->SetA(token->AsFloat());
     } else {
-      return Result("Extra parameter to clear command");
+      return Result("Extra parameter to clear command: " +
+                    token->ToOriginalString());
     }
 
     token = tokenizer_->NextToken();
@@ -432,7 +454,8 @@ Result CommandParser::ProcessClear() {
     cmd = MakeUnique<ClearCommand>();
   }
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter to clear " + cmd_suffix + "command");
+    return Result("Extra parameter to clear " + cmd_suffix +
+                  "command: " + token->ToOriginalString());
 
   commands_.push_back(std::move(cmd));
   return {};
@@ -450,7 +473,7 @@ Result CommandParser::ParseValues(const std::string& name,
     if ((type.IsFloat() || type.IsDouble())) {
       if (!token->IsInteger() && !token->IsDouble()) {
         return Result(std::string("Invalid value provided to ") + name +
-                      "  command");
+                      " command: " + token->ToOriginalString());
       }
 
       Result r = token->ConvertToDouble();
@@ -461,7 +484,7 @@ Result CommandParser::ParseValues(const std::string& name,
     } else {
       if (!token->IsInteger()) {
         return Result(std::string("Invalid value provided to ") + name +
-                      " command");
+                      " command: " + token->ToOriginalString());
       }
 
       v.SetIntValue(token->AsUint64());
@@ -507,7 +530,8 @@ Result CommandParser::ProcessSSBO() {
 
       cmd->SetBinding(static_cast<uint32_t>(binding_val));
     } else {
-      return Result("Invalid value for ssbo command");
+      return Result("Invalid value for ssbo command: " +
+                    token->ToOriginalString());
     }
 
     token = tokenizer_->NextToken();
@@ -520,7 +544,8 @@ Result CommandParser::ProcessSSBO() {
 
     token = tokenizer_->NextToken();
     if (!token->IsString())
-      return Result("Invalid type for ssbo command");
+      return Result("Invalid type for ssbo command: " +
+                    token->ToOriginalString());
 
     DatumTypeParser tp;
     Result r = tp.Parse(token->AsString());
@@ -531,7 +556,8 @@ Result CommandParser::ProcessSSBO() {
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger())
-      return Result("Invalid offset for ssbo command");
+      return Result("Invalid offset for ssbo command: " +
+                    token->ToOriginalString());
 
     cmd->SetOffset(token->AsUint32());
 
@@ -544,15 +570,18 @@ Result CommandParser::ProcessSSBO() {
 
   } else {
     if (token->IsEOL() || token->IsEOS())
-      return Result("Missing size value for ssbo command");
+      return Result("Missing size value for ssbo command: " +
+                    token->ToOriginalString());
     if (!token->IsInteger())
-      return Result("Invalid size value for ssbo command");
+      return Result("Invalid size value for ssbo command: " +
+                    token->ToOriginalString());
 
     cmd->SetSize(token->AsUint32());
 
     token = tokenizer_->NextToken();
     if (!token->IsEOS() && !token->IsEOL())
-      return Result("Extra parameter for ssbo command");
+      return Result("Extra parameter for ssbo command: " +
+                    token->ToOriginalString());
   }
 
   commands_.push_back(std::move(cmd));
@@ -562,9 +591,11 @@ Result CommandParser::ProcessSSBO() {
 Result CommandParser::ProcessUniform() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
-    return Result("Missing binding and size values for uniform command");
+    return Result("Missing binding and size values for uniform command: " +
+                  token->ToOriginalString());
   if (!token->IsString())
-    return Result("Invalid type value for uniform command");
+    return Result("Invalid type value for uniform command: " +
+                  token->ToOriginalString());
 
   std::unique_ptr<BufferCommand> cmd;
   if (token->AsString() == "ubo") {
@@ -572,13 +603,15 @@ Result CommandParser::ProcessUniform() {
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger())
-      return Result("Invalid binding value for uniform ubo command");
+      return Result("Invalid binding value for uniform ubo command: " +
+                    token->ToOriginalString());
 
     uint32_t val = token->AsUint32();
 
     token = tokenizer_->NextToken();
     if (!token->IsString())
-      return Result("Invalid type value for uniform ubo command");
+      return Result("Invalid type value for uniform ubo command: " +
+                    token->ToOriginalString());
 
     auto& str = token->AsString();
     if (str.size() >= 2 && str[0] == ':') {
@@ -587,13 +620,15 @@ Result CommandParser::ProcessUniform() {
       auto substr = str.substr(1, str.size());
       uint64_t binding_val = strtoul(substr.c_str(), nullptr, 10);
       if (binding_val > std::numeric_limits<uint32_t>::max())
-        return Result("binding value too large in uniform ubo command");
+        return Result("binding value too large in uniform ubo command: " +
+                      token->ToOriginalString());
 
       cmd->SetBinding(static_cast<uint32_t>(binding_val));
 
       token = tokenizer_->NextToken();
       if (!token->IsString())
-        return Result("Invalid type value for uniform ubo command");
+        return Result("Invalid type value for uniform ubo command: " +
+                      token->ToOriginalString());
     } else {
       cmd->SetBinding(val);
     }
@@ -611,7 +646,8 @@ Result CommandParser::ProcessUniform() {
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger())
-    return Result("Invalid offset value for uniform command");
+    return Result("Invalid offset value for uniform command: " +
+                  token->ToOriginalString());
 
   cmd->SetOffset(token->AsUint32());
 
@@ -646,7 +682,8 @@ Result CommandParser::ProcessTolerance() {
       token = tokenizer_->NextToken();
       if (token->IsString() && token->AsString() != ",") {
         if (token->AsString() != "%")
-          return Result("Invalid value for tolerance command");
+          return Result("Invalid value for tolerance command: " +
+                        token->ToOriginalString());
 
         current_tolerances_.push_back(Probe::Tolerance{true, value});
         token = tokenizer_->NextToken();
@@ -654,7 +691,8 @@ Result CommandParser::ProcessTolerance() {
         current_tolerances_.push_back(Probe::Tolerance{false, value});
       }
     } else {
-      return Result("Invalid value for tolerance command");
+      return Result("Invalid value for tolerance command: " +
+                    token->ToOriginalString());
     }
 
     ++found_tokens;
@@ -665,7 +703,8 @@ Result CommandParser::ProcessTolerance() {
     return Result("Invalid number of tolerance parameters provided");
 
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter for tolerance command");
+    return Result("Extra parameter for tolerance command: " +
+                  token->ToOriginalString());
 
   return {};
 }
@@ -675,20 +714,24 @@ Result CommandParser::ProcessPatch() {
 
   auto token = tokenizer_->NextToken();
   if (!token->IsString() || token->AsString() != "parameter")
-    return Result("Missing parameter flag to patch command");
+    return Result("Missing parameter flag to patch command: " +
+                  token->ToOriginalString());
 
   token = tokenizer_->NextToken();
   if (!token->IsString() || token->AsString() != "vertices")
-    return Result("Missing vertices flag to patch command");
+    return Result("Missing vertices flag to patch command: " +
+                  token->ToOriginalString());
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger())
-    return Result("Invalid count parameter for patch parameter vertices");
+    return Result("Invalid count parameter for patch parameter vertices: " +
+                  token->ToOriginalString());
   cmd->SetControlPointCount(token->AsUint32());
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter for patch parameter vertices command");
+    return Result("Extra parameter for patch parameter vertices command: " +
+                  token->ToOriginalString());
 
   commands_.push_back(std::move(cmd));
   return {};
@@ -702,14 +745,16 @@ Result CommandParser::ProcessEntryPoint(const std::string& name) {
     return Result("Missing entrypoint name");
 
   if (!token->IsString())
-    return Result("Entrypoint name must be a string");
+    return Result("Entrypoint name must be a string: " +
+                  token->ToOriginalString());
 
   cmd->SetShaderType(ShaderNameToType(name));
   cmd->SetEntryPointName(token->AsString());
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter for entrypoint command");
+    return Result("Extra parameter for entrypoint command: " +
+                  token->ToOriginalString());
 
   commands_.push_back(std::move(cmd));
 
@@ -719,7 +764,8 @@ Result CommandParser::ProcessEntryPoint(const std::string& name) {
 Result CommandParser::ProcessProbe(bool relative) {
   auto token = tokenizer_->NextToken();
   if (!token->IsString())
-    return Result("Invalid token in probe command");
+    return Result("Invalid token in probe command: " +
+                  token->ToOriginalString());
 
   // The SSBO syntax is different from probe or probe all so handle specially.
   if (token->AsString() == "ssbo")
@@ -736,18 +782,21 @@ Result CommandParser::ProcessProbe(bool relative) {
 
     token = tokenizer_->NextToken();
     if (!token->IsString())
-      return Result("Invalid token in probe command");
+      return Result("Invalid token in probe command: " +
+                    token->ToOriginalString());
   } else if (token->AsString() == "all") {
     cmd->SetWholeWindow();
 
     token = tokenizer_->NextToken();
     if (!token->IsString())
-      return Result("Invalid token in probe command");
+      return Result("Invalid token in probe command: " +
+                    token->ToOriginalString());
   }
 
   std::string format = token->AsString();
   if (format != "rgba" && format != "rgb")
-    return Result("Invalid format specified to probe command");
+    return Result("Invalid format specified to probe command: " +
+                  token->ToOriginalString());
 
   if (format == "rgba")
     cmd->SetIsRGBA();
@@ -860,7 +909,8 @@ Result CommandParser::ProcessProbe(bool relative) {
   }
 
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter to probe command");
+    return Result("Extra parameter to probe command: " +
+                  token->ToOriginalString());
 
   commands_.push_back(std::move(cmd));
   return {};
@@ -871,7 +921,8 @@ Result CommandParser::ProcessTopology() {
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing value for topology command");
   if (!token->IsString())
-    return Result("Invalid value for topology command");
+    return Result("Invalid value for topology command: " +
+                  token->ToOriginalString());
 
   Topology topology = Topology::kPatchList;
   std::string topo = token->AsString();
@@ -899,11 +950,13 @@ Result CommandParser::ProcessTopology() {
   else if (topo == "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY")
     topology = Topology::kTriangleStripWithAdjacency;
   else
-    return Result("Unknown value for topology command");
+    return Result("Unknown value for topology command: " +
+                  token->ToOriginalString());
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter for topology command");
+    return Result("Extra parameter for topology command: " +
+                  token->ToOriginalString());
 
   pipeline_data_.SetTopology(topology);
   return {};
@@ -914,7 +967,8 @@ Result CommandParser::ProcessPolygonMode() {
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing value for polygonMode command");
   if (!token->IsString())
-    return Result("Invalid value for polygonMode command");
+    return Result("Invalid value for polygonMode command: " +
+                  token->ToOriginalString());
 
   PolygonMode mode = PolygonMode::kFill;
   std::string m = token->AsString();
@@ -925,11 +979,13 @@ Result CommandParser::ProcessPolygonMode() {
   else if (m == "VK_POLYGON_MODE_POINT")
     mode = PolygonMode::kPoint;
   else
-    return Result("Unknown value for polygonMode command");
+    return Result("Unknown value for polygonMode command: " +
+                  token->ToOriginalString());
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter for polygonMode command");
+    return Result("Extra parameter for polygonMode command: " +
+                  token->ToOriginalString());
 
   pipeline_data_.SetPolygonMode(mode);
   return {};
@@ -940,7 +996,8 @@ Result CommandParser::ProcessLogicOp() {
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing value for logicOp command");
   if (!token->IsString())
-    return Result("Invalid value for logicOp command");
+    return Result("Invalid value for logicOp command: " +
+                  token->ToOriginalString());
 
   LogicOp op = LogicOp::kClear;
   std::string name = token->AsString();
@@ -977,11 +1034,13 @@ Result CommandParser::ProcessLogicOp() {
   else if (name == "VK_LOGIC_OP_SET")
     op = LogicOp::kSet;
   else
-    return Result("Unknown value for logicOp command");
+    return Result("Unknown value for logicOp command: " +
+                  token->ToOriginalString());
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter for logicOp command");
+    return Result("Extra parameter for logicOp command: " +
+                  token->ToOriginalString());
 
   pipeline_data_.SetLogicOp(op);
   return {};
@@ -992,7 +1051,8 @@ Result CommandParser::ProcessCullMode() {
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing value for cullMode command");
   if (!token->IsString())
-    return Result("Invalid value for cullMode command");
+    return Result("Invalid value for cullMode command: " +
+                  token->ToOriginalString());
 
   CullMode mode = CullMode::kNone;
   while (!token->IsEOS() && !token->IsEOL()) {
@@ -1015,7 +1075,8 @@ Result CommandParser::ProcessCullMode() {
     } else if (name == "VK_CULL_MODE_NONE") {
       // Do nothing ...
     } else {
-      return Result("Unknown value for cullMode command");
+      return Result("Unknown value for cullMode command: " +
+                    token->ToOriginalString());
     }
 
     token = tokenizer_->NextToken();
@@ -1030,7 +1091,8 @@ Result CommandParser::ProcessFrontFace() {
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing value for frontFace command");
   if (!token->IsString())
-    return Result("Invalid value for frontFace command");
+    return Result("Invalid value for frontFace command: " +
+                  token->ToOriginalString());
 
   FrontFace face = FrontFace::kCounterClockwise;
   std::string f = token->AsString();
@@ -1039,11 +1101,13 @@ Result CommandParser::ProcessFrontFace() {
   else if (f == "VK_FRONT_FACE_CLOCKWISE")
     face = FrontFace::kClockwise;
   else
-    return Result("Unknown value for frontFace command");
+    return Result("Unknown value for frontFace command: " +
+                  token->ToOriginalString());
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter for frontFace command");
+    return Result("Extra parameter for frontFace command: " +
+                  token->ToOriginalString());
 
   pipeline_data_.SetFrontFace(face);
   return {};
@@ -1055,7 +1119,8 @@ Result CommandParser::ProcessBooleanPipelineData(const std::string& name,
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing value for " + name + " command");
   if (!token->IsString())
-    return Result("Invalid value for " + name + " command");
+    return Result("Invalid value for " + name +
+                  " command: " + token->ToOriginalString());
 
   Result r = ParseBoolean(token->AsString(), value);
   if (!r.IsSuccess())
@@ -1063,7 +1128,8 @@ Result CommandParser::ProcessBooleanPipelineData(const std::string& name,
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter for " + name + " command");
+    return Result("Extra parameter for " + name +
+                  " command: " + token->ToOriginalString());
 
   return {};
 }
@@ -1184,7 +1250,8 @@ Result CommandParser::ProcessFloatPipelineData(const std::string& name,
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter for " + name + " command");
+    return Result("Extra parameter for " + name +
+                  " command: " + token->ToOriginalString());
 
   return {};
 }
@@ -1303,7 +1370,8 @@ Result CommandParser::ParseBlendFactor(const std::string& name,
   if (token->IsEOL() || token->IsEOS())
     return Result(std::string("Missing parameter for ") + name + " command");
   if (!token->IsString())
-    return Result(std::string("Invalid parameter for ") + name + " command");
+    return Result(std::string("Invalid parameter for ") + name +
+                  " command: " + token->ToOriginalString());
 
   Result r = ParseBlendFactorName(token->AsString(), factor);
   if (!r.IsSuccess())
@@ -1311,7 +1379,8 @@ Result CommandParser::ParseBlendFactor(const std::string& name,
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result(std::string("Extra parameter for ") + name + " command");
+    return Result(std::string("Extra parameter for ") + name +
+                  " command: " + token->ToOriginalString());
 
   return {};
 }
@@ -1474,7 +1543,8 @@ Result CommandParser::ParseBlendOp(const std::string& name, BlendOp* op) {
   if (token->IsEOL() || token->IsEOS())
     return Result(std::string("Missing parameter for ") + name + " command");
   if (!token->IsString())
-    return Result(std::string("Invalid parameter for ") + name + " command");
+    return Result(std::string("Invalid parameter for ") + name +
+                  " command: " + token->ToOriginalString());
 
   Result r = ParseBlendOpName(token->AsString(), op);
   if (!r.IsSuccess())
@@ -1482,7 +1552,8 @@ Result CommandParser::ParseBlendOp(const std::string& name, BlendOp* op) {
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result(std::string("Extra parameter for ") + name + " command");
+    return Result(std::string("Extra parameter for ") + name +
+                  " command: " + token->ToOriginalString());
 
   return {};
 }
@@ -1512,7 +1583,8 @@ Result CommandParser::ParseCompareOp(const std::string& name, CompareOp* op) {
   if (token->IsEOL() || token->IsEOS())
     return Result(std::string("Missing parameter for ") + name + " command");
   if (!token->IsString())
-    return Result(std::string("Invalid parameter for ") + name + " command");
+    return Result(std::string("Invalid parameter for ") + name +
+                  " command: " + token->ToOriginalString());
 
   Result r = ParseCompareOpName(token->AsString(), op);
   if (!r.IsSuccess())
@@ -1520,7 +1592,8 @@ Result CommandParser::ParseCompareOp(const std::string& name, CompareOp* op) {
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result(std::string("Extra parameter for ") + name + " command");
+    return Result(std::string("Extra parameter for ") + name +
+                  " command: " + token->ToOriginalString());
 
   return {};
 }
@@ -1586,7 +1659,8 @@ Result CommandParser::ParseStencilOp(const std::string& name, StencilOp* op) {
   if (token->IsEOL() || token->IsEOS())
     return Result(std::string("Missing parameter for ") + name + " command");
   if (!token->IsString())
-    return Result(std::string("Invalid parameter for ") + name + " command");
+    return Result(std::string("Invalid parameter for ") + name +
+                  " command: " + token->ToOriginalString());
 
   Result r = ParseStencilOpName(token->AsString(), op);
   if (!r.IsSuccess())
@@ -1594,7 +1668,8 @@ Result CommandParser::ParseStencilOp(const std::string& name, StencilOp* op) {
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result(std::string("Extra parameter for ") + name + " command");
+    return Result(std::string("Extra parameter for ") + name +
+                  " command: " + token->ToOriginalString());
 
   return {};
 }
@@ -1706,13 +1781,15 @@ Result CommandParser::ProcessFrontReference() {
   if (token->IsEOL() || token->IsEOS())
     return Result("Missing parameter for front.reference command");
   if (!token->IsInteger())
-    return Result("Invalid parameter for front.reference command");
+    return Result("Invalid parameter for front.reference command: " +
+                  token->ToOriginalString());
 
   pipeline_data_.SetFrontReference(token->AsUint32());
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter for front.reference command");
+    return Result("Extra parameter for front.reference command: " +
+                  token->ToOriginalString());
 
   return {};
 }
@@ -1722,13 +1799,15 @@ Result CommandParser::ProcessBackReference() {
   if (token->IsEOL() || token->IsEOS())
     return Result("Missing parameter for back.reference command");
   if (!token->IsInteger())
-    return Result("Invalid parameter for back.reference command");
+    return Result("Invalid parameter for back.reference command: " +
+                  token->ToOriginalString());
 
   pipeline_data_.SetBackReference(token->AsUint32());
 
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
-    return Result("Extra parameter for back.reference command");
+    return Result("Extra parameter for back.reference command: " +
+                  token->ToOriginalString());
 
   return {};
 }
@@ -1738,7 +1817,8 @@ Result CommandParser::ProcessColorWriteMask() {
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing parameter for colorWriteMask command");
   if (!token->IsString())
-    return Result("Invalid parameter for colorWriteMask command");
+    return Result("Invalid parameter for colorWriteMask command: " +
+                  token->ToOriginalString());
 
   uint8_t mask = 0;
   while (!token->IsEOS() && !token->IsEOL()) {
@@ -1755,7 +1835,7 @@ Result CommandParser::ProcessColorWriteMask() {
     } else if (name == "VK_COLOR_COMPONENT_A_BIT") {
       mask |= kColorMaskA;
     } else {
-      return Result("Unknown parameter for colorWriteMask command");
+      return Result("Unknown parameter for colorWriteMask command: " + name);
     }
 
     token = tokenizer_->NextToken();
@@ -1782,7 +1862,7 @@ Result CommandParser::ParseComparator(const std::string& name,
   else if (name == ">=")
     *op = ProbeSSBOCommand::Comparator::kGreaterOrEqual;
   else
-    return Result("Invalid comparator");
+    return Result("Invalid comparator: " + name);
   return {};
 }
 
@@ -1794,7 +1874,8 @@ Result CommandParser::ProcessProbeSSBO() {
   if (token->IsEOL() || token->IsEOS())
     return Result("Missing values for probe ssbo command");
   if (!token->IsString())
-    return Result("Invalid type for probe ssbo command");
+    return Result("Invalid type for probe ssbo command: " +
+                  token->ToOriginalString());
 
   DatumTypeParser tp;
   Result r = tp.Parse(token->AsString());
@@ -1805,7 +1886,8 @@ Result CommandParser::ProcessProbeSSBO() {
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger())
-    return Result("Invalid binding value for probe ssbo command");
+    return Result("Invalid binding value for probe ssbo command: " +
+                  token->ToOriginalString());
 
   uint32_t val = token->AsUint32();
 
@@ -1818,11 +1900,13 @@ Result CommandParser::ProcessProbeSSBO() {
       auto substr = str.substr(1, str.size());
       uint64_t binding_val = strtoul(substr.c_str(), nullptr, 10);
       if (binding_val > std::numeric_limits<uint32_t>::max())
-        return Result("binding value too large in probe ssbo command");
+        return Result("binding value too large in probe ssbo command: " +
+                      token->ToOriginalString());
 
       cmd->SetBinding(static_cast<uint32_t>(binding_val));
     } else {
-      return Result("Invalid value for probe ssbo command");
+      return Result("Invalid value for probe ssbo command: " +
+                    token->ToOriginalString());
     }
 
     token = tokenizer_->NextToken();
@@ -1831,13 +1915,15 @@ Result CommandParser::ProcessProbeSSBO() {
   }
 
   if (!token->IsInteger())
-    return Result("Invalid offset for probe ssbo command");
+    return Result("Invalid offset for probe ssbo command: " +
+                  token->ToOriginalString());
 
   cmd->SetOffset(token->AsUint32());
 
   token = tokenizer_->NextToken();
   if (!token->IsString())
-    return Result("Invalid comparator for probe ssbo command");
+    return Result("Invalid comparator for probe ssbo command: " +
+                  token->ToOriginalString());
 
   ProbeSSBOCommand::Comparator comp;
   r = ParseComparator(token->AsString(), &comp);

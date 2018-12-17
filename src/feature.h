@@ -17,6 +17,7 @@
 
 namespace amber {
 
+/// List of features that can be requested.
 enum class Feature {
   kUnknown = 0,
   kRobustBufferAccess,

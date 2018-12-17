@@ -22,8 +22,10 @@
 
 namespace amber {
 
+/// The format class describes requested image formats. (eg. R8G8B8A8_UINT).
 class Format {
  public:
+  /// Describes an individual component of a format.
   struct Component {
     Component(FormatComponentType t, FormatMode m, uint8_t bits)
         : type(t), mode(m), num_bits(bits) {}
@@ -40,9 +42,11 @@ class Format {
   void SetFormatType(FormatType type) { type_ = type; }
   FormatType GetFormatType() const { return type_; }
 
+  /// Set the number of bytes this format is packed into, if provided.
   void SetPackSize(uint8_t size_in_bytes) {
     pack_size_in_bytes_ = size_in_bytes;
   }
+  /// Retrieves the number of bytes this format is packed into.
   uint8_t GetPackSize() const { return pack_size_in_bytes_; }
 
   void AddComponent(FormatComponentType type, FormatMode mode, uint8_t bits) {
