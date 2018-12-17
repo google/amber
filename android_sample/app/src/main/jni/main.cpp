@@ -34,26 +34,33 @@ static void amber_main(android_app* app) {
     return;
   }
 
-  const auto& script_info = loader.GetScriptInfo();
+  const auto& script_info = loader.GetScripts();
 
+  uint32_t n_passes = 0;
+  uint32_t n_failures = 0;
   for (const auto& info : script_info) {
     amber::Amber am;
     amber::Recipe recipe;
     amber::Result r = am.Parse(info.script_content, &recipe);
     if (!r.IsSuccess()) {
-      LOGE("%s:\n\t%s", info.file_name.c_str(), r.Error().c_str());
-      return;
+      LOGE("case %s: fail\n\t%s", info.asset_name.c_str(), r.Error().c_str());
+      ++n_failures;
+      continue;
     }
 
     amber::Options amber_options;
     r = am.ExecuteWithShaderData(&recipe, amber_options, info.shader_map);
     if (!r.IsSuccess()) {
-      LOGE("%s:\n\t%s", info.file_name.c_str(), r.Error().c_str());
-      return;
+      LOGE("case %s: fail\n\t%s", info.asset_name.c_str(), r.Error().c_str());
+      ++n_failures;
+      continue;
     }
 
-    LOGE("%s: pass", info.file_name.c_str());
+    LOGE("case %s: pass", info.asset_name.c_str());
+    ++n_passes;
   }
+
+  LOGE("summary: %u pass, %u fail", n_passes, n_failures);
 }
 
 // Process the next main command.

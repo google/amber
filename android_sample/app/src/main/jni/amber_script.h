@@ -27,46 +27,51 @@ namespace amber {
 namespace android {
 
 struct AmberScriptInfo {
-  std::string file_name;       // Script file name. Note it is not a path
-                               // and just the name of script file.
+  std::string asset_name;      // Script asset name. Note it is not a
+                               // path and just the name of script file.
   std::string script_content;  // Script itself from the script file.
   amber::ShaderMap shader_map;
 };
 
 // A class to load scripts for Amber under assets/amber/ into
-// |script_info_|.
+// |script_info_|. We assume that file extension of those scripts
+// is ".amber" and all files with the extension are scripts for
+// Amber.
 class AmberScriptLoader {
  public:
   explicit AmberScriptLoader(android_app* app);
   ~AmberScriptLoader();
 
   Result LoadAllScriptsFromAsset();
-  const std::vector<AmberScriptInfo>& GetScriptInfo() const {
+  const std::vector<AmberScriptInfo>& GetScripts() const {
     return script_info_;
   }
 
  private:
-  // A struct to load file content into memory chunk |content|.
-  struct FileContent {
+  // A struct to load content of asset into memory chunk |content|.
+  // If the asset is shader, user must make sure |size_in_bytes| is
+  // multiple of sizeof(uint32_t).
+  struct AssetContent {
    public:
-    FileContent(size_t allocate_size_in_bytes)
+    AssetContent(size_t allocate_size_in_bytes)
         : size_in_bytes(allocate_size_in_bytes) {
-      if (allocate_size_in_bytes)
-        content = new char[allocate_size_in_bytes];
+      if (allocate_size_in_bytes) {
+        content = new char[allocate_size_in_bytes + 1];
+        content[allocate_size_in_bytes] = '\0';
+      }
     }
-    ~FileContent() { delete content; }
+    ~AssetContent() { delete content; }
 
-    std::string ToString() { return std::string(content); }
-    std::vector<uint32_t> ToVectorUint32() {
-      const uint32_t* ptr = reinterpret_cast<const uint32_t*>(content);
-      return std::vector<uint32_t>(ptr, ptr + size_in_bytes / sizeof(uint32_t));
+    std::string ToString() {
+      return content ? std::string(content) : std::string();
     }
+    std::vector<uint32_t> ToVectorUint32();
 
     size_t size_in_bytes = 0;
     char* content = nullptr;
   };
 
-  // Find all files with .amber extension and set |file_name| of
+  // Find all files with ".amber" extension and set |asset_name| of
   // |script_info_| as their names.
   void FindAllScripts();
 
@@ -74,8 +79,14 @@ class AmberScriptLoader {
   std::vector<std::string> GetShaderNamesForAmberScript(
       const std::string& script_name);
 
-  // Return file content of |file_name|.
-  std::unique_ptr<FileContent> ReadFileContent(const std::string& file_name);
+  // Return content of shader named |shader_name| under assets/amber/.
+  std::unique_ptr<AssetContent> ReadScript(const std::string& shader_name) {
+    return ReadAssetContent(shader_name, true);
+  }
+
+  // Return content of asset named |asset_name| under assets/amber/.
+  std::unique_ptr<AssetContent> ReadAssetContent(const std::string& asset_name,
+                                                 bool is_shader = false);
 
   android_app* app_context_ = nullptr;
   std::vector<AmberScriptInfo> script_info_;
