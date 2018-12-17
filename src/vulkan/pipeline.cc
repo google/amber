@@ -28,6 +28,11 @@
 
 namespace amber {
 namespace vulkan {
+namespace {
+
+const char* kDefaultEntryPointName = "main";
+
+}  // namespace
 
 Pipeline::Pipeline(
     PipelineType type,
@@ -399,6 +404,14 @@ Result Pipeline::GetDescriptorInfo(const uint32_t descriptor_set,
   return Result("Vulkan::Pipeline descriptor with descriptor set: " +
                 std::to_string(descriptor_set) +
                 ", binding: " + std::to_string(binding) + " does not exist");
+}
+
+const char* Pipeline::GetEntryPointName(VkShaderStageFlagBits stage) const {
+  auto it = entry_points_.find(stage);
+  if (it != entry_points_.end())
+    return it->second.c_str();
+
+  return kDefaultEntryPointName;
 }
 
 }  // namespace vulkan

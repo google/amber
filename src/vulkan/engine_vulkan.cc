@@ -164,8 +164,7 @@ EngineVulkan::GetShaderStageInfo() {
         VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     stage_info[stage_count].stage = ToVkShaderStage(it.first);
     stage_info[stage_count].module = it.second;
-    // TODO(jaebaek): Handle entry point command
-    stage_info[stage_count].pName = "main";
+    stage_info[stage_count].pName = nullptr;
     ++stage_count;
   }
   return stage_info;
@@ -320,8 +319,13 @@ Result EngineVulkan::DoCompute(const ComputeCommand* command) {
                                          command->GetZ());
 }
 
-Result EngineVulkan::DoEntryPoint(const EntryPointCommand*) {
-  return Result("Vulkan::DoEntryPoint Not Implemented");
+Result EngineVulkan::DoEntryPoint(const EntryPointCommand* command) {
+  if (!pipeline_)
+    return Result("Vulkan::DoEntryPoint no Pipeline exists");
+
+  pipeline_->SetEntryPointName(ToVkShaderStage(command->GetShaderType()),
+                               command->GetEntryPointName());
+  return {};
 }
 
 Result EngineVulkan::DoPatchParameterVertices(

@@ -1,0 +1,173 @@
+# Copyright 2018 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[comment]
+Source code in GLSL:
+
+#version 430
+
+layout(set = 0, binding = 0) buffer block0 {
+  float data_set0_binding0[3];
+};
+
+layout(set = 1, binding = 2) buffer block1 {
+  float data_set1_binding2[3];
+};
+
+layout(set = 2, binding = 1) buffer block2 {
+  float data_set2_binding1[3];
+};
+
+layout(set = 2, binding = 3) buffer block3 {
+  float data_set2_binding3[3];
+};
+
+[compute shader spirv]
+; SPIR-V
+; Version: 1.0
+; Generator: Khronos Glslang Reference Front End; 7
+; Bound: 71
+; Schema: 0
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint GLCompute %main "foo" %gl_WorkGroupID
+               OpExecutionMode %main LocalSize 1 1 1
+               OpSource GLSL 430
+               OpName %main "foo"
+               OpName %index "index"
+               OpName %gl_WorkGroupID "gl_WorkGroupID"
+               OpName %block0 "block0"
+               OpMemberName %block0 0 "data_set0_binding0"
+               OpName %_ ""
+               OpName %block1 "block1"
+               OpMemberName %block1 0 "data_set1_binding2"
+               OpName %__0 ""
+               OpName %block2 "block2"
+               OpMemberName %block2 0 "data_set2_binding1"
+               OpName %__1 ""
+               OpName %block3 "block3"
+               OpMemberName %block3 0 "data_set2_binding3"
+               OpName %__2 ""
+               OpDecorate %gl_WorkGroupID BuiltIn WorkgroupId
+               OpDecorate %_arr_float_uint_3 ArrayStride 4
+               OpMemberDecorate %block0 0 Offset 0
+               OpDecorate %block0 BufferBlock
+               OpDecorate %_ DescriptorSet 0
+               OpDecorate %_ Binding 0
+               OpDecorate %_arr_float_uint_3_0 ArrayStride 4
+               OpMemberDecorate %block1 0 Offset 0
+               OpDecorate %block1 BufferBlock
+               OpDecorate %__0 DescriptorSet 1
+               OpDecorate %__0 Binding 2
+               OpDecorate %_arr_float_uint_3_1 ArrayStride 4
+               OpMemberDecorate %block2 0 Offset 0
+               OpDecorate %block2 BufferBlock
+               OpDecorate %__1 DescriptorSet 2
+               OpDecorate %__1 Binding 1
+               OpDecorate %_arr_float_uint_3_2 ArrayStride 4
+               OpMemberDecorate %block3 0 Offset 0
+               OpDecorate %block3 BufferBlock
+               OpDecorate %__2 DescriptorSet 2
+               OpDecorate %__2 Binding 3
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+       %uint = OpTypeInt 32 0
+%_ptr_Function_uint = OpTypePointer Function %uint
+     %v3uint = OpTypeVector %uint 3
+%_ptr_Input_v3uint = OpTypePointer Input %v3uint
+%gl_WorkGroupID = OpVariable %_ptr_Input_v3uint Input
+     %uint_0 = OpConstant %uint 0
+%_ptr_Input_uint = OpTypePointer Input %uint
+      %float = OpTypeFloat 32
+     %uint_3 = OpConstant %uint 3
+%_arr_float_uint_3 = OpTypeArray %float %uint_3
+     %block0 = OpTypeStruct %_arr_float_uint_3
+%_ptr_Uniform_block0 = OpTypePointer Uniform %block0
+          %_ = OpVariable %_ptr_Uniform_block0 Uniform
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+%_ptr_Uniform_float = OpTypePointer Uniform %float
+    %float_1 = OpConstant %float 1
+%_arr_float_uint_3_0 = OpTypeArray %float %uint_3
+     %block1 = OpTypeStruct %_arr_float_uint_3_0
+%_ptr_Uniform_block1 = OpTypePointer Uniform %block1
+        %__0 = OpVariable %_ptr_Uniform_block1 Uniform
+%_arr_float_uint_3_1 = OpTypeArray %float %uint_3
+     %block2 = OpTypeStruct %_arr_float_uint_3_1
+%_ptr_Uniform_block2 = OpTypePointer Uniform %block2
+        %__1 = OpVariable %_ptr_Uniform_block2 Uniform
+   %float_10 = OpConstant %float 10
+%_arr_float_uint_3_2 = OpTypeArray %float %uint_3
+     %block3 = OpTypeStruct %_arr_float_uint_3_2
+%_ptr_Uniform_block3 = OpTypePointer Uniform %block3
+        %__2 = OpVariable %_ptr_Uniform_block3 Uniform
+   %float_30 = OpConstant %float 30
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+      %index = OpVariable %_ptr_Function_uint Function
+         %14 = OpAccessChain %_ptr_Input_uint %gl_WorkGroupID %uint_0
+         %15 = OpLoad %uint %14
+               OpStore %index %15
+         %24 = OpLoad %uint %index
+         %25 = OpLoad %uint %index
+         %27 = OpAccessChain %_ptr_Uniform_float %_ %int_0 %25
+         %28 = OpLoad %float %27
+         %30 = OpFAdd %float %28 %float_1
+         %31 = OpAccessChain %_ptr_Uniform_float %_ %int_0 %24
+               OpStore %31 %30
+         %36 = OpLoad %uint %index
+         %41 = OpLoad %uint %index
+         %42 = OpAccessChain %_ptr_Uniform_float %__1 %int_0 %41
+         %43 = OpLoad %float %42
+         %44 = OpLoad %uint %index
+         %45 = OpAccessChain %_ptr_Uniform_float %__0 %int_0 %44
+         %46 = OpLoad %float %45
+         %47 = OpFSub %float %43 %46
+         %48 = OpAccessChain %_ptr_Uniform_float %__0 %int_0 %36
+               OpStore %48 %47
+         %49 = OpLoad %uint %index
+         %55 = OpLoad %uint %index
+         %56 = OpAccessChain %_ptr_Uniform_float %__2 %int_0 %55
+         %57 = OpLoad %float %56
+         %58 = OpFMul %float %float_10 %57
+         %59 = OpLoad %uint %index
+         %60 = OpAccessChain %_ptr_Uniform_float %__1 %int_0 %59
+         %61 = OpLoad %float %60
+         %62 = OpFAdd %float %58 %61
+         %63 = OpAccessChain %_ptr_Uniform_float %__1 %int_0 %49
+               OpStore %63 %62
+         %64 = OpLoad %uint %index
+         %66 = OpLoad %uint %index
+         %67 = OpAccessChain %_ptr_Uniform_float %__2 %int_0 %66
+         %68 = OpLoad %float %67
+         %69 = OpFMul %float %float_30 %68
+         %70 = OpAccessChain %_ptr_Uniform_float %__2 %int_0 %64
+               OpStore %70 %69
+               OpReturn
+               OpFunctionEnd
+[test]
+ssbo 0:0 subdata vec3  0  1.0  2.0  3.0
+ssbo 1:2 subdata vec3  0  4.0  5.0  6.0
+ssbo 2:1 subdata vec3  0 21.0 22.0 23.0
+ssbo 2:3 subdata vec3  0  0.7  0.8  0.9
+
+compute entrypoint foo
+
+compute 3 1 1
+
+probe ssbo vec3 0:0 0 ~=  2.0  3.0  4.0
+probe ssbo vec3 1:2 0 ~= 17.0 17.0 17.0
+probe ssbo vec3 2:1 0 ~= 28.0 30.0 32.0
+probe ssbo vec3 2:3 0 ~= 21.0 24.0 27.0

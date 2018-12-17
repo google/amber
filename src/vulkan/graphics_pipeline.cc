@@ -260,7 +260,9 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   viewport_info.scissorCount = 1;
   viewport_info.pScissors = &scissor;
 
-  const auto& shader_stage_info = GetShaderStageInfo();
+  auto shader_stage_info = GetShaderStageInfo();
+  for (auto& info : shader_stage_info)
+    info.pName = GetEntryPointName(info.stage);
 
   VkGraphicsPipelineCreateInfo pipeline_info = {};
   pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
