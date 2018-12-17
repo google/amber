@@ -23,6 +23,7 @@ namespace {
 const std::string kAmberDir("amber/");
 const std::string kAmberScriptExtension(".amber");
 const std::string kShaderNameSignature(".vk_shader_");
+const std::string kShaderExtension(".spv");
 
 bool IsEndedWith(const std::string& path, const std::string& end) {
   const size_t path_size = path.size();
@@ -43,7 +44,10 @@ bool IsStartedWith(const std::string& path, const std::string& start) {
 }
 
 std::string GetShaderID(const std::string& shader_name) {
-  return shader_name.substr(shader_name.find_last_of('.') + 1);
+  size_t spv_extension_pos = shader_name.find_last_of('.');
+  size_t shader_id_pos =
+      shader_name.find_last_of('.', spv_extension_pos - 1UL) + 1UL;
+  return shader_name.substr(shader_id_pos, spv_extension_pos - shader_id_pos);
 }
 
 }  // namespace
@@ -101,7 +105,8 @@ std::vector<std::string> AmberScriptLoader::GetShaderNamesForAmberScript(
        file_name = AAssetDir_getNextFileName(asset)) {
     std::string file_name_in_string(file_name);
     if (IsStartedWith(file_name_in_string,
-                      script_name + kShaderNameSignature)) {
+                      script_name + kShaderNameSignature) &&
+        IsEndedWith(file_name_in_string, kShaderExtension)) {
       shaders.push_back(file_name_in_string);
     }
   }

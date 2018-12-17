@@ -14,6 +14,7 @@
 
 #include <android/log.h>
 #include <android_native_app_glue.h>
+#include <exception>
 
 #include "amber/amber.h"
 #include "amber/recipe.h"
@@ -49,7 +50,14 @@ static void amber_main(android_app* app) {
     }
 
     amber::Options amber_options;
-    r = am.ExecuteWithShaderData(&recipe, amber_options, info.shader_map);
+    try {
+      r = am.ExecuteWithShaderData(&recipe, amber_options, info.shader_map);
+    } catch (const std::exception& e) {
+      LOGE("case %s: exception\n\t", e.what());
+      ++n_failures;
+      continue;
+    }
+
     if (!r.IsSuccess()) {
       LOGE("case %s: fail\n\t%s", info.asset_name.c_str(), r.Error().c_str());
       ++n_failures;
