@@ -62,7 +62,7 @@ Result AmberScriptLoader::LoadAllScriptsFromAsset() {
     return Result("No Amber script found");
 
   for (auto& info : script_info_) {
-    info.script_content = ReadAssetContent(info.asset_name)->ToString();
+    info.script_content = ReadScript(info.asset_name);
     if (info.script_content.empty())
       return Result(info.asset_name + ":\n\tEmpty Amber script");
   }
@@ -70,7 +70,7 @@ Result AmberScriptLoader::LoadAllScriptsFromAsset() {
   for (auto& info : script_info_) {
     auto shader_names = GetShaderNamesForAmberScript(info.asset_name);
     for (const auto& shader : shader_names) {
-      auto shader_content = ReadAssetContent(shader)->ToVectorUint32();
+      auto shader_content = ReadAssetContentAsVectorUint32(shader);
       if (shader_content.empty())
         return Result(shader + ":\n\tEmpty shader");
 
@@ -115,34 +115,29 @@ std::vector<std::string> AmberScriptLoader::GetShaderNamesForAmberScript(
   return shaders;
 }
 
-std::unique_ptr<AmberScriptLoader::AssetContent>
-AmberScriptLoader::ReadAssetContent(const std::string& asset_name,
-                                    bool is_shader) {
+std::vector<uint32_t> AmberScriptLoader::ReadAssetContentAsVectorUint32(
+    const std::string& asset_name) {
   auto asset_path = kAmberDir + asset_name;
   AAsset* asset = AAssetManager_open(app_context_->activity->assetManager,
                                      asset_path.c_str(), AASSET_MODE_BUFFER);
   if (!asset)
-    return amber::MakeUnique<AssetContent>(0);
+    return std::vector<uint32_t>();
 
   size_t size_in_bytes = AAsset_getLength(asset);
-  if (is_shader) {
-    if (size_in_bytes % sizeof(uint32_t) != 0UL) {
-      size_in_bytes =
-          (size_in_bytes + 3UL) / sizeof(uint32_t) * sizeof(uint32_t);
-    }
-  }
+  // Initialize vector as zeros.
+  std::vector<uint32_t> content((size_in_bytes + sizeof(uint32_t) - 1) /
+                                sizeof(uint32_t));
 
-  auto asset_content = amber::MakeUnique<AssetContent>(size_in_bytes);
-  AAsset_read(asset, asset_content->content, asset_content->size_in_bytes);
+  AAsset_read(asset, content.data(), size_in_bytes);
   AAsset_close(asset);
 
-  return asset_content;
+  return content;
 }
 
-std::vector<uint32_t> AmberScriptLoader::AssetContent::ToVectorUint32() {
-  assert(size_in_bytes % sizeof(uint32_t) == 0UL);
-  const uint32_t* ptr = reinterpret_cast<const uint32_t*>(content);
-  return std::vector<uint32_t>(ptr, ptr + size_in_bytes / sizeof(uint32_t));
+std::string AmberScriptLoader::ReadScript(const std::string& script_name) {
+  auto content_in_vector_uin32 = ReadAssetContentAsVectorUint32(script_name);
+  return std::string(reinterpret_cast<char*>(&*content_in_vector_uin32.begin()),
+                     reinterpret_cast<char*>(&*content_in_vector_uin32.end()));
 }
 
 }  // namespace android

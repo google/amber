@@ -39,6 +39,8 @@ static void amber_main(android_app* app) {
   uint32_t n_passes = 0;
   uint32_t n_failures = 0;
   for (const auto& info : script_info) {
+    LOGE("case %s: run...", info.asset_name.c_str());
+
     amber::Amber am;
     amber::Recipe recipe;
     amber::Result r = am.Parse(info.script_content, &recipe);

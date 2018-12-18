@@ -48,29 +48,6 @@ class AmberScriptLoader {
   }
 
  private:
-  // A struct to load content of asset into memory chunk |content|.
-  // If the asset is shader, user must make sure |size_in_bytes| is
-  // multiple of sizeof(uint32_t).
-  struct AssetContent {
-   public:
-    AssetContent(size_t allocate_size_in_bytes)
-        : size_in_bytes(allocate_size_in_bytes) {
-      if (allocate_size_in_bytes) {
-        content = new char[allocate_size_in_bytes + 1];
-        content[allocate_size_in_bytes] = '\0';
-      }
-    }
-    ~AssetContent() { delete content; }
-
-    std::string ToString() {
-      return content ? std::string(content) : std::string();
-    }
-    std::vector<uint32_t> ToVectorUint32();
-
-    size_t size_in_bytes = 0;
-    char* content = nullptr;
-  };
-
   // Find all files with ".amber" extension and set |asset_name| of
   // |script_info_| as their names.
   void FindAllScripts();
@@ -79,14 +56,14 @@ class AmberScriptLoader {
   std::vector<std::string> GetShaderNamesForAmberScript(
       const std::string& script_name);
 
-  // Return content of shader named |shader_name| under assets/amber/.
-  std::unique_ptr<AssetContent> ReadScript(const std::string& shader_name) {
-    return ReadAssetContent(shader_name, true);
-  }
+  // Return content of script named |shader_name| under
+  // assets/amber/ as a std::string.
+  std::string ReadScript(const std::string& script_name);
 
-  // Return content of asset named |asset_name| under assets/amber/.
-  std::unique_ptr<AssetContent> ReadAssetContent(const std::string& asset_name,
-                                                 bool is_shader = false);
+  // Return content of asset named |asset_name| under assets/amber/
+  // as a std::vector<uint32_t>.
+  std::vector<uint32_t> ReadAssetContentAsVectorUint32(
+      const std::string& asset_name);
 
   android_app* app_context_ = nullptr;
   std::vector<AmberScriptInfo> script_info_;
