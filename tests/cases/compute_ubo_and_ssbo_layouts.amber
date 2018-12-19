@@ -24,7 +24,7 @@ layout(set = 0, binding = 0) buffer block00 {
   float e;      //        84
 } b0;
 
-// UBO compiled as std430 by glslang
+// UBO compiled as std140 by glslang
 layout(set = 0, binding = 1) uniform block01 {
   float a[3];   // Offset: 0, array stride:  16
   int b;        //        48
