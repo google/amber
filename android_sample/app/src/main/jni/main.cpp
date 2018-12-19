@@ -37,32 +37,38 @@ static void amber_main(android_app* app) {
   const auto& script_info = loader.GetScripts();
 
   uint32_t n_passes = 0;
-  uint32_t n_failures = 0;
+  std::vector<std::string> failures;
   for (const auto& info : script_info) {
-    LOGE("case %s: run...", info.asset_name.c_str());
+    LOGE("\ncase %s: run...", info.asset_name.c_str());
 
     amber::Amber am;
     amber::Recipe recipe;
     amber::Result r = am.Parse(info.script_content, &recipe);
     if (!r.IsSuccess()) {
-      LOGE("case %s: fail\n\t%s", info.asset_name.c_str(), r.Error().c_str());
-      ++n_failures;
+      LOGE("\ncase %s: fail\n\t%s", info.asset_name.c_str(), r.Error().c_str());
+      failures.push_back(info.asset_name);
       continue;
     }
 
     amber::Options amber_options;
     r = am.ExecuteWithShaderData(&recipe, amber_options, info.shader_map);
     if (!r.IsSuccess()) {
-      LOGE("case %s: fail\n\t%s", info.asset_name.c_str(), r.Error().c_str());
-      ++n_failures;
+      LOGE("\ncase %s: fail\n\t%s", info.asset_name.c_str(), r.Error().c_str());
+      failures.push_back(info.asset_name);
       continue;
     }
 
-    LOGE("case %s: pass", info.asset_name.c_str());
+    LOGE("\ncase %s: pass", info.asset_name.c_str());
     ++n_passes;
   }
 
-  LOGE("summary: %u pass, %u fail", n_passes, n_failures);
+  if (!failures.empty()) {
+    LOGE("\nSummary of Failures:");
+    for (const auto& failure : failures)
+      LOGE("%s", failure.c_str());
+  }
+  LOGE("\nsummary: %u pass, %u fail", n_passes,
+       static_cast<uint32_t>(failures.size()));
 }
 
 // Process the next main command.
