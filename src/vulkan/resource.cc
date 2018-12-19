@@ -191,8 +191,8 @@ Resource::AllocateResult Resource::AllocateAndBindMemoryToVkImage(
     VkDeviceMemory* memory,
     VkMemoryPropertyFlags flags,
     bool force_flags) {
-  if (image == nullptr)
-    return {Result("Vulkan::Given VkImage pointer is nullptr"), 0};
+  if (image == VK_NULL_HANDLE)
+    return {Result("Vulkan::Given VkImage is VK_NULL_HANDLE"), 0};
 
   if (memory == nullptr)
     return {Result("Vulkan::Given VkDeviceMemory pointer is nullptr"), 0};
