@@ -45,8 +45,17 @@ bool IsStartedWith(const std::string& path, const std::string& start) {
 
 std::string GetShaderID(const std::string& shader_name) {
   size_t spv_extension_pos = shader_name.find_last_of('.');
+  if (spv_extension_pos == std::string::npos)
+    return std::string();
+
   size_t shader_id_pos =
       shader_name.find_last_of('.', spv_extension_pos - 1UL) + 1UL;
+  if (shader_id_pos == std::string::npos)
+    return std::string();
+
+  if (shader_id_pos >= spv_extension_pos || shader_name.size() <= shader_id_pos)
+    return std::string();
+
   return shader_name.substr(shader_id_pos, spv_extension_pos - shader_id_pos);
 }
 
@@ -57,7 +66,7 @@ AmberScriptLoader::AmberScriptLoader(android_app* app) : app_context_(app) {}
 AmberScriptLoader::~AmberScriptLoader() = default;
 
 Result AmberScriptLoader::LoadAllScriptsFromAsset() {
-  FindAllScripts();
+  auto shader_names = FindAllScriptsAndReturnShaderNames();
   if (script_info_.empty())
     return Result("No Amber script found");
 
@@ -68,20 +77,29 @@ Result AmberScriptLoader::LoadAllScriptsFromAsset() {
   }
 
   for (auto& info : script_info_) {
-    auto shader_names = GetShaderNamesForAmberScript(info.asset_name);
     for (const auto& shader : shader_names) {
-      auto shader_content = ReadAssetContentAsVectorUint32(shader);
+      if (!IsStartedWith(shader, info.asset_name + kShaderNameSignature))
+        continue;
+
+      auto shader_content = ReadContent(shader);
       if (shader_content.empty())
         return Result(shader + ":\n\tEmpty shader");
 
-      info.shader_map[GetShaderID(shader)] = shader_content;
+      auto id = GetShaderID(shader);
+      if (id.empty())
+        return Result(shader + ":\n\tFail to get shader ID");
+
+      info.shader_map[id] = shader_content;
     }
   }
 
   return {};
 }
 
-void AmberScriptLoader::FindAllScripts() {
+std::vector<std::string>
+AmberScriptLoader::FindAllScriptsAndReturnShaderNames() {
+  std::vector<std::string> shaders;
+
   AAssetDir* asset = AAssetManager_openDir(app_context_->activity->assetManager,
                                            kAmberDir.c_str());
   for (const char* file_name = AAssetDir_getNextFileName(asset); file_name;
@@ -91,31 +109,16 @@ void AmberScriptLoader::FindAllScripts() {
       script_info_.emplace_back();
       script_info_.back().asset_name = file_name_in_string;
     }
-  }
-  AAssetDir_close(asset);
-}
 
-std::vector<std::string> AmberScriptLoader::GetShaderNamesForAmberScript(
-    const std::string& script_name) {
-  std::vector<std::string> shaders;
-
-  AAssetDir* asset = AAssetManager_openDir(app_context_->activity->assetManager,
-                                           kAmberDir.c_str());
-  for (const char* file_name = AAssetDir_getNextFileName(asset); file_name;
-       file_name = AAssetDir_getNextFileName(asset)) {
-    std::string file_name_in_string(file_name);
-    if (IsStartedWith(file_name_in_string,
-                      script_name + kShaderNameSignature) &&
-        IsEndedWith(file_name_in_string, kShaderExtension)) {
+    if (IsEndedWith(file_name_in_string, kShaderExtension))
       shaders.push_back(file_name_in_string);
-    }
   }
   AAssetDir_close(asset);
 
   return shaders;
 }
 
-std::vector<uint32_t> AmberScriptLoader::ReadAssetContentAsVectorUint32(
+std::vector<uint32_t> AmberScriptLoader::ReadContent(
     const std::string& asset_name) {
   auto asset_path = kAmberDir + asset_name;
   AAsset* asset = AAssetManager_open(app_context_->activity->assetManager,
@@ -135,7 +138,7 @@ std::vector<uint32_t> AmberScriptLoader::ReadAssetContentAsVectorUint32(
 }
 
 std::string AmberScriptLoader::ReadScript(const std::string& script_name) {
-  auto content_in_vector_uin32 = ReadAssetContentAsVectorUint32(script_name);
+  auto content_in_vector_uin32 = ReadContent(script_name);
   return std::string(reinterpret_cast<char*>(&*content_in_vector_uin32.begin()),
                      reinterpret_cast<char*>(&*content_in_vector_uin32.end()));
 }

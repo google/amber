@@ -49,12 +49,9 @@ class AmberScriptLoader {
 
  private:
   // Find all files with ".amber" extension and set |asset_name| of
-  // |script_info_| as their names.
-  void FindAllScripts();
-
-  // Return all shader files for a script |script_name|.
-  std::vector<std::string> GetShaderNamesForAmberScript(
-      const std::string& script_name);
+  // |script_info_| as their names. In addition, return all shader
+  // file names that have ".spv" extensions.
+  std::vector<std::string> FindAllScriptsAndReturnShaderNames();
 
   // Return content of script named |shader_name| under
   // assets/amber/ as a std::string.
@@ -62,8 +59,7 @@ class AmberScriptLoader {
 
   // Return content of asset named |asset_name| under assets/amber/
   // as a std::vector<uint32_t>.
-  std::vector<uint32_t> ReadAssetContentAsVectorUint32(
-      const std::string& asset_name);
+  std::vector<uint32_t> ReadContent(const std::string& asset_name);
 
   android_app* app_context_ = nullptr;
   std::vector<AmberScriptInfo> script_info_;

@@ -20,12 +20,14 @@
 #include "amber/result.h"
 #include "amber_script.h"
 
+namespace {
+
 // Android log function wrappers
-static const char* kTAG = "Amber";
+const char* kTAG = "Amber";
 #define LOGE(...) \
   ((void)__android_log_print(ANDROID_LOG_ERROR, kTAG, __VA_ARGS__))
 
-static void amber_main(android_app* app) {
+void amber_main(android_app* app) {
   amber::android::AmberScriptLoader loader(app);
 
   amber::Result r = loader.LoadAllScriptsFromAsset();
@@ -36,7 +38,6 @@ static void amber_main(android_app* app) {
 
   const auto& script_info = loader.GetScripts();
 
-  uint32_t n_passes = 0;
   std::vector<std::string> failures;
   for (const auto& info : script_info) {
     LOGE("\ncase %s: run...", info.asset_name.c_str());
@@ -59,7 +60,6 @@ static void amber_main(android_app* app) {
     }
 
     LOGE("\ncase %s: pass", info.asset_name.c_str());
-    ++n_passes;
   }
 
   if (!failures.empty()) {
@@ -67,12 +67,13 @@ static void amber_main(android_app* app) {
     for (const auto& failure : failures)
       LOGE("%s", failure.c_str());
   }
-  LOGE("\nsummary: %u pass, %u fail", n_passes,
+  LOGE("\nsummary: %u pass, %u fail",
+       static_cast<uint32_t>(script_info.size() - failures.size()),
        static_cast<uint32_t>(failures.size()));
 }
 
 // Process the next main command.
-static void handle_cmd(android_app* app, int32_t cmd) {
+void handle_cmd(android_app* app, int32_t cmd) {
   switch (cmd) {
     case APP_CMD_INIT_WINDOW:
       amber_main(app);
@@ -84,6 +85,8 @@ static void handle_cmd(android_app* app, int32_t cmd) {
   }
 }
 
+}  // namespace
+
 void android_main(struct android_app* app) {
   // Set the callback to process system events
   app->onAppCmd = handle_cmd;
@@ -94,8 +97,9 @@ void android_main(struct android_app* app) {
 
   // Main loop
   do {
-    if (ALooper_pollAll(1, nullptr, &events, (void**)&source) >= 0)
+    if (ALooper_pollAll(1, nullptr, &events, (void**)&source) >= 0) {
       if (source != NULL)
         source->process(app, source);
+    }
   } while (app->destroyRequested == 0);
 }
