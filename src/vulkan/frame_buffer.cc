@@ -113,17 +113,20 @@ Result FrameBuffer::ChangeFrameImageLayout(VkCommandBuffer command,
                                  ? VK_IMAGE_LAYOUT_UNDEFINED
                                  : VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 
+  VkPipelineStageFlagBits source_stage =
+      frame_image_layout_ == FrameImageState::kInit
+          ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
+          : VK_PIPELINE_STAGE_TRANSFER_BIT;
+
   if (color_image_) {
-    color_image_->ChangeLayout(command, old_layout,
-                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                               VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    color_image_->ChangeLayout(
+        command, old_layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        source_stage, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
   }
   if (depth_image_) {
-    depth_image_->ChangeLayout(command, old_layout,
-                               VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                               VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    depth_image_->ChangeLayout(
+        command, old_layout, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        source_stage, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
   }
   frame_image_layout_ = FrameImageState::kClearOrDraw;
   return {};
