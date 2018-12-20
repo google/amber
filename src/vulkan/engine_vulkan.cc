@@ -375,8 +375,8 @@ Result EngineVulkan::GetDescriptorInfo(const uint32_t descriptor_set,
 }
 
 Result EngineVulkan::DoBuffer(const BufferCommand* command) {
-  if (!command->IsSSBO() && !command->IsUniform())
-    return Result("Vulkan::DoBuffer not supported buffer type");
+  if (command->IsPushConstant())
+    return pipeline_->AddPushConstant(command);
 
   return pipeline_->AddDescriptor(command);
 }

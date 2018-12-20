@@ -39,10 +39,6 @@ class BufferDescriptor : public Descriptor {
                    uint32_t binding);
   ~BufferDescriptor() override;
 
-  // |data| contains information of what parts of |buffer_| must be
-  // updated as what values. This method conducts the update.
-  void FillBufferWithData(const BufferData& data);
-
   // Descriptor
   Result CreateOrResizeIfNeeded(
       VkCommandBuffer command,

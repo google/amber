@@ -25,6 +25,7 @@
 #include "src/engine.h"
 #include "src/vulkan/command.h"
 #include "src/vulkan/descriptor.h"
+#include "src/vulkan/handle_value_with_memory.h"
 #include "vulkan/vulkan.h"
 
 namespace amber {
@@ -47,6 +48,10 @@ class Pipeline {
   ComputePipeline* AsCompute();
 
   Result AddDescriptor(const BufferCommand*);
+
+  // Add information of how and what to do with push constant to
+  // |push_constant_data_|.
+  Result AddPushConstant(const BufferCommand* command);
 
   // Copy the contents of the resource bound to the given descriptor
   // to host memory.
@@ -80,6 +85,7 @@ class Pipeline {
   Result SendDescriptorDataToDeviceIfNeeded();
   void BindVkPipeline();
   void BindVkDescriptorSets();
+  void PushConstants();
 
   const std::vector<VkPipelineShaderStageCreateInfo>& GetShaderStageInfo()
       const {
@@ -105,6 +111,7 @@ class Pipeline {
     std::vector<std::unique_ptr<Descriptor>> descriptors_;
   };
 
+  VkPushConstantRange GetPushConstantRange();
   Result CreatePipelineLayout();
 
   Result CreateDescriptorSetLayouts();
@@ -114,6 +121,10 @@ class Pipeline {
   PipelineType pipeline_type_;
   std::vector<DescriptorSetInfo> descriptor_set_info_;
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
+
+  // Keep the information of what and how to conduct push constant.
+  std::vector<BufferData> push_constant_data_;
+
   uint32_t fence_timeout_ms_ = 100;
   bool descriptor_related_objects_already_created_ = false;
   std::unordered_map<VkShaderStageFlagBits,

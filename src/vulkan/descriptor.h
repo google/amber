@@ -21,6 +21,7 @@
 #include "amber/result.h"
 #include "src/datum_type.h"
 #include "src/engine.h"
+#include "src/vulkan/handle_value_with_memory.h"
 #include "vulkan/vulkan.h"
 
 namespace amber {
@@ -41,13 +42,6 @@ enum class DescriptorType : uint8_t {
 };
 
 VkDescriptorType ToVkDescriptorType(DescriptorType type);
-
-struct BufferData {
-  DataType type;
-  uint32_t offset;
-  size_t size_in_bytes;
-  std::vector<Value> values;
-};
 
 class Descriptor {
  public:

@@ -23,10 +23,11 @@ set(VULKAN_ENGINE_SOURCES
     engine_vulkan.cc
     format_data.cc
     frame_buffer.cc
-    resource.cc
+    graphics_pipeline.cc
+    handle_value_with_memory.cc
     image.cc
     pipeline.cc
-    graphics_pipeline.cc
+    resource.cc
     vertex_buffer.cc
 )
 

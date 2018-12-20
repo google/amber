@@ -558,6 +558,8 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   BindVkDescriptorSets();
   BindVkPipeline();
 
+  PushConstants();
+
   if (vertex_buffer != nullptr)
     vertex_buffer->BindToCommandBuffer(command_->GetCommandBuffer());
 
