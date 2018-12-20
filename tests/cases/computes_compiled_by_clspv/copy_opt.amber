@@ -1,0 +1,78 @@
+[compute shader spirv]
+; SPIR-V
+; Version: 1.0
+; Generator: Codeplay; 0
+; Bound: 28
+; Schema: 0
+               OpCapability Shader
+               OpCapability VariablePointers
+               OpExtension "SPV_KHR_storage_buffer_storage_class"
+               OpExtension "SPV_KHR_variable_pointers"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint GLCompute %21 "foo" %gl_GlobalInvocationID
+               OpSource OpenCL_C 120
+               OpDecorate %14 SpecId 0
+               OpDecorate %15 SpecId 1
+               OpDecorate %16 SpecId 2
+               OpDecorate %_runtimearr_uint ArrayStride 4
+               OpMemberDecorate %_struct_3 0 Offset 0
+               OpDecorate %_struct_3 Block
+               OpDecorate %gl_GlobalInvocationID BuiltIn GlobalInvocationId
+               OpDecorate %gl_WorkGroupSize BuiltIn WorkgroupSize
+               OpDecorate %19 DescriptorSet 0
+               OpDecorate %19 Binding 0
+               OpDecorate %20 DescriptorSet 0
+               OpDecorate %20 Binding 1
+       %uint = OpTypeInt 32 0
+%_runtimearr_uint = OpTypeRuntimeArray %uint
+  %_struct_3 = OpTypeStruct %_runtimearr_uint
+%_ptr_StorageBuffer__struct_3 = OpTypePointer StorageBuffer %_struct_3
+       %void = OpTypeVoid
+          %6 = OpTypeFunction %void
+     %v3uint = OpTypeVector %uint 3
+%_ptr_Input_v3uint = OpTypePointer Input %v3uint
+%_ptr_Input_uint = OpTypePointer Input %uint
+%_ptr_StorageBuffer_uint = OpTypePointer StorageBuffer %uint
+%_ptr_Private_v3uint = OpTypePointer Private %v3uint
+     %uint_0 = OpConstant %uint 0
+%gl_GlobalInvocationID = OpVariable %_ptr_Input_v3uint Input
+         %14 = OpSpecConstant %uint 1
+         %15 = OpSpecConstant %uint 1
+         %16 = OpSpecConstant %uint 1
+%gl_WorkGroupSize = OpSpecConstantComposite %v3uint %14 %15 %16
+         %18 = OpVariable %_ptr_Private_v3uint Private %gl_WorkGroupSize
+         %19 = OpVariable %_ptr_StorageBuffer__struct_3 StorageBuffer
+         %20 = OpVariable %_ptr_StorageBuffer__struct_3 StorageBuffer
+         %21 = OpFunction %void None %6
+         %22 = OpLabel
+         %23 = OpAccessChain %_ptr_Input_uint %gl_GlobalInvocationID %uint_0
+         %24 = OpLoad %uint %23
+         %25 = OpAccessChain %_ptr_StorageBuffer_uint %19 %uint_0 %24
+         %26 = OpLoad %uint %25
+         %27 = OpAccessChain %_ptr_StorageBuffer_uint %20 %uint_0 %24
+               OpStore %27 %26
+               OpReturn
+               OpFunctionEnd
+[require]
+VK_KHR_storage_buffer_storage_class
+VK_KHR_variable_pointers
+
+[test]
+# ssbo [set:bind] subdata [type] [offset] [values ...]
+ssbo          0:0 subdata    int        0 1 2 3 4 5 6 7 8 9 10
+ssbo          0:1 subdata    int        0 0 0 0 0 0 0 0 0 0  0
+
+compute entrypoint foo
+compute 10 1 1
+
+# probe ssbo [type] [set:bind] [offset]  == [values ...]
+probe ssbo      int        0:1        0  ==  1
+probe ssbo      int        0:1        4  ==  2
+probe ssbo      int        0:1        8  ==  3
+probe ssbo      int        0:1        12 ==  4
+probe ssbo      int        0:1        16 ==  5
+probe ssbo      int        0:1        20 ==  6
+probe ssbo      int        0:1        24 ==  7
+probe ssbo      int        0:1        28 ==  8
+probe ssbo      int        0:1        32 ==  9
+probe ssbo      int        0:1        36 ==  10

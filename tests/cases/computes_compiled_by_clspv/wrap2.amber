@@ -1,0 +1,16 @@
+[compute shader]
+#version 430
+
+layout (set = 0, binding = 0) buffer dataOut {
+  vec4 data[];
+} A;
+
+void main() {
+  vec4 value;
+  value.w = 1000.0;
+  A.data[0] = value;
+}
+[test]
+ssbo 0 16
+compute 1 1 1
+probe ssbo float 0 12  == 1000.0

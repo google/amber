@@ -1,0 +1,71 @@
+[comment]
+Source code in GLSL:
+
+#version 430
+
+layout (set = 0, binding = 0) buffer dataOut {
+  vec4 data[];
+} A;
+
+void main() {
+  vec4 value;
+  value.w = 1000.0;
+  A.data[0] = value;
+}
+
+[compute shader spirv]
+; SPIR-V
+; Version: 1.0
+; Generator: Codeplay; 0
+; Bound: 25
+; Schema: 0
+               OpCapability Shader
+               OpExtension "SPV_KHR_storage_buffer_storage_class"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint GLCompute %22 "foo0"
+               OpSource OpenCL_C 120
+               OpDecorate %16 SpecId 0
+               OpDecorate %17 SpecId 1
+               OpDecorate %18 SpecId 2
+               OpDecorate %_runtimearr_v4float ArrayStride 16
+               OpMemberDecorate %_struct_5 0 Offset 0
+               OpDecorate %_struct_5 Block
+               OpDecorate %gl_WorkGroupSize BuiltIn WorkgroupSize
+               OpDecorate %21 DescriptorSet 0
+               OpDecorate %21 Binding 0
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+%_ptr_StorageBuffer_v4float = OpTypePointer StorageBuffer %v4float
+%_runtimearr_v4float = OpTypeRuntimeArray %v4float
+  %_struct_5 = OpTypeStruct %_runtimearr_v4float
+%_ptr_StorageBuffer__struct_5 = OpTypePointer StorageBuffer %_struct_5
+       %uint = OpTypeInt 32 0
+       %void = OpTypeVoid
+          %9 = OpTypeFunction %void
+     %v3uint = OpTypeVector %uint 3
+%_ptr_Private_v3uint = OpTypePointer Private %v3uint
+     %uint_0 = OpConstant %uint 0
+         %13 = OpConstant %float 0
+ %float_1000 = OpConstant %float 1000
+         %15 = OpConstantComposite %v4float %13 %13 %13 %float_1000
+         %16 = OpSpecConstant %uint 1
+         %17 = OpSpecConstant %uint 1
+         %18 = OpSpecConstant %uint 1
+%gl_WorkGroupSize = OpSpecConstantComposite %v3uint %16 %17 %18
+         %20 = OpVariable %_ptr_Private_v3uint Private %gl_WorkGroupSize
+         %21 = OpVariable %_ptr_StorageBuffer__struct_5 StorageBuffer
+         %22 = OpFunction %void None %9
+         %23 = OpLabel
+         %24 = OpAccessChain %_ptr_StorageBuffer_v4float %21 %uint_0 %uint_0
+               OpStore %24 %15
+               OpReturn
+               OpFunctionEnd
+
+[require]
+VK_KHR_storage_buffer_storage_class
+
+[test]
+ssbo 0 16
+compute entrypoint foo0
+compute 1 1 1
+probe ssbo float 0 12  == 1000.0
