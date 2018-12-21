@@ -50,7 +50,7 @@ shell.
 * Set up Android NDK path by adding `ndk.dir = path/to/Android/NDK` to
 `local.properties` or run `export ANDROID_NDK_HOME=path/to/Android/NDK` in your
 shell.
-* Run `./gradlew build`.
+* Run `./gradlew build` in android\_sample/.
 
 ### Optional Components
 

@@ -81,7 +81,7 @@ Result AmberScriptLoader::LoadAllScriptsFromAsset() {
       if (!IsStartedWith(shader, info.asset_name + kShaderNameSignature))
         continue;
 
-      auto shader_content = ReadContent(shader);
+      auto shader_content = ReadSpvShader(shader);
       if (shader_content.empty())
         return Result(shader + ":\n\tEmpty shader");
 
@@ -118,18 +118,18 @@ AmberScriptLoader::FindAllScriptsAndReturnShaderNames() {
   return shaders;
 }
 
-std::vector<uint32_t> AmberScriptLoader::ReadContent(
+std::vector<uint8_t> AmberScriptLoader::ReadContent(
     const std::string& asset_name) {
   auto asset_path = kAmberDir + asset_name;
   AAsset* asset = AAssetManager_open(app_context_->activity->assetManager,
                                      asset_path.c_str(), AASSET_MODE_BUFFER);
   if (!asset)
-    return std::vector<uint32_t>();
+    return std::vector<uint8_t>();
 
   size_t size_in_bytes = AAsset_getLength(asset);
+
   // Initialize vector as zeros.
-  std::vector<uint32_t> content((size_in_bytes + sizeof(uint32_t) - 1) /
-                                sizeof(uint32_t));
+  std::vector<uint8_t> content(size_in_bytes);
 
   AAsset_read(asset, content.data(), size_in_bytes);
   AAsset_close(asset);
@@ -138,9 +138,19 @@ std::vector<uint32_t> AmberScriptLoader::ReadContent(
 }
 
 std::string AmberScriptLoader::ReadScript(const std::string& script_name) {
-  auto content_in_vector_uin32 = ReadContent(script_name);
-  return std::string(reinterpret_cast<char*>(&*content_in_vector_uin32.begin()),
-                     reinterpret_cast<char*>(&*content_in_vector_uin32.end()));
+  auto content = ReadContent(script_name);
+  return std::string(reinterpret_cast<char*>(&*content.begin()),
+                     reinterpret_cast<char*>(&*content.end()));
+}
+
+std::vector<uint32_t> AmberScriptLoader::ReadSpvShader(
+    const std::string& shader_name) {
+  auto content = ReadContent(shader_name);
+  if (content.size() % sizeof(uint32_t) != 0)
+    return std::vector<uint32_t>();
+
+  return std::vector<uint32_t>(reinterpret_cast<uint32_t*>(&*content.begin()),
+                               reinterpret_cast<uint32_t*>(&*content.end()));
 }
 
 }  // namespace android

@@ -53,13 +53,17 @@ class AmberScriptLoader {
   // file names that have ".spv" extensions.
   std::vector<std::string> FindAllScriptsAndReturnShaderNames();
 
-  // Return content of script named |shader_name| under
+  // Return content of script named |script_name| under
   // assets/amber/ as a std::string.
   std::string ReadScript(const std::string& script_name);
 
+  // Return SPIRV binary of script named |shader_name| under
+  // assets/amber/ as a std::vector<uint32_t>.
+  std::vector<uint32_t> ReadSpvShader(const std::string& shader_name);
+
   // Return content of asset named |asset_name| under assets/amber/
-  // as a std::vector<uint32_t>.
-  std::vector<uint32_t> ReadContent(const std::string& asset_name);
+  // as a std::vector<uint8_t>.
+  std::vector<uint8_t> ReadContent(const std::string& asset_name);
 
   android_app* app_context_ = nullptr;
   std::vector<AmberScriptInfo> script_info_;

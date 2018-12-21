@@ -22,6 +22,7 @@
 
 namespace {
 
+// TODO(jaebaek): Change this as a method rather than macro.
 // Android log function wrappers
 const char* kTAG = "Amber";
 #define LOGE(...) \
