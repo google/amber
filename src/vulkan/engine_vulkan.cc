@@ -78,11 +78,11 @@ bool IsFormatSupportedByPhysicalDevice(BufferType type,
   return (properties.bufferFeatures & flags) == flags;
 }
 
-bool ExceedMaximumDescriptorSets(VkPhysicalDevice physical_device,
-                                 uint32_t descriptor_set) {
+bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
+                             uint32_t descriptor_set) {
   VkPhysicalDeviceProperties properties = {};
   vkGetPhysicalDeviceProperties(physical_device, &properties);
-  return properties.limits.maxBoundDescriptorSets <= descriptor_set;
+  return properties.limits.maxBoundDescriptorSets > descriptor_set;
 }
 
 }  // namespace
@@ -418,8 +418,8 @@ Result EngineVulkan::DoBuffer(const BufferCommand* command) {
   if (!command->IsSSBO() && !command->IsUniform())
     return Result("Vulkan::DoBuffer not supported buffer type");
 
-  if (ExceedMaximumDescriptorSets(device_->GetPhysicalDevice(),
-                                  command->GetDescriptorSet())) {
+  if (!IsDescriptorSetInBounds(device_->GetPhysicalDevice(),
+                               command->GetDescriptorSet())) {
     return Result(
         "Vulkan::DoBuffer exceed maxBoundDescriptorSets limit of physical "
         "device");
