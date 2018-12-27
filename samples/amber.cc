@@ -15,16 +15,21 @@
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
+#include <memory>
+#include <tuple>
 #include <vector>
 
 #include "amber/amber.h"
+#include "amber/amber_vulkan.h"
 #include "amber/recipe.h"
+#include "samples/config_helper.h"
 #include "src/build-versions.h"
+#include "src/make_unique.h"
 
 namespace {
 
 struct Options {
-  std::string input_filename;
+  std::vector<std::string> input_filenames;
 
   std::string image_filename;
   std::string buffer_filename;
@@ -35,7 +40,7 @@ struct Options {
   amber::EngineType engine = amber::EngineType::kVulkan;
 };
 
-const char kUsage[] = R"(Usage: amber [options] SCRIPT
+const char kUsage[] = R"(Usage: amber [options] SCRIPT [more SCRIPTs]
 
  options:
   -p             -- Parse input files only; Don't execute
@@ -45,6 +50,10 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT
   -e <engine>    -- Specify graphics engine: vulkan, dawn. Default is vulkan.
   -V, --version  -- Output version information for Amber and libraries.
   -h             -- This help text.
+
+ Note:
+  If multiple SCRIPTs are given, it creates VkDevice out of engine
+  and reuse it for all executions for those SCRIPTs.
 )";
 
 bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
@@ -108,7 +117,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       std::cerr << "Unrecognized option " << arg << std::endl;
       return false;
     } else {
-      opts->input_filename = args[i];
+      opts->input_filenames.push_back(args[i]);
     }
   }
 
@@ -178,43 +187,73 @@ int main(int argc, const char** argv) {
     return 0;
   }
 
-  if (options.input_filename.empty()) {
+  if (options.input_filenames.empty()) {
     std::cerr << "Input file must be provided." << std::endl;
     return 2;
   }
 
-  auto data = ReadFile(options.input_filename);
-  if (data.empty())
-    return 1;
+  amber::Result result;
 
-  amber::Amber am;
-  amber::Recipe recipe;
-  amber::Result result = am.Parse(data, &recipe);
-  if (!result.IsSuccess()) {
-    std::cerr << result.Error() << std::endl;
-    return 1;
+  std::vector<amber::Amber> ambers(options.input_filenames.size());
+  std::vector<amber::Recipe> recipes(options.input_filenames.size());
+  for (size_t i = 0; i < options.input_filenames.size(); ++i) {
+    auto data = ReadFile(options.input_filenames[i]);
+    if (data.empty())
+      return 1;
+
+    auto& am = ambers[i];
+    auto& recipe = recipes[i];
+
+    result = am.Parse(data, &recipe);
+    if (!result.IsSuccess()) {
+      std::cerr << result.Error() << std::endl;
+      return 1;
+    }
   }
 
   if (options.parse_only)
     return 0;
 
+  sample::ConfigHelper config_helper;
   amber::Options amber_options;
   amber_options.engine = options.engine;
-  result = am.Execute(&recipe, amber_options);
-  if (!result.IsSuccess()) {
-    std::cerr << result.Error() << std::endl;
-    return 1;
+  if (options.input_filenames.size() > 1UL) {
+    amber_options.config = amber::MakeUnique<amber::VulkanEngineConfig>();
+
+    amber::VulkanEngineConfig* config =
+        static_cast<amber::VulkanEngineConfig*>(amber_options.config.get());
+    std::tie(result, *config) = config_helper.CreateVulkanConfig(recipes);
+    if (!result.IsSuccess()) {
+      std::cerr << result.Error() << std::endl;
+      return 1;
+    }
   }
 
-  if (!options.buffer_filename.empty()) {
-    // TODO(dsinclair): Write buffer file
-    assert(false);
+  for (size_t i = 0; i < ambers.size(); ++i) {
+    auto& am = ambers[i];
+    auto& recipe = recipes[i];
+
+    result = am.Execute(&recipe, amber_options);
+    if (!result.IsSuccess()) {
+      std::cerr << result.Error() << std::endl;
+      return 1;
+    }
+
+    if (!options.buffer_filename.empty()) {
+      // TODO(dsinclair): Write buffer file
+      assert(false);
+    }
+
+    if (!options.image_filename.empty()) {
+      // TODO(dsinclair): Write image file
+      assert(false);
+    }
+
+    return 0;
   }
 
-  if (!options.image_filename.empty()) {
-    // TODO(dsinclair): Write image file
-    assert(false);
-  }
+  if (options.input_filenames.size() > 1UL)
+    config_helper.Shutdown();
 
   return 0;
 }

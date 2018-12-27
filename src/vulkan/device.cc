@@ -487,11 +487,14 @@ bool AreAllExtensionsSupported(
 }  // namespace
 
 Device::Device() = default;
-Device::Device(VkDevice device) : device_(device), destroy_device_(false) {}
+Device::Device(VkPhysicalDevice physical_device, VkDevice device)
+    : physical_device_(physical_device),
+      device_(device),
+      has_device_ownership_(false) {}
 Device::~Device() = default;
 
 void Device::Shutdown() {
-  if (destroy_device_) {
+  if (has_device_ownership_) {
     vkDestroyDevice(device_, nullptr);
     vkDestroyInstance(instance_, nullptr);
   }
@@ -499,7 +502,14 @@ void Device::Shutdown() {
 
 Result Device::Initialize(const std::vector<Feature>& required_features,
                           const std::vector<std::string>& required_extensions) {
-  if (device_ == VK_NULL_HANDLE) {
+  if (has_device_ownership_ &&
+      (physical_device_ != VK_NULL_HANDLE || device_ != VK_NULL_HANDLE)) {
+    return Result(
+        "Vulkan: Device::Initialize has device ownership but physical and "
+        "logical devices are given");
+  }
+
+  if (has_device_ownership_) {
     Result r = CreateInstance();
     if (!r.IsSuccess())
       return r;
@@ -511,13 +521,33 @@ Result Device::Initialize(const std::vector<Feature>& required_features,
     r = CreateDevice(required_features, required_extensions);
     if (!r.IsSuccess())
       return r;
+  } else {
+    if (!AreAllRequiredFeaturesSupported(physical_device_, required_features)) {
+      return Result(
+          "Vulkan: Device::Initialize given physical does not support required "
+          "features");
+    }
+
+    if (!AreAllExtensionsSupported(physical_device_, required_extensions)) {
+      return Result(
+          "Vulkan: Device::Initialize given physical does not support required "
+          "extensions");
+    }
+
+    if (!ChooseQueueFamilyIndex(physical_device_)) {
+      return Result(
+          "Vulkan: Device::Initialize given physical does not have required "
+          "queue family");
+    }
   }
 
-  if (queue_ == VK_NULL_HANDLE) {
-    vkGetDeviceQueue(device_, queue_family_index_, 0, &queue_);
-    if (queue_ == VK_NULL_HANDLE)
-      return Result("Vulkan::Calling vkGetDeviceQueue Fail");
-  }
+  vkGetPhysicalDeviceMemoryProperties(physical_device_,
+                                      &physical_memory_properties_);
+
+  vkGetDeviceQueue(device_, queue_family_index_, 0, &queue_);
+  if (queue_ == VK_NULL_HANDLE)
+    return Result("Vulkan::Calling vkGetDeviceQueue Fail");
+
   return {};
 }
 
@@ -591,8 +621,6 @@ Result Device::ChoosePhysicalDevice(
 
     if (ChooseQueueFamilyIndex(physical_devices[i])) {
       physical_device_ = physical_devices[i];
-      vkGetPhysicalDeviceMemoryProperties(physical_device_,
-                                          &physical_memory_properties_);
       return {};
     }
   }

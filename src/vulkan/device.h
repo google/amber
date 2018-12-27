@@ -30,13 +30,15 @@ namespace vulkan {
 class Device {
  public:
   Device();
-  explicit Device(VkDevice device);
+  Device(VkPhysicalDevice physical_device, VkDevice device);
   ~Device();
 
   Result Initialize(const std::vector<Feature>& required_features,
                     const std::vector<std::string>& required_extensions);
   void Shutdown();
 
+  VkInstance GetInstance() const { return instance_; }
+  VkPhysicalDevice GetPhysicalDevice() { return physical_device_; }
   VkDevice GetDevice() const { return device_; }
   uint32_t GetQueueFamilyIndex() const { return queue_family_index_; }
   VkQueue GetQueue() const { return queue_; }
@@ -48,7 +50,11 @@ class Device {
   Result CreateInstance();
 
   // Get a physical device by checking if the physical device has a proper
-  // queue family, required features, and required extensions.
+  // queue family, required features, and required extensions. Note that
+  // this method calls ChooseQueueFamilyIndex() to check if any queue
+  // provided by the physical device supports graphics or compute pipeline
+  // and sets |queue_family_index_| and |queue_family_flags_| for the
+  // proper queue family.
   Result ChoosePhysicalDevice(
       const std::vector<Feature>& required_features,
       const std::vector<std::string>& required_extensions);
@@ -74,7 +80,7 @@ class Device {
 
   VkQueue queue_ = VK_NULL_HANDLE;
 
-  bool destroy_device_ = true;
+  bool has_device_ownership_ = true;
 };
 
 }  // namespace vulkan
