@@ -51,6 +51,7 @@ struct ResourceInfo {
   /// For higher dimensions or arrayed images, we would need more strides.
   /// For example, see VkSubresourceLayout.
   struct {
+    const Format* texel_format = nullptr;  // Format of a single texel.
     uint32_t texel_stride = 0;  // Number of bytes for a single texel.
     uint32_t row_stride = 0;  // Number of bytes between successive pixel rows.
     uint32_t width = 0;
@@ -149,8 +150,8 @@ class Engine {
   /// if graphics pipeline.
   virtual Result DoProcessCommands() = 0;
 
-  /// Get stride, width, height, and memory pointer of frame buffer.
-  /// This is only valid if the buffer of framebuffer is mapped into
+  /// Get stride, width, height, and memory pointer of color frame buffer.
+  /// This is only valid if the buffer of color framebuffer is mapped into
   /// the host address space. In particular, if we have run
   /// DoProcessCommands() and since then no graphics pipeline drawing
   /// commands have occurred e.g., DoClear, DoDrawArrays, DoDrawRect.

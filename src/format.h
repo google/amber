@@ -55,6 +55,9 @@ class Format {
   const std::vector<Component>& GetComponents() const { return components_; }
 
   uint32_t GetByteSize() const {
+    if (pack_size_in_bytes_)
+      return pack_size_in_bytes_;
+
     uint32_t bits = 0;
     for (uint32_t j = 0; j < components_.size(); ++j) {
       bits += components_[j].num_bits;

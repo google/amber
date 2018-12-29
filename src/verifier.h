@@ -17,6 +17,7 @@
 
 #include "amber/result.h"
 #include "src/command.h"
+#include "src/format.h"
 
 namespace amber {
 
@@ -30,6 +31,7 @@ class Verifier {
   /// Check |command| against |buf|. The result will be success if the probe
   /// passes correctly.
   Result Probe(const ProbeCommand* command,
+               const Format* texel_format,
                uint32_t texel_stride,
                uint32_t row_stride,
                uint32_t frame_width,
@@ -41,6 +43,33 @@ class Verifier {
   Result ProbeSSBO(const ProbeSSBOCommand* command,
                    size_t size,
                    const void* cpu_memory);
+
+ private:
+  struct TexelErrorInfo {
+    bool set_by_error = false;
+    double r = 0;
+    double g = 0;
+    double b = 0;
+    double a = 0;
+  };
+
+  /// Check texel pointed by |texel| with |texel_format| is the same with
+  /// the expected RGB(A) values given via |command|. This method allow
+  /// error smaller than |tolerance|. If an element of
+  /// |is_tolerance_percent| is true, we assume that the corresponding
+  /// |tolerance| is relative i.e., percentage allowed error.
+  bool IsTexelEqualToExpected(const uint8_t* texel,
+                              const Format* texel_format,
+                              const ProbeCommand* command,
+                              const double* tolerance,
+                              const bool* is_tolerance_percent);
+
+  /// When IsTexelEqualToExpected() returns false because the actual color
+  /// texel is different from the expected one, it keeps the actual color
+  /// texel values in |actual_color_texel_| and set
+  /// |actual_color_texel_.set_by_error| as true to provide users with
+  /// this information later.
+  TexelErrorInfo actual_color_texel_ = {};
 };
 
 }  // namespace amber

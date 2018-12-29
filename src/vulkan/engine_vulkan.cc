@@ -58,24 +58,31 @@ bool IsFormatSupportedByPhysicalDevice(BufferType type,
   vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
 
   VkFormatFeatureFlagBits flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
+  bool is_buffer_type_image = false;
   switch (type) {
     case BufferType::kColor:
       flag = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
+      is_buffer_type_image = true;
       break;
     case BufferType::kDepth:
       flag = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+      is_buffer_type_image = true;
       break;
     case BufferType::kSampled:
       flag = VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
+      is_buffer_type_image = true;
       break;
     case BufferType::kVertex:
       flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
+      is_buffer_type_image = false;
       break;
     default:
       return false;
   }
 
-  return (properties.bufferFeatures & flag) == flag;
+  return ((is_buffer_type_image ? properties.optimalTilingFeatures
+                                : properties.bufferFeatures) &
+          flag) == flag;
 }
 
 bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
@@ -104,6 +111,22 @@ Result EngineVulkan::InitDeviceAndCreateCommand(
     if (!r.IsSuccess())
       return r;
   }
+
+  // Set VK_FORMAT_B8G8R8A8_UNORM for color frame buffer in default.
+  color_frame_format_ = MakeUnique<Format>();
+  color_frame_format_->SetFormatType(FormatType::kB8G8R8A8_UNORM);
+  color_frame_format_->AddComponent(FormatComponentType::kB, FormatMode::kUNorm,
+                                    8);
+  color_frame_format_->AddComponent(FormatComponentType::kG, FormatMode::kUNorm,
+                                    8);
+  color_frame_format_->AddComponent(FormatComponentType::kR, FormatMode::kUNorm,
+                                    8);
+  color_frame_format_->AddComponent(FormatComponentType::kA, FormatMode::kUNorm,
+                                    8);
+
+  // Set VK_FORMAT_UNDEFINED for depth/stencil frame buffer in default.
+  depth_frame_format_ = MakeUnique<Format>();
+  depth_frame_format_->SetFormatType(FormatType::kUnknown);
 
   return {};
 }
@@ -179,8 +202,9 @@ Result EngineVulkan::CreatePipeline(PipelineType type) {
 
   pipeline_ = MakeUnique<GraphicsPipeline>(
       device_->GetDevice(), device_->GetPhysicalMemoryProperties(),
-      color_frame_format_, depth_frame_format_, engine_data.fence_timeout_ms,
-      GetShaderStageInfo());
+      ToVkFormat(color_frame_format_->GetFormatType()),
+      ToVkFormat(depth_frame_format_->GetFormatType()),
+      engine_data.fence_timeout_ms, GetShaderStageInfo());
 
   return pipeline_->AsGraphics()->Initialize(
       kFramebufferWidth, kFramebufferHeight, pool_->GetCommandPool(),
@@ -236,12 +260,12 @@ Result EngineVulkan::SetBuffer(BufferType type,
 
   // Handle image and depth attachments special as they come in before
   // the pipeline is created.
-  if (type == BufferType::kColor || type == BufferType::kDepth) {
-    if (type == BufferType::kColor)
-      color_frame_format_ = format_type;
-    else if (type == BufferType::kDepth)
-      depth_frame_format_ = format_type;
-
+  if (type == BufferType::kColor) {
+    *color_frame_format_ = format;
+    return {};
+  }
+  if (type == BufferType::kDepth) {
+    *depth_frame_format_ = format;
     return {};
   }
 
@@ -257,10 +281,9 @@ Result EngineVulkan::SetBuffer(BufferType type,
 
     pipeline_->AsGraphics()->SetVertexBuffer(location, format, values,
                                              vertex_buffer_.get());
-    return {};
   }
 
-  return Result("Vulkan::SetBuffer non-vertex buffer type not implemented");
+  return {};
 }
 
 Result EngineVulkan::DoClearColor(const ClearColorCommand* command) {
@@ -405,12 +428,13 @@ Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
 
   const auto graphics = pipeline_->AsGraphics();
   const auto frame = graphics->GetFrame();
-  const auto bytes_per_texel = VkFormatToByteSize(graphics->GetColorFormat());
+  const auto bytes_per_texel = color_frame_format_->GetByteSize();
   info->type = ResourceInfoType::kImage;
   info->image_info.width = frame->GetWidth();
   info->image_info.height = frame->GetHeight();
   info->image_info.depth = 1U;
   info->image_info.texel_stride = bytes_per_texel;
+  info->image_info.texel_format = color_frame_format_.get();
   // When copying the image to the host buffer, we specify a row length of 0
   // which results in tight packing of rows.  So the row stride is the product
   // of the texel stride and the number of texels in a row.

@@ -14,10 +14,12 @@
 
 #include "src/verifier.h"
 
+#include <cassert>
 #include <cmath>
 #include <string>
 #include <vector>
 
+#include "src/bit_copy.h"
 #include "src/command.h"
 
 namespace amber {
@@ -26,15 +28,24 @@ namespace {
 const double kEpsilon = 0.000001;
 const double kDefaultTexelTolerance = 0.002;
 
+// This is based on "18.3. sRGB transfer functions" of
+// https://www.khronos.org/registry/DataFormat/specs/1.2/dataformat.1.2.html
+double SRGBToLinearValue(double sRGB) {
+  if (sRGB <= 0.04045)
+    return sRGB / 12.92;
+
+  return pow((sRGB + 0.055) / 1.055, 2.4);
+}
+
 // It returns true if the difference is within the given error.
 // If |is_tolerance_percent| is true, the actual tolerance will be
 // relative value i.e., |tolerance| / 100 * fabs(expected).
 // Otherwise, this method uses the absolute value i.e., |tolerance|.
-bool IsEqualWithTolerance(const double real,
+bool IsEqualWithTolerance(const double actual,
                           const double expected,
                           double tolerance,
                           const bool is_tolerance_percent = true) {
-  double difference = std::fabs(real - expected);
+  double difference = std::fabs(actual - expected);
   if (is_tolerance_percent) {
     if (difference > ((tolerance / 100.0) * std::fabs(expected))) {
       return false;
@@ -174,12 +185,158 @@ Verifier::Verifier() = default;
 
 Verifier::~Verifier() = default;
 
+bool Verifier::IsTexelEqualToExpected(const uint8_t* texel,
+                                      const Format* texel_format,
+                                      const ProbeCommand* command,
+                                      const double* tolerance,
+                                      const bool* is_tolerance_percent) {
+  uint32_t bit_offset = 0;
+  TexelErrorInfo texel_error_info = {};
+
+  for (const auto& component : texel_format->GetComponents()) {
+    uint8_t actual[8] = {};
+    double expected = 0;
+    double current_tolerance = 0;
+    bool is_current_tolerance_percent = false;
+
+    BitCopy::CopyMemoryToBuffer(actual, texel, bit_offset, component.num_bits);
+    double actual_in_double = 0;
+    double scale_factor_for_error_report = 1;
+    if (component.mode == FormatMode::kUFloat ||
+        component.mode == FormatMode::kSFloat) {
+      if (component.num_bits < 32) {
+        actual_in_double = static_cast<double>(
+            BitCopy::HexFloatToFloat(actual, component.num_bits));
+      } else if (component.num_bits == 32) {
+        actual_in_double =
+            static_cast<double>(*(reinterpret_cast<float*>(&actual)));
+      } else if (component.num_bits == 64) {
+        actual_in_double = *(reinterpret_cast<double*>(&actual));
+      } else {
+        assert(false && "Bits of component is not for double nor float type");
+      }
+    } else {
+      switch (component.num_bits) {
+        case 8:
+          actual_in_double =
+              static_cast<double>(*(reinterpret_cast<uint8_t*>(&actual)));
+          break;
+        case 16:
+          actual_in_double =
+              static_cast<double>(*(reinterpret_cast<uint16_t*>(&actual)));
+          break;
+        case 32:
+          actual_in_double =
+              static_cast<double>(*(reinterpret_cast<uint32_t*>(&actual)));
+          break;
+        case 64:
+          actual_in_double =
+              static_cast<double>(*(reinterpret_cast<uint64_t*>(&actual)));
+          break;
+        default:
+          assert(false && "Bits of component is not for integer type");
+      }
+
+      switch (component.mode) {
+        case FormatMode::kUNorm:
+          actual_in_double /=
+              static_cast<double>((1 << component.num_bits) - 1);
+          scale_factor_for_error_report = 255.0;
+          break;
+        case FormatMode::kSNorm:
+          actual_in_double /=
+              static_cast<double>((1 << (component.num_bits - 1)) - 1);
+          scale_factor_for_error_report = 255.0;
+          break;
+        case FormatMode::kUInt:
+        case FormatMode::kSInt:
+          break;
+        case FormatMode::kSRGB:
+          actual_in_double /=
+              static_cast<double>((1 << component.num_bits) - 1);
+          if (component.type != FormatComponentType::kA)
+            actual_in_double = SRGBToLinearValue(actual_in_double);
+          scale_factor_for_error_report = 255.0;
+          break;
+        case FormatMode::kUScaled:
+        case FormatMode::kSScaled:
+          assert(false &&
+                 "FormatMode::kUScaled and ::kSScaled are not implemented");
+        default:
+          assert(false && "Unknown Integer type");
+          break;
+      }
+    }
+
+    switch (component.type) {
+      case FormatComponentType::kA:
+        if (!command->IsRGBA()) {
+          bit_offset += component.num_bits;
+          continue;
+        }
+        expected = command->GetA();
+        current_tolerance = tolerance[3];
+        is_current_tolerance_percent = is_tolerance_percent[3];
+        texel_error_info.a = scale_factor_for_error_report * actual_in_double;
+        break;
+      case FormatComponentType::kR:
+        expected = command->GetR();
+        current_tolerance = tolerance[0];
+        is_current_tolerance_percent = is_tolerance_percent[0];
+        texel_error_info.r = scale_factor_for_error_report * actual_in_double;
+        break;
+      case FormatComponentType::kG:
+        expected = command->GetG();
+        current_tolerance = tolerance[1];
+        is_current_tolerance_percent = is_tolerance_percent[1];
+        texel_error_info.g = scale_factor_for_error_report * actual_in_double;
+        break;
+      case FormatComponentType::kB:
+        expected = command->GetB();
+        current_tolerance = tolerance[2];
+        is_current_tolerance_percent = is_tolerance_percent[2];
+        texel_error_info.b = scale_factor_for_error_report * actual_in_double;
+        break;
+      default:
+        bit_offset += component.num_bits;
+        continue;
+    }
+
+    if (!IsEqualWithTolerance(expected, actual_in_double, current_tolerance,
+                              is_current_tolerance_percent)) {
+      if (actual_color_texel_.set_by_error)
+        return false;
+
+      texel_error_info.set_by_error = true;
+    }
+
+    bit_offset += component.num_bits;
+  }
+
+  if (texel_error_info.set_by_error)
+    actual_color_texel_ = texel_error_info;
+  return !texel_error_info.set_by_error;
+}
+
 Result Verifier::Probe(const ProbeCommand* command,
+                       const Format* texel_format,
                        uint32_t texel_stride,
                        uint32_t row_stride,
                        uint32_t frame_width,
                        uint32_t frame_height,
                        const void* buf) {
+  if (!command)
+    return Result("Verifier::Probe given ProbeCommand is nullptr");
+
+  if (!texel_format)
+    return Result("Verifier::Probe given texel's Format is nullptr");
+
+  if (texel_format->GetFormatType() == FormatType::kUnknown)
+    return Result("Verifier::Probe given texel's Format is unknown");
+
+  if (!buf)
+    return Result("Verifier::Probe given buffer to probe is nullptr");
+
   uint32_t x = 0;
   uint32_t y = 0;
   uint32_t width = 0;
@@ -210,6 +367,7 @@ Result Verifier::Probe(const ProbeCommand* command,
         std::to_string(y + height - 1) + ") is out of framebuffer scope (" +
         std::to_string(frame_width) + "," + std::to_string(frame_height) + ")");
   }
+
   if (row_stride < frame_width * texel_stride) {
     return Result("Verifier::Probe Row stride of " +
                   std::to_string(row_stride) + " is too small for " +
@@ -221,7 +379,6 @@ Result Verifier::Probe(const ProbeCommand* command,
   bool is_tolerance_percent[4] = {};
   SetupToleranceForTexels(command, tolerance, is_tolerance_percent);
 
-  // TODO(jaebaek): Support all VkFormat
   const uint8_t* ptr = static_cast<const uint8_t*>(buf);
   uint32_t count_of_invalid_pixels = 0;
   uint32_t first_invalid_i = 0;
@@ -229,24 +386,8 @@ Result Verifier::Probe(const ProbeCommand* command,
   for (uint32_t j = 0; j < height; ++j) {
     const uint8_t* p = ptr + row_stride * (j + y) + texel_stride * x;
     for (uint32_t i = 0; i < width; ++i) {
-      // TODO(jaebaek): Get actual pixel values based on frame buffer formats.
-      if (!IsEqualWithTolerance(
-              static_cast<const double>(command->GetR()),
-              static_cast<const double>(p[texel_stride * i]) / 255.0,
-              tolerance[0], is_tolerance_percent[0]) ||
-          !IsEqualWithTolerance(
-              static_cast<const double>(command->GetG()),
-              static_cast<const double>(p[texel_stride * i + 1]) / 255.0,
-              tolerance[1], is_tolerance_percent[1]) ||
-          !IsEqualWithTolerance(
-              static_cast<const double>(command->GetB()),
-              static_cast<const double>(p[texel_stride * i + 2]) / 255.0,
-              tolerance[2], is_tolerance_percent[2]) ||
-          (command->IsRGBA() &&
-           !IsEqualWithTolerance(
-               static_cast<const double>(command->GetA()),
-               static_cast<const double>(p[texel_stride * i + 3]) / 255.0,
-               tolerance[3], is_tolerance_percent[3]))) {
+      if (!IsTexelEqualToExpected(p + texel_stride * i, texel_format, command,
+                                  tolerance, is_tolerance_percent)) {
         if (!count_of_invalid_pixels) {
           first_invalid_i = i;
           first_invalid_j = j;
@@ -257,21 +398,29 @@ Result Verifier::Probe(const ProbeCommand* command,
   }
 
   if (count_of_invalid_pixels) {
-    const uint8_t* p = ptr + row_stride * (first_invalid_j + y) +
-                       texel_stride * (x + first_invalid_i);
+    const auto& component = texel_format->GetComponents().back();
+    double scale_factor_for_error_report = 1;
+    if (component.mode == FormatMode::kUNorm ||
+        component.mode == FormatMode::kSNorm ||
+        component.mode == FormatMode::kSRGB) {
+      scale_factor_for_error_report = 255;
+    }
+
     return Result(
         "Probe failed at: " + std::to_string(x + first_invalid_i) + ", " +
-        std::to_string(first_invalid_j + y) + "\n" +
-        "  Expected RGBA: " + std::to_string(command->GetR() * 255) + ", " +
-        std::to_string(command->GetG() * 255) + ", " +
-        std::to_string(command->GetB() * 255) +
-        (command->IsRGBA() ? ", " + std::to_string(command->GetA() * 255) +
+        std::to_string(first_invalid_j + y) + "\n" + "  Expected RGBA: " +
+        std::to_string(command->GetR() * scale_factor_for_error_report) + ", " +
+        std::to_string(command->GetG() * scale_factor_for_error_report) + ", " +
+        std::to_string(command->GetB() * scale_factor_for_error_report) +
+        (command->IsRGBA() ? ", " +
+                                 std::to_string(command->GetA() *
+                                                scale_factor_for_error_report) +
                                  "\n  Actual RGBA: "
                            : "\n  Actual RGB: ") +
-        std::to_string(static_cast<int>(p[0])) + ", " +
-        std::to_string(static_cast<int>(p[1])) + ", " +
-        std::to_string(static_cast<int>(p[2])) +
-        (command->IsRGBA() ? ", " + std::to_string(static_cast<int>(p[3]))
+        std::to_string(actual_color_texel_.r) + ", " +
+        std::to_string(actual_color_texel_.g) + ", " +
+        std::to_string(actual_color_texel_.b) +
+        (command->IsRGBA() ? ", " + std::to_string(actual_color_texel_.a)
                            : "") +
         "\n" + "Probe failed in " + std::to_string(count_of_invalid_pixels) +
         " pixels");

@@ -45,12 +45,14 @@ const VkImageCreateInfo kDefaultImageInfo = {
 
 Image::Image(VkDevice device,
              VkFormat format,
+             VkImageAspectFlags aspect,
              uint32_t x,
              uint32_t y,
              uint32_t z,
              const VkPhysicalDeviceMemoryProperties& properties)
     : Resource(device, x * y * z * VkFormatToByteSize(format), properties),
-      image_info_(kDefaultImageInfo) {
+      image_info_(kDefaultImageInfo),
+      aspect_(aspect) {
   image_info_.format = format;
   image_info_.extent = {x, y, z};
 }
@@ -96,11 +98,11 @@ Result Image::CreateVkImageView() {
       VK_COMPONENT_SWIZZLE_A,
   };
   image_view_info.subresourceRange = {
-      VK_IMAGE_ASPECT_COLOR_BIT, /* aspectMask */
-      0,                         /* baseMipLevel */
-      1,                         /* levelCount */
-      0,                         /* baseArrayLayer */
-      1,                         /* layerCount */
+      aspect_, /* aspectMask */
+      0,       /* baseMipLevel */
+      1,       /* levelCount */
+      0,       /* baseArrayLayer */
+      1,       /* layerCount */
   };
 
   if (vkCreateImageView(GetDevice(), &image_view_info, nullptr, &view_) !=

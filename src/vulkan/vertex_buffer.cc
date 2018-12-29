@@ -17,8 +17,8 @@
 #include <cassert>
 #include <cstring>
 
+#include "src/bit_copy.h"
 #include "src/make_unique.h"
-#include "src/vulkan/bit_copy.h"
 #include "src/vulkan/format_data.h"
 
 namespace amber {

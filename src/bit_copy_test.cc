@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/vulkan/bit_copy.h"
+#include "src/bit_copy.h"
 
 #include <cstring>
 #include <type_traits>
@@ -21,7 +21,6 @@
 #include "src/value.h"
 
 namespace amber {
-namespace vulkan {
 namespace {
 
 template <typename T>
@@ -378,5 +377,4 @@ TEST_F(BitCopyTest, CopyDouble) {
   ExpectBitsEQ<uint64_t>(data, 4606191626881995899);
 }
 
-}  // namespace vulkan
 }  // namespace amber

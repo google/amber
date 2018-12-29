@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "src/make_unique.h"
+#include "src/vulkan/format_data.h"
 
 namespace amber {
 namespace vulkan {
@@ -36,8 +37,9 @@ Result FrameBuffer::Initialize(
   std::vector<VkImageView> attachments;
 
   if (color_format != VK_FORMAT_UNDEFINED) {
-    color_image_ = MakeUnique<Image>(device_, color_format, width_, height_,
-                                     depth_, properties);
+    color_image_ =
+        MakeUnique<Image>(device_, color_format, VK_IMAGE_ASPECT_COLOR_BIT,
+                          width_, height_, depth_, properties);
     Result r = color_image_->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                                         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
     if (!r.IsSuccess())
@@ -46,8 +48,12 @@ Result FrameBuffer::Initialize(
   }
 
   if (depth_format != VK_FORMAT_UNDEFINED) {
-    depth_image_ = MakeUnique<Image>(device_, depth_format, width_, height_,
-                                     depth_, properties);
+    depth_image_ = MakeUnique<Image>(
+        device_, depth_format,
+        VkFormatHasStencilComponent(depth_format)
+            ? VK_IMAGE_ASPECT_DEPTH_BIT
+            : VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
+        width_, height_, depth_, properties);
     Result r =
         depth_image_->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                                  VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);

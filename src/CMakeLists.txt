@@ -15,6 +15,7 @@
 set(AMBER_SOURCES
     amber.cc
     amberscript/parser.cc
+    bit_copy.cc
     buffer.cc
     command.cc
     command_data.cc
@@ -91,7 +92,7 @@ if (${AMBER_ENABLE_TESTS})
   )
 
   if (${Vulkan_FOUND})
-    list(APPEND TEST_SRCS vulkan/bit_copy_test.cc)
+    list(APPEND TEST_SRCS bit_copy_test.cc)
   endif()
   if (${Dawn_FOUND})
     list(APPEND TEST_SRCS dawn/pipeline_info_test.cc)

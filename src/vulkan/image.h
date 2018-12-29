@@ -26,6 +26,7 @@ class Image : public Resource {
  public:
   Image(VkDevice device,
         VkFormat format,
+        VkImageAspectFlags aspect,
         uint32_t x,
         uint32_t y,
         uint32_t z,
@@ -60,6 +61,7 @@ class Image : public Resource {
   Result CreateVkImageView();
 
   VkImageCreateInfo image_info_;
+  VkImageAspectFlags aspect_;
 
   VkImage image_ = VK_NULL_HANDLE;
   VkImageView view_ = VK_NULL_HANDLE;

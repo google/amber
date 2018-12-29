@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+[require]
+framebuffer R32G32B32A32_SFLOAT
+
 [vertex shader]
 #version 430
 

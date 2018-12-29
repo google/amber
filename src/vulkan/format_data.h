@@ -23,6 +23,7 @@ namespace vulkan {
 
 VkFormat ToVkFormat(FormatType type);
 uint32_t VkFormatToByteSize(VkFormat format);
+bool VkFormatHasStencilComponent(VkFormat format);
 
 }  // namespace vulkan
 }  // namespace amber
