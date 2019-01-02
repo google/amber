@@ -505,8 +505,8 @@ Result Device::Initialize(const std::vector<Feature>& required_features,
   if (has_device_ownership_ &&
       (physical_device_ != VK_NULL_HANDLE || device_ != VK_NULL_HANDLE)) {
     return Result(
-        "Vulkan: Device::Initialize has device ownership but physical and "
-        "logical devices are given");
+        "Vulkan: Device::Initialize Device class has VkDevice ownership but "
+        "physical and logical devices are given");
   }
 
   if (has_device_ownership_) {
@@ -524,20 +524,20 @@ Result Device::Initialize(const std::vector<Feature>& required_features,
   } else {
     if (!AreAllRequiredFeaturesSupported(physical_device_, required_features)) {
       return Result(
-          "Vulkan: Device::Initialize given physical does not support required "
-          "features");
+          "Vulkan: Device::Initialize given physical device does not support "
+          "required features");
     }
 
     if (!AreAllExtensionsSupported(physical_device_, required_extensions)) {
       return Result(
-          "Vulkan: Device::Initialize given physical does not support required "
-          "extensions");
+          "Vulkan: Device::Initialize given physical device does not support "
+          "required extensions");
     }
 
     if (!ChooseQueueFamilyIndex(physical_device_)) {
       return Result(
-          "Vulkan: Device::Initialize given physical does not have required "
-          "queue family");
+          "Vulkan: Device::Initialize given physical device does not support "
+          "required queue family");
     }
   }
 

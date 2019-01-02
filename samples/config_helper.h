@@ -15,12 +15,10 @@
 #ifndef SAMPLES_CONFIG_HELPER_H_
 #define SAMPLES_CONFIG_HELPER_H_
 
-#include <memory>
+#include <limits>
 #include <utility>
-#include <vector>
 
 #include "amber/amber_vulkan.h"
-#include "amber/recipe.h"
 #include "amber/result.h"
 
 namespace amber {
@@ -34,23 +32,34 @@ class Device;
 namespace sample {
 
 // Proof of concept implementation showing how to provide and use
-// EngineConfig within sample amber program. This class uses amber
-// internal components e.g., amber::Script, amber::Feature,
-// amber::vulkan::Device to create Vulkan instance and device.
-// In practice e.g., Vulkan CTS, Vulkan instance and device will
-// be created using its own code not amber's internal components.
+// EngineConfig within sample amber program. This class creates
+// Vulkan instance and device.
 class ConfigHelper {
  public:
   ConfigHelper();
   ~ConfigHelper();
 
-  std::pair<amber::Result, amber::VulkanEngineConfig> CreateVulkanConfig(
-      const std::vector<amber::Recipe>& recipes);
+  // Create Vulkan instance and device and return them as
+  // amber::VulkanEngineConfig.
+  std::pair<amber::Result, amber::VulkanEngineConfig> CreateVulkanConfig();
 
+  // Destroy Vulkan instance and device.
   void Shutdown();
 
  private:
-  std::unique_ptr<amber::vulkan::Device> device_;
+  // Create Vulkan instance.
+  amber::Result CreateInstance();
+
+  // Choose Vulkan physical device.
+  amber::Result ChoosePhysicalDevice();
+
+  // Create Vulkan logical device.
+  amber::Result CreateDevice();
+
+  VkInstance instance_ = VK_NULL_HANDLE;
+  VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
+  uint32_t queue_family_index_ = std::numeric_limits<uint32_t>::max();
+  VkDevice device_ = VK_NULL_HANDLE;
 };
 
 }  // namespace sample

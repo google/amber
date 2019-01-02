@@ -15,7 +15,6 @@
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
-#include <memory>
 #include <tuple>
 #include <vector>
 
@@ -193,67 +192,96 @@ int main(int argc, const char** argv) {
   }
 
   amber::Result result;
-
-  std::vector<amber::Amber> ambers(options.input_filenames.size());
-  std::vector<amber::Recipe> recipes(options.input_filenames.size());
-  for (size_t i = 0; i < options.input_filenames.size(); ++i) {
-    auto data = ReadFile(options.input_filenames[i]);
-    if (data.empty())
-      return 1;
-
-    auto& am = ambers[i];
-    auto& recipe = recipes[i];
-
-    result = am.Parse(data, &recipe);
-    if (!result.IsSuccess()) {
-      std::cerr << result.Error() << std::endl;
-      return 1;
-    }
-  }
-
-  if (options.parse_only)
-    return 0;
-
   sample::ConfigHelper config_helper;
   amber::Options amber_options;
   amber_options.engine = options.engine;
-  if (options.input_filenames.size() > 1UL) {
+  if (options.input_filenames.size() > 1UL && !options.parse_only) {
     amber_options.config = amber::MakeUnique<amber::VulkanEngineConfig>();
 
     amber::VulkanEngineConfig* config =
         static_cast<amber::VulkanEngineConfig*>(amber_options.config.get());
-    std::tie(result, *config) = config_helper.CreateVulkanConfig(recipes);
+    std::tie(result, *config) = config_helper.CreateVulkanConfig();
     if (!result.IsSuccess()) {
       std::cerr << result.Error() << std::endl;
       return 1;
     }
   }
 
-  for (size_t i = 0; i < ambers.size(); ++i) {
-    auto& am = ambers[i];
-    auto& recipe = recipes[i];
+  std::vector<amber::Amber> ambers(options.input_filenames.size());
+  std::vector<amber::Recipe> recipes(options.input_filenames.size());
+  std::vector<std::string> failures;
+  for (size_t i = 0; i < options.input_filenames.size(); ++i) {
+    if (options.input_filenames.size() > 1UL)
+      std::cout << "case " << options.input_filenames[i] << ": run... ";
+
+    auto data = ReadFile(options.input_filenames[i]);
+    if (data.empty())
+      return 1;
+
+    amber::Amber am;
+    amber::Recipe recipe;
+
+    result = am.Parse(data, &recipe);
+    if (!result.IsSuccess()) {
+      if (options.input_filenames.size() == 1UL) {
+        std::cerr << result.Error() << std::endl;
+        return 1;
+      }
+
+      std::cout << "fail" << std::endl;
+      failures.push_back(options.input_filenames[i]);
+      std::cerr << result.Error() << std::endl << std::endl;
+      continue;
+    }
+
+    if (options.parse_only)
+      continue;
 
     result = am.Execute(&recipe, amber_options);
     if (!result.IsSuccess()) {
-      std::cerr << result.Error() << std::endl;
-      return 1;
+      if (options.input_filenames.size() == 1UL) {
+        std::cerr << result.Error() << std::endl;
+        return 1;
+      }
+
+      std::cout << "fail" << std::endl;
+      failures.push_back(options.input_filenames[i]);
+      std::cerr << result.Error() << std::endl << std::endl;
+      continue;
     }
 
     if (!options.buffer_filename.empty()) {
       // TODO(dsinclair): Write buffer file
+      if (options.input_filenames.size() > 1UL)
+        std::cout << "fail" << std::endl;
       assert(false);
     }
 
     if (!options.image_filename.empty()) {
       // TODO(dsinclair): Write image file
+      if (options.input_filenames.size() > 1UL)
+        std::cout << "fail" << std::endl;
       assert(false);
     }
 
-    return 0;
+    if (options.input_filenames.size() > 1UL)
+      std::cout << "pass" << std::endl;
   }
 
-  if (options.input_filenames.size() > 1UL)
-    config_helper.Shutdown();
+  if (options.input_filenames.size() > 1UL) {
+    if (!failures.empty())
+      std::cout << "\nSummary of Failures:" << std::endl;
+
+    for (const auto& failure : failures)
+      std::cout << "  " << failure << std::endl;
+
+    std::cout << "\nSummary: "
+              << (options.input_filenames.size() - failures.size()) << " pass, "
+              << failures.size() << " fail" << std::endl;
+
+    if (!options.parse_only)
+      config_helper.Shutdown();
+  }
 
   return 0;
 }
