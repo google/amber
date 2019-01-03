@@ -490,11 +490,11 @@ Device::Device() = default;
 Device::Device(VkPhysicalDevice physical_device, VkDevice device)
     : physical_device_(physical_device),
       device_(device),
-      has_device_ownership_(false) {}
+      destroy_device_(false) {}
 Device::~Device() = default;
 
 void Device::Shutdown() {
-  if (has_device_ownership_) {
+  if (destroy_device_) {
     vkDestroyDevice(device_, nullptr);
     vkDestroyInstance(instance_, nullptr);
   }
@@ -502,14 +502,7 @@ void Device::Shutdown() {
 
 Result Device::Initialize(const std::vector<Feature>& required_features,
                           const std::vector<std::string>& required_extensions) {
-  if (has_device_ownership_ &&
-      (physical_device_ != VK_NULL_HANDLE || device_ != VK_NULL_HANDLE)) {
-    return Result(
-        "Vulkan: Device::Initialize Device class has VkDevice ownership but "
-        "physical and logical devices are given");
-  }
-
-  if (has_device_ownership_) {
+  if (destroy_device_) {
     Result r = CreateInstance();
     if (!r.IsSuccess())
       return r;

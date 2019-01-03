@@ -53,13 +53,8 @@ class TestRunner:
     cmd += [tc.GetInputPath()]
 
     try:
-      err = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-      if err != "" and not tc.IsExpectedFail():
-        sys.stdout.write(err)
-        return False
-
+      subprocess.check_output(cmd)
     except Exception as e:
-      print e.output
       if not tc.IsExpectedFail():
         print e
       return False

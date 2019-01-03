@@ -16,10 +16,11 @@
 #define SAMPLES_CONFIG_HELPER_H_
 
 #include <limits>
+#include <memory>
 #include <utility>
 
+#include "amber/amber.h"
 #include "amber/amber_vulkan.h"
-#include "amber/result.h"
 
 namespace amber {
 namespace vulkan {
@@ -39,27 +40,32 @@ class ConfigHelper {
   ConfigHelper();
   ~ConfigHelper();
 
-  // Create Vulkan instance and device and return them as
-  // amber::VulkanEngineConfig.
-  std::pair<amber::Result, amber::VulkanEngineConfig> CreateVulkanConfig();
+  // Create instance and device and return them as amber::EngineConfig.
+  std::unique_ptr<amber::EngineConfig> CreateConfig(amber::EngineType engine);
 
   // Destroy Vulkan instance and device.
   void Shutdown();
 
  private:
+#if AMBER_ENGINE_VULKAN
+  // Create Vulkan instance and device and return them as
+  // amber::VulkanEngineConfig.
+  std::unique_ptr<amber::VulkanEngineConfig> CreateVulkanConfig();
+
   // Create Vulkan instance.
-  amber::Result CreateInstance();
+  void CreateVulkanInstance();
 
   // Choose Vulkan physical device.
-  amber::Result ChoosePhysicalDevice();
+  void ChooseVulkanPhysicalDevice();
 
   // Create Vulkan logical device.
-  amber::Result CreateDevice();
+  void CreateVulkanDevice();
 
-  VkInstance instance_ = VK_NULL_HANDLE;
-  VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
-  uint32_t queue_family_index_ = std::numeric_limits<uint32_t>::max();
-  VkDevice device_ = VK_NULL_HANDLE;
+  VkInstance vulkan_instance_ = VK_NULL_HANDLE;
+  VkPhysicalDevice vulkan_physical_device_ = VK_NULL_HANDLE;
+  uint32_t vulkan_queue_family_index_ = std::numeric_limits<uint32_t>::max();
+  VkDevice vulkan_device_ = VK_NULL_HANDLE;
+#endif  // AMBER_ENGINE_VULKAN
 };
 
 }  // namespace sample

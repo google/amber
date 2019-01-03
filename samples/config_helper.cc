@@ -14,14 +14,24 @@
 
 #include "samples/config_helper.h"
 
+#include <cassert>
 #include <set>
 #include <string>
 #include <vector>
 
-#include "src/vulkan/device.h"
+#include "src/make_unique.h"
+
+#if AMBER_ENGINE_VULKAN
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #include "vulkan/vulkan.h"
+#pragma clang diagnostic pop
+#endif  // AMBER_ENGINE_VULKAN
 
 namespace sample {
+
+#if AMBER_ENGINE_VULKAN
+
 namespace {
 
 VkPhysicalDeviceFeatures kRequiredFeatures = {
@@ -374,14 +384,7 @@ uint32_t ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device) {
 
 }  // namespace
 
-ConfigHelper::ConfigHelper() = default;
-
-ConfigHelper::~ConfigHelper() = default;
-
-amber::Result ConfigHelper::CreateInstance() {
-  if (instance_ != VK_NULL_HANDLE)
-    return amber::Result("Sample: Vulkan instance already exists");
-
+void ConfigHelper::CreateVulkanInstance() {
   VkApplicationInfo app_info = {};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.apiVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -390,23 +393,19 @@ amber::Result ConfigHelper::CreateInstance() {
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_info.pApplicationInfo = &app_info;
 
-  if (vkCreateInstance(&instance_info, nullptr, &instance_) != VK_SUCCESS)
-    return amber::Result("Sample: vkCreateInstance Fail");
-
-  return {};
+  assert(vkCreateInstance(&instance_info, nullptr, &vulkan_instance_) ==
+         VK_SUCCESS);
 }
 
-amber::Result ConfigHelper::ChoosePhysicalDevice() {
+void ConfigHelper::ChooseVulkanPhysicalDevice() {
   uint32_t count;
   std::vector<VkPhysicalDevice> physical_devices;
 
-  if (vkEnumeratePhysicalDevices(instance_, &count, nullptr) != VK_SUCCESS)
-    return amber::Result("Sample: vkEnumeratePhysicalDevices Fail");
+  assert(vkEnumeratePhysicalDevices(vulkan_instance_, &count, nullptr) ==
+         VK_SUCCESS);
   physical_devices.resize(count);
-  if (vkEnumeratePhysicalDevices(instance_, &count, physical_devices.data()) !=
-      VK_SUCCESS) {
-    return amber::Result("Sample: vkEnumeratePhysicalDevices Fail");
-  }
+  assert(vkEnumeratePhysicalDevices(vulkan_instance_, &count,
+                                    physical_devices.data()) == VK_SUCCESS);
 
   for (uint32_t i = 0; i < count; ++i) {
     if (!AreAllRequiredFeaturesSupported(physical_devices[i])) {
@@ -417,25 +416,22 @@ amber::Result ConfigHelper::ChoosePhysicalDevice() {
       continue;
     }
 
-    queue_family_index_ = ChooseQueueFamilyIndex(physical_devices[i]);
-    if (queue_family_index_ != std::numeric_limits<uint32_t>::max()) {
-      physical_device_ = physical_devices[i];
-      return {};
+    vulkan_queue_family_index_ = ChooseQueueFamilyIndex(physical_devices[i]);
+    if (vulkan_queue_family_index_ != std::numeric_limits<uint32_t>::max()) {
+      vulkan_physical_device_ = physical_devices[i];
+      return;
     }
   }
 
-  return amber::Result("Vulkan::No physical device supports Vulkan");
+  assert(false && "Vulkan::No physical device supports Vulkan");
 }
 
-amber::Result ConfigHelper::CreateDevice() {
-  if (device_ != VK_NULL_HANDLE)
-    return amber::Result("Sample: Vulkan device already exists");
-
+void ConfigHelper::CreateVulkanDevice() {
   VkDeviceQueueCreateInfo queue_info;
   const float priorities[] = {1.0f};
 
   queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-  queue_info.queueFamilyIndex = queue_family_index_;
+  queue_info.queueFamilyIndex = vulkan_queue_family_index_;
   queue_info.queueCount = 1;
   queue_info.pQueuePriorities = priorities;
 
@@ -448,40 +444,49 @@ amber::Result ConfigHelper::CreateDevice() {
       static_cast<uint32_t>(kNumberOfRequiredExtensions);
   info.ppEnabledExtensionNames = kRequiredExtensions;
 
-  if (vkCreateDevice(physical_device_, &info, nullptr, &device_) != VK_SUCCESS)
-    return amber::Result("Vulkan::Calling vkCreateDevice Fail");
-
-  return {};
+  assert(vkCreateDevice(vulkan_physical_device_, &info, nullptr,
+                        &vulkan_device_) == VK_SUCCESS);
 }
 
-std::pair<amber::Result, amber::VulkanEngineConfig>
-ConfigHelper::CreateVulkanConfig() {
-  amber::VulkanEngineConfig config = {};
+std::unique_ptr<amber::VulkanEngineConfig> ConfigHelper::CreateVulkanConfig() {
+  std::unique_ptr<amber::VulkanEngineConfig> config =
+      amber::MakeUnique<amber::VulkanEngineConfig>();
 
-  amber::Result r = CreateInstance();
-  if (!r.IsSuccess())
-    return std::make_pair(r, config);
+  CreateVulkanInstance();
+  ChooseVulkanPhysicalDevice();
+  CreateVulkanDevice();
 
-  r = ChoosePhysicalDevice();
-  if (!r.IsSuccess())
-    return std::make_pair(r, config);
+  config->physical_device = vulkan_physical_device_;
+  config->device = vulkan_device_;
+  return config;
+}
 
-  r = CreateDevice();
-  if (!r.IsSuccess())
-    return std::make_pair(r, config);
+#endif  // AMBER_ENGINE_VULKAN
 
-  config.instance = instance_;
-  config.physical_device = physical_device_;
-  config.device = device_;
-  return std::make_pair(r, config);
+ConfigHelper::ConfigHelper() = default;
+
+ConfigHelper::~ConfigHelper() = default;
+
+std::unique_ptr<amber::EngineConfig> ConfigHelper::CreateConfig(
+    amber::EngineType engine) {
+  if (engine == amber::EngineType::kDawn)
+    return nullptr;
+
+#if AMBER_ENGINE_VULKAN
+  return ConfigHelper::CreateVulkanConfig();
+#else   // AMBER_ENGINE_VULKAN
+  return nullptr;
+#endif  // AMBER_ENGINE_VULKAN
 }
 
 void ConfigHelper::Shutdown() {
-  if (device_ != VK_NULL_HANDLE)
-    vkDestroyDevice(device_, nullptr);
+#if AMBER_ENGINE_VULKAN
+  if (vulkan_device_ != VK_NULL_HANDLE)
+    vkDestroyDevice(vulkan_device_, nullptr);
 
-  if (instance_ != VK_NULL_HANDLE)
-    vkDestroyInstance(instance_, nullptr);
+  if (vulkan_instance_ != VK_NULL_HANDLE)
+    vkDestroyInstance(vulkan_instance_, nullptr);
+#endif  // AMBER_ENGINE_VULKAN
 }
 
 }  // namespace sample

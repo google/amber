@@ -15,7 +15,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "amber/amber.h"
@@ -39,7 +39,7 @@ struct Options {
   amber::EngineType engine = amber::EngineType::kVulkan;
 };
 
-const char kUsage[] = R"(Usage: amber [options] SCRIPT [more SCRIPTs]
+const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
 
  options:
   -p             -- Parse input files only; Don't execute
@@ -49,10 +49,6 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [more SCRIPTs]
   -e <engine>    -- Specify graphics engine: vulkan, dawn. Default is vulkan.
   -V, --version  -- Output version information for Amber and libraries.
   -h             -- This help text.
-
- Note:
-  If multiple SCRIPTs are given, it creates VkDevice out of engine
-  and reuse it for all executions for those SCRIPTs.
 )";
 
 bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
@@ -116,7 +112,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       std::cerr << "Unrecognized option " << arg << std::endl;
       return false;
     } else {
-      opts->input_filenames.push_back(args[i]);
+      if (!arg.empty())
+        opts->input_filenames.push_back(arg);
     }
   }
 
@@ -196,92 +193,73 @@ int main(int argc, const char** argv) {
   amber::Options amber_options;
   amber_options.engine = options.engine;
   if (options.input_filenames.size() > 1UL && !options.parse_only) {
-    amber_options.config = amber::MakeUnique<amber::VulkanEngineConfig>();
-
-    amber::VulkanEngineConfig* config =
-        static_cast<amber::VulkanEngineConfig*>(amber_options.config.get());
-    std::tie(result, *config) = config_helper.CreateVulkanConfig();
-    if (!result.IsSuccess()) {
-      std::cerr << result.Error() << std::endl;
-      return 1;
-    }
+    amber_options.config = config_helper.CreateConfig(amber_options.engine);
   }
 
-  std::vector<amber::Amber> ambers(options.input_filenames.size());
-  std::vector<amber::Recipe> recipes(options.input_filenames.size());
   std::vector<std::string> failures;
-  for (size_t i = 0; i < options.input_filenames.size(); ++i) {
-    if (options.input_filenames.size() > 1UL)
-      std::cout << "case " << options.input_filenames[i] << ": run... ";
-
-    auto data = ReadFile(options.input_filenames[i]);
-    if (data.empty())
-      return 1;
-
-    amber::Amber am;
-    amber::Recipe recipe;
-
-    result = am.Parse(data, &recipe);
-    if (!result.IsSuccess()) {
-      if (options.input_filenames.size() == 1UL) {
-        std::cerr << result.Error() << std::endl;
-        return 1;
-      }
-
-      std::cout << "fail" << std::endl;
-      failures.push_back(options.input_filenames[i]);
-      std::cerr << result.Error() << std::endl << std::endl;
+  std::vector<std::pair<std::unique_ptr<amber::Recipe>, std::string>>
+      recipe_and_files;
+  for (const auto& file : options.input_filenames) {
+    auto data = ReadFile(file);
+    if (data.empty()) {
+      std::cerr << file << " is empty." << std::endl;
+      failures.push_back(file);
       continue;
     }
 
-    if (options.parse_only)
-      continue;
+    amber::Amber am;
+    std::unique_ptr<amber::Recipe> recipe = amber::MakeUnique<amber::Recipe>();
 
-    result = am.Execute(&recipe, amber_options);
+    result = am.Parse(data, recipe.get());
     if (!result.IsSuccess()) {
-      if (options.input_filenames.size() == 1UL) {
-        std::cerr << result.Error() << std::endl;
-        return 1;
-      }
-
-      std::cout << "fail" << std::endl;
-      failures.push_back(options.input_filenames[i]);
+      std::cerr << "case " << file << ": parse fail" << std::endl;
       std::cerr << result.Error() << std::endl << std::endl;
+      failures.push_back(file);
+      continue;
+    }
+
+    recipe_and_files.push_back(
+        std::make_pair(std::move(recipe), std::string(file)));
+  }
+
+  if (options.parse_only)
+    return 0;
+
+  for (const auto& recipe_and_file : recipe_and_files) {
+    const auto* recipe = recipe_and_file.first.get();
+    const auto& file = recipe_and_file.second;
+
+    amber::Amber am;
+    result = am.Execute(recipe, amber_options);
+    if (!result.IsSuccess()) {
+      std::cerr << "case " << file << ": run fail" << std::endl;
+      std::cerr << result.Error() << std::endl << std::endl;
+      failures.push_back(file);
       continue;
     }
 
     if (!options.buffer_filename.empty()) {
       // TODO(dsinclair): Write buffer file
-      if (options.input_filenames.size() > 1UL)
-        std::cout << "fail" << std::endl;
       assert(false);
     }
 
     if (!options.image_filename.empty()) {
       // TODO(dsinclair): Write image file
-      if (options.input_filenames.size() > 1UL)
-        std::cout << "fail" << std::endl;
       assert(false);
     }
-
-    if (options.input_filenames.size() > 1UL)
-      std::cout << "pass" << std::endl;
   }
 
-  if (options.input_filenames.size() > 1UL) {
-    if (!failures.empty())
-      std::cout << "\nSummary of Failures:" << std::endl;
+  if (!failures.empty())
+    std::cout << "\nSummary of Failures:" << std::endl;
 
-    for (const auto& failure : failures)
-      std::cout << "  " << failure << std::endl;
+  for (const auto& failure : failures)
+    std::cout << "  " << failure << std::endl;
 
-    std::cout << "\nSummary: "
-              << (options.input_filenames.size() - failures.size()) << " pass, "
-              << failures.size() << " fail" << std::endl;
+  std::cout << "\nSummary: "
+            << (options.input_filenames.size() - failures.size()) << " pass, "
+            << failures.size() << " fail" << std::endl;
 
-    if (!options.parse_only)
-      config_helper.Shutdown();
-  }
+  config_helper.Shutdown();
 
-  return 0;
+  return failures.empty() ? 0 : 1;
 }

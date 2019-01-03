@@ -80,7 +80,7 @@ class Device {
 
   VkQueue queue_ = VK_NULL_HANDLE;
 
-  bool has_device_ownership_ = true;
+  bool destroy_device_ = true;
 };
 
 }  // namespace vulkan

@@ -91,9 +91,10 @@ Result EngineVulkan::InitializeWithConfig(
     return Result("Vulkan::Set device_ already exists");
 
   VulkanEngineConfig* vk_config = static_cast<VulkanEngineConfig*>(config);
-  if (vk_config->physical_device == VK_NULL_HANDLE)
+  if (vk_config->physical_device == VK_NULL_HANDLE) {
     return Result(
         "Vulkan::InitializeWithConfig physical device handle is null.");
+  }
 
   if (vk_config->device == VK_NULL_HANDLE)
     return Result("Vulkan::InitializeWithConfig device handle is null.");

@@ -22,9 +22,6 @@ namespace amber {
 
 /// Configuration for the Vulkan Engine.
 struct VulkanEngineConfig : public EngineConfig {
-  /// The VkInstance to use for the tests.
-  VkInstance instance = VK_NULL_HANDLE;
-
   /// The VkPhysicalDevice to use for the tests.
   VkPhysicalDevice physical_device = VK_NULL_HANDLE;
 
