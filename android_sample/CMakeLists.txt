@@ -3,14 +3,15 @@ cmake_minimum_required(VERSION 3.4.1)
 # build native_app_glue as a static lib
 set(APP_GLUE_DIR ${ANDROID_NDK}/sources/android/native_app_glue)
 include_directories(${APP_GLUE_DIR})
-add_library( app-glue STATIC ${APP_GLUE_DIR}/android_native_app_glue.c)
+add_library(app-glue STATIC
+  ${APP_GLUE_DIR}/android_native_app_glue.c)
 
 # build vulkan app
-set(SRC_DIR src/main/jni)
+set(SRC_DIR jni)
 
 add_library(amber_android SHARED
-            ${SRC_DIR}/main.cpp
-            ${SRC_DIR}/amber_script.cpp)
+  ${SRC_DIR}/main.cpp
+  ${SRC_DIR}/amber_script.cpp)
 
 include_directories(${SRC_DIR})
 
@@ -20,7 +21,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} \
                                -u ANativeActivity_onCreate")
 
 # Begin: include Amber
-set(AMBER_DIR ${CMAKE_SOURCE_DIR}/../..)
+set(AMBER_DIR ${CMAKE_SOURCE_DIR}/..)
 set(AMBER_SKIP_TESTS TRUE)
 set(AMBER_SKIP_SPIRV_TOOLS TRUE)
 set(Vulkan_FOUND TRUE)

@@ -29,6 +29,8 @@ This is not an officially supported Google product.
  * CMake
  * Ninja (or other build tool)
  * Recommended: Python, for fetching dependencies
+ * Android SDK 28 (or change `ANDROID_PLATFORM` in `android_sample/build.sh`),
+   NDK, Java 8 for Android
 
 
 ## Building
@@ -44,13 +46,11 @@ ninja
 
 ### Android
 
-* Set up Android SDK path by adding `sdk.dir = path/to/Android/SDK` to
-`local.properties` or run `export ANDROID_SDK_HOME=path/to/Android/SDK` in your
-shell.
-* Set up Android NDK path by adding `ndk.dir = path/to/Android/NDK` to
-`local.properties` or run `export ANDROID_NDK_HOME=path/to/Android/NDK` in your
-shell.
-* Run `./gradlew build` in android\_sample/.
+* Set up Android SDK path by running
+  `export ANDROID_SDK_HOME=path/to/Android/SDK` in your shell.
+* Set up Android NDK path by running
+  `export ANDROID_NDK_HOME=path/to/Android/NDK` in your shell.
+* Run `./build.sh`.
 
 ### Optional Components
 
