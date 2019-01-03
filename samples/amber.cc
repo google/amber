@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "amber/amber.h"
-#include "amber/amber_vulkan.h"
 #include "amber/recipe.h"
 #include "samples/config_helper.h"
 #include "src/build-versions.h"

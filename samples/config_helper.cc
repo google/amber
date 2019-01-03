@@ -21,13 +21,6 @@
 
 #include "src/make_unique.h"
 
-#if AMBER_ENGINE_VULKAN
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#include "vulkan/vulkan.h"
-#pragma clang diagnostic pop
-#endif  // AMBER_ENGINE_VULKAN
-
 namespace sample {
 
 #if AMBER_ENGINE_VULKAN

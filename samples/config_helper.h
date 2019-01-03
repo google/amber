@@ -20,15 +20,13 @@
 #include <utility>
 
 #include "amber/amber.h"
+
+#if AMBER_ENGINE_VULKAN
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #include "amber/amber_vulkan.h"
-
-namespace amber {
-namespace vulkan {
-
-class Device;
-
-}  // namespace vulkan
-}  // namespace amber
+#pragma clang diagnostic pop
+#endif  // AMBER_ENGINE_VULKAN
 
 namespace sample {
 
