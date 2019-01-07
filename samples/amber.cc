@@ -188,13 +188,6 @@ int main(int argc, const char** argv) {
   }
 
   amber::Result result;
-  sample::ConfigHelper config_helper;
-  amber::Options amber_options;
-  amber_options.engine = options.engine;
-  if (options.input_filenames.size() > 1UL && !options.parse_only) {
-    amber_options.config = config_helper.CreateConfig(amber_options.engine);
-  }
-
   std::vector<std::string> failures;
   std::vector<std::pair<std::unique_ptr<amber::Recipe>, std::string>>
       recipe_and_files;
@@ -223,6 +216,18 @@ int main(int argc, const char** argv) {
 
   if (options.parse_only)
     return 0;
+
+  sample::ConfigHelper config_helper;
+  amber::Options amber_options;
+  amber_options.engine = options.engine;
+  if (options.input_filenames.size() > 1UL) {
+    std::vector<const amber::Recipe*> recipes;
+    for (const auto& recipe_and_file : recipe_and_files)
+      recipes.push_back(recipe_and_file.first.get());
+
+    amber_options.config =
+        config_helper.CreateConfig(amber_options.engine, recipes);
+  }
 
   for (const auto& recipe_and_file : recipe_and_files) {
     const auto* recipe = recipe_and_file.first.get();

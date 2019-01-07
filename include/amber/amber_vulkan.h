@@ -15,6 +15,9 @@
 #ifndef AMBER_AMBER_VULKAN_H_
 #define AMBER_AMBER_VULKAN_H_
 
+#include <string>
+#include <vector>
+
 #include "amber/amber.h"
 #include "vulkan/vulkan.h"
 
@@ -22,12 +25,32 @@ namespace amber {
 
 /// Configuration for the Vulkan Engine.
 struct VulkanEngineConfig : public EngineConfig {
-  /// The VkPhysicalDevice to use for the tests.
+  /// The VkPhysicalDevice to be used for the tests.
   VkPhysicalDevice physical_device = VK_NULL_HANDLE;
 
-  /// The VkDevice to use for the tests.
+  /// Physical device features available for |physical_device|.
+  VkPhysicalDeviceFeatures available_features = {};
+
+  /// Physical device extensions available for |physical_device|.
+  std::vector<std::string> available_extensions;
+
+  /// The given queue family index to be used for the tests.
+  uint32_t queue_family_index;
+
+  /// The VkQueue to be used for the tests.
+  VkQueue queue;
+
+  /// The VkDevice to be used for the tests.
   VkDevice device = VK_NULL_HANDLE;
 };
+
+/// Returns required physical device features from |recipes|.
+VkPhysicalDeviceFeatures GetRequiredVulkanFeatures(
+    const std::vector<const Recipe*>& recipes);
+
+/// Returns required physical device extensions from |recipes|.
+std::vector<std::string> GetRequiredVulkanExtensions(
+    const std::vector<const Recipe*>& recipes);
 
 }  // namespace amber
 

@@ -17,7 +17,9 @@
 
 #include <limits>
 #include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "amber/amber.h"
 
@@ -39,7 +41,11 @@ class ConfigHelper {
   ~ConfigHelper();
 
   // Create instance and device and return them as amber::EngineConfig.
-  std::unique_ptr<amber::EngineConfig> CreateConfig(amber::EngineType engine);
+  // |recipes| contains the information of required features and
+  // extensions.
+  std::unique_ptr<amber::EngineConfig> CreateConfig(
+      amber::EngineType engine,
+      const std::vector<const amber::Recipe*>& recipes);
 
   // Destroy Vulkan instance and device.
   void Shutdown();
@@ -47,21 +53,31 @@ class ConfigHelper {
  private:
 #if AMBER_ENGINE_VULKAN
   // Create Vulkan instance and device and return them as
-  // amber::VulkanEngineConfig.
-  std::unique_ptr<amber::VulkanEngineConfig> CreateVulkanConfig();
+  // amber::VulkanEngineConfig. Required features and extensions
+  // are given in |recipes|.
+  std::unique_ptr<amber::VulkanEngineConfig> CreateVulkanConfig(
+      const std::vector<const amber::Recipe*>& recipes);
 
   // Create Vulkan instance.
   void CreateVulkanInstance();
 
-  // Choose Vulkan physical device.
-  void ChooseVulkanPhysicalDevice();
+  // Choose Vulkan physical device that supports both
+  // |required_features| and |required_extensions|.
+  void ChooseVulkanPhysicalDevice(
+      const VkPhysicalDeviceFeatures& required_features,
+      const std::vector<std::string>& required_extensions);
 
-  // Create Vulkan logical device.
-  void CreateVulkanDevice();
+  // Create Vulkan logical device that enables both
+  // |required_features| and |required_extensions|.
+  void CreateVulkanDevice(const VkPhysicalDeviceFeatures& required_features,
+                          const std::vector<std::string>& required_extensions);
 
   VkInstance vulkan_instance_ = VK_NULL_HANDLE;
   VkPhysicalDevice vulkan_physical_device_ = VK_NULL_HANDLE;
+  VkPhysicalDeviceFeatures available_features_ = {};
+  std::vector<std::string> available_extensions_;
   uint32_t vulkan_queue_family_index_ = std::numeric_limits<uint32_t>::max();
+  VkQueue vulkan_queue_ = VK_NULL_HANDLE;
   VkDevice vulkan_device_ = VK_NULL_HANDLE;
 #endif  // AMBER_ENGINE_VULKAN
 };

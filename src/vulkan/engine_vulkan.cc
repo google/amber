@@ -99,7 +99,10 @@ Result EngineVulkan::InitializeWithConfig(
   if (vk_config->device == VK_NULL_HANDLE)
     return Result("Vulkan::InitializeWithConfig device handle is null.");
 
-  device_ = MakeUnique<Device>(vk_config->physical_device, vk_config->device);
+  device_ = MakeUnique<Device>(
+      vk_config->physical_device, vk_config->available_features,
+      vk_config->available_extensions, vk_config->queue_family_index,
+      vk_config->device, vk_config->queue);
   return InitDeviceAndCreateCommand(features, extensions);
 }
 

@@ -14,6 +14,7 @@
 
 #include "samples/config_helper.h"
 
+#include <algorithm>
 #include <cassert>
 #include <set>
 #include <string>
@@ -27,328 +28,275 @@ namespace sample {
 
 namespace {
 
-VkPhysicalDeviceFeatures kRequiredFeatures = {
-    VK_FALSE, /* robustBufferAccess */
-    VK_FALSE, /* fullDrawIndexUint32 */
-    VK_FALSE, /* imageCubeArray */
-    VK_FALSE, /* independentBlend */
-    VK_FALSE, /* geometryShader */
-    VK_FALSE, /* tessellationShader */
-    VK_FALSE, /* sampleRateShading */
-    VK_FALSE, /* dualSrcBlend */
-    VK_FALSE, /* logicOp */
-    VK_FALSE, /* multiDrawIndirect */
-    VK_FALSE, /* drawIndirectFirstInstance */
-    VK_FALSE, /* depthClamp */
-    VK_FALSE, /* depthBiasClamp */
-    VK_FALSE, /* fillModeNonSolid */
-    VK_FALSE, /* depthBounds */
-    VK_FALSE, /* wideLines */
-    VK_FALSE, /* largePoints */
-    VK_FALSE, /* alphaToOne */
-    VK_FALSE, /* multiViewport */
-    VK_FALSE, /* samplerAnisotropy */
-    VK_FALSE, /* textureCompressionETC2 */
-    VK_FALSE, /* textureCompressionASTC_LDR */
-    VK_FALSE, /* textureCompressionBC */
-    VK_FALSE, /* occlusionQueryPrecise */
-    VK_FALSE, /* pipelineStatisticsQuery */
-    VK_TRUE,  /* vertexPipelineStoresAndAtomics */
-    VK_FALSE, /* fragmentStoresAndAtomics */
-    VK_FALSE, /* shaderTessellationAndGeometryPointSize */
-    VK_FALSE, /* shaderImageGatherExtended */
-    VK_FALSE, /* shaderStorageImageExtendedFormats */
-    VK_FALSE, /* shaderStorageImageMultisample */
-    VK_FALSE, /* shaderStorageImageReadWithoutFormat */
-    VK_FALSE, /* shaderStorageImageWriteWithoutFormat */
-    VK_FALSE, /* shaderUniformBufferArrayDynamicIndexing */
-    VK_FALSE, /* shaderSampledImageArrayDynamicIndexing */
-    VK_FALSE, /* shaderStorageBufferArrayDynamicIndexing */
-    VK_FALSE, /* shaderStorageImageArrayDynamicIndexing */
-    VK_FALSE, /* shaderClipDistance */
-    VK_FALSE, /* shaderCullDistance */
-    VK_FALSE, /* shaderFloat64 */
-    VK_FALSE, /* shaderInt64 */
-    VK_FALSE, /* shaderInt16 */
-    VK_FALSE, /* shaderResourceResidency */
-    VK_FALSE, /* shaderResourceMinLod */
-    VK_FALSE, /* sparseBinding */
-    VK_FALSE, /* sparseResidencyBuffer */
-    VK_FALSE, /* sparseResidencyImage2D */
-    VK_FALSE, /* sparseResidencyImage3D */
-    VK_FALSE, /* sparseResidency2Samples */
-    VK_FALSE, /* sparseResidency4Samples */
-    VK_FALSE, /* sparseResidency8Samples */
-    VK_FALSE, /* sparseResidency16Samples */
-    VK_FALSE, /* sparseResidencyAliased */
-    VK_FALSE, /* variableMultisampleRate */
-    VK_FALSE, /* inheritedQueries */
-};
-
-const char* kRequiredExtensions[] = {
-    "VK_KHR_storage_buffer_storage_class",
-    "VK_KHR_variable_pointers",
-};
-
-const size_t kNumberOfRequiredExtensions =
-    sizeof(kRequiredExtensions) / sizeof(kRequiredExtensions[0]);
-
 // Check if |physical_device| supports all required features given
-// in |kRequiredFeatures|.
-bool AreAllRequiredFeaturesSupported(const VkPhysicalDevice& physical_device) {
-  VkPhysicalDeviceFeatures available_features = {};
-  vkGetPhysicalDeviceFeatures(physical_device, &available_features);
-
+// in |required_features|.
+bool AreAllRequiredFeaturesSupported(
+    const VkPhysicalDeviceFeatures& available_features,
+    const VkPhysicalDeviceFeatures& required_features) {
   if (available_features.robustBufferAccess == VK_FALSE &&
-      kRequiredFeatures.robustBufferAccess == VK_TRUE) {
+      required_features.robustBufferAccess == VK_TRUE) {
     return false;
   }
   if (available_features.fullDrawIndexUint32 == VK_FALSE &&
-      kRequiredFeatures.fullDrawIndexUint32 == VK_TRUE) {
+      required_features.fullDrawIndexUint32 == VK_TRUE) {
     return false;
   }
   if (available_features.imageCubeArray == VK_FALSE &&
-      kRequiredFeatures.imageCubeArray == VK_TRUE) {
+      required_features.imageCubeArray == VK_TRUE) {
     return false;
   }
   if (available_features.independentBlend == VK_FALSE &&
-      kRequiredFeatures.independentBlend == VK_TRUE) {
+      required_features.independentBlend == VK_TRUE) {
     return false;
   }
   if (available_features.geometryShader == VK_FALSE &&
-      kRequiredFeatures.geometryShader == VK_TRUE) {
+      required_features.geometryShader == VK_TRUE) {
     return false;
   }
   if (available_features.tessellationShader == VK_FALSE &&
-      kRequiredFeatures.tessellationShader == VK_TRUE) {
+      required_features.tessellationShader == VK_TRUE) {
     return false;
   }
   if (available_features.sampleRateShading == VK_FALSE &&
-      kRequiredFeatures.sampleRateShading == VK_TRUE) {
+      required_features.sampleRateShading == VK_TRUE) {
     return false;
   }
   if (available_features.dualSrcBlend == VK_FALSE &&
-      kRequiredFeatures.dualSrcBlend == VK_TRUE) {
+      required_features.dualSrcBlend == VK_TRUE) {
     return false;
   }
   if (available_features.logicOp == VK_FALSE &&
-      kRequiredFeatures.logicOp == VK_TRUE) {
+      required_features.logicOp == VK_TRUE) {
     return false;
   }
   if (available_features.multiDrawIndirect == VK_FALSE &&
-      kRequiredFeatures.multiDrawIndirect == VK_TRUE) {
+      required_features.multiDrawIndirect == VK_TRUE) {
     return false;
   }
   if (available_features.drawIndirectFirstInstance == VK_FALSE &&
-      kRequiredFeatures.drawIndirectFirstInstance == VK_TRUE) {
+      required_features.drawIndirectFirstInstance == VK_TRUE) {
     return false;
   }
   if (available_features.depthClamp == VK_FALSE &&
-      kRequiredFeatures.depthClamp == VK_TRUE) {
+      required_features.depthClamp == VK_TRUE) {
     return false;
   }
   if (available_features.depthBiasClamp == VK_FALSE &&
-      kRequiredFeatures.depthBiasClamp == VK_TRUE) {
+      required_features.depthBiasClamp == VK_TRUE) {
     return false;
   }
   if (available_features.fillModeNonSolid == VK_FALSE &&
-      kRequiredFeatures.fillModeNonSolid == VK_TRUE) {
+      required_features.fillModeNonSolid == VK_TRUE) {
     return false;
   }
   if (available_features.depthBounds == VK_FALSE &&
-      kRequiredFeatures.depthBounds == VK_TRUE) {
+      required_features.depthBounds == VK_TRUE) {
     return false;
   }
   if (available_features.wideLines == VK_FALSE &&
-      kRequiredFeatures.wideLines == VK_TRUE) {
+      required_features.wideLines == VK_TRUE) {
     return false;
   }
   if (available_features.largePoints == VK_FALSE &&
-      kRequiredFeatures.largePoints == VK_TRUE) {
+      required_features.largePoints == VK_TRUE) {
     return false;
   }
   if (available_features.alphaToOne == VK_FALSE &&
-      kRequiredFeatures.alphaToOne == VK_TRUE) {
+      required_features.alphaToOne == VK_TRUE) {
     return false;
   }
   if (available_features.multiViewport == VK_FALSE &&
-      kRequiredFeatures.multiViewport == VK_TRUE) {
+      required_features.multiViewport == VK_TRUE) {
     return false;
   }
   if (available_features.samplerAnisotropy == VK_FALSE &&
-      kRequiredFeatures.samplerAnisotropy == VK_TRUE) {
+      required_features.samplerAnisotropy == VK_TRUE) {
     return false;
   }
   if (available_features.textureCompressionETC2 == VK_FALSE &&
-      kRequiredFeatures.textureCompressionETC2 == VK_TRUE) {
+      required_features.textureCompressionETC2 == VK_TRUE) {
     return false;
   }
   if (available_features.textureCompressionASTC_LDR == VK_FALSE &&
-      kRequiredFeatures.textureCompressionASTC_LDR == VK_TRUE) {
+      required_features.textureCompressionASTC_LDR == VK_TRUE) {
     return false;
   }
   if (available_features.textureCompressionBC == VK_FALSE &&
-      kRequiredFeatures.textureCompressionBC == VK_TRUE) {
+      required_features.textureCompressionBC == VK_TRUE) {
     return false;
   }
   if (available_features.occlusionQueryPrecise == VK_FALSE &&
-      kRequiredFeatures.occlusionQueryPrecise == VK_TRUE) {
+      required_features.occlusionQueryPrecise == VK_TRUE) {
     return false;
   }
   if (available_features.pipelineStatisticsQuery == VK_FALSE &&
-      kRequiredFeatures.pipelineStatisticsQuery == VK_TRUE) {
+      required_features.pipelineStatisticsQuery == VK_TRUE) {
     return false;
   }
   if (available_features.vertexPipelineStoresAndAtomics == VK_FALSE &&
-      kRequiredFeatures.vertexPipelineStoresAndAtomics == VK_TRUE) {
+      required_features.vertexPipelineStoresAndAtomics == VK_TRUE) {
     return false;
   }
   if (available_features.fragmentStoresAndAtomics == VK_FALSE &&
-      kRequiredFeatures.fragmentStoresAndAtomics == VK_TRUE) {
+      required_features.fragmentStoresAndAtomics == VK_TRUE) {
     return false;
   }
   if (available_features.shaderTessellationAndGeometryPointSize == VK_FALSE &&
-      kRequiredFeatures.shaderTessellationAndGeometryPointSize == VK_TRUE) {
+      required_features.shaderTessellationAndGeometryPointSize == VK_TRUE) {
     return false;
   }
   if (available_features.shaderImageGatherExtended == VK_FALSE &&
-      kRequiredFeatures.shaderImageGatherExtended == VK_TRUE) {
+      required_features.shaderImageGatherExtended == VK_TRUE) {
     return false;
   }
   if (available_features.shaderStorageImageExtendedFormats == VK_FALSE &&
-      kRequiredFeatures.shaderStorageImageExtendedFormats == VK_TRUE) {
+      required_features.shaderStorageImageExtendedFormats == VK_TRUE) {
     return false;
   }
   if (available_features.shaderStorageImageMultisample == VK_FALSE &&
-      kRequiredFeatures.shaderStorageImageMultisample == VK_TRUE) {
+      required_features.shaderStorageImageMultisample == VK_TRUE) {
     return false;
   }
   if (available_features.shaderStorageImageReadWithoutFormat == VK_FALSE &&
-      kRequiredFeatures.shaderStorageImageReadWithoutFormat == VK_TRUE) {
+      required_features.shaderStorageImageReadWithoutFormat == VK_TRUE) {
     return false;
   }
   if (available_features.shaderStorageImageWriteWithoutFormat == VK_FALSE &&
-      kRequiredFeatures.shaderStorageImageWriteWithoutFormat == VK_TRUE) {
+      required_features.shaderStorageImageWriteWithoutFormat == VK_TRUE) {
     return false;
   }
   if (available_features.shaderUniformBufferArrayDynamicIndexing == VK_FALSE &&
-      kRequiredFeatures.shaderUniformBufferArrayDynamicIndexing == VK_TRUE) {
+      required_features.shaderUniformBufferArrayDynamicIndexing == VK_TRUE) {
     return false;
   }
   if (available_features.shaderSampledImageArrayDynamicIndexing == VK_FALSE &&
-      kRequiredFeatures.shaderSampledImageArrayDynamicIndexing == VK_TRUE) {
+      required_features.shaderSampledImageArrayDynamicIndexing == VK_TRUE) {
     return false;
   }
   if (available_features.shaderStorageBufferArrayDynamicIndexing == VK_FALSE &&
-      kRequiredFeatures.shaderStorageBufferArrayDynamicIndexing == VK_TRUE) {
+      required_features.shaderStorageBufferArrayDynamicIndexing == VK_TRUE) {
     return false;
   }
   if (available_features.shaderStorageImageArrayDynamicIndexing == VK_FALSE &&
-      kRequiredFeatures.shaderStorageImageArrayDynamicIndexing == VK_TRUE) {
+      required_features.shaderStorageImageArrayDynamicIndexing == VK_TRUE) {
     return false;
   }
   if (available_features.shaderClipDistance == VK_FALSE &&
-      kRequiredFeatures.shaderClipDistance == VK_TRUE) {
+      required_features.shaderClipDistance == VK_TRUE) {
     return false;
   }
   if (available_features.shaderCullDistance == VK_FALSE &&
-      kRequiredFeatures.shaderCullDistance == VK_TRUE) {
+      required_features.shaderCullDistance == VK_TRUE) {
     return false;
   }
   if (available_features.shaderFloat64 == VK_FALSE &&
-      kRequiredFeatures.shaderFloat64 == VK_TRUE) {
+      required_features.shaderFloat64 == VK_TRUE) {
     return false;
   }
   if (available_features.shaderInt64 == VK_FALSE &&
-      kRequiredFeatures.shaderInt64 == VK_TRUE) {
+      required_features.shaderInt64 == VK_TRUE) {
     return false;
   }
   if (available_features.shaderInt16 == VK_FALSE &&
-      kRequiredFeatures.shaderInt16 == VK_TRUE) {
+      required_features.shaderInt16 == VK_TRUE) {
     return false;
   }
   if (available_features.shaderResourceResidency == VK_FALSE &&
-      kRequiredFeatures.shaderResourceResidency == VK_TRUE) {
+      required_features.shaderResourceResidency == VK_TRUE) {
     return false;
   }
   if (available_features.shaderResourceMinLod == VK_FALSE &&
-      kRequiredFeatures.shaderResourceMinLod == VK_TRUE) {
+      required_features.shaderResourceMinLod == VK_TRUE) {
     return false;
   }
   if (available_features.sparseBinding == VK_FALSE &&
-      kRequiredFeatures.sparseBinding == VK_TRUE) {
+      required_features.sparseBinding == VK_TRUE) {
     return false;
   }
   if (available_features.sparseResidencyBuffer == VK_FALSE &&
-      kRequiredFeatures.sparseResidencyBuffer == VK_TRUE) {
+      required_features.sparseResidencyBuffer == VK_TRUE) {
     return false;
   }
   if (available_features.sparseResidencyImage2D == VK_FALSE &&
-      kRequiredFeatures.sparseResidencyImage2D == VK_TRUE) {
+      required_features.sparseResidencyImage2D == VK_TRUE) {
     return false;
   }
   if (available_features.sparseResidencyImage3D == VK_FALSE &&
-      kRequiredFeatures.sparseResidencyImage3D == VK_TRUE) {
+      required_features.sparseResidencyImage3D == VK_TRUE) {
     return false;
   }
   if (available_features.sparseResidency2Samples == VK_FALSE &&
-      kRequiredFeatures.sparseResidency2Samples == VK_TRUE) {
+      required_features.sparseResidency2Samples == VK_TRUE) {
     return false;
   }
   if (available_features.sparseResidency4Samples == VK_FALSE &&
-      kRequiredFeatures.sparseResidency4Samples == VK_TRUE) {
+      required_features.sparseResidency4Samples == VK_TRUE) {
     return false;
   }
   if (available_features.sparseResidency8Samples == VK_FALSE &&
-      kRequiredFeatures.sparseResidency8Samples == VK_TRUE) {
+      required_features.sparseResidency8Samples == VK_TRUE) {
     return false;
   }
   if (available_features.sparseResidency16Samples == VK_FALSE &&
-      kRequiredFeatures.sparseResidency16Samples == VK_TRUE) {
+      required_features.sparseResidency16Samples == VK_TRUE) {
     return false;
   }
   if (available_features.sparseResidencyAliased == VK_FALSE &&
-      kRequiredFeatures.sparseResidencyAliased == VK_TRUE) {
+      required_features.sparseResidencyAliased == VK_TRUE) {
     return false;
   }
   if (available_features.variableMultisampleRate == VK_FALSE &&
-      kRequiredFeatures.variableMultisampleRate == VK_TRUE) {
+      required_features.variableMultisampleRate == VK_TRUE) {
     return false;
   }
   if (available_features.inheritedQueries == VK_FALSE &&
-      kRequiredFeatures.inheritedQueries == VK_TRUE) {
+      required_features.inheritedQueries == VK_TRUE) {
     return false;
   }
-
   return true;
 }
 
-// Check if |physical_device| supports all required extensions given
-// in |kRequiredExtensions|.
-bool AreAllExtensionsSupported(const VkPhysicalDevice& physical_device) {
+// Get all available extensions of |physical_device|.
+std::vector<std::string> GetAvailableExtensions(
+    const VkPhysicalDevice& physical_device) {
+  std::vector<std::string> available_extensions;
   uint32_t available_extension_count = 0;
   std::vector<VkExtensionProperties> available_extension_properties;
 
   if (vkEnumerateDeviceExtensionProperties(physical_device, nullptr,
                                            &available_extension_count,
                                            nullptr) != VK_SUCCESS) {
-    return false;
+    return available_extensions;
   }
 
   if (available_extension_count == 0)
-    return false;
+    return available_extensions;
 
   available_extension_properties.resize(available_extension_count);
   if (vkEnumerateDeviceExtensionProperties(
           physical_device, nullptr, &available_extension_count,
           available_extension_properties.data()) != VK_SUCCESS) {
-    return false;
+    return available_extensions;
   }
 
-  std::set<std::string> required_extension_set(
-      kRequiredExtensions, kRequiredExtensions + kNumberOfRequiredExtensions);
-  for (const auto& property : available_extension_properties) {
-    required_extension_set.erase(property.extensionName);
+  for (const auto& property : available_extension_properties)
+    available_extensions.push_back(property.extensionName);
+
+  return available_extensions;
+}
+
+// Check if |physical_device| supports all required extensions given
+// in |required_extensions|.
+bool AreAllExtensionsSupported(
+    const std::vector<std::string>& available_extensions,
+    const std::vector<std::string>& required_extensions) {
+  if (required_extensions.empty())
+    return true;
+
+  std::set<std::string> required_extension_set(required_extensions.begin(),
+                                               required_extensions.end());
+  for (const auto& extension : available_extensions) {
+    required_extension_set.erase(extension);
   }
 
   return required_extension_set.empty();
@@ -390,7 +338,9 @@ void ConfigHelper::CreateVulkanInstance() {
          VK_SUCCESS);
 }
 
-void ConfigHelper::ChooseVulkanPhysicalDevice() {
+void ConfigHelper::ChooseVulkanPhysicalDevice(
+    const VkPhysicalDeviceFeatures& required_features,
+    const std::vector<std::string>& required_extensions) {
   uint32_t count;
   std::vector<VkPhysicalDevice> physical_devices;
 
@@ -401,11 +351,15 @@ void ConfigHelper::ChooseVulkanPhysicalDevice() {
                                     physical_devices.data()) == VK_SUCCESS);
 
   for (uint32_t i = 0; i < count; ++i) {
-    if (!AreAllRequiredFeaturesSupported(physical_devices[i])) {
+    vkGetPhysicalDeviceFeatures(physical_devices[i], &available_features_);
+    if (!AreAllRequiredFeaturesSupported(available_features_,
+                                         required_features)) {
       continue;
     }
 
-    if (!AreAllExtensionsSupported(physical_devices[i])) {
+    available_extensions_ = GetAvailableExtensions(physical_devices[i]);
+    if (!AreAllExtensionsSupported(available_extensions_,
+                                   required_extensions)) {
       continue;
     }
 
@@ -419,7 +373,9 @@ void ConfigHelper::ChooseVulkanPhysicalDevice() {
   assert(false && "Vulkan::No physical device supports Vulkan");
 }
 
-void ConfigHelper::CreateVulkanDevice() {
+void ConfigHelper::CreateVulkanDevice(
+    const VkPhysicalDeviceFeatures& required_features,
+    const std::vector<std::string>& required_extensions) {
   VkDeviceQueueCreateInfo queue_info;
   const float priorities[] = {1.0f};
 
@@ -432,24 +388,42 @@ void ConfigHelper::CreateVulkanDevice() {
   info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   info.pQueueCreateInfos = &queue_info;
   info.queueCreateInfoCount = 1;
-  info.pEnabledFeatures = &kRequiredFeatures;
+  info.pEnabledFeatures = &required_features;
+
+  std::vector<const char*> required_extensions_in_char;
+  std::transform(
+      required_extensions.begin(), required_extensions.end(),
+      std::back_inserter(required_extensions_in_char),
+      [](const std::string& ext) -> const char* { return ext.c_str(); });
   info.enabledExtensionCount =
-      static_cast<uint32_t>(kNumberOfRequiredExtensions);
-  info.ppEnabledExtensionNames = kRequiredExtensions;
+      static_cast<uint32_t>(required_extensions_in_char.size());
+  info.ppEnabledExtensionNames = required_extensions_in_char.data();
 
   assert(vkCreateDevice(vulkan_physical_device_, &info, nullptr,
                         &vulkan_device_) == VK_SUCCESS);
 }
 
-std::unique_ptr<amber::VulkanEngineConfig> ConfigHelper::CreateVulkanConfig() {
+std::unique_ptr<amber::VulkanEngineConfig> ConfigHelper::CreateVulkanConfig(
+    const std::vector<const amber::Recipe*>& recipes) {
+  VkPhysicalDeviceFeatures required_features =
+      GetRequiredVulkanFeatures(recipes);
+  std::vector<std::string> required_extensions =
+      GetRequiredVulkanExtensions(recipes);
+
   std::unique_ptr<amber::VulkanEngineConfig> config =
       amber::MakeUnique<amber::VulkanEngineConfig>();
 
   CreateVulkanInstance();
-  ChooseVulkanPhysicalDevice();
-  CreateVulkanDevice();
+  ChooseVulkanPhysicalDevice(required_features, required_extensions);
+  CreateVulkanDevice(required_features, required_extensions);
+  vkGetDeviceQueue(vulkan_device_, vulkan_queue_family_index_, 0,
+                   &vulkan_queue_);
 
   config->physical_device = vulkan_physical_device_;
+  config->available_features = available_features_;
+  config->available_extensions = available_extensions_;
+  config->queue_family_index = vulkan_queue_family_index_;
+  config->queue = vulkan_queue_;
   config->device = vulkan_device_;
   return config;
 }
@@ -461,12 +435,13 @@ ConfigHelper::ConfigHelper() = default;
 ConfigHelper::~ConfigHelper() = default;
 
 std::unique_ptr<amber::EngineConfig> ConfigHelper::CreateConfig(
-    amber::EngineType engine) {
+    amber::EngineType engine,
+    const std::vector<const amber::Recipe*>& recipes) {
   if (engine == amber::EngineType::kDawn)
     return nullptr;
 
 #if AMBER_ENGINE_VULKAN
-  return ConfigHelper::CreateVulkanConfig();
+  return ConfigHelper::CreateVulkanConfig(recipes);
 #else   // AMBER_ENGINE_VULKAN
   return nullptr;
 #endif  // AMBER_ENGINE_VULKAN
