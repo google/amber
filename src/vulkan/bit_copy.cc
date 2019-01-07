@@ -32,7 +32,7 @@ void BitCopy::ShiftBufferBits(uint8_t* buffer,
   uint8_t carry = 0;
   for (uint32_t i = 0; i < length_bytes; ++i) {
     uint8_t new_value = static_cast<uint8_t>(buffer[i] << shift_bits) | carry;
-    carry = buffer[i] >> (8 - shift_bits);
+    carry = static_cast<uint8_t>(buffer[i] >> (8 - shift_bits));
     buffer[i] = new_value;
   }
 }
@@ -85,10 +85,11 @@ void BitCopy::CopyValueToBuffer(uint8_t* dst,
 
   while (bit_offset > 7) {
     ++dst;
-    bit_offset -= 8;
+    bit_offset = static_cast<uint8_t>(bit_offset - 8);
   }
 
-  ShiftBufferBits(data, ((bit_offset + bits - 1) / 8) + 1, bit_offset);
+  ShiftBufferBits(data, static_cast<uint8_t>(((bit_offset + bits - 1) / 8) + 1),
+                  bit_offset);
   CopyBits(dst, data, bit_offset, bits);
 }
 
@@ -100,14 +101,14 @@ void BitCopy::CopyBits(uint8_t* dst,
   while (bit_offset + bits > 0) {
     uint8_t target_bits = bits;
     if (bit_offset + target_bits > 8)
-      target_bits = 8 - bit_offset;
+      target_bits = static_cast<uint8_t>(8 - bit_offset);
 
     uint8_t bit_mask =
         static_cast<uint8_t>(((1U << target_bits) - 1U) << bit_offset);
-    *dst = (*src & bit_mask) | (*dst & ~bit_mask);
+    *dst = static_cast<uint8_t>((*src & bit_mask) | (*dst & ~bit_mask));
 
     bit_offset -= bit_offset;
-    bits -= target_bits;
+    bits = static_cast<uint8_t>(bits - target_bits);
     ++dst;
     ++src;
   }
