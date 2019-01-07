@@ -436,7 +436,7 @@ ConfigHelper::~ConfigHelper() = default;
 
 std::unique_ptr<amber::EngineConfig> ConfigHelper::CreateConfig(
     amber::EngineType engine,
-    const std::vector<const amber::Recipe*>& recipes) {
+    const std::vector<const amber::Recipe*>& recipes __attribute__((unused))) {
   if (engine == amber::EngineType::kDawn)
     return nullptr;
 
