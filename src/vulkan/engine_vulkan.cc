@@ -57,25 +57,25 @@ bool IsFormatSupportedByPhysicalDevice(BufferType type,
   VkFormatProperties properties = {};
   vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
 
-  VkFormatFeatureFlagBits flags = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
+  VkFormatFeatureFlagBits flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
   switch (type) {
     case BufferType::kColor:
-      flags = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
+      flag = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
       break;
     case BufferType::kDepth:
-      flags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+      flag = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
       break;
     case BufferType::kSampled:
-      flags = VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
+      flag = VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
       break;
     case BufferType::kVertex:
-      flags = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
+      flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
       break;
     default:
       return false;
   }
 
-  return (properties.bufferFeatures & flags) == flags;
+  return (properties.bufferFeatures & flag) == flag;
 }
 
 bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
