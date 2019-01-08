@@ -30,13 +30,20 @@ namespace vulkan {
 class Device {
  public:
   Device();
-  explicit Device(VkDevice device);
+  Device(VkPhysicalDevice physical_device,
+         const VkPhysicalDeviceFeatures& available_features,
+         const std::vector<std::string>& required_extensions,
+         uint32_t queue_family_index,
+         VkDevice device,
+         VkQueue queue);
   ~Device();
 
   Result Initialize(const std::vector<Feature>& required_features,
                     const std::vector<std::string>& required_extensions);
   void Shutdown();
 
+  VkInstance GetInstance() const { return instance_; }
+  VkPhysicalDevice GetPhysicalDevice() { return physical_device_; }
   VkDevice GetDevice() const { return device_; }
   VkPhysicalDevice GetPhysicalDevice() const { return physical_device_; }
   uint32_t GetQueueFamilyIndex() const { return queue_family_index_; }
@@ -49,16 +56,19 @@ class Device {
   Result CreateInstance();
 
   // Get a physical device by checking if the physical device has a proper
-  // queue family, required features, and required extensions.
+  // queue family, required features, and required extensions. Note that
+  // this method calls ChooseQueueFamilyIndex() to check if any queue
+  // provided by the physical device supports graphics or compute pipeline
+  // and sets |queue_family_index_| for the proper queue family.
   Result ChoosePhysicalDevice(
       const std::vector<Feature>& required_features,
       const std::vector<std::string>& required_extensions);
 
   // Return true if |physical_device| has a queue family that supports both
   // graphics and compute or only a compute pipeline. If the proper queue
-  // family exists, |queue_family_index_| and |queue_family_flags_| will have
-  // the queue family index and flags, respectively. Return false if the proper
-  // queue family does not exist.
+  // family exists, |queue_family_index_| will have the queue family index
+  // and flags, respectively. Return false if the proper queue family does
+  // not exist.
   bool ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device);
 
   // Create a logical device with enabled features |required_features|
@@ -69,9 +79,10 @@ class Device {
   VkInstance instance_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
   VkPhysicalDeviceMemoryProperties physical_memory_properties_ = {};
-  VkDevice device_ = VK_NULL_HANDLE;
-  VkQueueFlags queue_family_flags_ = 0;
+  VkPhysicalDeviceFeatures available_physical_device_features_ = {};
+  std::vector<std::string> available_physical_device_extensions_;
   uint32_t queue_family_index_ = 0;
+  VkDevice device_ = VK_NULL_HANDLE;
 
   VkQueue queue_ = VK_NULL_HANDLE;
 
