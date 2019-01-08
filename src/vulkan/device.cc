@@ -205,13 +205,11 @@ VkPhysicalDeviceFeatures RequestedFeatures(
 }
 
 bool AreAllRequiredFeaturesSupported(
-    const VkPhysicalDevice& physical_device,
+    const VkPhysicalDeviceFeatures& available_features,
     const std::vector<Feature>& required_features) {
   if (required_features.empty())
     return true;
 
-  VkPhysicalDeviceFeatures available_features = {};
-  vkGetPhysicalDeviceFeatures(physical_device, &available_features);
   for (const auto& feature : required_features) {
     switch (feature) {
       case Feature::kRobustBufferAccess:
@@ -450,35 +448,44 @@ bool AreAllRequiredFeaturesSupported(
   return true;
 }
 
-bool AreAllExtensionsSupported(
-    const VkPhysicalDevice& physical_device,
-    const std::vector<std::string>& required_extensions) {
-  if (required_extensions.empty())
-    return true;
-
+std::vector<std::string> GetAvailableExtensions(
+    const VkPhysicalDevice& physical_device) {
+  std::vector<std::string> available_extensions;
   uint32_t available_extension_count = 0;
   std::vector<VkExtensionProperties> available_extension_properties;
 
   if (vkEnumerateDeviceExtensionProperties(physical_device, nullptr,
                                            &available_extension_count,
                                            nullptr) != VK_SUCCESS) {
-    return false;
+    return available_extensions;
   }
 
   if (available_extension_count == 0)
-    return false;
+    return available_extensions;
 
   available_extension_properties.resize(available_extension_count);
   if (vkEnumerateDeviceExtensionProperties(
           physical_device, nullptr, &available_extension_count,
           available_extension_properties.data()) != VK_SUCCESS) {
-    return false;
+    return available_extensions;
   }
+
+  for (const auto& property : available_extension_properties)
+    available_extensions.push_back(property.extensionName);
+
+  return available_extensions;
+}
+
+bool AreAllExtensionsSupported(
+    const std::vector<std::string>& available_extensions,
+    const std::vector<std::string>& required_extensions) {
+  if (required_extensions.empty())
+    return true;
 
   std::set<std::string> required_extension_set(required_extensions.begin(),
                                                required_extensions.end());
-  for (const auto& property : available_extension_properties) {
-    required_extension_set.erase(property.extensionName);
+  for (const auto& extension : available_extensions) {
+    required_extension_set.erase(extension);
   }
 
   return required_extension_set.empty();
@@ -487,7 +494,19 @@ bool AreAllExtensionsSupported(
 }  // namespace
 
 Device::Device() = default;
-Device::Device(VkDevice device) : device_(device), destroy_device_(false) {}
+Device::Device(VkPhysicalDevice physical_device,
+               const VkPhysicalDeviceFeatures& available_features,
+               const std::vector<std::string>& available_extensions,
+               uint32_t queue_family_index,
+               VkDevice device,
+               VkQueue queue)
+    : physical_device_(physical_device),
+      available_physical_device_features_(available_features),
+      available_physical_device_extensions_(available_extensions),
+      queue_family_index_(queue_family_index),
+      device_(device),
+      queue_(queue),
+      destroy_device_(false) {}
 Device::~Device() = default;
 
 void Device::Shutdown() {
@@ -499,7 +518,7 @@ void Device::Shutdown() {
 
 Result Device::Initialize(const std::vector<Feature>& required_features,
                           const std::vector<std::string>& required_extensions) {
-  if (device_ == VK_NULL_HANDLE) {
+  if (destroy_device_) {
     Result r = CreateInstance();
     if (!r.IsSuccess())
       return r;
@@ -511,13 +530,29 @@ Result Device::Initialize(const std::vector<Feature>& required_features,
     r = CreateDevice(required_features, required_extensions);
     if (!r.IsSuccess())
       return r;
-  }
 
-  if (queue_ == VK_NULL_HANDLE) {
     vkGetDeviceQueue(device_, queue_family_index_, 0, &queue_);
     if (queue_ == VK_NULL_HANDLE)
       return Result("Vulkan::Calling vkGetDeviceQueue Fail");
+  } else {
+    if (!AreAllRequiredFeaturesSupported(available_physical_device_features_,
+                                         required_features)) {
+      return Result(
+          "Vulkan: Device::Initialize given physical device does not support "
+          "required features");
+    }
+
+    if (!AreAllExtensionsSupported(available_physical_device_extensions_,
+                                   required_extensions)) {
+      return Result(
+          "Vulkan: Device::Initialize given physical device does not support "
+          "required extensions");
+    }
   }
+
+  vkGetPhysicalDeviceMemoryProperties(physical_device_,
+                                      &physical_memory_properties_);
+
   return {};
 }
 
@@ -533,15 +568,6 @@ bool Device::ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device) {
   for (uint32_t i = 0; i < count; ++i) {
     if (properties[i].queueFlags &
         (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) {
-      queue_family_flags_ = properties[i].queueFlags;
-      queue_family_index_ = i;
-      return true;
-    }
-  }
-
-  for (uint32_t i = 0; i < count; ++i) {
-    if (properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
-      queue_family_flags_ = properties[i].queueFlags;
       queue_family_index_ = i;
       return true;
     }
@@ -580,19 +606,20 @@ Result Device::ChoosePhysicalDevice(
     return Result("Vulkan::Calling vkEnumeratePhysicalDevices Fail");
 
   for (uint32_t i = 0; i < count; ++i) {
-    if (!AreAllRequiredFeaturesSupported(physical_devices[i],
+    VkPhysicalDeviceFeatures available_features = {};
+    vkGetPhysicalDeviceFeatures(physical_devices[i], &available_features);
+    if (!AreAllRequiredFeaturesSupported(available_features,
                                          required_features)) {
       continue;
     }
 
-    if (!AreAllExtensionsSupported(physical_devices[i], required_extensions)) {
+    if (!AreAllExtensionsSupported(GetAvailableExtensions(physical_devices[i]),
+                                   required_extensions)) {
       continue;
     }
 
     if (ChooseQueueFamilyIndex(physical_devices[i])) {
       physical_device_ = physical_devices[i];
-      vkGetPhysicalDeviceMemoryProperties(physical_device_,
-                                          &physical_memory_properties_);
       return {};
     }
   }
@@ -603,9 +630,8 @@ Result Device::ChoosePhysicalDevice(
 Result Device::CreateDevice(
     const std::vector<Feature>& required_features,
     const std::vector<std::string>& required_extensions) {
-  VkDeviceQueueCreateInfo queue_info;
+  VkDeviceQueueCreateInfo queue_info = {};
   const float priorities[] = {1.0f};
-
   queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
   queue_info.queueFamilyIndex = queue_family_index_;
   queue_info.queueCount = 1;

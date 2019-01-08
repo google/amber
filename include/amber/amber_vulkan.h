@@ -15,14 +15,38 @@
 #ifndef AMBER_AMBER_VULKAN_H_
 #define AMBER_AMBER_VULKAN_H_
 
+#include <limits>
+#include <string>
+#include <vector>
+
+#include "amber/amber.h"
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #include "vulkan/vulkan.h"
+#pragma clang diagnostic pop
 
 namespace amber {
 
 /// Configuration for the Vulkan Engine.
 struct VulkanEngineConfig : public EngineConfig {
-  /// The VkDevice to use for the tests.
-  VkDevice device;
+  /// The VkPhysicalDevice to use.
+  VkPhysicalDevice physical_device = VK_NULL_HANDLE;
+
+  /// Physical device features available for |physical_device|.
+  VkPhysicalDeviceFeatures available_features = {};
+
+  /// Physical device extensions available for |physical_device|.
+  std::vector<std::string> available_extensions;
+
+  /// The given queue family index to use.
+  uint32_t queue_family_index = std::numeric_limits<uint32_t>::max();
+
+  /// The VkDevice to use.
+  VkDevice device = VK_NULL_HANDLE;
+
+  /// The VkQueue to use.
+  VkQueue queue = VK_NULL_HANDLE;
 };
 
 }  // namespace amber

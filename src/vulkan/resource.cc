@@ -48,7 +48,8 @@ template <typename T>
 void SetValueForBuffer(void* memory, const std::vector<Value>& values) {
   T* ptr = static_cast<T*>(memory);
   for (const auto& v : values) {
-    *ptr = static_cast<T>(v.IsInteger() ? v.AsUint64() : v.AsDouble());
+    *ptr = v.IsInteger() ? static_cast<T>(v.AsUint64())
+                         : static_cast<T>(v.AsDouble());
     ++ptr;
   }
 }

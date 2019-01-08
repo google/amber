@@ -51,6 +51,40 @@ VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
   return VK_SHADER_STAGE_FRAGMENT_BIT;
 }
 
+bool IsFormatSupportedByPhysicalDevice(BufferType type,
+                                       VkPhysicalDevice physical_device,
+                                       VkFormat format) {
+  VkFormatProperties properties = {};
+  vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
+
+  VkFormatFeatureFlagBits flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
+  switch (type) {
+    case BufferType::kColor:
+      flag = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
+      break;
+    case BufferType::kDepth:
+      flag = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+      break;
+    case BufferType::kSampled:
+      flag = VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
+      break;
+    case BufferType::kVertex:
+      flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
+      break;
+    default:
+      return false;
+  }
+
+  return (properties.bufferFeatures & flag) == flag;
+}
+
+bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
+                             uint32_t descriptor_set) {
+  VkPhysicalDeviceProperties properties = {};
+  vkGetPhysicalDeviceProperties(physical_device, &properties);
+  return properties.limits.maxBoundDescriptorSets > descriptor_set;
+}
+
 }  // namespace
 
 EngineVulkan::EngineVulkan() : Engine() {}
@@ -91,10 +125,21 @@ Result EngineVulkan::InitializeWithConfig(
     return Result("Vulkan::Set device_ already exists");
 
   VulkanEngineConfig* vk_config = static_cast<VulkanEngineConfig*>(config);
+  if (vk_config->physical_device == VK_NULL_HANDLE) {
+    return Result(
+        "Vulkan::InitializeWithConfig physical device handle is null.");
+  }
+
   if (vk_config->device == VK_NULL_HANDLE)
     return Result("Vulkan::InitializeWithConfig device handle is null.");
 
-  device_ = MakeUnique<Device>(vk_config->device);
+  if (vk_config->queue == VK_NULL_HANDLE)
+    return Result("Vulkan::InitializeWithConfig queue handle is null.");
+
+  device_ = MakeUnique<Device>(
+      vk_config->physical_device, vk_config->available_features,
+      vk_config->available_extensions, vk_config->queue_family_index,
+      vk_config->device, vk_config->queue);
   return InitDeviceAndCreateCommand(features, extensions);
 }
 
@@ -174,13 +219,19 @@ Result EngineVulkan::SetBuffer(BufferType type,
                                uint8_t location,
                                const Format& format,
                                const std::vector<Value>& values) {
+  auto format_type = ToVkFormat(format.GetFormatType());
+  if (!IsFormatSupportedByPhysicalDevice(type, device_->GetPhysicalDevice(),
+                                         format_type)) {
+    return Result("Vulkan::SetBuffer format is not supported for buffer type");
+  }
+
   // Handle image and depth attachments special as they come in before
   // the pipeline is created.
   if (type == BufferType::kColor || type == BufferType::kDepth) {
     if (type == BufferType::kColor)
-      color_frame_format_ = ToVkFormat(format.GetFormatType());
+      color_frame_format_ = format_type;
     else if (type == BufferType::kDepth)
-      depth_frame_format_ = ToVkFormat(format.GetFormatType());
+      depth_frame_format_ = format_type;
 
     return {};
   }
@@ -377,6 +428,13 @@ Result EngineVulkan::GetDescriptorInfo(const uint32_t descriptor_set,
 Result EngineVulkan::DoBuffer(const BufferCommand* command) {
   if (command->IsPushConstant())
     return pipeline_->AddPushConstant(command);
+
+  if (!IsDescriptorSetInBounds(device_->GetPhysicalDevice(),
+                               command->GetDescriptorSet())) {
+    return Result(
+        "Vulkan::DoBuffer exceed maxBoundDescriptorSets limit of physical "
+        "device");
+  }
 
   return pipeline_->AddDescriptor(command);
 }

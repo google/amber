@@ -15,30 +15,36 @@
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
+#include <set>
+#include <utility>
 #include <vector>
 
 #include "amber/amber.h"
 #include "amber/recipe.h"
+#include "samples/config_helper.h"
 #include "src/build-versions.h"
+#include "src/make_unique.h"
 
 namespace {
 
 struct Options {
-  std::string input_filename;
+  std::vector<std::string> input_filenames;
 
   std::string image_filename;
   std::string buffer_filename;
   int64_t buffer_binding_index = 0;
   bool parse_only = false;
+  bool show_summary = false;
   bool show_help = false;
   bool show_version_info = false;
   amber::EngineType engine = amber::EngineType::kVulkan;
 };
 
-const char kUsage[] = R"(Usage: amber [options] SCRIPT
+const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
 
  options:
-  -p             -- Parse input files only; Don't execute
+  -p             -- Parse input files only; Don't execute.
+  -s             -- Print summary of pass/failure.
   -i <filename>  -- Write rendering to <filename> as a PPM image.
   -b <filename>  -- Write contents of a UBO or SSBO to <filename>.
   -B <buffer>    -- Index of buffer to write. Defaults buffer 0.
@@ -104,11 +110,13 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->show_version_info = true;
     } else if (arg == "-p") {
       opts->parse_only = true;
+    } else if (arg == "-s") {
+      opts->show_summary = true;
     } else if (arg.size() > 0 && arg[0] == '-') {
       std::cerr << "Unrecognized option " << arg << std::endl;
       return false;
-    } else {
-      opts->input_filename = args[i];
+    } else if (!arg.empty()) {
+      opts->input_filenames.push_back(arg);
     }
   }
 
@@ -178,21 +186,39 @@ int main(int argc, const char** argv) {
     return 0;
   }
 
-  if (options.input_filename.empty()) {
+  if (options.input_filenames.empty()) {
     std::cerr << "Input file must be provided." << std::endl;
     return 2;
   }
 
-  auto data = ReadFile(options.input_filename);
-  if (data.empty())
-    return 1;
+  amber::Result result;
+  std::vector<std::string> failures;
+  struct RecipeData {
+    std::string file;
+    std::unique_ptr<amber::Recipe> recipe;
+  };
+  std::vector<RecipeData> recipe_data;
+  for (const auto& file : options.input_filenames) {
+    auto data = ReadFile(file);
+    if (data.empty()) {
+      std::cerr << file << " is empty." << std::endl;
+      failures.push_back(file);
+      continue;
+    }
 
-  amber::Amber am;
-  amber::Recipe recipe;
-  amber::Result result = am.Parse(data, &recipe);
-  if (!result.IsSuccess()) {
-    std::cerr << result.Error() << std::endl;
-    return 1;
+    amber::Amber am;
+    std::unique_ptr<amber::Recipe> recipe = amber::MakeUnique<amber::Recipe>();
+
+    result = am.Parse(data, recipe.get());
+    if (!result.IsSuccess()) {
+      std::cerr << file << ": " << result.Error() << std::endl;
+      failures.push_back(file);
+      continue;
+    }
+
+    recipe_data.emplace_back();
+    recipe_data.back().file = file;
+    recipe_data.back().recipe = std::move(recipe);
   }
 
   if (options.parse_only)
@@ -200,21 +226,62 @@ int main(int argc, const char** argv) {
 
   amber::Options amber_options;
   amber_options.engine = options.engine;
-  result = am.Execute(&recipe, amber_options);
-  if (!result.IsSuccess()) {
-    std::cerr << result.Error() << std::endl;
-    return 1;
+
+  std::set<std::string> required_features;
+  std::set<std::string> required_extensions;
+  for (const auto& recipe_data_elem : recipe_data) {
+    const auto features = recipe_data_elem.recipe->GetRequiredFeatures();
+    required_features.insert(features.begin(), features.end());
+
+    const auto extensions = recipe_data_elem.recipe->GetRequiredExtensions();
+    required_extensions.insert(extensions.begin(), extensions.end());
   }
 
-  if (!options.buffer_filename.empty()) {
-    // TODO(dsinclair): Write buffer file
-    assert(false);
+  sample::ConfigHelper config_helper;
+  amber_options.config = config_helper.CreateConfig(
+      amber_options.engine,
+      std::vector<std::string>(required_features.begin(),
+                               required_features.end()),
+      std::vector<std::string>(required_extensions.begin(),
+                               required_extensions.end()));
+
+  for (const auto& recipe_data_elem : recipe_data) {
+    const auto* recipe = recipe_data_elem.recipe.get();
+    const auto& file = recipe_data_elem.file;
+
+    amber::Amber am;
+    result = am.Execute(recipe, amber_options);
+    if (!result.IsSuccess()) {
+      std::cerr << file << ": " << result.Error() << std::endl;
+      failures.push_back(file);
+      continue;
+    }
+
+    if (!options.buffer_filename.empty()) {
+      // TODO(dsinclair): Write buffer file
+      assert(false);
+    }
+
+    if (!options.image_filename.empty()) {
+      // TODO(dsinclair): Write image file
+      assert(false);
+    }
   }
 
-  if (!options.image_filename.empty()) {
-    // TODO(dsinclair): Write image file
-    assert(false);
+  if (options.show_summary) {
+    if (!failures.empty()) {
+      std::cout << "\nSummary of Failures:" << std::endl;
+
+      for (const auto& failure : failures)
+        std::cout << "  " << failure << std::endl;
+    }
+
+    std::cout << "\nSummary: "
+              << (options.input_filenames.size() - failures.size()) << " pass, "
+              << failures.size() << " fail" << std::endl;
+
+    config_helper.Shutdown();
   }
 
-  return 0;
+  return !failures.empty();
 }

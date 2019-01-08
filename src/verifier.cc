@@ -189,10 +189,14 @@ Result Verifier::Probe(const ProbeCommand* command,
     width = frame_width;
     height = frame_height;
   } else if (command->IsRelative()) {
-    x = static_cast<uint32_t>(frame_width * command->GetX());
-    y = static_cast<uint32_t>(frame_height * command->GetY());
-    width = static_cast<uint32_t>(frame_width * command->GetWidth());
-    height = static_cast<uint32_t>(frame_height * command->GetHeight());
+    x = static_cast<uint32_t>(static_cast<float>(frame_width) *
+                              command->GetX());
+    y = static_cast<uint32_t>(static_cast<float>(frame_height) *
+                              command->GetY());
+    width = static_cast<uint32_t>(static_cast<float>(frame_width) *
+                                  command->GetWidth());
+    height = static_cast<uint32_t>(static_cast<float>(frame_height) *
+                                   command->GetHeight());
   } else {
     x = static_cast<uint32_t>(command->GetX());
     y = static_cast<uint32_t>(command->GetY());

@@ -42,6 +42,12 @@ class Script : public RecipeImpl {
   /// Retrieves information on the shaders in the given script.
   std::vector<ShaderInfo> GetShaderInfo() const override;
 
+  /// Returns required features in the given recipe.
+  std::vector<std::string> GetRequiredFeatures() const override;
+
+  /// Returns required extensions in the given recipe.
+  std::vector<std::string> GetRequiredExtensions() const override;
+
   /// Adds |pipeline| to the list of known pipelines. The |pipeline| must have
   /// a unique name over all pipelines in the script.
   Result AddPipeline(std::unique_ptr<Pipeline> pipeline) {
