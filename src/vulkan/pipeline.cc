@@ -58,11 +58,7 @@ ComputePipeline* Pipeline::AsCompute() {
 
 Result Pipeline::InitializeCommandBuffer(VkCommandPool pool, VkQueue queue) {
   command_ = MakeUnique<CommandBuffer>(device_, pool, queue);
-  Result r = command_->Initialize();
-  if (!r.IsSuccess())
-    return r;
-
-  return {};
+  return command_->Initialize();
 }
 
 void Pipeline::Shutdown() {
@@ -184,8 +180,10 @@ Result Pipeline::CreatePipelineLayout() {
   pipeline_layout_info.pSetLayouts = descriptor_set_layouts.data();
 
   VkPushConstantRange push_const_range = {};
-  if (!push_constant_data_.empty()) {
+  if (push_constant_)
     push_const_range = push_constant_->GetPushConstantRange();
+
+  if (push_const_range.size) {
     pipeline_layout_info.pushConstantRangeCount = 1U;
     pipeline_layout_info.pPushConstantRanges = &push_const_range;
   }
@@ -235,8 +233,9 @@ Result Pipeline::UpdateDescriptorSetsIfNeeded() {
 }
 
 void Pipeline::RecordPushConstant() {
-  push_constant_->RecordPushConstantVkCommand(command_->GetCommandBuffer(),
-                                              pipeline_layout_);
+  if (push_constant_)
+    push_constant_->RecordPushConstantVkCommand(command_->GetCommandBuffer(),
+                                                pipeline_layout_);
 }
 
 Result Pipeline::AddPushConstant(const BufferCommand* command) {
@@ -257,6 +256,10 @@ Result Pipeline::AddPushConstant(const BufferCommand* command) {
     vkDestroyPipeline(device_, pipeline_, nullptr);
 
     descriptor_related_objects_already_created_ = false;
+  }
+
+  if (!push_constant_) {
+    push_constant_ = MakeUnique<PushConstant>(0);
   }
 
   return push_constant_->AddBufferData(command);

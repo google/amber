@@ -1,4 +1,4 @@
-// Copyright 2018 The Amber Authors.
+// Copyright 2019 The Amber Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VULKAN_RESOURCE_H_
-#define SRC_VULKAN_RESOURCE_H_
+#ifndef SRC_VULKAN_PUSH_CONSTANT_H_
+#define SRC_VULKAN_PUSH_CONSTANT_H_
 
 #include <vector>
 
 #include "amber/result.h"
+#include "src/command.h"
 #include "src/vulkan/resource.h"
 #include "vulkan/vulkan.h"
 
@@ -27,7 +28,11 @@ namespace vulkan {
 // Class to handle push constant.
 class PushConstant : public Resource {
  public:
-  PushConstant();
+  // |max_push_constant_size| must be the same value with
+  // maxPushConstantsSize of VkPhysicalDeviceLimits, which is an
+  // element of VkPhysicalDeviceProperties getting from
+  // vkGetPhysicalDeviceProperties().
+  explicit PushConstant(uint32_t max_push_constant_size);
   ~PushConstant() override;
 
   // Return a VkPushConstantRange structure that contains shader
@@ -48,20 +53,24 @@ class PushConstant : public Resource {
 
   // Resource
   VkDeviceMemory GetHostAccessMemory() const override {
-    return memory_;
+    return VK_NULL_HANDLE;
   }
   Result CopyToHost(VkCommandBuffer) override {
     return Result("Vulkan: should not call CopyToHost() for PushConstant");
   }
-  void Shutdown() override;
+  void Shutdown() override {}
 
  private:
+  // maxPushConstantsSize of VkPhysicalDeviceLimits, which is an
+  // element of VkPhysicalDeviceProperties getting from
+  // vkGetPhysicalDeviceProperties().
+  uint32_t max_push_constant_size_ = 0;
+
   // Keep the information of what and how to conduct push constant.
   std::vector<BufferData> push_constant_data_;
-  void* memory_ptr_ = nullptr;
 };
 
 }  // namespace vulkan
 }  // namespace amber
 
-#endif  // SRC_VULKAN_RESOURCE_H_
+#endif  // SRC_VULKAN_PUSH_CONSTANT_H_

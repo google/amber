@@ -55,6 +55,8 @@ void SetValueForBuffer(void* memory, const std::vector<Value>& values) {
 
 }  // namespace
 
+Resource::Resource() = default;
+
 Resource::Resource(VkDevice device,
                    size_t size_in_bytes,
                    const VkPhysicalDeviceMemoryProperties& properties)

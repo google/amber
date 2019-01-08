@@ -26,6 +26,7 @@ set(VULKAN_ENGINE_SOURCES
     graphics_pipeline.cc
     image.cc
     pipeline.cc
+    push_constant.cc
     resource.cc
     vertex_buffer.cc
 )

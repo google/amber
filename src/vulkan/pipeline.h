@@ -25,6 +25,7 @@
 #include "src/engine.h"
 #include "src/vulkan/command.h"
 #include "src/vulkan/descriptor.h"
+#include "src/vulkan/push_constant.h"
 #include "vulkan/vulkan.h"
 
 namespace amber {
@@ -47,6 +48,9 @@ class Pipeline {
   ComputePipeline* AsCompute();
 
   Result AddDescriptor(const BufferCommand*);
+
+  // Add information of how and what to do with push constant.
+  Result AddPushConstant(const BufferCommand* command);
 
   // Copy the contents of the resource bound to the given descriptor
   // to host memory.
@@ -124,6 +128,8 @@ class Pipeline {
                      std::string,
                      CastHash<VkShaderStageFlagBits>>
       entry_points_;
+
+  std::unique_ptr<PushConstant> push_constant_;
 };
 
 }  // namespace vulkan

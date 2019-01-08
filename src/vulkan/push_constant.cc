@@ -1,4 +1,4 @@
-// Copyright 2018 The Amber Authors.
+// Copyright 2019 The Amber Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,9 +14,14 @@
 
 #include "src/vulkan/push_constant.h"
 
-namespace amber {
+#include <algorithm>
+#include <cassert>
 
-PushConstant::PushConstant() = default;
+namespace amber {
+namespace vulkan {
+
+PushConstant::PushConstant(uint32_t max_push_constant_size)
+    : max_push_constant_size_(max_push_constant_size) {}
 
 PushConstant::~PushConstant() = default;
 
@@ -67,8 +72,10 @@ void PushConstant::RecordPushConstantVkCommand(VkCommandBuffer command_buffer,
   auto push_const_range = GetPushConstantRange();
 
   std::vector<uint8_t> memory(push_const_range.offset + push_const_range.size);
+  SetMemoryPtr(memory.data());
+
   for (const auto& data : push_constant_data_) {
-    UpdateMemoryWithData(memory.data(), data);
+    UpdateMemoryWithData(data);
   }
 
   // Based on spec, offset and size in bytes of push constant must
@@ -78,6 +85,7 @@ void PushConstant::RecordPushConstantVkCommand(VkCommandBuffer command_buffer,
   vkCmdPushConstants(command_buffer, pipeline_layout,
                      VK_SHADER_STAGE_ALL, push_const_range.offset,
                      push_const_range.size, &memory[push_const_range.offset]);
+  SetMemoryPtr(nullptr);
 }
 
 Result PushConstant::AddBufferData(const BufferCommand* command) {
@@ -92,4 +100,5 @@ Result PushConstant::AddBufferData(const BufferCommand* command) {
   return {};
 }
 
+}  // namespace vulkan
 }  // namespace amber

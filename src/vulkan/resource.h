@@ -18,6 +18,8 @@
 #include <memory>
 
 #include "amber/result.h"
+#include "src/datum_type.h"
+#include "src/value.h"
 #include "vulkan/vulkan.h"
 
 namespace amber {
@@ -56,6 +58,7 @@ class Resource {
   size_t GetSizeInBytes() const { return size_in_bytes_; }
 
  protected:
+  Resource();
   Resource(VkDevice device,
            size_t size,
            const VkPhysicalDeviceMemoryProperties& properties);
@@ -95,6 +98,11 @@ class Resource {
 
   Result MapMemory(VkDeviceMemory memory);
   void UnMapMemory(VkDeviceMemory memory);
+
+  // Set |memory_ptr_| as |ptr|. This must be used for only push constant.
+  // For Vulkan buffer and image i.e., Buffer and Image classes, we should
+  // not call this but uses MapMemory() method.
+  void SetMemoryPtr(void *ptr) { memory_ptr_ = ptr; }
 
   // Make all memory operations before calling this method effective i.e.,
   // prevent hazards caused by out-of-order execution.
