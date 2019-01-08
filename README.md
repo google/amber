@@ -51,6 +51,7 @@ ninja
 * Set up Android NDK path by running
   `export ANDROID_NDK_HOME=path/to/Android/NDK` in your shell.
 * Run `./build.sh`.
+* To remove outputs of Android build, just remove `android_sample/build/`.
 
 ### Optional Components
 

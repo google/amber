@@ -26,15 +26,13 @@ AAPT_PACK="$AAPT package -f -I
 DX="$ANDROID_SDK_HOME/build-tools/$ANDROID_BUILD_TOOL_VERSION/dx --dex"
 
 JAVAC="javac -classpath
-       $ANDROID_SDK_HOME/platforms/$ANDROID_PLATFORM/android.jar"
-JAVAC_BUILD="$JAVAC -sourcepath build/gen -d build"
+       $ANDROID_SDK_HOME/platforms/$ANDROID_PLATFORM/android.jar
+       -sourcepath build/gen -d build"
 
 ANDROID_CMAKE=`find $ANDROID_SDK_HOME -name 'cmake' -executable -type f`
 ANDROID_NINJA=`find $ANDROID_SDK_HOME -name 'ninja' -executable -type f`
 
 KEYTOOL_PASSWORD=changeit
-
-rm -rf build/$APK_NAME classes.dex com/ gen/
 
 mkdir -p build/gen build/output/lib/$ABI build/$BUILD_TYPE
 
@@ -85,7 +83,7 @@ $AAPT_PACK -m \
   -F "build/$APK_NAME" \
   --shared-lib build/output
 
-$JAVAC_BUILD build/gen/com/google/amber/*.java
+$JAVAC build/gen/com/google/amber/*.java
 $DX --output="build/classes.dex" build
 
 cd build
