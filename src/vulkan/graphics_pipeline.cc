@@ -30,7 +30,7 @@ const VkAttachmentDescription kDefaultAttachmentDesc = {
     VK_FORMAT_UNDEFINED,   /* format */
     VK_SAMPLE_COUNT_1_BIT, /* samples */
     // TODO(jaebaek): Set up proper loadOp, StoreOp.
-    VK_ATTACHMENT_LOAD_OP_LOAD,           /* loadOp */
+    VK_ATTACHMENT_LOAD_OP_DONT_CARE,      /* loadOp */
     VK_ATTACHMENT_STORE_OP_STORE,         /* storeOp */
     VK_ATTACHMENT_LOAD_OP_LOAD,           /* stencilLoadOp */
     VK_ATTACHMENT_STORE_OP_STORE,         /* stencilStoreOp */
