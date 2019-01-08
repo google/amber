@@ -1,5 +1,15 @@
 #!/bin/bash
 
+if [[ $1 == "" ]]; then
+  echo "Usage: $0 [build directory]"
+  exit 1
+fi
+
+BUILD_DIR=$1
+if [[ `ls $BUILD_DIR 2> /dev/null` == "" ]]; then
+  mkdir -p $BUILD_DIR
+fi
+
 if [[ $ANDROID_SDK_HOME == "" ]]; then
   echo "Error: set ANDROID_SDK_HOME environment variable and run it again e.g.,"
   echo "       $ export ANDROID_SDK_HOME=path/to/Android/SDK"
@@ -27,20 +37,20 @@ DX="$ANDROID_SDK_HOME/build-tools/$ANDROID_BUILD_TOOL_VERSION/dx --dex"
 
 JAVAC="javac -classpath
        $ANDROID_SDK_HOME/platforms/$ANDROID_PLATFORM/android.jar
-       -sourcepath build/gen -d build"
+       -sourcepath $BUILD_DIR/gen -d $BUILD_DIR"
 
 ANDROID_CMAKE=`find $ANDROID_SDK_HOME -name 'cmake' -executable -type f`
 ANDROID_NINJA=`find $ANDROID_SDK_HOME -name 'ninja' -executable -type f`
 
 KEYTOOL_PASSWORD=changeit
 
-mkdir -p build/gen build/output/lib/$ABI build/$BUILD_TYPE
+mkdir -p $BUILD_DIR/gen $BUILD_DIR/output/lib/$ABI $BUILD_DIR/$BUILD_TYPE
 
 echo "Step 1:"
-echo "Run cmake to build build/output/lib/$ABI/libamber_android.so ......"
+echo "Run cmake to build $BUILD_DIR/output/lib/$ABI/libamber_android.so ......"
 echo
 
-pushd build/$BUILD_TYPE
+pushd $BUILD_DIR/$BUILD_TYPE
 $ANDROID_CMAKE \
   -DANDROID_ABI=$ABI \
   -DANDROID_PLATFORM=$ANDROID_PLATFORM \
@@ -62,34 +72,34 @@ echo "Copy shared libraries for vulkan validation layer ......"
 echo
 
 cp $ANDROID_NDK_HOME/sources/third_party/vulkan/src/build-android/jniLibs/$ABI/*.so \
-  build/output/lib/$ABI
+  $BUILD_DIR/output/lib/$ABI
 
 echo
 echo "Step 3:"
-echo "Generate R.java and build/pack it to build/$APK_NAME ......"
+echo "Generate R.java and build/pack it to $BUILD_DIR/$APK_NAME ......"
 echo
 
 $AAPT_PACK --non-constant-id -m \
   -M AndroidManifest.xml \
   -S res \
-  -J build/gen/ \
+  -J $BUILD_DIR/gen/ \
   --generate-dependencies
 
 $AAPT_PACK -m \
   -M AndroidManifest.xml \
   -A assets \
   -S res \
-  -J "build/gen" \
-  -F "build/$APK_NAME" \
-  --shared-lib build/output
+  -J "$BUILD_DIR/gen" \
+  -F "$BUILD_DIR/$APK_NAME" \
+  --shared-lib $BUILD_DIR/output
 
-$JAVAC build/gen/com/google/amber/*.java
-$DX --output="build/classes.dex" build
+$JAVAC $BUILD_DIR/gen/com/google/amber/*.java
+$DX --output="$BUILD_DIR/classes.dex" $BUILD_DIR
 
-cd build
+cd $BUILD_DIR
 $AAPT_ADD $APK_NAME classes.dex
 
-if [[ `ls keystore.jks` == "" ]]; then
+if [[ `ls keystore.jks 2> /dev/null` == "" ]]; then
   echo
   echo "Extra step:"
   echo "Generate signing key ......"
@@ -104,7 +114,7 @@ fi
 
 echo
 echo "Step 4:"
-echo "Sign build/$APK_NAME ......"
+echo "Sign $BUILD_DIR/$APK_NAME ......"
 echo
 
 echo $KEYTOOL_PASSWORD | \
@@ -112,4 +122,4 @@ echo $KEYTOOL_PASSWORD | \
   --min-sdk-version 28 --ks keystore.jks $APK_NAME
 
 echo
-echo "Done. Your app must be build/$APK_NAME"
+echo "Done. Your app must be $BUILD_DIR/$APK_NAME"
