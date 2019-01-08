@@ -67,6 +67,7 @@ class BufferDescriptor : public Descriptor {
   }
 
   std::unique_ptr<Buffer> buffer_;
+  std::vector<std::unique_ptr<Buffer>> not_destroyed_buffers_;
 };
 
 }  // namespace vulkan
