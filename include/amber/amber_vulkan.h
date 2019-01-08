@@ -15,17 +15,22 @@
 #ifndef AMBER_AMBER_VULKAN_H_
 #define AMBER_AMBER_VULKAN_H_
 
+#include <limits>
 #include <string>
 #include <vector>
 
 #include "amber/amber.h"
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #include "vulkan/vulkan.h"
+#pragma clang diagnostic pop
 
 namespace amber {
 
 /// Configuration for the Vulkan Engine.
 struct VulkanEngineConfig : public EngineConfig {
-  /// The VkPhysicalDevice to be used for the tests.
+  /// The VkPhysicalDevice to use.
   VkPhysicalDevice physical_device = VK_NULL_HANDLE;
 
   /// Physical device features available for |physical_device|.
@@ -34,23 +39,15 @@ struct VulkanEngineConfig : public EngineConfig {
   /// Physical device extensions available for |physical_device|.
   std::vector<std::string> available_extensions;
 
-  /// The given queue family index to be used for the tests.
-  uint32_t queue_family_index;
+  /// The given queue family index to use.
+  uint32_t queue_family_index = std::numeric_limits<uint32_t>::max();
 
-  /// The VkQueue to be used for the tests.
-  VkQueue queue;
-
-  /// The VkDevice to be used for the tests.
+  /// The VkDevice to use.
   VkDevice device = VK_NULL_HANDLE;
+
+  /// The VkQueue to use.
+  VkQueue queue = VK_NULL_HANDLE;
 };
-
-/// Returns required physical device features from |recipes|.
-VkPhysicalDeviceFeatures GetRequiredVulkanFeatures(
-    const std::vector<const Recipe*>& recipes);
-
-/// Returns required physical device extensions from |recipes|.
-std::vector<std::string> GetRequiredVulkanExtensions(
-    const std::vector<const Recipe*>& recipes);
 
 }  // namespace amber
 

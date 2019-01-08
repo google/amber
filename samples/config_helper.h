@@ -1,4 +1,4 @@
-// Copyright 2018 The Amber Authors.
+// Copyright 2019 The Amber Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,71 +15,50 @@
 #ifndef SAMPLES_CONFIG_HELPER_H_
 #define SAMPLES_CONFIG_HELPER_H_
 
-#include <limits>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "amber/amber.h"
 
-#if AMBER_ENGINE_VULKAN
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#include "amber/amber_vulkan.h"
-#pragma clang diagnostic pop
-#endif  // AMBER_ENGINE_VULKAN
-
 namespace sample {
 
 // Proof of concept implementation showing how to provide and use
-// EngineConfig within sample amber program. This class creates
-// Vulkan instance and device.
+// EngineConfig within sample amber program.
+class ConfigHelperImpl {
+ public:
+  // Create instance and device and return them as amber::EngineConfig.
+  // |required_features| and |required_extensions| contain lists of
+  // required features and required extensions, respectively.
+  virtual std::unique_ptr<amber::EngineConfig> CreateConfig(
+      const std::vector<std::string>& required_features,
+      const std::vector<std::string>& required_extensions) = 0;
+
+  // Destroy instance and device.
+  virtual void Shutdown() = 0;
+};
+
+// Wrapper of ConfigHelperImpl.
 class ConfigHelper {
  public:
   ConfigHelper();
   ~ConfigHelper();
 
   // Create instance and device and return them as amber::EngineConfig.
-  // |recipes| contains the information of required features and
-  // extensions.
+  // |required_features| and |required_extensions| contain lists of
+  // required features and required extensions, respectively. |engine|
+  // indicates whether the caller required VulkanEngineConfig or
+  // DawnEngineConfig.
   std::unique_ptr<amber::EngineConfig> CreateConfig(
       amber::EngineType engine,
-      const std::vector<const amber::Recipe*>& recipes);
+      const std::vector<std::string>& required_features,
+      const std::vector<std::string>& required_extensions);
 
-  // Destroy Vulkan instance and device.
+  // Destroy instance and device.
   void Shutdown();
 
  private:
-#if AMBER_ENGINE_VULKAN
-  // Create Vulkan instance and device and return them as
-  // amber::VulkanEngineConfig. Required features and extensions
-  // are given in |recipes|.
-  std::unique_ptr<amber::VulkanEngineConfig> CreateVulkanConfig(
-      const std::vector<const amber::Recipe*>& recipes);
-
-  // Create Vulkan instance.
-  void CreateVulkanInstance();
-
-  // Choose Vulkan physical device that supports both
-  // |required_features| and |required_extensions|.
-  void ChooseVulkanPhysicalDevice(
-      const VkPhysicalDeviceFeatures& required_features,
-      const std::vector<std::string>& required_extensions);
-
-  // Create Vulkan logical device that enables both
-  // |required_features| and |required_extensions|.
-  void CreateVulkanDevice(const VkPhysicalDeviceFeatures& required_features,
-                          const std::vector<std::string>& required_extensions);
-
-  VkInstance vulkan_instance_ = VK_NULL_HANDLE;
-  VkPhysicalDevice vulkan_physical_device_ = VK_NULL_HANDLE;
-  VkPhysicalDeviceFeatures available_features_ = {};
-  std::vector<std::string> available_extensions_;
-  uint32_t vulkan_queue_family_index_ = std::numeric_limits<uint32_t>::max();
-  VkQueue vulkan_queue_ = VK_NULL_HANDLE;
-  VkDevice vulkan_device_ = VK_NULL_HANDLE;
-#endif  // AMBER_ENGINE_VULKAN
+  std::unique_ptr<ConfigHelperImpl> impl_;
 };
 
 }  // namespace sample

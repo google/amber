@@ -13,7 +13,6 @@
 # limitations under the License.
 
 set(VULKAN_ENGINE_SOURCES
-    amber_vulkan.cc
     bit_copy.cc
     buffer.cc
     buffer_descriptor.cc

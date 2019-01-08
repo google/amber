@@ -99,6 +99,9 @@ Result EngineVulkan::InitializeWithConfig(
   if (vk_config->device == VK_NULL_HANDLE)
     return Result("Vulkan::InitializeWithConfig device handle is null.");
 
+  if (vk_config->queue == VK_NULL_HANDLE)
+    return Result("Vulkan::InitializeWithConfig queue handle is null.");
+
   device_ = MakeUnique<Device>(
       vk_config->physical_device, vk_config->available_features,
       vk_config->available_extensions, vk_config->queue_family_index,
