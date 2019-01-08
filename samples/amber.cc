@@ -44,7 +44,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
 
  options:
   -p             -- Parse input files only; Don't execute.
-  -s             -- Print summary of pass/failure if any failures exist.
+  -s             -- Print summary of pass/failure.
   -i <filename>  -- Write rendering to <filename> as a PPM image.
   -b <filename>  -- Write contents of a UBO or SSBO to <filename>.
   -B <buffer>    -- Index of buffer to write. Defaults buffer 0.
@@ -231,10 +231,10 @@ int main(int argc, const char** argv) {
   std::set<std::string> required_extensions;
   for (const auto& recipe_data_elem : recipe_data) {
     const auto features = recipe_data_elem.recipe->GetRequiredFeatures();
-    required_features.insert(features.begin(), features.begin());
+    required_features.insert(features.begin(), features.end());
 
     const auto extensions = recipe_data_elem.recipe->GetRequiredExtensions();
-    required_extensions.insert(extensions.begin(), extensions.begin());
+    required_extensions.insert(extensions.begin(), extensions.end());
   }
 
   sample::ConfigHelper config_helper;
@@ -268,11 +268,13 @@ int main(int argc, const char** argv) {
     }
   }
 
-  if (options.show_summary && !failures.empty()) {
-    std::cout << "\nSummary of Failures:" << std::endl;
+  if (options.show_summary) {
+    if (!failures.empty()) {
+      std::cout << "\nSummary of Failures:" << std::endl;
 
-    for (const auto& failure : failures)
-      std::cout << "  " << failure << std::endl;
+      for (const auto& failure : failures)
+        std::cout << "  " << failure << std::endl;
+    }
 
     std::cout << "\nSummary: "
               << (options.input_filenames.size() - failures.size()) << " pass, "

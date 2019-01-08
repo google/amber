@@ -27,6 +27,8 @@ namespace sample {
 // EngineConfig within sample amber program.
 class ConfigHelperImpl {
  public:
+  virtual ~ConfigHelperImpl();
+
   // Create instance and device and return them as amber::EngineConfig.
   // |required_features| and |required_extensions| contain lists of
   // required features and required extensions, respectively.

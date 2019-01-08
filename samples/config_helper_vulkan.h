@@ -30,7 +30,7 @@ namespace sample {
 class ConfigHelperVulkan : public ConfigHelperImpl {
  public:
   ConfigHelperVulkan();
-  ~ConfigHelperVulkan();
+  ~ConfigHelperVulkan() override;
 
   // Create Vulkan instance and device and return them as
   // amber::VulkanEngineConfig. Required Vulkan device features and

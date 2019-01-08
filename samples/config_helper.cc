@@ -28,6 +28,8 @@
 
 namespace sample {
 
+ConfigHelperImpl::~ConfigHelperImpl() = default;
+
 ConfigHelper::ConfigHelper() = default;
 
 ConfigHelper::~ConfigHelper() = default;
