@@ -92,11 +92,9 @@ void BufferDescriptor::UpdateResourceIfNeeded(VkCommandBuffer command) {
   if (buffer_data_queue.empty())
     return;
 
-  HandleValueWithMemory memory_updater;
-  for (const auto& data : buffer_data_queue) {
-    memory_updater.UpdateMemoryWithData(buffer_->HostAccessibleMemoryPtr(),
-                                        data);
-  }
+  for (const auto& data : buffer_data_queue)
+    buffer_->UpdateMemoryWithData(data);
+
   ClearBufferDataQueue();
 
   buffer_->CopyToDevice(command);

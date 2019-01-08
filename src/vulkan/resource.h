@@ -23,6 +23,18 @@
 namespace amber {
 namespace vulkan {
 
+// Contain information of updating memory
+// [|offset|, |offset| + |size_in_bytes|) with |values| whose data
+// type is |type|.
+struct BufferData {
+  DataType type;
+  uint32_t offset;
+  size_t size_in_bytes;
+  std::vector<Value> values;
+};
+
+// Class for Vulkan resources. Its children are Vulkan Buffer, Vulkan Image,
+// and a class for push constant.
 class Resource {
  public:
   virtual ~Resource();
@@ -34,6 +46,10 @@ class Resource {
   virtual Result CopyToHost(VkCommandBuffer command) = 0;
 
   virtual void Shutdown();
+
+  // Update |memory_ptr_| from |offset| of |data| to |offset| + |size_in_bytes|
+  // of |data| with |values| of |data|.
+  void UpdateMemoryWithData(const BufferData& data);
 
   void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
 

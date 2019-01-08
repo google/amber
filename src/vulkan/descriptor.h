@@ -21,7 +21,7 @@
 #include "amber/result.h"
 #include "src/datum_type.h"
 #include "src/engine.h"
-#include "src/vulkan/handle_value_with_memory.h"
+#include "src/vulkan/resource.h"
 #include "vulkan/vulkan.h"
 
 namespace amber {

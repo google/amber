@@ -101,7 +101,7 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
   BindVkDescriptorSets();
   BindVkPipeline();
 
-  PushConstants();
+  RecordPushConstant();
 
   vkCmdDispatch(command_->GetCommandBuffer(), x, y, z);
   return {};

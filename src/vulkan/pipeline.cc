@@ -172,45 +172,6 @@ Result Pipeline::CreateDescriptorSets() {
   return {};
 }
 
-VkPushConstantRange Pipeline::GetPushConstantRange() {
-  if (push_constant_data_.empty())
-    return {};
-
-  auto it =
-      std::min_element(push_constant_data_.begin(), push_constant_data_.end(),
-                       [](const BufferData& a, const BufferData& b) {
-                         return a.offset < b.offset;
-                       });
-  if (it == push_constant_data_.end())
-    return {};
-
-  uint32_t first_offset = it->offset;
-
-  it = std::max_element(
-      push_constant_data_.begin(), push_constant_data_.end(),
-      [](const BufferData& a, const BufferData& b) {
-        return a.offset + static_cast<uint32_t>(a.size_in_bytes) <
-               b.offset + static_cast<uint32_t>(b.size_in_bytes);
-      });
-  if (it == push_constant_data_.end())
-    return {};
-
-  uint32_t size_in_bytes =
-      it->offset + static_cast<uint32_t>(it->size_in_bytes) - first_offset;
-
-  VkPushConstantRange range = {};
-  range.stageFlags = VK_SHADER_STAGE_ALL;
-
-  // Based on Vulkan spec, range.offset must be multiple of 4.
-  range.offset = (first_offset / 4U) * 4U;
-
-  // Based on Vulkan spec, range.size must be multiple of 4.
-  assert(size_in_bytes + 3U <= std::numeric_limits<uint32_t>::max());
-  range.size = ((size_in_bytes + 3U) / 4U) * 4U;
-
-  return range;
-}
-
 Result Pipeline::CreatePipelineLayout() {
   std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
   for (const auto& desc_set : descriptor_set_info_)
@@ -224,7 +185,7 @@ Result Pipeline::CreatePipelineLayout() {
 
   VkPushConstantRange push_const_range = {};
   if (!push_constant_data_.empty()) {
-    push_const_range = GetPushConstantRange();
+    push_const_range = push_constant_->GetPushConstantRange();
     pipeline_layout_info.pushConstantRangeCount = 1U;
     pipeline_layout_info.pPushConstantRanges = &push_const_range;
   }
@@ -273,25 +234,9 @@ Result Pipeline::UpdateDescriptorSetsIfNeeded() {
   return {};
 }
 
-void Pipeline::PushConstants() {
-  if (push_constant_data_.empty())
-    return;
-
-  auto push_const_range = GetPushConstantRange();
-
-  HandleValueWithMemory memory_updater;
-  std::vector<uint8_t> memory(push_const_range.offset + push_const_range.size);
-  for (const auto& data : push_constant_data_) {
-    memory_updater.UpdateMemoryWithData(memory.data(), data);
-  }
-
-  // Based on spec, offset and size in bytes of push constant must
-  // be multiple of 4.
-  assert(push_const_range.offset % 4U == 0 && push_const_range.size % 4U == 0);
-
-  vkCmdPushConstants(command_->GetCommandBuffer(), pipeline_layout_,
-                     VK_SHADER_STAGE_ALL, push_const_range.offset,
-                     push_const_range.size, &memory[push_const_range.offset]);
+void Pipeline::RecordPushConstant() {
+  push_constant_->RecordPushConstantVkCommand(command_->GetCommandBuffer(),
+                                              pipeline_layout_);
 }
 
 Result Pipeline::AddPushConstant(const BufferCommand* command) {
@@ -299,10 +244,6 @@ Result Pipeline::AddPushConstant(const BufferCommand* command) {
     return Result(
         "Pipeline::AddPushConstant BufferCommand type is not push constant");
 
-  // TODO(jaebaek): push constant -> compute -> push constant -> compute
-  //                The second compute maybe have different push constant
-  //                ranges. Doublecheck if we update |pipeline_layout_| properly
-  //                in that case.
   if (descriptor_related_objects_already_created_) {
     for (auto& info : descriptor_set_info_) {
       vkDestroyDescriptorSetLayout(device_, info.layout, nullptr);
@@ -318,11 +259,7 @@ Result Pipeline::AddPushConstant(const BufferCommand* command) {
     descriptor_related_objects_already_created_ = false;
   }
 
-  push_constant_data_.push_back({command->GetDatumType().GetType(),
-                                 command->GetOffset(), command->GetSize(),
-                                 command->GetValues()});
-
-  return {};
+  return push_constant_->AddBufferData(command);
 }
 
 Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {

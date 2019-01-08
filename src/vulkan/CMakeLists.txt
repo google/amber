@@ -24,7 +24,6 @@ set(VULKAN_ENGINE_SOURCES
     format_data.cc
     frame_buffer.cc
     graphics_pipeline.cc
-    handle_value_with_memory.cc
     image.cc
     pipeline.cc
     resource.cc

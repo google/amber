@@ -44,6 +44,15 @@ VkMemoryBarrier kMemoryBarrierForAll = {
         VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT |
         VK_ACCESS_HOST_READ_BIT | VK_ACCESS_HOST_WRITE_BIT};
 
+template <typename T>
+void SetValueForBuffer(void* memory, const std::vector<Value>& values) {
+  T* ptr = static_cast<T*>(memory);
+  for (const auto& v : values) {
+    *ptr = static_cast<T>(v.IsInteger() ? v.AsUint64() : v.AsDouble());
+    ++ptr;
+  }
+}
+
 }  // namespace
 
 Resource::Resource(VkDevice device,
@@ -54,6 +63,34 @@ Resource::Resource(VkDevice device,
       physical_memory_properties_(properties) {}
 
 Resource::~Resource() = default;
+
+void Resource::UpdateMemoryWithData(const BufferData& data) {
+  uint8_t* ptr = static_cast<uint8_t*>(memory_ptr_) + data.offset;
+  switch (data.type) {
+    case DataType::kInt8:
+    case DataType::kUint8:
+      SetValueForBuffer<uint8_t>(ptr, data.values);
+      break;
+    case DataType::kInt16:
+    case DataType::kUint16:
+      SetValueForBuffer<uint16_t>(ptr, data.values);
+      break;
+    case DataType::kInt32:
+    case DataType::kUint32:
+      SetValueForBuffer<uint32_t>(ptr, data.values);
+      break;
+    case DataType::kInt64:
+    case DataType::kUint64:
+      SetValueForBuffer<uint64_t>(ptr, data.values);
+      break;
+    case DataType::kFloat:
+      SetValueForBuffer<float>(ptr, data.values);
+      break;
+    case DataType::kDouble:
+      SetValueForBuffer<double>(ptr, data.values);
+      break;
+  }
+}
 
 void Resource::Shutdown() {
   UnMapMemory(host_accessible_memory_);
