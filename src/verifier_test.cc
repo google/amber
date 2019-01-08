@@ -36,13 +36,6 @@ TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
   probe.SetB(0.2f);
   probe.SetA(0.8f);
 
-  EXPECT_TRUE(probe.IsWholeWindow());
-  EXPECT_TRUE(probe.IsRGBA());
-  EXPECT_FLOAT_EQ(0.5f, probe.GetR());
-  EXPECT_FLOAT_EQ(0.25f, probe.GetG());
-  EXPECT_FLOAT_EQ(0.2f, probe.GetB());
-  EXPECT_FLOAT_EQ(0.8f, probe.GetA());
-
   const uint8_t frame_buffer[3][3][4] = {
       {
           {128, 64, 51, 204},
@@ -80,18 +73,6 @@ TEST_F(VerifierTest, ProbeFrameBufferRelative) {
   probe.SetB(0.2f);
   probe.SetA(0.8f);
 
-  EXPECT_FALSE(probe.IsWholeWindow());
-  EXPECT_TRUE(probe.IsRelative());
-  EXPECT_TRUE(probe.IsRGBA());
-  EXPECT_FLOAT_EQ(0.1f, probe.GetX());
-  EXPECT_FLOAT_EQ(0.2f, probe.GetY());
-  EXPECT_FLOAT_EQ(0.4f, probe.GetWidth());
-  EXPECT_FLOAT_EQ(0.6f, probe.GetHeight());
-  EXPECT_FLOAT_EQ(0.5f, probe.GetR());
-  EXPECT_FLOAT_EQ(0.25f, probe.GetG());
-  EXPECT_FLOAT_EQ(0.2f, probe.GetB());
-  EXPECT_FLOAT_EQ(0.8f, probe.GetA());
-
   uint8_t frame_buffer[10][10][4] = {};
   for (uint8_t x = 1; x < 5; ++x) {
     for (uint8_t y = 2; y < 8; ++y) {
@@ -121,18 +102,6 @@ TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
   probe.SetB(0.0f);
   probe.SetA(0.0f);
 
-  EXPECT_FALSE(probe.IsWholeWindow());
-  EXPECT_TRUE(probe.IsRelative());
-  EXPECT_TRUE(probe.IsRGBA());
-  EXPECT_FLOAT_EQ(0.9f, probe.GetX());
-  EXPECT_FLOAT_EQ(0.9f, probe.GetY());
-  EXPECT_FLOAT_EQ(0.1f, probe.GetWidth());
-  EXPECT_FLOAT_EQ(0.1f, probe.GetHeight());
-  EXPECT_FLOAT_EQ(0.1f, probe.GetR());
-  EXPECT_FLOAT_EQ(0.0f, probe.GetG());
-  EXPECT_FLOAT_EQ(0.0f, probe.GetB());
-  EXPECT_FLOAT_EQ(0.0f, probe.GetA());
-
   uint8_t frame_buffer[250][250][4] = {};
 
   Verifier verifier;
@@ -157,18 +126,6 @@ TEST_F(VerifierTest, ProbeFrameBuffer) {
   probe.SetB(0.2f);
   probe.SetA(0.8f);
 
-  EXPECT_FALSE(probe.IsWholeWindow());
-  EXPECT_FALSE(probe.IsRelative());
-  EXPECT_TRUE(probe.IsRGBA());
-  EXPECT_FLOAT_EQ(1.0f, probe.GetX());
-  EXPECT_FLOAT_EQ(2.0f, probe.GetY());
-  EXPECT_FLOAT_EQ(4.0f, probe.GetWidth());
-  EXPECT_FLOAT_EQ(6.0f, probe.GetHeight());
-  EXPECT_FLOAT_EQ(0.5f, probe.GetR());
-  EXPECT_FLOAT_EQ(0.25f, probe.GetG());
-  EXPECT_FLOAT_EQ(0.2f, probe.GetB());
-  EXPECT_FLOAT_EQ(0.8f, probe.GetA());
-
   uint8_t frame_buffer[10][10][4] = {};
   for (uint8_t x = 1; x < 5; ++x) {
     for (uint8_t y = 2; y < 8; ++y) {
@@ -191,14 +148,6 @@ TEST_F(VerifierTest, ProbeFrameBufferRGB) {
   probe.SetR(0.5f);
   probe.SetG(0.25f);
   probe.SetB(0.2f);
-
-  EXPECT_TRUE(probe.IsWholeWindow());
-  EXPECT_FALSE(probe.IsRelative());
-  EXPECT_FALSE(probe.IsRGBA());
-  EXPECT_FLOAT_EQ(0.5f, probe.GetR());
-  EXPECT_FLOAT_EQ(0.25f, probe.GetG());
-  EXPECT_FLOAT_EQ(0.2f, probe.GetB());
-  EXPECT_FLOAT_EQ(0.0f, probe.GetA());
 
   const uint8_t frame_buffer[3][3][4] = {
       {
