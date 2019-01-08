@@ -38,6 +38,7 @@ class Device {
   void Shutdown();
 
   VkDevice GetDevice() const { return device_; }
+  VkPhysicalDevice GetPhysicalDevice() const { return physical_device_; }
   uint32_t GetQueueFamilyIndex() const { return queue_family_index_; }
   VkQueue GetQueue() const { return queue_; }
   const VkPhysicalDeviceMemoryProperties& GetPhysicalMemoryProperties() const {
