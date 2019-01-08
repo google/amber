@@ -630,9 +630,8 @@ Result Device::ChoosePhysicalDevice(
 Result Device::CreateDevice(
     const std::vector<Feature>& required_features,
     const std::vector<std::string>& required_extensions) {
-  VkDeviceQueueCreateInfo queue_info;
+  VkDeviceQueueCreateInfo queue_info = {};
   const float priorities[] = {1.0f};
-
   queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
   queue_info.queueFamilyIndex = queue_family_index_;
   queue_info.queueCount = 1;
