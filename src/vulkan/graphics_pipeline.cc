@@ -51,7 +51,7 @@ const VkPipelineRasterizationStateCreateInfo kDefaultRasterizationInfo = {
     0,                       /* depthBiasConstantFactor */
     0,                       /* depthBiasClamp */
     0,                       /* depthBiasSlopeFactor */
-    0,                       /* lineWidth */
+    1.0f,                    /* lineWidth */
 };
 
 const VkSampleMask kSampleMask = ~0U;
