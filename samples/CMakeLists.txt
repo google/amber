@@ -16,8 +16,13 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 
 set(AMBER_SOURCES
     amber.cc
+    config_helper.cc
     ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
 )
+
+if (${Vulkan_FOUND})
+  set(AMBER_SOURCES ${AMBER_SOURCES} config_helper_vulkan.cc)
+endif()
 
 add_executable(amber ${AMBER_SOURCES})
 target_include_directories(amber PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/..")

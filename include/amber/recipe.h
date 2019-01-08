@@ -16,6 +16,7 @@
 #define AMBER_RECIPE_H_
 
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -30,6 +31,12 @@ class RecipeImpl {
 
   /// Retrieves information on all the shaders in the given recipe.
   virtual std::vector<ShaderInfo> GetShaderInfo() const = 0;
+
+  /// Returns required features in the given recipe.
+  virtual std::vector<std::string> GetRequiredFeatures() const = 0;
+
+  /// Returns required extensions in the given recipe.
+  virtual std::vector<std::string> GetRequiredExtensions() const = 0;
 
  protected:
   RecipeImpl();
@@ -46,6 +53,12 @@ class Recipe {
 
   RecipeImpl* GetImpl() const { return impl_.get(); }
   void SetImpl(std::unique_ptr<RecipeImpl> impl) { impl_ = std::move(impl); }
+
+  /// Returns required features in the given recipe.
+  std::vector<std::string> GetRequiredFeatures() const;
+
+  /// Returns required extensions in the given recipe.
+  std::vector<std::string> GetRequiredExtensions() const;
 
  private:
   std::unique_ptr<RecipeImpl> impl_;
