@@ -108,6 +108,43 @@ TEST_F(VerifierTest, ProbeFrameBufferRelative) {
   EXPECT_TRUE(r.IsSuccess());
 }
 
+TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
+  ProbeCommand probe;
+  probe.SetRelative();
+  probe.SetIsRGBA();
+  probe.SetX(0.9f);
+  probe.SetY(0.9f);
+  probe.SetWidth(0.1f);
+  probe.SetHeight(0.1f);
+  probe.SetR(0.1f);
+  probe.SetG(0.0);
+  probe.SetB(0.0f);
+  probe.SetA(0.0f);
+
+  EXPECT_FALSE(probe.IsWholeWindow());
+  EXPECT_TRUE(probe.IsRelative());
+  EXPECT_TRUE(probe.IsRGBA());
+  EXPECT_FLOAT_EQ(0.9f, probe.GetX());
+  EXPECT_FLOAT_EQ(0.9f, probe.GetY());
+  EXPECT_FLOAT_EQ(0.1f, probe.GetWidth());
+  EXPECT_FLOAT_EQ(0.1f, probe.GetHeight());
+  EXPECT_FLOAT_EQ(0.1f, probe.GetR());
+  EXPECT_FLOAT_EQ(0.0f, probe.GetG());
+  EXPECT_FLOAT_EQ(0.0f, probe.GetB());
+  EXPECT_FLOAT_EQ(0.0f, probe.GetA());
+
+  uint8_t frame_buffer[250][250][4] = {};
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, 4, 1000, 250, 250,
+                            static_cast<const void*>(frame_buffer));
+  EXPECT_STREQ(
+      "Probe failed at: 225, 225\n  Expected RGBA: 25.500000, 0.000000, "
+      "0.000000, 0.000000\n  Actual RGBA: 0, 0, 0, 0\nProbe failed in 625 "
+      "pixels",
+      r.Error().c_str());
+}
+
 TEST_F(VerifierTest, ProbeFrameBuffer) {
   ProbeCommand probe;
   probe.SetIsRGBA();
