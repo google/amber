@@ -29,4 +29,12 @@ std::vector<ShaderInfo> Recipe::GetShaderInfo() const {
   return impl_->GetShaderInfo();
 }
 
+std::vector<std::string> Recipe::GetRequiredFeatures() const {
+  return impl_ ? impl_->GetRequiredFeatures() : std::vector<std::string>();
+}
+
+std::vector<std::string> Recipe::GetRequiredExtensions() const {
+  return impl_ ? impl_->GetRequiredExtensions() : std::vector<std::string>();
+}
+
 }  // namespace amber
