@@ -29,8 +29,6 @@ This is not an officially supported Google product.
  * CMake
  * Ninja (or other build tool)
  * Recommended: Python, for fetching dependencies
- * Android SDK 28 (or change `ANDROID_PLATFORM` in `android_sample/build.sh`),
-   NDK, Java 8 for Android
 
 
 ## Building
@@ -46,11 +44,17 @@ ninja
 
 ### Android
 
+* Android build needs Android SDK 28, Android NDK 16, Java 8. If you prefer
+  other versions of Android SDK, Android NDK, Java, then you can change
+  `ANDROID_PLATFORM` and `ANDROID_BUILD_TOOL_VERSION` in
+  `tools/build-amber-sample.sh`.
 * Set up Android SDK path by running
   `export ANDROID_SDK_HOME=path/to/Android/SDK` in your shell.
 * Set up Android NDK path by running
   `export ANDROID_NDK_HOME=path/to/Android/NDK` in your shell.
-* Run `./build.sh [build output directory path]`.
+* Generate a KeyStore using `keytool` command and set up `KEY_STORE_PATH`
+  env variable for the KeyStore file path.
+* Run `./tools/build-amber-sample.sh [build output directory path]`.
 
 ### Optional Components
 

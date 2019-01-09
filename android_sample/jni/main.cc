@@ -28,7 +28,7 @@ const char* kTAG = "Amber";
 #define LOGE(...) \
   ((void)__android_log_print(ANDROID_LOG_ERROR, kTAG, __VA_ARGS__))
 
-void amber_main(android_app* app) {
+void amber_sample_main(android_app* app) {
   amber::android::AmberScriptLoader loader(app);
 
   amber::Result r = loader.LoadAllScriptsFromAsset();
@@ -77,7 +77,7 @@ void amber_main(android_app* app) {
 void handle_cmd(android_app* app, int32_t cmd) {
   switch (cmd) {
     case APP_CMD_INIT_WINDOW:
-      amber_main(app);
+      amber_sample_main(app);
       break;
     case APP_CMD_TERM_WINDOW:
       break;
@@ -97,10 +97,10 @@ void android_main(struct android_app* app) {
   android_poll_source* source;
 
   // Main loop
-  do {
+  while (app->destroyRequested == 0) {
     if (ALooper_pollAll(1, nullptr, &events, (void**)&source) >= 0) {
       if (source != NULL)
         source->process(app, source);
     }
-  } while (app->destroyRequested == 0);
+  }
 }

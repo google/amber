@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required(VERSION 3.1)
 
 # build native_app_glue as a static lib
 set(APP_GLUE_DIR ${ANDROID_NDK}/sources/android/native_app_glue)
@@ -24,12 +24,12 @@ add_library(app-glue STATIC
 set(SRC_DIR jni)
 
 add_library(amber_android SHARED
-  ${SRC_DIR}/main.cpp
-  ${SRC_DIR}/amber_script.cpp)
+  ${SRC_DIR}/main.cc
+  ${SRC_DIR}/amber_script.cc)
 
 include_directories(${SRC_DIR})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror \
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror \
                      -DVK_USE_PLATFORM_ANDROID_KHR")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} \
                                -u ANativeActivity_onCreate")

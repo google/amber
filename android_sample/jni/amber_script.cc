@@ -20,10 +20,10 @@ namespace amber {
 namespace android {
 namespace {
 
-const std::string kAmberDir("amber/");
-const std::string kAmberScriptExtension(".amber");
-const std::string kShaderNameSignature(".vk_shader_");
-const std::string kShaderExtension(".spv");
+const char* kAmberDir = "amber/";
+const char* kAmberScriptExtension = ".amber";
+const char* kShaderNameSignature = ".vk_shader_";
+const char* kShaderExtension = ".spv";
 
 bool IsEndedWith(const std::string& path, const std::string& end) {
   const size_t path_size = path.size();
@@ -100,8 +100,8 @@ std::vector<std::string>
 AmberScriptLoader::FindAllScriptsAndReturnShaderNames() {
   std::vector<std::string> shaders;
 
-  AAssetDir* asset = AAssetManager_openDir(app_context_->activity->assetManager,
-                                           kAmberDir.c_str());
+  AAssetDir* asset =
+      AAssetManager_openDir(app_context_->activity->assetManager, kAmberDir);
   for (const char* file_name = AAssetDir_getNextFileName(asset); file_name;
        file_name = AAssetDir_getNextFileName(asset)) {
     std::string file_name_in_string(file_name);
@@ -128,7 +128,7 @@ std::vector<uint8_t> AmberScriptLoader::ReadContent(
 
   size_t size_in_bytes = AAsset_getLength(asset);
 
-  // Initialize vector as zeros.
+  // Allocate a memory chunk whose size in bytes is |size_in_bytes|.
   std::vector<uint8_t> content(size_in_bytes);
 
   AAsset_read(asset, content.data(), size_in_bytes);
@@ -139,8 +139,7 @@ std::vector<uint8_t> AmberScriptLoader::ReadContent(
 
 std::string AmberScriptLoader::ReadScript(const std::string& script_name) {
   auto content = ReadContent(script_name);
-  return std::string(reinterpret_cast<char*>(&*content.begin()),
-                     reinterpret_cast<char*>(&*content.end()));
+  return std::string(reinterpret_cast<char*>(content.data()));
 }
 
 std::vector<uint32_t> AmberScriptLoader::ReadSpvShader(
@@ -149,8 +148,9 @@ std::vector<uint32_t> AmberScriptLoader::ReadSpvShader(
   if (content.size() % sizeof(uint32_t) != 0)
     return std::vector<uint32_t>();
 
-  return std::vector<uint32_t>(reinterpret_cast<uint32_t*>(&*content.begin()),
-                               reinterpret_cast<uint32_t*>(&*content.end()));
+  return std::vector<uint32_t>(
+      reinterpret_cast<uint32_t*>(content.data()),
+      reinterpret_cast<uint32_t*>(content.data() + content.size()));
 }
 
 }  // namespace android
