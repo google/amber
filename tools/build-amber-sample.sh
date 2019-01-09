@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -x
+
 if [[ $1 == "" ]]; then
   echo "Usage: $0 [build directory]"
   exit 1
@@ -46,15 +48,13 @@ if [[ $KEY_STORE_PATH == "" ]]; then
   exit 1
 fi
 
-set -x
-
 ANDROID_SOURCE_DIR=$(dirname $(readlink -f $0))/../android_sample
 
 APK_NAME=AmberSample.apk
 ANDROID_PLATFORM=android-28
 ANDROID_BUILD_TOOL_VERSION=28.0.0
 ABI=arm64-v8a
-BUILD_TYPE=Debug
+BUILD_TYPE=Release
 
 AAPT=$ANDROID_SDK_HOME/build-tools/$ANDROID_BUILD_TOOL_VERSION/aapt
 AAPT_ADD="$AAPT add"
@@ -117,7 +117,4 @@ $AAPT_ADD $APK_NAME classes.dex
 $ANDROID_SDK_HOME/build-tools/$ANDROID_BUILD_TOOL_VERSION/apksigner sign \
 --min-sdk-version 28 --ks $KEY_STORE_PATH $APK_NAME
 
-set +x
-
-echo
-echo "Done. Your app must be $BUILD_DIR/$APK_NAME"
+echo "Successfully built $BUILD_DIR/$APK_NAME"

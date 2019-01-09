@@ -20,10 +20,10 @@ namespace amber {
 namespace android {
 namespace {
 
-const char* kAmberDir = "amber/";
-const char* kAmberScriptExtension = ".amber";
-const char* kShaderNameSignature = ".vk_shader_";
-const char* kShaderExtension = ".spv";
+const char kAmberDir[] = "amber/";
+const char kAmberScriptExtension[] = ".amber";
+const char kShaderNameSignature[] = ".vk_shader_";
+const char kShaderExtension[] = ".spv";
 
 bool IsEndedWith(const std::string& path, const std::string& end) {
   const size_t path_size = path.size();
