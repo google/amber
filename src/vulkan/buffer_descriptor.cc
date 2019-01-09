@@ -88,18 +88,22 @@ Result BufferDescriptor::CreateOrResizeIfNeeded(
   return {};
 }
 
-void BufferDescriptor::UpdateResourceIfNeeded(VkCommandBuffer command) {
+Result BufferDescriptor::UpdateResourceIfNeeded(VkCommandBuffer command) {
   const auto& buffer_data_queue = GetBufferDataQueue();
 
   if (buffer_data_queue.empty())
-    return;
+    return {};
 
-  for (const auto& data : buffer_data_queue)
-    buffer_->UpdateMemoryWithData(data);
+  for (const auto& data : buffer_data_queue) {
+    Result r = buffer_->UpdateMemoryWithData(data);
+    if (!r.IsSuccess())
+      return r;
+  }
 
   ClearBufferDataQueue();
 
   buffer_->CopyToDevice(command);
+  return {};
 }
 
 Result BufferDescriptor::SendDataToHostIfNeeded(VkCommandBuffer command) {

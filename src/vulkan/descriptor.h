@@ -106,7 +106,7 @@ class Descriptor {
   // Record a command for copying data in |buffer_data_queue_| to the
   // resource in device. Note that it only records the command and the
   // actual submission must be done later.
-  virtual void UpdateResourceIfNeeded(VkCommandBuffer command) = 0;
+  virtual Result UpdateResourceIfNeeded(VkCommandBuffer command) = 0;
 
   // Only record the copy command for sending the bound resource
   // data to the host accessible memory. The actual submission of

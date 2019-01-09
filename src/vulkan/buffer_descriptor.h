@@ -43,7 +43,7 @@ class BufferDescriptor : public Descriptor {
   Result CreateOrResizeIfNeeded(
       VkCommandBuffer command,
       const VkPhysicalDeviceMemoryProperties& properties) override;
-  void UpdateResourceIfNeeded(VkCommandBuffer command) override;
+  Result UpdateResourceIfNeeded(VkCommandBuffer command) override;
   Result SendDataToHostIfNeeded(VkCommandBuffer command) override;
   Result UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
   ResourceInfo GetResourceInfo() override;

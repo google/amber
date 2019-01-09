@@ -22,7 +22,8 @@ namespace amber {
 namespace vulkan {
 
 PushConstant::PushConstant(uint32_t max_push_constant_size)
-    : max_push_constant_size_(max_push_constant_size),
+    : Resource(VK_NULL_HANDLE, max_push_constant_size, {}),
+      max_push_constant_size_(max_push_constant_size),
       memory_(std::unique_ptr<uint8_t>(new uint8_t[max_push_constant_size])) {
   SetMemoryPtr(static_cast<void*>(memory_.get()));
 }
@@ -38,8 +39,7 @@ VkPushConstantRange PushConstant::GetPushConstantRange() {
                        [](const BufferData& a, const BufferData& b) {
                          return a.offset < b.offset;
                        });
-  if (it == push_constant_data_.end())
-    return {};
+  assert(it != push_constant_data_.end());
 
   uint32_t first_offset = it->offset;
 
@@ -49,8 +49,7 @@ VkPushConstantRange PushConstant::GetPushConstantRange() {
         return a.offset + static_cast<uint32_t>(a.size_in_bytes) <
                b.offset + static_cast<uint32_t>(b.size_in_bytes);
       });
-  if (it == push_constant_data_.end())
-    return {};
+  assert(it != push_constant_data_.end());
 
   uint32_t size_in_bytes =
       it->offset + static_cast<uint32_t>(it->size_in_bytes) - first_offset;
@@ -83,7 +82,9 @@ Result PushConstant::RecordPushConstantVkCommand(
   }
 
   for (const auto& data : push_constant_data_) {
-    UpdateMemoryWithData(data);
+    Result r = UpdateMemoryWithData(data);
+    if (!r.IsSuccess())
+      return r;
   }
 
   // Based on spec, offset and size in bytes of push constant must
@@ -101,9 +102,11 @@ Result PushConstant::AddBufferData(const BufferCommand* command) {
     return Result(
         "PushConstant::AddBufferData BufferCommand type is not push constant");
 
-  push_constant_data_.push_back({command->GetDatumType().GetType(),
-                                 command->GetOffset(), command->GetSize(),
-                                 command->GetValues()});
+  push_constant_data_.emplace_back();
+  push_constant_data_.back().type = command->GetDatumType().GetType();
+  push_constant_data_.back().offset = command->GetOffset();
+  push_constant_data_.back().size_in_bytes = command->GetSize();
+  push_constant_data_.back().values = command->GetValues();
 
   return {};
 }

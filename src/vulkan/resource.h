@@ -52,14 +52,13 @@ class Resource {
 
   // Update |memory_ptr_| from |offset| of |data| to |offset| + |size_in_bytes|
   // of |data| with |values| of |data|.
-  void UpdateMemoryWithData(const BufferData& data);
+  Result UpdateMemoryWithData(const BufferData& data);
 
   void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
 
   size_t GetSizeInBytes() const { return size_in_bytes_; }
 
  protected:
-  Resource();
   Resource(VkDevice device,
            size_t size,
            const VkPhysicalDeviceMemoryProperties& properties);

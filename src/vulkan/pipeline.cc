@@ -72,10 +72,10 @@ void Pipeline::Shutdown() {
     command_->SubmitAndReset(fence_timeout_ms_);
   command_->Shutdown();
 
-  DestroyVkDescriptorRelatedObjects();
+  DestroyVkDescriptorAndPipelineRelatedObjects();
 }
 
-void Pipeline::DestroyVkDescriptorRelatedObjects() {
+void Pipeline::DestroyVkDescriptorAndPipelineRelatedObjects() {
   for (auto& info : descriptor_set_info_) {
     vkDestroyDescriptorSetLayout(device_, info.layout, nullptr);
     if (info.empty)
@@ -87,11 +87,19 @@ void Pipeline::DestroyVkDescriptorRelatedObjects() {
       desc->Shutdown();
   }
 
-  if (pipeline_layout_ != VK_NULL_HANDLE)
-    vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
+  ResetVkPipelineRelatedObjects();
+}
 
-  if (pipeline_ != VK_NULL_HANDLE)
+void Pipeline::ResetVkPipelineRelatedObjects() {
+  if (pipeline_layout_ != VK_NULL_HANDLE) {
+    vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
+    pipeline_layout_ = VK_NULL_HANDLE;
+  }
+
+  if (pipeline_ != VK_NULL_HANDLE) {
     vkDestroyPipeline(device_, pipeline_, nullptr);
+    pipeline_ = VK_NULL_HANDLE;
+  }
 }
 
 Result Pipeline::CreateDescriptorSetLayouts() {
@@ -249,15 +257,7 @@ Result Pipeline::AddPushConstant(const BufferCommand* command) {
     return Result(
         "Pipeline::AddPushConstant BufferCommand type is not push constant");
 
-  if (pipeline_layout_ != VK_NULL_HANDLE) {
-    vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
-    pipeline_layout_ = VK_NULL_HANDLE;
-  }
-
-  if (pipeline_ != VK_NULL_HANDLE) {
-    vkDestroyPipeline(device_, pipeline_, nullptr);
-    pipeline_ = VK_NULL_HANDLE;
-  }
+  ResetVkPipelineRelatedObjects();
 
   return push_constant_->AddBufferData(command);
 }
@@ -374,8 +374,11 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     return r;
 
   for (auto& info : descriptor_set_info_) {
-    for (auto& desc : info.descriptors_)
-      desc->UpdateResourceIfNeeded(command_->GetCommandBuffer());
+    for (auto& desc : info.descriptors_) {
+      r = desc->UpdateResourceIfNeeded(command_->GetCommandBuffer());
+      if (!r.IsSuccess())
+        return r;
+    }
   }
 
   return {};

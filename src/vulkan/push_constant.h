@@ -36,9 +36,11 @@ class PushConstant : public Resource {
   explicit PushConstant(uint32_t max_push_constant_size);
   ~PushConstant() override;
 
-  // Return a VkPushConstantRange structure that contains shader
-  // stage flag, offset, and size in bytes of contents of push
-  // constant.
+  // Return a VkPushConstantRange structure whose shader stage flag
+  // is VK_SHADER_STAGE_ALL, offset is minimum |offset| among elements
+  // in |push_constant_data_| rounded down by 4, and size is maximum
+  // |offset| + |size_in_bytes| among elements in |push_constant_data_|
+  // rounded up by 4.
   VkPushConstantRange GetPushConstantRange();
 
   // Call vkCmdPushConstants() to record a command for push constant
@@ -49,8 +51,8 @@ class PushConstant : public Resource {
   Result RecordPushConstantVkCommand(VkCommandBuffer command_buffer,
                                      VkPipelineLayout pipeline_layout);
 
-  // Add information of how and what to do with push constant to
-  // |push_constant_data_|.
+  // Add a new set of values in an offset range to the push constants
+  // to be used on the next pipeline execution.
   Result AddBufferData(const BufferCommand* command);
 
   // Resource
@@ -67,6 +69,8 @@ class PushConstant : public Resource {
   uint32_t max_push_constant_size_ = 0;
 
   // Keep the information of what and how to conduct push constant.
+  // These are applied from lowest index to highest index, so that
+  // if address ranges overlap, then the later values take effect.
   std::vector<BufferData> push_constant_data_;
 
   std::unique_ptr<uint8_t> memory_;

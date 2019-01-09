@@ -84,7 +84,13 @@ class Pipeline {
   // VkFence objects.
   Result Initialize(VkCommandPool pool, VkQueue queue);
 
+  // Create Vulkan descriptor related objects i.e.,
+  // VkDescriptorSetLayout, VkDescriptorPool, VkDescriptorSet if
+  // |descriptor_related_objects_already_created_| is false. This
+  // method also creates VkPipelineLayout if |pipeline_layout_| is
+  // VK_NULL_HANDLE.
   Result CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded();
+
   Result UpdateDescriptorSetsIfNeeded();
 
   Result SendDescriptorDataToDeviceIfNeeded();
@@ -118,7 +124,8 @@ class Pipeline {
     std::vector<std::unique_ptr<Descriptor>> descriptors_;
   };
 
-  void DestroyVkDescriptorRelatedObjects();
+  void DestroyVkDescriptorAndPipelineRelatedObjects();
+  void ResetVkPipelineRelatedObjects();
   Result CreatePipelineLayout();
 
   Result CreateDescriptorSetLayouts();
