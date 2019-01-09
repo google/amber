@@ -18,8 +18,6 @@
 #include <cassert>
 #include <set>
 
-#include "src/make_unique.h"
-
 namespace sample {
 namespace {
 
@@ -639,9 +637,6 @@ void ConfigHelperVulkan::CreateVulkanDevice(
 std::unique_ptr<amber::EngineConfig> ConfigHelperVulkan::CreateConfig(
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions) {
-  std::unique_ptr<amber::VulkanEngineConfig> config =
-      amber::MakeUnique<amber::VulkanEngineConfig>();
-
   auto required_vulkan_features = NamesToVulkanFeatures(required_features);
 
   CreateVulkanInstance();
@@ -650,13 +645,17 @@ std::unique_ptr<amber::EngineConfig> ConfigHelperVulkan::CreateConfig(
   vkGetDeviceQueue(vulkan_device_, vulkan_queue_family_index_, 0,
                    &vulkan_queue_);
 
+  std::unique_ptr<amber::EngineConfig> cfg_holder =
+      std::unique_ptr<amber::EngineConfig>(new amber::VulkanEngineConfig());
+  amber::VulkanEngineConfig* config =
+      static_cast<amber::VulkanEngineConfig*>(cfg_holder.get());
   config->physical_device = vulkan_physical_device_;
   config->available_features = available_features_;
   config->available_extensions = available_extensions_;
   config->queue_family_index = vulkan_queue_family_index_;
   config->queue = vulkan_queue_;
   config->device = vulkan_device_;
-  return config;
+  return cfg_holder;
 }
 
 void ConfigHelperVulkan::Shutdown() {
