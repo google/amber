@@ -15,6 +15,7 @@
 #ifndef SRC_VULKAN_PUSH_CONSTANT_H_
 #define SRC_VULKAN_PUSH_CONSTANT_H_
 
+#include <memory>
 #include <vector>
 
 #include "amber/result.h"
@@ -40,21 +41,20 @@ class PushConstant : public Resource {
   // constant.
   VkPushConstantRange GetPushConstantRange();
 
-  // Call vkCmdPushConstants() to record a command for push
-  // constant. |command_buffer| is a Vulkan command buffer that
-  // keeps the recorded command and |pipeline_layout| is the
-  // graphics / compute pipeline that it currently uses.
-  void RecordPushConstantVkCommand(VkCommandBuffer command_buffer,
-                                   VkPipelineLayout pipeline_layout);
+  // Call vkCmdPushConstants() to record a command for push constant
+  // if size in bytes of push constant is not larger than
+  // |max_push_constant_size_|. |command_buffer| is a Vulkan command
+  // buffer that keeps the recorded command and |pipeline_layout| is
+  // the graphics / compute pipeline that it currently uses.
+  Result RecordPushConstantVkCommand(VkCommandBuffer command_buffer,
+                                     VkPipelineLayout pipeline_layout);
 
   // Add information of how and what to do with push constant to
   // |push_constant_data_|.
   Result AddBufferData(const BufferCommand* command);
 
   // Resource
-  VkDeviceMemory GetHostAccessMemory() const override {
-    return VK_NULL_HANDLE;
-  }
+  VkDeviceMemory GetHostAccessMemory() const override { return VK_NULL_HANDLE; }
   Result CopyToHost(VkCommandBuffer) override {
     return Result("Vulkan: should not call CopyToHost() for PushConstant");
   }
@@ -68,6 +68,8 @@ class PushConstant : public Resource {
 
   // Keep the information of what and how to conduct push constant.
   std::vector<BufferData> push_constant_data_;
+
+  std::unique_ptr<uint8_t> memory_;
 };
 
 }  // namespace vulkan

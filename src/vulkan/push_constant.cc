@@ -21,7 +21,10 @@ namespace amber {
 namespace vulkan {
 
 PushConstant::PushConstant(uint32_t max_push_constant_size)
-    : max_push_constant_size_(max_push_constant_size) {}
+    : max_push_constant_size_(max_push_constant_size),
+      memory_(std::unique_ptr<uint8_t>(new uint8_t[max_push_constant_size])) {
+  SetMemoryPtr(static_cast<void*>(memory_.get()));
+}
 
 PushConstant::~PushConstant() = default;
 
@@ -64,15 +67,19 @@ VkPushConstantRange PushConstant::GetPushConstantRange() {
   return range;
 }
 
-void PushConstant::RecordPushConstantVkCommand(VkCommandBuffer command_buffer,
-                                               VkPipelineLayout pipeline_layout) {
+Result PushConstant::RecordPushConstantVkCommand(
+    VkCommandBuffer command_buffer,
+    VkPipelineLayout pipeline_layout) {
   if (push_constant_data_.empty())
-    return;
+    return {};
 
   auto push_const_range = GetPushConstantRange();
-
-  std::vector<uint8_t> memory(push_const_range.offset + push_const_range.size);
-  SetMemoryPtr(memory.data());
+  if (push_const_range.offset + push_const_range.size >
+      max_push_constant_size_) {
+    return Result(
+        "PushConstant::RecordPushConstantVkCommand push constant size in bytes "
+        "exceeds maxPushConstantsSize of VkPhysicalDeviceLimits");
+  }
 
   for (const auto& data : push_constant_data_) {
     UpdateMemoryWithData(data);
@@ -82,10 +89,10 @@ void PushConstant::RecordPushConstantVkCommand(VkCommandBuffer command_buffer,
   // be multiple of 4.
   assert(push_const_range.offset % 4U == 0 && push_const_range.size % 4U == 0);
 
-  vkCmdPushConstants(command_buffer, pipeline_layout,
-                     VK_SHADER_STAGE_ALL, push_const_range.offset,
-                     push_const_range.size, &memory[push_const_range.offset]);
-  SetMemoryPtr(nullptr);
+  vkCmdPushConstants(command_buffer, pipeline_layout, VK_SHADER_STAGE_ALL,
+                     push_const_range.offset, push_const_range.size,
+                     memory_.get() + push_const_range.offset);
+  return {};
 }
 
 Result PushConstant::AddBufferData(const BufferCommand* command) {

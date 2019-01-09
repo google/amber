@@ -37,12 +37,14 @@ const char* kDefaultEntryPointName = "main";
 Pipeline::Pipeline(
     PipelineType type,
     VkDevice device,
-    const VkPhysicalDeviceMemoryProperties& properties,
+    const VkPhysicalDeviceProperties& properties,
+    const VkPhysicalDeviceMemoryProperties& memory_properties,
     uint32_t fence_timeout_ms,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : device_(device),
-      memory_properties_(properties),
+      memory_properties_(memory_properties),
       pipeline_type_(type),
+      physical_device_properties_(properties),
       shader_stage_info_(shader_stage_info),
       fence_timeout_ms_(fence_timeout_ms) {}
 
@@ -56,7 +58,10 @@ ComputePipeline* Pipeline::AsCompute() {
   return static_cast<ComputePipeline*>(this);
 }
 
-Result Pipeline::InitializeCommandBuffer(VkCommandPool pool, VkQueue queue) {
+Result Pipeline::Initialize(VkCommandPool pool, VkQueue queue) {
+  push_constant_ = MakeUnique<PushConstant>(
+      physical_device_properties_.limits.maxPushConstantsSize);
+
   command_ = MakeUnique<CommandBuffer>(device_, pool, queue);
   return command_->Initialize();
 }
@@ -186,10 +191,7 @@ Result Pipeline::CreatePipelineLayout() {
       static_cast<uint32_t>(descriptor_set_layouts.size());
   pipeline_layout_info.pSetLayouts = descriptor_set_layouts.data();
 
-  VkPushConstantRange push_const_range = {};
-  if (push_constant_)
-    push_const_range = push_constant_->GetPushConstantRange();
-
+  VkPushConstantRange push_const_range = push_constant_->GetPushConstantRange();
   if (push_const_range.size) {
     pipeline_layout_info.pushConstantRangeCount = 1U;
     pipeline_layout_info.pPushConstantRanges = &push_const_range;
@@ -239,10 +241,9 @@ Result Pipeline::UpdateDescriptorSetsIfNeeded() {
   return {};
 }
 
-void Pipeline::RecordPushConstant() {
-  if (push_constant_)
-    push_constant_->RecordPushConstantVkCommand(command_->GetCommandBuffer(),
-                                                pipeline_layout_);
+Result Pipeline::RecordPushConstant() {
+  return push_constant_->RecordPushConstantVkCommand(
+      command_->GetCommandBuffer(), pipeline_layout_);
 }
 
 Result Pipeline::AddPushConstant(const BufferCommand* command) {
@@ -263,10 +264,6 @@ Result Pipeline::AddPushConstant(const BufferCommand* command) {
     vkDestroyPipeline(device_, pipeline_, nullptr);
 
     descriptor_related_objects_already_created_ = false;
-  }
-
-  if (!push_constant_) {
-    push_constant_ = MakeUnique<PushConstant>(0);
   }
 
   return push_constant_->AddBufferData(command);

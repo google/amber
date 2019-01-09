@@ -102,7 +102,7 @@ class Resource {
   // Set |memory_ptr_| as |ptr|. This must be used for only push constant.
   // For Vulkan buffer and image i.e., Buffer and Image classes, we should
   // not call this but uses MapMemory() method.
-  void SetMemoryPtr(void *ptr) { memory_ptr_ = ptr; }
+  void SetMemoryPtr(void* ptr) { memory_ptr_ = ptr; }
 
   // Make all memory operations before calling this method effective i.e.,
   // prevent hazards caused by out-of-order execution.

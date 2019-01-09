@@ -74,10 +74,16 @@ class Pipeline {
   Pipeline(
       PipelineType type,
       VkDevice device,
-      const VkPhysicalDeviceMemoryProperties& properties,
+      const VkPhysicalDeviceProperties& properties,
+      const VkPhysicalDeviceMemoryProperties& memory_properties,
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
-  Result InitializeCommandBuffer(VkCommandPool pool, VkQueue queue);
+
+  // Create |push_constant_| and |command_|. This method also
+  // initializes |command_| that abstracts VkCommandBuffer and
+  // VkFence objects.
+  Result Initialize(VkCommandPool pool, VkQueue queue);
+
   Result CreateVkDescriptorRelatedObjectsIfNeeded();
   Result UpdateDescriptorSetsIfNeeded();
 
@@ -86,7 +92,7 @@ class Pipeline {
   void BindVkDescriptorSets();
 
   // Record a Vulkan command for push contant.
-  void RecordPushConstant();
+  Result RecordPushConstant();
 
   const std::vector<VkPipelineShaderStageCreateInfo>& GetShaderStageInfo()
       const {
@@ -120,6 +126,7 @@ class Pipeline {
   Result CreateDescriptorSets();
 
   PipelineType pipeline_type_;
+  VkPhysicalDeviceProperties physical_device_properties_;
   std::vector<DescriptorSetInfo> descriptor_set_info_;
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
 
