@@ -205,9 +205,11 @@ Result Pipeline::CreatePipelineLayout() {
   return {};
 }
 
-Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
-  if (descriptor_related_objects_already_created_)
-    return {};
+Result Pipeline::CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded() {
+  if (descriptor_related_objects_already_created_) {
+    return pipeline_layout_ == VK_NULL_HANDLE ? CreatePipelineLayout()
+                                              : Result();
+  }
 
   Result r = CreateDescriptorSetLayouts();
   if (!r.IsSuccess())
@@ -221,12 +223,8 @@ Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
   if (!r.IsSuccess())
     return r;
 
-  r = CreatePipelineLayout();
-  if (!r.IsSuccess())
-    return r;
-
   descriptor_related_objects_already_created_ = true;
-  return {};
+  return CreatePipelineLayout();
 }
 
 Result Pipeline::UpdateDescriptorSetsIfNeeded() {
@@ -251,19 +249,14 @@ Result Pipeline::AddPushConstant(const BufferCommand* command) {
     return Result(
         "Pipeline::AddPushConstant BufferCommand type is not push constant");
 
-  if (descriptor_related_objects_already_created_) {
-    for (auto& info : descriptor_set_info_) {
-      vkDestroyDescriptorSetLayout(device_, info.layout, nullptr);
-      if (info.empty)
-        continue;
-
-      vkDestroyDescriptorPool(device_, info.pool, nullptr);
-    }
-
+  if (pipeline_layout_ != VK_NULL_HANDLE) {
     vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
-    vkDestroyPipeline(device_, pipeline_, nullptr);
+    pipeline_layout_ = VK_NULL_HANDLE;
+  }
 
-    descriptor_related_objects_already_created_ = false;
+  if (pipeline_ != VK_NULL_HANDLE) {
+    vkDestroyPipeline(device_, pipeline_, nullptr);
+    pipeline_ = VK_NULL_HANDLE;
   }
 
   return push_constant_->AddBufferData(command);
@@ -286,8 +279,12 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
 
   if (descriptor_set_info_[desc_set].empty &&
       descriptor_related_objects_already_created_) {
-    DestroyVkDescriptorRelatedObjects();
-    descriptor_related_objects_already_created_ = false;
+    return Result(
+        "Vulkan: Pipeline descriptor related objects were already created but "
+        "try to put data on empty descriptor set '" +
+        std::to_string(desc_set) +
+        "'. Note that all used descriptor sets must be allocated before the "
+        "first compute or draw.");
   }
   descriptor_set_info_[desc_set].empty = false;
 

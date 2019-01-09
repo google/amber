@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <limits>
 
 namespace amber {
 namespace vulkan {

@@ -49,7 +49,7 @@ Result ComputePipeline::CreateVkComputePipeline() {
 
   shader_stage_info[0].pName = GetEntryPointName(VK_SHADER_STAGE_COMPUTE_BIT);
 
-  Result r = CreateVkDescriptorRelatedObjectsIfNeeded();
+  Result r = CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded();
   if (!r.IsSuccess())
     return r;
 

@@ -84,7 +84,7 @@ class Pipeline {
   // VkFence objects.
   Result Initialize(VkCommandPool pool, VkQueue queue);
 
-  Result CreateVkDescriptorRelatedObjectsIfNeeded();
+  Result CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded();
   Result UpdateDescriptorSetsIfNeeded();
 
   Result SendDescriptorDataToDeviceIfNeeded();

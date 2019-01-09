@@ -211,7 +211,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   if (pipeline_ != VK_NULL_HANDLE)
     return Result("Vulkan::Pipeline already created");
 
-  Result r = CreateVkDescriptorRelatedObjectsIfNeeded();
+  Result r = CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded();
   if (!r.IsSuccess())
     return r;
 

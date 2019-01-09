@@ -16,6 +16,7 @@
 #define SRC_VULKAN_RESOURCE_H_
 
 #include <memory>
+#include <vector>
 
 #include "amber/result.h"
 #include "src/datum_type.h"
