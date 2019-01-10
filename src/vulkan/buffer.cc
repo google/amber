@@ -99,20 +99,18 @@ void Buffer::CopyFromBuffer(VkCommandBuffer command, const Buffer& src) {
 }
 
 void Buffer::Shutdown() {
-  // TODO(jaebaek): Doublecheck what happens if |view_| is VK_NULL_HANDLE on
-  //                Android and Windows.
-  if (view_ != VK_NULL_HANDLE) {
+  if (view_ != VK_NULL_HANDLE)
     vkDestroyBufferView(GetDevice(), view_, nullptr);
-    view_ = VK_NULL_HANDLE;
+
+  if (memory_ != VK_NULL_HANDLE) {
+    if (is_buffer_host_accessible_)
+      UnMapMemory(memory_);
+
+    vkFreeMemory(GetDevice(), memory_, nullptr);
   }
 
-  if (is_buffer_host_accessible_)
-    UnMapMemory(memory_);
-
-  vkDestroyBuffer(GetDevice(), buffer_, nullptr);
-  vkFreeMemory(GetDevice(), memory_, nullptr);
-  buffer_ = VK_NULL_HANDLE;
-  memory_ = VK_NULL_HANDLE;
+  if (buffer_ != VK_NULL_HANDLE)
+    vkDestroyBuffer(GetDevice(), buffer_, nullptr);
 
   if (!is_buffer_host_accessible_)
     Resource::Shutdown();

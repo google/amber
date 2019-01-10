@@ -39,7 +39,8 @@ Result CommandPool::Initialize(uint32_t queue_family_index) {
 }
 
 void CommandPool::Shutdown() {
-  vkDestroyCommandPool(device_, pool_, nullptr);
+  if (pool_ != VK_NULL_HANDLE)
+    vkDestroyCommandPool(device_, pool_, nullptr);
 }
 
 CommandBuffer::CommandBuffer(VkDevice device, VkCommandPool pool, VkQueue queue)
@@ -123,8 +124,11 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
 }
 
 void CommandBuffer::Shutdown() {
-  vkDestroyFence(device_, fence_, nullptr);
-  vkFreeCommandBuffers(device_, pool_, 1, &command_);
+  if (fence_ != VK_NULL_HANDLE)
+    vkDestroyFence(device_, fence_, nullptr);
+
+  if (command_ != VK_NULL_HANDLE)
+    vkFreeCommandBuffers(device_, pool_, 1, &command_);
 }
 
 }  // namespace vulkan
