@@ -112,13 +112,14 @@ Result Image::CreateVkImageView() {
 }
 
 void Image::Shutdown() {
-  vkDestroyImageView(GetDevice(), view_, nullptr);
-  vkDestroyImage(GetDevice(), image_, nullptr);
-  vkFreeMemory(GetDevice(), memory_, nullptr);
+  if (view_ != VK_NULL_HANDLE)
+    vkDestroyImageView(GetDevice(), view_, nullptr);
 
-  view_ = VK_NULL_HANDLE;
-  image_ = VK_NULL_HANDLE;
-  memory_ = VK_NULL_HANDLE;
+  if (image_ != VK_NULL_HANDLE)
+    vkDestroyImage(GetDevice(), image_, nullptr);
+
+  if (memory_ != VK_NULL_HANDLE)
+    vkFreeMemory(GetDevice(), memory_, nullptr);
 
   Resource::Shutdown();
 }

@@ -597,7 +597,9 @@ void GraphicsPipeline::Shutdown() {
 
   Pipeline::Shutdown();
   frame_->Shutdown();
-  vkDestroyRenderPass(device_, render_pass_, nullptr);
+
+  if (render_pass_ != VK_NULL_HANDLE)
+    vkDestroyRenderPass(device_, render_pass_, nullptr);
 }
 
 }  // namespace vulkan

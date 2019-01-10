@@ -16,10 +16,55 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <set>
+
+#include "samples/log.h"
 
 namespace sample {
 namespace {
+
+const char* const kRequiredValidationLayers[] = {
+#ifdef __ANDROID__
+    // Note that the order of enabled layers is important. It is
+    // based on Android NDK Vulkan document.
+    "VK_LAYER_GOOGLE_threading",      "VK_LAYER_LUNARG_parameter_validation",
+    "VK_LAYER_LUNARG_object_tracker", "VK_LAYER_LUNARG_core_validation",
+    "VK_LAYER_GOOGLE_unique_objects",
+#else   // __ANDROID__
+    "VK_LAYER_LUNARG_standard_validation",
+#endif  // __ANDROID__
+};
+
+const size_t kNumberOfRequiredValidationLayers =
+    sizeof(kRequiredValidationLayers) / sizeof(const char*);
+
+const char* kExtensionForValidationLayer = "VK_EXT_debug_report";
+
+VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flag,
+                                             VkDebugReportObjectTypeEXT,
+                                             uint64_t,
+                                             size_t,
+                                             int32_t,
+                                             const char* layerPrefix,
+                                             const char* msg,
+                                             void*) {
+  std::string flag_message;
+  switch (flag) {
+    case VK_DEBUG_REPORT_ERROR_BIT_EXT:
+      flag_message = "[ERROR]";
+      break;
+    case VK_DEBUG_REPORT_WARNING_BIT_EXT:
+      flag_message = "[WARNING]";
+      break;
+    default:
+      flag_message = "[UNKNOWN]";
+      break;
+  }
+
+  LogError(flag_message + " validation layer (" + layerPrefix + "):\n" + msg);
+  return VK_FALSE;
+}
 
 // Convert required features given as a string array to
 // VkPhysicalDeviceFeatures.
@@ -253,6 +298,62 @@ VkPhysicalDeviceFeatures NamesToVulkanFeatures(
     assert(false && "Sample: Unknown Vulkan feature");
   }
   return required_vulkan_features;
+}
+
+bool AreAllValidationLayersSupported() {
+  std::vector<VkLayerProperties> available_layer_properties;
+  uint32_t available_layer_count = 0;
+  if (vkEnumerateInstanceLayerProperties(&available_layer_count, nullptr) !=
+      VK_SUCCESS) {
+    return false;
+  }
+  available_layer_properties.resize(available_layer_count);
+  if (vkEnumerateInstanceLayerProperties(&available_layer_count,
+                                         available_layer_properties.data()) !=
+      VK_SUCCESS) {
+    return false;
+  }
+
+  std::set<std::string> required_layer_set(
+      kRequiredValidationLayers,
+      &kRequiredValidationLayers[kNumberOfRequiredValidationLayers]);
+  for (const auto& property : available_layer_properties) {
+    required_layer_set.erase(property.layerName);
+  }
+
+  if (required_layer_set.empty())
+    return true;
+
+  std::string missing_layers;
+  for (const auto& missing_layer : required_layer_set)
+    missing_layers = missing_layers + missing_layer + ",\n\t\t";
+  LogError("Vulkan: missing validation layers:\n\t\t" + missing_layers);
+  return true;
+}
+
+bool AreAllValidationExtensionsSupported() {
+  for (const auto& layer : kRequiredValidationLayers) {
+    uint32_t available_extension_count = 0;
+    std::vector<VkExtensionProperties> extension_properties;
+
+    if (vkEnumerateInstanceExtensionProperties(
+            layer, &available_extension_count, nullptr) != VK_SUCCESS) {
+      return false;
+    }
+    extension_properties.resize(available_extension_count);
+    if (vkEnumerateInstanceExtensionProperties(
+            layer, &available_extension_count, extension_properties.data()) !=
+        VK_SUCCESS) {
+      return false;
+    }
+
+    for (const auto& ext : extension_properties) {
+      if (!strcmp(kExtensionForValidationLayer, ext.extensionName))
+        return true;
+    }
+  }
+
+  return false;
 }
 
 // Check if |physical_device| supports all required features given
@@ -561,12 +662,44 @@ void ConfigHelperVulkan::CreateVulkanInstance() {
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.apiVersion = VK_MAKE_VERSION(1, 0, 0);
 
+  if (!AreAllValidationLayersSupported()) {
+    assert(false && "Sample: not all validation layers are supported");
+  }
+
+  if (!AreAllValidationExtensionsSupported()) {
+    assert(false &&
+           "Sample: extensions of validation layers are not supported");
+  }
+
   VkInstanceCreateInfo instance_info = {};
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_info.pApplicationInfo = &app_info;
+  instance_info.enabledLayerCount = kNumberOfRequiredValidationLayers;
+  instance_info.ppEnabledLayerNames = kRequiredValidationLayers;
+  instance_info.enabledExtensionCount = 1U;
+  instance_info.ppEnabledExtensionNames = &kExtensionForValidationLayer;
 
   assert(vkCreateInstance(&instance_info, nullptr, &vulkan_instance_) ==
          VK_SUCCESS);
+}
+
+void ConfigHelperVulkan::CreateDebugReportCallback() {
+  VkDebugReportCallbackCreateInfoEXT info = {};
+  info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+  info.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+  info.pfnCallback = debugCallback;
+
+  auto vkCreateDebugReportCallbackEXT =
+      reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
+          vkGetInstanceProcAddr(vulkan_instance_,
+                                "vkCreateDebugReportCallbackEXT"));
+  if (!vkCreateDebugReportCallbackEXT)
+    assert(false && "Sample: vkCreateDebugReportCallbackEXT is nullptr");
+
+  if (vkCreateDebugReportCallbackEXT(vulkan_instance_, &info, nullptr,
+                                     &vulkan_callback_) != VK_SUCCESS) {
+    assert(false && "Sample: vkCreateDebugReportCallbackEXT fail");
+  }
 }
 
 void ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
@@ -607,7 +740,7 @@ void ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
 void ConfigHelperVulkan::CreateVulkanDevice(
     const VkPhysicalDeviceFeatures& required_features,
     const std::vector<std::string>& required_extensions) {
-  VkDeviceQueueCreateInfo queue_info;
+  VkDeviceQueueCreateInfo queue_info = {};
   const float priorities[] = {1.0f};
 
   queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -640,6 +773,7 @@ std::unique_ptr<amber::EngineConfig> ConfigHelperVulkan::CreateConfig(
   auto required_vulkan_features = NamesToVulkanFeatures(required_features);
 
   CreateVulkanInstance();
+  CreateDebugReportCallback();
   ChooseVulkanPhysicalDevice(required_vulkan_features, required_extensions);
   CreateVulkanDevice(required_vulkan_features, required_extensions);
   vkGetDeviceQueue(vulkan_device_, vulkan_queue_family_index_, 0,
@@ -661,6 +795,16 @@ std::unique_ptr<amber::EngineConfig> ConfigHelperVulkan::CreateConfig(
 void ConfigHelperVulkan::Shutdown() {
   if (vulkan_device_ != VK_NULL_HANDLE)
     vkDestroyDevice(vulkan_device_, nullptr);
+
+  auto vkDestroyDebugReportCallbackEXT =
+      reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
+          vkGetInstanceProcAddr(vulkan_instance_,
+                                "vkDestroyDebugReportCallbackEXT"));
+  assert(vkDestroyDebugReportCallbackEXT &&
+         "Sample: vkDestroyDebugReportCallbackEXT is nullptr");
+  if (vulkan_callback_ != VK_NULL_HANDLE)
+    vkDestroyDebugReportCallbackEXT(vulkan_instance_, vulkan_callback_,
+                                    nullptr);
 
   if (vulkan_instance_ != VK_NULL_HANDLE)
     vkDestroyInstance(vulkan_instance_, nullptr);

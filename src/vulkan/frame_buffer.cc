@@ -133,9 +133,12 @@ Result FrameBuffer::ChangeFrameImageLayout(VkCommandBuffer command,
 }
 
 void FrameBuffer::Shutdown() {
-  vkDestroyFramebuffer(device_, frame_, nullptr);
+  if (frame_ != VK_NULL_HANDLE)
+    vkDestroyFramebuffer(device_, frame_, nullptr);
+
   if (color_image_)
     color_image_->Shutdown();
+
   if (depth_image_)
     depth_image_->Shutdown();
 }

@@ -23,6 +23,7 @@ set(VULKAN_ENGINE_SOURCES
     engine_vulkan.cc
     format_data.cc
     frame_buffer.cc
+    log.cc
     resource.cc
     image.cc
     pipeline.cc

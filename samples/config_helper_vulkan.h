@@ -47,6 +47,10 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   // Create Vulkan instance.
   void CreateVulkanInstance();
 
+  // Create |vulkan_callback_| that reports validation layer errors
+  // via debugCallback() function in config_helper_vulkan.cc.
+  void CreateDebugReportCallback();
+
   // Choose Vulkan physical device that supports both
   // |required_features| and |required_extensions|.
   void ChooseVulkanPhysicalDevice(
@@ -59,6 +63,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
                           const std::vector<std::string>& required_extensions);
 
   VkInstance vulkan_instance_ = VK_NULL_HANDLE;
+  VkDebugReportCallbackEXT vulkan_callback_ = VK_NULL_HANDLE;
   VkPhysicalDevice vulkan_physical_device_ = VK_NULL_HANDLE;
   VkPhysicalDeviceFeatures available_features_ = {};
   std::vector<std::string> available_extensions_;

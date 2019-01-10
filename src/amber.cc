@@ -81,8 +81,11 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
 
   Executor executor;
   r = executor.Execute(engine.get(), script, shader_data);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
+    // Clean up Vulkan/Dawn objects
+    engine->Shutdown();
     return r;
+  }
 
   return engine->Shutdown();
 }
