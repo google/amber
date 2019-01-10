@@ -43,10 +43,15 @@ enum class DescriptorType : uint8_t {
 VkDescriptorType ToVkDescriptorType(DescriptorType type);
 
 struct BufferData {
-  DataType type;
   uint32_t offset;
   size_t size_in_bytes;
-  std::vector<Value> values;
+  DataType type;                      // Primitive type of |values|.
+  std::vector<Value> values;          // Data that has primitive
+                                      // type. If |raw_data| is not
+                                      // nullptr, it must be empty.
+  std::unique_ptr<uint8_t> raw_data;  // Data without primitive
+                                      // type. If |values| is not
+                                      // empty, it must be nullptr.
 };
 
 class Descriptor {
@@ -90,6 +95,10 @@ class Descriptor {
 
   bool HasDataNotSent() { return !buffer_data_queue_.empty(); }
 
+  // Add the information to |buffer_data_queue_| that "we will fill
+  // resource of this descriptor with |values| at |offset| of the
+  // resource". |type| indicates the primitive type of |values| and
+  // |size_in_bytes| denotes the total size in bytes of |values|.
   void AddToBufferDataQueue(DataType type,
                             uint32_t offset,
                             size_t size_in_bytes,
@@ -100,25 +109,42 @@ class Descriptor {
   // created or changed.
   virtual Result UpdateDescriptorSetIfNeeded(VkDescriptorSet) = 0;
 
-  // Create new vulkan resource if needed i.e., if it was not created
-  // yet or if we need bigger one. If we recreated it for bigger size,
-  // it records the command for copying the old one's data to the new
-  // one. Note that it only records the command and the actual
+  // Create vulkan resource e.g., buffer or image used for this
+  // descriptor if |buffer_data_queue_| is not empty. This method
+  // assumes that the resource is empty when it is called that means
+  // the resource must be created only when it is actually needed
+  // i.e., compute or draw command and destroyed right after those
+  // commands. Note that it only records the command and the actual
   // submission must be done later.
-  virtual Result CreateOrResizeIfNeeded(
-      VkCommandBuffer command,
+  virtual Result CreateResourceIfNeeded(
       const VkPhysicalDeviceMemoryProperties& properties) = 0;
 
   // Record a command for copying data in |buffer_data_queue_| to the
   // resource in device. Note that it only records the command and the
   // actual submission must be done later.
-  virtual void UpdateResourceIfNeeded(VkCommandBuffer command) = 0;
+  virtual void CopyDataToResourceIfNeeded(VkCommandBuffer command) = 0;
 
-  // Only record the copy command for sending the bound resource
-  // data to the host accessible memory. The actual submission of
-  // the command must be done later.
-  virtual Result SendDataToHostIfNeeded(VkCommandBuffer command) = 0;
+  // Only record the copy command for copying the resource data to
+  // the host accessible memory. The actual submission of the command
+  // must be done later.
+  virtual Result CopyDataToHost(VkCommandBuffer command) = 0;
+
+  // Copy contents of resource to a BufferData object and put it into
+  // |buffer_data_queue_|. This method assumes that we already copy
+  // the resource data to the host accessible memory by calling
+  // CopyDataToHost() method and submitting the command buffer. After
+  // putting the BufferData into |buffer_data_queue_|, it destroys
+  // |buffer_|.
+  virtual Result MoveResourceToBufferDataQueue() = 0;
+
+  // If the resource is empty and |buffer_data_queue_| has a single
+  // BufferData, the BufferData is the data copied from the resource
+  // before. In that case, this methods returns information for the
+  // BufferData. If the resource is not empty, it returns
+  // |size_in_bytes_| and host accessible memory of the resource.
+  // Otherwise, it returns nullptr for |cpu_memory| of ResourceInfo.
   virtual ResourceInfo GetResourceInfo() = 0;
+
   virtual void Shutdown() = 0;
 
  protected:
@@ -135,9 +161,7 @@ class Descriptor {
 
   VkDevice GetDevice() const { return device_; }
 
-  const std::vector<BufferData>& GetBufferDataQueue() const {
-    return buffer_data_queue_;
-  }
+  std::vector<BufferData>& GetBufferDataQueue() { return buffer_data_queue_; }
 
   void ClearBufferDataQueue() { buffer_data_queue_.clear(); }
 
@@ -162,8 +186,8 @@ class Descriptor {
 
   // Each element of this queue contains information of what parts
   // of buffer must be updates with what values. This queue will be
-  // consumed and cleared by UpdateResourceIfNeeded().
-  // UpdateResourceIfNeeded() updates the actual buffer in device
+  // consumed and cleared by CopyDataToResourceIfNeeded().
+  // CopyDataToResourceIfNeeded() updates the actual buffer in device
   // using this queued information.
   std::vector<BufferData> buffer_data_queue_;
 

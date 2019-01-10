@@ -425,13 +425,7 @@ Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
 Result EngineVulkan::GetDescriptorInfo(const uint32_t descriptor_set,
                                        const uint32_t binding,
                                        ResourceInfo* info) {
-  assert(info);
-  Result r = pipeline_->CopyDescriptorToHost(descriptor_set, binding);
-  if (!r.IsSuccess())
-    return r;
-
-  pipeline_->GetDescriptorInfo(descriptor_set, binding, info);
-  return {};
+  return pipeline_->GetDescriptorInfo(descriptor_set, binding, info);
 }
 
 Result EngineVulkan::DoBuffer(const BufferCommand* command) {

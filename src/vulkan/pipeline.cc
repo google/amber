@@ -325,8 +325,7 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
 
   for (auto& info : descriptor_set_info_) {
     for (auto& desc : info.descriptors_) {
-      r = desc->CreateOrResizeIfNeeded(command_->GetCommandBuffer(),
-                                       memory_properties_);
+      r = desc->CreateResourceIfNeeded(memory_properties_);
       if (!r.IsSuccess())
         return r;
     }
@@ -352,7 +351,7 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
 
   for (auto& info : descriptor_set_info_) {
     for (auto& desc : info.descriptors_)
-      desc->UpdateResourceIfNeeded(command_->GetCommandBuffer());
+      desc->CopyDataToResourceIfNeeded(command_->GetCommandBuffer());
   }
 
   return {};
@@ -378,28 +377,36 @@ void Pipeline::BindVkPipeline() {
                     pipeline_);
 }
 
-Result Pipeline::CopyDescriptorToHost(const uint32_t descriptor_set,
-                                      const uint32_t binding) {
-  if (descriptor_set_info_.size() <= descriptor_set) {
-    return Result(
-        "Pipeline::CopyDescriptorToHost no Descriptor class has given "
-        "descriptor set: " +
-        std::to_string(descriptor_set));
-  }
-
+Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
   Result r = command_->BeginIfNotInRecording();
   if (!r.IsSuccess())
     return r;
 
-  for (auto& desc : descriptor_set_info_[descriptor_set].descriptors_) {
-    if (desc->GetBinding() == binding) {
-      return desc->SendDataToHostIfNeeded(command_->GetCommandBuffer());
+  for (auto& desc_set : descriptor_set_info_) {
+    for (auto& desc : desc_set.descriptors_) {
+      r = desc->CopyDataToHost(command_->GetCommandBuffer());
+      if (!r.IsSuccess())
+        return r;
     }
   }
 
-  return Result("Vulkan::Pipeline descriptor with descriptor set: " +
-                std::to_string(descriptor_set) +
-                ", binding: " + std::to_string(binding) + " does not exist");
+  r = command_->End();
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->SubmitAndReset(GetFenceTimeout());
+  if (!r.IsSuccess())
+    return r;
+
+  for (auto& desc_set : descriptor_set_info_) {
+    for (auto& desc : desc_set.descriptors_) {
+      r = desc->MoveResourceToBufferDataQueue();
+      if (!r.IsSuccess())
+        return r;
+    }
+  }
+
+  return {};
 }
 
 Result Pipeline::GetDescriptorInfo(const uint32_t descriptor_set,
@@ -409,8 +416,8 @@ Result Pipeline::GetDescriptorInfo(const uint32_t descriptor_set,
 
   if (descriptor_set_info_.size() <= descriptor_set) {
     return Result(
-        "Pipeline::CopyDescriptorToHost no Descriptor class has given "
-        "descriptor set: " +
+        "Pipeline::GetDescriptorInfo no Descriptor class has given descriptor "
+        "set: " +
         std::to_string(descriptor_set));
   }
 
@@ -432,6 +439,18 @@ const char* Pipeline::GetEntryPointName(VkShaderStageFlagBits stage) const {
     return it->second.c_str();
 
   return kDefaultEntryPointName;
+}
+
+Result Pipeline::ProcessCommands() {
+  Result r = command_->BeginIfNotInRecording();
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->End();
+  if (!r.IsSuccess())
+    return r;
+
+  return command_->SubmitAndReset(GetFenceTimeout());
 }
 
 }  // namespace vulkan
