@@ -31,7 +31,8 @@ template <typename T>
 void SetValueForBuffer(void* memory, const std::vector<Value>& values) {
   T* ptr = static_cast<T*>(memory);
   for (const auto& v : values) {
-    *ptr = static_cast<T>(v.IsInteger() ? v.AsUint64() : v.AsDouble());
+    *ptr = v.IsInteger() ? static_cast<T>(v.AsUint64())
+                         : static_cast<T>(v.AsDouble());
     ++ptr;
   }
 }
@@ -121,6 +122,8 @@ Result BufferDescriptor::CreateOrResizeIfNeeded(
 
     new_buffer->CopyFromBuffer(command, *buffer_);
 
+    not_destroyed_buffers_.push_back(std::move(buffer_));
+
     buffer_ = std::move(new_buffer);
 
     SetUpdateDescriptorSetNeeded();
@@ -171,6 +174,8 @@ ResourceInfo BufferDescriptor::GetResourceInfo() {
 
 void BufferDescriptor::Shutdown() {
   buffer_->Shutdown();
+  for (auto& buffer : not_destroyed_buffers_)
+    buffer->Shutdown();
 }
 
 }  // namespace vulkan

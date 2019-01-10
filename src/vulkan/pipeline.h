@@ -105,6 +105,7 @@ class Pipeline {
     std::vector<std::unique_ptr<Descriptor>> descriptors_;
   };
 
+  void DestroyVkDescriptorRelatedObjects();
   Result CreatePipelineLayout();
 
   Result CreateDescriptorSetLayouts();

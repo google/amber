@@ -72,7 +72,7 @@ void VertexBuffer::FillVertexBufferWithData(VkCommandBuffer command) {
         assert(k == components.size() - 1 ||
                static_cast<uint32_t>(bit_offset) + static_cast<uint32_t>(bits) <
                    256);
-        bit_offset += bits;
+        bit_offset = static_cast<uint8_t>(bit_offset + bits);
       }
 
       ptr += formats_[j].GetByteSize();

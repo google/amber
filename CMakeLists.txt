@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 2.8)
 if (POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)
 endif()
@@ -39,6 +39,8 @@ option(AMBER_SKIP_SPIRV_TOOLS
   "Skip building spirv-tools into the library" ${AMBER_SKIP_SPIRV_TOOLS})
 option(AMBER_SKIP_SHADERC
   "Skip building Shaderc into the library" ${AMBER_SKIP_SHADERC})
+option(AMBER_SKIP_SAMPLES
+  "Skip building sample application" ${AMBER_SKIP_SAMPLES})
 
 if (${AMBER_SKIP_SPIRV_TOOLS})
   set(AMBER_ENABLE_SPIRV_TOOLS FALSE)
@@ -57,10 +59,16 @@ if (${AMBER_SKIP_TESTS})
 else()
   set(AMBER_ENABLE_TESTS TRUE)
 endif()
+if (${AMBER_SKIP_SAMPLES})
+  set(AMBER_ENABLE_SAMPLES FALSE)
+else()
+  set(AMBER_ENABLE_SAMPLES TRUE)
+endif()
 
 message(STATUS "Amber enable SPIRV-Tools: ${AMBER_ENABLE_SPIRV_TOOLS}")
 message(STATUS "Amber enable Shaderc: ${AMBER_ENABLE_SHADERC}")
 message(STATUS "Amber enable tests: ${AMBER_ENABLE_TESTS}")
+message(STATUS "Amber enable samples: ${AMBER_ENABLE_SAMPLES}")
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}")
@@ -178,4 +186,7 @@ endfunction()
 
 add_subdirectory(third_party)
 add_subdirectory(src)
-add_subdirectory(samples)
+
+if (${AMBER_ENABLE_SAMPLES})
+  add_subdirectory(samples)
+endif()
