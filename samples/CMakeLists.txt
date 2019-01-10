@@ -17,6 +17,7 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 set(AMBER_SOURCES
     amber.cc
     config_helper.cc
+    log.cc
     ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
 )
 
