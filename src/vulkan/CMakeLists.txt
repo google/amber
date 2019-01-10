@@ -36,7 +36,9 @@ amber_default_compile_options(libamberenginevulkan)
 set_target_properties(libamberenginevulkan PROPERTIES
     OUTPUT_NAME "amberenginevulkan"
 )
-target_link_libraries(libamberenginevulkan ${VULKAN_LIB})
+if (NOT ANDROID)
+  target_link_libraries(libamberenginevulkan ${VULKAN_LIB})
+endif()
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
   # vulkan/vulkan.h defines VK_NULL_HANDLE as 0u and that also serves as a null pointer.
