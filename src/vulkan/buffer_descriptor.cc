@@ -133,9 +133,13 @@ ResourceInfo BufferDescriptor::GetResourceInfo() {
 }
 
 void BufferDescriptor::Shutdown() {
-  buffer_->Shutdown();
-  for (auto& buffer : not_destroyed_buffers_)
-    buffer->Shutdown();
+  if (buffer_)
+    buffer_->Shutdown();
+
+  for (auto& buffer : not_destroyed_buffers_) {
+    if (buffer)
+      buffer->Shutdown();
+  }
 }
 
 }  // namespace vulkan

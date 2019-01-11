@@ -14,15 +14,60 @@
 
 #include "src/vulkan/device.h"
 
+#include <cassert>
+#include <cstring>
 #include <memory>
 #include <set>
 #include <vector>
 
 #include "src/make_unique.h"
+#include "src/vulkan/log.h"
 
 namespace amber {
 namespace vulkan {
 namespace {
+
+const char* const kRequiredValidationLayers[] = {
+#ifdef __ANDROID__
+    // Note that the order of enabled layers is important. It is
+    // based on Android NDK Vulkan document.
+    "VK_LAYER_GOOGLE_threading",      "VK_LAYER_LUNARG_parameter_validation",
+    "VK_LAYER_LUNARG_object_tracker", "VK_LAYER_LUNARG_core_validation",
+    "VK_LAYER_GOOGLE_unique_objects",
+#else   // __ANDROID__
+    "VK_LAYER_LUNARG_standard_validation",
+#endif  // __ANDROID__
+};
+
+const size_t kNumberOfRequiredValidationLayers =
+    sizeof(kRequiredValidationLayers) / sizeof(const char*);
+
+const char* kExtensionForValidationLayer = "VK_EXT_debug_report";
+
+VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flag,
+                                             VkDebugReportObjectTypeEXT,
+                                             uint64_t,
+                                             size_t,
+                                             int32_t,
+                                             const char* layerPrefix,
+                                             const char* msg,
+                                             void*) {
+  std::string flag_message;
+  switch (flag) {
+    case VK_DEBUG_REPORT_ERROR_BIT_EXT:
+      flag_message = "[ERROR]";
+      break;
+    case VK_DEBUG_REPORT_WARNING_BIT_EXT:
+      flag_message = "[WARNING]";
+      break;
+    default:
+      flag_message = "[UNKNOWN]";
+      break;
+  }
+
+  LogError(flag_message + " validation layer (" + layerPrefix + "):\n" + msg);
+  return VK_FALSE;
+}
 
 VkPhysicalDeviceFeatures RequestedFeatures(
     const std::vector<Feature>& required_features) {
@@ -491,6 +536,61 @@ bool AreAllExtensionsSupported(
   return required_extension_set.empty();
 }
 
+Result AreAllValidationLayersSupported() {
+  std::vector<VkLayerProperties> available_layer_properties;
+  uint32_t available_layer_count = 0;
+  if (vkEnumerateInstanceLayerProperties(&available_layer_count, nullptr) !=
+      VK_SUCCESS) {
+    return Result("Vulkan: vkEnumerateInstanceLayerProperties fail");
+  }
+  available_layer_properties.resize(available_layer_count);
+  if (vkEnumerateInstanceLayerProperties(&available_layer_count,
+                                         available_layer_properties.data()) !=
+      VK_SUCCESS) {
+    return Result("Vulkan: vkEnumerateInstanceLayerProperties fail");
+  }
+
+  std::set<std::string> required_layer_set(
+      kRequiredValidationLayers,
+      &kRequiredValidationLayers[kNumberOfRequiredValidationLayers]);
+  for (const auto& property : available_layer_properties) {
+    required_layer_set.erase(property.layerName);
+  }
+
+  if (required_layer_set.empty())
+    return {};
+
+  std::string missing_layers;
+  for (const auto& missing_layer : required_layer_set)
+    missing_layers = missing_layers + missing_layer + ",\n\t\t";
+  return Result("Vulkan: missing validation layers:\n\t\t" + missing_layers);
+}
+
+bool AreAllValidationExtensionsSupported() {
+  for (const auto& layer : kRequiredValidationLayers) {
+    uint32_t available_extension_count = 0;
+    std::vector<VkExtensionProperties> extension_properties;
+
+    if (vkEnumerateInstanceExtensionProperties(
+            layer, &available_extension_count, nullptr) != VK_SUCCESS) {
+      return false;
+    }
+    extension_properties.resize(available_extension_count);
+    if (vkEnumerateInstanceExtensionProperties(
+            layer, &available_extension_count, extension_properties.data()) !=
+        VK_SUCCESS) {
+      return false;
+    }
+
+    for (const auto& ext : extension_properties) {
+      if (!strcmp(kExtensionForValidationLayer, ext.extensionName))
+        return true;
+    }
+  }
+
+  return false;
+}
+
 }  // namespace
 
 Device::Device() = default;
@@ -512,6 +612,14 @@ Device::~Device() = default;
 void Device::Shutdown() {
   if (destroy_device_) {
     vkDestroyDevice(device_, nullptr);
+
+    auto vkDestroyDebugReportCallbackEXT =
+        reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
+            vkGetInstanceProcAddr(instance_,
+                                  "vkDestroyDebugReportCallbackEXT"));
+    assert(vkDestroyDebugReportCallbackEXT);
+    vkDestroyDebugReportCallbackEXT(instance_, callback_, nullptr);
+
     vkDestroyInstance(instance_, nullptr);
   }
 }
@@ -520,6 +628,10 @@ Result Device::Initialize(const std::vector<Feature>& required_features,
                           const std::vector<std::string>& required_extensions) {
   if (destroy_device_) {
     Result r = CreateInstance();
+    if (!r.IsSuccess())
+      return r;
+
+    r = CreateDebugReportCallback();
     if (!r.IsSuccess())
       return r;
 
@@ -579,18 +691,47 @@ bool Device::ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device) {
 }
 
 Result Device::CreateInstance() {
-  VkApplicationInfo appInfo = {};
-  appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.apiVersion = VK_MAKE_VERSION(1, 0, 0);
+  VkApplicationInfo app_info = {};
+  app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  app_info.apiVersion = VK_MAKE_VERSION(1, 0, 0);
 
-  VkInstanceCreateInfo instInfo = {};
-  instInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-  instInfo.pApplicationInfo = &appInfo;
-  // TODO(jaebaek): Enable layers, extensions
+  Result r = AreAllValidationLayersSupported();
+  if (!r.IsSuccess())
+    return r;
 
-  if (vkCreateInstance(&instInfo, nullptr, &instance_) != VK_SUCCESS)
+  if (!AreAllValidationExtensionsSupported())
+    return Result("Vulkan: extensions of validation layers are not supported");
+
+  VkInstanceCreateInfo instance_info = {};
+  instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  instance_info.pApplicationInfo = &app_info;
+  instance_info.enabledLayerCount = kNumberOfRequiredValidationLayers;
+  instance_info.ppEnabledLayerNames = kRequiredValidationLayers;
+  instance_info.enabledExtensionCount = 1U;
+  instance_info.ppEnabledExtensionNames = &kExtensionForValidationLayer;
+
+  if (vkCreateInstance(&instance_info, nullptr, &instance_) != VK_SUCCESS)
     return Result("Vulkan::Calling vkCreateInstance Fail");
 
+  return {};
+}
+
+Result Device::CreateDebugReportCallback() {
+  VkDebugReportCallbackCreateInfoEXT info = {};
+  info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+  info.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+  info.pfnCallback = debugCallback;
+
+  auto vkCreateDebugReportCallbackEXT =
+      reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
+          vkGetInstanceProcAddr(instance_, "vkCreateDebugReportCallbackEXT"));
+  if (!vkCreateDebugReportCallbackEXT)
+    return Result("Vulkan: vkCreateDebugReportCallbackEXT is nullptr");
+
+  if (vkCreateDebugReportCallbackEXT(instance_, &info, nullptr, &callback_) !=
+      VK_SUCCESS) {
+    return Result("Vulkan: vkCreateDebugReportCallbackEXT fail");
+  }
   return {};
 }
 

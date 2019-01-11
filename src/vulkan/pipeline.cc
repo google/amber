@@ -67,24 +67,32 @@ Result Pipeline::Initialize(VkCommandPool pool, VkQueue queue) {
 }
 
 void Pipeline::Shutdown() {
-  Result r = command_->End();
-  if (r.IsSuccess())
-    command_->SubmitAndReset(fence_timeout_ms_);
-  command_->Shutdown();
+  if (command_) {
+    Result r = command_->End();
+    if (r.IsSuccess())
+      command_->SubmitAndReset(fence_timeout_ms_);
+
+    command_->Shutdown();
+  }
 
   DestroyVkDescriptorAndPipelineRelatedObjects();
 }
 
 void Pipeline::DestroyVkDescriptorAndPipelineRelatedObjects() {
   for (auto& info : descriptor_set_info_) {
-    vkDestroyDescriptorSetLayout(device_, info.layout, nullptr);
+    if (info.layout != VK_NULL_HANDLE)
+      vkDestroyDescriptorSetLayout(device_, info.layout, nullptr);
+
     if (info.empty)
       continue;
 
-    vkDestroyDescriptorPool(device_, info.pool, nullptr);
+    if (info.pool != VK_NULL_HANDLE)
+      vkDestroyDescriptorPool(device_, info.pool, nullptr);
 
-    for (auto& desc : info.descriptors_)
-      desc->Shutdown();
+    for (auto& desc : info.descriptors_) {
+      if (desc)
+        desc->Shutdown();
+    }
   }
 
   ResetVkPipelineRelatedObjects();

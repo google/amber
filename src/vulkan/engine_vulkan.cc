@@ -144,15 +144,24 @@ Result EngineVulkan::InitializeWithConfig(
 }
 
 Result EngineVulkan::Shutdown() {
-  for (auto it = modules_.begin(); it != modules_.end(); ++it)
-    vkDestroyShaderModule(device_->GetDevice(), it->second, nullptr);
+  if (!device_)
+    return {};
 
-  pipeline_->Shutdown();
+  for (auto it = modules_.begin(); it != modules_.end(); ++it) {
+    auto vk_device = device_->GetDevice();
+    if (vk_device != VK_NULL_HANDLE && it->second != VK_NULL_HANDLE)
+      vkDestroyShaderModule(vk_device, it->second, nullptr);
+  }
+
+  if (pipeline_)
+    pipeline_->Shutdown();
 
   if (vertex_buffer_)
     vertex_buffer_->Shutdown();
 
-  pool_->Shutdown();
+  if (pool_)
+    pool_->Shutdown();
+
   device_->Shutdown();
   return {};
 }

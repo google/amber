@@ -118,9 +118,13 @@ Result Resource::UpdateMemoryWithData(const BufferData& data) {
 }
 
 void Resource::Shutdown() {
-  UnMapMemory(host_accessible_memory_);
-  vkDestroyBuffer(device_, host_accessible_buffer_, nullptr);
-  vkFreeMemory(device_, host_accessible_memory_, nullptr);
+  if (host_accessible_memory_ != VK_NULL_HANDLE) {
+    UnMapMemory(host_accessible_memory_);
+    vkFreeMemory(device_, host_accessible_memory_, nullptr);
+  }
+
+  if (host_accessible_buffer_ != VK_NULL_HANDLE)
+    vkDestroyBuffer(device_, host_accessible_buffer_, nullptr);
 }
 
 Result Resource::Initialize() {

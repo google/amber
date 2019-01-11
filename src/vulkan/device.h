@@ -57,6 +57,7 @@ class Device {
 
  private:
   Result CreateInstance();
+  Result CreateDebugReportCallback();
 
   // Get a physical device by checking if the physical device has a proper
   // queue family, required features, and required extensions. Note that
@@ -80,6 +81,7 @@ class Device {
                       const std::vector<std::string>& required_extensions);
 
   VkInstance instance_ = VK_NULL_HANDLE;
+  VkDebugReportCallbackEXT callback_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
   VkPhysicalDeviceProperties physical_device_properties_ = {};
   VkPhysicalDeviceMemoryProperties physical_memory_properties_ = {};
