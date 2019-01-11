@@ -100,8 +100,8 @@ if (${AMBER_ENABLE_TESTS})
   add_executable(amber_unittests ${TEST_SRCS})
 
   if (NOT MSVC)
-  	target_compile_options(amber_unittests PRIVATE
-  	    -Wno-global-constructors)
+    target_compile_options(amber_unittests PRIVATE
+        -Wno-global-constructors)
   endif()
 
   target_include_directories(amber_unittests PRIVATE
