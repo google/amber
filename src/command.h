@@ -89,10 +89,14 @@ class Command {
   ProbeSSBOCommand* AsProbeSSBO();
   BufferCommand* AsBuffer();
 
+  void SetLine(size_t line) { line_ = line; }
+  size_t GetLine() const { return line_; }
+
  protected:
   explicit Command(Type type);
 
   Type command_type_;
+  size_t line_;
 };
 
 class DrawRectCommand : public Command {
