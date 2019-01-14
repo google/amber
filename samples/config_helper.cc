@@ -38,7 +38,7 @@ std::unique_ptr<amber::EngineConfig> ConfigHelper::CreateConfig(
     amber::EngineType engine,
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions) {
-  if (engine == amber::EngineType::kDawn)
+  if (engine == amber::kEngineTypeDawn)
     return nullptr;
 
 #if AMBER_ENGINE_VULKAN

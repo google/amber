@@ -15,8 +15,9 @@
 #ifndef AMBER_AMBER_H_
 #define AMBER_AMBER_H_
 
+#include <stdint.h>
+
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -27,13 +28,13 @@ namespace amber {
 
 /// The shader map is a map from the name of a shader to the spirv-binary
 /// which is the compiled representation of that named shader.
-using ShaderMap = std::map<std::string, std::vector<uint32_t>>;
+typedef std::map<std::string, std::vector<uint32_t> > ShaderMap;
 
-enum class EngineType : uint8_t {
+enum EngineType {
   /// Use the Vulkan backend, if available
-  kVulkan = 0,
+  kEngineTypeVulkan = 0,
   /// Use the Dawn backend, if available
-  kDawn,
+  kEngineTypeDawn,
 };
 
 /// Override point of engines to add their own configuration.
@@ -41,9 +42,9 @@ struct EngineConfig {};
 
 struct Options {
   /// Sets the engine to be created. Default Vulkan.
-  EngineType engine = EngineType::kVulkan;
-  /// Holds engine specific configuration.
-  std::unique_ptr<EngineConfig> config;
+  EngineType engine;
+  /// Holds engine specific configuration. Ownership stays with the caller.
+  EngineConfig* config;
 };
 
 /// Main interface to the Amber environment.

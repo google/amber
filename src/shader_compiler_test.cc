@@ -92,9 +92,9 @@ void main() {
   gl_Position = position;
 })";
 
-  Shader shader(ShaderType::kVertex);
+  Shader shader(kShaderTypeVertex);
   shader.SetName("TestShader");
-  shader.SetFormat(ShaderFormat::kGlsl);
+  shader.SetFormat(kShaderFormatGlsl);
   shader.SetData(contents);
 
   ShaderCompiler sc;
@@ -109,9 +109,9 @@ void main() {
 
 #if AMBER_ENABLE_SPIRV_TOOLS
 TEST_F(ShaderCompilerTest, CompilesSpirvAsm) {
-  Shader shader(ShaderType::kVertex);
+  Shader shader(kShaderTypeVertex);
   shader.SetName("TestShader");
-  shader.SetFormat(ShaderFormat::kSpirvAsm);
+  shader.SetFormat(kShaderFormatSpirvAsm);
   shader.SetData(kPassThroughShader);
 
   ShaderCompiler sc;
@@ -127,9 +127,9 @@ TEST_F(ShaderCompilerTest, InvalidSpirvHex) {
   std::string contents = kHexShader;
   contents[3] = '0';
 
-  Shader shader(ShaderType::kVertex);
+  Shader shader(kShaderTypeVertex);
   shader.SetName("BadTestShader");
-  shader.SetFormat(ShaderFormat::kSpirvHex);
+  shader.SetFormat(kShaderFormatSpirvHex);
   shader.SetData(contents);
 
   ShaderCompiler sc;
@@ -142,9 +142,9 @@ TEST_F(ShaderCompilerTest, InvalidSpirvHex) {
 }
 
 TEST_F(ShaderCompilerTest, InvalidHex) {
-  Shader shader(ShaderType::kVertex);
+  Shader shader(kShaderTypeVertex);
   shader.SetName("BadTestShader");
-  shader.SetFormat(ShaderFormat::kSpirvHex);
+  shader.SetFormat(kShaderFormatSpirvHex);
   shader.SetData("aaaaaaaaaa");
 
   ShaderCompiler sc;
@@ -158,9 +158,9 @@ TEST_F(ShaderCompilerTest, InvalidHex) {
 #endif  // AMBER_ENABLE_SPIRV_TOOLS
 
 TEST_F(ShaderCompilerTest, CompilesSpirvHex) {
-  Shader shader(ShaderType::kVertex);
+  Shader shader(kShaderTypeVertex);
   shader.SetName("TestShader");
-  shader.SetFormat(ShaderFormat::kSpirvHex);
+  shader.SetFormat(kShaderFormatSpirvHex);
   shader.SetData(kHexShader);
 
   ShaderCompiler sc;
@@ -175,9 +175,9 @@ TEST_F(ShaderCompilerTest, CompilesSpirvHex) {
 TEST_F(ShaderCompilerTest, FailsOnInvalidShader) {
   std::string contents = "Just Random\nText()\nThat doesn't work.";
 
-  Shader shader(ShaderType::kVertex);
+  Shader shader(kShaderTypeVertex);
   shader.SetName("BadTestShader");
-  shader.SetFormat(ShaderFormat::kGlsl);
+  shader.SetFormat(kShaderFormatGlsl);
   shader.SetData(contents);
 
   ShaderCompiler sc;
@@ -193,9 +193,9 @@ TEST_F(ShaderCompilerTest, ReturnsCachedShader) {
   std::string contents = "Just Random\nText()\nThat doesn't work.";
 
   static const char kShaderName[] = "CachedShader";
-  Shader shader(ShaderType::kVertex);
+  Shader shader(kShaderTypeVertex);
   shader.SetName(kShaderName);
-  shader.SetFormat(ShaderFormat::kGlsl);
+  shader.SetFormat(kShaderFormatGlsl);
   shader.SetData(contents);
 
   std::vector<uint32_t> src_bytes = {1, 2, 3, 4, 5};

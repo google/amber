@@ -31,22 +31,22 @@ namespace amber {
 /// Configuration for the Vulkan Engine.
 struct VulkanEngineConfig : public EngineConfig {
   /// The VkPhysicalDevice to use.
-  VkPhysicalDevice physical_device = VK_NULL_HANDLE;
+  VkPhysicalDevice physical_device;
 
   /// Physical device features available for |physical_device|.
-  VkPhysicalDeviceFeatures available_features = {};
+  VkPhysicalDeviceFeatures available_features;
 
   /// Physical device extensions available for |physical_device|.
   std::vector<std::string> available_extensions;
 
   /// The given queue family index to use.
-  uint32_t queue_family_index = std::numeric_limits<uint32_t>::max();
+  uint32_t queue_family_index;
 
   /// The VkDevice to use.
-  VkDevice device = VK_NULL_HANDLE;
+  VkDevice device;
 
   /// The VkQueue to use.
-  VkQueue queue = VK_NULL_HANDLE;
+  VkQueue queue;
 };
 
 }  // namespace amber

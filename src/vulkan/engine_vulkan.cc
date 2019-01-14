@@ -33,17 +33,17 @@ const uint32_t kFramebufferHeight = 250;
 
 VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
   switch (type) {
-    case ShaderType::kGeometry:
+    case kShaderTypeGeometry:
       return VK_SHADER_STAGE_GEOMETRY_BIT;
-    case ShaderType::kFragment:
+    case kShaderTypeFragment:
       return VK_SHADER_STAGE_FRAGMENT_BIT;
-    case ShaderType::kVertex:
+    case kShaderTypeVertex:
       return VK_SHADER_STAGE_VERTEX_BIT;
-    case ShaderType::kTessellationControl:
+    case kShaderTypeTessellationControl:
       return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-    case ShaderType::kTessellationEvaluation:
+    case kShaderTypeTessellationEvaluation:
       return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-    case ShaderType::kCompute:
+    case kShaderTypeCompute:
       return VK_SHADER_STAGE_COMPUTE_BIT;
   }
 

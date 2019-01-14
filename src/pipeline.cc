@@ -35,11 +35,11 @@ Result Pipeline::AddShader(const Shader* shader) {
     return Result("shader can not be null when attached to pipeline");
 
   if (pipeline_type_ == PipelineType::kCompute &&
-      shader->GetType() != ShaderType::kCompute) {
+      shader->GetType() != kShaderTypeCompute) {
     return Result("only compute shaders allowed in a compute pipeline");
   }
   if (pipeline_type_ == PipelineType::kGraphics &&
-      shader->GetType() == ShaderType::kCompute) {
+      shader->GetType() == kShaderTypeCompute) {
     return Result("can not add a compute shader to a graphics pipeline");
   }
 
@@ -115,9 +115,9 @@ Result Pipeline::ValidateGraphics() const {
   bool found_fragment = false;
   for (const auto& info : shaders_) {
     const auto* is = info.GetShader();
-    if (is->GetType() == ShaderType::kVertex)
+    if (is->GetType() == kShaderTypeVertex)
       found_vertex = true;
-    if (is->GetType() == ShaderType::kFragment)
+    if (is->GetType() == kShaderTypeFragment)
       found_fragment = true;
     if (found_vertex && found_fragment)
       break;
