@@ -25,6 +25,7 @@
 #include "src/verifier.h"
 
 namespace amber {
+namespace {
 
 class VerifierTest : public testing::Test {
  public:
@@ -52,6 +53,8 @@ class VerifierTest : public testing::Test {
  private:
   std::unique_ptr<Format> color_frame_format_;
 };
+
+}  // namespace
 
 TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
   ProbeCommand probe;

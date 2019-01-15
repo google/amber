@@ -199,7 +199,7 @@ bool Verifier::IsTexelEqualToExpected(const uint8_t* texel,
                                       const ProbeCommand* command,
                                       const double* tolerance,
                                       const bool* is_tolerance_percent) {
-  uint32_t bit_offset = 0;
+  uint8_t bit_offset = 0;
   TexelErrorInfo texel_error_info = {};
 
   for (const auto& component : texel_format->GetComponents()) {
@@ -217,30 +217,33 @@ bool Verifier::IsTexelEqualToExpected(const uint8_t* texel,
         actual_in_double = static_cast<double>(
             BitCopy::HexFloatToFloat(actual, component.num_bits));
       } else if (component.num_bits == 32) {
-        actual_in_double =
-            static_cast<double>(*(reinterpret_cast<float*>(&actual)));
+        float* ptr = reinterpret_cast<float*>(actual);
+        actual_in_double = static_cast<double>(*ptr);
       } else if (component.num_bits == 64) {
-        actual_in_double = *(reinterpret_cast<double*>(&actual));
+        double* ptr = reinterpret_cast<double*>(actual);
+        actual_in_double = *ptr;
       } else {
         assert(false && "Bits of component is not for double nor float type");
       }
     } else {
+      uint16_t* ptr16 = nullptr;
+      uint32_t* ptr32 = nullptr;
+      uint64_t* ptr64 = nullptr;
       switch (component.num_bits) {
         case 8:
-          actual_in_double =
-              static_cast<double>(*(reinterpret_cast<uint8_t*>(&actual)));
+          actual_in_double = static_cast<double>(*actual);
           break;
         case 16:
-          actual_in_double =
-              static_cast<double>(*(reinterpret_cast<uint16_t*>(&actual)));
+          ptr16 = reinterpret_cast<uint16_t*>(actual);
+          actual_in_double = static_cast<double>(*ptr16);
           break;
         case 32:
-          actual_in_double =
-              static_cast<double>(*(reinterpret_cast<uint32_t*>(&actual)));
+          ptr32 = reinterpret_cast<uint32_t*>(actual);
+          actual_in_double = static_cast<double>(*ptr32);
           break;
         case 64:
-          actual_in_double =
-              static_cast<double>(*(reinterpret_cast<uint64_t*>(&actual)));
+          ptr64 = reinterpret_cast<uint64_t*>(actual);
+          actual_in_double = static_cast<double>(*ptr64);
           break;
         default:
           assert(false && "Bits of component is not for integer type");
@@ -271,6 +274,7 @@ bool Verifier::IsTexelEqualToExpected(const uint8_t* texel,
         case FormatMode::kSScaled:
           assert(false &&
                  "FormatMode::kUScaled and ::kSScaled are not implemented");
+          break;
         default:
           assert(false && "Unknown Integer type");
           break;
@@ -283,25 +287,25 @@ bool Verifier::IsTexelEqualToExpected(const uint8_t* texel,
           bit_offset += component.num_bits;
           continue;
         }
-        expected = command->GetA();
+        expected = static_cast<double>(command->GetA());
         current_tolerance = tolerance[3];
         is_current_tolerance_percent = is_tolerance_percent[3];
         texel_error_info.a = scale_factor_for_error_report * actual_in_double;
         break;
       case FormatComponentType::kR:
-        expected = command->GetR();
+        expected = static_cast<double>(command->GetR());
         current_tolerance = tolerance[0];
         is_current_tolerance_percent = is_tolerance_percent[0];
         texel_error_info.r = scale_factor_for_error_report * actual_in_double;
         break;
       case FormatComponentType::kG:
-        expected = command->GetG();
+        expected = static_cast<double>(command->GetG());
         current_tolerance = tolerance[1];
         is_current_tolerance_percent = is_tolerance_percent[1];
         texel_error_info.g = scale_factor_for_error_report * actual_in_double;
         break;
       case FormatComponentType::kB:
-        expected = command->GetB();
+        expected = static_cast<double>(command->GetB());
         current_tolerance = tolerance[2];
         is_current_tolerance_percent = is_tolerance_percent[2];
         texel_error_info.b = scale_factor_for_error_report * actual_in_double;
@@ -410,11 +414,11 @@ Result Verifier::Probe(const ProbeCommand* command,
 
   if (count_of_invalid_pixels) {
     const auto& component = texel_format->GetComponents().back();
-    double scale_factor_for_error_report = 1;
+    float scale_factor_for_error_report = 1.0f;
     if (component.mode == FormatMode::kUNorm ||
         component.mode == FormatMode::kSNorm ||
         component.mode == FormatMode::kSRGB) {
-      scale_factor_for_error_report = 255;
+      scale_factor_for_error_report = 255.0f;
     }
 
     return Result(
