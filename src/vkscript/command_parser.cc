@@ -32,17 +32,17 @@ namespace {
 
 ShaderType ShaderNameToType(const std::string& name) {
   if (name == "fragment")
-    return ShaderType::kFragment;
+    return kShaderTypeFragment;
   if (name == "compute")
-    return ShaderType::kCompute;
+    return kShaderTypeCompute;
   if (name == "geometry")
-    return ShaderType::kGeometry;
+    return kShaderTypeGeometry;
   if (name == "tessellation evaluation")
-    return ShaderType::kTessellationEvaluation;
+    return kShaderTypeTessellationEvaluation;
   if (name == "tessellation control")
-    return ShaderType::kTessellationControl;
+    return kShaderTypeTessellationControl;
 
-  return ShaderType::kVertex;
+  return kShaderTypeVertex;
 }
 
 }  // namespace
@@ -247,6 +247,7 @@ Result CommandParser::Parse() {
 
 Result CommandParser::ProcessDrawRect() {
   auto cmd = MakeUnique<DrawRectCommand>(pipeline_data_);
+  cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
   while (token->IsString()) {
@@ -296,6 +297,7 @@ Result CommandParser::ProcessDrawRect() {
 
 Result CommandParser::ProcessDrawArrays() {
   auto cmd = MakeUnique<DrawArraysCommand>(pipeline_data_);
+  cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
   while (token->IsString()) {
@@ -356,6 +358,7 @@ Result CommandParser::ProcessDrawArrays() {
 
 Result CommandParser::ProcessCompute() {
   auto cmd = MakeUnique<ComputeCommand>(pipeline_data_);
+  cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
 
@@ -399,6 +402,7 @@ Result CommandParser::ProcessClear() {
     cmd_suffix = str + " ";
     if (str == "depth") {
       cmd = MakeUnique<ClearDepthCommand>();
+      cmd->SetLine(tokenizer_->GetCurrentLine());
 
       token = tokenizer_->NextToken();
       Result r = token->ConvertToDouble();
@@ -408,6 +412,7 @@ Result CommandParser::ProcessClear() {
       cmd->AsClearDepth()->SetValue(token->AsFloat());
     } else if (str == "stencil") {
       cmd = MakeUnique<ClearStencilCommand>();
+      cmd->SetLine(tokenizer_->GetCurrentLine());
 
       token = tokenizer_->NextToken();
       if (token->IsEOL() || token->IsEOS())
@@ -420,6 +425,7 @@ Result CommandParser::ProcessClear() {
       cmd->AsClearStencil()->SetValue(token->AsUint32());
     } else if (str == "color") {
       cmd = MakeUnique<ClearColorCommand>();
+      cmd->SetLine(tokenizer_->GetCurrentLine());
 
       token = tokenizer_->NextToken();
       Result r = token->ConvertToDouble();
@@ -452,6 +458,7 @@ Result CommandParser::ProcessClear() {
     token = tokenizer_->NextToken();
   } else {
     cmd = MakeUnique<ClearCommand>();
+    cmd->SetLine(tokenizer_->GetCurrentLine());
   }
   if (!token->IsEOS() && !token->IsEOL())
     return Result("Extra parameter to clear " + cmd_suffix +
@@ -508,6 +515,7 @@ Result CommandParser::ParseValues(const std::string& name,
 
 Result CommandParser::ProcessSSBO() {
   auto cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kSSBO);
+  cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
@@ -600,6 +608,7 @@ Result CommandParser::ProcessUniform() {
   std::unique_ptr<BufferCommand> cmd;
   if (token->AsString() == "ubo") {
     cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kUniform);
+    cmd->SetLine(tokenizer_->GetCurrentLine());
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger())
@@ -635,6 +644,7 @@ Result CommandParser::ProcessUniform() {
 
   } else {
     cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kPushConstant);
+    cmd->SetLine(tokenizer_->GetCurrentLine());
   }
 
   DatumTypeParser tp;
@@ -711,6 +721,7 @@ Result CommandParser::ProcessTolerance() {
 
 Result CommandParser::ProcessPatch() {
   auto cmd = MakeUnique<PatchParameterVerticesCommand>();
+  cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
   if (!token->IsString() || token->AsString() != "parameter")
@@ -739,6 +750,7 @@ Result CommandParser::ProcessPatch() {
 
 Result CommandParser::ProcessEntryPoint(const std::string& name) {
   auto cmd = MakeUnique<EntryPointCommand>();
+  cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
@@ -772,6 +784,8 @@ Result CommandParser::ProcessProbe(bool relative) {
     return ProcessProbeSSBO();
 
   auto cmd = MakeUnique<ProbeCommand>();
+  cmd->SetLine(tokenizer_->GetCurrentLine());
+
   cmd->SetTolerances(current_tolerances_);
   if (relative)
     cmd->SetRelative();
@@ -1868,6 +1882,7 @@ Result CommandParser::ParseComparator(const std::string& name,
 
 Result CommandParser::ProcessProbeSSBO() {
   auto cmd = MakeUnique<ProbeSSBOCommand>();
+  cmd->SetLine(tokenizer_->GetCurrentLine());
   cmd->SetTolerances(current_tolerances_);
 
   auto token = tokenizer_->NextToken();

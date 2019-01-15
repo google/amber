@@ -47,7 +47,7 @@ Result Executor::Execute(Engine* engine,
     if (!r.IsSuccess())
       return r;
 
-    if (shader->GetType() == ShaderType::kCompute)
+    if (shader->GetType() == kShaderTypeCompute)
       pipeline_type = PipelineType::kCompute;
   }
 

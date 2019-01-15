@@ -36,15 +36,15 @@ using ScriptTest = testing::Test;
 TEST_F(ScriptTest, GetShaderInfo) {
   ScriptProxy sp;
 
-  auto shader = MakeUnique<Shader>(ShaderType::kVertex);
+  auto shader = MakeUnique<Shader>(kShaderTypeVertex);
   shader->SetName("Shader1");
-  shader->SetFormat(ShaderFormat::kGlsl);
+  shader->SetFormat(kShaderFormatGlsl);
   shader->SetData("This is my shader data");
   sp.AddShader(std::move(shader));
 
-  shader = MakeUnique<Shader>(ShaderType::kFragment);
+  shader = MakeUnique<Shader>(kShaderTypeFragment);
   shader->SetName("Shader2");
-  shader->SetFormat(ShaderFormat::kSpirvAsm);
+  shader->SetFormat(kShaderFormatSpirvAsm);
   shader->SetData("More shader data");
   sp.AddShader(std::move(shader));
 
@@ -52,14 +52,14 @@ TEST_F(ScriptTest, GetShaderInfo) {
   ASSERT_EQ(2U, info.size());
 
   EXPECT_EQ("Shader1", info[0].shader_name);
-  EXPECT_EQ(ShaderFormat::kGlsl, info[0].format);
-  EXPECT_EQ(ShaderType::kVertex, info[0].type);
+  EXPECT_EQ(kShaderFormatGlsl, info[0].format);
+  EXPECT_EQ(kShaderTypeVertex, info[0].type);
   EXPECT_EQ("This is my shader data", info[0].shader_source);
   EXPECT_TRUE(info[0].optimizations.empty());
 
   EXPECT_EQ("Shader2", info[1].shader_name);
-  EXPECT_EQ(ShaderFormat::kSpirvAsm, info[1].format);
-  EXPECT_EQ(ShaderType::kFragment, info[1].type);
+  EXPECT_EQ(kShaderFormatSpirvAsm, info[1].format);
+  EXPECT_EQ(kShaderTypeFragment, info[1].type);
   EXPECT_EQ("More shader data", info[1].shader_source);
   EXPECT_TRUE(info[1].optimizations.empty());
 }
@@ -71,7 +71,7 @@ TEST_F(ScriptTest, GetShaderInfoNoShaders) {
 }
 
 TEST_F(ScriptTest, AddShader) {
-  auto shader = MakeUnique<Shader>(ShaderType::kVertex);
+  auto shader = MakeUnique<Shader>(kShaderTypeVertex);
   shader->SetName("My Shader");
 
   Script s;
@@ -80,14 +80,14 @@ TEST_F(ScriptTest, AddShader) {
 }
 
 TEST_F(ScriptTest, AddDuplicateShader) {
-  auto shader1 = MakeUnique<Shader>(ShaderType::kVertex);
+  auto shader1 = MakeUnique<Shader>(kShaderTypeVertex);
   shader1->SetName("My Shader");
 
   Script s;
   Result r = s.AddShader(std::move(shader1));
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto shader2 = MakeUnique<Shader>(ShaderType::kFragment);
+  auto shader2 = MakeUnique<Shader>(kShaderTypeFragment);
   shader2->SetName("My Shader");
 
   r = s.AddShader(std::move(shader2));
@@ -96,7 +96,7 @@ TEST_F(ScriptTest, AddDuplicateShader) {
 }
 
 TEST_F(ScriptTest, GetShader) {
-  auto shader = MakeUnique<Shader>(ShaderType::kVertex);
+  auto shader = MakeUnique<Shader>(kShaderTypeVertex);
   shader->SetName("My Shader");
 
   auto* ptr = shader.get();
@@ -120,7 +120,7 @@ TEST_F(ScriptTest, GetShadersEmpty) {
 }
 
 TEST_F(ScriptTest, GetShaders) {
-  auto shader1 = MakeUnique<Shader>(ShaderType::kVertex);
+  auto shader1 = MakeUnique<Shader>(kShaderTypeVertex);
   shader1->SetName("My Shader");
 
   const auto* ptr1 = shader1.get();
@@ -129,7 +129,7 @@ TEST_F(ScriptTest, GetShaders) {
   Result r = s.AddShader(std::move(shader1));
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto shader2 = MakeUnique<Shader>(ShaderType::kFragment);
+  auto shader2 = MakeUnique<Shader>(kShaderTypeFragment);
   shader2->SetName("My Fragment");
 
   const auto* ptr2 = shader2.get();

@@ -457,8 +457,8 @@ void main() {}
 
   auto shader_types = ToStub(engine.get())->GetShaderTypesSeen();
   ASSERT_EQ(2U, shader_types.size());
-  EXPECT_EQ(ShaderType::kVertex, shader_types[0]);
-  EXPECT_EQ(ShaderType::kFragment, shader_types[1]);
+  EXPECT_EQ(kShaderTypeVertex, shader_types[0]);
+  EXPECT_EQ(kShaderTypeFragment, shader_types[1]);
 }
 
 TEST_F(VkScriptExecutorTest, ShaderFailure) {

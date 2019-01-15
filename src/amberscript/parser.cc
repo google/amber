@@ -66,17 +66,17 @@ Result Parser::ToShaderType(const std::string& str, ShaderType* type) {
   assert(type);
 
   if (str == "vertex")
-    *type = ShaderType::kVertex;
+    *type = kShaderTypeVertex;
   else if (str == "fragment")
-    *type = ShaderType::kFragment;
+    *type = kShaderTypeFragment;
   else if (str == "geometry")
-    *type = ShaderType::kGeometry;
+    *type = kShaderTypeGeometry;
   else if (str == "tessellation_evaluation")
-    *type = ShaderType::kTessellationEvaluation;
+    *type = kShaderTypeTessellationEvaluation;
   else if (str == "tessellation_control")
-    *type = ShaderType::kTessellationControl;
+    *type = kShaderTypeTessellationControl;
   else if (str == "compute")
-    *type = ShaderType::kCompute;
+    *type = kShaderTypeCompute;
   else
     return Result("unknown shader type: " + str);
   return {};
@@ -86,11 +86,11 @@ Result Parser::ToShaderFormat(const std::string& str, ShaderFormat* fmt) {
   assert(fmt);
 
   if (str == "GLSL")
-    *fmt = ShaderFormat::kGlsl;
+    *fmt = kShaderFormatGlsl;
   else if (str == "SPIRV-ASM")
-    *fmt = ShaderFormat::kSpirvAsm;
+    *fmt = kShaderFormatSpirvAsm;
   else if (str == "SPIRV-HEX")
-    *fmt = ShaderFormat::kSpirvHex;
+    *fmt = kShaderFormatSpirvHex;
   else
     return Result("unknown shader format: " + str);
   return {};
@@ -204,7 +204,7 @@ Result Parser::ParseShaderBlock() {
   if (!token->IsString())
     return Result("invalid token when looking for shader type");
 
-  ShaderType type = ShaderType::kVertex;
+  ShaderType type = kShaderTypeVertex;
   Result r = ToShaderType(token->AsString(), &type);
   if (!r.IsSuccess())
     return r;
@@ -223,12 +223,12 @@ Result Parser::ParseShaderBlock() {
 
   std::string fmt = token->AsString();
   if (fmt == "PASSTHROUGH") {
-    if (type != ShaderType::kVertex) {
+    if (type != kShaderTypeVertex) {
       return Result(
           "invalid shader type for PASSTHROUGH. Only vertex "
           "PASSTHROUGH allowed");
     }
-    shader->SetFormat(ShaderFormat::kSpirvAsm);
+    shader->SetFormat(kShaderFormatSpirvAsm);
     shader->SetData(kPassThroughShader);
 
     r = script_->AddShader(std::move(shader));
@@ -238,7 +238,7 @@ Result Parser::ParseShaderBlock() {
     return ValidateEndOfStatement("SHADER PASSTHROUGH");
   }
 
-  ShaderFormat format = ShaderFormat::kGlsl;
+  ShaderFormat format = kShaderFormatGlsl;
   r = ToShaderFormat(fmt, &format);
   if (!r.IsSuccess())
     return r;

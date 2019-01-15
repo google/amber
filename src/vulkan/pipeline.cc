@@ -37,12 +37,14 @@ const char* kDefaultEntryPointName = "main";
 Pipeline::Pipeline(
     PipelineType type,
     VkDevice device,
-    const VkPhysicalDeviceMemoryProperties& properties,
+    const VkPhysicalDeviceProperties& properties,
+    const VkPhysicalDeviceMemoryProperties& memory_properties,
     uint32_t fence_timeout_ms,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : device_(device),
-      memory_properties_(properties),
+      memory_properties_(memory_properties),
       pipeline_type_(type),
+      physical_device_properties_(properties),
       shader_stage_info_(shader_stage_info),
       fence_timeout_ms_(fence_timeout_ms) {}
 
@@ -56,13 +58,12 @@ ComputePipeline* Pipeline::AsCompute() {
   return static_cast<ComputePipeline*>(this);
 }
 
-Result Pipeline::InitializeCommandBuffer(VkCommandPool pool, VkQueue queue) {
-  command_ = MakeUnique<CommandBuffer>(device_, pool, queue);
-  Result r = command_->Initialize();
-  if (!r.IsSuccess())
-    return r;
+Result Pipeline::Initialize(VkCommandPool pool, VkQueue queue) {
+  push_constant_ = MakeUnique<PushConstant>(
+      physical_device_properties_.limits.maxPushConstantsSize);
 
-  return {};
+  command_ = MakeUnique<CommandBuffer>(device_, pool, queue);
+  return command_->Initialize();
 }
 
 void Pipeline::Shutdown() {
@@ -74,10 +75,10 @@ void Pipeline::Shutdown() {
     command_->Shutdown();
   }
 
-  DestroyVkDescriptorRelatedObjects();
+  DestroyVkDescriptorAndPipelineRelatedObjects();
 }
 
-void Pipeline::DestroyVkDescriptorRelatedObjects() {
+void Pipeline::DestroyVkDescriptorAndPipelineRelatedObjects() {
   for (auto& info : descriptor_set_info_) {
     if (info.layout != VK_NULL_HANDLE)
       vkDestroyDescriptorSetLayout(device_, info.layout, nullptr);
@@ -94,11 +95,19 @@ void Pipeline::DestroyVkDescriptorRelatedObjects() {
     }
   }
 
-  if (pipeline_layout_ != VK_NULL_HANDLE)
-    vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
+  ResetVkPipelineRelatedObjects();
+}
 
-  if (pipeline_ != VK_NULL_HANDLE)
+void Pipeline::ResetVkPipelineRelatedObjects() {
+  if (pipeline_layout_ != VK_NULL_HANDLE) {
+    vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
+    pipeline_layout_ = VK_NULL_HANDLE;
+  }
+
+  if (pipeline_ != VK_NULL_HANDLE) {
     vkDestroyPipeline(device_, pipeline_, nullptr);
+    pipeline_ = VK_NULL_HANDLE;
+  }
 }
 
 Result Pipeline::CreateDescriptorSetLayouts() {
@@ -197,7 +206,12 @@ Result Pipeline::CreatePipelineLayout() {
   pipeline_layout_info.setLayoutCount =
       static_cast<uint32_t>(descriptor_set_layouts.size());
   pipeline_layout_info.pSetLayouts = descriptor_set_layouts.data();
-  // TODO(jaebaek): Push constant for pipeline_layout_info.
+
+  VkPushConstantRange push_const_range = push_constant_->GetPushConstantRange();
+  if (push_const_range.size) {
+    pipeline_layout_info.pushConstantRangeCount = 1U;
+    pipeline_layout_info.pPushConstantRanges = &push_const_range;
+  }
 
   if (vkCreatePipelineLayout(device_, &pipeline_layout_info, nullptr,
                              &pipeline_layout_) != VK_SUCCESS) {
@@ -207,9 +221,11 @@ Result Pipeline::CreatePipelineLayout() {
   return {};
 }
 
-Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
-  if (descriptor_related_objects_already_created_)
-    return {};
+Result Pipeline::CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded() {
+  if (descriptor_related_objects_already_created_) {
+    return pipeline_layout_ == VK_NULL_HANDLE ? CreatePipelineLayout()
+                                              : Result();
+  }
 
   Result r = CreateDescriptorSetLayouts();
   if (!r.IsSuccess())
@@ -223,12 +239,8 @@ Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
   if (!r.IsSuccess())
     return r;
 
-  r = CreatePipelineLayout();
-  if (!r.IsSuccess())
-    return r;
-
   descriptor_related_objects_already_created_ = true;
-  return {};
+  return CreatePipelineLayout();
 }
 
 Result Pipeline::UpdateDescriptorSetsIfNeeded() {
@@ -241,6 +253,21 @@ Result Pipeline::UpdateDescriptorSetsIfNeeded() {
   }
 
   return {};
+}
+
+Result Pipeline::RecordPushConstant() {
+  return push_constant_->RecordPushConstantVkCommand(
+      command_->GetCommandBuffer(), pipeline_layout_);
+}
+
+Result Pipeline::AddPushConstant(const BufferCommand* command) {
+  if (!command->IsPushConstant())
+    return Result(
+        "Pipeline::AddPushConstant BufferCommand type is not push constant");
+
+  ResetVkPipelineRelatedObjects();
+
+  return push_constant_->AddBufferData(command);
 }
 
 Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
@@ -260,8 +287,12 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
 
   if (descriptor_set_info_[desc_set].empty &&
       descriptor_related_objects_already_created_) {
-    DestroyVkDescriptorRelatedObjects();
-    descriptor_related_objects_already_created_ = false;
+    return Result(
+        "Vulkan: Pipeline descriptor related objects were already created but "
+        "try to put data on empty descriptor set '" +
+        std::to_string(desc_set) +
+        "'. Note that all used descriptor sets must be allocated before the "
+        "first compute or draw.");
   }
   descriptor_set_info_[desc_set].empty = false;
 
@@ -351,8 +382,11 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     return r;
 
   for (auto& info : descriptor_set_info_) {
-    for (auto& desc : info.descriptors_)
-      desc->UpdateResourceIfNeeded(command_->GetCommandBuffer());
+    for (auto& desc : info.descriptors_) {
+      r = desc->UpdateResourceIfNeeded(command_->GetCommandBuffer());
+      if (!r.IsSuccess())
+        return r;
+    }
   }
 
   return {};
