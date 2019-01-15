@@ -443,7 +443,7 @@ class EntryPointCommand : public Command {
   std::string GetEntryPointName() const { return entry_point_name_; }
 
  private:
-  ShaderType shader_type_ = ShaderType::kVertex;
+  ShaderType shader_type_ = kShaderTypeVertex;
   std::string entry_point_name_;
 };
 

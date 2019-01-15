@@ -77,20 +77,20 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
 
   std::vector<uint32_t> results;
 
-  if (shader->GetFormat() == ShaderFormat::kSpirvHex) {
+  if (shader->GetFormat() == kShaderFormatSpirvHex) {
     Result r = ParseHex(shader->GetData(), &results);
     if (!r.IsSuccess())
       return {Result("Unable to parse shader hex."), {}};
 
 #if AMBER_ENABLE_SHADERC
-  } else if (shader->GetFormat() == ShaderFormat::kGlsl) {
+  } else if (shader->GetFormat() == kShaderFormatGlsl) {
     Result r = CompileGlsl(shader, &results);
     if (!r.IsSuccess())
       return {r, {}};
 #endif  // AMBER_ENABLE_SHADERC
 
 #if AMBER_ENABLE_SPIRV_TOOLS
-  } else if (shader->GetFormat() == ShaderFormat::kSpirvAsm) {
+  } else if (shader->GetFormat() == kShaderFormatSpirvAsm) {
     if (!tools.Assemble(shader->GetData(), &results,
                         spvtools::SpirvTools::kDefaultAssembleOption)) {
       return {Result("Shader assembly failed: " + spv_errors), {}};
@@ -143,17 +143,17 @@ Result ShaderCompiler::CompileGlsl(Shader* shader,
   shaderc::CompileOptions options;
 
   shaderc_shader_kind kind;
-  if (shader->GetType() == ShaderType::kCompute)
+  if (shader->GetType() == kShaderTypeCompute)
     kind = shaderc_compute_shader;
-  else if (shader->GetType() == ShaderType::kFragment)
+  else if (shader->GetType() == kShaderTypeFragment)
     kind = shaderc_fragment_shader;
-  else if (shader->GetType() == ShaderType::kGeometry)
+  else if (shader->GetType() == kShaderTypeGeometry)
     kind = shaderc_geometry_shader;
-  else if (shader->GetType() == ShaderType::kVertex)
+  else if (shader->GetType() == kShaderTypeVertex)
     kind = shaderc_vertex_shader;
-  else if (shader->GetType() == ShaderType::kTessellationControl)
+  else if (shader->GetType() == kShaderTypeTessellationControl)
     kind = shaderc_tess_control_shader;
-  else if (shader->GetType() == ShaderType::kTessellationEvaluation)
+  else if (shader->GetType() == kShaderTypeTessellationEvaluation)
     kind = shaderc_tess_evaluation_shader;
   else
     return Result("Unknown shader type");
