@@ -29,7 +29,7 @@ void BitCopy::LeftShiftBufferBits(uint8_t* buffer,
 
   uint8_t carry = 0;
   for (uint32_t i = 0; i < length_bytes; ++i) {
-    uint8_t new_value = (buffer[i] << shift_bits) | carry;
+    uint8_t new_value = static_cast<uint8_t>((buffer[i] << shift_bits) | carry);
     carry = buffer[i] >> (8 - shift_bits);
     buffer[i] = new_value;
   }
@@ -42,29 +42,37 @@ void BitCopy::CopyValueToBuffer(uint8_t* dst,
                                 uint8_t bits) {
   uint8_t data[9] = {};
   if (src.IsInteger()) {
-    if (bits <= 8)
+    if (bits <= 8) {
       data[0] = src.AsUint8();
-    else if (bits <= 16)
-      *(reinterpret_cast<uint16_t*>(data)) = src.AsUint16();
-    else if (bits <= 32)
-      *(reinterpret_cast<uint32_t*>(data)) = src.AsUint32();
-    else if (bits <= 64)
-      *(reinterpret_cast<uint64_t*>(data)) = src.AsUint64();
-    else
+    } else if (bits <= 16) {
+      uint16_t* ptr = reinterpret_cast<uint16_t*>(data);
+      *ptr = src.AsUint16();
+    } else if (bits <= 32) {
+      uint32_t* ptr = reinterpret_cast<uint32_t*>(data);
+      *ptr = src.AsUint32();
+    } else if (bits <= 64) {
+      uint64_t* ptr = reinterpret_cast<uint64_t*>(data);
+      *ptr = src.AsUint64();
+    } else {
       assert(false && "Invalid int bits for CopyBits");
+    }
   } else {
     if (bits == 64) {
-      *(reinterpret_cast<double*>(data)) = src.AsDouble();
+      double* ptr = reinterpret_cast<double*>(data);
+      *ptr = src.AsDouble();
     } else {
+      float* float_ptr = nullptr;
+      uint16_t* uint16_ptr = nullptr;
       switch (bits) {
         case 32:
-          *(reinterpret_cast<float*>(data)) = src.AsFloat();
+          float_ptr = reinterpret_cast<float*>(data);
+          *float_ptr = src.AsFloat();
           break;
         case 16:
         case 11:
         case 10:
-          *(reinterpret_cast<uint16_t*>(data)) =
-              FloatToHexFloat(src.AsFloat(), bits);
+          uint16_ptr = reinterpret_cast<uint16_t*>(data);
+          *uint16_ptr = FloatToHexFloat(src.AsFloat(), bits);
           break;
         default:
           assert(false && "Invalid float bits for CopyBits");
@@ -95,7 +103,8 @@ void BitCopy::RightShiftBufferBits(uint8_t* buffer,
   uint8_t carry = 0;
   for (uint32_t i = 0; i < length_bytes; ++i) {
     uint8_t old_value = buffer[i];
-    buffer[i] = (buffer[i] >> shift_bits) | (carry << (8 - shift_bits));
+    buffer[i] = static_cast<uint8_t>((buffer[i] >> shift_bits) |
+                                     (carry << (8 - shift_bits)));
     carry = old_value & ((1 << shift_bits) - 1);
   }
 }
@@ -184,56 +193,66 @@ uint16_t BitCopy::FloatToHexFloat(float value, uint8_t bits) {
 
 // static
 uint16_t BitCopy::FloatToHexFloat16(const float value) {
-  const uint32_t& hex = *(reinterpret_cast<const uint32_t*>(&value));
-  return static_cast<uint16_t>(FloatSign(hex) << 15U) |
-         static_cast<uint16_t>(FloatExponent(hex) << 10U) | FloatMantissa(hex);
+  const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
+  return static_cast<uint16_t>(FloatSign(*hex) << 15U) |
+         static_cast<uint16_t>(FloatExponent(*hex) << 10U) |
+         FloatMantissa(*hex);
 }
 
 // static
 uint16_t BitCopy::FloatToHexFloat11(const float value) {
-  const uint32_t& hex = *(reinterpret_cast<const uint32_t*>(&value));
-  assert(FloatSign(hex) == 0);
-  return static_cast<uint16_t>(FloatExponent(hex) << 6U) |
-         static_cast<uint16_t>(FloatMantissa(hex) >> 4U);
+  const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
+  assert(FloatSign(*hex) == 0);
+  return static_cast<uint16_t>(FloatExponent(*hex) << 6U) |
+         static_cast<uint16_t>(FloatMantissa(*hex) >> 4U);
 }
 
 // static
 uint16_t BitCopy::FloatToHexFloat10(const float value) {
-  const uint32_t& hex = *(reinterpret_cast<const uint32_t*>(&value));
-  assert(FloatSign(hex) == 0);
-  return static_cast<uint16_t>(FloatExponent(hex) << 5U) |
-         static_cast<uint16_t>(FloatMantissa(hex) >> 5U);
+  const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
+  assert(FloatSign(*hex) == 0);
+  return static_cast<uint16_t>(FloatExponent(*hex) << 5U) |
+         static_cast<uint16_t>(FloatMantissa(*hex) >> 5U);
 }
 
 // static
 float BitCopy::HexFloat16ToFloat(const uint8_t* value) {
-  uint32_t sign = (static_cast<uint32_t>(value[1]) & 0x80) << 16U;
-  uint32_t exponent = (static_cast<uint32_t>(value[1]) & 0x7c) << 13U;
-  uint32_t mantissa = (static_cast<uint32_t>(value[1]) & 0x3) << 8U |
-                      static_cast<uint32_t>(value[0]);
+  uint32_t sign = (static_cast<uint32_t>(value[1]) & 0x80) << 24U;
+  uint32_t exponent = (((static_cast<uint32_t>(value[1]) & 0x7c) >> 2U) + 112U)
+                      << 23U;
+  uint32_t mantissa = ((static_cast<uint32_t>(value[1]) & 0x3) << 8U |
+                       static_cast<uint32_t>(value[0]))
+                      << 13U;
 
   uint32_t hex = sign | exponent | mantissa;
-  return *(reinterpret_cast<float*>(&hex));
+  float* hex_float = reinterpret_cast<float*>(&hex);
+  return *hex_float;
 }
 
 // static
 float BitCopy::HexFloat11ToFloat(const uint8_t* value) {
-  uint32_t exponent = (static_cast<uint32_t>(value[1]) << 25U) |
-                      ((static_cast<uint32_t>(value[0]) & 0xc0) << 17U);
-  uint32_t mantissa = static_cast<uint32_t>(value[0]) & 0x3f;
+  uint32_t exponent = (((static_cast<uint32_t>(value[1]) << 2U) |
+                        ((static_cast<uint32_t>(value[0]) & 0xc0) >> 6U)) +
+                       112U)
+                      << 23U;
+  uint32_t mantissa = (static_cast<uint32_t>(value[0]) & 0x3f) << 17U;
 
   uint32_t hex = exponent | mantissa;
-  return *(reinterpret_cast<float*>(&hex));
+  float* hex_float = reinterpret_cast<float*>(&hex);
+  return *hex_float;
 }
 
 // static
 float BitCopy::HexFloat10ToFloat(const uint8_t* value) {
-  uint32_t exponent = (static_cast<uint32_t>(value[1]) << 26U) |
-                      ((static_cast<uint32_t>(value[0]) & 0xe0) << 18U);
-  uint32_t mantissa = static_cast<uint32_t>(value[0]) & 0x1f;
+  uint32_t exponent = (((static_cast<uint32_t>(value[1]) << 3U) |
+                        ((static_cast<uint32_t>(value[0]) & 0xe0) >> 5U)) +
+                       112U)
+                      << 23U;
+  uint32_t mantissa = (static_cast<uint32_t>(value[0]) & 0x1f) << 18U;
 
   uint32_t hex = exponent | mantissa;
-  return *(reinterpret_cast<float*>(&hex));
+  float* hex_float = reinterpret_cast<float*>(&hex);
+  return *hex_float;
 }
 
 }  // namespace amber

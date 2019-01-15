@@ -28,7 +28,13 @@ namespace amber {
 
 class VerifierTest : public testing::Test {
  public:
-  VerifierTest() {
+  VerifierTest() = default;
+  ~VerifierTest() = default;
+
+  const Format* GetColorFormat() {
+    if (color_frame_format_)
+      return color_frame_format_.get();
+
     // Set VK_FORMAT_R8G8B8A8_UNORM for color frame buffer.
     color_frame_format_ = MakeUnique<Format>();
     color_frame_format_->SetFormatType(FormatType::kB8G8R8A8_UNORM);
@@ -40,11 +46,8 @@ class VerifierTest : public testing::Test {
                                       FormatMode::kUNorm, 8);
     color_frame_format_->AddComponent(FormatComponentType::kA,
                                       FormatMode::kUNorm, 8);
+    return color_frame_format_.get();
   }
-
-  ~VerifierTest() = default;
-
-  const Format* GetColorFormat() const { return color_frame_format_.get(); }
 
  private:
   std::unique_ptr<Format> color_frame_format_;

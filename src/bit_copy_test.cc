@@ -308,14 +308,12 @@ TEST_F(BitCopyTest, CopyFloat) {
   uint8_t data[4] = {};
   Value value;
 
-  // 16 bits
   //         Sig / Exp / Mantissa
   // 12.34 =   0 / 130 /  4550820
   value.SetDoubleValue(12.34);
   BitCopy::CopyValueToBuffer(data, value, 0, 32);
   ExpectBitsEQ<uint32_t>(data, 1095069860);
 
-  // 11 bits
   //         Sig / Exp / Mantissa
   // 5.67 =    0 / 129 /  3502244
   value.SetDoubleValue(5.67);
@@ -326,7 +324,6 @@ TEST_F(BitCopyTest, CopyFloat) {
   BitCopy::CopyValueToBuffer(data, value, 0, 32);
   ExpectBitsEQ<uint32_t>(data, 1085632676);
 
-  // 10 bits
   //         Sig / Exp / Mantissa
   // 0.89 =    0 / 126 /  6543114
   value.SetDoubleValue(0.89);
@@ -375,6 +372,33 @@ TEST_F(BitCopyTest, CopyDouble) {
   data[7] = 0;
   BitCopy::CopyValueToBuffer(data, value, 0, 64);
   ExpectBitsEQ<uint64_t>(data, 4606191626881995899);
+}
+
+TEST_F(BitCopyTest, HexFloatToFloat) {
+  // 16 bits float to float
+  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
+  //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
+  uint16_t data = 50688;
+  EXPECT_FLOAT_EQ(
+      BitCopy::HexFloatToFloat(reinterpret_cast<const uint8_t*>(&data), 16),
+      -6.0f);
+
+  // 11 bits float to float
+  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
+  //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
+  data = 1200;
+  EXPECT_FLOAT_EQ(
+      BitCopy::HexFloatToFloat(reinterpret_cast<const uint8_t*>(&data), 11),
+      14.0f);
+
+  // 10 bits float to float
+  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
+  //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4 =
+  //     0.1171875
+  data = 380;
+  EXPECT_FLOAT_EQ(
+      BitCopy::HexFloatToFloat(reinterpret_cast<const uint8_t*>(&data), 10),
+      0.1171875f);
 }
 
 }  // namespace amber
