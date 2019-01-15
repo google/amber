@@ -96,7 +96,7 @@ class Command {
   explicit Command(Type type);
 
   Type command_type_;
-  size_t line_;
+  size_t line_ = 1;
 };
 
 class DrawRectCommand : public Command {
