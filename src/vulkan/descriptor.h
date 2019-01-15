@@ -103,27 +103,26 @@ class Descriptor {
   // assumes that the resource is empty when it is called that means
   // the resource must be created only when it is actually needed
   // i.e., compute or draw command and destroyed right after those
-  // commands. Note that it only records the command and the actual
-  // submission must be done later.
+  // commands.
   virtual Result CreateResourceIfNeeded(
       const VkPhysicalDeviceMemoryProperties& properties) = 0;
 
   // Record a command for copying data in |buffer_data_queue_| to the
   // resource in device. Note that it only records the command and the
   // actual submission must be done later.
-  virtual Result CopyDataToResourceIfNeeded(VkCommandBuffer command) = 0;
+  virtual Result RecordCopyDataToResourceIfNeeded(VkCommandBuffer command) = 0;
 
   // Only record the copy command for copying the resource data to
   // the host accessible memory. The actual submission of the command
   // must be done later.
-  virtual Result CopyDataToHost(VkCommandBuffer command) = 0;
+  virtual Result RecordCopyDataToHost(VkCommandBuffer command) = 0;
 
   // Copy contents of resource to a BufferData object and put it into
   // |buffer_data_queue_|. This method assumes that we already copy
   // the resource data to the host accessible memory by calling
-  // CopyDataToHost() method and submitting the command buffer. After
-  // putting the BufferData into |buffer_data_queue_|, it destroys
-  // |buffer_|.
+  // RecordCopyDataToHost() method and submitting the command buffer.
+  // After putting the BufferData into |buffer_data_queue_|, it
+  // destroys |buffer_|.
   virtual Result MoveResourceToBufferDataQueue() = 0;
 
   // If the resource is empty and |buffer_data_queue_| has a single

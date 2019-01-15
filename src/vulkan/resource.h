@@ -34,9 +34,15 @@ struct BufferData {
 
   uint32_t offset;
   size_t size_in_bytes;
-  DataType type;
-  std::vector<Value> values;
-  std::vector<uint8_t> raw_data;
+  DataType type;                  // Type of |values|.
+  std::vector<Value> values;      // Data whose type is |type|. It is
+                                  // used to save data given by script.
+                                  // If |raw_data| is not empty, it
+                                  // must be empty.
+  std::vector<uint8_t> raw_data;  // Data without type. It is used to
+                                  // save data from VkBuffer. If
+                                  // |values| is not empty, it must
+                                  // be empty.
 };
 
 // Class for Vulkan resources. Its children are Vulkan Buffer, Vulkan Image,

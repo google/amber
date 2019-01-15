@@ -87,7 +87,8 @@ Result BufferDescriptor::CreateResourceIfNeeded(
   return {};
 }
 
-Result BufferDescriptor::CopyDataToResourceIfNeeded(VkCommandBuffer command) {
+Result BufferDescriptor::RecordCopyDataToResourceIfNeeded(
+    VkCommandBuffer command) {
   const auto& buffer_data_queue = GetBufferDataQueue();
 
   if (buffer_data_queue.empty())
@@ -105,10 +106,10 @@ Result BufferDescriptor::CopyDataToResourceIfNeeded(VkCommandBuffer command) {
   return {};
 }
 
-Result BufferDescriptor::CopyDataToHost(VkCommandBuffer command) {
+Result BufferDescriptor::RecordCopyDataToHost(VkCommandBuffer command) {
   if (!buffer_) {
     return Result(
-        "Vulkan: BufferDescriptor::CopyDataToHost() |buffer_| is empty");
+        "Vulkan: BufferDescriptor::RecordCopyDataToHost() |buffer_| is empty");
   }
 
   return buffer_->CopyToHost(command);
