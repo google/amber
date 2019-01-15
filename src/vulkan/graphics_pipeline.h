@@ -36,7 +36,8 @@ namespace vulkan {
 class GraphicsPipeline : public Pipeline {
  public:
   GraphicsPipeline(VkDevice device,
-                   const VkPhysicalDeviceMemoryProperties& properties,
+                   const VkPhysicalDeviceProperties& properties,
+                   const VkPhysicalDeviceMemoryProperties& memory_properties,
                    VkFormat color_format,
                    VkFormat depth_stencil_format,
                    uint32_t fence_timeout_ms,

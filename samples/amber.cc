@@ -37,7 +37,7 @@ struct Options {
   bool show_summary = false;
   bool show_help = false;
   bool show_version_info = false;
-  amber::EngineType engine = amber::EngineType::kVulkan;
+  amber::EngineType engine = amber::kEngineTypeVulkan;
 };
 
 const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
@@ -94,9 +94,9 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       }
       const std::string& engine = args[i];
       if (engine == "vulkan") {
-        opts->engine = amber::EngineType::kVulkan;
+        opts->engine = amber::kEngineTypeVulkan;
       } else if (engine == "dawn") {
-        opts->engine = amber::EngineType::kDawn;
+        opts->engine = amber::kEngineTypeDawn;
       } else {
         std::cerr
             << "Invalid value for -e argument. Must be one of: vulkan dawn"
@@ -238,12 +238,14 @@ int main(int argc, const char** argv) {
   }
 
   sample::ConfigHelper config_helper;
-  amber_options.config = config_helper.CreateConfig(
+  auto config = config_helper.CreateConfig(
       amber_options.engine,
       std::vector<std::string>(required_features.begin(),
                                required_features.end()),
       std::vector<std::string>(required_extensions.begin(),
                                required_extensions.end()));
+
+  amber_options.config = config.get();
 
   for (const auto& recipe_data_elem : recipe_data) {
     const auto* recipe = recipe_data_elem.recipe.get();

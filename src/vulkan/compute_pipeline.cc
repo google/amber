@@ -19,19 +19,21 @@ namespace vulkan {
 
 ComputePipeline::ComputePipeline(
     VkDevice device,
-    const VkPhysicalDeviceMemoryProperties& properties,
+    const VkPhysicalDeviceProperties& properties,
+    const VkPhysicalDeviceMemoryProperties& memory_properties,
     uint32_t fence_timeout_ms,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : Pipeline(PipelineType::kCompute,
                device,
                properties,
+               memory_properties,
                fence_timeout_ms,
                shader_stage_info) {}
 
 ComputePipeline::~ComputePipeline() = default;
 
 Result ComputePipeline::Initialize(VkCommandPool pool, VkQueue queue) {
-  return Pipeline::InitializeCommandBuffer(pool, queue);
+  return Pipeline::Initialize(pool, queue);
 }
 
 Result ComputePipeline::CreateVkComputePipeline() {
@@ -47,7 +49,7 @@ Result ComputePipeline::CreateVkComputePipeline() {
 
   shader_stage_info[0].pName = GetEntryPointName(VK_SHADER_STAGE_COMPUTE_BIT);
 
-  Result r = CreateVkDescriptorRelatedObjectsIfNeeded();
+  Result r = CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded();
   if (!r.IsSuccess())
     return r;
 
@@ -100,6 +102,10 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
 
   BindVkDescriptorSets();
   BindVkPipeline();
+
+  r = RecordPushConstant();
+  if (!r.IsSuccess())
+    return r;
 
   vkCmdDispatch(command_->GetCommandBuffer(), x, y, z);
 

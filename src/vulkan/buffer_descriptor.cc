@@ -27,17 +27,6 @@ namespace amber {
 namespace vulkan {
 namespace {
 
-// TODO(jaebaek): Make this as a protected method of Descriptor.
-template <typename T>
-void SetValueForBuffer(void* memory, const std::vector<Value>& values) {
-  T* ptr = static_cast<T*>(memory);
-  for (const auto& v : values) {
-    *ptr = v.IsInteger() ? static_cast<T>(v.AsUint64())
-                         : static_cast<T>(v.AsDouble());
-    ++ptr;
-  }
-}
-
 // Return the size in bytes for a buffer that has enough capacity to
 // copy all data in |buffer_data_queue|.
 size_t GetBufferSizeInBytesForQueue(
@@ -67,41 +56,6 @@ BufferDescriptor::BufferDescriptor(DescriptorType type,
 }
 
 BufferDescriptor::~BufferDescriptor() = default;
-
-// TODO(jaebaek): Add unittests for this method.
-void BufferDescriptor::FillBufferWithData(void* host_memory,
-                                          const BufferData& data) {
-  uint8_t* ptr = static_cast<uint8_t*>(host_memory) + data.offset;
-  if (data.raw_data) {
-    std::memcpy(ptr, data.raw_data.get(), data.size_in_bytes);
-    return;
-  }
-
-  switch (data.type) {
-    case DataType::kInt8:
-    case DataType::kUint8:
-      SetValueForBuffer<uint8_t>(ptr, data.values);
-      break;
-    case DataType::kInt16:
-    case DataType::kUint16:
-      SetValueForBuffer<uint16_t>(ptr, data.values);
-      break;
-    case DataType::kInt32:
-    case DataType::kUint32:
-      SetValueForBuffer<uint32_t>(ptr, data.values);
-      break;
-    case DataType::kInt64:
-    case DataType::kUint64:
-      SetValueForBuffer<uint64_t>(ptr, data.values);
-      break;
-    case DataType::kFloat:
-      SetValueForBuffer<float>(ptr, data.values);
-      break;
-    case DataType::kDouble:
-      SetValueForBuffer<double>(ptr, data.values);
-      break;
-  }
-}
 
 Result BufferDescriptor::CreateResourceIfNeeded(
     const VkPhysicalDeviceMemoryProperties& properties) {
@@ -133,18 +87,22 @@ Result BufferDescriptor::CreateResourceIfNeeded(
   return {};
 }
 
-void BufferDescriptor::CopyDataToResourceIfNeeded(VkCommandBuffer command) {
+Result BufferDescriptor::CopyDataToResourceIfNeeded(VkCommandBuffer command) {
   const auto& buffer_data_queue = GetBufferDataQueue();
 
   if (buffer_data_queue.empty())
-    return;
+    return {};
 
   for (const auto& data : buffer_data_queue) {
-    FillBufferWithData(buffer_->HostAccessibleMemoryPtr(), data);
+    Result r = buffer_->UpdateMemoryWithData(data);
+    if (!r.IsSuccess())
+      return r;
   }
+
   ClearBufferDataQueue();
 
   buffer_->CopyToDevice(command);
+  return {};
 }
 
 Result BufferDescriptor::CopyDataToHost(VkCommandBuffer command) {
@@ -175,10 +133,8 @@ Result BufferDescriptor::MoveResourceToBufferDataQueue() {
   buffer_data_queue.emplace_back();
   buffer_data_queue.back().offset = 0;
   buffer_data_queue.back().size_in_bytes = size_in_bytes;
-  buffer_data_queue.back().raw_data =
-      std::unique_ptr<uint8_t>(new uint8_t[size_in_bytes]);
-
-  std::memcpy(buffer_data_queue.back().raw_data.get(), resource_memory_ptr,
+  buffer_data_queue.back().raw_data.resize(size_in_bytes);
+  std::memcpy(buffer_data_queue.back().raw_data.data(), resource_memory_ptr,
               size_in_bytes);
 
   buffer_->Shutdown();
@@ -216,22 +172,22 @@ ResourceInfo BufferDescriptor::GetResourceInfo() {
     return info;
   }
 
+  // Squash elements of the buffer data queue into a single one.
   size_t size_in_bytes = GetBufferSizeInBytesForQueue(buffer_data_queue);
-
-  auto raw_data = std::unique_ptr<uint8_t>(new uint8_t[size_in_bytes]);
+  std::vector<uint8_t> raw_data(size_in_bytes);
 
   for (const auto& data : buffer_data_queue) {
-    FillBufferWithData(raw_data.get(), data);
+    data.UpdateBufferWithValues(raw_data.data());
   }
   buffer_data_queue.clear();
 
   buffer_data_queue.emplace_back();
-  buffer_data_queue.back().offset = 0;
-  buffer_data_queue.back().size_in_bytes = size_in_bytes;
-  buffer_data_queue.back().raw_data = std::move(raw_data);
+  buffer_data_queue.push_back(
+      {0, size_in_bytes, DataType::kInt8, std::vector<Value>(), raw_data});
 
-  info.size_in_bytes = buffer_data_queue.back().size_in_bytes;
-  info.cpu_memory = buffer_data_queue.back().raw_data.get();
+  auto& buffer_data = buffer_data_queue.back();
+  info.size_in_bytes = buffer_data.size_in_bytes;
+  info.cpu_memory = buffer_data.raw_data.data();
   return info;
 }
 

@@ -25,6 +25,7 @@
 #include "src/engine.h"
 #include "src/vulkan/command.h"
 #include "src/vulkan/descriptor.h"
+#include "src/vulkan/push_constant.h"
 #include "vulkan/vulkan.h"
 
 namespace amber {
@@ -52,6 +53,9 @@ class Pipeline {
   // buffer data object and put it into buffer data queue in host.
   Result ReadbackDescriptorsToHostDataQueue();
 
+  // Add information of how and what to do with push constant.
+  Result AddPushConstant(const BufferCommand* command);
+
   // Get the information of the resource bound to the given descriptor.
   Result GetDescriptorInfo(const uint32_t descriptor_set,
                            const uint32_t binding,
@@ -73,16 +77,31 @@ class Pipeline {
   Pipeline(
       PipelineType type,
       VkDevice device,
-      const VkPhysicalDeviceMemoryProperties& properties,
+      const VkPhysicalDeviceProperties& properties,
+      const VkPhysicalDeviceMemoryProperties& memory_properties,
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
-  Result InitializeCommandBuffer(VkCommandPool pool, VkQueue queue);
-  Result CreateVkDescriptorRelatedObjectsIfNeeded();
+
+  // Create |push_constant_| and |command_|. This method also
+  // initializes |command_| that abstracts VkCommandBuffer and
+  // VkFence objects.
+  Result Initialize(VkCommandPool pool, VkQueue queue);
+
+  // Create Vulkan descriptor related objects i.e.,
+  // VkDescriptorSetLayout, VkDescriptorPool, VkDescriptorSet if
+  // |descriptor_related_objects_already_created_| is false. This
+  // method also creates VkPipelineLayout if |pipeline_layout_| is
+  // VK_NULL_HANDLE.
+  Result CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded();
+
   Result UpdateDescriptorSetsIfNeeded();
 
   Result SendDescriptorDataToDeviceIfNeeded();
   void BindVkPipeline();
   void BindVkDescriptorSets();
+
+  // Record a Vulkan command for push contant.
+  Result RecordPushConstant();
 
   const std::vector<VkPipelineShaderStageCreateInfo>& GetShaderStageInfo()
       const {
@@ -108,7 +127,8 @@ class Pipeline {
     std::vector<std::unique_ptr<Descriptor>> descriptors_;
   };
 
-  void DestroyVkDescriptorRelatedObjects();
+  void DestroyVkDescriptorAndPipelineRelatedObjects();
+  void ResetVkPipelineRelatedObjects();
   Result CreatePipelineLayout();
 
   Result CreateDescriptorSetLayouts();
@@ -116,14 +136,18 @@ class Pipeline {
   Result CreateDescriptorSets();
 
   PipelineType pipeline_type_;
+  VkPhysicalDeviceProperties physical_device_properties_;
   std::vector<DescriptorSetInfo> descriptor_set_info_;
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
+
   uint32_t fence_timeout_ms_ = 100;
   bool descriptor_related_objects_already_created_ = false;
   std::unordered_map<VkShaderStageFlagBits,
                      std::string,
                      CastHash<VkShaderStageFlagBits>>
       entry_points_;
+
+  std::unique_ptr<PushConstant> push_constant_;
 };
 
 }  // namespace vulkan

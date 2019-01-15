@@ -39,13 +39,10 @@ class BufferDescriptor : public Descriptor {
                    uint32_t binding);
   ~BufferDescriptor() override;
 
-  // Update |host_memory| based on the information given in |data|.
-  void FillBufferWithData(void* host_memory, const BufferData& data);
-
   // Descriptor
   Result CreateResourceIfNeeded(
       const VkPhysicalDeviceMemoryProperties& properties) override;
-  void CopyDataToResourceIfNeeded(VkCommandBuffer command) override;
+  Result CopyDataToResourceIfNeeded(VkCommandBuffer command) override;
   Result CopyDataToHost(VkCommandBuffer command) override;
   Result MoveResourceToBufferDataQueue() override;
   Result UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;

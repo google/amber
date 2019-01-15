@@ -14,6 +14,7 @@
 
 #include "src/vulkan/resource.h"
 
+#include <cstring>
 #include <limits>
 
 #include "src/make_unique.h"
@@ -44,7 +45,58 @@ VkMemoryBarrier kMemoryBarrierForAll = {
         VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT |
         VK_ACCESS_HOST_READ_BIT | VK_ACCESS_HOST_WRITE_BIT};
 
+// Fill the contents of |buffer| with |values|.
+template <typename T>
+void SetValuesForBuffer(void* buffer, const std::vector<Value>& values) {
+  T* ptr = static_cast<T*>(buffer);
+  for (const auto& v : values) {
+    *ptr = v.IsInteger() ? static_cast<T>(v.AsUint64())
+                         : static_cast<T>(v.AsDouble());
+    ++ptr;
+  }
+}
+
 }  // namespace
+
+void BufferData::UpdateBufferWithValues(void* buffer) const {
+  uint8_t* ptr = static_cast<uint8_t*>(buffer) + offset;
+  if (!raw_data.empty()) {
+    std::memcpy(ptr, raw_data.data(), size_in_bytes);
+    return;
+  }
+  switch (type) {
+    case DataType::kInt8:
+      SetValuesForBuffer<int8_t>(ptr, values);
+      break;
+    case DataType::kUint8:
+      SetValuesForBuffer<uint8_t>(ptr, values);
+      break;
+    case DataType::kInt16:
+      SetValuesForBuffer<int16_t>(ptr, values);
+      break;
+    case DataType::kUint16:
+      SetValuesForBuffer<uint16_t>(ptr, values);
+      break;
+    case DataType::kInt32:
+      SetValuesForBuffer<int32_t>(ptr, values);
+      break;
+    case DataType::kUint32:
+      SetValuesForBuffer<uint32_t>(ptr, values);
+      break;
+    case DataType::kInt64:
+      SetValuesForBuffer<int64_t>(ptr, values);
+      break;
+    case DataType::kUint64:
+      SetValuesForBuffer<uint64_t>(ptr, values);
+      break;
+    case DataType::kFloat:
+      SetValuesForBuffer<float>(ptr, values);
+      break;
+    case DataType::kDouble:
+      SetValuesForBuffer<double>(ptr, values);
+      break;
+  }
+}
 
 Resource::Resource(VkDevice device,
                    size_t size_in_bytes,
@@ -54,6 +106,24 @@ Resource::Resource(VkDevice device,
       physical_memory_properties_(properties) {}
 
 Resource::~Resource() = default;
+
+Result Resource::UpdateMemoryWithData(const BufferData& data) {
+  if (static_cast<size_t>(data.offset) >= size_in_bytes_) {
+    return Result(
+        "Vulkan: Resource::UpdateMemoryWithData BufferData offset exceeds "
+        "memory size");
+  }
+
+  if (data.size_in_bytes >
+      (size_in_bytes_ - static_cast<size_t>(data.offset))) {
+    return Result(
+        "Vulkan: Resource::UpdateMemoryWithData BufferData offset + size in "
+        "bytes exceeds memory size");
+  }
+
+  data.UpdateBufferWithValues(memory_ptr_);
+  return {};
+}
 
 void Resource::Shutdown() {
   if (host_accessible_memory_ != VK_NULL_HANDLE) {

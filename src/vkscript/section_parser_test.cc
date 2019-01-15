@@ -45,8 +45,8 @@ void main() {
   auto sections = p.Sections();
   ASSERT_EQ(1U, sections.size());
   EXPECT_EQ(NodeType::kShader, sections[0].section_type);
-  EXPECT_EQ(ShaderType::kVertex, sections[0].shader_type);
-  EXPECT_EQ(ShaderFormat::kGlsl, sections[0].format);
+  EXPECT_EQ(kShaderTypeVertex, sections[0].shader_type);
+  EXPECT_EQ(kShaderFormatGlsl, sections[0].format);
   EXPECT_EQ(shader, sections[0].contents);
 }
 
@@ -60,8 +60,8 @@ TEST_F(SectionParserTest, ParseShaderGlslVertexPassthrough) {
   auto sections = p.Sections();
   ASSERT_EQ(1U, sections.size());
   EXPECT_EQ(NodeType::kShader, sections[0].section_type);
-  EXPECT_EQ(ShaderType::kVertex, sections[0].shader_type);
-  EXPECT_EQ(ShaderFormat::kSpirvAsm, sections[0].format);
+  EXPECT_EQ(kShaderTypeVertex, sections[0].shader_type);
+  EXPECT_EQ(kShaderFormatSpirvAsm, sections[0].format);
   EXPECT_EQ(kPassThroughShader, sections[0].contents);
 }
 
@@ -97,30 +97,30 @@ test body.)";
 
   // Passthrough vertext shader
   EXPECT_EQ(NodeType::kShader, sections[0].section_type);
-  EXPECT_EQ(ShaderType::kVertex, sections[0].shader_type);
-  EXPECT_EQ(ShaderFormat::kSpirvAsm, sections[0].format);
+  EXPECT_EQ(kShaderTypeVertex, sections[0].shader_type);
+  EXPECT_EQ(kShaderFormatSpirvAsm, sections[0].format);
   EXPECT_EQ(kPassThroughShader, sections[0].contents);
 
   // fragment shader
   EXPECT_EQ(NodeType::kShader, sections[1].section_type);
-  EXPECT_EQ(ShaderType::kFragment, sections[1].shader_type);
-  EXPECT_EQ(ShaderFormat::kGlsl, sections[1].format);
+  EXPECT_EQ(kShaderTypeFragment, sections[1].shader_type);
+  EXPECT_EQ(kShaderFormatGlsl, sections[1].format);
   EXPECT_EQ("#version 430\nvoid main() {}", sections[1].contents);
 
   // geometry shader
   EXPECT_EQ(NodeType::kShader, sections[2].section_type);
-  EXPECT_EQ(ShaderType::kGeometry, sections[2].shader_type);
-  EXPECT_EQ(ShaderFormat::kGlsl, sections[2].format);
+  EXPECT_EQ(kShaderTypeGeometry, sections[2].shader_type);
+  EXPECT_EQ(kShaderFormatGlsl, sections[2].format);
   EXPECT_EQ("float4 main() {}", sections[2].contents);
 
   // indices
   EXPECT_EQ(NodeType::kIndices, sections[3].section_type);
-  EXPECT_EQ(ShaderFormat::kText, sections[3].format);
+  EXPECT_EQ(kShaderFormatText, sections[3].format);
   EXPECT_EQ("1 2 3 4\n5 6 7 8", sections[3].contents);
 
   // test
   EXPECT_EQ(NodeType::kTest, sections[4].section_type);
-  EXPECT_EQ(ShaderFormat::kText, sections[4].format);
+  EXPECT_EQ(kShaderFormatText, sections[4].format);
   EXPECT_EQ("test body.", sections[4].contents);
 }
 
@@ -134,8 +134,8 @@ TEST_F(SectionParserTest, SkipCommentLinesOutsideSections) {
   auto sections = p.Sections();
   ASSERT_EQ(1U, sections.size());
   EXPECT_EQ(NodeType::kShader, sections[0].section_type);
-  EXPECT_EQ(ShaderType::kVertex, sections[0].shader_type);
-  EXPECT_EQ(ShaderFormat::kGlsl, sections[0].format);
+  EXPECT_EQ(kShaderTypeVertex, sections[0].shader_type);
+  EXPECT_EQ(kShaderFormatGlsl, sections[0].format);
   EXPECT_EQ("", sections[0].contents);
 }
 
@@ -149,8 +149,8 @@ TEST_F(SectionParserTest, SkipBlankLinesOutsideSections) {
   auto sections = p.Sections();
   ASSERT_EQ(1U, sections.size());
   EXPECT_EQ(NodeType::kShader, sections[0].section_type);
-  EXPECT_EQ(ShaderType::kVertex, sections[0].shader_type);
-  EXPECT_EQ(ShaderFormat::kGlsl, sections[0].format);
+  EXPECT_EQ(kShaderTypeVertex, sections[0].shader_type);
+  EXPECT_EQ(kShaderFormatGlsl, sections[0].format);
   EXPECT_EQ("", sections[0].contents);
 }
 
@@ -188,56 +188,56 @@ TEST_F(SectionParserTest, NameToNodeType) {
     ShaderType shader_type;
     ShaderFormat fmt;
   } name_cases[] = {
-      {"comment", NodeType::kComment, ShaderType::kVertex, ShaderFormat::kText},
-      {"indices", NodeType::kIndices, ShaderType::kVertex, ShaderFormat::kText},
-      {"require", NodeType::kRequire, ShaderType::kVertex, ShaderFormat::kText},
-      {"test", NodeType::kTest, ShaderType::kVertex, ShaderFormat::kText},
-      {"vertex data", NodeType::kVertexData, ShaderType::kVertex,
-       ShaderFormat::kText},
+      {"comment", NodeType::kComment, kShaderTypeVertex, kShaderFormatText},
+      {"indices", NodeType::kIndices, kShaderTypeVertex, kShaderFormatText},
+      {"require", NodeType::kRequire, kShaderTypeVertex, kShaderFormatText},
+      {"test", NodeType::kTest, kShaderTypeVertex, kShaderFormatText},
+      {"vertex data", NodeType::kVertexData, kShaderTypeVertex,
+       kShaderFormatText},
 
-      {"compute shader", NodeType::kShader, ShaderType::kCompute,
-       ShaderFormat::kGlsl},
-      {"fragment shader", NodeType::kShader, ShaderType::kFragment,
-       ShaderFormat::kGlsl},
-      {"geometry shader", NodeType::kShader, ShaderType::kGeometry,
-       ShaderFormat::kGlsl},
+      {"compute shader", NodeType::kShader, kShaderTypeCompute,
+       kShaderFormatGlsl},
+      {"fragment shader", NodeType::kShader, kShaderTypeFragment,
+       kShaderFormatGlsl},
+      {"geometry shader", NodeType::kShader, kShaderTypeGeometry,
+       kShaderFormatGlsl},
       {"tessellation control shader", NodeType::kShader,
-       ShaderType::kTessellationControl, ShaderFormat::kGlsl},
+       kShaderTypeTessellationControl, kShaderFormatGlsl},
       {"tessellation evaluation shader", NodeType::kShader,
-       ShaderType::kTessellationEvaluation, ShaderFormat::kGlsl},
-      {"vertex shader", NodeType::kShader, ShaderType::kVertex,
-       ShaderFormat::kGlsl},
-      {"compute shader spirv", NodeType::kShader, ShaderType::kCompute,
-       ShaderFormat::kSpirvAsm},
-      {"fragment shader spirv", NodeType::kShader, ShaderType::kFragment,
-       ShaderFormat::kSpirvAsm},
-      {"geometry shader spirv", NodeType::kShader, ShaderType::kGeometry,
-       ShaderFormat::kSpirvAsm},
+       kShaderTypeTessellationEvaluation, kShaderFormatGlsl},
+      {"vertex shader", NodeType::kShader, kShaderTypeVertex,
+       kShaderFormatGlsl},
+      {"compute shader spirv", NodeType::kShader, kShaderTypeCompute,
+       kShaderFormatSpirvAsm},
+      {"fragment shader spirv", NodeType::kShader, kShaderTypeFragment,
+       kShaderFormatSpirvAsm},
+      {"geometry shader spirv", NodeType::kShader, kShaderTypeGeometry,
+       kShaderFormatSpirvAsm},
       {"tessellation control shader spirv", NodeType::kShader,
-       ShaderType::kTessellationControl, ShaderFormat::kSpirvAsm},
+       kShaderTypeTessellationControl, kShaderFormatSpirvAsm},
       {"tessellation evaluation shader spirv", NodeType::kShader,
-       ShaderType::kTessellationEvaluation, ShaderFormat::kSpirvAsm},
-      {"vertex shader spirv", NodeType::kShader, ShaderType::kVertex,
-       ShaderFormat::kSpirvAsm},
-      {"compute shader spirv hex", NodeType::kShader, ShaderType::kCompute,
-       ShaderFormat::kSpirvHex},
-      {"fragment shader spirv hex", NodeType::kShader, ShaderType::kFragment,
-       ShaderFormat::kSpirvHex},
-      {"geometry shader spirv hex", NodeType::kShader, ShaderType::kGeometry,
-       ShaderFormat::kSpirvHex},
+       kShaderTypeTessellationEvaluation, kShaderFormatSpirvAsm},
+      {"vertex shader spirv", NodeType::kShader, kShaderTypeVertex,
+       kShaderFormatSpirvAsm},
+      {"compute shader spirv hex", NodeType::kShader, kShaderTypeCompute,
+       kShaderFormatSpirvHex},
+      {"fragment shader spirv hex", NodeType::kShader, kShaderTypeFragment,
+       kShaderFormatSpirvHex},
+      {"geometry shader spirv hex", NodeType::kShader, kShaderTypeGeometry,
+       kShaderFormatSpirvHex},
       {"tessellation control shader spirv hex", NodeType::kShader,
-       ShaderType::kTessellationControl, ShaderFormat::kSpirvHex},
+       kShaderTypeTessellationControl, kShaderFormatSpirvHex},
       {"tessellation evaluation shader spirv hex", NodeType::kShader,
-       ShaderType::kTessellationEvaluation, ShaderFormat::kSpirvHex},
-      {"vertex shader spirv hex", NodeType::kShader, ShaderType::kVertex,
-       ShaderFormat::kSpirvHex},
-      {"vertex shader passthrough", NodeType::kShader, ShaderType::kVertex,
-       ShaderFormat::kDefault}};
+       kShaderTypeTessellationEvaluation, kShaderFormatSpirvHex},
+      {"vertex shader spirv hex", NodeType::kShader, kShaderTypeVertex,
+       kShaderFormatSpirvHex},
+      {"vertex shader passthrough", NodeType::kShader, kShaderTypeVertex,
+       kShaderFormatDefault}};
 
   for (auto name_case : name_cases) {
     NodeType section_type = NodeType::kTest;
-    ShaderType shader_type = ShaderType::kVertex;
-    ShaderFormat fmt = ShaderFormat::kText;
+    ShaderType shader_type = kShaderTypeVertex;
+    ShaderFormat fmt = kShaderFormatText;
     SectionParser p;
     Result r = p.NameToNodeTypeForTesting(name_case.name, &section_type,
                                           &shader_type, &fmt);
@@ -251,8 +251,8 @@ TEST_F(SectionParserTest, NameToNodeType) {
 
 TEST_F(SectionParserTest, NameToNodeTypeInvalidName) {
   NodeType section_type = NodeType::kTest;
-  ShaderType shader_type = ShaderType::kVertex;
-  ShaderFormat fmt = ShaderFormat::kText;
+  ShaderType shader_type = kShaderTypeVertex;
+  ShaderFormat fmt = kShaderFormatText;
   SectionParser p;
   Result r = p.NameToNodeTypeForTesting("InvalidName", &section_type,
                                         &shader_type, &fmt);
@@ -271,8 +271,8 @@ TEST_F(SectionParserTest, NameToSectionInvalidSuffix) {
 
   for (auto name_case : cases) {
     NodeType section_type = NodeType::kTest;
-    ShaderType shader_type = ShaderType::kVertex;
-    ShaderFormat fmt = ShaderFormat::kText;
+    ShaderType shader_type = kShaderTypeVertex;
+    ShaderFormat fmt = kShaderFormatText;
     SectionParser p;
 
     Result r = p.NameToNodeTypeForTesting(name_case.name, &section_type,

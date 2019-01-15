@@ -15,7 +15,6 @@
 #ifndef AMBER_RECIPE_H_
 #define AMBER_RECIPE_H_
 
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -51,8 +50,9 @@ class Recipe {
   /// Retrieves information on all the shaders in the recipe.
   std::vector<ShaderInfo> GetShaderInfo() const;
 
-  RecipeImpl* GetImpl() const { return impl_.get(); }
-  void SetImpl(std::unique_ptr<RecipeImpl> impl) { impl_ = std::move(impl); }
+  RecipeImpl* GetImpl() const { return impl_; }
+  /// Sets the recipe implementation. Ownership transfers to the recipe.
+  void SetImpl(RecipeImpl* impl) { impl_ = impl; }
 
   /// Returns required features in the given recipe.
   std::vector<std::string> GetRequiredFeatures() const;
@@ -61,7 +61,7 @@ class Recipe {
   std::vector<std::string> GetRequiredExtensions() const;
 
  private:
-  std::unique_ptr<RecipeImpl> impl_;
+  RecipeImpl* impl_;
 };
 
 }  // namespace amber

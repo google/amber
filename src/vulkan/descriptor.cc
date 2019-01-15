@@ -149,7 +149,8 @@ void Descriptor::AddToBufferDataQueue(DataType type,
                                       uint32_t offset,
                                       size_t size_in_bytes,
                                       const std::vector<Value>& values) {
-  buffer_data_queue_.push_back({offset, size_in_bytes, type, values, nullptr});
+  buffer_data_queue_.push_back(
+      {offset, size_in_bytes, type, values, std::vector<uint8_t>()});
 }
 
 }  // namespace vulkan

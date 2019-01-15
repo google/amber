@@ -104,7 +104,8 @@ VkPrimitiveTopology ToVkTopology(Topology topology) {
 
 GraphicsPipeline::GraphicsPipeline(
     VkDevice device,
-    const VkPhysicalDeviceMemoryProperties& properties,
+    const VkPhysicalDeviceProperties& properties,
+    const VkPhysicalDeviceMemoryProperties& memory_properties,
     VkFormat color_format,
     VkFormat depth_stencil_format,
     uint32_t fence_timeout_ms,
@@ -112,6 +113,7 @@ GraphicsPipeline::GraphicsPipeline(
     : Pipeline(PipelineType::kGraphics,
                device,
                properties,
+               memory_properties,
                fence_timeout_ms,
                shader_stage_info),
       color_format_(color_format),
@@ -209,7 +211,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   if (pipeline_ != VK_NULL_HANDLE)
     return Result("Vulkan::Pipeline already created");
 
-  Result r = CreateVkDescriptorRelatedObjectsIfNeeded();
+  Result r = CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded();
   if (!r.IsSuccess())
     return r;
 
@@ -310,7 +312,7 @@ Result GraphicsPipeline::Initialize(uint32_t width,
                                     uint32_t height,
                                     VkCommandPool pool,
                                     VkQueue queue) {
-  Result r = Pipeline::InitializeCommandBuffer(pool, queue);
+  Result r = Pipeline::Initialize(pool, queue);
   if (!r.IsSuccess())
     return r;
 
@@ -559,6 +561,10 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
 
   BindVkDescriptorSets();
   BindVkPipeline();
+
+  r = RecordPushConstant();
+  if (!r.IsSuccess())
+    return r;
 
   if (vertex_buffer != nullptr)
     vertex_buffer->BindToCommandBuffer(command_->GetCommandBuffer());

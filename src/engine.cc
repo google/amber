@@ -33,12 +33,12 @@ namespace amber {
 std::unique_ptr<Engine> Engine::Create(EngineType type) {
   std::unique_ptr<Engine> engine;
   switch (type) {
-    case EngineType::kVulkan:
+    case kEngineTypeVulkan:
 #if AMBER_ENGINE_VULKAN
       engine = MakeUnique<vulkan::EngineVulkan>();
 #endif  // AMBER_ENGINE_VULKAN
       break;
-    case EngineType::kDawn:
+    case kEngineTypeDawn:
 #if AMBER_ENGINE_DAWN
       engine = MakeUnique<dawn::EngineDawn>();
 #endif  // AMBER_ENGINE_DAWN

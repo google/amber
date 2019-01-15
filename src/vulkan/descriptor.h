@@ -21,6 +21,7 @@
 #include "amber/result.h"
 #include "src/datum_type.h"
 #include "src/engine.h"
+#include "src/vulkan/resource.h"
 #include "vulkan/vulkan.h"
 
 namespace amber {
@@ -41,18 +42,6 @@ enum class DescriptorType : uint8_t {
 };
 
 VkDescriptorType ToVkDescriptorType(DescriptorType type);
-
-struct BufferData {
-  uint32_t offset;
-  size_t size_in_bytes;
-  DataType type;                      // Primitive type of |values|.
-  std::vector<Value> values;          // Data that has primitive
-                                      // type. If |raw_data| is not
-                                      // nullptr, it must be empty.
-  std::unique_ptr<uint8_t> raw_data;  // Data without primitive
-                                      // type. If |values| is not
-                                      // empty, it must be nullptr.
-};
 
 class Descriptor {
  public:
@@ -122,7 +111,7 @@ class Descriptor {
   // Record a command for copying data in |buffer_data_queue_| to the
   // resource in device. Note that it only records the command and the
   // actual submission must be done later.
-  virtual void CopyDataToResourceIfNeeded(VkCommandBuffer command) = 0;
+  virtual Result CopyDataToResourceIfNeeded(VkCommandBuffer command) = 0;
 
   // Only record the copy command for copying the resource data to
   // the host accessible memory. The actual submission of the command
