@@ -28,7 +28,8 @@ class ComputePipeline : public Pipeline {
  public:
   ComputePipeline(
       VkDevice device,
-      const VkPhysicalDeviceMemoryProperties& properties,
+      const VkPhysicalDeviceProperties& properties,
+      const VkPhysicalDeviceMemoryProperties& memory_properties,
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
   ~ComputePipeline() override;

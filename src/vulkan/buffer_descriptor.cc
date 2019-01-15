@@ -24,20 +24,6 @@
 
 namespace amber {
 namespace vulkan {
-namespace {
-
-// TODO(jaebaek): Make this as a protected method of Descriptor.
-template <typename T>
-void SetValueForBuffer(void* memory, const std::vector<Value>& values) {
-  T* ptr = static_cast<T*>(memory);
-  for (const auto& v : values) {
-    *ptr = v.IsInteger() ? static_cast<T>(v.AsUint64())
-                         : static_cast<T>(v.AsDouble());
-    ++ptr;
-  }
-}
-
-}  // namespace
 
 BufferDescriptor::BufferDescriptor(DescriptorType type,
                                    VkDevice device,
@@ -49,36 +35,6 @@ BufferDescriptor::BufferDescriptor(DescriptorType type,
 }
 
 BufferDescriptor::~BufferDescriptor() = default;
-
-// TODO(jaebaek): Add unittests for this method.
-void BufferDescriptor::FillBufferWithData(const BufferData& data) {
-  uint8_t* ptr =
-      static_cast<uint8_t*>(buffer_->HostAccessibleMemoryPtr()) + data.offset;
-  switch (data.type) {
-    case DataType::kInt8:
-    case DataType::kUint8:
-      SetValueForBuffer<uint8_t>(ptr, data.values);
-      break;
-    case DataType::kInt16:
-    case DataType::kUint16:
-      SetValueForBuffer<uint16_t>(ptr, data.values);
-      break;
-    case DataType::kInt32:
-    case DataType::kUint32:
-      SetValueForBuffer<uint32_t>(ptr, data.values);
-      break;
-    case DataType::kInt64:
-    case DataType::kUint64:
-      SetValueForBuffer<uint64_t>(ptr, data.values);
-      break;
-    case DataType::kFloat:
-      SetValueForBuffer<float>(ptr, data.values);
-      break;
-    case DataType::kDouble:
-      SetValueForBuffer<double>(ptr, data.values);
-      break;
-  }
-}
 
 Result BufferDescriptor::CreateOrResizeIfNeeded(
     VkCommandBuffer command,
@@ -132,18 +88,22 @@ Result BufferDescriptor::CreateOrResizeIfNeeded(
   return {};
 }
 
-void BufferDescriptor::UpdateResourceIfNeeded(VkCommandBuffer command) {
+Result BufferDescriptor::UpdateResourceIfNeeded(VkCommandBuffer command) {
   const auto& buffer_data_queue = GetBufferDataQueue();
 
   if (buffer_data_queue.empty())
-    return;
+    return {};
 
   for (const auto& data : buffer_data_queue) {
-    FillBufferWithData(data);
+    Result r = buffer_->UpdateMemoryWithData(data);
+    if (!r.IsSuccess())
+      return r;
   }
+
   ClearBufferDataQueue();
 
   buffer_->CopyToDevice(command);
+  return {};
 }
 
 Result BufferDescriptor::SendDataToHostIfNeeded(VkCommandBuffer command) {

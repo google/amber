@@ -48,6 +48,9 @@ class Device {
   VkPhysicalDevice GetPhysicalDevice() const { return physical_device_; }
   uint32_t GetQueueFamilyIndex() const { return queue_family_index_; }
   VkQueue GetQueue() const { return queue_; }
+  const VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() const {
+    return physical_device_properties_;
+  }
   const VkPhysicalDeviceMemoryProperties& GetPhysicalMemoryProperties() const {
     return physical_memory_properties_;
   }
@@ -80,6 +83,7 @@ class Device {
   VkInstance instance_ = VK_NULL_HANDLE;
   VkDebugReportCallbackEXT callback_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
+  VkPhysicalDeviceProperties physical_device_properties_ = {};
   VkPhysicalDeviceMemoryProperties physical_memory_properties_ = {};
   VkPhysicalDeviceFeatures available_physical_device_features_ = {};
   std::vector<std::string> available_physical_device_extensions_;

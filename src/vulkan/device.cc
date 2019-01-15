@@ -662,6 +662,8 @@ Result Device::Initialize(const std::vector<Feature>& required_features,
     }
   }
 
+  vkGetPhysicalDeviceProperties(physical_device_, &physical_device_properties_);
+
   vkGetPhysicalDeviceMemoryProperties(physical_device_,
                                       &physical_memory_properties_);
 

@@ -32,17 +32,17 @@ namespace {
 
 ShaderType ShaderNameToType(const std::string& name) {
   if (name == "fragment")
-    return ShaderType::kFragment;
+    return kShaderTypeFragment;
   if (name == "compute")
-    return ShaderType::kCompute;
+    return kShaderTypeCompute;
   if (name == "geometry")
-    return ShaderType::kGeometry;
+    return kShaderTypeGeometry;
   if (name == "tessellation evaluation")
-    return ShaderType::kTessellationEvaluation;
+    return kShaderTypeTessellationEvaluation;
   if (name == "tessellation control")
-    return ShaderType::kTessellationControl;
+    return kShaderTypeTessellationControl;
 
-  return ShaderType::kVertex;
+  return kShaderTypeVertex;
 }
 
 }  // namespace

@@ -27,8 +27,8 @@ struct ShaderTypeData {
 using AmberScriptPipelineTest = testing::Test;
 
 TEST_F(AmberScriptPipelineTest, AddShader) {
-  Shader v(ShaderType::kVertex);
-  Shader f(ShaderType::kFragment);
+  Shader v(kShaderTypeVertex);
+  Shader f(kShaderTypeFragment);
 
   Pipeline p(PipelineType::kGraphics);
   Result r = p.AddShader(&v);
@@ -52,8 +52,8 @@ TEST_F(AmberScriptPipelineTest, MissingShader) {
 }
 
 TEST_F(AmberScriptPipelineTest, DuplicateShaders) {
-  Shader v(ShaderType::kVertex);
-  Shader f(ShaderType::kFragment);
+  Shader v(kShaderTypeVertex);
+  Shader f(kShaderTypeFragment);
 
   Pipeline p(PipelineType::kGraphics);
   Result r = p.AddShader(&v);
@@ -68,8 +68,8 @@ TEST_F(AmberScriptPipelineTest, DuplicateShaders) {
 }
 
 TEST_F(AmberScriptPipelineTest, DuplicateShaderType) {
-  Shader v(ShaderType::kVertex);
-  Shader f(ShaderType::kVertex);
+  Shader v(kShaderTypeVertex);
+  Shader f(kShaderTypeVertex);
 
   Pipeline p(PipelineType::kGraphics);
   Result r = p.AddShader(&v);
@@ -97,15 +97,15 @@ INSTANTIATE_TEST_CASE_P(
     AmberScriptPipelineComputePipelineTests,
     AmberScriptPipelineComputePipelineTest,
     testing::Values(
-        ShaderTypeData{ShaderType::kVertex},
-        ShaderTypeData{ShaderType::kFragment},
-        ShaderTypeData{ShaderType::kGeometry},
-        ShaderTypeData{ShaderType::kTessellationEvaluation},
+        ShaderTypeData{kShaderTypeVertex},
+        ShaderTypeData{kShaderTypeFragment},
+        ShaderTypeData{kShaderTypeGeometry},
+        ShaderTypeData{kShaderTypeTessellationEvaluation},
         ShaderTypeData{
-            ShaderType::kTessellationControl}), );  // NOLINT(whitespace/parens)
+            kShaderTypeTessellationControl}), );  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptPipelineTest, SettingComputeShaderToGraphicsPipeline) {
-  Shader c(ShaderType::kCompute);
+  Shader c(kShaderTypeCompute);
 
   Pipeline p(PipelineType::kGraphics);
   Result r = p.AddShader(&c);
@@ -114,8 +114,8 @@ TEST_F(AmberScriptPipelineTest, SettingComputeShaderToGraphicsPipeline) {
 }
 
 TEST_F(AmberScriptPipelineTest, SetShaderOptimizations) {
-  Shader v(ShaderType::kVertex);
-  Shader f(ShaderType::kFragment);
+  Shader v(kShaderTypeVertex);
+  Shader f(kShaderTypeFragment);
 
   Pipeline p(PipelineType::kGraphics);
   Result r = p.AddShader(&v);
@@ -140,7 +140,7 @@ TEST_F(AmberScriptPipelineTest, SetShaderOptimizations) {
 }
 
 TEST_F(AmberScriptPipelineTest, DuplicateShaderOptimizations) {
-  Shader v(ShaderType::kVertex);
+  Shader v(kShaderTypeVertex);
 
   Pipeline p(PipelineType::kGraphics);
   Result r = p.AddShader(&v);
@@ -160,7 +160,7 @@ TEST_F(AmberScriptPipelineTest, SetOptimizationForMissingShader) {
 }
 
 TEST_F(AmberScriptPipelineTest, SetOptimizationForInvalidShader) {
-  Shader v(ShaderType::kVertex);
+  Shader v(kShaderTypeVertex);
   v.SetName("my_shader");
 
   Pipeline p(PipelineType::kGraphics);
@@ -171,9 +171,9 @@ TEST_F(AmberScriptPipelineTest, SetOptimizationForInvalidShader) {
 
 TEST_F(AmberScriptPipelineTest,
        GraphicsPipelineRequiresVertexAndFragmentShader) {
-  Shader v(ShaderType::kVertex);
-  Shader f(ShaderType::kFragment);
-  Shader g(ShaderType::kGeometry);
+  Shader v(kShaderTypeVertex);
+  Shader f(kShaderTypeFragment);
+  Shader g(kShaderTypeGeometry);
 
   Pipeline p(PipelineType::kGraphics);
   Result r = p.AddShader(&v);
@@ -190,8 +190,8 @@ TEST_F(AmberScriptPipelineTest,
 }
 
 TEST_F(AmberScriptPipelineTest, GraphicsPipelineMissingFragmentShader) {
-  Shader v(ShaderType::kVertex);
-  Shader g(ShaderType::kGeometry);
+  Shader v(kShaderTypeVertex);
+  Shader g(kShaderTypeGeometry);
 
   Pipeline p(PipelineType::kGraphics);
   Result r = p.AddShader(&v);
@@ -206,8 +206,8 @@ TEST_F(AmberScriptPipelineTest, GraphicsPipelineMissingFragmentShader) {
 }
 
 TEST_F(AmberScriptPipelineTest, GraphicsPipelineMissingVertexShader) {
-  Shader f(ShaderType::kFragment);
-  Shader g(ShaderType::kGeometry);
+  Shader f(kShaderTypeFragment);
+  Shader g(kShaderTypeGeometry);
 
   Pipeline p(PipelineType::kGraphics);
   Result r = p.AddShader(&g);
@@ -223,7 +223,7 @@ TEST_F(AmberScriptPipelineTest, GraphicsPipelineMissingVertexShader) {
 
 TEST_F(AmberScriptPipelineTest,
        GraphicsPipelineMissingVertexAndFragmentShader) {
-  Shader g(ShaderType::kGeometry);
+  Shader g(kShaderTypeGeometry);
 
   Pipeline p(PipelineType::kGraphics);
   Result r = p.AddShader(&g);
@@ -244,7 +244,7 @@ TEST_F(AmberScriptPipelineTest, GraphicsPipelineWihoutShaders) {
 }
 
 TEST_F(AmberScriptPipelineTest, ComputePipelineRequiresComputeShader) {
-  Shader c(ShaderType::kCompute);
+  Shader c(kShaderTypeCompute);
 
   Pipeline p(PipelineType::kCompute);
   Result r = p.AddShader(&c);
@@ -262,7 +262,7 @@ TEST_F(AmberScriptPipelineTest, ComputePipelineWithoutShader) {
 }
 
 TEST_F(AmberScriptPipelineTest, SetEntryPointForMissingShader) {
-  Shader c(ShaderType::kCompute);
+  Shader c(kShaderTypeCompute);
   c.SetName("my_shader");
 
   Pipeline p(PipelineType::kCompute);
@@ -279,7 +279,7 @@ TEST_F(AmberScriptPipelineTest, SetEntryPointForNullShader) {
 }
 
 TEST_F(AmberScriptPipelineTest, SetBlankEntryPoint) {
-  Shader c(ShaderType::kCompute);
+  Shader c(kShaderTypeCompute);
   Pipeline p(PipelineType::kCompute);
   Result r = p.AddShader(&c);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -290,7 +290,7 @@ TEST_F(AmberScriptPipelineTest, SetBlankEntryPoint) {
 }
 
 TEST_F(AmberScriptPipelineTest, ShaderDefaultEntryPoint) {
-  Shader c(ShaderType::kCompute);
+  Shader c(kShaderTypeCompute);
   Pipeline p(PipelineType::kCompute);
   Result r = p.AddShader(&c);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -301,7 +301,7 @@ TEST_F(AmberScriptPipelineTest, ShaderDefaultEntryPoint) {
 }
 
 TEST_F(AmberScriptPipelineTest, SetShaderEntryPoint) {
-  Shader c(ShaderType::kCompute);
+  Shader c(kShaderTypeCompute);
   Pipeline p(PipelineType::kCompute);
   Result r = p.AddShader(&c);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -315,7 +315,7 @@ TEST_F(AmberScriptPipelineTest, SetShaderEntryPoint) {
 }
 
 TEST_F(AmberScriptPipelineTest, SetEntryPointMulitpleTimes) {
-  Shader c(ShaderType::kCompute);
+  Shader c(kShaderTypeCompute);
   Pipeline p(PipelineType::kCompute);
   Result r = p.AddShader(&c);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
