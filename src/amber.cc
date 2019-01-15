@@ -44,7 +44,7 @@ amber::Result Amber::Parse(const std::string& input, amber::Recipe* recipe) {
   if (!r.IsSuccess())
     return r;
 
-  recipe->SetImpl(parser->GetScript());
+  recipe->SetImpl(parser->GetScript().release());
   return {};
 }
 
@@ -69,8 +69,7 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
 
   Result r;
   if (opts.config) {
-    r = engine->InitializeWithConfig(opts.config.get(),
-                                     script->RequiredFeatures(),
+    r = engine->InitializeWithConfig(opts.config, script->RequiredFeatures(),
                                      script->RequiredExtensions());
   } else {
     r = engine->Initialize(script->RequiredFeatures(),

@@ -96,8 +96,8 @@ TEST_F(AmberScriptParserTest, ShaderPassThrough) {
 
   const auto* shader = shaders[0].get();
   EXPECT_EQ("my_shader1", shader->GetName());
-  EXPECT_EQ(ShaderType::kVertex, shader->GetType());
-  EXPECT_EQ(ShaderFormat::kSpirvAsm, shader->GetFormat());
+  EXPECT_EQ(kShaderTypeVertex, shader->GetType());
+  EXPECT_EQ(kShaderFormatSpirvAsm, shader->GetFormat());
   EXPECT_EQ(kPassThroughShader, shader->GetData());
 }
 
@@ -202,8 +202,8 @@ SHADER geometry shader_name GLSL
 
   const auto* shader = shaders[0].get();
   EXPECT_EQ("shader_name", shader->GetName());
-  EXPECT_EQ(ShaderType::kGeometry, shader->GetType());
-  EXPECT_EQ(ShaderFormat::kGlsl, shader->GetFormat());
+  EXPECT_EQ(kShaderTypeGeometry, shader->GetType());
+  EXPECT_EQ(kShaderFormatGlsl, shader->GetFormat());
   EXPECT_EQ(shader_result, shader->GetData());
 }
 
@@ -318,22 +318,21 @@ void main() {
   const auto* shader = shaders[0].get();
   EXPECT_EQ("my_shader", shader->GetName());
   EXPECT_EQ(test_data.type, shader->GetType());
-  EXPECT_EQ(ShaderFormat::kGlsl, shader->GetFormat());
+  EXPECT_EQ(kShaderFormatGlsl, shader->GetFormat());
   EXPECT_EQ(shader_result, shader->GetData());
 }
 INSTANTIATE_TEST_CASE_P(
     AmberScriptParserTestsShaderType,
     AmberScriptParserShaderTypeTest,
-    testing::Values(ShaderTypeData{"vertex", ShaderType::kVertex},
-                    ShaderTypeData{"fragment", ShaderType::kFragment},
-                    ShaderTypeData{"geometry", ShaderType::kGeometry},
-                    ShaderTypeData{"tessellation_evaluation",
-                                   ShaderType::kTessellationEvaluation},
-                    ShaderTypeData{"tessellation_control",
-                                   ShaderType::kTessellationControl},
-                    ShaderTypeData{
-                        "compute",
-                        ShaderType::kCompute}), );  // NOLINT(whitespace/parens)
+    testing::Values(
+        ShaderTypeData{"vertex", kShaderTypeVertex},
+        ShaderTypeData{"fragment", kShaderTypeFragment},
+        ShaderTypeData{"geometry", kShaderTypeGeometry},
+        ShaderTypeData{"tessellation_evaluation",
+                       kShaderTypeTessellationEvaluation},
+        ShaderTypeData{"tessellation_control", kShaderTypeTessellationControl},
+        ShaderTypeData{"compute",
+                       kShaderTypeCompute}), );  // NOLINT(whitespace/parens)
 
 using AmberScriptParserShaderFormatTest =
     testing::TestWithParam<ShaderFormatData>;
@@ -358,7 +357,7 @@ TEST_P(AmberScriptParserShaderFormatTest, ShaderFormats) {
 
   const auto* shader = shaders[0].get();
   EXPECT_EQ("my_shader", shader->GetName());
-  EXPECT_EQ(ShaderType::kVertex, shader->GetType());
+  EXPECT_EQ(kShaderTypeVertex, shader->GetType());
   EXPECT_EQ(test_data.format, shader->GetFormat());
   EXPECT_EQ(shader_result, shader->GetData());
 }
@@ -366,11 +365,11 @@ INSTANTIATE_TEST_CASE_P(
     AmberScriptParserTestsShaderFormat,
     AmberScriptParserShaderFormatTest,
     testing::Values(
-        ShaderFormatData{"GLSL", ShaderFormat::kGlsl},
-        ShaderFormatData{"SPIRV-ASM", ShaderFormat::kSpirvAsm},
+        ShaderFormatData{"GLSL", kShaderFormatGlsl},
+        ShaderFormatData{"SPIRV-ASM", kShaderFormatSpirvAsm},
         ShaderFormatData{
             "SPIRV-HEX",
-            ShaderFormat::kSpirvHex}), );  // NOLINT(whitespace/parens)
+            kShaderFormatSpirvHex}), );  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptParserTest, DuplicateShaderName) {
   std::string in = R"(
@@ -419,13 +418,13 @@ END
 
   ASSERT_TRUE(shaders[0].GetShader() != nullptr);
   EXPECT_EQ("my_shader", shaders[0].GetShader()->GetName());
-  EXPECT_EQ(ShaderType::kVertex, shaders[0].GetShader()->GetType());
+  EXPECT_EQ(kShaderTypeVertex, shaders[0].GetShader()->GetType());
   EXPECT_EQ(static_cast<uint32_t>(0),
             shaders[0].GetShaderOptimizations().size());
 
   ASSERT_TRUE(shaders[1].GetShader() != nullptr);
   EXPECT_EQ("my_fragment", shaders[1].GetShader()->GetName());
-  EXPECT_EQ(ShaderType::kFragment, shaders[1].GetShader()->GetType());
+  EXPECT_EQ(kShaderTypeFragment, shaders[1].GetShader()->GetType());
   EXPECT_EQ(static_cast<uint32_t>(0),
             shaders[1].GetShaderOptimizations().size());
 }
@@ -640,14 +639,14 @@ INSTANTIATE_TEST_CASE_P(
     AmberScriptParserPipelineAttachTests,
     AmberScriptParserPipelineAttachTest,
     testing::Values(
-        ShaderTypeData{"vertex", ShaderType::kVertex},
-        ShaderTypeData{"fragment", ShaderType::kFragment},
-        ShaderTypeData{"geometry", ShaderType::kGeometry},
+        ShaderTypeData{"vertex", kShaderTypeVertex},
+        ShaderTypeData{"fragment", kShaderTypeFragment},
+        ShaderTypeData{"geometry", kShaderTypeGeometry},
         ShaderTypeData{"tessellation_evaluation",
-                       ShaderType::kTessellationEvaluation},
+                       kShaderTypeTessellationEvaluation},
         ShaderTypeData{
             "tessellation_control",
-            ShaderType::kTessellationControl}), );  // NOLINT(whitespace/parens)
+            kShaderTypeTessellationControl}), );  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptParserTest, PipelineEntryPoint) {
   std::string in = R"(
@@ -677,11 +676,11 @@ END
   ASSERT_EQ(2U, shaders.size());
 
   ASSERT_TRUE(shaders[0].GetShader() != nullptr);
-  EXPECT_EQ(ShaderType::kVertex, shaders[0].GetShader()->GetType());
+  EXPECT_EQ(kShaderTypeVertex, shaders[0].GetShader()->GetType());
   EXPECT_EQ("green", shaders[0].GetEntryPoint());
 
   ASSERT_TRUE(shaders[1].GetShader() != nullptr);
-  EXPECT_EQ(ShaderType::kFragment, shaders[1].GetShader()->GetType());
+  EXPECT_EQ(kShaderTypeFragment, shaders[1].GetShader()->GetType());
   EXPECT_EQ("main", shaders[1].GetEntryPoint());
 }
 
@@ -823,17 +822,17 @@ END
   ASSERT_EQ(3U, shaders.size());
 
   ASSERT_TRUE(shaders[0].GetShader() != nullptr);
-  EXPECT_EQ(ShaderType::kVertex, shaders[0].GetShader()->GetType());
+  EXPECT_EQ(kShaderTypeVertex, shaders[0].GetShader()->GetType());
   std::vector<std::string> my_shader_opts = {"opt1", "opt_second"};
   EXPECT_EQ(my_shader_opts, shaders[0].GetShaderOptimizations());
 
   ASSERT_TRUE(shaders[1].GetShader() != nullptr);
-  EXPECT_EQ(ShaderType::kFragment, shaders[1].GetShader()->GetType());
+  EXPECT_EQ(kShaderTypeFragment, shaders[1].GetShader()->GetType());
   std::vector<std::string> my_fragment_opts = {"another_optimization", "third"};
   EXPECT_EQ(my_fragment_opts, shaders[1].GetShaderOptimizations());
 
   ASSERT_TRUE(shaders[2].GetShader() != nullptr);
-  EXPECT_EQ(ShaderType::kGeometry, shaders[2].GetShader()->GetType());
+  EXPECT_EQ(kShaderTypeGeometry, shaders[2].GetShader()->GetType());
   std::vector<std::string> my_geom_opts = {};
   EXPECT_EQ(my_geom_opts, shaders[2].GetShaderOptimizations());
 }

@@ -209,7 +209,7 @@ Result EngineDawn::Shutdown() {
 Result EngineDawn::CreatePipeline(PipelineType type) {
   switch (type) {
     case PipelineType::kCompute: {
-      auto module = module_for_type_[ShaderType::kCompute];
+      auto module = module_for_type_[kShaderTypeCompute];
       if (!module)
         return Result("CreatePipeline: no compute shader provided");
       compute_pipeline_info_ = std::move(ComputePipelineInfo(module));
@@ -218,8 +218,8 @@ Result EngineDawn::CreatePipeline(PipelineType type) {
 
     case PipelineType::kGraphics: {
       // TODO(dneto): Handle other shader types as well.  They are optional.
-      auto vs = module_for_type_[ShaderType::kVertex];
-      auto fs = module_for_type_[ShaderType::kFragment];
+      auto vs = module_for_type_[kShaderTypeVertex];
+      auto fs = module_for_type_[kShaderTypeFragment];
       if (!vs) {
         return Result(
             "CreatePipeline: no vertex shader provided for graphics pipeline");

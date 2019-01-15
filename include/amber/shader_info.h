@@ -20,21 +20,21 @@
 
 namespace amber {
 
-enum class ShaderFormat : uint8_t {
-  kDefault = 0,
-  kText,
-  kGlsl,
-  kSpirvAsm,
-  kSpirvHex,
+enum ShaderFormat {
+  kShaderFormatDefault = 0,
+  kShaderFormatText,
+  kShaderFormatGlsl,
+  kShaderFormatSpirvAsm,
+  kShaderFormatSpirvHex,
 };
 
-enum class ShaderType : uint8_t {
-  kCompute = 0,
-  kGeometry,
-  kFragment,
-  kVertex,
-  kTessellationControl,
-  kTessellationEvaluation,
+enum ShaderType {
+  kShaderTypeCompute = 0,
+  kShaderTypeGeometry,
+  kShaderTypeFragment,
+  kShaderTypeVertex,
+  kShaderTypeTessellationControl,
+  kShaderTypeTessellationEvaluation,
 };
 
 struct ShaderInfo {

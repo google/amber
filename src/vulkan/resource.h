@@ -16,13 +16,28 @@
 #define SRC_VULKAN_RESOURCE_H_
 
 #include <memory>
+#include <vector>
 
 #include "amber/result.h"
+#include "src/datum_type.h"
+#include "src/value.h"
 #include "vulkan/vulkan.h"
 
 namespace amber {
 namespace vulkan {
 
+// Contain information of updating memory
+// [|offset|, |offset| + |size_in_bytes|) with |values| whose data
+// type is |type|.
+struct BufferData {
+  DataType type;
+  uint32_t offset;
+  size_t size_in_bytes;
+  std::vector<Value> values;
+};
+
+// Class for Vulkan resources. Its children are Vulkan Buffer, Vulkan Image,
+// and a class for push constant.
 class Resource {
  public:
   virtual ~Resource();
@@ -34,6 +49,10 @@ class Resource {
   virtual Result CopyToHost(VkCommandBuffer command) = 0;
 
   virtual void Shutdown();
+
+  // Update |memory_ptr_| from |offset| of |data| to |offset| + |size_in_bytes|
+  // of |data| with |values| of |data|.
+  Result UpdateMemoryWithData(const BufferData& data);
 
   void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
 
@@ -79,6 +98,11 @@ class Resource {
 
   Result MapMemory(VkDeviceMemory memory);
   void UnMapMemory(VkDeviceMemory memory);
+
+  // Set |memory_ptr_| as |ptr|. This must be used for only push constant.
+  // For Vulkan buffer and image i.e., Buffer and Image classes, we should
+  // not call this but uses MapMemory() method.
+  void SetMemoryPtr(void* ptr) { memory_ptr_ = ptr; }
 
   // Make all memory operations before calling this method effective i.e.,
   // prevent hazards caused by out-of-order execution.
