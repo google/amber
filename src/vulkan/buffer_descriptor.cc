@@ -28,15 +28,15 @@ namespace vulkan {
 namespace {
 
 // Return the size in bytes for a buffer that has enough capacity to
-// copy all data in |buffer_data_queue|.
+// copy all data in |buffer_input_queue|.
 size_t GetBufferSizeInBytesForQueue(
-    const std::vector<BufferData>& buffer_data_queue) {
-  if (buffer_data_queue.empty())
+    const std::vector<BufferInput>& buffer_input_queue) {
+  if (buffer_input_queue.empty())
     return 0;
 
   auto buffer_data_with_last_offset = std::max_element(
-      buffer_data_queue.begin(), buffer_data_queue.end(),
-      [](const BufferData& a, const BufferData& b) {
+      buffer_input_queue.begin(), buffer_input_queue.end(),
+      [](const BufferInput& a, const BufferInput& b) {
         return static_cast<size_t>(a.offset) + a.size_in_bytes <
                static_cast<size_t>(b.offset) + b.size_in_bytes;
       });
@@ -60,7 +60,7 @@ BufferDescriptor::~BufferDescriptor() = default;
 Result BufferDescriptor::CreateResourceIfNeeded(
     const VkPhysicalDeviceMemoryProperties& properties) {
   // Amber copies back contents of |buffer_| to host and put it into
-  // |buffer_data_queue_| right after draw or compute. Therefore,
+  // |buffer_input_queue_| right after draw or compute. Therefore,
   // when calling this method, |buffer_| must be always empty.
   if (buffer_) {
     return Result(
@@ -68,12 +68,15 @@ Result BufferDescriptor::CreateResourceIfNeeded(
         "only when |buffer_| is empty");
   }
 
-  const auto& buffer_data_queue = GetBufferDataQueue();
+  const auto& buffer_input_queue = GetBufferInputQueue();
+  const auto& buffer_output = GetBufferOutput();
 
-  if (buffer_data_queue.empty())
+  if (buffer_input_queue.empty() && buffer_output.empty())
     return {};
 
-  size_t size_in_bytes = GetBufferSizeInBytesForQueue(buffer_data_queue);
+  size_t size_in_bytes = GetBufferSizeInBytesForQueue(buffer_input_queue);
+  if (buffer_output.size() > size_in_bytes)
+    size_in_bytes = buffer_output.size();
 
   buffer_ = MakeUnique<Buffer>(GetDevice(), size_in_bytes, properties);
 
@@ -89,18 +92,23 @@ Result BufferDescriptor::CreateResourceIfNeeded(
 
 Result BufferDescriptor::RecordCopyDataToResourceIfNeeded(
     VkCommandBuffer command) {
-  const auto& buffer_data_queue = GetBufferDataQueue();
+  auto& buffer_output = GetBufferOutput();
+  if (!buffer_output.empty()) {
+    buffer_->UpdateMemoryWithRawData(buffer_output);
+    buffer_output.clear();
+  }
 
-  if (buffer_data_queue.empty())
+  const auto& buffer_input_queue = GetBufferInputQueue();
+  if (buffer_input_queue.empty())
     return {};
 
-  for (const auto& data : buffer_data_queue) {
-    Result r = buffer_->UpdateMemoryWithData(data);
+  for (const auto& input : buffer_input_queue) {
+    Result r = buffer_->UpdateMemoryWithInput(input);
     if (!r.IsSuccess())
       return r;
   }
 
-  ClearBufferDataQueue();
+  ClearBufferInputQueue();
 
   buffer_->CopyToDevice(command);
   return {};
@@ -115,28 +123,30 @@ Result BufferDescriptor::RecordCopyDataToHost(VkCommandBuffer command) {
   return buffer_->CopyToHost(command);
 }
 
-Result BufferDescriptor::MoveResourceToBufferDataQueue() {
+Result BufferDescriptor::MoveResourceToBufferOutput() {
   if (!buffer_) {
     return Result(
-        "Vulkan: BufferDescriptor::MoveResourceToBufferDataQueue() |buffer_| "
+        "Vulkan: BufferDescriptor::MoveResourceToBufferOutput() |buffer_| "
         "is empty");
   }
 
   void* resource_memory_ptr = buffer_->HostAccessibleMemoryPtr();
   if (!resource_memory_ptr) {
     return Result(
-        "Vulkan: BufferDescriptor::MoveResourceToBufferDataQueue() |buffer_| "
+        "Vulkan: BufferDescriptor::MoveResourceToBufferOutput() |buffer_| "
         "has nullptr host accessible memory");
   }
 
+  auto& buffer_output = GetBufferOutput();
+  if (!buffer_output.empty()) {
+    return Result(
+        "Vulkan: BufferDescriptor::MoveResourceToBufferOutput() "
+        "|buffer_output_| is not empty");
+  }
+
   auto size_in_bytes = buffer_->GetSizeInBytes();
-  auto& buffer_data_queue = GetBufferDataQueue();
-  buffer_data_queue.emplace_back();
-  buffer_data_queue.back().offset = 0;
-  buffer_data_queue.back().size_in_bytes = size_in_bytes;
-  buffer_data_queue.back().raw_data.resize(size_in_bytes);
-  std::memcpy(buffer_data_queue.back().raw_data.data(), resource_memory_ptr,
-              size_in_bytes);
+  buffer_output.resize(size_in_bytes);
+  std::memcpy(buffer_output.data(), resource_memory_ptr, size_in_bytes);
 
   buffer_->Shutdown();
   buffer_ = nullptr;
@@ -158,37 +168,40 @@ Result BufferDescriptor::UpdateDescriptorSetIfNeeded(
 }
 
 ResourceInfo BufferDescriptor::GetResourceInfo() {
+  auto& buffer_input_queue = GetBufferInputQueue();
+  auto& buffer_output = GetBufferOutput();
+
   ResourceInfo info = {};
   info.type = ResourceInfoType::kBuffer;
   if (buffer_) {
+    assert(buffer_input_queue.empty() && buffer_output.empty());
+
     info.size_in_bytes = buffer_->GetSizeInBytes();
     info.cpu_memory = buffer_->HostAccessibleMemoryPtr();
     return info;
   }
 
-  auto& buffer_data_queue = GetBufferDataQueue();
-  if (buffer_data_queue.empty()) {
-    info.size_in_bytes = 0;
-    info.cpu_memory = nullptr;
+  if (buffer_input_queue.empty()) {
+    info.size_in_bytes = buffer_output.size();
+    info.cpu_memory = buffer_output.data();
     return info;
   }
 
-  // Squash elements of the buffer data queue into a single one.
-  size_t size_in_bytes = GetBufferSizeInBytesForQueue(buffer_data_queue);
-  std::vector<uint8_t> raw_data(size_in_bytes);
+  // Squash elements of |buffer_input_queue_| into |buffer_output_|.
+  size_t size_in_bytes = GetBufferSizeInBytesForQueue(buffer_input_queue);
+  std::vector<uint8_t> new_buffer_output = buffer_output;
+  if (size_in_bytes > new_buffer_output.size())
+    new_buffer_output.resize(size_in_bytes);
 
-  for (const auto& data : buffer_data_queue) {
-    data.UpdateBufferWithValues(raw_data.data());
+  for (const auto& input : buffer_input_queue) {
+    input.UpdateBufferWithValues(new_buffer_output.data());
   }
-  buffer_data_queue.clear();
+  buffer_input_queue.clear();
 
-  buffer_data_queue.emplace_back();
-  buffer_data_queue.push_back(
-      {0, size_in_bytes, DataType::kInt8, std::vector<Value>(), raw_data});
+  buffer_output = new_buffer_output;
 
-  auto& buffer_data = buffer_data_queue.back();
-  info.size_in_bytes = buffer_data.size_in_bytes;
-  info.cpu_memory = buffer_data.raw_data.data();
+  info.size_in_bytes = buffer_output.size();
+  info.cpu_memory = buffer_output.data();
   return info;
 }
 

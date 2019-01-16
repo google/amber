@@ -58,12 +58,8 @@ void SetValuesForBuffer(void* buffer, const std::vector<Value>& values) {
 
 }  // namespace
 
-void BufferData::UpdateBufferWithValues(void* buffer) const {
+void BufferInput::UpdateBufferWithValues(void* buffer) const {
   uint8_t* ptr = static_cast<uint8_t*>(buffer) + offset;
-  if (!raw_data.empty()) {
-    std::memcpy(ptr, raw_data.data(), size_in_bytes);
-    return;
-  }
   switch (type) {
     case DataType::kInt8:
       SetValuesForBuffer<int8_t>(ptr, values);
@@ -107,22 +103,28 @@ Resource::Resource(VkDevice device,
 
 Resource::~Resource() = default;
 
-Result Resource::UpdateMemoryWithData(const BufferData& data) {
-  if (static_cast<size_t>(data.offset) >= size_in_bytes_) {
+Result Resource::UpdateMemoryWithInput(const BufferInput& input) {
+  if (static_cast<size_t>(input.offset) >= size_in_bytes_) {
     return Result(
-        "Vulkan: Resource::UpdateMemoryWithData BufferData offset exceeds "
+        "Vulkan: Resource::UpdateMemoryWithInput BufferInput offset exceeds "
         "memory size");
   }
 
-  if (data.size_in_bytes >
-      (size_in_bytes_ - static_cast<size_t>(data.offset))) {
+  if (input.size_in_bytes >
+      (size_in_bytes_ - static_cast<size_t>(input.offset))) {
     return Result(
-        "Vulkan: Resource::UpdateMemoryWithData BufferData offset + size in "
+        "Vulkan: Resource::UpdateMemoryWithInput BufferInput offset + size in "
         "bytes exceeds memory size");
   }
 
-  data.UpdateBufferWithValues(memory_ptr_);
+  input.UpdateBufferWithValues(memory_ptr_);
   return {};
+}
+
+void Resource::UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data) {
+  size_t effective_size =
+      raw_data.size() > size_in_bytes_ ? size_in_bytes_ : raw_data.size();
+  std::memcpy(memory_ptr_, raw_data.data(), effective_size);
 }
 
 void Resource::Shutdown() {

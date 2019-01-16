@@ -326,7 +326,7 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
         "and binding");
   }
 
-  desc->AddToBufferDataQueue(
+  desc->AddToBufferInputQueue(
       buffer_command->GetDatumType().GetType(), buffer_command->GetOffset(),
       buffer_command->GetSize(), buffer_command->GetValues());
 
@@ -382,7 +382,7 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
 
   for (auto& info : descriptor_set_info_) {
     for (auto& desc : info.descriptors_) {
-      r = desc->CopyDataToResourceIfNeeded(command_->GetCommandBuffer());
+      r = desc->RecordCopyDataToResourceIfNeeded(command_->GetCommandBuffer());
       if (!r.IsSuccess())
         return r;
     }
@@ -418,7 +418,7 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
 
   for (auto& desc_set : descriptor_set_info_) {
     for (auto& desc : desc_set.descriptors_) {
-      r = desc->CopyDataToHost(command_->GetCommandBuffer());
+      r = desc->RecordCopyDataToHost(command_->GetCommandBuffer());
       if (!r.IsSuccess())
         return r;
     }
@@ -434,7 +434,7 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
 
   for (auto& desc_set : descriptor_set_info_) {
     for (auto& desc : desc_set.descriptors_) {
-      r = desc->MoveResourceToBufferDataQueue();
+      r = desc->MoveResourceToBufferOutput();
       if (!r.IsSuccess())
         return r;
     }

@@ -145,12 +145,11 @@ void Descriptor::UpdateVkDescriptorSet(const VkWriteDescriptorSet& write) {
   is_descriptor_set_update_needed_ = false;
 }
 
-void Descriptor::AddToBufferDataQueue(DataType type,
-                                      uint32_t offset,
-                                      size_t size_in_bytes,
-                                      const std::vector<Value>& values) {
-  buffer_data_queue_.push_back(
-      {offset, size_in_bytes, type, values, std::vector<uint8_t>()});
+void Descriptor::AddToBufferInputQueue(DataType type,
+                                       uint32_t offset,
+                                       size_t size_in_bytes,
+                                       const std::vector<Value>& values) {
+  buffer_input_queue_.push_back({offset, size_in_bytes, type, values});
 }
 
 }  // namespace vulkan
