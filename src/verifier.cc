@@ -59,14 +59,16 @@ Result CheckValue(const ProbeSSBOCommand* command,
       case ProbeSSBOCommand::Comparator::kEqual:
         if (values[i].IsInteger()) {
           if (static_cast<uint64_t>(*ptr) != static_cast<uint64_t>(val)) {
-            return Result("Verifier failed: " + std::to_string(*ptr) +
+            return Result("Line " + std::to_string(command->GetLine()) +
+                          ": Verifier failed: " + std::to_string(*ptr) +
                           " == " + std::to_string(val) + ", at index " +
                           std::to_string(i));
           }
         } else {
           if (!IsEqualWithTolerance(static_cast<const double>(*ptr),
                                     static_cast<const double>(val), kEpsilon)) {
-            return Result("Verifier failed: " + std::to_string(*ptr) +
+            return Result("Line " + std::to_string(command->GetLine()) +
+                          ": Verifier failed: " + std::to_string(*ptr) +
                           " == " + std::to_string(val) + ", at index " +
                           std::to_string(i));
           }
@@ -75,14 +77,16 @@ Result CheckValue(const ProbeSSBOCommand* command,
       case ProbeSSBOCommand::Comparator::kNotEqual:
         if (values[i].IsInteger()) {
           if (static_cast<uint64_t>(*ptr) == static_cast<uint64_t>(val)) {
-            return Result("Verifier failed: " + std::to_string(*ptr) +
+            return Result("Line " + std::to_string(command->GetLine()) +
+                          ": Verifier failed: " + std::to_string(*ptr) +
                           " != " + std::to_string(val) + ", at index " +
                           std::to_string(i));
           }
         } else {
           if (IsEqualWithTolerance(static_cast<const double>(*ptr),
                                    static_cast<const double>(val), kEpsilon)) {
-            return Result("Verifier failed: " + std::to_string(*ptr) +
+            return Result("Line " + std::to_string(command->GetLine()) +
+                          ": Verifier failed: " + std::to_string(*ptr) +
                           " != " + std::to_string(val) + ", at index " +
                           std::to_string(i));
           }
@@ -93,35 +97,40 @@ Result CheckValue(const ProbeSSBOCommand* command,
                 static_cast<const double>(*ptr), static_cast<const double>(val),
                 command->HasTolerances() ? tolerance[0].value : kEpsilon,
                 command->HasTolerances() ? tolerance[0].is_percent : true)) {
-          return Result("Verifier failed: " + std::to_string(*ptr) +
+          return Result("Line " + std::to_string(command->GetLine()) +
+                        ": Verifier failed: " + std::to_string(*ptr) +
                         " ~= " + std::to_string(val) + ", at index " +
                         std::to_string(i));
         }
         break;
       case ProbeSSBOCommand::Comparator::kLess:
         if (*ptr >= val) {
-          return Result("Verifier failed: " + std::to_string(*ptr) + " < " +
+          return Result("Line " + std::to_string(command->GetLine()) +
+                        ": Verifier failed: " + std::to_string(*ptr) + " < " +
                         std::to_string(val) + ", at index " +
                         std::to_string(i));
         }
         break;
       case ProbeSSBOCommand::Comparator::kLessOrEqual:
         if (*ptr > val) {
-          return Result("Verifier failed: " + std::to_string(*ptr) +
+          return Result("Line " + std::to_string(command->GetLine()) +
+                        ": Verifier failed: " + std::to_string(*ptr) +
                         " <= " + std::to_string(val) + ", at index " +
                         std::to_string(i));
         }
         break;
       case ProbeSSBOCommand::Comparator::kGreater:
         if (*ptr <= val) {
-          return Result("Verifier failed: " + std::to_string(*ptr) + " > " +
+          return Result("Line " + std::to_string(command->GetLine()) +
+                        ": Verifier failed: " + std::to_string(*ptr) + " > " +
                         std::to_string(val) + ", at index " +
                         std::to_string(i));
         }
         break;
       case ProbeSSBOCommand::Comparator::kGreaterOrEqual:
         if (*ptr < val) {
-          return Result("Verifier failed: " + std::to_string(*ptr) +
+          return Result("Line " + std::to_string(command->GetLine()) +
+                        ": Verifier failed: " + std::to_string(*ptr) +
                         " >= " + std::to_string(val) + ", at index " +
                         std::to_string(i));
         }
@@ -206,12 +215,14 @@ Result Verifier::Probe(const ProbeCommand* command,
 
   if (x + width > frame_width || y + height > frame_height) {
     return Result(
-        "Verifier::Probe Position(" + std::to_string(x + width - 1) + ", " +
+        "Line " + std::to_string(command->GetLine()) +
+        ": Verifier::Probe Position(" + std::to_string(x + width - 1) + ", " +
         std::to_string(y + height - 1) + ") is out of framebuffer scope (" +
         std::to_string(frame_width) + "," + std::to_string(frame_height) + ")");
   }
   if (row_stride < frame_width * texel_stride) {
-    return Result("Verifier::Probe Row stride of " +
+    return Result("Line " + std::to_string(command->GetLine()) +
+                  ": Verifier::Probe Row stride of " +
                   std::to_string(row_stride) + " is too small for " +
                   std::to_string(frame_width) + " texels of " +
                   std::to_string(texel_stride) + " bytes each");
@@ -260,7 +271,8 @@ Result Verifier::Probe(const ProbeCommand* command,
     const uint8_t* p = ptr + row_stride * (first_invalid_j + y) +
                        texel_stride * (x + first_invalid_i);
     return Result(
-        "Probe failed at: " + std::to_string(x + first_invalid_i) + ", " +
+        "Line " + std::to_string(command->GetLine()) +
+        ": Probe failed at: " + std::to_string(x + first_invalid_i) + ", " +
         std::to_string(first_invalid_j + y) + "\n" +
         "  Expected RGBA: " + std::to_string(command->GetR() * 255) + ", " +
         std::to_string(command->GetG() * 255) + ", " +
@@ -298,12 +310,14 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
 
   if (values.size() * bytes_per_elem + offset > size_in_bytes) {
     return Result(
-        "Verifier::ProbeSSBO has more expected values than SSBO size");
+        "Line " + std::to_string(command->GetLine()) +
+        ": Verifier::ProbeSSBO has more expected values than SSBO size");
   }
 
   if (offset % bytes_per_elem != 0) {
     return Result(
-        "Verifier::ProbeSSBO given offset is not multiple of bytes_per_elem");
+        "Line " + std::to_string(command->GetLine()) +
+        ": Verifier::ProbeSSBO given offset is not multiple of bytes_per_elem");
   }
 
   const uint8_t* ptr = static_cast<const uint8_t*>(cpu_memory) + offset;
@@ -328,7 +342,8 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
   if (datum_type.IsDouble())
     return CheckValue<double>(command, ptr, values);
 
-  return Result("Verifier::ProbeSSBO unknown datum type");
+  return Result("Line " + std::to_string(command->GetLine()) +
+                ": Verifier::ProbeSSBO unknown datum type");
 }
 
 }  // namespace amber
