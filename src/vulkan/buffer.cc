@@ -63,6 +63,10 @@ Result Buffer::CreateVkBufferView(VkFormat format) {
 }
 
 Result Buffer::CopyToDevice(VkCommandBuffer command) {
+  // This is redundant because this buffer is always host visible
+  // and coherent and vkQueueSubmit will make writes from host
+  // avaliable (See chapter 6.9. "Host Write Ordering Guarantees" in
+  // Vulkan spec). But we prefer to keep it to simplify our own code.
   MemoryBarrier(command);
   return {};
 }
@@ -93,6 +97,8 @@ void Buffer::Shutdown() {
 
   if (buffer_ != VK_NULL_HANDLE)
     vkDestroyBuffer(GetDevice(), buffer_, nullptr);
+
+  Resource::Shutdown();
 }
 
 }  // namespace vulkan
