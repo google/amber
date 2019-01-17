@@ -50,7 +50,7 @@ class VertexBuffer {
   VkVertexInputBindingDescription GetVertexInputBinding() const {
     VkVertexInputBindingDescription vertex_binding_desc = {};
     vertex_binding_desc.binding = 0;
-    vertex_binding_desc.stride = stride_in_bytes_;
+    vertex_binding_desc.stride = Get4BytesAlignedStride();
     vertex_binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     return vertex_binding_desc;
   }
@@ -66,6 +66,9 @@ class VertexBuffer {
 
  private:
   void FillVertexBufferWithData(VkCommandBuffer command);
+  uint32_t Get4BytesAlignedStride() const {
+    return ((stride_in_bytes_ + 3) / 4) * 4;
+  }
 
   VkDevice device_ = VK_NULL_HANDLE;
 
