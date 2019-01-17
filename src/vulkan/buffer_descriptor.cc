@@ -115,7 +115,7 @@ Result BufferDescriptor::UpdateDescriptorSetIfNeeded(
   if (!IsDescriptorSetUpdateNeeded())
     return {};
 
-  VkDescriptorBufferInfo buffer_info = {};
+  VkDescriptorBufferInfo buffer_info = VkDescriptorBufferInfo();
   buffer_info.buffer = buffer_->GetVkBuffer();
   buffer_info.offset = 0;
   buffer_info.range = VK_WHOLE_SIZE;
@@ -125,7 +125,7 @@ Result BufferDescriptor::UpdateDescriptorSetIfNeeded(
 }
 
 ResourceInfo BufferDescriptor::GetResourceInfo() {
-  ResourceInfo info = {};
+  ResourceInfo info = ResourceInfo();
   info.type = ResourceInfoType::kBuffer;
   info.size_in_bytes = buffer_->GetSizeInBytes();
   info.cpu_memory = buffer_->HostAccessibleMemoryPtr();

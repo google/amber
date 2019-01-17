@@ -83,7 +83,7 @@ Result Image::Initialize(VkImageUsageFlags usage) {
 }
 
 Result Image::CreateVkImageView() {
-  VkImageViewCreateInfo image_view_info = {};
+  VkImageViewCreateInfo image_view_info = VkImageViewCreateInfo();
   image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   image_view_info.image = image_;
   // TODO(jaebaek): Set .viewType correctly
@@ -125,7 +125,7 @@ void Image::Shutdown() {
 }
 
 Result Image::CopyToHost(VkCommandBuffer command) {
-  VkBufferImageCopy copy_region = {};
+  VkBufferImageCopy copy_region = VkBufferImageCopy();
   copy_region.bufferOffset = 0;
   // Row length of 0 results in tight packing of rows, so the row stride
   // is the number of texels times the texel stride.
@@ -153,7 +153,7 @@ void Image::ChangeLayout(VkCommandBuffer command,
                          VkImageLayout new_layout,
                          VkPipelineStageFlags from,
                          VkPipelineStageFlags to) {
-  VkImageMemoryBarrier barrier = {};
+  VkImageMemoryBarrier barrier = VkImageMemoryBarrier();
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   barrier.oldLayout = old_layout;
   barrier.newLayout = new_layout;
