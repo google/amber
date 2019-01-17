@@ -26,19 +26,16 @@
 namespace amber {
 namespace vulkan {
 
-// Contain information of updating memory
+// Contain information of filling memory
 // [|offset|, |offset| + |size_in_bytes|) with |values| whose data
-// type is |type|.
+// type is |type|. This information is given by script.
 struct BufferInput {
   void UpdateBufferWithValues(void* buffer) const;
 
   uint32_t offset;
   size_t size_in_bytes;
   DataType type;              // Type of |values|.
-  std::vector<Value> values;  // Data whose type is |type|. It is
-                              // used to save data given by script.
-                              // If |raw_data| is not empty, it
-                              // must be empty.
+  std::vector<Value> values;  // Data whose type is |type|.
 };
 
 // Class for Vulkan resources. Its children are Vulkan Buffer, Vulkan Image,
