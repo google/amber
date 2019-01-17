@@ -20,13 +20,13 @@
 #include <unordered_map>
 #include <vector>
 
+#include "amber/vulkan_header.h"
 #include "src/cast_hash.h"
 #include "src/engine.h"
 #include "src/vulkan/command.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/pipeline.h"
 #include "src/vulkan/vertex_buffer.h"
-#include "vulkan/vulkan.h"
 
 namespace amber {
 namespace vulkan {

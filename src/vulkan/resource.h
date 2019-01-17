@@ -19,9 +19,9 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "amber/vulkan_header.h"
 #include "src/datum_type.h"
 #include "src/value.h"
-#include "vulkan/vulkan.h"
 
 namespace amber {
 namespace vulkan {
