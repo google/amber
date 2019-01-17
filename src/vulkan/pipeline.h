@@ -21,12 +21,12 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "amber/vulkan_header.h"
 #include "src/cast_hash.h"
 #include "src/engine.h"
 #include "src/vulkan/command.h"
 #include "src/vulkan/descriptor.h"
 #include "src/vulkan/push_constant.h"
-#include "vulkan/vulkan.h"
 
 namespace amber {
 

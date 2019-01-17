@@ -19,9 +19,9 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "amber/vulkan_header.h"
 #include "src/command.h"
 #include "src/vulkan/resource.h"
-#include "vulkan/vulkan.h"
 
 namespace amber {
 namespace vulkan {
