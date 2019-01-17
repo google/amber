@@ -16,8 +16,8 @@
 #define SRC_VULKAN_BUFFER_H_
 
 #include "amber/result.h"
+#include "amber/vulkan_header.h"
 #include "src/vulkan/resource.h"
-#include "vulkan/vulkan.h"
 
 namespace amber {
 namespace vulkan {
