@@ -20,11 +20,7 @@
 #include <vector>
 
 #include "amber/amber.h"
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#include "vulkan/vulkan.h"
-#pragma clang diagnostic pop
+#include "amber/vulkan_header.h"
 
 namespace amber {
 

@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "amber/vulkan_header.h"
 #include "src/buffer_data.h"
 #include "src/format.h"
 #include "src/value.h"
@@ -26,7 +27,6 @@
 #include "src/vulkan/index_buffer.h"
 #include "src/vulkan/pipeline.h"
 #include "src/vulkan/vertex_buffer.h"
-#include "vulkan/vulkan.h"
 
 namespace amber {
 
