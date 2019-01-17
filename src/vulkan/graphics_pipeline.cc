@@ -599,6 +599,9 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     if (!r.IsSuccess())
       return r;
 
+    // VkRunner spec says
+    //   "vertexCount will be used as the index count, firstVertex
+    //    becomes the vertex offset and firstIndex will always be zero."
     vkCmdDrawIndexed(command_->GetCommandBuffer(),
                      command->GetVertexCount(),      /* indexCount */
                      instance_count,                 /* instanceCount */
