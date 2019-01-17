@@ -66,6 +66,8 @@ class VertexBuffer {
 
  private:
   void FillVertexBufferWithData(VkCommandBuffer command);
+
+  // Return |stride_in_bytes_| rounded up by 4.
   uint32_t Get4BytesAlignedStride() const {
     return ((stride_in_bytes_ + 3) / 4) * 4;
   }
