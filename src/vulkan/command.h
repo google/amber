@@ -16,7 +16,7 @@
 #define SRC_VULKAN_COMMAND_H_
 
 #include "amber/result.h"
-#include "vulkan/vulkan.h"
+#include "amber/vulkan_header.h"
 
 namespace amber {
 
