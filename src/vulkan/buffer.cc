@@ -46,7 +46,7 @@ Result Buffer::Initialize(const VkBufferUsageFlags usage) {
 }
 
 Result Buffer::CreateVkBufferView(VkFormat format) {
-  VkBufferViewCreateInfo buffer_view_info = {};
+  VkBufferViewCreateInfo buffer_view_info = VkBufferViewCreateInfo();
   buffer_view_info.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
   buffer_view_info.buffer = buffer_;
   buffer_view_info.format = format;
@@ -64,7 +64,7 @@ Result Buffer::CopyToDevice(VkCommandBuffer command) {
   if (is_buffer_host_accessible_)
     return FlushMemoryIfNeeded();
 
-  VkBufferCopy region = {};
+  VkBufferCopy region = VkBufferCopy();
   region.srcOffset = 0;
   region.dstOffset = 0;
   region.size = GetSizeInBytes();
@@ -78,7 +78,7 @@ Result Buffer::CopyToHost(VkCommandBuffer command) {
   if (is_buffer_host_accessible_)
     return InvalidateMemoryIfNeeded();
 
-  VkBufferCopy region = {};
+  VkBufferCopy region = VkBufferCopy();
   region.srcOffset = 0;
   region.dstOffset = 0;
   region.size = GetSizeInBytes();
@@ -89,7 +89,7 @@ Result Buffer::CopyToHost(VkCommandBuffer command) {
 }
 
 void Buffer::CopyFromBuffer(VkCommandBuffer command, const Buffer& src) {
-  VkBufferCopy region = {};
+  VkBufferCopy region = VkBufferCopy();
   region.srcOffset = 0;
   region.dstOffset = 0;
   region.size = src.GetSizeInBytes();
@@ -120,7 +120,7 @@ Result Buffer::InvalidateMemoryIfNeeded() {
   if (is_buffer_host_coherent_)
     return {};
 
-  VkMappedMemoryRange range = {};
+  VkMappedMemoryRange range = VkMappedMemoryRange();
   range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
   range.memory = GetHostAccessMemory();
   range.offset = 0;
@@ -135,7 +135,7 @@ Result Buffer::FlushMemoryIfNeeded() {
   if (is_buffer_host_coherent_)
     return {};
 
-  VkMappedMemoryRange range = {};
+  VkMappedMemoryRange range = VkMappedMemoryRange();
   range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
   range.memory = GetHostAccessMemory();
   range.offset = 0;

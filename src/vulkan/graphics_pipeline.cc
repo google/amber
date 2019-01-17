@@ -122,13 +122,13 @@ GraphicsPipeline::GraphicsPipeline(
 GraphicsPipeline::~GraphicsPipeline() = default;
 
 Result GraphicsPipeline::CreateRenderPass() {
-  VkSubpassDescription subpass_desc = {};
+  VkSubpassDescription subpass_desc = VkSubpassDescription();
   subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
   std::vector<VkAttachmentDescription> attachment_desc;
 
-  VkAttachmentReference color_refer = {};
-  VkAttachmentReference depth_refer = {};
+  VkAttachmentReference color_refer = VkAttachmentReference();
+  VkAttachmentReference depth_refer = VkAttachmentReference();
 
   if (color_format_ != VK_FORMAT_UNDEFINED) {
     attachment_desc.push_back(kDefaultAttachmentDesc);
@@ -159,7 +159,7 @@ Result GraphicsPipeline::CreateRenderPass() {
     subpass_desc.pDepthStencilAttachment = &depth_refer;
   }
 
-  VkRenderPassCreateInfo render_pass_info = {};
+  VkRenderPassCreateInfo render_pass_info = VkRenderPassCreateInfo();
   render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   render_pass_info.attachmentCount =
       static_cast<uint32_t>(attachment_desc.size());
@@ -177,7 +177,8 @@ Result GraphicsPipeline::CreateRenderPass() {
 
 VkPipelineDepthStencilStateCreateInfo
 GraphicsPipeline::GetPipelineDepthStencilInfo() {
-  VkPipelineDepthStencilStateCreateInfo depthstencil_info = {};
+  VkPipelineDepthStencilStateCreateInfo depthstencil_info =
+      VkPipelineDepthStencilStateCreateInfo();
   // TODO(jaebaek): Depth/stencil test setup should be come from the
   // PipelineData.
   depthstencil_info.depthTestEnable = VK_TRUE;
@@ -190,7 +191,8 @@ GraphicsPipeline::GetPipelineDepthStencilInfo() {
 
 VkPipelineColorBlendAttachmentState
 GraphicsPipeline::GetPipelineColorBlendAttachmentState() {
-  VkPipelineColorBlendAttachmentState colorblend_attachment = {};
+  VkPipelineColorBlendAttachmentState colorblend_attachment =
+      VkPipelineColorBlendAttachmentState();
   // TODO(jaebaek): Update blend state should be come from the PipelineData.
   colorblend_attachment.blendEnable = VK_FALSE;
   colorblend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ZERO;
@@ -215,12 +217,14 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   if (!r.IsSuccess())
     return r;
 
-  VkPipelineVertexInputStateCreateInfo vertex_input_info = {};
+  VkPipelineVertexInputStateCreateInfo vertex_input_info =
+      VkPipelineVertexInputStateCreateInfo();
   vertex_input_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   vertex_input_info.vertexBindingDescriptionCount = 1;
 
-  VkVertexInputBindingDescription vertex_binding_desc = {};
+  VkVertexInputBindingDescription vertex_binding_desc =
+      VkVertexInputBindingDescription();
   if (vertex_buffer != nullptr) {
     vertex_binding_desc = vertex_buffer->GetVertexInputBinding();
     const auto& vertex_attr_desc = vertex_buffer->GetVertexInputAttr();
@@ -239,7 +243,8 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
     vertex_input_info.pVertexAttributeDescriptions = nullptr;
   }
 
-  VkPipelineInputAssemblyStateCreateInfo input_assembly_info = {};
+  VkPipelineInputAssemblyStateCreateInfo input_assembly_info =
+      VkPipelineInputAssemblyStateCreateInfo();
   input_assembly_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
   // TODO(jaebaek): Handle the given index if exists.
@@ -255,7 +260,8 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
 
   VkRect2D scissor = {{0, 0}, {frame_->GetWidth(), frame_->GetHeight()}};
 
-  VkPipelineViewportStateCreateInfo viewport_info = {};
+  VkPipelineViewportStateCreateInfo viewport_info =
+      VkPipelineViewportStateCreateInfo();
   viewport_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
   viewport_info.viewportCount = 1;
   viewport_info.pViewports = &viewport;
@@ -266,7 +272,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   for (auto& info : shader_stage_info)
     info.pName = GetEntryPointName(info.stage);
 
-  VkGraphicsPipelineCreateInfo pipeline_info = {};
+  VkGraphicsPipelineCreateInfo pipeline_info = VkGraphicsPipelineCreateInfo();
   pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipeline_info.stageCount = static_cast<uint32_t>(shader_stage_info.size());
   pipeline_info.pStages = shader_stage_info.data();
@@ -282,7 +288,8 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
     pipeline_info.pDepthStencilState = &depthstencil_info;
   }
 
-  VkPipelineColorBlendStateCreateInfo colorblend_info = {};
+  VkPipelineColorBlendStateCreateInfo colorblend_info =
+      VkPipelineColorBlendStateCreateInfo();
   VkPipelineColorBlendAttachmentState colorblend_attachment;
   if (color_format_ != VK_FORMAT_UNDEFINED) {
     colorblend_attachment = GetPipelineColorBlendAttachmentState();
@@ -379,7 +386,7 @@ Result GraphicsPipeline::ActivateRenderPassIfNeeded() {
   if (!r.IsSuccess())
     return r;
 
-  VkRenderPassBeginInfo render_begin_info = {};
+  VkRenderPassBeginInfo render_begin_info = VkRenderPassBeginInfo();
   render_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   render_begin_info.renderPass = render_pass_;
   render_begin_info.framebuffer = frame_->GetFrameBuffer();
@@ -469,7 +476,7 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   if (!r.IsSuccess())
     return r;
 
-  VkClearAttachment clear_attachment = {};
+  VkClearAttachment clear_attachment = VkClearAttachment();
   clear_attachment.aspectMask = aspect;
   clear_attachment.colorAttachment = 0;
   clear_attachment.clearValue = clear_value;
