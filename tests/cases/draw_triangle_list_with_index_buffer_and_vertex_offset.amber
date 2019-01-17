@@ -72,22 +72,42 @@ void main() {
 [test]
 clear
 
-#                                "0" means 0th vertex among vertices
+#                                 "0" means the first vertex among
+#                                 vertices which is shown in line 46.
+#                                 Note that it uses "6" indices from
+#                                 the index 0 of indices.
+#                                 |
+#                                 V
 draw arrays indexed TRIANGLE_LIST 0 6
 relative probe rect rgb (0.0, 0.0, 1.0, 1.0) (1.0, 0, 0)
 
-#                                "4" means 4th vertex among vertices
+#                                 "4" means the fifth vertex among
+#                                 vertices which is shown in line 53.
+#                                 Note that it uses "6" indices from
+#                                 the index 0 of indices.
+#                                 |
+#                                 V
 draw arrays indexed TRIANGLE_LIST 4 6
 relative probe rect rgb (0.0, 0.0, 0.5, 1.0) (1.0, 0, 0)
 relative probe rect rgb (0.5, 0.0, 0.5, 1.0) (0, 1.0, 0)
 
-#                                "8" means 8th vertex among vertices
+#                                 "8" means the nineth vertex among
+#                                 vertices which is shown in line 60.
+#                                 Note that it uses "6" indices from
+#                                 the index 0 of indices.
+#                                 |
+#                                 V
 draw arrays indexed TRIANGLE_LIST 8 6
 relative probe rect rgb (0.0, 0.0, 0.5, 0.5) (1.0, 0, 0)
 relative probe rect rgb (0.5, 0.0, 0.5, 1.0) (0, 1.0, 0)
 relative probe rect rgb (0.0, 0.5, 0.5, 0.5) (0, 0, 1.0)
 
-#                                "12" means 12th vertex among vertices
+#                                  "12" means the thirteenth vertex among
+#                                  vertices which is shown in line 60.
+#                                  Note that it uses "6" indices from
+#                                  the index 0 of indices.
+#                                  |
+#                                  V
 draw arrays indexed TRIANGLE_LIST 12 6
 relative probe rect rgb (0.0, 0.0, 0.5, 0.5) (1.0, 0, 0)
 relative probe rect rgb (0.5, 0.0, 0.5, 0.5) (0, 1.0, 0)
