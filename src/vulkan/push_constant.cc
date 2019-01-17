@@ -54,7 +54,7 @@ VkPushConstantRange PushConstant::GetPushConstantRange() {
   uint32_t size_in_bytes =
       it->offset + static_cast<uint32_t>(it->size_in_bytes) - first_offset;
 
-  VkPushConstantRange range = {};
+  VkPushConstantRange range = VkPushConstantRange();
   range.stageFlags = VK_SHADER_STAGE_ALL;
 
   // Based on Vulkan spec, range.offset must be multiple of 4.
