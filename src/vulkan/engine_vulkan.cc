@@ -255,7 +255,8 @@ Result EngineVulkan::SetBuffer(BufferType type,
                                const Format& format,
                                const std::vector<Value>& values) {
   auto format_type = ToVkFormat(format.GetFormatType());
-  if (!IsFormatSupportedByPhysicalDevice(type, device_->GetPhysicalDevice(),
+  if (type != BufferType::kIndex &&
+      !IsFormatSupportedByPhysicalDevice(type, device_->GetPhysicalDevice(),
                                          format_type)) {
     return Result("Vulkan::SetBuffer format is not supported for buffer type");
   }
@@ -283,9 +284,15 @@ Result EngineVulkan::SetBuffer(BufferType type,
 
     pipeline_->AsGraphics()->SetVertexBuffer(location, format, values,
                                              vertex_buffer_.get());
+    return {};
   }
 
-  return {};
+  if (type == BufferType::kIndex) {
+    pipeline_->AsGraphics()->SetIndexBuffer(values);
+    return {};
+  }
+
+  return Result("Vulkan::SetBuffer unknown buffer type");
 }
 
 Result EngineVulkan::DoClearColor(const ClearColorCommand* command) {

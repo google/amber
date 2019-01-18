@@ -348,12 +348,6 @@ Result GraphicsPipeline::SetVertexBuffer(uint8_t location,
         "GraphicsPipeline::SetVertexBuffer: vertex buffer is nullptr");
   }
 
-  DeactivateRenderPassIfNeeded();
-
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
   vertex_buffer->SetData(location, format, values);
   return {};
 }
@@ -372,9 +366,35 @@ Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
 
   DeactivateRenderPassIfNeeded();
 
-  // TODO(jaebaek): Send indices data too.
   return vertex_buffer->SendVertexData(command_->GetCommandBuffer(),
                                        memory_properties_);
+}
+
+Result GraphicsPipeline::SetIndexBuffer(const std::vector<Value>& values) {
+  if (index_buffer_) {
+    return Result(
+        "GraphicsPipeline::SetIndexBuffer must be called once when "
+        "index_buffer_ is created");
+  }
+
+  index_buffer_ = MakeUnique<IndexBuffer>(device_);
+
+  Result r = command_->BeginIfNotInRecording();
+  if (!r.IsSuccess())
+    return r;
+
+  DeactivateRenderPassIfNeeded();
+
+  r = index_buffer_->SendIndexData(command_->GetCommandBuffer(),
+                                   memory_properties_, values);
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->End();
+  if (!r.IsSuccess())
+    return r;
+
+  return command_->SubmitAndReset(GetFenceTimeout());
 }
 
 Result GraphicsPipeline::ActivateRenderPassIfNeeded() {
@@ -578,8 +598,27 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (instance_count == 0 && command->GetVertexCount() != 0)
     instance_count = 1;
 
-  vkCmdDraw(command_->GetCommandBuffer(), command->GetVertexCount(),
-            instance_count, command->GetFirstVertexIndex(), 0);
+  if (command->IsIndexed()) {
+    if (!index_buffer_)
+      return Result("Vulkan: Draw indexed is used without given indices");
+
+    r = index_buffer_->BindToCommandBuffer(command_->GetCommandBuffer());
+    if (!r.IsSuccess())
+      return r;
+
+    // VkRunner spec says
+    //   "vertexCount will be used as the index count, firstVertex
+    //    becomes the vertex offset and firstIndex will always be zero."
+    vkCmdDrawIndexed(command_->GetCommandBuffer(),
+                     command->GetVertexCount(),      /* indexCount */
+                     instance_count,                 /* instanceCount */
+                     0,                              /* firstIndex */
+                     command->GetFirstVertexIndex(), /* vertexOffset */
+                     0 /* firstInstance */);
+  } else {
+    vkCmdDraw(command_->GetCommandBuffer(), command->GetVertexCount(),
+              instance_count, command->GetFirstVertexIndex(), 0);
+  }
 
   return {};
 }
@@ -607,6 +646,9 @@ Result GraphicsPipeline::ProcessCommands() {
 
 void GraphicsPipeline::Shutdown() {
   DeactivateRenderPassIfNeeded();
+
+  if (index_buffer_)
+    index_buffer_->Shutdown();
 
   Pipeline::Shutdown();
   frame_->Shutdown();
