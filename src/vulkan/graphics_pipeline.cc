@@ -509,7 +509,9 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   vkCmdClearAttachments(command_->GetCommandBuffer(), 1, &clear_attachment, 1,
                         &clear_rect);
 
-  return {};
+  DeactivateRenderPassIfNeeded();
+
+  return frame_->CopyColorImageToHost(command_->GetCommandBuffer());
 }
 
 Result GraphicsPipeline::ResetPipeline() {
@@ -620,28 +622,19 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
               instance_count, command->GetFirstVertexIndex(), 0);
   }
 
-  return {};
-}
-
-Result GraphicsPipeline::ProcessCommands() {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  r = ActivateRenderPassIfNeeded();
-  if (!r.IsSuccess())
-    return r;
   DeactivateRenderPassIfNeeded();
 
   r = frame_->CopyColorImageToHost(command_->GetCommandBuffer());
   if (!r.IsSuccess())
     return r;
 
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
+  return ReadbackDescriptorsToHostDataQueue();
+}
 
-  return command_->SubmitAndReset(GetFenceTimeout());
+Result GraphicsPipeline::ProcessCommands() {
+  DeactivateRenderPassIfNeeded();
+
+  return Pipeline::ProcessCommands();
 }
 
 void GraphicsPipeline::Shutdown() {

@@ -49,13 +49,12 @@ class Pipeline {
 
   Result AddDescriptor(const BufferCommand*);
 
+  // Read back the contents of resources of all descriptors to a
+  // buffer data object and put it into buffer data queue in host.
+  Result ReadbackDescriptorsToHostDataQueue();
+
   // Add information of how and what to do with push constant.
   Result AddPushConstant(const BufferCommand* command);
-
-  // Copy the contents of the resource bound to the given descriptor
-  // to host memory.
-  Result CopyDescriptorToHost(const uint32_t descriptor_set,
-                              const uint32_t binding);
 
   // Get the information of the resource bound to the given descriptor.
   Result GetDescriptorInfo(const uint32_t descriptor_set,
@@ -67,8 +66,12 @@ class Pipeline {
     entry_points_[stage] = entry;
   }
 
+  // End recording command buffer if it is in recording state. This
+  // method also submits commands in the command buffer and reset
+  // the command buffer.
+  virtual Result ProcessCommands();
+
   virtual void Shutdown();
-  virtual Result ProcessCommands() = 0;
 
  protected:
   Pipeline(
