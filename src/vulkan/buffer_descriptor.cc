@@ -158,7 +158,7 @@ Result BufferDescriptor::UpdateDescriptorSetIfNeeded(
   if (!IsDescriptorSetUpdateNeeded())
     return {};
 
-  VkDescriptorBufferInfo buffer_info = {};
+  VkDescriptorBufferInfo buffer_info = VkDescriptorBufferInfo();
   buffer_info.buffer = buffer_->GetVkBuffer();
   buffer_info.offset = 0;
   buffer_info.range = VK_WHOLE_SIZE;
@@ -171,7 +171,7 @@ ResourceInfo BufferDescriptor::GetResourceInfo() {
   auto& buffer_input_queue = GetBufferInputQueue();
   auto& buffer_output = GetBufferOutput();
 
-  ResourceInfo info = {};
+  ResourceInfo info = ResourceInfo();
   info.type = ResourceInfoType::kBuffer;
   if (buffer_) {
     assert(buffer_input_queue.empty() && buffer_output.empty());

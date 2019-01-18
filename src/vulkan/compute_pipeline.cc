@@ -53,7 +53,7 @@ Result ComputePipeline::CreateVkComputePipeline() {
   if (!r.IsSuccess())
     return r;
 
-  VkComputePipelineCreateInfo pipeline_info = {};
+  VkComputePipelineCreateInfo pipeline_info = VkComputePipelineCreateInfo();
   pipeline_info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
   pipeline_info.stage = shader_stage_info[0];
   pipeline_info.layout = pipeline_layout_;

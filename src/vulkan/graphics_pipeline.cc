@@ -122,13 +122,13 @@ GraphicsPipeline::GraphicsPipeline(
 GraphicsPipeline::~GraphicsPipeline() = default;
 
 Result GraphicsPipeline::CreateRenderPass() {
-  VkSubpassDescription subpass_desc = {};
+  VkSubpassDescription subpass_desc = VkSubpassDescription();
   subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
   std::vector<VkAttachmentDescription> attachment_desc;
 
-  VkAttachmentReference color_refer = {};
-  VkAttachmentReference depth_refer = {};
+  VkAttachmentReference color_refer = VkAttachmentReference();
+  VkAttachmentReference depth_refer = VkAttachmentReference();
 
   if (color_format_ != VK_FORMAT_UNDEFINED) {
     attachment_desc.push_back(kDefaultAttachmentDesc);
@@ -159,7 +159,7 @@ Result GraphicsPipeline::CreateRenderPass() {
     subpass_desc.pDepthStencilAttachment = &depth_refer;
   }
 
-  VkRenderPassCreateInfo render_pass_info = {};
+  VkRenderPassCreateInfo render_pass_info = VkRenderPassCreateInfo();
   render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   render_pass_info.attachmentCount =
       static_cast<uint32_t>(attachment_desc.size());
@@ -177,7 +177,8 @@ Result GraphicsPipeline::CreateRenderPass() {
 
 VkPipelineDepthStencilStateCreateInfo
 GraphicsPipeline::GetPipelineDepthStencilInfo() {
-  VkPipelineDepthStencilStateCreateInfo depthstencil_info = {};
+  VkPipelineDepthStencilStateCreateInfo depthstencil_info =
+      VkPipelineDepthStencilStateCreateInfo();
   // TODO(jaebaek): Depth/stencil test setup should be come from the
   // PipelineData.
   depthstencil_info.depthTestEnable = VK_TRUE;
@@ -190,7 +191,8 @@ GraphicsPipeline::GetPipelineDepthStencilInfo() {
 
 VkPipelineColorBlendAttachmentState
 GraphicsPipeline::GetPipelineColorBlendAttachmentState() {
-  VkPipelineColorBlendAttachmentState colorblend_attachment = {};
+  VkPipelineColorBlendAttachmentState colorblend_attachment =
+      VkPipelineColorBlendAttachmentState();
   // TODO(jaebaek): Update blend state should be come from the PipelineData.
   colorblend_attachment.blendEnable = VK_FALSE;
   colorblend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ZERO;
@@ -215,12 +217,14 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   if (!r.IsSuccess())
     return r;
 
-  VkPipelineVertexInputStateCreateInfo vertex_input_info = {};
+  VkPipelineVertexInputStateCreateInfo vertex_input_info =
+      VkPipelineVertexInputStateCreateInfo();
   vertex_input_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   vertex_input_info.vertexBindingDescriptionCount = 1;
 
-  VkVertexInputBindingDescription vertex_binding_desc = {};
+  VkVertexInputBindingDescription vertex_binding_desc =
+      VkVertexInputBindingDescription();
   if (vertex_buffer != nullptr) {
     vertex_binding_desc = vertex_buffer->GetVertexInputBinding();
     const auto& vertex_attr_desc = vertex_buffer->GetVertexInputAttr();
@@ -239,7 +243,8 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
     vertex_input_info.pVertexAttributeDescriptions = nullptr;
   }
 
-  VkPipelineInputAssemblyStateCreateInfo input_assembly_info = {};
+  VkPipelineInputAssemblyStateCreateInfo input_assembly_info =
+      VkPipelineInputAssemblyStateCreateInfo();
   input_assembly_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
   // TODO(jaebaek): Handle the given index if exists.
@@ -255,7 +260,8 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
 
   VkRect2D scissor = {{0, 0}, {frame_->GetWidth(), frame_->GetHeight()}};
 
-  VkPipelineViewportStateCreateInfo viewport_info = {};
+  VkPipelineViewportStateCreateInfo viewport_info =
+      VkPipelineViewportStateCreateInfo();
   viewport_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
   viewport_info.viewportCount = 1;
   viewport_info.pViewports = &viewport;
@@ -266,7 +272,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   for (auto& info : shader_stage_info)
     info.pName = GetEntryPointName(info.stage);
 
-  VkGraphicsPipelineCreateInfo pipeline_info = {};
+  VkGraphicsPipelineCreateInfo pipeline_info = VkGraphicsPipelineCreateInfo();
   pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipeline_info.stageCount = static_cast<uint32_t>(shader_stage_info.size());
   pipeline_info.pStages = shader_stage_info.data();
@@ -282,7 +288,8 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
     pipeline_info.pDepthStencilState = &depthstencil_info;
   }
 
-  VkPipelineColorBlendStateCreateInfo colorblend_info = {};
+  VkPipelineColorBlendStateCreateInfo colorblend_info =
+      VkPipelineColorBlendStateCreateInfo();
   VkPipelineColorBlendAttachmentState colorblend_attachment;
   if (color_format_ != VK_FORMAT_UNDEFINED) {
     colorblend_attachment = GetPipelineColorBlendAttachmentState();
@@ -341,12 +348,6 @@ Result GraphicsPipeline::SetVertexBuffer(uint8_t location,
         "GraphicsPipeline::SetVertexBuffer: vertex buffer is nullptr");
   }
 
-  DeactivateRenderPassIfNeeded();
-
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
   vertex_buffer->SetData(location, format, values);
   return {};
 }
@@ -365,9 +366,35 @@ Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
 
   DeactivateRenderPassIfNeeded();
 
-  // TODO(jaebaek): Send indices data too.
   return vertex_buffer->SendVertexData(command_->GetCommandBuffer(),
                                        memory_properties_);
+}
+
+Result GraphicsPipeline::SetIndexBuffer(const std::vector<Value>& values) {
+  if (index_buffer_) {
+    return Result(
+        "GraphicsPipeline::SetIndexBuffer must be called once when "
+        "index_buffer_ is created");
+  }
+
+  index_buffer_ = MakeUnique<IndexBuffer>(device_);
+
+  Result r = command_->BeginIfNotInRecording();
+  if (!r.IsSuccess())
+    return r;
+
+  DeactivateRenderPassIfNeeded();
+
+  r = index_buffer_->SendIndexData(command_->GetCommandBuffer(),
+                                   memory_properties_, values);
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->End();
+  if (!r.IsSuccess())
+    return r;
+
+  return command_->SubmitAndReset(GetFenceTimeout());
 }
 
 Result GraphicsPipeline::ActivateRenderPassIfNeeded() {
@@ -379,7 +406,7 @@ Result GraphicsPipeline::ActivateRenderPassIfNeeded() {
   if (!r.IsSuccess())
     return r;
 
-  VkRenderPassBeginInfo render_begin_info = {};
+  VkRenderPassBeginInfo render_begin_info = VkRenderPassBeginInfo();
   render_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   render_begin_info.renderPass = render_pass_;
   render_begin_info.framebuffer = frame_->GetFrameBuffer();
@@ -469,7 +496,7 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   if (!r.IsSuccess())
     return r;
 
-  VkClearAttachment clear_attachment = {};
+  VkClearAttachment clear_attachment = VkClearAttachment();
   clear_attachment.aspectMask = aspect;
   clear_attachment.colorAttachment = 0;
   clear_attachment.clearValue = clear_value;
@@ -573,8 +600,27 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (instance_count == 0 && command->GetVertexCount() != 0)
     instance_count = 1;
 
-  vkCmdDraw(command_->GetCommandBuffer(), command->GetVertexCount(),
-            instance_count, command->GetFirstVertexIndex(), 0);
+  if (command->IsIndexed()) {
+    if (!index_buffer_)
+      return Result("Vulkan: Draw indexed is used without given indices");
+
+    r = index_buffer_->BindToCommandBuffer(command_->GetCommandBuffer());
+    if (!r.IsSuccess())
+      return r;
+
+    // VkRunner spec says
+    //   "vertexCount will be used as the index count, firstVertex
+    //    becomes the vertex offset and firstIndex will always be zero."
+    vkCmdDrawIndexed(command_->GetCommandBuffer(),
+                     command->GetVertexCount(),      /* indexCount */
+                     instance_count,                 /* instanceCount */
+                     0,                              /* firstIndex */
+                     command->GetFirstVertexIndex(), /* vertexOffset */
+                     0 /* firstInstance */);
+  } else {
+    vkCmdDraw(command_->GetCommandBuffer(), command->GetVertexCount(),
+              instance_count, command->GetFirstVertexIndex(), 0);
+  }
 
   DeactivateRenderPassIfNeeded();
 
@@ -593,6 +639,9 @@ Result GraphicsPipeline::ProcessCommands() {
 
 void GraphicsPipeline::Shutdown() {
   DeactivateRenderPassIfNeeded();
+
+  if (index_buffer_)
+    index_buffer_->Shutdown();
 
   Pipeline::Shutdown();
   frame_->Shutdown();

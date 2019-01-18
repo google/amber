@@ -63,7 +63,7 @@ Descriptor::~Descriptor() = default;
 VkWriteDescriptorSet Descriptor::GetWriteDescriptorSet(
     VkDescriptorSet descriptor_set,
     VkDescriptorType descriptor_type) const {
-  VkWriteDescriptorSet write = {};
+  VkWriteDescriptorSet write = VkWriteDescriptorSet();
   write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   write.dstSet = descriptor_set;
   write.dstBinding = binding_;
