@@ -188,6 +188,8 @@ void SetupToleranceForTexels(const ProbeCommand* command,
   }
 }
 
+// Convert data of |texel| into double values based on the
+// information given in |texel_format|.
 std::vector<Value> GetActualValuesFromTexel(const uint8_t* texel,
                                             const Format* texel_format) {
   assert(texel_format && !texel_format->GetComponents().empty());
@@ -245,6 +247,10 @@ std::vector<Value> GetActualValuesFromTexel(const uint8_t* texel,
   return actual_values;
 }
 
+// If component mode of |texel_format| is FormatMode::kUNorm or
+// ::kSNorm or ::kSRGB, scale the corresponding value in |texel|.
+// Note that we do not scale values with FormatMode::kUInt, ::kSInt,
+// ::kUFloat, ::kSFloat.
 std::vector<Value> ScaleTexelValuesIfNeeded(const std::vector<Value>& texel,
                                             const Format* texel_format) {
   std::vector<Value> scaled_texel(texel.size());

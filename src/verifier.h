@@ -55,9 +55,9 @@ class Verifier {
     double a = 0;
   };
 
-  /// Check texel pointed by |texel| with |texel_format| is the same with
-  /// the expected RGB(A) values given via |command|. This method allow
-  /// error smaller than |tolerance|. If an element of
+  /// Check |texel| with |texel_format| is the same with the expected
+  /// RGB(A) values given via |command|. This method allow error
+  /// smaller than |tolerance|. If an element of
   /// |is_tolerance_percent| is true, we assume that the corresponding
   /// |tolerance| is relative i.e., percentage allowed error.
   bool IsTexelEqualToExpected(const std::vector<Value>& texel,
