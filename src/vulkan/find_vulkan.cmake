@@ -12,14 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # Include this file to find Vulkan and and set up compilation and linking.
-
 
 # Export these settings to the includer.
 set(Vulkan_FOUND FALSE)
+set(VULKAN_CTS_HEADER FALSE)
 set(VULKAN_LIB "")
-
 
 # Our first choice is to pick up the Vulkan headers from an enclosing project.
 # And if that's the case, then use Vulkan libraries as specified by
@@ -28,6 +26,7 @@ set(X "${Vulkan-Headers_SOURCE_DIR}/include")
 if (IS_DIRECTORY "${X}")
   message(STATUS "Amber: Using Vulkan header dir ${X}")
   list(APPEND CMAKE_REQUIRED_INCLUDES "${X}")
+
   # Add the directory to the list of include paths, before any others.
   include_directories(BEFORE "${X}")
   CHECK_INCLUDE_FILE(vulkan/vulkan.h HAVE_VULKAN_HEADER)
@@ -40,6 +39,7 @@ if (IS_DIRECTORY "${X}")
       message(STATUS "Amber: Using specified Vulkan libraries: ${Vulkan_LIBRARIES}")
       set(VULKAN_LIB "${Vulkan_LIBRARIES}")
     endif()
+
     # For now assume we have Vulkan.  We have its header, but we haven't checked
     # for the library.
     # TODO(dneto): Actually check for the libraries.
@@ -47,6 +47,26 @@ if (IS_DIRECTORY "${X}")
   endif()
 endif()
 unset(X)
+
+# Check if we're in the CTS
+if (NOT ${Vulkan_FOUND})
+  message(STATUS "Amber: Checking for CTS Vulkan header")
+  set(X "${Vulkan-Headers_SOURCE_DIR}")
+  if (IS_DIRECTORY "${X}")
+    message(STATUS "Amber: Using Vulkan header dir ${X}")
+    list(APPEND CMAKE_REQUIRED_INCLUDES "${X}")
+
+    # Add the directory to the list of include paths, before any others.
+    include_directories(BEFORE "${X}")
+
+    if (EXISTS "${X}/vkDefs.h")
+      set(VULKAN_CTS_HEADER TRUE)
+      set(Vulkan_FOUND TRUE)
+      set(VULKAN_LIB vulkan)
+    endif()
+  endif()
+  unset(X)
+endif()
 
 if (NOT ${Vulkan_FOUND})
   # If we aren't already building a Vulkan library, then use CMake to find it.

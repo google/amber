@@ -1,4 +1,4 @@
-// Copyright 2018 The Amber Authors.
+// Copyright 2019 The Amber Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VULKAN_FORMAT_DATA_H_
-#define SRC_VULKAN_FORMAT_DATA_H_
+#ifndef AMBER_VULKAN_HEADER_H_
+#define AMBER_VULKAN_HEADER_H_
 
-#include "amber/vulkan_header.h"
-#include "src/format_data.h"
+#if AMBER_CTS_VULKAN_HEADER
+#include "vkDefs.h"
+#else  // DAMBER_CTS_VULKAN_HEADER
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#include "vulkan/vulkan.h"
+#pragma clang diagnostic pop
+#endif  // AMBER_CTS_VULKAN_HEADER
 
-namespace amber {
-namespace vulkan {
-
-VkFormat ToVkFormat(FormatType type);
-uint32_t VkFormatToByteSize(VkFormat format);
-bool VkFormatHasStencilComponent(VkFormat format);
-
-}  // namespace vulkan
-}  // namespace amber
-
-#endif  // SRC_VULKAN_FORMAT_DATA_H_
+#endif  // AMBER_VULKAN_HEADER_H_

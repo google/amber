@@ -51,8 +51,10 @@ void VertexBuffer::SetData(uint8_t location,
 
 void VertexBuffer::FillVertexBufferWithData(VkCommandBuffer command) {
   // Send vertex data from host to device.
-  uint8_t* ptr = static_cast<uint8_t*>(buffer_->HostAccessibleMemoryPtr());
+  uint8_t* ptr_in_stride_begin =
+      static_cast<uint8_t*>(buffer_->HostAccessibleMemoryPtr());
   for (uint32_t i = 0; i < GetVertexCount(); ++i) {
+    uint8_t* ptr = ptr_in_stride_begin;
     for (uint32_t j = 0; j < formats_.size(); ++j) {
       const auto pack_size = formats_[j].GetPackSize();
       if (pack_size) {
@@ -77,9 +79,9 @@ void VertexBuffer::FillVertexBufferWithData(VkCommandBuffer command) {
 
       ptr += formats_[j].GetByteSize();
     }
+    ptr_in_stride_begin += Get4BytesAlignedStride();
   }
 
-  ptr = static_cast<uint8_t*>(buffer_->HostAccessibleMemoryPtr());
   buffer_->CopyToDevice(command);
 }
 
@@ -100,7 +102,7 @@ Result VertexBuffer::SendVertexData(
   if (n_vertices == 0)
     return Result("Vulkan::Data for VertexBuffer is empty");
 
-  size_t bytes = stride_in_bytes_ * n_vertices;
+  size_t bytes = static_cast<size_t>(Get4BytesAlignedStride()) * n_vertices;
 
   if (!buffer_) {
     buffer_ = MakeUnique<Buffer>(device_, bytes, properties);

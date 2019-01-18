@@ -82,6 +82,7 @@ if (NOT ANDROID)
   include(src/vulkan/find_vulkan.cmake)
 endif()
 
+add_definitions(-DAMBER_CTS_VULKAN_HEADER=$<BOOL:${VULKAN_CTS_HEADER}>)
 add_definitions(-DAMBER_ENGINE_VULKAN=$<BOOL:${Vulkan_FOUND}>)
 add_definitions(-DAMBER_ENGINE_DAWN=$<BOOL:${Dawn_FOUND}>)
 add_definitions(-DAMBER_ENABLE_SPIRV_TOOLS=$<BOOL:${AMBER_ENABLE_SPIRV_TOOLS}>)

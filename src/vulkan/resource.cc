@@ -149,7 +149,7 @@ Result Resource::CreateVkBuffer(VkBuffer* buffer, VkBufferUsageFlags usage) {
   if (buffer == nullptr)
     return Result("Vulkan::Given VkBuffer pointer is nullptr");
 
-  VkBufferCreateInfo buffer_info = {};
+  VkBufferCreateInfo buffer_info = VkBufferCreateInfo();
   buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   buffer_info.size = size_in_bytes_;
@@ -235,7 +235,7 @@ Resource::AllocateResult Resource::AllocateAndBindMemoryToVkBuffer(
 Result Resource::AllocateMemory(VkDeviceMemory* memory,
                                 VkDeviceSize size,
                                 uint32_t memory_type_index) {
-  VkMemoryAllocateInfo alloc_info = {};
+  VkMemoryAllocateInfo alloc_info = VkMemoryAllocateInfo();
   alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   alloc_info.allocationSize = size;
   alloc_info.memoryTypeIndex = memory_type_index;

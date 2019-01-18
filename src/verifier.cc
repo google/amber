@@ -390,8 +390,8 @@ Result Verifier::Probe(const ProbeCommand* command,
                   std::to_string(texel_stride) + " bytes each");
   }
 
-  double tolerance[4] = {};
-  bool is_tolerance_percent[4] = {};
+  double tolerance[4] = {0, 0, 0, 0};
+  bool is_tolerance_percent[4] = {0, 0, 0, 0};
   SetupToleranceForTexels(command, tolerance, is_tolerance_percent);
 
   const uint8_t* ptr = static_cast<const uint8_t*>(buf);

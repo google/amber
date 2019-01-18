@@ -54,7 +54,7 @@ VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
 bool IsFormatSupportedByPhysicalDevice(BufferType type,
                                        VkPhysicalDevice physical_device,
                                        VkFormat format) {
-  VkFormatProperties properties = {};
+  VkFormatProperties properties = VkFormatProperties();
   vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
 
   VkFormatFeatureFlagBits flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
@@ -87,7 +87,7 @@ bool IsFormatSupportedByPhysicalDevice(BufferType type,
 
 bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
                              uint32_t descriptor_set) {
-  VkPhysicalDeviceProperties properties = {};
+  VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties();
   vkGetPhysicalDeviceProperties(physical_device, &properties);
   return properties.limits.maxBoundDescriptorSets > descriptor_set;
 }
@@ -215,7 +215,7 @@ Result EngineVulkan::CreatePipeline(PipelineType type) {
 
 Result EngineVulkan::SetShader(ShaderType type,
                                const std::vector<uint32_t>& data) {
-  VkShaderModuleCreateInfo info = {};
+  VkShaderModuleCreateInfo info = VkShaderModuleCreateInfo();
   info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   info.codeSize = data.size() * sizeof(uint32_t);
   info.pCode = data.data();
@@ -239,7 +239,7 @@ EngineVulkan::GetShaderStageInfo() {
   std::vector<VkPipelineShaderStageCreateInfo> stage_info(modules_.size());
   uint32_t stage_count = 0;
   for (auto it : modules_) {
-    stage_info[stage_count] = {};
+    stage_info[stage_count] = VkPipelineShaderStageCreateInfo();
     stage_info[stage_count].sType =
         VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     stage_info[stage_count].stage = ToVkShaderStage(it.first);
