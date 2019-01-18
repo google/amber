@@ -15,6 +15,7 @@
 #ifndef SRC_BIT_COPY_H_
 #define SRC_BIT_COPY_H_
 
+#include "amber/result.h"
 #include "src/value.h"
 
 namespace amber {
@@ -23,10 +24,10 @@ class BitCopy {
  public:
   // Copy [0, bits) bits of |src| to
   // [dst_bit_offset, dst_bit_offset + bits) of |dst|.
-  static void CopyValueToBuffer(uint8_t* dst,
-                                const Value& src,
-                                uint8_t dst_bit_offset,
-                                uint8_t bits);
+  static Result CopyValueToBuffer(uint8_t* dst,
+                                  const Value& src,
+                                  uint8_t dst_bit_offset,
+                                  uint8_t bits);
 
   // Copy [src_bit_offset, src_bit_offset + bits) bits of |src|
   // to [0, bits) of |dst|.
@@ -45,15 +46,6 @@ class BitCopy {
 
   ~BitCopy() = delete;
 
-  // Left-shift |length_bytes| bytes of buffer by |shift_bits| bits
-  // based on assumption that |shift_bits| < 8. If there is overflow
-  // at |buffer| + |length_bytes|, this method ignores it. Note that
-  // this overflow is fine for BitCopy because we have only interest
-  // in data [0, length_bytes) bytes of |buffer|.
-  static void LeftShiftBufferBits(uint8_t* buffer,
-                                  uint8_t length_bytes,
-                                  uint8_t shift_bits);
-
   // Right-shift |length_bytes| bytes of buffer by |shift_bits| bits
   // based on assumption that |shift_bits| < 8. If there is underflow,
   // this method ignores it. Note that this underflow is fine for
@@ -67,7 +59,7 @@ class BitCopy {
   // [bit_offset, bit_offset + bits) of |dst| based on assumption
   // that |bit_offset| < 8.
   static void CopyBits(uint8_t* dst,
-                       const uint8_t* src,
+                       const uint64_t& src,
                        uint8_t bit_offset,
                        uint8_t bits);
 

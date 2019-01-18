@@ -49,7 +49,7 @@ void VertexBuffer::SetData(uint8_t location,
   data_.push_back(values);
 }
 
-void VertexBuffer::FillVertexBufferWithData(VkCommandBuffer command) {
+Result VertexBuffer::FillVertexBufferWithData(VkCommandBuffer command) {
   // Send vertex data from host to device.
   uint8_t* ptr_in_stride_begin =
       static_cast<uint8_t*>(buffer_->HostAccessibleMemoryPtr());
@@ -58,7 +58,10 @@ void VertexBuffer::FillVertexBufferWithData(VkCommandBuffer command) {
     for (uint32_t j = 0; j < formats_.size(); ++j) {
       const auto pack_size = formats_[j].GetPackSize();
       if (pack_size) {
-        BitCopy::CopyValueToBuffer(ptr, data_[j][i], 0, pack_size);
+        Result r = BitCopy::CopyValueToBuffer(ptr, data_[j][i], 0, pack_size);
+        if (!r.IsSuccess())
+          return r;
+
         ptr += pack_size / 8;
         continue;
       }
@@ -68,12 +71,18 @@ void VertexBuffer::FillVertexBufferWithData(VkCommandBuffer command) {
 
       for (uint32_t k = 0; k < components.size(); ++k) {
         uint8_t bits = components[k].num_bits;
-        BitCopy::CopyValueToBuffer(ptr, data_[j][i * components.size() + k],
-                                   bit_offset, bits);
+        Result r = BitCopy::CopyValueToBuffer(
+            ptr, data_[j][i * components.size() + k], bit_offset, bits);
+        if (!r.IsSuccess())
+          return r;
 
-        assert(k == components.size() - 1 ||
-               static_cast<uint32_t>(bit_offset) + static_cast<uint32_t>(bits) <
-                   256);
+        if ((k != components.size() - 1) &&
+            (static_cast<uint32_t>(bit_offset) + static_cast<uint32_t>(bits) >=
+             256)) {
+          return Result(
+              "Vulkan: VertexBuffer::FillVertexBufferWithData bit_offset "
+              "overflow");
+        }
         bit_offset = static_cast<uint8_t>(bit_offset + bits);
       }
 
@@ -82,7 +91,7 @@ void VertexBuffer::FillVertexBufferWithData(VkCommandBuffer command) {
     ptr_in_stride_begin += Get4BytesAlignedStride();
   }
 
-  buffer_->CopyToDevice(command);
+  return buffer_->CopyToDevice(command);
 }
 
 void VertexBuffer::BindToCommandBuffer(VkCommandBuffer command) {

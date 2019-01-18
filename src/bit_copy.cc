@@ -19,64 +19,46 @@
 namespace amber {
 
 // static
-void BitCopy::LeftShiftBufferBits(uint8_t* buffer,
-                                  uint8_t length_bytes,
-                                  uint8_t shift_bits) {
-  if (shift_bits == 0)
-    return;
-
-  assert(shift_bits < 8);
-
-  uint8_t carry = 0;
-  for (uint32_t i = 0; i < length_bytes; ++i) {
-    uint8_t new_value = static_cast<uint8_t>((buffer[i] << shift_bits) | carry);
-    carry = buffer[i] >> (8 - shift_bits);
-    buffer[i] = new_value;
-  }
-}
-
-// static
-void BitCopy::CopyValueToBuffer(uint8_t* dst,
-                                const Value& src,
-                                uint8_t dst_bit_offset,
-                                uint8_t bits) {
-  uint8_t data[9] = {};
+Result BitCopy::CopyValueToBuffer(uint8_t* dst,
+                                  const Value& src,
+                                  uint8_t dst_bit_offset,
+                                  uint8_t bits) {
+  uint64_t data = 0;
   if (src.IsInteger()) {
     if (bits <= 8) {
-      data[0] = src.AsUint8();
+      uint8_t* ptr = reinterpret_cast<uint8_t*>(&data);
+      *ptr = src.AsUint8();
     } else if (bits <= 16) {
-      uint16_t* ptr = reinterpret_cast<uint16_t*>(data);
+      uint16_t* ptr = reinterpret_cast<uint16_t*>(&data);
       *ptr = src.AsUint16();
     } else if (bits <= 32) {
-      uint32_t* ptr = reinterpret_cast<uint32_t*>(data);
+      uint32_t* ptr = reinterpret_cast<uint32_t*>(&data);
       *ptr = src.AsUint32();
     } else if (bits <= 64) {
-      uint64_t* ptr = reinterpret_cast<uint64_t*>(data);
-      *ptr = src.AsUint64();
+      data = src.AsUint64();
     } else {
-      assert(false && "Invalid int bits for CopyBits");
+      return Result("Invalid int bits for CopyValueToBuffer");
     }
   } else {
     if (bits == 64) {
-      double* ptr = reinterpret_cast<double*>(data);
+      double* ptr = reinterpret_cast<double*>(&data);
       *ptr = src.AsDouble();
     } else {
       float* float_ptr = nullptr;
       uint16_t* uint16_ptr = nullptr;
       switch (bits) {
         case 32:
-          float_ptr = reinterpret_cast<float*>(data);
+          float_ptr = reinterpret_cast<float*>(&data);
           *float_ptr = src.AsFloat();
           break;
         case 16:
         case 11:
         case 10:
-          uint16_ptr = reinterpret_cast<uint16_t*>(data);
+          uint16_ptr = reinterpret_cast<uint16_t*>(&data);
           *uint16_ptr = FloatToHexFloat(src.AsFloat(), bits);
           break;
         default:
-          assert(false && "Invalid float bits for CopyBits");
-          break;
+          return Result("Invalid float bits for CopyValueToBuffer");
       }
     }
   }
@@ -86,27 +68,13 @@ void BitCopy::CopyValueToBuffer(uint8_t* dst,
     dst_bit_offset -= 8;
   }
 
-  LeftShiftBufferBits(data, ((dst_bit_offset + bits - 1) / 8) + 1,
-                      dst_bit_offset);
+  // No overflow will happen. |dst_bit_offset| is based on VkFormat
+  // and if |bits| is 64, |dst_bit_offset| must be 0. No component
+  // has |bits| bigger than 64.
+  data <<= dst_bit_offset;
+
   CopyBits(dst, data, dst_bit_offset, bits);
-}
-
-// static
-void BitCopy::RightShiftBufferBits(uint8_t* buffer,
-                                   uint8_t length_bytes,
-                                   uint8_t shift_bits) {
-  if (shift_bits == 0)
-    return;
-
-  assert(shift_bits < 8);
-
-  uint8_t carry = 0;
-  for (uint32_t i = 0; i < length_bytes; ++i) {
-    uint8_t old_value = buffer[i];
-    buffer[i] = static_cast<uint8_t>((buffer[i] >> shift_bits) |
-                                     (carry << (8 - shift_bits)));
-    carry = old_value & ((1 << shift_bits) - 1);
-  }
+  return {};
 }
 
 // static
@@ -122,11 +90,14 @@ void BitCopy::CopyMemoryToBuffer(uint8_t* dst,
   const uint8_t size_in_bytes = src_bit_offset + bits / 8;
   assert(size_in_bytes <= 9);
 
-  uint8_t data[9] = {};
-  for (uint8_t i = 0; i < size_in_bytes; ++i)
-    data[i] = src[i];
+  uint64_t data = 0;
+  for (uint8_t i = 0; i < size_in_bytes; ++i) {
+    uint8_t* ptr = reinterpret_cast<uint8_t*>(&data);
+    ptr[i] = src[i];
+  }
 
-  RightShiftBufferBits(data, size_in_bytes, src_bit_offset);
+  data >>= src_bit_offset;
+
   CopyBits(dst, data, 0, bits);
 }
 
@@ -147,11 +118,12 @@ float BitCopy::HexFloatToFloat(const uint8_t* value, uint8_t bits) {
 
 // static
 void BitCopy::CopyBits(uint8_t* dst,
-                       const uint8_t* src,
+                       const uint64_t& src,
                        uint8_t bit_offset,
                        uint8_t bits) {
   assert(bit_offset < 8);
 
+  const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&src);
   while (bit_offset + bits > 0) {
     uint8_t target_bits = bits;
     if (bit_offset + target_bits > 8)
@@ -159,12 +131,12 @@ void BitCopy::CopyBits(uint8_t* dst,
 
     uint8_t bit_mask =
         static_cast<uint8_t>(((1U << target_bits) - 1U) << bit_offset);
-    *dst = (*src & bit_mask) | (*dst & ~bit_mask);
+    *dst = (*ptr & bit_mask) | (*dst & ~bit_mask);
 
     bit_offset -= bit_offset;
     bits -= target_bits;
     ++dst;
-    ++src;
+    ++ptr;
   }
 }
 

@@ -15,6 +15,8 @@
 #ifndef SRC_VERIFIER_H_
 #define SRC_VERIFIER_H_
 
+#include <vector>
+
 #include "amber/result.h"
 #include "src/command.h"
 #include "src/format.h"
@@ -58,7 +60,7 @@ class Verifier {
   /// error smaller than |tolerance|. If an element of
   /// |is_tolerance_percent| is true, we assume that the corresponding
   /// |tolerance| is relative i.e., percentage allowed error.
-  bool IsTexelEqualToExpected(const uint8_t* texel,
+  bool IsTexelEqualToExpected(const std::vector<Value>& texel,
                               const Format* texel_format,
                               const ProbeCommand* command,
                               const double* tolerance,
