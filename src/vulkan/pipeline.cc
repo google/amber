@@ -112,7 +112,8 @@ void Pipeline::ResetVkPipelineRelatedObjects() {
 
 Result Pipeline::CreateDescriptorSetLayouts() {
   for (auto& info : descriptor_set_info_) {
-    VkDescriptorSetLayoutCreateInfo desc_info = {};
+    VkDescriptorSetLayoutCreateInfo desc_info =
+        VkDescriptorSetLayoutCreateInfo();
     desc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
     // If there are no descriptors for this descriptor set we only
@@ -159,7 +160,7 @@ Result Pipeline::CreateDescriptorPools() {
       pool_sizes.back().descriptorCount = 1;
     }
 
-    VkDescriptorPoolCreateInfo pool_info = {};
+    VkDescriptorPoolCreateInfo pool_info = VkDescriptorPoolCreateInfo();
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.maxSets = 1;
     pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
@@ -179,7 +180,7 @@ Result Pipeline::CreateDescriptorSets() {
     if (descriptor_set_info_[i].empty)
       continue;
 
-    VkDescriptorSetAllocateInfo desc_set_info = {};
+    VkDescriptorSetAllocateInfo desc_set_info = VkDescriptorSetAllocateInfo();
     desc_set_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     desc_set_info.descriptorPool = descriptor_set_info_[i].pool;
     desc_set_info.descriptorSetCount = 1;
@@ -201,7 +202,8 @@ Result Pipeline::CreatePipelineLayout() {
   for (const auto& desc_set : descriptor_set_info_)
     descriptor_set_layouts.push_back(desc_set.layout);
 
-  VkPipelineLayoutCreateInfo pipeline_layout_info = {};
+  VkPipelineLayoutCreateInfo pipeline_layout_info =
+      VkPipelineLayoutCreateInfo();
   pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipeline_layout_info.setLayoutCount =
       static_cast<uint32_t>(descriptor_set_layouts.size());

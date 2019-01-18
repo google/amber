@@ -48,7 +48,8 @@ class VertexBuffer {
   }
 
   VkVertexInputBindingDescription GetVertexInputBinding() const {
-    VkVertexInputBindingDescription vertex_binding_desc = {};
+    VkVertexInputBindingDescription vertex_binding_desc =
+        VkVertexInputBindingDescription();
     vertex_binding_desc.binding = 0;
     vertex_binding_desc.stride = Get4BytesAlignedStride();
     vertex_binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;

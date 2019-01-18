@@ -33,8 +33,6 @@ namespace {
 // The dimensions of the framebuffer.  The code also assumes the framebuffer
 // is 2D and does not have any array layers.
 const uint32_t kFramebufferWidth = 250, kFramebufferHeight = 250;
-// The pipeline output color attachment slot expected for the framebuffer.
-const uint32_t kFramebufferSlot = 0;
 // The minimum multiple row pitch observed on Dawn on Metal.  Increase this
 // as needed for other Dawn backends.
 const uint32_t kMinimumImageRowPitch = 256;
@@ -53,7 +51,7 @@ Result MakeFramebufferTexture(const ::dawn::Device& device,
   descriptor.size.width = kFramebufferWidth;
   descriptor.size.height = kFramebufferHeight;
   descriptor.size.depth = 1;
-  descriptor.arrayLayer = 1;
+  descriptor.arraySize = 1;
   descriptor.format = format;
   descriptor.levelCount = 1;
   descriptor.usage = ::dawn::TextureUsageBit::TransferSrc |
@@ -285,15 +283,19 @@ Result EngineDawn::DoClear(const ClearCommand*) {
 
   const auto& clear_color = render_pipeline_info_.clear_color_value;
 
+  ::dawn::RenderPassColorAttachmentDescriptor color_attachment =
+      ::dawn::RenderPassColorAttachmentDescriptor();
+  color_attachment.attachment =
+      render_pipeline_info_.fb_texture.CreateDefaultTextureView();
+  color_attachment.resolveTarget = nullptr;
+  color_attachment.clearColor = {clear_color.GetR(), clear_color.GetG(),
+                                 clear_color.GetB(), clear_color.GetA()};
+  color_attachment.loadOp = ::dawn::LoadOp::Clear;
+  color_attachment.storeOp = ::dawn::StoreOp::Store;
+
   ::dawn::RenderPassDescriptor rpd =
       device_.CreateRenderPassDescriptorBuilder()
-          .SetColorAttachment(
-              kFramebufferSlot,
-              render_pipeline_info_.fb_texture.CreateDefaultTextureView(),
-              ::dawn::LoadOp::Clear)
-          .SetColorAttachmentClearColor(kFramebufferSlot, clear_color.GetR(),
-                                        clear_color.GetG(), clear_color.GetB(),
-                                        clear_color.GetA())
+          .SetColorAttachments(1, &color_attachment)
           .GetResult();
   command_buffer_builder_.BeginRenderPass(rpd).EndPass();
   return {};
@@ -346,10 +348,23 @@ Result EngineDawn::DoProcessCommands() {
   {
     const int x = 0, y = 0, z = 0, depth = 1, level = 0, slice = 0,
               buffer_offset = 0;
-    command_buffer_builder_.CopyTextureToBuffer(
-        render_pipeline_info_.fb_texture, x, y, z, kFramebufferWidth,
-        kFramebufferHeight, depth, level, slice, fb_buffer, buffer_offset,
-        render_pipeline_info_.fb_row_stride);
+
+    ::dawn::TextureCopyView texture_copy_view = ::dawn::TextureCopyView();
+    texture_copy_view.texture = render_pipeline_info_.fb_texture;
+    texture_copy_view.level = level;
+    texture_copy_view.slice = slice;
+    texture_copy_view.origin = {x, y, z};
+
+    ::dawn::BufferCopyView buffer_copy_view = ::dawn::BufferCopyView();
+    buffer_copy_view.buffer = fb_buffer;
+    buffer_copy_view.offset = buffer_offset;
+    buffer_copy_view.rowPitch = render_pipeline_info_.fb_row_stride;
+    buffer_copy_view.imageHeight = 1;
+
+    ::dawn::Extent3D extent = {kFramebufferWidth, kFramebufferHeight, depth};
+
+    command_buffer_builder_.CopyTextureToBuffer(&texture_copy_view,
+                                                &buffer_copy_view, &extent);
   }
 
   // Make sure we have a queue.
