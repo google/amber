@@ -71,7 +71,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flag,
 
 VkPhysicalDeviceFeatures RequestedFeatures(
     const std::vector<Feature>& required_features) {
-  VkPhysicalDeviceFeatures requested_features = {};
+  VkPhysicalDeviceFeatures requested_features = VkPhysicalDeviceFeatures();
   for (const auto& feature : required_features) {
     switch (feature) {
       case Feature::kRobustBufferAccess:
@@ -691,7 +691,7 @@ bool Device::ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device) {
 }
 
 Result Device::CreateInstance() {
-  VkApplicationInfo app_info = {};
+  VkApplicationInfo app_info = VkApplicationInfo();
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.apiVersion = VK_MAKE_VERSION(1, 0, 0);
 
@@ -702,7 +702,7 @@ Result Device::CreateInstance() {
   if (!AreAllValidationExtensionsSupported())
     return Result("Vulkan: extensions of validation layers are not supported");
 
-  VkInstanceCreateInfo instance_info = {};
+  VkInstanceCreateInfo instance_info = VkInstanceCreateInfo();
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_info.pApplicationInfo = &app_info;
   instance_info.enabledLayerCount = kNumberOfRequiredValidationLayers;
@@ -717,7 +717,8 @@ Result Device::CreateInstance() {
 }
 
 Result Device::CreateDebugReportCallback() {
-  VkDebugReportCallbackCreateInfoEXT info = {};
+  VkDebugReportCallbackCreateInfoEXT info =
+      VkDebugReportCallbackCreateInfoEXT();
   info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
   info.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
   info.pfnCallback = debugCallback;
@@ -749,7 +750,7 @@ Result Device::ChoosePhysicalDevice(
     return Result("Vulkan::Calling vkEnumeratePhysicalDevices Fail");
 
   for (uint32_t i = 0; i < count; ++i) {
-    VkPhysicalDeviceFeatures available_features = {};
+    VkPhysicalDeviceFeatures available_features = VkPhysicalDeviceFeatures();
     vkGetPhysicalDeviceFeatures(physical_devices[i], &available_features);
     if (!AreAllRequiredFeaturesSupported(available_features,
                                          required_features)) {
@@ -773,14 +774,14 @@ Result Device::ChoosePhysicalDevice(
 Result Device::CreateDevice(
     const std::vector<Feature>& required_features,
     const std::vector<std::string>& required_extensions) {
-  VkDeviceQueueCreateInfo queue_info = {};
+  VkDeviceQueueCreateInfo queue_info = VkDeviceQueueCreateInfo();
   const float priorities[] = {1.0f};
   queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
   queue_info.queueFamilyIndex = queue_family_index_;
   queue_info.queueCount = 1;
   queue_info.pQueuePriorities = priorities;
 
-  VkDeviceCreateInfo info = {};
+  VkDeviceCreateInfo info = VkDeviceCreateInfo();
   info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   info.pQueueCreateInfos = &queue_info;
   info.queueCreateInfoCount = 1;

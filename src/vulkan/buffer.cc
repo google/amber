@@ -48,7 +48,7 @@ Result Buffer::Initialize(const VkBufferUsageFlags usage) {
 }
 
 Result Buffer::CreateVkBufferView(VkFormat format) {
-  VkBufferViewCreateInfo buffer_view_info = {};
+  VkBufferViewCreateInfo buffer_view_info = VkBufferViewCreateInfo();
   buffer_view_info.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
   buffer_view_info.buffer = buffer_;
   buffer_view_info.format = format;
@@ -66,7 +66,7 @@ Result Buffer::CopyToDevice(VkCommandBuffer command) {
   // This is redundant because this buffer is always host visible
   // and coherent and vkQueueSubmit will make writes from host
   // avaliable (See chapter 6.9. "Host Write Ordering Guarantees" in
-  // Vulkan spec). But we prefer to keep it to simplify our own code.
+  // Vulkan spec), but we prefer to keep it to simplify our own code.
   MemoryBarrier(command);
   return {};
 }
@@ -77,7 +77,7 @@ Result Buffer::CopyToHost(VkCommandBuffer command) {
 }
 
 void Buffer::CopyFromBuffer(VkCommandBuffer command, const Buffer& src) {
-  VkBufferCopy region = {};
+  VkBufferCopy region = VkBufferCopy();
   region.srcOffset = 0;
   region.dstOffset = 0;
   region.size = src.GetSizeInBytes();

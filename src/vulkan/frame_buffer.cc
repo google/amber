@@ -56,7 +56,7 @@ Result FrameBuffer::Initialize(
     attachments.push_back(depth_image_->GetVkImageView());
   }
 
-  VkFramebufferCreateInfo frame_buffer_info = {};
+  VkFramebufferCreateInfo frame_buffer_info = VkFramebufferCreateInfo();
   frame_buffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
   frame_buffer_info.renderPass = render_pass;
   frame_buffer_info.attachmentCount = static_cast<uint32_t>(attachments.size());

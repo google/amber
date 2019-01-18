@@ -71,7 +71,7 @@ class PushConstant : public Resource {
   // Keep the information of what and how to conduct push constant.
   // These are applied from lowest index to highest index, so that
   // if address ranges overlap, then the later values take effect.
-  std::vector<BufferData> push_constant_data_;
+  std::vector<BufferInput> push_constant_data_;
 
   std::unique_ptr<uint8_t> memory_;
 };

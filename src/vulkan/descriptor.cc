@@ -63,7 +63,7 @@ Descriptor::~Descriptor() = default;
 VkWriteDescriptorSet Descriptor::GetWriteDescriptorSet(
     VkDescriptorSet descriptor_set,
     VkDescriptorType descriptor_type) const {
-  VkWriteDescriptorSet write = {};
+  VkWriteDescriptorSet write = VkWriteDescriptorSet();
   write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   write.dstSet = descriptor_set;
   write.dstBinding = binding_;
@@ -145,11 +145,11 @@ void Descriptor::UpdateVkDescriptorSet(const VkWriteDescriptorSet& write) {
   is_descriptor_set_update_needed_ = false;
 }
 
-void Descriptor::AddToBufferDataQueue(DataType type,
-                                      uint32_t offset,
-                                      size_t size_in_bytes,
-                                      const std::vector<Value>& values) {
-  buffer_data_queue_.push_back({type, offset, size_in_bytes, values});
+void Descriptor::AddToBufferInputQueue(DataType type,
+                                       uint32_t offset,
+                                       size_t size_in_bytes,
+                                       const std::vector<Value>& values) {
+  buffer_input_queue_.push_back({offset, size_in_bytes, type, values});
 }
 
 }  // namespace vulkan

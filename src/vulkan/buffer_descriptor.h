@@ -40,11 +40,11 @@ class BufferDescriptor : public Descriptor {
   ~BufferDescriptor() override;
 
   // Descriptor
-  Result CreateOrResizeIfNeeded(
-      VkCommandBuffer command,
+  Result CreateResourceIfNeeded(
       const VkPhysicalDeviceMemoryProperties& properties) override;
-  Result UpdateResourceIfNeeded(VkCommandBuffer command) override;
-  Result SendDataToHostIfNeeded(VkCommandBuffer command) override;
+  Result RecordCopyDataToResourceIfNeeded(VkCommandBuffer command) override;
+  Result RecordCopyDataToHost(VkCommandBuffer command) override;
+  Result MoveResourceToBufferOutput() override;
   Result UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
   ResourceInfo GetResourceInfo() override;
   void Shutdown() override;

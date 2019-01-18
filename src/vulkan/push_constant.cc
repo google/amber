@@ -36,7 +36,7 @@ VkPushConstantRange PushConstant::GetPushConstantRange() {
 
   auto it =
       std::min_element(push_constant_data_.begin(), push_constant_data_.end(),
-                       [](const BufferData& a, const BufferData& b) {
+                       [](const BufferInput& a, const BufferInput& b) {
                          return a.offset < b.offset;
                        });
   assert(it != push_constant_data_.end());
@@ -45,7 +45,7 @@ VkPushConstantRange PushConstant::GetPushConstantRange() {
 
   it = std::max_element(
       push_constant_data_.begin(), push_constant_data_.end(),
-      [](const BufferData& a, const BufferData& b) {
+      [](const BufferInput& a, const BufferInput& b) {
         return a.offset + static_cast<uint32_t>(a.size_in_bytes) <
                b.offset + static_cast<uint32_t>(b.size_in_bytes);
       });
@@ -54,7 +54,7 @@ VkPushConstantRange PushConstant::GetPushConstantRange() {
   uint32_t size_in_bytes =
       it->offset + static_cast<uint32_t>(it->size_in_bytes) - first_offset;
 
-  VkPushConstantRange range = {};
+  VkPushConstantRange range = VkPushConstantRange();
   range.stageFlags = VK_SHADER_STAGE_ALL;
 
   // Based on Vulkan spec, range.offset must be multiple of 4.
@@ -82,7 +82,7 @@ Result PushConstant::RecordPushConstantVkCommand(
   }
 
   for (const auto& data : push_constant_data_) {
-    Result r = UpdateMemoryWithData(data);
+    Result r = UpdateMemoryWithInput(data);
     if (!r.IsSuccess())
       return r;
   }

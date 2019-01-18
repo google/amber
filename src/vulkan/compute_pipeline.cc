@@ -53,7 +53,7 @@ Result ComputePipeline::CreateVkComputePipeline() {
   if (!r.IsSuccess())
     return r;
 
-  VkComputePipelineCreateInfo pipeline_info = {};
+  VkComputePipelineCreateInfo pipeline_info = VkComputePipelineCreateInfo();
   pipeline_info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
   pipeline_info.stage = shader_stage_info[0];
   pipeline_info.layout = pipeline_layout_;
@@ -108,19 +108,8 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
     return r;
 
   vkCmdDispatch(command_->GetCommandBuffer(), x, y, z);
-  return {};
-}
 
-Result ComputePipeline::ProcessCommands() {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
-  return command_->SubmitAndReset(GetFenceTimeout());
+  return ReadbackDescriptorsToHostDataQueue();
 }
 
 }  // namespace vulkan
