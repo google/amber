@@ -32,7 +32,7 @@ struct RenderPipelineInfo {
 
   ::dawn::ShaderModule vertex_shader;
   ::dawn::ShaderModule fragment_shader;
-  ClearColorCommand clear_color_value;
+  ::dawn::Color clear_color_value = {0.f, 0.f, 0.f, 0.f};
   float clear_depth_value = 1.0f;
   uint32_t clear_stencil_value = 0;
 

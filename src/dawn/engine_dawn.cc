@@ -257,7 +257,8 @@ Result EngineDawn::SetBuffer(BufferType,
 }
 
 Result EngineDawn::DoClearColor(const ClearColorCommand* command) {
-  render_pipeline_info_.clear_color_value = *command;
+  render_pipeline_info_.clear_color_value = ::dawn::Color{
+      command->GetR(), command->GetG(), command->GetB(), command->GetA()};
   return {};
 }
 
@@ -276,15 +277,12 @@ Result EngineDawn::DoClear(const ClearCommand*) {
   if (!result.IsSuccess())
     return result;
 
-  const auto& clear_color = render_pipeline_info_.clear_color_value;
-
   ::dawn::RenderPassColorAttachmentDescriptor color_attachment =
       ::dawn::RenderPassColorAttachmentDescriptor();
   color_attachment.attachment =
       render_pipeline_info_.fb_texture.CreateDefaultTextureView();
   color_attachment.resolveTarget = nullptr;
-  color_attachment.clearColor = {clear_color.GetR(), clear_color.GetG(),
-                                 clear_color.GetB(), clear_color.GetA()};
+  color_attachment.clearColor = render_pipeline_info_.clear_color_value;
   color_attachment.loadOp = ::dawn::LoadOp::Clear;
   color_attachment.storeOp = ::dawn::StoreOp::Store;
 
