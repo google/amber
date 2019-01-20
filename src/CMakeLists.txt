@@ -106,6 +106,10 @@ if (${AMBER_ENABLE_TESTS})
       -Wno-weak-vtables
     )
   endif()
+  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    # EXPECT_EQ(0u, ...) triggers a "zero as null pointer constant" warning.
+    target_compile_options(amber_unittests PRIVATE -Wno-zero-as-null-pointer-constant)
+  endif()
 
   target_include_directories(amber_unittests PRIVATE
       ${gmock_SOURCE_DIR}/include)
