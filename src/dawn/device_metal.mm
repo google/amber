@@ -14,7 +14,6 @@
 
 #include "device_metal.h"
 
-#include <Metal/Metal.h>
 #include <iostream>
 #include "amber/result.h"
 #include "dawn/dawncpp.h"
@@ -34,8 +33,7 @@ Result CreateMetalDevice(::dawn::Device* device_ptr) {
   if (!device_ptr) {
     return Result("::amber::dawn::CreateMetalDevice: invalid device parameter");
   }
-  dawnDevice cDevice =
-      ::dawn_native::metal::CreateDevice(MTLCreateSystemDefaultDevice());
+  dawnDevice cDevice = ::dawn_native::metal::CreateDevice();
   if (!cDevice) {
     return Result(
         "::amber::dawn::CreateMetalDevice: Failed to create metal device");
