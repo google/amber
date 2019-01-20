@@ -162,7 +162,7 @@ MapResult MapBuffer(const ::dawn::Device& device,
       map_result.result = Result("MapBuffer timed out after 100 iterations");
       break;
     }
-    USleep(interval);
+    USleep(uint32_t(interval));
   }
   return map_result;
 }
@@ -205,7 +205,7 @@ Result EngineDawn::CreatePipeline(PipelineType type) {
       auto module = module_for_type_[kShaderTypeCompute];
       if (!module)
         return Result("CreatePipeline: no compute shader provided");
-      compute_pipeline_info_ = std::move(ComputePipelineInfo(module));
+      compute_pipeline_info_ = ComputePipelineInfo(module);
       break;
     }
 
@@ -221,7 +221,7 @@ Result EngineDawn::CreatePipeline(PipelineType type) {
         return Result(
             "CreatePipeline: no vertex shader provided for graphics pipeline");
       }
-      render_pipeline_info_ = std::move(RenderPipelineInfo(vs, fs));
+      render_pipeline_info_ = RenderPipelineInfo(vs, fs);
       break;
     }
   }
