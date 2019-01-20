@@ -72,20 +72,23 @@ Result MakeFramebufferBuffer(const ::dawn::Device& device,
                              ::dawn::Buffer* result_ptr,
                              uint32_t* texel_stride_ptr,
                              uint32_t* row_stride_ptr,
+                             uint32_t* num_rows_ptr,
                              uint32_t* size_ptr) {
   assert(device);
   assert(result_ptr);
   assert(texel_stride_ptr);
   assert(row_stride_ptr);
+  assert(num_rows_ptr);
   assert(size_ptr);
 
-  ::dawn::BufferDescriptor descriptor;
   // TODO(dneto): Handle other formats.
   if (format != ::dawn::TextureFormat::R8G8B8A8Unorm) {
     return Result("Dawn::MakeFramebufferBuffer: Unhandled framebuffer format");
   }
   // Number of bytes for each texel in the default format.
   const uint32_t default_texel_bytes = 4;
+
+  const uint32_t num_rows = kFramebufferHeight;
 
   uint32_t row_stride = default_texel_bytes * kFramebufferWidth;
   {
@@ -96,12 +99,14 @@ Result MakeFramebufferBuffer(const ::dawn::Device& device,
     assert(0 == (row_stride % kMinimumImageRowPitch));
   }
 
-  descriptor.size = row_stride * kFramebufferHeight;
+  ::dawn::BufferDescriptor descriptor;
+  descriptor.size = row_stride * num_rows;
   descriptor.usage =
       ::dawn::BufferUsageBit::TransferDst | ::dawn::BufferUsageBit::MapRead;
   *result_ptr = device.CreateBuffer(&descriptor);
   *texel_stride_ptr = default_texel_bytes;
   *row_stride_ptr = row_stride;
+  *num_rows_ptr = num_rows;
   *size_ptr = descriptor.size;
   return {};
 }
@@ -349,7 +354,7 @@ Result EngineDawn::DoProcessCommands() {
     buffer_copy_view.buffer = fb_buffer;
     buffer_copy_view.offset = buffer_offset;
     buffer_copy_view.rowPitch = render_pipeline_info_.fb_row_stride;
-    buffer_copy_view.imageHeight = kFramebufferHeight;
+    buffer_copy_view.imageHeight = render_pipeline_info_.fb_num_rows;
 
     ::dawn::Extent3D extent = {kFramebufferWidth, kFramebufferHeight, depth};
 
@@ -420,14 +425,17 @@ Result EngineDawn::CreateFramebufferIfNeeded() {
     ::dawn::Buffer fb_buffer;
     uint32_t texel_stride = 0;
     uint32_t row_stride = 0;
+    uint32_t num_rows = 0;
     uint32_t size = 0;
-    result = MakeFramebufferBuffer(*device_, kFramebufferFormat, &fb_buffer,
-                                   &texel_stride, &row_stride, &size);
+    result =
+        MakeFramebufferBuffer(*device_, kFramebufferFormat, &fb_buffer,
+                              &texel_stride, &row_stride, &num_rows, &size);
     if (!result.IsSuccess())
       return result;
     render_pipeline_info_.fb_buffer = std::move(fb_buffer);
     render_pipeline_info_.fb_texel_stride = texel_stride;
     render_pipeline_info_.fb_row_stride = row_stride;
+    render_pipeline_info_.fb_num_rows = num_rows;
     render_pipeline_info_.fb_size = size;
     render_pipeline_info_.fb_data = nullptr;
   }
