@@ -281,9 +281,6 @@ std::vector<Value> ScaleTexelValuesIfNeeded(const std::vector<Value>& texel,
         assert(false &&
                "FormatMode::kUScaled and ::kSScaled are not implemented");
         break;
-      default:
-        assert(false && "Unknown Integer type");
-        break;
     }
 
     scaled_texel[i].SetDoubleValue(scaled_value);
