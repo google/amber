@@ -16,12 +16,19 @@
 #define AMBER_VULKAN_HEADER_H_
 
 #if AMBER_CTS_VULKAN_HEADER
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
 #include "vkDefs.h"
-#else  // DAMBER_CTS_VULKAN_HEADER
+#pragma clang diagnostic pop
+
+#else  // AMBER_CTS_VULKAN_HEADER
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #include "vulkan/vulkan.h"
 #pragma clang diagnostic pop
+
 #endif  // AMBER_CTS_VULKAN_HEADER
 
 #endif  // AMBER_VULKAN_HEADER_H_
