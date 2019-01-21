@@ -793,6 +793,7 @@ Result CommandParser::ProcessProbe(bool relative) {
   bool is_rect = false;
   if (token->AsString() == "rect") {
     is_rect = true;
+    cmd->SetProbeRect();
 
     token = tokenizer_->NextToken();
     if (!token->IsString())

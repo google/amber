@@ -62,6 +62,7 @@ TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
 
 TEST_F(VerifierTest, ProbeFrameBufferRelative) {
   ProbeCommand probe;
+  probe.SetProbeRect();
   probe.SetRelative();
   probe.SetIsRGBA();
   probe.SetX(0.1f);
@@ -91,6 +92,7 @@ TEST_F(VerifierTest, ProbeFrameBufferRelative) {
 
 TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
   ProbeCommand probe;
+  probe.SetProbeRect();
   probe.SetRelative();
   probe.SetIsRGBA();
   probe.SetX(0.9f);
@@ -116,6 +118,7 @@ TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
 
 TEST_F(VerifierTest, ProbeFrameBuffer) {
   ProbeCommand probe;
+  probe.SetProbeRect();
   probe.SetIsRGBA();
   probe.SetX(1.0f);
   probe.SetY(2.0f);
@@ -140,6 +143,58 @@ TEST_F(VerifierTest, ProbeFrameBuffer) {
   Result r = verifier.Probe(&probe, 4, 40, 10, 10,
                             static_cast<const void*>(frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeFrameBufferNotRect) {
+  uint8_t frame_buffer[10][10][4] = {};
+
+  frame_buffer[2][1][0] = 128;
+  frame_buffer[2][1][1] = 64;
+  frame_buffer[2][1][2] = 51;
+  frame_buffer[2][1][3] = 204;
+
+  frame_buffer[3][7][0] = 51;
+  frame_buffer[3][7][1] = 204;
+  frame_buffer[3][7][2] = 64;
+  frame_buffer[3][7][3] = 128;
+
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(1.0f);
+  probe.SetY(2.0f);
+  probe.SetR(0.5f);
+  probe.SetG(0.25f);
+  probe.SetB(0.2f);
+  probe.SetA(0.8f);
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, 4, 40, 10, 10,
+                            static_cast<const void*>(frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+
+  probe.SetIsRGBA();
+  probe.SetX(7.0f);
+  probe.SetY(3.0f);
+  probe.SetR(0.2f);
+  probe.SetG(0.8f);
+  probe.SetB(0.25f);
+  probe.SetA(0.5f);
+
+  r = verifier.Probe(&probe, 4, 40, 10, 10,
+                     static_cast<const void*>(frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+
+  r = verifier.Probe(&probe, 4, 40, 10, 10,
+                     static_cast<const void*>(frame_buffer));
+  EXPECT_FALSE(r.IsSuccess());
+  EXPECT_STREQ(
+      "Line 1: Probe failed at: 0, 0\n  Expected RGBA: 51.000000, 204.000000, "
+      "63.750000, 127.500000\n  Actual RGBA: 0, 0, 0, 0\nProbe failed in 1 "
+      "pixels",
+      r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferRGB) {

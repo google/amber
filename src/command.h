@@ -220,8 +220,14 @@ class ProbeCommand : public Probe {
   ProbeCommand();
   ~ProbeCommand() override;
 
-  void SetWholeWindow() { is_whole_window_ = true; }
+  void SetWholeWindow() {
+    is_whole_window_ = true;
+    is_probe_rect_ = true;
+  }
   bool IsWholeWindow() const { return is_whole_window_; }
+
+  void SetProbeRect() { is_probe_rect_ = true; }
+  bool IsProbeRect() const { return is_probe_rect_; }
 
   void SetRelative() { is_relative_ = true; }
   bool IsRelative() const { return is_relative_; }
@@ -260,6 +266,7 @@ class ProbeCommand : public Probe {
   };
 
   bool is_whole_window_ = false;
+  bool is_probe_rect_ = false;
   bool is_relative_ = false;
   ColorFormat color_format_ = ColorFormat::kRGB;
 

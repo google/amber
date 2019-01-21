@@ -744,6 +744,7 @@ TEST_P(CommandParserProbeTest, ProbeRgb) {
   auto* cmd = cmds[0]->AsProbe();
   EXPECT_EQ(is_relative, cmd->IsRelative());
   EXPECT_FALSE(cmd->IsWholeWindow());
+  EXPECT_FALSE(cmd->IsProbeRect());
   EXPECT_FALSE(cmd->IsRGBA());
 
   EXPECT_FLOAT_EQ(25U, cmd->GetX());
@@ -773,6 +774,7 @@ TEST_P(CommandParserProbeTest, ProbeRgba) {
   auto* cmd = cmds[0]->AsProbe();
   EXPECT_EQ(is_relative, cmd->IsRelative());
   EXPECT_FALSE(cmd->IsWholeWindow());
+  EXPECT_FALSE(cmd->IsProbeRect());
   EXPECT_TRUE(cmd->IsRGBA());
 
   EXPECT_FLOAT_EQ(25U, cmd->GetX());
@@ -803,12 +805,44 @@ TEST_P(CommandParserProbeTest, ProbeRect) {
   auto* cmd = cmds[0]->AsProbe();
   EXPECT_EQ(is_relative, cmd->IsRelative());
   EXPECT_FALSE(cmd->IsWholeWindow());
+  EXPECT_TRUE(cmd->IsProbeRect());
   EXPECT_TRUE(cmd->IsRGBA());
 
   EXPECT_FLOAT_EQ(25U, cmd->GetX());
   EXPECT_FLOAT_EQ(30U, cmd->GetY());
   EXPECT_FLOAT_EQ(200U, cmd->GetWidth());
   EXPECT_FLOAT_EQ(400U, cmd->GetHeight());
+
+  EXPECT_FLOAT_EQ(1.0f, cmd->GetR());
+  EXPECT_FLOAT_EQ(255.0f, cmd->GetG());
+  EXPECT_FLOAT_EQ(9.0f, cmd->GetB());
+  EXPECT_FLOAT_EQ(4.0f, cmd->GetA());
+}
+
+TEST_P(CommandParserProbeTest, ProbeNotRect) {
+  bool is_relative = GetParam();
+
+  std::string data = (is_relative ? std::string("relative ") : std::string()) +
+                     "probe rgba 25 30 1 255 9 4";
+
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
+  ASSERT_TRUE(r.IsSuccess()) << data << std::endl << r.Error();
+
+  auto& cmds = cp.Commands();
+  ASSERT_EQ(1U, cmds.size());
+  ASSERT_TRUE(cmds[0]->IsProbe());
+
+  auto* cmd = cmds[0]->AsProbe();
+  EXPECT_EQ(is_relative, cmd->IsRelative());
+  EXPECT_FALSE(cmd->IsWholeWindow());
+  EXPECT_FALSE(cmd->IsProbeRect());
+  EXPECT_TRUE(cmd->IsRGBA());
+
+  EXPECT_FLOAT_EQ(25U, cmd->GetX());
+  EXPECT_FLOAT_EQ(30U, cmd->GetY());
+  EXPECT_FLOAT_EQ(1.0f, cmd->GetWidth());
+  EXPECT_FLOAT_EQ(1.0f, cmd->GetHeight());
 
   EXPECT_FLOAT_EQ(1.0f, cmd->GetR());
   EXPECT_FLOAT_EQ(255.0f, cmd->GetG());
@@ -835,6 +869,7 @@ TEST_F(CommandParserTest, ProbeAllRGB) {
   auto* cmd = cmds[0]->AsProbe();
   EXPECT_FALSE(cmd->IsRelative());
   EXPECT_TRUE(cmd->IsWholeWindow());
+  EXPECT_TRUE(cmd->IsProbeRect());
   EXPECT_FALSE(cmd->IsRGBA());
 
   EXPECT_FLOAT_EQ(0.2f, cmd->GetR());
@@ -856,6 +891,7 @@ TEST_F(CommandParserTest, ProbeAllRGBA) {
   auto* cmd = cmds[0]->AsProbe();
   EXPECT_FALSE(cmd->IsRelative());
   EXPECT_TRUE(cmd->IsWholeWindow());
+  EXPECT_TRUE(cmd->IsProbeRect());
   EXPECT_TRUE(cmd->IsRGBA());
 
   EXPECT_FLOAT_EQ(0.2f, cmd->GetR());
@@ -878,12 +914,40 @@ TEST_F(CommandParserTest, ProbeCommandRectBrackets) {
   auto* cmd = cmds[0]->AsProbe();
   EXPECT_TRUE(cmd->IsRelative());
   EXPECT_FALSE(cmd->IsWholeWindow());
+  EXPECT_TRUE(cmd->IsProbeRect());
   EXPECT_FALSE(cmd->IsRGBA());
 
   EXPECT_FLOAT_EQ(0.5f, cmd->GetX());
   EXPECT_FLOAT_EQ(0.6f, cmd->GetY());
   EXPECT_FLOAT_EQ(0.3f, cmd->GetWidth());
   EXPECT_FLOAT_EQ(0.4f, cmd->GetHeight());
+
+  EXPECT_FLOAT_EQ(1.0f, cmd->GetR());
+  EXPECT_FLOAT_EQ(2.0f, cmd->GetG());
+  EXPECT_FLOAT_EQ(3.0f, cmd->GetB());
+}
+
+TEST_F(CommandParserTest, ProbeCommandNotRectBrackets) {
+  std::string data = "relative probe rgb (0.5, 0.6) 1 2 3";
+
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto& cmds = cp.Commands();
+  ASSERT_EQ(1U, cmds.size());
+  ASSERT_TRUE(cmds[0]->IsProbe());
+
+  auto* cmd = cmds[0]->AsProbe();
+  EXPECT_TRUE(cmd->IsRelative());
+  EXPECT_FALSE(cmd->IsWholeWindow());
+  EXPECT_FALSE(cmd->IsProbeRect());
+  EXPECT_FALSE(cmd->IsRGBA());
+
+  EXPECT_FLOAT_EQ(0.5f, cmd->GetX());
+  EXPECT_FLOAT_EQ(0.6f, cmd->GetY());
+  EXPECT_FLOAT_EQ(1.0f, cmd->GetWidth());
+  EXPECT_FLOAT_EQ(1.0f, cmd->GetHeight());
 
   EXPECT_FLOAT_EQ(1.0f, cmd->GetR());
   EXPECT_FLOAT_EQ(2.0f, cmd->GetG());
@@ -904,6 +968,7 @@ TEST_F(CommandParserTest, ProbeCommandColorBrackets) {
   auto* cmd = cmds[0]->AsProbe();
   EXPECT_TRUE(cmd->IsRelative());
   EXPECT_FALSE(cmd->IsWholeWindow());
+  EXPECT_TRUE(cmd->IsProbeRect());
   EXPECT_FALSE(cmd->IsRGBA());
 
   EXPECT_FLOAT_EQ(0.5f, cmd->GetX());
@@ -930,6 +995,7 @@ TEST_F(CommandParserTest, ProbeCommandColorOptionalCommas) {
   auto* cmd = cmds[0]->AsProbe();
   EXPECT_TRUE(cmd->IsRelative());
   EXPECT_FALSE(cmd->IsWholeWindow());
+  EXPECT_TRUE(cmd->IsProbeRect());
   EXPECT_FALSE(cmd->IsRGBA());
 
   EXPECT_FLOAT_EQ(0.5f, cmd->GetX());
