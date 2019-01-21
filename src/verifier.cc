@@ -243,8 +243,8 @@ Result Verifier::Probe(const ProbeCommand* command,
       // TODO(jaebaek): Get actual pixel values based on frame buffer formats.
       if (!IsEqualWithTolerance(
               static_cast<double>(command->GetR()),
-              static_cast<double>(p[texel_stride * i]) / 255.0,
-              tolerance[0], is_tolerance_percent[0]) ||
+              static_cast<double>(p[texel_stride * i]) / 255.0, tolerance[0],
+              is_tolerance_percent[0]) ||
           !IsEqualWithTolerance(
               static_cast<double>(command->GetG()),
               static_cast<double>(p[texel_stride * i + 1]) / 255.0,
