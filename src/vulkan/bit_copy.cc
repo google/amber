@@ -31,7 +31,8 @@ void BitCopy::ShiftBufferBits(uint8_t* buffer,
 
   uint8_t carry = 0;
   for (uint32_t i = 0; i < length_bytes; ++i) {
-    uint8_t new_value = static_cast<uint8_t>(buffer[i] << shift_bits) | carry;
+    uint8_t new_value = static_cast<uint8_t>(
+        static_cast<uint8_t>(buffer[i] << shift_bits) | carry);
     carry = static_cast<uint8_t>(buffer[i] >> (8 - shift_bits));
     buffer[i] = new_value;
   }
@@ -150,8 +151,8 @@ uint16_t BitCopy::FloatToHexFloat11(const float value) {
   uint32_t hex;
   memcpy(&hex, &value, sizeof(float));
   assert(FloatSign(hex) == 0);
-  return static_cast<uint16_t>(FloatExponent(hex) << 6U) |
-         static_cast<uint16_t>(FloatMantissa(hex) >> 4U);
+  return static_cast<uint16_t>(static_cast<uint16_t>(FloatExponent(hex) << 6U) |
+                               static_cast<uint16_t>(FloatMantissa(hex) >> 4U));
 }
 
 // static
@@ -159,8 +160,8 @@ uint16_t BitCopy::FloatToHexFloat10(const float value) {
   uint32_t hex;
   memcpy(&hex, &value, sizeof(float));
   assert(FloatSign(hex) == 0);
-  return static_cast<uint16_t>(FloatExponent(hex) << 5U) |
-         static_cast<uint16_t>(FloatMantissa(hex) >> 5U);
+  return static_cast<uint16_t>(static_cast<uint16_t>(FloatExponent(hex) << 5U) |
+                               static_cast<uint16_t>(FloatMantissa(hex) >> 5U));
 }
 
 }  // namespace vulkan
