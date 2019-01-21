@@ -228,8 +228,8 @@ Result Verifier::Probe(const ProbeCommand* command,
                   std::to_string(texel_stride) + " bytes each");
   }
 
-  double tolerance[4] = {};
-  bool is_tolerance_percent[4] = {};
+  double tolerance[4] = {0, 0, 0, 0};
+  bool is_tolerance_percent[4] = {0, 0, 0, 0};
   SetupToleranceForTexels(command, tolerance, is_tolerance_percent);
 
   // TODO(jaebaek): Support all VkFormat
@@ -296,6 +296,13 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
                            size_t size_in_bytes,
                            const void* cpu_memory) {
   const auto& values = command->GetValues();
+  if (!cpu_memory) {
+    return values.empty() ? Result()
+                          : Result(
+                                "Verifier::ProbeSSBO actual data is empty "
+                                "while expected data is not");
+  }
+
   const auto& datum_type = command->GetDatumType();
   size_t bytes_per_elem = datum_type.SizeInBytes() / datum_type.RowCount() /
                           datum_type.ColumnCount();

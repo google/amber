@@ -19,12 +19,12 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "amber/vulkan_header.h"
 #include "src/datum_type.h"
 #include "src/engine.h"
 #include "src/value.h"
 #include "src/vulkan/buffer.h"
 #include "src/vulkan/descriptor.h"
-#include "vulkan/vulkan.h"
 
 namespace amber {
 namespace vulkan {
@@ -40,11 +40,11 @@ class BufferDescriptor : public Descriptor {
   ~BufferDescriptor() override;
 
   // Descriptor
-  Result CreateOrResizeIfNeeded(
-      VkCommandBuffer command,
+  Result CreateResourceIfNeeded(
       const VkPhysicalDeviceMemoryProperties& properties) override;
-  Result UpdateResourceIfNeeded(VkCommandBuffer command) override;
-  Result SendDataToHostIfNeeded(VkCommandBuffer command) override;
+  Result RecordCopyDataToResourceIfNeeded(VkCommandBuffer command) override;
+  Result RecordCopyDataToHost(VkCommandBuffer command) override;
+  Result MoveResourceToBufferOutput() override;
   Result UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
   ResourceInfo GetResourceInfo() override;
   void Shutdown() override;

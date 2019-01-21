@@ -19,13 +19,14 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "amber/vulkan_header.h"
 #include "src/buffer_data.h"
 #include "src/format.h"
 #include "src/value.h"
 #include "src/vulkan/frame_buffer.h"
+#include "src/vulkan/index_buffer.h"
 #include "src/vulkan/pipeline.h"
 #include "src/vulkan/vertex_buffer.h"
-#include "vulkan/vulkan.h"
 
 namespace amber {
 
@@ -53,6 +54,8 @@ class GraphicsPipeline : public Pipeline {
                          const Format& format,
                          const std::vector<Value>& values,
                          VertexBuffer* vertex_buffer);
+
+  Result SetIndexBuffer(const std::vector<Value>& values);
 
   Result Clear();
   Result ClearBuffer(const VkClearValue& clear_value,
@@ -109,6 +112,7 @@ class GraphicsPipeline : public Pipeline {
   std::unique_ptr<FrameBuffer> frame_;
   VkFormat color_format_;
   VkFormat depth_stencil_format_;
+  std::unique_ptr<IndexBuffer> index_buffer_;
 
   uint32_t frame_width_ = 0;
   uint32_t frame_height_ = 0;

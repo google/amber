@@ -18,8 +18,8 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "amber/vulkan_header.h"
 #include "src/vulkan/pipeline.h"
-#include "vulkan/vulkan.h"
 
 namespace amber {
 namespace vulkan {
@@ -37,9 +37,6 @@ class ComputePipeline : public Pipeline {
   Result Initialize(VkCommandPool pool, VkQueue queue);
 
   Result Compute(uint32_t x, uint32_t y, uint32_t z);
-
-  // Pipeline
-  Result ProcessCommands() override;
 
  private:
   Result CreateVkComputePipeline();

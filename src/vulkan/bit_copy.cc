@@ -42,7 +42,7 @@ void BitCopy::CopyValueToBuffer(uint8_t* dst,
                                 const Value& src,
                                 uint8_t bit_offset,
                                 uint8_t bits) {
-  uint8_t data[9] = {};
+  uint8_t data[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
   if (src.IsInteger()) {
     if (bits <= 8) {
       uint8_t data_uint8 = src.AsUint8();

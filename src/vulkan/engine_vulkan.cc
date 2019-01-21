@@ -54,7 +54,7 @@ VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
 bool IsFormatSupportedByPhysicalDevice(BufferType type,
                                        VkPhysicalDevice physical_device,
                                        VkFormat format) {
-  VkFormatProperties properties = {};
+  VkFormatProperties properties = VkFormatProperties();
   vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
 
   VkFormatFeatureFlagBits flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
@@ -80,7 +80,7 @@ bool IsFormatSupportedByPhysicalDevice(BufferType type,
 
 bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
                              uint32_t descriptor_set) {
-  VkPhysicalDeviceProperties properties = {};
+  VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties();
   vkGetPhysicalDeviceProperties(physical_device, &properties);
   return properties.limits.maxBoundDescriptorSets > descriptor_set;
 }
@@ -190,7 +190,7 @@ Result EngineVulkan::CreatePipeline(PipelineType type) {
 
 Result EngineVulkan::SetShader(ShaderType type,
                                const std::vector<uint32_t>& data) {
-  VkShaderModuleCreateInfo info = {};
+  VkShaderModuleCreateInfo info = VkShaderModuleCreateInfo();
   info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   info.codeSize = data.size() * sizeof(uint32_t);
   info.pCode = data.data();
@@ -214,7 +214,7 @@ EngineVulkan::GetShaderStageInfo() {
   std::vector<VkPipelineShaderStageCreateInfo> stage_info(modules_.size());
   uint32_t stage_count = 0;
   for (auto it : modules_) {
-    stage_info[stage_count] = {};
+    stage_info[stage_count] = VkPipelineShaderStageCreateInfo();
     stage_info[stage_count].sType =
         VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     stage_info[stage_count].stage = ToVkShaderStage(it.first);
@@ -230,7 +230,8 @@ Result EngineVulkan::SetBuffer(BufferType type,
                                const Format& format,
                                const std::vector<Value>& values) {
   auto format_type = ToVkFormat(format.GetFormatType());
-  if (!IsFormatSupportedByPhysicalDevice(type, device_->GetPhysicalDevice(),
+  if (type != BufferType::kIndex &&
+      !IsFormatSupportedByPhysicalDevice(type, device_->GetPhysicalDevice(),
                                          format_type)) {
     return Result("Vulkan::SetBuffer format is not supported for buffer type");
   }
@@ -258,6 +259,11 @@ Result EngineVulkan::SetBuffer(BufferType type,
 
     pipeline_->AsGraphics()->SetVertexBuffer(location, format, values,
                                              vertex_buffer_.get());
+    return {};
+  }
+
+  if (type == BufferType::kIndex) {
+    pipeline_->AsGraphics()->SetIndexBuffer(values);
     return {};
   }
 
@@ -426,13 +432,7 @@ Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
 Result EngineVulkan::GetDescriptorInfo(const uint32_t descriptor_set,
                                        const uint32_t binding,
                                        ResourceInfo* info) {
-  assert(info);
-  Result r = pipeline_->CopyDescriptorToHost(descriptor_set, binding);
-  if (!r.IsSuccess())
-    return r;
-
-  pipeline_->GetDescriptorInfo(descriptor_set, binding, info);
-  return {};
+  return pipeline_->GetDescriptorInfo(descriptor_set, binding, info);
 }
 
 Result EngineVulkan::DoBuffer(const BufferCommand* command) {

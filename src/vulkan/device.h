@@ -20,8 +20,8 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "amber/vulkan_header.h"
 #include "src/feature.h"
-#include "vulkan/vulkan.h"
 
 namespace amber {
 
@@ -83,9 +83,9 @@ class Device {
   VkInstance instance_ = VK_NULL_HANDLE;
   VkDebugReportCallbackEXT callback_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
-  VkPhysicalDeviceProperties physical_device_properties_ = {};
-  VkPhysicalDeviceMemoryProperties physical_memory_properties_ = {};
-  VkPhysicalDeviceFeatures available_physical_device_features_ = {};
+  VkPhysicalDeviceProperties physical_device_properties_;
+  VkPhysicalDeviceMemoryProperties physical_memory_properties_;
+  VkPhysicalDeviceFeatures available_physical_device_features_;
   std::vector<std::string> available_physical_device_extensions_;
   uint32_t queue_family_index_ = 0;
   VkDevice device_ = VK_NULL_HANDLE;

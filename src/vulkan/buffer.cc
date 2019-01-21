@@ -29,24 +29,26 @@ Result Buffer::Initialize(const VkBufferUsageFlags usage) {
   if (!r.IsSuccess())
     return r;
 
-  AllocateResult allocate_result = AllocateAndBindMemoryToVkBuffer(
-      buffer_, &memory_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
+  AllocateResult allocate_result =
+      AllocateAndBindMemoryToVkBuffer(buffer_, &memory_,
+                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                      true);
   if (!allocate_result.r.IsSuccess())
     return allocate_result.r;
 
-  if (IsMemoryHostAccessible(allocate_result.memory_type_index)) {
-    is_buffer_host_accessible_ = true;
-    is_buffer_host_coherent_ =
-        IsMemoryHostCoherent(allocate_result.memory_type_index);
-    return MapMemory(memory_);
+  if (!IsMemoryHostAccessible(allocate_result.memory_type_index) ||
+      !IsMemoryHostCoherent(allocate_result.memory_type_index)) {
+    return Result(
+        "Vulkan: Buffer::Initialize() Buffer is not host accessible or not "
+        "host coherent.");
   }
 
-  is_buffer_host_accessible_ = false;
-  return Resource::Initialize();
+  return MapMemory(memory_);
 }
 
 Result Buffer::CreateVkBufferView(VkFormat format) {
-  VkBufferViewCreateInfo buffer_view_info = {};
+  VkBufferViewCreateInfo buffer_view_info = VkBufferViewCreateInfo();
   buffer_view_info.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
   buffer_view_info.buffer = buffer_;
   buffer_view_info.format = format;
@@ -61,35 +63,21 @@ Result Buffer::CreateVkBufferView(VkFormat format) {
 }
 
 Result Buffer::CopyToDevice(VkCommandBuffer command) {
-  if (is_buffer_host_accessible_)
-    return FlushMemoryIfNeeded();
-
-  VkBufferCopy region = {};
-  region.srcOffset = 0;
-  region.dstOffset = 0;
-  region.size = GetSizeInBytes();
-
-  vkCmdCopyBuffer(command, GetHostAccessibleBuffer(), buffer_, 1, &region);
+  // This is redundant because this buffer is always host visible
+  // and coherent and vkQueueSubmit will make writes from host
+  // avaliable (See chapter 6.9. "Host Write Ordering Guarantees" in
+  // Vulkan spec), but we prefer to keep it to simplify our own code.
   MemoryBarrier(command);
   return {};
 }
 
 Result Buffer::CopyToHost(VkCommandBuffer command) {
-  if (is_buffer_host_accessible_)
-    return InvalidateMemoryIfNeeded();
-
-  VkBufferCopy region = {};
-  region.srcOffset = 0;
-  region.dstOffset = 0;
-  region.size = GetSizeInBytes();
-
-  vkCmdCopyBuffer(command, buffer_, GetHostAccessibleBuffer(), 1, &region);
   MemoryBarrier(command);
   return {};
 }
 
 void Buffer::CopyFromBuffer(VkCommandBuffer command, const Buffer& src) {
-  VkBufferCopy region = {};
+  VkBufferCopy region = VkBufferCopy();
   region.srcOffset = 0;
   region.dstOffset = 0;
   region.size = src.GetSizeInBytes();
@@ -103,47 +91,14 @@ void Buffer::Shutdown() {
     vkDestroyBufferView(GetDevice(), view_, nullptr);
 
   if (memory_ != VK_NULL_HANDLE) {
-    if (is_buffer_host_accessible_)
-      UnMapMemory(memory_);
-
+    UnMapMemory(memory_);
     vkFreeMemory(GetDevice(), memory_, nullptr);
   }
 
   if (buffer_ != VK_NULL_HANDLE)
     vkDestroyBuffer(GetDevice(), buffer_, nullptr);
 
-  if (!is_buffer_host_accessible_)
-    Resource::Shutdown();
-}
-
-Result Buffer::InvalidateMemoryIfNeeded() {
-  if (is_buffer_host_coherent_)
-    return {};
-
-  VkMappedMemoryRange range = {};
-  range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-  range.memory = GetHostAccessMemory();
-  range.offset = 0;
-  range.size = VK_WHOLE_SIZE;
-  if (vkInvalidateMappedMemoryRanges(GetDevice(), 1, &range) != VK_SUCCESS)
-    return Result("Vulkan: vkInvalidateMappedMemoryRanges fail");
-
-  return {};
-}
-
-Result Buffer::FlushMemoryIfNeeded() {
-  if (is_buffer_host_coherent_)
-    return {};
-
-  VkMappedMemoryRange range = {};
-  range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-  range.memory = GetHostAccessMemory();
-  range.offset = 0;
-  range.size = VK_WHOLE_SIZE;
-  if (vkFlushMappedMemoryRanges(GetDevice(), 1, &range) != VK_SUCCESS)
-    return Result("Vulkan: vkFlushMappedMemoryRanges fail");
-
-  return {};
+  Resource::Shutdown();
 }
 
 }  // namespace vulkan

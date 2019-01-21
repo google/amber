@@ -19,10 +19,10 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "amber/vulkan_header.h"
 #include "src/datum_type.h"
 #include "src/engine.h"
 #include "src/vulkan/resource.h"
-#include "vulkan/vulkan.h"
 
 namespace amber {
 namespace vulkan {
@@ -82,37 +82,58 @@ class Descriptor {
     return type_ == DescriptorType::kDynamicStorageBuffer;
   }
 
-  bool HasDataNotSent() { return !buffer_data_queue_.empty(); }
+  bool HasDataNotSent() { return !buffer_input_queue_.empty(); }
 
-  void AddToBufferDataQueue(DataType type,
-                            uint32_t offset,
-                            size_t size_in_bytes,
-                            const std::vector<Value>& values);
+  // Add the information to |buffer_input_queue_| that "we will fill
+  // resource of this descriptor with |values| at |offset| of the
+  // resource". |type| indicates the primitive type of |values| and
+  // |size_in_bytes| denotes the total size in bytes of |values|.
+  void AddToBufferInputQueue(DataType type,
+                             uint32_t offset,
+                             size_t size_in_bytes,
+                             const std::vector<Value>& values);
 
   // Call vkUpdateDescriptorSets() to update the backing resource
   // for this descriptor only when the backing resource was newly
   // created or changed.
   virtual Result UpdateDescriptorSetIfNeeded(VkDescriptorSet) = 0;
 
-  // Create new vulkan resource if needed i.e., if it was not created
-  // yet or if we need bigger one. If we recreated it for bigger size,
-  // it records the command for copying the old one's data to the new
-  // one. Note that it only records the command and the actual
-  // submission must be done later.
-  virtual Result CreateOrResizeIfNeeded(
-      VkCommandBuffer command,
+  // Create vulkan resource e.g., buffer or image used for this
+  // descriptor if |buffer_input_queue_| is not empty. This method
+  // assumes that the resource is empty when it is called that means
+  // the resource must be created only when it is actually needed
+  // i.e., compute or draw command and destroyed right after those
+  // commands.
+  virtual Result CreateResourceIfNeeded(
       const VkPhysicalDeviceMemoryProperties& properties) = 0;
 
-  // Record a command for copying data in |buffer_data_queue_| to the
-  // resource in device. Note that it only records the command and the
-  // actual submission must be done later.
-  virtual Result UpdateResourceIfNeeded(VkCommandBuffer command) = 0;
+  // Record a command for copying |buffer_output_| and
+  // |buffer_input_queue_| to the resource in device. After the copy
+  // it clears |buffer_output_| and |buffer_input_queue_|. Note that
+  // it only records the command and the actual submission must be
+  // done later.
+  virtual Result RecordCopyDataToResourceIfNeeded(VkCommandBuffer command) = 0;
 
-  // Only record the copy command for sending the bound resource
-  // data to the host accessible memory. The actual submission of
-  // the command must be done later.
-  virtual Result SendDataToHostIfNeeded(VkCommandBuffer command) = 0;
+  // Only record the copy command for copying the resource data to
+  // the host accessible memory. The actual submission of the command
+  // must be done later.
+  virtual Result RecordCopyDataToHost(VkCommandBuffer command) = 0;
+
+  // Copy contents of resource e.g., VkBuffer to host buffer
+  // |buffer_output_|. This method assumes that we already copy
+  // the resource data to the host accessible memory by calling
+  // RecordCopyDataToHost() method and submitting the command buffer.
+  // After copying the contents, it destroys |buffer_|.
+  virtual Result MoveResourceToBufferOutput() = 0;
+
+  // If the resource is empty and |buffer_input_queue_| has a single
+  // BufferInput, the BufferInput is the data copied from the resource
+  // before. In that case, this methods returns information for the
+  // BufferInput. If the resource is not empty, it returns
+  // |size_in_bytes_| and host accessible memory of the resource.
+  // Otherwise, it returns nullptr for |cpu_memory| of ResourceInfo.
   virtual ResourceInfo GetResourceInfo() = 0;
+
   virtual void Shutdown() = 0;
 
  protected:
@@ -129,11 +150,13 @@ class Descriptor {
 
   VkDevice GetDevice() const { return device_; }
 
-  const std::vector<BufferData>& GetBufferDataQueue() const {
-    return buffer_data_queue_;
+  std::vector<BufferInput>& GetBufferInputQueue() {
+    return buffer_input_queue_;
   }
+  std::vector<uint8_t>& GetBufferOutput() { return buffer_output_; }
 
-  void ClearBufferDataQueue() { buffer_data_queue_.clear(); }
+  void ClearBufferInputQueue() { buffer_input_queue_.clear(); }
+  void ClearBufferOutput() { buffer_output_.clear(); }
 
   void SetUpdateDescriptorSetNeeded() {
     is_descriptor_set_update_needed_ = true;
@@ -156,10 +179,13 @@ class Descriptor {
 
   // Each element of this queue contains information of what parts
   // of buffer must be updates with what values. This queue will be
-  // consumed and cleared by UpdateResourceIfNeeded().
-  // UpdateResourceIfNeeded() updates the actual buffer in device
+  // consumed and cleared by CopyDataToResourceIfNeeded().
+  // CopyDataToResourceIfNeeded() updates the actual buffer in device
   // using this queued information.
-  std::vector<BufferData> buffer_data_queue_;
+  std::vector<BufferInput> buffer_input_queue_;
+
+  // Vector to keep data from GPU memory i.e., read back from VkBuffer.
+  std::vector<uint8_t> buffer_output_;
 
   bool is_descriptor_set_update_needed_ = false;
 };
