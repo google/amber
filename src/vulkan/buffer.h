@@ -22,6 +22,10 @@
 namespace amber {
 namespace vulkan {
 
+// Class managing Vulkan Buffer i.e., VkBuffer |buffer_|. |memory_|
+// has VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT and
+// VK_MEMORY_PROPERTY_HOST_COHERENT_BIT properties and it is mapped
+// to |buffer_|.
 class Buffer : public Resource {
  public:
   Buffer(VkDevice device,
@@ -29,35 +33,27 @@ class Buffer : public Resource {
          const VkPhysicalDeviceMemoryProperties& properties);
   ~Buffer() override;
 
+  // Create |buffer_| whose usage is |usage| and allocate |memory_|
+  // with VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT and
+  // VK_MEMORY_PROPERTY_HOST_COHERENT_BIT properties. It also maps
+  // |memory_| to |buffer_|
   Result Initialize(const VkBufferUsageFlags usage);
+
   VkBuffer GetVkBuffer() const { return buffer_; }
   Result CreateVkBufferView(VkFormat format);
   VkBufferView GetVkBufferView() const { return view_; }
 
-  // If this buffer is host accessible and has coherent memory, this
-  // method does nothing. If this buffer is host accessible but it does
-  // not have coherent memory, this method flush the memory to make the
-  // writes from host effective to device. Otherwise, this method records
-  // the command for copying the secondary host-accessible buffer to
-  // this device local buffer. Note that it only records the command and
-  // the actual submission must be done later.
+  // Since |buffer_| is mapped to host accessible and host coherent
+  // memory |memory_|, this method only conducts memory barrier to
+  // make it available to device domain.
   Result CopyToDevice(VkCommandBuffer command);
 
   // Resource
-  VkDeviceMemory GetHostAccessMemory() const override {
-    if (is_buffer_host_accessible_)
-      return memory_;
+  VkDeviceMemory GetHostAccessMemory() const override { return memory_; }
 
-    return Resource::GetHostAccessMemory();
-  }
-
-  // If this buffer is host accessible and has coherent memory, this
-  // method does nothing. If this buffer is host accessible but it does
-  // not have coherent memory, this method invalidate the memory to make the
-  // writes from device visible to host. Otherwise, this method records
-  // the command for copying this buffer to its secondary host-accessible
-  // buffer. Note that it only records the command and the actual
-  // submission must be done later.
+  // Since |buffer_| is mapped to host accessible and host coherent
+  // memory |memory_|, this method only conducts memory barrier to
+  // make it available to host domain.
   Result CopyToHost(VkCommandBuffer command) override;
 
   // Copy all data from |src| to |this| and wait until
@@ -69,14 +65,9 @@ class Buffer : public Resource {
   void Shutdown() override;
 
  private:
-  Result InvalidateMemoryIfNeeded();
-  Result FlushMemoryIfNeeded();
-
   VkBuffer buffer_ = VK_NULL_HANDLE;
   VkBufferView view_ = VK_NULL_HANDLE;
   VkDeviceMemory memory_ = VK_NULL_HANDLE;
-  bool is_buffer_host_accessible_ = false;
-  bool is_buffer_host_coherent_ = false;
 };
 
 }  // namespace vulkan

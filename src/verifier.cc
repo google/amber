@@ -296,6 +296,13 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
                            size_t size_in_bytes,
                            const void* cpu_memory) {
   const auto& values = command->GetValues();
+  if (!cpu_memory) {
+    return values.empty() ? Result()
+                          : Result(
+                                "Verifier::ProbeSSBO actual data is empty "
+                                "while expected data is not");
+  }
+
   const auto& datum_type = command->GetDatumType();
   size_t bytes_per_elem = datum_type.SizeInBytes() / datum_type.RowCount() /
                           datum_type.ColumnCount();

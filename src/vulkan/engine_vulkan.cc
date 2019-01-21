@@ -230,7 +230,8 @@ Result EngineVulkan::SetBuffer(BufferType type,
                                const Format& format,
                                const std::vector<Value>& values) {
   auto format_type = ToVkFormat(format.GetFormatType());
-  if (!IsFormatSupportedByPhysicalDevice(type, device_->GetPhysicalDevice(),
+  if (type != BufferType::kIndex &&
+      !IsFormatSupportedByPhysicalDevice(type, device_->GetPhysicalDevice(),
                                          format_type)) {
     return Result("Vulkan::SetBuffer format is not supported for buffer type");
   }
@@ -258,6 +259,11 @@ Result EngineVulkan::SetBuffer(BufferType type,
 
     pipeline_->AsGraphics()->SetVertexBuffer(location, format, values,
                                              vertex_buffer_.get());
+    return {};
+  }
+
+  if (type == BufferType::kIndex) {
+    pipeline_->AsGraphics()->SetIndexBuffer(values);
     return {};
   }
 
@@ -426,13 +432,7 @@ Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
 Result EngineVulkan::GetDescriptorInfo(const uint32_t descriptor_set,
                                        const uint32_t binding,
                                        ResourceInfo* info) {
-  assert(info);
-  Result r = pipeline_->CopyDescriptorToHost(descriptor_set, binding);
-  if (!r.IsSuccess())
-    return r;
-
-  pipeline_->GetDescriptorInfo(descriptor_set, binding, info);
-  return {};
+  return pipeline_->GetDescriptorInfo(descriptor_set, binding, info);
 }
 
 Result EngineVulkan::DoBuffer(const BufferCommand* command) {
