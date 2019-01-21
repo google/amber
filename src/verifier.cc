@@ -242,21 +242,21 @@ Result Verifier::Probe(const ProbeCommand* command,
     for (uint32_t i = 0; i < width; ++i) {
       // TODO(jaebaek): Get actual pixel values based on frame buffer formats.
       if (!IsEqualWithTolerance(
-              static_cast<const double>(command->GetR()),
-              static_cast<const double>(p[texel_stride * i]) / 255.0,
-              tolerance[0], is_tolerance_percent[0]) ||
+              static_cast<double>(command->GetR()),
+              static_cast<double>(p[texel_stride * i]) / 255.0, tolerance[0],
+              is_tolerance_percent[0]) ||
           !IsEqualWithTolerance(
-              static_cast<const double>(command->GetG()),
-              static_cast<const double>(p[texel_stride * i + 1]) / 255.0,
+              static_cast<double>(command->GetG()),
+              static_cast<double>(p[texel_stride * i + 1]) / 255.0,
               tolerance[1], is_tolerance_percent[1]) ||
           !IsEqualWithTolerance(
-              static_cast<const double>(command->GetB()),
-              static_cast<const double>(p[texel_stride * i + 2]) / 255.0,
+              static_cast<double>(command->GetB()),
+              static_cast<double>(p[texel_stride * i + 2]) / 255.0,
               tolerance[2], is_tolerance_percent[2]) ||
           (command->IsRGBA() &&
            !IsEqualWithTolerance(
-               static_cast<const double>(command->GetA()),
-               static_cast<const double>(p[texel_stride * i + 3]) / 255.0,
+               static_cast<double>(command->GetA()),
+               static_cast<double>(p[texel_stride * i + 3]) / 255.0,
                tolerance[3], is_tolerance_percent[3]))) {
         if (!count_of_invalid_pixels) {
           first_invalid_i = i;
