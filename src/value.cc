@@ -22,4 +22,6 @@ Value::Value(const Value&) = default;
 
 Value::~Value() = default;
 
+Value& Value::operator=(const Value&) = default;
+
 }  // namespace amber
