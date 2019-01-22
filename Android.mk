@@ -6,7 +6,6 @@ LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti
 LOCAL_SRC_FILES:= \
     src/amber.cc \
     src/amberscript/parser.cc \
-    src/bit_copy.cc \
     src/buffer.cc \
     src/command.cc \
     src/command_data.cc \
