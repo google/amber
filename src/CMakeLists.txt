@@ -15,7 +15,6 @@
 set(AMBER_SOURCES
     amber.cc
     amberscript/parser.cc
-    bit_copy.cc
     buffer.cc
     command.cc
     command_data.cc
@@ -92,8 +91,9 @@ if (${AMBER_ENABLE_TESTS})
   )
 
   if (${Vulkan_FOUND})
-    list(APPEND TEST_SRCS bit_copy_test.cc)
+    list(APPEND TEST_SRCS vulkan/vertex_buffer_test.cc)
   endif()
+
   if (${Dawn_FOUND})
     list(APPEND TEST_SRCS dawn/pipeline_info_test.cc)
   endif()
@@ -110,4 +110,11 @@ if (${AMBER_ENABLE_TESTS})
   target_link_libraries(amber_unittests libamber gmock_main)
   amber_default_compile_options(amber_unittests)
   add_test(NAME amber_unittests COMMAND amber_unittests)
+
+  if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    # vulkan/vulkan.h defines VK_NULL_HANDLE as 0u and that also serves as a null pointer.
+    # Disable Clang's warning that will alwaays fire on that.  This is required to build
+    # with XCode 10.
+    target_compile_options(amber_unittests PRIVATE -Wno-zero-as-null-pointer-constant)
+  endif()
 endif()

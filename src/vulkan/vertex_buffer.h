@@ -65,6 +65,9 @@ class VertexBuffer {
 
   void BindToCommandBuffer(VkCommandBuffer command);
 
+  // Must be used only for unit tests.
+  void SetBufferForTest(std::unique_ptr<Buffer> buffer);
+
  private:
   Result FillVertexBufferWithData(VkCommandBuffer command);
 

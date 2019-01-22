@@ -59,7 +59,7 @@ class Resource {
   // Fill |memory_ptr_| from 0 to |raw_data.size()| with |raw_data|.
   void UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data);
 
-  void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
+  virtual void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
 
   size_t GetSizeInBytes() const { return size_in_bytes_; }
 
