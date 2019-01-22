@@ -56,18 +56,6 @@ const VkPipelineRasterizationStateCreateInfo kDefaultRasterizationInfo = {
 
 const VkSampleMask kSampleMask = ~0U;
 
-const VkPipelineMultisampleStateCreateInfo kMultisampleInfo = {
-    VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, /* sType */
-    nullptr,                                                  /* pNext */
-    0,                                                        /* flags */
-    kDefaultAttachmentDesc.samples, /* rasterizationSamples */
-    VK_FALSE,                       /* sampleShadingEnable */
-    0,                              /* minSampleShading */
-    &kSampleMask,                   /* pSampleMask */
-    VK_FALSE,                       /* alphaToCoverageEnable */
-    VK_FALSE,                       /* alphaToOneEnable */
-};
-
 VkPrimitiveTopology ToVkTopology(Topology topology) {
   switch (topology) {
     case Topology::kPointList:
@@ -272,6 +260,18 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   for (auto& info : shader_stage_info)
     info.pName = GetEntryPointName(info.stage);
 
+  VkPipelineMultisampleStateCreateInfo multisampleInfo = {
+      VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, /* sType */
+      nullptr,                                                  /* pNext */
+      0,                                                        /* flags */
+      kDefaultAttachmentDesc.samples, /* rasterizationSamples */
+      VK_FALSE,                       /* sampleShadingEnable */
+      0,                              /* minSampleShading */
+      &kSampleMask,                   /* pSampleMask */
+      VK_FALSE,                       /* alphaToCoverageEnable */
+      VK_FALSE,                       /* alphaToOneEnable */
+  };
+
   VkGraphicsPipelineCreateInfo pipeline_info = VkGraphicsPipelineCreateInfo();
   pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipeline_info.stageCount = static_cast<uint32_t>(shader_stage_info.size());
@@ -280,7 +280,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   pipeline_info.pInputAssemblyState = &input_assembly_info;
   pipeline_info.pViewportState = &viewport_info;
   pipeline_info.pRasterizationState = &kDefaultRasterizationInfo;
-  pipeline_info.pMultisampleState = &kMultisampleInfo;
+  pipeline_info.pMultisampleState = &multisampleInfo;
 
   VkPipelineDepthStencilStateCreateInfo depthstencil_info;
   if (depth_stencil_format_ != VK_FORMAT_UNDEFINED) {

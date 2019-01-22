@@ -25,6 +25,8 @@ class Value {
   Value(const Value&);
   ~Value();
 
+  Value& operator=(const Value&);
+
   void SetIntValue(uint64_t val) {
     type_ = Type::kInteger;
     uint_value_ = val;

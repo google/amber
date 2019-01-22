@@ -19,10 +19,10 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "amber/vulkan_header.h"
 #include "src/format.h"
 #include "src/value.h"
 #include "src/vulkan/buffer.h"
-#include "vulkan/vulkan.h"
 
 namespace amber {
 namespace vulkan {

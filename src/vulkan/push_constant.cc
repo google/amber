@@ -22,7 +22,9 @@ namespace amber {
 namespace vulkan {
 
 PushConstant::PushConstant(uint32_t max_push_constant_size)
-    : Resource(VK_NULL_HANDLE, max_push_constant_size, {}),
+    : Resource(VK_NULL_HANDLE,
+               max_push_constant_size,
+               VkPhysicalDeviceMemoryProperties()),
       max_push_constant_size_(max_push_constant_size),
       memory_(std::unique_ptr<uint8_t>(new uint8_t[max_push_constant_size])) {
   SetMemoryPtr(static_cast<void*>(memory_.get()));
@@ -32,7 +34,7 @@ PushConstant::~PushConstant() = default;
 
 VkPushConstantRange PushConstant::GetPushConstantRange() {
   if (push_constant_data_.empty())
-    return {};
+    return VkPushConstantRange();
 
   auto it =
       std::min_element(push_constant_data_.begin(), push_constant_data_.end(),
