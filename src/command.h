@@ -220,10 +220,7 @@ class ProbeCommand : public Probe {
   ProbeCommand();
   ~ProbeCommand() override;
 
-  void SetWholeWindow() {
-    is_whole_window_ = true;
-    is_probe_rect_ = true;
-  }
+  void SetWholeWindow() { is_whole_window_ = true; }
   bool IsWholeWindow() const { return is_whole_window_; }
 
   void SetProbeRect() { is_probe_rect_ = true; }

@@ -801,6 +801,7 @@ Result CommandParser::ProcessProbe(bool relative) {
                     token->ToOriginalString());
   } else if (token->AsString() == "all") {
     cmd->SetWholeWindow();
+    cmd->SetProbeRect();
 
     token = tokenizer_->NextToken();
     if (!token->IsString())
