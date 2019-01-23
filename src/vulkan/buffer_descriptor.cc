@@ -47,7 +47,7 @@ size_t GetBufferSizeInBytesForQueue(
 }  // namespace
 
 BufferDescriptor::BufferDescriptor(DescriptorType type,
-                                   VkDevice device,
+                                   Device* device,
                                    uint32_t desc_set,
                                    uint32_t binding)
     : Descriptor(type, device, desc_set, binding) {
@@ -78,7 +78,7 @@ Result BufferDescriptor::CreateResourceIfNeeded(
   if (buffer_output.size() > size_in_bytes)
     size_in_bytes = buffer_output.size();
 
-  buffer_ = MakeUnique<Buffer>(GetDevice(), size_in_bytes, properties);
+  buffer_ = MakeUnique<Buffer>(device_, size_in_bytes, properties);
 
   Result r = buffer_->Initialize(GetVkBufferUsage() |
                                  VK_BUFFER_USAGE_TRANSFER_SRC_BIT |

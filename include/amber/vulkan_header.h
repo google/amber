@@ -26,6 +26,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#define VK_NO_PROTOTYPES
 #include "vulkan/vulkan.h"
 #pragma clang diagnostic pop
 

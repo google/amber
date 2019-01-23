@@ -14,11 +14,13 @@
 
 #include "src/vulkan/compute_pipeline.h"
 
+#include "src/vulkan/device.h"
+
 namespace amber {
 namespace vulkan {
 
 ComputePipeline::ComputePipeline(
-    VkDevice device,
+    Device* device,
     const VkPhysicalDeviceProperties& properties,
     const VkPhysicalDeviceMemoryProperties& memory_properties,
     uint32_t fence_timeout_ms,
@@ -58,8 +60,9 @@ Result ComputePipeline::CreateVkComputePipeline() {
   pipeline_info.stage = shader_stage_info[0];
   pipeline_info.layout = pipeline_layout_;
 
-  if (vkCreateComputePipelines(device_, VK_NULL_HANDLE, 1, &pipeline_info,
-                               nullptr, &pipeline_) != VK_SUCCESS) {
+  if (device_->GetPtrs()->vkCreateComputePipelines(
+          device_->GetDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
+          &pipeline_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateComputePipelines Fail");
   }
 
@@ -107,7 +110,7 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
   if (!r.IsSuccess())
     return r;
 
-  vkCmdDispatch(command_->GetCommandBuffer(), x, y, z);
+  device_->GetPtrs()->vkCmdDispatch(command_->GetCommandBuffer(), x, y, z);
 
   return ReadbackDescriptorsToHostDataQueue();
 }

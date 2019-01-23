@@ -39,7 +39,7 @@ set_target_properties(libamberenginevulkan PROPERTIES
     OUTPUT_NAME "amberenginevulkan"
 )
 if (NOT ANDROID)
-  target_link_libraries(libamberenginevulkan ${VULKAN_LIB})
+  target_link_libraries(libamberenginevulkan)
 endif()
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")

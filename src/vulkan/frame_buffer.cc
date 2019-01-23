@@ -19,11 +19,12 @@
 #include <vector>
 
 #include "src/make_unique.h"
+#include "src/vulkan/device.h"
 
 namespace amber {
 namespace vulkan {
 
-FrameBuffer::FrameBuffer(VkDevice device, uint32_t width, uint32_t height)
+FrameBuffer::FrameBuffer(Device* device, uint32_t width, uint32_t height)
     : device_(device), width_(width), height_(height) {}
 
 FrameBuffer::~FrameBuffer() = default;
@@ -65,8 +66,9 @@ Result FrameBuffer::Initialize(
   frame_buffer_info.height = height_;
   frame_buffer_info.layers = 1;
 
-  if (vkCreateFramebuffer(device_, &frame_buffer_info, nullptr, &frame_) !=
-      VK_SUCCESS) {
+  if (device_->GetPtrs()->vkCreateFramebuffer(device_->GetDevice(),
+                                              &frame_buffer_info, nullptr,
+                                              &frame_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateFramebuffer Fail");
   }
 
@@ -133,8 +135,10 @@ Result FrameBuffer::ChangeFrameImageLayout(VkCommandBuffer command,
 }
 
 void FrameBuffer::Shutdown() {
-  if (frame_ != VK_NULL_HANDLE)
-    vkDestroyFramebuffer(device_, frame_, nullptr);
+  if (frame_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkDestroyFramebuffer(device_->GetDevice(), frame_,
+                                             nullptr);
+  }
 
   if (color_image_)
     color_image_->Shutdown();

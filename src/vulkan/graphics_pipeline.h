@@ -36,7 +36,7 @@ namespace vulkan {
 
 class GraphicsPipeline : public Pipeline {
  public:
-  GraphicsPipeline(VkDevice device,
+  GraphicsPipeline(Device* device,
                    const VkPhysicalDeviceProperties& properties,
                    const VkPhysicalDeviceMemoryProperties& memory_properties,
                    VkFormat color_format,

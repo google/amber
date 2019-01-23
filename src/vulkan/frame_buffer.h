@@ -28,9 +28,11 @@ enum class FrameImageState : uint8_t {
   kProbe,
 };
 
+class Device;
+
 class FrameBuffer {
  public:
-  FrameBuffer(VkDevice device, uint32_t width, uint32_t height);
+  FrameBuffer(Device* device, uint32_t width, uint32_t height);
   ~FrameBuffer();
 
   Result Initialize(VkRenderPass render_pass,
@@ -60,7 +62,7 @@ class FrameBuffer {
   uint32_t GetHeight() const { return height_; }
 
  private:
-  VkDevice device_ = VK_NULL_HANDLE;
+  Device* device_ = nullptr;
   VkFramebuffer frame_ = VK_NULL_HANDLE;
   std::unique_ptr<Image> color_image_;
   std::unique_ptr<Image> depth_image_;

@@ -24,13 +24,21 @@
 #include "src/feature.h"
 
 namespace amber {
-
 namespace vulkan {
+
+struct VulkanPtrs {
+#define AMBER_VK_FUNC(func) PFN_##func func;
+#define AMBER_VK_GLOBAL_FUNC(func) PFN_##func func;
+#include "src/vulkan/vk-funcs.inc"
+#undef AMBER_VK_GLOBAL_FUNC
+#undef AMBER_VK_FUNC
+};
 
 class Device {
  public:
   Device();
-  Device(VkPhysicalDevice physical_device,
+  Device(VkInstance instance,
+         VkPhysicalDevice physical_device,
          const VkPhysicalDeviceFeatures& available_features,
          const std::vector<std::string>& required_extensions,
          uint32_t queue_family_index,
@@ -38,7 +46,8 @@ class Device {
          VkQueue queue);
   ~Device();
 
-  Result Initialize(const std::vector<Feature>& required_features,
+  Result Initialize(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
+                    const std::vector<Feature>& required_features,
                     const std::vector<std::string>& required_extensions);
   void Shutdown();
 
@@ -55,7 +64,11 @@ class Device {
     return physical_memory_properties_;
   }
 
+  const VulkanPtrs* GetPtrs() const { return &ptrs_; }
+
  private:
+  Result LoadVulkanGlobalPointers(PFN_vkGetInstanceProcAddr);
+  Result LoadVulkanPointers(PFN_vkGetInstanceProcAddr);
   Result CreateInstance();
   Result CreateDebugReportCallback();
 
@@ -80,6 +93,11 @@ class Device {
   Result CreateDevice(const std::vector<Feature>& required_features,
                       const std::vector<std::string>& required_extensions);
 
+  std::vector<std::string> GetAvailableExtensions(
+      const VkPhysicalDevice& physical_device);
+  Result AreAllValidationLayersSupported();
+  bool AreAllValidationExtensionsSupported();
+
   VkInstance instance_ = VK_NULL_HANDLE;
   VkDebugReportCallbackEXT callback_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
@@ -93,6 +111,8 @@ class Device {
   VkQueue queue_ = VK_NULL_HANDLE;
 
   bool destroy_device_ = true;
+
+  VulkanPtrs ptrs_;
 };
 
 }  // namespace vulkan

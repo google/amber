@@ -18,7 +18,6 @@
 #include <cassert>
 #include <cstring>
 #include <set>
-#include <vulkan/vulkan.h>
 
 #include "samples/log.h"
 
@@ -787,6 +786,7 @@ std::unique_ptr<amber::EngineConfig> ConfigHelperVulkan::CreateConfig(
   config->physical_device = vulkan_physical_device_;
   config->available_features = available_features_;
   config->available_extensions = available_extensions_;
+  config->instance = vulkan_instance_;
   config->queue_family_index = vulkan_queue_family_index_;
   config->queue = vulkan_queue_;
   config->device = vulkan_device_;

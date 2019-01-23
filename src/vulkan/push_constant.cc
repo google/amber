@@ -18,11 +18,13 @@
 #include <cassert>
 #include <limits>
 
+#include "src/vulkan/device.h"
+
 namespace amber {
 namespace vulkan {
 
-PushConstant::PushConstant(uint32_t max_push_constant_size)
-    : Resource(VK_NULL_HANDLE,
+PushConstant::PushConstant(Device* device, uint32_t max_push_constant_size)
+    : Resource(device,
                max_push_constant_size,
                VkPhysicalDeviceMemoryProperties()),
       max_push_constant_size_(max_push_constant_size),
@@ -93,9 +95,10 @@ Result PushConstant::RecordPushConstantVkCommand(
   // be multiple of 4.
   assert(push_const_range.offset % 4U == 0 && push_const_range.size % 4U == 0);
 
-  vkCmdPushConstants(command_buffer, pipeline_layout, VK_SHADER_STAGE_ALL,
-                     push_const_range.offset, push_const_range.size,
-                     memory_.get() + push_const_range.offset);
+  device_->GetPtrs()->vkCmdPushConstants(
+      command_buffer, pipeline_layout, VK_SHADER_STAGE_ALL,
+      push_const_range.offset, push_const_range.size,
+      memory_.get() + push_const_range.offset);
   return {};
 }
 

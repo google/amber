@@ -18,6 +18,7 @@
 #include <limits>
 
 #include "src/make_unique.h"
+#include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
 
 namespace amber {
@@ -94,7 +95,7 @@ void BufferInput::UpdateBufferWithValues(void* buffer) const {
   }
 }
 
-Resource::Resource(VkDevice device,
+Resource::Resource(Device* device,
                    size_t size_in_bytes,
                    const VkPhysicalDeviceMemoryProperties& properties)
     : device_(device),
@@ -130,11 +131,14 @@ void Resource::UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data) {
 void Resource::Shutdown() {
   if (host_accessible_memory_ != VK_NULL_HANDLE) {
     UnMapMemory(host_accessible_memory_);
-    vkFreeMemory(device_, host_accessible_memory_, nullptr);
+    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(),
+                                     host_accessible_memory_, nullptr);
   }
 
-  if (host_accessible_buffer_ != VK_NULL_HANDLE)
-    vkDestroyBuffer(device_, host_accessible_buffer_, nullptr);
+  if (host_accessible_buffer_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(),
+                                        host_accessible_buffer_, nullptr);
+  }
 }
 
 Result Resource::Initialize() {
@@ -165,8 +169,10 @@ Result Resource::CreateVkBuffer(VkBuffer* buffer, VkBufferUsageFlags usage) {
   buffer_info.size = size_in_bytes_;
   buffer_info.usage = usage;
 
-  if (vkCreateBuffer(device_, &buffer_info, nullptr, buffer) != VK_SUCCESS)
+  if (device_->GetPtrs()->vkCreateBuffer(device_->GetDevice(), &buffer_info,
+                                         nullptr, buffer) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateBuffer Fail");
+  }
 
   return {};
 }
@@ -206,14 +212,16 @@ uint32_t Resource::ChooseMemory(uint32_t memory_type_bits,
 const VkMemoryRequirements Resource::GetVkBufferMemoryRequirements(
     VkBuffer buffer) const {
   VkMemoryRequirements requirement;
-  vkGetBufferMemoryRequirements(device_, buffer, &requirement);
+  device_->GetPtrs()->vkGetBufferMemoryRequirements(device_->GetDevice(),
+                                                    buffer, &requirement);
   return requirement;
 }
 
 const VkMemoryRequirements Resource::GetVkImageMemoryRequirements(
     VkImage image) const {
   VkMemoryRequirements requirement;
-  vkGetImageMemoryRequirements(device_, image, &requirement);
+  device_->GetPtrs()->vkGetImageMemoryRequirements(device_->GetDevice(), image,
+                                                   &requirement);
   return requirement;
 }
 
@@ -249,15 +257,19 @@ Result Resource::AllocateMemory(VkDeviceMemory* memory,
   alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   alloc_info.allocationSize = size;
   alloc_info.memoryTypeIndex = memory_type_index;
-  if (vkAllocateMemory(device_, &alloc_info, nullptr, memory) != VK_SUCCESS)
+  if (device_->GetPtrs()->vkAllocateMemory(device_->GetDevice(), &alloc_info,
+                                           nullptr, memory) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkAllocateMemory Fail");
+  }
 
   return {};
 }
 
 Result Resource::BindMemoryToVkBuffer(VkBuffer buffer, VkDeviceMemory memory) {
-  if (vkBindBufferMemory(device_, buffer, memory, 0) != VK_SUCCESS)
+  if (device_->GetPtrs()->vkBindBufferMemory(device_->GetDevice(), buffer,
+                                             memory, 0) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkBindBufferMemory Fail");
+  }
 
   return {};
 }
@@ -288,15 +300,18 @@ Resource::AllocateResult Resource::AllocateAndBindMemoryToVkImage(
 }
 
 Result Resource::BindMemoryToVkImage(VkImage image, VkDeviceMemory memory) {
-  if (vkBindImageMemory(device_, image, memory, 0) != VK_SUCCESS)
+  if (device_->GetPtrs()->vkBindImageMemory(device_->GetDevice(), image, memory,
+                                            0) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkBindImageMemory Fail");
+  }
 
   return {};
 }
 
 Result Resource::MapMemory(VkDeviceMemory memory) {
-  if (vkMapMemory(device_, memory, 0, VK_WHOLE_SIZE, 0, &memory_ptr_) !=
-      VK_SUCCESS) {
+  if (device_->GetPtrs()->vkMapMemory(device_->GetDevice(), memory, 0,
+                                      VK_WHOLE_SIZE, 0,
+                                      &memory_ptr_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkMapMemory Fail");
   }
 
@@ -304,7 +319,7 @@ Result Resource::MapMemory(VkDeviceMemory memory) {
 }
 
 void Resource::UnMapMemory(VkDeviceMemory memory) {
-  vkUnmapMemory(device_, memory);
+  device_->GetPtrs()->vkUnmapMemory(device_->GetDevice(), memory);
 }
 
 void Resource::MemoryBarrier(VkCommandBuffer command) {
@@ -328,9 +343,10 @@ void Resource::MemoryBarrier(VkCommandBuffer command) {
   //
   // ReadOnly Descriptors          host w         shader r
   //                           transfer w       transfer r
-  vkCmdPipelineBarrier(command, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1,
-                       &kMemoryBarrierForAll, 0, nullptr, 0, nullptr);
+  device_->GetPtrs()->vkCmdPipelineBarrier(
+      command, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1, &kMemoryBarrierForAll, 0,
+      nullptr, 0, nullptr);
 }
 
 }  // namespace vulkan

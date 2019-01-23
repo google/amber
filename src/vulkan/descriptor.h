@@ -41,12 +41,14 @@ enum class DescriptorType : uint8_t {
   kInputAttachment,
 };
 
+class Device;
+
 VkDescriptorType ToVkDescriptorType(DescriptorType type);
 
 class Descriptor {
  public:
   Descriptor(DescriptorType type,
-             VkDevice device,
+             Device* device,
              uint32_t desc_set,
              uint32_t binding);
 
@@ -148,8 +150,6 @@ class Descriptor {
                                           VkDescriptorType descriptor_type,
                                           const VkBufferView& texel_view);
 
-  VkDevice GetDevice() const { return device_; }
-
   std::vector<BufferInput>& GetBufferInputQueue() {
     return buffer_input_queue_;
   }
@@ -167,6 +167,7 @@ class Descriptor {
 
   uint32_t descriptor_set_ = 0;
   uint32_t binding_ = 0;
+  Device* device_ = nullptr;
 
  private:
   VkWriteDescriptorSet GetWriteDescriptorSet(
@@ -175,7 +176,6 @@ class Descriptor {
   void UpdateVkDescriptorSet(const VkWriteDescriptorSet& write);
 
   DescriptorType type_ = DescriptorType::kSampledImage;
-  VkDevice device_ = VK_NULL_HANDLE;
 
   // Each element of this queue contains information of what parts
   // of buffer must be updates with what values. This queue will be

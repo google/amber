@@ -14,10 +14,12 @@
 
 #include "src/vulkan/buffer.h"
 
+#include "src/vulkan/device.h"
+
 namespace amber {
 namespace vulkan {
 
-Buffer::Buffer(VkDevice device,
+Buffer::Buffer(Device* device,
                size_t size_in_bytes,
                const VkPhysicalDeviceMemoryProperties& properties)
     : Resource(device, size_in_bytes, properties) {}
@@ -54,8 +56,9 @@ Result Buffer::CreateVkBufferView(VkFormat format) {
   buffer_view_info.format = format;
   buffer_view_info.offset = 0;
   buffer_view_info.range = VK_WHOLE_SIZE;
-  if (vkCreateBufferView(GetDevice(), &buffer_view_info, nullptr, &view_) !=
-      VK_SUCCESS) {
+  if (device_->GetPtrs()->vkCreateBufferView(device_->GetDevice(),
+                                             &buffer_view_info, nullptr,
+                                             &view_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateBufferView Fail");
   }
 
@@ -82,21 +85,24 @@ void Buffer::CopyFromBuffer(VkCommandBuffer command, const Buffer& src) {
   region.dstOffset = 0;
   region.size = src.GetSizeInBytes();
 
-  vkCmdCopyBuffer(command, src.buffer_, buffer_, 1, &region);
+  device_->GetPtrs()->vkCmdCopyBuffer(command, src.buffer_, buffer_, 1,
+                                      &region);
   MemoryBarrier(command);
 }
 
 void Buffer::Shutdown() {
-  if (view_ != VK_NULL_HANDLE)
-    vkDestroyBufferView(GetDevice(), view_, nullptr);
+  if (view_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkDestroyBufferView(device_->GetDevice(), view_,
+                                            nullptr);
+  }
 
   if (memory_ != VK_NULL_HANDLE) {
     UnMapMemory(memory_);
-    vkFreeMemory(GetDevice(), memory_, nullptr);
+    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_, nullptr);
   }
 
   if (buffer_ != VK_NULL_HANDLE)
-    vkDestroyBuffer(GetDevice(), buffer_, nullptr);
+    device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(), buffer_, nullptr);
 
   Resource::Shutdown();
 }

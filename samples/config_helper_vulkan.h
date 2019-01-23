@@ -15,6 +15,8 @@
 #ifndef SAMPLES_CONFIG_HELPER_VULKAN_H_
 #define SAMPLES_CONFIG_HELPER_VULKAN_H_
 
+#include <vulkan/vulkan.h>
+
 #include <limits>
 #include <memory>
 #include <string>
