@@ -191,8 +191,8 @@ Result Verifier::Probe(const ProbeCommand* command,
                        const void* buf) {
   uint32_t x = 0;
   uint32_t y = 0;
-  uint32_t width = 0;
-  uint32_t height = 0;
+  uint32_t width = 1;
+  uint32_t height = 1;
 
   if (command->IsWholeWindow()) {
     width = frame_width;
@@ -202,10 +202,12 @@ Result Verifier::Probe(const ProbeCommand* command,
                               command->GetX());
     y = static_cast<uint32_t>(static_cast<float>(frame_height) *
                               command->GetY());
-    width = static_cast<uint32_t>(static_cast<float>(frame_width) *
-                                  command->GetWidth());
-    height = static_cast<uint32_t>(static_cast<float>(frame_height) *
-                                   command->GetHeight());
+    if (command->IsProbeRect()) {
+      width = static_cast<uint32_t>(static_cast<float>(frame_width) *
+                                    command->GetWidth());
+      height = static_cast<uint32_t>(static_cast<float>(frame_height) *
+                                     command->GetHeight());
+    }
   } else {
     x = static_cast<uint32_t>(command->GetX());
     y = static_cast<uint32_t>(command->GetY());
