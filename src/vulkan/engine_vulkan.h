@@ -37,12 +37,9 @@ class EngineVulkan : public Engine {
   ~EngineVulkan() override;
 
   // Engine
-  Result Initialize(const std::vector<Feature>& features,
+  Result Initialize(EngineConfig* config,
+                    const std::vector<Feature>& features,
                     const std::vector<std::string>& extensions) override;
-  Result InitializeWithConfig(
-      EngineConfig* config,
-      const std::vector<Feature>& features,
-      const std::vector<std::string>& extensions) override;
   Result Shutdown() override;
   Result CreatePipeline(PipelineType type) override;
   Result SetShader(ShaderType type, const std::vector<uint32_t>& data) override;
@@ -68,9 +65,6 @@ class EngineVulkan : public Engine {
                            ResourceInfo* info) override;
 
  private:
-  Result InitDeviceAndCreateCommand(const std::vector<Feature>& features,
-                                    const std::vector<std::string>& extensions);
-
   std::vector<VkPipelineShaderStageCreateInfo> GetShaderStageInfo();
 
   std::unique_ptr<Device> device_;

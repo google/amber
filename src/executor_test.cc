@@ -33,16 +33,11 @@ class EngineStub : public Engine {
   ~EngineStub() override = default;
 
   // Engine
-  Result Initialize(const std::vector<Feature>& features,
+  Result Initialize(EngineConfig*,
+                    const std::vector<Feature>& features,
                     const std::vector<std::string>& extensions) override {
     features_ = features;
     extensions_ = extensions;
-    return {};
-  }
-
-  Result InitializeWithConfig(EngineConfig*,
-                              const std::vector<Feature>&,
-                              const std::vector<std::string>&) override {
     return {};
   }
 
@@ -258,7 +253,7 @@ class VkScriptExecutorTest : public testing::Test {
       const std::vector<Feature>& features,
       const std::vector<std::string>& extensions) {
     auto engine = MakeUnique<EngineStub>();
-    engine->Initialize(features, extensions);
+    engine->Initialize(nullptr, features, extensions);
     return std::move(engine);
   }
   EngineStub* ToStub(Engine* engine) {
