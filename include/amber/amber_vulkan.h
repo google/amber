@@ -43,6 +43,9 @@ struct VulkanEngineConfig : public EngineConfig {
 
   /// The VkQueue to use.
   VkQueue queue;
+
+  /// REQUIRED. The Vulkan instance procedue loader.
+  PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
 };
 
 }  // namespace amber

@@ -97,15 +97,14 @@ Result EngineVulkan::Initialize(EngineConfig* config,
   if (device_)
     return Result("Vulkan::Initialize device_ already exists");
 
-  if (config) {
-    VulkanEngineConfig* vk_config = static_cast<VulkanEngineConfig*>(config);
-    if (vk_config->physical_device == VK_NULL_HANDLE) {
+  VulkanEngineConfig* vk_config = static_cast<VulkanEngineConfig*>(config);
+  if (!vk_config || vk_config->vkGetInstanceProcAddr == VK_NULL_HANDLE)
+    return Result("Vulkan::Initialize vkGetInstanceProcAddr must be provided.");
+
+  // If the device is provided, the physical_device and queue are also required.
+  if (vk_config->device != VK_NULL_HANDLE) {
+    if (vk_config->physical_device == VK_NULL_HANDLE)
       return Result("Vulkan::Initialize physical device handle is null.");
-    }
-
-    if (vk_config->device == VK_NULL_HANDLE)
-      return Result("Vulkan::Initialize device handle is null.");
-
     if (vk_config->queue == VK_NULL_HANDLE)
       return Result("Vulkan::Initialize queue handle is null.");
 
