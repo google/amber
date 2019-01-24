@@ -1,4 +1,4 @@
-// Copyright 2018 The Amber Authors.
+// Copyright 2019 The Amber Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VKSCRIPT_FORMAT_PARSER_H_
-#define SRC_VKSCRIPT_FORMAT_PARSER_H_
+#ifndef SRC_FORMAT_PARSER_H_
+#define SRC_FORMAT_PARSER_H_
 
 #include <memory>
 #include <string>
@@ -24,8 +24,6 @@
 namespace amber {
 
 class Format;
-
-namespace vkscript {
 
 class FormatParser {
  public:
@@ -51,7 +49,6 @@ class FormatParser {
   std::vector<Pieces> pieces_;
 };
 
-}  // namespace vkscript
 }  // namespace amber
 
-#endif  // SRC_VKSCRIPT_FORMAT_PARSER_H_
+#endif  // SRC_FORMAT_PARSER_H_

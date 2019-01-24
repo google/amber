@@ -17,7 +17,7 @@ contexts:
       push: line_comment
 
     # Keywords
-    - match: '\b(END|SHADER|BUFFER|DATA_TYPE|SIZE|DIMS|DATA|FILL|SERIES_FROM)\b'
+    - match: '\b(END|SHADER|BUFFER|DATA_TYPE|SIZE|DATA|FILL|SERIES_FROM)\b'
       scope: keyword.control.amber
     - match: '\b(PASSTHROUGH|PIPELINE|ATTACH|ENTRY_POINT|DESCRIPTOR_SET|INC_BY)\b'
       scope: keyword.control.amber

@@ -13,6 +13,7 @@ LOCAL_SRC_FILES:= \
     src/engine.cc \
     src/executor.cc \
     src/format.cc \
+    src/format_parser.cc \
     src/parser.cc \
     src/pipeline.cc \
     src/pipeline_data.cc \
@@ -26,7 +27,6 @@ LOCAL_SRC_FILES:= \
     src/verifier.cc \
     src/vkscript/command_parser.cc \
     src/vkscript/datum_type_parser.cc \
-    src/vkscript/format_parser.cc \
     src/vkscript/parser.cc \
     src/vkscript/section_parser.cc
 LOCAL_STATIC_LIBRARIES:=glslang SPIRV-Tools shaderc
