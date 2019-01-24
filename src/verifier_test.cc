@@ -250,7 +250,7 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt32) {
                             4 * static_cast<uint32_t>(sizeof(uint32_t)), 1, 1,
                             static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
-  EXPECT_STREQ("", r.Error());
+  EXPECT_STREQ("", r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferUInt64) {
@@ -359,7 +359,7 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt32) {
                             4 * static_cast<uint32_t>(sizeof(int32_t)), 1, 1,
                             static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
-  EXPECT_STREQ("", r.Error());
+  EXPECT_STREQ("", r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferSInt64) {
@@ -414,7 +414,7 @@ TEST_F(VerifierTest, ProbeFrameBufferFloat32) {
                      4 * static_cast<uint32_t>(sizeof(float)), 1, 1,
                      static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
-  EXPECT_STREQ("", r.Error());
+  EXPECT_STREQ("", r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferFloat64) {
@@ -480,7 +480,7 @@ TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
   Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
                             static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
-  EXPECT_STREQ("", r.Error());
+  EXPECT_STREQ("", r.Error().c_str());
 }
 
 TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
@@ -519,7 +519,7 @@ TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
   Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
                             static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
-  EXPECT_STREQ("", r.Error());
+  EXPECT_STREQ("", r.Error().c_str());
 }
 
 TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
@@ -558,7 +558,7 @@ TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
   Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
                             static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
-  EXPECT_STREQ("", r.Error());
+  EXPECT_STREQ("", r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferRGB) {
@@ -925,8 +925,8 @@ TEST_F(VerifierTest, ProbeSSBOEqualFail) {
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Line 1: Verifier failed: 2.800000 == 2.900000, at index 0",
-            r.Error());
+  EXPECT_STREQ("Line 1: Verifier failed: 2.800000 == 2.900000, at index 0",
+               r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteTolerance) {
@@ -988,8 +988,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteToleranceFail) {
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Line 1: Verifier failed: 3.001000 ~= 2.900000, at index 0",
-            r.Error());
+  EXPECT_STREQ("Line 1: Verifier failed: 3.001000 ~= 2.900000, at index 0",
+               r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeTolerance) {
@@ -1051,8 +1051,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeToleranceFail) {
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Line 1: Verifier failed: 2.903000 ~= 2.900000, at index 0",
-            r.Error());
+  EXPECT_STREQ("Line 1: Verifier failed: 2.903000 ~= 2.900000, at index 0",
+               r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeSSBONotEqual) {
@@ -1101,8 +1101,8 @@ TEST_F(VerifierTest, ProbeSSBONotEqualFail) {
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Line 1: Verifier failed: 2.900000 != 2.900000, at index 0",
-            r.Error());
+  EXPECT_STREQ("Line 1: Verifier failed: 2.900000 != 2.900000, at index 0",
+               r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeSSBOLess) {
@@ -1151,8 +1151,8 @@ TEST_F(VerifierTest, ProbeSSBOLessFail) {
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Line 1: Verifier failed: 3.900000 < 2.900000, at index 0",
-            r.Error());
+  EXPECT_STREQ("Line 1: Verifier failed: 3.900000 < 2.900000, at index 0",
+               r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeSSBOLessOrEqual) {
@@ -1201,8 +1201,9 @@ TEST_F(VerifierTest, ProbeSSBOLessOrEqualFail) {
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Line 1: Verifier failed: 1234.561000 <= 1234.560000, at index 3",
-            r.Error());
+  EXPECT_STREQ(
+      "Line 1: Verifier failed: 1234.561000 <= 1234.560000, at index 3",
+      r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeSSBOGreater) {
@@ -1251,8 +1252,8 @@ TEST_F(VerifierTest, ProbeSSBOGreaterFail) {
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Line 1: Verifier failed: 0.730000 > 0.730000, at index 1",
-            r.Error());
+  EXPECT_STREQ("Line 1: Verifier failed: 0.730000 > 0.730000, at index 1",
+               r.Error().c_str());
 }
 
 TEST_F(VerifierTest, ProbeSSBOGreaterOrEqual) {
@@ -1301,8 +1302,9 @@ TEST_F(VerifierTest, ProbeSSBOGreaterOrEqualFail) {
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Line 1: Verifier failed: 1234.559000 >= 1234.560000, at index 3",
-            r.Error());
+  EXPECT_STREQ(
+      "Line 1: Verifier failed: 1234.559000 >= 1234.560000, at index 3",
+      r.Error().c_str());
 }
 
 }  // namespace amber
