@@ -1328,37 +1328,27 @@ INSTANTIATE_TEST_CASE_P(
         BufferParseError{"BUFFER my_buf DATA_TYPE uint8 SIZE 5 "
                          "SERIES_FROM 1 INVALID 2",
                          "1: BUFFER series_from invalid command"},
-        BufferParseError{R"(
-BUFFER my_index_buffer DATA_TYPE int32 DATA
-1.234
-END)",
-                         "3: invalid BUFFER data value"},
-        BufferParseError{R"(
-BUFFER my_index_buffer DATA_TYPE int32 DATA
-INVALID
-END)",
-                         "3: invalid BUFFER data value"},
-        BufferParseError{R"(
-BUFFER my_index_buffer DATA_TYPE int32 DATA INVALID
-123
-END)",
-                         "2: extra parameters after BUFFER data command"},
-        BufferParseError{R"(
-BUFFER my_index_buffer DATA_TYPE int32 SIZE 256 FILL 5 INVALID
-123
-END)",
-                         "2: extra parameters after BUFFER fill command"},
+        BufferParseError{
+            "BUFFER my_index_buffer DATA_TYPE int32 DATA\n1.234\nEND",
+            "2: invalid BUFFER data value"},
+        BufferParseError{
+            "BUFFER my_index_buffer DATA_TYPE int32 DATA\nINVALID\nEND",
+            "2: invalid BUFFER data value"},
+        BufferParseError{
+            "BUFFER my_index_buffer DATA_TYPE int32 DATA INVALID\n123\nEND",
+            "1: extra parameters after BUFFER data command"},
+        BufferParseError{"BUFFER my_index_buffer DATA_TYPE int32 SIZE 256 FILL "
+                         "5 INVALID\n123\nEND",
+                         "1: extra parameters after BUFFER fill command"},
         BufferParseError{
             "BUFFER my_buffer DATA_TYPE int32 SIZE 256 SERIES_FROM 2 "
             "INC_BY 5 "
             "INVALID",
             "1: extra parameters after BUFFER series_from command"},
-        BufferParseError{
-            R"(
-BUFFER my_buf DATA_TYPE int32 SIZE 5 FILL 5
-BUFFER my_buf DATA_TYPE int16 SIZE 5 FILL 2)",
-            // NOLINTNEXTLINE(whitespace/parens)
-            "3: duplicate buffer name provided"}), );
+        BufferParseError{"BUFFER my_buf DATA_TYPE int32 SIZE 5 FILL 5\nBUFFER "
+                         "my_buf DATA_TYPE int16 SIZE 5 FILL 2",
+                         // NOLINTNEXTLINE(whitespace/parens)
+                         "2: duplicate buffer name provided"}), );
 
 using AmberScriptParserBufferDataTypeTest = testing::TestWithParam<BufferData>;
 TEST_P(AmberScriptParserBufferDataTypeTest, BufferTypes) {
