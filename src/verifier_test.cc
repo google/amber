@@ -250,6 +250,7 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt32) {
                             4 * static_cast<uint32_t>(sizeof(uint32_t)), 1, 1,
                             static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
+  EXPECT_STREQ("", r.Error());
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferUInt64) {
@@ -358,6 +359,7 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt32) {
                             4 * static_cast<uint32_t>(sizeof(int32_t)), 1, 1,
                             static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
+  EXPECT_STREQ("", r.Error());
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferSInt64) {
@@ -412,6 +414,7 @@ TEST_F(VerifierTest, ProbeFrameBufferFloat32) {
                      4 * static_cast<uint32_t>(sizeof(float)), 1, 1,
                      static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
+  EXPECT_STREQ("", r.Error());
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferFloat64) {
@@ -477,6 +480,7 @@ TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
   Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
                             static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
+  EXPECT_STREQ("", r.Error());
 }
 
 TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
@@ -515,6 +519,7 @@ TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
   Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
                             static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
+  EXPECT_STREQ("", r.Error());
 }
 
 TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
@@ -553,6 +558,7 @@ TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
   Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
                             static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
+  EXPECT_STREQ("", r.Error());
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferRGB) {
