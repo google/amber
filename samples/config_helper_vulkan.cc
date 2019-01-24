@@ -14,11 +14,11 @@
 
 #include "samples/config_helper_vulkan.h"
 
+#include <vulkan/vulkan.h>
 #include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <set>
-#include <vulkan/vulkan.h>
 
 #include "samples/log.h"
 
