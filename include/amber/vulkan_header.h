@@ -28,6 +28,7 @@
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #define VK_NO_PROTOTYPES
 #include "vulkan/vulkan.h"
+#undef VK_NO_PROTOTYPES
 #pragma clang diagnostic pop
 
 #endif  // AMBER_CTS_VULKAN_HEADER
