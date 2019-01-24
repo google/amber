@@ -49,6 +49,8 @@ class Buffer {
   /// true for this method to be used.
   FormatBuffer* AsFormatBuffer();
 
+  /// Sets the type of data stored in the buffer.
+  void SetBufferType(BufferType type) { buffer_type_ = type; }
   /// Returns the BufferType of this buffer.
   BufferType GetBufferType() const { return buffer_type_; }
 
@@ -77,7 +79,9 @@ class Buffer {
   const std::vector<Value>& GetData() const { return data_; }
 
  protected:
-  /// Create a buffer of |type|.
+  /// Create an un-typed buffer.
+  Buffer();
+  /// Create a buffer of |type_|.
   explicit Buffer(BufferType type);
 
  private:
@@ -91,6 +95,7 @@ class Buffer {
 /// A buffer class where the data is described by a |DatumType| object.
 class DataBuffer : public Buffer {
  public:
+  DataBuffer();
   explicit DataBuffer(BufferType type);
   ~DataBuffer() override;
 
@@ -116,6 +121,7 @@ class DataBuffer : public Buffer {
 /// A buffer class where the data is described by a |format| object.
 class FormatBuffer : public Buffer {
  public:
+  FormatBuffer();
   explicit FormatBuffer(BufferType type);
   ~FormatBuffer() override;
 

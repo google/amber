@@ -1,4 +1,4 @@
-// Copyright 2018 The Amber Authors.
+// Copyright 2019 The Amber Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/vkscript/format_parser.h"
+#include "src/format_parser.h"
 #include "gtest/gtest.h"
 
 namespace amber {
-namespace vkscript {
 
 using FormatParserTest = testing::Test;
 
@@ -1274,5 +1273,4 @@ TEST_F(FormatParserTest, GlslStringInvalid) {
   }
 }
 
-}  // namespace vkscript
 }  // namespace amber

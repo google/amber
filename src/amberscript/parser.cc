@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "src/format_parser.h"
 #include "src/make_unique.h"
 #include "src/shader_data.h"
 #include "src/tokenizer.h"
@@ -403,8 +404,6 @@ Result Parser::ToBufferType(const std::string& str, BufferType* type) {
     *type = BufferType::kColor;
   else if (str == "depth")
     *type = BufferType::kDepth;
-  else if (str == "framebuffer")
-    *type = BufferType::kFramebuffer;
   else if (str == "index")
     *type = BufferType::kIndex;
   else if (str == "sampled")
@@ -424,85 +423,47 @@ Result Parser::ToBufferType(const std::string& str, BufferType* type) {
 Result Parser::ParseBuffer() {
   auto token = tokenizer_->NextToken();
   if (!token->IsString())
-    return Result("invalid BUFFER type provided");
-
-  BufferType type;
-  Result r = ToBufferType(token->AsString(), &type);
-  if (!r.IsSuccess())
-    return r;
-
-  auto buffer = MakeUnique<DataBuffer>(type);
-
-  token = tokenizer_->NextToken();
-  if (!token->IsString())
     return Result("invalid BUFFER name provided");
 
-  auto& name = token->AsString();
-  if (name == "DATA_TYPE" || name == "DIMS")
+  auto name = token->AsString();
+  if (name == "DATA_TYPE" || name == "FORMAT")
     return Result("missing BUFFER name");
-
-  buffer->SetName(token->AsString());
 
   token = tokenizer_->NextToken();
   if (!token->IsString())
     return Result("invalid BUFFER command provided");
 
+  std::unique_ptr<Buffer> buffer;
   auto& cmd = token->AsString();
   if (cmd == "DATA_TYPE") {
-    if (type == BufferType::kFramebuffer)
-      return Result("BUFFER framebuffer must be used with DIMS");
+    buffer = MakeUnique<DataBuffer>();
 
-    r = ParseBufferInitializer(buffer.get());
+    Result r = ParseBufferInitializer(buffer->AsDataBuffer());
     if (!r.IsSuccess())
       return r;
-  } else if (cmd == "DIMS") {
-    if (type != BufferType::kFramebuffer)
-      return Result("BUFFER DIMS can only be used with a framebuffer");
+  } else if (cmd == "FORMAT") {
+    token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("BUFFER FORMAT must be a string");
 
-    r = ParseBufferFramebuffer(buffer.get());
-    if (!r.IsSuccess())
-      return r;
+    buffer = MakeUnique<FormatBuffer>();
+
+    FormatParser fmt_parser;
+    auto fmt = fmt_parser.Parse(token->AsString());
+    if (fmt == nullptr)
+      return Result("invalid BUFFER FORMAT");
+
+    buffer->AsFormatBuffer()->SetFormat(std::move(fmt));
   } else {
     return Result("unknown BUFFER command provided: " + cmd);
   }
+  buffer->SetName(name);
 
-  r = script_->AddBuffer(std::move(buffer));
+  Result r = script_->AddBuffer(std::move(buffer));
   if (!r.IsSuccess())
     return r;
 
   return {};
-}
-
-Result Parser::ParseBufferFramebuffer(DataBuffer* buffer) {
-  auto token = tokenizer_->NextToken();
-  if (token->IsEOL() || token->IsEOS())
-    return Result("BUFFER framebuffer missing DIMS values");
-  if (!token->IsInteger())
-    return Result("BUFFER framebuffer invalid width value");
-
-  // TODO(dsinclair): Is uint32 rgba the right format to use here?
-  DatumType datum;
-  datum.SetType(DataType::kUint32);
-  datum.SetColumnCount(4);
-  buffer->SetDatumType(datum);
-
-  auto w = token->AsUint32();
-
-  token = tokenizer_->NextToken();
-  if (token->IsEOS() || token->IsEOL())
-    return Result("BUFFER framebuffer missing height value");
-  if (!token->IsInteger())
-    return Result("BUFFER framebuffer invalid height value");
-
-  auto h = token->AsUint32();
-
-  // TODO(dsinclair): Should this be a smaller maximum size?
-  uint64_t size = static_cast<uint64_t>(w) * static_cast<uint64_t>(h);
-  if (size >= std::numeric_limits<uint32_t>::max())
-    return Result("BUFFER framebuffer size too large");
-
-  buffer->SetSize(static_cast<size_t>(size));
-  return ValidateEndOfStatement("BUFFER framebuffer command");
 }
 
 Result Parser::ParseBufferInitializer(DataBuffer* buffer) {

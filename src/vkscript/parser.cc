@@ -21,10 +21,10 @@
 #include <utility>
 #include <vector>
 
+#include "src/format_parser.h"
 #include "src/make_unique.h"
 #include "src/shader.h"
 #include "src/vkscript/command_parser.h"
-#include "src/vkscript/format_parser.h"
 
 namespace amber {
 namespace vkscript {
