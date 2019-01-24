@@ -29,12 +29,14 @@
 namespace amber {
 namespace vulkan {
 
+class Device;
+
 // Among Vulkan descriptor types, this class handles Storage Buffer
 // a.k.a. SSBO and Uniform Buffer a.k.a. UBO.
 class BufferDescriptor : public Descriptor {
  public:
   BufferDescriptor(DescriptorType type,
-                   VkDevice device,
+                   Device* device,
                    uint32_t desc_set,
                    uint32_t binding);
   ~BufferDescriptor() override;

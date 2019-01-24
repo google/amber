@@ -22,9 +22,11 @@
 namespace amber {
 namespace vulkan {
 
+class Device;
+
 class Image : public Resource {
  public:
-  Image(VkDevice device,
+  Image(Device* device,
         VkFormat format,
         uint32_t x,
         uint32_t y,

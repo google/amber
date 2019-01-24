@@ -26,6 +26,8 @@
 namespace amber {
 namespace vulkan {
 
+class Device;
+
 // Class to handle push constant.
 class PushConstant : public Resource {
  public:
@@ -33,7 +35,7 @@ class PushConstant : public Resource {
   // maxPushConstantsSize of VkPhysicalDeviceLimits, which is an
   // element of VkPhysicalDeviceProperties getting from
   // vkGetPhysicalDeviceProperties().
-  explicit PushConstant(uint32_t max_push_constant_size);
+  PushConstant(Device* device, uint32_t max_push_constant_size);
   ~PushConstant() override;
 
   // Return a VkPushConstantRange structure whose shader stage flag

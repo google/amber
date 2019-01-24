@@ -66,6 +66,11 @@ class EngineVulkan : public Engine {
 
  private:
   std::vector<VkPipelineShaderStageCreateInfo> GetShaderStageInfo();
+  bool IsFormatSupportedByPhysicalDevice(BufferType type,
+                                         VkPhysicalDevice physical_device,
+                                         VkFormat format);
+  bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
+                               uint32_t descriptor_set);
 
   std::unique_ptr<Device> device_;
   std::unique_ptr<CommandPool> pool_;

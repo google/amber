@@ -493,34 +493,6 @@ bool AreAllRequiredFeaturesSupported(
   return true;
 }
 
-std::vector<std::string> GetAvailableExtensions(
-    const VkPhysicalDevice& physical_device) {
-  std::vector<std::string> available_extensions;
-  uint32_t available_extension_count = 0;
-  std::vector<VkExtensionProperties> available_extension_properties;
-
-  if (vkEnumerateDeviceExtensionProperties(physical_device, nullptr,
-                                           &available_extension_count,
-                                           nullptr) != VK_SUCCESS) {
-    return available_extensions;
-  }
-
-  if (available_extension_count == 0)
-    return available_extensions;
-
-  available_extension_properties.resize(available_extension_count);
-  if (vkEnumerateDeviceExtensionProperties(
-          physical_device, nullptr, &available_extension_count,
-          available_extension_properties.data()) != VK_SUCCESS) {
-    return available_extensions;
-  }
-
-  for (const auto& property : available_extension_properties)
-    available_extensions.push_back(property.extensionName);
-
-  return available_extensions;
-}
-
 bool AreAllExtensionsSupported(
     const std::vector<std::string>& available_extensions,
     const std::vector<std::string>& required_extensions) {
@@ -536,101 +508,84 @@ bool AreAllExtensionsSupported(
   return required_extension_set.empty();
 }
 
-Result AreAllValidationLayersSupported() {
-  std::vector<VkLayerProperties> available_layer_properties;
-  uint32_t available_layer_count = 0;
-  if (vkEnumerateInstanceLayerProperties(&available_layer_count, nullptr) !=
-      VK_SUCCESS) {
-    return Result("Vulkan: vkEnumerateInstanceLayerProperties fail");
-  }
-  available_layer_properties.resize(available_layer_count);
-  if (vkEnumerateInstanceLayerProperties(&available_layer_count,
-                                         available_layer_properties.data()) !=
-      VK_SUCCESS) {
-    return Result("Vulkan: vkEnumerateInstanceLayerProperties fail");
-  }
-
-  std::set<std::string> required_layer_set(
-      kRequiredValidationLayers,
-      &kRequiredValidationLayers[kNumberOfRequiredValidationLayers]);
-  for (const auto& property : available_layer_properties) {
-    required_layer_set.erase(property.layerName);
-  }
-
-  if (required_layer_set.empty())
-    return {};
-
-  std::string missing_layers;
-  for (const auto& missing_layer : required_layer_set)
-    missing_layers = missing_layers + missing_layer + ",\n\t\t";
-  return Result("Vulkan: missing validation layers:\n\t\t" + missing_layers);
-}
-
-bool AreAllValidationExtensionsSupported() {
-  for (const auto& layer : kRequiredValidationLayers) {
-    uint32_t available_extension_count = 0;
-    std::vector<VkExtensionProperties> extension_properties;
-
-    if (vkEnumerateInstanceExtensionProperties(
-            layer, &available_extension_count, nullptr) != VK_SUCCESS) {
-      return false;
-    }
-    extension_properties.resize(available_extension_count);
-    if (vkEnumerateInstanceExtensionProperties(
-            layer, &available_extension_count, extension_properties.data()) !=
-        VK_SUCCESS) {
-      return false;
-    }
-
-    for (const auto& ext : extension_properties) {
-      if (!strcmp(kExtensionForValidationLayer, ext.extensionName))
-        return true;
-    }
-  }
-
-  return false;
-}
-
 }  // namespace
 
 Device::Device() = default;
-Device::Device(VkPhysicalDevice physical_device,
+
+Device::Device(VkInstance instance,
+               VkPhysicalDevice physical_device,
                const VkPhysicalDeviceFeatures& available_features,
                const std::vector<std::string>& available_extensions,
                uint32_t queue_family_index,
                VkDevice device,
                VkQueue queue)
-    : physical_device_(physical_device),
+    : instance_(instance),
+      physical_device_(physical_device),
       available_physical_device_features_(available_features),
       available_physical_device_extensions_(available_extensions),
       queue_family_index_(queue_family_index),
       device_(device),
       queue_(queue),
       destroy_device_(false) {}
+
 Device::~Device() = default;
 
 void Device::Shutdown() {
   if (destroy_device_) {
-    vkDestroyDevice(device_, nullptr);
-
-    auto vkDestroyDebugReportCallbackEXT =
-        reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
-            vkGetInstanceProcAddr(instance_,
-                                  "vkDestroyDebugReportCallbackEXT"));
-    assert(vkDestroyDebugReportCallbackEXT);
-    vkDestroyDebugReportCallbackEXT(instance_, callback_, nullptr);
-
-    vkDestroyInstance(instance_, nullptr);
+    ptrs_.vkDestroyDevice(device_, nullptr);
+    ptrs_.vkDestroyDebugReportCallbackEXT(instance_, callback_, nullptr);
+    ptrs_.vkDestroyInstance(instance_, nullptr);
   }
 }
 
-Result Device::Initialize(const std::vector<Feature>& required_features,
+Result Device::LoadVulkanGlobalPointers(
+    PFN_vkGetInstanceProcAddr getInstanceProcAddr) {
+#define AMBER_VK_FUNC(func)
+#define AMBER_VK_GLOBAL_FUNC(func)                             \
+  if (!(ptrs_.func = reinterpret_cast<PFN_##func>(             \
+            getInstanceProcAddr(VK_NULL_HANDLE, #func)))) {    \
+    return Result("Vulkan: Unable to load " #func " pointer"); \
+  }
+#include "src/vulkan/vk-funcs.inc"
+#undef AMBER_VK_GLOBAL_FUNC
+#undef AMBER_VK_FUNC
+
+  return {};
+}
+
+Result Device::LoadVulkanPointers(
+    PFN_vkGetInstanceProcAddr getInstanceProcAddr) {
+#define AMBER_VK_GLOBAL_FUNC(func)
+#define AMBER_VK_FUNC(func)                                    \
+  if (!(ptrs_.func = reinterpret_cast<PFN_##func>(             \
+            getInstanceProcAddr(instance_, #func)))) {         \
+    return Result("Vulkan: Unable to load " #func " pointer"); \
+  }
+#include "src/vulkan/vk-funcs.inc"  // NOLINT(build/include)
+#undef AMBER_VK_FUNC
+#undef AMBER_VK_GLOBAL_FUNC
+
+  return {};
+}
+
+Result Device::Initialize(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
+                          const std::vector<Feature>& required_features,
                           const std::vector<std::string>& required_extensions) {
+  Result r = LoadVulkanGlobalPointers(getInstanceProcAddr);
+  if (!r.IsSuccess())
+    return r;
+
   if (destroy_device_) {
-    Result r = CreateInstance();
+    r = CreateInstance();
     if (!r.IsSuccess())
       return r;
+  }
 
+  r = LoadVulkanPointers(getInstanceProcAddr);
+  if (!r.IsSuccess())
+    return r;
+
+  if (destroy_device_) {
     r = CreateDebugReportCallback();
     if (!r.IsSuccess())
       return r;
@@ -643,7 +598,7 @@ Result Device::Initialize(const std::vector<Feature>& required_features,
     if (!r.IsSuccess())
       return r;
 
-    vkGetDeviceQueue(device_, queue_family_index_, 0, &queue_);
+    ptrs_.vkGetDeviceQueue(device_, queue_family_index_, 0, &queue_);
     if (queue_ == VK_NULL_HANDLE)
       return Result("Vulkan::Calling vkGetDeviceQueue Fail");
   } else {
@@ -662,10 +617,11 @@ Result Device::Initialize(const std::vector<Feature>& required_features,
     }
   }
 
-  vkGetPhysicalDeviceProperties(physical_device_, &physical_device_properties_);
+  ptrs_.vkGetPhysicalDeviceProperties(physical_device_,
+                                      &physical_device_properties_);
 
-  vkGetPhysicalDeviceMemoryProperties(physical_device_,
-                                      &physical_memory_properties_);
+  ptrs_.vkGetPhysicalDeviceMemoryProperties(physical_device_,
+                                            &physical_memory_properties_);
 
   return {};
 }
@@ -674,10 +630,12 @@ bool Device::ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device) {
   uint32_t count;
   std::vector<VkQueueFamilyProperties> properties;
 
-  vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &count, nullptr);
+  ptrs_.vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &count,
+                                                 nullptr);
   properties.resize(count);
-  vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &count,
-                                           properties.data());
+
+  ptrs_.vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &count,
+                                                 properties.data());
 
   for (uint32_t i = 0; i < count; ++i) {
     if (properties[i].queueFlags &
@@ -710,7 +668,7 @@ Result Device::CreateInstance() {
   instance_info.enabledExtensionCount = 1U;
   instance_info.ppEnabledExtensionNames = &kExtensionForValidationLayer;
 
-  if (vkCreateInstance(&instance_info, nullptr, &instance_) != VK_SUCCESS)
+  if (ptrs_.vkCreateInstance(&instance_info, nullptr, &instance_) != VK_SUCCESS)
     return Result("Vulkan::Calling vkCreateInstance Fail");
 
   return {};
@@ -723,14 +681,8 @@ Result Device::CreateDebugReportCallback() {
   info.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
   info.pfnCallback = debugCallback;
 
-  auto vkCreateDebugReportCallbackEXT =
-      reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
-          vkGetInstanceProcAddr(instance_, "vkCreateDebugReportCallbackEXT"));
-  if (!vkCreateDebugReportCallbackEXT)
-    return Result("Vulkan: vkCreateDebugReportCallbackEXT is nullptr");
-
-  if (vkCreateDebugReportCallbackEXT(instance_, &info, nullptr, &callback_) !=
-      VK_SUCCESS) {
+  if (ptrs_.vkCreateDebugReportCallbackEXT(instance_, &info, nullptr,
+                                           &callback_) != VK_SUCCESS) {
     return Result("Vulkan: vkCreateDebugReportCallbackEXT fail");
   }
   return {};
@@ -742,16 +694,20 @@ Result Device::ChoosePhysicalDevice(
   uint32_t count;
   std::vector<VkPhysicalDevice> physical_devices;
 
-  if (vkEnumeratePhysicalDevices(instance_, &count, nullptr) != VK_SUCCESS)
+  if (ptrs_.vkEnumeratePhysicalDevices(instance_, &count, nullptr) !=
+      VK_SUCCESS) {
     return Result("Vulkan::Calling vkEnumeratePhysicalDevices Fail");
+  }
+
   physical_devices.resize(count);
-  if (vkEnumeratePhysicalDevices(instance_, &count, physical_devices.data()) !=
-      VK_SUCCESS)
+  if (ptrs_.vkEnumeratePhysicalDevices(instance_, &count,
+                                       physical_devices.data()) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkEnumeratePhysicalDevices Fail");
+  }
 
   for (uint32_t i = 0; i < count; ++i) {
     VkPhysicalDeviceFeatures available_features = VkPhysicalDeviceFeatures();
-    vkGetPhysicalDeviceFeatures(physical_devices[i], &available_features);
+    ptrs_.vkGetPhysicalDeviceFeatures(physical_devices[i], &available_features);
     if (!AreAllRequiredFeaturesSupported(available_features,
                                          required_features)) {
       continue;
@@ -796,10 +752,95 @@ Result Device::CreateDevice(
   info.enabledExtensionCount = static_cast<uint32_t>(enabled_extensions.size());
   info.ppEnabledExtensionNames = enabled_extensions.data();
 
-  if (vkCreateDevice(physical_device_, &info, nullptr, &device_) != VK_SUCCESS)
+  if (ptrs_.vkCreateDevice(physical_device_, &info, nullptr, &device_) !=
+      VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateDevice Fail");
+  }
 
   return {};
+}
+
+std::vector<std::string> Device::GetAvailableExtensions(
+    const VkPhysicalDevice& physical_device) {
+  std::vector<std::string> available_extensions;
+  uint32_t available_extension_count = 0;
+  std::vector<VkExtensionProperties> available_extension_properties;
+
+  if (ptrs_.vkEnumerateDeviceExtensionProperties(physical_device, nullptr,
+                                                 &available_extension_count,
+                                                 nullptr) != VK_SUCCESS) {
+    return available_extensions;
+  }
+
+  if (available_extension_count == 0)
+    return available_extensions;
+
+  available_extension_properties.resize(available_extension_count);
+  if (ptrs_.vkEnumerateDeviceExtensionProperties(
+          physical_device, nullptr, &available_extension_count,
+          available_extension_properties.data()) != VK_SUCCESS) {
+    return available_extensions;
+  }
+
+  for (const auto& property : available_extension_properties)
+    available_extensions.push_back(property.extensionName);
+
+  return available_extensions;
+}
+
+Result Device::AreAllValidationLayersSupported() {
+  std::vector<VkLayerProperties> available_layer_properties;
+  uint32_t available_layer_count = 0;
+  if (ptrs_.vkEnumerateInstanceLayerProperties(&available_layer_count,
+                                               nullptr) != VK_SUCCESS) {
+    return Result("Vulkan: vkEnumerateInstanceLayerProperties fail");
+  }
+  available_layer_properties.resize(available_layer_count);
+  if (ptrs_.vkEnumerateInstanceLayerProperties(
+          &available_layer_count, available_layer_properties.data()) !=
+      VK_SUCCESS) {
+    return Result("Vulkan: vkEnumerateInstanceLayerProperties fail");
+  }
+
+  std::set<std::string> required_layer_set(
+      kRequiredValidationLayers,
+      &kRequiredValidationLayers[kNumberOfRequiredValidationLayers]);
+  for (const auto& property : available_layer_properties) {
+    required_layer_set.erase(property.layerName);
+  }
+
+  if (required_layer_set.empty())
+    return {};
+
+  std::string missing_layers;
+  for (const auto& missing_layer : required_layer_set)
+    missing_layers = missing_layers + missing_layer + ",\n\t\t";
+  return Result("Vulkan: missing validation layers:\n\t\t" + missing_layers);
+}
+
+bool Device::AreAllValidationExtensionsSupported() {
+  for (const auto& layer : kRequiredValidationLayers) {
+    uint32_t available_extension_count = 0;
+    std::vector<VkExtensionProperties> extension_properties;
+
+    if (ptrs_.vkEnumerateInstanceExtensionProperties(
+            layer, &available_extension_count, nullptr) != VK_SUCCESS) {
+      return false;
+    }
+    extension_properties.resize(available_extension_count);
+    if (ptrs_.vkEnumerateInstanceExtensionProperties(
+            layer, &available_extension_count, extension_properties.data()) !=
+        VK_SUCCESS) {
+      return false;
+    }
+
+    for (const auto& ext : extension_properties) {
+      if (!strcmp(kExtensionForValidationLayer, ext.extensionName))
+        return true;
+    }
+  }
+
+  return false;
 }
 
 }  // namespace vulkan

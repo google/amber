@@ -35,6 +35,7 @@ class BufferCommand;
 namespace vulkan {
 
 class ComputePipeline;
+class Device;
 class GraphicsPipeline;
 
 class Pipeline {
@@ -76,7 +77,7 @@ class Pipeline {
  protected:
   Pipeline(
       PipelineType type,
-      VkDevice device,
+      Device* device,
       const VkPhysicalDeviceProperties& properties,
       const VkPhysicalDeviceMemoryProperties& memory_properties,
       uint32_t fence_timeout_ms,
@@ -114,7 +115,7 @@ class Pipeline {
   VkPipeline pipeline_ = VK_NULL_HANDLE;
   VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
 
-  VkDevice device_ = VK_NULL_HANDLE;
+  Device* device_ = nullptr;
   VkPhysicalDeviceMemoryProperties memory_properties_;
   std::unique_ptr<CommandBuffer> command_;
 

@@ -16,6 +16,8 @@
 
 #include <cassert>
 
+#include "src/vulkan/device.h"
+
 namespace amber {
 namespace vulkan {
 
@@ -50,13 +52,13 @@ VkDescriptorType ToVkDescriptorType(DescriptorType type) {
 }
 
 Descriptor::Descriptor(DescriptorType type,
-                       VkDevice device,
+                       Device* device,
                        uint32_t desc_set,
                        uint32_t binding)
     : descriptor_set_(desc_set),
       binding_(binding),
-      type_(type),
-      device_(device) {}
+      device_(device),
+      type_(type) {}
 
 Descriptor::~Descriptor() = default;
 
@@ -141,7 +143,8 @@ Result Descriptor::UpdateDescriptorSetForBufferView(
 }
 
 void Descriptor::UpdateVkDescriptorSet(const VkWriteDescriptorSet& write) {
-  vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
+  device_->GetPtrs()->vkUpdateDescriptorSets(device_->GetDevice(), 1, &write, 0,
+                                             nullptr);
   is_descriptor_set_update_needed_ = false;
 }
 

@@ -27,7 +27,7 @@ namespace vulkan {
 class ComputePipeline : public Pipeline {
  public:
   ComputePipeline(
-      VkDevice device,
+      Device* device,
       const VkPhysicalDeviceProperties& properties,
       const VkPhysicalDeviceMemoryProperties& memory_properties,
       uint32_t fence_timeout_ms,
