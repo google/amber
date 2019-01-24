@@ -14,6 +14,7 @@
 
 #include "samples/config_helper_vulkan.h"
 
+#include <vulkan/vulkan.h>
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -789,6 +790,7 @@ std::unique_ptr<amber::EngineConfig> ConfigHelperVulkan::CreateConfig(
   config->queue_family_index = vulkan_queue_family_index_;
   config->queue = vulkan_queue_;
   config->device = vulkan_device_;
+  config->vkGetInstanceProcAddr = vkGetInstanceProcAddr;
   return cfg_holder;
 }
 
