@@ -23,8 +23,6 @@ enum class BufferType : uint8_t {
   kColor = 0,
   /// A depth/stencil buffer.
   kDepth,
-  /// A framebuffer.
-  kFramebuffer,
   /// An index buffer.
   kIndex,
   /// A sampled buffer.

@@ -171,8 +171,6 @@ The following commands are all specified within the `PIPELINE` command.
  * uniform
  * storage
  * sampled
- * color
- * depth_stencil
 
 TODO(dsinclair): Reserve `input` as a buffer type for input attachments.
 

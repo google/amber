@@ -52,7 +52,6 @@ class Parser : public amber::Parser {
   Result ParseBufferInitializerFill(DataBuffer*, uint32_t);
   Result ParseBufferInitializerSeries(DataBuffer*, uint32_t);
   Result ParseBufferInitializerData(DataBuffer*);
-  Result ParseBufferFramebuffer(DataBuffer*);
   Result ParseShaderBlock();
   Result ParsePipelineBlock();
   Result ParsePipelineAttach(Pipeline*);

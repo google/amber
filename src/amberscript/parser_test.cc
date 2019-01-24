@@ -933,7 +933,7 @@ END)";
 
 TEST_F(AmberScriptParserTest, BufferData) {
   std::string in = R"(
-BUFFER storage my_buffer DATA_TYPE uint32 DATA
+BUFFER my_buffer DATA_TYPE uint32 DATA
 1 2 3 4
 55 99 1234
 END)";
@@ -948,7 +948,6 @@ END)";
 
   ASSERT_TRUE(buffers[0] != nullptr);
   EXPECT_EQ("my_buffer", buffers[0]->GetName());
-  EXPECT_EQ(BufferType::kStorage, buffers[0]->GetBufferType());
 
   ASSERT_TRUE(buffers[0]->IsDataBuffer());
   auto* buffer = buffers[0]->AsDataBuffer();
@@ -966,7 +965,7 @@ END)";
 }
 
 TEST_F(AmberScriptParserTest, BufferFill) {
-  std::string in = "BUFFER color my_buffer DATA_TYPE uint8 SIZE 5 FILL 5";
+  std::string in = "BUFFER my_buffer DATA_TYPE uint8 SIZE 5 FILL 5";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -980,7 +979,6 @@ TEST_F(AmberScriptParserTest, BufferFill) {
   ASSERT_TRUE(buffers[0]->IsDataBuffer());
   auto* buffer = buffers[0]->AsDataBuffer();
   EXPECT_EQ("my_buffer", buffer->GetName());
-  EXPECT_EQ(BufferType::kColor, buffer->GetBufferType());
   EXPECT_TRUE(buffer->GetDatumType().IsUint8());
   EXPECT_EQ(5U, buffer->GetSize());
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
@@ -995,7 +993,7 @@ TEST_F(AmberScriptParserTest, BufferFill) {
 }
 
 TEST_F(AmberScriptParserTest, BufferFillFloat) {
-  std::string in = "BUFFER color my_buffer DATA_TYPE float SIZE 5 FILL 5.2";
+  std::string in = "BUFFER my_buffer DATA_TYPE float SIZE 5 FILL 5.2";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -1009,7 +1007,6 @@ TEST_F(AmberScriptParserTest, BufferFillFloat) {
   ASSERT_TRUE(buffers[0]->IsDataBuffer());
   auto* buffer = buffers[0]->AsDataBuffer();
   EXPECT_EQ("my_buffer", buffer->GetName());
-  EXPECT_EQ(BufferType::kColor, buffer->GetBufferType());
   EXPECT_TRUE(buffer->GetDatumType().IsFloat());
   EXPECT_EQ(5U, buffer->GetSize());
   EXPECT_EQ(5U * sizeof(float), buffer->GetSizeInBytes());
@@ -1025,7 +1022,7 @@ TEST_F(AmberScriptParserTest, BufferFillFloat) {
 
 TEST_F(AmberScriptParserTest, BufferSeries) {
   std::string in =
-      "BUFFER color my_buffer DATA_TYPE uint8 SIZE 5 SERIES_FROM 2 INC_BY 1";
+      "BUFFER my_buffer DATA_TYPE uint8 SIZE 5 SERIES_FROM 2 INC_BY 1";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -1039,7 +1036,6 @@ TEST_F(AmberScriptParserTest, BufferSeries) {
   ASSERT_TRUE(buffers[0]->IsDataBuffer());
   auto* buffer = buffers[0]->AsDataBuffer();
   EXPECT_EQ("my_buffer", buffer->GetName());
-  EXPECT_EQ(BufferType::kColor, buffer->GetBufferType());
   EXPECT_TRUE(buffer->GetDatumType().IsUint8());
   EXPECT_EQ(5U, buffer->GetSize());
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
@@ -1055,7 +1051,7 @@ TEST_F(AmberScriptParserTest, BufferSeries) {
 
 TEST_F(AmberScriptParserTest, BufferSeriesFloat) {
   std::string in =
-      "BUFFER color my_buffer DATA_TYPE float SIZE 5 SERIES_FROM 2.2 INC_BY "
+      "BUFFER my_buffer DATA_TYPE float SIZE 5 SERIES_FROM 2.2 INC_BY "
       "1.1";
 
   Parser parser;
@@ -1070,7 +1066,6 @@ TEST_F(AmberScriptParserTest, BufferSeriesFloat) {
   ASSERT_TRUE(buffers[0]->IsDataBuffer());
   auto* buffer = buffers[0]->AsDataBuffer();
   EXPECT_EQ("my_buffer", buffer->GetName());
-  EXPECT_EQ(BufferType::kColor, buffer->GetBufferType());
   EXPECT_TRUE(buffer->GetDatumType().IsFloat());
   EXPECT_EQ(5U, buffer->GetSize());
   EXPECT_EQ(5U * sizeof(float), buffer->GetSizeInBytes());
@@ -1084,32 +1079,10 @@ TEST_F(AmberScriptParserTest, BufferSeriesFloat) {
   }
 }
 
-TEST_F(AmberScriptParserTest, BufferFramebuffer) {
-  std::string in = "BUFFER framebuffer my_buffer DIMS 800 600";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_TRUE(r.IsSuccess()) << r.Error();
-
-  auto script = parser.GetScript();
-  const auto& buffers = script->GetBuffers();
-  ASSERT_EQ(1U, buffers.size());
-
-  ASSERT_TRUE(buffers[0] != nullptr);
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
-  EXPECT_EQ("my_buffer", buffer->GetName());
-  EXPECT_EQ(BufferType::kFramebuffer, buffer->GetBufferType());
-  EXPECT_TRUE(buffer->GetDatumType().IsUint32());
-  EXPECT_EQ(4U, buffer->GetDatumType().ColumnCount());
-  EXPECT_EQ(800U * 600U, buffer->GetSize());
-  EXPECT_EQ(800U * 600U * 4U * sizeof(uint32_t), buffer->GetSizeInBytes());
-}
-
 TEST_F(AmberScriptParserTest, BufferMultipleBuffers) {
   std::string in = R"(
-BUFFER color color_buffer DATA_TYPE uint8 SIZE 5 FILL 5
-BUFFER storage storage_buffer DATA_TYPE uint32 DATA
+BUFFER color_buffer DATA_TYPE uint8 SIZE 5 FILL 5
+BUFFER storage_buffer DATA_TYPE uint32 DATA
 1 2 3 4
 55 99 1234
 END)";
@@ -1126,7 +1099,6 @@ END)";
   ASSERT_TRUE(buffers[0]->IsDataBuffer());
   auto* buffer = buffers[0]->AsDataBuffer();
   EXPECT_EQ("color_buffer", buffer->GetName());
-  EXPECT_EQ(BufferType::kColor, buffer->GetBufferType());
   EXPECT_TRUE(buffer->GetDatumType().IsUint8());
   EXPECT_EQ(5U, buffer->GetSize());
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
@@ -1143,7 +1115,6 @@ END)";
   ASSERT_TRUE(buffers[1]->IsDataBuffer());
   buffer = buffers[1]->AsDataBuffer();
   EXPECT_EQ("storage_buffer", buffer->GetName());
-  EXPECT_EQ(BufferType::kStorage, buffer->GetBufferType());
   EXPECT_TRUE(buffer->GetDatumType().IsUint32());
   EXPECT_EQ(7U, buffer->GetSize());
   EXPECT_EQ(7U * sizeof(uint32_t), buffer->GetSizeInBytes());
@@ -1159,7 +1130,7 @@ END)";
 
 TEST_F(AmberScriptParserTest, BufferFillMultiRow) {
   std::string in = R"(
-BUFFER index my_index_buffer DATA_TYPE vec2<int32> SIZE 5 FILL 2)";
+BUFFER my_index_buffer DATA_TYPE vec2<int32> SIZE 5 FILL 2)";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -1173,7 +1144,6 @@ BUFFER index my_index_buffer DATA_TYPE vec2<int32> SIZE 5 FILL 2)";
   ASSERT_TRUE(buffers[0]->IsDataBuffer());
   auto* buffer = buffers[0]->AsDataBuffer();
   EXPECT_EQ("my_index_buffer", buffer->GetName());
-  EXPECT_EQ(BufferType::kIndex, buffer->GetBufferType());
   EXPECT_TRUE(buffer->GetDatumType().IsInt32());
   EXPECT_EQ(5U, buffer->GetSize());
   EXPECT_EQ(5U * 2 * sizeof(int32_t), buffer->GetSizeInBytes());
@@ -1189,7 +1159,7 @@ BUFFER index my_index_buffer DATA_TYPE vec2<int32> SIZE 5 FILL 2)";
 
 TEST_F(AmberScriptParserTest, BufferDataMultiRow) {
   std::string in = R"(
-BUFFER index my_index_buffer DATA_TYPE vec2<int32> DATA
+BUFFER my_index_buffer DATA_TYPE vec2<int32> DATA
 2 3
 4 5
 6 7
@@ -1209,7 +1179,6 @@ END
   ASSERT_TRUE(buffers[0]->IsDataBuffer());
   auto* buffer = buffers[0]->AsDataBuffer();
   EXPECT_EQ("my_index_buffer", buffer->GetName());
-  EXPECT_EQ(BufferType::kIndex, buffer->GetBufferType());
   EXPECT_TRUE(buffer->GetDatumType().IsInt32());
   EXPECT_EQ(4U, buffer->GetSize());
   EXPECT_EQ(4U * 2 * sizeof(int32_t), buffer->GetSizeInBytes());
@@ -1225,7 +1194,7 @@ END
 
 TEST_F(AmberScriptParserTest, BufferDataHex) {
   std::string in = R"(
-BUFFER index my_index_buffer DATA_TYPE uint32 DATA
+BUFFER my_index_buffer DATA_TYPE uint32 DATA
 0xff000000
 0x00ff0000
 0x0000ff00
@@ -1245,7 +1214,6 @@ END
   ASSERT_TRUE(buffers[0]->IsDataBuffer());
   auto* buffer = buffers[0]->AsDataBuffer();
   EXPECT_EQ("my_index_buffer", buffer->GetName());
-  EXPECT_EQ(BufferType::kIndex, buffer->GetBufferType());
   EXPECT_TRUE(buffer->GetDatumType().IsUint32());
   EXPECT_EQ(4U, buffer->GetSize());
   EXPECT_EQ(4U * sizeof(uint32_t), buffer->GetSizeInBytes());
@@ -1259,358 +1227,8 @@ END
   }
 }
 
-TEST_F(AmberScriptParserTest, BufferInvalidType) {
-  std::string in = "BUFFER 1234 color_buffer DATA_TYPE uint8 SIZE 5 FILL 5";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: invalid BUFFER type provided", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferUnknownType) {
-  std::string in = "BUFFER UNKNOWN color_buffer DATA_TYPE uint8 SIZE 5 FILL 5";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: unknown BUFFER type provided: UNKNOWN", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferInvalidName) {
-  std::string in = "BUFFER color 1234 DATA_TYPE uint8 SIZE 5 FILL 5";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: invalid BUFFER name provided", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferMissingName) {
-  std::string in = "BUFFER color DATA_TYPE uint8 SIZE 5 FILL 5";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: missing BUFFER name", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferInvalidCommand) {
-  std::string in = "BUFFER color my_buf 1234";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: invalid BUFFER command provided", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferUnknownCommand) {
-  std::string in = "BUFFER color my_buf INVALID";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: unknown BUFFER command provided: INVALID", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferDimsWithoutFramebuffer) {
-  std::string in = "BUFFER color my_buf DIMS 256 256";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: BUFFER DIMS can only be used with a framebuffer", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFramebufferWithoutDims) {
-  std::string in = "BUFFER framebuffer my_buf DATA_TYPE int32 FILL 0";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: BUFFER framebuffer must be used with DIMS", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferInvalidSize) {
-  std::string in = "BUFFER color my_buf DATA_TYPE uint8 SIZE INVALID FILL 5";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: BUFFER size invalid", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferMissingSizeValue) {
-  std::string in = "BUFFER color my_buf DATA_TYPE uint8 SIZE FILL 5";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: BUFFER size invalid", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferMissingFillValue) {
-  std::string in = "BUFFER color my_buf DATA_TYPE uint8 SIZE 5 FILL";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: missing BUFFER fill value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferInvalidFillValue) {
-  std::string in = "BUFFER color my_buf DATA_TYPE uint8 SIZE 5 FILL INVALID";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: invalid BUFFER fill value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferInvalidInitializer) {
-  std::string in = "BUFFER color my_buf DATA_TYPE uint8 SIZE 5 INVALID 5";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: invalid BUFFER initializer provided", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFillInvalidValue) {
-  std::string in = "BUFFER color my_buf DATA_TYPE uint8 SIZE 5 FILL INVALID";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: invalid BUFFER fill value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFillingMissingValue) {
-  std::string in = "BUFFER color my_buf DATA_TYPE uint8 SIZE 5 FILL";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: missing BUFFER fill value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferSeriesMissingValue) {
-  std::string in =
-      "BUFFER color my_buf DATA_TYPE uint8 SIZE 5 SERIES_FROM INC_BY 2";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: invalid BUFFER series_from value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferSeriesMissingInc) {
-  std::string in = "BUFFER color my_buf DATA_TYPE uint8 SIZE 5 SERIES_FROM 2";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: missing BUFFER series_from inc_by", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferSeriesMissingIncValue) {
-  std::string in =
-      "BUFFER color my_buf DATA_TYPE uint8 SIZE 5 SERIES_FROM 2 INC_BY";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: missing BUFFER series_from inc_by value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferSeriesInvalidStart) {
-  std::string in =
-      "BUFFER color my_buf DATA_TYPE uint8 SIZE 5 SERIES_FROM INVALID INC_BY 2";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: invalid BUFFER series_from value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferSeriesInvalidInc) {
-  std::string in =
-      "BUFFER color my_buf DATA_TYPE uint8 SIZE 5 SERIES_FROM 1 INC_BY INVALID";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: invalid BUFFER series_from inc_by value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferSeriesInvalidSuffix) {
-  std::string in =
-      "BUFFER color my_buf DATA_TYPE uint8 SIZE 5 SERIES_FROM 1 INVALID 2";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: BUFFER series_from invalid command", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFramebufferMissingDims) {
-  std::string in = "BUFFER framebuffer my_frame";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: invalid BUFFER command provided", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFramebufferMissingDimValues) {
-  std::string in = "BUFFER framebuffer my_frame DIMS";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: BUFFER framebuffer missing DIMS values", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFramebufferMissingHeight) {
-  std::string in = "BUFFER framebuffer my_frame DIMS 256";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: BUFFER framebuffer missing height value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFramebufferInvalidWidth) {
-  std::string in = "BUFFER framebuffer my_frame DIMS INVALID 256";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: BUFFER framebuffer invalid width value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFramebufferFloatWidth) {
-  std::string in = "BUFFER framebuffer my_frame DIMS 2.4 256";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: BUFFER framebuffer invalid width value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFramebufferInvalidHeight) {
-  std::string in = "BUFFER framebuffer my_frame DIMS 256 INVALID";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: BUFFER framebuffer invalid height value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFramebufferFloatHeight) {
-  std::string in = "BUFFER framebuffer my_frame DIMS 256 2.4";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: BUFFER framebuffer invalid height value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFramebufferTooLarge) {
-  std::string in =
-      "BUFFER framebuffer my_frame DIMS 99999999999999 9999999999999";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: BUFFER framebuffer size too large", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferDataInvalidValueFloatForInt) {
-  std::string in = R"(
-BUFFER index my_index_buffer DATA_TYPE int32 DATA
-1.234
-END)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("3: invalid BUFFER data value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferDataInvalidValueString) {
-  std::string in = R"(
-BUFFER index my_index_buffer DATA_TYPE int32 DATA
-INVALID
-END)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("3: invalid BUFFER data value", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferDataExtraParams) {
-  std::string in = R"(
-BUFFER index my_index_buffer DATA_TYPE int32 DATA INVALID
-123
-END)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("2: extra parameters after BUFFER data command", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFillExtraParams) {
-  std::string in = R"(
-BUFFER index my_index_buffer DATA_TYPE int32 SIZE 256 FILL 5 INVALID
-123
-END)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("2: extra parameters after BUFFER fill command", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferSeriesExtraParams) {
-  std::string in =
-      "BUFFER index my_buffer DATA_TYPE int32 SIZE 256 SERIES_FROM 2 INC_BY 5 "
-      "INVALID";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: extra parameters after BUFFER series_from command", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferFramebufferExtraParams) {
-  std::string in = "BUFFER framebuffer my_buffer DIMS 256 256 INVALID";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: extra parameters after BUFFER framebuffer command", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BufferDuplicateName) {
-  std::string in = R"(
-BUFFER vertex my_buf DATA_TYPE int32 SIZE 5 FILL 5
-BUFFER index my_buf DATA_TYPE int16 SIZE 5 FILL 2)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("3: duplicate buffer name provided", r.Error());
-}
-
-using AmberScriptParserBufferTypeTest = testing::TestWithParam<BufferTypeData>;
-TEST_P(AmberScriptParserBufferTypeTest, BufferTypes) {
-  auto test_data = GetParam();
-
-  std::string in = std::string("BUFFER ") + test_data.name +
-                   " my_buf DATA_TYPE int32 SIZE 2 FILL 5";
+TEST_F(AmberScriptParserTest, BufferFormat) {
+  std::string in = "BUFFER my_buf FORMAT R32G32B32A32_SINT";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -1621,27 +1239,133 @@ TEST_P(AmberScriptParserBufferTypeTest, BufferTypes) {
   ASSERT_EQ(1U, buffers.size());
 
   ASSERT_TRUE(buffers[0] != nullptr);
-  EXPECT_EQ(test_data.type, buffers[0]->GetBufferType());
+  ASSERT_TRUE(buffers[0]->IsFormatBuffer());
+  auto* buffer = buffers[0]->AsFormatBuffer();
+  EXPECT_EQ("my_buf", buffer->GetName());
+
+  auto& fmt = buffer->GetFormat();
+  auto& comps = fmt.GetComponents();
+  ASSERT_EQ(4U, comps.size());
+
+  EXPECT_EQ(FormatComponentType::kR, comps[0].type);
+  EXPECT_EQ(FormatMode::kSInt, comps[0].mode);
+  EXPECT_EQ(32U, comps[0].num_bits);
+  EXPECT_EQ(FormatComponentType::kG, comps[1].type);
+  EXPECT_EQ(FormatMode::kSInt, comps[1].mode);
+  EXPECT_EQ(32U, comps[1].num_bits);
+  EXPECT_EQ(FormatComponentType::kB, comps[2].type);
+  EXPECT_EQ(FormatMode::kSInt, comps[2].mode);
+  EXPECT_EQ(32U, comps[2].num_bits);
+  EXPECT_EQ(FormatComponentType::kA, comps[3].type);
+  EXPECT_EQ(FormatMode::kSInt, comps[3].mode);
+  EXPECT_EQ(32U, comps[3].num_bits);
 }
+
+struct BufferParseError {
+  const char* in;
+  const char* err;
+};
+using AmberScriptParserBufferParseErrorTest =
+    testing::TestWithParam<BufferParseError>;
+TEST_P(AmberScriptParserBufferParseErrorTest, Test) {
+  auto test_data = GetParam();
+
+  Parser parser;
+  Result r = parser.Parse(test_data.in);
+  ASSERT_FALSE(r.IsSuccess()) << test_data.in;
+  EXPECT_EQ(std::string(test_data.err), r.Error()) << test_data.in;
+}
+
 INSTANTIATE_TEST_CASE_P(
-    AmberScriptParserTestsBufferType,
-    AmberScriptParserBufferTypeTest,
-    testing::Values(BufferTypeData{"uniform", BufferType::kUniform},
-                    BufferTypeData{"storage", BufferType::kStorage},
-                    BufferTypeData{"vertex", BufferType::kVertex},
-                    BufferTypeData{"index", BufferType::kIndex},
-                    BufferTypeData{"sampled", BufferType::kSampled},
-                    BufferTypeData{"color", BufferType::kColor},
-                    BufferTypeData{
-                        "depth",
-                        BufferType::kDepth}), );  // NOLINT(whitespace/parens)
+    AmberScriptParserBufferParseErrorTest,
+    AmberScriptParserBufferParseErrorTest,
+    testing::Values(
+        BufferParseError{"BUFFER my_buf FORMAT 123",
+                         "1: BUFFER FORMAT must be a string"},
+        BufferParseError{"BUFFER my_buf FORMAT A23A32",
+                         "1: invalid BUFFER FORMAT"},
+        BufferParseError{"BUFFER my_buf FORMAT",
+                         "1: BUFFER FORMAT must be a string"},
+        BufferParseError{"BUFFER my_buffer FORMAT R32G32B32A32_SFLOAT EXTRA",
+                         "1: unknown token: EXTRA"},
+        BufferParseError{"BUFFER 1234 DATA_TYPE uint8 SIZE 5 FILL 5",
+                         "1: invalid BUFFER name provided"},
+        BufferParseError{"BUFFER DATA_TYPE uint8 SIZE 5 FILL 5",
+                         "1: missing BUFFER name"},
+
+        BufferParseError{"BUFFER my_buf 1234",
+                         "1: invalid BUFFER command provided"},
+        BufferParseError{"BUFFER my_buf INVALID",
+                         "1: unknown BUFFER command provided: INVALID"},
+        BufferParseError{"BUFFER my_buf DATA_TYPE uint8 SIZE INVALID FILL 5",
+                         "1: BUFFER size invalid"},
+        BufferParseError{"BUFFER my_buf DATA_TYPE uint8 SIZE FILL 5",
+                         "1: BUFFER size invalid"},
+        BufferParseError{"BUFFER my_buf DATA_TYPE uint8 SIZE 5 FILL",
+                         "1: missing BUFFER fill value"},
+        BufferParseError{"BUFFER my_buf DATA_TYPE uint8 SIZE 5 FILL INVALID",
+                         "1: invalid BUFFER fill value"},
+        BufferParseError{"BUFFER my_buf DATA_TYPE uint8 SIZE 5 INVALID 5",
+                         "1: invalid BUFFER initializer provided"},
+        BufferParseError{"BUFFER my_buf DATA_TYPE uint8 SIZE 5 FILL INVALID",
+                         "1: invalid BUFFER fill value"},
+        BufferParseError{"BUFFER my_buf DATA_TYPE uint8 SIZE 5 FILL",
+                         "1: missing BUFFER fill value"},
+        BufferParseError{
+            "BUFFER my_buf DATA_TYPE uint8 SIZE 5 SERIES_FROM INC_BY 2",
+            "1: invalid BUFFER series_from value"},
+        BufferParseError{"BUFFER my_buf DATA_TYPE uint8 SIZE 5 SERIES_FROM 2",
+                         "1: missing BUFFER series_from inc_by"},
+        BufferParseError{
+            "BUFFER my_buf DATA_TYPE uint8 SIZE 5 SERIES_FROM 2 INC_BY",
+            "1: missing BUFFER series_from inc_by value"},
+        BufferParseError{"BUFFER my_buf DATA_TYPE uint8 SIZE 5 "
+                         "SERIES_FROM INVALID INC_BY 2",
+                         "1: invalid BUFFER series_from value"},
+        BufferParseError{"BUFFER my_buf DATA_TYPE uint8 SIZE 5 "
+                         "SERIES_FROM 1 INC_BY INVALID",
+                         "1: invalid BUFFER series_from inc_by value"},
+        BufferParseError{"BUFFER my_buf DATA_TYPE uint8 SIZE 5 "
+                         "SERIES_FROM 1 INVALID 2",
+                         "1: BUFFER series_from invalid command"},
+        BufferParseError{R"(
+BUFFER my_index_buffer DATA_TYPE int32 DATA
+1.234
+END)",
+                         "3: invalid BUFFER data value"},
+        BufferParseError{R"(
+BUFFER my_index_buffer DATA_TYPE int32 DATA
+INVALID
+END)",
+                         "3: invalid BUFFER data value"},
+        BufferParseError{R"(
+BUFFER my_index_buffer DATA_TYPE int32 DATA INVALID
+123
+END)",
+                         "2: extra parameters after BUFFER data command"},
+        BufferParseError{R"(
+BUFFER my_index_buffer DATA_TYPE int32 SIZE 256 FILL 5 INVALID
+123
+END)",
+                         "2: extra parameters after BUFFER fill command"},
+        BufferParseError{
+            "BUFFER my_buffer DATA_TYPE int32 SIZE 256 SERIES_FROM 2 "
+            "INC_BY 5 "
+            "INVALID",
+            "1: extra parameters after BUFFER series_from command"},
+        BufferParseError{
+            R"(
+BUFFER my_buf DATA_TYPE int32 SIZE 5 FILL 5
+BUFFER my_buf DATA_TYPE int16 SIZE 5 FILL 2)",
+            // NOLINTNEXTLINE(whitespace/parens)
+            "3: duplicate buffer name provided"}), );
 
 using AmberScriptParserBufferDataTypeTest = testing::TestWithParam<BufferData>;
 TEST_P(AmberScriptParserBufferDataTypeTest, BufferTypes) {
   auto test_data = GetParam();
 
-  std::string in = std::string("BUFFER vertex my_buf DATA_TYPE ") +
-                   test_data.name + " SIZE 2 FILL 5";
+  std::string in = std::string("BUFFER my_buf DATA_TYPE ") + test_data.name +
+                   " SIZE 2 FILL 5";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -1685,8 +1409,8 @@ using AmberScriptParserBufferDataTypeInvalidTest =
 TEST_P(AmberScriptParserBufferDataTypeInvalidTest, BufferTypes) {
   auto test_data = GetParam();
 
-  std::string in = std::string("BUFFER vertex my_buf DATA_TYPE ") +
-                   test_data.name + " SIZE 4 FILL 5";
+  std::string in = std::string("BUFFER my_buf DATA_TYPE ") + test_data.name +
+                   " SIZE 4 FILL 5";
 
   Parser parser;
   Result r = parser.Parse(in);
