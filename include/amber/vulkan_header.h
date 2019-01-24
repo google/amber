@@ -26,6 +26,8 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+// Note, VK_NO_PROTOTYPES is used by vulkan/vulkan.h to disable defining
+// all of the vk* methods.
 #define VK_NO_PROTOTYPES
 #include "vulkan/vulkan.h"
 #undef VK_NO_PROTOTYPES
