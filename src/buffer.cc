@@ -16,6 +16,8 @@
 
 namespace amber {
 
+Buffer::Buffer() = default;
+
 Buffer::Buffer(BufferType type) : buffer_type_(type) {}
 
 Buffer::~Buffer() = default;
@@ -28,9 +30,13 @@ FormatBuffer* Buffer::AsFormatBuffer() {
   return static_cast<FormatBuffer*>(this);
 }
 
+DataBuffer::DataBuffer() = default;
+
 DataBuffer::DataBuffer(BufferType type) : Buffer(type) {}
 
 DataBuffer::~DataBuffer() = default;
+
+FormatBuffer::FormatBuffer() = default;
 
 FormatBuffer::FormatBuffer(BufferType type) : Buffer(type) {}
 
