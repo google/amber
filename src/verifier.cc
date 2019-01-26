@@ -17,6 +17,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -559,7 +560,11 @@ Result Verifier::Probe(const ProbeCommand* command,
     for (uint32_t i = 0; i < width; ++i) {
       auto actual_texel_values =
           GetActualValuesFromTexel(p + texel_stride * i, framebuffer_format);
+      for (const auto& value : actual_texel_values)
+        std::cout << value << std::endl;
       ScaleTexelValuesIfNeeded(&actual_texel_values, framebuffer_format);
+      for (const auto& value : actual_texel_values)
+        std::cout << value << std::endl;
       if (!IsTexelEqualToExpected(actual_texel_values, framebuffer_format,
                                   command, tolerance, is_tolerance_percent)) {
         if (!count_of_invalid_pixels) {
