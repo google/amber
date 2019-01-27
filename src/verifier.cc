@@ -47,13 +47,21 @@ void CopyBitsOfMemoryToBuffer(uint8_t* dst,
 
   uint64_t data = 0;
   uint8_t* ptr = reinterpret_cast<uint8_t*>(&data);
+  std::cout << __FILE__ << " " << __LINE__ << ": " << size_in_bytes
+            << std::endl;
   for (uint8_t i = 0; i < size_in_bytes; ++i) {
     ptr[i] = src[i];
+    std::cout << __FILE__ << " " << __LINE__ << ": "
+              << static_cast<uint32_t>(src[i]) << std::endl;
   }
+  std::cout << __FILE__ << " " << __LINE__ << ": " << data << std::endl;
+  std::cout << __FILE__ << " " << __LINE__ << ": " << src_bit_offset
+            << std::endl;
 
   data >>= src_bit_offset;
   if (bits != 64)
     data &= (1UL << bits) - 1UL;
+  std::cout << __FILE__ << " " << __LINE__ << ": " << data << std::endl;
 
   std::memcpy(dst, &data, static_cast<size_t>((bits + 7) / 8));
 }
@@ -560,11 +568,7 @@ Result Verifier::Probe(const ProbeCommand* command,
     for (uint32_t i = 0; i < width; ++i) {
       auto actual_texel_values =
           GetActualValuesFromTexel(p + texel_stride * i, framebuffer_format);
-      for (const auto& value : actual_texel_values)
-        std::cout << value << std::endl;
       ScaleTexelValuesIfNeeded(&actual_texel_values, framebuffer_format);
-      for (const auto& value : actual_texel_values)
-        std::cout << value << std::endl;
       if (!IsTexelEqualToExpected(actual_texel_values, framebuffer_format,
                                   command, tolerance, is_tolerance_percent)) {
         if (!count_of_invalid_pixels) {
