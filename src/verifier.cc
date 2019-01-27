@@ -60,7 +60,7 @@ void CopyBitsOfMemoryToBuffer(uint8_t* dst,
 
   data >>= src_bit_offset;
   if (bits != 64)
-    data &= (1UL << bits) - 1UL;
+    data &= (static_cast<uint64_t>(1) << bits) - static_cast<uint64_t>(1);
   std::cout << __FILE__ << " " << __LINE__ << ": " << data << std::endl;
 
   std::memcpy(dst, &data, static_cast<size_t>((bits + 7) / 8));
