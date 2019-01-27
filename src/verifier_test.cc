@@ -454,20 +454,20 @@ TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
   // 16 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
-  frame_buffer = 50688UL;
+  frame_buffer = 50688ULL;
   probe.SetR(-6.0f);
 
   // 11 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
-  frame_buffer |= 1200UL << 16UL;
+  frame_buffer |= 1200ULL << 16ULL;
   probe.SetG(14.0f);
 
   // 10 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4
   //                                                 = 0.1171875
-  frame_buffer |= 380UL << (16UL + 11UL);
+  frame_buffer |= 380ULL << (16ULL + 11ULL);
   probe.SetB(0.1171875f);
 
   Format format;
@@ -493,20 +493,20 @@ TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
   // 11 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
-  frame_buffer = 1200UL;
+  frame_buffer = 1200ULL;
   probe.SetR(14.0f);
 
   // 16 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
-  frame_buffer |= 50688UL << 11UL;
+  frame_buffer |= 50688ULL << 11ULL;
   probe.SetG(-6.0f);
 
   // 10 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4
   //                                                 = 0.1171875
-  frame_buffer |= 380UL << (16UL + 11UL);
+  frame_buffer |= 380ULL << (16ULL + 11ULL);
   probe.SetB(0.1171875f);
 
   Format format;
@@ -533,19 +533,19 @@ TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4
   //                                                 = 0.1171875
-  frame_buffer = 380UL;
+  frame_buffer = 380ULL;
   probe.SetR(0.1171875f);
 
   // 11 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
-  frame_buffer |= 1200UL << 10UL;
+  frame_buffer |= 1200ULL << 10ULL;
   probe.SetG(14.0f);
 
   // 16 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
-  frame_buffer |= 50688UL << (10UL + 11UL);
+  frame_buffer |= 50688ULL << (10ULL + 11ULL);
   probe.SetB(-6.0f);
 
   Format format;
