@@ -78,6 +78,8 @@ Result Parser::ToShaderType(const std::string& str, ShaderType* type) {
     *type = kShaderTypeTessellationControl;
   else if (str == "compute")
     *type = kShaderTypeCompute;
+  else if (str == "multi")
+    *type = kShaderTypeMulti;
   else
     return Result("unknown shader type: " + str);
   return {};
@@ -301,8 +303,6 @@ Result Parser::ParsePipelineBlock() {
       break;
     } else if (tok == "ATTACH") {
       r = ParsePipelineAttach(pipeline.get());
-    } else if (tok == "ENTRY_POINT") {
-      r = ParsePipelineEntryPoint(pipeline.get());
     } else if (tok == "SHADER_OPTIMIZATION") {
       r = ParsePipelineShaderOptimizations(pipeline.get());
     } else {
@@ -335,31 +335,58 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
   if (!shader)
     return Result("unknown shader in ATTACH command");
 
-  Result r = pipeline->AddShader(shader);
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS()) {
+    if (shader->GetType() == kShaderTypeMulti)
+      return Result("multi shader ATTACH requires TYPE");
+
+    Result r = pipeline->AddShader(shader, shader->GetType());
+    if (!r.IsSuccess())
+      return r;
+    return {};
+  }
+  if (!token->IsString())
+    return Result("Invalid token after ATTACH");
+
+  bool set_shader_type = false;
+  ShaderType shader_type = shader->GetType();
+  auto type = token->AsString();
+  if (type == "TYPE") {
+    token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("invalid type in ATTACH");
+
+    Result r = ToShaderType(token->AsString(), &shader_type);
+    if (!r.IsSuccess())
+      return r;
+
+    set_shader_type = true;
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("ATTACH TYPE requires an ENTRY_POINT");
+
+    type = token->AsString();
+  }
+  if (type != "ENTRY_POINT")
+    return Result("Unknown ATTACH parameter: " + type);
+
+  if (shader->GetType() == ShaderType::kShaderTypeMulti && !set_shader_type)
+    return Result("ATTACH missing TYPE for multi shader");
+
+  Result r = pipeline->AddShader(shader, shader_type);
+  if (!r.IsSuccess())
+    return r;
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("missing shader name in ATTACH ENTRY_POINT command");
+
+  r = pipeline->SetShaderEntryPoint(shader, token->AsString());
   if (!r.IsSuccess())
     return r;
 
   return ValidateEndOfStatement("ATTACH command");
-}
-
-Result Parser::ParsePipelineEntryPoint(Pipeline* pipeline) {
-  auto token = tokenizer_->NextToken();
-  if (!token->IsString())
-    return Result("missing shader name in ENTRY_POINT command");
-
-  auto* shader = script_->GetShader(token->AsString());
-  if (!shader)
-    return Result("unknown shader in ENTRY_POINT command");
-
-  token = tokenizer_->NextToken();
-  if (!token->IsString())
-    return Result("invalid value in ENTRY_POINT command");
-
-  Result r = pipeline->SetShaderEntryPoint(shader, token->AsString());
-  if (!r.IsSuccess())
-    return r;
-
-  return ValidateEndOfStatement("ENTRY_POINT command");
 }
 
 Result Parser::ParsePipelineShaderOptimizations(Pipeline* pipeline) {

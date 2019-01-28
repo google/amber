@@ -55,7 +55,6 @@ class Parser : public amber::Parser {
   Result ParseShaderBlock();
   Result ParsePipelineBlock();
   Result ParsePipelineAttach(Pipeline*);
-  Result ParsePipelineEntryPoint(Pipeline*);
   Result ParsePipelineShaderOptimizations(Pipeline*);
 
   std::unique_ptr<Tokenizer> tokenizer_;

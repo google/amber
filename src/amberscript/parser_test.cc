@@ -150,7 +150,8 @@ INSTANTIATE_TEST_CASE_P(
                     NameData{"geometry"},
                     NameData{"tessellation_evaluation"},
                     NameData{"tessellation_control"},
-                    NameData{"compute"}), );  // NOLINT(whitespace/parens)
+                    NameData{"compute"},
+                    NameData{"multi"}), );  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptParserTest, ShaderPassThroughUnknownShaderType) {
   std::string in = "SHADER UNKNOWN my_shader PASSTHROUGH";
@@ -331,8 +332,9 @@ INSTANTIATE_TEST_CASE_P(
         ShaderTypeData{"tessellation_evaluation",
                        kShaderTypeTessellationEvaluation},
         ShaderTypeData{"tessellation_control", kShaderTypeTessellationControl},
-        ShaderTypeData{"compute",
-                       kShaderTypeCompute}), );  // NOLINT(whitespace/parens)
+        ShaderTypeData{"compute", kShaderTypeCompute},
+        ShaderTypeData{"multi",
+                       kShaderTypeMulti}), );  // NOLINT(whitespace/parens)
 
 using AmberScriptParserShaderFormatTest =
     testing::TestWithParam<ShaderFormatData>;
@@ -557,7 +559,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("5: can not add duplicate shader to pipeline", r.Error());
+  EXPECT_EQ("6: can not add duplicate shader to pipeline", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, AttachInvalidToken) {
@@ -581,7 +583,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("4: extra parameters after ATTACH command", r.Error());
+  EXPECT_EQ("4: Unknown ATTACH parameter: INVALID", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, AttachMissingValue) {
@@ -611,7 +613,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("8: can not add a compute shader to a graphics pipeline",
+  EXPECT_EQ("9: can not add a compute shader to a graphics pipeline",
             r.Error());
 }
 
@@ -656,10 +658,8 @@ SHADER fragment my_fragment GLSL
 END
 
 PIPELINE graphics my_pipeline
-  ATTACH my_shader
+  ATTACH my_shader ENTRY_POINT green
   ATTACH my_fragment
-
-  ENTRY_POINT my_shader green
 END
 )";
 
@@ -690,14 +690,13 @@ SHADER compute my_compute GLSL
 # Compute Shader
 END
 PIPELINE compute my_pipeline
-  ATTACH my_compute
-  ENTRY_POINT my_compute 1234
+  ATTACH my_compute ENTRY_POINT 1234
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("7: invalid value in ENTRY_POINT command", r.Error());
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("6: missing shader name in ATTACH ENTRY_POINT command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PipelineEntryPointMissingValue) {
@@ -706,30 +705,13 @@ SHADER compute my_compute GLSL
 # Compute Shader
 END
 PIPELINE compute my_pipeline
-  ATTACH my_compute
-  ENTRY_POINT
+  ATTACH my_compute ENTRY_POINT
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("8: missing shader name in ENTRY_POINT command", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, PipelineEntryPointMissingEntryPointName) {
-  std::string in = R"(
-SHADER compute my_compute GLSL
-# Compute Shader
-END
-PIPELINE compute my_pipeline
-  ATTACH my_compute
-  ENTRY_POINT my_compute
-END)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("8: invalid value in ENTRY_POINT command", r.Error());
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("7: missing shader name in ATTACH ENTRY_POINT command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PipelineEntryPointExtraParameter) {
@@ -738,47 +720,102 @@ SHADER compute my_compute GLSL
 # Compute Shader
 END
 PIPELINE compute my_pipeline
-  ATTACH my_compute
-  ENTRY_POINT my_compute green INVALID
+  ATTACH my_compute ENTRY_POINT green INVALID
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("7: extra parameters after ENTRY_POINT command", r.Error());
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("6: extra parameters after ATTACH command", r.Error());
 }
 
-TEST_F(AmberScriptParserTest, PipelineMultipleEntryPointsForOneShader) {
+TEST_F(AmberScriptParserTest, PiplineMultiShaderAttach) {
   std::string in = R"(
-SHADER compute my_compute GLSL
-# Compute Shader
+SHADER multi my_shader GLSL
+# shaders
 END
 PIPELINE compute my_pipeline
-  ATTACH my_compute
-  ENTRY_POINT my_compute green
-  ENTRY_POINT my_compute red
+  ATTACH my_shader TYPE compute ENTRY_POINT my_entry_point
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("8: multiple entry points given for the same shader", r.Error());
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& shaders = pipeline->GetShaders();
+  ASSERT_EQ(1U, shaders.size());
+
+  ASSERT_TRUE(shaders[0].GetShader() != nullptr);
+  EXPECT_EQ(kShaderTypeMulti, shaders[0].GetShader()->GetType());
+  EXPECT_EQ(kShaderTypeCompute, shaders[0].GetShaderType());
+  EXPECT_EQ("my_entry_point", shaders[0].GetEntryPoint());
 }
 
-TEST_F(AmberScriptParserTest, PipelineEntryPointForInvalidShader) {
+TEST_F(AmberScriptParserTest,
+       PipelineMultiShaderMismatchPipelineAndShaderType) {
   std::string in = R"(
-SHADER compute my_compute GLSL
-# Compute Shader
+SHADER multi my_shader GLSL
+# shaders
 END
-PIPELINE compute my_pipeline
-  ATTACH my_compute
-  ENTRY_POINT INVALID green
+PIPELINE graphics my_pipeline
+  ATTACH my_shader TYPE compute ENTRY_POINT my_entry_point
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("7: unknown shader in ENTRY_POINT command", r.Error());
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("6: can not add a compute shader to a graphics pipeline",
+            r.Error());
+}
+
+TEST_F(AmberScriptParserTest, PipelineMultiShaderMissingEntryPoint) {
+  std::string in = R"(
+SHADER multi my_shader GLSL
+# shaders
+END
+PIPELINE graphics my_pipeline
+  ATTACH my_shader TYPE fragment
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("7: ATTACH TYPE requires an ENTRY_POINT", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, PipelineMultiShaderMissingType) {
+  std::string in = R"(
+SHADER multi my_shader GLSL
+# shaders
+END
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("7: multi shader ATTACH requires TYPE", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, PipelineMultiShaderMissingTypeWithEntryPoint) {
+  std::string in = R"(
+SHADER multi my_shader GLSL
+# shaders
+END
+PIPELINE graphics my_pipeline
+  ATTACH my_shader ENTRY_POINT my_ep
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("6: ATTACH missing TYPE for multi shader", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PipelineShaderOptimization) {
