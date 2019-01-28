@@ -17,7 +17,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -47,23 +46,13 @@ void CopyBitsOfMemoryToBuffer(uint8_t* dst,
 
   uint64_t data = 0;
   uint8_t* ptr = reinterpret_cast<uint8_t*>(&data);
-  std::cout << __FILE__ << " " << __LINE__ << ": "
-            << static_cast<uint32_t>(size_in_bytes) << std::endl;
   for (uint8_t i = 0; i < size_in_bytes; ++i) {
     ptr[i] = src[i];
-    std::cout << __FILE__ << " " << __LINE__ << ": "
-              << static_cast<uint32_t>(src[i]) << std::endl;
   }
-  std::cout << __FILE__ << " " << __LINE__ << ": " << data << std::endl;
-  std::cout << __FILE__ << " " << __LINE__ << ": "
-            << static_cast<uint32_t>(bits) << std::endl;
-  std::cout << __FILE__ << " " << __LINE__ << ": "
-            << static_cast<uint32_t>(src_bit_offset) << std::endl;
 
   data >>= src_bit_offset;
   if (bits != 64)
     data &= (1ULL << bits) - 1ULL;
-  std::cout << __FILE__ << " " << __LINE__ << ": " << data << std::endl;
 
   std::memcpy(dst, &data, static_cast<size_t>((bits + 7) / 8));
 }
