@@ -169,6 +169,8 @@ VkPipelineDepthStencilStateCreateInfo
 GraphicsPipeline::GetPipelineDepthStencilInfo() {
   VkPipelineDepthStencilStateCreateInfo depthstencil_info =
       VkPipelineDepthStencilStateCreateInfo();
+  depthstencil_info.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
   // TODO(jaebaek): Depth/stencil test setup should be come from the
   // PipelineData.
   depthstencil_info.depthTestEnable = VK_TRUE;
@@ -486,8 +488,10 @@ Result GraphicsPipeline::Clear() {
 
   VkClearValue clear_value;
   clear_value.depthStencil = {clear_depth_, clear_stencil_};
-  return ClearBuffer(clear_value,
-                     VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
+  return ClearBuffer(
+      clear_value, VkFormatHasStencilComponent(depth_stencil_format_)
+                       ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+                       : VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
 Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,

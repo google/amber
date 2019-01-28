@@ -1,0 +1,91 @@
+# Copyright 2018 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[require]
+depthstencil D24_UNORM_S8_UINT
+
+[vertex shader]
+#version 430
+
+layout(location = 0) in vec4 position;
+layout(location = 1) in vec4 vert_color;
+layout(location = 0) out vec4 frag_color;
+
+void main() {
+  gl_Position = position;
+  frag_color = vert_color;
+}
+
+[fragment shader]
+#version 430
+
+layout(location = 0) in vec4 frag_color;
+layout(location = 0) out vec4 final_color;
+
+void main() {
+  final_color = frag_color;
+}
+
+[vertex data]
+#        position     vert_color
+     0/R8G8B8_SNORM 1/R8G8B8_UNORM
+
+#             Red for entire frame
+#        R8   G8 B8     R8  G8  B8
+       -128 -128  3    255   0   0
+        127  127  3    255   0   0
+       -128  127  3    255   0   0
+
+       -128 -128  3    255   0   0
+        127  127  3    255   0   0
+        127 -128  3    255   0   0
+
+#             Green for half frame
+          0 -128  2      0 255   0
+        127  127  2      0 255   0
+          0  127  2      0 255   0
+
+          0 -128  2      0 255   0
+        127  127  2      0 255   0
+        127 -128  2      0 255   0
+
+#           Blue for quarter frame
+       -128    0  1      0   0 255
+          0  127  1      0   0 255
+       -128  127  1      0   0 255
+
+       -128    0  1      0   0 255
+          0  127  1      0   0 255
+          0    0  1      0   0 255
+
+#  Mixed color for quarter frame
+          0    0  0    127 127 127
+        127  127  0    127 127 127
+          0  127  0    127 127 127
+
+          0    0  0    127 127 127
+        127  127  0    127 127 127
+        127    0  0    127 127 127
+
+[test]
+clear
+
+draw arrays TRIANGLE_LIST 18 6
+draw arrays TRIANGLE_LIST 12 6
+draw arrays TRIANGLE_LIST 6 6
+draw arrays TRIANGLE_LIST 0 6
+relative probe rect rgb (0.0, 0.0, 0.5, 0.5) (1.0, 0, 0)
+relative probe rect rgb (0.5, 0.0, 0.5, 0.5) (0, 1.0, 0)
+relative probe rect rgb (0.0, 0.5, 0.5, 0.5) (0, 0, 1.0)
+relative probe rect rgb (0.5, 0.5, 0.5, 0.5) (0.5, 0.5, 0.5)
