@@ -368,8 +368,12 @@ Result EngineVulkan::DoEntryPoint(const EntryPointCommand* command) {
 }
 
 Result EngineVulkan::DoPatchParameterVertices(
-    const PatchParameterVerticesCommand*) {
-  return Result("Vulkan::DoPatch Not Implemented");
+    const PatchParameterVerticesCommand* cmd) {
+  if (!pipeline_->IsGraphics())
+    return Result("Vulkan::DoPatchParameterVertices for Non-Graphics Pipeline");
+
+  pipeline_->AsGraphics()->SetPatchControlPoints(cmd->GetControlPointCount());
+  return {};
 }
 
 Result EngineVulkan::DoProcessCommands() {
