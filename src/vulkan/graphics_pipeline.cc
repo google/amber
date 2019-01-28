@@ -259,8 +259,14 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   viewport_info.pScissors = &scissor;
 
   auto shader_stage_info = GetShaderStageInfo();
-  for (auto& info : shader_stage_info)
+  bool is_tessellation_needed = false;
+  for (auto& info : shader_stage_info) {
     info.pName = GetEntryPointName(info.stage);
+    if (info.stage == VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT ||
+        info.stage == VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT) {
+      is_tessellation_needed = true;
+    }
+  }
 
   VkPipelineMultisampleStateCreateInfo multisampleInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, /* sType */
@@ -283,6 +289,13 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   pipeline_info.pViewportState = &viewport_info;
   pipeline_info.pRasterizationState = &kDefaultRasterizationInfo;
   pipeline_info.pMultisampleState = &multisampleInfo;
+
+  VkPipelineTessellationStateCreateInfo tess_info = {};
+  if (is_tessellation_needed) {
+    tess_info.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+    tess_info.patchControlPoints = patch_control_points_;
+    pipeline_info.pTessellationState = &tess_info;
+  }
 
   VkPipelineDepthStencilStateCreateInfo depthstencil_info;
   if (depth_stencil_format_ != VK_FORMAT_UNDEFINED) {
