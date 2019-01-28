@@ -16,10 +16,10 @@
 
 #include <utility>
 
+#include "amber/value.h"
 #include "gtest/gtest.h"
 #include "src/format.h"
 #include "src/make_unique.h"
-#include "src/value.h"
 #include "src/vulkan/buffer.h"
 
 namespace amber {

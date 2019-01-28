@@ -1,4 +1,4 @@
-// Copyright 2018 The Amber Authors.
+// Copyright 2019 The Amber Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "amber/value.h"
+#ifndef SAMPLES_PPM_H_
+#define SAMPLES_PPM_H_
 
-namespace amber {
+#include <string>
+#include <utility>
+#include <vector>
 
-Value::Value() = default;
+#include "amber/amber.h"
 
-Value::Value(const Value&) = default;
+namespace ppm {
 
-Value::~Value() = default;
+/// Converts the image of dimensions |width| and |height| and with pixels stored
+/// in row-major order in |values| with format R8G8B8A8 into PPM format,
+/// returning the PPM binary as a string.
+std::pair<amber::Result, std::string> ConvertToPPM(
+    uint32_t width,
+    uint32_t height,
+    const std::vector<amber::Value>& values);
 
-Value& Value::operator=(const Value&) = default;
+}  // namespace ppm
 
-}  // namespace amber
+#endif  // SAMPLES_PPM_H_

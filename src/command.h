@@ -21,10 +21,10 @@
 #include <vector>
 
 #include "amber/shader_info.h"
+#include "amber/value.h"
 #include "src/command_data.h"
 #include "src/datum_type.h"
 #include "src/pipeline_data.h"
-#include "src/value.h"
 
 namespace amber {
 
