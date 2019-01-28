@@ -23,6 +23,7 @@
 
 #include "amber/recipe.h"
 #include "amber/result.h"
+#include "amber/value.h"
 
 namespace amber {
 
@@ -40,11 +41,24 @@ enum EngineType {
 /// Override point of engines to add their own configuration.
 struct EngineConfig {};
 
+struct BufferInfo {
+  /// Holds the buffer name
+  std::string buffer_name;
+  /// Holds the buffer width
+  uint32_t width;
+  /// Holds the buffer height
+  uint32_t height;
+  /// Contains the buffer internal data
+  std::vector<Value> values;
+};
+
 struct Options {
   /// Sets the engine to be created. Default Vulkan.
   EngineType engine;
   /// Holds engine specific configuration. Ownership stays with the caller.
   EngineConfig* config;
+  /// Lists the buffers to extract at the end of the execution
+  std::vector<BufferInfo> extractions;
 };
 
 /// Main interface to the Amber environment.
@@ -58,13 +72,13 @@ class Amber {
 
   /// Executes the given |recipe| with the provided |opts|. Returns a
   /// |Result| which indicates if the execution succeded.
-  amber::Result Execute(const amber::Recipe* recipe, const Options& opts);
+  amber::Result Execute(const amber::Recipe* recipe, Options* opts);
 
   /// Executes the given |recipe| with the provided |opts|. Will use
   /// |shader_map| to lookup shader data before attempting to compile the
   /// shader if possible.
   amber::Result ExecuteWithShaderData(const amber::Recipe* recipe,
-                                      const Options& opts,
+                                      Options* opts,
                                       const ShaderMap& shader_data);
 };
 

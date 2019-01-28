@@ -1,0 +1,114 @@
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[require]
+geometryShader
+
+[vertex shader]
+#version 430
+
+layout(location = 0) in vec4 position;
+layout(location = 1) in vec4 vert_color;
+layout(location = 0) out vec4 geom_color;
+
+void main() {
+  gl_Position = position;
+  geom_color = vert_color;
+}
+
+[geometry shader]
+#version 430
+
+layout (points) in;
+layout (triangle_strip, max_vertices = 6) out;
+
+layout(location = 0) in vec4 geom_color[];
+
+layout(location = 0) out vec4 frag_color;
+
+void
+main()
+{
+        gl_Position = gl_in[0].gl_Position;
+        frag_color = geom_color[0];
+        EmitVertex();
+
+        gl_Position = vec4(gl_in[0].gl_Position.x + 1.0,
+                           gl_in[0].gl_Position.y + 1.0,
+                           0.0, 1.0);
+        frag_color = geom_color[0];
+        EmitVertex();
+        EndPrimitive();
+
+        gl_Position = vec4(gl_in[0].gl_Position.x,
+                           gl_in[0].gl_Position.y + 1.0,
+                           0.0, 1.0);
+        frag_color = geom_color[0];
+        EmitVertex();
+
+        gl_Position = gl_in[0].gl_Position;
+        frag_color = geom_color[0];
+        EmitVertex();
+
+        gl_Position = vec4(gl_in[0].gl_Position.x + 1.0,
+                           gl_in[0].gl_Position.y + 1.0,
+                           0.0, 1.0);
+        frag_color = geom_color[0];
+        EmitVertex();
+
+        gl_Position = vec4(gl_in[0].gl_Position.x + 1.0,
+                           gl_in[0].gl_Position.y,
+                           0.0, 1.0);
+        frag_color = geom_color[0];
+        EmitVertex();
+}
+
+[fragment shader]
+#version 430
+
+layout(location = 0) in vec4 frag_color;
+layout(location = 0) out vec4 final_color;
+
+void main() {
+  final_color = frag_color;
+}
+
+[vertex data]
+#        position     vert_color
+     0/R8G8_SNORM 1/R8G8B8_UNORM
+
+# Red for left-top quarter frame
+#         R8   G8     R8  G8  B8
+        -128 -128    255   0   0
+
+# Green for right-top quarter frame
+#         R8   G8     R8  G8  B8
+           0 -128      0 255   0
+
+# Blue for left-bottom quarter frame
+#         R8   G8     R8  G8  B8
+        -128    0      0   0 255
+
+#  Mixed color for quarter frame
+#         R8   G8     R8  G8  B8
+           0    0    128 128 128
+
+[test]
+clear
+
+draw arrays POINT_LIST 0 4
+relative probe rect rgb (0.0, 0.0, 0.5, 0.5) (1.0, 0, 0)
+relative probe rect rgb (0.5, 0.0, 0.5, 0.5) (0, 1.0, 0)
+relative probe rect rgb (0.0, 0.5, 0.5, 0.5) (0, 0, 1.0)
+relative probe rect rgb (0.5, 0.5, 0.5, 0.5) (0.5, 0.5, 0.5)

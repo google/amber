@@ -21,10 +21,10 @@
 #include <utility>
 #include <vector>
 
+#include "amber/value.h"
 #include "src/buffer_data.h"
 #include "src/datum_type.h"
 #include "src/format.h"
-#include "src/value.h"
 
 namespace amber {
 

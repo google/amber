@@ -18,6 +18,7 @@ set(AMBER_SOURCES
     amber.cc
     config_helper.cc
     log.cc
+    ppm.cc
     ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
 )
 
