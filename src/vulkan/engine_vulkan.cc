@@ -413,7 +413,7 @@ Result EngineVulkan::GetFrameBuffer(std::vector<Value>* values) {
   }
 
   // TODO(jaebaek): Support other formats
-  assert(color_frame_format_ == VK_FORMAT_R8G8B8A8_UNORM);
+  assert(color_frame_format_->GetFormatType() == FormatType::kR8G8B8A8_UINT);
 
   Value pixel;
 

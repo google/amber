@@ -23,16 +23,16 @@ namespace ppm {
 
 namespace {
 
-uint8_t byte0(uint32_t word) {
-  return (uint8_t)(word);
+char byte0(uint32_t word) {
+  return static_cast<char>(word);
 }
 
-uint8_t byte1(uint32_t word) {
-  return (uint8_t)(word >> 8);
+char byte1(uint32_t word) {
+  return static_cast<char>(word >> 8);
 }
 
-uint8_t byte2(uint32_t word) {
-  return (uint8_t)(word >> 16);
+char byte2(uint32_t word) {
+  return static_cast<char>(word >> 16);
 }
 
 }  // namespace
