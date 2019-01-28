@@ -456,6 +456,11 @@ Result EngineDawn::GetFrameBufferInfo(ResourceInfo* info) {
   return {};
 }
 
+Result EngineDawn::GetFrameBuffer(std::vector<Value>* values) {
+  assert(values);
+  return Result("Dawn::GetFrameBuffer not implemented");
+}
+
 Result EngineDawn::GetDescriptorInfo(const uint32_t,
                                      const uint32_t,
                                      ResourceInfo*) {

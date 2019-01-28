@@ -17,11 +17,11 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "amber/value.h"
 #include "gtest/gtest.h"
 #include "src/command.h"
 #include "src/datum_type.h"
 #include "src/make_unique.h"
-#include "src/value.h"
 #include "src/verifier.h"
 
 namespace amber {
