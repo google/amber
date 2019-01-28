@@ -150,6 +150,10 @@ class Engine {
   /// commands have occurred e.g., DoClear, DoDrawArrays, DoDrawRect.
   virtual Result GetFrameBufferInfo(ResourceInfo* info) = 0;
 
+  /// Copy the content of the framebuffer into |values|, each value is a pixel
+  /// in R8G8B8A8 format.
+  virtual Result GetFrameBuffer(std::vector<Value>* values) = 0;
+
   /// Copy the contents of the resource bound to the given descriptor
   /// and get the resource information e.g., size for buffer, width,
   /// height, depth for image of descriptor given as |descriptor_set|

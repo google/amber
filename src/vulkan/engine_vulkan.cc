@@ -402,6 +402,37 @@ Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
   return {};
 }
 
+Result EngineVulkan::GetFrameBuffer(std::vector<Value>* values) {
+  values->resize(0);
+
+  ResourceInfo info;
+  GetFrameBufferInfo(&info);
+  if (info.type != ResourceInfoType::kImage) {
+    return Result(
+        "Vulkan:GetFrameBuffer() is invalid for non-image framebuffer");
+  }
+
+  // TODO(jaebaek): Support other formats
+  assert(color_frame_format_ == VK_FORMAT_R8G8B8A8_UNORM);
+
+  Value pixel;
+
+  const uint8_t* cpu_memory = static_cast<const uint8_t*>(info.cpu_memory);
+  const uint32_t row_stride = info.image_info.row_stride;
+  const uint32_t texel_stride = info.image_info.texel_stride;
+
+  for (uint32_t y = 0; y < info.image_info.height; ++y) {
+    for (uint32_t x = 0; x < info.image_info.width; ++x) {
+      const uint8_t* ptr_8 = cpu_memory + (row_stride * y) + (texel_stride * x);
+      const uint32_t* ptr_32 = reinterpret_cast<const uint32_t*>(ptr_8);
+      pixel.SetIntValue(*ptr_32);
+      values->push_back(pixel);
+    }
+  }
+
+  return {};
+}
+
 Result EngineVulkan::GetDescriptorInfo(const uint32_t descriptor_set,
                                        const uint32_t binding,
                                        ResourceInfo* info) {
