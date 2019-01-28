@@ -75,7 +75,7 @@ TEST_F(AmberScriptPipelineTest, DuplicateShaderType) {
   Result r = p.AddShader(&v, kShaderTypeVertex);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  r = p.AddShader(&f, kShaderTypeFragment);
+  r = p.AddShader(&f, kShaderTypeVertex);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("can not add duplicate shader type to pipeline", r.Error());
 }

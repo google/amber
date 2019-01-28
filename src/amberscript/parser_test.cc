@@ -635,7 +635,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("8: only compute shaders allowed in a compute pipeline", r.Error());
+  EXPECT_EQ("9: only compute shaders allowed in a compute pipeline", r.Error());
 }
 INSTANTIATE_TEST_CASE_P(
     AmberScriptParserPipelineAttachTests,
