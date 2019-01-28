@@ -18,12 +18,13 @@
 #include <cstring>
 
 #include "src/make_unique.h"
+#include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
 
 namespace amber {
 namespace vulkan {
 
-IndexBuffer::IndexBuffer(VkDevice device) : device_(device) {}
+IndexBuffer::IndexBuffer(Device* device) : device_(device) {}
 
 IndexBuffer::~IndexBuffer() = default;
 
@@ -62,8 +63,8 @@ Result IndexBuffer::BindToCommandBuffer(VkCommandBuffer command) {
   if (!buffer_)
     return Result("IndexBuffer::BindToCommandBuffer |buffer_| is nullptr");
 
-  vkCmdBindIndexBuffer(command, buffer_->GetVkBuffer(), 0,
-                       VK_INDEX_TYPE_UINT32);
+  device_->GetPtrs()->vkCmdBindIndexBuffer(command, buffer_->GetVkBuffer(), 0,
+                                           VK_INDEX_TYPE_UINT32);
   return {};
 }
 

@@ -22,13 +22,15 @@
 namespace amber {
 namespace vulkan {
 
+class Device;
+
 // Class managing Vulkan Buffer i.e., VkBuffer |buffer_|. |memory_|
 // has VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT and
 // VK_MEMORY_PROPERTY_HOST_COHERENT_BIT properties and it is mapped
 // to |buffer_|.
 class Buffer : public Resource {
  public:
-  Buffer(VkDevice device,
+  Buffer(Device* device,
          size_t size_in_bytes,
          const VkPhysicalDeviceMemoryProperties& properties);
   ~Buffer() override;

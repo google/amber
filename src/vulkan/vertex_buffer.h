@@ -27,9 +27,11 @@
 namespace amber {
 namespace vulkan {
 
+class Device;
+
 class VertexBuffer {
  public:
-  explicit VertexBuffer(VkDevice device);
+  explicit VertexBuffer(Device* device);
   ~VertexBuffer();
 
   void Shutdown();
@@ -76,7 +78,7 @@ class VertexBuffer {
     return ((stride_in_bytes_ + 3) / 4) * 4;
   }
 
-  VkDevice device_ = VK_NULL_HANDLE;
+  Device* device_ = nullptr;
 
   bool is_vertex_data_pending_ = true;
 

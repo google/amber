@@ -37,7 +37,7 @@ const VkPhysicalDeviceMemoryProperties kMemoryProperties =
 
 class BufferForTest : public Buffer {
  public:
-  BufferForTest(VkDevice device,
+  BufferForTest(Device* device,
                 size_t size_in_bytes,
                 const VkPhysicalDeviceMemoryProperties& properties)
       : Buffer(device, size_in_bytes, properties) {
@@ -58,11 +58,10 @@ class BufferForTest : public Buffer {
 class VertexBufferTest : public testing::Test {
  public:
   VertexBufferTest() {
-    VkDevice null_device = VK_NULL_HANDLE;
-    vertex_buffer_ = MakeUnique<VertexBuffer>(null_device);
+    vertex_buffer_ = MakeUnique<VertexBuffer>(nullptr);
 
     std::unique_ptr<Buffer> buffer =
-        MakeUnique<BufferForTest>(null_device, 0, kMemoryProperties);
+        MakeUnique<BufferForTest>(nullptr, 0, kMemoryProperties);
     buffer_memory_ = buffer->HostAccessibleMemoryPtr();
     vertex_buffer_->SetBufferForTest(std::move(buffer));
   }

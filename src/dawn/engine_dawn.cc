@@ -173,29 +173,24 @@ EngineDawn::EngineDawn() : Engine() {}
 
 EngineDawn::~EngineDawn() = default;
 
-Result EngineDawn::Initialize(const std::vector<Feature>&,
+Result EngineDawn::Initialize(EngineConfig* config,
+                              const std::vector<Feature>&,
                               const std::vector<std::string>&) {
   if (device_)
     return Result("Dawn:Initialize device_ already exists");
 
+  if (config) {
+    DawnEngineConfig* dawn_config = static_cast<DawnEngineConfig*>(config);
+    if (dawn_config->device == nullptr)
+      return Result("Dawn:Initialize device is a null pointer");
+
+    device_ = *dawn_config->device;
 #if AMBER_DAWN_METAL
-  return CreateMetalDevice(&device_);
+  } else {
+    return CreateMetalDevice(&device_);
 #endif  // AMBER_DAWN_METAL
+  }
 
-  return Result("Dawn::Initialize: Can't make a device: Unknown backend");
-}
-
-Result EngineDawn::InitializeWithConfig(EngineConfig* config,
-                                        const std::vector<Feature>&,
-                                        const std::vector<std::string>&) {
-  if (device_)
-    return Result("Dawn:InitializeWithconfig device_ already exists");
-
-  DawnEngineConfig* dawn_config = static_cast<DawnEngineConfig*>(config);
-  if (dawn_config->device == nullptr)
-    return Result("Dawn:InitializeWithConfig device is a null pointer");
-
-  device_ = *dawn_config->device;
   return {};
 }
 

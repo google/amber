@@ -26,6 +26,8 @@
 namespace amber {
 namespace vulkan {
 
+class Device;
+
 // Contain information of filling memory
 // [|offset|, |offset| + |size_in_bytes|) with |values| whose data
 // type is |type|. This information is given by script.
@@ -64,13 +66,12 @@ class Resource {
   size_t GetSizeInBytes() const { return size_in_bytes_; }
 
  protected:
-  Resource(VkDevice device,
+  Resource(Device* device,
            size_t size,
            const VkPhysicalDeviceMemoryProperties& properties);
   Result Initialize();
   Result CreateVkBuffer(VkBuffer* buffer, VkBufferUsageFlags usage);
 
-  VkDevice GetDevice() const { return device_; }
   VkBuffer GetHostAccessibleBuffer() const { return host_accessible_buffer_; }
 
   struct AllocateResult {
@@ -113,6 +114,8 @@ class Resource {
   // prevent hazards caused by out-of-order execution.
   void MemoryBarrier(VkCommandBuffer command);
 
+  Device* device_ = nullptr;
+
  private:
   uint32_t ChooseMemory(uint32_t memory_type_bits,
                         VkMemoryPropertyFlags flags,
@@ -128,7 +131,6 @@ class Resource {
   Result BindMemoryToVkImage(VkImage image, VkDeviceMemory memory);
   const VkMemoryRequirements GetVkImageMemoryRequirements(VkImage image) const;
 
-  VkDevice device_ = VK_NULL_HANDLE;
   size_t size_in_bytes_ = 0;
   VkPhysicalDeviceMemoryProperties physical_memory_properties_;
 

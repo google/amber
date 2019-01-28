@@ -32,9 +32,11 @@ enum class CommandBufferState : uint8_t {
   kInvalid,
 };
 
+class Device;
+
 class CommandPool {
  public:
-  explicit CommandPool(VkDevice device);
+  explicit CommandPool(Device* device);
   ~CommandPool();
 
   Result Initialize(uint32_t queue_family_index);
@@ -42,13 +44,13 @@ class CommandPool {
   void Shutdown();
 
  private:
-  VkDevice device_ = VK_NULL_HANDLE;
+  Device* device_ = nullptr;
   VkCommandPool pool_ = VK_NULL_HANDLE;
 };
 
 class CommandBuffer {
  public:
-  CommandBuffer(VkDevice device, VkCommandPool pool, VkQueue queue);
+  CommandBuffer(Device* device, VkCommandPool pool, VkQueue queue);
   ~CommandBuffer();
 
   Result Initialize();
@@ -64,7 +66,7 @@ class CommandBuffer {
   Result SubmitAndReset(uint32_t timeout_ms);
 
  private:
-  VkDevice device_ = VK_NULL_HANDLE;
+  Device* device_ = nullptr;
   VkCommandPool pool_ = VK_NULL_HANDLE;
   VkQueue queue_ = VK_NULL_HANDLE;
   VkCommandBuffer command_ = VK_NULL_HANDLE;

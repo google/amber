@@ -16,6 +16,7 @@
 
 #include <limits>
 
+#include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
 
 namespace amber {
@@ -43,7 +44,7 @@ const VkImageCreateInfo kDefaultImageInfo = {
 
 }  // namespace
 
-Image::Image(VkDevice device,
+Image::Image(Device* device,
              VkFormat format,
              VkImageAspectFlags aspect,
              uint32_t x,
@@ -65,8 +66,10 @@ Result Image::Initialize(VkImageUsageFlags usage) {
 
   image_info_.usage = usage;
 
-  if (vkCreateImage(GetDevice(), &image_info_, nullptr, &image_) != VK_SUCCESS)
+  if (device_->GetPtrs()->vkCreateImage(device_->GetDevice(), &image_info_,
+                                        nullptr, &image_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateImage Fail");
+  }
 
   AllocateResult allocate_result = AllocateAndBindMemoryToVkImage(
       image_, &memory_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
@@ -105,8 +108,9 @@ Result Image::CreateVkImageView() {
       1,       /* layerCount */
   };
 
-  if (vkCreateImageView(GetDevice(), &image_view_info, nullptr, &view_) !=
-      VK_SUCCESS) {
+  if (device_->GetPtrs()->vkCreateImageView(device_->GetDevice(),
+                                            &image_view_info, nullptr,
+                                            &view_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateImageView Fail");
   }
 
@@ -114,14 +118,16 @@ Result Image::CreateVkImageView() {
 }
 
 void Image::Shutdown() {
-  if (view_ != VK_NULL_HANDLE)
-    vkDestroyImageView(GetDevice(), view_, nullptr);
+  if (view_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkDestroyImageView(device_->GetDevice(), view_,
+                                           nullptr);
+  }
 
   if (image_ != VK_NULL_HANDLE)
-    vkDestroyImage(GetDevice(), image_, nullptr);
+    device_->GetPtrs()->vkDestroyImage(device_->GetDevice(), image_, nullptr);
 
   if (memory_ != VK_NULL_HANDLE)
-    vkFreeMemory(GetDevice(), memory_, nullptr);
+    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_, nullptr);
 
   Resource::Shutdown();
 }
@@ -143,8 +149,9 @@ Result Image::CopyToHost(VkCommandBuffer command) {
   copy_region.imageExtent = {image_info_.extent.width,
                              image_info_.extent.height, 1};
 
-  vkCmdCopyImageToBuffer(command, image_, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                         GetHostAccessibleBuffer(), 1, &copy_region);
+  device_->GetPtrs()->vkCmdCopyImageToBuffer(
+      command, image_, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      GetHostAccessibleBuffer(), 1, &copy_region);
 
   MemoryBarrier(command);
   return {};
@@ -225,7 +232,8 @@ void Image::ChangeLayout(VkCommandBuffer command,
       break;
   }
 
-  vkCmdPipelineBarrier(command, from, to, 0, 0, NULL, 0, NULL, 1, &barrier);
+  device_->GetPtrs()->vkCmdPipelineBarrier(command, from, to, 0, 0, NULL, 0,
+                                           NULL, 1, &barrier);
 }
 
 }  // namespace vulkan

@@ -59,6 +59,7 @@ class VerifierTest : public testing::Test {
 TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
   ProbeCommand probe;
   probe.SetWholeWindow();
+  probe.SetProbeRect();
   probe.SetIsRGBA();
   probe.SetR(0.5f);
   probe.SetG(0.25f);
@@ -91,6 +92,7 @@ TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
 
 TEST_F(VerifierTest, ProbeFrameBufferRelative) {
   ProbeCommand probe;
+  probe.SetProbeRect();
   probe.SetRelative();
   probe.SetIsRGBA();
   probe.SetX(0.1f);
@@ -120,6 +122,7 @@ TEST_F(VerifierTest, ProbeFrameBufferRelative) {
 
 TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
   ProbeCommand probe;
+  probe.SetProbeRect();
   probe.SetRelative();
   probe.SetIsRGBA();
   probe.SetX(0.9f);
@@ -145,6 +148,7 @@ TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
 
 TEST_F(VerifierTest, ProbeFrameBuffer) {
   ProbeCommand probe;
+  probe.SetProbeRect();
   probe.SetIsRGBA();
   probe.SetX(1.0f);
   probe.SetY(2.0f);
@@ -555,9 +559,33 @@ TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
   EXPECT_TRUE(r.IsSuccess());
 }
 
+TEST_F(VerifierTest, ProbeFrameBufferNotRect) {
+  uint8_t frame_buffer[10][10][4] = {};
+
+  frame_buffer[2][1][0] = 128;
+  frame_buffer[2][1][1] = 64;
+  frame_buffer[2][1][2] = 51;
+  frame_buffer[2][1][3] = 204;
+
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(1.0f);
+  probe.SetY(2.0f);
+  probe.SetR(0.5f);
+  probe.SetG(0.25f);
+  probe.SetB(0.2f);
+  probe.SetA(0.8f);
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, GetColorFormat(), 4, 40, 10, 10,
+                            static_cast<const void*>(frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
 TEST_F(VerifierTest, ProbeFrameBufferRGB) {
   ProbeCommand probe;
   probe.SetWholeWindow();
+  probe.SetProbeRect();
   probe.SetR(0.5f);
   probe.SetG(0.25f);
   probe.SetB(0.2f);
@@ -589,6 +617,7 @@ TEST_F(VerifierTest, ProbeFrameBufferRGB) {
 TEST_F(VerifierTest, ProbeFrameBufferBadRowStride) {
   ProbeCommand probe;
   probe.SetWholeWindow();
+  probe.SetProbeRect();
 
   const uint8_t frame_buffer[4] = {128, 64, 51, 255};
 

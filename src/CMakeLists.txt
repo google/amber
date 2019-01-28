@@ -22,6 +22,7 @@ set(AMBER_SOURCES
     engine.cc
     executor.cc
     format.cc
+    format_parser.cc
     parser.cc
     pipeline.cc
     pipeline_data.cc
@@ -36,7 +37,6 @@ set(AMBER_SOURCES
     verifier.cc
     vkscript/command_parser.cc
     vkscript/datum_type_parser.cc
-    vkscript/format_parser.cc
     vkscript/parser.cc
     vkscript/section_parser.cc
 )
@@ -77,6 +77,7 @@ if (${AMBER_ENABLE_TESTS})
     buffer_test.cc
     command_data_test.cc
     executor_test.cc
+    format_parser_test.cc
     pipeline_test.cc
     result_test.cc
     script_test.cc
@@ -85,7 +86,6 @@ if (${AMBER_ENABLE_TESTS})
     verifier_test.cc
     vkscript/command_parser_test.cc
     vkscript/datum_type_parser_test.cc
-    vkscript/format_parser_test.cc
     vkscript/parser_test.cc
     vkscript/section_parser_test.cc
   )

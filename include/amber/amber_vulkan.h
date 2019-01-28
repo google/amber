@@ -26,6 +26,12 @@ namespace amber {
 
 /// Configuration for the Vulkan Engine.
 struct VulkanEngineConfig : public EngineConfig {
+  /// REQUIRED. The Vulkan instance procedure loader.
+  PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
+
+  /// The VkInstance to use.
+  VkInstance instance;
+
   /// The VkPhysicalDevice to use.
   VkPhysicalDevice physical_device;
 

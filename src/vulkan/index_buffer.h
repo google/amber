@@ -27,13 +27,15 @@
 namespace amber {
 namespace vulkan {
 
+class Device;
+
 // A class providing abstraction for index buffer. Only a single
 // instance of this class must exist as a member of GraphicsPipeline
 // class. It must be created once when
 // GraphicsPipeline::SetIndexBuffer() is called.
 class IndexBuffer {
  public:
-  explicit IndexBuffer(VkDevice device);
+  explicit IndexBuffer(Device* device);
   ~IndexBuffer();
 
   // Destroy |buffer_| if it is not nullptr.
@@ -50,7 +52,7 @@ class IndexBuffer {
   Result BindToCommandBuffer(VkCommandBuffer command);
 
  private:
-  VkDevice device_ = VK_NULL_HANDLE;
+  Device* device_ = nullptr;
   std::unique_ptr<Buffer> buffer_;
 };
 

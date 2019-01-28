@@ -51,62 +51,44 @@ VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
   return VK_SHADER_STAGE_FRAGMENT_BIT;
 }
 
-bool IsFormatSupportedByPhysicalDevice(BufferType type,
-                                       VkPhysicalDevice physical_device,
-                                       VkFormat format) {
-  VkFormatProperties properties = VkFormatProperties();
-  vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
-
-  VkFormatFeatureFlagBits flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
-  bool is_buffer_type_image = false;
-  switch (type) {
-    case BufferType::kColor:
-      flag = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
-      is_buffer_type_image = true;
-      break;
-    case BufferType::kDepth:
-      flag = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
-      is_buffer_type_image = true;
-      break;
-    case BufferType::kSampled:
-      flag = VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
-      is_buffer_type_image = true;
-      break;
-    case BufferType::kVertex:
-      flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
-      is_buffer_type_image = false;
-      break;
-    default:
-      return false;
-  }
-
-  return ((is_buffer_type_image ? properties.optimalTilingFeatures
-                                : properties.bufferFeatures) &
-          flag) == flag;
-}
-
-bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
-                             uint32_t descriptor_set) {
-  VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties();
-  vkGetPhysicalDeviceProperties(physical_device, &properties);
-  return properties.limits.maxBoundDescriptorSets > descriptor_set;
-}
-
 }  // namespace
 
 EngineVulkan::EngineVulkan() : Engine() {}
 
 EngineVulkan::~EngineVulkan() = default;
 
-Result EngineVulkan::InitDeviceAndCreateCommand(
-    const std::vector<Feature>& features,
-    const std::vector<std::string>& extensions) {
-  Result r = device_->Initialize(features, extensions);
+Result EngineVulkan::Initialize(EngineConfig* config,
+                                const std::vector<Feature>& features,
+                                const std::vector<std::string>& extensions) {
+  if (device_)
+    return Result("Vulkan::Initialize device_ already exists");
+
+  VulkanEngineConfig* vk_config = static_cast<VulkanEngineConfig*>(config);
+  if (!vk_config || vk_config->vkGetInstanceProcAddr == VK_NULL_HANDLE)
+    return Result("Vulkan::Initialize vkGetInstanceProcAddr must be provided.");
+
+  // If the device is provided, the physical_device and queue are also required.
+  if (vk_config->device != VK_NULL_HANDLE) {
+    if (vk_config->physical_device == VK_NULL_HANDLE)
+      return Result("Vulkan::Initialize physical device handle is null.");
+    if (vk_config->queue == VK_NULL_HANDLE)
+      return Result("Vulkan::Initialize queue handle is null.");
+
+    device_ = MakeUnique<Device>(
+        vk_config->instance, vk_config->physical_device,
+        vk_config->available_features, vk_config->available_extensions,
+        vk_config->queue_family_index, vk_config->device, vk_config->queue);
+  } else {
+    device_ = MakeUnique<Device>();
+  }
+
+  Result r = device_->Initialize(vk_config->vkGetInstanceProcAddr, features,
+                                 extensions);
   if (!r.IsSuccess())
     return r;
 
   if (!pool_) {
-    pool_ = MakeUnique<CommandPool>(device_->GetDevice());
+    pool_ = MakeUnique<CommandPool>(device_.get());
     r = pool_->Initialize(device_->GetQueueFamilyIndex());
     if (!r.IsSuccess())
       return r;
@@ -131,41 +113,6 @@ Result EngineVulkan::InitDeviceAndCreateCommand(
   return {};
 }
 
-Result EngineVulkan::Initialize(const std::vector<Feature>& features,
-                                const std::vector<std::string>& extensions) {
-  if (device_)
-    return Result("Vulkan::Set device_ already exists");
-
-  device_ = MakeUnique<Device>();
-  return InitDeviceAndCreateCommand(features, extensions);
-}
-
-Result EngineVulkan::InitializeWithConfig(
-    EngineConfig* config,
-    const std::vector<Feature>& features,
-    const std::vector<std::string>& extensions) {
-  if (device_)
-    return Result("Vulkan::Set device_ already exists");
-
-  VulkanEngineConfig* vk_config = static_cast<VulkanEngineConfig*>(config);
-  if (vk_config->physical_device == VK_NULL_HANDLE) {
-    return Result(
-        "Vulkan::InitializeWithConfig physical device handle is null.");
-  }
-
-  if (vk_config->device == VK_NULL_HANDLE)
-    return Result("Vulkan::InitializeWithConfig device handle is null.");
-
-  if (vk_config->queue == VK_NULL_HANDLE)
-    return Result("Vulkan::InitializeWithConfig queue handle is null.");
-
-  device_ = MakeUnique<Device>(
-      vk_config->physical_device, vk_config->available_features,
-      vk_config->available_extensions, vk_config->queue_family_index,
-      vk_config->device, vk_config->queue);
-  return InitDeviceAndCreateCommand(features, extensions);
-}
-
 Result EngineVulkan::Shutdown() {
   if (!device_)
     return {};
@@ -173,7 +120,7 @@ Result EngineVulkan::Shutdown() {
   for (auto it = modules_.begin(); it != modules_.end(); ++it) {
     auto vk_device = device_->GetDevice();
     if (vk_device != VK_NULL_HANDLE && it->second != VK_NULL_HANDLE)
-      vkDestroyShaderModule(vk_device, it->second, nullptr);
+      device_->GetPtrs()->vkDestroyShaderModule(vk_device, it->second, nullptr);
   }
 
   if (pipeline_)
@@ -194,7 +141,7 @@ Result EngineVulkan::CreatePipeline(PipelineType type) {
 
   if (type == PipelineType::kCompute) {
     pipeline_ = MakeUnique<ComputePipeline>(
-        device_->GetDevice(), device_->GetPhysicalDeviceProperties(),
+        device_.get(), device_->GetPhysicalDeviceProperties(),
         device_->GetPhysicalMemoryProperties(), engine_data.fence_timeout_ms,
         GetShaderStageInfo());
     return pipeline_->AsCompute()->Initialize(pool_->GetCommandPool(),
@@ -202,7 +149,7 @@ Result EngineVulkan::CreatePipeline(PipelineType type) {
   }
 
   pipeline_ = MakeUnique<GraphicsPipeline>(
-      device_->GetDevice(), device_->GetPhysicalDeviceProperties(),
+      device_.get(), device_->GetPhysicalDeviceProperties(),
       device_->GetPhysicalMemoryProperties(),
       ToVkFormat(color_frame_format_->GetFormatType()),
       ToVkFormat(depth_frame_format_->GetFormatType()),
@@ -225,8 +172,8 @@ Result EngineVulkan::SetShader(ShaderType type,
     return Result("Vulkan::Setting Duplicated Shader Types Fail");
 
   VkShaderModule shader;
-  if (vkCreateShaderModule(device_->GetDevice(), &info, nullptr, &shader) !=
-      VK_SUCCESS) {
+  if (device_->GetPtrs()->vkCreateShaderModule(
+          device_->GetDevice(), &info, nullptr, &shader) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateShaderModule Fail");
   }
 
@@ -280,7 +227,7 @@ Result EngineVulkan::SetBuffer(BufferType type,
 
   if (type == BufferType::kVertex) {
     if (!vertex_buffer_)
-      vertex_buffer_ = MakeUnique<VertexBuffer>(device_->GetDevice());
+      vertex_buffer_ = MakeUnique<VertexBuffer>(device_.get());
 
     pipeline_->AsGraphics()->SetVertexBuffer(location, format, values,
                                              vertex_buffer_.get());
@@ -370,7 +317,7 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   values[6].SetDoubleValue(static_cast<double>(x + width));
   values[7].SetDoubleValue(static_cast<double>(y));
 
-  auto vertex_buffer = MakeUnique<VertexBuffer>(device_->GetDevice());
+  auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
 
   r = graphics->SetVertexBuffer(0, format, values, vertex_buffer.get());
   if (!r.IsSuccess())
@@ -473,6 +420,50 @@ Result EngineVulkan::DoBuffer(const BufferCommand* command) {
   }
 
   return pipeline_->AddDescriptor(command);
+}
+
+bool EngineVulkan::IsFormatSupportedByPhysicalDevice(
+    BufferType type,
+    VkPhysicalDevice physical_device,
+    VkFormat format) {
+  VkFormatProperties properties = VkFormatProperties();
+  device_->GetPtrs()->vkGetPhysicalDeviceFormatProperties(physical_device,
+                                                          format, &properties);
+
+  VkFormatFeatureFlagBits flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
+  bool is_buffer_type_image = false;
+  switch (type) {
+    case BufferType::kColor:
+      flag = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
+      is_buffer_type_image = true;
+      break;
+    case BufferType::kDepth:
+      flag = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+      is_buffer_type_image = true;
+      break;
+    case BufferType::kSampled:
+      flag = VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
+      is_buffer_type_image = true;
+      break;
+    case BufferType::kVertex:
+      flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
+      is_buffer_type_image = false;
+      break;
+    default:
+      return false;
+  }
+
+  return ((is_buffer_type_image ? properties.optimalTilingFeatures
+                                : properties.bufferFeatures) &
+          flag) == flag;
+}
+
+bool EngineVulkan::IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
+                                           uint32_t descriptor_set) {
+  VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties();
+  device_->GetPtrs()->vkGetPhysicalDeviceProperties(physical_device,
+                                                    &properties);
+  return properties.limits.maxBoundDescriptorSets > descriptor_set;
 }
 
 }  // namespace vulkan

@@ -79,21 +79,14 @@ class Engine {
 
   virtual ~Engine();
 
-  /// Initialize the engine. The |features| list is a set of required features
-  /// for the device. The |extensions| list is a list of required extensions.
-  virtual Result Initialize(const std::vector<Feature>& features,
+  /// Initialize the engine with the provided config. The config is _not_ owned
+  /// by the engine and will not be destroyed. The |features| and |extensions|
+  /// are for validation purposes only. If possible the engine should verify
+  /// that the constraints in |features| and |extensions| are valid and fail
+  /// otherwise.
+  virtual Result Initialize(EngineConfig* config,
+                            const std::vector<Feature>& features,
                             const std::vector<std::string>& extensions) = 0;
-
-  /// Initialize the engine with the provided device. The device is _not_ owned
-  /// by the engine and should not be destroyed. The |features| and |extensions|
-  /// are passed into InitializeWithConfig for validation purposes only. If
-  /// possible the engine should verify the provided config specifies the
-  /// constraints in |features| and |extensions| and fail if those constrains
-  /// are not met.
-  virtual Result InitializeWithConfig(
-      EngineConfig* config,
-      const std::vector<Feature>& features,
-      const std::vector<std::string>& extensions) = 0;
 
   /// Shutdown the engine and cleanup any resources.
   virtual Result Shutdown() = 0;

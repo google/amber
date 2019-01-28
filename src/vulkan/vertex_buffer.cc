@@ -18,6 +18,7 @@
 #include <cstring>
 
 #include "src/make_unique.h"
+#include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
 
 namespace amber {
@@ -184,7 +185,7 @@ Result CopyBitsOfValueToBuffer(uint8_t* dst,
 
 }  // namespace
 
-VertexBuffer::VertexBuffer(VkDevice device) : device_(device) {}
+VertexBuffer::VertexBuffer(Device* device) : device_(device) {}
 
 VertexBuffer::~VertexBuffer() = default;
 
@@ -258,7 +259,7 @@ void VertexBuffer::BindToCommandBuffer(VkCommandBuffer command) {
   const VkDeviceSize offset = 0;
   const VkBuffer buffer = buffer_->GetVkBuffer();
   // TODO(jaebaek): Support multiple binding
-  vkCmdBindVertexBuffers(command, 0, 1, &buffer, &offset);
+  device_->GetPtrs()->vkCmdBindVertexBuffers(command, 0, 1, &buffer, &offset);
 }
 
 Result VertexBuffer::SendVertexData(

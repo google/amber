@@ -19,6 +19,7 @@
 
 #include "src/command.h"
 #include "src/make_unique.h"
+#include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
 
 namespace amber {
@@ -91,7 +92,7 @@ VkPrimitiveTopology ToVkTopology(Topology topology) {
 }  // namespace
 
 GraphicsPipeline::GraphicsPipeline(
-    VkDevice device,
+    Device* device,
     const VkPhysicalDeviceProperties& properties,
     const VkPhysicalDeviceMemoryProperties& memory_properties,
     VkFormat color_format,
@@ -155,8 +156,9 @@ Result GraphicsPipeline::CreateRenderPass() {
   render_pass_info.subpassCount = 1;
   render_pass_info.pSubpasses = &subpass_desc;
 
-  if (vkCreateRenderPass(device_, &render_pass_info, nullptr, &render_pass_) !=
-      VK_SUCCESS) {
+  if (device_->GetPtrs()->vkCreateRenderPass(device_->GetDevice(),
+                                             &render_pass_info, nullptr,
+                                             &render_pass_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateRenderPass Fail");
   }
 
@@ -307,8 +309,9 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   pipeline_info.renderPass = render_pass_;
   pipeline_info.subpass = 0;
 
-  if (vkCreateGraphicsPipelines(device_, VK_NULL_HANDLE, 1, &pipeline_info,
-                                nullptr, &pipeline_) != VK_SUCCESS) {
+  if (device_->GetPtrs()->vkCreateGraphicsPipelines(
+          device_->GetDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
+          &pipeline_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateGraphicsPipelines Fail");
   }
 
@@ -411,8 +414,9 @@ Result GraphicsPipeline::ActivateRenderPassIfNeeded() {
   render_begin_info.renderPass = render_pass_;
   render_begin_info.framebuffer = frame_->GetFrameBuffer();
   render_begin_info.renderArea = {{0, 0}, {frame_width_, frame_height_}};
-  vkCmdBeginRenderPass(command_->GetCommandBuffer(), &render_begin_info,
-                       VK_SUBPASS_CONTENTS_INLINE);
+  device_->GetPtrs()->vkCmdBeginRenderPass(command_->GetCommandBuffer(),
+                                           &render_begin_info,
+                                           VK_SUBPASS_CONTENTS_INLINE);
   render_pass_state_ = RenderPassState::kActive;
   return {};
 }
@@ -421,7 +425,7 @@ void GraphicsPipeline::DeactivateRenderPassIfNeeded() {
   if (render_pass_state_ == RenderPassState::kInactive)
     return;
 
-  vkCmdEndRenderPass(command_->GetCommandBuffer());
+  device_->GetPtrs()->vkCmdEndRenderPass(command_->GetCommandBuffer());
   render_pass_state_ = RenderPassState::kInactive;
 }
 
@@ -506,8 +510,8 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   clear_rect.baseArrayLayer = 0;
   clear_rect.layerCount = 1;
 
-  vkCmdClearAttachments(command_->GetCommandBuffer(), 1, &clear_attachment, 1,
-                        &clear_rect);
+  device_->GetPtrs()->vkCmdClearAttachments(command_->GetCommandBuffer(), 1,
+                                            &clear_attachment, 1, &clear_rect);
 
   DeactivateRenderPassIfNeeded();
 
@@ -533,7 +537,8 @@ Result GraphicsPipeline::ResetPipeline() {
     return r;
 
   if (pipeline_ != VK_NULL_HANDLE) {
-    vkDestroyPipeline(device_, pipeline_, nullptr);
+    device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline_,
+                                          nullptr);
     pipeline_ = VK_NULL_HANDLE;
   }
 
@@ -611,15 +616,17 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     // VkRunner spec says
     //   "vertexCount will be used as the index count, firstVertex
     //    becomes the vertex offset and firstIndex will always be zero."
-    vkCmdDrawIndexed(command_->GetCommandBuffer(),
-                     command->GetVertexCount(),      /* indexCount */
-                     instance_count,                 /* instanceCount */
-                     0,                              /* firstIndex */
-                     command->GetFirstVertexIndex(), /* vertexOffset */
-                     0 /* firstInstance */);
+    device_->GetPtrs()->vkCmdDrawIndexed(
+        command_->GetCommandBuffer(),
+        command->GetVertexCount(),      /* indexCount */
+        instance_count,                 /* instanceCount */
+        0,                              /* firstIndex */
+        command->GetFirstVertexIndex(), /* vertexOffset */
+        0 /* firstInstance */);
   } else {
-    vkCmdDraw(command_->GetCommandBuffer(), command->GetVertexCount(),
-              instance_count, command->GetFirstVertexIndex(), 0);
+    device_->GetPtrs()->vkCmdDraw(command_->GetCommandBuffer(),
+                                  command->GetVertexCount(), instance_count,
+                                  command->GetFirstVertexIndex(), 0);
   }
 
   DeactivateRenderPassIfNeeded();
@@ -646,8 +653,10 @@ void GraphicsPipeline::Shutdown() {
   Pipeline::Shutdown();
   frame_->Shutdown();
 
-  if (render_pass_ != VK_NULL_HANDLE)
-    vkDestroyRenderPass(device_, render_pass_, nullptr);
+  if (render_pass_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkDestroyRenderPass(device_->GetDevice(), render_pass_,
+                                            nullptr);
+  }
 }
 
 }  // namespace vulkan

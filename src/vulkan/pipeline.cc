@@ -24,6 +24,7 @@
 #include "src/make_unique.h"
 #include "src/vulkan/buffer_descriptor.h"
 #include "src/vulkan/compute_pipeline.h"
+#include "src/vulkan/device.h"
 #include "src/vulkan/graphics_pipeline.h"
 
 namespace amber {
@@ -36,7 +37,7 @@ const char* kDefaultEntryPointName = "main";
 
 Pipeline::Pipeline(
     PipelineType type,
-    VkDevice device,
+    Device* device,
     const VkPhysicalDeviceProperties& properties,
     const VkPhysicalDeviceMemoryProperties& memory_properties,
     uint32_t fence_timeout_ms,
@@ -60,7 +61,7 @@ ComputePipeline* Pipeline::AsCompute() {
 
 Result Pipeline::Initialize(VkCommandPool pool, VkQueue queue) {
   push_constant_ = MakeUnique<PushConstant>(
-      physical_device_properties_.limits.maxPushConstantsSize);
+      device_, physical_device_properties_.limits.maxPushConstantsSize);
 
   command_ = MakeUnique<CommandBuffer>(device_, pool, queue);
   return command_->Initialize();
@@ -80,14 +81,18 @@ void Pipeline::Shutdown() {
 
 void Pipeline::DestroyVkDescriptorAndPipelineRelatedObjects() {
   for (auto& info : descriptor_set_info_) {
-    if (info.layout != VK_NULL_HANDLE)
-      vkDestroyDescriptorSetLayout(device_, info.layout, nullptr);
+    if (info.layout != VK_NULL_HANDLE) {
+      device_->GetPtrs()->vkDestroyDescriptorSetLayout(device_->GetDevice(),
+                                                       info.layout, nullptr);
+    }
 
     if (info.empty)
       continue;
 
-    if (info.pool != VK_NULL_HANDLE)
-      vkDestroyDescriptorPool(device_, info.pool, nullptr);
+    if (info.pool != VK_NULL_HANDLE) {
+      device_->GetPtrs()->vkDestroyDescriptorPool(device_->GetDevice(),
+                                                  info.pool, nullptr);
+    }
 
     for (auto& desc : info.descriptors_) {
       if (desc)
@@ -100,12 +105,14 @@ void Pipeline::DestroyVkDescriptorAndPipelineRelatedObjects() {
 
 void Pipeline::ResetVkPipelineRelatedObjects() {
   if (pipeline_layout_ != VK_NULL_HANDLE) {
-    vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
+    device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetDevice(),
+                                                pipeline_layout_, nullptr);
     pipeline_layout_ = VK_NULL_HANDLE;
   }
 
   if (pipeline_ != VK_NULL_HANDLE) {
-    vkDestroyPipeline(device_, pipeline_, nullptr);
+    device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline_,
+                                          nullptr);
     pipeline_ = VK_NULL_HANDLE;
   }
 }
@@ -129,8 +136,9 @@ Result Pipeline::CreateDescriptorSetLayouts() {
     desc_info.bindingCount = static_cast<uint32_t>(bindings.size());
     desc_info.pBindings = bindings.data();
 
-    if (vkCreateDescriptorSetLayout(device_, &desc_info, nullptr,
-                                    &info.layout) != VK_SUCCESS) {
+    if (device_->GetPtrs()->vkCreateDescriptorSetLayout(
+            device_->GetDevice(), &desc_info, nullptr, &info.layout) !=
+        VK_SUCCESS) {
       return Result("Vulkan::Calling vkCreateDescriptorSetLayout Fail");
     }
   }
@@ -166,8 +174,9 @@ Result Pipeline::CreateDescriptorPools() {
     pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
     pool_info.pPoolSizes = pool_sizes.data();
 
-    if (vkCreateDescriptorPool(device_, &pool_info, nullptr, &info.pool) !=
-        VK_SUCCESS) {
+    if (device_->GetPtrs()->vkCreateDescriptorPool(device_->GetDevice(),
+                                                   &pool_info, nullptr,
+                                                   &info.pool) != VK_SUCCESS) {
       return Result("Vulkan::Calling vkCreateDescriptorPool Fail");
     }
   }
@@ -187,8 +196,8 @@ Result Pipeline::CreateDescriptorSets() {
     desc_set_info.pSetLayouts = &descriptor_set_info_[i].layout;
 
     VkDescriptorSet desc_set = VK_NULL_HANDLE;
-    if (vkAllocateDescriptorSets(device_, &desc_set_info, &desc_set) !=
-        VK_SUCCESS) {
+    if (device_->GetPtrs()->vkAllocateDescriptorSets(
+            device_->GetDevice(), &desc_set_info, &desc_set) != VK_SUCCESS) {
       return Result("Vulkan::Calling vkAllocateDescriptorSets Fail");
     }
     descriptor_set_info_[i].vk_desc_set = desc_set;
@@ -215,8 +224,9 @@ Result Pipeline::CreatePipelineLayout() {
     pipeline_layout_info.pPushConstantRanges = &push_const_range;
   }
 
-  if (vkCreatePipelineLayout(device_, &pipeline_layout_info, nullptr,
-                             &pipeline_layout_) != VK_SUCCESS) {
+  if (device_->GetPtrs()->vkCreatePipelineLayout(
+          device_->GetDevice(), &pipeline_layout_info, nullptr,
+          &pipeline_layout_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreatePipelineLayout Fail");
   }
 
@@ -398,19 +408,21 @@ void Pipeline::BindVkDescriptorSets() {
     if (descriptor_set_info_[i].empty)
       continue;
 
-    vkCmdBindDescriptorSets(command_->GetCommandBuffer(),
-                            IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                                         : VK_PIPELINE_BIND_POINT_COMPUTE,
-                            pipeline_layout_, static_cast<uint32_t>(i), 1,
-                            &descriptor_set_info_[i].vk_desc_set, 0, nullptr);
+    device_->GetPtrs()->vkCmdBindDescriptorSets(
+        command_->GetCommandBuffer(),
+        IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                     : VK_PIPELINE_BIND_POINT_COMPUTE,
+        pipeline_layout_, static_cast<uint32_t>(i), 1,
+        &descriptor_set_info_[i].vk_desc_set, 0, nullptr);
   }
 }
 
 void Pipeline::BindVkPipeline() {
-  vkCmdBindPipeline(command_->GetCommandBuffer(),
-                    IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                                 : VK_PIPELINE_BIND_POINT_COMPUTE,
-                    pipeline_);
+  device_->GetPtrs()->vkCmdBindPipeline(command_->GetCommandBuffer(),
+                                        IsGraphics()
+                                            ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                                            : VK_PIPELINE_BIND_POINT_COMPUTE,
+                                        pipeline_);
 }
 
 Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
