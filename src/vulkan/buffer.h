@@ -48,7 +48,7 @@ class Buffer : public Resource {
   // Since |buffer_| is mapped to host accessible and host coherent
   // memory |memory_|, this method only conducts memory barrier to
   // make it available to device domain.
-  Result CopyToDevice(VkCommandBuffer command);
+  virtual Result CopyToDevice(VkCommandBuffer command);
 
   // Resource
   VkDeviceMemory GetHostAccessMemory() const override { return memory_; }

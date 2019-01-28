@@ -1,4 +1,4 @@
-# Copyright 2018 The Amber Authors.
+# Copyright 2019 The Amber Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+[require]
+framebuffer R8G8B8A8_SRGB
 
 [vertex shader]
 #version 430
@@ -80,6 +83,10 @@ void main() {
 
 [test]
 clear
+
+# R8G8B8A8_SRGB has only 256 slots and it has complicated computation
+# e.g., exponential. It needs enough tolerance.
+tolerance 0.8%
 
 draw arrays TRIANGLE_LIST 0 6
 relative probe rect rgb (0.0, 0.0, 1.0, 1.0) (1.0, 0, 0)

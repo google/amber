@@ -54,7 +54,7 @@ Result Executor::Execute(Engine* engine,
   // Handle Image and Depth buffers early so they are available when we call
   // the CreatePipeline method.
   for (const auto& buf : script->GetBuffers()) {
-    // Image and depth are handled earler. They will be moved to the pipeline
+    // Image and depth are handled earlier. They will be moved to the pipeline
     // object when it exists.
     if (buf->GetBufferType() != BufferType::kColor &&
         buf->GetBufferType() != BufferType::kDepth) {
@@ -76,7 +76,7 @@ Result Executor::Execute(Engine* engine,
 
   // Process Buffers
   for (const auto& buf : script->GetBuffers()) {
-    // Image and depth are handled earler. They will be moved to the pipeline
+    // Image and depth are handled earlier. They will be moved to the pipeline
     // object when it exists.
     if (buf->GetBufferType() == BufferType::kColor ||
         buf->GetBufferType() == BufferType::kDepth) {
@@ -108,7 +108,8 @@ Result Executor::Execute(Engine* engine,
         return r;
       assert(info.cpu_memory != nullptr);
 
-      r = verifier_.Probe(cmd->AsProbe(), info.image_info.texel_stride,
+      r = verifier_.Probe(cmd->AsProbe(), info.image_info.texel_format,
+                          info.image_info.texel_stride,
                           info.image_info.row_stride, info.image_info.width,
                           info.image_info.height, info.cpu_memory);
     } else if (cmd->IsProbeSSBO()) {

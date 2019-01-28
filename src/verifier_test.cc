@@ -20,12 +20,41 @@
 #include "gtest/gtest.h"
 #include "src/command.h"
 #include "src/datum_type.h"
+#include "src/make_unique.h"
 #include "src/value.h"
 #include "src/verifier.h"
 
 namespace amber {
+namespace {
 
-using VerifierTest = testing::Test;
+class VerifierTest : public testing::Test {
+ public:
+  VerifierTest() = default;
+  ~VerifierTest() = default;
+
+  const Format* GetColorFormat() {
+    if (color_frame_format_)
+      return color_frame_format_.get();
+
+    // Set VK_FORMAT_R8G8B8A8_UNORM for color frame buffer.
+    color_frame_format_ = MakeUnique<Format>();
+    color_frame_format_->SetFormatType(FormatType::kB8G8R8A8_UNORM);
+    color_frame_format_->AddComponent(FormatComponentType::kR,
+                                      FormatMode::kUNorm, 8);
+    color_frame_format_->AddComponent(FormatComponentType::kG,
+                                      FormatMode::kUNorm, 8);
+    color_frame_format_->AddComponent(FormatComponentType::kB,
+                                      FormatMode::kUNorm, 8);
+    color_frame_format_->AddComponent(FormatComponentType::kA,
+                                      FormatMode::kUNorm, 8);
+    return color_frame_format_.get();
+  }
+
+ private:
+  std::unique_ptr<Format> color_frame_format_;
+};
+
+}  // namespace
 
 TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
   ProbeCommand probe;
@@ -56,7 +85,7 @@ TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
   };
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, 4, 12, 3, 3,
+  Result r = verifier.Probe(&probe, GetColorFormat(), 4, 12, 3, 3,
                             static_cast<const void*>(frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
@@ -86,7 +115,7 @@ TEST_F(VerifierTest, ProbeFrameBufferRelative) {
   }
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, 4, 40, 10, 10,
+  Result r = verifier.Probe(&probe, GetColorFormat(), 4, 40, 10, 10,
                             static_cast<const void*>(frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
@@ -108,13 +137,13 @@ TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
   uint8_t frame_buffer[250][250][4] = {};
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, 4, 1000, 250, 250,
+  Result r = verifier.Probe(&probe, GetColorFormat(), 4, 1000, 250, 250,
                             static_cast<const void*>(frame_buffer));
-  EXPECT_STREQ(
+  EXPECT_EQ(
       "Line 1: Probe failed at: 225, 225\n  Expected RGBA: 25.500000, "
-      "0.000000, 0.000000, 0.000000\n  Actual RGBA: 0, 0, 0, 0\nProbe failed "
-      "in 625 pixels",
-      r.Error().c_str());
+      "0.000000, 0.000000, 0.000000\n  Actual RGBA: 0.000000, 0.000000, "
+      "0.000000, 0.000000\nProbe failed in 625 pixels",
+      r.Error());
 }
 
 TEST_F(VerifierTest, ProbeFrameBuffer) {
@@ -141,8 +170,392 @@ TEST_F(VerifierTest, ProbeFrameBuffer) {
   }
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, 4, 40, 10, 10,
+  Result r = verifier.Probe(&probe, GetColorFormat(), 4, 40, 10, 10,
                             static_cast<const void*>(frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeFrameBufferUInt8) {
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+  probe.SetR(255);
+  probe.SetG(14);
+  probe.SetB(75);
+  probe.SetA(8);
+
+  uint8_t frame_buffer[4] = {255, 14, 75, 8};
+
+  Format format;
+  format.SetFormatType(FormatType::kR8G8B8A8_UINT);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kUInt, 8);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kUInt, 8);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kUInt, 8);
+  format.AddComponent(FormatComponentType::kA, FormatMode::kUInt, 8);
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, &format,
+                            4 * static_cast<uint32_t>(sizeof(uint8_t)),
+                            4 * static_cast<uint32_t>(sizeof(uint8_t)), 1, 1,
+                            static_cast<const void*>(&frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeFrameBufferUInt16) {
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+  probe.SetR(65535);
+  probe.SetG(14);
+  probe.SetB(1875);
+  probe.SetA(8);
+
+  uint16_t frame_buffer[4] = {65535, 14, 1875, 8};
+
+  Format format;
+  format.SetFormatType(FormatType::kR16G16B16A16_UINT);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kUInt, 16);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kUInt, 16);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kUInt, 16);
+  format.AddComponent(FormatComponentType::kA, FormatMode::kUInt, 16);
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, &format,
+                            4 * static_cast<uint32_t>(sizeof(uint16_t)),
+                            4 * static_cast<uint32_t>(sizeof(uint16_t)), 1, 1,
+                            static_cast<const void*>(&frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeFrameBufferUInt32) {
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+  probe.SetR(6);
+  probe.SetG(14);
+  probe.SetB(1171875);
+  probe.SetA(8);
+
+  uint32_t frame_buffer[4] = {6, 14, 1171875, 8};
+
+  Format format;
+  format.SetFormatType(FormatType::kR32G32B32A32_UINT);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kUInt, 32);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kUInt, 32);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kUInt, 32);
+  format.AddComponent(FormatComponentType::kA, FormatMode::kUInt, 32);
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, &format,
+                            4 * static_cast<uint32_t>(sizeof(uint32_t)),
+                            4 * static_cast<uint32_t>(sizeof(uint32_t)), 1, 1,
+                            static_cast<const void*>(&frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeFrameBufferUInt64) {
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+  probe.SetR(6);
+  probe.SetG(14);
+  probe.SetB(1171875);
+  probe.SetA(8);
+
+  uint64_t frame_buffer[4] = {6, 14, 1171875, 8};
+
+  Format format;
+  format.SetFormatType(FormatType::kR64G64B64A64_UINT);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kUInt, 64);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kUInt, 64);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kUInt, 64);
+  format.AddComponent(FormatComponentType::kA, FormatMode::kUInt, 64);
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, &format,
+                            4 * static_cast<uint32_t>(sizeof(uint64_t)),
+                            4 * static_cast<uint32_t>(sizeof(uint64_t)), 1, 1,
+                            static_cast<const void*>(&frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeFrameBufferSInt8) {
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+  probe.SetR(-6);
+  probe.SetG(14);
+  probe.SetB(75);
+  probe.SetA(8);
+
+  int8_t frame_buffer[4] = {-6, 14, 75, 8};
+
+  Format format;
+  format.SetFormatType(FormatType::kR8G8B8A8_SINT);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kSInt, 8);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kSInt, 8);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kSInt, 8);
+  format.AddComponent(FormatComponentType::kA, FormatMode::kSInt, 8);
+
+  Verifier verifier;
+  Result r =
+      verifier.Probe(&probe, &format, 4 * static_cast<uint32_t>(sizeof(int8_t)),
+                     4 * static_cast<uint32_t>(sizeof(int8_t)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeFrameBufferSInt16) {
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+  probe.SetR(-6);
+  probe.SetG(14);
+  probe.SetB(1875);
+  probe.SetA(8);
+
+  int16_t frame_buffer[4] = {-6, 14, 1875, 8};
+
+  Format format;
+  format.SetFormatType(FormatType::kR16G16B16A16_SINT);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kSInt, 16);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kSInt, 16);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kSInt, 16);
+  format.AddComponent(FormatComponentType::kA, FormatMode::kSInt, 16);
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, &format,
+                            4 * static_cast<uint32_t>(sizeof(int16_t)),
+                            4 * static_cast<uint32_t>(sizeof(int16_t)), 1, 1,
+                            static_cast<const void*>(&frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeFrameBufferSInt32) {
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+  probe.SetR(-6);
+  probe.SetG(14);
+  probe.SetB(1171875);
+  probe.SetA(8);
+
+  int32_t frame_buffer[4] = {-6, 14, 1171875, 8};
+
+  Format format;
+  format.SetFormatType(FormatType::kR32G32B32A32_SINT);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kSInt, 32);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kSInt, 32);
+  format.AddComponent(FormatComponentType::kA, FormatMode::kSInt, 32);
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, &format,
+                            4 * static_cast<uint32_t>(sizeof(int32_t)),
+                            4 * static_cast<uint32_t>(sizeof(int32_t)), 1, 1,
+                            static_cast<const void*>(&frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeFrameBufferSInt64) {
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+  probe.SetR(-6);
+  probe.SetG(14);
+  probe.SetB(1171875);
+  probe.SetA(8);
+
+  int64_t frame_buffer[4] = {-6, 14, 1171875, 8};
+
+  Format format;
+  format.SetFormatType(FormatType::kR64G64B64A64_SINT);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kSInt, 64);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kSInt, 64);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kSInt, 64);
+  format.AddComponent(FormatComponentType::kA, FormatMode::kSInt, 64);
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, &format,
+                            4 * static_cast<uint32_t>(sizeof(int64_t)),
+                            4 * static_cast<uint32_t>(sizeof(int64_t)), 1, 1,
+                            static_cast<const void*>(&frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeFrameBufferFloat32) {
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+  probe.SetR(-6.0f);
+  probe.SetG(14.0f);
+  probe.SetB(0.1171875f);
+  probe.SetA(0.8f);
+
+  float frame_buffer[4] = {-6.0f, 14.0f, 0.1171875f, 0.8f};
+
+  Format format;
+  format.SetFormatType(FormatType::kR32G32B32A32_SFLOAT);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 32);
+  format.AddComponent(FormatComponentType::kA, FormatMode::kSFloat, 32);
+
+  Verifier verifier;
+  Result r =
+      verifier.Probe(&probe, &format, 4 * static_cast<uint32_t>(sizeof(float)),
+                     4 * static_cast<uint32_t>(sizeof(float)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, ProbeFrameBufferFloat64) {
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+  probe.SetR(-6.0f);
+  probe.SetG(14.0f);
+  probe.SetB(0.1171875f);
+  probe.SetA(0.8f);
+
+  double frame_buffer[4] = {-6.0, 14.0, 0.1171875, 0.8};
+
+  Format format;
+  format.SetFormatType(FormatType::kR64G64B64A64_SFLOAT);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 64);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 64);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 64);
+  format.AddComponent(FormatComponentType::kA, FormatMode::kSFloat, 64);
+
+  Verifier verifier;
+  Result r =
+      verifier.Probe(&probe, &format, 4 * static_cast<uint32_t>(sizeof(double)),
+                     4 * static_cast<uint32_t>(sizeof(double)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
+  ProbeCommand probe;
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+
+  uint64_t frame_buffer = 0;
+
+  // 16 bits float to float
+  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
+  //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
+  frame_buffer = 50688ULL;
+  probe.SetR(-6.0f);
+
+  // 11 bits float to float
+  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
+  //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
+  frame_buffer |= 1200ULL << 16ULL;
+  probe.SetG(14.0f);
+
+  // 10 bits float to float
+  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
+  //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4
+  //                                                 = 0.1171875
+  frame_buffer |= 380ULL << (16ULL + 11ULL);
+  probe.SetB(0.1171875f);
+
+  Format format;
+  format.SetFormatType(FormatType::kB8G8R8A8_UNORM);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 16);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kUFloat, 11);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kUFloat, 10);
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
+                            static_cast<const void*>(&frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
+  ProbeCommand probe;
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+
+  uint64_t frame_buffer = 0;
+
+  // 11 bits float to float
+  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
+  //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
+  frame_buffer = 1200ULL;
+  probe.SetR(14.0f);
+
+  // 16 bits float to float
+  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
+  //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
+  frame_buffer |= 50688ULL << 11ULL;
+  probe.SetG(-6.0f);
+
+  // 10 bits float to float
+  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
+  //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4
+  //                                                 = 0.1171875
+  frame_buffer |= 380ULL << (16ULL + 11ULL);
+  probe.SetB(0.1171875f);
+
+  Format format;
+  format.SetFormatType(FormatType::kB8G8R8A8_UNORM);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 11);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kUFloat, 16);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kUFloat, 10);
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
+                            static_cast<const void*>(&frame_buffer));
+  EXPECT_TRUE(r.IsSuccess());
+}
+
+TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
+  ProbeCommand probe;
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+
+  uint64_t frame_buffer = 0;
+
+  // 10 bits float to float
+  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
+  //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4
+  //                                                 = 0.1171875
+  frame_buffer = 380ULL;
+  probe.SetR(0.1171875f);
+
+  // 11 bits float to float
+  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
+  //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
+  frame_buffer |= 1200ULL << 10ULL;
+  probe.SetG(14.0f);
+
+  // 16 bits float to float
+  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
+  //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
+  frame_buffer |= 50688ULL << (10ULL + 11ULL);
+  probe.SetB(-6.0f);
+
+  Format format;
+  format.SetFormatType(FormatType::kB8G8R8A8_UNORM);
+  format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 10);
+  format.AddComponent(FormatComponentType::kG, FormatMode::kUFloat, 11);
+  format.AddComponent(FormatComponentType::kB, FormatMode::kUFloat, 16);
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
+                            static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -164,7 +577,7 @@ TEST_F(VerifierTest, ProbeFrameBufferNotRect) {
   probe.SetA(0.8f);
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, 4, 40, 10, 10,
+  Result r = verifier.Probe(&probe, GetColorFormat(), 4, 40, 10, 10,
                             static_cast<const void*>(frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
@@ -196,7 +609,7 @@ TEST_F(VerifierTest, ProbeFrameBufferRGB) {
   };
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, 4, 12, 3, 3,
+  Result r = verifier.Probe(&probe, GetColorFormat(), 4, 12, 3, 3,
                             static_cast<const void*>(frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
@@ -209,13 +622,13 @@ TEST_F(VerifierTest, ProbeFrameBufferBadRowStride) {
   const uint8_t frame_buffer[4] = {128, 64, 51, 255};
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, 4, 3, 1, 1,
+  Result r = verifier.Probe(&probe, GetColorFormat(), 4, 3, 1, 1,
                             static_cast<const void*>(frame_buffer));
   EXPECT_FALSE(r.IsSuccess());
-  EXPECT_STREQ(
+  EXPECT_EQ(
       "Line 1: Verifier::Probe Row stride of 3 is too small for 1 texels of 4 "
       "bytes each",
-      r.Error().c_str());
+      r.Error());
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint8Single) {

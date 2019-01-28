@@ -15,8 +15,11 @@
 #ifndef SRC_VERIFIER_H_
 #define SRC_VERIFIER_H_
 
+#include <vector>
+
 #include "amber/result.h"
 #include "src/command.h"
+#include "src/format.h"
 
 namespace amber {
 
@@ -30,6 +33,7 @@ class Verifier {
   /// Check |command| against |buf|. The result will be success if the probe
   /// passes correctly.
   Result Probe(const ProbeCommand* command,
+               const Format* texel_format,
                uint32_t texel_stride,
                uint32_t row_stride,
                uint32_t frame_width,

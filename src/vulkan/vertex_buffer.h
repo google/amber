@@ -67,8 +67,11 @@ class VertexBuffer {
 
   void BindToCommandBuffer(VkCommandBuffer command);
 
+  // Must be used only for unit tests.
+  void SetBufferForTest(std::unique_ptr<Buffer> buffer);
+
  private:
-  void FillVertexBufferWithData(VkCommandBuffer command);
+  Result FillVertexBufferWithData(VkCommandBuffer command);
 
   // Return |stride_in_bytes_| rounded up by 4.
   uint32_t Get4BytesAlignedStride() const {
