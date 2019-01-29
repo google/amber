@@ -52,8 +52,8 @@ Result FrameBuffer::Initialize(
     depth_image_ = MakeUnique<Image>(
         device_, depth_format,
         VkFormatHasStencilComponent(depth_format)
-            ? VK_IMAGE_ASPECT_DEPTH_BIT
-            : VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
+            ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+            : VK_IMAGE_ASPECT_DEPTH_BIT,
         width_, height_, depth_, properties);
     Result r =
         depth_image_->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
@@ -109,7 +109,7 @@ Result FrameBuffer::ChangeFrameImageLayout(VkCommandBuffer command,
       depth_image_->ChangeLayout(
           command, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+          VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
           VK_PIPELINE_STAGE_TRANSFER_BIT);
     }
 
@@ -134,7 +134,7 @@ Result FrameBuffer::ChangeFrameImageLayout(VkCommandBuffer command,
   if (depth_image_) {
     depth_image_->ChangeLayout(
         command, old_layout, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        source_stage, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        source_stage, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
   }
   frame_image_layout_ = FrameImageState::kClearOrDraw;
   return {};
