@@ -19,10 +19,10 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "amber/value.h"
 #include "amber/vulkan_header.h"
 #include "src/buffer_data.h"
 #include "src/format.h"
-#include "src/value.h"
 #include "src/vulkan/frame_buffer.h"
 #include "src/vulkan/index_buffer.h"
 #include "src/vulkan/pipeline.h"
@@ -76,6 +76,10 @@ class GraphicsPipeline : public Pipeline {
   uint32_t GetWidth() const { return frame_width_; }
   uint32_t GetHeight() const { return frame_height_; }
 
+  void SetPatchControlPoints(uint32_t points) {
+    patch_control_points_ = points;
+  }
+
   // Pipeline
   void Shutdown() override;
   Result ProcessCommands() override;
@@ -123,6 +127,7 @@ class GraphicsPipeline : public Pipeline {
   float clear_color_a_ = 0;
   uint32_t clear_stencil_ = 0;
   float clear_depth_ = 1.0f;
+  uint32_t patch_control_points_ = 3;
 };
 
 }  // namespace vulkan

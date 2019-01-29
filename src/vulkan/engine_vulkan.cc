@@ -371,8 +371,12 @@ Result EngineVulkan::DoEntryPoint(const EntryPointCommand* command) {
 }
 
 Result EngineVulkan::DoPatchParameterVertices(
-    const PatchParameterVerticesCommand*) {
-  return Result("Vulkan::DoPatch Not Implemented");
+    const PatchParameterVerticesCommand* cmd) {
+  if (!pipeline_->IsGraphics())
+    return Result("Vulkan::DoPatchParameterVertices for Non-Graphics Pipeline");
+
+  pipeline_->AsGraphics()->SetPatchControlPoints(cmd->GetControlPointCount());
+  return {};
 }
 
 Result EngineVulkan::DoProcessCommands() {
@@ -401,6 +405,37 @@ Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
   info->image_info.row_stride = row_stride;
   info->size_in_bytes = row_stride * frame->GetHeight();
   info->cpu_memory = frame->GetColorBufferPtr();
+
+  return {};
+}
+
+Result EngineVulkan::GetFrameBuffer(std::vector<Value>* values) {
+  values->resize(0);
+
+  ResourceInfo info;
+  GetFrameBufferInfo(&info);
+  if (info.type != ResourceInfoType::kImage) {
+    return Result(
+        "Vulkan:GetFrameBuffer() is invalid for non-image framebuffer");
+  }
+
+  // TODO(jaebaek): Support other formats
+  assert(color_frame_format_->GetFormatType() == FormatType::kR8G8B8A8_UINT);
+
+  Value pixel;
+
+  const uint8_t* cpu_memory = static_cast<const uint8_t*>(info.cpu_memory);
+  const uint32_t row_stride = info.image_info.row_stride;
+  const uint32_t texel_stride = info.image_info.texel_stride;
+
+  for (uint32_t y = 0; y < info.image_info.height; ++y) {
+    for (uint32_t x = 0; x < info.image_info.width; ++x) {
+      const uint8_t* ptr_8 = cpu_memory + (row_stride * y) + (texel_stride * x);
+      const uint32_t* ptr_32 = reinterpret_cast<const uint32_t*>(ptr_8);
+      pixel.SetIntValue(*ptr_32);
+      values->push_back(pixel);
+    }
+  }
 
   return {};
 }

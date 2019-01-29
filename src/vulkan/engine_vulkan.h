@@ -60,6 +60,7 @@ class EngineVulkan : public Engine {
   Result DoBuffer(const BufferCommand* cmd) override;
   Result DoProcessCommands() override;
   Result GetFrameBufferInfo(ResourceInfo* info) override;
+  Result GetFrameBuffer(std::vector<Value>* values) override;
   Result GetDescriptorInfo(const uint32_t descriptor_set,
                            const uint32_t binding,
                            ResourceInfo* info) override;
