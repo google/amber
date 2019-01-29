@@ -180,14 +180,16 @@ A `pipeline` can have buffers bound. This includes buffers to contain image
 attachment content, depth/stencil content, uniform buffers, etc.
 
 ```
-  # Attach |buffer_name| as an output colour attachment at location |idx|.
-  # The provided buffer must be a `FORMAT` buffer. If no colour attachments are
-  # provided a single attachment with format `R8G8B8A8_UINT` will be created.
+  # Attach |buffer_name| as an output color attachment at location |idx|.
+  # The provided buffer must be a `FORMAT` buffer. If no color attachments are
+  # provided a single attachment with format `R8G8B8A8_UINT` will be created
+  # for graphics pipelines.
   BIND BUFFER <buffer_name> AS color LOCATION <idx>
 
   # Attach |buffer_name| as the depth/stencil buffer. The provided buffer must
   # be a `FORMAT` buffer. If no depth/stencil buffer is specified a default
-  # buffer of format `D32_SFLOAT_S8_UINT` will be created.
+  # buffer of format `D32_SFLOAT_S8_UINT` will be created for graphics
+  # pipelines.
   BIND BUFFER <buffer_name> AS depth_stencil
 
   # Bind the buffer of the given |buffer_type| at the given descriptor set
@@ -284,8 +286,8 @@ RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology> \
 
 ### Commands
 ```
-# Sets the clear colour to use for |pipeline| which must be a `graphics`
-# pipeline. The colours are integers from 0 - 255.
+# Sets the clear color to use for |pipeline| which must be a `graphics`
+# pipeline. The colors are integers from 0 - 255.
 # TODO(dsinclair): Do we need to allow different types here to handle different
 #                  buffer formats?
 CLEAR_COLOR <pipeline> <r (0 - 255)> <g (0 - 255)> <b (0 - 255)> <a (0 - 255)>
