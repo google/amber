@@ -140,10 +140,10 @@ Result Image::CopyToHost(VkCommandBuffer command) {
   copy_region.bufferRowLength = 0;
   copy_region.bufferImageHeight = 0;
   copy_region.imageSubresource = {
-      VK_IMAGE_ASPECT_COLOR_BIT, /* aspectMask */
-      0,                         /* mipLevel */
-      0,                         /* baseArrayLayer */
-      1,                         /* layerCount */
+      aspect_, /* aspectMask */
+      0,       /* mipLevel */
+      0,       /* baseArrayLayer */
+      1,       /* layerCount */
   };
   copy_region.imageOffset = {0, 0, 0};
   copy_region.imageExtent = {image_info_.extent.width,
@@ -170,11 +170,11 @@ void Image::ChangeLayout(VkCommandBuffer command,
   barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.image = image_;
   barrier.subresourceRange = {
-      VK_IMAGE_ASPECT_COLOR_BIT, /* aspectMask */
-      0,                         /* baseMipLevel */
-      1,                         /* levelCount */
-      0,                         /* baseArrayLayer */
-      1,                         /* layerCount */
+      aspect_, /* aspectMask */
+      0,       /* baseMipLevel */
+      1,       /* levelCount */
+      0,       /* baseArrayLayer */
+      1,       /* layerCount */
   };
 
   switch (old_layout) {
