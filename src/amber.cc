@@ -48,13 +48,13 @@ amber::Result Amber::Parse(const std::string& input, amber::Recipe* recipe) {
   return {};
 }
 
-amber::Result Amber::Execute(const amber::Recipe* recipe, const Options& opts) {
+amber::Result Amber::Execute(const amber::Recipe* recipe, Options* opts) {
   ShaderMap map;
   return ExecuteWithShaderData(recipe, opts, map);
 }
 
 amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
-                                           const Options& opts,
+                                           Options* opts,
                                            const ShaderMap& shader_data) {
   if (!recipe)
     return Result("Attempting to execute and invalid recipe");
@@ -63,11 +63,11 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   if (!script)
     return Result("Recipe must contain a parsed script");
 
-  auto engine = Engine::Create(opts.engine);
+  auto engine = Engine::Create(opts->engine);
   if (!engine)
     return Result("Failed to create engine");
 
-  Result r = engine->Initialize(opts.config, script->RequiredFeatures(),
+  Result r = engine->Initialize(opts->config, script->RequiredFeatures(),
                                 script->RequiredExtensions());
   if (!r.IsSuccess())
     return r;
@@ -78,6 +78,24 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
     // Clean up Vulkan/Dawn objects
     engine->Shutdown();
     return r;
+  }
+
+  for (BufferInfo& buffer_info : opts->extractions) {
+    if (buffer_info.buffer_name == "framebuffer") {
+      ResourceInfo info;
+      r = engine->GetFrameBufferInfo(&info);
+      if (!r.IsSuccess()) {
+        engine->Shutdown();
+        return r;
+      }
+      buffer_info.width = info.image_info.width;
+      buffer_info.height = info.image_info.height;
+      r = engine->GetFrameBuffer(&(buffer_info.values));
+      if (!r.IsSuccess()) {
+        engine->Shutdown();
+        return r;
+      }
+    }
   }
 
   return engine->Shutdown();

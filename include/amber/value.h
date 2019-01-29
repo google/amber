@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VALUE_H_
-#define SRC_VALUE_H_
+#ifndef AMBER_VALUE_H_
+#define AMBER_VALUE_H_
 
 #include <cstdint>
 
@@ -61,4 +61,4 @@ class Value {
 
 }  // namespace amber
 
-#endif  // SRC_VALUE_H_
+#endif  // AMBER_VALUE_H_

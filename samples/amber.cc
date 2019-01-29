@@ -14,6 +14,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <set>
 #include <utility>
@@ -22,6 +23,7 @@
 #include "amber/amber.h"
 #include "amber/recipe.h"
 #include "samples/config_helper.h"
+#include "samples/ppm.h"
 #include "src/build-versions.h"
 #include "src/make_unique.h"
 
@@ -247,26 +249,51 @@ int main(int argc, const char** argv) {
 
   amber_options.config = config.get();
 
+  if (!options.buffer_filename.empty()) {
+    // TODO(dsinclair): Write buffer file
+    assert(false);
+  }
+
+  if (!options.image_filename.empty()) {
+    amber::BufferInfo buffer_info;
+    buffer_info.buffer_name = "framebuffer";
+    amber_options.extractions.push_back(buffer_info);
+  }
+
   for (const auto& recipe_data_elem : recipe_data) {
     const auto* recipe = recipe_data_elem.recipe.get();
     const auto& file = recipe_data_elem.file;
 
     amber::Amber am;
-    result = am.Execute(recipe, amber_options);
+    result = am.Execute(recipe, &amber_options);
     if (!result.IsSuccess()) {
       std::cerr << file << ": " << result.Error() << std::endl;
       failures.push_back(file);
       continue;
     }
 
-    if (!options.buffer_filename.empty()) {
-      // TODO(dsinclair): Write buffer file
-      assert(false);
-    }
-
     if (!options.image_filename.empty()) {
-      // TODO(dsinclair): Write image file
-      assert(false);
+      std::string image;
+      for (amber::BufferInfo buffer_info : amber_options.extractions) {
+        if (buffer_info.buffer_name == "framebuffer") {
+          std::tie(result, image) = ppm::ConvertToPPM(
+              buffer_info.width, buffer_info.height, buffer_info.values);
+          break;
+        }
+      }
+      if (!result.IsSuccess()) {
+        std::cerr << result.Error() << std::endl;
+        continue;
+      }
+      std::ofstream image_file;
+      image_file.open(options.image_filename, std::ios::out | std::ios::binary);
+      if (!image_file.is_open()) {
+        std::cerr << "Cannot open file for image dump: ";
+        std::cerr << options.image_filename << std::endl;
+        continue;
+      }
+      image_file << image;
+      image_file.close();
     }
   }
 

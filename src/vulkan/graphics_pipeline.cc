@@ -169,6 +169,8 @@ VkPipelineDepthStencilStateCreateInfo
 GraphicsPipeline::GetPipelineDepthStencilInfo() {
   VkPipelineDepthStencilStateCreateInfo depthstencil_info =
       VkPipelineDepthStencilStateCreateInfo();
+  depthstencil_info.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
   // TODO(jaebaek): Depth/stencil test setup should be come from the
   // PipelineData.
   depthstencil_info.depthTestEnable = VK_TRUE;
@@ -259,8 +261,14 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   viewport_info.pScissors = &scissor;
 
   auto shader_stage_info = GetShaderStageInfo();
-  for (auto& info : shader_stage_info)
+  bool is_tessellation_needed = false;
+  for (auto& info : shader_stage_info) {
     info.pName = GetEntryPointName(info.stage);
+    if (info.stage == VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT ||
+        info.stage == VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT) {
+      is_tessellation_needed = true;
+    }
+  }
 
   VkPipelineMultisampleStateCreateInfo multisampleInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, /* sType */
@@ -283,6 +291,13 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   pipeline_info.pViewportState = &viewport_info;
   pipeline_info.pRasterizationState = &kDefaultRasterizationInfo;
   pipeline_info.pMultisampleState = &multisampleInfo;
+
+  VkPipelineTessellationStateCreateInfo tess_info = {};
+  if (is_tessellation_needed) {
+    tess_info.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+    tess_info.patchControlPoints = patch_control_points_;
+    pipeline_info.pTessellationState = &tess_info;
+  }
 
   VkPipelineDepthStencilStateCreateInfo depthstencil_info;
   if (depth_stencil_format_ != VK_FORMAT_UNDEFINED) {
@@ -486,8 +501,10 @@ Result GraphicsPipeline::Clear() {
 
   VkClearValue clear_value;
   clear_value.depthStencil = {clear_depth_, clear_stencil_};
-  return ClearBuffer(clear_value,
-                     VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
+  return ClearBuffer(
+      clear_value, VkFormatHasStencilComponent(depth_stencil_format_)
+                       ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+                       : VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
 Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
