@@ -19,8 +19,8 @@
 
 namespace amber {
 
-Pipeline::ShaderInfo::ShaderInfo(const Shader* shader)
-    : shader_(shader), entry_point_("main") {}
+Pipeline::ShaderInfo::ShaderInfo(const Shader* shader, ShaderType type)
+    : shader_(shader), shader_type_(type), entry_point_("main") {}
 
 Pipeline::ShaderInfo::ShaderInfo(const ShaderInfo&) = default;
 
@@ -30,16 +30,16 @@ Pipeline::Pipeline(PipelineType type) : pipeline_type_(type) {}
 
 Pipeline::~Pipeline() = default;
 
-Result Pipeline::AddShader(const Shader* shader) {
+Result Pipeline::AddShader(const Shader* shader, ShaderType shader_type) {
   if (!shader)
     return Result("shader can not be null when attached to pipeline");
 
   if (pipeline_type_ == PipelineType::kCompute &&
-      shader->GetType() != kShaderTypeCompute) {
+      shader_type != kShaderTypeCompute) {
     return Result("only compute shaders allowed in a compute pipeline");
   }
   if (pipeline_type_ == PipelineType::kGraphics &&
-      shader->GetType() == kShaderTypeCompute) {
+      shader_type == kShaderTypeCompute) {
     return Result("can not add a compute shader to a graphics pipeline");
   }
 
@@ -47,11 +47,11 @@ Result Pipeline::AddShader(const Shader* shader) {
     const auto* is = info.GetShader();
     if (is == shader)
       return Result("can not add duplicate shader to pipeline");
-    if (is->GetType() == shader->GetType())
+    if (is->GetType() == shader_type)
       return Result("can not add duplicate shader type to pipeline");
   }
 
-  shaders_.emplace_back(shader);
+  shaders_.emplace_back(shader, shader_type);
   return {};
 }
 
@@ -98,6 +98,21 @@ Result Pipeline::SetShaderEntryPoint(const Shader* shader,
   }
 
   return Result("unknown shader specified for entry point: " +
+                shader->GetName());
+}
+
+Result Pipeline::SetShaderType(const Shader* shader, ShaderType type) {
+  if (!shader)
+    return Result("invalid shader specified for shader type");
+
+  for (auto& info : shaders_) {
+    if (info.GetShader() == shader) {
+      info.SetShaderType(type);
+      return {};
+    }
+  }
+
+  return Result("unknown shader specified for shader type: " +
                 shader->GetName());
 }
 

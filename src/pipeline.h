@@ -29,7 +29,7 @@ class Pipeline {
  public:
   class ShaderInfo {
    public:
-    explicit ShaderInfo(const Shader*);
+    ShaderInfo(const Shader*, ShaderType type);
     ShaderInfo(const ShaderInfo&);
     ~ShaderInfo();
 
@@ -45,8 +45,12 @@ class Pipeline {
     void SetEntryPoint(const std::string& ep) { entry_point_ = ep; }
     std::string GetEntryPoint() const { return entry_point_; }
 
+    void SetShaderType(ShaderType type) { shader_type_ = type; }
+    ShaderType GetShaderType() const { return shader_type_; }
+
    private:
     const Shader* shader_ = nullptr;
+    ShaderType shader_type_;
     std::vector<std::string> shader_optimizations_;
     std::string entry_point_;
   };
@@ -59,9 +63,10 @@ class Pipeline {
   void SetName(const std::string& name) { name_ = name; }
   const std::string& GetName() const { return name_; }
 
-  Result AddShader(const Shader*);
+  Result AddShader(const Shader*, ShaderType);
   const std::vector<ShaderInfo>& GetShaders() const { return shaders_; }
 
+  Result SetShaderType(const Shader* shader, ShaderType type);
   Result SetShaderEntryPoint(const Shader* shader, const std::string& name);
   Result SetShaderOptimizations(const Shader* shader,
                                 const std::vector<std::string>& opts);
