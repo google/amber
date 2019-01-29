@@ -480,30 +480,29 @@ bool IsTexelEqualToExpected(const std::vector<double>& texel,
   return true;
 }
 
-std::vector<double> GetSortedTexelInOrderOfRGBA(
-    const std::vector<double>& texel,
-    const Format* framebuffer_format) {
-  std::vector<double> sorted_texel(texel.size());
+std::vector<double> GetTexelInRGBA(const std::vector<double>& texel,
+                                   const Format* framebuffer_format) {
+  std::vector<double> texel_in_rgba(texel.size());
   for (size_t i = 0; i < framebuffer_format->GetComponents().size(); ++i) {
     const auto& component = framebuffer_format->GetComponents()[i];
     switch (component.type) {
       case FormatComponentType::kR:
-        sorted_texel[0] = texel[i];
+        texel_in_rgba[0] = texel[i];
         break;
       case FormatComponentType::kG:
-        sorted_texel[1] = texel[i];
+        texel_in_rgba[1] = texel[i];
         break;
       case FormatComponentType::kB:
-        sorted_texel[2] = texel[i];
+        texel_in_rgba[2] = texel[i];
         break;
       case FormatComponentType::kA:
-        sorted_texel[3] = texel[i];
+        texel_in_rgba[3] = texel[i];
         break;
       default:
         continue;
     }
   }
-  return sorted_texel;
+  return texel_in_rgba;
 }
 
 }  // namespace
@@ -591,8 +590,8 @@ Result Verifier::Probe(const ProbeCommand* command,
       if (!IsTexelEqualToExpected(actual_texel_values, framebuffer_format,
                                   command, tolerance, is_tolerance_percent)) {
         if (!count_of_invalid_pixels) {
-          actual_texel_values_on_failure = GetSortedTexelInOrderOfRGBA(
-              actual_texel_values, framebuffer_format);
+          actual_texel_values_on_failure =
+              GetTexelInRGBA(actual_texel_values, framebuffer_format);
           first_invalid_i = i;
           first_invalid_j = j;
         }
