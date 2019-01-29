@@ -69,7 +69,7 @@ void main() {
           0  127  1      0   0 255
           0    0  1      0   0 255
 
-#  Mixed color for quarter frame
+#    Mixed color for quarter frame
           0    0  0    127 127 127
         127  127  0    127 127 127
           0  127  0    127 127 127
@@ -81,10 +81,16 @@ void main() {
 [test]
 clear
 
+# Note that the rectangle drawn by the last command fully contains
+# the one drawn by the former command. However, the rectangle drawn
+# by the former command is shown in the final frame buffer because
+# of depth comparison based on depth buffer.
 draw arrays TRIANGLE_LIST 18 6
 draw arrays TRIANGLE_LIST 12 6
 draw arrays TRIANGLE_LIST 6 6
 draw arrays TRIANGLE_LIST 0 6
+
+# The final frame buffer shows all red, green, blue, and mixed color.
 relative probe rect rgb (0.0, 0.0, 0.5, 0.5) (1.0, 0, 0)
 relative probe rect rgb (0.5, 0.0, 0.5, 0.5) (0, 1.0, 0)
 relative probe rect rgb (0.0, 0.5, 0.5, 0.5) (0, 0, 1.0)
