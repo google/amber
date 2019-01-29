@@ -68,18 +68,27 @@ ProbeSSBOCommand* Command::AsProbeSSBO() {
   return static_cast<ProbeSSBOCommand*>(this);
 }
 
-DrawRectCommand::DrawRectCommand(PipelineData data)
-    : Command(Type::kDrawRect), data_(data) {}
+DrawRectCommand::DrawRectCommand(
+    PipelineData data,
+    bool is_pipeline_data_different_from_previous_one)
+    : Command(Type::kDrawRect),
+      data_(data),
+      is_pipeline_data_different_from_previous_one_(
+          is_pipeline_data_different_from_previous_one) {}
 
 DrawRectCommand::~DrawRectCommand() = default;
 
-DrawArraysCommand::DrawArraysCommand(PipelineData data)
-    : Command(Type::kDrawArrays), data_(data) {}
+DrawArraysCommand::DrawArraysCommand(
+    PipelineData data,
+    bool is_pipeline_data_different_from_previous_one)
+    : Command(Type::kDrawArrays),
+      data_(data),
+      is_pipeline_data_different_from_previous_one_(
+          is_pipeline_data_different_from_previous_one) {}
 
 DrawArraysCommand::~DrawArraysCommand() = default;
 
-ComputeCommand::ComputeCommand(PipelineData data)
-    : Command(Type::kCompute), data_(data) {}
+ComputeCommand::ComputeCommand() : Command(Type::kCompute) {}
 
 ComputeCommand::~ComputeCommand() = default;
 

@@ -148,94 +148,98 @@ Result CommandParser::Parse() {
       r = ProcessEntryPoint(shader_name);
 
       // Pipeline Commands
-    } else if (cmd_name == "primitiveRestartEnable") {
-      r = ProcessPrimitiveRestartEnable();
-    } else if (cmd_name == "depthClampEnable") {
-      r = ProcessDepthClampEnable();
-    } else if (cmd_name == "rasterizerDiscardEnable") {
-      r = ProcessRasterizerDiscardEnable();
-    } else if (cmd_name == "depthBiasEnable") {
-      r = ProcessDepthBiasEnable();
-    } else if (cmd_name == "logicOpEnable") {
-      r = ProcessLogicOpEnable();
-    } else if (cmd_name == "blendEnable") {
-      r = ProcessBlendEnable();
-    } else if (cmd_name == "depthTestEnable") {
-      r = ProcessDepthTestEnable();
-    } else if (cmd_name == "depthWriteEnable") {
-      r = ProcessDepthWriteEnable();
-    } else if (cmd_name == "depthBoundsTestEnable") {
-      r = ProcessDepthBoundsTestEnable();
-    } else if (cmd_name == "stencilTestEnable") {
-      r = ProcessStencilTestEnable();
-    } else if (cmd_name == "topology") {
-      r = ProcessTopology();
-    } else if (cmd_name == "polygonMode") {
-      r = ProcessPolygonMode();
-    } else if (cmd_name == "logicOp") {
-      r = ProcessLogicOp();
-    } else if (cmd_name == "frontFace") {
-      r = ProcessFrontFace();
-    } else if (cmd_name == "cullMode") {
-      r = ProcessCullMode();
-    } else if (cmd_name == "depthBiasConstantFactor") {
-      r = ProcessDepthBiasConstantFactor();
-    } else if (cmd_name == "depthBiasClamp") {
-      r = ProcessDepthBiasClamp();
-    } else if (cmd_name == "depthBiasSlopeFactor") {
-      r = ProcessDepthBiasSlopeFactor();
-    } else if (cmd_name == "lineWidth") {
-      r = ProcessLineWidth();
-    } else if (cmd_name == "minDepthBounds") {
-      r = ProcessMinDepthBounds();
-    } else if (cmd_name == "maxDepthBounds") {
-      r = ProcessMaxDepthBounds();
-    } else if (cmd_name == "srcColorBlendFactor") {
-      r = ProcessSrcColorBlendFactor();
-    } else if (cmd_name == "dstColorBlendFactor") {
-      r = ProcessDstColorBlendFactor();
-    } else if (cmd_name == "srcAlphaBlendFactor") {
-      r = ProcessSrcAlphaBlendFactor();
-    } else if (cmd_name == "dstAlphaBlendFactor") {
-      r = ProcessDstAlphaBlendFactor();
-    } else if (cmd_name == "colorBlendOp") {
-      r = ProcessColorBlendOp();
-    } else if (cmd_name == "alphaBlendOp") {
-      r = ProcessAlphaBlendOp();
-    } else if (cmd_name == "depthCompareOp") {
-      r = ProcessDepthCompareOp();
-    } else if (cmd_name == "front.compareOp") {
-      r = ProcessFrontCompareOp();
-    } else if (cmd_name == "back.compareOp") {
-      r = ProcessBackCompareOp();
-    } else if (cmd_name == "front.failOp") {
-      r = ProcessFrontFailOp();
-    } else if (cmd_name == "front.passOp") {
-      r = ProcessFrontPassOp();
-    } else if (cmd_name == "front.depthFailOp") {
-      r = ProcessFrontDepthFailOp();
-    } else if (cmd_name == "back.failOp") {
-      r = ProcessBackFailOp();
-    } else if (cmd_name == "back.passOp") {
-      r = ProcessBackPassOp();
-    } else if (cmd_name == "back.depthFailOp") {
-      r = ProcessBackDepthFailOp();
-    } else if (cmd_name == "front.compareMask") {
-      r = ProcessFrontCompareMask();
-    } else if (cmd_name == "front.writeMask") {
-      r = ProcessFrontWriteMask();
-    } else if (cmd_name == "back.compareMask") {
-      r = ProcessBackCompareMask();
-    } else if (cmd_name == "back.writeMask") {
-      r = ProcessBackWriteMask();
-    } else if (cmd_name == "front.reference") {
-      r = ProcessFrontReference();
-    } else if (cmd_name == "back.reference") {
-      r = ProcessBackReference();
-    } else if (cmd_name == "colorWriteMask") {
-      r = ProcessColorWriteMask();
     } else {
-      r = Result("Unknown command: " + cmd_name);
+      is_pipeline_data_different_from_previous_one_ = true;
+
+      if (cmd_name == "primitiveRestartEnable") {
+        r = ProcessPrimitiveRestartEnable();
+      } else if (cmd_name == "depthClampEnable") {
+        r = ProcessDepthClampEnable();
+      } else if (cmd_name == "rasterizerDiscardEnable") {
+        r = ProcessRasterizerDiscardEnable();
+      } else if (cmd_name == "depthBiasEnable") {
+        r = ProcessDepthBiasEnable();
+      } else if (cmd_name == "logicOpEnable") {
+        r = ProcessLogicOpEnable();
+      } else if (cmd_name == "blendEnable") {
+        r = ProcessBlendEnable();
+      } else if (cmd_name == "depthTestEnable") {
+        r = ProcessDepthTestEnable();
+      } else if (cmd_name == "depthWriteEnable") {
+        r = ProcessDepthWriteEnable();
+      } else if (cmd_name == "depthBoundsTestEnable") {
+        r = ProcessDepthBoundsTestEnable();
+      } else if (cmd_name == "stencilTestEnable") {
+        r = ProcessStencilTestEnable();
+      } else if (cmd_name == "topology") {
+        r = ProcessTopology();
+      } else if (cmd_name == "polygonMode") {
+        r = ProcessPolygonMode();
+      } else if (cmd_name == "logicOp") {
+        r = ProcessLogicOp();
+      } else if (cmd_name == "frontFace") {
+        r = ProcessFrontFace();
+      } else if (cmd_name == "cullMode") {
+        r = ProcessCullMode();
+      } else if (cmd_name == "depthBiasConstantFactor") {
+        r = ProcessDepthBiasConstantFactor();
+      } else if (cmd_name == "depthBiasClamp") {
+        r = ProcessDepthBiasClamp();
+      } else if (cmd_name == "depthBiasSlopeFactor") {
+        r = ProcessDepthBiasSlopeFactor();
+      } else if (cmd_name == "lineWidth") {
+        r = ProcessLineWidth();
+      } else if (cmd_name == "minDepthBounds") {
+        r = ProcessMinDepthBounds();
+      } else if (cmd_name == "maxDepthBounds") {
+        r = ProcessMaxDepthBounds();
+      } else if (cmd_name == "srcColorBlendFactor") {
+        r = ProcessSrcColorBlendFactor();
+      } else if (cmd_name == "dstColorBlendFactor") {
+        r = ProcessDstColorBlendFactor();
+      } else if (cmd_name == "srcAlphaBlendFactor") {
+        r = ProcessSrcAlphaBlendFactor();
+      } else if (cmd_name == "dstAlphaBlendFactor") {
+        r = ProcessDstAlphaBlendFactor();
+      } else if (cmd_name == "colorBlendOp") {
+        r = ProcessColorBlendOp();
+      } else if (cmd_name == "alphaBlendOp") {
+        r = ProcessAlphaBlendOp();
+      } else if (cmd_name == "depthCompareOp") {
+        r = ProcessDepthCompareOp();
+      } else if (cmd_name == "front.compareOp") {
+        r = ProcessFrontCompareOp();
+      } else if (cmd_name == "back.compareOp") {
+        r = ProcessBackCompareOp();
+      } else if (cmd_name == "front.failOp") {
+        r = ProcessFrontFailOp();
+      } else if (cmd_name == "front.passOp") {
+        r = ProcessFrontPassOp();
+      } else if (cmd_name == "front.depthFailOp") {
+        r = ProcessFrontDepthFailOp();
+      } else if (cmd_name == "back.failOp") {
+        r = ProcessBackFailOp();
+      } else if (cmd_name == "back.passOp") {
+        r = ProcessBackPassOp();
+      } else if (cmd_name == "back.depthFailOp") {
+        r = ProcessBackDepthFailOp();
+      } else if (cmd_name == "front.compareMask") {
+        r = ProcessFrontCompareMask();
+      } else if (cmd_name == "front.writeMask") {
+        r = ProcessFrontWriteMask();
+      } else if (cmd_name == "back.compareMask") {
+        r = ProcessBackCompareMask();
+      } else if (cmd_name == "back.writeMask") {
+        r = ProcessBackWriteMask();
+      } else if (cmd_name == "front.reference") {
+        r = ProcessFrontReference();
+      } else if (cmd_name == "back.reference") {
+        r = ProcessBackReference();
+      } else if (cmd_name == "colorWriteMask") {
+        r = ProcessColorWriteMask();
+      } else {
+        r = Result("Unknown command: " + cmd_name);
+      }
     }
 
     if (!r.IsSuccess())
@@ -246,7 +250,9 @@ Result CommandParser::Parse() {
 }
 
 Result CommandParser::ProcessDrawRect() {
-  auto cmd = MakeUnique<DrawRectCommand>(pipeline_data_);
+  auto cmd = MakeUnique<DrawRectCommand>(
+      pipeline_data_, is_pipeline_data_different_from_previous_one_);
+  is_pipeline_data_different_from_previous_one_ = false;
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -296,7 +302,9 @@ Result CommandParser::ProcessDrawRect() {
 }
 
 Result CommandParser::ProcessDrawArrays() {
-  auto cmd = MakeUnique<DrawArraysCommand>(pipeline_data_);
+  auto cmd = MakeUnique<DrawArraysCommand>(
+      pipeline_data_, is_pipeline_data_different_from_previous_one_);
+  is_pipeline_data_different_from_previous_one_ = false;
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -357,7 +365,7 @@ Result CommandParser::ProcessDrawArrays() {
 }
 
 Result CommandParser::ProcessCompute() {
-  auto cmd = MakeUnique<ComputeCommand>(pipeline_data_);
+  auto cmd = MakeUnique<ComputeCommand>();
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();

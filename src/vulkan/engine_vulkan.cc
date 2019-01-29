@@ -323,8 +323,8 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   if (!r.IsSuccess())
     return r;
 
-  PipelineData data;
-  DrawArraysCommand draw(data);
+  DrawArraysCommand draw(*command->GetPipelineData(),
+                         command->IsPipelineDataDifferentFromPreviousOne());
   draw.SetTopology(command->IsPatch() ? Topology::kPatchList
                                       : Topology::kTriangleStrip);
   draw.SetFirstVertexIndex(0);

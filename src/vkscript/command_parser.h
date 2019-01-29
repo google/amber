@@ -155,6 +155,7 @@ class CommandParser {
                          ProbeSSBOCommand::Comparator* op);
 
   PipelineData pipeline_data_;
+  bool is_pipeline_data_different_from_previous_one_ = false;
   std::unique_ptr<Tokenizer> tokenizer_;
   std::vector<std::unique_ptr<Command>> commands_;
   std::vector<Probe::Tolerance> current_tolerances_;
