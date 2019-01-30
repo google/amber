@@ -45,6 +45,9 @@ VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
       return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
     case kShaderTypeCompute:
       return VK_SHADER_STAGE_COMPUTE_BIT;
+    case kShaderTypeMulti:
+      // It's an error if this arrives here ...
+      break;
   }
 
   assert(false && "Vulkan::Unknown shader stage");

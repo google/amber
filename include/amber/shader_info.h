@@ -35,6 +35,7 @@ enum ShaderType {
   kShaderTypeVertex,
   kShaderTypeTessellationControl,
   kShaderTypeTessellationEvaluation,
+  kShaderTypeMulti,
 };
 
 struct ShaderInfo {

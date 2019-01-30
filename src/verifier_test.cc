@@ -39,11 +39,11 @@ class VerifierTest : public testing::Test {
     // Set VK_FORMAT_R8G8B8A8_UNORM for color frame buffer.
     color_frame_format_ = MakeUnique<Format>();
     color_frame_format_->SetFormatType(FormatType::kB8G8R8A8_UNORM);
-    color_frame_format_->AddComponent(FormatComponentType::kR,
+    color_frame_format_->AddComponent(FormatComponentType::kB,
                                       FormatMode::kUNorm, 8);
     color_frame_format_->AddComponent(FormatComponentType::kG,
                                       FormatMode::kUNorm, 8);
-    color_frame_format_->AddComponent(FormatComponentType::kB,
+    color_frame_format_->AddComponent(FormatComponentType::kR,
                                       FormatMode::kUNorm, 8);
     color_frame_format_->AddComponent(FormatComponentType::kA,
                                       FormatMode::kUNorm, 8);
@@ -61,9 +61,9 @@ TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
   probe.SetWholeWindow();
   probe.SetProbeRect();
   probe.SetIsRGBA();
-  probe.SetR(0.5f);
+  probe.SetB(0.5f);
   probe.SetG(0.25f);
-  probe.SetB(0.2f);
+  probe.SetR(0.2f);
   probe.SetA(0.8f);
 
   const uint8_t frame_buffer[3][3][4] = {
@@ -87,7 +87,7 @@ TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
   Verifier verifier;
   Result r = verifier.Probe(&probe, GetColorFormat(), 4, 12, 3, 3,
                             static_cast<const void*>(frame_buffer));
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferRelative) {
@@ -99,9 +99,9 @@ TEST_F(VerifierTest, ProbeFrameBufferRelative) {
   probe.SetY(0.2f);
   probe.SetWidth(0.4f);
   probe.SetHeight(0.6f);
-  probe.SetR(0.5f);
+  probe.SetB(0.5f);
   probe.SetG(0.25f);
-  probe.SetB(0.2f);
+  probe.SetR(0.2f);
   probe.SetA(0.8f);
 
   uint8_t frame_buffer[10][10][4] = {};
@@ -117,7 +117,7 @@ TEST_F(VerifierTest, ProbeFrameBufferRelative) {
   Verifier verifier;
   Result r = verifier.Probe(&probe, GetColorFormat(), 4, 40, 10, 10,
                             static_cast<const void*>(frame_buffer));
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
@@ -154,9 +154,9 @@ TEST_F(VerifierTest, ProbeFrameBuffer) {
   probe.SetY(2.0f);
   probe.SetWidth(4.0f);
   probe.SetHeight(6.0f);
-  probe.SetR(0.5f);
+  probe.SetB(0.5f);
   probe.SetG(0.25f);
-  probe.SetB(0.2f);
+  probe.SetR(0.2f);
   probe.SetA(0.8f);
 
   uint8_t frame_buffer[10][10][4] = {};
@@ -172,7 +172,7 @@ TEST_F(VerifierTest, ProbeFrameBuffer) {
   Verifier verifier;
   Result r = verifier.Probe(&probe, GetColorFormat(), 4, 40, 10, 10,
                             static_cast<const void*>(frame_buffer));
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferUInt8) {
@@ -571,24 +571,24 @@ TEST_F(VerifierTest, ProbeFrameBufferNotRect) {
   probe.SetIsRGBA();
   probe.SetX(1.0f);
   probe.SetY(2.0f);
-  probe.SetR(0.5f);
+  probe.SetB(0.5f);
   probe.SetG(0.25f);
-  probe.SetB(0.2f);
+  probe.SetR(0.2f);
   probe.SetA(0.8f);
 
   Verifier verifier;
   Result r = verifier.Probe(&probe, GetColorFormat(), 4, 40, 10, 10,
                             static_cast<const void*>(frame_buffer));
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferRGB) {
   ProbeCommand probe;
   probe.SetWholeWindow();
   probe.SetProbeRect();
-  probe.SetR(0.5f);
+  probe.SetB(0.5f);
   probe.SetG(0.25f);
-  probe.SetB(0.2f);
+  probe.SetR(0.2f);
 
   const uint8_t frame_buffer[3][3][4] = {
       {
@@ -611,7 +611,7 @@ TEST_F(VerifierTest, ProbeFrameBufferRGB) {
   Verifier verifier;
   Result r = verifier.Probe(&probe, GetColorFormat(), 4, 12, 3, 3,
                             static_cast<const void*>(frame_buffer));
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferBadRowStride) {
@@ -1326,6 +1326,31 @@ TEST_F(VerifierTest, ProbeSSBOGreaterOrEqualFail) {
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ("Line 1: Verifier failed: 1234.559000 >= 1234.560000, at index 3",
             r.Error());
+}
+
+TEST_F(VerifierTest, CheckRGBAOrderForFailure) {
+  ProbeCommand probe;
+  probe.SetIsRGBA();
+  probe.SetX(0.0f);
+  probe.SetY(0.0f);
+  probe.SetR(0.6f);
+  probe.SetG(0.4f);
+  probe.SetB(0.0f);
+  probe.SetA(0.3f);
+
+  uint8_t frame_buffer[4] = {255, 14, 75, 8};
+
+  Verifier verifier;
+  Result r = verifier.Probe(&probe, GetColorFormat(),
+                            4U * static_cast<uint32_t>(sizeof(uint8_t)),
+                            4U * static_cast<uint32_t>(sizeof(uint8_t)), 1U, 1U,
+                            static_cast<const void*>(&frame_buffer));
+  EXPECT_FALSE(r.IsSuccess());
+  EXPECT_EQ(
+      "Line 1: Probe failed at: 0, 0\n  Expected RGBA: 153.000000, 102.000000, "
+      "0.000000, 76.500000\n  Actual RGBA: 75.000000, 14.000000, 255.000000, "
+      "8.000000\nProbe failed in 1 pixels",
+      r.Error());
 }
 
 }  // namespace amber

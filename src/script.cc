@@ -145,7 +145,7 @@ std::vector<ShaderInfo> Script::GetShaderInfo() const {
     // pipelines everywhere
 
     // TODO(dsinclair): The optimization passes should be retrieved from the
-    // pipeline and returned here instead of an empy array.
+    // pipeline and returned here instead of an empty array.
     ret.emplace_back(ShaderInfo{shader->GetFormat(),
                                 shader->GetType(),
                                 shader->GetName(),
