@@ -305,6 +305,8 @@ Result Parser::ParsePipelineBlock() {
       r = ParsePipelineAttach(pipeline.get());
     } else if (tok == "SHADER_OPTIMIZATION") {
       r = ParsePipelineShaderOptimizations(pipeline.get());
+    } else if (tok == "FRAMEBUFFER_SIZE") {
+      r = ParsePipelineFramebufferSize(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -422,6 +424,26 @@ Result Parser::ParsePipelineShaderOptimizations(Pipeline* pipeline) {
     return r;
 
   return ValidateEndOfStatement("SHADER_OPTIMIZATION command");
+}
+
+Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing size for FRAMEBUFFER_SIZE command");
+  if (!token->IsInteger())
+    return Result("invalid width for FRAMEBUFFER_SIZE command");
+
+  pipeline->SetFramebufferWidth(token->AsUint32());
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing height for FRAMEBUFFER_SIZE command");
+  if (!token->IsInteger())
+    return Result("invalid height for FRAMEBUFFER_SIZE command");
+
+  pipeline->SetFramebufferHeight(token->AsUint32());
+
+  return ValidateEndOfStatement("FRAMEBUFFER_SIZE command");
 }
 
 Result Parser::ToBufferType(const std::string& str, BufferType* type) {

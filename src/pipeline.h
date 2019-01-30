@@ -63,6 +63,12 @@ class Pipeline {
   void SetName(const std::string& name) { name_ = name; }
   const std::string& GetName() const { return name_; }
 
+  void SetFramebufferWidth(uint32_t fb_width) { fb_width_ = fb_width; }
+  uint32_t GetFramebufferWidth() const { return fb_width_; }
+
+  void SetFramebufferHeight(uint32_t fb_height) { fb_height_ = fb_height; }
+  uint32_t GetFramebufferHeight() const { return fb_height_; }
+
   Result AddShader(const Shader*, ShaderType);
   const std::vector<ShaderInfo>& GetShaders() const { return shaders_; }
 
@@ -81,6 +87,9 @@ class Pipeline {
   PipelineType pipeline_type_ = PipelineType::kCompute;
   std::string name_;
   std::vector<ShaderInfo> shaders_;
+
+  uint32_t fb_width_ = 250;
+  uint32_t fb_height_ = 250;
 };
 
 }  // namespace amber
