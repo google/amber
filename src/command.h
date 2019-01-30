@@ -106,6 +106,11 @@ class DrawRectCommand : public Command {
   ~DrawRectCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
+
+  // Return true if PipelineData is changed since the last draw
+  // command, which means that graphics pipeline must be created
+  // with the new PipelineData. In that case,
+  // GraphicsPipeline::Draw() method resets graphics pipeline.
   bool IsPipelineDataDifferentFromPreviousOne() const {
     return is_pipeline_data_different_from_previous_one_;
   }
@@ -146,6 +151,11 @@ class DrawArraysCommand : public Command {
   ~DrawArraysCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
+
+  // Return true if PipelineData is changed since the last draw
+  // command, which means that graphics pipeline must be created
+  // with the new PipelineData. In that case,
+  // GraphicsPipeline::Draw() method resets graphics pipeline.
   bool IsPipelineDataDifferentFromPreviousOne() const {
     return is_pipeline_data_different_from_previous_one_;
   }
