@@ -39,22 +39,6 @@ const VkAttachmentDescription kDefaultAttachmentDesc = {
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, /* finalLayout */
 };
 
-const VkPipelineRasterizationStateCreateInfo kDefaultRasterizationInfo = {
-    VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO, /* sType */
-    nullptr,                                                    /* pNext */
-    0,                                                          /* flags */
-    VK_FALSE,                /* depthClampEnable */
-    VK_FALSE,                /* rasterizerDiscardEnable */
-    VK_POLYGON_MODE_FILL,    /* polygonMode */
-    VK_CULL_MODE_NONE,       /* cullMode */
-    VK_FRONT_FACE_CLOCKWISE, /* frontFace */
-    VK_FALSE,                /* depthBiasEnable */
-    0,                       /* depthBiasConstantFactor */
-    0,                       /* depthBiasClamp */
-    0,                       /* depthBiasSlopeFactor */
-    1.0f,                    /* lineWidth */
-};
-
 const VkSampleMask kSampleMask = ~0U;
 
 VkPrimitiveTopology ToVkTopology(Topology topology) {
@@ -966,10 +950,10 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     //    becomes the vertex offset and firstIndex will always be zero."
     device_->GetPtrs()->vkCmdDrawIndexed(
         command_->GetCommandBuffer(),
-        command->GetVertexCount(),      /* indexCount */
-        instance_count,                 /* instanceCount */
-        0,                              /* firstIndex */
-        command->GetFirstVertexIndex(), /* vertexOffset */
+        command->GetVertexCount(), /* indexCount */
+        instance_count,            /* instanceCount */
+        0,                         /* firstIndex */
+        static_cast<int32_t>(command->GetFirstVertexIndex()), /* vertexOffset */
         0 /* firstInstance */);
   } else {
     device_->GetPtrs()->vkCmdDraw(command_->GetCommandBuffer(),

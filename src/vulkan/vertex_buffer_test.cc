@@ -61,7 +61,7 @@ class VertexBufferTest : public testing::Test {
     vertex_buffer_ = MakeUnique<VertexBuffer>(nullptr);
 
     std::unique_ptr<Buffer> buffer =
-        MakeUnique<BufferForTest>(nullptr, 0, kMemoryProperties);
+        MakeUnique<BufferForTest>(nullptr, 0U, kMemoryProperties);
     buffer_memory_ = buffer->HostAccessibleMemoryPtr();
     vertex_buffer_->SetBufferForTest(std::move(buffer));
   }
@@ -179,9 +179,9 @@ TEST_F(VertexBufferTest, R64G64B64A64_UINT) {
 
 TEST_F(VertexBufferTest, R8G8B8A8_SNORM) {
   std::vector<Value> values(4);
-  values[0].SetIntValue(-55);
+  values[0].SetIntValue(static_cast<uint64_t>(-55));
   values[1].SetIntValue(3);
-  values[2].SetIntValue(-128);
+  values[2].SetIntValue(static_cast<uint64_t>(-128));
   values[3].SetIntValue(127);
 
   Format format;
@@ -201,9 +201,9 @@ TEST_F(VertexBufferTest, R8G8B8A8_SNORM) {
 
 TEST_F(VertexBufferTest, R16G16B16A16_SNORM) {
   std::vector<Value> values(4);
-  values[0].SetIntValue(-55);
+  values[0].SetIntValue(static_cast<uint64_t>(-55));
   values[1].SetIntValue(3);
-  values[2].SetIntValue(-27);
+  values[2].SetIntValue(static_cast<uint64_t>(-27));
   values[3].SetIntValue(255);
 
   Format format;
@@ -223,9 +223,9 @@ TEST_F(VertexBufferTest, R16G16B16A16_SNORM) {
 
 TEST_F(VertexBufferTest, R32G32B32A32_SINT) {
   std::vector<Value> values(4);
-  values[0].SetIntValue(-55);
+  values[0].SetIntValue(static_cast<uint64_t>(-55));
   values[1].SetIntValue(3);
-  values[2].SetIntValue(-27);
+  values[2].SetIntValue(static_cast<uint64_t>(-27));
   values[3].SetIntValue(255);
 
   Format format;
@@ -245,9 +245,9 @@ TEST_F(VertexBufferTest, R32G32B32A32_SINT) {
 
 TEST_F(VertexBufferTest, R64G64B64A64_SINT) {
   std::vector<Value> values(4);
-  values[0].SetIntValue(-55);
+  values[0].SetIntValue(static_cast<uint64_t>(-55));
   values[1].SetIntValue(3);
-  values[2].SetIntValue(-27);
+  values[2].SetIntValue(static_cast<uint64_t>(-27));
   values[3].SetIntValue(255);
 
   Format format;
@@ -366,9 +366,9 @@ TEST_F(VertexBufferTest, R11G16B10_SFLOAT) {
 
 TEST_F(VertexBufferTest, R32G32B32_SFLOAT) {
   std::vector<Value> values(3);
-  values[0].SetDoubleValue(-6.0f);
-  values[1].SetDoubleValue(14.0f);
-  values[2].SetDoubleValue(0.1171875f);
+  values[0].SetDoubleValue(-6.0);
+  values[1].SetDoubleValue(14.0);
+  values[2].SetDoubleValue(0.1171875);
 
   Format format;
   format.SetFormatType(FormatType::kR32G32B32A32_SFLOAT);
@@ -385,9 +385,9 @@ TEST_F(VertexBufferTest, R32G32B32_SFLOAT) {
 
 TEST_F(VertexBufferTest, R64G64B64_SFLOAT) {
   std::vector<Value> values(3);
-  values[0].SetDoubleValue(-6.0f);
-  values[1].SetDoubleValue(14.0f);
-  values[2].SetDoubleValue(0.1171875f);
+  values[0].SetDoubleValue(-6.0);
+  values[1].SetDoubleValue(14.0);
+  values[2].SetDoubleValue(0.1171875);
 
   Format format;
   format.SetFormatType(FormatType::kR64G64B64A64_SFLOAT);
