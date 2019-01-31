@@ -89,6 +89,278 @@ VkPrimitiveTopology ToVkTopology(Topology topology) {
   return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 }
 
+VkStencilOp ToVkStencilOp(StencilOp op) {
+  switch (op) {
+    case StencilOp::kKeep:
+      return VK_STENCIL_OP_KEEP;
+    case StencilOp::kZero:
+      return VK_STENCIL_OP_ZERO;
+    case StencilOp::kReplace:
+      return VK_STENCIL_OP_REPLACE;
+    case StencilOp::kIncrementAndClamp:
+      return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
+    case StencilOp::kDecrementAndClamp:
+      return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
+    case StencilOp::kInvert:
+      return VK_STENCIL_OP_INVERT;
+    case StencilOp::kIncrementAndWrap:
+      return VK_STENCIL_OP_INCREMENT_AND_WRAP;
+    case StencilOp::kDecrementAndWrap:
+      return VK_STENCIL_OP_DECREMENT_AND_WRAP;
+  }
+  assert(false && "Vulkan::Unknown StencilOp");
+  return VK_STENCIL_OP_KEEP;
+}
+
+VkCompareOp ToVkCompareOp(CompareOp op) {
+  switch (op) {
+    case CompareOp::kNever:
+      return VK_COMPARE_OP_NEVER;
+    case CompareOp::kLess:
+      return VK_COMPARE_OP_LESS;
+    case CompareOp::kEqual:
+      return VK_COMPARE_OP_EQUAL;
+    case CompareOp::kLessOrEqual:
+      return VK_COMPARE_OP_LESS_OR_EQUAL;
+    case CompareOp::kGreater:
+      return VK_COMPARE_OP_GREATER;
+    case CompareOp::kNotEqual:
+      return VK_COMPARE_OP_NOT_EQUAL;
+    case CompareOp::kGreaterOrEqual:
+      return VK_COMPARE_OP_GREATER_OR_EQUAL;
+    case CompareOp::kAlways:
+      return VK_COMPARE_OP_ALWAYS;
+  }
+  assert(false && "Vulkan::Unknown CompareOp");
+  return VK_COMPARE_OP_NEVER;
+}
+
+VkPolygonMode ToVkPolygonMode(PolygonMode mode) {
+  switch (mode) {
+    case PolygonMode::kFill:
+      return VK_POLYGON_MODE_FILL;
+    case PolygonMode::kLine:
+      return VK_POLYGON_MODE_LINE;
+    case PolygonMode::kPoint:
+      return VK_POLYGON_MODE_POINT;
+  }
+  assert(false && "Vulkan::Unknown PolygonMode");
+  return VK_POLYGON_MODE_FILL;
+}
+
+VkCullModeFlags ToVkCullMode(CullMode mode) {
+  switch (mode) {
+    case CullMode::kNone:
+      return VK_CULL_MODE_NONE;
+    case CullMode::kFront:
+      return VK_CULL_MODE_FRONT_BIT;
+    case CullMode::kBack:
+      return VK_CULL_MODE_BACK_BIT;
+    case CullMode::kFrontAndBack:
+      return VK_CULL_MODE_FRONT_AND_BACK;
+  }
+  assert(false && "Vulkan::Unknown CullMode");
+  return VK_CULL_MODE_NONE;
+}
+
+VkFrontFace ToVkFrontFace(FrontFace front_face) {
+  return front_face == FrontFace::kClockwise ? VK_FRONT_FACE_CLOCKWISE
+                                             : VK_FRONT_FACE_COUNTER_CLOCKWISE;
+}
+
+VkLogicOp ToVkLogicOp(LogicOp op) {
+  switch (op) {
+    case LogicOp::kClear:
+      return VK_LOGIC_OP_CLEAR;
+    case LogicOp::kAnd:
+      return VK_LOGIC_OP_AND;
+    case LogicOp::kAndReverse:
+      return VK_LOGIC_OP_AND_REVERSE;
+    case LogicOp::kCopy:
+      return VK_LOGIC_OP_COPY;
+    case LogicOp::kAndInverted:
+      return VK_LOGIC_OP_AND_INVERTED;
+    case LogicOp::kNoOp:
+      return VK_LOGIC_OP_NO_OP;
+    case LogicOp::kXor:
+      return VK_LOGIC_OP_XOR;
+    case LogicOp::kOr:
+      return VK_LOGIC_OP_OR;
+    case LogicOp::kNor:
+      return VK_LOGIC_OP_NOR;
+    case LogicOp::kEquivalent:
+      return VK_LOGIC_OP_EQUIVALENT;
+    case LogicOp::kInvert:
+      return VK_LOGIC_OP_INVERT;
+    case LogicOp::kOrReverse:
+      return VK_LOGIC_OP_OR_REVERSE;
+    case LogicOp::kCopyInverted:
+      return VK_LOGIC_OP_COPY_INVERTED;
+    case LogicOp::kOrInverted:
+      return VK_LOGIC_OP_OR_INVERTED;
+    case LogicOp::kNand:
+      return VK_LOGIC_OP_NAND;
+    case LogicOp::kSet:
+      return VK_LOGIC_OP_SET;
+  }
+  assert(false && "Vulkan::Unknown LogicOp");
+  return VK_LOGIC_OP_CLEAR;
+}
+
+VkBlendFactor ToVkBlendFactor(BlendFactor factor) {
+  switch (factor) {
+    case BlendFactor::kZero:
+      return VK_BLEND_FACTOR_ZERO;
+    case BlendFactor::kOne:
+      return VK_BLEND_FACTOR_ONE;
+    case BlendFactor::kSrcColor:
+      return VK_BLEND_FACTOR_SRC_COLOR;
+    case BlendFactor::kOneMinusSrcColor:
+      return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+    case BlendFactor::kDstColor:
+      return VK_BLEND_FACTOR_DST_COLOR;
+    case BlendFactor::kOneMinusDstColor:
+      return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+    case BlendFactor::kSrcAlpha:
+      return VK_BLEND_FACTOR_SRC_ALPHA;
+    case BlendFactor::kOneMinusSrcAlpha:
+      return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    case BlendFactor::kDstAlpha:
+      return VK_BLEND_FACTOR_DST_ALPHA;
+    case BlendFactor::kOneMinusDstAlpha:
+      return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+    case BlendFactor::kConstantColor:
+      return VK_BLEND_FACTOR_CONSTANT_COLOR;
+    case BlendFactor::kOneMinusConstantColor:
+      return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+    case BlendFactor::kConstantAlpha:
+      return VK_BLEND_FACTOR_CONSTANT_ALPHA;
+    case BlendFactor::kOneMinusConstantAlpha:
+      return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+    case BlendFactor::kSrcAlphaSaturate:
+      return VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+    case BlendFactor::kSrc1Color:
+      return VK_BLEND_FACTOR_SRC1_COLOR;
+    case BlendFactor::kOneMinusSrc1Color:
+      return VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+    case BlendFactor::kSrc1Alpha:
+      return VK_BLEND_FACTOR_SRC1_ALPHA;
+    case BlendFactor::kOneMinusSrc1Alpha:
+      return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+  }
+  assert(false && "Vulkan::Unknown BlendFactor");
+  return VK_BLEND_FACTOR_ZERO;
+}
+
+VkBlendOp ToVkBlendOp(BlendOp op) {
+  switch (op) {
+    case BlendOp::kAdd:
+      return VK_BLEND_OP_ADD;
+    case BlendOp::kSubtract:
+      return VK_BLEND_OP_SUBTRACT;
+    case BlendOp::kReverseSubtract:
+      return VK_BLEND_OP_REVERSE_SUBTRACT;
+    case BlendOp::kMin:
+      return VK_BLEND_OP_MIN;
+    case BlendOp::kMax:
+      return VK_BLEND_OP_MAX;
+    case BlendOp::kZero:
+      return VK_BLEND_OP_ZERO_EXT;
+    case BlendOp::kSrc:
+      return VK_BLEND_OP_SRC_EXT;
+    case BlendOp::kDst:
+      return VK_BLEND_OP_DST_EXT;
+    case BlendOp::kSrcOver:
+      return VK_BLEND_OP_SRC_OVER_EXT;
+    case BlendOp::kDstOver:
+      return VK_BLEND_OP_DST_OVER_EXT;
+    case BlendOp::kSrcIn:
+      return VK_BLEND_OP_SRC_IN_EXT;
+    case BlendOp::kDstIn:
+      return VK_BLEND_OP_DST_IN_EXT;
+    case BlendOp::kSrcOut:
+      return VK_BLEND_OP_SRC_OUT_EXT;
+    case BlendOp::kDstOut:
+      return VK_BLEND_OP_DST_OUT_EXT;
+    case BlendOp::kSrcAtop:
+      return VK_BLEND_OP_SRC_ATOP_EXT;
+    case BlendOp::kDstAtop:
+      return VK_BLEND_OP_DST_ATOP_EXT;
+    case BlendOp::kXor:
+      return VK_BLEND_OP_XOR_EXT;
+    case BlendOp::kMultiply:
+      return VK_BLEND_OP_MULTIPLY_EXT;
+    case BlendOp::kScreen:
+      return VK_BLEND_OP_SCREEN_EXT;
+    case BlendOp::kOverlay:
+      return VK_BLEND_OP_OVERLAY_EXT;
+    case BlendOp::kDarken:
+      return VK_BLEND_OP_DARKEN_EXT;
+    case BlendOp::kLighten:
+      return VK_BLEND_OP_LIGHTEN_EXT;
+    case BlendOp::kColorDodge:
+      return VK_BLEND_OP_COLORDODGE_EXT;
+    case BlendOp::kColorBurn:
+      return VK_BLEND_OP_COLORBURN_EXT;
+    case BlendOp::kHardLight:
+      return VK_BLEND_OP_HARDLIGHT_EXT;
+    case BlendOp::kSoftLight:
+      return VK_BLEND_OP_SOFTLIGHT_EXT;
+    case BlendOp::kDifference:
+      return VK_BLEND_OP_DIFFERENCE_EXT;
+    case BlendOp::kExclusion:
+      return VK_BLEND_OP_EXCLUSION_EXT;
+    case BlendOp::kInvert:
+      return VK_BLEND_OP_INVERT_EXT;
+    case BlendOp::kInvertRGB:
+      return VK_BLEND_OP_INVERT_RGB_EXT;
+    case BlendOp::kLinearDodge:
+      return VK_BLEND_OP_LINEARDODGE_EXT;
+    case BlendOp::kLinearBurn:
+      return VK_BLEND_OP_LINEARBURN_EXT;
+    case BlendOp::kVividLight:
+      return VK_BLEND_OP_VIVIDLIGHT_EXT;
+    case BlendOp::kLinearLight:
+      return VK_BLEND_OP_LINEARLIGHT_EXT;
+    case BlendOp::kPinLight:
+      return VK_BLEND_OP_PINLIGHT_EXT;
+    case BlendOp::kHardMix:
+      return VK_BLEND_OP_HARDMIX_EXT;
+    case BlendOp::kHslHue:
+      return VK_BLEND_OP_HSL_HUE_EXT;
+    case BlendOp::kHslSaturation:
+      return VK_BLEND_OP_HSL_SATURATION_EXT;
+    case BlendOp::kHslColor:
+      return VK_BLEND_OP_HSL_COLOR_EXT;
+    case BlendOp::kHslLuminosity:
+      return VK_BLEND_OP_HSL_LUMINOSITY_EXT;
+    case BlendOp::kPlus:
+      return VK_BLEND_OP_PLUS_EXT;
+    case BlendOp::kPlusClamped:
+      return VK_BLEND_OP_PLUS_CLAMPED_EXT;
+    case BlendOp::kPlusClampedAlpha:
+      return VK_BLEND_OP_PLUS_CLAMPED_ALPHA_EXT;
+    case BlendOp::kPlusDarker:
+      return VK_BLEND_OP_PLUS_DARKER_EXT;
+    case BlendOp::kMinus:
+      return VK_BLEND_OP_MINUS_EXT;
+    case BlendOp::kMinusClamped:
+      return VK_BLEND_OP_MINUS_CLAMPED_EXT;
+    case BlendOp::kContrast:
+      return VK_BLEND_OP_CONTRAST_EXT;
+    case BlendOp::kInvertOvg:
+      return VK_BLEND_OP_INVERT_OVG_EXT;
+    case BlendOp::kRed:
+      return VK_BLEND_OP_RED_EXT;
+    case BlendOp::kGreen:
+      return VK_BLEND_OP_GREEN_EXT;
+    case BlendOp::kBlue:
+      return VK_BLEND_OP_BLUE_EXT;
+  }
+  assert(false && "Vulkan::Unknown BlendOp");
+  return VK_BLEND_OP_ADD;
+}
+
 }  // namespace
 
 GraphicsPipeline::GraphicsPipeline(
@@ -166,44 +438,83 @@ Result GraphicsPipeline::CreateRenderPass() {
 }
 
 VkPipelineDepthStencilStateCreateInfo
-GraphicsPipeline::GetPipelineDepthStencilInfo() {
+GraphicsPipeline::GetPipelineDepthStencilInfo(
+    const PipelineData* pipeline_data) {
   VkPipelineDepthStencilStateCreateInfo depthstencil_info =
       VkPipelineDepthStencilStateCreateInfo();
   depthstencil_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  // TODO(jaebaek): Depth/stencil test setup should be come from the
-  // PipelineData.
-  depthstencil_info.depthTestEnable = VK_TRUE;
-  depthstencil_info.depthWriteEnable = VK_TRUE;
-  depthstencil_info.depthCompareOp = VK_COMPARE_OP_LESS;
-  depthstencil_info.depthBoundsTestEnable = VK_FALSE;
-  depthstencil_info.stencilTestEnable = VK_FALSE;
+
+  depthstencil_info.depthTestEnable = pipeline_data->GetEnableDepthTest();
+  depthstencil_info.depthWriteEnable = pipeline_data->GetEnableDepthWrite();
+  depthstencil_info.depthCompareOp =
+      ToVkCompareOp(pipeline_data->GetDepthCompareOp());
+  depthstencil_info.depthBoundsTestEnable =
+      pipeline_data->GetEnableDepthBoundsTest();
+  depthstencil_info.stencilTestEnable = pipeline_data->GetEnableStencilTest();
+
+  depthstencil_info.front.failOp =
+      ToVkStencilOp(pipeline_data->GetFrontFailOp());
+  depthstencil_info.front.passOp =
+      ToVkStencilOp(pipeline_data->GetFrontPassOp());
+  depthstencil_info.front.depthFailOp =
+      ToVkStencilOp(pipeline_data->GetFrontDepthFailOp());
+  depthstencil_info.front.compareOp =
+      ToVkCompareOp(pipeline_data->GetFrontCompareOp());
+  depthstencil_info.front.compareMask = pipeline_data->GetFrontCompareMask();
+  depthstencil_info.front.writeMask = pipeline_data->GetFrontWriteMask();
+  depthstencil_info.front.reference = pipeline_data->GetFrontReference();
+
+  depthstencil_info.back.failOp = ToVkStencilOp(pipeline_data->GetBackFailOp());
+  depthstencil_info.back.passOp = ToVkStencilOp(pipeline_data->GetBackPassOp());
+  depthstencil_info.back.depthFailOp =
+      ToVkStencilOp(pipeline_data->GetBackDepthFailOp());
+  depthstencil_info.back.compareOp =
+      ToVkCompareOp(pipeline_data->GetBackCompareOp());
+  depthstencil_info.back.compareMask = pipeline_data->GetBackCompareMask();
+  depthstencil_info.back.writeMask = pipeline_data->GetBackWriteMask();
+  depthstencil_info.back.reference = pipeline_data->GetBackReference();
+
+  depthstencil_info.minDepthBounds = pipeline_data->GetMinDepthBounds();
+  depthstencil_info.maxDepthBounds = pipeline_data->GetMaxDepthBounds();
+
   return depthstencil_info;
 }
 
 VkPipelineColorBlendAttachmentState
-GraphicsPipeline::GetPipelineColorBlendAttachmentState() {
+GraphicsPipeline::GetPipelineColorBlendAttachmentState(
+    const PipelineData* pipeline_data) {
   VkPipelineColorBlendAttachmentState colorblend_attachment =
       VkPipelineColorBlendAttachmentState();
-  // TODO(jaebaek): Update blend state should be come from the PipelineData.
-  colorblend_attachment.blendEnable = VK_FALSE;
-  colorblend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-  colorblend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-  colorblend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
-  colorblend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-  colorblend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-  colorblend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
-  colorblend_attachment.colorWriteMask =
-      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-      VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  colorblend_attachment.blendEnable = pipeline_data->GetEnableBlend();
+  colorblend_attachment.srcColorBlendFactor =
+      ToVkBlendFactor(pipeline_data->GetSrcColorBlendFactor());
+  colorblend_attachment.dstColorBlendFactor =
+      ToVkBlendFactor(pipeline_data->GetDstColorBlendFactor());
+  colorblend_attachment.colorBlendOp =
+      ToVkBlendOp(pipeline_data->GetColorBlendOp());
+  colorblend_attachment.srcAlphaBlendFactor =
+      ToVkBlendFactor(pipeline_data->GetSrcAlphaBlendFactor());
+  colorblend_attachment.dstAlphaBlendFactor =
+      ToVkBlendFactor(pipeline_data->GetDstAlphaBlendFactor());
+  colorblend_attachment.alphaBlendOp =
+      ToVkBlendOp(pipeline_data->GetAlphaBlendOp());
+  colorblend_attachment.colorWriteMask = pipeline_data->GetColorWriteMask();
   return colorblend_attachment;
 }
 
 Result GraphicsPipeline::CreateVkGraphicsPipeline(
+    const PipelineData* pipeline_data,
     VkPrimitiveTopology topology,
     const VertexBuffer* vertex_buffer) {
   if (pipeline_ != VK_NULL_HANDLE)
     return Result("Vulkan::Pipeline already created");
+
+  if (!pipeline_data) {
+    return Result(
+        "Vulkan: GraphicsPipeline::CreateVkGraphicsPipeline PipelineData is "
+        "null");
+  }
 
   Result r = CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded();
   if (!r.IsSuccess())
@@ -241,7 +552,8 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
   // TODO(jaebaek): Handle the given index if exists.
   input_assembly_info.topology = topology;
-  input_assembly_info.primitiveRestartEnable = VK_FALSE;
+  input_assembly_info.primitiveRestartEnable =
+      pipeline_data->GetEnablePrimitiveRestart();
 
   VkViewport viewport = {0,
                          0,
@@ -289,10 +601,30 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   pipeline_info.pVertexInputState = &vertex_input_info;
   pipeline_info.pInputAssemblyState = &input_assembly_info;
   pipeline_info.pViewportState = &viewport_info;
-  pipeline_info.pRasterizationState = &kDefaultRasterizationInfo;
   pipeline_info.pMultisampleState = &multisampleInfo;
 
-  VkPipelineTessellationStateCreateInfo tess_info = {};
+  VkPipelineRasterizationStateCreateInfo rasterization_info =
+      VkPipelineRasterizationStateCreateInfo();
+  rasterization_info.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+  rasterization_info.depthClampEnable = pipeline_data->GetEnableDepthClamp();
+  rasterization_info.rasterizerDiscardEnable =
+      pipeline_data->GetEnableRasterizerDiscard();
+  rasterization_info.polygonMode =
+      ToVkPolygonMode(pipeline_data->GetPolygonMode());
+  rasterization_info.cullMode = ToVkCullMode(pipeline_data->GetCullMode());
+  rasterization_info.frontFace = ToVkFrontFace(pipeline_data->GetFrontFace());
+  rasterization_info.depthBiasEnable = pipeline_data->GetEnableDepthBias();
+  rasterization_info.depthBiasConstantFactor =
+      pipeline_data->GetDepthBiasConstantFactor();
+  rasterization_info.depthBiasClamp = pipeline_data->GetDepthBiasClamp();
+  rasterization_info.depthBiasSlopeFactor =
+      pipeline_data->GetDepthBiasSlopeFactor();
+  rasterization_info.lineWidth = pipeline_data->GetLineWidth();
+  pipeline_info.pRasterizationState = &rasterization_info;
+
+  VkPipelineTessellationStateCreateInfo tess_info =
+      VkPipelineTessellationStateCreateInfo();
   if (is_tessellation_needed) {
     tess_info.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
     tess_info.patchControlPoints = patch_control_points_;
@@ -301,7 +633,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
 
   VkPipelineDepthStencilStateCreateInfo depthstencil_info;
   if (depth_stencil_format_ != VK_FORMAT_UNDEFINED) {
-    depthstencil_info = GetPipelineDepthStencilInfo();
+    depthstencil_info = GetPipelineDepthStencilInfo(pipeline_data);
     pipeline_info.pDepthStencilState = &depthstencil_info;
   }
 
@@ -309,12 +641,12 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
       VkPipelineColorBlendStateCreateInfo();
   VkPipelineColorBlendAttachmentState colorblend_attachment;
   if (color_format_ != VK_FORMAT_UNDEFINED) {
-    colorblend_attachment = GetPipelineColorBlendAttachmentState();
+    colorblend_attachment = GetPipelineColorBlendAttachmentState(pipeline_data);
 
     colorblend_info.sType =
         VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorblend_info.logicOpEnable = VK_FALSE;
-    colorblend_info.logicOp = VK_LOGIC_OP_COPY;
+    colorblend_info.logicOpEnable = pipeline_data->GetEnableLogicOp();
+    colorblend_info.logicOp = ToVkLogicOp(pipeline_data->GetLogicOp());
     colorblend_info.attachmentCount = 1;
     colorblend_info.pAttachments = &colorblend_attachment;
     pipeline_info.pColorBlendState = &colorblend_info;
@@ -582,12 +914,11 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  if (pipeline_ == VK_NULL_HANDLE) {
-    r = CreateVkGraphicsPipeline(ToVkTopology(command->GetTopology()),
-                                 vertex_buffer);
-    if (!r.IsSuccess())
-      return r;
-  }
+  r = CreateVkGraphicsPipeline(command->GetPipelineData(),
+                               ToVkTopology(command->GetTopology()),
+                               vertex_buffer);
+  if (!r.IsSuccess())
+    return r;
 
   // Note that a command updating a descriptor set and a command using
   // it must be submitted separately, because using a descriptor set
@@ -652,7 +983,11 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  return ReadbackDescriptorsToHostDataQueue();
+  r = ReadbackDescriptorsToHostDataQueue();
+  if (!r.IsSuccess())
+    return r;
+
+  return ResetPipeline();
 }
 
 Result GraphicsPipeline::ProcessCommands() {
