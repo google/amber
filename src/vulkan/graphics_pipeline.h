@@ -90,7 +90,8 @@ class GraphicsPipeline : public Pipeline {
     kInactive,
   };
 
-  Result CreateVkGraphicsPipeline(VkPrimitiveTopology topology,
+  Result CreateVkGraphicsPipeline(const PipelineData* pipeline_data,
+                                  VkPrimitiveTopology topology,
                                   const VertexBuffer* vertex_buffer);
 
   Result CreateRenderPass();
@@ -107,8 +108,10 @@ class GraphicsPipeline : public Pipeline {
                       const uint32_t height,
                       const ProbeCommand* command);
 
-  VkPipelineDepthStencilStateCreateInfo GetPipelineDepthStencilInfo();
-  VkPipelineColorBlendAttachmentState GetPipelineColorBlendAttachmentState();
+  VkPipelineDepthStencilStateCreateInfo GetPipelineDepthStencilInfo(
+      const PipelineData* pipeline_data);
+  VkPipelineColorBlendAttachmentState GetPipelineColorBlendAttachmentState(
+      const PipelineData* pipeline_data);
 
   VkRenderPass render_pass_ = VK_NULL_HANDLE;
   RenderPassState render_pass_state_ = RenderPassState::kInactive;

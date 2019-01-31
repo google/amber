@@ -81,6 +81,10 @@ void main() {
 [test]
 clear
 
+depthTestEnable true
+depthWriteEnable true
+depthCompareOp VK_COMPARE_OP_LESS
+
 # Note that the rectangle drawn by the last command fully contains
 # the one drawn by the former command. However, the rectangle drawn
 # by the former command is shown in the final frame buffer because

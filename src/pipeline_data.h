@@ -82,7 +82,7 @@ class PipelineData {
   uint32_t GetBackCompareMask() const { return back_compare_mask_; }
 
   void SetBackWriteMask(uint32_t mask) { back_write_mask_ = mask; }
-  uint32_t GetbackWriteMask() const { return back_write_mask_; }
+  uint32_t GetBackWriteMask() const { return back_write_mask_; }
 
   void SetBackReference(uint32_t ref) { back_reference_ = ref; }
   uint32_t GetBackReference() const { return back_reference_; }
