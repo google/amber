@@ -39,6 +39,8 @@ class Format {
   Format(const Format&);
   ~Format();
 
+  Format& operator=(const Format&) = default;
+
   void SetFormatType(FormatType type) { type_ = type; }
   FormatType GetFormatType() const { return type_; }
 

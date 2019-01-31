@@ -51,9 +51,10 @@ Result FrameBuffer::Initialize(
   if (depth_format != VK_FORMAT_UNDEFINED) {
     depth_image_ = MakeUnique<Image>(
         device_, depth_format,
-        VkFormatHasStencilComponent(depth_format)
-            ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-            : VK_IMAGE_ASPECT_DEPTH_BIT,
+        static_cast<VkImageAspectFlags>(
+            VkFormatHasStencilComponent(depth_format)
+                ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+                : VK_IMAGE_ASPECT_DEPTH_BIT),
         width_, height_, depth_, properties);
     Result r =
         depth_image_->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
