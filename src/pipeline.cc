@@ -229,6 +229,27 @@ Result Pipeline::SetDepthBuffer(Buffer* buf) {
   return {};
 }
 
+Result Pipeline::SetIndexBuffer(Buffer* buf) {
+  if (index_buffer_ != nullptr)
+    return Result("can only bind one INDEX_DATA buffer in a pipeline");
+
+  index_buffer_ = buf;
+  return {};
+}
+
+Result Pipeline::AddVertexBuffer(Buffer* buf, uint32_t location) {
+  for (const auto& vtex : vertex_buffers_) {
+    if (vtex.location == location)
+      return Result("can not bind two vertex buffers to the same LOCATION");
+    if (vtex.buffer == buf)
+      return Result("vertex buffer may only be bound to a PIPELINE once");
+  }
+
+  vertex_buffers_.push_back(BufferInfo{buf});
+  vertex_buffers_.back().location = location;
+  return {};
+}
+
 std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() const {
   FormatParser fp;
 
