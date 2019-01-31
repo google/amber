@@ -135,10 +135,6 @@ VkCompareOp ToVkCompareOp(CompareOp op) {
   return VK_COMPARE_OP_NEVER;
 }
 
-VkBool32 ToVkBool32(bool true_or_false) {
-  return true_or_false ? VK_TRUE : VK_FALSE;
-}
-
 VkPolygonMode ToVkPolygonMode(PolygonMode mode) {
   switch (mode) {
     case PolygonMode::kFill:
@@ -449,16 +445,13 @@ GraphicsPipeline::GetPipelineDepthStencilInfo(
   depthstencil_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 
-  depthstencil_info.depthTestEnable =
-      ToVkBool32(pipeline_data->GetEnableDepthTest());
-  depthstencil_info.depthWriteEnable =
-      ToVkBool32(pipeline_data->GetEnableDepthWrite());
+  depthstencil_info.depthTestEnable = pipeline_data->GetEnableDepthTest();
+  depthstencil_info.depthWriteEnable = pipeline_data->GetEnableDepthWrite();
   depthstencil_info.depthCompareOp =
       ToVkCompareOp(pipeline_data->GetDepthCompareOp());
   depthstencil_info.depthBoundsTestEnable =
-      ToVkBool32(pipeline_data->GetEnableDepthBoundsTest());
-  depthstencil_info.stencilTestEnable =
-      ToVkBool32(pipeline_data->GetEnableStencilTest());
+      pipeline_data->GetEnableDepthBoundsTest();
+  depthstencil_info.stencilTestEnable = pipeline_data->GetEnableStencilTest();
 
   depthstencil_info.front.failOp =
       ToVkStencilOp(pipeline_data->GetFrontFailOp());
@@ -493,8 +486,7 @@ GraphicsPipeline::GetPipelineColorBlendAttachmentState(
     const PipelineData* pipeline_data) {
   VkPipelineColorBlendAttachmentState colorblend_attachment =
       VkPipelineColorBlendAttachmentState();
-  colorblend_attachment.blendEnable =
-      ToVkBool32(pipeline_data->GetEnableBlend());
+  colorblend_attachment.blendEnable = pipeline_data->GetEnableBlend();
   colorblend_attachment.srcColorBlendFactor =
       ToVkBlendFactor(pipeline_data->GetSrcColorBlendFactor());
   colorblend_attachment.dstColorBlendFactor =
@@ -561,7 +553,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   // TODO(jaebaek): Handle the given index if exists.
   input_assembly_info.topology = topology;
   input_assembly_info.primitiveRestartEnable =
-      ToVkBool32(pipeline_data->GetEnablePrimitiveRestart());
+      pipeline_data->GetEnablePrimitiveRestart();
 
   VkViewport viewport = {0,
                          0,
@@ -615,16 +607,14 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
       VkPipelineRasterizationStateCreateInfo();
   rasterization_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-  rasterization_info.depthClampEnable =
-      ToVkBool32(pipeline_data->GetEnableDepthClamp());
+  rasterization_info.depthClampEnable = pipeline_data->GetEnableDepthClamp();
   rasterization_info.rasterizerDiscardEnable =
-      ToVkBool32(pipeline_data->GetEnableRasterizerDiscard());
+      pipeline_data->GetEnableRasterizerDiscard();
   rasterization_info.polygonMode =
       ToVkPolygonMode(pipeline_data->GetPolygonMode());
   rasterization_info.cullMode = ToVkCullMode(pipeline_data->GetCullMode());
   rasterization_info.frontFace = ToVkFrontFace(pipeline_data->GetFrontFace());
-  rasterization_info.depthBiasEnable =
-      ToVkBool32(pipeline_data->GetEnableDepthBias());
+  rasterization_info.depthBiasEnable = pipeline_data->GetEnableDepthBias();
   rasterization_info.depthBiasConstantFactor =
       pipeline_data->GetDepthBiasConstantFactor();
   rasterization_info.depthBiasClamp = pipeline_data->GetDepthBiasClamp();
@@ -655,8 +645,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
 
     colorblend_info.sType =
         VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorblend_info.logicOpEnable =
-        ToVkBool32(pipeline_data->GetEnableLogicOp());
+    colorblend_info.logicOpEnable = pipeline_data->GetEnableLogicOp();
     colorblend_info.logicOp = ToVkLogicOp(pipeline_data->GetLogicOp());
     colorblend_info.attachmentCount = 1;
     colorblend_info.pAttachments = &colorblend_attachment;
@@ -925,20 +914,11 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  if (pipeline_ != VK_NULL_HANDLE &&
-      command->IsPipelineDataDifferentFromPreviousOne()) {
-    r = ResetPipeline();
-    if (!r.IsSuccess())
-      return r;
-  }
-
-  if (pipeline_ == VK_NULL_HANDLE) {
-    r = CreateVkGraphicsPipeline(command->GetPipelineData(),
-                                 ToVkTopology(command->GetTopology()),
-                                 vertex_buffer);
-    if (!r.IsSuccess())
-      return r;
-  }
+  r = CreateVkGraphicsPipeline(command->GetPipelineData(),
+                               ToVkTopology(command->GetTopology()),
+                               vertex_buffer);
+  if (!r.IsSuccess())
+    return r;
 
   // Note that a command updating a descriptor set and a command using
   // it must be submitted separately, because using a descriptor set
@@ -1003,7 +983,11 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  return ReadbackDescriptorsToHostDataQueue();
+  r = ReadbackDescriptorsToHostDataQueue();
+  if (!r.IsSuccess())
+    return r;
+
+  return ResetPipeline();
 }
 
 Result GraphicsPipeline::ProcessCommands() {

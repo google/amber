@@ -326,8 +326,7 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   if (!r.IsSuccess())
     return r;
 
-  DrawArraysCommand draw(*command->GetPipelineData(),
-                         command->IsPipelineDataDifferentFromPreviousOne());
+  DrawArraysCommand draw(*command->GetPipelineData());
   draw.SetTopology(command->IsPatch() ? Topology::kPatchList
                                       : Topology::kTriangleStrip);
   draw.SetFirstVertexIndex(0);

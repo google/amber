@@ -101,19 +101,10 @@ class Command {
 
 class DrawRectCommand : public Command {
  public:
-  DrawRectCommand(PipelineData data,
-                  bool is_pipeline_data_different_from_previous_one);
+  explicit DrawRectCommand(PipelineData data);
   ~DrawRectCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
-
-  // Return true if PipelineData is changed since the last draw
-  // command, which means that graphics pipeline must be created
-  // with the new PipelineData. In that case,
-  // GraphicsPipeline::Draw() method resets graphics pipeline.
-  bool IsPipelineDataDifferentFromPreviousOne() const {
-    return is_pipeline_data_different_from_previous_one_;
-  }
 
   void EnableOrtho() { is_ortho_ = true; }
   bool IsOrtho() const { return is_ortho_; }
@@ -135,7 +126,6 @@ class DrawRectCommand : public Command {
 
  private:
   PipelineData data_;
-  bool is_pipeline_data_different_from_previous_one_ = false;
   bool is_ortho_ = false;
   bool is_patch_ = false;
   float x_ = 0.0;
@@ -146,19 +136,10 @@ class DrawRectCommand : public Command {
 
 class DrawArraysCommand : public Command {
  public:
-  DrawArraysCommand(PipelineData data,
-                    bool is_pipeline_data_different_from_previous_one);
+  explicit DrawArraysCommand(PipelineData data);
   ~DrawArraysCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
-
-  // Return true if PipelineData is changed since the last draw
-  // command, which means that graphics pipeline must be created
-  // with the new PipelineData. In that case,
-  // GraphicsPipeline::Draw() method resets graphics pipeline.
-  bool IsPipelineDataDifferentFromPreviousOne() const {
-    return is_pipeline_data_different_from_previous_one_;
-  }
 
   void EnableIndexed() { is_indexed_ = true; }
   bool IsIndexed() const { return is_indexed_; }
@@ -180,7 +161,6 @@ class DrawArraysCommand : public Command {
 
  private:
   PipelineData data_;
-  bool is_pipeline_data_different_from_previous_one_ = false;
   bool is_indexed_ = false;
   bool is_instanced_ = false;
   Topology topology_ = Topology::kUnknown;
@@ -191,8 +171,10 @@ class DrawArraysCommand : public Command {
 
 class ComputeCommand : public Command {
  public:
-  ComputeCommand();
+  explicit ComputeCommand(PipelineData data);
   ~ComputeCommand() override;
+
+  const PipelineData* GetPipelineData() const { return &data_; }
 
   void SetX(uint32_t x) { x_ = x; }
   uint32_t GetX() const { return x_; }
@@ -204,6 +186,8 @@ class ComputeCommand : public Command {
   uint32_t GetZ() const { return z_; }
 
  private:
+  PipelineData data_;
+
   uint32_t x_ = 0;
   uint32_t y_ = 0;
   uint32_t z_ = 0;
