@@ -171,10 +171,8 @@ class DrawArraysCommand : public Command {
 
 class ComputeCommand : public Command {
  public:
-  explicit ComputeCommand(PipelineData data);
+  ComputeCommand();
   ~ComputeCommand() override;
-
-  const PipelineData* GetPipelineData() const { return &data_; }
 
   void SetX(uint32_t x) { x_ = x; }
   uint32_t GetX() const { return x_; }
@@ -186,8 +184,6 @@ class ComputeCommand : public Command {
   uint32_t GetZ() const { return z_; }
 
  private:
-  PipelineData data_;
-
   uint32_t x_ = 0;
   uint32_t y_ = 0;
   uint32_t z_ = 0;
