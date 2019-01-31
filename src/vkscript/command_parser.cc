@@ -357,7 +357,7 @@ Result CommandParser::ProcessDrawArrays() {
 }
 
 Result CommandParser::ProcessCompute() {
-  auto cmd = MakeUnique<ComputeCommand>(pipeline_data_);
+  auto cmd = MakeUnique<ComputeCommand>();
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
