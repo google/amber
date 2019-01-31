@@ -78,8 +78,7 @@ DrawArraysCommand::DrawArraysCommand(PipelineData data)
 
 DrawArraysCommand::~DrawArraysCommand() = default;
 
-ComputeCommand::ComputeCommand(PipelineData data)
-    : Command(Type::kCompute), data_(data) {}
+ComputeCommand::ComputeCommand() : Command(Type::kCompute) {}
 
 ComputeCommand::~ComputeCommand() = default;
 
