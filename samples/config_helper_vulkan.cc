@@ -634,7 +634,7 @@ bool AreAllExtensionsSupported(
 // Check if |physical_device| supports both compute and graphics
 // pipelines.
 uint32_t ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device) {
-  uint32_t count;
+  uint32_t count = 0;
   std::vector<VkQueueFamilyProperties> properties;
 
   vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &count, nullptr);
@@ -680,8 +680,10 @@ void ConfigHelperVulkan::CreateVulkanInstance() {
   instance_info.enabledExtensionCount = 1U;
   instance_info.ppEnabledExtensionNames = &kExtensionForValidationLayer;
 
-  assert(vkCreateInstance(&instance_info, nullptr, &vulkan_instance_) ==
-         VK_SUCCESS);
+  if (vkCreateInstance(&instance_info, nullptr, &vulkan_instance_) !=
+      VK_SUCCESS) {
+    assert(false && "Sample: vkCreateInstance fail");
+  }
 }
 
 void ConfigHelperVulkan::CreateDebugReportCallback() {
@@ -706,14 +708,18 @@ void ConfigHelperVulkan::CreateDebugReportCallback() {
 void ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
     const VkPhysicalDeviceFeatures& required_features,
     const std::vector<std::string>& required_extensions) {
-  uint32_t count;
+  uint32_t count = 0;
   std::vector<VkPhysicalDevice> physical_devices;
 
-  assert(vkEnumeratePhysicalDevices(vulkan_instance_, &count, nullptr) ==
-         VK_SUCCESS);
+  if (vkEnumeratePhysicalDevices(vulkan_instance_, &count, nullptr) !=
+      VK_SUCCESS) {
+    assert(false && "Sample: vkEnumeratePhysicalDevices fail");
+  }
   physical_devices.resize(count);
-  assert(vkEnumeratePhysicalDevices(vulkan_instance_, &count,
-                                    physical_devices.data()) == VK_SUCCESS);
+  if (vkEnumeratePhysicalDevices(vulkan_instance_, &count,
+                                 physical_devices.data()) != VK_SUCCESS) {
+    assert(false && "Sample: vkEnumeratePhysicalDevices fail");
+  }
 
   for (uint32_t i = 0; i < count; ++i) {
     vkGetPhysicalDeviceFeatures(physical_devices[i], &available_features_);
@@ -764,8 +770,10 @@ void ConfigHelperVulkan::CreateVulkanDevice(
       static_cast<uint32_t>(required_extensions_in_char.size());
   info.ppEnabledExtensionNames = required_extensions_in_char.data();
 
-  assert(vkCreateDevice(vulkan_physical_device_, &info, nullptr,
-                        &vulkan_device_) == VK_SUCCESS);
+  if (vkCreateDevice(vulkan_physical_device_, &info, nullptr,
+                     &vulkan_device_) != VK_SUCCESS) {
+    assert(false && "Sample: vkCreateDevice fail");
+  }
 }
 
 std::unique_ptr<amber::EngineConfig> ConfigHelperVulkan::CreateConfig(
@@ -805,9 +813,10 @@ void ConfigHelperVulkan::Shutdown() {
                                 "vkDestroyDebugReportCallbackEXT"));
   assert(vkDestroyDebugReportCallbackEXT &&
          "Sample: vkDestroyDebugReportCallbackEXT is nullptr");
-  if (vulkan_callback_ != VK_NULL_HANDLE)
+  if (vulkan_callback_ != VK_NULL_HANDLE) {
     vkDestroyDebugReportCallbackEXT(vulkan_instance_, vulkan_callback_,
                                     nullptr);
+  }
 
   if (vulkan_instance_ != VK_NULL_HANDLE)
     vkDestroyInstance(vulkan_instance_, nullptr);
