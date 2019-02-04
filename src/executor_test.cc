@@ -204,6 +204,10 @@ class EngineStub : public Engine {
                            ResourceInfo*) override {
     return {};
   }
+  std::vector<ResourceInfo> GetAllDescriptorInfo() override {
+    std::vector<ResourceInfo> info;
+    return info;
+  }
 
  private:
   bool fail_shader_command_ = false;

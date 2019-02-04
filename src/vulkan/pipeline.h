@@ -62,6 +62,9 @@ class Pipeline {
                            const uint32_t binding,
                            ResourceInfo* info);
 
+  // Get the information of all resources for descriptors.
+  std::vector<ResourceInfo> GetAllDescriptorInfo();
+
   void SetEntryPointName(VkShaderStageFlagBits stage,
                          const std::string& entry) {
     entry_points_[stage] = entry;

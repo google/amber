@@ -47,6 +47,14 @@ struct EngineData {
 struct ResourceInfo {
   ResourceInfoType type = ResourceInfoType::kBuffer;
 
+  /// Descriptor set number. This is meaningful only when it is a resource
+  /// for a descriptor.
+  uint32_t descriptor_set = 0;
+
+  /// Binding number. This is meaningful only when it is a resource for a
+  /// descriptor.
+  uint32_t binding = 0;
+
   /// Key metrics of a 2D image.
   /// For higher dimensions or arrayed images, we would need more strides.
   /// For example, see VkSubresourceLayout.
@@ -161,6 +169,11 @@ class Engine {
   virtual Result GetDescriptorInfo(const uint32_t descriptor_set,
                                    const uint32_t binding,
                                    ResourceInfo* info) = 0;
+
+  /// Copy the contents of all resources bound to descriptors and get
+  /// their resource information e.g., size for buffer, width, height,
+  /// depth for image.
+  virtual std::vector<ResourceInfo> GetAllDescriptorInfo() = 0;
 
   /// Sets the engine data to use.
   void SetEngineData(const EngineData& data) { engine_data_ = data; }

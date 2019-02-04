@@ -64,6 +64,7 @@ class EngineVulkan : public Engine {
   Result GetDescriptorInfo(const uint32_t descriptor_set,
                            const uint32_t binding,
                            ResourceInfo* info) override;
+  std::vector<ResourceInfo> GetAllDescriptorInfo() override;
 
  private:
   std::vector<VkPipelineShaderStageCreateInfo> GetShaderStageInfo();

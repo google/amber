@@ -172,6 +172,8 @@ ResourceInfo BufferDescriptor::GetResourceInfo() {
   auto& buffer_output = GetBufferOutput();
 
   ResourceInfo info = ResourceInfo();
+  info.descriptor_set = GetDescriptorSet();
+  info.binding = GetBinding();
   info.type = ResourceInfoType::kBuffer;
   if (buffer_) {
     assert(buffer_input_queue.empty() && buffer_output.empty());

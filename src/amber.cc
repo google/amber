@@ -14,6 +14,7 @@
 
 #include "amber/amber.h"
 
+#include <algorithm>
 #include <memory>
 #include <string>
 
@@ -80,6 +81,7 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
     return r;
   }
 
+  bool dump_buffer = false;
   for (BufferInfo& buffer_info : opts->extractions) {
     if (buffer_info.buffer_name == "framebuffer") {
       ResourceInfo info;
@@ -95,6 +97,36 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
         engine->Shutdown();
         return r;
       }
+    }
+
+    if (!dump_buffer && buffer_info.buffer_name == "buffer")
+      dump_buffer = true;
+  }
+
+  if (!dump_buffer)
+    return engine->Shutdown();
+
+  opts->extractions.erase(
+      std::remove_if(opts->extractions.begin(), opts->extractions.end(),
+                     [](const BufferInfo& buffer_info) {
+                       return buffer_info.buffer_name == "buffer";
+                     }),
+      opts->extractions.end());
+
+  const auto descriptor_info = engine->GetAllDescriptorInfo();
+  for (const auto& info : descriptor_info) {
+    opts->extractions.emplace_back();
+    opts->extractions.back().buffer_name =
+        (info.type == ResourceInfoType::kBuffer ? "BUFFER " : "IMAGE ") +
+        std::to_string(info.descriptor_set) + ":" +
+        std::to_string(info.binding);
+
+    const uint8_t* ptr = static_cast<const uint8_t*>(info.cpu_memory);
+    auto& values = opts->extractions.back().values;
+    for (size_t i = 0; i < info.size_in_bytes; ++i) {
+      values.emplace_back();
+      values.back().SetIntValue(*ptr);
+      ++ptr;
     }
   }
 

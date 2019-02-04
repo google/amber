@@ -15,6 +15,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <set>
 #include <utility>
@@ -258,8 +259,9 @@ int main(int argc, const char** argv) {
   amber_options.config = config.get();
 
   if (!options.buffer_filename.empty()) {
-    // TODO(dsinclair): Write buffer file
-    assert(false);
+    amber::BufferInfo buffer_info;
+    buffer_info.buffer_name = "buffer";
+    amber_options.extractions.push_back(buffer_info);
   }
 
   if (!options.image_filename.empty()) {
@@ -302,6 +304,31 @@ int main(int argc, const char** argv) {
       }
       image_file << image;
       image_file.close();
+    }
+
+    if (!options.buffer_filename.empty()) {
+      std::ofstream buffer_file;
+      buffer_file.open(options.buffer_filename, std::ios::out);
+      if (!buffer_file.is_open()) {
+        std::cerr << "Cannot open file for image dump: ";
+        std::cerr << options.buffer_filename << std::endl;
+      } else {
+        for (amber::BufferInfo buffer_info : amber_options.extractions) {
+          if (buffer_info.buffer_name == "framebuffer")
+            continue;
+
+          buffer_file << buffer_info.buffer_name << std::endl;
+          const auto& values = buffer_info.values;
+          for (size_t i = 0; i < values.size(); ++i) {
+            buffer_file << " " << std::setfill('0') << std::setw(2) << std::hex
+                        << values[i].AsUint32();
+            if (i % 16 == 15)
+              buffer_file << std::endl;
+          }
+          buffer_file << std::endl;
+        }
+        buffer_file.close();
+      }
     }
   }
 
