@@ -15,7 +15,7 @@
 #ifndef AMBER_VALUE_H_
 #define AMBER_VALUE_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 namespace amber {
 
@@ -28,16 +28,16 @@ class Value {
   Value& operator=(const Value&);
 
   void SetIntValue(uint64_t val) {
-    type_ = Type::kInteger;
+    type_ = kValueTypeInteger;
     uint_value_ = val;
   }
-  bool IsInteger() const { return type_ == Type::kInteger; }
+  bool IsInteger() const { return type_ == kValueTypeInteger; }
 
   void SetDoubleValue(double val) {
-    type_ = Type::kFloat;
+    type_ = kValueTypeFloat;
     double_value_ = val;
   }
-  bool IsFloat() const { return type_ == Type::kFloat; }
+  bool IsFloat() const { return type_ == kValueTypeFloat; }
 
   uint8_t AsUint8() const { return static_cast<uint8_t>(uint_value_); }
   uint16_t AsUint16() const { return static_cast<uint16_t>(uint_value_); }
@@ -53,10 +53,10 @@ class Value {
   double AsDouble() const { return double_value_; }
 
  private:
-  enum class Type { kFloat, kInteger };
-  Type type_ = Type::kFloat;
-  uint64_t uint_value_ = 0;
-  double double_value_ = 0.0;
+  enum Type { kValueTypeFloat, kValueTypeInteger };
+  Type type_;
+  uint64_t uint_value_;
+  double double_value_;
 };
 
 }  // namespace amber

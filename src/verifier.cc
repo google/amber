@@ -380,7 +380,7 @@ std::vector<double> GetActualValuesFromTexel(const uint8_t* texel,
       }
     }
 
-    bit_offset += component.num_bits;
+    bit_offset = static_cast<uint8_t>(bit_offset + component.num_bits);
   }
 
   return actual_values;
