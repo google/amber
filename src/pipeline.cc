@@ -29,7 +29,7 @@ Pipeline::ShaderInfo::ShaderInfo(const ShaderInfo&) = default;
 
 Pipeline::ShaderInfo::~ShaderInfo() = default;
 
-const char* Pipeline::kDefaultColorBufferFormat = "R8G8B8A8_UINT";
+const char* Pipeline::kDefaultColorBufferFormat = "B8G8R8A8_UNORM";
 const char* Pipeline::kDefaultDepthBufferFormat = "D32_SFLOAT_S8_UINT";
 const char* Pipeline::kGeneratedColorBuffer = "amber_default_framebuffer";
 const char* Pipeline::kGeneratedDepthBuffer = "amber_default_depth_buffer";

@@ -182,7 +182,7 @@ attachment content, depth/stencil content, uniform buffers, etc.
 ```
   # Attach |buffer_name| as an output color attachment at location |idx|.
   # The provided buffer must be a `FORMAT` buffer. If no color attachments are
-  # provided a single attachment with format `R8G8B8A8_UINT` will be created
+  # provided a single attachment with format `B8G8R8A8_UNORM` will be created
   # for graphics pipelines.
   BIND BUFFER <buffer_name> AS color LOCATION <idx>
 
