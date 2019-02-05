@@ -87,7 +87,7 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
 
   size_t end_pos = current_position_;
   while (end_pos < data_.length()) {
-    if (data_[end_pos] == ' ' || data_[end_pos] == '\n' ||
+    if (data_[end_pos] == ' ' || data_[end_pos] == '\r' || data_[end_pos] == '\n' ||
         data_[end_pos] == ')' || data_[end_pos] == ',' ||
         data_[end_pos] == '(') {
       break;
