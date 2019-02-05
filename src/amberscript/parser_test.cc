@@ -2032,7 +2032,7 @@ END)";
 
   Buffer* buffer1 = buf1.buffer;
   ASSERT_TRUE(buffer1->IsFormatBuffer());
-  EXPECT_EQ(FormatType::kR8G8B8A8_UINT,
+  EXPECT_EQ(FormatType::kB8G8R8A8_UNORM,
             buffer1->AsFormatBuffer()->GetFormat().GetFormatType());
   EXPECT_EQ(0, buf1.location);
   EXPECT_EQ(250 * 250, buffer1->GetSize());
@@ -2043,7 +2043,7 @@ END)";
   ASSERT_TRUE(buf2.buffer != nullptr);
   ASSERT_EQ(buffer1, buf2.buffer);
   EXPECT_EQ(0, buf2.location);
-  EXPECT_EQ(FormatType::kR8G8B8A8_UINT,
+  EXPECT_EQ(FormatType::kB8G8R8A8_UNORM,
             buf2.buffer->AsFormatBuffer()->GetFormat().GetFormatType());
   EXPECT_EQ(250 * 250, buf2.buffer->GetSize());
   EXPECT_EQ(250 * 250 * sizeof(uint32_t), buf2.buffer->GetSizeInBytes());
