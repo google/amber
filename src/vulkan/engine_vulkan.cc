@@ -232,8 +232,7 @@ Result EngineVulkan::SetBuffer(BufferType type,
     if (!vertex_buffer_)
       vertex_buffer_ = MakeUnique<VertexBuffer>(device_.get());
 
-    pipeline_->AsGraphics()->SetVertexBuffer(location, format, values,
-                                             vertex_buffer_.get());
+    vertex_buffer_->SetData(location, format, values);
     return {};
   }
 
@@ -321,10 +320,7 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   values[7].SetDoubleValue(static_cast<double>(y));
 
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
-
-  r = graphics->SetVertexBuffer(0, format, values, vertex_buffer.get());
-  if (!r.IsSuccess())
-    return r;
+  vertex_buffer->SetData(0, format, values);
 
   DrawArraysCommand draw(*command->GetPipelineData());
   draw.SetTopology(command->IsPatch() ? Topology::kPatchList
