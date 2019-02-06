@@ -26,12 +26,6 @@ namespace amber {
 namespace vulkan {
 namespace {
 
-template <typename T>
-void ExpectBitsEQ(const uint8_t* actual, T expected) {
-  const T* ptr = reinterpret_cast<const T*>(actual);
-  EXPECT_EQ(*ptr, expected);
-}
-
 const VkPhysicalDeviceMemoryProperties kMemoryProperties =
     VkPhysicalDeviceMemoryProperties();
 
@@ -44,7 +38,7 @@ class BufferForTest : public Buffer {
     memory_.resize(4096);
     memory_ptr_ = memory_.data();
   }
-  ~BufferForTest() = default;
+  ~BufferForTest() override = default;
 
   void* HostAccessibleMemoryPtr() const override { return memory_ptr_; }
 
