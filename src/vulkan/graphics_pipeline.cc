@@ -673,19 +673,6 @@ Result GraphicsPipeline::Initialize(uint32_t width,
   return {};
 }
 
-Result GraphicsPipeline::SetVertexBuffer(uint8_t location,
-                                         const Format& format,
-                                         const std::vector<Value>& values,
-                                         VertexBuffer* vertex_buffer) {
-  if (!vertex_buffer) {
-    return Result(
-        "GraphicsPipeline::SetVertexBuffer: vertex buffer is nullptr");
-  }
-
-  vertex_buffer->SetData(location, format, values);
-  return {};
-}
-
 Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
     VertexBuffer* vertex_buffer) {
   if (!vertex_buffer)
