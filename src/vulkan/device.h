@@ -36,7 +36,6 @@ struct VulkanPtrs {
 
 class Device {
  public:
-  Device();
   Device(VkInstance instance,
          VkPhysicalDevice physical_device,
          const VkPhysicalDeviceFeatures& available_features,
@@ -49,7 +48,6 @@ class Device {
   Result Initialize(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
                     const std::vector<Feature>& required_features,
                     const std::vector<std::string>& required_extensions);
-  void Shutdown();
 
   VkInstance GetInstance() const { return instance_; }
   VkPhysicalDevice GetPhysicalDevice() { return physical_device_; }
@@ -67,39 +65,9 @@ class Device {
   const VulkanPtrs* GetPtrs() const { return &ptrs_; }
 
  private:
-  Result LoadVulkanGlobalPointers(PFN_vkGetInstanceProcAddr);
   Result LoadVulkanPointers(PFN_vkGetInstanceProcAddr);
-  Result CreateInstance();
-  Result CreateDebugReportCallback();
-
-  // Get a physical device by checking if the physical device has a proper
-  // queue family, required features, and required extensions. Note that
-  // this method calls ChooseQueueFamilyIndex() to check if any queue
-  // provided by the physical device supports graphics or compute pipeline
-  // and sets |queue_family_index_| for the proper queue family.
-  Result ChoosePhysicalDevice(
-      const std::vector<Feature>& required_features,
-      const std::vector<std::string>& required_extensions);
-
-  // Return true if |physical_device| has a queue family that supports both
-  // graphics and compute or only a compute pipeline. If the proper queue
-  // family exists, |queue_family_index_| will have the queue family index
-  // and flags, respectively. Return false if the proper queue family does
-  // not exist.
-  bool ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device);
-
-  // Create a logical device with enabled features |required_features|
-  // and enabled extensions|required_extensions|.
-  Result CreateDevice(const std::vector<Feature>& required_features,
-                      const std::vector<std::string>& required_extensions);
-
-  std::vector<std::string> GetAvailableExtensions(
-      const VkPhysicalDevice& physical_device);
-  Result AreAllValidationLayersSupported();
-  bool AreAllValidationExtensionsSupported();
 
   VkInstance instance_ = VK_NULL_HANDLE;
-  VkDebugReportCallbackEXT callback_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
   VkPhysicalDeviceProperties physical_device_properties_;
   VkPhysicalDeviceMemoryProperties physical_memory_properties_;
@@ -107,16 +75,12 @@ class Device {
   std::vector<std::string> available_physical_device_extensions_;
   uint32_t queue_family_index_ = 0;
   VkDevice device_ = VK_NULL_HANDLE;
-
   VkQueue queue_ = VK_NULL_HANDLE;
-
-  bool destroy_device_ = true;
 
   VulkanPtrs ptrs_;
 };
 
 }  // namespace vulkan
-
 }  // namespace amber
 
 #endif  // SRC_VULKAN_DEVICE_H_

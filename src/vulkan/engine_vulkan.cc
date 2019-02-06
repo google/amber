@@ -69,21 +69,17 @@ Result EngineVulkan::Initialize(EngineConfig* config,
   VulkanEngineConfig* vk_config = static_cast<VulkanEngineConfig*>(config);
   if (!vk_config || vk_config->vkGetInstanceProcAddr == VK_NULL_HANDLE)
     return Result("Vulkan::Initialize vkGetInstanceProcAddr must be provided.");
+  if (vk_config->device != VK_NULL_HANDLE)
+    return Result("Vulkan::Initialize device must be provided");
+  if (vk_config->physical_device == VK_NULL_HANDLE)
+    return Result("Vulkan::Initialize physical device handle is null.");
+  if (vk_config->queue == VK_NULL_HANDLE)
+    return Result("Vulkan::Initialize queue handle is null.");
 
-  // If the device is provided, the physical_device and queue are also required.
-  if (vk_config->device != VK_NULL_HANDLE) {
-    if (vk_config->physical_device == VK_NULL_HANDLE)
-      return Result("Vulkan::Initialize physical device handle is null.");
-    if (vk_config->queue == VK_NULL_HANDLE)
-      return Result("Vulkan::Initialize queue handle is null.");
-
-    device_ = MakeUnique<Device>(
-        vk_config->instance, vk_config->physical_device,
-        vk_config->available_features, vk_config->available_extensions,
-        vk_config->queue_family_index, vk_config->device, vk_config->queue);
-  } else {
-    device_ = MakeUnique<Device>();
-  }
+  device_ = MakeUnique<Device>(
+      vk_config->instance, vk_config->physical_device,
+      vk_config->available_features, vk_config->available_extensions,
+      vk_config->queue_family_index, vk_config->device, vk_config->queue);
 
   Result r = device_->Initialize(vk_config->vkGetInstanceProcAddr, features,
                                  extensions);
@@ -135,7 +131,6 @@ Result EngineVulkan::Shutdown() {
   if (pool_)
     pool_->Shutdown();
 
-  device_->Shutdown();
   return {};
 }
 
