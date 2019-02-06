@@ -240,12 +240,20 @@ int main(int argc, const char** argv) {
   }
 
   sample::ConfigHelper config_helper;
-  auto config = config_helper.CreateConfig(
+  std::unique_ptr<amber::EngineConfig> config;
+
+  amber::Result r = config_helper.CreateConfig(
       amber_options.engine,
       std::vector<std::string>(required_features.begin(),
                                required_features.end()),
       std::vector<std::string>(required_extensions.begin(),
-                               required_extensions.end()));
+                               required_extensions.end()),
+      &config);
+
+  if (!r.IsSuccess()) {
+    std::cout << r.Error() << std::endl;
+    return 1;
+  }
 
   amber_options.config = config.get();
 
