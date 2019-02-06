@@ -552,5 +552,23 @@ TEST_F(VkScriptParserTest, VertexDataRowsWithHexWrongColumn) {
   EXPECT_EQ("2: Invalid vertex data value: 0xffff0000", r.Error());
 }
 
+TEST_F(VkScriptParserTest, ErrorLineNumberBug195) {
+  std::string input = R"([compute shader]
+#version 430
+
+void main() {
+}
+
+[test]
+# Error must report "9: Unknown command: unknown"
+unknown
+})";
+
+  Parser parser;
+  Result r = parser.Parse(input);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("9: Unknown command: unknown", r.Error());
+}
+
 }  // namespace vkscript
 }  // namespace amber
