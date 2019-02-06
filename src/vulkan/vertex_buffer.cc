@@ -177,7 +177,7 @@ Result CopyBitsOfValueToBuffer(uint8_t* dst,
   uint64_t* dst64 = reinterpret_cast<uint64_t*>(dst);
   uint64_t dst_lower_bits = *dst64 & ((1UL << dst_bit_offset) - 1UL);
   uint64_t dst_upper_bits =
-      *dst64 & ~(((1UL << (dst_bit_offset + bits)) - 1UL));
+      *dst64 & ~(((1ULL << (dst_bit_offset + bits)) - 1ULL));
 
   *dst64 = dst_lower_bits | data | dst_upper_bits;
   return {};
