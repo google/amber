@@ -379,7 +379,8 @@ Result EngineVulkan::DoProcessCommands() {
 }
 
 Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
-  assert(info);
+  if (!info)
+    return Result("Vulkan::GetFrameBufferInfo Missing info");
 
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::GetFrameBufferInfo for Non-Graphics Pipeline");
@@ -415,7 +416,8 @@ Result EngineVulkan::GetFrameBuffer(std::vector<Value>* values) {
   }
 
   // TODO(jaebaek): Support other formats
-  assert(color_frame_format_->GetFormatType() == FormatType::kR8G8B8A8_UINT);
+  if (color_frame_format_->GetFormatType() != FormatType::kR8G8B8A8_UINT)
+    return Result("Vulkan::GetFrameBuffer Unsupported buffer format");
 
   Value pixel;
 
