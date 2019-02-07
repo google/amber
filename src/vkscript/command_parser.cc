@@ -471,7 +471,7 @@ Result CommandParser::ProcessClear() {
 Result CommandParser::ParseValues(const std::string& name,
                                   const DatumType& type,
                                   std::vector<Value>* values,
-                                  bool use_std430_layout = false) {
+                                  bool use_std430_layout) {
   assert(values);
 
   uint32_t row_index = 0;
@@ -480,8 +480,14 @@ Result CommandParser::ParseValues(const std::string& name,
   while (!token->IsEOL() && !token->IsEOS()) {
     Value v;
 
-    // When |type| is a multi-column matrix, fill more values for its
-    // memory layout.
+    // VkRunner script assumes that all multi-column matrices given
+    // in a script are row-major matrices. Glslang compiler sets the
+    // stride of a matrix as std140 for SSBO and push constant and
+    // std430 for UBO. Thus, when |type| is a multi-column matrix,
+    // we fill more values for its stride. For example, the row
+    // stride of 3x2 UBO float matrix is 16 bytes but VkRunner script
+    // is supposed to take only 2 float values for a row. We need two
+    // more float values for a row.
     if (type.ColumnCount() > 1U && type.RowCount() > 1U &&
         row_index == type.RowCount()) {
       if (use_std430_layout || type.RowCount() == 3U) {
@@ -595,7 +601,7 @@ Result CommandParser::ProcessSSBO() {
     cmd->SetOffset(token->AsUint32());
 
     std::vector<Value> values;
-    r = ParseValues("ssbo", cmd->GetDatumType(), &values);
+    r = ParseValues("ssbo", cmd->GetDatumType(), &values, false);
     if (!r.IsSuccess())
       return r;
 
@@ -1977,7 +1983,7 @@ Result CommandParser::ProcessProbeSSBO() {
   cmd->SetComparator(comp);
 
   std::vector<Value> values;
-  r = ParseValues("probe ssbo", cmd->GetDatumType(), &values);
+  r = ParseValues("probe ssbo", cmd->GetDatumType(), &values, false);
   if (!r.IsSuccess())
     return r;
 
