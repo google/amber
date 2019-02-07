@@ -35,8 +35,11 @@ ConfigHelper::~ConfigHelper() = default;
 
 amber::Result ConfigHelper::CreateConfig(
     amber::EngineType engine,
+    uint32_t engine_major,
+    uint32_t engine_minor,
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions,
+    bool disable_validation_layer,
     std::unique_ptr<amber::EngineConfig>* config) {
   if (engine == amber::kEngineTypeDawn)
     return amber::Result("Unable to create engine config for Dawn");
@@ -47,7 +50,9 @@ amber::Result ConfigHelper::CreateConfig(
   if (!impl_)
     return amber::Result("Unable to create config helper");
 
-  return impl_->CreateConfig(required_features, required_extensions, config);
+  return impl_->CreateConfig(engine_major, engine_minor, required_features,
+                             required_extensions, disable_validation_layer,
+                             config);
 }
 
 amber::Result ConfigHelper::Shutdown() {

@@ -63,6 +63,8 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   if (!script)
     return Result("Recipe must contain a parsed script");
 
+  script->SetSpvTargetEnv(opts->spv_env);
+
   auto engine = Engine::Create(opts->engine);
   if (!engine)
     return Result("Failed to create engine");

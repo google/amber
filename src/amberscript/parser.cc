@@ -356,6 +356,10 @@ Result Parser::ParsePipelineBlock() {
       r = ParsePipelineFramebufferSize(pipeline.get());
     } else if (tok == "BIND") {
       r = ParsePipelineBind(pipeline.get());
+    } else if (tok == "VERTEX_DATA") {
+      r = ParsePipelineVertexData(pipeline.get());
+    } else if (tok == "INDEX_DATA") {
+      r = ParsePipelineIndexData(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -541,6 +545,46 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
   }
 
   return ValidateEndOfStatement("BIND command");
+}
+
+Result Parser::ParsePipelineVertexData(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("missing buffer name in VERTEX_DATA command");
+
+  auto* buffer = script_->GetBuffer(token->AsString());
+  if (!buffer)
+    return Result("unknown buffer: " + token->AsString());
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "LOCATION")
+    return Result("VERTEX_DATA missing LOCATION");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsInteger())
+    return Result("invalid value for VERTEX_DATA LOCATION");
+
+  Result r = pipeline->AddVertexBuffer(buffer, token->AsUint32());
+  if (!r.IsSuccess())
+    return r;
+
+  return ValidateEndOfStatement("VERTEX_DATA command");
+}
+
+Result Parser::ParsePipelineIndexData(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("missing buffer name in INDEX_DATA command");
+
+  auto* buffer = script_->GetBuffer(token->AsString());
+  if (!buffer)
+    return Result("unknown buffer: " + token->AsString());
+
+  Result r = pipeline->SetIndexBuffer(buffer);
+  if (!r.IsSuccess())
+    return r;
+
+  return ValidateEndOfStatement("INDEX_DATA command");
 }
 
 Result Parser::ToBufferType(const std::string& str, BufferType* type) {
