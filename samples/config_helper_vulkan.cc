@@ -546,25 +546,27 @@ ConfigHelperVulkan::ConfigHelperVulkan() = default;
 
 ConfigHelperVulkan::~ConfigHelperVulkan() = default;
 
-amber::Result ConfigHelperVulkan::CreateVulkanInstance() {
+amber::Result ConfigHelperVulkan::CreateVulkanInstance(
+    bool disable_validation_layer) {
   VkApplicationInfo app_info = {};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.apiVersion = VK_MAKE_VERSION(1, 0, 0);
 
-  if (!AreAllValidationLayersSupported())
-    return amber::Result("Sample: not all validation layers are supported");
-  if (!AreAllValidationExtensionsSupported()) {
-    return amber::Result(
-        "Sample: extensions of validation layers are not supported");
-  }
-
   VkInstanceCreateInfo instance_info = {};
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_info.pApplicationInfo = &app_info;
-  instance_info.enabledLayerCount = kNumberOfRequiredValidationLayers;
-  instance_info.ppEnabledLayerNames = kRequiredValidationLayers;
-  instance_info.enabledExtensionCount = 1U;
-  instance_info.ppEnabledExtensionNames = &kExtensionForValidationLayer;
+  if (!disable_validation_layer) {
+    if (!AreAllValidationLayersSupported())
+      return amber::Result("Sample: not all validation layers are supported");
+    if (!AreAllValidationExtensionsSupported()) {
+      return amber::Result(
+          "Sample: extensions of validation layers are not supported");
+    }
+    instance_info.enabledLayerCount = kNumberOfRequiredValidationLayers;
+    instance_info.ppEnabledLayerNames = kRequiredValidationLayers;
+    instance_info.enabledExtensionCount = 1U;
+    instance_info.ppEnabledExtensionNames = &kExtensionForValidationLayer;
+  }
 
   if (vkCreateInstance(&instance_info, nullptr, &vulkan_instance_) !=
       VK_SUCCESS) {
@@ -669,6 +671,7 @@ amber::Result ConfigHelperVulkan::CreateVulkanDevice(
 amber::Result ConfigHelperVulkan::CreateConfig(
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions,
+    bool disable_validation_layer,
     std::unique_ptr<amber::EngineConfig>* cfg_holder) {
   VkPhysicalDeviceFeatures required_vulkan_features = {};
   amber::Result r =
@@ -676,13 +679,15 @@ amber::Result ConfigHelperVulkan::CreateConfig(
   if (!r.IsSuccess())
     return r;
 
-  r = CreateVulkanInstance();
+  r = CreateVulkanInstance(disable_validation_layer);
   if (!r.IsSuccess())
     return r;
 
-  r = CreateDebugReportCallback();
-  if (!r.IsSuccess())
-    return r;
+  if (!disable_validation_layer) {
+    r = CreateDebugReportCallback();
+    if (!r.IsSuccess())
+      return r;
+  }
 
   r = ChooseVulkanPhysicalDevice(required_vulkan_features, required_extensions);
   if (!r.IsSuccess())
@@ -715,16 +720,18 @@ amber::Result ConfigHelperVulkan::Shutdown() {
   if (vulkan_device_ != VK_NULL_HANDLE)
     vkDestroyDevice(vulkan_device_, nullptr);
 
-  auto vkDestroyDebugReportCallbackEXT =
-      reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
-          vkGetInstanceProcAddr(vulkan_instance_,
-                                "vkDestroyDebugReportCallbackEXT"));
-  if (!vkDestroyDebugReportCallbackEXT)
-    return amber::Result("Sample: vkDestroyDebugReportCallbackEXT is nullptr");
+  if (vulkan_callback_ != VK_NULL_HANDLE) {
+    auto vkDestroyDebugReportCallbackEXT =
+        reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
+            vkGetInstanceProcAddr(vulkan_instance_,
+                                  "vkDestroyDebugReportCallbackEXT"));
+    if (!vkDestroyDebugReportCallbackEXT)
+      return amber::Result(
+          "Sample: vkDestroyDebugReportCallbackEXT is nullptr");
 
-  if (vulkan_callback_ != VK_NULL_HANDLE)
     vkDestroyDebugReportCallbackEXT(vulkan_instance_, vulkan_callback_,
                                     nullptr);
+  }
 
   if (vulkan_instance_ != VK_NULL_HANDLE)
     vkDestroyInstance(vulkan_instance_, nullptr);
