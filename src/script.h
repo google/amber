@@ -150,6 +150,11 @@ class Script : public RecipeImpl {
     return commands_;
   }
 
+  /// Sets the SPIR-V target environment.
+  void SetSpvTargetEnv(uint32_t env) { spv_env_ = env; }
+  /// Retrieves the SPIR-V target environment.
+  uint32_t GetSpvTargetEnv() const { return spv_env_; }
+
  private:
   struct {
     std::vector<Feature> required_features;
@@ -157,6 +162,7 @@ class Script : public RecipeImpl {
   } engine_info_;
 
   EngineData engine_data_;
+  uint32_t spv_env_ = 0;
   std::map<std::string, Shader*> name_to_shader_;
   std::map<std::string, Buffer*> name_to_buffer_;
   std::map<std::string, Pipeline*> name_to_pipeline_;

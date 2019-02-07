@@ -36,7 +36,9 @@
 
 namespace amber {
 
-ShaderCompiler::ShaderCompiler() = default;
+ShaderCompiler::ShaderCompiler() : spv_env_(0) {}
+
+ShaderCompiler::ShaderCompiler(uint32_t env) : spv_env_(env) {}
 
 ShaderCompiler::~ShaderCompiler() = default;
 
@@ -49,8 +51,7 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
 
 #if AMBER_ENABLE_SPIRV_TOOLS
   std::string spv_errors;
-  // TODO(dsinclair): Vulkan env should be an option.
-  spvtools::SpirvTools tools(SPV_ENV_UNIVERSAL_1_0);
+  spvtools::SpirvTools tools(static_cast<spv_target_env>(spv_env_));
   tools.SetMessageConsumer([&spv_errors](spv_message_level_t level, const char*,
                                          const spv_position_t& position,
                                          const char* message) {

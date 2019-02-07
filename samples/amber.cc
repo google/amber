@@ -24,6 +24,7 @@
 #include "amber/recipe.h"
 #include "samples/config_helper.h"
 #include "samples/ppm.h"
+#include "spirv-tools/libspirv.h"
 #include "src/build-versions.h"
 #include "src/make_unique.h"
 
@@ -41,6 +42,7 @@ struct Options {
   bool show_help = false;
   bool show_version_info = false;
   amber::EngineType engine = amber::kEngineTypeVulkan;
+  spv_target_env spv_env = SPV_ENV_UNIVERSAL_1_0;
 };
 
 const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
@@ -49,6 +51,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -p             -- Parse input files only; Don't execute.
   -s             -- Print summary of pass/failure.
   -d             -- Disable Vulkan/Dawn validation layer.
+  -t <spirv_env> -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
   -i <filename>  -- Write rendering to <filename> as a PPM image.
   -b <filename>  -- Write contents of a UBO or SSBO to <filename>.
   -B <buffer>    -- Index of buffer to write. Defaults buffer 0.
@@ -105,6 +108,17 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         std::cerr
             << "Invalid value for -e argument. Must be one of: vulkan dawn"
             << std::endl;
+        return false;
+      }
+    } else if (arg == "-t") {
+      ++i;
+      if (i >= args.size()) {
+        std::cerr << "Missing value for -t argument." << std::endl;
+        return false;
+      }
+
+      if (!spvParseTargetEnv(args[i].c_str(), &(opts->spv_env))) {
+        std::cerr << "Unable to parse SPIR-V target environment." << std::endl;
         return false;
       }
 
