@@ -24,7 +24,6 @@ set(VULKAN_ENGINE_SOURCES
     frame_buffer.cc
     graphics_pipeline.cc
     index_buffer.cc
-    log.cc
     image.cc
     pipeline.cc
     push_constant.cc
