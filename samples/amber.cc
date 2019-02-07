@@ -36,6 +36,7 @@ struct Options {
   std::string buffer_filename;
   int64_t buffer_binding_index = 0;
   bool parse_only = false;
+  bool disable_validation_layer = false;
   bool show_summary = false;
   bool show_help = false;
   bool show_version_info = false;
@@ -47,6 +48,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
  options:
   -p             -- Parse input files only; Don't execute.
   -s             -- Print summary of pass/failure.
+  -d             -- Disable Vulkan/Dawn validation layer.
   -i <filename>  -- Write rendering to <filename> as a PPM image.
   -b <filename>  -- Write contents of a UBO or SSBO to <filename>.
   -B <buffer>    -- Index of buffer to write. Defaults buffer 0.
@@ -112,6 +114,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->show_version_info = true;
     } else if (arg == "-p") {
       opts->parse_only = true;
+    } else if (arg == "-d") {
+      opts->disable_validation_layer = true;
     } else if (arg == "-s") {
       opts->show_summary = true;
     } else if (arg.size() > 0 && arg[0] == '-') {
@@ -248,7 +252,7 @@ int main(int argc, const char** argv) {
                                required_features.end()),
       std::vector<std::string>(required_extensions.begin(),
                                required_extensions.end()),
-      &config);
+      options.disable_validation_layer, &config);
 
   if (!r.IsSuccess()) {
     std::cout << r.Error() << std::endl;

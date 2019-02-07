@@ -35,6 +35,7 @@ class ConfigHelperImpl {
   virtual amber::Result CreateConfig(
       const std::vector<std::string>& required_features,
       const std::vector<std::string>& required_extensions,
+      bool disable_validation_layer,
       std::unique_ptr<amber::EngineConfig>* config) = 0;
 
   // Destroy instance and device.
@@ -56,6 +57,7 @@ class ConfigHelper {
       amber::EngineType engine,
       const std::vector<std::string>& required_features,
       const std::vector<std::string>& required_extensions,
+      bool disable_validation_layer,
       std::unique_ptr<amber::EngineConfig>* config);
 
   // Destroy instance and device.
