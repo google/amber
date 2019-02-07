@@ -39,6 +39,8 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   // extensions are given in |required_features| and
   // |required_extensions|, respectively.
   amber::Result CreateConfig(
+      uint32_t engine_major,
+      uint32_t engine_minor,
       const std::vector<std::string>& required_features,
       const std::vector<std::string>& required_extensions,
       bool disable_validation_layer,
@@ -49,7 +51,9 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
 
  private:
   // Create Vulkan instance.
-  amber::Result CreateVulkanInstance(bool disable_validation_layer);
+  amber::Result CreateVulkanInstance(uint32_t engine_major,
+                                     uint32_t engine_minor,
+                                     bool disable_validation_layer);
 
   // Create |vulkan_callback_| that reports validation layer errors
   // via debugCallback() function in config_helper_vulkan.cc.
