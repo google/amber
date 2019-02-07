@@ -57,6 +57,8 @@ struct Options {
   EngineType engine;
   /// Holds engine specific configuration. Ownership stays with the caller.
   EngineConfig* config;
+  /// The SPIR-V environment to target.
+  std::string spv_env;
   /// Lists the buffers to extract at the end of the execution
   std::vector<BufferInfo> extractions;
 };
