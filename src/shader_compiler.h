@@ -28,6 +28,7 @@ namespace amber {
 class ShaderCompiler {
  public:
   ShaderCompiler();
+  explicit ShaderCompiler(const std::string& env);
   ~ShaderCompiler();
 
   std::pair<Result, std::vector<uint32_t>> Compile(
@@ -37,6 +38,8 @@ class ShaderCompiler {
  private:
   Result ParseHex(const std::string& data, std::vector<uint32_t>* result) const;
   Result CompileGlsl(Shader* shader, std::vector<uint32_t>* result) const;
+
+  std::string spv_env_;
 };
 
 }  // namespace amber

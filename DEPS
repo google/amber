@@ -8,8 +8,8 @@ vars = {
   'glslang_revision': 'f44b17ee135d5e153ce000e88b806b5377812b11',
   'googletest_revision': 'd5932506d6eed73ac80b9bcc47ed723c8c74eb1e',
   'shaderc_revision': '53c776f776821bc037b31b8b3b79db2fa54b4ce7',
-  'spirv_headers_revision': '282879ca34563020dbe73fd8f7d45bed6755626a',
-  'spirv_tools_revision': '703305b1a5a2a06ea75510b954dea1dd2489fa46',
+  'spirv_headers_revision': '8bea0a266ac9b718aa0818d9e3a47c0b77c2cb23',
+  'spirv_tools_revision': '39bfb6b978e937487a9cedfd964d61a3ac4384b8',
 }
 
 deps = {
