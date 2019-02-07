@@ -15,7 +15,6 @@
 #include "samples/config_helper.h"
 
 #include <algorithm>
-#include <cassert>
 #include <set>
 #include <string>
 #include <vector>
@@ -34,24 +33,29 @@ ConfigHelper::ConfigHelper() = default;
 
 ConfigHelper::~ConfigHelper() = default;
 
-std::unique_ptr<amber::EngineConfig> ConfigHelper::CreateConfig(
+amber::Result ConfigHelper::CreateConfig(
     amber::EngineType engine,
     const std::vector<std::string>& required_features,
-    const std::vector<std::string>& required_extensions) {
+    const std::vector<std::string>& required_extensions,
+    bool disable_validation_layer,
+    std::unique_ptr<amber::EngineConfig>* config) {
   if (engine == amber::kEngineTypeDawn)
-    return nullptr;
+    return amber::Result("Unable to create engine config for Dawn");
 
 #if AMBER_ENGINE_VULKAN
   impl_ = amber::MakeUnique<ConfigHelperVulkan>();
 #endif  // AMBER_ENGINE_VULKAN
-  return impl_ ? impl_->CreateConfig(required_features, required_extensions)
-               : nullptr;
+  if (!impl_)
+    return amber::Result("Unable to create config helper");
+
+  return impl_->CreateConfig(required_features, required_extensions,
+                             disable_validation_layer, config);
 }
 
-void ConfigHelper::Shutdown() {
+amber::Result ConfigHelper::Shutdown() {
   if (!impl_)
-    return;
-  impl_->Shutdown();
+    return {};
+  return impl_->Shutdown();
 }
 
 }  // namespace sample

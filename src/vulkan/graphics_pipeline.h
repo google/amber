@@ -50,11 +50,6 @@ class GraphicsPipeline : public Pipeline {
                     VkCommandPool pool,
                     VkQueue queue);
 
-  Result SetVertexBuffer(uint8_t location,
-                         const Format& format,
-                         const std::vector<Value>& values,
-                         VertexBuffer* vertex_buffer);
-
   Result SetIndexBuffer(const std::vector<Value>& values);
 
   Result Clear();

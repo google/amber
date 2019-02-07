@@ -32,12 +32,14 @@ class ConfigHelperImpl {
   // Create instance and device and return them as amber::EngineConfig.
   // |required_features| and |required_extensions| contain lists of
   // required features and required extensions, respectively.
-  virtual std::unique_ptr<amber::EngineConfig> CreateConfig(
+  virtual amber::Result CreateConfig(
       const std::vector<std::string>& required_features,
-      const std::vector<std::string>& required_extensions) = 0;
+      const std::vector<std::string>& required_extensions,
+      bool disable_validation_layer,
+      std::unique_ptr<amber::EngineConfig>* config) = 0;
 
   // Destroy instance and device.
-  virtual void Shutdown() = 0;
+  virtual amber::Result Shutdown() = 0;
 };
 
 // Wrapper of ConfigHelperImpl.
@@ -51,13 +53,15 @@ class ConfigHelper {
   // required features and required extensions, respectively. |engine|
   // indicates whether the caller required VulkanEngineConfig or
   // DawnEngineConfig.
-  std::unique_ptr<amber::EngineConfig> CreateConfig(
+  amber::Result CreateConfig(
       amber::EngineType engine,
       const std::vector<std::string>& required_features,
-      const std::vector<std::string>& required_extensions);
+      const std::vector<std::string>& required_extensions,
+      bool disable_validation_layer,
+      std::unique_ptr<amber::EngineConfig>* config);
 
   // Destroy instance and device.
-  void Shutdown();
+  amber::Result Shutdown();
 
  private:
   std::unique_ptr<ConfigHelperImpl> impl_;
