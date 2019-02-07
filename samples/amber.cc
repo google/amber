@@ -241,6 +241,7 @@ int main(int argc, const char** argv) {
 
   amber::Options amber_options;
   amber_options.engine = options.engine;
+  amber_options.spv_env = options.spv_env;
 
   std::set<std::string> required_features;
   std::set<std::string> required_extensions;
