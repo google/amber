@@ -60,6 +60,53 @@ Result Parser::Parse(const std::string& data) {
     if (!r.IsSuccess())
       return Result(make_error(r.Error()));
   }
+
+  // Generate any  needed color and depth attachments. This is done before
+  // validating in case one of the pipelines specifies the framebuffer size
+  // it needs to be verified against all other pipelines.
+  for (const auto& pipeline : script_->GetPipelines()) {
+    // Add a color attachment if needed
+    if (pipeline->GetColorAttachments().empty()) {
+      auto* buf = script_->GetBuffer(Pipeline::kGeneratedColorBuffer);
+      if (!buf) {
+        auto new_buf = pipeline->GenerateDefaultColorAttachmentBuffer();
+        buf = new_buf.get();
+
+        Result r = script_->AddBuffer(std::move(new_buf));
+        if (!r.IsSuccess())
+          return r;
+      }
+      Result r = pipeline->AddColorAttachment(buf, 0);
+      if (!r.IsSuccess())
+        return r;
+    }
+
+    // Add a depth buffer if needed
+    if (pipeline->GetDepthBuffer().buffer == nullptr) {
+      auto* buf = script_->GetBuffer(Pipeline::kGeneratedDepthBuffer);
+      if (!buf) {
+        auto new_buf = pipeline->GenerateDefaultDepthAttachmentBuffer();
+        buf = new_buf.get();
+
+        Result r = script_->AddBuffer(std::move(new_buf));
+        if (!r.IsSuccess())
+          return r;
+      }
+
+      Result r = pipeline->SetDepthBuffer(buf);
+      if (!r.IsSuccess())
+        return r;
+    }
+  }
+
+  // Validate all the pipelines at the end. This allows us to verify the
+  // framebuffer sizes are consistent over pipelines.
+  for (const auto& pipeline : script_->GetPipelines()) {
+    Result r = pipeline->Validate();
+    if (!r.IsSuccess())
+      return r;
+  }
+
   return {};
 }
 
@@ -307,6 +354,8 @@ Result Parser::ParsePipelineBlock() {
       r = ParsePipelineShaderOptimizations(pipeline.get());
     } else if (tok == "FRAMEBUFFER_SIZE") {
       r = ParsePipelineFramebufferSize(pipeline.get());
+    } else if (tok == "BIND") {
+      r = ParsePipelineBind(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -316,10 +365,6 @@ Result Parser::ParsePipelineBlock() {
 
   if (!token->IsString() || token->AsString() != "END")
     return Result("PIPELINE missing END command");
-
-  r = pipeline->Validate();
-  if (!r.IsSuccess())
-    return r;
 
   r = script_->AddPipeline(std::move(pipeline));
   if (!r.IsSuccess())
@@ -444,6 +489,58 @@ Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
   pipeline->SetFramebufferHeight(token->AsUint32());
 
   return ValidateEndOfStatement("FRAMEBUFFER_SIZE command");
+}
+
+Result Parser::ParsePipelineBind(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("missing BUFFER in BIND command");
+  if (token->AsString() != "BUFFER")
+    return Result("missing BUFFER in BIND command");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("missing buffer name in BIND command");
+
+  auto* buffer = script_->GetBuffer(token->AsString());
+  if (!buffer)
+    return Result("unknown buffer: " + token->AsString());
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "AS")
+    return Result("BUFFER command missing AS keyword");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("invalid token for BUFFER type");
+
+  if (token->AsString() == "color") {
+    if (!buffer->IsFormatBuffer())
+      return Result("color buffer must be a FORMAT buffer");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "LOCATION")
+      return Result("BIND missing LOCATION");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("invalid value for BIND LOCATION");
+
+    Result r = pipeline->AddColorAttachment(buffer, token->AsUint32());
+    if (!r.IsSuccess())
+      return r;
+  } else if (token->AsString() == "depth_stencil") {
+    if (!buffer->IsFormatBuffer())
+      return Result("depth buffer must be a FORMAT buffer");
+
+    Result r = pipeline->SetDepthBuffer(buffer);
+    if (!r.IsSuccess())
+      return r;
+  } else {
+    return Result("unknown BUFFER type: " + token->AsString());
+  }
+
+  return ValidateEndOfStatement("BIND command");
 }
 
 Result Parser::ToBufferType(const std::string& str, BufferType* type) {
