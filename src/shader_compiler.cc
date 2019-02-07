@@ -36,9 +36,9 @@
 
 namespace amber {
 
-ShaderCompiler::ShaderCompiler() : spv_env_(0) {}
+ShaderCompiler::ShaderCompiler() = default;
 
-ShaderCompiler::ShaderCompiler(uint32_t env) : spv_env_(env) {}
+ShaderCompiler::ShaderCompiler(const std::string& env) : spv_env_(env) {}
 
 ShaderCompiler::~ShaderCompiler() = default;
 
@@ -51,7 +51,14 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
 
 #if AMBER_ENABLE_SPIRV_TOOLS
   std::string spv_errors;
-  spvtools::SpirvTools tools(static_cast<spv_target_env>(spv_env_));
+
+  spv_target_env target_env = SPV_ENV_UNIVERSAL_1_0;
+  if (!spv_env_.empty()) {
+    if (!spvParseTargetEnv(spv_env_.c_str(), &target_env))
+      return {Result("Unable to parse SPIR-V target environment"), {}};
+  }
+
+  spvtools::SpirvTools tools(target_env);
   tools.SetMessageConsumer([&spv_errors](spv_message_level_t level, const char*,
                                          const spv_position_t& position,
                                          const char* message) {

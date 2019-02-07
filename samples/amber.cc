@@ -24,7 +24,6 @@
 #include "amber/recipe.h"
 #include "samples/config_helper.h"
 #include "samples/ppm.h"
-#include "spirv-tools/libspirv.h"
 #include "src/build-versions.h"
 #include "src/make_unique.h"
 
@@ -42,7 +41,7 @@ struct Options {
   bool show_help = false;
   bool show_version_info = false;
   amber::EngineType engine = amber::kEngineTypeVulkan;
-  spv_target_env spv_env = SPV_ENV_UNIVERSAL_1_0;
+  std::string spv_env;
 };
 
 const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
@@ -116,11 +115,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         std::cerr << "Missing value for -t argument." << std::endl;
         return false;
       }
-
-      if (!spvParseTargetEnv(args[i].c_str(), &(opts->spv_env))) {
-        std::cerr << "Unable to parse SPIR-V target environment." << std::endl;
-        return false;
-      }
+      opts->spv_env = args[i];
 
     } else if (arg == "-h" || arg == "--help") {
       opts->show_help = true;
