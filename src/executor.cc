@@ -35,7 +35,7 @@ Result Executor::Execute(Engine* engine,
   // Process Shader nodes
   PipelineType pipeline_type = PipelineType::kGraphics;
   for (const auto& shader : script->GetShaders()) {
-    ShaderCompiler sc;
+    ShaderCompiler sc(script->GetSpvTargetEnv());
 
     Result r;
     std::vector<uint32_t> data;

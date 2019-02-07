@@ -38,6 +38,8 @@ namespace amber {
 
 ShaderCompiler::ShaderCompiler() = default;
 
+ShaderCompiler::ShaderCompiler(const std::string& env) : spv_env_(env) {}
+
 ShaderCompiler::~ShaderCompiler() = default;
 
 std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
@@ -49,8 +51,14 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
 
 #if AMBER_ENABLE_SPIRV_TOOLS
   std::string spv_errors;
-  // TODO(dsinclair): Vulkan env should be an option.
-  spvtools::SpirvTools tools(SPV_ENV_UNIVERSAL_1_0);
+
+  spv_target_env target_env = SPV_ENV_UNIVERSAL_1_0;
+  if (!spv_env_.empty()) {
+    if (!spvParseTargetEnv(spv_env_.c_str(), &target_env))
+      return {Result("Unable to parse SPIR-V target environment"), {}};
+  }
+
+  spvtools::SpirvTools tools(target_env);
   tools.SetMessageConsumer([&spv_errors](spv_message_level_t level, const char*,
                                          const spv_position_t& position,
                                          const char* message) {

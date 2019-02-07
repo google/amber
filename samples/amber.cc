@@ -41,6 +41,7 @@ struct Options {
   bool show_help = false;
   bool show_version_info = false;
   amber::EngineType engine = amber::kEngineTypeVulkan;
+  std::string spv_env;
 };
 
 const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
@@ -49,6 +50,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -p             -- Parse input files only; Don't execute.
   -s             -- Print summary of pass/failure.
   -d             -- Disable Vulkan/Dawn validation layer.
+  -t <spirv_env> -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
   -i <filename>  -- Write rendering to <filename> as a PPM image.
   -b <filename>  -- Write contents of a UBO or SSBO to <filename>.
   -B <buffer>    -- Index of buffer to write. Defaults buffer 0.
@@ -107,6 +109,13 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
             << std::endl;
         return false;
       }
+    } else if (arg == "-t") {
+      ++i;
+      if (i >= args.size()) {
+        std::cerr << "Missing value for -t argument." << std::endl;
+        return false;
+      }
+      opts->spv_env = args[i];
 
     } else if (arg == "-h" || arg == "--help") {
       opts->show_help = true;
@@ -232,6 +241,7 @@ int main(int argc, const char** argv) {
 
   amber::Options amber_options;
   amber_options.engine = options.engine;
+  amber_options.spv_env = options.spv_env;
 
   std::set<std::string> required_features;
   std::set<std::string> required_extensions;
