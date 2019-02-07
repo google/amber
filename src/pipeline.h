@@ -108,6 +108,14 @@ class Pipeline {
   Result SetDepthBuffer(Buffer* buf);
   const BufferInfo& GetDepthBuffer() const { return depth_buffer_; }
 
+  const std::vector<BufferInfo>& GetVertexBuffers() const {
+    return vertex_buffers_;
+  }
+  Result AddVertexBuffer(Buffer* buf, uint32_t location);
+
+  Result SetIndexBuffer(Buffer* buf);
+  const Buffer* GetIndexBuffer() const { return index_buffer_; }
+
   // Validates that the pipeline has been created correctly.
   Result Validate() const;
 
@@ -124,7 +132,9 @@ class Pipeline {
   std::string name_;
   std::vector<ShaderInfo> shaders_;
   std::vector<BufferInfo> color_attachments_;
+  std::vector<BufferInfo> vertex_buffers_;
   BufferInfo depth_buffer_;
+  Buffer* index_buffer_ = nullptr;
 
   uint32_t fb_width_ = 250;
   uint32_t fb_height_ = 250;

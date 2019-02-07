@@ -356,9 +356,9 @@ int main(int argc, const char** argv) {
     std::cout << "\nSummary: "
               << (options.input_filenames.size() - failures.size()) << " pass, "
               << failures.size() << " fail" << std::endl;
-
-    config_helper.Shutdown();
   }
+
+  config_helper.Shutdown();
 
   return !failures.empty();
 }
