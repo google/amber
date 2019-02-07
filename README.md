@@ -104,9 +104,9 @@ A Vulkan implementation is found by CMake in the following priority order:
      that contains the `include` and `lib` directories.
      Example: `VULKAN_SDK=$HOME/vulkan-macos-1.1.85.0/macOS`
    * `VK_ICD_FILENAMES` should point to the ICD JSON file.
-     Example: `VK_ICD_FILENAMES=$VULKAN_SDK/etc/vulkan/icd/MoltenVK_icd.json`
-   * `VK_LAYER_PATH` should point to the $VULKAN_SDK/etc/explicit\_layer.d
-     folder.
+     Example: `VK_ICD_FILENAMES=$VULKAN_SDK/etc/vulkan/icd.d/MoltenVK_icd.json`
+   * `VK_LAYER_PATH` should point to the
+     $VULKAN_SDK/etc/vulkan/explicit\_layer.d folder.
    * `LD_LIBRARY_PATH` must contain the $VULKAN_SDK/lib/ folder for the
      validation libraries.
 
