@@ -232,8 +232,7 @@ Result EngineVulkan::SetBuffer(BufferType type,
     if (!vertex_buffer_)
       vertex_buffer_ = MakeUnique<VertexBuffer>(device_.get());
 
-    pipeline_->AsGraphics()->SetVertexBuffer(location, format, values,
-                                             vertex_buffer_.get());
+    vertex_buffer_->SetData(location, format, values);
     return {};
   }
 
@@ -321,10 +320,7 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   values[7].SetDoubleValue(static_cast<double>(y));
 
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
-
-  r = graphics->SetVertexBuffer(0, format, values, vertex_buffer.get());
-  if (!r.IsSuccess())
-    return r;
+  vertex_buffer->SetData(0, format, values);
 
   DrawArraysCommand draw(*command->GetPipelineData());
   draw.SetTopology(command->IsPatch() ? Topology::kPatchList
@@ -383,7 +379,8 @@ Result EngineVulkan::DoProcessCommands() {
 }
 
 Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
-  assert(info);
+  if (!info)
+    return Result("Vulkan::GetFrameBufferInfo Missing info");
 
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::GetFrameBufferInfo for Non-Graphics Pipeline");
@@ -419,7 +416,8 @@ Result EngineVulkan::GetFrameBuffer(std::vector<Value>* values) {
   }
 
   // TODO(jaebaek): Support other formats
-  assert(color_frame_format_->GetFormatType() == FormatType::kR8G8B8A8_UINT);
+  if (color_frame_format_->GetFormatType() != FormatType::kR8G8B8A8_UINT)
+    return Result("Vulkan::GetFrameBuffer Unsupported buffer format");
 
   Value pixel;
 

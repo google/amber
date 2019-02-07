@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/pipeline.h"
+
 #include "gtest/gtest.h"
 
 namespace amber {
@@ -24,7 +25,31 @@ struct ShaderTypeData {
 
 }  // namespace
 
-using AmberScriptPipelineTest = testing::Test;
+class AmberScriptPipelineTest : public testing::Test {
+ public:
+  void TearDown() override {
+    color_buffer_ = nullptr;
+    depth_buffer_ = nullptr;
+  }
+
+  void SetupColorAttachment(Pipeline* p, uint32_t location) {
+    if (!color_buffer_)
+      color_buffer_ = p->GenerateDefaultColorAttachmentBuffer();
+
+    p->AddColorAttachment(color_buffer_.get(), location);
+  }
+
+  void SetupDepthAttachment(Pipeline* p) {
+    if (!depth_buffer_)
+      depth_buffer_ = p->GenerateDefaultDepthAttachmentBuffer();
+
+    p->SetDepthBuffer(depth_buffer_.get());
+  }
+
+ private:
+  std::unique_ptr<Buffer> color_buffer_;
+  std::unique_ptr<Buffer> depth_buffer_;
+};
 
 TEST_F(AmberScriptPipelineTest, AddShader) {
   Shader v(kShaderTypeVertex);
@@ -169,6 +194,24 @@ TEST_F(AmberScriptPipelineTest, SetOptimizationForInvalidShader) {
   EXPECT_EQ("unknown shader specified for optimizations: my_shader", r.Error());
 }
 
+TEST_F(AmberScriptPipelineTest, GraphicsPipelineRequiresColorAttachment) {
+  Pipeline p(PipelineType::kGraphics);
+  SetupDepthAttachment(&p);
+
+  Result r = p.Validate();
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("PIPELINE missing color attachment", r.Error());
+}
+
+TEST_F(AmberScriptPipelineTest, GraphicsPipelineRequiresDepthAttachment) {
+  Pipeline p(PipelineType::kGraphics);
+  SetupColorAttachment(&p, 0);
+
+  Result r = p.Validate();
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("PIPELINE missing depth buffer", r.Error());
+}
+
 TEST_F(AmberScriptPipelineTest,
        GraphicsPipelineRequiresVertexAndFragmentShader) {
   Shader v(kShaderTypeVertex);
@@ -176,6 +219,9 @@ TEST_F(AmberScriptPipelineTest,
   Shader g(kShaderTypeGeometry);
 
   Pipeline p(PipelineType::kGraphics);
+  SetupColorAttachment(&p, 0);
+  SetupDepthAttachment(&p);
+
   Result r = p.AddShader(&v, kShaderTypeVertex);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -194,6 +240,9 @@ TEST_F(AmberScriptPipelineTest, GraphicsPipelineMissingFragmentShader) {
   Shader g(kShaderTypeGeometry);
 
   Pipeline p(PipelineType::kGraphics);
+  SetupColorAttachment(&p, 0);
+  SetupDepthAttachment(&p);
+
   Result r = p.AddShader(&v, kShaderTypeVertex);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -210,6 +259,9 @@ TEST_F(AmberScriptPipelineTest, GraphicsPipelineMissingVertexShader) {
   Shader g(kShaderTypeGeometry);
 
   Pipeline p(PipelineType::kGraphics);
+  SetupColorAttachment(&p, 0);
+  SetupDepthAttachment(&p);
+
   Result r = p.AddShader(&g, kShaderTypeGeometry);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -226,6 +278,9 @@ TEST_F(AmberScriptPipelineTest,
   Shader g(kShaderTypeGeometry);
 
   Pipeline p(PipelineType::kGraphics);
+  SetupColorAttachment(&p, 0);
+  SetupDepthAttachment(&p);
+
   Result r = p.AddShader(&g, kShaderTypeGeometry);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -237,6 +292,9 @@ TEST_F(AmberScriptPipelineTest,
 
 TEST_F(AmberScriptPipelineTest, GraphicsPipelineWihoutShaders) {
   Pipeline p(PipelineType::kGraphics);
+  SetupColorAttachment(&p, 0);
+  SetupDepthAttachment(&p);
+
   Result r = p.Validate();
   EXPECT_FALSE(r.IsSuccess()) << r.Error();
   EXPECT_EQ("graphics pipeline requires vertex and fragment shaders",
@@ -247,6 +305,9 @@ TEST_F(AmberScriptPipelineTest, ComputePipelineRequiresComputeShader) {
   Shader c(kShaderTypeCompute);
 
   Pipeline p(PipelineType::kCompute);
+  SetupColorAttachment(&p, 0);
+  SetupDepthAttachment(&p);
+
   Result r = p.AddShader(&c, kShaderTypeCompute);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -256,6 +317,9 @@ TEST_F(AmberScriptPipelineTest, ComputePipelineRequiresComputeShader) {
 
 TEST_F(AmberScriptPipelineTest, ComputePipelineWithoutShader) {
   Pipeline p(PipelineType::kCompute);
+  SetupColorAttachment(&p, 0);
+  SetupDepthAttachment(&p);
+
   Result r = p.Validate();
   EXPECT_FALSE(r.IsSuccess()) << r.Error();
   EXPECT_EQ("compute pipeline requires a compute shader", r.Error());

@@ -15,10 +15,12 @@
 #ifndef SRC_PIPELINE_H_
 #define SRC_PIPELINE_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "amber/result.h"
+#include "src/buffer.h"
 #include "src/shader.h"
 
 namespace amber {
@@ -55,6 +57,21 @@ class Pipeline {
     std::string entry_point_;
   };
 
+  struct BufferInfo {
+    BufferInfo() = default;
+    explicit BufferInfo(Buffer* buf) : buffer(buf) {}
+
+    Buffer* buffer = nullptr;
+    uint32_t location = 0;
+    uint32_t width = 0;
+    uint32_t height = 0;
+  };
+
+  static const char* kDefaultColorBufferFormat;
+  static const char* kDefaultDepthBufferFormat;
+  static const char* kGeneratedColorBuffer;
+  static const char* kGeneratedDepthBuffer;
+
   explicit Pipeline(PipelineType type);
   ~Pipeline();
 
@@ -63,10 +80,16 @@ class Pipeline {
   void SetName(const std::string& name) { name_ = name; }
   const std::string& GetName() const { return name_; }
 
-  void SetFramebufferWidth(uint32_t fb_width) { fb_width_ = fb_width; }
+  void SetFramebufferWidth(uint32_t fb_width) {
+    fb_width_ = fb_width;
+    UpdateFramebufferSizes();
+  }
   uint32_t GetFramebufferWidth() const { return fb_width_; }
 
-  void SetFramebufferHeight(uint32_t fb_height) { fb_height_ = fb_height; }
+  void SetFramebufferHeight(uint32_t fb_height) {
+    fb_height_ = fb_height;
+    UpdateFramebufferSizes();
+  }
   uint32_t GetFramebufferHeight() const { return fb_height_; }
 
   Result AddShader(const Shader*, ShaderType);
@@ -77,16 +100,31 @@ class Pipeline {
   Result SetShaderOptimizations(const Shader* shader,
                                 const std::vector<std::string>& opts);
 
+  const std::vector<BufferInfo>& GetColorAttachments() const {
+    return color_attachments_;
+  }
+  Result AddColorAttachment(Buffer* buf, uint32_t location);
+
+  Result SetDepthBuffer(Buffer* buf);
+  const BufferInfo& GetDepthBuffer() const { return depth_buffer_; }
+
   // Validates that the pipeline has been created correctly.
   Result Validate() const;
 
+  std::unique_ptr<Buffer> GenerateDefaultColorAttachmentBuffer() const;
+  std::unique_ptr<Buffer> GenerateDefaultDepthAttachmentBuffer() const;
+
  private:
+  void UpdateFramebufferSizes();
+
   Result ValidateGraphics() const;
   Result ValidateCompute() const;
 
   PipelineType pipeline_type_ = PipelineType::kCompute;
   std::string name_;
   std::vector<ShaderInfo> shaders_;
+  std::vector<BufferInfo> color_attachments_;
+  BufferInfo depth_buffer_;
 
   uint32_t fb_width_ = 250;
   uint32_t fb_height_ = 250;

@@ -499,7 +499,7 @@ TEST_F(AmberScriptParserTest, PipelineEmpty) {
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("2: compute pipeline requires a compute shader", r.Error());
+  EXPECT_EQ("compute pipeline requires a compute shader", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PipelineWithUnknownShader) {
@@ -1620,6 +1620,673 @@ END
   ASSERT_FALSE(r.IsSuccess());
 
   EXPECT_EQ("9: invalid height for FRAMEBUFFER_SIZE command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& color_buffers = pipeline->GetColorAttachments();
+  ASSERT_EQ(1U, color_buffers.size());
+
+  const auto& buf_info = color_buffers[0];
+  ASSERT_TRUE(buf_info.buffer != nullptr);
+  EXPECT_EQ(0, buf_info.location);
+  EXPECT_EQ(250 * 250, buf_info.buffer->GetSize());
+  EXPECT_EQ(250 * 250 * 4 * sizeof(float), buf_info.buffer->GetSizeInBytes());
+}
+
+TEST_F(AmberScriptParserTest, BindColorBufferTwice) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+  BIND BUFFER my_fb AS color LOCATION 1
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: color buffer may only be bound to a PIPELINE once", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorBufferMissingBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: unknown buffer: AS", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorBufferNonDeclaredBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("11: unknown buffer: my_fb", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorBufferMissingLocation) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: BIND missing LOCATION", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorBufferMissingLocationIndex) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: invalid value for BIND LOCATION", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorBufferInvalidLocationIndex) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION INVALID
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: invalid value for BIND LOCATION", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorBufferExtraParams) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0 EXTRA
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: extra parameters after BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorBufferNonFormatBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb DATA_TYPE int32 SIZE 500 FILL 0
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: color buffer must be a FORMAT buffer", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorBufferDuplicateLocation) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+BUFFER sec_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+  BIND BUFFER sec_fb AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("14: can not bind two color buffers to the same LOCATION",
+            r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorToTwoPipelinesRequiresMatchingSize) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+PIPELINE graphics second_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+  FRAMEBUFFER_SIZE 256 300
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("shared framebuffer must have same size over all PIPELINES",
+            r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorTwoPipelines) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+BUFFER second_fb FORMAT R8G8B8A8_UINT
+BUFFER depth_1 FORMAT D32_SFLOAT_S8_UINT
+BUFFER depth_2 FORMAT D32_SFLOAT_S8_UINT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+  BIND BUFFER depth_1 AS depth_stencil
+  FRAMEBUFFER_SIZE 90 180
+END
+PIPELINE graphics second_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER second_fb AS color LOCATION 9
+  BIND BUFFER depth_2 AS depth_stencil
+  FRAMEBUFFER_SIZE 256 300
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(2U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& color_buffers1 = pipeline->GetColorAttachments();
+  ASSERT_EQ(1U, color_buffers1.size());
+
+  const auto& buf1 = color_buffers1[0];
+  ASSERT_TRUE(buf1.buffer != nullptr);
+  EXPECT_EQ(0, buf1.location);
+  EXPECT_EQ(90 * 180, buf1.buffer->GetSize());
+  EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf1.buffer->GetSizeInBytes());
+
+  pipeline = pipelines[1].get();
+  const auto& color_buffers2 = pipeline->GetColorAttachments();
+  const auto& buf2 = color_buffers2[0];
+  ASSERT_TRUE(buf2.buffer != nullptr);
+  EXPECT_EQ(9, buf2.location);
+  EXPECT_EQ(256 * 300, buf2.buffer->GetSize());
+  EXPECT_EQ(256 * 300 * sizeof(uint32_t), buf2.buffer->GetSizeInBytes());
+}
+
+TEST_F(AmberScriptParserTest, BindColorFBSizeSetBeforeBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  FRAMEBUFFER_SIZE 90 180
+  BIND BUFFER my_fb AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& color_buffers1 = pipeline->GetColorAttachments();
+  ASSERT_EQ(1U, color_buffers1.size());
+
+  const auto& buf1 = color_buffers1[0];
+  ASSERT_TRUE(buf1.buffer != nullptr);
+  EXPECT_EQ(0, buf1.location);
+  EXPECT_EQ(90 * 180, buf1.buffer->GetSize());
+  EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf1.buffer->GetSizeInBytes());
+}
+
+TEST_F(AmberScriptParserTest, BindColorFBSizeSetAfterBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& color_buffers1 = pipeline->GetColorAttachments();
+  ASSERT_EQ(1U, color_buffers1.size());
+
+  const auto& buf1 = color_buffers1[0];
+  ASSERT_TRUE(buf1.buffer != nullptr);
+  EXPECT_EQ(0, buf1.location);
+  EXPECT_EQ(90 * 180, buf1.buffer->GetSize());
+  EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf1.buffer->GetSizeInBytes());
+}
+
+TEST_F(AmberScriptParserTest, PipelineDefaultColorBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+PIPELINE graphics my_pipeline2
+  ATTACH my_shader
+  ATTACH my_fragment
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(2U, pipelines.size());
+
+  ASSERT_EQ(1U, pipelines[0]->GetColorAttachments().size());
+  const auto& buf1 = pipelines[0]->GetColorAttachments()[0];
+  ASSERT_TRUE(buf1.buffer != nullptr);
+
+  Buffer* buffer1 = buf1.buffer;
+  ASSERT_TRUE(buffer1->IsFormatBuffer());
+  EXPECT_EQ(FormatType::kB8G8R8A8_UNORM,
+            buffer1->AsFormatBuffer()->GetFormat().GetFormatType());
+  EXPECT_EQ(0, buf1.location);
+  EXPECT_EQ(250 * 250, buffer1->GetSize());
+  EXPECT_EQ(250 * 250 * sizeof(uint32_t), buffer1->GetSizeInBytes());
+
+  ASSERT_EQ(1U, pipelines[1]->GetColorAttachments().size());
+  const auto& buf2 = pipelines[1]->GetColorAttachments()[0];
+  ASSERT_TRUE(buf2.buffer != nullptr);
+  ASSERT_EQ(buffer1, buf2.buffer);
+  EXPECT_EQ(0, buf2.location);
+  EXPECT_EQ(FormatType::kB8G8R8A8_UNORM,
+            buf2.buffer->AsFormatBuffer()->GetFormat().GetFormatType());
+  EXPECT_EQ(250 * 250, buf2.buffer->GetSize());
+  EXPECT_EQ(250 * 250 * sizeof(uint32_t), buf2.buffer->GetSizeInBytes());
+}
+
+TEST_F(AmberScriptParserTest, PipelineDefaultColorBufferMismatchSize) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+PIPELINE graphics my_pipeline2
+  ATTACH my_shader
+  ATTACH my_fragment
+  FRAMEBUFFER_SIZE 256 256
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+
+  EXPECT_EQ("shared framebuffer must have same size over all PIPELINES",
+            r.Error());
+}
+
+TEST_F(AmberScriptParserTest, PipelineDefaultDepthBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& buf = pipeline->GetDepthBuffer();
+
+  ASSERT_TRUE(buf.buffer != nullptr);
+  EXPECT_EQ(FormatType::kD32_SFLOAT_S8_UINT,
+            buf.buffer->AsFormatBuffer()->GetFormat().GetFormatType());
+  EXPECT_EQ(250 * 250, buf.buffer->GetSize());
+  EXPECT_EQ(250 * 250 * (sizeof(float) + sizeof(uint8_t)),
+            buf.buffer->GetSizeInBytes());
+}
+
+TEST_F(AmberScriptParserTest, BindDepthBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS depth_stencil
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& buf = pipeline->GetDepthBuffer();
+  ASSERT_TRUE(buf.buffer != nullptr);
+  EXPECT_EQ(90 * 180, buf.buffer->GetSize());
+  EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf.buffer->GetSizeInBytes());
+}
+
+TEST_F(AmberScriptParserTest, BindDepthBufferNonFormatBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int32 SIZE 500 FILL 0
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS depth_stencil
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: depth buffer must be a FORMAT buffer", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindDepthBufferExtraParams) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS depth_stencil EXTRA
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: extra parameters after BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferMissingBufferName) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER AS depth_stencil
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: unknown buffer: AS", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferAsMissingType) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: invalid token for BUFFER type", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferAsInvalidType) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: invalid token for BUFFER type", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindDepthBufferUnknownBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS depth_stencil
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("11: unknown buffer: my_buf", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferMultipleDepthBuffers) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+BUFFER my_buf2 FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS depth_stencil
+  BIND BUFFER my_buf AS depth_stencil
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("14: can only bind one depth buffer in a PIPELINE", r.Error());
 }
 
 }  // namespace amberscript

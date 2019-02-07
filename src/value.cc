@@ -16,7 +16,7 @@
 
 namespace amber {
 
-Value::Value() = default;
+Value::Value() : type_(kValueTypeFloat), uint_value_(0), double_value_(0.0) {}
 
 Value::Value(const Value&) = default;
 

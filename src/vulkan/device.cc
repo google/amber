@@ -14,7 +14,6 @@
 
 #include "src/vulkan/device.h"
 
-#include <cassert>
 #include <cstring>
 #include <memory>
 #include <set>

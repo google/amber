@@ -38,31 +38,33 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   // amber::VulkanEngineConfig. Required Vulkan device features and
   // extensions are given in |required_features| and
   // |required_extensions|, respectively.
-  std::unique_ptr<amber::EngineConfig> CreateConfig(
+  amber::Result CreateConfig(
       const std::vector<std::string>& required_features,
-      const std::vector<std::string>& required_extensions) override;
+      const std::vector<std::string>& required_extensions,
+      std::unique_ptr<amber::EngineConfig>* config) override;
 
   // Destroy Vulkan instance and device.
-  void Shutdown() override;
+  amber::Result Shutdown() override;
 
  private:
   // Create Vulkan instance.
-  void CreateVulkanInstance();
+  amber::Result CreateVulkanInstance();
 
   // Create |vulkan_callback_| that reports validation layer errors
   // via debugCallback() function in config_helper_vulkan.cc.
-  void CreateDebugReportCallback();
+  amber::Result CreateDebugReportCallback();
 
   // Choose Vulkan physical device that supports both
   // |required_features| and |required_extensions|.
-  void ChooseVulkanPhysicalDevice(
+  amber::Result ChooseVulkanPhysicalDevice(
       const VkPhysicalDeviceFeatures& required_features,
       const std::vector<std::string>& required_extensions);
 
   // Create Vulkan logical device that enables both
   // |required_features| and |required_extensions|.
-  void CreateVulkanDevice(const VkPhysicalDeviceFeatures& required_features,
-                          const std::vector<std::string>& required_extensions);
+  amber::Result CreateVulkanDevice(
+      const VkPhysicalDeviceFeatures& required_features,
+      const std::vector<std::string>& required_extensions);
 
   VkInstance vulkan_instance_ = VK_NULL_HANDLE;
   VkDebugReportCallbackEXT vulkan_callback_ = VK_NULL_HANDLE;

@@ -166,7 +166,7 @@ Result CopyBitsOfValueToBuffer(uint8_t* dst,
 
   while (dst_bit_offset > 7) {
     ++dst;
-    dst_bit_offset -= 8;
+    dst_bit_offset = static_cast<uint8_t>(dst_bit_offset - 8);
   }
 
   // No overflow will happen. |dst_bit_offset| is based on VkFormat
@@ -177,7 +177,7 @@ Result CopyBitsOfValueToBuffer(uint8_t* dst,
   uint64_t* dst64 = reinterpret_cast<uint64_t*>(dst);
   uint64_t dst_lower_bits = *dst64 & ((1UL << dst_bit_offset) - 1UL);
   uint64_t dst_upper_bits =
-      *dst64 & ~(((1UL << (dst_bit_offset + bits)) - 1UL));
+      *dst64 & ~(((1ULL << (dst_bit_offset + bits)) - 1ULL));
 
   *dst64 = dst_lower_bits | data | dst_upper_bits;
   return {};

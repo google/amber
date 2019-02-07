@@ -17,6 +17,9 @@
 #include <algorithm>
 #include <set>
 
+#include "src/format_parser.h"
+#include "src/make_unique.h"
+
 namespace amber {
 
 Pipeline::ShaderInfo::ShaderInfo(const Shader* shader, ShaderType type)
@@ -25,6 +28,11 @@ Pipeline::ShaderInfo::ShaderInfo(const Shader* shader, ShaderType type)
 Pipeline::ShaderInfo::ShaderInfo(const ShaderInfo&) = default;
 
 Pipeline::ShaderInfo::~ShaderInfo() = default;
+
+const char* Pipeline::kDefaultColorBufferFormat = "B8G8R8A8_UNORM";
+const char* Pipeline::kDefaultDepthBufferFormat = "D32_SFLOAT_S8_UINT";
+const char* Pipeline::kGeneratedColorBuffer = "amber_default_framebuffer";
+const char* Pipeline::kGeneratedDepthBuffer = "amber_default_depth_buffer";
 
 Pipeline::Pipeline(PipelineType type) : pipeline_type_(type) {}
 
@@ -117,6 +125,22 @@ Result Pipeline::SetShaderType(const Shader* shader, ShaderType type) {
 }
 
 Result Pipeline::Validate() const {
+  if (color_attachments_.empty())
+    return Result("PIPELINE missing color attachment");
+
+  size_t fb_size = fb_width_ * fb_height_;
+  for (const auto& attachment : color_attachments_) {
+    if (attachment.buffer->GetSize() != fb_size) {
+      return Result(
+          "shared framebuffer must have same size over all PIPELINES");
+    }
+  }
+
+  if (depth_buffer_.buffer == nullptr)
+    return Result("PIPELINE missing depth buffer");
+  if (depth_buffer_.buffer->GetSize() != fb_size)
+    return Result("shared depth buffer must have same size over all PIPELINES");
+
   if (pipeline_type_ == PipelineType::kGraphics)
     return ValidateGraphics();
   return ValidateCompute();
@@ -144,6 +168,7 @@ Result Pipeline::ValidateGraphics() const {
     return Result("graphics pipeline requires a vertex shader");
   if (!found_fragment)
     return Result("graphics pipeline requires a fragment shader");
+
   return {};
 }
 
@@ -152,6 +177,74 @@ Result Pipeline::ValidateCompute() const {
     return Result("compute pipeline requires a compute shader");
 
   return {};
+}
+
+void Pipeline::UpdateFramebufferSizes() {
+  size_t size = fb_width_ * fb_height_;
+  if (size == 0)
+    return;
+
+  for (auto& attachment : color_attachments_) {
+    attachment.buffer->SetSize(size);
+    attachment.width = fb_width_;
+    attachment.height = fb_height_;
+  }
+
+  if (depth_buffer_.buffer) {
+    depth_buffer_.buffer->SetSize(size);
+    depth_buffer_.width = fb_width_;
+    depth_buffer_.height = fb_height_;
+  }
+}
+
+Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
+  for (const auto& attachment : color_attachments_) {
+    if (attachment.location == location)
+      return Result("can not bind two color buffers to the same LOCATION");
+    if (attachment.buffer == buf)
+      return Result("color buffer may only be bound to a PIPELINE once");
+  }
+
+  color_attachments_.push_back(BufferInfo{buf});
+
+  auto& info = color_attachments_.back();
+  info.location = location;
+  info.width = fb_width_;
+  info.height = fb_height_;
+
+  buf->SetSize(fb_width_ * fb_height_);
+  return {};
+}
+
+Result Pipeline::SetDepthBuffer(Buffer* buf) {
+  if (depth_buffer_.buffer != nullptr)
+    return Result("can only bind one depth buffer in a PIPELINE");
+
+  depth_buffer_.buffer = buf;
+  depth_buffer_.width = fb_width_;
+  depth_buffer_.height = fb_height_;
+
+  buf->SetSize(fb_width_ * fb_height_);
+
+  return {};
+}
+
+std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() const {
+  FormatParser fp;
+
+  std::unique_ptr<Buffer> buf = MakeUnique<FormatBuffer>(BufferType::kColor);
+  buf->SetName(kGeneratedColorBuffer);
+  buf->AsFormatBuffer()->SetFormat(fp.Parse(kDefaultColorBufferFormat));
+  return buf;
+}
+
+std::unique_ptr<Buffer> Pipeline::GenerateDefaultDepthAttachmentBuffer() const {
+  FormatParser fp;
+
+  std::unique_ptr<Buffer> buf = MakeUnique<FormatBuffer>(BufferType::kDepth);
+  buf->SetName(kGeneratedDepthBuffer);
+  buf->AsFormatBuffer()->SetFormat(fp.Parse(kDefaultDepthBufferFormat));
+  return buf;
 }
 
 }  // namespace amber
