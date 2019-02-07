@@ -547,10 +547,12 @@ ConfigHelperVulkan::ConfigHelperVulkan() = default;
 ConfigHelperVulkan::~ConfigHelperVulkan() = default;
 
 amber::Result ConfigHelperVulkan::CreateVulkanInstance(
+    uint32_t engine_major,
+    uint32_t engine_minor,
     bool disable_validation_layer) {
   VkApplicationInfo app_info = {};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  app_info.apiVersion = VK_MAKE_VERSION(1, 0, 0);
+  app_info.apiVersion = VK_MAKE_VERSION(engine_major, engine_minor, 0);
 
   VkInstanceCreateInfo instance_info = {};
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -669,6 +671,8 @@ amber::Result ConfigHelperVulkan::CreateVulkanDevice(
 }
 
 amber::Result ConfigHelperVulkan::CreateConfig(
+    uint32_t engine_major,
+    uint32_t engine_minor,
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions,
     bool disable_validation_layer,
@@ -679,7 +683,8 @@ amber::Result ConfigHelperVulkan::CreateConfig(
   if (!r.IsSuccess())
     return r;
 
-  r = CreateVulkanInstance(disable_validation_layer);
+  r = CreateVulkanInstance(engine_major, engine_minor,
+                           disable_validation_layer);
   if (!r.IsSuccess())
     return r;
 

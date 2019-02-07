@@ -35,6 +35,8 @@ struct Options {
   std::string image_filename;
   std::string buffer_filename;
   int64_t buffer_binding_index = 0;
+  uint32_t engine_major = 1;
+  uint32_t engine_minor = 0;
   bool parse_only = false;
   bool disable_validation_layer = false;
   bool show_summary = false;
@@ -47,16 +49,17 @@ struct Options {
 const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
 
  options:
-  -p             -- Parse input files only; Don't execute.
-  -s             -- Print summary of pass/failure.
-  -d             -- Disable Vulkan/Dawn validation layer.
+  -p                  -- Parse input files only; Don't execute.
+  -s                  -- Print summary of pass/failure.
+  -d                  -- Disable validation layers.
   -t <spirv_env> -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
-  -i <filename>  -- Write rendering to <filename> as a PPM image.
-  -b <filename>  -- Write contents of a UBO or SSBO to <filename>.
-  -B <buffer>    -- Index of buffer to write. Defaults buffer 0.
-  -e <engine>    -- Specify graphics engine: vulkan, dawn. Default is vulkan.
-  -V, --version  -- Output version information for Amber and libraries.
-  -h             -- This help text.
+  -i <filename>       -- Write rendering to <filename> as a PPM image.
+  -b <filename>       -- Write contents of a UBO or SSBO to <filename>.
+  -B <buffer>         -- Index of buffer to write. Defaults buffer 0.
+  -e <engine>         -- Specify graphics engine: vulkan, dawn. Default is vulkan.
+  -v <engine version> -- Engine version (eg, 1.1 for Vulkan). Default 1.0.
+  -V, --version       -- Output version information for Amber and libraries.
+  -h                  -- This help text.
 )";
 
 bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
@@ -116,9 +119,32 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         return false;
       }
       opts->spv_env = args[i];
-
     } else if (arg == "-h" || arg == "--help") {
       opts->show_help = true;
+    } else if (arg == "-v") {
+      ++i;
+      if (i >= args.size()) {
+        std::cerr << "Missing value for -v argument." << std::endl;
+        return false;
+      }
+      const std::string& ver = args[i];
+
+      size_t dot_pos = 0;
+      int32_t val = std::stoi(ver, &dot_pos);
+      if (val < 0) {
+        std::cerr << "Version major must be non-negative" << std::endl;
+        return false;
+      }
+
+      opts->engine_major = static_cast<uint32_t>(val);
+      if (dot_pos != std::string::npos && (dot_pos + 1) < ver.size()) {
+        val = std::stoi(ver.substr(dot_pos + 1));
+        if (val < 0) {
+          std::cerr << "Version minor must be non-negative" << std::endl;
+          return false;
+        }
+        opts->engine_minor = static_cast<uint32_t>(val);
+      }
     } else if (arg == "-V" || arg == "--version") {
       opts->show_version_info = true;
     } else if (arg == "-p") {
@@ -257,7 +283,7 @@ int main(int argc, const char** argv) {
   std::unique_ptr<amber::EngineConfig> config;
 
   amber::Result r = config_helper.CreateConfig(
-      amber_options.engine,
+      amber_options.engine, options.engine_major, options.engine_minor,
       std::vector<std::string>(required_features.begin(),
                                required_features.end()),
       std::vector<std::string>(required_extensions.begin(),
