@@ -522,7 +522,7 @@ bool AreAllExtensionsSupported(
 // Check if |physical_device| supports both compute and graphics
 // pipelines.
 uint32_t ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device) {
-  uint32_t count;
+  uint32_t count = 0;
   std::vector<VkQueueFamilyProperties> properties;
 
   vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &count, nullptr);
@@ -598,7 +598,7 @@ amber::Result ConfigHelperVulkan::CreateDebugReportCallback() {
 amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
     const VkPhysicalDeviceFeatures& required_features,
     const std::vector<std::string>& required_extensions) {
-  uint32_t count;
+  uint32_t count = 0;
   std::vector<VkPhysicalDevice> physical_devices;
 
   if (vkEnumeratePhysicalDevices(vulkan_instance_, &count, nullptr) !=
