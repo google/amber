@@ -69,7 +69,7 @@ Result EngineVulkan::Initialize(EngineConfig* config,
   VulkanEngineConfig* vk_config = static_cast<VulkanEngineConfig*>(config);
   if (!vk_config || vk_config->vkGetInstanceProcAddr == VK_NULL_HANDLE)
     return Result("Vulkan::Initialize vkGetInstanceProcAddr must be provided.");
-  if (vk_config->device != VK_NULL_HANDLE)
+  if (vk_config->device == VK_NULL_HANDLE)
     return Result("Vulkan::Initialize device must be provided");
   if (vk_config->physical_device == VK_NULL_HANDLE)
     return Result("Vulkan::Initialize physical device handle is null.");
