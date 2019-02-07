@@ -110,6 +110,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     -Wextra
     -Wno-c++98-compat
     -Wno-c++98-compat-pedantic
+    -Wno-format-pedantic
     -Wno-padded
     -Wno-switch-enum
     -Wno-unknown-pragmas

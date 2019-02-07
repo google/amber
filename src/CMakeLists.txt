@@ -102,7 +102,9 @@ if (${AMBER_ENABLE_TESTS})
 
   if (NOT MSVC)
     target_compile_options(amber_unittests PRIVATE
-        -Wno-global-constructors)
+      -Wno-global-constructors
+      -Wno-weak-vtables
+    )
   endif()
 
   target_include_directories(amber_unittests PRIVATE
