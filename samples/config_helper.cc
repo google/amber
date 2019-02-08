@@ -21,6 +21,9 @@
 
 #include "src/make_unique.h"
 
+#if AMBER_ENGINE_DAWN
+#include "samples/config_helper_dawn.h"
+#endif  // AMBER_ENGINE_DAWN
 #if AMBER_ENGINE_VULKAN
 #include "samples/config_helper_vulkan.h"
 #endif  // AMBER_ENGINE_VULKAN
@@ -41,12 +44,22 @@ amber::Result ConfigHelper::CreateConfig(
     const std::vector<std::string>& required_extensions,
     bool disable_validation_layer,
     std::unique_ptr<amber::EngineConfig>* config) {
-  if (engine == amber::kEngineTypeDawn)
-    return amber::Result("Unable to create engine config for Dawn");
-
+  switch (engine) {
+    case amber::kEngineTypeVulkan:
 #if AMBER_ENGINE_VULKAN
-  impl_ = amber::MakeUnique<ConfigHelperVulkan>();
+      impl_ = amber::MakeUnique<ConfigHelperVulkan>();
+#else
+      return amber::Result("Unable to create engine config for Vulkan");
 #endif  // AMBER_ENGINE_VULKAN
+      break;
+    case amber::kEngineTypeDawn:
+#if AMBER_ENGINE_DAWN
+#else
+      return amber::Result("Unable to create engine config for Dawn");
+#endif  // AMBER_ENGINE_DAWN
+      break;
+  }
+
   if (!impl_)
     return amber::Result("Unable to create config helper");
 
