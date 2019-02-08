@@ -14,7 +14,6 @@
 
 #include "device_metal.h"
 
-#include <iostream>
 #include "amber/result.h"
 #include "dawn/dawncpp.h"
 #include "dawn_native/DawnNative.h"
@@ -23,27 +22,28 @@
 namespace amber {
 namespace dawn {
 
-namespace {
-void PrintDeviceError(const char* message, ::dawn::CallbackUserdata) {
-  std::cout << "Dawn device error: " << message << std::endl;
-}
-}  // namespace
-
-Result CreateMetalDevice(::dawn::Device* device_ptr) {
+Result CreateMetalDevice(
+    ::dawn::Device* device_ptr,
+    std::unique_ptr<::dawn_native::Instance>* dawn_instance_ptr) {
   if (!device_ptr) {
     return Result("::amber::dawn::CreateMetalDevice: invalid device parameter");
   }
-  dawnDevice cDevice = ::dawn_native::metal::CreateDevice();
-  if (!cDevice) {
+  if (!dawn_instance_ptr) {
     return Result(
-        "::amber::dawn::CreateMetalDevice: Failed to create metal device");
+        "::amber::dawn::CreateMetalDevice: invalid dawn instance parameter");
   }
-  dawnProcTable procs = ::dawn_native::GetProcs();
-  dawnSetProcs(&procs);
-  procs.deviceSetErrorCallback(cDevice, PrintDeviceError, 0);
-  *device_ptr = ::dawn::Device::Acquire(cDevice);
+  *device_ptr = nullptr;
+  dawn_instance_ptr->reset(new ::dawn_native::Instance);
+  (*dawn_instance_ptr)->DiscoverDefaultAdapters();
+  for (dawn_native::Adapter adapter : (*dawn_instance_ptr)->GetAdapters()) {
+    if (adapter.GetBackendType() == ::dawn_native::BackendType::Metal) {
+      *device_ptr = ::dawn::Device::Acquire(adapter.CreateDevice());
+      return {};
+    }
+  }
 
-  return {};
+  return Result(
+      "::amber::dawn::CreateMetalDevice: Failed to create metal device");
 }
 
 }  // namespace dawn

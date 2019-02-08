@@ -19,11 +19,13 @@
 
 #include "amber/result.h"
 #include "dawn/dawncpp.h"
+#include "dawn_native/DawnNative.h"
 
 namespace amber {
 namespace dawn {
 
-Result CreateMetalDevice(::dawn::Device*);
+Result CreateMetalDevice(::dawn::Device*,
+                         std::unique_ptr<::dawn_native::Instance>*);
 
 }  // namespace dawn
 }  // namespace amber

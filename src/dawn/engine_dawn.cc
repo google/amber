@@ -187,7 +187,7 @@ Result EngineDawn::Initialize(EngineConfig* config,
     device_ = *dawn_config->device;
 #if AMBER_DAWN_METAL
   } else {
-    return CreateMetalDevice(&device_);
+    return CreateMetalDevice(&device_, &dawn_instance_);
 #endif  // AMBER_DAWN_METAL
   }
 
