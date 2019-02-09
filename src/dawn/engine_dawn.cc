@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include "amber/amber_dawn.h"
 #include "dawn/dawncpp.h"
@@ -53,6 +54,7 @@ Result MakeFramebufferTexture(const ::dawn::Device& device,
   descriptor.arraySize = 1;
   descriptor.format = format;
   descriptor.levelCount = 1;
+  descriptor.sampleCount = 1;
   descriptor.usage = ::dawn::TextureUsageBit::TransferSrc |
                      ::dawn::TextureUsageBit::OutputAttachment;
   // TODO(dneto): Get a better message by using the Dawn error callback.
@@ -184,13 +186,13 @@ Result EngineDawn::Initialize(EngineConfig* config,
   if (dawn_config->device == nullptr)
     return Result("Dawn:Initialize device is a null pointer");
 
-  device_ = *dawn_config->device;
+  device_ = dawn_config->device;
 
   return {};
 }
 
 Result EngineDawn::Shutdown() {
-  device_ = ::dawn::Device();
+  device_ = nullptr;
   return {};
 }
 
@@ -233,7 +235,7 @@ Result EngineDawn::SetShader(ShaderType type,
   if (!device_) {
     return Result("Dawn::SetShader: device is not created");
   }
-  auto shader = device_.CreateShaderModule(&descriptor);
+  auto shader = device_->CreateShaderModule(&descriptor);
   if (!shader) {
     return Result("Dawn::SetShader: failed to create shader");
   }
@@ -282,7 +284,7 @@ Result EngineDawn::DoClear(const ClearCommand*) {
   color_attachment.storeOp = ::dawn::StoreOp::Store;
 
   ::dawn::RenderPassDescriptor rpd =
-      device_.CreateRenderPassDescriptorBuilder()
+      device_->CreateRenderPassDescriptorBuilder()
           .SetColorAttachments(1, &color_attachment)
           .GetResult();
   command_buffer_builder_.BeginRenderPass(rpd).EndPass();
@@ -357,7 +359,7 @@ Result EngineDawn::DoProcessCommands() {
 
   // Make sure we have a queue.
   if (!queue_)
-    queue_ = device_.CreateQueue();
+    queue_ = device_->CreateQueue();
 
   // Now run the commands.
   auto command_buffer = command_buffer_builder_.GetResult();
@@ -372,7 +374,7 @@ Result EngineDawn::DoProcessCommands() {
   // And any further commands start afresh.
   DestroyCommandBufferBuilder();
 
-  MapResult map = MapBuffer(device_, fb_buffer, render_pipeline_info_.fb_size);
+  MapResult map = MapBuffer(*device_, fb_buffer, render_pipeline_info_.fb_size);
   render_pipeline_info_.fb_data = map.data;
   return map.result;
 }
@@ -387,7 +389,7 @@ Result EngineDawn::CreateCommandBufferBuilderIfNeeded() {
         "EngineDawn: Can't create command buffer builder: device is not "
         "initialized");
   }
-  command_buffer_builder_ = device_.CreateCommandBufferBuilder();
+  command_buffer_builder_ = device_->CreateCommandBufferBuilder();
   if (command_buffer_builder_)
     return {};
   return Result("EngineDawn: Can't create command buffer builder");
@@ -408,7 +410,7 @@ Result EngineDawn::CreateFramebufferIfNeeded() {
   Result result;
   {
     ::dawn::Texture fb_texture;
-    result = MakeFramebufferTexture(device_, kFramebufferFormat, &fb_texture);
+    result = MakeFramebufferTexture(*device_, kFramebufferFormat, &fb_texture);
     if (!result.IsSuccess())
       return result;
     render_pipeline_info_.fb_texture = std::move(fb_texture);
@@ -419,7 +421,7 @@ Result EngineDawn::CreateFramebufferIfNeeded() {
     uint32_t texel_stride = 0;
     uint32_t row_stride = 0;
     uint32_t size = 0;
-    result = MakeFramebufferBuffer(device_, kFramebufferFormat, &fb_buffer,
+    result = MakeFramebufferBuffer(*device_, kFramebufferFormat, &fb_buffer,
                                    &texel_stride, &row_stride, &size);
     if (!result.IsSuccess())
       return result;
