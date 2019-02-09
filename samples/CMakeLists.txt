@@ -26,10 +26,23 @@ if (${Vulkan_FOUND})
   set(AMBER_SOURCES ${AMBER_SOURCES} config_helper_vulkan.cc)
 endif()
 
+set(AMBER_EXTRA_LIBS "")
+if (${Dawn_FOUND})
+  list(APPEND Dawn::dawn_native Dawn::dawn)
+  if (APPLE)
+    add_definitions(-DAMBER_DAWN_METAL=1)
+    list(APPEND AMBER_SOURCES dawn_device_metal.mm)
+    find_library(METAL_LIB Metal)
+    list(APPEND AMBER_EXTRA_LIBS ${METAL_LIB})
+  else()
+    add_definitions(-DAMBER_DAWN_METAL=0)
+  endif()
+endif()
+
 add_executable(amber ${AMBER_SOURCES})
 target_include_directories(amber PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/..")
 set_target_properties(amber PROPERTIES OUTPUT_NAME "amber")
-target_link_libraries(amber libamber ${VULKAN_LIB})
+target_link_libraries(amber libamber ${VULKAN_LIB} ${AMBER_EXTRA_LIBS})
 
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/src/build-versions.h.fake

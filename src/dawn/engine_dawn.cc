@@ -22,7 +22,6 @@
 
 #include "amber/amber_dawn.h"
 #include "dawn/dawncpp.h"
-#include "src/dawn/device_metal.h"
 #include "src/sleep.h"
 
 namespace amber {
@@ -179,17 +178,13 @@ Result EngineDawn::Initialize(EngineConfig* config,
   if (device_)
     return Result("Dawn:Initialize device_ already exists");
 
-  if (config) {
-    DawnEngineConfig* dawn_config = static_cast<DawnEngineConfig*>(config);
-    if (dawn_config->device == nullptr)
-      return Result("Dawn:Initialize device is a null pointer");
+  if (!config)
+    return Result("Dawn::Initialize config is null");
+  DawnEngineConfig* dawn_config = static_cast<DawnEngineConfig*>(config);
+  if (dawn_config->device == nullptr)
+    return Result("Dawn:Initialize device is a null pointer");
 
-    device_ = *dawn_config->device;
-#if AMBER_DAWN_METAL
-  } else {
-    return CreateMetalDevice(&device_, &dawn_instance_);
-#endif  // AMBER_DAWN_METAL
-  }
+  device_ = *dawn_config->device;
 
   return {};
 }
