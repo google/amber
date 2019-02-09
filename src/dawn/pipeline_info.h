@@ -21,6 +21,7 @@
 #include "amber/result.h"
 #include "dawn/dawncpp.h"
 #include "src/command.h"
+#include "src/format.h"
 
 namespace amber {
 namespace dawn {
@@ -52,6 +53,8 @@ struct RenderPipelineInfo {
   // The number of data bytes in the framebuffer host-side buffer.
   uint32_t fb_size = 0;
   const void* fb_data = nullptr;
+  // The framebuffer format.
+  ::amber::Format fb_format;
 
   // TODO(dneto): Record index data
   // TODO(dneto): Record buffer data

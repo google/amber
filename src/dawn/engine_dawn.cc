@@ -23,6 +23,7 @@
 
 #include "amber/amber_dawn.h"
 #include "dawn/dawncpp.h"
+#include "src/format.h"
 #include "src/sleep.h"
 
 namespace amber {
@@ -37,6 +38,8 @@ const uint32_t kFramebufferWidth = 250, kFramebufferHeight = 250;
 // as needed for other Dawn backends.
 const uint32_t kMinimumImageRowPitch = 256;
 const auto kFramebufferFormat = ::dawn::TextureFormat::R8G8B8A8Unorm;
+const auto kAmberFramebufferFormatType = FormatType::kR8G8B8A8_UNORM;
+
 
 // Creates a device-side texture for the framebuffer, and returns it through
 // |result_ptr|.  Assumes the device exists and is valid.  Assumes result_ptr
@@ -438,6 +441,10 @@ Result EngineDawn::CreateFramebufferIfNeeded() {
     render_pipeline_info_.fb_num_rows = num_rows;
     render_pipeline_info_.fb_size = size;
     render_pipeline_info_.fb_data = nullptr;
+
+    // TODO(dneto): support other formats
+    render_pipeline_info_.fb_format = ::amber::Format();
+    render_pipeline_info_.fb_format.SetFormatType(kAmberFramebufferFormatType);
   }
   return {};
 }
@@ -448,6 +455,7 @@ Result EngineDawn::GetFrameBufferInfo(ResourceInfo* info) {
   if (render_pipeline_info_.fb_data == nullptr)
     return Result("Dawn: FrameBuffer is not mapped");
 
+  info->image_info.texel_format = &render_pipeline_info_.fb_format;
   info->image_info.texel_stride = render_pipeline_info_.fb_texel_stride;
   info->image_info.row_stride = render_pipeline_info_.fb_row_stride;
   info->image_info.width = kFramebufferWidth;
