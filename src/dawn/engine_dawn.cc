@@ -17,9 +17,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <iostream>
 #include <utility>
 #include <vector>
-#include <iostream>
 
 #include "amber/amber_dawn.h"
 #include "dawn/dawncpp.h"
@@ -39,7 +39,6 @@ const uint32_t kFramebufferWidth = 250, kFramebufferHeight = 250;
 const uint32_t kMinimumImageRowPitch = 256;
 const auto kFramebufferFormat = ::dawn::TextureFormat::R8G8B8A8Unorm;
 const auto kAmberFramebufferFormatType = FormatType::kR8G8B8A8_UNORM;
-
 
 // Creates a device-side texture for the framebuffer, and returns it through
 // |result_ptr|.  Assumes the device exists and is valid.  Assumes result_ptr
