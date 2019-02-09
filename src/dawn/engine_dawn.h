@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "dawn/dawncpp.h"
-#include "dawn_native/DawnNative.h"
 #include "src/cast_hash.h"
 #include "src/command.h"
 #include "src/dawn/pipeline_info.h"
@@ -88,7 +87,6 @@ class EngineDawn : public Engine {
   ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.
   ::dawn::Queue queue_;
   ::dawn::CommandBufferBuilder command_buffer_builder_;
-  std::unique_ptr<::dawn_native::Instance> dawn_instance_;
 
   std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
       module_for_type_;
