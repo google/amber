@@ -16,17 +16,9 @@ set(DAWN_ENGINE_SOURCES
     engine_dawn.cc
 )
 
-set(AMBER_EXTRA_LIBS "")
-if(APPLE)
-  add_definitions(-DAMBER_DAWN_METAL=1)
-else()
-  add_definitions(-DAMBER_DAWN_METAL=0)
-endif(APPLE)
-
 add_library(libamberenginedawn ${DAWN_ENGINE_SOURCES})
 amber_default_compile_options(libamberenginedawn)
 set_target_properties(libamberenginedawn PROPERTIES
     OUTPUT_NAME "amberenginedawn"
 )
-target_link_libraries(libamberenginedawn libamber Dawn::dawn_native Dawn::dawn
-  ${AMBER_EXTRA_LIBS})
+target_link_libraries(libamberenginedawn libamber Dawn::dawn_native Dawn::dawn)
