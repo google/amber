@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include "samples/config_helper_dawn.h"
+
+#include <iostream>
 #include "samples/dawn_device_metal.h"
 
 namespace sample {
@@ -20,6 +22,13 @@ namespace sample {
 ConfigHelperDawn::ConfigHelperDawn() = default;
 
 ConfigHelperDawn::~ConfigHelperDawn() = default;
+
+namespace {
+// Callback which prints a message from a Dawn device operation.
+void PrintDeviceError(const char* message, ::dawn::CallbackUserdata) {
+  std::cout << "Device error: " << message << std::endl;
+}
+}  // namespace
 
 amber::Result ConfigHelperDawn::CreateConfig(
     uint32_t,
@@ -35,6 +44,11 @@ amber::Result ConfigHelperDawn::CreateConfig(
 #else
   return amber::Result("Can't make Dawn engine config");
 #endif
+
+  // Set procedure table and error callback.
+  dawnProcTable backendProcs = dawn_native::GetProcs();
+  dawnSetProcs(&backendProcs);
+  backendProcs.deviceSetErrorCallback(dawn_device_.Get(), PrintDeviceError, 0);
 
   auto* dawn_config = new amber::DawnEngineConfig;
   dawn_config->device = &dawn_device_;
