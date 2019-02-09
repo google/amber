@@ -349,7 +349,7 @@ Result EngineDawn::DoProcessCommands() {
     buffer_copy_view.buffer = fb_buffer;
     buffer_copy_view.offset = buffer_offset;
     buffer_copy_view.rowPitch = render_pipeline_info_.fb_row_stride;
-    buffer_copy_view.imageHeight = 1;
+    buffer_copy_view.imageHeight = kFramebufferHeight;
 
     ::dawn::Extent3D extent = {kFramebufferWidth, kFramebufferHeight, depth};
 
