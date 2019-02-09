@@ -54,6 +54,7 @@ amber::Result ConfigHelper::CreateConfig(
       break;
     case amber::kEngineTypeDawn:
 #if AMBER_ENGINE_DAWN
+      impl_ = amber::MakeUnique<ConfigHelperDawn>();
 #else
       return amber::Result("Unable to create engine config for Dawn");
 #endif  // AMBER_ENGINE_DAWN

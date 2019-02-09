@@ -36,9 +36,8 @@ class ConfigHelperDawn : public ConfigHelperImpl {
   ~ConfigHelperDawn() override;
 
   // Create a Dawn instance and device and return them as
-  // amber::DawnEngineConfig. Required Dawn device features and
-  // extensions are given in |required_features| and
-  // |required_extensions|, but ignored.
+  // amber::DawnEngineConfig.  Engine version number and features
+  // and extension lists are ignored.
   amber::Result CreateConfig(
       uint32_t engine_major,
       uint32_t engine_minor,

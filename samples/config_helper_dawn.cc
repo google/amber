@@ -17,8 +17,9 @@
 
 namespace sample {
 
-ConfigHelperDawn::ConfigHelperDawn()
-    : dawn_instance_(), dawn_device_() {}
+ConfigHelperDawn::ConfigHelperDawn() = default;
+
+ConfigHelperDawn::~ConfigHelperDawn() = default;
 
 amber::Result ConfigHelperDawn::CreateConfig(
     uint32_t,
@@ -35,13 +36,14 @@ amber::Result ConfigHelperDawn::CreateConfig(
   return amber::Result("Can't make Dawn engine config");
 #endif
 
-  config->reset(new DawnEngineConfig{&dawn_instance_, &dawn_device_});
-  return {}
+  auto* dawn_config = new amber::DawnEngineConfig;
+  dawn_config->device = &dawn_device_;
+  config->reset(dawn_config);
+  return {};
 }
 
 amber::Result ConfigHelperDawn::Shutdown() {
   dawn_device_ = {};
-  dawn_instance_ = {};
   return {};
 }
 
