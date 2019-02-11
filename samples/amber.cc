@@ -310,7 +310,7 @@ int main(int argc, const char** argv) {
       std::ofstream buffer_file;
       buffer_file.open(options.buffer_filename, std::ios::out);
       if (!buffer_file.is_open()) {
-        std::cerr << "Cannot open file for image dump: ";
+        std::cerr << "Cannot open file for buffer dump: ";
         std::cerr << options.buffer_filename << std::endl;
       } else {
         for (amber::BufferInfo buffer_info : amber_options.extractions) {
