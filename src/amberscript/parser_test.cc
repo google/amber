@@ -2289,5 +2289,309 @@ END)";
   EXPECT_EQ("14: can only bind one depth buffer in a PIPELINE", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, BindVertexData) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 50 FILL 5
+BUFFER my_buf2 DATA_TYPE int8 SIZE 50 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0
+  VERTEX_DATA my_buf2 LOCATION 1
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& vertex_buffers = pipeline->GetVertexBuffers();
+  ASSERT_EQ(2, vertex_buffers.size());
+
+  const auto& info1 = vertex_buffers[0];
+  ASSERT_TRUE(info1.buffer != nullptr);
+  EXPECT_TRUE(info1.buffer->IsDataBuffer());
+  EXPECT_EQ(0, info1.location);
+
+  const auto& info2 = vertex_buffers[1];
+  ASSERT_TRUE(info2.buffer != nullptr);
+  EXPECT_TRUE(info2.buffer->IsDataBuffer());
+  EXPECT_EQ(1, info2.location);
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataDuplicateLocation) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 50 FILL 5
+BUFFER my_buf2 DATA_TYPE int8 SIZE 50 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0
+  VERTEX_DATA my_buf2 LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("14: can not bind two vertex buffers to the same LOCATION",
+            r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataDuplicateBinding) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 50 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0
+  VERTEX_DATA my_buf LOCATION 1
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: vertex buffer may only be bound to a PIPELINE once",
+            r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataMissingBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 50 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: unknown buffer: LOCATION", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataUnknownBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("11: unknown buffer: my_buf", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataMissingLocation) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 50 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: VERTEX_DATA missing LOCATION", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataMissingLocationValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 50 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: invalid value for VERTEX_DATA LOCATION", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataExtraParameters) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 50 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 EXTRA
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: extra parameters after VERTEX_DATA command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindIndexData) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 50 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  INDEX_DATA my_buf
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto* buf = pipeline->GetIndexBuffer();
+  ASSERT_TRUE(buf != nullptr);
+  EXPECT_TRUE(buf->IsDataBuffer());
+}
+
+TEST_F(AmberScriptParserTest, BindIndexataMissingBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  INDEX_DATA
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: missing buffer name in INDEX_DATA command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindIndexDataUnknownBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  INDEX_DATA my_buf
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("11: unknown buffer: my_buf", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindIndexDataExtraParameters) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  INDEX_DATA my_buf EXTRA
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: extra parameters after INDEX_DATA command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindIndexDataMultiple) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  INDEX_DATA my_buf
+  INDEX_DATA my_buf
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: can only bind one INDEX_DATA buffer in a pipeline", r.Error());
+}
+
 }  // namespace amberscript
 }  // namespace amber

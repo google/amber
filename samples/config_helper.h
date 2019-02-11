@@ -33,8 +33,11 @@ class ConfigHelperImpl {
   // |required_features| and |required_extensions| contain lists of
   // required features and required extensions, respectively.
   virtual amber::Result CreateConfig(
+      uint32_t engine_major,
+      uint32_t engine_minor,
       const std::vector<std::string>& required_features,
       const std::vector<std::string>& required_extensions,
+      bool disable_validation_layer,
       std::unique_ptr<amber::EngineConfig>* config) = 0;
 
   // Destroy instance and device.
@@ -54,8 +57,11 @@ class ConfigHelper {
   // DawnEngineConfig.
   amber::Result CreateConfig(
       amber::EngineType engine,
+      uint32_t engine_major,
+      uint32_t engine_minor,
       const std::vector<std::string>& required_features,
       const std::vector<std::string>& required_extensions,
+      bool disable_validation_layer,
       std::unique_ptr<amber::EngineConfig>* config);
 
   // Destroy instance and device.

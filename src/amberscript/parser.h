@@ -58,6 +58,8 @@ class Parser : public amber::Parser {
   Result ParsePipelineShaderOptimizations(Pipeline*);
   Result ParsePipelineFramebufferSize(Pipeline*);
   Result ParsePipelineBind(Pipeline*);
+  Result ParsePipelineVertexData(Pipeline*);
+  Result ParsePipelineIndexData(Pipeline*);
 
   std::unique_ptr<Tokenizer> tokenizer_;
 };
