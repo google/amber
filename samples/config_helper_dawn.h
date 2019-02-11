@@ -15,15 +15,14 @@
 #ifndef SAMPLES_CONFIG_HELPER_DAWN_H_
 #define SAMPLES_CONFIG_HELPER_DAWN_H_
 
-#include "amber/amber.h"
-#include "amber/amber_dawn.h"
-#include "dawn_native/DawnNative.h"
-
 #include <limits>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "amber/amber.h"
+#include "amber/amber_dawn.h"
+#include "dawn_native/DawnNative.h"
 #include "samples/config_helper.h"
 #include "samples/dawn_device_metal.h"
 
