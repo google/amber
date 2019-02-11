@@ -31,6 +31,8 @@ enum class CommandBufferState : uint8_t {
   kInvalid,
 };
 
+class Device;
+
 class CommandBuffer {
  public:
   CommandBuffer(Device* device, VkCommandPool pool, VkQueue queue);

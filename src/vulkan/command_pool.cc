@@ -14,6 +14,8 @@
 
 #include "src/vulkan/command_pool.h"
 
+#include "src/vulkan/device.h"
+
 namespace amber {
 namespace vulkan {
 
@@ -39,7 +41,8 @@ void CommandPool::Shutdown() {
   if (pool_ == VK_NULL_HANDLE)
     return;
 
-  device_->GetPtrs()->vkDestroyCommandPool(device_->GetDevice(), pool_, nullptr);
+  device_->GetPtrs()->vkDestroyCommandPool(device_->GetDevice(), pool_,
+                                           nullptr);
 }
 
 }  // namespace vulkan

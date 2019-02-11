@@ -37,7 +37,6 @@ class CommandPool {
   VkCommandPool pool_ = VK_NULL_HANDLE;
 };
 
-
 }  // namespace vulkan
 }  // namespace amber
 
