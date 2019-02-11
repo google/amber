@@ -31,8 +31,8 @@ Pipeline::ShaderInfo::~ShaderInfo() = default;
 
 const char* Pipeline::kDefaultColorBufferFormat = "B8G8R8A8_UNORM";
 const char* Pipeline::kDefaultDepthBufferFormat = "D32_SFLOAT_S8_UINT";
-const char* Pipeline::kGeneratedColorBuffer = "amber_default_framebuffer";
-const char* Pipeline::kGeneratedDepthBuffer = "amber_default_depth_buffer";
+const char* Pipeline::kGeneratedColorBuffer = "framebuffer";
+const char* Pipeline::kGeneratedDepthBuffer = "depth_buffer";
 
 Pipeline::Pipeline(PipelineType type) : pipeline_type_(type) {}
 
@@ -253,7 +253,7 @@ Result Pipeline::AddVertexBuffer(Buffer* buf, uint32_t location) {
 std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() const {
   FormatParser fp;
 
-  std::unique_ptr<Buffer> buf = MakeUnique<FormatBuffer>();
+  std::unique_ptr<Buffer> buf = MakeUnique<FormatBuffer>(BufferType::kColor);
   buf->SetName(kGeneratedColorBuffer);
   buf->AsFormatBuffer()->SetFormat(fp.Parse(kDefaultColorBufferFormat));
   return buf;
@@ -262,7 +262,7 @@ std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() const {
 std::unique_ptr<Buffer> Pipeline::GenerateDefaultDepthAttachmentBuffer() const {
   FormatParser fp;
 
-  std::unique_ptr<Buffer> buf = MakeUnique<FormatBuffer>();
+  std::unique_ptr<Buffer> buf = MakeUnique<FormatBuffer>(BufferType::kDepth);
   buf->SetName(kGeneratedDepthBuffer);
   buf->AsFormatBuffer()->SetFormat(fp.Parse(kDefaultDepthBufferFormat));
   return buf;
