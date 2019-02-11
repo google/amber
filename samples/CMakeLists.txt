@@ -31,7 +31,7 @@ endif()
 
 if (${Dawn_FOUND})
   set(AMBER_SOURCES ${AMBER_SOURCES} config_helper_dawn.cc)
-  list(APPEND Dawn::dawn_native Dawn::dawn)
+  list(APPEND AMBER_EXTRA_LIBS Dawn::dawn_native Dawn::dawn)
   if (APPLE)
     add_definitions(-DAMBER_DAWN_METAL=1)
     set(AMBER_SOURCES ${AMBER_SOURCES} dawn_device_metal.mm)
