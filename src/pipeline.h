@@ -62,6 +62,9 @@ class Pipeline {
     explicit BufferInfo(Buffer* buf) : buffer(buf) {}
 
     Buffer* buffer = nullptr;
+    BufferType type = BufferType::kColor;
+    uint32_t descriptor_set = 0;
+    uint32_t binding = 0;
     uint32_t location = 0;
     uint32_t width = 0;
     uint32_t height = 0;
@@ -116,6 +119,21 @@ class Pipeline {
   Result SetIndexBuffer(Buffer* buf);
   const Buffer* GetIndexBuffer() const { return index_buffer_; }
 
+  void AddBuffer(Buffer* buf,
+                 BufferType type,
+                 uint32_t descriptor_set,
+                 uint32_t binding,
+                 uint32_t location) {
+    buffers_.push_back(BufferInfo{buf});
+
+    auto& info = buffers_.back();
+    info.descriptor_set = descriptor_set;
+    info.binding = binding;
+    info.location = location;
+    info.type = type;
+  }
+  const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
+
   // Validates that the pipeline has been created correctly.
   Result Validate() const;
 
@@ -133,6 +151,7 @@ class Pipeline {
   std::vector<ShaderInfo> shaders_;
   std::vector<BufferInfo> color_attachments_;
   std::vector<BufferInfo> vertex_buffers_;
+  std::vector<BufferInfo> buffers_;
   BufferInfo depth_buffer_;
   Buffer* index_buffer_ = nullptr;
 

@@ -2593,5 +2593,347 @@ END)";
   EXPECT_EQ("13: can only bind one INDEX_DATA buffer in a pipeline", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, BindBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(1U, bufs.size());
+  EXPECT_EQ(BufferType::kUniform, bufs[0].type);
+  EXPECT_EQ(1U, bufs[0].descriptor_set);
+  EXPECT_EQ(2U, bufs[0].binding);
+  EXPECT_EQ(static_cast<uint32_t>(0), bufs[0].location);
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+            bufs[0].buffer->AsFormatBuffer()->GetFormat().GetFormatType());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferWithIdx) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 IDX 5
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(1U, bufs.size());
+  EXPECT_EQ(BufferType::kUniform, bufs[0].type);
+  EXPECT_EQ(1U, bufs[0].descriptor_set);
+  EXPECT_EQ(2U, bufs[0].binding);
+  EXPECT_EQ(5U, bufs[0].location);
+  EXPECT_TRUE(bufs[0].buffer->IsFormatBuffer());
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+            bufs[0].buffer->AsFormatBuffer()->GetFormat().GetFormatType());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferMissingIdxValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 IDX
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: invalid value for IDX in BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferMissingBindingValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: invalid value for BINDING in BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferMissingBinding) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 IDX 5
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: missing BINDING for BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferMissingDescriptorSetValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET BINDING 2
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: invalid value for DESCRIPTOR_SET in BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferMissingDescriptorSet) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform BINDING 2
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: missing DESCRIPTOR_SET for BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindingBufferExtraParams) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 EXTRA
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: extra parameters after BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindingBufferIdxExtraParams) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 IDX 5 EXTRA
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: extra parameters after BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindingBufferInvalidIdxValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 IDX INVALID
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: invalid value for IDX in BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindingBufferInvalidBindingValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING INVALID
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: invalid value for BINDING in BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindingBufferInvalidDescriptorSetValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET INVALID BINDING 2
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: invalid value for DESCRIPTOR_SET in BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindingBufferInvalidBufferType) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS INVALID DESCRIPTOR_SET 1 BINDING 2 IDX INVALID
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: unknown buffer_type: INVALID", r.Error());
+}
+
+using AmberScriptParserBufferTypeTest = testing::TestWithParam<BufferTypeData>;
+TEST_P(AmberScriptParserBufferTypeTest, BufferType) {
+  auto test_data = GetParam();
+
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS )" +
+                   std::string(test_data.name) +
+                   " DESCRIPTOR_SET 0 BINDING 0\nEND";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(1U, bufs.size());
+  EXPECT_EQ(test_data.type, bufs[0].type);
+}
+INSTANTIATE_TEST_CASE_P(
+    AmberScriptParserBufferTypeTest,
+    AmberScriptParserBufferTypeTest,
+    testing::Values(BufferTypeData{"push_constant", BufferType::kPushConstant},
+                    BufferTypeData{"uniform", BufferType::kUniform},
+                    BufferTypeData{
+                        "storage",
+                        BufferType::kStorage}), );  // NOLINT(whitespace/parens)
+
 }  // namespace amberscript
 }  // namespace amber
