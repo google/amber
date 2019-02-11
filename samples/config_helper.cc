@@ -48,17 +48,17 @@ amber::Result ConfigHelper::CreateConfig(
     case amber::kEngineTypeVulkan:
 #if AMBER_ENGINE_VULKAN
       impl_ = amber::MakeUnique<ConfigHelperVulkan>();
+      break;
 #else
       return amber::Result("Unable to create engine config for Vulkan");
 #endif  // AMBER_ENGINE_VULKAN
-      break;
     case amber::kEngineTypeDawn:
 #if AMBER_ENGINE_DAWN
       impl_ = amber::MakeUnique<ConfigHelperDawn>();
+      break;
 #else
       return amber::Result("Unable to create engine config for Dawn");
 #endif  // AMBER_ENGINE_DAWN
-      break;
   }
 
   if (!impl_)
