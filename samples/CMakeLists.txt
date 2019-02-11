@@ -22,11 +22,13 @@ set(AMBER_SOURCES
     ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
 )
 
+set(AMBER_EXTRA_LIBS "")
+
 if (${Vulkan_FOUND})
   set(AMBER_SOURCES ${AMBER_SOURCES} config_helper_vulkan.cc)
+  list(APPEND AMBER_EXTRA_LIBS ${VULKAN_LIB})
 endif()
 
-set(AMBER_EXTRA_LIBS "")
 if (${Dawn_FOUND})
   set(AMBER_SOURCES ${AMBER_SOURCES} config_helper_dawn.cc)
   list(APPEND Dawn::dawn_native Dawn::dawn)
@@ -43,7 +45,7 @@ endif()
 add_executable(amber ${AMBER_SOURCES})
 target_include_directories(amber PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/..")
 set_target_properties(amber PROPERTIES OUTPUT_NAME "amber")
-target_link_libraries(amber libamber ${VULKAN_LIB} ${AMBER_EXTRA_LIBS})
+target_link_libraries(amber libamber ${AMBER_EXTRA_LIBS})
 
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
