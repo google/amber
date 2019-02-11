@@ -253,7 +253,7 @@ Result Pipeline::AddVertexBuffer(Buffer* buf, uint32_t location) {
 std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() const {
   FormatParser fp;
 
-  std::unique_ptr<Buffer> buf = MakeUnique<FormatBuffer>(BufferType::kColor);
+  std::unique_ptr<Buffer> buf = MakeUnique<FormatBuffer>();
   buf->SetName(kGeneratedColorBuffer);
   buf->AsFormatBuffer()->SetFormat(fp.Parse(kDefaultColorBufferFormat));
   return buf;
@@ -262,7 +262,7 @@ std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() const {
 std::unique_ptr<Buffer> Pipeline::GenerateDefaultDepthAttachmentBuffer() const {
   FormatParser fp;
 
-  std::unique_ptr<Buffer> buf = MakeUnique<FormatBuffer>(BufferType::kDepth);
+  std::unique_ptr<Buffer> buf = MakeUnique<FormatBuffer>();
   buf->SetName(kGeneratedDepthBuffer);
   buf->AsFormatBuffer()->SetFormat(fp.Parse(kDefaultDepthBufferFormat));
   return buf;

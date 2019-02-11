@@ -168,9 +168,9 @@ The following commands are all specified within the `PIPELINE` command.
 ### Pipeline Buffers
 
 #### Buffer Types
+ * push\_constant
  * uniform
  * storage
- * sampled
 
 TODO(dsinclair): Reserve `input` as a buffer type for input attachments.
 

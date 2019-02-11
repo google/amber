@@ -15,7 +15,8 @@
 set(VULKAN_ENGINE_SOURCES
     buffer.cc
     buffer_descriptor.cc
-    command.cc
+    command_buffer.cc
+    command_pool.cc
     compute_pipeline.cc
     descriptor.cc
     device.cc
