@@ -569,7 +569,7 @@ Result CommandParser::ProcessSSBO() {
     }
     if (token->AsInt32() < 0) {
       return Result("offset for SSBO must be positive, got: " +
-          std::to_string(token->AsInt32()));
+                    std::to_string(token->AsInt32()));
     }
 
     cmd->SetOffset(token->AsUint32());
@@ -668,7 +668,7 @@ Result CommandParser::ProcessUniform() {
   }
   if (token->AsInt32() < 0) {
     return Result("offset for uniform must be positive, got: " +
-        std::to_string(token->AsInt32()));
+                  std::to_string(token->AsInt32()));
   }
 
   cmd->SetOffset(token->AsUint32());
