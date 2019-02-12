@@ -1,4 +1,4 @@
-// Copyright 2018 The Amber Authors.
+// Copyright 2019 The Amber Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VULKAN_COMMAND_H_
-#define SRC_VULKAN_COMMAND_H_
+#ifndef SRC_VULKAN_COMMAND_BUFFER_H_
+#define SRC_VULKAN_COMMAND_BUFFER_H_
 
 #include "amber/result.h"
 #include "amber/vulkan_header.h"
 
 namespace amber {
-
 namespace vulkan {
 
 // Command buffer states based on "5.1. Command Buffer Lifecycle" of Vulkan
@@ -33,20 +32,6 @@ enum class CommandBufferState : uint8_t {
 };
 
 class Device;
-
-class CommandPool {
- public:
-  explicit CommandPool(Device* device);
-  ~CommandPool();
-
-  Result Initialize(uint32_t queue_family_index);
-  VkCommandPool GetCommandPool() const { return pool_; }
-  void Shutdown();
-
- private:
-  Device* device_ = nullptr;
-  VkCommandPool pool_ = VK_NULL_HANDLE;
-};
 
 class CommandBuffer {
  public:
@@ -75,7 +60,6 @@ class CommandBuffer {
 };
 
 }  // namespace vulkan
-
 }  // namespace amber
 
-#endif  // SRC_VULKAN_COMMAND_H_
+#endif  // SRC_VULKAN_COMMAND_BUFFER_H_

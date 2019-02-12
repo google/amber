@@ -49,8 +49,6 @@ class Buffer {
   /// true for this method to be used.
   FormatBuffer* AsFormatBuffer();
 
-  /// Sets the type of data stored in the buffer.
-  void SetBufferType(BufferType type) { buffer_type_ = type; }
   /// Returns the BufferType of this buffer.
   BufferType GetBufferType() const { return buffer_type_; }
 
