@@ -62,6 +62,8 @@ It is possible to obtain a plain executable for Android, as opposed to an APK,
 with the following:
 
 ```
+./tools/update_build_version.py . samples/ third_party/
+
 mkdir build
 cd build
 mkdir app
