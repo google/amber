@@ -12,22 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_DAWN_DEVICE_METAL_H_
-#define SRC_DAWN_DEVICE_METAL_H_
+#ifndef SAMPLES_DAWN_DEVICE_METAL_H_
+#define SAMPLES_DAWN_DEVICE_METAL_H_
 
 #if AMBER_DAWN_METAL
 
 #include "amber/result.h"
 #include "dawn/dawncpp.h"
+#include "dawn_native/DawnNative.h"
 
-namespace amber {
+namespace sample {
 namespace dawn {
 
-Result CreateMetalDevice(::dawn::Device*);
+amber::Result CreateMetalDevice(::dawn_native::Instance*, ::dawn::Device*);
 
 }  // namespace dawn
-}  // namespace amber
+}  // namespace sample
 
 #endif  // AMBER_DAWN_METAL
 
-#endif  // SRC_DAWN_DEVICE_METAL_H_
+#endif  // SAMPLES_DAWN_DEVICE_METAL_H_
