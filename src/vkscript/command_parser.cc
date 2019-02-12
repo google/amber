@@ -470,12 +470,41 @@ Result CommandParser::ProcessClear() {
 
 Result CommandParser::ParseValues(const std::string& name,
                                   const DatumType& type,
-                                  std::vector<Value>* values) {
+                                  std::vector<Value>* values,
+                                  bool use_std430_layout) {
   assert(values);
 
+  uint32_t row_index = 0;
   auto token = tokenizer_->NextToken();
+  size_t seen = 0;
   while (!token->IsEOL() && !token->IsEOS()) {
     Value v;
+
+    // VkRunner script assumes that all multi-column matrices given
+    // in a script are row-major matrices. Glslang compiler sets the
+    // stride of a matrix as std140 for SSBO and push constant and
+    // std430 for UBO. Thus, when |type| is a multi-column matrix,
+    // we fill more values for its stride. For example, the row
+    // stride of 3x2 UBO float matrix is 16 bytes but VkRunner script
+    // is supposed to take only 2 float values for a row. We need two
+    // more float values for a row.
+    if (type.ColumnCount() > 1U && type.RowCount() > 1U &&
+        row_index == type.RowCount()) {
+      if (use_std430_layout || type.RowCount() == 3U) {
+        if ((type.IsFloat() || type.IsDouble())) {
+          v.SetDoubleValue(0);
+        } else {
+          v.SetIntValue(0);
+        }
+        // For std430 layout, the stride of each row must be
+        // 4 * element size in bytes when row count is not 1.
+        // For std140 layout, the stride of each row must be
+        // 4 * element size in bytes when row count is 3 or 4.
+        for (uint32_t i = type.RowCount(); i < 4U; ++i)
+          values->push_back(v);
+      }
+      row_index = 0;
+    }
 
     if ((type.IsFloat() || type.IsDouble())) {
       if (!token->IsInteger() && !token->IsDouble()) {
@@ -499,9 +528,11 @@ Result CommandParser::ParseValues(const std::string& name,
 
     values->push_back(v);
     token = tokenizer_->NextToken();
+
+    ++row_index;
+    ++seen;
   }
 
-  size_t seen = values->size();
   // This could overflow, but I don't really expect us to get command files
   // that big ....
   size_t num_per_row = type.ColumnCount() * type.RowCount();
@@ -563,14 +594,19 @@ Result CommandParser::ProcessSSBO() {
     cmd->SetDatumType(tp.GetType());
 
     token = tokenizer_->NextToken();
-    if (!token->IsInteger())
+    if (!token->IsInteger()) {
       return Result("Invalid offset for ssbo command: " +
                     token->ToOriginalString());
+    }
+    if (token->AsInt32() < 0) {
+      return Result("offset for SSBO must be positive, got: " +
+                    std::to_string(token->AsInt32()));
+    }
 
     cmd->SetOffset(token->AsUint32());
 
     std::vector<Value> values;
-    r = ParseValues("ssbo", cmd->GetDatumType(), &values);
+    r = ParseValues("ssbo", cmd->GetDatumType(), &values, false);
     if (!r.IsSuccess())
       return r;
 
@@ -606,21 +642,24 @@ Result CommandParser::ProcessUniform() {
                   token->ToOriginalString());
 
   std::unique_ptr<BufferCommand> cmd;
+  bool use_std430_layout = false;
   if (token->AsString() == "ubo") {
     cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kUniform);
     cmd->SetLine(tokenizer_->GetCurrentLine());
 
     token = tokenizer_->NextToken();
-    if (!token->IsInteger())
+    if (!token->IsInteger()) {
       return Result("Invalid binding value for uniform ubo command: " +
                     token->ToOriginalString());
+    }
 
     uint32_t val = token->AsUint32();
 
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsString()) {
       return Result("Invalid type value for uniform ubo command: " +
                     token->ToOriginalString());
+    }
 
     auto& str = token->AsString();
     if (str.size() >= 2 && str[0] == ':') {
@@ -635,13 +674,15 @@ Result CommandParser::ProcessUniform() {
       cmd->SetBinding(static_cast<uint32_t>(binding_val));
 
       token = tokenizer_->NextToken();
-      if (!token->IsString())
+      if (!token->IsString()) {
         return Result("Invalid type value for uniform ubo command: " +
                       token->ToOriginalString());
+      }
     } else {
       cmd->SetBinding(val);
     }
 
+    use_std430_layout = true;
   } else {
     cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kPushConstant);
     cmd->SetLine(tokenizer_->GetCurrentLine());
@@ -655,14 +696,19 @@ Result CommandParser::ProcessUniform() {
   cmd->SetDatumType(tp.GetType());
 
   token = tokenizer_->NextToken();
-  if (!token->IsInteger())
+  if (!token->IsInteger()) {
     return Result("Invalid offset value for uniform command: " +
                   token->ToOriginalString());
+  }
+  if (token->AsInt32() < 0) {
+    return Result("offset for uniform must be positive, got: " +
+                  std::to_string(token->AsInt32()));
+  }
 
   cmd->SetOffset(token->AsUint32());
 
   std::vector<Value> values;
-  r = ParseValues("uniform", cmd->GetDatumType(), &values);
+  r = ParseValues("uniform", cmd->GetDatumType(), &values, use_std430_layout);
   if (!r.IsSuccess())
     return r;
 
@@ -1950,7 +1996,7 @@ Result CommandParser::ProcessProbeSSBO() {
   cmd->SetComparator(comp);
 
   std::vector<Value> values;
-  r = ParseValues("probe ssbo", cmd->GetDatumType(), &values);
+  r = ParseValues("probe ssbo", cmd->GetDatumType(), &values, false);
   if (!r.IsSuccess())
     return r;
 

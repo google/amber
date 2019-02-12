@@ -21,6 +21,7 @@
 #include "amber/result.h"
 #include "dawn/dawncpp.h"
 #include "src/command.h"
+#include "src/format.h"
 
 namespace amber {
 namespace dawn {
@@ -32,7 +33,7 @@ struct RenderPipelineInfo {
 
   ::dawn::ShaderModule vertex_shader;
   ::dawn::ShaderModule fragment_shader;
-  ClearColorCommand clear_color_value;
+  ::dawn::Color clear_color_value = {0.f, 0.f, 0.f, 0.f};
   float clear_depth_value = 1.0f;
   uint32_t clear_stencil_value = 0;
 
@@ -47,9 +48,13 @@ struct RenderPipelineInfo {
   // The number of bytes between successive rows of texels in framebuffer
   // host-side buffer.
   uint32_t fb_row_stride = 0;
+  // The number of rows in the framebuffer.
+  uint32_t fb_num_rows = 0;
   // The number of data bytes in the framebuffer host-side buffer.
   uint32_t fb_size = 0;
   const void* fb_data = nullptr;
+  // The framebuffer format.
+  ::amber::Format fb_format;
 
   // TODO(dneto): Record index data
   // TODO(dneto): Record buffer data

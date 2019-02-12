@@ -1,4 +1,4 @@
-// Copyright 2018 The Amber Authors.
+// Copyright 2019 The Amber Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_DAWN_DEVICE_METAL_H_
-#define SRC_DAWN_DEVICE_METAL_H_
-
-#if AMBER_DAWN_METAL
+#ifndef SRC_VULKAN_COMMAND_POOL_H_
+#define SRC_VULKAN_COMMAND_POOL_H_
 
 #include "amber/result.h"
-#include "dawn/dawncpp.h"
+#include "amber/vulkan_header.h"
 
 namespace amber {
-namespace dawn {
+namespace vulkan {
 
-Result CreateMetalDevice(::dawn::Device*);
+class Device;
 
-}  // namespace dawn
+class CommandPool {
+ public:
+  explicit CommandPool(Device* device);
+  ~CommandPool();
+
+  Result Initialize(uint32_t queue_family_index);
+  VkCommandPool GetCommandPool() const { return pool_; }
+  void Shutdown();
+
+ private:
+  Device* device_ = nullptr;
+  VkCommandPool pool_ = VK_NULL_HANDLE;
+};
+
+}  // namespace vulkan
 }  // namespace amber
 
-#endif  // AMBER_DAWN_METAL
-
-#endif  // SRC_DAWN_DEVICE_METAL_H_
+#endif  // SRC_VULKAN_COMMAND_POOL_H_

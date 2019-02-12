@@ -31,6 +31,8 @@ enum class BufferType : uint8_t {
   kStorage,
   /// A uniform buffer.
   kUniform,
+  /// A push constant buffer.
+  kPushConstant,
   /// A vertex buffer.
   kVertex
 };

@@ -12,20 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AMBER_AMBER_DAWN_H_
-#define AMBER_AMBER_DAWN_H_
+#ifndef SAMPLES_DAWN_DEVICE_METAL_H_
+#define SAMPLES_DAWN_DEVICE_METAL_H_
 
-#include "amber/amber.h"
+#if AMBER_DAWN_METAL
+
+#include "amber/result.h"
 #include "dawn/dawncpp.h"
+#include "dawn_native/DawnNative.h"
 
-namespace amber {
+namespace sample {
+namespace dawn {
 
-/// Configuration for the Dawn engine.
-struct DawnEngineConfig : public EngineConfig {
-  /// The Dawn Device to use for running tests.
-  ::dawn::Device* device;
-};
+amber::Result CreateMetalDevice(::dawn_native::Instance*, ::dawn::Device*);
 
-}  // namespace amber
+}  // namespace dawn
+}  // namespace sample
 
-#endif  // AMBER_AMBER_DAWN_H_
+#endif  // AMBER_DAWN_METAL
+
+#endif  // SAMPLES_DAWN_DEVICE_METAL_H_

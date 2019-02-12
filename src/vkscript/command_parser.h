@@ -85,7 +85,8 @@ class CommandParser {
   Result ParseBoolean(const std::string& str, bool* result);
   Result ParseValues(const std::string& name,
                      const DatumType& type,
-                     std::vector<Value>* values);
+                     std::vector<Value>* values,
+                     bool use_std430_layout);
 
   Result ProcessDrawRect();
   Result ProcessDrawArrays();

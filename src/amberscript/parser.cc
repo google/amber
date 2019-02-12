@@ -495,6 +495,20 @@ Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
   return ValidateEndOfStatement("FRAMEBUFFER_SIZE command");
 }
 
+Result Parser::ToBufferType(const std::string& name, BufferType* type) {
+  assert(type);
+  if (name == "push_constant")
+    *type = BufferType::kPushConstant;
+  else if (name == "uniform")
+    *type = BufferType::kUniform;
+  else if (name == "storage")
+    *type = BufferType::kStorage;
+  else
+    return Result("unknown buffer_type: " + name);
+
+  return {};
+}
+
 Result Parser::ParsePipelineBind(Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
   if (!token->IsString())
@@ -541,7 +555,43 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     if (!r.IsSuccess())
       return r;
   } else {
-    return Result("unknown BUFFER type: " + token->AsString());
+    BufferType type = BufferType::kColor;
+    Result r = ToBufferType(token->AsString(), &type);
+    if (!r.IsSuccess())
+      return r;
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "DESCRIPTOR_SET")
+      return Result("missing DESCRIPTOR_SET for BIND command");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("invalid value for DESCRIPTOR_SET in BIND command");
+    uint32_t descriptor_set = token->AsUint32();
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "BINDING")
+      return Result("missing BINDING for BIND command");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("invalid value for BINDING in BIND command");
+    uint32_t binding = token->AsUint32();
+
+    token = tokenizer_->NextToken();
+    if (token->IsEOL() || token->IsEOS()) {
+      pipeline->AddBuffer(buffer, type, descriptor_set, binding, 0);
+      return {};
+    }
+    if (!token->IsString() || token->AsString() != "IDX")
+      return Result("extra parameters after BIND command");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("invalid value for IDX in BIND command");
+
+    pipeline->AddBuffer(buffer, type, descriptor_set, binding,
+                        token->AsUint32());
   }
 
   return ValidateEndOfStatement("BIND command");
@@ -585,29 +635,6 @@ Result Parser::ParsePipelineIndexData(Pipeline* pipeline) {
     return r;
 
   return ValidateEndOfStatement("INDEX_DATA command");
-}
-
-Result Parser::ToBufferType(const std::string& str, BufferType* type) {
-  assert(type);
-
-  if (str == "color")
-    *type = BufferType::kColor;
-  else if (str == "depth")
-    *type = BufferType::kDepth;
-  else if (str == "index")
-    *type = BufferType::kIndex;
-  else if (str == "sampled")
-    *type = BufferType::kSampled;
-  else if (str == "storage")
-    *type = BufferType::kStorage;
-  else if (str == "uniform")
-    *type = BufferType::kUniform;
-  else if (str == "vertex")
-    *type = BufferType::kVertex;
-  else
-    return Result("unknown BUFFER type provided: " + str);
-
-  return {};
 }
 
 Result Parser::ParseBuffer() {
