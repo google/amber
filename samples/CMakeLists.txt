@@ -47,13 +47,6 @@ target_include_directories(amber PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/..")
 set_target_properties(amber PROPERTIES OUTPUT_NAME "amber")
 target_link_libraries(amber libamber ${AMBER_EXTRA_LIBS})
 
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-  # vulkan/vulkan.h defines VK_NULL_HANDLE as 0u and that also serves as a null pointer.
-  # Disable Clang's warning that will alwaays fire on that.  This is required to build
-  # with XCode 10.
-  target_compile_options(amber PRIVATE -Wno-zero-as-null-pointer-constant)
-endif()
-
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
     COMMAND
