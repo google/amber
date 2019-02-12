@@ -6,10 +6,11 @@ LOCAL_CPP_EXTENSION := .cc .cpp .cxx
 LOCAL_SRC_FILES:= \
     amber.cc \
     config_helper.cc \
+    config_helper_vulkan.cc \
     log.cc \
     ppm.cc
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/.. $(LOCAL_PATH)/../include
-LOCAL_LDLIBS:=-landroid
+LOCAL_LDLIBS:=-landroid -lvulkan
 LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti -Werror
 LOCAL_STATIC_LIBRARIES:=amber
 include $(BUILD_EXECUTABLE)
