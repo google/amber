@@ -170,7 +170,7 @@ Result Parser::Parse(const std::string& input) {
   if (!r.IsSuccess())
     return r;
 
-  r = GenerateDefaultPipeline(&section_parser);
+  r = GenerateDefaultPipeline(section_parser);
   if (!r.IsSuccess())
     return r;
 
@@ -183,10 +183,10 @@ Result Parser::Parse(const std::string& input) {
   return {};
 }
 
-Result Parser::GenerateDefaultPipeline(SectionParser* section_parser) {
+Result Parser::GenerateDefaultPipeline(const SectionParser& section_parser) {
   // Generate a pipeline for VkScript.
   PipelineType pipeline_type = PipelineType::kCompute;
-  for (const auto& section : section_parser->Sections()) {
+  for (const auto& section : section_parser.Sections()) {
     if (!SectionParser::HasShader(section.section_type))
       continue;
 
@@ -208,21 +208,11 @@ Result Parser::GenerateDefaultPipeline(SectionParser* section_parser) {
 
   // Generate and add a framebuffer
   auto color_buf = pipeline->GenerateDefaultColorAttachmentBuffer();
-  auto* buf = color_buf.get();
-  r = script_->AddBuffer(std::move(color_buf));
-  if (!r.IsSuccess())
-    return r;
-  r = pipeline->AddColorAttachment(buf, 0);
+  r = pipeline->AddColorAttachment(color_buf.get(), 0);
   if (!r.IsSuccess())
     return r;
 
-  // Generate and add a depth buffer
-  auto depth_buf = pipeline->GenerateDefaultDepthAttachmentBuffer();
-  buf = depth_buf.get();
-  r = script_->AddBuffer(std::move(depth_buf));
-  if (!r.IsSuccess())
-    return r;
-  r = pipeline->SetDepthBuffer(buf);
+  r = script_->AddBuffer(std::move(color_buf));
   if (!r.IsSuccess())
     return r;
 
@@ -322,10 +312,21 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
             make_error(tokenizer, "Failed to parse depthstencil format: " +
                                       token->ToOriginalString()));
       }
-      script_->GetPipeline(kDefaultPipelineName)
-          ->GetDepthBuffer()
-          .buffer->AsFormatBuffer()
-          ->SetFormat(std::move(fmt));
+
+      auto* pipeline = script_->GetPipeline(kDefaultPipelineName);
+      if (pipeline->GetDepthBuffer().buffer != nullptr)
+        return Result("Only one depthstencil command allowed");
+
+      // Generate and add a depth buffer
+      auto depth_buf = pipeline->GenerateDefaultDepthAttachmentBuffer();
+      depth_buf->AsFormatBuffer()->SetFormat(std::move(fmt));
+      Result r = pipeline->SetDepthBuffer(depth_buf.get());
+      if (!r.IsSuccess())
+        return r;
+
+      r = script_->AddBuffer(std::move(depth_buf));
+      if (!r.IsSuccess())
+        return r;
 
     } else if (feature == Feature::kFenceTimeout) {
       token = tokenizer.NextToken();

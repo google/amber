@@ -38,7 +38,7 @@ class Parser : public amber::Parser {
 
  private:
   std::string make_error(const Tokenizer& tokenizer, const std::string& err);
-  Result GenerateDefaultPipeline(SectionParser* section_parser);
+  Result GenerateDefaultPipeline(const SectionParser& section_parser);
   Result ProcessSection(const SectionParser::Section& section);
   Result ProcessShaderBlock(const SectionParser::Section& section);
   Result ProcessRequireBlock(const SectionParser::Section& section);

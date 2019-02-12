@@ -294,7 +294,7 @@ logicOp)";
   auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
   auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
   EXPECT_EQ(FormatType::kB8G8R8A8_UNORM, color_frame_format);
-  EXPECT_EQ(FormatType::kD32_SFLOAT_S8_UINT, depth_frame_format);
+  EXPECT_EQ(FormatType::kUnknown, depth_frame_format);
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredExtensions) {
@@ -327,7 +327,7 @@ VK_KHR_variable_pointers)";
   auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
   auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
   EXPECT_EQ(FormatType::kB8G8R8A8_UNORM, color_frame_format);
-  EXPECT_EQ(FormatType::kD32_SFLOAT_S8_UINT, depth_frame_format);
+  EXPECT_EQ(FormatType::kUnknown, depth_frame_format);
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredFrameBuffers) {
@@ -388,7 +388,7 @@ fence_timeout 12345)";
   auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
   auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
   EXPECT_EQ(FormatType::kB8G8R8A8_UNORM, color_frame_format);
-  EXPECT_EQ(FormatType::kD32_SFLOAT_S8_UINT, depth_frame_format);
+  EXPECT_EQ(FormatType::kUnknown, depth_frame_format);
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredAll) {
