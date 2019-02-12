@@ -53,7 +53,7 @@ amber::Result ParseDescriptorSetAndBinding(const std::string& buffer_id,
       return Result("binding for buffer must be positive, got: " +
                     std::to_string(binding_before_validation));
     }
-    *binding = binding_before_validation;
+    *binding = static_cast<uint32_t>(binding_before_validation);
     return {};
   }
 
