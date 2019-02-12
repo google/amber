@@ -258,7 +258,7 @@ Result Parser::ProcessShaderBlock(const SectionParser::Section& section) {
   shader->SetData(section.contents);
 
   Result r = script_->GetPipeline(kDefaultPipelineName)
-                  ->AddShader(shader.get(), shader->GetType());
+                 ->AddShader(shader.get(), shader->GetType());
   if (!r.IsSuccess())
     return r;
 
