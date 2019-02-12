@@ -10,8 +10,8 @@ LOCAL_SRC_FILES:= \
     log.cc \
     ppm.cc
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/.. $(LOCAL_PATH)/../include
-LOCAL_LDLIBS:=-landroid -lvulkan
-LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti -Werror
+LOCAL_LDLIBS:=-landroid -lvulkan -llog
+LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti -Werror -DAMBER_ENGINE_VULKAN
 LOCAL_STATIC_LIBRARIES:=amber
 include $(BUILD_EXECUTABLE)
 
