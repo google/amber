@@ -80,7 +80,9 @@ Result Executor::Execute(Engine* engine,
   for (const auto& info : pipeline->GetVertexBuffers()) {
     r = engine->SetBuffer(
         info.type, static_cast<uint8_t>(info.location),
-        info.buffer->IsFormatBuffer() ? info.buffer->AsFormatBuffer()->GetFormat() : Format(),
+        info.buffer->IsFormatBuffer() ?
+            info.buffer->AsFormatBuffer()->GetFormat() :
+            Format(),
         info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
