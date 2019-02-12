@@ -43,7 +43,7 @@ ShaderCompiler::ShaderCompiler(const std::string& env) : spv_env_(env) {}
 ShaderCompiler::~ShaderCompiler() = default;
 
 std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
-    Shader* shader,
+    const Shader* shader,
     const ShaderMap& shader_map) const {
   auto it = shader_map.find(shader->GetName());
   if (it != shader_map.end())
@@ -145,7 +145,7 @@ Result ShaderCompiler::ParseHex(const std::string& data,
 }
 
 #if AMBER_ENABLE_SHADERC
-Result ShaderCompiler::CompileGlsl(Shader* shader,
+Result ShaderCompiler::CompileGlsl(const Shader* shader,
                                    std::vector<uint32_t>* result) const {
   shaderc::Compiler compiler;
   shaderc::CompileOptions options;

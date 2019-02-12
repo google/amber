@@ -32,64 +32,70 @@ Result Executor::Execute(Engine* engine,
                          const ShaderMap& shader_map) {
   engine->SetEngineData(script->GetEngineData());
 
-  // Process Shader nodes
-  PipelineType pipeline_type = PipelineType::kGraphics;
-  for (const auto& shader : script->GetShaders()) {
+  if (script->GetPipelines().empty())
+    return Result("no pipelines defined");
+
+  // TODO(jaebaek): Support multiple pipelines.
+  if (script->GetPipelines().size() > 1)
+    return Result("only single pipeline supported currently");
+
+  auto* pipeline = script->GetPipelines()[0].get();
+
+  // Process Shaders
+  for (const auto& shader_info : pipeline->GetShaders()) {
     ShaderCompiler sc(script->GetSpvTargetEnv());
 
     Result r;
     std::vector<uint32_t> data;
-    std::tie(r, data) = sc.Compile(shader.get(), shader_map);
+    std::tie(r, data) = sc.Compile(shader_info.GetShader(), shader_map);
     if (!r.IsSuccess())
       return r;
 
-    r = engine->SetShader(shader->GetType(), data);
+    r = engine->SetShader(shader_info.GetShaderType(), data);
     if (!r.IsSuccess())
       return r;
-
-    if (shader->GetType() == kShaderTypeCompute)
-      pipeline_type = PipelineType::kCompute;
   }
 
   // Handle Image and Depth buffers early so they are available when we call
   // the CreatePipeline method.
-  for (const auto& buf : script->GetBuffers()) {
-    // Image and depth are handled earlier. They will be moved to the pipeline
-    // object when it exists.
-    if (buf->GetBufferType() != BufferType::kColor &&
-        buf->GetBufferType() != BufferType::kDepth) {
-      continue;
-    }
-
-    Result r = engine->SetBuffer(
-        buf->GetBufferType(), buf->GetLocation(),
-        buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
-        buf->GetData());
+  for (const auto& info : pipeline->GetColorAttachments()) {
+    Result r = engine->SetBuffer(info.type, static_cast<uint8_t>(info.location),
+        info.buffer->AsFormatBuffer()->GetFormat(), info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
 
-  // TODO(jaebaek): Support multiple pipelines.
-  Result r = engine->CreatePipeline(pipeline_type);
+  if (pipeline->GetDepthBuffer().buffer) {
+    const auto& info = pipeline->GetDepthBuffer();
+    Result r = engine->SetBuffer(info.type, static_cast<uint8_t>(info.location),
+        info.buffer->AsFormatBuffer()->GetFormat(), info.buffer->GetData());
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  Result r = engine->CreatePipeline(pipeline->GetType());
   if (!r.IsSuccess())
     return r;
 
-  // Process Buffers
-  for (const auto& buf : script->GetBuffers()) {
-    // Image and depth are handled earlier. They will be moved to the pipeline
-    // object when it exists.
-    if (buf->GetBufferType() == BufferType::kColor ||
-        buf->GetBufferType() == BufferType::kDepth) {
-      continue;
-    }
-
+  for (const auto& info : pipeline->GetVertexBuffers()) {
     r = engine->SetBuffer(
-        buf->GetBufferType(), buf->GetLocation(),
+        info.type, static_cast<uint8_t>(info.location),
+        info.buffer->IsFormatBuffer() ? info.buffer->AsFormatBuffer()->GetFormat() : Format(),
+        info.buffer->GetData());
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  if (pipeline->GetIndexBuffer()) {
+    auto* buf = pipeline->GetIndexBuffer();
+    r = engine->SetBuffer(buf->GetBufferType(), 0,
         buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
         buf->GetData());
     if (!r.IsSuccess())
       return r;
   }
+
+  // TODO(dsinclair) pipeline->GetBuffers() ....
 
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {

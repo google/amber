@@ -220,6 +220,7 @@ Result Pipeline::SetDepthBuffer(Buffer* buf) {
   if (depth_buffer_.buffer != nullptr)
     return Result("can only bind one depth buffer in a PIPELINE");
 
+  depth_buffer_.type = BufferType::kDepth;
   depth_buffer_.buffer = buf;
   depth_buffer_.width = fb_width_;
   depth_buffer_.height = fb_height_;
@@ -247,6 +248,7 @@ Result Pipeline::AddVertexBuffer(Buffer* buf, uint32_t location) {
 
   vertex_buffers_.push_back(BufferInfo{buf});
   vertex_buffers_.back().location = location;
+  vertex_buffers_.back().type = BufferType::kVertex;
   return {};
 }
 
