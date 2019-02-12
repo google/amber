@@ -25,6 +25,9 @@
 #include "src/vulkan/graphics_pipeline.h"
 
 namespace amber {
+
+VulkanEngineConfig::~VulkanEngineConfig() = default;
+
 namespace vulkan {
 namespace {
 

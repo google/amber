@@ -22,6 +22,8 @@ namespace amber {
 
 /// Configuration for the Dawn engine.
 struct DawnEngineConfig : public EngineConfig {
+  virtual ~DawnEngineConfig() override;
+
   /// The Dawn Device to use for running tests.
   ::dawn::Device* device;
 };

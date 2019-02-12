@@ -27,6 +27,8 @@ namespace amber {
 /// Configuration for the Vulkan Engine. The following are all required when
 /// when using the vulkan backend.
 struct VulkanEngineConfig : public EngineConfig {
+  virtual ~VulkanEngineConfig() override;
+
   /// The Vulkan instance procedure loader.
   PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
 

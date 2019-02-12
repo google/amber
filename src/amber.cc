@@ -26,6 +26,8 @@
 
 namespace amber {
 
+EngineConfig::~EngineConfig() = default;
+
 Amber::Amber() = default;
 
 Amber::~Amber() = default;

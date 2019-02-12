@@ -27,6 +27,9 @@
 #include "src/sleep.h"
 
 namespace amber {
+
+DawnEngineConfig::~DawnEngineConfig() = default;
+
 namespace dawn {
 
 namespace {
