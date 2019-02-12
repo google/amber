@@ -22,7 +22,7 @@ namespace amber {
 
 /// Configuration for the Dawn engine.
 struct DawnEngineConfig : public EngineConfig {
-  /// The dawn Device to use for running tests.
+  /// The Dawn Device to use for running tests.
   ::dawn::Device* device;
 };
 
