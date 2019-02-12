@@ -594,9 +594,14 @@ Result CommandParser::ProcessSSBO() {
     cmd->SetDatumType(tp.GetType());
 
     token = tokenizer_->NextToken();
-    if (!token->IsInteger())
+    if (!token->IsInteger()) {
       return Result("Invalid offset for ssbo command: " +
                     token->ToOriginalString());
+    }
+    if (token->AsInt32() < 0) {
+      return Result("offset for SSBO must be positive, got: " +
+                    std::to_string(token->AsInt32()));
+    }
 
     cmd->SetOffset(token->AsUint32());
 
@@ -643,16 +648,18 @@ Result CommandParser::ProcessUniform() {
     cmd->SetLine(tokenizer_->GetCurrentLine());
 
     token = tokenizer_->NextToken();
-    if (!token->IsInteger())
+    if (!token->IsInteger()) {
       return Result("Invalid binding value for uniform ubo command: " +
                     token->ToOriginalString());
+    }
 
     uint32_t val = token->AsUint32();
 
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsString()) {
       return Result("Invalid type value for uniform ubo command: " +
                     token->ToOriginalString());
+    }
 
     auto& str = token->AsString();
     if (str.size() >= 2 && str[0] == ':') {
@@ -667,9 +674,10 @@ Result CommandParser::ProcessUniform() {
       cmd->SetBinding(static_cast<uint32_t>(binding_val));
 
       token = tokenizer_->NextToken();
-      if (!token->IsString())
+      if (!token->IsString()) {
         return Result("Invalid type value for uniform ubo command: " +
                       token->ToOriginalString());
+      }
     } else {
       cmd->SetBinding(val);
     }
@@ -688,9 +696,14 @@ Result CommandParser::ProcessUniform() {
   cmd->SetDatumType(tp.GetType());
 
   token = tokenizer_->NextToken();
-  if (!token->IsInteger())
+  if (!token->IsInteger()) {
     return Result("Invalid offset value for uniform command: " +
                   token->ToOriginalString());
+  }
+  if (token->AsInt32() < 0) {
+    return Result("offset for uniform must be positive, got: " +
+                  std::to_string(token->AsInt32()));
+  }
 
   cmd->SetOffset(token->AsUint32());
 
