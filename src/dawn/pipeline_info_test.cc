@@ -39,15 +39,17 @@ TEST_F(DawnRenderPipelineInfoTest, DefaultValuesForMembers) {
   RenderPipelineInfo rpi;
   EXPECT_FALSE(static_cast<bool>(rpi.vertex_shader));
   EXPECT_FALSE(static_cast<bool>(rpi.fragment_shader));
-  EXPECT_FLOAT_EQ(0.0f, rpi.clear_color_value.GetR());
-  EXPECT_FLOAT_EQ(0.0f, rpi.clear_color_value.GetG());
-  EXPECT_FLOAT_EQ(0.0f, rpi.clear_color_value.GetB());
-  EXPECT_FLOAT_EQ(0.0f, rpi.clear_color_value.GetA());
+  EXPECT_FLOAT_EQ(0.0f, rpi.clear_color_value.r);
+  EXPECT_FLOAT_EQ(0.0f, rpi.clear_color_value.g);
+  EXPECT_FLOAT_EQ(0.0f, rpi.clear_color_value.b);
+  EXPECT_FLOAT_EQ(0.0f, rpi.clear_color_value.a);
   EXPECT_FLOAT_EQ(1.0f, rpi.clear_depth_value);
   EXPECT_EQ(0u, rpi.clear_stencil_value);
   EXPECT_FALSE(static_cast<bool>(rpi.fb_texture));
   EXPECT_FALSE(static_cast<bool>(rpi.fb_buffer));
+  EXPECT_EQ(0u, rpi.fb_texel_stride);
   EXPECT_EQ(0u, rpi.fb_row_stride);
+  EXPECT_EQ(0u, rpi.fb_num_rows);
   EXPECT_EQ(0u, rpi.fb_size);
   EXPECT_EQ(nullptr, rpi.fb_data);
 }

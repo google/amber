@@ -165,7 +165,7 @@ executions.
 
 
 ### Probe all
- * `probe all (rgb|rgba) _r_ _g_ _b_ [_a_]
+ * `probe all (rgb|rgba) _r_ _g_ _b_ [_a_]`
 
 Probes the entire window to verify all pixels are of color r,g,b and optionally
 a. If `rgba` is specified then the `a` parameter is required. If `rgb` is
@@ -241,7 +241,7 @@ to 3.
 
 
 ### Tolerance
- * `tolerance tolerance0 [tolerance1 tolerance2 tolerance3]
+ * `tolerance tolerance0 [tolerance1 tolerance2 tolerance3]`
 
 The `tolerance` command sets the amount of fuzzyness used when using the `~=`
 comparator. If a single tolerance value is set it is used for every comparison.

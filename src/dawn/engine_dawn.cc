@@ -17,12 +17,13 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <iostream>
 #include <utility>
 #include <vector>
 
 #include "amber/amber_dawn.h"
 #include "dawn/dawncpp.h"
-#include "src/dawn/device_metal.h"
+#include "src/format.h"
 #include "src/sleep.h"
 
 namespace amber {
@@ -37,6 +38,7 @@ const uint32_t kFramebufferWidth = 250, kFramebufferHeight = 250;
 // as needed for other Dawn backends.
 const uint32_t kMinimumImageRowPitch = 256;
 const auto kFramebufferFormat = ::dawn::TextureFormat::R8G8B8A8Unorm;
+const auto kAmberFramebufferFormatType = FormatType::kR8G8B8A8_UNORM;
 
 // Creates a device-side texture for the framebuffer, and returns it through
 // |result_ptr|.  Assumes the device exists and is valid.  Assumes result_ptr
@@ -54,6 +56,7 @@ Result MakeFramebufferTexture(const ::dawn::Device& device,
   descriptor.arraySize = 1;
   descriptor.format = format;
   descriptor.levelCount = 1;
+  descriptor.sampleCount = 1;
   descriptor.usage = ::dawn::TextureUsageBit::TransferSrc |
                      ::dawn::TextureUsageBit::OutputAttachment;
   // TODO(dneto): Get a better message by using the Dawn error callback.
@@ -71,20 +74,23 @@ Result MakeFramebufferBuffer(const ::dawn::Device& device,
                              ::dawn::Buffer* result_ptr,
                              uint32_t* texel_stride_ptr,
                              uint32_t* row_stride_ptr,
+                             uint32_t* num_rows_ptr,
                              uint32_t* size_ptr) {
   assert(device);
   assert(result_ptr);
   assert(texel_stride_ptr);
   assert(row_stride_ptr);
+  assert(num_rows_ptr);
   assert(size_ptr);
 
-  ::dawn::BufferDescriptor descriptor;
   // TODO(dneto): Handle other formats.
   if (format != ::dawn::TextureFormat::R8G8B8A8Unorm) {
     return Result("Dawn::MakeFramebufferBuffer: Unhandled framebuffer format");
   }
   // Number of bytes for each texel in the default format.
   const uint32_t default_texel_bytes = 4;
+
+  const uint32_t num_rows = kFramebufferHeight;
 
   uint32_t row_stride = default_texel_bytes * kFramebufferWidth;
   {
@@ -95,12 +101,14 @@ Result MakeFramebufferBuffer(const ::dawn::Device& device,
     assert(0 == (row_stride % kMinimumImageRowPitch));
   }
 
-  descriptor.size = row_stride * kFramebufferHeight;
+  ::dawn::BufferDescriptor descriptor;
+  descriptor.size = row_stride * num_rows;
   descriptor.usage =
       ::dawn::BufferUsageBit::TransferDst | ::dawn::BufferUsageBit::MapRead;
   *result_ptr = device.CreateBuffer(&descriptor);
   *texel_stride_ptr = default_texel_bytes;
   *row_stride_ptr = row_stride;
+  *num_rows_ptr = num_rows;
   *size_ptr = descriptor.size;
   return {};
 }
@@ -162,7 +170,7 @@ MapResult MapBuffer(const ::dawn::Device& device,
       map_result.result = Result("MapBuffer timed out after 100 iterations");
       break;
     }
-    USleep(interval);
+    USleep(uint32_t(interval));
   }
   return map_result;
 }
@@ -179,23 +187,19 @@ Result EngineDawn::Initialize(EngineConfig* config,
   if (device_)
     return Result("Dawn:Initialize device_ already exists");
 
-  if (config) {
-    DawnEngineConfig* dawn_config = static_cast<DawnEngineConfig*>(config);
-    if (dawn_config->device == nullptr)
-      return Result("Dawn:Initialize device is a null pointer");
+  if (!config)
+    return Result("Dawn::Initialize config is null");
+  DawnEngineConfig* dawn_config = static_cast<DawnEngineConfig*>(config);
+  if (dawn_config->device == nullptr)
+    return Result("Dawn:Initialize device is a null pointer");
 
-    device_ = *dawn_config->device;
-#if AMBER_DAWN_METAL
-  } else {
-    return CreateMetalDevice(&device_);
-#endif  // AMBER_DAWN_METAL
-  }
+  device_ = dawn_config->device;
 
   return {};
 }
 
 Result EngineDawn::Shutdown() {
-  device_ = ::dawn::Device();
+  device_ = nullptr;
   return {};
 }
 
@@ -205,7 +209,7 @@ Result EngineDawn::CreatePipeline(PipelineType type) {
       auto module = module_for_type_[kShaderTypeCompute];
       if (!module)
         return Result("CreatePipeline: no compute shader provided");
-      compute_pipeline_info_ = std::move(ComputePipelineInfo(module));
+      compute_pipeline_info_ = ComputePipelineInfo(module);
       break;
     }
 
@@ -221,7 +225,7 @@ Result EngineDawn::CreatePipeline(PipelineType type) {
         return Result(
             "CreatePipeline: no vertex shader provided for graphics pipeline");
       }
-      render_pipeline_info_ = std::move(RenderPipelineInfo(vs, fs));
+      render_pipeline_info_ = RenderPipelineInfo(vs, fs);
       break;
     }
   }
@@ -238,7 +242,7 @@ Result EngineDawn::SetShader(ShaderType type,
   if (!device_) {
     return Result("Dawn::SetShader: device is not created");
   }
-  auto shader = device_.CreateShaderModule(&descriptor);
+  auto shader = device_->CreateShaderModule(&descriptor);
   if (!shader) {
     return Result("Dawn::SetShader: failed to create shader");
   }
@@ -257,7 +261,8 @@ Result EngineDawn::SetBuffer(BufferType,
 }
 
 Result EngineDawn::DoClearColor(const ClearColorCommand* command) {
-  render_pipeline_info_.clear_color_value = *command;
+  render_pipeline_info_.clear_color_value = ::dawn::Color{
+      command->GetR(), command->GetG(), command->GetB(), command->GetA()};
   return {};
 }
 
@@ -276,20 +281,17 @@ Result EngineDawn::DoClear(const ClearCommand*) {
   if (!result.IsSuccess())
     return result;
 
-  const auto& clear_color = render_pipeline_info_.clear_color_value;
-
   ::dawn::RenderPassColorAttachmentDescriptor color_attachment =
       ::dawn::RenderPassColorAttachmentDescriptor();
   color_attachment.attachment =
       render_pipeline_info_.fb_texture.CreateDefaultTextureView();
   color_attachment.resolveTarget = nullptr;
-  color_attachment.clearColor = {clear_color.GetR(), clear_color.GetG(),
-                                 clear_color.GetB(), clear_color.GetA()};
+  color_attachment.clearColor = render_pipeline_info_.clear_color_value;
   color_attachment.loadOp = ::dawn::LoadOp::Clear;
   color_attachment.storeOp = ::dawn::StoreOp::Store;
 
   ::dawn::RenderPassDescriptor rpd =
-      device_.CreateRenderPassDescriptorBuilder()
+      device_->CreateRenderPassDescriptorBuilder()
           .SetColorAttachments(1, &color_attachment)
           .GetResult();
   command_buffer_builder_.BeginRenderPass(rpd).EndPass();
@@ -354,7 +356,7 @@ Result EngineDawn::DoProcessCommands() {
     buffer_copy_view.buffer = fb_buffer;
     buffer_copy_view.offset = buffer_offset;
     buffer_copy_view.rowPitch = render_pipeline_info_.fb_row_stride;
-    buffer_copy_view.imageHeight = 1;
+    buffer_copy_view.imageHeight = render_pipeline_info_.fb_num_rows;
 
     ::dawn::Extent3D extent = {kFramebufferWidth, kFramebufferHeight, depth};
 
@@ -364,7 +366,7 @@ Result EngineDawn::DoProcessCommands() {
 
   // Make sure we have a queue.
   if (!queue_)
-    queue_ = device_.CreateQueue();
+    queue_ = device_->CreateQueue();
 
   // Now run the commands.
   auto command_buffer = command_buffer_builder_.GetResult();
@@ -379,7 +381,7 @@ Result EngineDawn::DoProcessCommands() {
   // And any further commands start afresh.
   DestroyCommandBufferBuilder();
 
-  MapResult map = MapBuffer(device_, fb_buffer, render_pipeline_info_.fb_size);
+  MapResult map = MapBuffer(*device_, fb_buffer, render_pipeline_info_.fb_size);
   render_pipeline_info_.fb_data = map.data;
   return map.result;
 }
@@ -394,7 +396,7 @@ Result EngineDawn::CreateCommandBufferBuilderIfNeeded() {
         "EngineDawn: Can't create command buffer builder: device is not "
         "initialized");
   }
-  command_buffer_builder_ = device_.CreateCommandBufferBuilder();
+  command_buffer_builder_ = device_->CreateCommandBufferBuilder();
   if (command_buffer_builder_)
     return {};
   return Result("EngineDawn: Can't create command buffer builder");
@@ -415,7 +417,7 @@ Result EngineDawn::CreateFramebufferIfNeeded() {
   Result result;
   {
     ::dawn::Texture fb_texture;
-    result = MakeFramebufferTexture(device_, kFramebufferFormat, &fb_texture);
+    result = MakeFramebufferTexture(*device_, kFramebufferFormat, &fb_texture);
     if (!result.IsSuccess())
       return result;
     render_pipeline_info_.fb_texture = std::move(fb_texture);
@@ -425,16 +427,23 @@ Result EngineDawn::CreateFramebufferIfNeeded() {
     ::dawn::Buffer fb_buffer;
     uint32_t texel_stride = 0;
     uint32_t row_stride = 0;
+    uint32_t num_rows = 0;
     uint32_t size = 0;
-    result = MakeFramebufferBuffer(device_, kFramebufferFormat, &fb_buffer,
-                                   &texel_stride, &row_stride, &size);
+    result =
+        MakeFramebufferBuffer(*device_, kFramebufferFormat, &fb_buffer,
+                              &texel_stride, &row_stride, &num_rows, &size);
     if (!result.IsSuccess())
       return result;
     render_pipeline_info_.fb_buffer = std::move(fb_buffer);
     render_pipeline_info_.fb_texel_stride = texel_stride;
     render_pipeline_info_.fb_row_stride = row_stride;
+    render_pipeline_info_.fb_num_rows = num_rows;
     render_pipeline_info_.fb_size = size;
     render_pipeline_info_.fb_data = nullptr;
+
+    // TODO(dneto): support other formats
+    render_pipeline_info_.fb_format = ::amber::Format();
+    render_pipeline_info_.fb_format.SetFormatType(kAmberFramebufferFormatType);
   }
   return {};
 }
@@ -445,6 +454,7 @@ Result EngineDawn::GetFrameBufferInfo(ResourceInfo* info) {
   if (render_pipeline_info_.fb_data == nullptr)
     return Result("Dawn: FrameBuffer is not mapped");
 
+  info->image_info.texel_format = &render_pipeline_info_.fb_format;
   info->image_info.texel_stride = render_pipeline_info_.fb_texel_stride;
   info->image_info.row_stride = render_pipeline_info_.fb_row_stride;
   info->image_info.width = kFramebufferWidth;

@@ -85,7 +85,7 @@ class EngineDawn : public Engine {
   // for that host-side buffer.
   Result CreateFramebufferIfNeeded();
 
-  ::dawn::Device device_;
+  ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.
   ::dawn::Queue queue_;
   ::dawn::CommandBufferBuilder command_buffer_builder_;
 

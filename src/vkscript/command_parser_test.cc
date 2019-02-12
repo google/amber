@@ -2709,6 +2709,15 @@ TEST_F(CommandParserTest, SSBOSubdataWithFloat) {
   }
 }
 
+TEST_F(CommandParserTest, SSBOSubdataWithNegativeOffset) {
+  std::string data = "ssbo 6 subdata vec3 -2 -4 -5 -6";
+
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("1: offset for SSBO must be positive, got: -2", r.Error());
+}
+
 TEST_F(CommandParserTest, SSBOSubdataWithDescriptorSet) {
   std::string data = "ssbo 5:6 subdata vec3 2 2.3 4.2 1.2";
 
@@ -2908,6 +2917,15 @@ TEST_F(CommandParserTest, Uniform) {
   }
 }
 
+TEST_F(CommandParserTest, UniformOffsetMustBePositive) {
+  std::string data = "uniform vec3 -2 2.1 3.2 4.3";
+
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("1: offset for uniform must be positive, got: -2", r.Error());
+}
+
 TEST_F(CommandParserTest, UniformWithContinuation) {
   std::string data = "uniform vec3 2 2.1 3.2 4.3 \\\n5.4 6.7 8.9";
 
@@ -3003,6 +3021,15 @@ TEST_F(CommandParserTest, UniformUBO) {
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FLOAT_EQ(results[i], values[i].AsFloat());
   }
+}
+
+TEST_F(CommandParserTest, UniformUBOOffsetMustBePositive) {
+  std::string data = "uniform ubo 2 vec3 -1 2.1 3.2 4.3";
+
+  CommandParser cp(1, data);
+  Result r = cp.Parse();
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("1: offset for uniform must be positive, got: -1", r.Error());
 }
 
 TEST_F(CommandParserTest, UniformUBOWithDescriptorSet) {
