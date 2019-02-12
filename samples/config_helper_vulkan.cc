@@ -721,6 +721,9 @@ amber::Result ConfigHelperVulkan::CreateConfig(
   return {};
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+
 amber::Result ConfigHelperVulkan::Shutdown() {
   if (vulkan_device_ != VK_NULL_HANDLE)
     vkDestroyDevice(vulkan_device_, nullptr);
@@ -743,5 +746,7 @@ amber::Result ConfigHelperVulkan::Shutdown() {
 
   return {};
 }
+
+#pragma clang diagnostic pop
 
 }  // namespace sample

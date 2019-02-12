@@ -26,6 +26,9 @@
 #include "amber/amber_vulkan.h"
 #include "samples/config_helper.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+
 namespace sample {
 
 // Child class of ConfigHelperImpl for Vulkan.
@@ -82,5 +85,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
 };
 
 }  // namespace sample
+
+#pragma clang diagnostic pop
 
 #endif  // SAMPLES_CONFIG_HELPER_VULKAN_H_
