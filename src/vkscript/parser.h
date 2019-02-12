@@ -36,12 +36,9 @@ class Parser : public amber::Parser {
   // amber::Parser
   Result Parse(const std::string& data) override;
 
-  Result ProcessSectionForTesting(const SectionParser::Section& section) {
-    return ProcessSection(section);
-  }
-
  private:
   std::string make_error(const Tokenizer& tokenizer, const std::string& err);
+  Result GenerateDefaultPipeline(const SectionParser& section_parser);
   Result ProcessSection(const SectionParser::Section& section);
   Result ProcessShaderBlock(const SectionParser::Section& section);
   Result ProcessRequireBlock(const SectionParser::Section& section);

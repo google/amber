@@ -50,7 +50,7 @@ class SectionParser {
   ~SectionParser();
 
   Result Parse(const std::string& data);
-  const std::vector<Section>& Sections() { return sections_; }
+  const std::vector<Section>& Sections() const { return sections_; }
 
   Result SplitSectionsForTesting(const std::string& data) {
     return SplitSections(data);
