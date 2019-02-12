@@ -257,8 +257,8 @@ Result Parser::ProcessShaderBlock(const SectionParser::Section& section) {
   shader->SetFormat(section.format);
   shader->SetData(section.contents);
 
-  Result r = script_->GetPipeline(kDefaultPipelineName)->AddShader(
-      shader.get(), shader->GetType());
+  Result r = script_->GetPipeline(kDefaultPipelineName)
+                  ->AddShader(shader.get(), shader->GetType());
   if (!r.IsSuccess())
     return r;
 
@@ -305,8 +305,10 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
             make_error(tokenizer, "Failed to parse framebuffer format: " +
                                       token->ToOriginalString()));
       }
-      script_->GetPipeline(kDefaultPipelineName)->GetColorAttachments()[0]
-          .buffer->AsFormatBuffer()->SetFormat(std::move(fmt));
+      script_->GetPipeline(kDefaultPipelineName)
+          ->GetColorAttachments()[0]
+          .buffer->AsFormatBuffer()
+          ->SetFormat(std::move(fmt));
 
     } else if (feature == Feature::kDepthStencil) {
       token = tokenizer.NextToken();
@@ -320,8 +322,10 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
             make_error(tokenizer, "Failed to parse depthstencil format: " +
                                       token->ToOriginalString()));
       }
-      script_->GetPipeline(kDefaultPipelineName)->GetDepthBuffer()
-          .buffer->AsFormatBuffer()->SetFormat(std::move(fmt));
+      script_->GetPipeline(kDefaultPipelineName)
+          ->GetDepthBuffer()
+          .buffer->AsFormatBuffer()
+          ->SetFormat(std::move(fmt));
 
     } else if (feature == Feature::kFenceTimeout) {
       token = tokenizer.NextToken();
