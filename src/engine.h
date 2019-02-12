@@ -92,19 +92,7 @@ class Engine {
   virtual Result Shutdown() = 0;
 
   /// Create graphics pipeline.
-  virtual Result CreatePipeline(PipelineType type) = 0;
-
-  /// Set the shader of |type| to the binary |data|.
-  virtual Result SetShader(ShaderType type,
-                           const std::vector<uint32_t>& data) = 0;
-
-  /// Provides the data for a given buffer to be bound at the given location
-  /// This is used to declare and populate vertex and index inputs to a graphics
-  /// pipeline.
-  virtual Result SetBuffer(BufferType type,
-                           uint8_t location,
-                           const Format& format,
-                           const std::vector<Value>& data) = 0;
+  virtual Result CreatePipeline(Pipeline* pipeline) = 0;
 
   /// Execute the clear color command
   virtual Result DoClearColor(const ClearColorCommand* cmd) = 0;

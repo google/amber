@@ -203,8 +203,14 @@ Result EngineDawn::Shutdown() {
   return {};
 }
 
-Result EngineDawn::CreatePipeline(PipelineType type) {
-  switch (type) {
+Result EngineDawn::CreatePipeline(Pipeline* pipeline) {
+  for (const auto& shader_info : pipeline->GetShaders()) {
+    Result r = SetShader(shader_info.GetShaderType(), shader_info.GetData());
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  switch (pipeline->GetType()) {
     case PipelineType::kCompute: {
       auto module = module_for_type_[kShaderTypeCompute];
       if (!module)
@@ -251,13 +257,6 @@ Result EngineDawn::SetShader(ShaderType type,
   }
   module_for_type_[type] = shader;
   return {};
-}
-
-Result EngineDawn::SetBuffer(BufferType,
-                             uint8_t,
-                             const Format&,
-                             const std::vector<Value>&) {
-  return Result("Dawn:SetBuffer not implemented");
 }
 
 Result EngineDawn::DoClearColor(const ClearColorCommand* command) {
