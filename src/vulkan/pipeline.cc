@@ -481,15 +481,6 @@ Result Pipeline::GetDescriptorInfo(const uint32_t descriptor_set,
                 ", binding: " + std::to_string(binding) + " does not exist");
 }
 
-std::vector<ResourceInfo> Pipeline::GetAllDescriptorInfo() {
-  std::vector<ResourceInfo> info;
-  for (auto& desc_set : descriptor_set_info_) {
-    for (auto& desc : desc_set.descriptors_)
-      info.push_back(desc->GetResourceInfo());
-  }
-  return info;
-}
-
 const char* Pipeline::GetEntryPointName(VkShaderStageFlagBits stage) const {
   auto it = entry_points_.find(stage);
   if (it != entry_points_.end())

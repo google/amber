@@ -476,12 +476,5 @@ Result EngineDawn::GetDescriptorInfo(const uint32_t,
   return Result("Dawn:GetDescriptorInfo not implemented");
 }
 
-std::vector<DescriptorInfo> EngineDawn::GetAllDescriptorInfo() {
-  assert(false && "Dawn:GetAllDescriptorInfo not implemented");
-
-  std::vector<DescriptorInfo> info;
-  return info;
-}
-
 }  // namespace dawn
 }  // namespace amber

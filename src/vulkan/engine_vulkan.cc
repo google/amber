@@ -438,10 +438,6 @@ Result EngineVulkan::GetDescriptorInfo(const uint32_t descriptor_set,
   return pipeline_->GetDescriptorInfo(descriptor_set, binding, info);
 }
 
-std::vector<ResourceInfo> EngineVulkan::GetAllDescriptorInfo() {
-  return pipeline_->GetAllDescriptorInfo();
-}
-
 Result EngineVulkan::DoBuffer(const BufferCommand* command) {
   if (command->IsPushConstant())
     return pipeline_->AddPushConstant(command);

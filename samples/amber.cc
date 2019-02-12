@@ -35,7 +35,7 @@ struct Options {
 
   std::string image_filename;
   std::string buffer_filename;
-  int64_t buffer_binding_index = 0;
+  std::vector<amber::BufferInfo> buffer_to_dump;
   uint32_t engine_major = 1;
   uint32_t engine_minor = 0;
   bool parse_only = false;
@@ -56,7 +56,8 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -t <spirv_env> -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
   -i <filename>       -- Write rendering to <filename> as a PPM image.
   -b <filename>       -- Write contents of a UBO or SSBO to <filename>.
-  -B <buffer>         -- Index of buffer to write. Defaults buffer 0.
+  -B [<desc set>:]<binding>     -- Descriptor set and binding of buffer to write.
+                                   Default is [0:]0.
   -e <engine>         -- Specify graphics engine: vulkan, dawn. Default is vulkan.
   -v <engine version> -- Engine version (eg, 1.1 for Vulkan). Default 1.0.
   -V, --version       -- Output version information for Amber and libraries.
@@ -88,14 +89,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         std::cerr << "Missing value for -B argument." << std::endl;
         return false;
       }
-      opts->buffer_binding_index =
-          static_cast<int64_t>(strtol(args[i].c_str(), nullptr, 10));
-
-      if (opts->buffer_binding_index < 0U) {
-        std::cerr << "Invalid value for -B, must be 0 or greater." << std::endl;
-        return false;
-      }
-
+      opts->buffer_to_dump.emplace_back();
+      opts->buffer_to_dump.back().buffer_name = args[i];
     } else if (arg == "-e") {
       ++i;
       if (i >= args.size()) {
@@ -298,10 +293,10 @@ int main(int argc, const char** argv) {
 
   amber_options.config = config.get();
 
-  if (!options.buffer_filename.empty()) {
-    amber::BufferInfo buffer_info;
-    buffer_info.buffer_name = "buffer";
-    amber_options.extractions.push_back(buffer_info);
+  if (!options.buffer_filename.empty() && !options.buffer_to_dump.empty()) {
+    amber_options.extractions.insert(amber_options.extractions.end(),
+                                     options.buffer_to_dump.begin(),
+                                     options.buffer_to_dump.end());
   }
 
   if (!options.image_filename.empty()) {
