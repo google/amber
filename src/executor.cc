@@ -60,7 +60,8 @@ Result Executor::Execute(Engine* engine,
   // the CreatePipeline method.
   for (const auto& info : pipeline->GetColorAttachments()) {
     Result r = engine->SetBuffer(info.type, static_cast<uint8_t>(info.location),
-        info.buffer->AsFormatBuffer()->GetFormat(), info.buffer->GetData());
+                                 info.buffer->AsFormatBuffer()->GetFormat(),
+                                 info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
@@ -68,7 +69,8 @@ Result Executor::Execute(Engine* engine,
   if (pipeline->GetDepthBuffer().buffer) {
     const auto& info = pipeline->GetDepthBuffer();
     Result r = engine->SetBuffer(info.type, static_cast<uint8_t>(info.location),
-        info.buffer->AsFormatBuffer()->GetFormat(), info.buffer->GetData());
+                                 info.buffer->AsFormatBuffer()->GetFormat(),
+                                 info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
@@ -78,19 +80,19 @@ Result Executor::Execute(Engine* engine,
     return r;
 
   for (const auto& info : pipeline->GetVertexBuffers()) {
-    r = engine->SetBuffer(
-        info.type, static_cast<uint8_t>(info.location),
-        info.buffer->IsFormatBuffer() ?
-            info.buffer->AsFormatBuffer()->GetFormat() :
-            Format(),
-        info.buffer->GetData());
+    r = engine->SetBuffer(info.type, static_cast<uint8_t>(info.location),
+                          info.buffer->IsFormatBuffer()
+                              ? info.buffer->AsFormatBuffer()->GetFormat()
+                              : Format(),
+                          info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
 
   if (pipeline->GetIndexBuffer()) {
     auto* buf = pipeline->GetIndexBuffer();
-    r = engine->SetBuffer(buf->GetBufferType(), 0,
+    r = engine->SetBuffer(
+        buf->GetBufferType(), 0,
         buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
         buf->GetData());
     if (!r.IsSuccess())

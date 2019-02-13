@@ -176,8 +176,8 @@ Result ShaderCompiler::CompileGlsl(const Shader* shader,
   return {};
 }
 #else
-Result ShaderCompiler::CompileGlsl(
-    const Shader*, std::vector<uint32_t>*) const {
+Result ShaderCompiler::CompileGlsl(const Shader*,
+                                   std::vector<uint32_t>*) const {
   return {};
 }
 #endif  // AMBER_ENABLE_SHADERC
