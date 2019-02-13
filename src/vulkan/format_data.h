@@ -15,6 +15,8 @@
 #ifndef SRC_VULKAN_FORMAT_DATA_H_
 #define SRC_VULKAN_FORMAT_DATA_H_
 
+#include <cstdint>
+
 #include "amber/vulkan_header.h"
 #include "src/format_data.h"
 
