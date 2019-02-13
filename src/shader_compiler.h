@@ -32,12 +32,12 @@ class ShaderCompiler {
   ~ShaderCompiler();
 
   std::pair<Result, std::vector<uint32_t>> Compile(
-      Shader* shader,
+      const Shader* shader,
       const ShaderMap& shader_map) const;
 
  private:
   Result ParseHex(const std::string& data, std::vector<uint32_t>* result) const;
-  Result CompileGlsl(Shader* shader, std::vector<uint32_t>* result) const;
+  Result CompileGlsl(const Shader* shader, std::vector<uint32_t>* result) const;
 
   std::string spv_env_;
 };
