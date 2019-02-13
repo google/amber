@@ -141,7 +141,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   // the pipeline.
   for (const auto& info : pipeline->GetColorAttachments()) {
     Result r = SetBuffer(info.type, static_cast<uint8_t>(info.location),
-        info.buffer->AsFormatBuffer()->GetFormat(), info.buffer->GetData());
+                         info.buffer->AsFormatBuffer()->GetFormat(),
+                         info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
@@ -149,7 +150,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   if (pipeline->GetDepthBuffer().buffer) {
     const auto& info = pipeline->GetDepthBuffer();
     Result r = SetBuffer(info.type, static_cast<uint8_t>(info.location),
-        info.buffer->AsFormatBuffer()->GetFormat(), info.buffer->GetData());
+                         info.buffer->AsFormatBuffer()->GetFormat(),
+                         info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
@@ -166,7 +168,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
         device_->GetPhysicalMemoryProperties(), engine_data.fence_timeout_ms,
         GetShaderStageInfo());
     Result r = pipeline_->AsCompute()->Initialize(pool_->GetCommandPool(),
-                                              device_->GetQueue());
+                                                  device_->GetQueue());
     if (!r.IsSuccess())
       return r;
   } else {
@@ -185,17 +187,19 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   }
 
   for (const auto& info : pipeline->GetVertexBuffers()) {
-    Result r = SetBuffer(
-        info.type, static_cast<uint8_t>(info.location),
-        info.buffer->IsFormatBuffer() ? info.buffer->AsFormatBuffer()->GetFormat() : Format(),
-        info.buffer->GetData());
+    Result r = SetBuffer(info.type, static_cast<uint8_t>(info.location),
+                         info.buffer->IsFormatBuffer()
+                             ? info.buffer->AsFormatBuffer()->GetFormat()
+                             : Format(),
+                         info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
 
   if (pipeline->GetIndexBuffer()) {
     auto* buf = pipeline->GetIndexBuffer();
-    Result r = SetBuffer(buf->GetBufferType(), 0,
+    Result r = SetBuffer(
+        buf->GetBufferType(), 0,
         buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
         buf->GetData());
     if (!r.IsSuccess())
