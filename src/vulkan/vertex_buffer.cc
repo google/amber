@@ -47,25 +47,28 @@ uint32_t FloatMantissa(const uint32_t hex_float) {
 // Convert 32 bits float |value| to 16 bits float based on IEEE-754.
 uint16_t FloatToHexFloat16(const float value) {
   const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
-  return static_cast<uint16_t>(FloatSign(*hex) << 15U) |
-         static_cast<uint16_t>(FloatExponent(*hex) << 10U) |
-         static_cast<uint16_t>(FloatMantissa(*hex) >> 13U);
+  return static_cast<uint16_t>(
+      static_cast<uint16_t>(FloatSign(*hex) << 15U) |
+      static_cast<uint16_t>(FloatExponent(*hex) << 10U) |
+      static_cast<uint16_t>(FloatMantissa(*hex) >> 13U));
 }
 
 // Convert 32 bits float |value| to 11 bits float based on IEEE-754.
 uint16_t FloatToHexFloat11(const float value) {
   const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
   assert(FloatSign(*hex) == 0);
-  return static_cast<uint16_t>(FloatExponent(*hex) << 6U) |
-         static_cast<uint16_t>(FloatMantissa(*hex) >> 17U);
+  return static_cast<uint16_t>(
+      static_cast<uint16_t>(FloatExponent(*hex) << 6U) |
+      static_cast<uint16_t>(FloatMantissa(*hex) >> 17U));
 }
 
 // Convert 32 bits float |value| to 10 bits float based on IEEE-754.
 uint16_t FloatToHexFloat10(const float value) {
   const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
   assert(FloatSign(*hex) == 0);
-  return static_cast<uint16_t>(FloatExponent(*hex) << 5U) |
-         static_cast<uint16_t>(FloatMantissa(*hex) >> 18U);
+  return static_cast<uint16_t>(
+      static_cast<uint16_t>(FloatExponent(*hex) << 5U) |
+      static_cast<uint16_t>(FloatMantissa(*hex) >> 18U));
 }
 
 // Convert float to small float format.
