@@ -19,7 +19,7 @@ RecipeImpl::RecipeImpl() = default;
 
 RecipeImpl::~RecipeImpl() = default;
 
-Recipe::Recipe() = default;
+Recipe::Recipe() : impl_(nullptr) {}
 
 Recipe::~Recipe() {
   delete impl_;
