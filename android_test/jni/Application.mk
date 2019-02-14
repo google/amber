@@ -1,4 +1,4 @@
-# Copyright 2018 The Amber Authors.
+# Copyright 2019 The Amber Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-APP_ABI := armeabi-v7a
+APP_ABI := arm64-v8a # armeabi-v7a x86 x86_64
 APP_BUILD_SCRIPT := Android.mk
 APP_STL := c++_static
 APP_PLATFORM := android-14
