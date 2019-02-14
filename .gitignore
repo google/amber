@@ -9,3 +9,7 @@ third_party/spirv-headers
 
 # Vim swap files
 [._]*.s[a-w][a-z]
+
+# C-Lion
+.idea
+cmake-build-debug
