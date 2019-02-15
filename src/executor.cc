@@ -15,6 +15,7 @@
 #include "src/executor.h"
 
 #include <cassert>
+#include <utility>
 #include <vector>
 
 #include "src/engine.h"
@@ -41,8 +42,8 @@ Result Executor::Execute(Engine* engine,
 
   auto* pipeline = script->GetPipelines()[0].get();
 
-  // Process Shaders
-  for (const auto& shader_info : pipeline->GetShaders()) {
+  // Compile Shaders
+  for (auto& shader_info : pipeline->GetShaders()) {
     ShaderCompiler sc(script->GetSpvTargetEnv());
 
     Result r;
@@ -51,55 +52,12 @@ Result Executor::Execute(Engine* engine,
     if (!r.IsSuccess())
       return r;
 
-    r = engine->SetShader(shader_info.GetShaderType(), data);
-    if (!r.IsSuccess())
-      return r;
+    shader_info.SetData(std::move(data));
   }
 
-  // Handle Image and Depth buffers early so they are available when we call
-  // the CreatePipeline method.
-  for (const auto& info : pipeline->GetColorAttachments()) {
-    Result r = engine->SetBuffer(info.type, static_cast<uint8_t>(info.location),
-                                 info.buffer->AsFormatBuffer()->GetFormat(),
-                                 info.buffer->GetData());
-    if (!r.IsSuccess())
-      return r;
-  }
-
-  if (pipeline->GetDepthBuffer().buffer) {
-    const auto& info = pipeline->GetDepthBuffer();
-    Result r = engine->SetBuffer(info.type, static_cast<uint8_t>(info.location),
-                                 info.buffer->AsFormatBuffer()->GetFormat(),
-                                 info.buffer->GetData());
-    if (!r.IsSuccess())
-      return r;
-  }
-
-  Result r = engine->CreatePipeline(pipeline->GetType());
+  Result r = engine->CreatePipeline(pipeline);
   if (!r.IsSuccess())
     return r;
-
-  for (const auto& info : pipeline->GetVertexBuffers()) {
-    r = engine->SetBuffer(info.type, static_cast<uint8_t>(info.location),
-                          info.buffer->IsFormatBuffer()
-                              ? info.buffer->AsFormatBuffer()->GetFormat()
-                              : Format(),
-                          info.buffer->GetData());
-    if (!r.IsSuccess())
-      return r;
-  }
-
-  if (pipeline->GetIndexBuffer()) {
-    auto* buf = pipeline->GetIndexBuffer();
-    r = engine->SetBuffer(
-        buf->GetBufferType(), 0,
-        buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
-        buf->GetData());
-    if (!r.IsSuccess())
-      return r;
-  }
-
-  // TODO(dsinclair) pipeline->GetBuffers() ....
 
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {

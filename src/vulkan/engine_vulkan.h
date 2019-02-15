@@ -23,6 +23,7 @@
 #include "amber/vulkan_header.h"
 #include "src/cast_hash.h"
 #include "src/engine.h"
+#include "src/pipeline.h"
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/pipeline.h"
@@ -41,12 +42,8 @@ class EngineVulkan : public Engine {
                     const std::vector<Feature>& features,
                     const std::vector<std::string>& extensions) override;
   Result Shutdown() override;
-  Result CreatePipeline(PipelineType type) override;
-  Result SetShader(ShaderType type, const std::vector<uint32_t>& data) override;
-  Result SetBuffer(BufferType type,
-                   uint8_t location,
-                   const Format& format,
-                   const std::vector<Value>& data) override;
+  Result CreatePipeline(amber::Pipeline* type) override;
+
   Result DoClearColor(const ClearColorCommand* cmd) override;
   Result DoClearStencil(const ClearStencilCommand* cmd) override;
   Result DoClearDepth(const ClearDepthCommand* cmd) override;
@@ -72,6 +69,11 @@ class EngineVulkan : public Engine {
                                          VkFormat format);
   bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
                                uint32_t descriptor_set);
+  Result SetShader(ShaderType type, const std::vector<uint32_t>& data);
+  Result SetBuffer(BufferType type,
+                   uint8_t location,
+                   const Format& format,
+                   const std::vector<Value>& data);
 
   std::unique_ptr<Device> device_;
   std::unique_ptr<CommandPool> pool_;
