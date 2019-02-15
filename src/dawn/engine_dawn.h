@@ -45,12 +45,8 @@ class EngineDawn : public Engine {
   // later.  Assumes necessary shader modules have been created.  A compute
   // pipeline requires a compute shader.  A graphics pipeline requires a vertex
   // and a fragment shader.
-  Result CreatePipeline(PipelineType) override;
-  Result SetShader(ShaderType type, const std::vector<uint32_t>& data) override;
-  Result SetBuffer(BufferType type,
-                   uint8_t location,
-                   const Format& format,
-                   const std::vector<Value>& data) override;
+  Result CreatePipeline(Pipeline*) override;
+
   Result DoClearColor(const ClearColorCommand* cmd) override;
   Result DoClearStencil(const ClearStencilCommand* cmd) override;
   Result DoClearDepth(const ClearDepthCommand* cmd) override;
@@ -83,6 +79,7 @@ class EngineDawn : public Engine {
   // resulting pixels for use in checking expectations, and bookkeeping info
   // for that host-side buffer.
   Result CreateFramebufferIfNeeded();
+  Result SetShader(ShaderType type, const std::vector<uint32_t>& data);
 
   ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.
   ::dawn::Queue queue_;

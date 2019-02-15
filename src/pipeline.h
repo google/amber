@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "amber/result.h"
@@ -50,11 +51,15 @@ class Pipeline {
     void SetShaderType(ShaderType type) { shader_type_ = type; }
     ShaderType GetShaderType() const { return shader_type_; }
 
+    const std::vector<uint32_t> GetData() const { return data_; }
+    void SetData(std::vector<uint32_t>&& data) { data_ = std::move(data); }
+
    private:
     const Shader* shader_ = nullptr;
     ShaderType shader_type_;
     std::vector<std::string> shader_optimizations_;
     std::string entry_point_;
+    std::vector<uint32_t> data_;
   };
 
   struct BufferInfo {
@@ -96,6 +101,7 @@ class Pipeline {
   uint32_t GetFramebufferHeight() const { return fb_height_; }
 
   Result AddShader(const Shader*, ShaderType);
+  std::vector<ShaderInfo>& GetShaders() { return shaders_; }
   const std::vector<ShaderInfo>& GetShaders() const { return shaders_; }
 
   Result SetShaderType(const Shader* shader, ShaderType type);

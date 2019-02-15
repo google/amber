@@ -134,28 +134,81 @@ Result EngineVulkan::Shutdown() {
   return {};
 }
 
-Result EngineVulkan::CreatePipeline(PipelineType type) {
+Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   const auto& engine_data = GetEngineData();
 
-  if (type == PipelineType::kCompute) {
+  // Handle Image and Depth buffers early so they are available when we create
+  // the pipeline.
+  for (const auto& info : pipeline->GetColorAttachments()) {
+    Result r = SetBuffer(info.type, static_cast<uint8_t>(info.location),
+                         info.buffer->AsFormatBuffer()->GetFormat(),
+                         info.buffer->GetData());
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  if (pipeline->GetDepthBuffer().buffer) {
+    const auto& info = pipeline->GetDepthBuffer();
+    Result r = SetBuffer(info.type, static_cast<uint8_t>(info.location),
+                         info.buffer->AsFormatBuffer()->GetFormat(),
+                         info.buffer->GetData());
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  for (const auto& shader_info : pipeline->GetShaders()) {
+    Result r = SetShader(shader_info.GetShaderType(), shader_info.GetData());
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  if (pipeline->GetType() == PipelineType::kCompute) {
     pipeline_ = MakeUnique<ComputePipeline>(
         device_.get(), device_->GetPhysicalDeviceProperties(),
         device_->GetPhysicalMemoryProperties(), engine_data.fence_timeout_ms,
         GetShaderStageInfo());
-    return pipeline_->AsCompute()->Initialize(pool_->GetCommandPool(),
-                                              device_->GetQueue());
+    Result r = pipeline_->AsCompute()->Initialize(pool_->GetCommandPool(),
+                                                  device_->GetQueue());
+    if (!r.IsSuccess())
+      return r;
+  } else {
+    pipeline_ = MakeUnique<GraphicsPipeline>(
+        device_.get(), device_->GetPhysicalDeviceProperties(),
+        device_->GetPhysicalMemoryProperties(),
+        ToVkFormat(color_frame_format_->GetFormatType()),
+        ToVkFormat(depth_frame_format_->GetFormatType()),
+        engine_data.fence_timeout_ms, GetShaderStageInfo());
+
+    Result r = pipeline_->AsGraphics()->Initialize(
+        kFramebufferWidth, kFramebufferHeight, pool_->GetCommandPool(),
+        device_->GetQueue());
+    if (!r.IsSuccess())
+      return r;
   }
 
-  pipeline_ = MakeUnique<GraphicsPipeline>(
-      device_.get(), device_->GetPhysicalDeviceProperties(),
-      device_->GetPhysicalMemoryProperties(),
-      ToVkFormat(color_frame_format_->GetFormatType()),
-      ToVkFormat(depth_frame_format_->GetFormatType()),
-      engine_data.fence_timeout_ms, GetShaderStageInfo());
+  for (const auto& info : pipeline->GetVertexBuffers()) {
+    Result r = SetBuffer(info.type, static_cast<uint8_t>(info.location),
+                         info.buffer->IsFormatBuffer()
+                             ? info.buffer->AsFormatBuffer()->GetFormat()
+                             : Format(),
+                         info.buffer->GetData());
+    if (!r.IsSuccess())
+      return r;
+  }
 
-  return pipeline_->AsGraphics()->Initialize(
-      kFramebufferWidth, kFramebufferHeight, pool_->GetCommandPool(),
-      device_->GetQueue());
+  if (pipeline->GetIndexBuffer()) {
+    auto* buf = pipeline->GetIndexBuffer();
+    Result r = SetBuffer(
+        buf->GetBufferType(), 0,
+        buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
+        buf->GetData());
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  // TODO(dsinclair) pipeline->GetBuffers() ....
+
+  return {};
 }
 
 Result EngineVulkan::SetShader(ShaderType type,

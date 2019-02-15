@@ -45,50 +45,9 @@ class EngineStub : public Engine {
 
   const std::vector<Feature>& GetFeatures() const { return features_; }
   const std::vector<std::string>& GetExtensions() const { return extensions_; }
-  FormatType GetColorFrameFormat() const { return color_frame_format_; }
-  FormatType GetDepthFrameFormat() const { return depth_frame_format_; }
   uint32_t GetFenceTimeoutMs() { return GetEngineData().fence_timeout_ms; }
 
-  Result CreatePipeline(PipelineType) override { return {}; }
-
-  void FailShaderCommand() { fail_shader_command_ = true; }
-  const std::vector<ShaderType>& GetShaderTypesSeen() const {
-    return shaders_seen_;
-  }
-  Result SetShader(ShaderType type, const std::vector<uint32_t>&) override {
-    if (fail_shader_command_)
-      return Result("shader command failed");
-
-    shaders_seen_.push_back(type);
-    return {};
-  }
-
-  uint8_t GetBufferCallCount() const { return buffer_call_count_; }
-  BufferType GetBufferType(size_t idx) const { return buffer_types_[idx]; }
-  uint8_t GetBufferLocation(size_t idx) const { return buffer_locations_[idx]; }
-  Format* GetBufferFormat(size_t idx) { return &(buffer_formats_[idx]); }
-  const std::vector<Value>& GetBufferValues(size_t idx) const {
-    return buffer_values_[idx];
-  }
-  Result SetBuffer(BufferType type,
-                   uint8_t location,
-                   const Format& format,
-                   const std::vector<Value>& data) override {
-    if (type == BufferType::kColor || type == BufferType::kDepth) {
-      if (type == BufferType::kColor)
-        color_frame_format_ = format.GetFormatType();
-      else if (type == BufferType::kDepth)
-        depth_frame_format_ = format.GetFormatType();
-      return {};
-    }
-
-    ++buffer_call_count_;
-    buffer_types_.push_back(type);
-    buffer_locations_.push_back(location);
-    buffer_formats_.push_back(format);
-    buffer_values_.push_back(data);
-    return {};
-  }
+  Result CreatePipeline(Pipeline*) override { return {}; }
 
   void FailClearColorCommand() { fail_clear_color_command_ = true; }
   bool DidClearColorCommand() { return did_clear_color_command_ = true; }
@@ -206,7 +165,6 @@ class EngineStub : public Engine {
   }
 
  private:
-  bool fail_shader_command_ = false;
   bool fail_clear_command_ = false;
   bool fail_clear_color_command_ = false;
   bool fail_clear_stencil_command_ = false;
@@ -229,15 +187,6 @@ class EngineStub : public Engine {
   bool did_patch_command_ = false;
   bool did_buffer_command_ = false;
 
-  uint8_t buffer_call_count_ = 0;
-  std::vector<uint8_t> buffer_locations_;
-  std::vector<BufferType> buffer_types_;
-  std::vector<Format> buffer_formats_;
-  std::vector<std::vector<Value>> buffer_values_;
-
-  std::vector<ShaderType> shaders_seen_;
-  FormatType color_frame_format_ = FormatType::kUnknown;
-  FormatType depth_frame_format_ = FormatType::kUnknown;
   std::vector<Feature> features_;
   std::vector<std::string> extensions_;
 
@@ -290,11 +239,6 @@ logicOp)";
   ASSERT_EQ(static_cast<size_t>(0U), extensions.size());
 
   EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
-
-  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
-  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
-  EXPECT_EQ(FormatType::kB8G8R8A8_UNORM, color_frame_format);
-  EXPECT_EQ(FormatType::kUnknown, depth_frame_format);
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredExtensions) {
@@ -323,11 +267,6 @@ VK_KHR_variable_pointers)";
   EXPECT_EQ("VK_KHR_variable_pointers", extensions[1]);
 
   EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
-
-  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
-  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
-  EXPECT_EQ(FormatType::kB8G8R8A8_UNORM, color_frame_format);
-  EXPECT_EQ(FormatType::kUnknown, depth_frame_format);
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredFrameBuffers) {
@@ -354,11 +293,6 @@ depthstencil D24_UNORM_S8_UINT)";
   ASSERT_EQ(static_cast<size_t>(0U), extensions.size());
 
   EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
-
-  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
-  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
-  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT, color_frame_format);
-  EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT, depth_frame_format);
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredFenceTimeout) {
@@ -384,11 +318,6 @@ fence_timeout 12345)";
   ASSERT_EQ(static_cast<size_t>(0U), extensions.size());
 
   EXPECT_EQ(12345U, ToStub(engine.get())->GetFenceTimeoutMs());
-
-  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
-  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
-  EXPECT_EQ(FormatType::kB8G8R8A8_UNORM, color_frame_format);
-  EXPECT_EQ(FormatType::kUnknown, depth_frame_format);
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredAll) {
@@ -424,60 +353,7 @@ fence_timeout 12345)";
   EXPECT_EQ("VK_KHR_variable_pointers", extensions[1]);
 
   EXPECT_EQ(12345U, ToStub(engine.get())->GetFenceTimeoutMs());
-
-  auto color_frame_format = ToStub(engine.get())->GetColorFrameFormat();
-  auto depth_frame_format = ToStub(engine.get())->GetDepthFrameFormat();
-  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT, color_frame_format);
-  EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT, depth_frame_format);
 }
-
-#if AMBER_ENABLE_SHADERC
-TEST_F(VkScriptExecutorTest, ExecutesShaders) {
-  std::string input = R"(
-[vertex shader passthrough]
-[fragment shader]
-#version 430
-void main() {}
-)";
-
-  Parser parser;
-  Result r = parser.Parse(input);
-  ASSERT_TRUE(r.IsSuccess()) << r.Error();
-
-  auto engine = MakeEngine();
-  auto script = parser.GetScript();
-
-  Executor ex;
-  r = ex.Execute(engine.get(), script.get(), ShaderMap());
-  ASSERT_TRUE(r.IsSuccess());
-
-  auto shader_types = ToStub(engine.get())->GetShaderTypesSeen();
-  ASSERT_EQ(2U, shader_types.size());
-  EXPECT_EQ(kShaderTypeVertex, shader_types[0]);
-  EXPECT_EQ(kShaderTypeFragment, shader_types[1]);
-}
-
-TEST_F(VkScriptExecutorTest, ShaderFailure) {
-  std::string input = R"(
-[vertex shader passthrough]
-[fragment shader]
-#version 430
-void main() {}
-)";
-
-  Parser parser;
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
-
-  auto engine = MakeEngine();
-  ToStub(engine.get())->FailShaderCommand();
-  auto script = parser.GetScript();
-
-  Executor ex;
-  Result r = ex.Execute(engine.get(), script.get(), ShaderMap());
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("shader command failed", r.Error());
-}
-#endif  // AMBER_ENABLE_SHADERC
 
 TEST_F(VkScriptExecutorTest, ClearCommand) {
   std::string input = R"(
@@ -906,82 +782,6 @@ probe ssbo vec3 0 2 <= 2 3 4)";
   Result r = ex.Execute(engine.get(), script.get(), ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("probe ssbo command failed", r.Error());
-}
-
-TEST_F(VkScriptExecutorTest, VertexData) {
-  std::string input = R"(
-[vertex data]
-9/R32G32B32_SFLOAT  1/R8G8B8_UNORM
--1    -1 0.25       255 128 64
-0.25  -1 0.25       255 0 0
-)";
-
-  Parser parser;
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
-  auto engine = MakeEngine();
-  auto script = parser.GetScript();
-
-  Executor ex;
-  Result r = ex.Execute(engine.get(), script.get(), ShaderMap());
-  ASSERT_TRUE(r.IsSuccess());
-
-  auto stub = ToStub(engine.get());
-  ASSERT_EQ(2U, stub->GetBufferCallCount());
-
-  EXPECT_EQ(FormatType::kR32G32B32_SFLOAT,
-            stub->GetBufferFormat(0)->GetFormatType());
-  EXPECT_EQ(BufferType::kVertex, stub->GetBufferType(0));
-  EXPECT_EQ(9U, stub->GetBufferLocation(0));
-
-  const auto& data1 = stub->GetBufferValues(0);
-  std::vector<float> results1 = {-1, -1, 0.25, 0.25, -1, 0.25};
-  ASSERT_EQ(results1.size(), data1.size());
-  for (size_t i = 0; i < results1.size(); ++i) {
-    ASSERT_TRUE(data1[i].IsFloat());
-    EXPECT_FLOAT_EQ(results1[i], data1[i].AsFloat());
-  }
-
-  EXPECT_EQ(FormatType::kR8G8B8_UNORM,
-            stub->GetBufferFormat(1)->GetFormatType());
-  EXPECT_EQ(BufferType::kVertex, stub->GetBufferType(1));
-  EXPECT_EQ(1U, stub->GetBufferLocation(1));
-
-  const auto& data2 = stub->GetBufferValues(1);
-  std::vector<uint8_t> results2 = {255, 128, 64, 255, 0, 0};
-  ASSERT_EQ(results2.size(), data2.size());
-  for (size_t i = 0; i < results2.size(); ++i) {
-    ASSERT_TRUE(data2[i].IsInteger());
-    EXPECT_EQ(results2[i], data2[i].AsUint8());
-  }
-}
-
-TEST_F(VkScriptExecutorTest, IndexBuffer) {
-  std::string input = R"(
-[indices]
-1 2 3 4 5 6
-)";
-
-  Parser parser;
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
-  auto engine = MakeEngine();
-  auto script = parser.GetScript();
-
-  Executor ex;
-  Result r = ex.Execute(engine.get(), script.get(), ShaderMap());
-  ASSERT_TRUE(r.IsSuccess());
-
-  auto stub = ToStub(engine.get());
-  ASSERT_EQ(1U, stub->GetBufferCallCount());
-
-  EXPECT_EQ(BufferType::kIndex, stub->GetBufferType(0));
-
-  const auto& data = stub->GetBufferValues(0);
-  std::vector<uint8_t> results = {1, 2, 3, 4, 5, 6};
-  ASSERT_EQ(results.size(), data.size());
-  for (size_t i = 0; i < results.size(); ++i) {
-    ASSERT_TRUE(data[i].IsInteger());
-    EXPECT_EQ(results[i], data[i].AsUint8());
-  }
 }
 
 }  // namespace vkscript
