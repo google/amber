@@ -56,6 +56,33 @@ ninja
   env variable for the KeyStore file path.
 * Run `./tools/build-amber-sample.sh [build output directory path]`.
 
+#### Android plain executable
+
+It is possible to obtain a plain executable for Android, as opposed to an APK,
+with the following:
+
+```
+./tools/update_build_version.py . samples/ third_party/
+
+mkdir build
+cd build
+mkdir app
+mkdir libs
+${ANDROID_NDK_HOME}/ndk-build -C ../samples NDK_PROJECT_PATH=. NDK_LIBS_OUT=`pwd`/libs NDK_APP_OUT=`pwd`/app
+```
+
+The list of target ABIs can be configured in `samples/jni/Application.mk` by
+editing the APP_ABI entry:
+
+```
+APP_ABI := arm64-v8a armeabi-v7a x86 x86_64
+```
+
+The resulting executable will be produced as
+`build/app/local/<abi>/amber_ndk`. This executable can be run via the adb shell
+on your device, e.g. under `/data/local/tmp` (`/sdcard` is generally not
+suitable because it is mounted with a non-executable flag).
+
 ### Optional Components
 
 Amber, by default, enables testing, SPIRV-Tools and Shaderc. Each of these can

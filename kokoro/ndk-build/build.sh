@@ -29,18 +29,28 @@ export PATH="$PWD:$PATH"
 
 cd $SRC
 ./tools/git-sync-deps
- 
+./tools/update_build_version.py . samples/ third_party/
+
 mkdir -p build/libs build/app
 cd $SRC/build
 
 # Invoke the build.
 BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
-echo $(date): Starting ndk-build ...
-$ANDROID_NDK/ndk-build \
-  -C $SRC/android_test \
-  NDK_PROJECT_PATH=.   \
-  NDK_LIBS_OUT=./libs  \
-  NDK_APP_OUT=./app    \
-  -j8
 
-echo $(date): ndk-build completed.
+echo $(date): Starting ndk-build for android_test ...
+$ANDROID_NDK/ndk-build     \
+  -C $SRC/android_test     \
+  NDK_PROJECT_PATH=.       \
+  NDK_LIBS_OUT=`pwd`/libs  \
+  NDK_APP_OUT=`pwd`/app    \
+  -j8
+echo $(date): ndk-build for android_test completed.
+
+echo $(date): Starting ndk-build for samples ...
+$ANDROID_NDK/ndk-build     \
+  -C $SRC/samples          \
+  NDK_PROJECT_PATH=.       \
+  NDK_LIBS_OUT=`pwd`/libs  \
+  NDK_APP_OUT=`pwd`/app    \
+  -j8
+echo $(date): ndk-build for samples completed.

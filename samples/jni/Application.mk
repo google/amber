@@ -12,15 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH:= $(call my-dir)
-
-include $(CLEAR_VARS)
-LOCAL_CPP_EXTENSION := .cc .cpp .cxx
-LOCAL_SRC_FILES:=test.cc
-LOCAL_MODULE:=amber_ndk_test
-LOCAL_LDLIBS:=-landroid
-LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti -Werror
-LOCAL_STATIC_LIBRARIES:=amber
-include $(BUILD_SHARED_LIBRARY)
-
-include $(LOCAL_PATH)/../Android.mk
+APP_ABI := arm64-v8a # armeabi-v7a x86 x86_64
+APP_BUILD_SCRIPT := Android.mk
+APP_STL := c++_static
+APP_PLATFORM := android-24 # minimal version to get libvulkan

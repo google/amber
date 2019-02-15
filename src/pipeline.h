@@ -117,7 +117,7 @@ class Pipeline {
   Result AddVertexBuffer(Buffer* buf, uint32_t location);
 
   Result SetIndexBuffer(Buffer* buf);
-  const Buffer* GetIndexBuffer() const { return index_buffer_; }
+  Buffer* GetIndexBuffer() const { return index_buffer_; }
 
   void AddBuffer(Buffer* buf,
                  BufferType type,

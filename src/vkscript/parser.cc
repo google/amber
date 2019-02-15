@@ -30,6 +30,9 @@ namespace amber {
 namespace vkscript {
 namespace {
 
+uint32_t kDefaultFrameBufferSize = 250;
+const char kDefaultPipelineName[] = "vk_pipeline";
+
 Feature NameToFeature(const std::string& name) {
   if (name == "robustBufferAccess")
     return Feature::kRobustBufferAccess;
@@ -167,11 +170,51 @@ Result Parser::Parse(const std::string& input) {
   if (!r.IsSuccess())
     return r;
 
+  r = GenerateDefaultPipeline(section_parser);
+  if (!r.IsSuccess())
+    return r;
+
   for (const auto& section : section_parser.Sections()) {
     r = ProcessSection(section);
     if (!r.IsSuccess())
       return r;
   }
+
+  return {};
+}
+
+Result Parser::GenerateDefaultPipeline(const SectionParser& section_parser) {
+  // Generate a pipeline for VkScript.
+  PipelineType pipeline_type = PipelineType::kCompute;
+  for (const auto& section : section_parser.Sections()) {
+    if (!SectionParser::HasShader(section.section_type))
+      continue;
+
+    if (section.shader_type != kShaderTypeCompute) {
+      pipeline_type = PipelineType::kGraphics;
+      break;
+    }
+  }
+
+  auto new_pipeline = MakeUnique<Pipeline>(pipeline_type);
+  auto* pipeline = new_pipeline.get();
+  pipeline->SetName(kDefaultPipelineName);
+  pipeline->SetFramebufferWidth(kDefaultFrameBufferSize);
+  pipeline->SetFramebufferHeight(kDefaultFrameBufferSize);
+
+  Result r = script_->AddPipeline(std::move(new_pipeline));
+  if (!r.IsSuccess())
+    return r;
+
+  // Generate and add a framebuffer
+  auto color_buf = pipeline->GenerateDefaultColorAttachmentBuffer();
+  r = pipeline->AddColorAttachment(color_buf.get(), 0);
+  if (!r.IsSuccess())
+    return r;
+
+  r = script_->AddBuffer(std::move(color_buf));
+  if (!r.IsSuccess())
+    return r;
 
   return {};
 }
@@ -204,7 +247,12 @@ Result Parser::ProcessShaderBlock(const SectionParser::Section& section) {
   shader->SetFormat(section.format);
   shader->SetData(section.contents);
 
-  Result r = script_->AddShader(std::move(shader));
+  Result r = script_->GetPipeline(kDefaultPipelineName)
+                 ->AddShader(shader.get(), shader->GetType());
+  if (!r.IsSuccess())
+    return r;
+
+  r = script_->AddShader(std::move(shader));
   if (!r.IsSuccess())
     return r;
 
@@ -247,12 +295,11 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
             make_error(tokenizer, "Failed to parse framebuffer format: " +
                                       token->ToOriginalString()));
       }
+      script_->GetPipeline(kDefaultPipelineName)
+          ->GetColorAttachments()[0]
+          .buffer->AsFormatBuffer()
+          ->SetFormat(std::move(fmt));
 
-      auto framebuffer = MakeUnique<FormatBuffer>(BufferType::kColor);
-      framebuffer->SetName("framebuffer");
-      framebuffer->SetFormat(std::move(fmt));
-      framebuffer->SetLocation(0);  // Only one image attachment in vkscript
-      script_->AddBuffer(std::move(framebuffer));
     } else if (feature == Feature::kDepthStencil) {
       token = tokenizer.NextToken();
       if (!token->IsString())
@@ -266,11 +313,21 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
                                       token->ToOriginalString()));
       }
 
-      auto depthbuffer = MakeUnique<FormatBuffer>(BufferType::kDepth);
-      depthbuffer->SetName("depth_stencil_buffer");
-      depthbuffer->SetFormat(std::move(fmt));
-      depthbuffer->SetLocation(0);
-      script_->AddBuffer(std::move(depthbuffer));
+      auto* pipeline = script_->GetPipeline(kDefaultPipelineName);
+      if (pipeline->GetDepthBuffer().buffer != nullptr)
+        return Result("Only one depthstencil command allowed");
+
+      // Generate and add a depth buffer
+      auto depth_buf = pipeline->GenerateDefaultDepthAttachmentBuffer();
+      depth_buf->AsFormatBuffer()->SetFormat(std::move(fmt));
+      Result r = pipeline->SetDepthBuffer(depth_buf.get());
+      if (!r.IsSuccess())
+        return r;
+
+      r = script_->AddBuffer(std::move(depth_buf));
+      if (!r.IsSuccess())
+        return r;
+
     } else if (feature == Feature::kFenceTimeout) {
       token = tokenizer.NextToken();
       if (!token->IsInteger())
@@ -319,12 +376,15 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
     type.SetType(DataType::kUint16);
 
     auto b = MakeUnique<DataBuffer>(BufferType::kIndex);
+    auto* buf = b.get();
     b->SetName("indices");
     b->SetDatumType(type);
     b->SetData(std::move(indices));
     Result r = script_->AddBuffer(std::move(b));
     if (!r.IsSuccess())
       return r;
+
+    script_->GetPipeline(kDefaultPipelineName)->SetIndexBuffer(buf);
   }
 
   return {};
@@ -438,13 +498,17 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
     }
   }
 
+  auto* pipeline = script_->GetPipeline(kDefaultPipelineName);
   for (size_t i = 0; i < headers.size(); ++i) {
     auto buffer = MakeUnique<FormatBuffer>(BufferType::kVertex);
+    auto* buf = buffer.get();
     buffer->SetName("Vertices" + std::to_string(i));
     buffer->SetFormat(std::move(headers[i].format));
     buffer->SetLocation(headers[i].location);
     buffer->SetData(std::move(values[i]));
     script_->AddBuffer(std::move(buffer));
+
+    pipeline->AddVertexBuffer(buf, headers[i].location);
   }
 
   return {};
