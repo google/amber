@@ -41,7 +41,7 @@ class DescriptorSetAndBindingParser {
   /// Return binding that is the result of Parse().
   uint32_t GetBinding() const { return binding_; }
 
- protected:
+ private:
   uint32_t descriptor_set_ = 0;
   uint32_t binding_ = 0;
 };
