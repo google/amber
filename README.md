@@ -81,7 +81,17 @@ APP_ABI := arm64-v8a armeabi-v7a x86 x86_64
 The resulting executable will be produced as
 `build/app/local/<abi>/amber_ndk`. This executable can be run via the adb shell
 on your device, e.g. under `/data/local/tmp` (`/sdcard` is generally not
-suitable because it is mounted with a non-executable flag).
+suitable because it is mounted with a non-executable flag). Also, vulkan layers
+may not be available to this executable as it is not an app, so make sure to use
+the `-d` flag to disable Vulkan layers:
+
+```
+adb push build/app/local/<abi>/amber_ndk /data/local/tmp
+adb shell
+# Now on device shell
+cd /data/local/tmp
+./amber_ndk -d <shader-test-files>
+```
 
 ### Optional Components
 
