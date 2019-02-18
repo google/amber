@@ -21,6 +21,7 @@ LOCAL_SRC_FILES:= \
     amber.cc \
     config_helper.cc \
     config_helper_vulkan.cc \
+    farbfeld.cc \
     log.cc \
     ppm.cc
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/.. $(LOCAL_PATH)/../include

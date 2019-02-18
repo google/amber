@@ -23,6 +23,7 @@
 #include "amber/amber.h"
 #include "amber/recipe.h"
 #include "samples/config_helper.h"
+#include "samples/farbfeld.h"
 #include "samples/ppm.h"
 #include "src/build-versions.h"
 #include "src/make_unique.h"
@@ -53,7 +54,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -s                  -- Print summary of pass/failure.
   -d                  -- Disable validation layers.
   -t <spirv_env> -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
-  -i <filename>       -- Write rendering to <filename> as a PPM image.
+  -i <filename>       -- Write rendering to <filename>, as a farbfeld image if filename ends with '.ff', as a PPM image otherwise.
   -b <filename>       -- Write contents of a UBO or SSBO to <filename>.
   -B <buffer>         -- Index of buffer to write. Defaults buffer 0.
   -e <engine>         -- Specify graphics engine: vulkan, dawn. Default is vulkan.
@@ -324,8 +325,17 @@ int main(int argc, const char** argv) {
       std::string image;
       for (amber::BufferInfo buffer_info : amber_options.extractions) {
         if (buffer_info.buffer_name == "framebuffer") {
-          std::tie(result, image) = ppm::ConvertToPPM(
-              buffer_info.width, buffer_info.height, buffer_info.values);
+          // Image encoding: use farbfeld if image filename ends with ".ff",
+          // otherwise default to PPM.
+          if (options.image_filename.compare(
+                  options.image_filename.length() - 4,
+                  options.image_filename.length(), ".ff")) {
+            std::tie(result, image) = farbfeld::ConvertToFarbfeld(
+                buffer_info.width, buffer_info.height, buffer_info.values);
+          } else {
+            std::tie(result, image) = ppm::ConvertToPPM(
+                buffer_info.width, buffer_info.height, buffer_info.values);
+          }
           break;
         }
       }
