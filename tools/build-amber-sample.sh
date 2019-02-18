@@ -52,7 +52,7 @@ ANDROID_SOURCE_DIR=$(dirname $(readlink -f $0))/../android_sample
 
 APK_NAME=AmberSample.apk
 ANDROID_PLATFORM=android-28
-ANDROID_BUILD_TOOL_VERSION=28.0.2
+ANDROID_BUILD_TOOL_VERSION=28.0.0
 ABI=arm64-v8a
 BUILD_TYPE=Release
 
