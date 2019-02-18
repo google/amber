@@ -20,7 +20,7 @@ BUILD_ROOT=$PWD
 SRC=$PWD/github/amber
 
 # NDK Path
-export ANDROID_NDK=/opt/android-ndk-r15c
+export ANDROID_NDK=/opt/android-ndk-r16b
 
 # Get NINJA.
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
