@@ -20,6 +20,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
       -Wno-disabled-macro-expansion
       -Wno-exit-time-constructors
       -Wno-exit-time-destructors
+      -Wno-extra-semi-stmt
       -Wno-global-constructors
       -Wno-missing-field-initializers
       -Wno-format-nonliteral
@@ -44,6 +45,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
       -Wno-error
       -Wno-exit-time-destructors
       -Wno-extra-semi
+      -Wno-extra-semi-stmt
       -Wno-float-equal
       -Wno-format-nonliteral
       -Wno-format-pedantic
@@ -85,6 +87,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
       -Wno-documentation-pedantic
       -Wno-double-promotion
       -Wno-extra-semi
+      -Wno-extra-semi-stmt
       -Wno-float-equal
       -Wno-format-nonliteral
       -Wno-implicit-fallthrough
@@ -132,9 +135,11 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
   set(GLSLANG_BUILD_FIXES
       -Wno-error
+      -Wno-implicit-fallthrough
       -Wno-overflow
       -Wno-missing-field-initializers
       -Wno-pedantic
+      -Wno-strict-aliasing
       -Wno-unused-parameter
       -Wno-unused-variable)
 

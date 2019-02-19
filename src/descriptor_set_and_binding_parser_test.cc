@@ -22,7 +22,7 @@ using DescriptorSetAndBindingParserTest = testing::Test;
 
 TEST_F(DescriptorSetAndBindingParserTest, CommaAndBinding) {
   DescriptorSetAndBindingParser parser;
-  Result r = parser.Parse(",1234");
+  Result r = parser.Parse(":1234");
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   EXPECT_EQ(0, parser.GetDescriptorSet());
@@ -40,7 +40,7 @@ TEST_F(DescriptorSetAndBindingParserTest, Binding) {
 
 TEST_F(DescriptorSetAndBindingParserTest, DescSetAndBinding) {
   DescriptorSetAndBindingParser parser;
-  Result r = parser.Parse("1234,5678");
+  Result r = parser.Parse("1234:5678");
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   EXPECT_EQ(1234, parser.GetDescriptorSet());
@@ -67,7 +67,7 @@ TEST_F(DescriptorSetAndBindingParserTest, InvalidCharacterBetweenTwoNumbers) {
 
 TEST_F(DescriptorSetAndBindingParserTest, InvalidCharacterAfterComma) {
   DescriptorSetAndBindingParser parser;
-  Result r = parser.Parse("1234,a5678");
+  Result r = parser.Parse("1234:a5678");
   EXPECT_EQ(
       "Binding for a buffer must be non-negative integer, but you gave: a5678",
       r.Error());
@@ -75,7 +75,7 @@ TEST_F(DescriptorSetAndBindingParserTest, InvalidCharacterAfterComma) {
 
 TEST_F(DescriptorSetAndBindingParserTest, NegativeDescSet) {
   DescriptorSetAndBindingParser parser;
-  Result r = parser.Parse("-1234,5678");
+  Result r = parser.Parse("-1234:5678");
   EXPECT_EQ(
       "Descriptor set and binding for a buffer must be non-negative integer, "
       "but you gave: -1234",
@@ -84,7 +84,7 @@ TEST_F(DescriptorSetAndBindingParserTest, NegativeDescSet) {
 
 TEST_F(DescriptorSetAndBindingParserTest, NegativeBindingAfterComma) {
   DescriptorSetAndBindingParser parser;
-  Result r = parser.Parse(",-1234");
+  Result r = parser.Parse(":-1234");
   EXPECT_EQ(
       "Binding for a buffer must be non-negative integer, but you gave: -1234",
       r.Error());
@@ -101,7 +101,7 @@ TEST_F(DescriptorSetAndBindingParserTest, NegativeBinding) {
 
 TEST_F(DescriptorSetAndBindingParserTest, DescSetAndNegativeBinding) {
   DescriptorSetAndBindingParser parser;
-  Result r = parser.Parse("1234,-5678");
+  Result r = parser.Parse("1234:-5678");
   EXPECT_EQ(
       "Binding for a buffer must be non-negative integer, but you gave: -5678",
       r.Error());

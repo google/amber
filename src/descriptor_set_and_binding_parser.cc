@@ -15,6 +15,8 @@
 #include "src/descriptor_set_and_binding_parser.h"
 
 #include <iostream>
+#include <limits>
+
 #include "src/tokenizer.h"
 
 namespace amber {
@@ -47,19 +49,35 @@ Result DescriptorSetAndBindingParser::Parse(const std::string& buffer_id) {
     descriptor_set_ = 0;
   }
 
-  std::cout << token->AsString() << std::endl;
-  if (!token->IsString() || token->AsString() != ",") {
+  if (!token->IsString())
     return Result("Invalid buffer id: " + buffer_id);
+
+  auto& str = token->AsString();
+  if (str.size() < 2 || str[0] != ':')
+    return Result("Invalid buffer id: " + buffer_id);
+
+  auto substr = str.substr(1, str.size());
+  // Validate all characters are integers.
+  for (size_t i = 0; i < substr.size(); ++i) {
+    if (substr[i] < '0' || substr[i] > '9') {
+      return Result(
+          "Binding for a buffer must be non-negative integer, "
+          "but you gave: " +
+          substr);
+    }
   }
 
-  token = t.NextToken();
-  if (!token->IsInteger() || token->AsInt32() < 0) {
+  uint64_t binding_val = strtoul(substr.c_str(), nullptr, 10);
+  if (binding_val > std::numeric_limits<uint32_t>::max())
+    return Result("binding value too large in probe ssbo command: " +
+                  token->ToOriginalString());
+  if (static_cast<int32_t>(binding_val) < 0) {
     return Result(
         "Binding for a buffer must be non-negative integer, but you gave: " +
         token->ToOriginalString());
   }
 
-  binding_ = token->AsUint32();
+  binding_ = static_cast<uint32_t>(binding_val);
   return {};
 }
 
