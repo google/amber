@@ -53,9 +53,9 @@ std::pair<amber::Result, std::string> ConvertToPPM(
   for (amber::Value value : values) {
     const uint32_t pixel = value.AsUint32();
     // We assume B8G8R8A8_UNORM here:
-    image.push_back(byte2(pixel));  // B
+    image.push_back(byte2(pixel));  // R
     image.push_back(byte1(pixel));  // G
-    image.push_back(byte0(pixel));  // R
+    image.push_back(byte0(pixel));  // B
     // PPM does not support alpha channel
   }
 
