@@ -19,6 +19,7 @@ set(AMBER_SOURCES
     command.cc
     command_data.cc
     datum_type.cc
+    descriptor_set_and_binding_parser.cc
     engine.cc
     executor.cc
     format.cc
@@ -76,6 +77,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_test.cc
     buffer_test.cc
     command_data_test.cc
+    descriptor_set_and_binding_parser_test.cc
     executor_test.cc
     format_parser_test.cc
     pipeline_test.cc
