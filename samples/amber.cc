@@ -50,18 +50,18 @@ struct Options {
 const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
 
  options:
-  -p                  -- Parse input files only; Don't execute.
-  -s                  -- Print summary of pass/failure.
-  -d                  -- Disable validation layers.
-  -t <spirv_env> -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
-  -i <filename>       -- Write rendering to <filename> as a PPM image.
-  -b <filename>       -- Write contents of a UBO or SSBO to <filename>.
-  -B [<desc set>:]<binding>     -- Descriptor set and binding of buffer to write.
-                                   Default is [0:]0.
-  -e <engine>         -- Specify graphics engine: vulkan, dawn. Default is vulkan.
-  -v <engine version> -- Engine version (eg, 1.1 for Vulkan). Default 1.0.
-  -V, --version       -- Output version information for Amber and libraries.
-  -h                  -- This help text.
+  -p                        -- Parse input files only; Don't execute.
+  -s                        -- Print summary of pass/failure.
+  -d                        -- Disable validation layers.
+  -t <spirv_env>            -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
+  -i <filename>             -- Write rendering to <filename> as a PPM image.
+  -b <filename>             -- Write contents of a UBO or SSBO to <filename>.
+  -B [<desc set>:]<binding> -- Descriptor set and binding of buffer to write.
+                               Default is [0:]0.
+  -e <engine>               -- Specify graphics engine: vulkan, dawn. Default is vulkan.
+  -v <engine version>       -- Engine version (eg, 1.1 for Vulkan). Default 1.0.
+  -V, --version             -- Output version information for Amber and libraries.
+  -h                        -- This help text.
 )";
 
 bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
@@ -293,7 +293,13 @@ int main(int argc, const char** argv) {
 
   amber_options.config = config.get();
 
-  if (!options.buffer_filename.empty() && !options.buffer_to_dump.empty()) {
+  if (!options.buffer_filename.empty()) {
+    // Have a filename to dump, but no explicit buffer, set the default of 0:0.
+    if (options.buffer_to_dump.empty()) {
+      options.buffer_to_dump.emplace_back();
+      options.buffer_to_dump.back().buffer_name = "0:0";
+    }
+
     amber_options.extractions.insert(amber_options.extractions.end(),
                                      options.buffer_to_dump.begin(),
                                      options.buffer_to_dump.end());
