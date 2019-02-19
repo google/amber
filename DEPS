@@ -25,7 +25,7 @@ deps = {
       vars['glslang_revision'],
 
   'third_party/lodepng': vars['lvandeve_git'] + '/lodepng.git@' +
-      vars['glslang_revision'],
+      vars['lodepng_revision'],
 
   'third_party/shaderc': vars['google_git'] + '/shaderc.git@' +
       vars['shaderc_revision'],

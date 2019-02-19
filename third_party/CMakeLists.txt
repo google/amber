@@ -263,3 +263,5 @@ if (${AMBER_ENABLE_SHADERC})
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/shaderc)
   set(CMAKE_CXX_FLAGS ${CXX_BACK})
 endif()
+
+add_library(lodepng STATIC ${CMAKE_CURRENT_SOURCE_DIR}/lodepng/lodepng.cpp)

@@ -18,7 +18,7 @@
 
 #include "amber/result.h"
 #include "amber/value.h"
-#include "lodepng/lodepng.h"
+#include "third_party/lodepng/lodepng.h"
 
 namespace png {
 

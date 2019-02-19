@@ -14,20 +14,16 @@
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
-set(LODEPNG ${PROJECT_SOURCE_DIR}/third_party/lodepng)
-include_directories("${PROJECT_SOURCE_DIR}/third_party")
-
 set(AMBER_SOURCES
     amber.cc
     config_helper.cc
     log.cc
     ppm.cc
     png.cc
-    ${LODEPNG}/lodepng.cpp
     ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
 )
 
-set(AMBER_EXTRA_LIBS "")
+set(AMBER_EXTRA_LIBS "lodepng")
 
 if (${Vulkan_FOUND})
   set(AMBER_SOURCES ${AMBER_SOURCES} config_helper_vulkan.cc)
