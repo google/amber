@@ -14,10 +14,13 @@
 
 #include "amber/amber.h"
 
+#include <cctype>
+#include <cstdlib>
 #include <memory>
 #include <string>
 
 #include "src/amberscript/parser.h"
+#include "src/descriptor_set_and_binding_parser.h"
 #include "src/engine.h"
 #include "src/executor.h"
 #include "src/make_unique.h"
@@ -97,6 +100,32 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
         engine->Shutdown();
         return r;
       }
+
+      continue;
+    }
+
+    DescriptorSetAndBindingParser desc_set_and_binding_parser;
+    r = desc_set_and_binding_parser.Parse(buffer_info.buffer_name);
+    if (!r.IsSuccess()) {
+      engine->Shutdown();
+      return r;
+    }
+
+    ResourceInfo info = ResourceInfo();
+    r = engine->GetDescriptorInfo(
+        desc_set_and_binding_parser.GetDescriptorSet(),
+        desc_set_and_binding_parser.GetBinding(), &info);
+    if (!r.IsSuccess()) {
+      engine->Shutdown();
+      return r;
+    }
+
+    const uint8_t* ptr = static_cast<const uint8_t*>(info.cpu_memory);
+    auto& values = buffer_info.values;
+    for (size_t i = 0; i < info.size_in_bytes; ++i) {
+      values.emplace_back();
+      values.back().SetIntValue(*ptr);
+      ++ptr;
     }
   }
 
