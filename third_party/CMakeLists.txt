@@ -77,6 +77,11 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
       -Wno-weak-vtables
       -Wno-zero-as-null-pointer-constant)
 
+  set(LODEPNG_BUILD_FIXES
+      -Wno-missing-prototypes
+      -Wno-old-style-cast
+  )
+
   set(SPIRV_TOOLS_BUILD_FIXES
       -Wno-conditional-uninitialized
       -Wno-covered-switch-default
@@ -138,6 +143,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
       -Wno-unused-parameter
       -Wno-unused-variable)
 
+  set(LODEPNG_BUILD_FIXES "")
+
   set(SPIRV_TOOLS_BUILD_FIXES "")
 
   set(SHADERC_BUILD_FIXES
@@ -183,8 +190,13 @@ if (MSVC)
 	/wd5045
   )
 
+  set(LODEPNG_BUILD_FIXES
+	/W3
+	/wd4267
+  )
+
   set(SPIRV_TOOLS_BUILD_FIXES
-    /W3
+	/W3
 	/wd4365
 	/wd4389
 	/wd4571
@@ -203,7 +215,7 @@ if (MSVC)
 	/wd5045
   )
 
-set(SHADERC_BUILD_FIXES
+  set(SHADERC_BUILD_FIXES
 	/W3
 	/wd4365
 	/wd4571
@@ -264,4 +276,9 @@ if (${AMBER_ENABLE_SHADERC})
   set(CMAKE_CXX_FLAGS ${CXX_BACK})
 endif()
 
+# Lodepng
+set(CXX_BACK ${CMAKE_CXX_FLAGS})
+SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "${LODEPNG_BUILD_FIXES}")
+STRING(REGEX REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 add_library(lodepng STATIC ${CMAKE_CURRENT_SOURCE_DIR}/lodepng/lodepng.cpp)
+set(CMAKE_CXX_FLAGS ${CXX_BACK})
