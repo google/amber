@@ -57,6 +57,16 @@ Result DescriptorSetAndBindingParser::Parse(const std::string& buffer_id) {
     return Result("Invalid buffer id: " + buffer_id);
 
   auto substr = str.substr(1, str.size());
+  // Validate all characters are integers.
+  for (size_t i = 0; i < substr.size(); ++i) {
+    if (substr[i] < '0' || substr[i] > '9') {
+      return Result(
+          "Binding for a buffer must be non-negative integer, "
+          "but you gave: " +
+          substr);
+    }
+  }
+
   uint64_t binding_val = strtoul(substr.c_str(), nullptr, 10);
   if (binding_val > std::numeric_limits<uint32_t>::max())
     return Result("binding value too large in probe ssbo command: " +

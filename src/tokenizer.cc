@@ -157,7 +157,8 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
   if (tok_str.size() > 1 && tok_str[0] == '-')
     tok->SetNegative();
 
-  tok->SetOriginalString(tok_str);
+  tok->SetOriginalString(
+      tok_str.substr(0, static_cast<size_t>(final_pos - tok_str.c_str())));
 
   // If the number isn't the whole token then move back so we can then parse
   // the string portion.
