@@ -36,7 +36,8 @@ class ConfigHelperImpl {
       uint32_t engine_major,
       uint32_t engine_minor,
       const std::vector<std::string>& required_features,
-      const std::vector<std::string>& required_extensions,
+      const std::vector<std::string>& required_instance_extensions,
+      const std::vector<std::string>& required_device_extensions,
       bool disable_validation_layer,
       std::unique_ptr<amber::EngineConfig>* config) = 0;
 
@@ -60,7 +61,8 @@ class ConfigHelper {
       uint32_t engine_major,
       uint32_t engine_minor,
       const std::vector<std::string>& required_features,
-      const std::vector<std::string>& required_extensions,
+      const std::vector<std::string>& required_instance_extensions,
+      const std::vector<std::string>& required_device_extensions,
       bool disable_validation_layer,
       std::unique_ptr<amber::EngineConfig>* config);
 

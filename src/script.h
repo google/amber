@@ -45,8 +45,15 @@ class Script : public RecipeImpl {
   /// Returns required features in the given recipe.
   std::vector<std::string> GetRequiredFeatures() const override;
 
-  /// Returns required extensions in the given recipe.
-  std::vector<std::string> GetRequiredExtensions() const override;
+  /// Returns required device extensions in the given recipe.
+  std::vector<std::string> GetRequiredDeviceExtensions() const override {
+    return engine_info_.required_device_extensions;
+  }
+
+  /// Returns required instance extensions in the given recipe.
+  std::vector<std::string> GetRequiredInstanceExtensions() const override {
+    return engine_info_.required_instance_extensions;
+  }
 
   /// Adds |pipeline| to the list of known pipelines. The |pipeline| must have
   /// a unique name over all pipelines in the script.
@@ -126,14 +133,7 @@ class Script : public RecipeImpl {
   }
 
   /// Adds |ext| to the list of extensions that must be supported by the engine.
-  void AddRequiredExtension(const std::string& ext) {
-    engine_info_.required_extensions.push_back(ext);
-  }
-
-  /// Retrieves a list of extensions required for this script.
-  const std::vector<std::string>& RequiredExtensions() const {
-    return engine_info_.required_extensions;
-  }
+  void AddRequiredExtension(const std::string& ext);
 
   /// Retrieves the engine configuration data for this script.
   EngineData& GetEngineData() { return engine_data_; }
@@ -158,7 +158,8 @@ class Script : public RecipeImpl {
  private:
   struct {
     std::vector<Feature> required_features;
-    std::vector<std::string> required_extensions;
+    std::vector<std::string> required_device_extensions;
+    std::vector<std::string> required_instance_extensions;
   } engine_info_;
 
   EngineData engine_data_;

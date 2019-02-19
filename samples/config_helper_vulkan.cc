@@ -473,8 +473,35 @@ bool AreAllRequiredFeaturesSupported(
   return true;
 }
 
+// Get all available instance extensions.
+std::vector<std::string> GetAvailableInstanceExtensions() {
+  std::vector<std::string> available_extensions;
+  uint32_t available_extension_count = 0;
+  std::vector<VkExtensionProperties> available_extension_properties;
+
+  if (vkEnumerateInstanceExtensionProperties(
+          nullptr, &available_extension_count, nullptr) != VK_SUCCESS) {
+    return available_extensions;
+  }
+
+  if (available_extension_count == 0)
+    return available_extensions;
+
+  available_extension_properties.resize(available_extension_count);
+  if (vkEnumerateInstanceExtensionProperties(
+          nullptr, &available_extension_count,
+          available_extension_properties.data()) != VK_SUCCESS) {
+    return available_extensions;
+  }
+
+  for (const auto& property : available_extension_properties)
+    available_extensions.push_back(property.extensionName);
+
+  return available_extensions;
+}
+
 // Get all available extensions of |physical_device|.
-std::vector<std::string> GetAvailableExtensions(
+std::vector<std::string> GetAvailableDeviceExtensions(
     const VkPhysicalDevice& physical_device) {
   std::vector<std::string> available_extensions;
   uint32_t available_extension_count = 0;
@@ -549,6 +576,7 @@ ConfigHelperVulkan::~ConfigHelperVulkan() = default;
 amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     uint32_t engine_major,
     uint32_t engine_minor,
+    std::vector<std::string> required_extensions,
     bool disable_validation_layer) {
   VkApplicationInfo app_info = {};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -557,6 +585,7 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
   VkInstanceCreateInfo instance_info = {};
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_info.pApplicationInfo = &app_info;
+
   if (!disable_validation_layer) {
     if (!AreAllValidationLayersSupported())
       return amber::Result("Sample: not all validation layers are supported");
@@ -566,9 +595,27 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     }
     instance_info.enabledLayerCount = kNumberOfRequiredValidationLayers;
     instance_info.ppEnabledLayerNames = kRequiredValidationLayers;
-    instance_info.enabledExtensionCount = 1U;
-    instance_info.ppEnabledExtensionNames = &kExtensionForValidationLayer;
+
+    required_extensions.push_back(kExtensionForValidationLayer);
   }
+
+  if (!required_extensions.empty()) {
+    available_instance_extensions_ = GetAvailableInstanceExtensions();
+    if (!AreAllExtensionsSupported(available_instance_extensions_,
+                                   required_extensions)) {
+      return amber::Result("Missing required instance extensions");
+    }
+  }
+
+  std::vector<const char*> required_extensions_in_char;
+  std::transform(
+      required_extensions.begin(), required_extensions.end(),
+      std::back_inserter(required_extensions_in_char),
+      [](const std::string& ext) -> const char* { return ext.c_str(); });
+
+  instance_info.enabledExtensionCount =
+      static_cast<uint32_t>(required_extensions_in_char.size());
+  instance_info.ppEnabledExtensionNames = required_extensions_in_char.data();
 
   if (vkCreateInstance(&instance_info, nullptr, &vulkan_instance_) !=
       VK_SUCCESS) {
@@ -621,8 +668,9 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
       continue;
     }
 
-    available_extensions_ = GetAvailableExtensions(physical_devices[i]);
-    if (!AreAllExtensionsSupported(available_extensions_,
+    available_device_extensions_ =
+        GetAvailableDeviceExtensions(physical_devices[i]);
+    if (!AreAllExtensionsSupported(available_device_extensions_,
                                    required_extensions)) {
       continue;
     }
@@ -674,7 +722,8 @@ amber::Result ConfigHelperVulkan::CreateConfig(
     uint32_t engine_major,
     uint32_t engine_minor,
     const std::vector<std::string>& required_features,
-    const std::vector<std::string>& required_extensions,
+    const std::vector<std::string>& required_instance_extensions,
+    const std::vector<std::string>& required_device_extensions,
     bool disable_validation_layer,
     std::unique_ptr<amber::EngineConfig>* cfg_holder) {
   VkPhysicalDeviceFeatures required_vulkan_features = {};
@@ -684,6 +733,7 @@ amber::Result ConfigHelperVulkan::CreateConfig(
     return r;
 
   r = CreateVulkanInstance(engine_major, engine_minor,
+                           required_instance_extensions,
                            disable_validation_layer);
   if (!r.IsSuccess())
     return r;
@@ -694,11 +744,12 @@ amber::Result ConfigHelperVulkan::CreateConfig(
       return r;
   }
 
-  r = ChooseVulkanPhysicalDevice(required_vulkan_features, required_extensions);
+  r = ChooseVulkanPhysicalDevice(required_vulkan_features,
+                                 required_device_extensions);
   if (!r.IsSuccess())
     return r;
 
-  r = CreateVulkanDevice(required_vulkan_features, required_extensions);
+  r = CreateVulkanDevice(required_vulkan_features, required_device_extensions);
   if (!r.IsSuccess())
     return r;
 
@@ -711,7 +762,8 @@ amber::Result ConfigHelperVulkan::CreateConfig(
       static_cast<amber::VulkanEngineConfig*>(cfg_holder->get());
   config->physical_device = vulkan_physical_device_;
   config->available_features = available_features_;
-  config->available_extensions = available_extensions_;
+  config->available_instance_extensions = available_instance_extensions_;
+  config->available_device_extensions = available_device_extensions_;
   config->instance = vulkan_instance_;
   config->queue_family_index = vulkan_queue_family_index_;
   config->queue = vulkan_queue_;

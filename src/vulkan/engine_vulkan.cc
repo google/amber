@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <set>
 
 #include "amber/amber_vulkan.h"
 #include "src/make_unique.h"
@@ -55,15 +56,32 @@ VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
   return VK_SHADER_STAGE_FRAGMENT_BIT;
 }
 
+bool AreAllExtensionsSupported(
+    const std::vector<std::string>& available_extensions,
+    const std::vector<std::string>& required_extensions) {
+  if (required_extensions.empty())
+    return true;
+
+  std::set<std::string> required_extension_set(required_extensions.begin(),
+                                               required_extensions.end());
+  for (const auto& extension : available_extensions) {
+    required_extension_set.erase(extension);
+  }
+
+  return required_extension_set.empty();
+}
+
 }  // namespace
 
 EngineVulkan::EngineVulkan() : Engine() {}
 
 EngineVulkan::~EngineVulkan() = default;
 
-Result EngineVulkan::Initialize(EngineConfig* config,
-                                const std::vector<Feature>& features,
-                                const std::vector<std::string>& extensions) {
+Result EngineVulkan::Initialize(
+    EngineConfig* config,
+    const std::vector<Feature>& features,
+    const std::vector<std::string>& instance_extensions,
+    const std::vector<std::string>& device_extensions) {
   if (device_)
     return Result("Vulkan::Initialize device_ already exists");
 
@@ -77,13 +95,19 @@ Result EngineVulkan::Initialize(EngineConfig* config,
   if (vk_config->queue == VK_NULL_HANDLE)
     return Result("Vulkan::Initialize queue handle is null.");
 
+  // Validate instance extensions
+  if (!AreAllExtensionsSupported(vk_config->available_instance_extensions,
+                                 instance_extensions)) {
+    return Result("Vulkan::Initialize not all instance extensions supported");
+  }
+
   device_ = MakeUnique<Device>(
       vk_config->instance, vk_config->physical_device,
-      vk_config->available_features, vk_config->available_extensions,
+      vk_config->available_features, vk_config->available_device_extensions,
       vk_config->queue_family_index, vk_config->device, vk_config->queue);
 
   Result r = device_->Initialize(vk_config->vkGetInstanceProcAddr, features,
-                                 extensions);
+                                 device_extensions);
   if (!r.IsSuccess())
     return r;
 

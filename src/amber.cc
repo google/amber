@@ -73,7 +73,8 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
     return Result("Failed to create engine");
 
   Result r = engine->Initialize(opts->config, script->RequiredFeatures(),
-                                script->RequiredExtensions());
+                                script->GetRequiredInstanceExtensions(),
+                                script->GetRequiredDeviceExtensions());
   if (!r.IsSuccess())
     return r;
 

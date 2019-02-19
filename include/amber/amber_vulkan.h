@@ -39,8 +39,11 @@ struct VulkanEngineConfig : public EngineConfig {
   /// Physical device features available for |physical_device|.
   VkPhysicalDeviceFeatures available_features;
 
+  /// Instance extensions available.
+  std::vector<std::string> available_instance_extensions;
+
   /// Physical device extensions available for |physical_device|.
-  std::vector<std::string> available_extensions;
+  std::vector<std::string> available_device_extensions;
 
   /// The given queue family index to use.
   uint32_t queue_family_index;

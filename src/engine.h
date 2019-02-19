@@ -84,9 +84,11 @@ class Engine {
   /// are for validation purposes only. If possible the engine should verify
   /// that the constraints in |features| and |extensions| are valid and fail
   /// otherwise.
-  virtual Result Initialize(EngineConfig* config,
-                            const std::vector<Feature>& features,
-                            const std::vector<std::string>& extensions) = 0;
+  virtual Result Initialize(
+      EngineConfig* config,
+      const std::vector<Feature>& features,
+      const std::vector<std::string>& instance_extensions,
+      const std::vector<std::string>& device_extensions) = 0;
 
   /// Shutdown the engine and cleanup any resources.
   virtual Result Shutdown() = 0;
