@@ -30,6 +30,7 @@ namespace {
 
 const uint32_t kFramebufferWidth = 250;
 const uint32_t kFramebufferHeight = 250;
+const FormatType kDefaultFramebufferFormat = FormatType::kB8G8R8A8_UNORM;
 
 VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
   switch (type) {
@@ -93,9 +94,9 @@ Result EngineVulkan::Initialize(EngineConfig* config,
       return r;
   }
 
-  // Set VK_FORMAT_B8G8R8A8_UNORM for color frame buffer in default.
+  // Set VK_FORMAT_B8G8R8A8_UNORM for color frame buffer by default.
   color_frame_format_ = MakeUnique<Format>();
-  color_frame_format_->SetFormatType(FormatType::kB8G8R8A8_UNORM);
+  color_frame_format_->SetFormatType(kDefaultFramebufferFormat);
   color_frame_format_->AddComponent(FormatComponentType::kB, FormatMode::kUNorm,
                                     8);
   color_frame_format_->AddComponent(FormatComponentType::kG, FormatMode::kUNorm,
@@ -464,7 +465,7 @@ Result EngineVulkan::GetFrameBuffer(std::vector<Value>* values) {
   }
 
   // TODO(jaebaek): Support other formats
-  if (color_frame_format_->GetFormatType() != FormatType::kR8G8B8A8_UINT)
+  if (color_frame_format_->GetFormatType() != kDefaultFramebufferFormat)
     return Result("Vulkan::GetFrameBuffer Unsupported buffer format");
 
   Value pixel;
