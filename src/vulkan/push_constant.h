@@ -75,7 +75,7 @@ class PushConstant : public Resource {
   // if address ranges overlap, then the later values take effect.
   std::vector<BufferInput> push_constant_data_;
 
-  std::unique_ptr<uint8_t> memory_;
+  std::vector<uint8_t> memory_;
 };
 
 }  // namespace vulkan
