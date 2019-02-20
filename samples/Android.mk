@@ -22,11 +22,12 @@ LOCAL_SRC_FILES:= \
     config_helper.cc \
     config_helper_vulkan.cc \
     log.cc \
-    ppm.cc
+    ppm.cc \
+    png.cc
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/.. $(LOCAL_PATH)/../include
 LOCAL_LDLIBS:=-landroid -lvulkan -llog
 LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti -Werror -Wno-unknown-pragmas -DAMBER_ENGINE_VULKAN=1
-LOCAL_STATIC_LIBRARIES:=amber
+LOCAL_STATIC_LIBRARIES:=amber lodepng
 include $(BUILD_EXECUTABLE)
 
 include $(LOCAL_PATH)/../Android.mk

@@ -24,6 +24,7 @@
 #include "amber/amber.h"
 #include "amber/recipe.h"
 #include "samples/config_helper.h"
+#include "samples/png.h"
 #include "samples/ppm.h"
 #include "src/build-versions.h"
 #include "src/make_unique.h"
@@ -56,7 +57,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -s                        -- Print summary of pass/failure.
   -d                        -- Disable validation layers.
   -t <spirv_env>            -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
-  -i <filename>             -- Write rendering to <filename> as a PPM image.
+  -i <filename>             -- Write rendering to <filename> as a PNG image if it ends with '.png', or as a PPM image otherwise.
   -b <filename>             -- Write contents of a UBO or SSBO to <filename>.
   -B [<desc set>:]<binding> -- Descriptor set and binding of buffer to write.
                                Default is [0:]0.
@@ -330,10 +331,19 @@ int main(int argc, const char** argv) {
 
     if (!options.image_filename.empty()) {
       std::string image;
+
+      auto pos = options.image_filename.find_last_of('.');
+      bool usePNG = pos != std::string::npos &&
+                    options.image_filename.substr(pos + 1) == "png";
       for (amber::BufferInfo buffer_info : amber_options.extractions) {
         if (buffer_info.buffer_name == "framebuffer") {
-          std::tie(result, image) = ppm::ConvertToPPM(
-              buffer_info.width, buffer_info.height, buffer_info.values);
+          if (usePNG) {
+            std::tie(result, image) = png::ConvertToPNG(
+                buffer_info.width, buffer_info.height, buffer_info.values);
+          } else {
+            std::tie(result, image) = ppm::ConvertToPPM(
+                buffer_info.width, buffer_info.height, buffer_info.values);
+          }
           break;
         }
       }
