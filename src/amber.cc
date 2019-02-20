@@ -79,7 +79,10 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
     return r;
 
   Executor executor;
-  r = executor.Execute(engine.get(), script, shader_data);
+  r = executor.Execute(engine.get(), script, shader_data,
+                       opts->pipeline_create_only
+                           ? ExecutionType::kPipelineCreateOnly
+                           : ExecutionType::kExecute);
   if (!r.IsSuccess()) {
     // Clean up Vulkan/Dawn objects
     engine->Shutdown();

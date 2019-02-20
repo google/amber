@@ -1,5 +1,14 @@
 THIRD_PARTY_PATH := $(call my-dir)
 
+LOCAL_PATH := $(call my-dir)
+
+# Lodepng
+include $(CLEAR_VARS)
+LOCAL_MODULE:=lodepng
+LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti
+LOCAL_SRC_FILES:= lodepng/lodepng.cpp
+include $(BUILD_STATIC_LIBRARY)
+
 ifeq ($(GLSLANG_LOCAL_PATH),)
 	GLSLANG_LOCAL_PATH:=$(THIRD_PARTY_PATH)/glslang
 endif
