@@ -35,6 +35,7 @@ amber::Result ConfigHelperDawn::CreateConfig(
     uint32_t,
     const std::vector<std::string>&,
     const std::vector<std::string>&,
+    const std::vector<std::string>&,
     bool,
     std::unique_ptr<amber::EngineConfig>* config) {
 #if AMBER_DAWN_METAL

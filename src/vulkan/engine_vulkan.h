@@ -40,7 +40,8 @@ class EngineVulkan : public Engine {
   // Engine
   Result Initialize(EngineConfig* config,
                     const std::vector<Feature>& features,
-                    const std::vector<std::string>& extensions) override;
+                    const std::vector<std::string>& instance_extensions,
+                    const std::vector<std::string>& device_extensions) override;
   Result Shutdown() override;
   Result CreatePipeline(amber::Pipeline* type) override;
 
