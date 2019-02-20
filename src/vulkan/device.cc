@@ -288,18 +288,14 @@ bool AreAllExtensionsSupported(
 
 Device::Device(VkInstance instance,
                VkPhysicalDevice physical_device,
-               const VkPhysicalDeviceFeatures& available_features,
-               const std::vector<std::string>& available_extensions,
                uint32_t queue_family_index,
                VkDevice device,
                VkQueue queue)
     : instance_(instance),
       physical_device_(physical_device),
-      available_physical_device_features_(available_features),
-      available_physical_device_extensions_(available_extensions),
-      queue_family_index_(queue_family_index),
       device_(device),
-      queue_(queue) {}
+      queue_(queue),
+      queue_family_index_(queue_family_index) {}
 
 Device::~Device() = default;
 
@@ -317,20 +313,38 @@ Result Device::LoadVulkanPointers(
 
 Result Device::Initialize(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
                           const std::vector<Feature>& required_features,
-                          const std::vector<std::string>& required_extensions) {
+                          const std::vector<std::string>& required_extensions,
+                          const VkPhysicalDeviceFeatures& available_features,
+                          const VkPhysicalDeviceFeatures2KHR& available_features2,
+                          const std::vector<std::string>& available_extensions) {
   Result r = LoadVulkanPointers(getInstanceProcAddr);
   if (!r.IsSuccess())
     return r;
 
-  if (!AreAllRequiredFeaturesSupported(available_physical_device_features_,
+
+  bool use_physical_device_features_2_ = false;
+  // Determine if VkPhysicalDeviceProperties2KHR should be used
+  for (auto& ext : required_extensions) {
+    if (ext == "VK_KHR_get_physical_device_properties2") {
+      use_physical_device_features_2_ = true;
+    }
+  }
+
+  VkPhysicalDeviceFeatures available_vulkan_features = {};
+  if (use_physical_device_features_2_) {
+    available_vulkan_features = available_features2.features;
+  } else {
+    available_vulkan_features = available_features;
+  }
+
+  if (!AreAllRequiredFeaturesSupported(available_vulkan_features,
                                        required_features)) {
     return Result(
         "Vulkan: Device::Initialize given physical device does not support "
         "required features");
   }
 
-  if (!AreAllExtensionsSupported(available_physical_device_extensions_,
-                                 required_extensions)) {
+  if (!AreAllExtensionsSupported(available_extensions, required_extensions)) {
     return Result(
         "Vulkan: Device::Initialize given physical device does not support "
         "required extensions");
