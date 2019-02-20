@@ -151,7 +151,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->pipeline_create_only = true;
     } else if (arg == "-d") {
       opts->disable_validation_layer = true;
-    // -s is an old option which is still recognized but does nothing.
+      // -s is an old option which is still recognized but does nothing.
     } else if (arg == "-s") {
       opts->quiet = false;
     } else if (arg == "-q") {
