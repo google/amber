@@ -70,12 +70,7 @@ std::pair<amber::Result, std::string> ConvertToPNG(
                           nullptr);
   }
 
-  std::string image;
-  for (unsigned char c : png) {
-    image.push_back(static_cast<char>(c));
-  }
-
-  return std::make_pair(amber::Result(), image);
+  return std::make_pair(amber::Result(), std::string(png.begin(), png.end()));
 }
 
 }  // namespace png
