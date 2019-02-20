@@ -311,16 +311,16 @@ Result Device::LoadVulkanPointers(
   return {};
 }
 
-Result Device::Initialize(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
-                          const std::vector<Feature>& required_features,
-                          const std::vector<std::string>& required_extensions,
-                          const VkPhysicalDeviceFeatures& available_features,
-                          const VkPhysicalDeviceFeatures2KHR& available_features2,
-                          const std::vector<std::string>& available_extensions) {
+Result Device::Initialize(
+    PFN_vkGetInstanceProcAddr getInstanceProcAddr,
+    const std::vector<Feature>& required_features,
+    const std::vector<std::string>& required_extensions,
+    const VkPhysicalDeviceFeatures& available_features,
+    const VkPhysicalDeviceFeatures2KHR& available_features2,
+    const std::vector<std::string>& available_extensions) {
   Result r = LoadVulkanPointers(getInstanceProcAddr);
   if (!r.IsSuccess())
     return r;
-
 
   bool use_physical_device_features_2_ = false;
   // Determine if VkPhysicalDeviceProperties2KHR should be used

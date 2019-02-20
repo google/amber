@@ -675,9 +675,9 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
       features2.pNext = nullptr;
 
       auto vkGetPhysicalDeviceFeatures2KHR =
-        reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
-            vkGetInstanceProcAddr(vulkan_instance_,
-                                  "vkGetPhysicalDeviceFeatures2KHR"));
+          reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
+              vkGetInstanceProcAddr(vulkan_instance_,
+                                    "vkGetPhysicalDeviceFeatures2KHR"));
       vkGetPhysicalDeviceFeatures2KHR(physical_devices[i], &features2);
       available_features_ = features2.features;
     } else {
@@ -755,8 +755,8 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
 }
 
 amber::Result ConfigHelperVulkan::DoCreateDevice(VkDeviceCreateInfo* info) {
-  if (vkCreateDevice(vulkan_physical_device_, info, nullptr,
-                     &vulkan_device_) != VK_SUCCESS) {
+  if (vkCreateDevice(vulkan_physical_device_, info, nullptr, &vulkan_device_) !=
+      VK_SUCCESS) {
     return amber::Result("Unable to create vulkan device");
   }
   return {};

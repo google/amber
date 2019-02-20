@@ -101,15 +101,14 @@ Result EngineVulkan::Initialize(
     return Result("Vulkan::Initialize not all instance extensions supported");
   }
 
-  device_ = MakeUnique<Device>(
-      vk_config->instance, vk_config->physical_device,
-      vk_config->queue_family_index, vk_config->device, vk_config->queue);
+  device_ = MakeUnique<Device>(vk_config->instance, vk_config->physical_device,
+                               vk_config->queue_family_index, vk_config->device,
+                               vk_config->queue);
 
-  Result r = device_->Initialize(vk_config->vkGetInstanceProcAddr, features,
-                                 device_extensions,
-                                 vk_config->available_features,
-                                  vk_config->available_features2,
-                                  vk_config->available_device_extensions);
+  Result r = device_->Initialize(
+      vk_config->vkGetInstanceProcAddr, features, device_extensions,
+      vk_config->available_features, vk_config->available_features2,
+      vk_config->available_device_extensions);
   if (!r.IsSuccess())
     return r;
 
