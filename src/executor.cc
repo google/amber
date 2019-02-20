@@ -28,9 +28,28 @@ Executor::Executor() = default;
 
 Executor::~Executor() = default;
 
+Result Executor::CompileShaders(const amber::Script* script,
+                                const ShaderMap& shader_map) {
+  for (auto& pipeline : script->GetPipelines()) {
+    for (auto& shader_info : pipeline->GetShaders()) {
+      ShaderCompiler sc(script->GetSpvTargetEnv());
+
+      Result r;
+      std::vector<uint32_t> data;
+      std::tie(r, data) = sc.Compile(shader_info.GetShader(), shader_map);
+      if (!r.IsSuccess())
+        return r;
+
+      shader_info.SetData(std::move(data));
+    }
+  }
+  return {};
+}
+
 Result Executor::Execute(Engine* engine,
                          const amber::Script* script,
-                         const ShaderMap& shader_map) {
+                         const ShaderMap& shader_map,
+                         ExecutionType executionType) {
   engine->SetEngineData(script->GetEngineData());
 
   if (script->GetPipelines().empty())
@@ -40,24 +59,16 @@ Result Executor::Execute(Engine* engine,
   if (script->GetPipelines().size() > 1)
     return Result("only single pipeline supported currently");
 
-  auto* pipeline = script->GetPipelines()[0].get();
-
-  // Compile Shaders
-  for (auto& shader_info : pipeline->GetShaders()) {
-    ShaderCompiler sc(script->GetSpvTargetEnv());
-
-    Result r;
-    std::vector<uint32_t> data;
-    std::tie(r, data) = sc.Compile(shader_info.GetShader(), shader_map);
-    if (!r.IsSuccess())
-      return r;
-
-    shader_info.SetData(std::move(data));
-  }
-
-  Result r = engine->CreatePipeline(pipeline);
+  Result r = CompileShaders(script, shader_map);
   if (!r.IsSuccess())
     return r;
+
+  auto* pipeline = script->GetPipelines()[0].get();
+  r = engine->CreatePipeline(pipeline);
+  if (!r.IsSuccess())
+    return r;
+  if (executionType == ExecutionType::kPipelineCreateOnly)
+    return {};
 
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
