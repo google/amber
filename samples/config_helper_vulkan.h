@@ -79,11 +79,11 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
 
   // Sets up the device creation to use VkPhysicalDeviceFeatures.
   amber::Result CreateDeviceWithFeatures1(
-      const VkPhysicalDeviceFeatures& required_features,
+      const std::vector<std::string>& required_features,
       VkDeviceCreateInfo* info);
   // Sets up the device creation to use VkPhysicalDeviceFeatures2KHR.
   amber::Result CreateDeviceWithFeatures2(
-      const VkPhysicalDeviceFeatures& required_features,
+      const std::vector<std::string>& required_features,
       VkDeviceCreateInfo* info);
 
   // Creates the physical device given the device |info|.
