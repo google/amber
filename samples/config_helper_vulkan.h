@@ -68,13 +68,13 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   // Choose Vulkan physical device that supports both
   // |required_features| and |required_extensions|.
   amber::Result ChooseVulkanPhysicalDevice(
-      const VkPhysicalDeviceFeatures& required_features,
+      const std::vector<std::string>& required_features,
       const std::vector<std::string>& required_extensions);
 
   // Create Vulkan logical device that enables both
   // |required_features| and |required_extensions|.
   amber::Result CreateVulkanDevice(
-      const VkPhysicalDeviceFeatures& required_features,
+      const std::vector<std::string>& required_features,
       const std::vector<std::string>& required_extensions);
 
   // Sets up the device creation to use VkPhysicalDeviceFeatures.
