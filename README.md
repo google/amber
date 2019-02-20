@@ -167,6 +167,13 @@ run amber scripts. The script can be used as
 `out/Debug/amber <path to amber file>`. Where, currently, the amber file is
 in the [VkScript](docs/vk_script.md) format.
 
+```
+out/Debug/amber tests/cases/clear.amber
+```
+
+The sample app returns a value of 0 on success or non-zero on error. Any issues
+encountered should be displayed on the console.
+
 ## Contributing
 
 Please see the [CONTRIBUTING](CONTRIBUTING.md) and
