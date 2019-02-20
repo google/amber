@@ -652,7 +652,7 @@ amber::Result ConfigHelperVulkan::CreateDebugReportCallback() {
 }
 
 amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
-    const VkPhysicalDeviceFeatures& required_features,
+    const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions) {
   uint32_t count = 0;
   std::vector<VkPhysicalDevice> physical_devices;
