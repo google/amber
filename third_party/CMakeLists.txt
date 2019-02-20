@@ -81,6 +81,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 
   set(LODEPNG_BUILD_FIXES
     -Wno-cast-qual
+    -Wno-conversion
     -Wno-covered-switch-default
     -Wno-deprecated
     -Wno-extra-semi-stmt
