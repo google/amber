@@ -41,7 +41,6 @@ struct Options {
   bool parse_only = false;
   bool disable_validation_layer = false;
   bool quiet = false;
-  bool show_summary = false;
   bool show_help = false;
   bool show_version_info = false;
   amber::EngineType engine = amber::kEngineTypeVulkan;
@@ -150,7 +149,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->disable_validation_layer = true;
     // -s is an old option which is still recognized but does nothing.
     } else if (arg == "-s") {
-      opts->show_summary = true;
+      opts->quiet = false;
     } else if (arg == "-q") {
       opts->quiet = true;
     } else if (arg.size() > 0 && arg[0] == '-') {
