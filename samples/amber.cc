@@ -329,8 +329,8 @@ int main(int argc, const char** argv) {
       bool usePNG = options.image_filename.compare(
           options.image_filename.length() - 5, options.image_filename.length(),
           ".png");
-       for (amber::BufferInfo buffer_info : amber_options.extractions) {
-         if (buffer_info.buffer_name == "framebuffer") {
+      for (amber::BufferInfo buffer_info : amber_options.extractions) {
+        if (buffer_info.buffer_name == "framebuffer") {
           if (usePNG) {
             std::tie(result, image) = png::ConvertToPNG(
                 buffer_info.width, buffer_info.height, buffer_info.values);
