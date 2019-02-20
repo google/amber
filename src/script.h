@@ -27,7 +27,6 @@
 #include "src/buffer.h"
 #include "src/command.h"
 #include "src/engine.h"
-#include "src/feature.h"
 #include "src/pipeline.h"
 #include "src/shader.h"
 
@@ -43,7 +42,9 @@ class Script : public RecipeImpl {
   std::vector<ShaderInfo> GetShaderInfo() const override;
 
   /// Returns required features in the given recipe.
-  std::vector<std::string> GetRequiredFeatures() const override;
+  std::vector<std::string> GetRequiredFeatures() const override {
+    return engine_info_.required_features;
+  }
 
   /// Returns required device extensions in the given recipe.
   std::vector<std::string> GetRequiredDeviceExtensions() const override {
@@ -123,13 +124,8 @@ class Script : public RecipeImpl {
 
   /// Adds |feature| to the list of features that must be supported by the
   /// engine.
-  void AddRequiredFeature(Feature feature) {
+  void AddRequiredFeature(const std::string& feature) {
     engine_info_.required_features.push_back(feature);
-  }
-
-  /// Retrieves a list of features required for this script.
-  const std::vector<Feature>& RequiredFeatures() const {
-    return engine_info_.required_features;
   }
 
   /// Adds |ext| to the list of extensions that must be supported by the engine.
@@ -157,7 +153,7 @@ class Script : public RecipeImpl {
 
  private:
   struct {
-    std::vector<Feature> required_features;
+    std::vector<std::string> required_features;
     std::vector<std::string> required_device_extensions;
     std::vector<std::string> required_instance_extensions;
   } engine_info_;
