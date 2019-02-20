@@ -61,8 +61,8 @@ struct Options {
   std::string spv_env;
   /// Lists the buffers to extract at the end of the execution
   std::vector<BufferInfo> extractions;
-  /// Terminate after compiling shaders; Don't execute script.
-  bool shader_compile_only;
+  /// Terminate after creating the pipelines.
+  bool pipeline_create_only;
 };
 
 /// Main interface to the Amber environment.

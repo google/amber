@@ -39,7 +39,7 @@ struct Options {
   uint32_t engine_major = 1;
   uint32_t engine_minor = 0;
   bool parse_only = false;
-  bool shader_compile_only = false;
+  bool pipeline_create_only = false;
   bool disable_validation_layer = false;
   bool show_summary = false;
   bool show_help = false;
@@ -52,7 +52,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
 
  options:
   -p                        -- Parse input files only; Don't execute.
-  -ps                       -- Parse input files, compile shaders; Don't execute.
+  -ps                       -- Parse input files, create pipelines; Don't execute.
   -s                        -- Print summary of pass/failure.
   -d                        -- Disable validation layers.
   -t <spirv_env>            -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
@@ -148,7 +148,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
     } else if (arg == "-p") {
       opts->parse_only = true;
     } else if (arg == "-ps") {
-      opts->shader_compile_only = true;
+      opts->pipeline_create_only = true;
     } else if (arg == "-d") {
       opts->disable_validation_layer = true;
     } else if (arg == "-s") {
@@ -268,7 +268,7 @@ int main(int argc, const char** argv) {
   amber::Options amber_options;
   amber_options.engine = options.engine;
   amber_options.spv_env = options.spv_env;
-  amber_options.shader_compile_only = options.shader_compile_only;
+  amber_options.pipeline_create_only = options.pipeline_create_only;
 
   std::set<std::string> required_features;
   std::set<std::string> required_extensions;

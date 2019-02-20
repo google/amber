@@ -48,7 +48,8 @@ Result Executor::CompileShaders(const amber::Script* script,
 
 Result Executor::Execute(Engine* engine,
                          const amber::Script* script,
-                         const ShaderMap& shader_map) {
+                         const ShaderMap& shader_map,
+                         ExecutionType executionType) {
   engine->SetEngineData(script->GetEngineData());
 
   if (script->GetPipelines().empty())
@@ -66,6 +67,8 @@ Result Executor::Execute(Engine* engine,
   r = engine->CreatePipeline(pipeline);
   if (!r.IsSuccess())
     return r;
+  if (executionType == ExecutionType::kPipelineCreateOnly)
+    return {};
 
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {

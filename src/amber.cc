@@ -68,10 +68,6 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
 
   script->SetSpvTargetEnv(opts->spv_env);
 
-  Executor executor;
-  if (opts->shader_compile_only)
-    return executor.CompileShaders(script, shader_data);
-
   auto engine = Engine::Create(opts->engine);
   if (!engine)
     return Result("Failed to create engine");
@@ -81,7 +77,11 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   if (!r.IsSuccess())
     return r;
 
-  r = executor.Execute(engine.get(), script, shader_data);
+  Executor executor;
+  r = executor.Execute(engine.get(), script, shader_data,
+                       opts->pipeline_create_only
+                           ? ExecutionType::kPipelineCreateOnly
+                           : ExecutionType::kExecute);
   if (!r.IsSuccess()) {
     // Clean up Vulkan/Dawn objects
     engine->Shutdown();
