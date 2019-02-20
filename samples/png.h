@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLES_PPM_H_
-#define SAMPLES_PPM_H_
+#ifndef SAMPLES_PNG_H_
+#define SAMPLES_PNG_H_
 
 #include <string>
 #include <utility>
@@ -21,16 +21,16 @@
 
 #include "amber/amber.h"
 
-namespace ppm {
+namespace png {
 
 /// Converts the image of dimensions |width| and |height| and with pixels stored
-/// in row-major order in |values| with format B8G8R8A8 into PPM format,
-/// returning the PPM binary as a string.
-std::pair<amber::Result, std::string> ConvertToPPM(
+/// in row-major order in |values| with format B8G8R8A8 into PNG format,
+/// returning the PNG binary as a string.
+std::pair<amber::Result, std::string> ConvertToPNG(
     uint32_t width,
     uint32_t height,
     const std::vector<amber::Value>& values);
 
-}  // namespace ppm
+}  // namespace png
 
-#endif  // SAMPLES_PPM_H_
+#endif  // SAMPLES_PNG_H_
