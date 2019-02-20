@@ -19,10 +19,11 @@ set(AMBER_SOURCES
     config_helper.cc
     log.cc
     ppm.cc
+    png.cc
     ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
 )
 
-set(AMBER_EXTRA_LIBS "")
+set(AMBER_EXTRA_LIBS "lodepng")
 
 if (${Vulkan_FOUND})
   set(AMBER_SOURCES ${AMBER_SOURCES} config_helper_vulkan.cc)

@@ -17,6 +17,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE:=amber
 LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti \
+    -Wno-unknown-pragmas \
     -DAMBER_ENABLE_SPIRV_TOOLS=1 \
     -DAMBER_ENABLE_SHADERC=1 \
     -DAMBER_ENGINE_VULKAN=1

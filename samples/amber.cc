@@ -24,6 +24,7 @@
 #include "amber/amber.h"
 #include "amber/recipe.h"
 #include "samples/config_helper.h"
+#include "samples/png.h"
 #include "samples/ppm.h"
 #include "src/build-versions.h"
 #include "src/make_unique.h"
@@ -39,6 +40,7 @@ struct Options {
   uint32_t engine_major = 1;
   uint32_t engine_minor = 0;
   bool parse_only = false;
+  bool pipeline_create_only = false;
   bool disable_validation_layer = false;
   bool show_summary = false;
   bool show_help = false;
@@ -51,10 +53,11 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
 
  options:
   -p                        -- Parse input files only; Don't execute.
+  -ps                       -- Parse input files, create pipelines; Don't execute.
   -s                        -- Print summary of pass/failure.
   -d                        -- Disable validation layers.
   -t <spirv_env>            -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
-  -i <filename>             -- Write rendering to <filename> as a PPM image.
+  -i <filename>             -- Write rendering to <filename> as a PNG image if it ends with '.png', or as a PPM image otherwise.
   -b <filename>             -- Write contents of a UBO or SSBO to <filename>.
   -B [<desc set>:]<binding> -- Descriptor set and binding of buffer to write.
                                Default is [0:]0.
@@ -145,6 +148,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->show_version_info = true;
     } else if (arg == "-p") {
       opts->parse_only = true;
+    } else if (arg == "-ps") {
+      opts->pipeline_create_only = true;
     } else if (arg == "-d") {
       opts->disable_validation_layer = true;
     } else if (arg == "-s") {
@@ -264,6 +269,7 @@ int main(int argc, const char** argv) {
   amber::Options amber_options;
   amber_options.engine = options.engine;
   amber_options.spv_env = options.spv_env;
+  amber_options.pipeline_create_only = options.pipeline_create_only;
 
   std::set<std::string> required_features;
   std::set<std::string> required_extensions;
@@ -325,10 +331,19 @@ int main(int argc, const char** argv) {
 
     if (!options.image_filename.empty()) {
       std::string image;
+
+      auto pos = options.image_filename.find_last_of('.');
+      bool usePNG = pos != std::string::npos &&
+                    options.image_filename.substr(pos + 1) == "png";
       for (amber::BufferInfo buffer_info : amber_options.extractions) {
         if (buffer_info.buffer_name == "framebuffer") {
-          std::tie(result, image) = ppm::ConvertToPPM(
-              buffer_info.width, buffer_info.height, buffer_info.values);
+          if (usePNG) {
+            std::tie(result, image) = png::ConvertToPNG(
+                buffer_info.width, buffer_info.height, buffer_info.values);
+          } else {
+            std::tie(result, image) = ppm::ConvertToPPM(
+                buffer_info.width, buffer_info.height, buffer_info.values);
+          }
           break;
         }
       }
