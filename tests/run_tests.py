@@ -47,7 +47,7 @@ class TestRunner:
   def RunTest(self, tc):
     print "Testing %s" % tc.GetInputPath()
 
-    cmd = [self.options.test_prog_path]
+    cmd = [self.options.test_prog_path, '-q']
     if tc.IsParseOnly():
       cmd += ['-p']
     cmd += [tc.GetInputPath()]

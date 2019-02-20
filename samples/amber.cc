@@ -40,6 +40,7 @@ struct Options {
   uint32_t engine_minor = 0;
   bool parse_only = false;
   bool disable_validation_layer = false;
+  bool quiet = false;
   bool show_summary = false;
   bool show_help = false;
   bool show_version_info = false;
@@ -51,7 +52,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
 
  options:
   -p                        -- Parse input files only; Don't execute.
-  -s                        -- Print summary of pass/failure.
+  -q                        -- Disable summary output.
   -d                        -- Disable validation layers.
   -t <spirv_env>            -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
   -i <filename>             -- Write rendering to <filename> as a PPM image.
@@ -147,8 +148,11 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->parse_only = true;
     } else if (arg == "-d") {
       opts->disable_validation_layer = true;
+    // -s is an old option which is still recognized but does nothing.
     } else if (arg == "-s") {
       opts->show_summary = true;
+    } else if (arg == "-q") {
+      opts->quiet = true;
     } else if (arg.size() > 0 && arg[0] == '-') {
       std::cerr << "Unrecognized option " << arg << std::endl;
       return false;
@@ -373,7 +377,7 @@ int main(int argc, const char** argv) {
     }
   }
 
-  if (options.show_summary) {
+  if (!options.quiet) {
     if (!failures.empty()) {
       std::cout << "\nSummary of Failures:" << std::endl;
 
