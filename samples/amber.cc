@@ -334,7 +334,7 @@ int main(int argc, const char** argv) {
 
       auto pos = options.image_filename.find_last_of('.');
       bool usePNG = pos != std::string::npos &&
-            options.image_filename.substr(pos + 1) == "png";
+                    options.image_filename.substr(pos + 1) == "png";
       for (amber::BufferInfo buffer_info : amber_options.extractions) {
         if (buffer_info.buffer_name == "framebuffer") {
           if (usePNG) {
