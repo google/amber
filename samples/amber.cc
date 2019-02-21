@@ -42,7 +42,7 @@ struct Options {
   bool parse_only = false;
   bool pipeline_create_only = false;
   bool disable_validation_layer = false;
-  bool show_summary = false;
+  bool quiet = false;
   bool show_help = false;
   bool show_version_info = false;
   amber::EngineType engine = amber::kEngineTypeVulkan;
@@ -54,7 +54,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
  options:
   -p                        -- Parse input files only; Don't execute.
   -ps                       -- Parse input files, create pipelines; Don't execute.
-  -s                        -- Print summary of pass/failure.
+  -q                        -- Disable summary output.
   -d                        -- Disable validation layers.
   -t <spirv_env>            -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
   -i <filename>             -- Write rendering to <filename> as a PNG image if it ends with '.png', or as a PPM image otherwise.
@@ -153,7 +153,10 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
     } else if (arg == "-d") {
       opts->disable_validation_layer = true;
     } else if (arg == "-s") {
-      opts->show_summary = true;
+      // -s is deprecated but still recognized, it inverts the quiet flag.
+      opts->quiet = false;
+    } else if (arg == "-q") {
+      opts->quiet = true;
     } else if (arg.size() > 0 && arg[0] == '-') {
       std::cerr << "Unrecognized option " << arg << std::endl;
       return false;
@@ -400,7 +403,7 @@ int main(int argc, const char** argv) {
     }
   }
 
-  if (options.show_summary) {
+  if (!options.quiet) {
     if (!failures.empty()) {
       std::cout << "\nSummary of Failures:" << std::endl;
 
