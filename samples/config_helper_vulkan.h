@@ -101,6 +101,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   bool use_physical_device_features2_ = false;
   VkPhysicalDeviceFeatures available_features_ = {};
   VkPhysicalDeviceFeatures2KHR available_features2_ = {};
+  VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_feature_ = {};
 };
 
 }  // namespace sample

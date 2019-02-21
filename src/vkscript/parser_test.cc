@@ -26,63 +26,63 @@ using VkScriptParserTest = testing::Test;
 TEST_F(VkScriptParserTest, RequireBlockNoArgumentFeatures) {
   struct {
     const char* name;
-  } features[] = {
-      {"robustBufferAccess"},
-      {"fullDrawIndexUint32"},
-      {"imageCubeArray"},
-      {"independentBlend"},
-      {"geometryShader"},
-      {"tessellationShader"},
-      {"sampleRateShading"},
-      {"dualSrcBlend"},
-      {"logicOp"},
-      {"multiDrawIndirect"},
-      {"drawIndirectFirstInstance"},
-      {"depthClamp"},
-      {"depthBiasClamp"},
-      {"fillModeNonSolid"},
-      {"depthBounds"},
-      {"wideLines"},
-      {"largePoints"},
-      {"alphaToOne"},
-      {"multiViewport"},
-      {"samplerAnisotropy"},
-      {"textureCompressionETC2"},
-      {"textureCompressionASTC_LDR"},
-      {"textureCompressionBC"},
-      {"occlusionQueryPrecise"},
-      {"pipelineStatisticsQuery"},
-      {"vertexPipelineStoresAndAtomics"},
-      {"fragmentStoresAndAtomics"},
-      {"shaderTessellationAndGeometryPointSize"},
-      {"shaderImageGatherExtended"},
-      {"shaderStorageImageExtendedFormats"},
-      {"shaderStorageImageMultisample"},
-      {"shaderStorageImageReadWithoutFormat"},
-      {"shaderStorageImageWriteWithoutFormat"},
-      {"shaderUniformBufferArrayDynamicIndexing"},
-      {"shaderSampledImageArrayDynamicIndexing"},
-      {"shaderStorageBufferArrayDynamicIndexing"},
-      {"shaderStorageImageArrayDynamicIndexing"},
-      {"shaderClipDistance"},
-      {"shaderCullDistance"},
-      {"shaderFloat64"},
-      {"shaderInt64"},
-      {"shaderInt16"},
-      {"shaderResourceResidency"},
-      {"shaderResourceMinLod"},
-      {"sparseBinding"},
-      {"sparseResidencyBuffer"},
-      {"sparseResidencyImage2D"},
-      {"sparseResidencyImage3D"},
-      {"sparseResidency2Samples"},
-      {"sparseResidency4Samples"},
-      {"sparseResidency8Samples"},
-      {"sparseResidency16Samples"},
-      {"sparseResidencyAliased"},
-      {"variableMultisampleRate"},
-      {"inheritedQueries"},
-  };
+  } features[] = {{"robustBufferAccess"},
+                  {"fullDrawIndexUint32"},
+                  {"imageCubeArray"},
+                  {"independentBlend"},
+                  {"geometryShader"},
+                  {"tessellationShader"},
+                  {"sampleRateShading"},
+                  {"dualSrcBlend"},
+                  {"logicOp"},
+                  {"multiDrawIndirect"},
+                  {"drawIndirectFirstInstance"},
+                  {"depthClamp"},
+                  {"depthBiasClamp"},
+                  {"fillModeNonSolid"},
+                  {"depthBounds"},
+                  {"wideLines"},
+                  {"largePoints"},
+                  {"alphaToOne"},
+                  {"multiViewport"},
+                  {"samplerAnisotropy"},
+                  {"textureCompressionETC2"},
+                  {"textureCompressionASTC_LDR"},
+                  {"textureCompressionBC"},
+                  {"occlusionQueryPrecise"},
+                  {"pipelineStatisticsQuery"},
+                  {"vertexPipelineStoresAndAtomics"},
+                  {"fragmentStoresAndAtomics"},
+                  {"shaderTessellationAndGeometryPointSize"},
+                  {"shaderImageGatherExtended"},
+                  {"shaderStorageImageExtendedFormats"},
+                  {"shaderStorageImageMultisample"},
+                  {"shaderStorageImageReadWithoutFormat"},
+                  {"shaderStorageImageWriteWithoutFormat"},
+                  {"shaderUniformBufferArrayDynamicIndexing"},
+                  {"shaderSampledImageArrayDynamicIndexing"},
+                  {"shaderStorageBufferArrayDynamicIndexing"},
+                  {"shaderStorageImageArrayDynamicIndexing"},
+                  {"shaderClipDistance"},
+                  {"shaderCullDistance"},
+                  {"shaderFloat64"},
+                  {"shaderInt64"},
+                  {"shaderInt16"},
+                  {"shaderResourceResidency"},
+                  {"shaderResourceMinLod"},
+                  {"sparseBinding"},
+                  {"sparseResidencyBuffer"},
+                  {"sparseResidencyImage2D"},
+                  {"sparseResidencyImage3D"},
+                  {"sparseResidency2Samples"},
+                  {"sparseResidency4Samples"},
+                  {"sparseResidency8Samples"},
+                  {"sparseResidency16Samples"},
+                  {"sparseResidencyAliased"},
+                  {"variableMultisampleRate"},
+                  {"inheritedQueries"},
+                  {"VariablePointerFeatures.variablePointers"},
+                  {"VariablePointerFeatures.variablePointersStorageBuffer"}};
 
   for (const auto& feature : features) {
     std::string in = std::string("[require]\n") + feature.name + "\n";
@@ -149,6 +149,66 @@ TEST_F(VkScriptParserTest, RequireBlockDepthStencil) {
   EXPECT_TRUE(buffers[1]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT,
             buffers[1]->AsFormatBuffer()->GetFormat().GetFormatType());
+}
+
+TEST_F(VkScriptParserTest, RequireFbSize) {
+  std::string block = "[require]\nfbsize 300 400";
+
+  Parser parser;
+  Result r = parser.Parse(block);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+  EXPECT_EQ(300, pipelines[0]->GetFramebufferWidth());
+  EXPECT_EQ(400, pipelines[0]->GetFramebufferHeight());
+}
+
+TEST_F(VkScriptParserTest, RequireFbSizeMissingSize) {
+  std::string block = "[require]\nfbsize";
+
+  Parser parser;
+  Result r = parser.Parse(block);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: Missing width and height for fbsize command", r.Error());
+}
+
+TEST_F(VkScriptParserTest, RequireFbSizeMissingValue) {
+  std::string block = "[require]\nfbsize 200";
+
+  Parser parser;
+  Result r = parser.Parse(block);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: Missing height for fbsize command", r.Error());
+}
+
+TEST_F(VkScriptParserTest, RequireFbSizeExtraParams) {
+  std::string block = "[require]\nfbsize 200 300 EXTRA";
+
+  Parser parser;
+  Result r = parser.Parse(block);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: Failed to parse requirements block: invalid token: EXTRA",
+            r.Error());
+}
+
+TEST_F(VkScriptParserTest, RequireFbSizeInvalidFirstParam) {
+  std::string block = "[require]\nfbsize INVALID 200";
+
+  Parser parser;
+  Result r = parser.Parse(block);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: Invalid width for fbsize command", r.Error());
+}
+
+TEST_F(VkScriptParserTest, RequireFbSizeInvalidSecondParam) {
+  std::string block = "[require]\nfbsize 200 INVALID";
+
+  Parser parser;
+  Result r = parser.Parse(block);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: Invalid height for fbsize command", r.Error());
 }
 
 TEST_F(VkScriptParserTest, RequireBlockMultipleLines) {
