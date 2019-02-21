@@ -17,6 +17,7 @@
 #include <cstring>
 #include <memory>
 #include <set>
+#include <string>
 #include <vector>
 
 #include "src/make_unique.h"
@@ -24,6 +25,15 @@
 namespace amber {
 namespace vulkan {
 namespace {
+
+const char kVariablePointers[] = "VariablePointerFeatures.variablePointers";
+const char kVariablePointersStorageBuffer[] =
+    "VariablePointerFeatures.variablePointersStorageBuffer";
+
+struct BaseOutStructure {
+  VkStructureType sType;
+  void* pNext;
+};
 
 bool AreAllRequiredFeaturesSupported(
     const VkPhysicalDeviceFeatures& available_features,
@@ -378,6 +388,46 @@ Result Device::Initialize(
   VkPhysicalDeviceFeatures available_vulkan_features = {};
   if (use_physical_device_features_2) {
     available_vulkan_features = available_features2.features;
+
+    VkPhysicalDeviceVariablePointerFeaturesKHR* var_ptrs = nullptr;
+    void* ptr = available_features2.pNext;
+    while (ptr != nullptr) {
+      BaseOutStructure* s = static_cast<BaseOutStructure*>(ptr);
+      if (s->sType ==
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR) {
+        var_ptrs =
+            static_cast<VkPhysicalDeviceVariablePointerFeaturesKHR*>(ptr);
+        break;
+      }
+      ptr = s->pNext;
+    }
+
+    std::vector<std::string> required_features1;
+    for (const auto& feature : required_features) {
+      // No dot means this is a features1 feature.
+      if (feature.find_first_of('.') == std::string::npos) {
+        required_features1.push_back(feature);
+        continue;
+      }
+
+      if ((feature == kVariablePointers ||
+           feature == kVariablePointersStorageBuffer) &&
+          var_ptrs == nullptr) {
+        return amber::Result(
+            "Variable pointers requested but feature not returned");
+      }
+
+      if (feature == kVariablePointers &&
+          var_ptrs->variablePointers != VK_TRUE) {
+        return amber::Result("Missing variable pointers feature");
+      }
+      if (feature == kVariablePointersStorageBuffer &&
+          var_ptrs->variablePointersStorageBuffer != VK_TRUE) {
+        return amber::Result(
+            "Missing variable pointers storage buffer feature");
+      }
+    }
+
   } else {
     available_vulkan_features = available_features;
   }
