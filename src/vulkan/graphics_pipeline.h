@@ -66,8 +66,6 @@ class GraphicsPipeline : public Pipeline {
 
   const FrameBuffer* GetFrame() const { return frame_.get(); }
 
-  Result ResetPipeline();
-
   uint32_t GetWidth() const { return frame_width_; }
   uint32_t GetHeight() const { return frame_height_; }
 
@@ -87,7 +85,9 @@ class GraphicsPipeline : public Pipeline {
 
   Result CreateVkGraphicsPipeline(const PipelineData* pipeline_data,
                                   VkPrimitiveTopology topology,
-                                  const VertexBuffer* vertex_buffer);
+                                  const VertexBuffer* vertex_buffer,
+                                  const VkPipelineLayout& pipeline_layout,
+                                  VkPipeline* pipeline);
 
   Result CreateRenderPass();
   Result ActivateRenderPassIfNeeded();

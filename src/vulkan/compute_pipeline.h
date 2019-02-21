@@ -39,7 +39,8 @@ class ComputePipeline : public Pipeline {
   Result Compute(uint32_t x, uint32_t y, uint32_t z);
 
  private:
-  Result CreateVkComputePipeline();
+  Result CreateVkComputePipeline(const VkPipelineLayout& pipeline_layout,
+                                 VkPipeline* pipeline);
 };
 
 }  // namespace vulkan

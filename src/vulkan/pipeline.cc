@@ -76,10 +76,6 @@ void Pipeline::Shutdown() {
     command_->Shutdown();
   }
 
-  DestroyVkDescriptorAndPipelineRelatedObjects();
-}
-
-void Pipeline::DestroyVkDescriptorAndPipelineRelatedObjects() {
   for (auto& info : descriptor_set_info_) {
     if (info.layout != VK_NULL_HANDLE) {
       device_->GetPtrs()->vkDestroyDescriptorSetLayout(device_->GetDevice(),
@@ -98,22 +94,6 @@ void Pipeline::DestroyVkDescriptorAndPipelineRelatedObjects() {
       if (desc)
         desc->Shutdown();
     }
-  }
-
-  ResetVkPipelineRelatedObjects();
-}
-
-void Pipeline::ResetVkPipelineRelatedObjects() {
-  if (pipeline_layout_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetDevice(),
-                                                pipeline_layout_, nullptr);
-    pipeline_layout_ = VK_NULL_HANDLE;
-  }
-
-  if (pipeline_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline_,
-                                          nullptr);
-    pipeline_ = VK_NULL_HANDLE;
   }
 }
 
@@ -206,7 +186,11 @@ Result Pipeline::CreateDescriptorSets() {
   return {};
 }
 
-Result Pipeline::CreatePipelineLayout() {
+Result Pipeline::CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout) {
+  Result r = CreateVkDescriptorRelatedObjectsIfNeeded();
+  if (!r.IsSuccess())
+    return r;
+
   std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
   for (const auto& desc_set : descriptor_set_info_)
     descriptor_set_layouts.push_back(desc_set.layout);
@@ -226,18 +210,16 @@ Result Pipeline::CreatePipelineLayout() {
 
   if (device_->GetPtrs()->vkCreatePipelineLayout(
           device_->GetDevice(), &pipeline_layout_info, nullptr,
-          &pipeline_layout_) != VK_SUCCESS) {
+          pipeline_layout) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreatePipelineLayout Fail");
   }
 
   return {};
 }
 
-Result Pipeline::CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded() {
-  if (descriptor_related_objects_already_created_) {
-    return pipeline_layout_ == VK_NULL_HANDLE ? CreatePipelineLayout()
-                                              : Result();
-  }
+Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
+  if (descriptor_related_objects_already_created_)
+    return {};
 
   Result r = CreateDescriptorSetLayouts();
   if (!r.IsSuccess())
@@ -252,7 +234,7 @@ Result Pipeline::CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded() {
     return r;
 
   descriptor_related_objects_already_created_ = true;
-  return CreatePipelineLayout();
+  return {};
 }
 
 Result Pipeline::UpdateDescriptorSetsIfNeeded() {
@@ -267,17 +249,15 @@ Result Pipeline::UpdateDescriptorSetsIfNeeded() {
   return {};
 }
 
-Result Pipeline::RecordPushConstant() {
+Result Pipeline::RecordPushConstant(const VkPipelineLayout& pipeline_layout) {
   return push_constant_->RecordPushConstantVkCommand(
-      command_->GetCommandBuffer(), pipeline_layout_);
+      command_->GetCommandBuffer(), pipeline_layout);
 }
 
 Result Pipeline::AddPushConstant(const BufferCommand* command) {
   if (!command->IsPushConstant())
     return Result(
         "Pipeline::AddPushConstant BufferCommand type is not push constant");
-
-  ResetVkPipelineRelatedObjects();
 
   return push_constant_->AddBufferData(command);
 }
@@ -403,7 +383,7 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
   return {};
 }
 
-void Pipeline::BindVkDescriptorSets() {
+void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
   for (size_t i = 0; i < descriptor_set_info_.size(); ++i) {
     if (descriptor_set_info_[i].empty)
       continue;
@@ -412,17 +392,9 @@ void Pipeline::BindVkDescriptorSets() {
         command_->GetCommandBuffer(),
         IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
                      : VK_PIPELINE_BIND_POINT_COMPUTE,
-        pipeline_layout_, static_cast<uint32_t>(i), 1,
+        pipeline_layout, static_cast<uint32_t>(i), 1,
         &descriptor_set_info_[i].vk_desc_set, 0, nullptr);
   }
-}
-
-void Pipeline::BindVkPipeline() {
-  device_->GetPtrs()->vkCmdBindPipeline(command_->GetCommandBuffer(),
-                                        IsGraphics()
-                                            ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                                            : VK_PIPELINE_BIND_POINT_COMPUTE,
-                                        pipeline_);
 }
 
 Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
