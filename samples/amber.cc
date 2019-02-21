@@ -150,9 +150,9 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
     } else if (arg == "-ps") {
       opts->pipeline_create_only = true;
     } else if (arg == "-d") {
-      opts->disable_validation_layer = true;      
+      opts->disable_validation_layer = true;
     } else if (arg == "-s") {
-      // -s is an old option which is still recognized, it inverts the quiet flag.
+      // -s is deprecated but still recognized, it inverts the quiet flag.
       opts->quiet = false;
     } else if (arg == "-q") {
       opts->quiet = true;
