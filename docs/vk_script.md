@@ -42,13 +42,16 @@ The _framebuffer_ and _depthstencil_ commands allow setting the format for the
 given buffer. The valid values are listed below in the *Image Formats*
 section.
 
+The _fbsize_ command allows setting the width and height of the framebuffer.
+
 The _fence\_timeout_ option allows setting an integer number of milliseconds
 for any fence timeouts.
 
-The last option is _extensions_. Any string which isn't a _feature_,
-_framebuffer_ or _depthstencil_ is assumed to be an _extension_. The extensions
-must be of the format [a-zA-Z0-9_]+. If the device extension is not available
-we will report it is not available and the test will continue.
+The last option is _extensions_. Any string which isn't listed above is assumed
+to be an _extension_. The extensions must be of the format [a-zA-Z0-9_]+. If the
+device extension is not available we will report it is not available and the
+test will continue.
+
 
 #### Require Examples
 ```

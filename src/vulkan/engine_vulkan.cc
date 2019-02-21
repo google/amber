@@ -29,8 +29,6 @@ namespace amber {
 namespace vulkan {
 namespace {
 
-const uint32_t kFramebufferWidth = 250;
-const uint32_t kFramebufferHeight = 250;
 const FormatType kDefaultFramebufferFormat = FormatType::kB8G8R8A8_UNORM;
 
 VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
@@ -206,8 +204,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
         engine_data.fence_timeout_ms, GetShaderStageInfo());
 
     Result r = pipeline_->AsGraphics()->Initialize(
-        kFramebufferWidth, kFramebufferHeight, pool_->GetCommandPool(),
-        device_->GetQueue());
+        pipeline->GetFramebufferWidth(), pipeline->GetFramebufferHeight(),
+        pool_->GetCommandPool(), device_->GetQueue());
     if (!r.IsSuccess())
       return r;
   }
