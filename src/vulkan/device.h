@@ -65,8 +65,6 @@ class Device {
  private:
   Result LoadVulkanPointers(PFN_vkGetInstanceProcAddr);
 
-  bool use_physical_device_features2_ = false;
-
   VkInstance instance_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
   VkPhysicalDeviceProperties physical_device_properties_;
