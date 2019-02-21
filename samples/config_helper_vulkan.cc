@@ -607,6 +607,13 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     }
   }
 
+  // Determine if VkPhysicalDeviceProperties2KHR should be used
+  for (auto& ext : required_extensions) {
+    if (ext == "VK_KHR_get_physical_device_properties2") {
+      use_physical_device_features2_ = true;
+    }
+  }
+
   std::vector<const char*> required_extensions_in_char;
   std::transform(
       required_extensions.begin(), required_extensions.end(),
@@ -662,7 +669,20 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
   }
 
   for (uint32_t i = 0; i < count; ++i) {
-    vkGetPhysicalDeviceFeatures(physical_devices[i], &available_features_);
+    if (use_physical_device_features2_) {
+      VkPhysicalDeviceFeatures2KHR features2 = {};
+      features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+      features2.pNext = nullptr;
+
+      auto vkGetPhysicalDeviceFeatures2KHR =
+          reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
+              vkGetInstanceProcAddr(vulkan_instance_,
+                                    "vkGetPhysicalDeviceFeatures2KHR"));
+      vkGetPhysicalDeviceFeatures2KHR(physical_devices[i], &features2);
+      available_features_ = features2.features;
+    } else {
+      vkGetPhysicalDeviceFeatures(physical_devices[i], &available_features_);
+    }
     if (!AreAllRequiredFeaturesSupported(available_features_,
                                          required_features)) {
       continue;
@@ -696,23 +716,47 @@ amber::Result ConfigHelperVulkan::CreateVulkanDevice(
   queue_info.queueCount = 1;
   queue_info.pQueuePriorities = priorities;
 
-  VkDeviceCreateInfo info = {};
-  info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  info.pQueueCreateInfos = &queue_info;
-  info.queueCreateInfoCount = 1;
-  info.pEnabledFeatures = &required_features;
-
   std::vector<const char*> required_extensions_in_char;
   std::transform(
       required_extensions.begin(), required_extensions.end(),
       std::back_inserter(required_extensions_in_char),
       [](const std::string& ext) -> const char* { return ext.c_str(); });
+
+  VkDeviceCreateInfo info = {};
+  info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  info.pQueueCreateInfos = &queue_info;
+  info.queueCreateInfoCount = 1;
   info.enabledExtensionCount =
       static_cast<uint32_t>(required_extensions_in_char.size());
   info.ppEnabledExtensionNames = required_extensions_in_char.data();
 
-  if (vkCreateDevice(vulkan_physical_device_, &info, nullptr,
-                     &vulkan_device_) != VK_SUCCESS) {
+  if (use_physical_device_features2_)
+    return CreateDeviceWithFeatures2(required_features, &info);
+  return CreateDeviceWithFeatures1(required_features, &info);
+}
+
+amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures1(
+    const VkPhysicalDeviceFeatures& required_features,
+    VkDeviceCreateInfo* info) {
+  info->pEnabledFeatures = &required_features;
+  return DoCreateDevice(info);
+}
+
+amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
+    const VkPhysicalDeviceFeatures& required_features,
+    VkDeviceCreateInfo* info) {
+  available_features2_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+  available_features2_.pNext = nullptr;
+  available_features2_.features = required_features;
+
+  info->pNext = &available_features2_;
+  info->pEnabledFeatures = nullptr;
+  return DoCreateDevice(info);
+}
+
+amber::Result ConfigHelperVulkan::DoCreateDevice(VkDeviceCreateInfo* info) {
+  if (vkCreateDevice(vulkan_physical_device_, info, nullptr, &vulkan_device_) !=
+      VK_SUCCESS) {
     return amber::Result("Unable to create vulkan device");
   }
   return {};
@@ -762,6 +806,7 @@ amber::Result ConfigHelperVulkan::CreateConfig(
       static_cast<amber::VulkanEngineConfig*>(cfg_holder->get());
   config->physical_device = vulkan_physical_device_;
   config->available_features = available_features_;
+  config->available_features2 = available_features2_;
   config->available_instance_extensions = available_instance_extensions_;
   config->available_device_extensions = available_device_extensions_;
   config->instance = vulkan_instance_;
