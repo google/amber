@@ -339,7 +339,8 @@ int main(int argc, const char** argv) {
     if (!result.IsSuccess()) {
       std::cerr << file << ": " << result.Error() << std::endl;
       failures.push_back(file);
-      continue;
+      // Note, we continue after failure to allow dumping the buffers which may
+      // give clues as to the failure.
     }
 
     if (!options.image_filename.empty()) {
@@ -360,19 +361,20 @@ int main(int argc, const char** argv) {
           break;
         }
       }
-      if (!result.IsSuccess()) {
+      if (result.IsSuccess()) {
+        std::ofstream image_file;
+        image_file.open(options.image_filename,
+                        std::ios::out | std::ios::binary);
+        if (!image_file.is_open()) {
+          std::cerr << "Cannot open file for image dump: ";
+          std::cerr << options.image_filename << std::endl;
+          continue;
+        }
+        image_file << image;
+        image_file.close();
+      } else {
         std::cerr << result.Error() << std::endl;
-        continue;
       }
-      std::ofstream image_file;
-      image_file.open(options.image_filename, std::ios::out | std::ios::binary);
-      if (!image_file.is_open()) {
-        std::cerr << "Cannot open file for image dump: ";
-        std::cerr << options.image_filename << std::endl;
-        continue;
-      }
-      image_file << image;
-      image_file.close();
     }
 
     if (!options.buffer_filename.empty()) {

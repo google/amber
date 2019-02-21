@@ -80,7 +80,7 @@ Result Executor::Execute(Engine* engine,
         return r;
 
       // This must come after processing commands because we require
-      // the frambuffer buffer to be mapped into host memory and have
+      // the framebuffer data to be mapped into host memory and have
       // a valid host-side pointer.
       r = engine->GetFrameBufferInfo(&info);
       if (!r.IsSuccess())
