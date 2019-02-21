@@ -27,9 +27,9 @@ PushConstant::PushConstant(Device* device, uint32_t max_push_constant_size)
     : Resource(device,
                max_push_constant_size,
                VkPhysicalDeviceMemoryProperties()),
-      max_push_constant_size_(max_push_constant_size),
-      memory_(std::unique_ptr<uint8_t>(new uint8_t[max_push_constant_size])) {
-  SetMemoryPtr(static_cast<void*>(memory_.get()));
+      max_push_constant_size_(max_push_constant_size) {
+  memory_.resize(max_push_constant_size_);
+  SetMemoryPtr(static_cast<void*>(memory_.data()));
 }
 
 PushConstant::~PushConstant() = default;
@@ -98,7 +98,7 @@ Result PushConstant::RecordPushConstantVkCommand(
   device_->GetPtrs()->vkCmdPushConstants(
       command_buffer, pipeline_layout, VK_SHADER_STAGE_ALL,
       push_const_range.offset, push_const_range.size,
-      memory_.get() + push_const_range.offset);
+      memory_.data() + push_const_range.offset);
   return {};
 }
 

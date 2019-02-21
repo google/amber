@@ -24,6 +24,7 @@
 #include "amber/amber.h"
 #include "amber/recipe.h"
 #include "samples/config_helper.h"
+#include "samples/png.h"
 #include "samples/ppm.h"
 #include "src/build-versions.h"
 #include "src/make_unique.h"
@@ -56,7 +57,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -q                        -- Disable summary output.
   -d                        -- Disable validation layers.
   -t <spirv_env>            -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
-  -i <filename>             -- Write rendering to <filename> as a PPM image.
+  -i <filename>             -- Write rendering to <filename> as a PNG image if it ends with '.png', or as a PPM image otherwise.
   -b <filename>             -- Write contents of a UBO or SSBO to <filename>.
   -B [<desc set>:]<binding> -- Descriptor set and binding of buffer to write.
                                Default is [0:]0.
@@ -274,13 +275,21 @@ int main(int argc, const char** argv) {
   amber_options.pipeline_create_only = options.pipeline_create_only;
 
   std::set<std::string> required_features;
-  std::set<std::string> required_extensions;
+  std::set<std::string> required_device_extensions;
+  std::set<std::string> required_instance_extensions;
   for (const auto& recipe_data_elem : recipe_data) {
     const auto features = recipe_data_elem.recipe->GetRequiredFeatures();
     required_features.insert(features.begin(), features.end());
 
-    const auto extensions = recipe_data_elem.recipe->GetRequiredExtensions();
-    required_extensions.insert(extensions.begin(), extensions.end());
+    const auto device_extensions =
+        recipe_data_elem.recipe->GetRequiredDeviceExtensions();
+    required_device_extensions.insert(device_extensions.begin(),
+                                      device_extensions.end());
+
+    const auto inst_extensions =
+        recipe_data_elem.recipe->GetRequiredInstanceExtensions();
+    required_instance_extensions.insert(inst_extensions.begin(),
+                                        inst_extensions.end());
   }
 
   sample::ConfigHelper config_helper;
@@ -290,8 +299,10 @@ int main(int argc, const char** argv) {
       amber_options.engine, options.engine_major, options.engine_minor,
       std::vector<std::string>(required_features.begin(),
                                required_features.end()),
-      std::vector<std::string>(required_extensions.begin(),
-                               required_extensions.end()),
+      std::vector<std::string>(required_instance_extensions.begin(),
+                               required_instance_extensions.end()),
+      std::vector<std::string>(required_device_extensions.begin(),
+                               required_device_extensions.end()),
       options.disable_validation_layer, &config);
 
   if (!r.IsSuccess()) {
@@ -333,10 +344,19 @@ int main(int argc, const char** argv) {
 
     if (!options.image_filename.empty()) {
       std::string image;
+
+      auto pos = options.image_filename.find_last_of('.');
+      bool usePNG = pos != std::string::npos &&
+                    options.image_filename.substr(pos + 1) == "png";
       for (amber::BufferInfo buffer_info : amber_options.extractions) {
         if (buffer_info.buffer_name == "framebuffer") {
-          std::tie(result, image) = ppm::ConvertToPPM(
-              buffer_info.width, buffer_info.height, buffer_info.values);
+          if (usePNG) {
+            std::tie(result, image) = png::ConvertToPNG(
+                buffer_info.width, buffer_info.height, buffer_info.values);
+          } else {
+            std::tie(result, image) = ppm::ConvertToPPM(
+                buffer_info.width, buffer_info.height, buffer_info.values);
+          }
           break;
         }
       }

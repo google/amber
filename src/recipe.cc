@@ -35,8 +35,14 @@ std::vector<std::string> Recipe::GetRequiredFeatures() const {
   return impl_ ? impl_->GetRequiredFeatures() : std::vector<std::string>();
 }
 
-std::vector<std::string> Recipe::GetRequiredExtensions() const {
-  return impl_ ? impl_->GetRequiredExtensions() : std::vector<std::string>();
+std::vector<std::string> Recipe::GetRequiredDeviceExtensions() const {
+  return impl_ ? impl_->GetRequiredDeviceExtensions()
+               : std::vector<std::string>();
+}
+
+std::vector<std::string> Recipe::GetRequiredInstanceExtensions() const {
+  return impl_ ? impl_->GetRequiredInstanceExtensions()
+               : std::vector<std::string>();
 }
 
 }  // namespace amber

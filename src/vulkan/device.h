@@ -36,8 +36,6 @@ class Device {
  public:
   Device(VkInstance instance,
          VkPhysicalDevice physical_device,
-         const VkPhysicalDeviceFeatures& available_features,
-         const std::vector<std::string>& required_extensions,
          uint32_t queue_family_index,
          VkDevice device,
          VkQueue queue);
@@ -45,7 +43,10 @@ class Device {
 
   Result Initialize(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
                     const std::vector<Feature>& required_features,
-                    const std::vector<std::string>& required_extensions);
+                    const std::vector<std::string>& required_extensions,
+                    const VkPhysicalDeviceFeatures& available_features,
+                    const VkPhysicalDeviceFeatures2KHR& available_features2,
+                    const std::vector<std::string>& available_extensions);
 
   VkInstance GetInstance() const { return instance_; }
   VkPhysicalDevice GetPhysicalDevice() { return physical_device_; }
@@ -65,15 +66,15 @@ class Device {
  private:
   Result LoadVulkanPointers(PFN_vkGetInstanceProcAddr);
 
+  bool use_physical_device_features2_ = false;
+
   VkInstance instance_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
   VkPhysicalDeviceProperties physical_device_properties_;
   VkPhysicalDeviceMemoryProperties physical_memory_properties_;
-  VkPhysicalDeviceFeatures available_physical_device_features_;
-  std::vector<std::string> available_physical_device_extensions_;
-  uint32_t queue_family_index_ = 0;
   VkDevice device_ = VK_NULL_HANDLE;
   VkQueue queue_ = VK_NULL_HANDLE;
+  uint32_t queue_family_index_ = 0;
 
   VulkanPtrs ptrs_;
 };

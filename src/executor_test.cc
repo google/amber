@@ -35,16 +35,20 @@ class EngineStub : public Engine {
   // Engine
   Result Initialize(EngineConfig*,
                     const std::vector<Feature>& features,
-                    const std::vector<std::string>& extensions) override {
+                    const std::vector<std::string>& instance_exts,
+                    const std::vector<std::string>& device_exts) override {
     features_ = features;
-    extensions_ = extensions;
+    instance_extensions_ = instance_exts;
+    device_extensions_ = device_exts;
     return {};
   }
 
   Result Shutdown() override { return {}; }
 
   const std::vector<Feature>& GetFeatures() const { return features_; }
-  const std::vector<std::string>& GetExtensions() const { return extensions_; }
+  const std::vector<std::string>& GetDeviceExtensions() const {
+    return device_extensions_;
+  }
   uint32_t GetFenceTimeoutMs() { return GetEngineData().fence_timeout_ms; }
 
   Result CreatePipeline(Pipeline*) override { return {}; }
@@ -188,7 +192,8 @@ class EngineStub : public Engine {
   bool did_buffer_command_ = false;
 
   std::vector<Feature> features_;
-  std::vector<std::string> extensions_;
+  std::vector<std::string> instance_extensions_;
+  std::vector<std::string> device_extensions_;
 
   ClearColorCommand* last_clear_color_ = nullptr;
 };
@@ -201,9 +206,11 @@ class VkScriptExecutorTest : public testing::Test {
   std::unique_ptr<Engine> MakeEngine() { return MakeUnique<EngineStub>(); }
   std::unique_ptr<Engine> MakeAndInitializeEngine(
       const std::vector<Feature>& features,
-      const std::vector<std::string>& extensions) {
+      const std::vector<std::string>& instance_extensions,
+      const std::vector<std::string>& device_extensions) {
     auto engine = MakeUnique<EngineStub>();
-    engine->Initialize(nullptr, features, extensions);
+    engine->Initialize(nullptr, features, instance_extensions,
+                       device_extensions);
     return std::move(engine);
   }
   EngineStub* ToStub(Engine* engine) {
@@ -224,7 +231,8 @@ logicOp)";
 
   auto script = parser.GetScript();
   auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
-                                        script->RequiredExtensions());
+                                        script->GetRequiredInstanceExtensions(),
+                                        script->GetRequiredDeviceExtensions());
 
   Executor ex;
   Result r = ex.Execute(engine.get(), script.get(), ShaderMap(),
@@ -236,7 +244,7 @@ logicOp)";
   EXPECT_EQ(Feature::kRobustBufferAccess, features[0]);
   EXPECT_EQ(Feature::kLogicOp, features[1]);
 
-  const auto& extensions = ToStub(engine.get())->GetExtensions();
+  const auto& extensions = ToStub(engine.get())->GetDeviceExtensions();
   ASSERT_EQ(static_cast<size_t>(0U), extensions.size());
 
   EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
@@ -253,7 +261,8 @@ VK_KHR_variable_pointers)";
 
   auto script = parser.GetScript();
   auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
-                                        script->RequiredExtensions());
+                                        script->GetRequiredInstanceExtensions(),
+                                        script->GetRequiredDeviceExtensions());
 
   Executor ex;
   Result r = ex.Execute(engine.get(), script.get(), ShaderMap(),
@@ -263,7 +272,7 @@ VK_KHR_variable_pointers)";
   const auto& features = ToStub(engine.get())->GetFeatures();
   ASSERT_EQ(static_cast<size_t>(0U), features.size());
 
-  const auto& extensions = ToStub(engine.get())->GetExtensions();
+  const auto& extensions = ToStub(engine.get())->GetDeviceExtensions();
   ASSERT_EQ(2U, extensions.size());
   EXPECT_EQ("VK_KHR_storage_buffer_storage_class", extensions[0]);
   EXPECT_EQ("VK_KHR_variable_pointers", extensions[1]);
@@ -282,7 +291,8 @@ depthstencil D24_UNORM_S8_UINT)";
 
   auto script = parser.GetScript();
   auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
-                                        script->RequiredExtensions());
+                                        script->GetRequiredInstanceExtensions(),
+                                        script->GetRequiredDeviceExtensions());
 
   Executor ex;
   Result r = ex.Execute(engine.get(), script.get(), ShaderMap(),
@@ -292,7 +302,7 @@ depthstencil D24_UNORM_S8_UINT)";
   const auto& features = ToStub(engine.get())->GetFeatures();
   ASSERT_EQ(static_cast<size_t>(0U), features.size());
 
-  const auto& extensions = ToStub(engine.get())->GetExtensions();
+  const auto& extensions = ToStub(engine.get())->GetDeviceExtensions();
   ASSERT_EQ(static_cast<size_t>(0U), extensions.size());
 
   EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
@@ -308,7 +318,8 @@ fence_timeout 12345)";
 
   auto script = parser.GetScript();
   auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
-                                        script->RequiredExtensions());
+                                        script->GetRequiredInstanceExtensions(),
+                                        script->GetRequiredDeviceExtensions());
 
   Executor ex;
   Result r = ex.Execute(engine.get(), script.get(), ShaderMap(),
@@ -318,7 +329,7 @@ fence_timeout 12345)";
   const auto& features = ToStub(engine.get())->GetFeatures();
   ASSERT_EQ(static_cast<size_t>(0U), features.size());
 
-  const auto& extensions = ToStub(engine.get())->GetExtensions();
+  const auto& extensions = ToStub(engine.get())->GetDeviceExtensions();
   ASSERT_EQ(static_cast<size_t>(0U), extensions.size());
 
   EXPECT_EQ(12345U, ToStub(engine.get())->GetFenceTimeoutMs());
@@ -340,7 +351,8 @@ fence_timeout 12345)";
 
   auto script = parser.GetScript();
   auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
-                                        script->RequiredExtensions());
+                                        script->GetRequiredInstanceExtensions(),
+                                        script->GetRequiredDeviceExtensions());
 
   Executor ex;
   Result r = ex.Execute(engine.get(), script.get(), ShaderMap(),
@@ -352,7 +364,7 @@ fence_timeout 12345)";
   EXPECT_EQ(Feature::kRobustBufferAccess, features[0]);
   EXPECT_EQ(Feature::kLogicOp, features[1]);
 
-  const auto& extensions = ToStub(engine.get())->GetExtensions();
+  const auto& extensions = ToStub(engine.get())->GetDeviceExtensions();
   ASSERT_EQ(2U, extensions.size());
   EXPECT_EQ("VK_KHR_storage_buffer_storage_class", extensions[0]);
   EXPECT_EQ("VK_KHR_variable_pointers", extensions[1]);
