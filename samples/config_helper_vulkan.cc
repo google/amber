@@ -652,7 +652,7 @@ amber::Result ConfigHelperVulkan::CreateDebugReportCallback() {
 }
 
 amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
-    const VkPhysicalDeviceFeatures& required_features,
+    const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions) {
   uint32_t count = 0;
   std::vector<VkPhysicalDevice> physical_devices;
@@ -667,6 +667,12 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
                                  physical_devices.data()) != VK_SUCCESS) {
     return amber::Result("Unable to enumerate physical devices");
   }
+
+  VkPhysicalDeviceFeatures required_vulkan_features = {};
+  amber::Result r =
+      NamesToVulkanFeatures(required_features, &required_vulkan_features);
+  if (!r.IsSuccess())
+    return r;
 
   for (uint32_t i = 0; i < count; ++i) {
     if (use_physical_device_features2_) {
@@ -684,7 +690,7 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
       vkGetPhysicalDeviceFeatures(physical_devices[i], &available_features_);
     }
     if (!AreAllRequiredFeaturesSupported(available_features_,
-                                         required_features)) {
+                                         required_vulkan_features)) {
       continue;
     }
 
@@ -706,7 +712,7 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
 }
 
 amber::Result ConfigHelperVulkan::CreateVulkanDevice(
-    const VkPhysicalDeviceFeatures& required_features,
+    const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions) {
   VkDeviceQueueCreateInfo queue_info = {};
   const float priorities[] = {1.0f};
@@ -736,18 +742,30 @@ amber::Result ConfigHelperVulkan::CreateVulkanDevice(
 }
 
 amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures1(
-    const VkPhysicalDeviceFeatures& required_features,
+    const std::vector<std::string>& required_features,
     VkDeviceCreateInfo* info) {
-  info->pEnabledFeatures = &required_features;
+  VkPhysicalDeviceFeatures required_vulkan_features = {};
+  amber::Result r =
+      NamesToVulkanFeatures(required_features, &required_vulkan_features);
+  if (!r.IsSuccess())
+    return r;
+
+  info->pEnabledFeatures = &required_vulkan_features;
   return DoCreateDevice(info);
 }
 
 amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
-    const VkPhysicalDeviceFeatures& required_features,
+    const std::vector<std::string>& required_features,
     VkDeviceCreateInfo* info) {
+  VkPhysicalDeviceFeatures required_vulkan_features = {};
+  amber::Result r =
+      NamesToVulkanFeatures(required_features, &required_vulkan_features);
+  if (!r.IsSuccess())
+    return r;
+
   available_features2_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
   available_features2_.pNext = nullptr;
-  available_features2_.features = required_features;
+  available_features2_.features = required_vulkan_features;
 
   info->pNext = &available_features2_;
   info->pEnabledFeatures = nullptr;
@@ -770,15 +788,9 @@ amber::Result ConfigHelperVulkan::CreateConfig(
     const std::vector<std::string>& required_device_extensions,
     bool disable_validation_layer,
     std::unique_ptr<amber::EngineConfig>* cfg_holder) {
-  VkPhysicalDeviceFeatures required_vulkan_features = {};
-  amber::Result r =
-      NamesToVulkanFeatures(required_features, &required_vulkan_features);
-  if (!r.IsSuccess())
-    return r;
-
-  r = CreateVulkanInstance(engine_major, engine_minor,
-                           required_instance_extensions,
-                           disable_validation_layer);
+  amber::Result r = CreateVulkanInstance(engine_major, engine_minor,
+                                         required_instance_extensions,
+                                         disable_validation_layer);
   if (!r.IsSuccess())
     return r;
 
@@ -788,12 +800,11 @@ amber::Result ConfigHelperVulkan::CreateConfig(
       return r;
   }
 
-  r = ChooseVulkanPhysicalDevice(required_vulkan_features,
-                                 required_device_extensions);
+  r = ChooseVulkanPhysicalDevice(required_features, required_device_extensions);
   if (!r.IsSuccess())
     return r;
 
-  r = CreateVulkanDevice(required_vulkan_features, required_device_extensions);
+  r = CreateVulkanDevice(required_features, required_device_extensions);
   if (!r.IsSuccess())
     return r;
 

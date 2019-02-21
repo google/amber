@@ -21,7 +21,6 @@
 
 #include "amber/result.h"
 #include "amber/vulkan_header.h"
-#include "src/feature.h"
 
 namespace amber {
 namespace vulkan {
@@ -42,7 +41,7 @@ class Device {
   ~Device();
 
   Result Initialize(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
-                    const std::vector<Feature>& required_features,
+                    const std::vector<std::string>& required_features,
                     const std::vector<std::string>& required_extensions,
                     const VkPhysicalDeviceFeatures& available_features,
                     const VkPhysicalDeviceFeatures2KHR& available_features2,

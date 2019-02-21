@@ -182,7 +182,7 @@ EngineDawn::EngineDawn() : Engine() {}
 EngineDawn::~EngineDawn() = default;
 
 Result EngineDawn::Initialize(EngineConfig* config,
-                              const std::vector<Feature>&,
+                              const std::vector<std::string>&,
                               const std::vector<std::string>&,
                               const std::vector<std::string>&) {
   if (device_)
