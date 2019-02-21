@@ -14,6 +14,7 @@
 
 #include "src/vulkan/compute_pipeline.h"
 
+#include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 
 namespace amber {
@@ -34,7 +35,7 @@ ComputePipeline::ComputePipeline(
 
 ComputePipeline::~ComputePipeline() = default;
 
-Result ComputePipeline::Initialize(VkCommandPool pool, VkQueue queue) {
+Result ComputePipeline::Initialize(CommandPool* pool, VkQueue queue) {
   return Pipeline::Initialize(pool, queue);
 }
 

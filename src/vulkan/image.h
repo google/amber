@@ -22,6 +22,7 @@
 namespace amber {
 namespace vulkan {
 
+class CommandBuffer;
 class Device;
 
 class Image : public Resource {
@@ -41,26 +42,27 @@ class Image : public Resource {
 
   // TODO(jaebaek): Implement CopyToDevice
 
-  void ChangeLayout(VkCommandBuffer command,
+  void ChangeLayout(CommandBuffer* command,
                     VkImageLayout old_layout,
                     VkImageLayout new_layout,
                     VkPipelineStageFlags from,
                     VkPipelineStageFlags to);
 
-  // Resource
-  VkDeviceMemory GetHostAccessMemory() const override {
-    return Resource::GetHostAccessMemory();
-  }
-
   // Only record the command for copying this image to its secondary
   // host-accessible buffer. The actual submission of the command
   // must be done later.
-  Result CopyToHost(VkCommandBuffer command) override;
+  Result CopyToHost(CommandBuffer* command) override;
 
   void Shutdown() override;
 
  private:
   Result CreateVkImageView();
+  Result AllocateAndBindMemoryToVkImage(VkImage image,
+                                        VkDeviceMemory* memory,
+                                        VkMemoryPropertyFlags flags,
+                                        bool force_flags,
+                                        uint32_t* memory_type_index);
+  const VkMemoryRequirements GetVkImageMemoryRequirements(VkImage image) const;
 
   VkImageCreateInfo image_info_;
   VkImageAspectFlags aspect_;

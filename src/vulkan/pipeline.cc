@@ -59,7 +59,7 @@ ComputePipeline* Pipeline::AsCompute() {
   return static_cast<ComputePipeline*>(this);
 }
 
-Result Pipeline::Initialize(VkCommandPool pool, VkQueue queue) {
+Result Pipeline::Initialize(CommandPool* pool, VkQueue queue) {
   push_constant_ = MakeUnique<PushConstant>(
       device_, physical_device_properties_.limits.maxPushConstantsSize);
 
@@ -250,8 +250,8 @@ Result Pipeline::UpdateDescriptorSetsIfNeeded() {
 }
 
 Result Pipeline::RecordPushConstant(const VkPipelineLayout& pipeline_layout) {
-  return push_constant_->RecordPushConstantVkCommand(
-      command_->GetCommandBuffer(), pipeline_layout);
+  return push_constant_->RecordPushConstantVkCommand(command_.get(),
+                                                     pipeline_layout);
 }
 
 Result Pipeline::AddPushConstant(const BufferCommand* command) {
@@ -374,7 +374,7 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
 
   for (auto& info : descriptor_set_info_) {
     for (auto& desc : info.descriptors_) {
-      r = desc->RecordCopyDataToResourceIfNeeded(command_->GetCommandBuffer());
+      r = desc->RecordCopyDataToResourceIfNeeded(command_.get());
       if (!r.IsSuccess())
         return r;
     }
@@ -404,7 +404,7 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
 
   for (auto& desc_set : descriptor_set_info_) {
     for (auto& desc : desc_set.descriptors_) {
-      r = desc->RecordCopyDataToHost(command_->GetCommandBuffer());
+      r = desc->RecordCopyDataToHost(command_.get());
       if (!r.IsSuccess())
         return r;
     }

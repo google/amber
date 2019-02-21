@@ -27,6 +27,7 @@
 namespace amber {
 namespace vulkan {
 
+class CommandBuffer;
 class Device;
 
 // A class providing abstraction for index buffer. Only a single
@@ -44,12 +45,12 @@ class IndexBuffer {
   // Assuming that |buffer_| is nullptr and |values| is not empty,
   // it creates |buffer_| whose size is |sizeof(uint32_t) * values.size()|
   // and coverts |values| as uint32 values and copies them to |buffer_|.
-  Result SendIndexData(VkCommandBuffer command,
+  Result SendIndexData(CommandBuffer* command,
                        const VkPhysicalDeviceMemoryProperties& properties,
                        const std::vector<Value>& values);
 
   // Bind |buffer_| as index buffer if it is not nullptr.
-  Result BindToCommandBuffer(VkCommandBuffer command);
+  Result BindToCommandBuffer(CommandBuffer* command);
 
  private:
   Device* device_ = nullptr;

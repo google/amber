@@ -26,6 +26,7 @@
 namespace amber {
 namespace vulkan {
 
+class CommandBuffer;
 class Device;
 
 // Class to handle push constant.
@@ -50,7 +51,7 @@ class PushConstant : public Resource {
   // |max_push_constant_size_|. |command_buffer| is a Vulkan command
   // buffer that keeps the recorded command and |pipeline_layout| is
   // the graphics / compute pipeline that it currently uses.
-  Result RecordPushConstantVkCommand(VkCommandBuffer command_buffer,
+  Result RecordPushConstantVkCommand(CommandBuffer* command,
                                      VkPipelineLayout pipeline_layout);
 
   // Add a new set of values in an offset range to the push constants
@@ -59,7 +60,7 @@ class PushConstant : public Resource {
 
   // Resource
   VkDeviceMemory GetHostAccessMemory() const override { return VK_NULL_HANDLE; }
-  Result CopyToHost(VkCommandBuffer) override {
+  Result CopyToHost(CommandBuffer*) override {
     return Result("Vulkan: should not call CopyToHost() for PushConstant");
   }
   void Shutdown() override {}

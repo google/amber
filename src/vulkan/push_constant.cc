@@ -18,6 +18,7 @@
 #include <cassert>
 #include <limits>
 
+#include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
 namespace amber {
@@ -72,7 +73,7 @@ VkPushConstantRange PushConstant::GetPushConstantRange() {
 }
 
 Result PushConstant::RecordPushConstantVkCommand(
-    VkCommandBuffer command_buffer,
+    CommandBuffer* command,
     VkPipelineLayout pipeline_layout) {
   if (push_constant_data_.empty())
     return {};
@@ -96,7 +97,7 @@ Result PushConstant::RecordPushConstantVkCommand(
   assert(push_const_range.offset % 4U == 0 && push_const_range.size % 4U == 0);
 
   device_->GetPtrs()->vkCmdPushConstants(
-      command_buffer, pipeline_layout, VK_SHADER_STAGE_ALL,
+      command->GetCommandBuffer(), pipeline_layout, VK_SHADER_STAGE_ALL,
       push_const_range.offset, push_const_range.size,
       memory_.data() + push_const_range.offset);
   return {};

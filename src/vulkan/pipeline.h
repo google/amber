@@ -83,10 +83,8 @@ class Pipeline {
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
 
-  // Create |push_constant_| and |command_|. This method also
-  // initializes |command_| that abstracts VkCommandBuffer and
-  // VkFence objects.
-  Result Initialize(VkCommandPool pool, VkQueue queue);
+  // Initialize the pipeline.
+  Result Initialize(CommandPool* pool, VkQueue queue);
 
   Result UpdateDescriptorSetsIfNeeded();
 

@@ -34,6 +34,8 @@ class ProbeCommand;
 
 namespace vulkan {
 
+class CommandPool;
+
 class GraphicsPipeline : public Pipeline {
  public:
   GraphicsPipeline(Device* device,
@@ -47,7 +49,7 @@ class GraphicsPipeline : public Pipeline {
 
   Result Initialize(uint32_t width,
                     uint32_t height,
-                    VkCommandPool pool,
+                    CommandPool* pool,
                     VkQueue queue);
 
   Result SetIndexBuffer(const std::vector<Value>& values);

@@ -29,6 +29,7 @@
 namespace amber {
 namespace vulkan {
 
+class CommandBuffer;
 class Device;
 
 // Among Vulkan descriptor types, this class handles Storage Buffer
@@ -44,8 +45,8 @@ class BufferDescriptor : public Descriptor {
   // Descriptor
   Result CreateResourceIfNeeded(
       const VkPhysicalDeviceMemoryProperties& properties) override;
-  Result RecordCopyDataToResourceIfNeeded(VkCommandBuffer command) override;
-  Result RecordCopyDataToHost(VkCommandBuffer command) override;
+  Result RecordCopyDataToResourceIfNeeded(CommandBuffer* command) override;
+  Result RecordCopyDataToHost(CommandBuffer* command) override;
   Result MoveResourceToBufferOutput() override;
   Result UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
   ResourceInfo GetResourceInfo() override;

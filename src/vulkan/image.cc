@@ -16,6 +16,7 @@
 
 #include <limits>
 
+#include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
 
@@ -71,12 +72,14 @@ Result Image::Initialize(VkImageUsageFlags usage) {
     return Result("Vulkan::Calling vkCreateImage Fail");
   }
 
-  AllocateResult allocate_result = AllocateAndBindMemoryToVkImage(
-      image_, &memory_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
-  if (!allocate_result.r.IsSuccess())
-    return allocate_result.r;
+  uint32_t memory_type_index = 0;
+  Result r = AllocateAndBindMemoryToVkImage(image_, &memory_,
+                                            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                            false, &memory_type_index);
+  if (!r.IsSuccess())
+    return r;
 
-  Result r = CreateVkImageView();
+  r = CreateVkImageView();
   if (!r.IsSuccess())
     return r;
 
@@ -132,7 +135,7 @@ void Image::Shutdown() {
   Resource::Shutdown();
 }
 
-Result Image::CopyToHost(VkCommandBuffer command) {
+Result Image::CopyToHost(CommandBuffer* command) {
   VkBufferImageCopy copy_region = VkBufferImageCopy();
   copy_region.bufferOffset = 0;
   // Row length of 0 results in tight packing of rows, so the row stride
@@ -150,14 +153,14 @@ Result Image::CopyToHost(VkCommandBuffer command) {
                              image_info_.extent.height, 1};
 
   device_->GetPtrs()->vkCmdCopyImageToBuffer(
-      command, image_, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      command->GetCommandBuffer(), image_, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
       GetHostAccessibleBuffer(), 1, &copy_region);
 
   MemoryBarrier(command);
   return {};
 }
 
-void Image::ChangeLayout(VkCommandBuffer command,
+void Image::ChangeLayout(CommandBuffer* command,
                          VkImageLayout old_layout,
                          VkImageLayout new_layout,
                          VkPipelineStageFlags from,
@@ -232,8 +235,49 @@ void Image::ChangeLayout(VkCommandBuffer command,
       break;
   }
 
-  device_->GetPtrs()->vkCmdPipelineBarrier(command, from, to, 0, 0, NULL, 0,
-                                           NULL, 1, &barrier);
+  device_->GetPtrs()->vkCmdPipelineBarrier(
+      command->GetCommandBuffer(), from, to, 0, 0, NULL, 0, NULL, 1, &barrier);
+}
+
+Result Image::AllocateAndBindMemoryToVkImage(VkImage image,
+                                             VkDeviceMemory* memory,
+                                             VkMemoryPropertyFlags flags,
+                                             bool force_flags,
+                                             uint32_t* memory_type_index) {
+  assert(memory_type_index);
+
+  *memory_type_index = 0;
+
+  if (image == VK_NULL_HANDLE)
+    return Result("Vulkan::Given VkImage is VK_NULL_HANDLE");
+  if (memory == nullptr)
+    return Result("Vulkan::Given VkDeviceMemory pointer is nullptr");
+
+  auto requirement = GetVkImageMemoryRequirements(image);
+
+  *memory_type_index =
+      ChooseMemory(requirement.memoryTypeBits, flags, force_flags);
+  if (*memory_type_index == std::numeric_limits<uint32_t>::max())
+    return Result("Vulkan::Find Proper Memory Fail");
+
+  Result r = AllocateMemory(memory, requirement.size, *memory_type_index);
+  if (!r.IsSuccess())
+    return r;
+
+  if (device_->GetPtrs()->vkBindImageMemory(device_->GetDevice(), image,
+                                            *memory, 0) != VK_SUCCESS) {
+    return Result("Vulkan::Calling vkBindImageMemory Fail");
+  }
+
+  return {};
+}
+
+const VkMemoryRequirements Image::GetVkImageMemoryRequirements(
+    VkImage image) const {
+  VkMemoryRequirements requirement;
+  device_->GetPtrs()->vkGetImageMemoryRequirements(device_->GetDevice(), image,
+                                                   &requirement);
+  return requirement;
 }
 
 }  // namespace vulkan
