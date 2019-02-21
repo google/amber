@@ -79,15 +79,12 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
     return r;
 
   Executor executor;
-  r = executor.Execute(engine.get(), script, shader_data,
-                       opts->pipeline_create_only
-                           ? ExecutionType::kPipelineCreateOnly
-                           : ExecutionType::kExecute);
-  if (!r.IsSuccess()) {
-    // Clean up Vulkan/Dawn objects
-    engine->Shutdown();
-    return r;
-  }
+  Result executor_result = executor.Execute(
+      engine.get(), script, shader_data,
+      opts->pipeline_create_only ? ExecutionType::kPipelineCreateOnly
+                                 : ExecutionType::kExecute);
+  // Hold the executor result until the extractions are complete. This will let
+  // us dump any buffers requested even on failure.
 
   for (BufferInfo& buffer_info : opts->extractions) {
     if (buffer_info.buffer_name == "framebuffer") {
@@ -133,6 +130,10 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
     }
   }
 
+  if (!executor_result.IsSuccess()) {
+    engine->Shutdown();
+    return executor_result;
+  }
   return engine->Shutdown();
 }
 
