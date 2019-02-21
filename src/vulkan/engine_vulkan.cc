@@ -454,8 +454,9 @@ Result EngineVulkan::DoProcessCommands() {
 
 Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
   if (!info)
-    return Result("Vulkan::GetFrameBufferInfo Missing info");
-
+    return Result("Vulkan::GetFrameBufferInfo missing info");
+  if (!pipeline_)
+    return Result("Vulkan::GetFrameBufferIfno missing pipeline");
   if (!pipeline_->IsGraphics())
     return Result("Vulkan::GetFrameBufferInfo for Non-Graphics Pipeline");
 
