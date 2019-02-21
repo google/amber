@@ -15,7 +15,6 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "src/feature.h"
 #include "src/format.h"
 #include "src/vkscript/parser.h"
 
@@ -27,73 +26,62 @@ using VkScriptParserTest = testing::Test;
 TEST_F(VkScriptParserTest, RequireBlockNoArgumentFeatures) {
   struct {
     const char* name;
-    Feature feature;
   } features[] = {
-      {"robustBufferAccess", Feature::kRobustBufferAccess},
-      {"fullDrawIndexUint32", Feature::kFullDrawIndexUint32},
-      {"imageCubeArray", Feature::kImageCubeArray},
-      {"independentBlend", Feature::kIndependentBlend},
-      {"geometryShader", Feature::kGeometryShader},
-      {"tessellationShader", Feature::kTessellationShader},
-      {"sampleRateShading", Feature::kSampleRateShading},
-      {"dualSrcBlend", Feature::kDualSrcBlend},
-      {"logicOp", Feature::kLogicOp},
-      {"multiDrawIndirect", Feature::kMultiDrawIndirect},
-      {"drawIndirectFirstInstance", Feature::kDrawIndirectFirstInstance},
-      {"depthClamp", Feature::kDepthClamp},
-      {"depthBiasClamp", Feature::kDepthBiasClamp},
-      {"fillModeNonSolid", Feature::kFillModeNonSolid},
-      {"depthBounds", Feature::kDepthBounds},
-      {"wideLines", Feature::kWideLines},
-      {"largePoints", Feature::kLargePoints},
-      {"alphaToOne", Feature::kAlphaToOne},
-      {"multiViewport", Feature::kMultiViewport},
-      {"samplerAnisotropy", Feature::kSamplerAnisotropy},
-      {"textureCompressionETC2", Feature::kTextureCompressionETC2},
-      {"textureCompressionASTC_LDR", Feature::kTextureCompressionASTC_LDR},
-      {"textureCompressionBC", Feature::kTextureCompressionBC},
-      {"occlusionQueryPrecise", Feature::kOcclusionQueryPrecise},
-      {"pipelineStatisticsQuery", Feature::kPipelineStatisticsQuery},
-      {"vertexPipelineStoresAndAtomics",
-       Feature::kVertexPipelineStoresAndAtomics},
-      {"fragmentStoresAndAtomics", Feature::kFragmentStoresAndAtomics},
-      {"shaderTessellationAndGeometryPointSize",
-       Feature::kShaderTessellationAndGeometryPointSize},
-      {"shaderImageGatherExtended", Feature::kShaderImageGatherExtended},
-      {"shaderStorageImageExtendedFormats",
-       Feature::kShaderStorageImageExtendedFormats},
-      {"shaderStorageImageMultisample",
-       Feature::kShaderStorageImageMultisample},
-      {"shaderStorageImageReadWithoutFormat",
-       Feature::kShaderStorageImageReadWithoutFormat},
-      {"shaderStorageImageWriteWithoutFormat",
-       Feature::kShaderStorageImageWriteWithoutFormat},
-      {"shaderUniformBufferArrayDynamicIndexing",
-       Feature::kShaderUniformBufferArrayDynamicIndexing},
-      {"shaderSampledImageArrayDynamicIndexing",
-       Feature::kShaderSampledImageArrayDynamicIndexing},
-      {"shaderStorageBufferArrayDynamicIndexing",
-       Feature::kShaderStorageBufferArrayDynamicIndexing},
-      {"shaderStorageImageArrayDynamicIndexing",
-       Feature::kShaderStorageImageArrayDynamicIndexing},
-      {"shaderClipDistance", Feature::kShaderClipDistance},
-      {"shaderCullDistance", Feature::kShaderCullDistance},
-      {"shaderFloat64", Feature::kShaderFloat64},
-      {"shaderInt64", Feature::kShaderInt64},
-      {"shaderInt16", Feature::kShaderInt16},
-      {"shaderResourceResidency", Feature::kShaderResourceResidency},
-      {"shaderResourceMinLod", Feature::kShaderResourceMinLod},
-      {"sparseBinding", Feature::kSparseBinding},
-      {"sparseResidencyBuffer", Feature::kSparseResidencyBuffer},
-      {"sparseResidencyImage2D", Feature::kSparseResidencyImage2D},
-      {"sparseResidencyImage3D", Feature::kSparseResidencyImage3D},
-      {"sparseResidency2Samples", Feature::kSparseResidency2Samples},
-      {"sparseResidency4Samples", Feature::kSparseResidency4Samples},
-      {"sparseResidency8Samples", Feature::kSparseResidency8Samples},
-      {"sparseResidency16Samples", Feature::kSparseResidency16Samples},
-      {"sparseResidencyAliased", Feature::kSparseResidencyAliased},
-      {"variableMultisampleRate", Feature::kVariableMultisampleRate},
-      {"inheritedQueries", Feature::kInheritedQueries},
+      {"robustBufferAccess"},
+      {"fullDrawIndexUint32"},
+      {"imageCubeArray"},
+      {"independentBlend"},
+      {"geometryShader"},
+      {"tessellationShader"},
+      {"sampleRateShading"},
+      {"dualSrcBlend"},
+      {"logicOp"},
+      {"multiDrawIndirect"},
+      {"drawIndirectFirstInstance"},
+      {"depthClamp"},
+      {"depthBiasClamp"},
+      {"fillModeNonSolid"},
+      {"depthBounds"},
+      {"wideLines"},
+      {"largePoints"},
+      {"alphaToOne"},
+      {"multiViewport"},
+      {"samplerAnisotropy"},
+      {"textureCompressionETC2"},
+      {"textureCompressionASTC_LDR"},
+      {"textureCompressionBC"},
+      {"occlusionQueryPrecise"},
+      {"pipelineStatisticsQuery"},
+      {"vertexPipelineStoresAndAtomics"},
+      {"fragmentStoresAndAtomics"},
+      {"shaderTessellationAndGeometryPointSize"},
+      {"shaderImageGatherExtended"},
+      {"shaderStorageImageExtendedFormats"},
+      {"shaderStorageImageMultisample"},
+      {"shaderStorageImageReadWithoutFormat"},
+      {"shaderStorageImageWriteWithoutFormat"},
+      {"shaderUniformBufferArrayDynamicIndexing"},
+      {"shaderSampledImageArrayDynamicIndexing"},
+      {"shaderStorageBufferArrayDynamicIndexing"},
+      {"shaderStorageImageArrayDynamicIndexing"},
+      {"shaderClipDistance"},
+      {"shaderCullDistance"},
+      {"shaderFloat64"},
+      {"shaderInt64"},
+      {"shaderInt16"},
+      {"shaderResourceResidency"},
+      {"shaderResourceMinLod"},
+      {"sparseBinding"},
+      {"sparseResidencyBuffer"},
+      {"sparseResidencyImage2D"},
+      {"sparseResidencyImage3D"},
+      {"sparseResidency2Samples"},
+      {"sparseResidency4Samples"},
+      {"sparseResidency8Samples"},
+      {"sparseResidency16Samples"},
+      {"sparseResidencyAliased"},
+      {"variableMultisampleRate"},
+      {"inheritedQueries"},
   };
 
   for (const auto& feature : features) {
@@ -104,9 +92,9 @@ TEST_F(VkScriptParserTest, RequireBlockNoArgumentFeatures) {
     ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
     auto script = parser.GetScript();
-    auto& feats = script->RequiredFeatures();
+    auto feats = script->GetRequiredFeatures();
     ASSERT_EQ(1U, feats.size());
-    EXPECT_EQ(feature.feature, feats[0]);
+    EXPECT_EQ(feature.name, feats[0]);
   }
 }
 
@@ -190,9 +178,9 @@ inheritedQueries # line comment
   EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT,
             buffers[1]->AsFormatBuffer()->GetFormat().GetFormatType());
 
-  auto& feats = script->RequiredFeatures();
-  EXPECT_EQ(Feature::kSparseResidency4Samples, feats[0]);
-  EXPECT_EQ(Feature::kInheritedQueries, feats[1]);
+  auto feats = script->GetRequiredFeatures();
+  EXPECT_EQ("sparseResidency4Samples", feats[0]);
+  EXPECT_EQ("inheritedQueries", feats[1]);
 }
 
 TEST_F(VkScriptParserTest, IndicesBlock) {

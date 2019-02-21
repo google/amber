@@ -33,124 +33,46 @@ namespace {
 uint32_t kDefaultFrameBufferSize = 250;
 const char kDefaultPipelineName[] = "vk_pipeline";
 
-Feature NameToFeature(const std::string& name) {
-  if (name == "robustBufferAccess")
-    return Feature::kRobustBufferAccess;
-  if (name == "fullDrawIndexUint32")
-    return Feature::kFullDrawIndexUint32;
-  if (name == "imageCubeArray")
-    return Feature::kImageCubeArray;
-  if (name == "independentBlend")
-    return Feature::kIndependentBlend;
-  if (name == "geometryShader")
-    return Feature::kGeometryShader;
-  if (name == "tessellationShader")
-    return Feature::kTessellationShader;
-  if (name == "sampleRateShading")
-    return Feature::kSampleRateShading;
-  if (name == "dualSrcBlend")
-    return Feature::kDualSrcBlend;
-  if (name == "logicOp")
-    return Feature::kLogicOp;
-  if (name == "multiDrawIndirect")
-    return Feature::kMultiDrawIndirect;
-  if (name == "drawIndirectFirstInstance")
-    return Feature::kDrawIndirectFirstInstance;
-  if (name == "depthClamp")
-    return Feature::kDepthClamp;
-  if (name == "depthBiasClamp")
-    return Feature::kDepthBiasClamp;
-  if (name == "fillModeNonSolid")
-    return Feature::kFillModeNonSolid;
-  if (name == "depthBounds")
-    return Feature::kDepthBounds;
-  if (name == "wideLines")
-    return Feature::kWideLines;
-  if (name == "largePoints")
-    return Feature::kLargePoints;
-  if (name == "alphaToOne")
-    return Feature::kAlphaToOne;
-  if (name == "multiViewport")
-    return Feature::kMultiViewport;
-  if (name == "samplerAnisotropy")
-    return Feature::kSamplerAnisotropy;
-  if (name == "textureCompressionETC2")
-    return Feature::kTextureCompressionETC2;
-  if (name == "textureCompressionASTC_LDR")
-    return Feature::kTextureCompressionASTC_LDR;
-  if (name == "textureCompressionBC")
-    return Feature::kTextureCompressionBC;
-  if (name == "occlusionQueryPrecise")
-    return Feature::kOcclusionQueryPrecise;
-  if (name == "pipelineStatisticsQuery")
-    return Feature::kPipelineStatisticsQuery;
-  if (name == "vertexPipelineStoresAndAtomics")
-    return Feature::kVertexPipelineStoresAndAtomics;
-  if (name == "fragmentStoresAndAtomics")
-    return Feature::kFragmentStoresAndAtomics;
-  if (name == "shaderTessellationAndGeometryPointSize")
-    return Feature::kShaderTessellationAndGeometryPointSize;
-  if (name == "shaderImageGatherExtended")
-    return Feature::kShaderImageGatherExtended;
-  if (name == "shaderStorageImageExtendedFormats")
-    return Feature::kShaderStorageImageExtendedFormats;
-  if (name == "shaderStorageImageMultisample")
-    return Feature::kShaderStorageImageMultisample;
-  if (name == "shaderStorageImageReadWithoutFormat")
-    return Feature::kShaderStorageImageReadWithoutFormat;
-  if (name == "shaderStorageImageWriteWithoutFormat")
-    return Feature::kShaderStorageImageWriteWithoutFormat;
-  if (name == "shaderUniformBufferArrayDynamicIndexing")
-    return Feature::kShaderUniformBufferArrayDynamicIndexing;
-  if (name == "shaderSampledImageArrayDynamicIndexing")
-    return Feature::kShaderSampledImageArrayDynamicIndexing;
-  if (name == "shaderStorageBufferArrayDynamicIndexing")
-    return Feature::kShaderStorageBufferArrayDynamicIndexing;
-  if (name == "shaderStorageImageArrayDynamicIndexing")
-    return Feature::kShaderStorageImageArrayDynamicIndexing;
-  if (name == "shaderClipDistance")
-    return Feature::kShaderClipDistance;
-  if (name == "shaderCullDistance")
-    return Feature::kShaderCullDistance;
-  if (name == "shaderFloat64")
-    return Feature::kShaderFloat64;
-  if (name == "shaderInt64")
-    return Feature::kShaderInt64;
-  if (name == "shaderInt16")
-    return Feature::kShaderInt16;
-  if (name == "shaderResourceResidency")
-    return Feature::kShaderResourceResidency;
-  if (name == "shaderResourceMinLod")
-    return Feature::kShaderResourceMinLod;
-  if (name == "sparseBinding")
-    return Feature::kSparseBinding;
-  if (name == "sparseResidencyBuffer")
-    return Feature::kSparseResidencyBuffer;
-  if (name == "sparseResidencyImage2D")
-    return Feature::kSparseResidencyImage2D;
-  if (name == "sparseResidencyImage3D")
-    return Feature::kSparseResidencyImage3D;
-  if (name == "sparseResidency2Samples")
-    return Feature::kSparseResidency2Samples;
-  if (name == "sparseResidency4Samples")
-    return Feature::kSparseResidency4Samples;
-  if (name == "sparseResidency8Samples")
-    return Feature::kSparseResidency8Samples;
-  if (name == "sparseResidency16Samples")
-    return Feature::kSparseResidency16Samples;
-  if (name == "sparseResidencyAliased")
-    return Feature::kSparseResidencyAliased;
-  if (name == "variableMultisampleRate")
-    return Feature::kVariableMultisampleRate;
-  if (name == "inheritedQueries")
-    return Feature::kInheritedQueries;
-  if (name == "framebuffer")
-    return Feature::kFramebuffer;
-  if (name == "depthstencil")
-    return Feature::kDepthStencil;
-  if (name == "fence_timeout")
-    return Feature::kFenceTimeout;
-  return Feature::kUnknown;
+bool IsKnownFeature(const std::string& name) {
+  // Note framebuffer, depthstencil and fence_timeout are not matched here.
+  return name == "robustBufferAccess" || name == "fullDrawIndexUint32" ||
+         name == "imageCubeArray" || name == "independentBlend" ||
+         name == "geometryShader" || name == "tessellationShader" ||
+         name == "sampleRateShading" || name == "dualSrcBlend" ||
+         name == "logicOp" || name == "multiDrawIndirect" ||
+         name == "drawIndirectFirstInstance" || name == "depthClamp" ||
+         name == "depthBiasClamp" || name == "fillModeNonSolid" ||
+         name == "depthBounds" || name == "wideLines" ||
+         name == "largePoints" || name == "alphaToOne" ||
+         name == "multiViewport" || name == "samplerAnisotropy" ||
+         name == "textureCompressionETC2" ||
+         name == "textureCompressionASTC_LDR" ||
+         name == "textureCompressionBC" || name == "occlusionQueryPrecise" ||
+         name == "pipelineStatisticsQuery" ||
+         name == "vertexPipelineStoresAndAtomics" ||
+         name == "fragmentStoresAndAtomics" ||
+         name == "shaderTessellationAndGeometryPointSize" ||
+         name == "shaderImageGatherExtended" ||
+         name == "shaderStorageImageExtendedFormats" ||
+         name == "shaderStorageImageMultisample" ||
+         name == "shaderStorageImageReadWithoutFormat" ||
+         name == "shaderStorageImageWriteWithoutFormat" ||
+         name == "shaderUniformBufferArrayDynamicIndexing" ||
+         name == "shaderSampledImageArrayDynamicIndexing" ||
+         name == "shaderStorageBufferArrayDynamicIndexing" ||
+         name == "shaderStorageImageArrayDynamicIndexing" ||
+         name == "shaderClipDistance" || name == "shaderCullDistance" ||
+         name == "shaderFloat64" || name == "shaderInt64" ||
+         name == "shaderInt16" || name == "shaderResourceResidency" ||
+         name == "shaderResourceMinLod" || name == "sparseBinding" ||
+         name == "sparseResidencyBuffer" || name == "sparseResidencyImage2D" ||
+         name == "sparseResidencyImage3D" ||
+         name == "sparseResidency2Samples" ||
+         name == "sparseResidency4Samples" ||
+         name == "sparseResidency8Samples" ||
+         name == "sparseResidency16Samples" ||
+         name == "sparseResidencyAliased" ||
+         name == "variableMultisampleRate" || name == "inheritedQueries";
 }
 
 }  // namespace
@@ -273,17 +195,9 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
     }
 
     std::string str = token->AsString();
-    Feature feature = NameToFeature(str);
-    if (feature == Feature::kUnknown) {
-      auto it = std::find_if(str.begin(), str.end(),
-                             [](char c) { return !(isalnum(c) || c == '_'); });
-      if (it != str.end()) {
-        return Result(
-            make_error(tokenizer, "Unknown feature or extension: " + str));
-      }
-
-      script_->AddRequiredExtension(str);
-    } else if (feature == Feature::kFramebuffer) {
+    if (IsKnownFeature(str)) {
+      script_->AddRequiredFeature(str);
+    } else if (str == "framebuffer") {
       token = tokenizer.NextToken();
       if (!token->IsString())
         return Result(make_error(tokenizer, "Missing framebuffer format"));
@@ -300,7 +214,7 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
           .buffer->AsFormatBuffer()
           ->SetFormat(std::move(fmt));
 
-    } else if (feature == Feature::kDepthStencil) {
+    } else if (str == "depthstencil") {
       token = tokenizer.NextToken();
       if (!token->IsString())
         return Result(make_error(tokenizer, "Missing depthStencil format"));
@@ -328,14 +242,21 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       if (!r.IsSuccess())
         return r;
 
-    } else if (feature == Feature::kFenceTimeout) {
+    } else if (str == "fence_timeout") {
       token = tokenizer.NextToken();
       if (!token->IsInteger())
         return Result(make_error(tokenizer, "Missing fence_timeout value"));
 
       script_->GetEngineData().fence_timeout_ms = token->AsUint32();
     } else {
-      script_->AddRequiredFeature(feature);
+      auto it = std::find_if(str.begin(), str.end(),
+                             [](char c) { return !(isalnum(c) || c == '_'); });
+      if (it != str.end()) {
+        return Result(
+            make_error(tokenizer, "Unknown feature or extension: " + str));
+      }
+
+      script_->AddRequiredExtension(str);
     }
 
     token = tokenizer.NextToken();
