@@ -18,6 +18,7 @@
 #include <limits>
 
 #include "src/make_unique.h"
+#include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
 
@@ -148,13 +149,14 @@ Result Resource::Initialize() {
   if (!r.IsSuccess())
     return r;
 
-  AllocateResult allocate_result = AllocateAndBindMemoryToVkBuffer(
-      host_accessible_buffer_, &host_accessible_memory_,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-      true);
-  if (!allocate_result.r.IsSuccess())
-    return allocate_result.r;
+  uint32_t memory_type_index = 0;
+  r = AllocateAndBindMemoryToVkBuffer(host_accessible_buffer_,
+                                      &host_accessible_memory_,
+                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                      true, &memory_type_index);
+  if (!r.IsSuccess())
+    return r;
 
   return MapMemory(host_accessible_memory_);
 }
@@ -217,37 +219,37 @@ const VkMemoryRequirements Resource::GetVkBufferMemoryRequirements(
   return requirement;
 }
 
-const VkMemoryRequirements Resource::GetVkImageMemoryRequirements(
-    VkImage image) const {
-  VkMemoryRequirements requirement;
-  device_->GetPtrs()->vkGetImageMemoryRequirements(device_->GetDevice(), image,
-                                                   &requirement);
-  return requirement;
-}
+Result Resource::AllocateAndBindMemoryToVkBuffer(VkBuffer buffer,
+                                                 VkDeviceMemory* memory,
+                                                 VkMemoryPropertyFlags flags,
+                                                 bool force_flags,
+                                                 uint32_t* memory_type_index) {
+  assert(memory_type_index);
 
-Resource::AllocateResult Resource::AllocateAndBindMemoryToVkBuffer(
-    VkBuffer buffer,
-    VkDeviceMemory* memory,
-    VkMemoryPropertyFlags flags,
-    bool force_flags) {
+  *memory_type_index = 0;
+
   if (buffer == VK_NULL_HANDLE)
-    return {Result("Vulkan::Given VkBuffer is VK_NULL_HANDLE"), 0};
-
+    return Result("Vulkan::Given VkBuffer is VK_NULL_HANDLE");
   if (memory == nullptr)
-    return {Result("Vulkan::Given VkDeviceMemory pointer is nullptr"), 0};
+    return Result("Vulkan::Given VkDeviceMemory pointer is nullptr");
 
   auto requirement = GetVkBufferMemoryRequirements(buffer);
 
-  uint32_t memory_type_index =
+  *memory_type_index =
       ChooseMemory(requirement.memoryTypeBits, flags, force_flags);
-  if (memory_type_index == std::numeric_limits<uint32_t>::max())
-    return {Result("Vulkan::Find Proper Memory Fail"), 0};
+  if (*memory_type_index == std::numeric_limits<uint32_t>::max())
+    return Result("Vulkan::Find Proper Memory Fail");
 
-  Result r = AllocateMemory(memory, requirement.size, memory_type_index);
+  Result r = AllocateMemory(memory, requirement.size, *memory_type_index);
   if (!r.IsSuccess())
-    return {r, 0};
+    return r;
 
-  return {BindMemoryToVkBuffer(buffer, *memory), memory_type_index};
+  if (device_->GetPtrs()->vkBindBufferMemory(device_->GetDevice(), buffer,
+                                             *memory, 0) != VK_SUCCESS) {
+    return Result("Vulkan::Calling vkBindBufferMemory Fail");
+  }
+
+  return {};
 }
 
 Result Resource::AllocateMemory(VkDeviceMemory* memory,
@@ -260,49 +262,6 @@ Result Resource::AllocateMemory(VkDeviceMemory* memory,
   if (device_->GetPtrs()->vkAllocateMemory(device_->GetDevice(), &alloc_info,
                                            nullptr, memory) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkAllocateMemory Fail");
-  }
-
-  return {};
-}
-
-Result Resource::BindMemoryToVkBuffer(VkBuffer buffer, VkDeviceMemory memory) {
-  if (device_->GetPtrs()->vkBindBufferMemory(device_->GetDevice(), buffer,
-                                             memory, 0) != VK_SUCCESS) {
-    return Result("Vulkan::Calling vkBindBufferMemory Fail");
-  }
-
-  return {};
-}
-
-Resource::AllocateResult Resource::AllocateAndBindMemoryToVkImage(
-    VkImage image,
-    VkDeviceMemory* memory,
-    VkMemoryPropertyFlags flags,
-    bool force_flags) {
-  if (image == VK_NULL_HANDLE)
-    return {Result("Vulkan::Given VkImage is VK_NULL_HANDLE"), 0};
-
-  if (memory == nullptr)
-    return {Result("Vulkan::Given VkDeviceMemory pointer is nullptr"), 0};
-
-  auto requirement = GetVkImageMemoryRequirements(image);
-
-  uint32_t memory_type_index =
-      ChooseMemory(requirement.memoryTypeBits, flags, force_flags);
-  if (memory_type_index == std::numeric_limits<uint32_t>::max())
-    return {Result("Vulkan::Find Proper Memory Fail"), 0};
-
-  Result r = AllocateMemory(memory, requirement.size, memory_type_index);
-  if (!r.IsSuccess())
-    return {r, 0};
-
-  return {BindMemoryToVkImage(image, *memory), memory_type_index};
-}
-
-Result Resource::BindMemoryToVkImage(VkImage image, VkDeviceMemory memory) {
-  if (device_->GetPtrs()->vkBindImageMemory(device_->GetDevice(), image, memory,
-                                            0) != VK_SUCCESS) {
-    return Result("Vulkan::Calling vkBindImageMemory Fail");
   }
 
   return {};
@@ -322,7 +281,7 @@ void Resource::UnMapMemory(VkDeviceMemory memory) {
   device_->GetPtrs()->vkUnmapMemory(device_->GetDevice(), memory);
 }
 
-void Resource::MemoryBarrier(VkCommandBuffer command) {
+void Resource::MemoryBarrier(CommandBuffer* command) {
   // TODO(jaebaek): Current memory barrier is natively implemented.
   // Update it with the following access flags:
   // (r = read, w = write)
@@ -344,7 +303,7 @@ void Resource::MemoryBarrier(VkCommandBuffer command) {
   // ReadOnly Descriptors          host w         shader r
   //                           transfer w       transfer r
   device_->GetPtrs()->vkCmdPipelineBarrier(
-      command, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+      command->GetCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1, &kMemoryBarrierForAll, 0,
       nullptr, 0, nullptr);
 }

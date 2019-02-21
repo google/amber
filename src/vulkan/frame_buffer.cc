@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "src/make_unique.h"
+#include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
 
@@ -82,7 +83,7 @@ Result FrameBuffer::Initialize(
   return {};
 }
 
-Result FrameBuffer::ChangeFrameImageLayout(VkCommandBuffer command,
+Result FrameBuffer::ChangeFrameImageLayout(CommandBuffer* command,
                                            FrameImageState layout) {
   if (layout == FrameImageState::kInit) {
     return Result(

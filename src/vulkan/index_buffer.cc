@@ -18,6 +18,7 @@
 #include <cstring>
 
 #include "src/make_unique.h"
+#include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
 
@@ -34,7 +35,7 @@ void IndexBuffer::Shutdown() {
 }
 
 Result IndexBuffer::SendIndexData(
-    VkCommandBuffer command,
+    CommandBuffer* command,
     const VkPhysicalDeviceMemoryProperties& properties,
     const std::vector<Value>& values) {
   if (buffer_) {
@@ -59,11 +60,12 @@ Result IndexBuffer::SendIndexData(
   return buffer_->CopyToDevice(command);
 }
 
-Result IndexBuffer::BindToCommandBuffer(VkCommandBuffer command) {
+Result IndexBuffer::BindToCommandBuffer(CommandBuffer* command) {
   if (!buffer_)
     return Result("IndexBuffer::BindToCommandBuffer |buffer_| is nullptr");
 
-  device_->GetPtrs()->vkCmdBindIndexBuffer(command, buffer_->GetVkBuffer(), 0,
+  device_->GetPtrs()->vkCmdBindIndexBuffer(command->GetCommandBuffer(),
+                                           buffer_->GetVkBuffer(), 0,
                                            VK_INDEX_TYPE_UINT32);
   return {};
 }

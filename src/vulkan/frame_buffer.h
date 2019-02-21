@@ -28,6 +28,7 @@ enum class FrameImageState : uint8_t {
   kProbe,
 };
 
+class CommandBuffer;
 class Device;
 
 class FrameBuffer {
@@ -41,8 +42,7 @@ class FrameBuffer {
                     const VkPhysicalDeviceMemoryProperties& properties);
   void Shutdown();
 
-  Result ChangeFrameImageLayout(VkCommandBuffer command,
-                                FrameImageState layout);
+  Result ChangeFrameImageLayout(CommandBuffer* command, FrameImageState layout);
 
   VkFramebuffer GetFrameBuffer() const { return frame_; }
   const void* GetColorBufferPtr() const {
@@ -53,7 +53,7 @@ class FrameBuffer {
   // Only record the command for copying the image that backs this
   // framebuffer to the host accessible buffer. The actual submission
   // of the command must be done later.
-  Result CopyColorImageToHost(VkCommandBuffer command) {
+  Result CopyColorImageToHost(CommandBuffer* command) {
     ChangeFrameImageLayout(command, FrameImageState::kProbe);
     return color_image_->CopyToHost(command);
   }

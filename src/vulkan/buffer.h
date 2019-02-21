@@ -22,6 +22,7 @@
 namespace amber {
 namespace vulkan {
 
+class CommandBuffer;
 class Device;
 
 // Class managing Vulkan Buffer i.e., VkBuffer |buffer_|. |memory_|
@@ -48,7 +49,7 @@ class Buffer : public Resource {
   // Since |buffer_| is mapped to host accessible and host coherent
   // memory |memory_|, this method only conducts memory barrier to
   // make it available to device domain.
-  virtual Result CopyToDevice(VkCommandBuffer command);
+  virtual Result CopyToDevice(CommandBuffer* command);
 
   // Resource
   VkDeviceMemory GetHostAccessMemory() const override { return memory_; }
@@ -56,13 +57,13 @@ class Buffer : public Resource {
   // Since |buffer_| is mapped to host accessible and host coherent
   // memory |memory_|, this method only conducts memory barrier to
   // make it available to host domain.
-  Result CopyToHost(VkCommandBuffer command) override;
+  Result CopyToHost(CommandBuffer* command) override;
 
   // Copy all data from |src| to |this| and wait until
   // the memory update is effective by calling vkCmdPipelineBarrier().
   // Note that this method only records the copy command and the
   // actual submission of the command must be done later.
-  void CopyFromBuffer(VkCommandBuffer command, const Buffer& src);
+  void CopyFromBuffer(CommandBuffer* command, const Buffer& src);
 
   void Shutdown() override;
 

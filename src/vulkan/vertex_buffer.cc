@@ -18,6 +18,7 @@
 #include <cstring>
 
 #include "src/make_unique.h"
+#include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
 
@@ -213,7 +214,7 @@ void VertexBuffer::SetData(uint8_t location,
   data_.push_back(values);
 }
 
-Result VertexBuffer::FillVertexBufferWithData(VkCommandBuffer command) {
+Result VertexBuffer::FillVertexBufferWithData(CommandBuffer* command) {
   // Send vertex data from host to device.
   uint8_t* ptr_in_stride_begin =
       static_cast<uint8_t*>(buffer_->HostAccessibleMemoryPtr());
@@ -258,15 +259,16 @@ Result VertexBuffer::FillVertexBufferWithData(VkCommandBuffer command) {
   return buffer_->CopyToDevice(command);
 }
 
-void VertexBuffer::BindToCommandBuffer(VkCommandBuffer command) {
+void VertexBuffer::BindToCommandBuffer(CommandBuffer* command) {
   const VkDeviceSize offset = 0;
   const VkBuffer buffer = buffer_->GetVkBuffer();
   // TODO(jaebaek): Support multiple binding
-  device_->GetPtrs()->vkCmdBindVertexBuffers(command, 0, 1, &buffer, &offset);
+  device_->GetPtrs()->vkCmdBindVertexBuffers(command->GetCommandBuffer(), 0, 1,
+                                             &buffer, &offset);
 }
 
 Result VertexBuffer::SendVertexData(
-    VkCommandBuffer command,
+    CommandBuffer* command,
     const VkPhysicalDeviceMemoryProperties& properties) {
   if (!is_vertex_data_pending_)
     return Result("Vulkan::Vertices data was already sent");

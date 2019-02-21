@@ -191,8 +191,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
         device_.get(), device_->GetPhysicalDeviceProperties(),
         device_->GetPhysicalMemoryProperties(), engine_data.fence_timeout_ms,
         GetShaderStageInfo());
-    Result r = pipeline_->AsCompute()->Initialize(pool_->GetCommandPool(),
-                                                  device_->GetQueue());
+    Result r =
+        pipeline_->AsCompute()->Initialize(pool_.get(), device_->GetQueue());
     if (!r.IsSuccess())
       return r;
   } else {
@@ -205,7 +205,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
     Result r = pipeline_->AsGraphics()->Initialize(
         pipeline->GetFramebufferWidth(), pipeline->GetFramebufferHeight(),
-        pool_->GetCommandPool(), device_->GetQueue());
+        pool_.get(), device_->GetQueue());
     if (!r.IsSuccess())
       return r;
   }

@@ -19,6 +19,7 @@
 
 #include "src/command.h"
 #include "src/make_unique.h"
+#include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
 
@@ -651,7 +652,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
 
 Result GraphicsPipeline::Initialize(uint32_t width,
                                     uint32_t height,
-                                    VkCommandPool pool,
+                                    CommandPool* pool,
                                     VkQueue queue) {
   Result r = Pipeline::Initialize(pool, queue);
   if (!r.IsSuccess())
@@ -687,8 +688,7 @@ Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
 
   DeactivateRenderPassIfNeeded();
 
-  return vertex_buffer->SendVertexData(command_->GetCommandBuffer(),
-                                       memory_properties_);
+  return vertex_buffer->SendVertexData(command_.get(), memory_properties_);
 }
 
 Result GraphicsPipeline::SetIndexBuffer(const std::vector<Value>& values) {
@@ -706,8 +706,7 @@ Result GraphicsPipeline::SetIndexBuffer(const std::vector<Value>& values) {
 
   DeactivateRenderPassIfNeeded();
 
-  r = index_buffer_->SendIndexData(command_->GetCommandBuffer(),
-                                   memory_properties_, values);
+  r = index_buffer_->SendIndexData(command_.get(), memory_properties_, values);
   if (!r.IsSuccess())
     return r;
 
@@ -722,7 +721,7 @@ Result GraphicsPipeline::ActivateRenderPassIfNeeded() {
   if (render_pass_state_ == RenderPassState::kActive)
     return {};
 
-  Result r = frame_->ChangeFrameImageLayout(command_->GetCommandBuffer(),
+  Result r = frame_->ChangeFrameImageLayout(command_.get(),
                                             FrameImageState::kClearOrDraw);
   if (!r.IsSuccess())
     return r;
@@ -835,7 +834,7 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
 
   DeactivateRenderPassIfNeeded();
 
-  return frame_->CopyColorImageToHost(command_->GetCommandBuffer());
+  return frame_->CopyColorImageToHost(command_.get());
 }
 
 Result GraphicsPipeline::ResetPipeline() {
@@ -918,7 +917,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     return r;
 
   if (vertex_buffer != nullptr)
-    vertex_buffer->BindToCommandBuffer(command_->GetCommandBuffer());
+    vertex_buffer->BindToCommandBuffer(command_.get());
 
   uint32_t instance_count = command->GetInstanceCount();
   if (instance_count == 0 && command->GetVertexCount() != 0)
@@ -928,7 +927,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     if (!index_buffer_)
       return Result("Vulkan: Draw indexed is used without given indices");
 
-    r = index_buffer_->BindToCommandBuffer(command_->GetCommandBuffer());
+    r = index_buffer_->BindToCommandBuffer(command_.get());
     if (!r.IsSuccess())
       return r;
 
@@ -950,7 +949,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
 
   DeactivateRenderPassIfNeeded();
 
-  r = frame_->CopyColorImageToHost(command_->GetCommandBuffer());
+  r = frame_->CopyColorImageToHost(command_.get());
   if (!r.IsSuccess())
     return r;
 
