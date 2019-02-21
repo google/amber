@@ -73,7 +73,9 @@ bool IsKnownFeature(const std::string& name) {
          name == "sparseResidency8Samples" ||
          name == "sparseResidency16Samples" ||
          name == "sparseResidencyAliased" ||
-         name == "variableMultisampleRate" || name == "inheritedQueries";
+         name == "variableMultisampleRate" || name == "inheritedQueries" ||
+         name == "VariablePointerFeatures.variablePointers" ||
+         name == "VariablePointerFeatures.variablePointersStorageBuffer";
 }
 
 }  // namespace

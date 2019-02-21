@@ -39,7 +39,11 @@ const char* const kRequiredValidationLayers[] = {
 const size_t kNumberOfRequiredValidationLayers =
     sizeof(kRequiredValidationLayers) / sizeof(const char*);
 
-const char* kExtensionForValidationLayer = "VK_EXT_debug_report";
+const char kVariablePointers[] = "VariablePointerFeatures.variablePointers";
+const char kVariablePointersStorageBuffer[] =
+    "VariablePointerFeatures.variablePointersStorageBuffer";
+
+const char kExtensionForValidationLayer[] = "VK_EXT_debug_report";
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flag,
                                              VkDebugReportObjectTypeEXT,
@@ -183,7 +187,7 @@ amber::Result NamesToVulkanFeatures(
     } else if (name == "inheritedQueries") {
       features->inheritedQueries = VK_TRUE;
     } else {
-      return amber::Result("Sample: Unknown Vulkan feature");
+      return amber::Result("Sample: Unknown Vulkan feature: " + name);
     }
   }
   return {};
@@ -669,16 +673,16 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
   }
 
   VkPhysicalDeviceFeatures required_vulkan_features = {};
-  amber::Result r =
-      NamesToVulkanFeatures(required_features, &required_vulkan_features);
-  if (!r.IsSuccess())
-    return r;
-
   for (uint32_t i = 0; i < count; ++i) {
     if (use_physical_device_features2_) {
+      VkPhysicalDeviceVariablePointerFeaturesKHR var_ptrs = {};
+      var_ptrs.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
+      var_ptrs.pNext = nullptr;
+
       VkPhysicalDeviceFeatures2KHR features2 = {};
       features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
-      features2.pNext = nullptr;
+      features2.pNext = &var_ptrs;
 
       auto vkGetPhysicalDeviceFeatures2KHR =
           reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
@@ -686,7 +690,37 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
                                     "vkGetPhysicalDeviceFeatures2KHR"));
       vkGetPhysicalDeviceFeatures2KHR(physical_devices[i], &features2);
       available_features_ = features2.features;
+
+      std::vector<std::string> required_features1;
+      for (const auto& feature : required_features) {
+        // No dot means this is a features1 feature.
+        if (feature.find_first_of('.') == std::string::npos) {
+          required_features1.push_back(feature);
+          continue;
+        }
+
+        if (feature == kVariablePointers &&
+            var_ptrs.variablePointers != VK_TRUE) {
+          return amber::Result("Missing variable pointers feature");
+        }
+        if (feature == kVariablePointersStorageBuffer &&
+            var_ptrs.variablePointersStorageBuffer != VK_TRUE) {
+          return amber::Result(
+              "Missing variable pointers storage buffer feature");
+        }
+      }
+
+      amber::Result r =
+          NamesToVulkanFeatures(required_features1, &required_vulkan_features);
+      if (!r.IsSuccess())
+        return r;
+
     } else {
+      amber::Result r =
+          NamesToVulkanFeatures(required_features, &required_vulkan_features);
+      if (!r.IsSuccess())
+        return r;
+
       vkGetPhysicalDeviceFeatures(physical_devices[i], &available_features_);
     }
     if (!AreAllRequiredFeaturesSupported(available_features_,
@@ -757,14 +791,33 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures1(
 amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
     const std::vector<std::string>& required_features,
     VkDeviceCreateInfo* info) {
+  variable_pointers_feature_.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
+  variable_pointers_feature_.pNext = nullptr;
+
+  available_features2_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+  available_features2_.pNext = &variable_pointers_feature_;
+
+  std::vector<std::string> feature1_names;
+  for (const auto& feature : required_features) {
+    // No dot means this is a features1 feature.
+    if (feature.find_first_of('.') == std::string::npos) {
+      feature1_names.push_back(feature);
+      continue;
+    }
+
+    if (feature == kVariablePointers)
+      variable_pointers_feature_.variablePointers = VK_TRUE;
+    else if (feature == kVariablePointersStorageBuffer)
+      variable_pointers_feature_.variablePointersStorageBuffer = VK_TRUE;
+  }
+
   VkPhysicalDeviceFeatures required_vulkan_features = {};
   amber::Result r =
-      NamesToVulkanFeatures(required_features, &required_vulkan_features);
+      NamesToVulkanFeatures(feature1_names, &required_vulkan_features);
   if (!r.IsSuccess())
     return r;
 
-  available_features2_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
-  available_features2_.pNext = nullptr;
   available_features2_.features = required_vulkan_features;
 
   info->pNext = &available_features2_;
