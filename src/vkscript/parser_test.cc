@@ -151,6 +151,66 @@ TEST_F(VkScriptParserTest, RequireBlockDepthStencil) {
             buffers[1]->AsFormatBuffer()->GetFormat().GetFormatType());
 }
 
+TEST_F(VkScriptParserTest, RequireFbSize) {
+  std::string block = "[require]\nfbsize 300 400";
+
+  Parser parser;
+  Result r = parser.Parse(block);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+  EXPECT_EQ(300, pipelines[0]->GetFramebufferWidth());
+  EXPECT_EQ(400, pipelines[0]->GetFramebufferHeight());
+}
+
+TEST_F(VkScriptParserTest, RequireFbSizeMissingSize) {
+  std::string block = "[require]\nfbsize";
+
+  Parser parser;
+  Result r = parser.Parse(block);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: Missing width and height for fbsize command", r.Error());
+}
+
+TEST_F(VkScriptParserTest, RequireFbSizeMissingValue) {
+  std::string block = "[require]\nfbsize 200";
+
+  Parser parser;
+  Result r = parser.Parse(block);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: Missing height for fbsize command", r.Error());
+}
+
+TEST_F(VkScriptParserTest, RequireFbSizeExtraParams) {
+  std::string block = "[require]\nfbsize 200 300 EXTRA";
+
+  Parser parser;
+  Result r = parser.Parse(block);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: Failed to parse requirements block: invalid token: EXTRA",
+            r.Error());
+}
+
+TEST_F(VkScriptParserTest, RequireFbSizeInvalidFirstParam) {
+  std::string block = "[require]\nfbsize INVALID 200";
+
+  Parser parser;
+  Result r = parser.Parse(block);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: Invalid width for fbsize command", r.Error());
+}
+
+TEST_F(VkScriptParserTest, RequireFbSizeInvalidSecondParam) {
+  std::string block = "[require]\nfbsize 200 INVALID";
+
+  Parser parser;
+  Result r = parser.Parse(block);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: Invalid height for fbsize command", r.Error());
+}
+
 TEST_F(VkScriptParserTest, RequireBlockMultipleLines) {
   std::string block = R"([require]
 # Requirements block stuff.

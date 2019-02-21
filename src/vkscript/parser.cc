@@ -34,7 +34,8 @@ uint32_t kDefaultFrameBufferSize = 250;
 const char kDefaultPipelineName[] = "vk_pipeline";
 
 bool IsKnownFeature(const std::string& name) {
-  // Note framebuffer, depthstencil and fence_timeout are not matched here.
+  // Note framebuffer, depthstencil, fbsize and fence_timeout are not matched
+  // here.
   return name == "robustBufferAccess" || name == "fullDrawIndexUint32" ||
          name == "imageCubeArray" || name == "independentBlend" ||
          name == "geometryShader" || name == "tessellationShader" ||
@@ -185,7 +186,8 @@ Result Parser::ProcessShaderBlock(const SectionParser::Section& section) {
 
 Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
   Tokenizer tokenizer(section.contents);
-  tokenizer.SetCurrentLine(section.starting_line_number);
+  tokenizer.SetCurrentLine(section.starting_line_number + 1);
+
   for (auto token = tokenizer.NextToken(); !token->IsEOS();
        token = tokenizer.NextToken()) {
     if (token->IsEOL())
@@ -250,6 +252,34 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
         return Result(make_error(tokenizer, "Missing fence_timeout value"));
 
       script_->GetEngineData().fence_timeout_ms = token->AsUint32();
+
+    } else if (str == "fbsize") {
+      auto* pipeline = script_->GetPipeline(kDefaultPipelineName);
+
+      token = tokenizer.NextToken();
+      if (token->IsEOL() || token->IsEOS()) {
+        return Result(make_error(
+            tokenizer, "Missing width and height for fbsize command"));
+      }
+      if (!token->IsInteger()) {
+        return Result(
+            make_error(tokenizer, "Invalid width for fbsize command"));
+      }
+
+      pipeline->SetFramebufferWidth(token->AsUint32());
+
+      token = tokenizer.NextToken();
+      if (token->IsEOL() || token->IsEOS()) {
+        return Result(
+            make_error(tokenizer, "Missing height for fbsize command"));
+      }
+      if (!token->IsInteger()) {
+        return Result(
+            make_error(tokenizer, "Invalid height for fbsize command"));
+      }
+
+      pipeline->SetFramebufferHeight(token->AsUint32());
+
     } else {
       auto it = std::find_if(str.begin(), str.end(),
                              [](char c) { return !(isalnum(c) || c == '_'); });
@@ -264,7 +294,7 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
     token = tokenizer.NextToken();
     if (!token->IsEOS() && !token->IsEOL()) {
       return Result(make_error(
-          tokenizer, "Failed to parser requirements block: invalid token: " +
+          tokenizer, "Failed to parse requirements block: invalid token: " +
                          token->ToOriginalString()));
     }
   }
