@@ -22,6 +22,7 @@
 
 #include "src/engine.h"
 #include "src/make_unique.h"
+#include "src/vulkan/command_buffer.h"
 
 namespace amber {
 namespace vulkan {
@@ -91,7 +92,7 @@ Result BufferDescriptor::CreateResourceIfNeeded(
 }
 
 Result BufferDescriptor::RecordCopyDataToResourceIfNeeded(
-    VkCommandBuffer command) {
+    CommandBuffer* command) {
   auto& buffer_output = GetBufferOutput();
   if (!buffer_output.empty()) {
     buffer_->UpdateMemoryWithRawData(buffer_output);
@@ -114,7 +115,7 @@ Result BufferDescriptor::RecordCopyDataToResourceIfNeeded(
   return {};
 }
 
-Result BufferDescriptor::RecordCopyDataToHost(VkCommandBuffer command) {
+Result BufferDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
   if (!buffer_) {
     return Result(
         "Vulkan: BufferDescriptor::RecordCopyDataToHost() |buffer_| is empty");

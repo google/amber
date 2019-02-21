@@ -14,12 +14,13 @@
 
 #include "src/vulkan/command_buffer.h"
 
+#include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 
 namespace amber {
 namespace vulkan {
 
-CommandBuffer::CommandBuffer(Device* device, VkCommandPool pool, VkQueue queue)
+CommandBuffer::CommandBuffer(Device* device, CommandPool* pool, VkQueue queue)
     : device_(device), pool_(pool), queue_(queue) {}
 
 CommandBuffer::~CommandBuffer() = default;
@@ -27,7 +28,7 @@ CommandBuffer::~CommandBuffer() = default;
 Result CommandBuffer::Initialize() {
   VkCommandBufferAllocateInfo command_info = VkCommandBufferAllocateInfo();
   command_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  command_info.commandPool = pool_;
+  command_info.commandPool = pool_->GetCommandPool();
   command_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   command_info.commandBufferCount = 1;
 
@@ -114,8 +115,8 @@ void CommandBuffer::Shutdown() {
     device_->GetPtrs()->vkDestroyFence(device_->GetDevice(), fence_, nullptr);
 
   if (command_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkFreeCommandBuffers(device_->GetDevice(), pool_, 1,
-                                             &command_);
+    device_->GetPtrs()->vkFreeCommandBuffers(
+        device_->GetDevice(), pool_->GetCommandPool(), 1, &command_);
   }
 }
 

@@ -27,6 +27,7 @@
 namespace amber {
 namespace vulkan {
 
+class CommandBuffer;
 class Device;
 
 class VertexBuffer {
@@ -36,7 +37,7 @@ class VertexBuffer {
 
   void Shutdown();
 
-  Result SendVertexData(VkCommandBuffer command,
+  Result SendVertexData(CommandBuffer* command,
                         const VkPhysicalDeviceMemoryProperties& properties);
   bool VertexDataSent() const { return !is_vertex_data_pending_; }
 
@@ -65,13 +66,13 @@ class VertexBuffer {
     return data_[0].size() / formats_[0].GetComponents().size();
   }
 
-  void BindToCommandBuffer(VkCommandBuffer command);
+  void BindToCommandBuffer(CommandBuffer* command);
 
   // Must be used only for unit tests.
   void SetBufferForTest(std::unique_ptr<Buffer> buffer);
 
  private:
-  Result FillVertexBufferWithData(VkCommandBuffer command);
+  Result FillVertexBufferWithData(CommandBuffer* command);
 
   // Return |stride_in_bytes_| rounded up by 4.
   uint32_t Get4BytesAlignedStride() const {

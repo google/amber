@@ -42,7 +42,7 @@ class BufferForTest : public Buffer {
 
   void* HostAccessibleMemoryPtr() const override { return memory_ptr_; }
 
-  Result CopyToDevice(VkCommandBuffer) override { return Result(); }
+  Result CopyToDevice(CommandBuffer*) override { return Result(); }
 
  private:
   std::vector<uint8_t> memory_;
@@ -66,8 +66,7 @@ class VertexBufferTest : public testing::Test {
                  const Format& format,
                  const std::vector<Value>& values) {
     vertex_buffer_->SetData(location, format, values);
-    VkCommandBuffer null_cmd_buf = VK_NULL_HANDLE;
-    return vertex_buffer_->SendVertexData(null_cmd_buf, kMemoryProperties);
+    return vertex_buffer_->SendVertexData(nullptr, kMemoryProperties);
   }
 
   const void* GetVkBufferPtr() const { return buffer_memory_; }

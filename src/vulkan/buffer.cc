@@ -14,10 +14,28 @@
 
 #include "src/vulkan/buffer.h"
 
+#include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
 namespace amber {
 namespace vulkan {
+namespace {
+
+bool IsMemoryHostAccessible(const VkPhysicalDeviceMemoryProperties& props,
+                            uint32_t memory_type_index) {
+  return (props.memoryTypes[memory_type_index].propertyFlags &
+          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) ==
+         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+}
+
+bool IsMemoryHostCoherent(const VkPhysicalDeviceMemoryProperties& props,
+                          uint32_t memory_type_index) {
+  return (props.memoryTypes[memory_type_index].propertyFlags &
+          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) ==
+         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+}
+
+}  // namespace
 
 Buffer::Buffer(Device* device,
                size_t size_in_bytes,
@@ -31,16 +49,16 @@ Result Buffer::Initialize(const VkBufferUsageFlags usage) {
   if (!r.IsSuccess())
     return r;
 
-  AllocateResult allocate_result =
-      AllocateAndBindMemoryToVkBuffer(buffer_, &memory_,
+  uint32_t memory_type_index = 0;
+  r = AllocateAndBindMemoryToVkBuffer(buffer_, &memory_,
                                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                      true);
-  if (!allocate_result.r.IsSuccess())
-    return allocate_result.r;
+                                      true, &memory_type_index);
+  if (!r.IsSuccess())
+    return r;
 
-  if (!IsMemoryHostAccessible(allocate_result.memory_type_index) ||
-      !IsMemoryHostCoherent(allocate_result.memory_type_index)) {
+  if (!IsMemoryHostAccessible(GetMemoryProperties(), memory_type_index) ||
+      !IsMemoryHostCoherent(GetMemoryProperties(), memory_type_index)) {
     return Result(
         "Vulkan: Buffer::Initialize() Buffer is not host accessible or not "
         "host coherent.");
@@ -65,7 +83,7 @@ Result Buffer::CreateVkBufferView(VkFormat format) {
   return {};
 }
 
-Result Buffer::CopyToDevice(VkCommandBuffer command) {
+Result Buffer::CopyToDevice(CommandBuffer* command) {
   // This is redundant because this buffer is always host visible
   // and coherent and vkQueueSubmit will make writes from host
   // avaliable (See chapter 6.9. "Host Write Ordering Guarantees" in
@@ -74,19 +92,19 @@ Result Buffer::CopyToDevice(VkCommandBuffer command) {
   return {};
 }
 
-Result Buffer::CopyToHost(VkCommandBuffer command) {
+Result Buffer::CopyToHost(CommandBuffer* command) {
   MemoryBarrier(command);
   return {};
 }
 
-void Buffer::CopyFromBuffer(VkCommandBuffer command, const Buffer& src) {
+void Buffer::CopyFromBuffer(CommandBuffer* command, const Buffer& src) {
   VkBufferCopy region = VkBufferCopy();
   region.srcOffset = 0;
   region.dstOffset = 0;
   region.size = src.GetSizeInBytes();
 
-  device_->GetPtrs()->vkCmdCopyBuffer(command, src.buffer_, buffer_, 1,
-                                      &region);
+  device_->GetPtrs()->vkCmdCopyBuffer(command->GetCommandBuffer(), src.buffer_,
+                                      buffer_, 1, &region);
   MemoryBarrier(command);
 }
 

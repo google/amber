@@ -26,6 +26,7 @@
 namespace amber {
 namespace vulkan {
 
+class CommandBuffer;
 class Device;
 
 // Contain information of filling memory
@@ -50,7 +51,7 @@ class Resource {
     return host_accessible_memory_;
   }
 
-  virtual Result CopyToHost(VkCommandBuffer command) = 0;
+  virtual Result CopyToHost(CommandBuffer* command) = 0;
 
   virtual void Shutdown();
 
@@ -74,33 +75,11 @@ class Resource {
 
   VkBuffer GetHostAccessibleBuffer() const { return host_accessible_buffer_; }
 
-  struct AllocateResult {
-    Result r;
-    uint32_t memory_type_index;
-  };
-
-  AllocateResult AllocateAndBindMemoryToVkBuffer(VkBuffer buffer,
-                                                 VkDeviceMemory* memory,
-                                                 VkMemoryPropertyFlags flags,
-                                                 bool force_flags);
-  AllocateResult AllocateAndBindMemoryToVkImage(VkImage image,
-                                                VkDeviceMemory* memory,
-                                                VkMemoryPropertyFlags flags,
-                                                bool force_flags);
-
-  bool IsMemoryHostAccessible(uint32_t memory_type_index) {
-    return (physical_memory_properties_.memoryTypes[memory_type_index]
-                .propertyFlags &
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) ==
-           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-  }
-
-  bool IsMemoryHostCoherent(uint32_t memory_type_index) {
-    return (physical_memory_properties_.memoryTypes[memory_type_index]
-                .propertyFlags &
-            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) ==
-           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-  }
+  Result AllocateAndBindMemoryToVkBuffer(VkBuffer buffer,
+                                         VkDeviceMemory* memory,
+                                         VkMemoryPropertyFlags flags,
+                                         bool force_flags,
+                                         uint32_t* memory_type_index);
 
   Result MapMemory(VkDeviceMemory memory);
   void UnMapMemory(VkDeviceMemory memory);
@@ -112,11 +91,12 @@ class Resource {
 
   // Make all memory operations before calling this method effective i.e.,
   // prevent hazards caused by out-of-order execution.
-  void MemoryBarrier(VkCommandBuffer command);
+  void MemoryBarrier(CommandBuffer* command);
 
-  Device* device_ = nullptr;
+  const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() const {
+    return physical_memory_properties_;
+  }
 
- private:
   uint32_t ChooseMemory(uint32_t memory_type_bits,
                         VkMemoryPropertyFlags flags,
                         bool force_flags);
@@ -124,12 +104,11 @@ class Resource {
                         VkDeviceSize size,
                         uint32_t memory_type_index);
 
-  Result BindMemoryToVkBuffer(VkBuffer buffer, VkDeviceMemory memory);
+  Device* device_ = nullptr;
+
+ private:
   const VkMemoryRequirements GetVkBufferMemoryRequirements(
       VkBuffer buffer) const;
-
-  Result BindMemoryToVkImage(VkImage image, VkDeviceMemory memory);
-  const VkMemoryRequirements GetVkImageMemoryRequirements(VkImage image) const;
 
   size_t size_in_bytes_ = 0;
   VkPhysicalDeviceMemoryProperties physical_memory_properties_;
