@@ -23,7 +23,6 @@
 #include "amber/result.h"
 #include "src/buffer_data.h"
 #include "src/command.h"
-#include "src/feature.h"
 #include "src/format.h"
 #include "src/pipeline.h"
 
@@ -86,7 +85,7 @@ class Engine {
   /// otherwise.
   virtual Result Initialize(
       EngineConfig* config,
-      const std::vector<Feature>& features,
+      const std::vector<std::string>& features,
       const std::vector<std::string>& instance_extensions,
       const std::vector<std::string>& device_extensions) = 0;
 
