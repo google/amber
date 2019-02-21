@@ -34,7 +34,7 @@ class EngineStub : public Engine {
 
   // Engine
   Result Initialize(EngineConfig*,
-                    const std::vector<Feature>& features,
+                    const std::vector<std::string>& features,
                     const std::vector<std::string>& instance_exts,
                     const std::vector<std::string>& device_exts) override {
     features_ = features;
@@ -45,7 +45,7 @@ class EngineStub : public Engine {
 
   Result Shutdown() override { return {}; }
 
-  const std::vector<Feature>& GetFeatures() const { return features_; }
+  const std::vector<std::string>& GetFeatures() const { return features_; }
   const std::vector<std::string>& GetDeviceExtensions() const {
     return device_extensions_;
   }
@@ -191,7 +191,7 @@ class EngineStub : public Engine {
   bool did_patch_command_ = false;
   bool did_buffer_command_ = false;
 
-  std::vector<Feature> features_;
+  std::vector<std::string> features_;
   std::vector<std::string> instance_extensions_;
   std::vector<std::string> device_extensions_;
 
@@ -205,7 +205,7 @@ class VkScriptExecutorTest : public testing::Test {
 
   std::unique_ptr<Engine> MakeEngine() { return MakeUnique<EngineStub>(); }
   std::unique_ptr<Engine> MakeAndInitializeEngine(
-      const std::vector<Feature>& features,
+      const std::vector<std::string>& features,
       const std::vector<std::string>& instance_extensions,
       const std::vector<std::string>& device_extensions) {
     auto engine = MakeUnique<EngineStub>();
@@ -230,7 +230,7 @@ logicOp)";
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto script = parser.GetScript();
-  auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
+  auto engine = MakeAndInitializeEngine(script->GetRequiredFeatures(),
                                         script->GetRequiredInstanceExtensions(),
                                         script->GetRequiredDeviceExtensions());
 
@@ -241,8 +241,8 @@ logicOp)";
 
   const auto& features = ToStub(engine.get())->GetFeatures();
   ASSERT_EQ(2U, features.size());
-  EXPECT_EQ(Feature::kRobustBufferAccess, features[0]);
-  EXPECT_EQ(Feature::kLogicOp, features[1]);
+  EXPECT_EQ("robustBufferAccess", features[0]);
+  EXPECT_EQ("logicOp", features[1]);
 
   const auto& extensions = ToStub(engine.get())->GetDeviceExtensions();
   ASSERT_EQ(static_cast<size_t>(0U), extensions.size());
@@ -260,7 +260,7 @@ VK_KHR_variable_pointers)";
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto script = parser.GetScript();
-  auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
+  auto engine = MakeAndInitializeEngine(script->GetRequiredFeatures(),
                                         script->GetRequiredInstanceExtensions(),
                                         script->GetRequiredDeviceExtensions());
 
@@ -290,7 +290,7 @@ depthstencil D24_UNORM_S8_UINT)";
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto script = parser.GetScript();
-  auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
+  auto engine = MakeAndInitializeEngine(script->GetRequiredFeatures(),
                                         script->GetRequiredInstanceExtensions(),
                                         script->GetRequiredDeviceExtensions());
 
@@ -317,7 +317,7 @@ fence_timeout 12345)";
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto script = parser.GetScript();
-  auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
+  auto engine = MakeAndInitializeEngine(script->GetRequiredFeatures(),
                                         script->GetRequiredInstanceExtensions(),
                                         script->GetRequiredDeviceExtensions());
 
@@ -350,7 +350,7 @@ fence_timeout 12345)";
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto script = parser.GetScript();
-  auto engine = MakeAndInitializeEngine(script->RequiredFeatures(),
+  auto engine = MakeAndInitializeEngine(script->GetRequiredFeatures(),
                                         script->GetRequiredInstanceExtensions(),
                                         script->GetRequiredDeviceExtensions());
 
@@ -361,8 +361,8 @@ fence_timeout 12345)";
 
   const auto& features = ToStub(engine.get())->GetFeatures();
   ASSERT_EQ(2U, features.size());
-  EXPECT_EQ(Feature::kRobustBufferAccess, features[0]);
-  EXPECT_EQ(Feature::kLogicOp, features[1]);
+  EXPECT_EQ("robustBufferAccess", features[0]);
+  EXPECT_EQ("logicOp", features[1]);
 
   const auto& extensions = ToStub(engine.get())->GetDeviceExtensions();
   ASSERT_EQ(2U, extensions.size());
