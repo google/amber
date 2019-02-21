@@ -183,6 +183,7 @@ EngineDawn::~EngineDawn() = default;
 
 Result EngineDawn::Initialize(EngineConfig* config,
                               const std::vector<Feature>&,
+                              const std::vector<std::string>&,
                               const std::vector<std::string>&) {
   if (device_)
     return Result("Dawn:Initialize device_ already exists");

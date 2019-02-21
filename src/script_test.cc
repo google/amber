@@ -288,4 +288,22 @@ TEST_F(ScriptTest, GetBuffers) {
   EXPECT_EQ(ptr2, buffers[1].get());
 }
 
+TEST_F(ScriptTest, IdentifiesDeviceExtensions) {
+  Script s;
+  s.AddRequiredExtension("VK_KHR_16bit_storage");
+  EXPECT_TRUE(s.GetRequiredInstanceExtensions().empty());
+  ASSERT_EQ(1U, s.GetRequiredDeviceExtensions().size());
+  EXPECT_EQ("VK_KHR_16bit_storage", s.GetRequiredDeviceExtensions()[0]);
+}
+
+TEST_F(ScriptTest,
+       IdentifesInstanceExt_VK_KHR_get_physical_device_properties2) {
+  Script s;
+  s.AddRequiredExtension("VK_KHR_get_physical_device_properties2");
+  EXPECT_TRUE(s.GetRequiredDeviceExtensions().empty());
+  ASSERT_EQ(1U, s.GetRequiredInstanceExtensions().size());
+  EXPECT_EQ("VK_KHR_get_physical_device_properties2",
+            s.GetRequiredInstanceExtensions()[0]);
+}
+
 }  // namespace amber

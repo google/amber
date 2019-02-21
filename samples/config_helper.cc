@@ -41,7 +41,8 @@ amber::Result ConfigHelper::CreateConfig(
     uint32_t engine_major,
     uint32_t engine_minor,
     const std::vector<std::string>& required_features,
-    const std::vector<std::string>& required_extensions,
+    const std::vector<std::string>& required_instance_extensions,
+    const std::vector<std::string>& required_device_extensions,
     bool disable_validation_layer,
     std::unique_ptr<amber::EngineConfig>* config) {
   switch (engine) {
@@ -65,8 +66,9 @@ amber::Result ConfigHelper::CreateConfig(
     return amber::Result("Unable to create config helper");
 
   return impl_->CreateConfig(engine_major, engine_minor, required_features,
-                             required_extensions, disable_validation_layer,
-                             config);
+                             required_instance_extensions,
+                             required_device_extensions,
+                             disable_validation_layer, config);
 }
 
 amber::Result ConfigHelper::Shutdown() {

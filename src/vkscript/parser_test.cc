@@ -113,17 +113,22 @@ TEST_F(VkScriptParserTest, RequireBlockNoArgumentFeatures) {
 TEST_F(VkScriptParserTest, RequireBlockExtensions) {
   std::string block = R"([require]
 VK_KHR_storage_buffer_storage_class
-VK_KHR_variable_pointers)";
+VK_KHR_variable_pointers
+VK_KHR_get_physical_device_properties2)";
 
   Parser parser;
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto script = parser.GetScript();
-  auto& exts = script->RequiredExtensions();
-  ASSERT_EQ(2U, exts.size());
-  EXPECT_EQ("VK_KHR_storage_buffer_storage_class", exts[0]);
-  EXPECT_EQ("VK_KHR_variable_pointers", exts[1]);
+  auto device_exts = script->GetRequiredDeviceExtensions();
+  ASSERT_EQ(2U, device_exts.size());
+  EXPECT_EQ("VK_KHR_storage_buffer_storage_class", device_exts[0]);
+  EXPECT_EQ("VK_KHR_variable_pointers", device_exts[1]);
+
+  auto inst_exts = script->GetRequiredInstanceExtensions();
+  ASSERT_EQ(1U, inst_exts.size());
+  EXPECT_EQ("VK_KHR_get_physical_device_properties2", inst_exts[0]);
 }
 
 TEST_F(VkScriptParserTest, RequireBlockFramebuffer) {

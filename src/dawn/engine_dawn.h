@@ -38,7 +38,8 @@ class EngineDawn : public Engine {
   // Initialize with given configuration data.
   Result Initialize(EngineConfig* config,
                     const std::vector<Feature>& features,
-                    const std::vector<std::string>& extensions) override;
+                    const std::vector<std::string>& instance_extensions,
+                    const std::vector<std::string>& device_extensions) override;
 
   Result Shutdown() override;
   // Record info for a pipeline.  The Dawn render pipeline will be created

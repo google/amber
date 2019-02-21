@@ -272,13 +272,21 @@ int main(int argc, const char** argv) {
   amber_options.pipeline_create_only = options.pipeline_create_only;
 
   std::set<std::string> required_features;
-  std::set<std::string> required_extensions;
+  std::set<std::string> required_device_extensions;
+  std::set<std::string> required_instance_extensions;
   for (const auto& recipe_data_elem : recipe_data) {
     const auto features = recipe_data_elem.recipe->GetRequiredFeatures();
     required_features.insert(features.begin(), features.end());
 
-    const auto extensions = recipe_data_elem.recipe->GetRequiredExtensions();
-    required_extensions.insert(extensions.begin(), extensions.end());
+    const auto device_extensions =
+        recipe_data_elem.recipe->GetRequiredDeviceExtensions();
+    required_device_extensions.insert(device_extensions.begin(),
+                                      device_extensions.end());
+
+    const auto inst_extensions =
+        recipe_data_elem.recipe->GetRequiredInstanceExtensions();
+    required_instance_extensions.insert(inst_extensions.begin(),
+                                        inst_extensions.end());
   }
 
   sample::ConfigHelper config_helper;
@@ -288,8 +296,10 @@ int main(int argc, const char** argv) {
       amber_options.engine, options.engine_major, options.engine_minor,
       std::vector<std::string>(required_features.begin(),
                                required_features.end()),
-      std::vector<std::string>(required_extensions.begin(),
-                               required_extensions.end()),
+      std::vector<std::string>(required_instance_extensions.begin(),
+                               required_instance_extensions.end()),
+      std::vector<std::string>(required_device_extensions.begin(),
+                               required_device_extensions.end()),
       options.disable_validation_layer, &config);
 
   if (!r.IsSuccess()) {
