@@ -193,3 +193,15 @@ Please see the [CONTRIBUTING](CONTRIBUTING.md) and
 [Talvos]: https://talvos.github.io/
 [Vulkan-Headers]: https://github.com/KhronosGroup/Vulkan-Headers
 [VkRunner]: https://github.com/igalia/vkrunner
+
+### Using SwiftShader as a backend
+
+```
+mkdir out/sw
+cd out/sw
+cmake -GNinja -DAMBER_ENABLE_SWIFTSHADER=TRUE ../..
+ninja
+export VK_ICD_FILENAMES=$PWD/Linux/vk_swiftshader_icd.json
+./amber -d -V    # Should see SwiftShader listed as device
+./amber -d ../../tests/cases/clear.vkscript
+```

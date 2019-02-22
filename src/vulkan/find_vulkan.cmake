@@ -19,17 +19,19 @@ set(Vulkan_FOUND FALSE)
 set(VULKAN_CTS_HEADER FALSE)
 set(VULKAN_LIB "")
 
-if (${AMBER_USE_LOCAL_VULKAN})
-  set(Vulkan_FOUND TRUE)
-  set(VulkanHeaders_INCLUDE_DIR
-    ${PROJECT_SOURCE_DIR}/third_party/vulkan-headers/include
-    CACHE PATH "vk headers dir" FORCE)
-  set(VulkanRegistry_DIR
-    ${PROJECT_SOURCE_DIR}/third_party/vulkan-headers/registry
-    CACHE PATH "vk_registry_dir" FORCE)
-  include_directories(BEFORE "${VulkanHeaders_INCLUDE_DIR}")
-  set(VULKAN_LIB vulkan)
-  message(STATUS "Amber: using local vulkan")
+if (NOT ${Vulkan_FOUND})
+  if (${AMBER_USE_LOCAL_VULKAN})
+    set(Vulkan_FOUND TRUE)
+    set(VulkanHeaders_INCLUDE_DIR
+      ${PROJECT_SOURCE_DIR}/third_party/vulkan-headers/include
+      CACHE PATH "vk headers dir" FORCE)
+    set(VulkanRegistry_DIR
+      ${PROJECT_SOURCE_DIR}/third_party/vulkan-headers/registry
+      CACHE PATH "vk_registry_dir" FORCE)
+    include_directories(BEFORE "${VulkanHeaders_INCLUDE_DIR}")
+    set(VULKAN_LIB vulkan)
+    message(STATUS "Amber: using local vulkan")
+  endif()
 endif()
 
 if (NOT ${Vulkan_FOUND})

@@ -4,6 +4,7 @@ vars = {
   'google_git':  'https://github.com/google',
   'khronos_git': 'https://github.com/KhronosGroup',
   'lvandeve_git':  'https://github.com/lvandeve',
+  'swiftshader_git': 'https://swiftshader.googlesource.com',
 
   'cpplint_revision': '9f41862c0efa7681e2147910d39629c73a2b2702',
   'glslang_revision': 'f44b17ee135d5e153ce000e88b806b5377812b11',
@@ -12,6 +13,7 @@ vars = {
   'shaderc_revision': '53c776f776821bc037b31b8b3b79db2fa54b4ce7',
   'spirv_headers_revision': '03a081524afabdde274d885880c2fef213e46a59',
   'spirv_tools_revision': '07f80c4df1b0619ee484c38e79a7ad71f672ca14',
+  'swiftshader_revision': '67cf8a9266d0a2a39f5823d67ffa50698977302b',
   'vulkan_headers_revision': '8e2c4cd554b644592a6d904f2c8000ebbd4aa77f',
   'vulkan_loader_revision': '15fa85d92454f7823febeb68b56038d427e2a7a4',
 }
@@ -37,6 +39,9 @@ deps = {
 
   'third_party/spirv-tools': vars['khronos_git'] + '/SPIRV-Tools.git@' +
       vars['spirv_tools_revision'],
+
+  'third_party/swiftshader': vars['swiftshader_git'] + '/SwiftShader.git@' +
+      vars['swiftshader_revision'],
 
   'third_party/vulkan-headers': vars['khronos_git'] + '/Vulkan-Headers.git@' +
       vars['vulkan_headers_revision'],
