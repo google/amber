@@ -12,6 +12,8 @@ vars = {
   'shaderc_revision': '53c776f776821bc037b31b8b3b79db2fa54b4ce7',
   'spirv_headers_revision': '8bea0a266ac9b718aa0818d9e3a47c0b77c2cb23',
   'spirv_tools_revision': '39bfb6b978e937487a9cedfd964d61a3ac4384b8',
+  'vulkan_headers_revision': '8e2c4cd554b644592a6d904f2c8000ebbd4aa77f',
+  'vulkan_loader_revision': '15fa85d92454f7823febeb68b56038d427e2a7a4',
 }
 
 deps = {
@@ -35,4 +37,12 @@ deps = {
 
   'third_party/spirv-tools': vars['khronos_git'] + '/SPIRV-Tools.git@' +
       vars['spirv_tools_revision'],
+
+  'third_party/vulkan-headers': vars['khronos_git'] + '/Vulkan-Headers.git@' +
+      vars['vulkan_headers_revision'],
+
+  'third_party/vulkan-loader': vars['khronos_git'] + '/Vulkan-Loader.git@' +
+      vars['vulkan_loader_revision'],
+
+
 }

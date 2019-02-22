@@ -142,6 +142,10 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     -Wno-weak-vtables
     -Wno-zero-as-null-pointer-constant
   )
+
+  set(VULKAN_LOADER_BUILD_FIXES
+    -Wno-unknown-warning-option
+  )
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -164,6 +168,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(SHADERC_BUILD_FIXES
       -Wno-missing-field-initializers
       -Wno-pedantic)
+
+  set(VULKAN_LOADER_BUILD_FIXES "")
 endif()
 
 if (MSVC)
@@ -240,6 +246,10 @@ if (MSVC)
     /wd5027
     /wd5039
     /wd5045)
+
+  set(VULKAN_LOADER_BUILD_FIXES
+    /W3
+  )
 endif()
 
 if (${AMBER_ENABLE_TESTS})
@@ -297,3 +307,15 @@ if (${AMBER_ENABLE_SAMPLES})
 
   add_library(lodepng STATIC ${LODEPNG_SOURCES})
 endif()
+
+if (${AMBER_USE_LOCAL_VULKAN})
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-headers)
+
+  set(CXX_BACK ${CMAKE_CXX_FLAGS})
+  SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "${VULKAN_LOADER_BUILD_FIXES}")
+  STRING(REGEX REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  set(BUILD_TESTS FALSE)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-loader)
+  set(CMAKE_CXX_FLAGS ${CXX_BACK})
+endif()
+
