@@ -244,7 +244,11 @@ Result Image::AllocateAndBindMemoryToVkImage(VkImage image,
                                              VkMemoryPropertyFlags flags,
                                              bool force_flags,
                                              uint32_t* memory_type_index) {
-  assert(memory_type_index);
+  if (memory_type_index == nullptr) {
+    return Result(
+        "Vulkan: Image::AllocateAndBindMemoryToVkImage memory_type_index is "
+        "nullptr");
+  }
 
   *memory_type_index = 0;
 
