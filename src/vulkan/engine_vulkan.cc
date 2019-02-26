@@ -351,10 +351,6 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
 
   auto* graphics = pipeline_->AsGraphics();
 
-  Result r = graphics->ResetPipeline();
-  if (!r.IsSuccess())
-    return r;
-
   // |format| is not Format for frame buffer but for vertex buffer.
   // Since draw rect command contains its vertex information and it
   // does not include a format of vertex buffer, we can choose any
@@ -401,11 +397,7 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   draw.SetVertexCount(4);
   draw.SetInstanceCount(1);
 
-  r = graphics->Draw(&draw, vertex_buffer.get());
-  if (!r.IsSuccess())
-    return r;
-
-  r = graphics->ResetPipeline();
+  Result r = graphics->Draw(&draw, vertex_buffer.get());
   if (!r.IsSuccess())
     return r;
 

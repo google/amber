@@ -491,19 +491,14 @@ GraphicsPipeline::GetPipelineColorBlendAttachmentState(
 Result GraphicsPipeline::CreateVkGraphicsPipeline(
     const PipelineData* pipeline_data,
     VkPrimitiveTopology topology,
-    const VertexBuffer* vertex_buffer) {
-  if (pipeline_ != VK_NULL_HANDLE)
-    return Result("Vulkan::Pipeline already created");
-
+    const VertexBuffer* vertex_buffer,
+    const VkPipelineLayout& pipeline_layout,
+    VkPipeline* pipeline) {
   if (!pipeline_data) {
     return Result(
         "Vulkan: GraphicsPipeline::CreateVkGraphicsPipeline PipelineData is "
         "null");
   }
-
-  Result r = CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded();
-  if (!r.IsSuccess())
-    return r;
 
   VkPipelineVertexInputStateCreateInfo vertex_input_info =
       VkPipelineVertexInputStateCreateInfo();
@@ -637,13 +632,13 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
     pipeline_info.pColorBlendState = &colorblend_info;
   }
 
-  pipeline_info.layout = pipeline_layout_;
+  pipeline_info.layout = pipeline_layout;
   pipeline_info.renderPass = render_pass_;
   pipeline_info.subpass = 0;
 
   if (device_->GetPtrs()->vkCreateGraphicsPipelines(
           device_->GetDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
-          &pipeline_) != VK_SUCCESS) {
+          pipeline) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateGraphicsPipelines Fail");
   }
 
@@ -837,33 +832,6 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   return frame_->CopyColorImageToHost(command_.get());
 }
 
-Result GraphicsPipeline::ResetPipeline() {
-  if (pipeline_ == VK_NULL_HANDLE)
-    return {};
-
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  DeactivateRenderPassIfNeeded();
-
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->SubmitAndReset(GetFenceTimeout());
-  if (!r.IsSuccess())
-    return r;
-
-  if (pipeline_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline_,
-                                          nullptr);
-    pipeline_ = VK_NULL_HANDLE;
-  }
-
-  return {};
-}
-
 Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
                               VertexBuffer* vertex_buffer) {
   Result r = command_->BeginIfNotInRecording();
@@ -884,9 +852,13 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
+  VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
+  r = CreateVkPipelineLayout(&pipeline_layout);
+
+  VkPipeline pipeline = VK_NULL_HANDLE;
   r = CreateVkGraphicsPipeline(command->GetPipelineData(),
                                ToVkTopology(command->GetTopology()),
-                               vertex_buffer);
+                               vertex_buffer, pipeline_layout, &pipeline);
   if (!r.IsSuccess())
     return r;
 
@@ -909,12 +881,14 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  BindVkDescriptorSets();
-  BindVkPipeline();
+  BindVkDescriptorSets(pipeline_layout);
 
-  r = RecordPushConstant();
+  r = RecordPushConstant(pipeline_layout);
   if (!r.IsSuccess())
     return r;
+
+  device_->GetPtrs()->vkCmdBindPipeline(
+      command_->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
   if (vertex_buffer != nullptr)
     vertex_buffer->BindToCommandBuffer(command_.get());
@@ -957,7 +931,11 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  return ResetPipeline();
+  device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline,
+                                        nullptr);
+  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetDevice(),
+                                              pipeline_layout, nullptr);
+  return {};
 }
 
 Result GraphicsPipeline::ProcessCommands() {
