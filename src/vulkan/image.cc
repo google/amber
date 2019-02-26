@@ -14,6 +14,7 @@
 
 #include "src/vulkan/image.h"
 
+#include <cassert>
 #include <limits>
 
 #include "src/vulkan/command_buffer.h"

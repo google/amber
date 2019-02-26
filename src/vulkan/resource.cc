@@ -14,6 +14,7 @@
 
 #include "src/vulkan/resource.h"
 
+#include <cassert>
 #include <cstring>
 #include <limits>
 
