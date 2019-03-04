@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "src/make_unique.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -445,11 +446,11 @@ Result Device::Initialize(
         "required extensions");
   }
 
-  ptrs_.vkGetPhysicalDeviceProperties(physical_device_,
-                                      &physical_device_properties_);
+  VKLOG(ptrs_.vkGetPhysicalDeviceProperties(physical_device_,
+                                            &physical_device_properties_));
 
-  ptrs_.vkGetPhysicalDeviceMemoryProperties(physical_device_,
-                                            &physical_memory_properties_);
+  VKLOG(ptrs_.vkGetPhysicalDeviceMemoryProperties(
+      physical_device_, &physical_memory_properties_));
 
   return {};
 }

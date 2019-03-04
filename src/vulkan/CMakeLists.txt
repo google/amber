@@ -32,6 +32,14 @@ set(VULKAN_ENGINE_SOURCES
     vertex_buffer.cc
 )
 
+if (${AMBER_LOG_VULKAN})
+  set(VULKAN_ENGINE_SOURCES
+    ${VULKAN_ENGINE_SOURCES}
+    vklog.cc
+    )
+  add_definitions(-DAMBER_LOG_VULKAN)
+endif()
+
 add_library(libamberenginevulkan ${VULKAN_ENGINE_SOURCES})
 amber_default_compile_options(libamberenginevulkan)
 set_target_properties(libamberenginevulkan PROPERTIES

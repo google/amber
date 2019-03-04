@@ -24,6 +24,7 @@
 #include "src/vulkan/descriptor.h"
 #include "src/vulkan/format_data.h"
 #include "src/vulkan/graphics_pipeline.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -143,7 +144,8 @@ Result EngineVulkan::Shutdown() {
   for (auto it = modules_.begin(); it != modules_.end(); ++it) {
     auto vk_device = device_->GetDevice();
     if (vk_device != VK_NULL_HANDLE && it->second != VK_NULL_HANDLE)
-      device_->GetPtrs()->vkDestroyShaderModule(vk_device, it->second, nullptr);
+      VKLOG(device_->GetPtrs()->vkDestroyShaderModule(vk_device, it->second,
+                                                      nullptr));
   }
 
   if (pipeline_)
@@ -247,8 +249,8 @@ Result EngineVulkan::SetShader(ShaderType type,
     return Result("Vulkan::Setting Duplicated Shader Types Fail");
 
   VkShaderModule shader;
-  if (device_->GetPtrs()->vkCreateShaderModule(
-          device_->GetDevice(), &info, nullptr, &shader) != VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkCreateShaderModule(
+          device_->GetDevice(), &info, nullptr, &shader)) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateShaderModule Fail");
   }
 
@@ -527,8 +529,8 @@ bool EngineVulkan::IsFormatSupportedByPhysicalDevice(
     VkPhysicalDevice physical_device,
     VkFormat format) {
   VkFormatProperties properties = VkFormatProperties();
-  device_->GetPtrs()->vkGetPhysicalDeviceFormatProperties(physical_device,
-                                                          format, &properties);
+  VKLOG(device_->GetPtrs()->vkGetPhysicalDeviceFormatProperties(
+      physical_device, format, &properties));
 
   VkFormatFeatureFlagBits flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
   bool is_buffer_type_image = false;
@@ -561,8 +563,8 @@ bool EngineVulkan::IsFormatSupportedByPhysicalDevice(
 bool EngineVulkan::IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
                                            uint32_t descriptor_set) {
   VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties();
-  device_->GetPtrs()->vkGetPhysicalDeviceProperties(physical_device,
-                                                    &properties);
+  VKLOG(device_->GetPtrs()->vkGetPhysicalDeviceProperties(physical_device,
+                                                          &properties));
   return properties.limits.maxBoundDescriptorSets > descriptor_set;
 }
 

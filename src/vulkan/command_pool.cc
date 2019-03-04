@@ -15,6 +15,7 @@
 #include "src/vulkan/command_pool.h"
 
 #include "src/vulkan/device.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -29,8 +30,8 @@ Result CommandPool::Initialize(uint32_t queue_family_index) {
   pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   pool_info.queueFamilyIndex = queue_family_index;
 
-  if (device_->GetPtrs()->vkCreateCommandPool(device_->GetDevice(), &pool_info,
-                                              nullptr, &pool_) != VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkCreateCommandPool(
+          device_->GetDevice(), &pool_info, nullptr, &pool_)) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateCommandPool Fail");
   }
 
@@ -41,8 +42,8 @@ void CommandPool::Shutdown() {
   if (pool_ == VK_NULL_HANDLE)
     return;
 
-  device_->GetPtrs()->vkDestroyCommandPool(device_->GetDevice(), pool_,
-                                           nullptr);
+  VKLOG(device_->GetPtrs()->vkDestroyCommandPool(device_->GetDevice(), pool_,
+                                                 nullptr));
 }
 
 }  // namespace vulkan

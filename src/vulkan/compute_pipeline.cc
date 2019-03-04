@@ -16,6 +16,7 @@
 
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -59,9 +60,9 @@ Result ComputePipeline::CreateVkComputePipeline(
   pipeline_info.stage = shader_stage_info[0];
   pipeline_info.layout = pipeline_layout;
 
-  if (device_->GetPtrs()->vkCreateComputePipelines(
+  if (VKLOG(device_->GetPtrs()->vkCreateComputePipelines(
           device_->GetDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
-          pipeline) != VK_SUCCESS) {
+          pipeline)) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateComputePipelines Fail");
   }
 
@@ -112,18 +113,19 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
   if (!r.IsSuccess())
     return r;
 
-  device_->GetPtrs()->vkCmdBindPipeline(
-      command_->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
-  device_->GetPtrs()->vkCmdDispatch(command_->GetCommandBuffer(), x, y, z);
+  VKLOG(device_->GetPtrs()->vkCmdBindPipeline(
+      command_->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, pipeline));
+  VKLOG(
+      device_->GetPtrs()->vkCmdDispatch(command_->GetCommandBuffer(), x, y, z));
 
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;
 
-  device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline,
-                                        nullptr);
-  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetDevice(),
-                                              pipeline_layout, nullptr);
+  VKLOG(device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline,
+                                              nullptr));
+  VKLOG(device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetDevice(),
+                                                    pipeline_layout, nullptr));
 
   return {};
 }

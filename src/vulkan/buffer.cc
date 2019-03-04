@@ -16,6 +16,7 @@
 
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -74,9 +75,9 @@ Result Buffer::CreateVkBufferView(VkFormat format) {
   buffer_view_info.format = format;
   buffer_view_info.offset = 0;
   buffer_view_info.range = VK_WHOLE_SIZE;
-  if (device_->GetPtrs()->vkCreateBufferView(device_->GetDevice(),
-                                             &buffer_view_info, nullptr,
-                                             &view_) != VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkCreateBufferView(
+          device_->GetDevice(), &buffer_view_info, nullptr, &view_)) !=
+      VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateBufferView Fail");
   }
 
@@ -103,24 +104,26 @@ void Buffer::CopyFromBuffer(CommandBuffer* command, const Buffer& src) {
   region.dstOffset = 0;
   region.size = src.GetSizeInBytes();
 
-  device_->GetPtrs()->vkCmdCopyBuffer(command->GetCommandBuffer(), src.buffer_,
-                                      buffer_, 1, &region);
+  VKLOG(device_->GetPtrs()->vkCmdCopyBuffer(command->GetCommandBuffer(),
+                                            src.buffer_, buffer_, 1, &region));
   MemoryBarrier(command);
 }
 
 void Buffer::Shutdown() {
   if (view_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyBufferView(device_->GetDevice(), view_,
-                                            nullptr);
+    VKLOG(device_->GetPtrs()->vkDestroyBufferView(device_->GetDevice(), view_,
+                                                  nullptr));
   }
 
   if (memory_ != VK_NULL_HANDLE) {
     UnMapMemory(memory_);
-    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_, nullptr);
+    VKLOG(device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_,
+                                           nullptr));
   }
 
   if (buffer_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(), buffer_, nullptr);
+    VKLOG(device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(), buffer_,
+                                              nullptr));
 
   Resource::Shutdown();
 }

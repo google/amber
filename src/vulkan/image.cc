@@ -19,6 +19,7 @@
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -67,8 +68,9 @@ Result Image::Initialize(VkImageUsageFlags usage) {
 
   image_info_.usage = usage;
 
-  if (device_->GetPtrs()->vkCreateImage(device_->GetDevice(), &image_info_,
-                                        nullptr, &image_) != VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkCreateImage(
+          device_->GetDevice(), &image_info_, nullptr, &image_)) !=
+      VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateImage Fail");
   }
 
@@ -111,9 +113,9 @@ Result Image::CreateVkImageView() {
       1,       /* layerCount */
   };
 
-  if (device_->GetPtrs()->vkCreateImageView(device_->GetDevice(),
-                                            &image_view_info, nullptr,
-                                            &view_) != VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkCreateImageView(
+          device_->GetDevice(), &image_view_info, nullptr, &view_)) !=
+      VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateImageView Fail");
   }
 
@@ -122,15 +124,17 @@ Result Image::CreateVkImageView() {
 
 void Image::Shutdown() {
   if (view_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyImageView(device_->GetDevice(), view_,
-                                           nullptr);
+    VKLOG(device_->GetPtrs()->vkDestroyImageView(device_->GetDevice(), view_,
+                                                 nullptr));
   }
 
   if (image_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkDestroyImage(device_->GetDevice(), image_, nullptr);
+    VKLOG(device_->GetPtrs()->vkDestroyImage(device_->GetDevice(), image_,
+                                             nullptr));
 
   if (memory_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_, nullptr);
+    VKLOG(device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_,
+                                           nullptr));
 
   Resource::Shutdown();
 }
@@ -152,9 +156,9 @@ Result Image::CopyToHost(CommandBuffer* command) {
   copy_region.imageExtent = {image_info_.extent.width,
                              image_info_.extent.height, 1};
 
-  device_->GetPtrs()->vkCmdCopyImageToBuffer(
+  VKLOG(device_->GetPtrs()->vkCmdCopyImageToBuffer(
       command->GetCommandBuffer(), image_, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      GetHostAccessibleBuffer(), 1, &copy_region);
+      GetHostAccessibleBuffer(), 1, &copy_region));
 
   MemoryBarrier(command);
   return {};
@@ -235,8 +239,8 @@ void Image::ChangeLayout(CommandBuffer* command,
       break;
   }
 
-  device_->GetPtrs()->vkCmdPipelineBarrier(
-      command->GetCommandBuffer(), from, to, 0, 0, NULL, 0, NULL, 1, &barrier);
+  VKLOG(device_->GetPtrs()->vkCmdPipelineBarrier(
+      command->GetCommandBuffer(), from, to, 0, 0, NULL, 0, NULL, 1, &barrier));
 }
 
 Result Image::AllocateAndBindMemoryToVkImage(VkImage image,
@@ -268,8 +272,8 @@ Result Image::AllocateAndBindMemoryToVkImage(VkImage image,
   if (!r.IsSuccess())
     return r;
 
-  if (device_->GetPtrs()->vkBindImageMemory(device_->GetDevice(), image,
-                                            *memory, 0) != VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkBindImageMemory(device_->GetDevice(), image,
+                                                  *memory, 0)) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkBindImageMemory Fail");
   }
 
@@ -279,8 +283,8 @@ Result Image::AllocateAndBindMemoryToVkImage(VkImage image,
 const VkMemoryRequirements Image::GetVkImageMemoryRequirements(
     VkImage image) const {
   VkMemoryRequirements requirement;
-  device_->GetPtrs()->vkGetImageMemoryRequirements(device_->GetDevice(), image,
-                                                   &requirement);
+  VKLOG(device_->GetPtrs()->vkGetImageMemoryRequirements(device_->GetDevice(),
+                                                         image, &requirement));
   return requirement;
 }
 

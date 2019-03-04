@@ -21,6 +21,7 @@
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -263,8 +264,8 @@ void VertexBuffer::BindToCommandBuffer(CommandBuffer* command) {
   const VkDeviceSize offset = 0;
   const VkBuffer buffer = buffer_->GetVkBuffer();
   // TODO(jaebaek): Support multiple binding
-  device_->GetPtrs()->vkCmdBindVertexBuffers(command->GetCommandBuffer(), 0, 1,
-                                             &buffer, &offset);
+  VKLOG(device_->GetPtrs()->vkCmdBindVertexBuffers(command->GetCommandBuffer(),
+                                                   0, 1, &buffer, &offset));
 }
 
 Result VertexBuffer::SendVertexData(

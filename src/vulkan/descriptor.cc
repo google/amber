@@ -17,6 +17,7 @@
 #include <cassert>
 
 #include "src/vulkan/device.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -143,8 +144,8 @@ Result Descriptor::UpdateDescriptorSetForBufferView(
 }
 
 void Descriptor::UpdateVkDescriptorSet(const VkWriteDescriptorSet& write) {
-  device_->GetPtrs()->vkUpdateDescriptorSets(device_->GetDevice(), 1, &write, 0,
-                                             nullptr);
+  VKLOG(device_->GetPtrs()->vkUpdateDescriptorSets(device_->GetDevice(), 1,
+                                                   &write, 0, nullptr));
   is_descriptor_set_update_needed_ = false;
 }
 

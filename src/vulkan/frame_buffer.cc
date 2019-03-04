@@ -22,6 +22,7 @@
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -74,9 +75,9 @@ Result FrameBuffer::Initialize(
   frame_buffer_info.height = height_;
   frame_buffer_info.layers = 1;
 
-  if (device_->GetPtrs()->vkCreateFramebuffer(device_->GetDevice(),
-                                              &frame_buffer_info, nullptr,
-                                              &frame_) != VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkCreateFramebuffer(
+          device_->GetDevice(), &frame_buffer_info, nullptr, &frame_)) !=
+      VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateFramebuffer Fail");
   }
 
@@ -144,8 +145,8 @@ Result FrameBuffer::ChangeFrameImageLayout(CommandBuffer* command,
 
 void FrameBuffer::Shutdown() {
   if (frame_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyFramebuffer(device_->GetDevice(), frame_,
-                                             nullptr);
+    VKLOG(device_->GetPtrs()->vkDestroyFramebuffer(device_->GetDevice(), frame_,
+                                                   nullptr));
   }
 
   if (color_image_)

@@ -22,6 +22,7 @@
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -413,9 +414,9 @@ Result GraphicsPipeline::CreateRenderPass() {
   render_pass_info.subpassCount = 1;
   render_pass_info.pSubpasses = &subpass_desc;
 
-  if (device_->GetPtrs()->vkCreateRenderPass(device_->GetDevice(),
-                                             &render_pass_info, nullptr,
-                                             &render_pass_) != VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkCreateRenderPass(
+          device_->GetDevice(), &render_pass_info, nullptr, &render_pass_)) !=
+      VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateRenderPass Fail");
   }
 
@@ -636,9 +637,9 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   pipeline_info.renderPass = render_pass_;
   pipeline_info.subpass = 0;
 
-  if (device_->GetPtrs()->vkCreateGraphicsPipelines(
+  if (VKLOG(device_->GetPtrs()->vkCreateGraphicsPipelines(
           device_->GetDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
-          pipeline) != VK_SUCCESS) {
+          pipeline)) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateGraphicsPipelines Fail");
   }
 
@@ -726,9 +727,9 @@ Result GraphicsPipeline::ActivateRenderPassIfNeeded() {
   render_begin_info.renderPass = render_pass_;
   render_begin_info.framebuffer = frame_->GetFrameBuffer();
   render_begin_info.renderArea = {{0, 0}, {frame_width_, frame_height_}};
-  device_->GetPtrs()->vkCmdBeginRenderPass(command_->GetCommandBuffer(),
-                                           &render_begin_info,
-                                           VK_SUBPASS_CONTENTS_INLINE);
+  VKLOG(device_->GetPtrs()->vkCmdBeginRenderPass(command_->GetCommandBuffer(),
+                                                 &render_begin_info,
+                                                 VK_SUBPASS_CONTENTS_INLINE));
   render_pass_state_ = RenderPassState::kActive;
   return {};
 }
@@ -737,7 +738,7 @@ void GraphicsPipeline::DeactivateRenderPassIfNeeded() {
   if (render_pass_state_ == RenderPassState::kInactive)
     return;
 
-  device_->GetPtrs()->vkCmdEndRenderPass(command_->GetCommandBuffer());
+  VKLOG(device_->GetPtrs()->vkCmdEndRenderPass(command_->GetCommandBuffer()));
   render_pass_state_ = RenderPassState::kInactive;
 }
 
@@ -824,8 +825,8 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   clear_rect.baseArrayLayer = 0;
   clear_rect.layerCount = 1;
 
-  device_->GetPtrs()->vkCmdClearAttachments(command_->GetCommandBuffer(), 1,
-                                            &clear_attachment, 1, &clear_rect);
+  VKLOG(device_->GetPtrs()->vkCmdClearAttachments(
+      command_->GetCommandBuffer(), 1, &clear_attachment, 1, &clear_rect));
 
   DeactivateRenderPassIfNeeded();
 
@@ -887,8 +888,8 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  device_->GetPtrs()->vkCmdBindPipeline(
-      command_->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+  VKLOG(device_->GetPtrs()->vkCmdBindPipeline(
+      command_->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline));
 
   if (vertex_buffer != nullptr)
     vertex_buffer->BindToCommandBuffer(command_.get());
@@ -908,17 +909,17 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     // VkRunner spec says
     //   "vertexCount will be used as the index count, firstVertex
     //    becomes the vertex offset and firstIndex will always be zero."
-    device_->GetPtrs()->vkCmdDrawIndexed(
+    VKLOG(device_->GetPtrs()->vkCmdDrawIndexed(
         command_->GetCommandBuffer(),
         command->GetVertexCount(), /* indexCount */
         instance_count,            /* instanceCount */
         0,                         /* firstIndex */
         static_cast<int32_t>(command->GetFirstVertexIndex()), /* vertexOffset */
-        0 /* firstInstance */);
+        0 /* firstInstance */));
   } else {
-    device_->GetPtrs()->vkCmdDraw(command_->GetCommandBuffer(),
-                                  command->GetVertexCount(), instance_count,
-                                  command->GetFirstVertexIndex(), 0);
+    VKLOG(device_->GetPtrs()->vkCmdDraw(
+        command_->GetCommandBuffer(), command->GetVertexCount(), instance_count,
+        command->GetFirstVertexIndex(), 0));
   }
 
   DeactivateRenderPassIfNeeded();
@@ -931,10 +932,10 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline,
-                                        nullptr);
-  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetDevice(),
-                                              pipeline_layout, nullptr);
+  VKLOG(device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline,
+                                              nullptr));
+  VKLOG(device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetDevice(),
+                                                    pipeline_layout, nullptr));
   return {};
 }
 
@@ -954,8 +955,8 @@ void GraphicsPipeline::Shutdown() {
   frame_->Shutdown();
 
   if (render_pass_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyRenderPass(device_->GetDevice(), render_pass_,
-                                            nullptr);
+    VKLOG(device_->GetPtrs()->vkDestroyRenderPass(device_->GetDevice(),
+                                                  render_pass_, nullptr));
   }
 }
 

@@ -20,6 +20,7 @@
 
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -96,10 +97,10 @@ Result PushConstant::RecordPushConstantVkCommand(
   // be multiple of 4.
   assert(push_const_range.offset % 4U == 0 && push_const_range.size % 4U == 0);
 
-  device_->GetPtrs()->vkCmdPushConstants(
+  VKLOG(device_->GetPtrs()->vkCmdPushConstants(
       command->GetCommandBuffer(), pipeline_layout, VK_SHADER_STAGE_ALL,
       push_const_range.offset, push_const_range.size,
-      memory_.data() + push_const_range.offset);
+      memory_.data() + push_const_range.offset));
   return {};
 }
 

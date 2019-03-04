@@ -16,6 +16,7 @@
 
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -32,15 +33,15 @@ Result CommandBuffer::Initialize() {
   command_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   command_info.commandBufferCount = 1;
 
-  if (device_->GetPtrs()->vkAllocateCommandBuffers(
-          device_->GetDevice(), &command_info, &command_) != VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkAllocateCommandBuffers(
+          device_->GetDevice(), &command_info, &command_)) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkAllocateCommandBuffers Fail");
   }
 
   VkFenceCreateInfo fence_info = VkFenceCreateInfo();
   fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  if (device_->GetPtrs()->vkCreateFence(device_->GetDevice(), &fence_info,
-                                        nullptr, &fence_) != VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkCreateFence(
+          device_->GetDevice(), &fence_info, nullptr, &fence_)) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateFence Fail");
   }
 
@@ -57,8 +58,8 @@ Result CommandBuffer::BeginIfNotInRecording() {
   VkCommandBufferBeginInfo command_begin_info = VkCommandBufferBeginInfo();
   command_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   command_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-  if (device_->GetPtrs()->vkBeginCommandBuffer(command_, &command_begin_info) !=
-      VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkBeginCommandBuffer(
+          command_, &command_begin_info)) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkBeginCommandBuffer Fail");
   }
 
@@ -70,7 +71,7 @@ Result CommandBuffer::End() {
   if (state_ != CommandBufferState::kRecording)
     return Result("Vulkan::End CommandBuffer from Not Valid State");
 
-  if (device_->GetPtrs()->vkEndCommandBuffer(command_) != VK_SUCCESS)
+  if (VKLOG(device_->GetPtrs()->vkEndCommandBuffer(command_)) != VK_SUCCESS)
     return Result("Vulkan::Calling vkEndCommandBuffer Fail");
 
   state_ = CommandBufferState::kExecutable;
@@ -81,8 +82,8 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (state_ != CommandBufferState::kExecutable)
     return Result("Vulkan::Submit CommandBuffer from Not Valid State");
 
-  if (device_->GetPtrs()->vkResetFences(device_->GetDevice(), 1, &fence_) !=
-      VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkResetFences(device_->GetDevice(), 1,
+                                              &fence_)) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkResetFences Fail");
   }
 
@@ -90,20 +91,21 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submit_info.commandBufferCount = 1;
   submit_info.pCommandBuffers = &command_;
-  if (device_->GetPtrs()->vkQueueSubmit(queue_, 1, &submit_info, fence_) !=
-      VK_SUCCESS) {
+  if (VKLOG(device_->GetPtrs()->vkQueueSubmit(queue_, 1, &submit_info,
+                                              fence_)) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkQueueSubmit Fail");
   }
 
-  VkResult r = device_->GetPtrs()->vkWaitForFences(
+  VkResult r = VKLOG(device_->GetPtrs()->vkWaitForFences(
       device_->GetDevice(), 1, &fence_, VK_TRUE,
-      static_cast<uint64_t>(timeout_ms) * 1000ULL * 1000ULL /* nanosecond */);
+      static_cast<uint64_t>(timeout_ms) * 1000ULL * 1000ULL /* nanosecond */));
   if (r == VK_TIMEOUT)
     return Result("Vulkan::Calling vkWaitForFences Timeout");
   if (r != VK_SUCCESS)
     return Result("Vulkan::Calling vkWaitForFences Fail");
 
-  if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS)
+  if (VKLOG(device_->GetPtrs()->vkResetCommandBuffer(command_, 0)) !=
+      VK_SUCCESS)
     return Result("Vulkan::Calling vkResetCommandBuffer Fail");
 
   state_ = CommandBufferState::kInitial;
@@ -112,11 +114,12 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
 
 void CommandBuffer::Shutdown() {
   if (fence_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkDestroyFence(device_->GetDevice(), fence_, nullptr);
+    VKLOG(device_->GetPtrs()->vkDestroyFence(device_->GetDevice(), fence_,
+                                             nullptr));
 
   if (command_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkFreeCommandBuffers(
-        device_->GetDevice(), pool_->GetCommandPool(), 1, &command_);
+    VKLOG(device_->GetPtrs()->vkFreeCommandBuffers(
+        device_->GetDevice(), pool_->GetCommandPool(), 1, &command_));
   }
 }
 

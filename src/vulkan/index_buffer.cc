@@ -21,6 +21,7 @@
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/format_data.h"
+#include "src/vulkan/vklog.h"
 
 namespace amber {
 namespace vulkan {
@@ -64,9 +65,9 @@ Result IndexBuffer::BindToCommandBuffer(CommandBuffer* command) {
   if (!buffer_)
     return Result("IndexBuffer::BindToCommandBuffer |buffer_| is nullptr");
 
-  device_->GetPtrs()->vkCmdBindIndexBuffer(command->GetCommandBuffer(),
-                                           buffer_->GetVkBuffer(), 0,
-                                           VK_INDEX_TYPE_UINT32);
+  VKLOG(device_->GetPtrs()->vkCmdBindIndexBuffer(command->GetCommandBuffer(),
+                                                 buffer_->GetVkBuffer(), 0,
+                                                 VK_INDEX_TYPE_UINT32));
   return {};
 }
 
