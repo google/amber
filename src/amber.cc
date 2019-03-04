@@ -68,15 +68,10 @@ Result CreateEngineAndCheckRequirements(const Recipe* recipe,
   if (!script)
     return Result("Recipe must contain a parsed script");
 
-  const auto saved_env = script->GetSpvTargetEnv();
-  auto restore_env = [&script, &saved_env]() {
-    script->SetSpvTargetEnv(saved_env);
-  };
   script->SetSpvTargetEnv(opts->spv_env);
 
   auto engine = Engine::Create(opts->engine);
   if (!engine) {
-    restore_env();
     return Result("Failed to create engine");
   }
 
@@ -85,15 +80,12 @@ Result CreateEngineAndCheckRequirements(const Recipe* recipe,
   Result r = engine->Initialize(opts->config, script->GetRequiredFeatures(),
                                 script->GetRequiredInstanceExtensions(),
                                 script->GetRequiredDeviceExtensions());
-  if (!r.IsSuccess()) {
-    restore_env();
+  if (!r.IsSuccess())
     return r;
-  }
 
   *engine_ptr = std::move(engine);
   *script_ptr = script;
 
-  restore_env();
   return r;
 }
 }  // namespace
