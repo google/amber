@@ -65,7 +65,7 @@ def main():
   projects = ['spirv-tools', 'spirv-headers', 'glslang', 'shaderc']
   new_content = get_version_string('amber', sys.argv[2]) + "\n"
   new_content = new_content + ''.join([
-    '{}\n'.format(get_version_string(p, srcdir + p))
+    '{}\n'.format(get_version_string(p, os.path.join(srcdir, p)))
     for p in projects
   ])
 
