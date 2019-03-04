@@ -74,6 +74,10 @@ class Amber {
   /// Parse the given |data| into the |recipe|.
   amber::Result Parse(const std::string& data, amber::Recipe* recipe);
 
+  /// Determine whether the engine supports all features required by the recipe.
+  amber::Result AreAllRequirementsSupported(const amber::Recipe* recipe,
+                                            Options* opts);
+
   /// Executes the given |recipe| with the provided |opts|. Returns a
   /// |Result| which indicates if the execution succeded.
   amber::Result Execute(const amber::Recipe* recipe, Options* opts);

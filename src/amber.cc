@@ -51,16 +51,16 @@ amber::Result Amber::Parse(const std::string& input, amber::Recipe* recipe) {
   return {};
 }
 
-amber::Result Amber::Execute(const amber::Recipe* recipe, Options* opts) {
-  ShaderMap map;
-  return ExecuteWithShaderData(recipe, opts, map);
-}
-
-amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
-                                           Options* opts,
-                                           const ShaderMap& shader_data) {
+// Create an engine initialize it, and check the recipe's requirements.
+// Returns a failing result if anything fails.  Otherwise pass the created
+// engine out through |engine_ptr| and the script via |script|.
+static Result CreateEngineAndCheckRequirements(
+    const Recipe* recipe,
+    Options* opts,
+    std::unique_ptr<Engine>* engine_ptr,
+    Script** script_ptr) {
   if (!recipe)
-    return Result("Attempting to execute and invalid recipe");
+    return Result("Attempting to check an invalid recipe");
 
   Script* script = static_cast<Script*>(recipe->GetImpl());
   if (!script)
@@ -72,9 +72,38 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   if (!engine)
     return Result("Failed to create engine");
 
+  // Engine initialization checks requirements.  Current backends don't do
+  // much else.  Refactor this if they end up doing to much here.
   Result r = engine->Initialize(opts->config, script->GetRequiredFeatures(),
                                 script->GetRequiredInstanceExtensions(),
                                 script->GetRequiredDeviceExtensions());
+  if (r.IsSuccess()) {
+    *engine_ptr = std::move(engine);
+    *script_ptr = script;
+  }
+
+  return r;
+}
+
+amber::Result Amber::AreAllRequirementsSupported(const amber::Recipe* recipe,
+                                                 Options* opts) {
+  std::unique_ptr<Engine> engine;
+  Script* script = nullptr;
+
+  return CreateEngineAndCheckRequirements(recipe, opts, &engine, &script);
+}
+
+amber::Result Amber::Execute(const amber::Recipe* recipe, Options* opts) {
+  ShaderMap map;
+  return ExecuteWithShaderData(recipe, opts, map);
+}
+
+amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
+                                           Options* opts,
+                                           const ShaderMap& shader_data) {
+  std::unique_ptr<Engine> engine;
+  Script* script = nullptr;
+  Result r = CreateEngineAndCheckRequirements(recipe, opts, &engine, &script);
   if (!r.IsSuccess())
     return r;
 
