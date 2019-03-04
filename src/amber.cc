@@ -51,10 +51,13 @@ amber::Result Amber::Parse(const std::string& input, amber::Recipe* recipe) {
   return {};
 }
 
+namespace {
+
 // Create an engine initialize it, and check the recipe's requirements.
 // Returns a failing result if anything fails.  Otherwise pass the created
-// engine out through |engine_ptr| and the script via |script|.
-static Result CreateEngineAndCheckRequirements(
+// engine out through |engine_ptr| and the script via |script|.  The |script|
+// pointer is borrowed, and should not be freed.
+Result CreateEngineAndCheckRequirements(
     const Recipe* recipe,
     Options* opts,
     std::unique_ptr<Engine>* engine_ptr,
@@ -66,24 +69,35 @@ static Result CreateEngineAndCheckRequirements(
   if (!script)
     return Result("Recipe must contain a parsed script");
 
+  const auto saved_env = script->GetSpvTargetEnv();
+  auto restore_env = [&script, &saved_env]() {
+    script->SetSpvTargetEnv(saved_env);
+  };
   script->SetSpvTargetEnv(opts->spv_env);
 
   auto engine = Engine::Create(opts->engine);
-  if (!engine)
+  if (!engine) {
+    restore_env();
     return Result("Failed to create engine");
+  }
 
   // Engine initialization checks requirements.  Current backends don't do
   // much else.  Refactor this if they end up doing to much here.
   Result r = engine->Initialize(opts->config, script->GetRequiredFeatures(),
                                 script->GetRequiredInstanceExtensions(),
                                 script->GetRequiredDeviceExtensions());
-  if (r.IsSuccess()) {
-    *engine_ptr = std::move(engine);
-    *script_ptr = script;
+  if (!r.IsSuccess())  {
+    restore_env();
+    return r;
   }
 
+  *engine_ptr = std::move(engine);
+  *script_ptr = script;
+
+  restore_env();
   return r;
 }
+}  // namespace
 
 amber::Result Amber::AreAllRequirementsSupported(const amber::Recipe* recipe,
                                                  Options* opts) {
@@ -106,6 +120,7 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   Result r = CreateEngineAndCheckRequirements(recipe, opts, &engine, &script);
   if (!r.IsSuccess())
     return r;
+  script->SetSpvTargetEnv(opts->spv_env);
 
   Executor executor;
   Result executor_result = executor.Execute(
