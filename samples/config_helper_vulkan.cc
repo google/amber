@@ -17,6 +17,7 @@
 #include <vulkan/vulkan.h>
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 #include <set>
 
 #include "samples/log.h"
@@ -571,6 +572,24 @@ uint32_t ChooseQueueFamilyIndex(const VkPhysicalDevice& physical_device) {
   return std::numeric_limits<uint32_t>::max();
 }
 
+std::string deviceTypeToName(VkPhysicalDeviceType type) {
+  switch (type) {
+    case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+      return "other";
+    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+      return "integrated gpu";
+    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+      return "discrete gpu";
+    case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+      return "virtual gpu";
+    case VK_PHYSICAL_DEVICE_TYPE_CPU:
+      return "cpu";
+    default:
+      break;
+  }
+  return "unknown";
+}
+
 }  // namespace
 
 ConfigHelperVulkan::ConfigHelperVulkan() = default;
@@ -833,6 +852,25 @@ amber::Result ConfigHelperVulkan::DoCreateDevice(VkDeviceCreateInfo* info) {
   return {};
 }
 
+void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
+  VkPhysicalDeviceProperties props;
+  vkGetPhysicalDeviceProperties(vulkan_physical_device_, &props);
+
+  uint32_t api_version = props.apiVersion;
+
+  std::cout << std::endl;
+  std::cout << "Physical device properties:" << std::endl;
+  std::cout << "  apiVersion: " << VK_VERSION_MAJOR(api_version) << "."
+            << VK_VERSION_MINOR(api_version) << "."
+            << VK_VERSION_PATCH(api_version) << std::endl;
+  std::cout << "  driverVersion: " << props.driverVersion << std::endl;
+  std::cout << "  vendorID: " << props.vendorID << std::endl;
+  std::cout << "  deviceID: " << props.deviceID << std::endl;
+  std::cout << "  deviceType: " << deviceTypeToName(props.deviceType)
+            << std::endl;
+  std::cout << "  deviceName: " << props.deviceName << std::endl;
+}
+
 amber::Result ConfigHelperVulkan::CreateConfig(
     uint32_t engine_major,
     uint32_t engine_minor,
@@ -840,6 +878,7 @@ amber::Result ConfigHelperVulkan::CreateConfig(
     const std::vector<std::string>& required_instance_extensions,
     const std::vector<std::string>& required_device_extensions,
     bool disable_validation_layer,
+    bool show_version_info,
     std::unique_ptr<amber::EngineConfig>* cfg_holder) {
   amber::Result r = CreateVulkanInstance(engine_major, engine_minor,
                                          required_instance_extensions,
@@ -856,6 +895,9 @@ amber::Result ConfigHelperVulkan::CreateConfig(
   r = ChooseVulkanPhysicalDevice(required_features, required_device_extensions);
   if (!r.IsSuccess())
     return r;
+
+  if (show_version_info)
+    DumpPhysicalDeviceInfo();
 
   r = CreateVulkanDevice(required_features, required_device_extensions);
   if (!r.IsSuccess())

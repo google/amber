@@ -44,6 +44,7 @@ amber::Result ConfigHelper::CreateConfig(
     const std::vector<std::string>& required_instance_extensions,
     const std::vector<std::string>& required_device_extensions,
     bool disable_validation_layer,
+    bool show_version_info,
     std::unique_ptr<amber::EngineConfig>* config) {
   switch (engine) {
     case amber::kEngineTypeVulkan:
@@ -65,10 +66,10 @@ amber::Result ConfigHelper::CreateConfig(
   if (!impl_)
     return amber::Result("Unable to create config helper");
 
-  return impl_->CreateConfig(engine_major, engine_minor, required_features,
-                             required_instance_extensions,
-                             required_device_extensions,
-                             disable_validation_layer, config);
+  return impl_->CreateConfig(
+      engine_major, engine_minor, required_features,
+      required_instance_extensions, required_device_extensions,
+      disable_validation_layer, show_version_info, config);
 }
 
 amber::Result ConfigHelper::Shutdown() {
