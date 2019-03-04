@@ -57,11 +57,10 @@ namespace {
 // Returns a failing result if anything fails.  Otherwise pass the created
 // engine out through |engine_ptr| and the script via |script|.  The |script|
 // pointer is borrowed, and should not be freed.
-Result CreateEngineAndCheckRequirements(
-    const Recipe* recipe,
-    Options* opts,
-    std::unique_ptr<Engine>* engine_ptr,
-    Script** script_ptr) {
+Result CreateEngineAndCheckRequirements(const Recipe* recipe,
+                                        Options* opts,
+                                        std::unique_ptr<Engine>* engine_ptr,
+                                        Script** script_ptr) {
   if (!recipe)
     return Result("Attempting to check an invalid recipe");
 
@@ -86,7 +85,7 @@ Result CreateEngineAndCheckRequirements(
   Result r = engine->Initialize(opts->config, script->GetRequiredFeatures(),
                                 script->GetRequiredInstanceExtensions(),
                                 script->GetRequiredDeviceExtensions());
-  if (!r.IsSuccess())  {
+  if (!r.IsSuccess()) {
     restore_env();
     return r;
   }
