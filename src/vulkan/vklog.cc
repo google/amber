@@ -14,10 +14,10 @@
 
 #include "src/vulkan/vklog.h"
 
-#include <iostream>
-
 // Use C string library for preprocessor strings like __FILE__
 #include <string.h>
+
+#include <iostream>
 
 namespace amber {
 namespace vulkan {
