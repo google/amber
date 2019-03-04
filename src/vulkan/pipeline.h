@@ -86,21 +86,13 @@ class Pipeline {
   // Initialize the pipeline.
   Result Initialize(CommandPool* pool, VkQueue queue);
 
-  // Create Vulkan descriptor related objects i.e.,
-  // VkDescriptorSetLayout, VkDescriptorPool, VkDescriptorSet if
-  // |descriptor_related_objects_already_created_| is false. This
-  // method also creates VkPipelineLayout if |pipeline_layout_| is
-  // VK_NULL_HANDLE.
-  Result CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded();
-
   Result UpdateDescriptorSetsIfNeeded();
 
   Result SendDescriptorDataToDeviceIfNeeded();
-  void BindVkPipeline();
-  void BindVkDescriptorSets();
+  void BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout);
 
   // Record a Vulkan command for push contant.
-  Result RecordPushConstant();
+  Result RecordPushConstant(const VkPipelineLayout& pipeline_layout);
 
   const std::vector<VkPipelineShaderStageCreateInfo>& GetShaderStageInfo()
       const {
@@ -110,8 +102,7 @@ class Pipeline {
   const char* GetEntryPointName(VkShaderStageFlagBits stage) const;
   uint32_t GetFenceTimeout() const { return fence_timeout_ms_; }
 
-  VkPipeline pipeline_ = VK_NULL_HANDLE;
-  VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
+  Result CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout);
 
   Device* device_ = nullptr;
   VkPhysicalDeviceMemoryProperties memory_properties_;
@@ -126,9 +117,10 @@ class Pipeline {
     std::vector<std::unique_ptr<Descriptor>> descriptors_;
   };
 
-  void DestroyVkDescriptorAndPipelineRelatedObjects();
-  void ResetVkPipelineRelatedObjects();
-  Result CreatePipelineLayout();
+  // Create Vulkan descriptor related objects i.e.,
+  // VkDescriptorSetLayout, VkDescriptorPool, VkDescriptorSet if
+  // |descriptor_related_objects_already_created_| is false.
+  Result CreateVkDescriptorRelatedObjectsIfNeeded();
 
   Result CreateDescriptorSetLayouts();
   Result CreateDescriptorPools();

@@ -224,7 +224,11 @@ Result Resource::AllocateAndBindMemoryToVkBuffer(VkBuffer buffer,
                                                  VkMemoryPropertyFlags flags,
                                                  bool force_flags,
                                                  uint32_t* memory_type_index) {
-  assert(memory_type_index);
+  if (memory_type_index == nullptr) {
+    return Result(
+        "Vulkan: Resource::AllocateAndBindMemoryToVkBuffer memory_type_index "
+        "is nullptr");
+  }
 
   *memory_type_index = 0;
 

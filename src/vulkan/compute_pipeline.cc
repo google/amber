@@ -39,7 +39,9 @@ Result ComputePipeline::Initialize(CommandPool* pool, VkQueue queue) {
   return Pipeline::Initialize(pool, queue);
 }
 
-Result ComputePipeline::CreateVkComputePipeline() {
+Result ComputePipeline::CreateVkComputePipeline(
+    const VkPipelineLayout& pipeline_layout,
+    VkPipeline* pipeline) {
   auto shader_stage_info = GetShaderStageInfo();
   if (shader_stage_info.size() != 1) {
     return Result(
@@ -52,18 +54,14 @@ Result ComputePipeline::CreateVkComputePipeline() {
 
   shader_stage_info[0].pName = GetEntryPointName(VK_SHADER_STAGE_COMPUTE_BIT);
 
-  Result r = CreateVkDescriptorRelatedObjectsAndPipelineLayoutIfNeeded();
-  if (!r.IsSuccess())
-    return r;
-
   VkComputePipelineCreateInfo pipeline_info = VkComputePipelineCreateInfo();
   pipeline_info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
   pipeline_info.stage = shader_stage_info[0];
-  pipeline_info.layout = pipeline_layout_;
+  pipeline_info.layout = pipeline_layout;
 
   if (device_->GetPtrs()->vkCreateComputePipelines(
           device_->GetDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
-          &pipeline_) != VK_SUCCESS) {
+          pipeline) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateComputePipelines Fail");
   }
 
@@ -87,11 +85,15 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
   if (!r.IsSuccess())
     return r;
 
-  if (pipeline_ == VK_NULL_HANDLE) {
-    r = CreateVkComputePipeline();
-    if (!r.IsSuccess())
-      return r;
-  }
+  VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
+  r = CreateVkPipelineLayout(&pipeline_layout);
+  if (!r.IsSuccess())
+    return r;
+
+  VkPipeline pipeline = VK_NULL_HANDLE;
+  r = CreateVkComputePipeline(pipeline_layout, &pipeline);
+  if (!r.IsSuccess())
+    return r;
 
   // Note that a command updating a descriptor set and a command using
   // it must be submitted separately, because using a descriptor set
@@ -104,16 +106,26 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
   if (!r.IsSuccess())
     return r;
 
-  BindVkDescriptorSets();
-  BindVkPipeline();
+  BindVkDescriptorSets(pipeline_layout);
 
-  r = RecordPushConstant();
+  r = RecordPushConstant(pipeline_layout);
   if (!r.IsSuccess())
     return r;
 
+  device_->GetPtrs()->vkCmdBindPipeline(
+      command_->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
   device_->GetPtrs()->vkCmdDispatch(command_->GetCommandBuffer(), x, y, z);
 
-  return ReadbackDescriptorsToHostDataQueue();
+  r = ReadbackDescriptorsToHostDataQueue();
+  if (!r.IsSuccess())
+    return r;
+
+  device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline,
+                                        nullptr);
+  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetDevice(),
+                                              pipeline_layout, nullptr);
+
+  return {};
 }
 
 }  // namespace vulkan
