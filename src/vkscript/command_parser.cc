@@ -47,8 +47,10 @@ ShaderType ShaderNameToType(const std::string& name) {
 
 }  // namespace
 
-CommandParser::CommandParser(size_t current_line, const std::string& data)
-    : tokenizer_(MakeUnique<Tokenizer>(data)) {
+CommandParser::CommandParser(Pipeline* pipeline,
+                             size_t current_line,
+                             const std::string& data)
+    : pipeline_(pipeline), tokenizer_(MakeUnique<Tokenizer>(data)) {
   tokenizer_->SetCurrentLine(current_line);
 }
 
@@ -246,7 +248,7 @@ Result CommandParser::Parse() {
 }
 
 Result CommandParser::ProcessDrawRect() {
-  auto cmd = MakeUnique<DrawRectCommand>(pipeline_data_);
+  auto cmd = MakeUnique<DrawRectCommand>(pipeline_, pipeline_data_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -296,7 +298,7 @@ Result CommandParser::ProcessDrawRect() {
 }
 
 Result CommandParser::ProcessDrawArrays() {
-  auto cmd = MakeUnique<DrawArraysCommand>(pipeline_data_);
+  auto cmd = MakeUnique<DrawArraysCommand>(pipeline_, pipeline_data_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -357,7 +359,7 @@ Result CommandParser::ProcessDrawArrays() {
 }
 
 Result CommandParser::ProcessCompute() {
-  auto cmd = MakeUnique<ComputeCommand>();
+  auto cmd = MakeUnique<ComputeCommand>(pipeline_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -401,7 +403,7 @@ Result CommandParser::ProcessClear() {
     std::string str = token->AsString();
     cmd_suffix = str + " ";
     if (str == "depth") {
-      cmd = MakeUnique<ClearDepthCommand>();
+      cmd = MakeUnique<ClearDepthCommand>(pipeline_);
       cmd->SetLine(tokenizer_->GetCurrentLine());
 
       token = tokenizer_->NextToken();
@@ -411,7 +413,7 @@ Result CommandParser::ProcessClear() {
 
       cmd->AsClearDepth()->SetValue(token->AsFloat());
     } else if (str == "stencil") {
-      cmd = MakeUnique<ClearStencilCommand>();
+      cmd = MakeUnique<ClearStencilCommand>(pipeline_);
       cmd->SetLine(tokenizer_->GetCurrentLine());
 
       token = tokenizer_->NextToken();
@@ -424,7 +426,7 @@ Result CommandParser::ProcessClear() {
 
       cmd->AsClearStencil()->SetValue(token->AsUint32());
     } else if (str == "color") {
-      cmd = MakeUnique<ClearColorCommand>();
+      cmd = MakeUnique<ClearColorCommand>(pipeline_);
       cmd->SetLine(tokenizer_->GetCurrentLine());
 
       token = tokenizer_->NextToken();
@@ -457,7 +459,7 @@ Result CommandParser::ProcessClear() {
 
     token = tokenizer_->NextToken();
   } else {
-    cmd = MakeUnique<ClearCommand>();
+    cmd = MakeUnique<ClearCommand>(pipeline_);
     cmd->SetLine(tokenizer_->GetCurrentLine());
   }
   if (!token->IsEOS() && !token->IsEOL())
@@ -545,7 +547,8 @@ Result CommandParser::ParseValues(const std::string& name,
 }
 
 Result CommandParser::ProcessSSBO() {
-  auto cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kSSBO);
+  auto cmd =
+      MakeUnique<BufferCommand>(BufferCommand::BufferType::kSSBO, pipeline_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -644,7 +647,8 @@ Result CommandParser::ProcessUniform() {
   std::unique_ptr<BufferCommand> cmd;
   bool use_std430_layout = false;
   if (token->AsString() == "ubo") {
-    cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kUniform);
+    cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kUniform,
+                                    pipeline_);
     cmd->SetLine(tokenizer_->GetCurrentLine());
 
     token = tokenizer_->NextToken();
@@ -684,7 +688,8 @@ Result CommandParser::ProcessUniform() {
 
     use_std430_layout = true;
   } else {
-    cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kPushConstant);
+    cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kPushConstant,
+                                    pipeline_);
     cmd->SetLine(tokenizer_->GetCurrentLine());
   }
 
@@ -766,7 +771,7 @@ Result CommandParser::ProcessTolerance() {
 }
 
 Result CommandParser::ProcessPatch() {
-  auto cmd = MakeUnique<PatchParameterVerticesCommand>();
+  auto cmd = MakeUnique<PatchParameterVerticesCommand>(pipeline_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -795,7 +800,7 @@ Result CommandParser::ProcessPatch() {
 }
 
 Result CommandParser::ProcessEntryPoint(const std::string& name) {
-  auto cmd = MakeUnique<EntryPointCommand>();
+  auto cmd = MakeUnique<EntryPointCommand>(pipeline_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -829,7 +834,7 @@ Result CommandParser::ProcessProbe(bool relative) {
   if (token->AsString() == "ssbo")
     return ProcessProbeSSBO();
 
-  auto cmd = MakeUnique<ProbeCommand>();
+  auto cmd = MakeUnique<ProbeCommand>(pipeline_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   cmd->SetTolerances(current_tolerances_);
@@ -1929,7 +1934,7 @@ Result CommandParser::ParseComparator(const std::string& name,
 }
 
 Result CommandParser::ProcessProbeSSBO() {
-  auto cmd = MakeUnique<ProbeSSBOCommand>();
+  auto cmd = MakeUnique<ProbeSSBOCommand>(pipeline_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
   cmd->SetTolerances(current_tolerances_);
 

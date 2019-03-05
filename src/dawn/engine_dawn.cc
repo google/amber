@@ -323,7 +323,7 @@ Result EngineDawn::DoBuffer(const BufferCommand*) {
   return Result("Dawn:DoBuffer not implemented");
 }
 
-Result EngineDawn::DoProcessCommands() {
+Result EngineDawn::DoProcessCommands(Pipeline* pipeline) {
   Result result;
 
   // TODO(dneto): How to distinguish the compute case: It won't have a
@@ -448,7 +448,7 @@ Result EngineDawn::CreateFramebufferIfNeeded() {
   return {};
 }
 
-Result EngineDawn::GetFrameBufferInfo(ResourceInfo* info) {
+Result EngineDawn::GetFrameBufferInfo(Pipeline*, ResourceInfo* info) {
   assert(info);
 
   if (render_pipeline_info_.fb_data == nullptr)
@@ -466,11 +466,12 @@ Result EngineDawn::GetFrameBufferInfo(ResourceInfo* info) {
   return {};
 }
 
-Result EngineDawn::GetFrameBuffer(std::vector<Value>*) {
+Result EngineDawn::GetFrameBuffer(Pipeline*, std::vector<Value>*) {
   return Result("Dawn::GetFrameBuffer not implemented");
 }
 
-Result EngineDawn::GetDescriptorInfo(const uint32_t,
+Result EngineDawn::GetDescriptorInfo(Pipeline*,
+                                     const uint32_t,
                                      const uint32_t,
                                      ResourceInfo*) {
   return Result("Dawn:GetDescriptorInfo not implemented");

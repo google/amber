@@ -56,35 +56,46 @@ class EngineVulkan : public Engine {
   Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) override;
   Result DoBuffer(const BufferCommand* cmd) override;
-  Result DoProcessCommands() override;
-  Result GetFrameBufferInfo(ResourceInfo* info) override;
-  Result GetFrameBuffer(std::vector<Value>* values) override;
-  Result GetDescriptorInfo(const uint32_t descriptor_set,
+  Result DoProcessCommands(amber::Pipeline* pipeline) override;
+  Result GetFrameBufferInfo(amber::Pipeline* pipeline,
+                            ResourceInfo* info) override;
+  Result GetFrameBuffer(amber::Pipeline* pipeline,
+                        std::vector<Value>* values) override;
+  Result GetDescriptorInfo(amber::Pipeline* pipeline,
+                           const uint32_t descriptor_set,
                            const uint32_t binding,
                            ResourceInfo* info) override;
 
  private:
-  std::vector<VkPipelineShaderStageCreateInfo> GetShaderStageInfo();
+  struct PipelineInfo {
+    std::unique_ptr<Pipeline> vk_pipeline;
+    std::unique_ptr<VertexBuffer> vertex_buffer;
+    std::unordered_map<ShaderType, VkShaderModule, CastHash<ShaderType>>
+        shaders;
+    std::unique_ptr<Format> color_frame_format;
+    std::unique_ptr<Format> depth_frame_format;
+  };
+
+  std::vector<VkPipelineShaderStageCreateInfo> GetShaderStageInfo(
+      amber::Pipeline* pipeline);
   bool IsFormatSupportedByPhysicalDevice(BufferType type,
                                          VkPhysicalDevice physical_device,
                                          VkFormat format);
   bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
                                uint32_t descriptor_set);
-  Result SetShader(ShaderType type, const std::vector<uint32_t>& data);
-  Result SetBuffer(BufferType type,
+  Result SetShader(amber::Pipeline* pipeline,
+                   ShaderType type,
+                   const std::vector<uint32_t>& data);
+  Result SetBuffer(amber::Pipeline* pipeline,
+                   BufferType type,
                    uint8_t location,
                    const Format& format,
                    const std::vector<Value>& data);
 
   std::unique_ptr<Device> device_;
   std::unique_ptr<CommandPool> pool_;
-  std::unique_ptr<Pipeline> pipeline_;
-  std::unique_ptr<VertexBuffer> vertex_buffer_;
 
-  std::unordered_map<ShaderType, VkShaderModule, CastHash<ShaderType>> modules_;
-
-  std::unique_ptr<Format> color_frame_format_;
-  std::unique_ptr<Format> depth_frame_format_;
+  std::map<amber::Pipeline*, PipelineInfo> pipeline_map_;
 };
 
 }  // namespace vulkan

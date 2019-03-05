@@ -55,18 +55,16 @@ Result Executor::Execute(Engine* engine,
   if (script->GetPipelines().empty())
     return Result("no pipelines defined");
 
-  // TODO(jaebaek): Support multiple pipelines.
-  if (script->GetPipelines().size() > 1)
-    return Result("only single pipeline supported currently");
-
   Result r = CompileShaders(script, shader_map);
   if (!r.IsSuccess())
     return r;
 
-  auto* pipeline = script->GetPipelines()[0].get();
-  r = engine->CreatePipeline(pipeline);
-  if (!r.IsSuccess())
-    return r;
+  for (auto& pipeline : script->GetPipelines()) {
+    r = engine->CreatePipeline(pipeline.get());
+    if (!r.IsSuccess())
+      return r;
+  }
+
   if (executionType == ExecutionType::kPipelineCreateOnly)
     return {};
 
@@ -75,14 +73,14 @@ Result Executor::Execute(Engine* engine,
     if (cmd->IsProbe()) {
       ResourceInfo info;
 
-      r = engine->DoProcessCommands();
+      r = engine->DoProcessCommands(cmd->GetPipeline());
       if (!r.IsSuccess())
         return r;
 
       // This must come after processing commands because we require
       // the framebuffer data to be mapped into host memory and have
       // a valid host-side pointer.
-      r = engine->GetFrameBufferInfo(&info);
+      r = engine->GetFrameBufferInfo(cmd->GetPipeline(), &info);
       if (!r.IsSuccess())
         return r;
       assert(info.cpu_memory != nullptr);
@@ -94,12 +92,13 @@ Result Executor::Execute(Engine* engine,
     } else if (cmd->IsProbeSSBO()) {
       auto probe_ssbo = cmd->AsProbeSSBO();
       ResourceInfo info;
-      r = engine->GetDescriptorInfo(probe_ssbo->GetDescriptorSet(),
+      r = engine->GetDescriptorInfo(cmd->GetPipeline(),
+                                    probe_ssbo->GetDescriptorSet(),
                                     probe_ssbo->GetBinding(), &info);
       if (!r.IsSuccess())
         return r;
 
-      r = engine->DoProcessCommands();
+      r = engine->DoProcessCommands(cmd->GetPipeline());
       if (!r.IsSuccess())
         return r;
 
