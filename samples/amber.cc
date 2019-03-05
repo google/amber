@@ -231,11 +231,6 @@ int main(int argc, const char** argv) {
     return 0;
   }
 
-  if (options.input_filenames.empty()) {
-    std::cerr << "Input file must be provided." << std::endl;
-    return 2;
-  }
-
   amber::Result result;
   std::vector<std::string> failures;
   struct RecipeData {
@@ -303,7 +298,7 @@ int main(int argc, const char** argv) {
                                required_instance_extensions.end()),
       std::vector<std::string>(required_device_extensions.begin(),
                                required_device_extensions.end()),
-      options.disable_validation_layer, &config);
+      options.disable_validation_layer, options.show_version_info, &config);
 
   if (!r.IsSuccess()) {
     std::cout << r.Error() << std::endl;
