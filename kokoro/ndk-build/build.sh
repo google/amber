@@ -30,6 +30,7 @@ export PATH="$PWD:$PATH"
 cd $SRC
 ./tools/git-sync-deps
 ./tools/update_build_version.py . samples/ third_party/
+./tools/update_vk_wrappers.py . .
 
 mkdir -p build/libs build/app
 cd $SRC/build

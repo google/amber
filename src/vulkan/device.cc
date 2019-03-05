@@ -356,13 +356,7 @@ Device::~Device() = default;
 
 Result Device::LoadVulkanPointers(
     PFN_vkGetInstanceProcAddr getInstanceProcAddr) {
-#define AMBER_VK_FUNC(func)                                    \
-  if (!(ptrs_.func = reinterpret_cast<PFN_##func>(             \
-            getInstanceProcAddr(instance_, #func)))) {         \
-    return Result("Vulkan: Unable to load " #func " pointer"); \
-  }
-#include "src/vulkan/vk-funcs.inc"
-#undef AMBER_VK_FUNC
+#include "src/vk-wrappers.inc"
   return {};
 }
 
