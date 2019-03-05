@@ -48,6 +48,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
       const std::vector<std::string>& required_instance_extensions,
       const std::vector<std::string>& required_device_extensions,
       bool disable_validation_layer,
+      bool show_version_info,
       std::unique_ptr<amber::EngineConfig>* config) override;
 
   // Destroy Vulkan instance and device.
@@ -88,6 +89,9 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
 
   // Creates the physical device given the device |info|.
   amber::Result DoCreateDevice(VkDeviceCreateInfo* info);
+
+  // Writes information related to the vulkan instance to stdout.
+  void DumpPhysicalDeviceInfo();
 
   VkInstance vulkan_instance_ = VK_NULL_HANDLE;
   VkDebugReportCallbackEXT vulkan_callback_ = VK_NULL_HANDLE;

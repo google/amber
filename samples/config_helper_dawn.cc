@@ -37,6 +37,7 @@ amber::Result ConfigHelperDawn::CreateConfig(
     const std::vector<std::string>&,
     const std::vector<std::string>&,
     bool,
+    bool,
     std::unique_ptr<amber::EngineConfig>* config) {
 #if AMBER_DAWN_METAL
   auto r = dawn::CreateMetalDevice(&dawn_instance_, &dawn_device_);
