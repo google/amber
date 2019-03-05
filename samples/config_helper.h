@@ -39,6 +39,7 @@ class ConfigHelperImpl {
       const std::vector<std::string>& required_instance_extensions,
       const std::vector<std::string>& required_device_extensions,
       bool disable_validation_layer,
+      bool show_version_info,
       std::unique_ptr<amber::EngineConfig>* config) = 0;
 
   // Destroy instance and device.
@@ -64,6 +65,7 @@ class ConfigHelper {
       const std::vector<std::string>& required_instance_extensions,
       const std::vector<std::string>& required_device_extensions,
       bool disable_validation_layer,
+      bool show_version_info,
       std::unique_ptr<amber::EngineConfig>* config);
 
   // Destroy instance and device.
