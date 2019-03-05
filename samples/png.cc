@@ -64,7 +64,17 @@ std::pair<amber::Result, std::string> ConvertToPNG(
   }
 
   std::vector<unsigned char> png;
-  unsigned error = lodepng::encode(png, data, width, height);
+  lodepng::State state;
+
+  // Force RGBA color type, otherwise many PNG decoders will ignore the alpha
+  // channel.
+  state.encoder.auto_convert = 0;
+  state.info_raw.colortype = LodePNGColorType::LCT_RGBA;
+  state.info_raw.bitdepth = 8;
+  state.info_png.color.colortype = LodePNGColorType::LCT_RGBA;
+  state.info_png.color.bitdepth = 8;
+
+  unsigned error = lodepng::encode(png, data, width, height, state);
   if (error) {
     return std::make_pair(amber::Result("lodepng::encode() returned non-zero"),
                           nullptr);
