@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cassert>
 #include <set>
+#include <utility>
 
 #include "amber/amber_vulkan.h"
 #include "src/make_unique.h"

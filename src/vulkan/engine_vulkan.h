@@ -15,6 +15,7 @@
 #ifndef SRC_VULKAN_ENGINE_VULKAN_H_
 #define SRC_VULKAN_ENGINE_VULKAN_H_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>

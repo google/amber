@@ -175,7 +175,7 @@ class DrawArraysCommand : public Command {
 
 class ComputeCommand : public Command {
  public:
-  ComputeCommand(Pipeline* pipeline);
+  explicit ComputeCommand(Pipeline* pipeline);
   ~ComputeCommand() override;
 
   void SetX(uint32_t x) { x_ = x; }
@@ -217,7 +217,7 @@ class Probe : public Command {
 
 class ProbeCommand : public Probe {
  public:
-  ProbeCommand(Pipeline* pipeline);
+  explicit ProbeCommand(Pipeline* pipeline);
   ~ProbeCommand() override;
 
   void SetWholeWindow() { is_whole_window_ = true; }
@@ -290,7 +290,7 @@ class ProbeSSBOCommand : public Probe {
     kGreaterOrEqual
   };
 
-  ProbeSSBOCommand(Pipeline* pipeline);
+  explicit ProbeSSBOCommand(Pipeline* pipeline);
   ~ProbeSSBOCommand() override;
 
   void SetComparator(Comparator comp) { comparator_ = comp; }
@@ -375,13 +375,13 @@ class BufferCommand : public Command {
 
 class ClearCommand : public Command {
  public:
-  ClearCommand(Pipeline* pipeline);
+  explicit ClearCommand(Pipeline* pipeline);
   ~ClearCommand() override;
 };
 
 class ClearColorCommand : public Command {
  public:
-  ClearColorCommand(Pipeline* pipeline);
+  explicit ClearColorCommand(Pipeline* pipeline);
   ~ClearColorCommand() override;
 
   void SetR(float r) { r_ = r; }
@@ -405,7 +405,7 @@ class ClearColorCommand : public Command {
 
 class ClearDepthCommand : public Command {
  public:
-  ClearDepthCommand(Pipeline* pipeline);
+  explicit ClearDepthCommand(Pipeline* pipeline);
   ~ClearDepthCommand() override;
 
   void SetValue(float val) { value_ = val; }
@@ -417,7 +417,7 @@ class ClearDepthCommand : public Command {
 
 class ClearStencilCommand : public Command {
  public:
-  ClearStencilCommand(Pipeline* pipeline);
+  explicit ClearStencilCommand(Pipeline* pipeline);
   ~ClearStencilCommand() override;
 
   void SetValue(uint32_t val) { value_ = val; }
@@ -429,7 +429,7 @@ class ClearStencilCommand : public Command {
 
 class PatchParameterVerticesCommand : public Command {
  public:
-  PatchParameterVerticesCommand(Pipeline* pipeline);
+  explicit PatchParameterVerticesCommand(Pipeline* pipeline);
   ~PatchParameterVerticesCommand() override;
 
   void SetControlPointCount(uint32_t count) { control_point_count_ = count; }
@@ -441,7 +441,7 @@ class PatchParameterVerticesCommand : public Command {
 
 class EntryPointCommand : public Command {
  public:
-  EntryPointCommand(Pipeline* pipeline);
+  explicit EntryPointCommand(Pipeline* pipeline);
   ~EntryPointCommand() override;
 
   void SetShaderType(ShaderType type) { shader_type_ = type; }
