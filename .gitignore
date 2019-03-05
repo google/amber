@@ -6,6 +6,7 @@ third_party/lodepng
 third_party/shaderc
 third_party/spirv-tools
 third_party/spirv-headers
+third_party/vulkan-headers
 .vs
 
 # Vim swap files

@@ -15,6 +15,7 @@
 #ifndef SRC_VULKAN_DEVICE_H_
 #define SRC_VULKAN_DEVICE_H_
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -26,9 +27,7 @@ namespace amber {
 namespace vulkan {
 
 struct VulkanPtrs {
-#define AMBER_VK_FUNC(func) PFN_##func func;
-#include "src/vulkan/vk-funcs.inc"
-#undef AMBER_VK_FUNC
+#include "src/vk-wrappers.h"
 };
 
 class Device {
