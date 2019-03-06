@@ -43,6 +43,4 @@ deps = {
 
   'third_party/vulkan-loader': vars['khronos_git'] + '/Vulkan-Loader.git@' +
       vars['vulkan_loader_revision'],
-
-
 }

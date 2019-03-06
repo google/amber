@@ -51,6 +51,7 @@ endif()
 
 add_library(libamber ${AMBER_SOURCES})
 amber_default_compile_options(libamber)
+target_include_directories(libamber PRIVATE "${CMAKE_BINARY_DIR}")
 set_target_properties(libamber PROPERTIES OUTPUT_NAME "amber")
 
 if (${AMBER_ENABLE_SPIRV_TOOLS})

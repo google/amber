@@ -30,7 +30,7 @@ class TestCase:
     self.results = {}
 
   def IsExpectedFail(self):
-    fail_re = re.compile('^.+[.]expect_fail[.]amber')
+    fail_re = re.compile('^.+[.]expect_fail[.][amber|vkscript]')
     return fail_re.match(self.GetInputPath())
 
   def IsParseOnly(self):
@@ -123,7 +123,7 @@ class TestRunner:
       print "--test-prog-path must point to an executable"
       return 1
 
-    input_file_re = re.compile('^.+[.]amber')
+    input_file_re = re.compile('^.+[.][amber|vkscript]')
     self.test_cases = []
 
     if self.args:

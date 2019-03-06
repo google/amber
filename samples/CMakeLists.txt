@@ -44,7 +44,7 @@ if (${Dawn_FOUND})
 endif()
 
 add_executable(amber ${AMBER_SOURCES})
-target_include_directories(amber PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/..")
+target_include_directories(amber PRIVATE "${CMAKE_BINARY_DIR}")
 set_target_properties(amber PROPERTIES OUTPUT_NAME "amber")
 target_link_libraries(amber libamber ${AMBER_EXTRA_LIBS})
 
@@ -52,10 +52,10 @@ add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
     COMMAND
       ${PYTHON_EXE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/update_build_version.py
+        ${PROJECT_SOURCE_DIR}/tools/update_build_version.py
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../third_party
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.."
+        ${PROJECT_SOURCE_DIR}/third_party
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Update build-versions.h in the build directory"
 )

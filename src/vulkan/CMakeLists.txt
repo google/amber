@@ -30,10 +30,12 @@ set(VULKAN_ENGINE_SOURCES
     push_constant.cc
     resource.cc
     vertex_buffer.cc
+    ${CMAKE_BINARY_DIR}/src/vk-wrappers.inc.fake
 )
 
 add_library(libamberenginevulkan ${VULKAN_ENGINE_SOURCES})
 amber_default_compile_options(libamberenginevulkan)
+target_include_directories(libamberenginevulkan PRIVATE "${CMAKE_BINARY_DIR}")
 set_target_properties(libamberenginevulkan PROPERTIES
     OUTPUT_NAME "amberenginevulkan"
 )
@@ -47,3 +49,14 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
   # with XCode 10.
   target_compile_options(libamberenginevulkan PRIVATE -Wno-zero-as-null-pointer-constant)
 endif()
+
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/src/vk-wrappers.inc.fake
+    COMMAND
+      ${PYTHON_EXE}
+        ${PROJECT_SOURCE_DIR}/tools/update_vk_wrappers.py
+        ${CMAKE_BINARY_DIR}
+        ${PROJECT_SOURCE_DIR}
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    COMMENT "Update vk-wrapper files in the build directory"
+)
