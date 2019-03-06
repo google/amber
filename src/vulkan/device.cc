@@ -15,6 +15,7 @@
 #include "src/vulkan/device.h"
 
 #include <cstring>
+#include <iostream>
 #include <memory>
 #include <set>
 #include <string>
@@ -354,20 +355,28 @@ Device::Device(VkInstance instance,
 
 Device::~Device() = default;
 
-Result Device::LoadVulkanPointers(
-    PFN_vkGetInstanceProcAddr getInstanceProcAddr) {
+Result Device::LoadVulkanPointers(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
+                                  Delegate* delegate) {
+  // Note: logging Vulkan calls is done via the delegate rather than a Vulkan
+  // layer because we want such logging even when Amber is built as a native
+  // executable on Android, where Vulkan layers are usable only with APKs.
+  if (delegate && delegate->LogGraphicsCalls())
+    delegate->Log("Loading Vulkan Pointers");
+
 #include "src/vk-wrappers.inc"
+
   return {};
 }
 
 Result Device::Initialize(
     PFN_vkGetInstanceProcAddr getInstanceProcAddr,
+    Delegate* delegate,
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions,
     const VkPhysicalDeviceFeatures& available_features,
     const VkPhysicalDeviceFeatures2KHR& available_features2,
     const std::vector<std::string>& available_extensions) {
-  Result r = LoadVulkanPointers(getInstanceProcAddr);
+  Result r = LoadVulkanPointers(getInstanceProcAddr, delegate);
   if (!r.IsSuccess())
     return r;
 

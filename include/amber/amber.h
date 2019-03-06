@@ -52,6 +52,17 @@ struct BufferInfo {
   std::vector<Value> values;
 };
 
+/// Delegate class for various hook functions
+class Delegate {
+ public:
+  virtual ~Delegate();
+
+  /// Log the given message
+  virtual void Log(const std::string& message) = 0;
+  /// Tells whether to log the graphics API calls
+  virtual bool LogGraphicsCalls() const = 0;
+};
+
 struct Options {
   /// Sets the engine to be created. Default Vulkan.
   EngineType engine;
@@ -63,6 +74,8 @@ struct Options {
   std::vector<BufferInfo> extractions;
   /// Terminate after creating the pipelines.
   bool pipeline_create_only;
+  /// Delegate implementation
+  Delegate* delegate;
 };
 
 /// Main interface to the Amber environment.

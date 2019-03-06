@@ -45,6 +45,7 @@ struct Options {
   bool quiet = false;
   bool show_help = false;
   bool show_version_info = false;
+  bool log_graphics_calls = false;
   amber::EngineType engine = amber::kEngineTypeVulkan;
   std::string spv_env;
 };
@@ -64,6 +65,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -e <engine>               -- Specify graphics engine: vulkan, dawn. Default is vulkan.
   -v <engine version>       -- Engine version (eg, 1.1 for Vulkan). Default 1.0.
   -V, --version             -- Output version information for Amber and libraries.
+  --log-graphics-calls      -- Log graphics API calls (only for Vulkan so far).
   -h                        -- This help text.
 )";
 
@@ -157,6 +159,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->quiet = false;
     } else if (arg == "-q") {
       opts->quiet = true;
+    } else if (arg == "--log-graphics-calls") {
+      opts->log_graphics_calls = true;
     } else if (arg.size() > 0 && arg[0] == '-') {
       std::cerr << "Unrecognized option " << arg << std::endl;
       return false;
@@ -202,6 +206,25 @@ std::string ReadFile(const std::string& input_file) {
 
   return std::string(data.begin(), data.end());
 }
+
+class SampleDelegate : public amber::Delegate {
+ public:
+  SampleDelegate() : log_graphics_calls_(false) {}
+  ~SampleDelegate() override = default;
+
+  void Log(const std::string& message) override {
+    std::cout << message << std::endl;
+  }
+
+  bool LogGraphicsCalls() const override { return log_graphics_calls_; }
+
+  void SetLogGraphicsCalls(bool log_graphics_calls) {
+    log_graphics_calls_ = log_graphics_calls;
+  }
+
+ private:
+  bool log_graphics_calls_;
+};
 
 }  // namespace
 
@@ -264,10 +287,16 @@ int main(int argc, const char** argv) {
   if (options.parse_only)
     return 0;
 
+  SampleDelegate delegate;
+  if (options.log_graphics_calls) {
+    delegate.SetLogGraphicsCalls(true);
+  }
+
   amber::Options amber_options;
   amber_options.engine = options.engine;
   amber_options.spv_env = options.spv_env;
   amber_options.pipeline_create_only = options.pipeline_create_only;
+  amber_options.delegate = &delegate;
 
   std::set<std::string> required_features;
   std::set<std::string> required_device_extensions;

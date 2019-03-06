@@ -85,6 +85,7 @@ class Engine {
   /// otherwise.
   virtual Result Initialize(
       EngineConfig* config,
+      Delegate* delegate,
       const std::vector<std::string>& features,
       const std::vector<std::string>& instance_extensions,
       const std::vector<std::string>& device_extensions) = 0;

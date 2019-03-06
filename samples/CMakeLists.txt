@@ -47,6 +47,7 @@ add_executable(amber ${AMBER_SOURCES})
 target_include_directories(amber PRIVATE "${CMAKE_BINARY_DIR}")
 set_target_properties(amber PROPERTIES OUTPUT_NAME "amber")
 target_link_libraries(amber libamber ${AMBER_EXTRA_LIBS})
+amber_default_compile_options(amber)
 
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
