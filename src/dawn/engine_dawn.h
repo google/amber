@@ -59,10 +59,11 @@ class EngineDawn : public Engine {
   Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) override;
   Result DoBuffer(const BufferCommand* cmd) override;
-  Result DoProcessCommands() override;
-  Result GetFrameBufferInfo(ResourceInfo* info) override;
-  Result GetFrameBuffer(std::vector<Value>* values) override;
-  Result GetDescriptorInfo(const uint32_t descriptor_set,
+  Result DoProcessCommands(Pipeline*) override;
+  Result GetFrameBufferInfo(Pipeline*, ResourceInfo* info) override;
+  Result GetFrameBuffer(Pipeline*, std::vector<Value>* values) override;
+  Result GetDescriptorInfo(Pipeline*,
+                           const uint32_t descriptor_set,
                            const uint32_t binding,
                            ResourceInfo* info) override;
 

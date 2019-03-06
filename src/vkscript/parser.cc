@@ -468,7 +468,9 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
 }
 
 Result Parser::ProcessTestBlock(const SectionParser::Section& section) {
-  CommandParser cp(section.starting_line_number + 1, section.contents);
+  auto* pipeline = script_->GetPipeline(kDefaultPipelineName);
+  CommandParser cp(pipeline, section.starting_line_number + 1,
+                   section.contents);
   Result r = cp.Parse();
   if (!r.IsSuccess())
     return r;

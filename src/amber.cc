@@ -121,6 +121,9 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   // Hold the executor result until the extractions are complete. This will let
   // us dump any buffers requested even on failure.
 
+  // TODO(dsinclair): Figure out how extractions work with multiple pipelines.
+  auto* pipeline = script->GetPipelines()[0].get();
+
   // The dump process holds onto the results and terminates the loop if any dump
   // fails. This will allow us to validate |extractor_result| first as if the
   // extractor fails before running the pipeline that will trigger the dumps
@@ -128,13 +131,13 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   for (BufferInfo& buffer_info : opts->extractions) {
     if (buffer_info.buffer_name == "framebuffer") {
       ResourceInfo info;
-      r = engine->GetFrameBufferInfo(&info);
+      r = engine->GetFrameBufferInfo(pipeline, &info);
       if (!r.IsSuccess())
         break;
 
       buffer_info.width = info.image_info.width;
       buffer_info.height = info.image_info.height;
-      r = engine->GetFrameBuffer(&(buffer_info.values));
+      r = engine->GetFrameBuffer(pipeline, &(buffer_info.values));
       if (!r.IsSuccess())
         break;
 
@@ -148,7 +151,7 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
 
     ResourceInfo info = ResourceInfo();
     r = engine->GetDescriptorInfo(
-        desc_set_and_binding_parser.GetDescriptorSet(),
+        pipeline, desc_set_and_binding_parser.GetDescriptorSet(),
         desc_set_and_binding_parser.GetBinding(), &info);
     if (!r.IsSuccess())
       break;
