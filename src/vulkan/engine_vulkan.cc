@@ -147,51 +147,49 @@ Result EngineVulkan::Shutdown() {
   return {};
 }
 
+bool EngineVulkan::VerifyFormatAvailable(const Format& format, BufferType type) {
+  return IsFormatSupportedByPhysicalDevice(type, device_->GetPhysicalDevice(),
+                                           ToVkFormat(format.GetFormatType()));
+}
+
 Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   // Create the pipeline data early so we can access them as needed.
   pipeline_map_[pipeline] = {};
   auto& info = pipeline_map_[pipeline];
 
   // Set VK_FORMAT_B8G8R8A8_UNORM for color frame buffer by default.
-  info.color_frame_format = MakeUnique<Format>();
-  info.color_frame_format->SetFormatType(kDefaultFramebufferFormat);
-  info.color_frame_format->AddComponent(FormatComponentType::kB,
+  info.color_frame_format.SetFormatType(kDefaultFramebufferFormat);
+  info.color_frame_format.AddComponent(FormatComponentType::kB,
                                         FormatMode::kUNorm, 8);
-  info.color_frame_format->AddComponent(FormatComponentType::kG,
+  info.color_frame_format.AddComponent(FormatComponentType::kG,
                                         FormatMode::kUNorm, 8);
-  info.color_frame_format->AddComponent(FormatComponentType::kR,
+  info.color_frame_format.AddComponent(FormatComponentType::kR,
                                         FormatMode::kUNorm, 8);
-  info.color_frame_format->AddComponent(FormatComponentType::kA,
+  info.color_frame_format.AddComponent(FormatComponentType::kA,
                                         FormatMode::kUNorm, 8);
-
-  // Set VK_FORMAT_UNDEFINED for depth/stencil frame buffer in default.
-  info.depth_frame_format = MakeUnique<Format>();
-  info.depth_frame_format->SetFormatType(FormatType::kUnknown);
-
-  // Handle Image and Depth buffers early so they are available when we create
-  // the pipeline.
-  for (const auto& info : pipeline->GetColorAttachments()) {
-    Result r = SetBuffer(
-        pipeline, info.type, static_cast<uint8_t>(info.location),
-        info.buffer->AsFormatBuffer()->GetFormat(), info.buffer->GetData());
-    if (!r.IsSuccess())
-      return r;
-  }
-
-  if (pipeline->GetDepthBuffer().buffer) {
-    const auto& info = pipeline->GetDepthBuffer();
-    Result r = SetBuffer(
-        pipeline, info.type, static_cast<uint8_t>(info.location),
-        info.buffer->AsFormatBuffer()->GetFormat(), info.buffer->GetData());
-    if (!r.IsSuccess())
-      return r;
-  }
 
   for (const auto& shader_info : pipeline->GetShaders()) {
     Result r =
         SetShader(pipeline, shader_info.GetShaderType(), shader_info.GetData());
     if (!r.IsSuccess())
       return r;
+  }
+
+  for (const auto& clr_info : pipeline->GetColorAttachments()) {
+    auto& fmt = clr_info.buffer->AsFormatBuffer()->GetFormat();
+    info.color_frame_format = fmt;
+    if (!VerifyFormatAvailable(fmt, clr_info.type))
+      return Result("Vulkan color attachment format is not supported");
+  }
+
+  FormatType depth_buffer_format = FormatType::kUnknown;
+  if (pipeline->GetDepthBuffer().buffer) {
+    const auto& depth_info = pipeline->GetDepthBuffer();
+    auto& depth_fmt = depth_info.buffer->AsFormatBuffer()->GetFormat();
+    if (!VerifyFormatAvailable(depth_fmt, depth_info.type))
+      return Result("Vulkan depth attachment format is not supported");
+
+    depth_buffer_format = depth_fmt.GetFormatType();
   }
 
   const auto& engine_data = GetEngineData();
@@ -209,8 +207,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     vk_pipeline = MakeUnique<GraphicsPipeline>(
         device_.get(), device_->GetPhysicalDeviceProperties(),
         device_->GetPhysicalMemoryProperties(),
-        ToVkFormat(info.color_frame_format->GetFormatType()),
-        ToVkFormat(info.depth_frame_format->GetFormatType()),
+        ToVkFormat(info.color_frame_format.GetFormatType()),
+        ToVkFormat(depth_buffer_format),
         engine_data.fence_timeout_ms, GetShaderStageInfo(pipeline));
 
     Result r = vk_pipeline->AsGraphics()->Initialize(
@@ -222,25 +220,23 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   info.vk_pipeline = std::move(vk_pipeline);
 
-  for (const auto& info : pipeline->GetVertexBuffers()) {
-    Result r =
-        SetBuffer(pipeline, info.type, static_cast<uint8_t>(info.location),
-                  info.buffer->IsFormatBuffer()
-                      ? info.buffer->AsFormatBuffer()->GetFormat()
-                      : Format(),
-                  info.buffer->GetData());
-    if (!r.IsSuccess())
-      return r;
+  for (const auto& vtex_info : pipeline->GetVertexBuffers()) {
+    auto& fmt = vtex_info.buffer->IsFormatBuffer()
+                    ? vtex_info.buffer->AsFormatBuffer()->GetFormat()
+                    : Format();
+    if (!VerifyFormatAvailable(fmt, vtex_info.type))
+      return Result("Vulkan vertex buffer format is not supported");
+
+    if (!info.vertex_buffer)
+      info.vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
+
+    info.vertex_buffer->SetData(static_cast<uint8_t>(vtex_info.location), fmt,
+                                vtex_info.buffer->GetData());
   }
 
   if (pipeline->GetIndexBuffer()) {
     auto* buf = pipeline->GetIndexBuffer();
-    Result r = SetBuffer(
-        pipeline, buf->GetBufferType(), 0,
-        buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
-        buf->GetData());
-    if (!r.IsSuccess())
-      return r;
+    info.vk_pipeline->AsGraphics()->SetIndexBuffer(buf->GetData());
   }
 
   return {};
@@ -286,53 +282,6 @@ std::vector<VkPipelineShaderStageCreateInfo> EngineVulkan::GetShaderStageInfo(
     ++stage_count;
   }
   return stage_info;
-}
-
-Result EngineVulkan::SetBuffer(amber::Pipeline* pipeline,
-                               BufferType type,
-                               uint8_t location,
-                               const Format& format,
-                               const std::vector<Value>& values) {
-  auto format_type = ToVkFormat(format.GetFormatType());
-  if (type != BufferType::kIndex &&
-      !IsFormatSupportedByPhysicalDevice(type, device_->GetPhysicalDevice(),
-                                         format_type)) {
-    return Result("Vulkan::SetBuffer format is not supported for buffer type");
-  }
-
-  auto& info = pipeline_map_[pipeline];
-
-  // Handle image and depth attachments special as they come in before
-  // the pipeline is created.
-  if (type == BufferType::kColor) {
-    *(info.color_frame_format) = format;
-    return {};
-  }
-  if (type == BufferType::kDepth) {
-    *(info.depth_frame_format) = format;
-    return {};
-  }
-
-  if (!info.vk_pipeline)
-    return Result("Vulkan::SetBuffer no Pipeline exists");
-
-  if (!info.vk_pipeline->IsGraphics())
-    return Result("Vulkan::SetBuffer for Non-Graphics Pipeline");
-
-  if (type == BufferType::kVertex) {
-    if (!info.vertex_buffer)
-      info.vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
-
-    info.vertex_buffer->SetData(location, format, values);
-    return {};
-  }
-
-  if (type == BufferType::kIndex) {
-    info.vk_pipeline->AsGraphics()->SetIndexBuffer(values);
-    return {};
-  }
-
-  return Result("Vulkan::SetBuffer unknown buffer type");
 }
 
 Result EngineVulkan::DoClearColor(const ClearColorCommand* command) {
@@ -485,13 +434,13 @@ Result EngineVulkan::GetFrameBufferInfo(amber::Pipeline* pipeline,
 
   const auto graphics = info.vk_pipeline->AsGraphics();
   const auto frame = graphics->GetFrame();
-  const auto bytes_per_texel = info.color_frame_format->GetByteSize();
+  const auto bytes_per_texel = info.color_frame_format.GetByteSize();
   resource_info->type = ResourceInfoType::kImage;
   resource_info->image_info.width = frame->GetWidth();
   resource_info->image_info.height = frame->GetHeight();
   resource_info->image_info.depth = 1U;
   resource_info->image_info.texel_stride = bytes_per_texel;
-  resource_info->image_info.texel_format = info.color_frame_format.get();
+  resource_info->image_info.texel_format = &info.color_frame_format;
   // When copying the image to the host buffer, we specify a row length of 0
   // which results in tight packing of rows.  So the row stride is the product
   // of the texel stride and the number of texels in a row.
@@ -516,7 +465,7 @@ Result EngineVulkan::GetFrameBuffer(amber::Pipeline* pipeline,
 
   auto& info = pipeline_map_[pipeline];
   // TODO(jaebaek): Support other formats
-  if (info.color_frame_format->GetFormatType() != kDefaultFramebufferFormat)
+  if (info.color_frame_format.GetFormatType() != kDefaultFramebufferFormat)
     return Result("Vulkan::GetFrameBuffer Unsupported buffer format");
 
   Value pixel;
