@@ -24,16 +24,16 @@ This is not an officially supported Google product.
 
 ## Requirements
 
- * Recommended: Configure at least one target graphics API. See below.
+ * Recommended: Configure at least one backend. See [Backends](#backends) below.
  * Git
- * CMake
+ * CMake (version 3.7+ enables automatic discovery of an installed Vulkan SDK)
  * Ninja (or other build tool)
  * Recommended: Python, for fetching dependencies
 
 
 ## Building
 ```
-git clone git@github.com:google/amber
+git clone https://github.com/google/amber.git
 cd amber
 ./tools/git-sync-deps
 mkdir -p out/Debug
@@ -62,7 +62,12 @@ It is possible to obtain a plain executable for Android, as opposed to an APK,
 with the following:
 
 ```
+git clone https://github.com/google/amber.git
+cd amber
+./tools/git-sync-deps
+
 ./tools/update_build_version.py . samples/ third_party/
+./tools/update_vk_wrappers.py . .
 
 mkdir build
 cd build
