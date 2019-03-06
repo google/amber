@@ -168,7 +168,7 @@ run amber scripts. The script can be used as
 in the [VkScript](docs/vk_script.md) format.
 
 ```
-out/Debug/amber tests/cases/clear.amber
+out/Debug/amber tests/cases/clear.vkscript
 ```
 
 The sample app returns a value of 0 on success or non-zero on error. Any issues
