@@ -860,9 +860,9 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
 
   std::cout << std::endl;
   std::cout << "Physical device properties:" << std::endl;
-  std::cout << "  apiVersion: " << VK_VERSION_MAJOR(api_version) << "."
-            << VK_VERSION_MINOR(api_version) << "."
-            << VK_VERSION_PATCH(api_version) << std::endl;
+  std::cout << "  apiVersion: " << static_cast<uint32_t>(api_version >> 22)
+            << "." << static_cast<uint32_t>((api_version >> 12) & 0x3ff) << "."
+            << static_cast<uint32_t>(api_version & 0xfff) << std::endl;
   std::cout << "  driverVersion: " << props.driverVersion << std::endl;
   std::cout << "  vendorID: " << props.vendorID << std::endl;
   std::cout << "  deviceID: " << props.deviceID << std::endl;
