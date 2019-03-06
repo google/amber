@@ -67,10 +67,10 @@ else()
 endif()
 
 if (${AMBER_USE_LOCAL_VULKAN})
+  message(STATUS "Using python3")
   # vulkan-loaders requires python 3
   find_package(PythonInterp 3 REQUIRED)
 endif()
-
 
 message(STATUS "Amber enable SPIRV-Tools: ${AMBER_ENABLE_SPIRV_TOOLS}")
 message(STATUS "Amber enable Shaderc: ${AMBER_ENABLE_SHADERC}")

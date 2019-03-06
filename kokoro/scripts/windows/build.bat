@@ -18,8 +18,8 @@ set BUILD_ROOT=%cd%
 set SRC=%cd%\github\amber
 set BUILD_TYPE=%1
 
-:: Force usage of python 2.7 rather than 3.6
-set PATH=C:\python27;%PATH%
+:: Force usage of python 3.6
+set PATH=C:\python36;%PATH%
 
 cd %SRC%
 python tools\git-sync-deps
