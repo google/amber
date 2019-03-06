@@ -592,7 +592,11 @@ std::string deviceTypeToName(VkPhysicalDeviceType type) {
 
 }  // namespace
 
-ConfigHelperVulkan::ConfigHelperVulkan() = default;
+ConfigHelperVulkan::ConfigHelperVulkan()
+    : available_features_(VkPhysicalDeviceFeatures()),
+      available_features2_(VkPhysicalDeviceFeatures2KHR()),
+      variable_pointers_feature_(VkPhysicalDeviceVariablePointerFeaturesKHR()) {
+}
 
 ConfigHelperVulkan::~ConfigHelperVulkan() = default;
 
@@ -601,11 +605,11 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     uint32_t engine_minor,
     std::vector<std::string> required_extensions,
     bool disable_validation_layer) {
-  VkApplicationInfo app_info = {};
+  VkApplicationInfo app_info = VkApplicationInfo();
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.apiVersion = VK_MAKE_VERSION(engine_major, engine_minor, 0);
 
-  VkInstanceCreateInfo instance_info = {};
+  VkInstanceCreateInfo instance_info = VkInstanceCreateInfo();
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_info.pApplicationInfo = &app_info;
 
@@ -655,7 +659,8 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
 }
 
 amber::Result ConfigHelperVulkan::CreateDebugReportCallback() {
-  VkDebugReportCallbackCreateInfoEXT info = {};
+  VkDebugReportCallbackCreateInfoEXT info =
+      VkDebugReportCallbackCreateInfoEXT();
   info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
   info.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
   info.pfnCallback = debugCallback;
@@ -691,15 +696,17 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
     return amber::Result("Unable to enumerate physical devices");
   }
 
-  VkPhysicalDeviceFeatures required_vulkan_features = {};
+  VkPhysicalDeviceFeatures required_vulkan_features =
+      VkPhysicalDeviceFeatures();
   for (uint32_t i = 0; i < count; ++i) {
     if (use_physical_device_features2_) {
-      VkPhysicalDeviceVariablePointerFeaturesKHR var_ptrs = {};
+      VkPhysicalDeviceVariablePointerFeaturesKHR var_ptrs =
+          VkPhysicalDeviceVariablePointerFeaturesKHR();
       var_ptrs.sType =
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
       var_ptrs.pNext = nullptr;
 
-      VkPhysicalDeviceFeatures2KHR features2 = {};
+      VkPhysicalDeviceFeatures2KHR features2 = VkPhysicalDeviceFeatures2KHR();
       features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
       features2.pNext = &var_ptrs;
 
@@ -767,7 +774,7 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
 amber::Result ConfigHelperVulkan::CreateVulkanDevice(
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions) {
-  VkDeviceQueueCreateInfo queue_info = {};
+  VkDeviceQueueCreateInfo queue_info = VkDeviceQueueCreateInfo();
   const float priorities[] = {1.0f};
 
   queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -781,7 +788,7 @@ amber::Result ConfigHelperVulkan::CreateVulkanDevice(
       std::back_inserter(required_extensions_in_char),
       [](const std::string& ext) -> const char* { return ext.c_str(); });
 
-  VkDeviceCreateInfo info = {};
+  VkDeviceCreateInfo info = VkDeviceCreateInfo();
   info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   info.pQueueCreateInfos = &queue_info;
   info.queueCreateInfoCount = 1;
@@ -797,7 +804,8 @@ amber::Result ConfigHelperVulkan::CreateVulkanDevice(
 amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures1(
     const std::vector<std::string>& required_features,
     VkDeviceCreateInfo* info) {
-  VkPhysicalDeviceFeatures required_vulkan_features = {};
+  VkPhysicalDeviceFeatures required_vulkan_features =
+      VkPhysicalDeviceFeatures();
   amber::Result r =
       NamesToVulkanFeatures(required_features, &required_vulkan_features);
   if (!r.IsSuccess())
@@ -831,7 +839,8 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       variable_pointers_feature_.variablePointersStorageBuffer = VK_TRUE;
   }
 
-  VkPhysicalDeviceFeatures required_vulkan_features = {};
+  VkPhysicalDeviceFeatures required_vulkan_features =
+      VkPhysicalDeviceFeatures();
   amber::Result r =
       NamesToVulkanFeatures(feature1_names, &required_vulkan_features);
   if (!r.IsSuccess())
