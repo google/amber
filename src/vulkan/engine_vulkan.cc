@@ -147,7 +147,8 @@ Result EngineVulkan::Shutdown() {
   return {};
 }
 
-bool EngineVulkan::VerifyFormatAvailable(const Format& format, BufferType type) {
+bool EngineVulkan::VerifyFormatAvailable(const Format& format,
+                                         BufferType type) {
   return IsFormatSupportedByPhysicalDevice(type, device_->GetPhysicalDevice(),
                                            ToVkFormat(format.GetFormatType()));
 }
@@ -160,13 +161,13 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   // Set VK_FORMAT_B8G8R8A8_UNORM for color frame buffer by default.
   info.color_frame_format.SetFormatType(kDefaultFramebufferFormat);
   info.color_frame_format.AddComponent(FormatComponentType::kB,
-                                        FormatMode::kUNorm, 8);
+                                       FormatMode::kUNorm, 8);
   info.color_frame_format.AddComponent(FormatComponentType::kG,
-                                        FormatMode::kUNorm, 8);
+                                       FormatMode::kUNorm, 8);
   info.color_frame_format.AddComponent(FormatComponentType::kR,
-                                        FormatMode::kUNorm, 8);
+                                       FormatMode::kUNorm, 8);
   info.color_frame_format.AddComponent(FormatComponentType::kA,
-                                        FormatMode::kUNorm, 8);
+                                       FormatMode::kUNorm, 8);
 
   for (const auto& shader_info : pipeline->GetShaders()) {
     Result r =
@@ -208,8 +209,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
         device_.get(), device_->GetPhysicalDeviceProperties(),
         device_->GetPhysicalMemoryProperties(),
         ToVkFormat(info.color_frame_format.GetFormatType()),
-        ToVkFormat(depth_buffer_format),
-        engine_data.fence_timeout_ms, GetShaderStageInfo(pipeline));
+        ToVkFormat(depth_buffer_format), engine_data.fence_timeout_ms,
+        GetShaderStageInfo(pipeline));
 
     Result r = vk_pipeline->AsGraphics()->Initialize(
         pipeline->GetFramebufferWidth(), pipeline->GetFramebufferHeight(),
