@@ -18,6 +18,8 @@ set BUILD_ROOT=%cd%
 set SRC=%cd%\github\amber
 set BUILD_TYPE=%1
 
+set PATH=C:\python27;%PATH%
+
 cd %SRC%
 python tools\git-sync-deps
 
