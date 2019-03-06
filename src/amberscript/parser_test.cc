@@ -3163,8 +3163,7 @@ TEST_F(AmberScriptParserTest, RunDrawRectWithMissingPipeline) {
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  ASSERT_EQ("1: unknown pipeline for RUN command: my_pipeline",
-            r.Error());
+  ASSERT_EQ("1: unknown pipeline for RUN command: my_pipeline", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawRectMissingValues) {
