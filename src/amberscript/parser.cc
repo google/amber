@@ -956,11 +956,9 @@ Result Parser::ParseRun() {
 
     script_->AddCommand(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
-  } else {
-    return Result("invalid token in RUN command: " + token->AsString());
   }
 
-  return {};
+  return Result("invalid token in RUN command: " + token->AsString());
 }
 
 }  // namespace amberscript
