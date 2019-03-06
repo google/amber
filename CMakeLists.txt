@@ -66,6 +66,12 @@ else()
   set(AMBER_ENABLE_SAMPLES TRUE)
 endif()
 
+if (${AMBER_USE_LOCAL_VULKAN})
+  # vulkan-loaders requires python 3
+  find_package(PythonInterp 3 REQUIRED)
+endif()
+
+
 message(STATUS "Amber enable SPIRV-Tools: ${AMBER_ENABLE_SPIRV_TOOLS}")
 message(STATUS "Amber enable Shaderc: ${AMBER_ENABLE_SHADERC}")
 message(STATUS "Amber enable tests: ${AMBER_ENABLE_TESTS}")
