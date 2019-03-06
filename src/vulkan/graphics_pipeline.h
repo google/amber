@@ -23,6 +23,7 @@
 #include "amber/vulkan_header.h"
 #include "src/buffer_data.h"
 #include "src/format.h"
+#include "src/pipeline.h"
 #include "src/vulkan/frame_buffer.h"
 #include "src/vulkan/index_buffer.h"
 #include "src/vulkan/pipeline.h"
@@ -38,13 +39,14 @@ class CommandPool;
 
 class GraphicsPipeline : public Pipeline {
  public:
-  GraphicsPipeline(Device* device,
-                   const VkPhysicalDeviceProperties& properties,
-                   const VkPhysicalDeviceMemoryProperties& memory_properties,
-                   VkFormat color_format,
-                   VkFormat depth_stencil_format,
-                   uint32_t fence_timeout_ms,
-                   const std::vector<VkPipelineShaderStageCreateInfo>&);
+  GraphicsPipeline(
+      Device* device,
+      const VkPhysicalDeviceProperties& properties,
+      const VkPhysicalDeviceMemoryProperties& memory_properties,
+      const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
+      VkFormat depth_stencil_format,
+      uint32_t fence_timeout_ms,
+      const std::vector<VkPipelineShaderStageCreateInfo>&);
   ~GraphicsPipeline() override;
 
   Result Initialize(uint32_t width,
@@ -57,8 +59,6 @@ class GraphicsPipeline : public Pipeline {
   Result Clear();
   Result ClearBuffer(const VkClearValue& clear_value,
                      VkImageAspectFlags aspect);
-  VkFormat GetColorFormat() const { return color_format_; }
-  VkFormat GetDepthStencilFormat() const { return depth_stencil_format_; }
 
   Result SetClearColor(float r, float g, float b, float a);
   Result SetClearStencil(uint32_t stencil);
@@ -114,7 +114,9 @@ class GraphicsPipeline : public Pipeline {
   RenderPassState render_pass_state_ = RenderPassState::kInactive;
 
   std::unique_ptr<FrameBuffer> frame_;
-  VkFormat color_format_;
+
+  // color buffers are owned by the amber::Pipeline.
+  std::vector<const amber::Pipeline::BufferInfo*> color_buffers_;
   VkFormat depth_stencil_format_;
   std::unique_ptr<IndexBuffer> index_buffer_;
 

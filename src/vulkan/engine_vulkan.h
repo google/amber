@@ -59,8 +59,10 @@ class EngineVulkan : public Engine {
   Result DoBuffer(const BufferCommand* cmd) override;
   Result DoProcessCommands(amber::Pipeline* pipeline) override;
   Result GetFrameBufferInfo(amber::Pipeline* pipeline,
+                            size_t attachment_idx,
                             ResourceInfo* info) override;
   Result GetFrameBuffer(amber::Pipeline* pipeline,
+                        size_t attachment_idx,
                         std::vector<Value>* values) override;
   Result GetDescriptorInfo(amber::Pipeline* pipeline,
                            const uint32_t descriptor_set,
@@ -73,7 +75,6 @@ class EngineVulkan : public Engine {
     std::unique_ptr<VertexBuffer> vertex_buffer;
     std::unordered_map<ShaderType, VkShaderModule, CastHash<ShaderType>>
         shaders;
-    Format color_frame_format;
   };
 
   std::vector<VkPipelineShaderStageCreateInfo> GetShaderStageInfo(

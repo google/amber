@@ -26,27 +26,36 @@
 namespace amber {
 namespace vulkan {
 
-FrameBuffer::FrameBuffer(Device* device, uint32_t width, uint32_t height)
-    : device_(device), width_(width), height_(height) {}
+FrameBuffer::FrameBuffer(
+    Device* device,
+    const std::vector<const amber::Pipeline::BufferInfo*>& color_attachments,
+    uint32_t width,
+    uint32_t height)
+    : device_(device),
+      color_attachments_(color_attachments),
+      width_(width),
+      height_(height) {}
 
 FrameBuffer::~FrameBuffer() = default;
 
 Result FrameBuffer::Initialize(
     VkRenderPass render_pass,
-    VkFormat color_format,
     VkFormat depth_format,
     const VkPhysicalDeviceMemoryProperties& properties) {
   std::vector<VkImageView> attachments;
 
-  if (color_format != VK_FORMAT_UNDEFINED) {
-    color_image_ =
-        MakeUnique<Image>(device_, color_format, VK_IMAGE_ASPECT_COLOR_BIT,
-                          width_, height_, depth_, properties);
-    Result r = color_image_->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-                                        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+  for (auto* info : color_attachments_) {
+    color_images_.push_back(MakeUnique<Image>(
+        device_,
+        ToVkFormat(info->buffer->AsFormatBuffer()->GetFormat().GetFormatType()),
+        VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_, properties));
+
+    Result r = color_images_.back()->Initialize(
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
     if (!r.IsSuccess())
       return r;
-    attachments.push_back(color_image_->GetVkImageView());
+
+    attachments.push_back(color_images_.back()->GetVkImageView());
   }
 
   if (depth_format != VK_FORMAT_UNDEFINED) {
@@ -57,6 +66,7 @@ Result FrameBuffer::Initialize(
                 ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
                 : VK_IMAGE_ASPECT_DEPTH_BIT),
         width_, height_, depth_, properties);
+
     Result r =
         depth_image_->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                                  VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
@@ -100,12 +110,11 @@ Result FrameBuffer::ChangeFrameImageLayout(CommandBuffer* command,
           "from kInit");
     }
 
-    if (color_image_) {
-      color_image_->ChangeLayout(command,
-                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                                 VK_PIPELINE_STAGE_TRANSFER_BIT);
+    for (auto& img : color_images_) {
+      img->ChangeLayout(command, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                        VK_PIPELINE_STAGE_TRANSFER_BIT);
     }
     if (depth_image_) {
       depth_image_->ChangeLayout(
@@ -128,10 +137,10 @@ Result FrameBuffer::ChangeFrameImageLayout(CommandBuffer* command,
           ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
           : VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-  if (color_image_) {
-    color_image_->ChangeLayout(
-        command, old_layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        source_stage, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+  for (auto& img : color_images_) {
+    img->ChangeLayout(command, old_layout,
+                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, source_stage,
+                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
   }
   if (depth_image_) {
     depth_image_->ChangeLayout(
@@ -148,11 +157,21 @@ void FrameBuffer::Shutdown() {
                                              nullptr);
   }
 
-  if (color_image_)
-    color_image_->Shutdown();
+  for (auto& img : color_images_)
+    img->Shutdown();
 
   if (depth_image_)
     depth_image_->Shutdown();
+}
+
+Result FrameBuffer::CopyColorImagesToHost(CommandBuffer* command) {
+  for (auto& img : color_images_) {
+    ChangeFrameImageLayout(command, FrameImageState::kProbe);
+    Result r = img->CopyToHost(command);
+    if (!r.IsSuccess())
+      return r;
+  }
+  return {};
 }
 
 }  // namespace vulkan
