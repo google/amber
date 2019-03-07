@@ -865,7 +865,7 @@ Result Parser::ParseRun() {
     if (!pipeline->IsCompute())
       return Result("RUN command requires compute pipeline, got graphics");
 
-    auto cmd = MakeUnique<ComputeCommand>();
+    auto cmd = MakeUnique<ComputeCommand>(pipeline);
     cmd->SetX(token->AsUint32());
 
     token = tokenizer_->NextToken();
@@ -905,7 +905,7 @@ Result Parser::ParseRun() {
     if (!token->IsInteger())
       return Result("missing X position for RUN command");
 
-    auto cmd = MakeUnique<DrawRectCommand>(PipelineData{});
+    auto cmd = MakeUnique<DrawRectCommand>(pipeline, PipelineData{});
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
       return r;
@@ -952,7 +952,7 @@ Result Parser::ParseRun() {
     if (!pipeline->IsGraphics())
       return Result("RUN command requires graphics pipeline, got compute");
 
-    auto cmd = MakeUnique<DrawArraysCommand>(PipelineData{});
+    auto cmd = MakeUnique<DrawArraysCommand>(pipeline, PipelineData{});
 
     script_->AddCommand(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
