@@ -352,7 +352,7 @@ GraphicsPipeline::GraphicsPipeline(
     Device* device,
     const VkPhysicalDeviceProperties& properties,
     const VkPhysicalDeviceMemoryProperties& memory_properties,
-    VkFormat color_format,
+    const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
     VkFormat depth_stencil_format,
     uint32_t fence_timeout_ms,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
@@ -362,8 +362,10 @@ GraphicsPipeline::GraphicsPipeline(
                memory_properties,
                fence_timeout_ms,
                shader_stage_info),
-      color_format_(color_format),
-      depth_stencil_format_(depth_stencil_format) {}
+      depth_stencil_format_(depth_stencil_format) {
+  for (const auto& info : color_buffers)
+    color_buffers_.push_back(&info);
+}
 
 GraphicsPipeline::~GraphicsPipeline() = default;
 
@@ -373,22 +375,26 @@ Result GraphicsPipeline::CreateRenderPass() {
 
   std::vector<VkAttachmentDescription> attachment_desc;
 
-  VkAttachmentReference color_refer = VkAttachmentReference();
+  std::vector<VkAttachmentReference> color_refer;
   VkAttachmentReference depth_refer = VkAttachmentReference();
 
-  if (color_format_ != VK_FORMAT_UNDEFINED) {
+  for (const auto* info : color_buffers_) {
     attachment_desc.push_back(kDefaultAttachmentDesc);
-    attachment_desc.back().format = color_format_;
+    attachment_desc.back().format =
+        ToVkFormat(info->buffer->AsFormatBuffer()->GetFormat().GetFormatType());
     attachment_desc.back().initialLayout =
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     attachment_desc.back().finalLayout =
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    color_refer.attachment = static_cast<uint32_t>(attachment_desc.size() - 1);
-    color_refer.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    VkAttachmentReference ref = VkAttachmentReference();
+    ref.attachment = static_cast<uint32_t>(attachment_desc.size() - 1);
+    ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    color_refer.push_back(ref);
 
-    subpass_desc.colorAttachmentCount = 1;
-    subpass_desc.pColorAttachments = &color_refer;
+    subpass_desc.colorAttachmentCount =
+        static_cast<uint32_t>(color_refer.size());
+    subpass_desc.pColorAttachments = color_refer.data();
   }
 
   if (depth_stencil_format_ != VK_FORMAT_UNDEFINED) {
@@ -535,14 +541,11 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   input_assembly_info.primitiveRestartEnable =
       pipeline_data->GetEnablePrimitiveRestart();
 
-  VkViewport viewport = {0,
-                         0,
-                         static_cast<float>(frame_->GetWidth()),
-                         static_cast<float>(frame_->GetHeight()),
-                         0,
-                         1};
+  VkViewport viewport = {
+      0, 0, static_cast<float>(frame_width_), static_cast<float>(frame_height_),
+      0, 1};
 
-  VkRect2D scissor = {{0, 0}, {frame_->GetWidth(), frame_->GetHeight()}};
+  VkRect2D scissor = {{0, 0}, {frame_width_, frame_height_}};
 
   VkPipelineViewportStateCreateInfo viewport_info =
       VkPipelineViewportStateCreateInfo();
@@ -620,17 +623,16 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   VkPipelineColorBlendStateCreateInfo colorblend_info =
       VkPipelineColorBlendStateCreateInfo();
   VkPipelineColorBlendAttachmentState colorblend_attachment;
-  if (color_format_ != VK_FORMAT_UNDEFINED) {
-    colorblend_attachment = GetPipelineColorBlendAttachmentState(pipeline_data);
 
-    colorblend_info.sType =
-        VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorblend_info.logicOpEnable = pipeline_data->GetEnableLogicOp();
-    colorblend_info.logicOp = ToVkLogicOp(pipeline_data->GetLogicOp());
-    colorblend_info.attachmentCount = 1;
-    colorblend_info.pAttachments = &colorblend_attachment;
-    pipeline_info.pColorBlendState = &colorblend_info;
-  }
+  colorblend_attachment = GetPipelineColorBlendAttachmentState(pipeline_data);
+
+  colorblend_info.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+  colorblend_info.logicOpEnable = pipeline_data->GetEnableLogicOp();
+  colorblend_info.logicOp = ToVkLogicOp(pipeline_data->GetLogicOp());
+  colorblend_info.attachmentCount = 1;
+  colorblend_info.pAttachments = &colorblend_attachment;
+  pipeline_info.pColorBlendState = &colorblend_info;
 
   pipeline_info.layout = pipeline_layout;
   pipeline_info.renderPass = render_pass_;
@@ -657,8 +659,8 @@ Result GraphicsPipeline::Initialize(uint32_t width,
   if (!r.IsSuccess())
     return r;
 
-  frame_ = MakeUnique<FrameBuffer>(device_, width, height);
-  r = frame_->Initialize(render_pass_, color_format_, depth_stencil_format_,
+  frame_ = MakeUnique<FrameBuffer>(device_, color_buffers_, width, height);
+  r = frame_->Initialize(render_pass_, depth_stencil_format_,
                          memory_properties_);
   if (!r.IsSuccess())
     return r;
@@ -742,11 +744,6 @@ void GraphicsPipeline::DeactivateRenderPassIfNeeded() {
 }
 
 Result GraphicsPipeline::SetClearColor(float r, float g, float b, float a) {
-  if (color_format_ == VK_FORMAT_UNDEFINED) {
-    return Result(
-        "Vulkan::ClearColorCommand No Color Buffer for FrameBuffer Exists");
-  }
-
   clear_color_r_ = r;
   clear_color_g_ = g;
   clear_color_b_ = b;
@@ -777,29 +774,22 @@ Result GraphicsPipeline::SetClearDepth(float depth) {
 }
 
 Result GraphicsPipeline::Clear() {
-  if (color_format_ == VK_FORMAT_UNDEFINED &&
-      depth_stencil_format_ == VK_FORMAT_UNDEFINED) {
-    return Result(
-        "Vulkan::ClearColorCommand No Color nor DepthStencil Buffer for "
-        "FrameBuffer Exists");
-  }
+  VkClearValue colour_clear;
+  colour_clear.color = {
+      {clear_color_r_, clear_color_g_, clear_color_b_, clear_color_a_}};
 
-  if (color_format_ != VK_FORMAT_UNDEFINED) {
-    VkClearValue clear_value;
-    clear_value.color = {
-        {clear_color_r_, clear_color_g_, clear_color_b_, clear_color_a_}};
-    Result r = ClearBuffer(clear_value, VK_IMAGE_ASPECT_COLOR_BIT);
-    if (!r.IsSuccess())
-      return r;
-  }
+  Result r = ClearBuffer(colour_clear, VK_IMAGE_ASPECT_COLOR_BIT);
+  if (!r.IsSuccess())
+    return r;
 
   if (depth_stencil_format_ == VK_FORMAT_UNDEFINED)
     return {};
 
-  VkClearValue clear_value;
-  clear_value.depthStencil = {clear_depth_, clear_stencil_};
+  VkClearValue depth_clear;
+  depth_clear.depthStencil = {clear_depth_, clear_stencil_};
+
   return ClearBuffer(
-      clear_value, VkFormatHasStencilComponent(depth_stencil_format_)
+      depth_clear, VkFormatHasStencilComponent(depth_stencil_format_)
                        ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
                        : VK_IMAGE_ASPECT_DEPTH_BIT);
 }
@@ -829,7 +819,7 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
 
   DeactivateRenderPassIfNeeded();
 
-  return frame_->CopyColorImageToHost(command_.get());
+  return frame_->CopyColorImagesToHost(command_.get());
 }
 
 Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
@@ -923,7 +913,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
 
   DeactivateRenderPassIfNeeded();
 
-  r = frame_->CopyColorImageToHost(command_.get());
+  r = frame_->CopyColorImagesToHost(command_.get());
   if (!r.IsSuccess())
     return r;
 

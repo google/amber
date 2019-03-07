@@ -125,9 +125,6 @@ Result Pipeline::SetShaderType(const Shader* shader, ShaderType type) {
 }
 
 Result Pipeline::Validate() const {
-  if (color_attachments_.empty())
-    return Result("PIPELINE missing color attachment");
-
   size_t fb_size = fb_width_ * fb_height_;
   for (const auto& attachment : color_attachments_) {
     if (attachment.buffer->GetSize() != fb_size) {
@@ -147,6 +144,8 @@ Result Pipeline::Validate() const {
 }
 
 Result Pipeline::ValidateGraphics() const {
+  if (color_attachments_.empty())
+    return Result("PIPELINE missing color attachment");
   if (shaders_.empty())
     return Result("graphics pipeline requires vertex and fragment shaders");
 

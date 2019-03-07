@@ -131,13 +131,13 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   for (BufferInfo& buffer_info : opts->extractions) {
     if (buffer_info.buffer_name == "framebuffer") {
       ResourceInfo info;
-      r = engine->GetFrameBufferInfo(pipeline, &info);
+      r = engine->GetFrameBufferInfo(pipeline, 0, &info);
       if (!r.IsSuccess())
         break;
 
       buffer_info.width = info.image_info.width;
       buffer_info.height = info.image_info.height;
-      r = engine->GetFrameBuffer(pipeline, &(buffer_info.values));
+      r = engine->GetFrameBuffer(pipeline, 0, &(buffer_info.values));
       if (!r.IsSuccess())
         break;
 

@@ -16,7 +16,9 @@
 #define SRC_VULKAN_FRAME_BUFFER_H_
 
 #include <memory>
+#include <vector>
 
+#include "src/pipeline.h"
 #include "src/vulkan/image.h"
 
 namespace amber {
@@ -33,11 +35,14 @@ class Device;
 
 class FrameBuffer {
  public:
-  FrameBuffer(Device* device, uint32_t width, uint32_t height);
+  FrameBuffer(
+      Device* device,
+      const std::vector<const amber::Pipeline::BufferInfo*>& color_attachments,
+      uint32_t width,
+      uint32_t height);
   ~FrameBuffer();
 
   Result Initialize(VkRenderPass render_pass,
-                    VkFormat color_format,
                     VkFormat depth_format,
                     const VkPhysicalDeviceMemoryProperties& properties);
   void Shutdown();
@@ -45,26 +50,27 @@ class FrameBuffer {
   Result ChangeFrameImageLayout(CommandBuffer* command, FrameImageState layout);
 
   VkFramebuffer GetFrameBuffer() const { return frame_; }
-  const void* GetColorBufferPtr() const {
-    return color_image_->HostAccessibleMemoryPtr();
+  const void* GetColorBufferPtr(size_t idx) const {
+    return color_images_[idx]->HostAccessibleMemoryPtr();
   }
-  VkImage GetColorImage() const { return color_image_->GetVkImage(); }
+
+  const Format& GetFormatForAttachment(size_t idx) const {
+    return color_attachments_[idx]->buffer->AsFormatBuffer()->GetFormat();
+  }
 
   // Only record the command for copying the image that backs this
   // framebuffer to the host accessible buffer. The actual submission
   // of the command must be done later.
-  Result CopyColorImageToHost(CommandBuffer* command) {
-    ChangeFrameImageLayout(command, FrameImageState::kProbe);
-    return color_image_->CopyToHost(command);
-  }
+  Result CopyColorImagesToHost(CommandBuffer* command);
 
   uint32_t GetWidth() const { return width_; }
   uint32_t GetHeight() const { return height_; }
 
  private:
   Device* device_ = nullptr;
+  std::vector<const amber::Pipeline::BufferInfo*> color_attachments_;
   VkFramebuffer frame_ = VK_NULL_HANDLE;
-  std::unique_ptr<Image> color_image_;
+  std::vector<std::unique_ptr<Image>> color_images_;
   std::unique_ptr<Image> depth_image_;
   uint32_t width_ = 0;
   uint32_t height_ = 0;
