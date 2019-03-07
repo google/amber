@@ -83,6 +83,8 @@ class Pipeline {
   explicit Pipeline(PipelineType type);
   ~Pipeline();
 
+  bool IsGraphics() const { return pipeline_type_ == PipelineType::kGraphics; }
+  bool IsCompute() const { return pipeline_type_ == PipelineType::kCompute; }
   PipelineType GetType() const { return pipeline_type_; }
 
   void SetName(const std::string& name) { name_ = name; }
