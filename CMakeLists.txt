@@ -41,6 +41,7 @@ option(AMBER_SKIP_SHADERC
   "Skip building Shaderc into the library" ${AMBER_SKIP_SHADERC})
 option(AMBER_SKIP_SAMPLES
   "Skip building sample application" ${AMBER_SKIP_SAMPLES})
+option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
 
 if (${AMBER_SKIP_SPIRV_TOOLS})
   set(AMBER_ENABLE_SPIRV_TOOLS FALSE)
@@ -63,6 +64,12 @@ if (${AMBER_SKIP_SAMPLES})
   set(AMBER_ENABLE_SAMPLES FALSE)
 else()
   set(AMBER_ENABLE_SAMPLES TRUE)
+endif()
+
+if (${AMBER_USE_LOCAL_VULKAN})
+  message(STATUS "Using python3")
+  # vulkan-loaders requires python 3
+  find_package(PythonInterp 3 REQUIRED)
 endif()
 
 message(STATUS "Amber enable SPIRV-Tools: ${AMBER_ENABLE_SPIRV_TOOLS}")

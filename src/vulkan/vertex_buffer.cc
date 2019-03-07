@@ -105,14 +105,7 @@ uint16_t FloatToHexFloat(float value, uint8_t bits) {
   return 0;
 }
 
-// Copy [0, bits) bits of |src| to
-// [dst_bit_offset, dst_bit_offset + bits) of |dst|. If |bits| is
-// less than 32 and the type is float, this method uses
-// FloatToHexFloat() to convert it into small bits float.
-Result CopyBitsOfValueToBuffer(uint8_t* dst,
-                               const Value& src,
-                               uint8_t dst_bit_offset,
-                               uint8_t bits) {
+Result ValueToUint64(const Value& src, uint8_t bits, uint64_t* out) {
   uint64_t data = 0;
   if (src.IsInteger()) {
     switch (bits) {
@@ -147,17 +140,16 @@ Result CopyBitsOfValueToBuffer(uint8_t* dst,
     } else {
       switch (bits) {
         case 32: {
-          float* float_ptr = nullptr;
-          float_ptr = reinterpret_cast<float*>(&data);
+          float* float_ptr = reinterpret_cast<float*>(&data);
           *float_ptr = src.AsFloat();
           break;
         }
         case 16:
         case 11:
         case 10: {
-          uint16_t* uint16_ptr = nullptr;
-          uint16_ptr = reinterpret_cast<uint16_t*>(&data);
-          *uint16_ptr = FloatToHexFloat(src.AsFloat(), bits);
+          uint16_t* uint16_ptr = reinterpret_cast<uint16_t*>(&data);
+          *uint16_ptr =
+              static_cast<uint16_t>(FloatToHexFloat(src.AsFloat(), bits));
           break;
         }
         default: {
@@ -167,10 +159,27 @@ Result CopyBitsOfValueToBuffer(uint8_t* dst,
       }
     }
   }
+  *out = data;
+  return {};
+}
 
+// Copy [0, bits) bits of |src| to
+// [dst_bit_offset, dst_bit_offset + bits) of |dst|. If |bits| is
+// less than 32 and the type is float, this method uses
+// FloatToHexFloat() to convert it into small bits float.
+Result CopyBitsOfValueToBuffer(uint8_t* dst,
+                               const Value& src,
+                               uint32_t dst_bit_offset,
+                               uint8_t bits) {
+  uint64_t data = 0;
+  Result r = ValueToUint64(src, bits, &data);
+  if (!r.IsSuccess())
+    return r;
+
+  // Shift memory pointer to the start of the byte to write into.
   while (dst_bit_offset > 7) {
     ++dst;
-    dst_bit_offset = static_cast<uint8_t>(dst_bit_offset - 8);
+    dst_bit_offset -= 8;
   }
 
   // No overflow will happen. |dst_bit_offset| is based on VkFormat
@@ -232,7 +241,7 @@ Result VertexBuffer::FillVertexBufferWithData(CommandBuffer* command) {
       }
 
       const auto& components = formats_[j].GetComponents();
-      uint8_t bit_offset = 0;
+      uint32_t bit_offset = 0;
 
       for (uint32_t k = 0; k < components.size(); ++k) {
         uint8_t bits = components[k].num_bits;
@@ -241,14 +250,12 @@ Result VertexBuffer::FillVertexBufferWithData(CommandBuffer* command) {
         if (!r.IsSuccess())
           return r;
 
-        if ((k != components.size() - 1) &&
-            (static_cast<uint32_t>(bit_offset) + static_cast<uint32_t>(bits) >=
-             256)) {
+        if ((k != components.size() - 1) && (bit_offset + bits >= 256)) {
           return Result(
               "Vulkan: VertexBuffer::FillVertexBufferWithData bit_offset "
               "overflow");
         }
-        bit_offset = static_cast<uint8_t>(bit_offset + bits);
+        bit_offset += bits;
       }
 
       ptr += formats_[j].GetByteSize();

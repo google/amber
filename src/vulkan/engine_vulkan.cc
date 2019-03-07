@@ -155,7 +155,7 @@ bool EngineVulkan::VerifyFormatAvailable(const Format& format,
 
 Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   // Create the pipeline data early so we can access them as needed.
-  pipeline_map_[pipeline] = {};
+  pipeline_map_[pipeline] = PipelineInfo();
   auto& info = pipeline_map_[pipeline];
 
   for (const auto& shader_info : pipeline->GetShaders()) {
