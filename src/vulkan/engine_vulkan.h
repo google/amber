@@ -73,8 +73,7 @@ class EngineVulkan : public Engine {
     std::unique_ptr<VertexBuffer> vertex_buffer;
     std::unordered_map<ShaderType, VkShaderModule, CastHash<ShaderType>>
         shaders;
-    std::unique_ptr<Format> color_frame_format;
-    std::unique_ptr<Format> depth_frame_format;
+    Format color_frame_format;
   };
 
   std::vector<VkPipelineShaderStageCreateInfo> GetShaderStageInfo(
@@ -84,14 +83,11 @@ class EngineVulkan : public Engine {
                                          VkFormat format);
   bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
                                uint32_t descriptor_set);
+  bool VerifyFormatAvailable(const Format& format, BufferType type);
+
   Result SetShader(amber::Pipeline* pipeline,
                    ShaderType type,
                    const std::vector<uint32_t>& data);
-  Result SetBuffer(amber::Pipeline* pipeline,
-                   BufferType type,
-                   uint8_t location,
-                   const Format& format,
-                   const std::vector<Value>& data);
 
   std::unique_ptr<Device> device_;
   std::unique_ptr<CommandPool> pool_;
