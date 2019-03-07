@@ -56,6 +56,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParseShaderBlock();
     } else if (tok == "RUN") {
       r = ParseRun();
+    } else if (tok == "CLEAR") {
+      r = ParseClear();
     } else {
       r = Result("unknown token: " + tok);
     }
@@ -959,6 +961,24 @@ Result Parser::ParseRun() {
   }
 
   return Result("invalid token in RUN command: " + token->AsString());
+}
+
+Result Parser::ParseClear() {
+  auto token = tokenizer_->NextToken();
+
+  if (!token->IsString())
+    return Result("missing pipeline name for CLEAR command");
+
+  auto* pipeline = script_->GetPipeline(token->AsString());
+  if (!pipeline)
+    return Result("unknown pipeline for CLEAR command: " + token->AsString());
+  if (!pipeline->IsGraphics())
+    return Result("CLEAR command requires graphics pipeline, got compute");
+
+  auto cmd = MakeUnique<ClearCommand>(pipeline);
+  script_->AddCommand(std::move(cmd));
+
+  return ValidateEndOfStatement("CLEAR command");
 }
 
 }  // namespace amberscript

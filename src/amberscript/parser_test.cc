@@ -3406,5 +3406,101 @@ RUN my_pipeline DRAW_RECT POS 2 4 SIZE 10 20 EXTRA)";
   ASSERT_EQ("12: extra parameters after RUN command", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, Clear) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+CLEAR my_pipeline)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(1U, commands.size());
+
+  auto* cmd = commands[0].get();
+  ASSERT_TRUE(cmd->IsClear());
+}
+
+TEST_F(AmberScriptParserTest, ClearMissingPipeline) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+CLEAR)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: missing pipeline name for CLEAR command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ClearInvalidPipeline) {
+  std::string in = R"(CLEAR other_pipeline)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("1: unknown pipeline for CLEAR command: other_pipeline", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ClearComputePipeline) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+void main() {
+  gl_FragColor = vec3(2, 3, 4);
+}
+END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+END
+
+CLEAR my_pipeline)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: CLEAR command requires graphics pipeline, got compute",
+            r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ClearExtraParams) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+CLEAR my_pipeline EXTRA)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: extra parameters after CLEAR command", r.Error());
+}
+
 }  // namespace amberscript
 }  // namespace amber
