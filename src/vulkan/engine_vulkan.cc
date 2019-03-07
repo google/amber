@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cassert>
 #include <set>
+#include <utility>
 
 #include "amber/amber_vulkan.h"
 #include "src/make_unique.h"
@@ -117,22 +118,6 @@ Result EngineVulkan::Initialize(
       return r;
   }
 
-  // Set VK_FORMAT_B8G8R8A8_UNORM for color frame buffer by default.
-  color_frame_format_ = MakeUnique<Format>();
-  color_frame_format_->SetFormatType(kDefaultFramebufferFormat);
-  color_frame_format_->AddComponent(FormatComponentType::kB, FormatMode::kUNorm,
-                                    8);
-  color_frame_format_->AddComponent(FormatComponentType::kG, FormatMode::kUNorm,
-                                    8);
-  color_frame_format_->AddComponent(FormatComponentType::kR, FormatMode::kUNorm,
-                                    8);
-  color_frame_format_->AddComponent(FormatComponentType::kA, FormatMode::kUNorm,
-                                    8);
-
-  // Set VK_FORMAT_UNDEFINED for depth/stencil frame buffer in default.
-  depth_frame_format_ = MakeUnique<Format>();
-  depth_frame_format_->SetFormatType(FormatType::kUnknown);
-
   return {};
 }
 
@@ -140,17 +125,21 @@ Result EngineVulkan::Shutdown() {
   if (!device_)
     return {};
 
-  for (auto it = modules_.begin(); it != modules_.end(); ++it) {
-    auto vk_device = device_->GetDevice();
-    if (vk_device != VK_NULL_HANDLE && it->second != VK_NULL_HANDLE)
-      device_->GetPtrs()->vkDestroyShaderModule(vk_device, it->second, nullptr);
+  for (auto it = pipeline_map_.begin(); it != pipeline_map_.end(); ++it) {
+    auto& info = it->second;
+
+    for (auto mod_it = info.shaders.begin(); mod_it != info.shaders.end();
+         ++mod_it) {
+      auto vk_device = device_->GetDevice();
+      if (vk_device != VK_NULL_HANDLE && mod_it->second != VK_NULL_HANDLE)
+        device_->GetPtrs()->vkDestroyShaderModule(vk_device, mod_it->second,
+                                                  nullptr);
+    }
+
+    info.vk_pipeline->Shutdown();
+    if (info.vertex_buffer)
+      info.vertex_buffer->Shutdown();
   }
-
-  if (pipeline_)
-    pipeline_->Shutdown();
-
-  if (vertex_buffer_)
-    vertex_buffer_->Shutdown();
 
   if (pool_)
     pool_->Shutdown();
@@ -159,63 +148,89 @@ Result EngineVulkan::Shutdown() {
 }
 
 Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
-  const auto& engine_data = GetEngineData();
+  // Create the pipeline data early so we can access them as needed.
+  pipeline_map_[pipeline] = {};
+  auto& info = pipeline_map_[pipeline];
+
+  // Set VK_FORMAT_B8G8R8A8_UNORM for color frame buffer by default.
+  info.color_frame_format = MakeUnique<Format>();
+  info.color_frame_format->SetFormatType(kDefaultFramebufferFormat);
+  info.color_frame_format->AddComponent(FormatComponentType::kB,
+                                        FormatMode::kUNorm, 8);
+  info.color_frame_format->AddComponent(FormatComponentType::kG,
+                                        FormatMode::kUNorm, 8);
+  info.color_frame_format->AddComponent(FormatComponentType::kR,
+                                        FormatMode::kUNorm, 8);
+  info.color_frame_format->AddComponent(FormatComponentType::kA,
+                                        FormatMode::kUNorm, 8);
+
+  // Set VK_FORMAT_UNDEFINED for depth/stencil frame buffer in default.
+  info.depth_frame_format = MakeUnique<Format>();
+  info.depth_frame_format->SetFormatType(FormatType::kUnknown);
 
   // Handle Image and Depth buffers early so they are available when we create
   // the pipeline.
-  for (const auto& info : pipeline->GetColorAttachments()) {
-    Result r = SetBuffer(info.type, static_cast<uint8_t>(info.location),
-                         info.buffer->AsFormatBuffer()->GetFormat(),
-                         info.buffer->GetData());
+  for (const auto& colour_info : pipeline->GetColorAttachments()) {
+    Result r = SetBuffer(pipeline, colour_info.type,
+                         static_cast<uint8_t>(colour_info.location),
+                         colour_info.buffer->AsFormatBuffer()->GetFormat(),
+                         colour_info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
 
   if (pipeline->GetDepthBuffer().buffer) {
-    const auto& info = pipeline->GetDepthBuffer();
-    Result r = SetBuffer(info.type, static_cast<uint8_t>(info.location),
-                         info.buffer->AsFormatBuffer()->GetFormat(),
-                         info.buffer->GetData());
+    const auto& depth_info = pipeline->GetDepthBuffer();
+    Result r = SetBuffer(pipeline, depth_info.type,
+                         static_cast<uint8_t>(depth_info.location),
+                         depth_info.buffer->AsFormatBuffer()->GetFormat(),
+                         depth_info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
 
   for (const auto& shader_info : pipeline->GetShaders()) {
-    Result r = SetShader(shader_info.GetShaderType(), shader_info.GetData());
+    Result r =
+        SetShader(pipeline, shader_info.GetShaderType(), shader_info.GetData());
     if (!r.IsSuccess())
       return r;
   }
 
+  const auto& engine_data = GetEngineData();
+  std::unique_ptr<Pipeline> vk_pipeline;
   if (pipeline->GetType() == PipelineType::kCompute) {
-    pipeline_ = MakeUnique<ComputePipeline>(
+    vk_pipeline = MakeUnique<ComputePipeline>(
         device_.get(), device_->GetPhysicalDeviceProperties(),
         device_->GetPhysicalMemoryProperties(), engine_data.fence_timeout_ms,
-        GetShaderStageInfo());
+        GetShaderStageInfo(pipeline));
     Result r =
-        pipeline_->AsCompute()->Initialize(pool_.get(), device_->GetQueue());
+        vk_pipeline->AsCompute()->Initialize(pool_.get(), device_->GetQueue());
     if (!r.IsSuccess())
       return r;
   } else {
-    pipeline_ = MakeUnique<GraphicsPipeline>(
+    vk_pipeline = MakeUnique<GraphicsPipeline>(
         device_.get(), device_->GetPhysicalDeviceProperties(),
         device_->GetPhysicalMemoryProperties(),
-        ToVkFormat(color_frame_format_->GetFormatType()),
-        ToVkFormat(depth_frame_format_->GetFormatType()),
-        engine_data.fence_timeout_ms, GetShaderStageInfo());
+        ToVkFormat(info.color_frame_format->GetFormatType()),
+        ToVkFormat(info.depth_frame_format->GetFormatType()),
+        engine_data.fence_timeout_ms, GetShaderStageInfo(pipeline));
 
-    Result r = pipeline_->AsGraphics()->Initialize(
+    Result r = vk_pipeline->AsGraphics()->Initialize(
         pipeline->GetFramebufferWidth(), pipeline->GetFramebufferHeight(),
         pool_.get(), device_->GetQueue());
     if (!r.IsSuccess())
       return r;
   }
 
-  for (const auto& info : pipeline->GetVertexBuffers()) {
-    Result r = SetBuffer(info.type, static_cast<uint8_t>(info.location),
-                         info.buffer->IsFormatBuffer()
-                             ? info.buffer->AsFormatBuffer()->GetFormat()
+  info.vk_pipeline = std::move(vk_pipeline);
+
+  for (const auto& vtex_info : pipeline->GetVertexBuffers()) {
+    Result r = SetBuffer(pipeline, vtex_info.type,
+                         static_cast<uint8_t>(vtex_info.location),
+                         vtex_info.buffer->IsFormatBuffer()
+                             ? vtex_info.buffer->AsFormatBuffer()->GetFormat()
                              : Format(),
-                         info.buffer->GetData());
+                         vtex_info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
@@ -223,44 +238,47 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   if (pipeline->GetIndexBuffer()) {
     auto* buf = pipeline->GetIndexBuffer();
     Result r = SetBuffer(
-        buf->GetBufferType(), 0,
+        pipeline, buf->GetBufferType(), 0,
         buf->IsFormatBuffer() ? buf->AsFormatBuffer()->GetFormat() : Format(),
         buf->GetData());
     if (!r.IsSuccess())
       return r;
   }
 
-  // TODO(dsinclair) pipeline->GetBuffers() ....
-
   return {};
 }
 
-Result EngineVulkan::SetShader(ShaderType type,
+Result EngineVulkan::SetShader(amber::Pipeline* pipeline,
+                               ShaderType type,
                                const std::vector<uint32_t>& data) {
-  VkShaderModuleCreateInfo info = VkShaderModuleCreateInfo();
-  info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  info.codeSize = data.size() * sizeof(uint32_t);
-  info.pCode = data.data();
+  auto& info = pipeline_map_[pipeline];
 
-  auto it = modules_.find(type);
-  if (it != modules_.end())
+  auto it = info.shaders.find(type);
+  if (it != info.shaders.end())
     return Result("Vulkan::Setting Duplicated Shader Types Fail");
+
+  VkShaderModuleCreateInfo create_info = VkShaderModuleCreateInfo();
+  create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  create_info.codeSize = data.size() * sizeof(uint32_t);
+  create_info.pCode = data.data();
 
   VkShaderModule shader;
   if (device_->GetPtrs()->vkCreateShaderModule(
-          device_->GetDevice(), &info, nullptr, &shader) != VK_SUCCESS) {
+          device_->GetDevice(), &create_info, nullptr, &shader) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateShaderModule Fail");
   }
 
-  modules_[type] = shader;
+  info.shaders[type] = shader;
   return {};
 }
 
-std::vector<VkPipelineShaderStageCreateInfo>
-EngineVulkan::GetShaderStageInfo() {
-  std::vector<VkPipelineShaderStageCreateInfo> stage_info(modules_.size());
+std::vector<VkPipelineShaderStageCreateInfo> EngineVulkan::GetShaderStageInfo(
+    amber::Pipeline* pipeline) {
+  auto& info = pipeline_map_[pipeline];
+
+  std::vector<VkPipelineShaderStageCreateInfo> stage_info(info.shaders.size());
   uint32_t stage_count = 0;
-  for (auto it : modules_) {
+  for (auto it : info.shaders) {
     stage_info[stage_count] = VkPipelineShaderStageCreateInfo();
     stage_info[stage_count].sType =
         VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -272,7 +290,8 @@ EngineVulkan::GetShaderStageInfo() {
   return stage_info;
 }
 
-Result EngineVulkan::SetBuffer(BufferType type,
+Result EngineVulkan::SetBuffer(amber::Pipeline* pipeline,
+                               BufferType type,
                                uint8_t location,
                                const Format& format,
                                const std::vector<Value>& values) {
@@ -283,33 +302,35 @@ Result EngineVulkan::SetBuffer(BufferType type,
     return Result("Vulkan::SetBuffer format is not supported for buffer type");
   }
 
+  auto& info = pipeline_map_[pipeline];
+
   // Handle image and depth attachments special as they come in before
   // the pipeline is created.
   if (type == BufferType::kColor) {
-    *color_frame_format_ = format;
+    *(info.color_frame_format) = format;
     return {};
   }
   if (type == BufferType::kDepth) {
-    *depth_frame_format_ = format;
+    *(info.depth_frame_format) = format;
     return {};
   }
 
-  if (!pipeline_)
+  if (!info.vk_pipeline)
     return Result("Vulkan::SetBuffer no Pipeline exists");
 
-  if (!pipeline_->IsGraphics())
+  if (!info.vk_pipeline->IsGraphics())
     return Result("Vulkan::SetBuffer for Non-Graphics Pipeline");
 
   if (type == BufferType::kVertex) {
-    if (!vertex_buffer_)
-      vertex_buffer_ = MakeUnique<VertexBuffer>(device_.get());
+    if (!info.vertex_buffer)
+      info.vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
 
-    vertex_buffer_->SetData(location, format, values);
+    info.vertex_buffer->SetData(location, format, values);
     return {};
   }
 
   if (type == BufferType::kIndex) {
-    pipeline_->AsGraphics()->SetIndexBuffer(values);
+    info.vk_pipeline->AsGraphics()->SetIndexBuffer(values);
     return {};
   }
 
@@ -317,39 +338,44 @@ Result EngineVulkan::SetBuffer(BufferType type,
 }
 
 Result EngineVulkan::DoClearColor(const ClearColorCommand* command) {
-  if (!pipeline_->IsGraphics())
+  auto& info = pipeline_map_[command->GetPipeline()];
+  if (!info.vk_pipeline->IsGraphics())
     return Result("Vulkan::Clear Color Command for Non-Graphics Pipeline");
 
-  return pipeline_->AsGraphics()->SetClearColor(
+  return info.vk_pipeline->AsGraphics()->SetClearColor(
       command->GetR(), command->GetG(), command->GetB(), command->GetA());
 }
 
 Result EngineVulkan::DoClearStencil(const ClearStencilCommand* command) {
-  if (!pipeline_->IsGraphics())
+  auto& info = pipeline_map_[command->GetPipeline()];
+  if (!info.vk_pipeline->IsGraphics())
     return Result("Vulkan::Clear Stencil Command for Non-Graphics Pipeline");
 
-  return pipeline_->AsGraphics()->SetClearStencil(command->GetValue());
+  return info.vk_pipeline->AsGraphics()->SetClearStencil(command->GetValue());
 }
 
 Result EngineVulkan::DoClearDepth(const ClearDepthCommand* command) {
-  if (!pipeline_->IsGraphics())
+  auto& info = pipeline_map_[command->GetPipeline()];
+  if (!info.vk_pipeline->IsGraphics())
     return Result("Vulkan::Clear Depth Command for Non-Graphics Pipeline");
 
-  return pipeline_->AsGraphics()->SetClearDepth(command->GetValue());
+  return info.vk_pipeline->AsGraphics()->SetClearDepth(command->GetValue());
 }
 
-Result EngineVulkan::DoClear(const ClearCommand*) {
-  if (!pipeline_->IsGraphics())
+Result EngineVulkan::DoClear(const ClearCommand* command) {
+  auto& info = pipeline_map_[command->GetPipeline()];
+  if (!info.vk_pipeline->IsGraphics())
     return Result("Vulkan::Clear Command for Non-Graphics Pipeline");
 
-  return pipeline_->AsGraphics()->Clear();
+  return info.vk_pipeline->AsGraphics()->Clear();
 }
 
 Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
-  if (!pipeline_->IsGraphics())
+  auto& info = pipeline_map_[command->GetPipeline()];
+  if (!info.vk_pipeline->IsGraphics())
     return Result("Vulkan::DrawRect for Non-Graphics Pipeline");
 
-  auto* graphics = pipeline_->AsGraphics();
+  auto* graphics = info.vk_pipeline->AsGraphics();
 
   // |format| is not Format for frame buffer but for vertex buffer.
   // Since draw rect command contains its vertex information and it
@@ -390,7 +416,7 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
   vertex_buffer->SetData(0, format, values);
 
-  DrawArraysCommand draw(*command->GetPipelineData());
+  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
   draw.SetTopology(command->IsPatch() ? Topology::kPatchList
                                       : Topology::kTriangleStrip);
   draw.SetFirstVertexIndex(0);
@@ -406,92 +432,104 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
 }
 
 Result EngineVulkan::DoDrawArrays(const DrawArraysCommand* command) {
-  if (!pipeline_->IsGraphics())
+  auto& info = pipeline_map_[command->GetPipeline()];
+  if (!info.vk_pipeline)
     return Result("Vulkan::DrawArrays for Non-Graphics Pipeline");
 
-  return pipeline_->AsGraphics()->Draw(command, vertex_buffer_.get());
+  return info.vk_pipeline->AsGraphics()->Draw(command,
+                                              info.vertex_buffer.get());
 }
 
 Result EngineVulkan::DoCompute(const ComputeCommand* command) {
-  if (pipeline_->IsGraphics())
+  auto& info = pipeline_map_[command->GetPipeline()];
+  if (info.vk_pipeline->IsGraphics())
     return Result("Vulkan: Compute called for graphics pipeline.");
 
-  return pipeline_->AsCompute()->Compute(command->GetX(), command->GetY(),
-                                         command->GetZ());
+  return info.vk_pipeline->AsCompute()->Compute(
+      command->GetX(), command->GetY(), command->GetZ());
 }
 
 Result EngineVulkan::DoEntryPoint(const EntryPointCommand* command) {
-  if (!pipeline_)
+  auto& info = pipeline_map_[command->GetPipeline()];
+  if (!info.vk_pipeline)
     return Result("Vulkan::DoEntryPoint no Pipeline exists");
 
-  pipeline_->SetEntryPointName(ToVkShaderStage(command->GetShaderType()),
-                               command->GetEntryPointName());
+  info.vk_pipeline->SetEntryPointName(ToVkShaderStage(command->GetShaderType()),
+                                      command->GetEntryPointName());
   return {};
 }
 
 Result EngineVulkan::DoPatchParameterVertices(
-    const PatchParameterVerticesCommand* cmd) {
-  if (!pipeline_->IsGraphics())
+    const PatchParameterVerticesCommand* command) {
+  auto& info = pipeline_map_[command->GetPipeline()];
+  if (!info.vk_pipeline->IsGraphics())
     return Result("Vulkan::DoPatchParameterVertices for Non-Graphics Pipeline");
 
-  pipeline_->AsGraphics()->SetPatchControlPoints(cmd->GetControlPointCount());
+  info.vk_pipeline->AsGraphics()->SetPatchControlPoints(
+      command->GetControlPointCount());
   return {};
 }
 
-Result EngineVulkan::DoProcessCommands() {
-  return pipeline_->ProcessCommands();
+Result EngineVulkan::DoProcessCommands(amber::Pipeline* pipeline) {
+  return pipeline_map_[pipeline].vk_pipeline->ProcessCommands();
 }
 
-Result EngineVulkan::GetFrameBufferInfo(ResourceInfo* info) {
-  if (!info)
-    return Result("Vulkan::GetFrameBufferInfo missing info");
-  if (!pipeline_)
+Result EngineVulkan::GetFrameBufferInfo(amber::Pipeline* pipeline,
+                                        ResourceInfo* resource_info) {
+  if (!resource_info)
+    return Result("Vulkan::GetFrameBufferInfo missing resource info");
+
+  auto& info = pipeline_map_[pipeline];
+  if (!info.vk_pipeline)
     return Result("Vulkan::GetFrameBufferIfno missing pipeline");
-  if (!pipeline_->IsGraphics())
+  if (!info.vk_pipeline->IsGraphics())
     return Result("Vulkan::GetFrameBufferInfo for Non-Graphics Pipeline");
 
-  const auto graphics = pipeline_->AsGraphics();
+  const auto graphics = info.vk_pipeline->AsGraphics();
   const auto frame = graphics->GetFrame();
-  const auto bytes_per_texel = color_frame_format_->GetByteSize();
-  info->type = ResourceInfoType::kImage;
-  info->image_info.width = frame->GetWidth();
-  info->image_info.height = frame->GetHeight();
-  info->image_info.depth = 1U;
-  info->image_info.texel_stride = bytes_per_texel;
-  info->image_info.texel_format = color_frame_format_.get();
+  const auto bytes_per_texel = info.color_frame_format->GetByteSize();
+  resource_info->type = ResourceInfoType::kImage;
+  resource_info->image_info.width = frame->GetWidth();
+  resource_info->image_info.height = frame->GetHeight();
+  resource_info->image_info.depth = 1U;
+  resource_info->image_info.texel_stride = bytes_per_texel;
+  resource_info->image_info.texel_format = info.color_frame_format.get();
   // When copying the image to the host buffer, we specify a row length of 0
   // which results in tight packing of rows.  So the row stride is the product
   // of the texel stride and the number of texels in a row.
   const auto row_stride = bytes_per_texel * frame->GetWidth();
-  info->image_info.row_stride = row_stride;
-  info->size_in_bytes = row_stride * frame->GetHeight();
-  info->cpu_memory = frame->GetColorBufferPtr();
+  resource_info->image_info.row_stride = row_stride;
+  resource_info->size_in_bytes = row_stride * frame->GetHeight();
+  resource_info->cpu_memory = frame->GetColorBufferPtr();
 
   return {};
 }
 
-Result EngineVulkan::GetFrameBuffer(std::vector<Value>* values) {
+Result EngineVulkan::GetFrameBuffer(amber::Pipeline* pipeline,
+                                    std::vector<Value>* values) {
   values->resize(0);
 
-  ResourceInfo info;
-  GetFrameBufferInfo(&info);
-  if (info.type != ResourceInfoType::kImage) {
+  ResourceInfo resource_info;
+  GetFrameBufferInfo(pipeline, &resource_info);
+  if (resource_info.type != ResourceInfoType::kImage) {
     return Result(
         "Vulkan:GetFrameBuffer() is invalid for non-image framebuffer");
   }
 
+  auto& info = pipeline_map_[pipeline];
   // TODO(jaebaek): Support other formats
-  if (color_frame_format_->GetFormatType() != kDefaultFramebufferFormat)
+  if (info.color_frame_format->GetFormatType() != kDefaultFramebufferFormat)
     return Result("Vulkan::GetFrameBuffer Unsupported buffer format");
 
   Value pixel;
 
-  const uint8_t* cpu_memory = static_cast<const uint8_t*>(info.cpu_memory);
-  const uint32_t row_stride = info.image_info.row_stride;
-  const uint32_t texel_stride = info.image_info.texel_stride;
+  const uint8_t* cpu_memory =
+      static_cast<const uint8_t*>(resource_info.cpu_memory);
+  const uint32_t row_stride = resource_info.image_info.row_stride;
+  const uint32_t texel_stride = resource_info.image_info.texel_stride;
 
-  for (uint32_t y = 0; y < info.image_info.height; ++y) {
-    for (uint32_t x = 0; x < info.image_info.width; ++x) {
+  for (uint32_t y = 0; y < resource_info.image_info.height; ++y) {
+    for (uint32_t x = 0; x < resource_info.image_info.width; ++x) {
       const uint8_t* ptr_8 = cpu_memory + (row_stride * y) + (texel_stride * x);
       const uint32_t* ptr_32 = reinterpret_cast<const uint32_t*>(ptr_8);
       pixel.SetIntValue(*ptr_32);
@@ -502,15 +540,19 @@ Result EngineVulkan::GetFrameBuffer(std::vector<Value>* values) {
   return {};
 }
 
-Result EngineVulkan::GetDescriptorInfo(const uint32_t descriptor_set,
+Result EngineVulkan::GetDescriptorInfo(amber::Pipeline* pipeline,
+                                       const uint32_t descriptor_set,
                                        const uint32_t binding,
-                                       ResourceInfo* info) {
-  return pipeline_->GetDescriptorInfo(descriptor_set, binding, info);
+                                       ResourceInfo* resource_info) {
+  auto& info = pipeline_map_[pipeline];
+  return info.vk_pipeline->GetDescriptorInfo(descriptor_set, binding,
+                                             resource_info);
 }
 
 Result EngineVulkan::DoBuffer(const BufferCommand* command) {
+  auto& info = pipeline_map_[command->GetPipeline()];
   if (command->IsPushConstant())
-    return pipeline_->AddPushConstant(command);
+    return info.vk_pipeline->AddPushConstant(command);
 
   if (!IsDescriptorSetInBounds(device_->GetPhysicalDevice(),
                                command->GetDescriptorSet())) {
@@ -519,7 +561,7 @@ Result EngineVulkan::DoBuffer(const BufferCommand* command) {
         "device");
   }
 
-  return pipeline_->AddDescriptor(command);
+  return info.vk_pipeline->AddDescriptor(command);
 }
 
 bool EngineVulkan::IsFormatSupportedByPhysicalDevice(
