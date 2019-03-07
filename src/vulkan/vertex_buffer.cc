@@ -42,34 +42,28 @@ uint16_t FloatExponent(const uint32_t hex_float) {
 // Return mantissa value of 32 bits float. Note that mantissa for 32
 // bits float is 23 bits and this method must return uint32_t.
 uint32_t FloatMantissa(const uint32_t hex_float) {
-  return static_cast<uint32_t>(hex_float & ((1U << 23U) - 1U));
+  return hex_float & ((1U << 23U) - 1U) & 0x7fffff;
 }
 
 // Convert 32 bits float |value| to 16 bits float based on IEEE-754.
-uint16_t FloatToHexFloat16(const float value) {
+uint32_t FloatToHexFloat16(const float value) {
   const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
-  return static_cast<uint16_t>(
-      static_cast<uint16_t>(FloatSign(*hex) << 15U) |
-      static_cast<uint16_t>(FloatExponent(*hex) << 10U) |
-      static_cast<uint16_t>(FloatMantissa(*hex) >> 13U));
+  return ((FloatSign(*hex) << 15U) | (FloatExponent(*hex) << 10U) |
+      (FloatMantissa(*hex) >> 13U)) & 0xffff;
 }
 
 // Convert 32 bits float |value| to 11 bits float based on IEEE-754.
-uint16_t FloatToHexFloat11(const float value) {
+uint32_t FloatToHexFloat11(const float value) {
   const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
   assert(FloatSign(*hex) == 0);
-  return static_cast<uint16_t>(
-      static_cast<uint16_t>(FloatExponent(*hex) << 6U) |
-      static_cast<uint16_t>(FloatMantissa(*hex) >> 17U));
+  return ((FloatExponent(*hex) << 6U) | (FloatMantissa(*hex) >> 17U)) & 0x7ff;
 }
 
 // Convert 32 bits float |value| to 10 bits float based on IEEE-754.
-uint16_t FloatToHexFloat10(const float value) {
+uint32_t FloatToHexFloat10(const float value) {
   const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
   assert(FloatSign(*hex) == 0);
-  return static_cast<uint16_t>(
-      static_cast<uint16_t>(FloatExponent(*hex) << 5U) |
-      static_cast<uint16_t>(FloatMantissa(*hex) >> 18U));
+  return ((FloatExponent(*hex) << 5U) | (FloatMantissa(*hex) >> 18U)) & 0x3ff;
 }
 
 // Convert float to small float format.
@@ -91,7 +85,7 @@ uint16_t FloatToHexFloat10(const float value) {
 //
 // 1.0011010010 * 2^10 --> 0 (sign) / 10 + 127 (exp) / 0011010010 (Mantissa)
 //                     --> 0x449a4000
-uint16_t FloatToHexFloat(float value, uint8_t bits) {
+uint32_t FloatToHexFloat(float value, uint8_t bits) {
   switch (bits) {
     case 10:
       return FloatToHexFloat10(value);
@@ -105,14 +99,7 @@ uint16_t FloatToHexFloat(float value, uint8_t bits) {
   return 0;
 }
 
-// Copy [0, bits) bits of |src| to
-// [dst_bit_offset, dst_bit_offset + bits) of |dst|. If |bits| is
-// less than 32 and the type is float, this method uses
-// FloatToHexFloat() to convert it into small bits float.
-Result CopyBitsOfValueToBuffer(uint8_t* dst,
-                               const Value& src,
-                               uint8_t dst_bit_offset,
-                               uint8_t bits) {
+Result ValueToUint64(const Value& src, uint8_t bits, uint64_t* out) {
   uint64_t data = 0;
   if (src.IsInteger()) {
     switch (bits) {
@@ -147,17 +134,15 @@ Result CopyBitsOfValueToBuffer(uint8_t* dst,
     } else {
       switch (bits) {
         case 32: {
-          float* float_ptr = nullptr;
-          float_ptr = reinterpret_cast<float*>(&data);
+          float* float_ptr = reinterpret_cast<float*>(&data);
           *float_ptr = src.AsFloat();
           break;
         }
         case 16:
         case 11:
         case 10: {
-          uint16_t* uint16_ptr = nullptr;
-          uint16_ptr = reinterpret_cast<uint16_t*>(&data);
-          *uint16_ptr = FloatToHexFloat(src.AsFloat(), bits);
+          uint16_t* uint16_ptr = reinterpret_cast<uint16_t*>(&data);
+          *uint16_ptr = static_cast<uint16_t>(FloatToHexFloat(src.AsFloat(), bits));
           break;
         }
         default: {
@@ -167,10 +152,27 @@ Result CopyBitsOfValueToBuffer(uint8_t* dst,
       }
     }
   }
+  *out = data;
+  return {};
+}
 
+// Copy [0, bits) bits of |src| to
+// [dst_bit_offset, dst_bit_offset + bits) of |dst|. If |bits| is
+// less than 32 and the type is float, this method uses
+// FloatToHexFloat() to convert it into small bits float.
+Result CopyBitsOfValueToBuffer(uint8_t* dst,
+                               const Value& src,
+                               uint32_t dst_bit_offset,
+                               uint8_t bits) {
+  uint64_t data = 0;
+  Result r = ValueToUint64(src, bits, &data);
+  if (!r.IsSuccess())
+    return r;
+
+  // Shift memory pointer to the start of the byte to write into.
   while (dst_bit_offset > 7) {
     ++dst;
-    dst_bit_offset = static_cast<uint8_t>(dst_bit_offset - 8);
+    dst_bit_offset -= 8;
   }
 
   // No overflow will happen. |dst_bit_offset| is based on VkFormat
@@ -184,6 +186,10 @@ Result CopyBitsOfValueToBuffer(uint8_t* dst,
       *dst64 & ~(((1ULL << (dst_bit_offset + bits)) - 1ULL));
 
   *dst64 = dst_lower_bits | data | dst_upper_bits;
+
+printf("%lu val, dst_bit_offset: %d, bits: %d, result: %lu",
+  data, dst_bit_offset, bits, *dst64);
+
   return {};
 }
 
@@ -232,7 +238,7 @@ Result VertexBuffer::FillVertexBufferWithData(CommandBuffer* command) {
       }
 
       const auto& components = formats_[j].GetComponents();
-      uint8_t bit_offset = 0;
+      uint32_t bit_offset = 0;
 
       for (uint32_t k = 0; k < components.size(); ++k) {
         uint8_t bits = components[k].num_bits;
@@ -241,14 +247,12 @@ Result VertexBuffer::FillVertexBufferWithData(CommandBuffer* command) {
         if (!r.IsSuccess())
           return r;
 
-        if ((k != components.size() - 1) &&
-            (static_cast<uint32_t>(bit_offset) + static_cast<uint32_t>(bits) >=
-             256)) {
+        if ((k != components.size() - 1) && (bit_offset + bits >= 256)) {
           return Result(
               "Vulkan: VertexBuffer::FillVertexBufferWithData bit_offset "
               "overflow");
         }
-        bit_offset = static_cast<uint8_t>(bit_offset + bits);
+        bit_offset += bits;
       }
 
       ptr += formats_[j].GetByteSize();

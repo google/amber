@@ -90,7 +90,6 @@ TEST_F(VertexBufferTest, R8G8B8A8_UINT) {
   values[3].SetIntValue(255);
 
   Format format;
-  format.SetFormatType(FormatType::kR8G8B8A8_UINT);
   format.AddComponent(FormatComponentType::kR, FormatMode::kUInt, 8);
   format.AddComponent(FormatComponentType::kG, FormatMode::kUInt, 8);
   format.AddComponent(FormatComponentType::kB, FormatMode::kUInt, 8);
@@ -112,7 +111,6 @@ TEST_F(VertexBufferTest, R16G16B16A16_UINT) {
   values[3].SetIntValue(255);
 
   Format format;
-  format.SetFormatType(FormatType::kR16G16B16A16_UINT);
   format.AddComponent(FormatComponentType::kR, FormatMode::kUInt, 16);
   format.AddComponent(FormatComponentType::kG, FormatMode::kUInt, 16);
   format.AddComponent(FormatComponentType::kB, FormatMode::kUInt, 16);
@@ -134,7 +132,6 @@ TEST_F(VertexBufferTest, R32G32B32A32_UINT) {
   values[3].SetIntValue(255);
 
   Format format;
-  format.SetFormatType(FormatType::kR32G32B32A32_UINT);
   format.AddComponent(FormatComponentType::kR, FormatMode::kUInt, 32);
   format.AddComponent(FormatComponentType::kG, FormatMode::kUInt, 32);
   format.AddComponent(FormatComponentType::kB, FormatMode::kUInt, 32);
@@ -156,7 +153,6 @@ TEST_F(VertexBufferTest, R64G64B64A64_UINT) {
   values[3].SetIntValue(255);
 
   Format format;
-  format.SetFormatType(FormatType::kR64G64B64A64_UINT);
   format.AddComponent(FormatComponentType::kR, FormatMode::kUInt, 64);
   format.AddComponent(FormatComponentType::kG, FormatMode::kUInt, 64);
   format.AddComponent(FormatComponentType::kB, FormatMode::kUInt, 64);
@@ -178,7 +174,6 @@ TEST_F(VertexBufferTest, R8G8B8A8_SNORM) {
   values[3].SetIntValue(127);
 
   Format format;
-  format.SetFormatType(FormatType::kR8G8B8A8_SNORM);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSNorm, 8);
   format.AddComponent(FormatComponentType::kG, FormatMode::kSNorm, 8);
   format.AddComponent(FormatComponentType::kB, FormatMode::kSNorm, 8);
@@ -200,7 +195,6 @@ TEST_F(VertexBufferTest, R16G16B16A16_SNORM) {
   values[3].SetIntValue(255);
 
   Format format;
-  format.SetFormatType(FormatType::kR16G16B16A16_SNORM);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSNorm, 16);
   format.AddComponent(FormatComponentType::kG, FormatMode::kSNorm, 16);
   format.AddComponent(FormatComponentType::kB, FormatMode::kSNorm, 16);
@@ -222,7 +216,6 @@ TEST_F(VertexBufferTest, R32G32B32A32_SINT) {
   values[3].SetIntValue(255);
 
   Format format;
-  format.SetFormatType(FormatType::kR32G32B32A32_SINT);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
   format.AddComponent(FormatComponentType::kG, FormatMode::kSInt, 32);
   format.AddComponent(FormatComponentType::kB, FormatMode::kSInt, 32);
@@ -244,7 +237,6 @@ TEST_F(VertexBufferTest, R64G64B64A64_SINT) {
   values[3].SetIntValue(255);
 
   Format format;
-  format.SetFormatType(FormatType::kR64G64B64A64_SINT);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSInt, 64);
   format.AddComponent(FormatComponentType::kG, FormatMode::kSInt, 64);
   format.AddComponent(FormatComponentType::kB, FormatMode::kSInt, 64);
@@ -281,7 +273,6 @@ TEST_F(VertexBufferTest, R16G11B10_SFLOAT) {
   values[2].SetDoubleValue(0.1171875);
 
   Format format;
-  format.SetFormatType(FormatType::kR8G8B8_UNORM);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 16);
   format.AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 11);
   format.AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 10);
@@ -314,7 +305,6 @@ TEST_F(VertexBufferTest, R10G16B11_SFLOAT) {
   values[2].SetDoubleValue(14.0);
 
   Format format;
-  format.SetFormatType(FormatType::kR8G8B8_UNORM);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 10);
   format.AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 16);
   format.AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 11);
@@ -347,7 +337,6 @@ TEST_F(VertexBufferTest, R11G16B10_SFLOAT) {
   values[2].SetDoubleValue(0.1171875);
 
   Format format;
-  format.SetFormatType(FormatType::kR8G8B8_UNORM);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 11);
   format.AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 16);
   format.AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 10);
@@ -364,7 +353,6 @@ TEST_F(VertexBufferTest, R32G32B32_SFLOAT) {
   values[2].SetDoubleValue(0.1171875);
 
   Format format;
-  format.SetFormatType(FormatType::kR32G32B32A32_SFLOAT);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
   format.AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
   format.AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 32);
@@ -383,7 +371,6 @@ TEST_F(VertexBufferTest, R64G64B64_SFLOAT) {
   values[2].SetDoubleValue(0.1171875);
 
   Format format;
-  format.SetFormatType(FormatType::kR64G64B64A64_SFLOAT);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 64);
   format.AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 64);
   format.AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 64);
