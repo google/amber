@@ -22,6 +22,7 @@
 #include "src/command.h"
 #include "src/datum_type.h"
 #include "src/make_unique.h"
+#include "src/pipeline.h"
 #include "src/verifier.h"
 
 namespace amber {
@@ -57,7 +58,8 @@ class VerifierTest : public testing::Test {
 }  // namespace
 
 TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetWholeWindow();
   probe.SetProbeRect();
   probe.SetIsRGBA();
@@ -91,7 +93,8 @@ TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferRelative) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetProbeRect();
   probe.SetRelative();
   probe.SetIsRGBA();
@@ -121,7 +124,8 @@ TEST_F(VerifierTest, ProbeFrameBufferRelative) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetProbeRect();
   probe.SetRelative();
   probe.SetIsRGBA();
@@ -147,7 +151,8 @@ TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBuffer) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetProbeRect();
   probe.SetIsRGBA();
   probe.SetX(1.0f);
@@ -176,7 +181,8 @@ TEST_F(VerifierTest, ProbeFrameBuffer) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferUInt8) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -203,7 +209,8 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt8) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferUInt16) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -230,7 +237,8 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt16) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferUInt32) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -257,7 +265,8 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt32) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferUInt64) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -284,7 +293,8 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt64) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferSInt8) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -311,7 +321,8 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt8) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferSInt16) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -338,7 +349,8 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt16) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferSInt32) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -365,7 +377,8 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt32) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferSInt64) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -392,7 +405,8 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt64) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferFloat32) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -419,7 +433,8 @@ TEST_F(VerifierTest, ProbeFrameBufferFloat32) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferFloat64) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -446,7 +461,8 @@ TEST_F(VerifierTest, ProbeFrameBufferFloat64) {
 }
 
 TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetX(0.0f);
   probe.SetY(0.0f);
 
@@ -484,7 +500,8 @@ TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
 }
 
 TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetX(0.0f);
   probe.SetY(0.0f);
 
@@ -522,7 +539,8 @@ TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
 }
 
 TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetX(0.0f);
   probe.SetY(0.0f);
 
@@ -567,7 +585,8 @@ TEST_F(VerifierTest, ProbeFrameBufferNotRect) {
   frame_buffer[2][1][2] = 51;
   frame_buffer[2][1][3] = 204;
 
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetIsRGBA();
   probe.SetX(1.0f);
   probe.SetY(2.0f);
@@ -583,7 +602,8 @@ TEST_F(VerifierTest, ProbeFrameBufferNotRect) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferRGB) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetWholeWindow();
   probe.SetProbeRect();
   probe.SetB(0.5f);
@@ -615,7 +635,8 @@ TEST_F(VerifierTest, ProbeFrameBufferRGB) {
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferBadRowStride) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetWholeWindow();
   probe.SetProbeRect();
 
@@ -632,7 +653,8 @@ TEST_F(VerifierTest, ProbeFrameBufferBadRowStride) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint8Single) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kUint8);
@@ -654,7 +676,8 @@ TEST_F(VerifierTest, ProbeSSBOUint8Single) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint8Multiple) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kUint8);
@@ -677,7 +700,8 @@ TEST_F(VerifierTest, ProbeSSBOUint8Multiple) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint8Many) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kUint8);
@@ -705,7 +729,8 @@ TEST_F(VerifierTest, ProbeSSBOUint8Many) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint32Single) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kUint32);
@@ -727,7 +752,8 @@ TEST_F(VerifierTest, ProbeSSBOUint32Single) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint32Multiple) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kUint32);
@@ -751,7 +777,8 @@ TEST_F(VerifierTest, ProbeSSBOUint32Multiple) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint32Many) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kUint32);
@@ -779,7 +806,8 @@ TEST_F(VerifierTest, ProbeSSBOUint32Many) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOFloatSingle) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kFloat);
@@ -801,7 +829,8 @@ TEST_F(VerifierTest, ProbeSSBOFloatSingle) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOFloatMultiple) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kFloat);
@@ -825,7 +854,8 @@ TEST_F(VerifierTest, ProbeSSBOFloatMultiple) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOFloatMany) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kFloat);
@@ -853,7 +883,8 @@ TEST_F(VerifierTest, ProbeSSBOFloatMany) {
 }
 
 TEST_F(VerifierTest, ProbeSSBODoubleSingle) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -875,7 +906,8 @@ TEST_F(VerifierTest, ProbeSSBODoubleSingle) {
 }
 
 TEST_F(VerifierTest, ProbeSSBODoubleMultiple) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -899,7 +931,8 @@ TEST_F(VerifierTest, ProbeSSBODoubleMultiple) {
 }
 
 TEST_F(VerifierTest, ProbeSSBODoubleMany) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -927,7 +960,8 @@ TEST_F(VerifierTest, ProbeSSBODoubleMany) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOEqualFail) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -953,7 +987,8 @@ TEST_F(VerifierTest, ProbeSSBOEqualFail) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteTolerance) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -986,7 +1021,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteTolerance) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteToleranceFail) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1016,7 +1052,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteToleranceFail) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeTolerance) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1049,7 +1086,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeTolerance) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeToleranceFail) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1079,7 +1117,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeToleranceFail) {
 }
 
 TEST_F(VerifierTest, ProbeSSBONotEqual) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1103,7 +1142,8 @@ TEST_F(VerifierTest, ProbeSSBONotEqual) {
 }
 
 TEST_F(VerifierTest, ProbeSSBONotEqualFail) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1129,7 +1169,8 @@ TEST_F(VerifierTest, ProbeSSBONotEqualFail) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOLess) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1153,7 +1194,8 @@ TEST_F(VerifierTest, ProbeSSBOLess) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOLessFail) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1179,7 +1221,8 @@ TEST_F(VerifierTest, ProbeSSBOLessFail) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOLessOrEqual) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1203,7 +1246,8 @@ TEST_F(VerifierTest, ProbeSSBOLessOrEqual) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOLessOrEqualFail) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1229,7 +1273,8 @@ TEST_F(VerifierTest, ProbeSSBOLessOrEqualFail) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOGreater) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1253,7 +1298,8 @@ TEST_F(VerifierTest, ProbeSSBOGreater) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOGreaterFail) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1279,7 +1325,8 @@ TEST_F(VerifierTest, ProbeSSBOGreaterFail) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOGreaterOrEqual) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1303,7 +1350,8 @@ TEST_F(VerifierTest, ProbeSSBOGreaterOrEqual) {
 }
 
 TEST_F(VerifierTest, ProbeSSBOGreaterOrEqualFail) {
-  ProbeSSBOCommand probe_ssbo;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeSSBOCommand probe_ssbo(&pipeline);
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1329,7 +1377,8 @@ TEST_F(VerifierTest, ProbeSSBOGreaterOrEqualFail) {
 }
 
 TEST_F(VerifierTest, CheckRGBAOrderForFailure) {
-  ProbeCommand probe;
+  Pipeline pipeline(PipelineType::kGraphics);
+  ProbeCommand probe(&pipeline);
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);

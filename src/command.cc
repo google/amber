@@ -14,9 +14,12 @@
 
 #include "src/command.h"
 
+#include "src/pipeline.h"
+
 namespace amber {
 
-Command::Command(Type type) : command_type_(type) {}
+Command::Command(Type type, Pipeline* pipeline)
+    : command_type_(type), pipeline_(pipeline) {}
 
 Command::~Command() = default;
 
@@ -68,59 +71,67 @@ ProbeSSBOCommand* Command::AsProbeSSBO() {
   return static_cast<ProbeSSBOCommand*>(this);
 }
 
-DrawRectCommand::DrawRectCommand(PipelineData data)
-    : Command(Type::kDrawRect), data_(data) {}
+DrawRectCommand::DrawRectCommand(Pipeline* pipeline, PipelineData data)
+    : Command(Type::kDrawRect, pipeline), data_(data) {}
 
 DrawRectCommand::~DrawRectCommand() = default;
 
-DrawArraysCommand::DrawArraysCommand(PipelineData data)
-    : Command(Type::kDrawArrays), data_(data) {}
+DrawArraysCommand::DrawArraysCommand(Pipeline* pipeline, PipelineData data)
+    : Command(Type::kDrawArrays, pipeline), data_(data) {}
 
 DrawArraysCommand::~DrawArraysCommand() = default;
 
-ComputeCommand::ComputeCommand() : Command(Type::kCompute) {}
+ComputeCommand::ComputeCommand(Pipeline* pipeline)
+    : Command(Type::kCompute, pipeline) {}
 
 ComputeCommand::~ComputeCommand() = default;
 
-Probe::Probe(Type type) : Command(type) {}
+Probe::Probe(Type type, Pipeline* pipeline) : Command(type, pipeline) {}
 
 Probe::~Probe() = default;
 
-ProbeCommand::ProbeCommand() : Probe(Type::kProbe) {}
+ProbeCommand::ProbeCommand(Pipeline* pipeline)
+    : Probe(Type::kProbe, pipeline) {}
 
 ProbeCommand::~ProbeCommand() = default;
 
-BufferCommand::BufferCommand(BufferType type)
-    : Command(Type::kBuffer), buffer_type_(type) {}
+BufferCommand::BufferCommand(BufferType type, Pipeline* pipeline)
+    : Command(Type::kBuffer, pipeline), buffer_type_(type) {}
 
 BufferCommand::~BufferCommand() = default;
 
-ProbeSSBOCommand::ProbeSSBOCommand() : Probe(Type::kProbeSSBO) {}
+ProbeSSBOCommand::ProbeSSBOCommand(Pipeline* pipeline)
+    : Probe(Type::kProbeSSBO, pipeline) {}
 
 ProbeSSBOCommand::~ProbeSSBOCommand() = default;
 
-ClearCommand::ClearCommand() : Command(Type::kClear) {}
+ClearCommand::ClearCommand(Pipeline* pipeline)
+    : Command(Type::kClear, pipeline) {}
 
 ClearCommand::~ClearCommand() = default;
 
-ClearColorCommand::ClearColorCommand() : Command(Type::kClearColor) {}
+ClearColorCommand::ClearColorCommand(Pipeline* pipeline)
+    : Command(Type::kClearColor, pipeline) {}
 
 ClearColorCommand::~ClearColorCommand() = default;
 
-ClearDepthCommand::ClearDepthCommand() : Command(Type::kClearDepth) {}
+ClearDepthCommand::ClearDepthCommand(Pipeline* pipeline)
+    : Command(Type::kClearDepth, pipeline) {}
 
 ClearDepthCommand::~ClearDepthCommand() = default;
 
-ClearStencilCommand::ClearStencilCommand() : Command(Type::kClearStencil) {}
+ClearStencilCommand::ClearStencilCommand(Pipeline* pipeline)
+    : Command(Type::kClearStencil, pipeline) {}
 
 ClearStencilCommand::~ClearStencilCommand() = default;
 
-PatchParameterVerticesCommand::PatchParameterVerticesCommand()
-    : Command(Type::kPatchParameterVertices) {}
+PatchParameterVerticesCommand::PatchParameterVerticesCommand(Pipeline* pipeline)
+    : Command(Type::kPatchParameterVertices, pipeline) {}
 
 PatchParameterVerticesCommand::~PatchParameterVerticesCommand() = default;
 
-EntryPointCommand::EntryPointCommand() : Command(Type::kEntryPoint) {}
+EntryPointCommand::EntryPointCommand(Pipeline* pipeline)
+    : Command(Type::kEntryPoint, pipeline) {}
 
 EntryPointCommand::~EntryPointCommand() = default;
 

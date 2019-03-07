@@ -130,24 +130,26 @@ class Engine {
 
   /// Run all queued commands and copy frame buffer data to the host
   /// if graphics pipeline.
-  virtual Result DoProcessCommands() = 0;
+  virtual Result DoProcessCommands(amber::Pipeline* pipeline) = 0;
 
   /// Get stride, width, height, and memory pointer of color frame buffer.
   /// This is only valid if the buffer of color framebuffer is mapped into
   /// the host address space. In particular, if we have run
   /// DoProcessCommands() and since then no graphics pipeline drawing
   /// commands have occurred e.g., DoClear, DoDrawArrays, DoDrawRect.
-  virtual Result GetFrameBufferInfo(ResourceInfo* info) = 0;
+  virtual Result GetFrameBufferInfo(Pipeline* pipeline, ResourceInfo* info) = 0;
 
   /// Copy the content of the framebuffer into |values|, each value is a pixel
   /// in R8G8B8A8 format.
-  virtual Result GetFrameBuffer(std::vector<Value>* values) = 0;
+  virtual Result GetFrameBuffer(Pipeline* pipeline,
+                                std::vector<Value>* values) = 0;
 
   /// Copy the contents of the resource bound to the given descriptor
   /// and get the resource information e.g., size for buffer, width,
   /// height, depth for image of descriptor given as |descriptor_set|
   /// and |binding|.
-  virtual Result GetDescriptorInfo(const uint32_t descriptor_set,
+  virtual Result GetDescriptorInfo(Pipeline* pipeline,
+                                   const uint32_t descriptor_set,
                                    const uint32_t binding,
                                    ResourceInfo* info) = 0;
 
