@@ -975,7 +975,7 @@ Result Parser::ParseClear() {
   if (!pipeline->IsGraphics())
     return Result("CLEAR command requires graphics pipeline, got compute");
 
-  auto cmd = MakeUnique<ClearCommand>();
+  auto cmd = MakeUnique<ClearCommand>(pipeline);
   script_->AddCommand(std::move(cmd));
 
   return ValidateEndOfStatement("CLEAR command");
