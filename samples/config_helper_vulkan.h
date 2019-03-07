@@ -103,9 +103,9 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   VkDevice vulkan_device_ = VK_NULL_HANDLE;
 
   bool use_physical_device_features2_ = false;
-  VkPhysicalDeviceFeatures available_features_ = {};
-  VkPhysicalDeviceFeatures2KHR available_features2_ = {};
-  VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_feature_ = {};
+  VkPhysicalDeviceFeatures available_features_;
+  VkPhysicalDeviceFeatures2KHR available_features2_;
+  VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_feature_;
 };
 
 }  // namespace sample

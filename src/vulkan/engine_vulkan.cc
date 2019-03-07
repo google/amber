@@ -155,7 +155,7 @@ bool EngineVulkan::VerifyFormatAvailable(const Format& format,
 
 Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   // Create the pipeline data early so we can access them as needed.
-  pipeline_map_[pipeline] = {};
+  pipeline_map_[pipeline] = PipelineInfo();
   auto& info = pipeline_map_[pipeline];
 
   // Set VK_FORMAT_B8G8R8A8_UNORM for color frame buffer by default.
