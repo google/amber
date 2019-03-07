@@ -54,6 +54,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParsePipelineBlock();
     } else if (tok == "SHADER") {
       r = ParseShaderBlock();
+    } else if (tok == "RUN") {
+      r = ParseRun();
     } else {
       r = Result("unknown token: " + tok);
     }
@@ -844,6 +846,119 @@ Result Parser::ParseBufferInitializerData(DataBuffer* buffer) {
 
   buffer->SetData(std::move(values));
   return ValidateEndOfStatement("BUFFER data command");
+}
+
+Result Parser::ParseRun() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("missing pipeline name for RUN command");
+
+  auto* pipeline = script_->GetPipeline(token->AsString());
+  if (!pipeline)
+    return Result("unknown pipeline for RUN command: " + token->AsString());
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("RUN command requires parameters");
+
+  if (token->IsInteger()) {
+    if (!pipeline->IsCompute())
+      return Result("RUN command requires compute pipeline, got graphics");
+
+    auto cmd = MakeUnique<ComputeCommand>(pipeline);
+    cmd->SetX(token->AsUint32());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger()) {
+      return Result("invalid parameter for RUN command: " +
+                    token->ToOriginalString());
+    }
+    cmd->SetY(token->AsUint32());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger()) {
+      return Result("invalid parameter for RUN command: " +
+                    token->ToOriginalString());
+    }
+    cmd->SetZ(token->AsUint32());
+
+    script_->AddCommand(std::move(cmd));
+    return ValidateEndOfStatement("RUN command");
+  }
+  if (!token->IsString())
+    return Result("invalid token in RUN command: " + token->ToOriginalString());
+
+  if (token->AsString() == "DRAW_RECT") {
+    if (!pipeline->IsGraphics())
+      return Result("RUN command requires graphics pipeline, got compute");
+
+    token = tokenizer_->NextToken();
+    if (token->IsEOS() || token->IsEOL())
+      return Result("RUN DRAW_RECT command requires parameters");
+
+    if (!token->IsString() || token->AsString() != "POS") {
+      return Result("invalid token in RUN command: " +
+                    token->ToOriginalString() + "; expected POS");
+    }
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("missing X position for RUN command");
+
+    auto cmd = MakeUnique<DrawRectCommand>(pipeline, PipelineData{});
+    Result r = token->ConvertToDouble();
+    if (!r.IsSuccess())
+      return r;
+    cmd->SetX(token->AsFloat());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("missing Y position for RUN command");
+
+    r = token->ConvertToDouble();
+    if (!r.IsSuccess())
+      return r;
+    cmd->SetY(token->AsFloat());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "SIZE") {
+      return Result("invalid token in RUN command: " +
+                    token->ToOriginalString() + "; expected SIZE");
+    }
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("missing width value for RUN command");
+
+    r = token->ConvertToDouble();
+    if (!r.IsSuccess())
+      return r;
+    cmd->SetWidth(token->AsFloat());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("missing height value for RUN command");
+
+    r = token->ConvertToDouble();
+    if (!r.IsSuccess())
+      return r;
+    cmd->SetHeight(token->AsFloat());
+
+    script_->AddCommand(std::move(cmd));
+    return ValidateEndOfStatement("RUN command");
+  }
+
+  if (token->AsString() == "DRAW_ARRAY") {
+    if (!pipeline->IsGraphics())
+      return Result("RUN command requires graphics pipeline, got compute");
+
+    auto cmd = MakeUnique<DrawArraysCommand>(pipeline, PipelineData{});
+
+    script_->AddCommand(std::move(cmd));
+    return ValidateEndOfStatement("RUN command");
+  }
+
+  return Result("invalid token in RUN command: " + token->AsString());
 }
 
 }  // namespace amberscript
