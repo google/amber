@@ -448,7 +448,7 @@ Result EngineDawn::CreateFramebufferIfNeeded() {
   return {};
 }
 
-Result EngineDawn::GetFrameBufferInfo(Pipeline*, ResourceInfo* info) {
+Result EngineDawn::GetFrameBufferInfo(Pipeline*, size_t, ResourceInfo* info) {
   assert(info);
 
   if (render_pipeline_info_.fb_data == nullptr)
@@ -466,7 +466,7 @@ Result EngineDawn::GetFrameBufferInfo(Pipeline*, ResourceInfo* info) {
   return {};
 }
 
-Result EngineDawn::GetFrameBuffer(Pipeline*, std::vector<Value>*) {
+Result EngineDawn::GetFrameBuffer(Pipeline*, size_t, std::vector<Value>*) {
   return Result("Dawn::GetFrameBuffer not implemented");
 }
 
