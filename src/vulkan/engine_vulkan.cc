@@ -176,10 +176,10 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       return r;
   }
 
-  for (const auto& clr_info : pipeline->GetColorAttachments()) {
-    auto& fmt = clr_info.buffer->AsFormatBuffer()->GetFormat();
+  for (const auto& colour_info : pipeline->GetColorAttachments()) {
+    auto& fmt = colour_info.buffer->AsFormatBuffer()->GetFormat();
     info.color_frame_format = fmt;
-    if (!VerifyFormatAvailable(fmt, clr_info.type))
+    if (!VerifyFormatAvailable(fmt, colour_info.type))
       return Result("Vulkan color attachment format is not supported");
   }
 
