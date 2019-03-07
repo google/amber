@@ -170,19 +170,21 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   // Handle Image and Depth buffers early so they are available when we create
   // the pipeline.
-  for (const auto& info : pipeline->GetColorAttachments()) {
-    Result r = SetBuffer(
-        pipeline, info.type, static_cast<uint8_t>(info.location),
-        info.buffer->AsFormatBuffer()->GetFormat(), info.buffer->GetData());
+  for (const auto& colour_info : pipeline->GetColorAttachments()) {
+    Result r = SetBuffer(pipeline, colour_info.type,
+                         static_cast<uint8_t>(colour_info.location),
+                         colour_info.buffer->AsFormatBuffer()->GetFormat(),
+                         colour_info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
 
   if (pipeline->GetDepthBuffer().buffer) {
-    const auto& info = pipeline->GetDepthBuffer();
-    Result r = SetBuffer(
-        pipeline, info.type, static_cast<uint8_t>(info.location),
-        info.buffer->AsFormatBuffer()->GetFormat(), info.buffer->GetData());
+    const auto& depth_info = pipeline->GetDepthBuffer();
+    Result r = SetBuffer(pipeline, depth_info.type,
+                         static_cast<uint8_t>(depth_info.location),
+                         depth_info.buffer->AsFormatBuffer()->GetFormat(),
+                         depth_info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
@@ -222,13 +224,13 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   info.vk_pipeline = std::move(vk_pipeline);
 
-  for (const auto& info : pipeline->GetVertexBuffers()) {
-    Result r =
-        SetBuffer(pipeline, info.type, static_cast<uint8_t>(info.location),
-                  info.buffer->IsFormatBuffer()
-                      ? info.buffer->AsFormatBuffer()->GetFormat()
-                      : Format(),
-                  info.buffer->GetData());
+  for (const auto& vtex_info : pipeline->GetVertexBuffers()) {
+    Result r = SetBuffer(pipeline, vtex_info.type,
+                         static_cast<uint8_t>(vtex_info.location),
+                         vtex_info.buffer->IsFormatBuffer()
+                             ? vtex_info.buffer->AsFormatBuffer()->GetFormat()
+                             : Format(),
+                         vtex_info.buffer->GetData());
     if (!r.IsSuccess())
       return r;
   }
