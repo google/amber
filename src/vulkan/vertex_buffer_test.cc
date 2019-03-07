@@ -256,20 +256,20 @@ TEST_F(VertexBufferTest, R16G11B10_SFLOAT) {
   // 16 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
-  uint64_t expected = 50688UL;
+  uint64_t expected = 50688ULL;
   values[0].SetDoubleValue(-6.0);
 
   // 11 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
-  expected |= 1200UL << 16UL;
+  expected |= 1200ULL << 16ULL;
   values[1].SetDoubleValue(14.0);
 
   // 10 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4
   //                                                 = 0.1171875
-  expected |= 380UL << (16UL + 11UL);
+  expected |= 380ULL << (16ULL + 11ULL);
   values[2].SetDoubleValue(0.1171875);
 
   Format format;
@@ -289,19 +289,19 @@ TEST_F(VertexBufferTest, R10G16B11_SFLOAT) {
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4
   //                                                 = 0.1171875
-  uint64_t expected = 380UL;
+  uint64_t expected = 380ULL;
   values[0].SetDoubleValue(0.1171875);
 
   // 16 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
-  expected |= 50688UL << 10UL;
+  expected |= 50688ULL << 10ULL;
   values[1].SetDoubleValue(-6.0);
 
   // 11 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
-  expected |= 1200UL << (16UL + 10UL);
+  expected |= 1200ULL << (16ULL + 10ULL);
   values[2].SetDoubleValue(14.0);
 
   Format format;
@@ -320,20 +320,20 @@ TEST_F(VertexBufferTest, R11G16B10_SFLOAT) {
   // 11 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
-  uint64_t expected = 1200UL;
+  uint64_t expected = 1200ULL;
   values[0].SetDoubleValue(14.0);
 
   // 16 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
-  expected |= 50688UL << 11UL;
+  expected |= 50688ULL << 11ULL;
   values[1].SetDoubleValue(-6.0);
 
   // 10 bits float to float
   //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
   //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4
   //                                                 = 0.1171875
-  expected |= 380UL << (16UL + 11UL);
+  expected |= 380ULL << (16ULL + 11ULL);
   values[2].SetDoubleValue(0.1171875);
 
   Format format;
