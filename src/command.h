@@ -37,6 +37,7 @@ class DrawArraysCommand;
 class DrawRectCommand;
 class EntryPointCommand;
 class PatchParameterVerticesCommand;
+class Pipeline;
 class ProbeCommand;
 class ProbeSSBOCommand;
 class BufferCommand;
@@ -92,16 +93,19 @@ class Command {
   void SetLine(size_t line) { line_ = line; }
   size_t GetLine() const { return line_; }
 
+  Pipeline* GetPipeline() const { return pipeline_; }
+
  protected:
-  explicit Command(Type type);
+  explicit Command(Type type, Pipeline* pipeline);
 
   Type command_type_;
+  Pipeline* pipeline_;
   size_t line_ = 1;
 };
 
 class DrawRectCommand : public Command {
  public:
-  explicit DrawRectCommand(PipelineData data);
+  explicit DrawRectCommand(Pipeline* pipeline, PipelineData data);
   ~DrawRectCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
@@ -136,7 +140,7 @@ class DrawRectCommand : public Command {
 
 class DrawArraysCommand : public Command {
  public:
-  explicit DrawArraysCommand(PipelineData data);
+  explicit DrawArraysCommand(Pipeline* pipeline, PipelineData data);
   ~DrawArraysCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
@@ -171,7 +175,7 @@ class DrawArraysCommand : public Command {
 
 class ComputeCommand : public Command {
  public:
-  ComputeCommand();
+  explicit ComputeCommand(Pipeline* pipeline);
   ~ComputeCommand() override;
 
   void SetX(uint32_t x) { x_ = x; }
@@ -205,7 +209,7 @@ class Probe : public Command {
   const std::vector<Tolerance>& GetTolerances() const { return tolerances_; }
 
  protected:
-  explicit Probe(Type type);
+  explicit Probe(Type type, Pipeline* pipeline);
 
  private:
   std::vector<Tolerance> tolerances_;
@@ -213,7 +217,7 @@ class Probe : public Command {
 
 class ProbeCommand : public Probe {
  public:
-  ProbeCommand();
+  explicit ProbeCommand(Pipeline* pipeline);
   ~ProbeCommand() override;
 
   void SetWholeWindow() { is_whole_window_ = true; }
@@ -286,7 +290,7 @@ class ProbeSSBOCommand : public Probe {
     kGreaterOrEqual
   };
 
-  ProbeSSBOCommand();
+  explicit ProbeSSBOCommand(Pipeline* pipeline);
   ~ProbeSSBOCommand() override;
 
   void SetComparator(Comparator comp) { comparator_ = comp; }
@@ -324,7 +328,7 @@ class BufferCommand : public Command {
     kPushConstant,
   };
 
-  explicit BufferCommand(BufferType type);
+  explicit BufferCommand(BufferType type, Pipeline* pipeline);
   ~BufferCommand() override;
 
   bool IsSSBO() const { return buffer_type_ == BufferType::kSSBO; }
@@ -371,13 +375,13 @@ class BufferCommand : public Command {
 
 class ClearCommand : public Command {
  public:
-  ClearCommand();
+  explicit ClearCommand(Pipeline* pipeline);
   ~ClearCommand() override;
 };
 
 class ClearColorCommand : public Command {
  public:
-  ClearColorCommand();
+  explicit ClearColorCommand(Pipeline* pipeline);
   ~ClearColorCommand() override;
 
   void SetR(float r) { r_ = r; }
@@ -401,7 +405,7 @@ class ClearColorCommand : public Command {
 
 class ClearDepthCommand : public Command {
  public:
-  ClearDepthCommand();
+  explicit ClearDepthCommand(Pipeline* pipeline);
   ~ClearDepthCommand() override;
 
   void SetValue(float val) { value_ = val; }
@@ -413,7 +417,7 @@ class ClearDepthCommand : public Command {
 
 class ClearStencilCommand : public Command {
  public:
-  ClearStencilCommand();
+  explicit ClearStencilCommand(Pipeline* pipeline);
   ~ClearStencilCommand() override;
 
   void SetValue(uint32_t val) { value_ = val; }
@@ -425,7 +429,7 @@ class ClearStencilCommand : public Command {
 
 class PatchParameterVerticesCommand : public Command {
  public:
-  PatchParameterVerticesCommand();
+  explicit PatchParameterVerticesCommand(Pipeline* pipeline);
   ~PatchParameterVerticesCommand() override;
 
   void SetControlPointCount(uint32_t count) { control_point_count_ = count; }
@@ -437,7 +441,7 @@ class PatchParameterVerticesCommand : public Command {
 
 class EntryPointCommand : public Command {
  public:
-  EntryPointCommand();
+  explicit EntryPointCommand(Pipeline* pipeline);
   ~EntryPointCommand() override;
 
   void SetShaderType(ShaderType type) { shader_type_ = type; }
