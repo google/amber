@@ -19,34 +19,49 @@ set(Vulkan_FOUND FALSE)
 set(VULKAN_CTS_HEADER FALSE)
 set(VULKAN_LIB "")
 
-# Our first choice is to pick up the Vulkan headers from an enclosing project.
-# And if that's the case, then use Vulkan libraries as specified by
-# Vulkan_LIBRARIES, with a default library of "vulkan".
-set(X "${Vulkan-Headers_SOURCE_DIR}/include")
-if (IS_DIRECTORY "${X}")
-  message(STATUS "Amber: Using Vulkan header dir ${X}")
-  list(APPEND CMAKE_REQUIRED_INCLUDES "${X}")
-
-  # Add the directory to the list of include paths, before any others.
-  include_directories(BEFORE "${X}")
-  CHECK_INCLUDE_FILE(vulkan/vulkan.h HAVE_VULKAN_HEADER)
-
-  if (${HAVE_VULKAN_HEADER})
-    if ("${Vulkan_LIBRARIES}" STREQUAL "")
-      message(STATUS "Amber: Defaulting to Vulkan library: vulkan")
-      set(VULKAN_LIB vulkan)
-    else()
-      message(STATUS "Amber: Using specified Vulkan libraries: ${Vulkan_LIBRARIES}")
-      set(VULKAN_LIB "${Vulkan_LIBRARIES}")
-    endif()
-
-    # For now assume we have Vulkan.  We have its header, but we haven't checked
-    # for the library.
-    # TODO(dneto): Actually check for the libraries.
-    set(Vulkan_FOUND TRUE)
-  endif()
+if (${AMBER_USE_LOCAL_VULKAN})
+  set(Vulkan_FOUND TRUE)
+  set(VulkanHeaders_INCLUDE_DIR
+    ${PROJECT_SOURCE_DIR}/third_party/vulkan-headers/include
+    CACHE PATH "vk headers dir" FORCE)
+  set(VulkanRegistry_DIR
+    ${PROJECT_SOURCE_DIR}/third_party/vulkan-headers/registry
+    CACHE PATH "vk_registry_dir" FORCE)
+  include_directories(BEFORE "${VulkanHeaders_INCLUDE_DIR}")
+  set(VULKAN_LIB vulkan)
+  message(STATUS "Amber: using local vulkan")
 endif()
-unset(X)
+
+if (NOT ${Vulkan_FOUND})
+  # Our first choice is to pick up the Vulkan headers from an enclosing project.
+  # And if that's the case, then use Vulkan libraries as specified by
+  # Vulkan_LIBRARIES, with a default library of "vulkan".
+  set(X "${Vulkan-Headers_SOURCE_DIR}/include")
+  if (IS_DIRECTORY "${X}")
+    message(STATUS "Amber: Using Vulkan header dir ${X}")
+    list(APPEND CMAKE_REQUIRED_INCLUDES "${X}")
+
+    # Add the directory to the list of include paths, before any others.
+    include_directories(BEFORE "${X}")
+    CHECK_INCLUDE_FILE(vulkan/vulkan.h HAVE_VULKAN_HEADER)
+
+    if (${HAVE_VULKAN_HEADER})
+      if ("${Vulkan_LIBRARIES}" STREQUAL "")
+        message(STATUS "Amber: Defaulting to Vulkan library: vulkan")
+        set(VULKAN_LIB vulkan)
+      else()
+        message(STATUS "Amber: Using specified Vulkan libraries: ${Vulkan_LIBRARIES}")
+        set(VULKAN_LIB "${Vulkan_LIBRARIES}")
+      endif()
+
+      # For now assume we have Vulkan.  We have its header, but we haven't checked
+      # for the library.
+      # TODO(dneto): Actually check for the libraries.
+      set(Vulkan_FOUND TRUE)
+    endif()
+  endif()
+  unset(X)
+endif()
 
 # Check if we're in the CTS
 if (NOT ${Vulkan_FOUND})

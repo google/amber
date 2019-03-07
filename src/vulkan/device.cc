@@ -379,7 +379,8 @@ Result Device::Initialize(
     }
   }
 
-  VkPhysicalDeviceFeatures available_vulkan_features = {};
+  VkPhysicalDeviceFeatures available_vulkan_features =
+      VkPhysicalDeviceFeatures();
   if (use_physical_device_features_2) {
     available_vulkan_features = available_features2.features;
 
