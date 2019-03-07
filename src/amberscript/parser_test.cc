@@ -3462,7 +3462,7 @@ TEST_F(AmberScriptParserTest, ClearInvalidPipeline) {
 }
 
 TEST_F(AmberScriptParserTest, ClearComputePipeline) {
- std::string in = R"(
+  std::string in = R"(
 SHADER compute my_shader GLSL
 void main() {
   gl_FragColor = vec3(2, 3, 4);
