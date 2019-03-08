@@ -66,6 +66,7 @@ def read_vk(file):
 
   return methods
 
+
 def gen_wrappers(methods, xml):
   content = ""
   for method in methods:
@@ -86,20 +87,43 @@ def gen_wrappers(methods, xml):
     content += "    return Result(\"Vulkan: Unable to "
     content += "load {} pointer\");\n".format(method)
     content += "  }\n"
-    content += "  ptrs_.{} = [ptr](".format(method)
+
+    # if delegate is not null ...
+    content += "  if (delegate && delegate->LogGraphicsCalls()) {\n"
+
+    # ... lambda with delegate calls ...
+    content += "    ptrs_.{} = [ptr, delegate](".format(method)
     content += ', '.join(str(x) for x in param_vals)
     content += ") -> " + data['return_type'] + " {\n"
-
+    content += '      delegate->Log("{}");\n'.format(method)
     if data['return_type'] != 'void':
-      content += "    {} ret = ".format(data['return_type'])
-    content += "    ptr(" + ", ".join(str(x) for x in param_names) + ");\n"
+      content += "      {} ret = ".format(data['return_type'])
+    content += "ptr(" + ", ".join(str(x) for x in param_names) + ");\n"
+    content += "      return";
+    if data['return_type'] != 'void':
+      content += " ret"
+    content += ";\n"
+    content += "    };\n"
 
-    content += "    return";
+    # ... else ...
+    content += "  } else {\n"
+
+    # ... simple wrapper lambda ...
+    content += "    ptrs_.{} = [ptr](".format(method)
+    content += ', '.join(str(x) for x in param_vals)
+    content += ") -> " + data['return_type'] + " {\n"
+    if data['return_type'] != 'void':
+      content += "      {} ret = ".format(data['return_type'])
+    content += "ptr(" + ", ".join(str(x) for x in param_names) + ");\n"
+    content += "      return";
     if data['return_type'] != 'void':
       content += " ret"
     content += ";\n"
 
-    content += "};\n"
+    content += "    };\n"
+
+    # ... end if
+    content += "  }\n"
     content += "}\n"
 
   return content

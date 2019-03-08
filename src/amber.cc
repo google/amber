@@ -29,6 +29,8 @@
 
 namespace amber {
 
+Delegate::~Delegate() = default;
+
 Amber::Amber() = default;
 
 Amber::~Amber() = default;
@@ -77,7 +79,8 @@ Result CreateEngineAndCheckRequirements(const Recipe* recipe,
 
   // Engine initialization checks requirements.  Current backends don't do
   // much else.  Refactor this if they end up doing to much here.
-  Result r = engine->Initialize(opts->config, script->GetRequiredFeatures(),
+  Result r = engine->Initialize(opts->config, opts->delegate,
+                                script->GetRequiredFeatures(),
                                 script->GetRequiredInstanceExtensions(),
                                 script->GetRequiredDeviceExtensions());
   if (!r.IsSuccess())

@@ -182,6 +182,7 @@ EngineDawn::EngineDawn() : Engine() {}
 EngineDawn::~EngineDawn() = default;
 
 Result EngineDawn::Initialize(EngineConfig* config,
+                              Delegate*,
                               const std::vector<std::string>&,
                               const std::vector<std::string>&,
                               const std::vector<std::string>&) {
