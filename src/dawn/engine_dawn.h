@@ -37,6 +37,7 @@ class EngineDawn : public Engine {
   // Engine
   // Initialize with given configuration data.
   Result Initialize(EngineConfig* config,
+                    Delegate*,
                     const std::vector<std::string>& features,
                     const std::vector<std::string>& instance_extensions,
                     const std::vector<std::string>& device_extensions) override;

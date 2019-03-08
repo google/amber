@@ -34,6 +34,7 @@ class EngineStub : public Engine {
 
   // Engine
   Result Initialize(EngineConfig*,
+                    Delegate*,
                     const std::vector<std::string>& features,
                     const std::vector<std::string>& instance_exts,
                     const std::vector<std::string>& device_exts) override {
@@ -214,7 +215,7 @@ class VkScriptExecutorTest : public testing::Test {
       const std::vector<std::string>& instance_extensions,
       const std::vector<std::string>& device_extensions) {
     auto engine = MakeUnique<EngineStub>();
-    engine->Initialize(nullptr, features, instance_extensions,
+    engine->Initialize(nullptr, nullptr, features, instance_extensions,
                        device_extensions);
     return std::move(engine);
   }

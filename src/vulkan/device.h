@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "amber/amber.h"
 #include "amber/result.h"
 #include "amber/vulkan_header.h"
 
@@ -40,6 +41,7 @@ class Device {
   ~Device();
 
   Result Initialize(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
+                    Delegate* delegate,
                     const std::vector<std::string>& required_features,
                     const std::vector<std::string>& required_extensions,
                     const VkPhysicalDeviceFeatures& available_features,
@@ -62,7 +64,7 @@ class Device {
   const VulkanPtrs* GetPtrs() const { return &ptrs_; }
 
  private:
-  Result LoadVulkanPointers(PFN_vkGetInstanceProcAddr);
+  Result LoadVulkanPointers(PFN_vkGetInstanceProcAddr, Delegate* delegate);
 
   VkInstance instance_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
