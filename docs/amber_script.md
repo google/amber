@@ -314,19 +314,26 @@ CLEAR <pipeline>
 ```
 # Checks that |buffer_name| at |x|, |y| has the given |value|s when compared
 # with the given |comparator|.
-EXPECT <buffer_name> IDX <x> <y> <comparator> <value>+
+EXPECT <pipeline_name> BUFFER <buffer_name> IDX <x> <y> <comparator> <value>+
 
 # Checks that |buffer_name| at |x|, |y| has values within |tolerance| of |value|
 # when compared with the given |comparator|. The |tolerance| can be specified
 # as 1-4 float values separated by spaces.
-EXPECT <buffer_name> IDX <x> <y> TOLERANCE <tolerance>{1,4} <comparator> \
-    <value>+
+EXPECT <pipeline_name> BUFFER <buffer_name> IDX <x> <y> TOLERANCE \
+    <tolerance>{1,4} <comparator> <value>+
 
 # Checks that |buffer_name| at |x|, |y| for |width|x|height| pixels has the
 # given |r|, |g|, |b| values. Each r, g, b value is an integer from 0-255.
-EXPECT <buffer_name> IDX <x_in_pixels> <y_in_pixels> \
+EXPECT <pipeline_name> BUFFER <buffer_name> IDX <x_in_pixels> <y_in_pixels> \
   SIZE <width_in_pixels> <height_in_pixels> \
   EQ_RGB <r (0 - 255)> <g (0 - 255)> <b (0 - 255)>
+
+# Checks that |buffer_name| at |x|, |y| for |width|x|height| pixels has the
+# given |r|, |g|, |b|, |a| values. Each r, g, b, a value is an integer
+# from 0-255.
+EXPECT <pipeline_name> BUFFER <buffer_name> IDX <x_in_pixels> <y_in_pixels> \
+  SIZE <width_in_pixels> <height_in_pixels> \
+  EQ_RGBA <r (0 - 255)> <g (0 - 255)> <b (0 - 255)> <a (0 - 255)>
 ```
 
 ## Examples
@@ -359,13 +366,13 @@ END  # pipeline
 RUN kComputePipeline 256 256 1
 
 # Four corners
-EXPECT kComputeBuffer IDX 0 EQ 0 0
-EXPECT kComputeBuffer IDX 2040 EQ 255 0
-EXPECT kComputeBuffer IDX 522240 EQ 0 255
-EXPECT kComputeBuffer IDX 524280 EQ 255 255
+EXPECT kComputePipeline BUFFER kComputeBuffer IDX 0 EQ 0 0
+EXPECT kComputePipeline BUFFER kComputeBuffer IDX 2040 EQ 255 0
+EXPECT kComputePipeline BUFFER kComputeBuffer IDX 522240 EQ 0 255
+EXPECT kComputePipeline BUFFER kComputeBuffer IDX 524280 EQ 255 255
 
 # Center
-EXPECT kComputeBuffer IDX 263168 EQ 128 128
+EXPECT kComputePipeline BUFFER kComputeBuffer IDX 263168 EQ 128 128
 ```
 
 ### Entry Points
@@ -440,8 +447,8 @@ END  # pipeline
 RUN kRedPipeline DRAW_RECT POS 0 0 SIZE 256 256
 RUN kGreenPipeline DRAW_RECT POS 128 128 SIZE 256 256
 
-EXPECT kImgBuffer IDX 0 0 SIZE 127 127 EQ_RGB 255 0 0
-EXPECT kImgBuffer IDX 128 128 SIZE 128 128 EQ_RGB 0 255 0
+EXPECT kGreenPipeline BUFFER kImgBuffer IDX 0 0 SIZE 127 127 EQ_RGB 255 0 0
+EXPECT kGreenPipeline BUFFER kImgBuffer IDX 128 128 SIZE 128 128 EQ_RGB 0 255 0
 ```
 
 ### Buffers
