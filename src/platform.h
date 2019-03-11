@@ -16,7 +16,6 @@
 #define SRC_PLATFORM_H_
 
 namespace amber {
-namespace dawn {
 
 #if defined(_WIN32) || defined(_WIN64)
 #define AMBER_PLATFORM_WINDOWS 1
@@ -46,7 +45,6 @@ namespace dawn {
 #define AMBER_PLATFORM_POSIX 0
 #endif
 
-}  // namespace dawn
 }  // namespace amber
 
 #endif  // SRC_PLATFORM_H_
