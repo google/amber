@@ -14,6 +14,7 @@
 
 #include "src/vulkan/frame_buffer.h"
 
+#include <algorithm>
 #include <cassert>
 #include <limits>
 #include <vector>
@@ -44,18 +45,30 @@ Result FrameBuffer::Initialize(
     const VkPhysicalDeviceMemoryProperties& properties) {
   std::vector<VkImageView> attachments;
 
-  for (auto* info : color_attachments_) {
-    color_images_.push_back(MakeUnique<Image>(
-        device_,
-        ToVkFormat(info->buffer->AsFormatBuffer()->GetFormat().GetFormatType()),
-        VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_, properties));
+  if (!color_attachments_.empty()) {
+    uint32_t max_attachment_idx = 0;
+    for (auto* info : color_attachments_)
+      max_attachment_idx = std::max(max_attachment_idx, info->location);
 
-    Result r = color_images_.back()->Initialize(
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-    if (!r.IsSuccess())
-      return r;
+    if ((max_attachment_idx + 1) != color_attachments_.size())
+      return Result("color attachment locations must be sequential from 0");
 
-    attachments.push_back(color_images_.back()->GetVkImageView());
+    attachments.resize(max_attachment_idx + 1);
+
+    for (auto* info : color_attachments_) {
+      color_images_.push_back(MakeUnique<Image>(
+          device_,
+          ToVkFormat(info->buffer->AsFormatBuffer()->GetFormat().GetFormatType()),
+          VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_, properties));
+
+      Result r = color_images_.back()->Initialize(
+          VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+      if (!r.IsSuccess())
+        return r;
+
+
+      attachments[info->location] = color_images_.back()->GetVkImageView();
+    }
   }
 
   if (depth_format != VK_FORMAT_UNDEFINED) {
