@@ -54,10 +54,6 @@ class FrameBuffer {
     return color_images_[idx]->HostAccessibleMemoryPtr();
   }
 
-  const Format& GetFormatForAttachment(size_t idx) const {
-    return color_attachments_[idx]->buffer->AsFormatBuffer()->GetFormat();
-  }
-
   // Only record the command for copying the image that backs this
   // framebuffer to the host accessible buffer. The actual submission
   // of the command must be done later.

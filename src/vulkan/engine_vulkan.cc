@@ -416,8 +416,9 @@ Result EngineVulkan::GetFrameBuffer(Buffer* buffer,
 
   // TODO(jaebaek): Support other formats
   if (buffer->AsFormatBuffer()->GetFormat().GetFormatType() !=
-      kDefaultFramebufferFormat)
+      kDefaultFramebufferFormat) {
     return Result("Vulkan::GetFrameBuffer Unsupported buffer format");
+  }
 
   const uint8_t* cpu_memory = static_cast<const uint8_t*>(buffer->GetMemPtr());
   const auto texel_stride = buffer->AsFormatBuffer()->GetTexelStride();
