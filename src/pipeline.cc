@@ -215,7 +215,8 @@ Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
   return {};
 }
 
-Result Pipeline::GetLocationForColorAttachment(Buffer* buf, uint32_t* loc) {
+Result Pipeline::GetLocationForColorAttachment(Buffer* buf,
+                                               uint32_t* loc) const {
   for (const auto& info : color_attachments_) {
     if (info.buffer == buf) {
       *loc = info.location;

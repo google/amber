@@ -115,7 +115,7 @@ class Pipeline {
     return color_attachments_;
   }
   Result AddColorAttachment(Buffer* buf, uint32_t location);
-  Result GetLocationForColorAttachment(Buffer* buf, uint32_t* loc);
+  Result GetLocationForColorAttachment(Buffer* buf, uint32_t* loc) const;
 
   Result SetDepthBuffer(Buffer* buf);
   const BufferInfo& GetDepthBuffer() const { return depth_buffer_; }
