@@ -22,6 +22,7 @@
 
 #include "amber/shader_info.h"
 #include "amber/value.h"
+#include "src/buffer.h"
 #include "src/command_data.h"
 #include "src/datum_type.h"
 #include "src/pipeline_data.h"
@@ -217,8 +218,10 @@ class Probe : public Command {
 
 class ProbeCommand : public Probe {
  public:
-  explicit ProbeCommand(Pipeline* pipeline);
+  explicit ProbeCommand(Pipeline* pipeline, Buffer* buffer);
   ~ProbeCommand() override;
+
+  Buffer* GetBuffer() const { return buffer_; }
 
   void SetWholeWindow() { is_whole_window_ = true; }
   bool IsWholeWindow() const { return is_whole_window_; }
@@ -261,6 +264,8 @@ class ProbeCommand : public Probe {
     kRGB = 0,
     kRGBA,
   };
+
+  Buffer* buffer_;
 
   bool is_whole_window_ = false;
   bool is_probe_rect_ = false;
