@@ -80,7 +80,8 @@ Result Executor::Execute(Engine* engine,
       // This must come after processing commands because we require
       // the framebuffer data to be mapped into host memory and have
       // a valid host-side pointer.
-      r = engine->GetFrameBufferInfo(cmd->GetPipeline(), 0, &info);
+      r = engine->GetFrameBufferInfo(cmd->GetPipeline(),
+                                     cmd->AsProbe()->GetBuffer(), &info);
       if (!r.IsSuccess())
         return r;
       assert(info.cpu_memory != nullptr);

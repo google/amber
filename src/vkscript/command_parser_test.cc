@@ -789,6 +789,9 @@ TEST_P(CommandParserProbeTest, ProbeRgb) {
                      "probe rgb 25 30 0.2 0.4 0.6";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << data << std::endl << r.Error();
@@ -820,6 +823,9 @@ TEST_P(CommandParserProbeTest, ProbeRgba) {
                      "probe rgba 25 30 1 255 9 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << data << std::endl << r.Error();
@@ -852,6 +858,9 @@ TEST_P(CommandParserProbeTest, ProbeRect) {
                      "probe rect rgba 25 30 200 400 1 255 9 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << data << std::endl << r.Error();
@@ -884,6 +893,9 @@ TEST_P(CommandParserProbeTest, ProbeNotRect) {
                      "probe rgba 25 30 1 255 9 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << data << std::endl << r.Error();
@@ -918,6 +930,9 @@ TEST_F(CommandParserTest, ProbeAllRGB) {
   std::string data = "probe all rgb 0.2 0.3 0.4";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -941,6 +956,9 @@ TEST_F(CommandParserTest, ProbeAllRGBA) {
   std::string data = "probe all rgba 0.2 0.3 0.4 0.5";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -965,6 +983,9 @@ TEST_F(CommandParserTest, ProbeCommandRectBrackets) {
   std::string data = "relative probe rect rgb (0.5, 0.6, 0.3, 0.4) 1 2 3";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -993,6 +1014,9 @@ TEST_F(CommandParserTest, ProbeCommandNotRectBrackets) {
   std::string data = "relative probe rgb (0.5, 0.6) 1 2 3";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -1021,6 +1045,9 @@ TEST_F(CommandParserTest, ProbeCommandColorBrackets) {
   std::string data = "relative probe rect rgb 0.5 0.6 0.3 0.4 (1, 2, 3)";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -1049,6 +1076,9 @@ TEST_F(CommandParserTest, ProbeCommandColorOptionalCommas) {
   std::string data = "relative probe rect rgb 0.5, 0.6, 0.3 0.4 1 2 3";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -1179,6 +1209,9 @@ TEST_F(CommandParserTest, ProbeErrors) {
 
   for (const auto& probe : probes) {
     Pipeline pipeline(PipelineType::kGraphics);
+    auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+    pipeline.AddColorAttachment(color_buf.get(), 0);
+
     CommandParser cp(&pipeline, 1, probe.str);
     Result r = cp.Parse();
     EXPECT_FALSE(r.IsSuccess()) << probe.str;
@@ -1200,6 +1233,9 @@ TEST_F(CommandParserTest, ProbeWithInvalidRGBA) {
   std::string data = "probe 1";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
@@ -1210,6 +1246,9 @@ TEST_F(CommandParserTest, ProbeWithRectAndInvalidRGB) {
   std::string data = "probe rect 1";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
@@ -1220,6 +1259,9 @@ TEST_F(CommandParserTest, ProbeWithRectMissingFormat) {
   std::string data = "probe rect unknown";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
@@ -1230,6 +1272,9 @@ TEST_F(CommandParserTest, ProbeAllMissingFormat) {
   std::string data = "probe all unknown";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
@@ -1240,6 +1285,9 @@ TEST_F(CommandParserTest, ProbeAlWithInvalidRGB) {
   std::string data = "probe all unknown";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
@@ -3593,6 +3641,9 @@ tolerance 2% 3% 4% 5%
 probe all rgba 0.2 0.3 0.4 0.5)";
 
   Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+  pipeline.AddColorAttachment(color_buf.get(), 0);
+
   CommandParser cp(&pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();

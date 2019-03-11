@@ -90,8 +90,8 @@ Probe::Probe(Type type, Pipeline* pipeline) : Command(type, pipeline) {}
 
 Probe::~Probe() = default;
 
-ProbeCommand::ProbeCommand(Pipeline* pipeline)
-    : Probe(Type::kProbe, pipeline) {}
+ProbeCommand::ProbeCommand(Pipeline* pipeline, Buffer* buffer)
+    : Probe(Type::kProbe, pipeline), buffer_(buffer) {}
 
 ProbeCommand::~ProbeCommand() = default;
 

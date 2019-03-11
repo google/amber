@@ -411,7 +411,7 @@ Result EngineVulkan::DoProcessCommands(amber::Pipeline* pipeline) {
 }
 
 Result EngineVulkan::GetFrameBufferInfo(amber::Pipeline* pipeline,
-                                        size_t attachment_idx,
+                                        amber::Buffer* buffer,
                                         ResourceInfo* resource_info) {
   if (!resource_info)
     return Result("Vulkan::GetFrameBufferInfo missing resource info");
@@ -421,6 +421,11 @@ Result EngineVulkan::GetFrameBufferInfo(amber::Pipeline* pipeline,
     return Result("Vulkan::GetFrameBufferInfo missing pipeline");
   if (!info.vk_pipeline->IsGraphics())
     return Result("Vulkan::GetFrameBufferInfo for Non-Graphics Pipeline");
+
+  uint32_t attachment_idx = 0;
+  Result r = pipeline->GetLocationForColorAttachment(buffer, &attachment_idx);
+  if (!r.IsSuccess())
+    return r;
 
   const auto graphics = info.vk_pipeline->AsGraphics();
   const auto frame = graphics->GetFrame();
@@ -444,16 +449,21 @@ Result EngineVulkan::GetFrameBufferInfo(amber::Pipeline* pipeline,
 }
 
 Result EngineVulkan::GetFrameBuffer(amber::Pipeline* pipeline,
-                                    size_t attachment_idx,
+                                    amber::Buffer* buffer,
                                     std::vector<Value>* values) {
   values->resize(0);
 
   ResourceInfo resource_info;
-  GetFrameBufferInfo(pipeline, attachment_idx, &resource_info);
+  GetFrameBufferInfo(pipeline, buffer, &resource_info);
   if (resource_info.type != ResourceInfoType::kImage) {
     return Result(
         "Vulkan:GetFrameBuffer() is invalid for non-image framebuffer");
   }
+
+  uint32_t attachment_idx = 0;
+  Result r = pipeline->GetLocationForColorAttachment(buffer, &attachment_idx);
+  if (!r.IsSuccess())
+    return r;
 
   auto& info = pipeline_map_[pipeline];
   const auto frame = info.vk_pipeline->AsGraphics()->GetFrame();
