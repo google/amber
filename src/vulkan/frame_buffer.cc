@@ -58,14 +58,15 @@ Result FrameBuffer::Initialize(
     for (auto* info : color_attachments_) {
       color_images_.push_back(MakeUnique<Image>(
           device_,
-          ToVkFormat(info->buffer->AsFormatBuffer()->GetFormat().GetFormatType()),
+          ToVkFormat(
+              info->buffer->AsFormatBuffer()->GetFormat().GetFormatType()),
           VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_, properties));
 
-      Result r = color_images_.back()->Initialize(
-          VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+      Result r =
+          color_images_.back()->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+                                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
       if (!r.IsSuccess())
         return r;
-
 
       attachments[info->location] = color_images_.back()->GetVkImageView();
     }
