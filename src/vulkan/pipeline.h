@@ -57,11 +57,6 @@ class Pipeline {
   // Add information of how and what to do with push constant.
   Result AddPushConstant(const BufferCommand* command);
 
-  // Get the information of the resource bound to the given descriptor.
-  Result GetDescriptorInfo(const uint32_t descriptor_set,
-                           const uint32_t binding,
-                           ResourceInfo* info);
-
   void SetEntryPointName(VkShaderStageFlagBits stage,
                          const std::string& entry) {
     entry_points_[stage] = entry;

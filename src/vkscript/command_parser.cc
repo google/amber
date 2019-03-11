@@ -47,10 +47,13 @@ ShaderType ShaderNameToType(const std::string& name) {
 
 }  // namespace
 
-CommandParser::CommandParser(Pipeline* pipeline,
+CommandParser::CommandParser(Script* script,
+                             Pipeline* pipeline,
                              size_t current_line,
                              const std::string& data)
-    : pipeline_(pipeline), tokenizer_(MakeUnique<Tokenizer>(data)) {
+    : script_(script),
+      pipeline_(pipeline),
+      tokenizer_(MakeUnique<Tokenizer>(data)) {
   tokenizer_->SetCurrentLine(current_line);
 }
 
@@ -581,6 +584,22 @@ Result CommandParser::ProcessSSBO() {
     cmd->SetBinding(val);
   }
 
+  {
+    // Generate an internal buffer for this binding if needed.
+    auto set = cmd->GetDescriptorSet();
+    auto binding = cmd->GetBinding();
+
+    auto* buffer = pipeline_->GetBufferForBinding(set, binding);
+    if (!buffer) {
+      auto b = MakeUnique<Buffer>(BufferType::kStorage);
+      b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
+      buffer = b.get();
+      script_->AddBuffer(std::move(b));
+      pipeline_->AddBuffer(buffer, set, binding, 0);
+    }
+    cmd->SetBuffer(buffer);
+  }
+
   if (token->IsString() && token->AsString() == "subdata") {
     cmd->SetIsSubdata();
 
@@ -684,6 +703,22 @@ Result CommandParser::ProcessUniform() {
       }
     } else {
       cmd->SetBinding(val);
+    }
+
+    {
+      // Generate an internal buffer for this binding if needed.
+      auto set = cmd->GetDescriptorSet();
+      auto binding = cmd->GetBinding();
+
+      auto* buffer = pipeline_->GetBufferForBinding(set, binding);
+      if (!buffer) {
+        auto b = MakeUnique<Buffer>(BufferType::kStorage);
+        b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
+        buffer = b.get();
+        script_->AddBuffer(std::move(b));
+        pipeline_->AddBuffer(buffer, set, binding, 0);
+      }
+      cmd->SetBuffer(buffer);
     }
 
     use_std430_layout = true;

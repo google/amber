@@ -35,6 +35,9 @@ class FormatBuffer;
 /// maybe created as needed. A buffer must have a unique name.
 class Buffer {
  public:
+  /// Create a buffer of |type_|.
+  explicit Buffer(BufferType type);
+
   virtual ~Buffer();
 
   /// Returns |true| if this is a buffer described by a |DatumType|.
@@ -75,7 +78,7 @@ class Buffer {
   void SetHeight(size_t height) { height_ = height; }
 
   /// Returns the number of bytes needed for the data in the buffer.
-  virtual size_t GetSizeInBytes() const = 0;
+  virtual size_t GetSizeInBytes() const { return size_; }
 
   /// Sets the data into the buffer. The size will also be updated to be the
   /// size of the data provided.
@@ -84,13 +87,24 @@ class Buffer {
   const std::vector<Value>& GetData() const { return data_; }
 
   void SetMemPtr(void* ptr) { mem_ptr_ = ptr; }
-  void* GetMemPtr() const { return mem_ptr_; }
+
+  const void* GetMemPtr() const {
+    if (mem_ptr_ == nullptr && !values_.empty())
+      return values_.data();
+    return mem_ptr_;
+  }
+
+  void* GetMemPtr() {
+    if (mem_ptr_ == nullptr && !values_.empty())
+      return values_.data();
+    return mem_ptr_;
+  }
+
+  std::vector<uint8_t>* ValuePtr() { return &values_; }
 
  protected:
   /// Create an un-typed buffer.
   Buffer();
-  /// Create a buffer of |type_|.
-  explicit Buffer(BufferType type);
 
  private:
   BufferType buffer_type_ = BufferType::kUnknown;
@@ -101,6 +115,7 @@ class Buffer {
   size_t height_ = 0;
   uint8_t location_ = 0;
   void* mem_ptr_ = nullptr;
+  std::vector<uint8_t> values_;
 };
 
 /// A buffer class where the data is described by a |DatumType| object.

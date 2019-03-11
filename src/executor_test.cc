@@ -162,12 +162,6 @@ class EngineStub : public Engine {
 
   Result DoProcessCommands(Pipeline*) override { return {}; }
   Result GetFrameBuffer(Buffer*, std::vector<Value>*) override { return {}; }
-  Result GetDescriptorInfo(Pipeline*,
-                           const uint32_t,
-                           const uint32_t,
-                           ResourceInfo*) override {
-    return {};
-  }
 
  private:
   bool fail_clear_command_ = false;

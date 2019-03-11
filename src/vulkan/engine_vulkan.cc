@@ -414,9 +414,6 @@ Result EngineVulkan::GetFrameBuffer(amber::Buffer* buffer,
                                     std::vector<Value>* values) {
   values->resize(0);
 
-  if (!buffer->GetMemPtr())
-    return Result("Vulkan::GetFrameBuffer buffer missing memory pointer");
-
   // TODO(jaebaek): Support other formats
   if (buffer->AsFormatBuffer()->GetFormat().GetFormatType() !=
       kDefaultFramebufferFormat)
@@ -439,28 +436,18 @@ Result EngineVulkan::GetFrameBuffer(amber::Buffer* buffer,
   return {};
 }
 
-Result EngineVulkan::GetDescriptorInfo(amber::Pipeline* pipeline,
-                                       const uint32_t descriptor_set,
-                                       const uint32_t binding,
-                                       ResourceInfo* resource_info) {
-  auto& info = pipeline_map_[pipeline];
-  return info.vk_pipeline->GetDescriptorInfo(descriptor_set, binding,
-                                             resource_info);
-}
-
-Result EngineVulkan::DoBuffer(const BufferCommand* command) {
-  auto& info = pipeline_map_[command->GetPipeline()];
-  if (command->IsPushConstant())
-    return info.vk_pipeline->AddPushConstant(command);
+Result EngineVulkan::DoBuffer(const BufferCommand* cmd) {
+  auto& info = pipeline_map_[cmd->GetPipeline()];
+  if (cmd->IsPushConstant())
+    return info.vk_pipeline->AddPushConstant(cmd);
 
   if (!IsDescriptorSetInBounds(device_->GetPhysicalDevice(),
-                               command->GetDescriptorSet())) {
+                               cmd->GetDescriptorSet())) {
     return Result(
         "Vulkan::DoBuffer exceed maxBoundDescriptorSets limit of physical "
         "device");
   }
-
-  return info.vk_pipeline->AddDescriptor(command);
+  return info.vk_pipeline->AddDescriptor(cmd);
 }
 
 bool EngineVulkan::IsFormatSupportedByPhysicalDevice(

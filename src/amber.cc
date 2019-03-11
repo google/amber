@@ -151,16 +151,15 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
     if (!r.IsSuccess())
       break;
 
-    ResourceInfo info = ResourceInfo();
-    r = engine->GetDescriptorInfo(
-        pipeline, desc_set_and_binding_parser.GetDescriptorSet(),
-        desc_set_and_binding_parser.GetBinding(), &info);
-    if (!r.IsSuccess())
+    const auto* buffer = pipeline->GetBufferForBinding(
+        desc_set_and_binding_parser.GetDescriptorSet(),
+        desc_set_and_binding_parser.GetBinding());
+    if (!buffer)
       break;
 
-    const uint8_t* ptr = static_cast<const uint8_t*>(info.cpu_memory);
+    const uint8_t* ptr = static_cast<const uint8_t*>(buffer->GetMemPtr());
     auto& values = buffer_info.values;
-    for (size_t i = 0; i < info.size_in_bytes; ++i) {
+    for (size_t i = 0; i < buffer->GetSize(); ++i) {
       values.emplace_back();
       values.back().SetIntValue(*ptr);
       ++ptr;

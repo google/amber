@@ -367,7 +367,11 @@ class BufferCommand : public Command {
   }
   const std::vector<Value>& GetValues() const { return values_; }
 
+  void SetBuffer(Buffer* buffer) { buffer_ = buffer; }
+  Buffer* GetBuffer() const { return buffer_; }
+
  private:
+  Buffer* buffer_ = nullptr;
   BufferType buffer_type_;
   bool is_subdata_ = false;
   uint32_t descriptor_set_ = 0;

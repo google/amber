@@ -62,10 +62,6 @@ class EngineDawn : public Engine {
   Result DoBuffer(const BufferCommand* cmd) override;
   Result DoProcessCommands(Pipeline*) override;
   Result GetFrameBuffer(Buffer*, std::vector<Value>* values) override;
-  Result GetDescriptorInfo(Pipeline*,
-                           const uint32_t descriptor_set,
-                           const uint32_t binding,
-                           ResourceInfo* info) override;
 
  private:
   // Creates a command buffer builder if it doesn't already exist.

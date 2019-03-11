@@ -24,7 +24,7 @@ void main() {
 
 [test]
 ssbo 1:2 subdata vec4  0 0.1 0.2 0.3 0.4
-probe ssbo float 1:2 0  ~= 0.1 0.2  0.3  0.4
+probe ssbo float 1:2 0  ~= 0.1 0.2 0.3 0.4
 
 
 ssbo 1:2 subdata float 0 0.57 0.56 0.55 0.54 \

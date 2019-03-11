@@ -453,12 +453,5 @@ Result EngineDawn::GetFrameBuffer(Buffer*, std::vector<Value>*) {
   return Result("Dawn::GetFrameBuffer not implemented");
 }
 
-Result EngineDawn::GetDescriptorInfo(Pipeline*,
-                                     const uint32_t,
-                                     const uint32_t,
-                                     ResourceInfo*) {
-  return Result("Dawn:GetDescriptorInfo not implemented");
-}
-
 }  // namespace dawn
 }  // namespace amber

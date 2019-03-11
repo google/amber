@@ -21,6 +21,7 @@
 #include "amber/result.h"
 #include "amber/value.h"
 #include "amber/vulkan_header.h"
+#include "src/buffer.h"
 #include "src/datum_type.h"
 #include "src/engine.h"
 #include "src/vulkan/buffer.h"
@@ -36,7 +37,8 @@ class Device;
 // a.k.a. SSBO and Uniform Buffer a.k.a. UBO.
 class BufferDescriptor : public Descriptor {
  public:
-  BufferDescriptor(DescriptorType type,
+  BufferDescriptor(amber::Buffer* buffer,
+                   DescriptorType type,
                    Device* device,
                    uint32_t desc_set,
                    uint32_t binding);
@@ -49,8 +51,12 @@ class BufferDescriptor : public Descriptor {
   Result RecordCopyDataToHost(CommandBuffer* command) override;
   Result MoveResourceToBufferOutput() override;
   Result UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
-  ResourceInfo GetResourceInfo() override;
   void Shutdown() override;
+
+  Result AddToBuffer(DataType type,
+                     uint32_t offset,
+                     size_t size_in_bytes,
+                     const std::vector<Value>& values);
 
  private:
   VkBufferUsageFlagBits GetVkBufferUsage() const {
@@ -65,8 +71,8 @@ class BufferDescriptor : public Descriptor {
                : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   }
 
-  std::unique_ptr<Buffer> buffer_;
-  std::vector<std::unique_ptr<Buffer>> not_destroyed_buffers_;
+  amber::Buffer* amber_buffer_ = nullptr;
+  std::unique_ptr<Buffer> vk_buffer_;
 };
 
 }  // namespace vulkan

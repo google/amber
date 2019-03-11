@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "src/engine.h"
+#include "src/make_unique.h"
 #include "src/script.h"
 #include "src/shader_compiler.h"
 
@@ -71,8 +72,6 @@ Result Executor::Execute(Engine* engine,
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
     if (cmd->IsProbe()) {
-      ResourceInfo info;
-
       r = engine->DoProcessCommands(cmd->GetPipeline());
       if (!r.IsSuccess())
         return r;
@@ -88,18 +87,22 @@ Result Executor::Execute(Engine* engine,
                           buffer->GetMemPtr());
     } else if (cmd->IsProbeSSBO()) {
       auto probe_ssbo = cmd->AsProbeSSBO();
-      ResourceInfo info;
-      r = engine->GetDescriptorInfo(cmd->GetPipeline(),
-                                    probe_ssbo->GetDescriptorSet(),
-                                    probe_ssbo->GetBinding(), &info);
-      if (!r.IsSuccess())
-        return r;
+
+      const auto* buffer = cmd->GetPipeline()->GetBufferForBinding(
+          probe_ssbo->GetDescriptorSet(), probe_ssbo->GetBinding());
+      if (!buffer) {
+        return Result("unable to find buffer at descriptor set " +
+                      std::to_string(probe_ssbo->GetDescriptorSet()) +
+                      " and binding " +
+                      std::to_string(probe_ssbo->GetBinding()));
+      }
 
       r = engine->DoProcessCommands(cmd->GetPipeline());
       if (!r.IsSuccess())
         return r;
 
-      r = verifier_.ProbeSSBO(probe_ssbo, info.size_in_bytes, info.cpu_memory);
+      r = verifier_.ProbeSSBO(probe_ssbo, buffer->GetSize(),
+                              buffer->GetMemPtr());
     } else if (cmd->IsClear()) {
       r = engine->DoClear(cmd->AsClear());
     } else if (cmd->IsClearColor()) {

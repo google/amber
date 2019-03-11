@@ -61,10 +61,6 @@ class EngineVulkan : public Engine {
   Result DoProcessCommands(amber::Pipeline* pipeline) override;
   Result GetFrameBuffer(amber::Buffer* buffer,
                         std::vector<Value>* values) override;
-  Result GetDescriptorInfo(amber::Pipeline* pipeline,
-                           const uint32_t descriptor_set,
-                           const uint32_t binding,
-                           ResourceInfo* info) override;
 
  private:
   struct PipelineInfo {
