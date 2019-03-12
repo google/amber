@@ -168,7 +168,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   for (const auto& colour_info : pipeline->GetColorAttachments()) {
     auto& fmt = colour_info.buffer->AsFormatBuffer()->GetFormat();
-    if (!VerifyFormatAvailable(fmt, colour_info.type))
+    if (!VerifyFormatAvailable(fmt, colour_info.buffer->GetBufferType()))
       return Result("Vulkan color attachment format is not supported");
   }
 
@@ -176,7 +176,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   if (pipeline->GetDepthBuffer().buffer) {
     const auto& depth_info = pipeline->GetDepthBuffer();
     auto& depth_fmt = depth_info.buffer->AsFormatBuffer()->GetFormat();
-    if (!VerifyFormatAvailable(depth_fmt, depth_info.type))
+    if (!VerifyFormatAvailable(depth_fmt, depth_info.buffer->GetBufferType()))
       return Result("Vulkan depth attachment format is not supported");
 
     depth_buffer_format = depth_fmt.GetFormatType();
@@ -213,7 +213,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     auto& fmt = vtex_info.buffer->IsFormatBuffer()
                     ? vtex_info.buffer->AsFormatBuffer()->GetFormat()
                     : Format();
-    if (!VerifyFormatAvailable(fmt, vtex_info.type))
+    if (!VerifyFormatAvailable(fmt, vtex_info.buffer->GetBufferType()))
       return Result("Vulkan vertex buffer format is not supported");
 
     if (!info.vertex_buffer)

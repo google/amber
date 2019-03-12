@@ -2620,7 +2620,7 @@ END
   const auto* pipeline = pipelines[0].get();
   const auto& bufs = pipeline->GetBuffers();
   ASSERT_EQ(1U, bufs.size());
-  EXPECT_EQ(BufferType::kUniform, bufs[0].type);
+  EXPECT_EQ(BufferType::kUniform, bufs[0].buffer->GetBufferType());
   EXPECT_EQ(1U, bufs[0].descriptor_set);
   EXPECT_EQ(2U, bufs[0].binding);
   EXPECT_EQ(static_cast<uint32_t>(0), bufs[0].location);
@@ -2654,7 +2654,7 @@ END)";
   const auto* pipeline = pipelines[0].get();
   const auto& bufs = pipeline->GetBuffers();
   ASSERT_EQ(1U, bufs.size());
-  EXPECT_EQ(BufferType::kUniform, bufs[0].type);
+  EXPECT_EQ(BufferType::kUniform, bufs[0].buffer->GetBufferType());
   EXPECT_EQ(1U, bufs[0].descriptor_set);
   EXPECT_EQ(2U, bufs[0].binding);
   EXPECT_EQ(5U, bufs[0].location);
@@ -2924,7 +2924,7 @@ PIPELINE graphics my_pipeline
   const auto* pipeline = pipelines[0].get();
   const auto& bufs = pipeline->GetBuffers();
   ASSERT_EQ(1U, bufs.size());
-  EXPECT_EQ(test_data.type, bufs[0].type);
+  EXPECT_EQ(test_data.type, bufs[0].buffer->GetBufferType());
 }
 INSTANTIATE_TEST_CASE_P(
     AmberScriptParserBufferTypeTest,

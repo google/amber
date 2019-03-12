@@ -18,7 +18,9 @@
 namespace amber {
 
 /// Types of buffers which can be created.
-enum class BufferType : uint8_t {
+enum class BufferType : int8_t {
+  /// Unknown buffer type
+  kUnknown = -1,
   /// A color buffer.
   kColor = 0,
   /// A depth/stencil buffer.
