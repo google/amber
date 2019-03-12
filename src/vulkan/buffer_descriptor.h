@@ -24,8 +24,8 @@
 #include "src/buffer.h"
 #include "src/datum_type.h"
 #include "src/engine.h"
-#include "src/vulkan/buffer.h"
 #include "src/vulkan/descriptor.h"
+#include "src/vulkan/transfer_buffer.h"
 
 namespace amber {
 namespace vulkan {
@@ -37,7 +37,7 @@ class Device;
 // a.k.a. SSBO and Uniform Buffer a.k.a. UBO.
 class BufferDescriptor : public Descriptor {
  public:
-  BufferDescriptor(amber::Buffer* buffer,
+  BufferDescriptor(Buffer* buffer,
                    DescriptorType type,
                    Device* device,
                    uint32_t desc_set,
@@ -71,8 +71,8 @@ class BufferDescriptor : public Descriptor {
                : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   }
 
-  amber::Buffer* amber_buffer_ = nullptr;
-  std::unique_ptr<Buffer> vk_buffer_;
+  Buffer* amber_buffer_ = nullptr;
+  std::unique_ptr<TransferBuffer> transfer_buffer_;
 };
 
 }  // namespace vulkan

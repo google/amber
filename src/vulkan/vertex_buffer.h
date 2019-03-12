@@ -22,7 +22,7 @@
 #include "amber/value.h"
 #include "amber/vulkan_header.h"
 #include "src/format.h"
-#include "src/vulkan/buffer.h"
+#include "src/vulkan/transfer_buffer.h"
 
 namespace amber {
 namespace vulkan {
@@ -69,7 +69,7 @@ class VertexBuffer {
   void BindToCommandBuffer(CommandBuffer* command);
 
   // Must be used only for unit tests.
-  void SetBufferForTest(std::unique_ptr<Buffer> buffer);
+  void SetBufferForTest(std::unique_ptr<TransferBuffer> buffer);
 
  private:
   Result FillVertexBufferWithData(CommandBuffer* command);
@@ -83,7 +83,7 @@ class VertexBuffer {
 
   bool is_vertex_data_pending_ = true;
 
-  std::unique_ptr<Buffer> buffer_;
+  std::unique_ptr<TransferBuffer> transfer_buffer_;
   uint32_t stride_in_bytes_ = 0;
 
   std::vector<Format> formats_;

@@ -22,7 +22,7 @@
 #include "amber/value.h"
 #include "amber/vulkan_header.h"
 #include "src/format.h"
-#include "src/vulkan/buffer.h"
+#include "src/vulkan/transfer_buffer.h"
 
 namespace amber {
 namespace vulkan {
@@ -54,7 +54,7 @@ class IndexBuffer {
 
  private:
   Device* device_ = nullptr;
-  std::unique_ptr<Buffer> buffer_;
+  std::unique_ptr<TransferBuffer> transfer_buffer_;
 };
 
 }  // namespace vulkan

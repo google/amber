@@ -27,7 +27,7 @@
 namespace amber {
 namespace vulkan {
 
-BufferDescriptor::BufferDescriptor(amber::Buffer* buffer,
+BufferDescriptor::BufferDescriptor(Buffer* buffer,
                                    DescriptorType type,
                                    Device* device,
                                    uint32_t desc_set,
@@ -41,21 +41,22 @@ BufferDescriptor::~BufferDescriptor() = default;
 
 Result BufferDescriptor::CreateResourceIfNeeded(
     const VkPhysicalDeviceMemoryProperties& properties) {
-  if (vk_buffer_) {
+  if (transfer_buffer_) {
     return Result(
         "Vulkan: BufferDescriptor::CreateResourceIfNeeded() must be called "
-        "only when |vk_buffer| is empty");
+        "only when |transfer_buffer| is empty");
   }
 
   if (amber_buffer_ && amber_buffer_->ValuePtr()->empty())
     return {};
 
   size_t size_in_bytes = amber_buffer_ ? amber_buffer_->ValuePtr()->size() : 0;
-  vk_buffer_ = MakeUnique<Buffer>(device_, size_in_bytes, properties);
+  transfer_buffer_ =
+      MakeUnique<TransferBuffer>(device_, size_in_bytes, properties);
 
-  Result r = vk_buffer_->Initialize(GetVkBufferUsage() |
-                                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+  Result r = transfer_buffer_->Initialize(GetVkBufferUsage() |
+                                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                                          VK_BUFFER_USAGE_TRANSFER_DST_BIT);
   if (!r.IsSuccess())
     return r;
 
@@ -66,26 +67,26 @@ Result BufferDescriptor::CreateResourceIfNeeded(
 Result BufferDescriptor::RecordCopyDataToResourceIfNeeded(
     CommandBuffer* command) {
   if (amber_buffer_ && !amber_buffer_->ValuePtr()->empty()) {
-    vk_buffer_->UpdateMemoryWithRawData(*amber_buffer_->ValuePtr());
+    transfer_buffer_->UpdateMemoryWithRawData(*amber_buffer_->ValuePtr());
     amber_buffer_->ValuePtr()->clear();
   }
 
-  vk_buffer_->CopyToDevice(command);
+  transfer_buffer_->CopyToDevice(command);
   return {};
 }
 
 Result BufferDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
-  if (!vk_buffer_) {
+  if (!transfer_buffer_) {
     return Result(
         "Vulkan: BufferDescriptor::RecordCopyDataToHost() |vk_buffer| is "
         "empty");
   }
 
-  return vk_buffer_->CopyToHost(command);
+  return transfer_buffer_->CopyToHost(command);
 }
 
 Result BufferDescriptor::MoveResourceToBufferOutput() {
-  if (!vk_buffer_) {
+  if (!transfer_buffer_) {
     return Result(
         "Vulkan: BufferDescriptor::MoveResourceToBufferOutput() |vk_buffer| "
         "is empty");
@@ -94,7 +95,7 @@ Result BufferDescriptor::MoveResourceToBufferOutput() {
   // Only need to copy the buffer back if we have an attached amber buffer to
   // write too.
   if (amber_buffer_) {
-    void* resource_memory_ptr = vk_buffer_->HostAccessibleMemoryPtr();
+    void* resource_memory_ptr = transfer_buffer_->HostAccessibleMemoryPtr();
     if (!resource_memory_ptr) {
       return Result(
           "Vulkan: BufferDescriptor::MoveResourceToBufferOutput() |vk_buffer| "
@@ -107,15 +108,15 @@ Result BufferDescriptor::MoveResourceToBufferOutput() {
           "output buffer is not empty");
     }
 
-    auto size_in_bytes = vk_buffer_->GetSizeInBytes();
+    auto size_in_bytes = transfer_buffer_->GetSizeInBytes();
     amber_buffer_->SetSize(size_in_bytes);
     amber_buffer_->ValuePtr()->resize(size_in_bytes);
     std::memcpy(amber_buffer_->ValuePtr()->data(), resource_memory_ptr,
                 size_in_bytes);
   }
 
-  vk_buffer_->Shutdown();
-  vk_buffer_ = nullptr;
+  transfer_buffer_->Shutdown();
+  transfer_buffer_ = nullptr;
   return {};
 }
 
@@ -125,7 +126,7 @@ Result BufferDescriptor::UpdateDescriptorSetIfNeeded(
     return {};
 
   VkDescriptorBufferInfo buffer_info = VkDescriptorBufferInfo();
-  buffer_info.buffer = vk_buffer_->GetVkBuffer();
+  buffer_info.buffer = transfer_buffer_->GetVkBuffer();
   buffer_info.offset = 0;
   buffer_info.range = VK_WHOLE_SIZE;
 
@@ -134,8 +135,8 @@ Result BufferDescriptor::UpdateDescriptorSetIfNeeded(
 }
 
 void BufferDescriptor::Shutdown() {
-  if (vk_buffer_)
-    vk_buffer_->Shutdown();
+  if (transfer_buffer_)
+    transfer_buffer_->Shutdown();
 }
 
 Result BufferDescriptor::AddToBuffer(DataType type,

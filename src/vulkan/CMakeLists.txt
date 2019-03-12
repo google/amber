@@ -13,7 +13,6 @@
 # limitations under the License.
 
 set(VULKAN_ENGINE_SOURCES
-    buffer.cc
     buffer_descriptor.cc
     command_buffer.cc
     command_pool.cc
@@ -29,6 +28,7 @@ set(VULKAN_ENGINE_SOURCES
     pipeline.cc
     push_constant.cc
     resource.cc
+    transfer_buffer.cc
     vertex_buffer.cc
     ${CMAKE_BINARY_DIR}/src/vk-wrappers.inc.fake
 )
