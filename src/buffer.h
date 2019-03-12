@@ -51,6 +51,7 @@ class Buffer {
 
   /// Returns the BufferType of this buffer.
   BufferType GetBufferType() const { return buffer_type_; }
+  void SetBufferType(BufferType type) { buffer_type_ = type; }
 
   /// Set the location binding value for the buffer.
   void SetLocation(uint8_t loc) { location_ = loc; }
@@ -83,7 +84,7 @@ class Buffer {
   explicit Buffer(BufferType type);
 
  private:
-  BufferType buffer_type_;
+  BufferType buffer_type_ = BufferType::kUnknown;
   std::vector<Value> data_;
   std::string name_;
   size_t size_ = 0;

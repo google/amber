@@ -67,7 +67,6 @@ class Pipeline {
     explicit BufferInfo(Buffer* buf) : buffer(buf) {}
 
     Buffer* buffer = nullptr;
-    BufferType type = BufferType::kColor;
     uint32_t descriptor_set = 0;
     uint32_t binding = 0;
     uint32_t location = 0;
@@ -128,7 +127,6 @@ class Pipeline {
   Buffer* GetIndexBuffer() const { return index_buffer_; }
 
   void AddBuffer(Buffer* buf,
-                 BufferType type,
                  uint32_t descriptor_set,
                  uint32_t binding,
                  uint32_t location) {
@@ -138,7 +136,6 @@ class Pipeline {
     info.descriptor_set = descriptor_set;
     info.binding = binding;
     info.location = location;
-    info.type = type;
   }
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
 

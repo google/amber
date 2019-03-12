@@ -555,6 +555,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     if (!buffer->IsFormatBuffer())
       return Result("depth buffer must be a FORMAT buffer");
 
+    buffer->SetBufferType(BufferType::kDepth);
     Result r = pipeline->SetDepthBuffer(buffer);
     if (!r.IsSuccess())
       return r;
@@ -563,6 +564,11 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     Result r = ToBufferType(token->AsString(), &type);
     if (!r.IsSuccess())
       return r;
+
+    if (buffer->GetBufferType() == BufferType::kUnknown)
+      buffer->SetBufferType(type);
+    else if (buffer->GetBufferType() != type)
+      return Result("buffer type does not match intended usage");
 
     token = tokenizer_->NextToken();
     if (!token->IsString() || token->AsString() != "DESCRIPTOR_SET")
@@ -584,7 +590,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
 
     token = tokenizer_->NextToken();
     if (token->IsEOL() || token->IsEOS()) {
-      pipeline->AddBuffer(buffer, type, descriptor_set, binding, 0);
+      pipeline->AddBuffer(buffer, descriptor_set, binding, 0);
       return {};
     }
     if (!token->IsString() || token->AsString() != "IDX")
@@ -594,8 +600,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     if (!token->IsInteger())
       return Result("invalid value for IDX in BIND command");
 
-    pipeline->AddBuffer(buffer, type, descriptor_set, binding,
-                        token->AsUint32());
+    pipeline->AddBuffer(buffer, descriptor_set, binding, token->AsUint32());
   }
 
   return ValidateEndOfStatement("BIND command");
@@ -618,6 +623,7 @@ Result Parser::ParsePipelineVertexData(Pipeline* pipeline) {
   if (!token->IsInteger())
     return Result("invalid value for VERTEX_DATA LOCATION");
 
+  buffer->SetBufferType(BufferType::kVertex);
   Result r = pipeline->AddVertexBuffer(buffer, token->AsUint32());
   if (!r.IsSuccess())
     return r;
@@ -634,6 +640,7 @@ Result Parser::ParsePipelineIndexData(Pipeline* pipeline) {
   if (!buffer)
     return Result("unknown buffer: " + token->AsString());
 
+  buffer->SetBufferType(BufferType::kIndex);
   Result r = pipeline->SetIndexBuffer(buffer);
   if (!r.IsSuccess())
     return r;
