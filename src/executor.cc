@@ -77,19 +77,15 @@ Result Executor::Execute(Engine* engine,
       if (!r.IsSuccess())
         return r;
 
-      // This must come after processing commands because we require
-      // the framebuffer data to be mapped into host memory and have
-      // a valid host-side pointer.
-      r = engine->GetFrameBufferInfo(cmd->GetPipeline(),
-                                     cmd->AsProbe()->GetBuffer(), &info);
-      if (!r.IsSuccess())
-        return r;
-      assert(info.cpu_memory != nullptr);
+      assert(cmd->AsProbe()->GetBuffer()->IsFormatBuffer());
 
-      r = verifier_.Probe(cmd->AsProbe(), info.image_info.texel_format,
-                          info.image_info.texel_stride,
-                          info.image_info.row_stride, info.image_info.width,
-                          info.image_info.height, info.cpu_memory);
+      auto* buffer = cmd->AsProbe()->GetBuffer()->AsFormatBuffer();
+      assert(buffer->GetMemPtr() != nullptr);
+
+      r = verifier_.Probe(cmd->AsProbe(), &buffer->GetFormat(),
+                          buffer->GetTexelStride(), buffer->GetRowStride(),
+                          buffer->GetWidth(), buffer->GetHeight(),
+                          buffer->GetMemPtr());
     } else if (cmd->IsProbeSSBO()) {
       auto probe_ssbo = cmd->AsProbeSSBO();
       ResourceInfo info;

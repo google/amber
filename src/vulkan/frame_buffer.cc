@@ -72,6 +72,7 @@ Result FrameBuffer::Initialize(
         return r;
 
       attachments[info->location] = color_images_.back()->GetVkImageView();
+      info->buffer->SetMemPtr(color_images_.back()->HostAccessibleMemoryPtr());
     }
   }
 
@@ -89,6 +90,7 @@ Result FrameBuffer::Initialize(
                                  VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
     if (!r.IsSuccess())
       return r;
+
     attachments.push_back(depth_image_->GetVkImageView());
   }
 

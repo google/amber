@@ -28,14 +28,6 @@
 
 namespace amber {
 
-/// The type of resource being described.
-enum class ResourceInfoType : uint8_t {
-  /// A buffer resource.
-  kBuffer = 0,
-  /// An image resource.
-  kImage,
-};
-
 /// EngineData stores information used during engine execution.
 struct EngineData {
   /// The timeout to use for fences, in milliseconds.
@@ -44,20 +36,6 @@ struct EngineData {
 
 /// Contains information relating to a backing resource from the engine.
 struct ResourceInfo {
-  ResourceInfoType type = ResourceInfoType::kBuffer;
-
-  /// Key metrics of a 2D image.
-  /// For higher dimensions or arrayed images, we would need more strides.
-  /// For example, see VkSubresourceLayout.
-  struct {
-    const Format* texel_format = nullptr;  // Format of a single texel.
-    uint32_t texel_stride = 0;  // Number of bytes for a single texel.
-    uint32_t row_stride = 0;  // Number of bytes between successive pixel rows.
-    uint32_t width = 0;
-    uint32_t height = 0;
-    uint32_t depth = 0;
-  } image_info;
-
   /// The size in bytes of Vulkan memory pointed by |cpu_memory|.
   /// For the case when it is an image resource, |size_in_bytes| must
   /// be |image_info.row_stride * image_info.height * image_info.depth|.
@@ -133,20 +111,9 @@ class Engine {
   /// if graphics pipeline.
   virtual Result DoProcessCommands(amber::Pipeline* pipeline) = 0;
 
-  /// Get stride, width, height, and memory pointer of color frame buffer.
-  /// This is only valid if the buffer of color framebuffer is mapped into
-  /// the host address space. In particular, if we have run
-  /// DoProcessCommands() and since then no graphics pipeline drawing
-  /// commands have occurred e.g., DoClear, DoDrawArrays, DoDrawRect.
-  virtual Result GetFrameBufferInfo(Pipeline* pipeline,
-                                    Buffer* buffer,
-                                    ResourceInfo* info) = 0;
-
   /// Copy the content of the framebuffer into |values|, each value is a pixel
   /// in R8G8B8A8 format.
-  virtual Result GetFrameBuffer(Pipeline* pipeline,
-                                Buffer* buffer,
-                                std::vector<Value>* values) = 0;
+  virtual Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) = 0;
 
   /// Copy the contents of the resource bound to the given descriptor
   /// and get the resource information e.g., size for buffer, width,

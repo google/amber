@@ -161,12 +161,7 @@ class EngineStub : public Engine {
   }
 
   Result DoProcessCommands(Pipeline*) override { return {}; }
-  Result GetFrameBufferInfo(Pipeline*, Buffer*, ResourceInfo*) override {
-    return {};
-  }
-  Result GetFrameBuffer(Pipeline*, Buffer*, std::vector<Value>*) override {
-    return {};
-  }
+  Result GetFrameBuffer(Buffer*, std::vector<Value>*) override { return {}; }
   Result GetDescriptorInfo(Pipeline*,
                            const uint32_t,
                            const uint32_t,

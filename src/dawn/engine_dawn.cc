@@ -449,25 +449,7 @@ Result EngineDawn::CreateFramebufferIfNeeded() {
   return {};
 }
 
-Result EngineDawn::GetFrameBufferInfo(Pipeline*, Buffer*, ResourceInfo* info) {
-  assert(info);
-
-  if (render_pipeline_info_.fb_data == nullptr)
-    return Result("Dawn: FrameBuffer is not mapped");
-
-  info->image_info.texel_format = &render_pipeline_info_.fb_format;
-  info->image_info.texel_stride = render_pipeline_info_.fb_texel_stride;
-  info->image_info.row_stride = render_pipeline_info_.fb_row_stride;
-  info->image_info.width = kFramebufferWidth;
-  info->image_info.height = kFramebufferHeight;
-  info->image_info.depth = 1U;
-  info->size_in_bytes =
-      render_pipeline_info_.fb_row_stride * kFramebufferHeight;
-  info->cpu_memory = render_pipeline_info_.fb_data;
-  return {};
-}
-
-Result EngineDawn::GetFrameBuffer(Pipeline*, Buffer*, std::vector<Value>*) {
+Result EngineDawn::GetFrameBuffer(Buffer*, std::vector<Value>*) {
   return Result("Dawn::GetFrameBuffer not implemented");
 }
 

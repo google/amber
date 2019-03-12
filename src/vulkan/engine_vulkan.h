@@ -59,11 +59,7 @@ class EngineVulkan : public Engine {
       const PatchParameterVerticesCommand* cmd) override;
   Result DoBuffer(const BufferCommand* cmd) override;
   Result DoProcessCommands(amber::Pipeline* pipeline) override;
-  Result GetFrameBufferInfo(amber::Pipeline* pipeline,
-                            amber::Buffer* buffer,
-                            ResourceInfo* info) override;
-  Result GetFrameBuffer(amber::Pipeline* pipeline,
-                        amber::Buffer* buffer,
+  Result GetFrameBuffer(amber::Buffer* buffer,
                         std::vector<Value>* values) override;
   Result GetDescriptorInfo(amber::Pipeline* pipeline,
                            const uint32_t descriptor_set,

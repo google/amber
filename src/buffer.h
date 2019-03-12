@@ -63,10 +63,16 @@ class Buffer {
   /// Returns the name of the buffer.
   std::string GetName() const { return name_; }
 
-  /// Sets the buffer to |size| items.
+  /// Sets the number of items in the buffer.
   void SetSize(size_t size) { size_ = size; }
+
   /// Returns the number of items in the buffer.
   size_t GetSize() const { return size_; }
+
+  size_t GetWidth() const { return width_; }
+  void SetWidth(size_t width) { width_ = width; }
+  size_t GetHeight() const { return height_; }
+  void SetHeight(size_t height) { height_ = height; }
 
   /// Returns the number of bytes needed for the data in the buffer.
   virtual size_t GetSizeInBytes() const = 0;
@@ -76,6 +82,9 @@ class Buffer {
   virtual void SetData(std::vector<Value>&& data) { data_ = std::move(data); }
   /// Returns the vector of Values stored in the buffer.
   const std::vector<Value>& GetData() const { return data_; }
+
+  void SetMemPtr(void* ptr) { mem_ptr_ = ptr; }
+  void* GetMemPtr() const { return mem_ptr_; }
 
  protected:
   /// Create an un-typed buffer.
@@ -88,7 +97,10 @@ class Buffer {
   std::vector<Value> data_;
   std::string name_;
   size_t size_ = 0;
+  size_t width_ = 0;
+  size_t height_ = 0;
   uint8_t location_ = 0;
+  void* mem_ptr_ = nullptr;
 };
 
 /// A buffer class where the data is described by a |DatumType| object.
@@ -140,6 +152,13 @@ class FormatBuffer : public Buffer {
   }
   /// Returns the Format describing the buffer data.
   const Format& GetFormat() const { return *(format_.get()); }
+
+  uint32_t GetTexelStride() { return format_->GetByteSize(); }
+
+  // When copying the image to the host buffer, we specify a row length of 0
+  // which results in tight packing of rows.  So the row stride is the product
+  // of the texel stride and the number of texels in a row.
+  uint32_t GetRowStride() { return GetTexelStride() * GetWidth(); }
 
  private:
   std::unique_ptr<Format> format_;

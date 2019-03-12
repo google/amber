@@ -410,77 +410,25 @@ Result EngineVulkan::DoProcessCommands(amber::Pipeline* pipeline) {
   return pipeline_map_[pipeline].vk_pipeline->ProcessCommands();
 }
 
-Result EngineVulkan::GetFrameBufferInfo(amber::Pipeline* pipeline,
-                                        amber::Buffer* buffer,
-                                        ResourceInfo* resource_info) {
-  if (!resource_info)
-    return Result("Vulkan::GetFrameBufferInfo missing resource info");
-
-  auto& info = pipeline_map_[pipeline];
-  if (!info.vk_pipeline)
-    return Result("Vulkan::GetFrameBufferInfo missing pipeline");
-  if (!info.vk_pipeline->IsGraphics())
-    return Result("Vulkan::GetFrameBufferInfo for Non-Graphics Pipeline");
-
-  uint32_t attachment_idx = 0;
-  Result r = pipeline->GetLocationForColorAttachment(buffer, &attachment_idx);
-  if (!r.IsSuccess())
-    return r;
-
-  const auto graphics = info.vk_pipeline->AsGraphics();
-  const auto frame = graphics->GetFrame();
-  const auto& fmt = frame->GetFormatForAttachment(attachment_idx);
-  const auto bytes_per_texel = fmt.GetByteSize();
-  resource_info->type = ResourceInfoType::kImage;
-  resource_info->image_info.width = frame->GetWidth();
-  resource_info->image_info.height = frame->GetHeight();
-  resource_info->image_info.depth = 1U;
-  resource_info->image_info.texel_stride = bytes_per_texel;
-  resource_info->image_info.texel_format = &fmt;
-  // When copying the image to the host buffer, we specify a row length of 0
-  // which results in tight packing of rows.  So the row stride is the product
-  // of the texel stride and the number of texels in a row.
-  const auto row_stride = bytes_per_texel * frame->GetWidth();
-  resource_info->image_info.row_stride = row_stride;
-  resource_info->size_in_bytes = row_stride * frame->GetHeight();
-  resource_info->cpu_memory = frame->GetColorBufferPtr(attachment_idx);
-
-  return {};
-}
-
-Result EngineVulkan::GetFrameBuffer(amber::Pipeline* pipeline,
-                                    amber::Buffer* buffer,
+Result EngineVulkan::GetFrameBuffer(amber::Buffer* buffer,
                                     std::vector<Value>* values) {
   values->resize(0);
 
-  ResourceInfo resource_info;
-  GetFrameBufferInfo(pipeline, buffer, &resource_info);
-  if (resource_info.type != ResourceInfoType::kImage) {
-    return Result(
-        "Vulkan:GetFrameBuffer() is invalid for non-image framebuffer");
-  }
+  if (!buffer->GetMemPtr())
+    return Result("Vulkan::GetFrameBuffer buffer missing memory pointer");
 
-  uint32_t attachment_idx = 0;
-  Result r = pipeline->GetLocationForColorAttachment(buffer, &attachment_idx);
-  if (!r.IsSuccess())
-    return r;
-
-  auto& info = pipeline_map_[pipeline];
-  const auto frame = info.vk_pipeline->AsGraphics()->GetFrame();
-  const auto& fmt = frame->GetFormatForAttachment(attachment_idx);
   // TODO(jaebaek): Support other formats
-  if (fmt.GetFormatType() != kDefaultFramebufferFormat)
+  if (buffer->AsFormatBuffer()->GetFormat().GetFormatType() !=
+      kDefaultFramebufferFormat)
     return Result("Vulkan::GetFrameBuffer Unsupported buffer format");
 
+  const uint8_t* cpu_memory = static_cast<const uint8_t*>(buffer->GetMemPtr());
+  const auto texel_stride = buffer->AsFormatBuffer()->GetTexelStride();
+  const auto row_stride = buffer->AsFormatBuffer()->GetRowStride();
+
   Value pixel;
-
-  const uint8_t* cpu_memory =
-      static_cast<const uint8_t*>(resource_info.cpu_memory);
-  const uint32_t row_stride = resource_info.image_info.row_stride;
-  const uint32_t texel_stride = resource_info.image_info.texel_stride;
-
-  for (uint32_t y = 0; y < resource_info.image_info.height; ++y) {
-    for (uint32_t x = 0; x < resource_info.image_info.width; ++x) {
+  for (uint32_t y = 0; y < buffer->GetHeight(); ++y) {
+    for (uint32_t x = 0; x < buffer->GetWidth(); ++x) {
       const uint8_t* ptr_8 = cpu_memory + (row_stride * y) + (texel_stride * x);
       const uint32_t* ptr_32 = reinterpret_cast<const uint32_t*>(ptr_8);
       pixel.SetIntValue(*ptr_32);
