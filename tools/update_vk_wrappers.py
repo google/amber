@@ -102,7 +102,7 @@ def gen_wrappers(methods, xml):
       return ${return_variable};
     };
   } else {
-    ptrs_.${method} = [ptr, delegate](${signature}) -> ${return_type} {
+    ptrs_.${method} = [ptr](${signature}) -> ${return_type} {
       ${call_prefix}ptr(${arguments});
       return ${return_variable};
     };
