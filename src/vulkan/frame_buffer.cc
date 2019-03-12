@@ -52,7 +52,7 @@ Result FrameBuffer::Initialize(
         return Result("color attachment locations must be sequential from 0");
       if (seen_idx[info->location] != -1) {
         return Result("can not use duplicate attachment location: " +
-                      info->location);
+                      std::to_string(info->location));
       }
       seen_idx[info->location] = info->location;
     }
