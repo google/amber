@@ -46,15 +46,18 @@ Result FrameBuffer::Initialize(
   std::vector<VkImageView> attachments;
 
   if (!color_attachments_.empty()) {
-    uint32_t max_attachment_idx = 0;
-    for (auto* info : color_attachments_)
-      max_attachment_idx = std::max(max_attachment_idx, info->location);
+    std::vector<int32_t> seen_idx(color_attachments_.size(), -1);
+    for (auto* info : color_attachments_) {
+      if (info->location >= color_attachments_.size())
+        return Result("color attachment locations must be sequential from 0");
+      if (seen_idx[info->location] != -1) {
+        return Result("can not use duplicate attachment location: " +
+                      info->location);
+      }
+      seen_idx[info->location] = info->location;
+    }
 
-    if ((max_attachment_idx + 1) != color_attachments_.size())
-      return Result("color attachment locations must be sequential from 0");
-
-    attachments.resize(max_attachment_idx + 1);
-
+    attachments.resize(color_attachments_.size());
     for (auto* info : color_attachments_) {
       color_images_.push_back(MakeUnique<Image>(
           device_,
