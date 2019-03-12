@@ -61,6 +61,10 @@ class Delegate {
   virtual void Log(const std::string& message) = 0;
   /// Tells whether to log the graphics API calls
   virtual bool LogGraphicsCalls() const = 0;
+  /// Tells whether to log the duration of graphics API calls
+  virtual bool LogGraphicsCallsTime() const = 0;
+  /// Returns the current timestamp in nanoseconds
+  virtual uint64_t GetTimestampNs() const = 0;
 };
 
 struct Options {

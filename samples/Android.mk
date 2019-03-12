@@ -23,7 +23,8 @@ LOCAL_SRC_FILES:= \
     config_helper_vulkan.cc \
     log.cc \
     ppm.cc \
-    png.cc
+    png.cc \
+    timestamp.cc
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/.. $(LOCAL_PATH)/../include
 LOCAL_LDLIBS:=-landroid -lvulkan -llog
 LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti -Werror -Wno-unknown-pragmas -DAMBER_ENGINE_VULKAN=1
