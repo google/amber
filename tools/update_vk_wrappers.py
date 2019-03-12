@@ -22,7 +22,7 @@ import os.path
 import re
 import sys
 import xml.etree.ElementTree as ET
-
+from string import Template
 
 def read_inc(file):
   methods = []
@@ -80,51 +80,42 @@ def gen_wrappers(methods, xml):
       param_vals.append(param['def'])
       param_names.append(param['name'])
 
-    content += "{\n"
-    content += "  PFN_{} ptr = reinterpret_cast<PFN_{}>(".format(method, method)
-    content += "getInstanceProcAddr(instance_, \"{}\"));\n".format(method);
-    content += "  if (!ptr) {\n"
-    content += "    return Result(\"Vulkan: Unable to "
-    content += "load {} pointer\");\n".format(method)
-    content += "  }\n"
+    signature = ', '.join(str(x) for x in param_vals)
+    arguments = ', '.join(str(x) for x in param_names)
+    return_type = data['return_type']
+    return_variable = ''
+    call_prefix = ''
+    if return_type != 'void':
+      return_variable = 'ret'
+      call_prefix = return_type + ' ' + return_variable + ' = '
 
-    # if delegate is not null ...
-    content += "  if (delegate && delegate->LogGraphicsCalls()) {\n"
 
-    # ... lambda with delegate calls ...
-    content += "    ptrs_.{} = [ptr, delegate](".format(method)
-    content += ', '.join(str(x) for x in param_vals)
-    content += ") -> " + data['return_type'] + " {\n"
-    content += '      delegate->Log("{}");\n'.format(method)
-    if data['return_type'] != 'void':
-      content += "      {} ret = ".format(data['return_type'])
-    content += "ptr(" + ", ".join(str(x) for x in param_names) + ");\n"
-    content += "      return";
-    if data['return_type'] != 'void':
-      content += " ret"
-    content += ";\n"
-    content += "    };\n"
+    template = Template(R'''{
+  PFN_${method} ptr = reinterpret_cast<PFN_${method}>(getInstanceProcAddr(instance_, "${method}"));
+  if (!ptr) {
+    return Result("Vulkan: Unable to load ${method} pointer");
+  }
+  if (delegate && delegate->LogGraphicsCalls()) {
+    ptrs_.${method} = [ptr, delegate](${signature}) -> ${return_type} {
+      delegate->Log("${method}");
+      ${call_prefix}ptr(${arguments});
+      return ${return_variable};
+    };
+  } else {
+    ptrs_.${method} = [ptr, delegate](${signature}) -> ${return_type} {
+      ${call_prefix}ptr(${arguments});
+      return ${return_variable};
+    };
+  }
+}
+''')
 
-    # ... else ...
-    content += "  } else {\n"
-
-    # ... simple wrapper lambda ...
-    content += "    ptrs_.{} = [ptr](".format(method)
-    content += ', '.join(str(x) for x in param_vals)
-    content += ") -> " + data['return_type'] + " {\n"
-    if data['return_type'] != 'void':
-      content += "      {} ret = ".format(data['return_type'])
-    content += "ptr(" + ", ".join(str(x) for x in param_names) + ");\n"
-    content += "      return";
-    if data['return_type'] != 'void':
-      content += " ret"
-    content += ";\n"
-
-    content += "    };\n"
-
-    # ... end if
-    content += "  }\n"
-    content += "}\n"
+    content += template.substitute(method=method,
+                                   signature=signature,
+                                   arguments=arguments,
+                                   return_type=return_type,
+                                   return_variable=return_variable,
+                                   call_prefix=call_prefix)
 
   return content
 
@@ -150,12 +141,15 @@ def gen_headers(methods, xml):
 
 def gen_direct(methods):
   content = "";
+
+  template = Template(R'''
+if (!(ptrs_.${method} = reinterpret_cast<PFN_${method}>(getInstanceProcAddr(instance_, "${method}")))) {
+  return Result("Vulkan: Unable to load ${method} pointer");
+}
+''')
+
   for method in methods:
-    content += "if (!(ptrs_.{} = reinterpret_cast<PFN_{}>(".format(method, method)
-    content += "getInstanceProcAddr(instance_, \"{}\"))))".format(method)
-    content += " {\n"
-    content += "  return Result(\"Vulkan: Unable to load {} pointer\");\n".format(method)
-    content += "}\n"
+    content += template.substitute(method=method)
 
   return content
 
