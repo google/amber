@@ -54,7 +54,7 @@ Result FrameBuffer::Initialize(
         return Result("can not use duplicate attachment location: " +
                       std::to_string(info->location));
       }
-      seen_idx[info->location] = info->location;
+      seen_idx[info->location] = static_cast<int32_t>(info->location);
     }
 
     attachments.resize(color_attachments_.size());
