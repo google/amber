@@ -14,6 +14,7 @@
 
 #include "src/vulkan/frame_buffer.h"
 
+#include <algorithm>
 #include <cassert>
 #include <limits>
 #include <vector>
@@ -44,18 +45,34 @@ Result FrameBuffer::Initialize(
     const VkPhysicalDeviceMemoryProperties& properties) {
   std::vector<VkImageView> attachments;
 
-  for (auto* info : color_attachments_) {
-    color_images_.push_back(MakeUnique<Image>(
-        device_,
-        ToVkFormat(info->buffer->AsFormatBuffer()->GetFormat().GetFormatType()),
-        VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_, properties));
+  if (!color_attachments_.empty()) {
+    std::vector<int32_t> seen_idx(color_attachments_.size(), -1);
+    for (auto* info : color_attachments_) {
+      if (info->location >= color_attachments_.size())
+        return Result("color attachment locations must be sequential from 0");
+      if (seen_idx[info->location] != -1) {
+        return Result("duplicate attachment location: " +
+                      std::to_string(info->location));
+      }
+      seen_idx[info->location] = static_cast<int32_t>(info->location);
+    }
 
-    Result r = color_images_.back()->Initialize(
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-    if (!r.IsSuccess())
-      return r;
+    attachments.resize(color_attachments_.size());
+    for (auto* info : color_attachments_) {
+      color_images_.push_back(MakeUnique<Image>(
+          device_,
+          ToVkFormat(
+              info->buffer->AsFormatBuffer()->GetFormat().GetFormatType()),
+          VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_, properties));
 
-    attachments.push_back(color_images_.back()->GetVkImageView());
+      Result r =
+          color_images_.back()->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+                                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+      if (!r.IsSuccess())
+        return r;
+
+      attachments[info->location] = color_images_.back()->GetVkImageView();
+    }
   }
 
   if (depth_format != VK_FORMAT_UNDEFINED) {
