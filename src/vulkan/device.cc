@@ -15,9 +15,11 @@
 #include "src/vulkan/device.h"
 
 #include <cstring>
+#include <iomanip>  // Vulkan wrappers: std::setw(), std::left/right
 #include <iostream>
 #include <memory>
 #include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 

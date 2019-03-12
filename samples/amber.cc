@@ -26,6 +26,7 @@
 #include "samples/config_helper.h"
 #include "samples/png.h"
 #include "samples/ppm.h"
+#include "samples/timestamp.h"
 #include "src/build-versions.h"
 #include "src/make_unique.h"
 
@@ -46,6 +47,7 @@ struct Options {
   bool show_help = false;
   bool show_version_info = false;
   bool log_graphics_calls = false;
+  bool log_graphics_calls_time = false;
   amber::EngineType engine = amber::kEngineTypeVulkan;
   std::string spv_env;
 };
@@ -66,6 +68,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -v <engine version>       -- Engine version (eg, 1.1 for Vulkan). Default 1.0.
   -V, --version             -- Output version information for Amber and libraries.
   --log-graphics-calls      -- Log graphics API calls (only for Vulkan so far).
+  --log-graphics-calls-time -- Log timing of graphics API calls timing (Vulkan only).
   -h                        -- This help text.
 )";
 
@@ -161,6 +164,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->quiet = true;
     } else if (arg == "--log-graphics-calls") {
       opts->log_graphics_calls = true;
+    } else if (arg == "--log-graphics-calls-time") {
+      opts->log_graphics_calls_time = true;
     } else if (arg.size() > 0 && arg[0] == '-') {
       std::cerr << "Unrecognized option " << arg << std::endl;
       return false;
@@ -209,7 +214,8 @@ std::string ReadFile(const std::string& input_file) {
 
 class SampleDelegate : public amber::Delegate {
  public:
-  SampleDelegate() : log_graphics_calls_(false) {}
+  SampleDelegate()
+      : log_graphics_calls_(false), log_graphics_calls_time_(false) {}
   ~SampleDelegate() override = default;
 
   void Log(const std::string& message) override {
@@ -222,8 +228,25 @@ class SampleDelegate : public amber::Delegate {
     log_graphics_calls_ = log_graphics_calls;
   }
 
+  bool LogGraphicsCallsTime() const override {
+    return log_graphics_calls_time_;
+  }
+
+  void SetLogGraphicsCallsTime(bool log_graphics_calls_time) {
+    log_graphics_calls_time_ = log_graphics_calls_time;
+    if (log_graphics_calls_time) {
+      // Make sure regular logging is also enabled
+      log_graphics_calls_ = true;
+    }
+  }
+
+  uint64_t GetTimestampNs() const override {
+    return timestamp::SampleGetTimestampNs();
+  }
+
  private:
   bool log_graphics_calls_;
+  bool log_graphics_calls_time_;
 };
 
 }  // namespace
@@ -290,6 +313,9 @@ int main(int argc, const char** argv) {
   SampleDelegate delegate;
   if (options.log_graphics_calls) {
     delegate.SetLogGraphicsCalls(true);
+  }
+  if (options.log_graphics_calls_time) {
+    delegate.SetLogGraphicsCallsTime(true);
   }
 
   amber::Options amber_options;
