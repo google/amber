@@ -20,6 +20,7 @@ set(AMBER_SOURCES
     log.cc
     ppm.cc
     png.cc
+    timestamp.cc
     ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
 )
 

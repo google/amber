@@ -89,7 +89,6 @@ def gen_wrappers(methods, xml):
       return_variable = 'ret'
       call_prefix = return_type + ' ' + return_variable + ' = '
 
-
     template = Template(R'''{
   PFN_${method} ptr = reinterpret_cast<PFN_${method}>(getInstanceProcAddr(instance_, "${method}"));
   if (!ptr) {
@@ -98,7 +97,23 @@ def gen_wrappers(methods, xml):
   if (delegate && delegate->LogGraphicsCalls()) {
     ptrs_.${method} = [ptr, delegate](${signature}) -> ${return_type} {
       delegate->Log("${method}");
+      uint64_t timestamp_start = 0;
+      if (delegate->LogGraphicsCallsTime()) {
+        timestamp_start = delegate->GetTimestampNs();
+      }
       ${call_prefix}ptr(${arguments});
+      if (delegate->LogGraphicsCallsTime()) {
+        uint64_t timestamp_end = delegate->GetTimestampNs();
+        uint64_t duration = timestamp_end - timestamp_start;
+        std::ostringstream out;
+        out << "time ";
+        // name of method on 40 characters
+        out << std::left << std::setw(40) << "${method}";
+        // duration in nanoseconds on 12 characters, right-aligned
+        out << std::right << std::setw(12) << duration;
+        out << " ns";
+        delegate->Log(out.str());
+      }
       return ${return_variable};
     };
   } else {
