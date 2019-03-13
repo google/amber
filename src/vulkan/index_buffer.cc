@@ -30,15 +30,15 @@ IndexBuffer::IndexBuffer(Device* device) : device_(device) {}
 IndexBuffer::~IndexBuffer() = default;
 
 void IndexBuffer::Shutdown() {
-  if (buffer_)
-    buffer_->Shutdown();
+  if (transfer_buffer_)
+    transfer_buffer_->Shutdown();
 }
 
 Result IndexBuffer::SendIndexData(
     CommandBuffer* command,
     const VkPhysicalDeviceMemoryProperties& properties,
     const std::vector<Value>& values) {
-  if (buffer_) {
+  if (transfer_buffer_) {
     return Result(
         "IndexBuffer::SendIndexData must be called once when it is created");
   }
@@ -46,27 +46,30 @@ Result IndexBuffer::SendIndexData(
   if (values.empty())
     return Result("IndexBuffer::SendIndexData |values| is empty");
 
-  buffer_ = MakeUnique<Buffer>(
+  transfer_buffer_ = MakeUnique<TransferBuffer>(
       device_, static_cast<uint32_t>(sizeof(uint32_t) * values.size()),
       properties);
-  Result r = buffer_->Initialize(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-                                 VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+  Result r = transfer_buffer_->Initialize(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+                                          VK_BUFFER_USAGE_TRANSFER_DST_BIT);
   if (!r.IsSuccess())
     return r;
 
-  uint32_t* ptr = static_cast<uint32_t*>(buffer_->HostAccessibleMemoryPtr());
+  uint32_t* ptr =
+      static_cast<uint32_t*>(transfer_buffer_->HostAccessibleMemoryPtr());
   for (const auto& value : values)
     *ptr++ = value.AsUint32();
 
-  return buffer_->CopyToDevice(command);
+  return transfer_buffer_->CopyToDevice(command);
 }
 
 Result IndexBuffer::BindToCommandBuffer(CommandBuffer* command) {
-  if (!buffer_)
-    return Result("IndexBuffer::BindToCommandBuffer |buffer_| is nullptr");
+  if (!transfer_buffer_) {
+    return Result(
+        "IndexBuffer::BindToCommandBuffer |transfer_buffer_| is nullptr");
+  }
 
   device_->GetPtrs()->vkCmdBindIndexBuffer(command->GetCommandBuffer(),
-                                           buffer_->GetVkBuffer(), 0,
+                                           transfer_buffer_->GetVkBuffer(), 0,
                                            VK_INDEX_TYPE_UINT32);
   return {};
 }

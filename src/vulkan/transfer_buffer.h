@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VULKAN_BUFFER_H_
-#define SRC_VULKAN_BUFFER_H_
+#ifndef SRC_VULKAN_TRANSFER_BUFFER_H_
+#define SRC_VULKAN_TRANSFER_BUFFER_H_
 
 #include "amber/result.h"
 #include "amber/vulkan_header.h"
@@ -29,12 +29,12 @@ class Device;
 // has VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT and
 // VK_MEMORY_PROPERTY_HOST_COHERENT_BIT properties and it is mapped
 // to |buffer_|.
-class Buffer : public Resource {
+class TransferBuffer : public Resource {
  public:
-  Buffer(Device* device,
-         uint32_t size_in_bytes,
-         const VkPhysicalDeviceMemoryProperties& properties);
-  ~Buffer() override;
+  TransferBuffer(Device* device,
+                 uint32_t size_in_bytes,
+                 const VkPhysicalDeviceMemoryProperties& properties);
+  ~TransferBuffer() override;
 
   // Create |buffer_| whose usage is |usage| and allocate |memory_|
   // with VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT and
@@ -59,12 +59,6 @@ class Buffer : public Resource {
   // make it available to host domain.
   Result CopyToHost(CommandBuffer* command) override;
 
-  // Copy all data from |src| to |this| and wait until
-  // the memory update is effective by calling vkCmdPipelineBarrier().
-  // Note that this method only records the copy command and the
-  // actual submission of the command must be done later.
-  void CopyFromBuffer(CommandBuffer* command, const Buffer& src);
-
   void Shutdown() override;
 
  private:
@@ -76,4 +70,4 @@ class Buffer : public Resource {
 }  // namespace vulkan
 }  // namespace amber
 
-#endif  // SRC_VULKAN_BUFFER_H_
+#endif  // SRC_VULKAN_TRANSFER_BUFFER_H_

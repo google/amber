@@ -203,8 +203,8 @@ VertexBuffer::VertexBuffer(Device* device) : device_(device) {}
 VertexBuffer::~VertexBuffer() = default;
 
 void VertexBuffer::Shutdown() {
-  if (buffer_)
-    buffer_->Shutdown();
+  if (transfer_buffer_)
+    transfer_buffer_->Shutdown();
 }
 
 void VertexBuffer::SetData(uint8_t location,
@@ -226,7 +226,7 @@ void VertexBuffer::SetData(uint8_t location,
 Result VertexBuffer::FillVertexBufferWithData(CommandBuffer* command) {
   // Send vertex data from host to device.
   uint8_t* ptr_in_stride_begin =
-      static_cast<uint8_t*>(buffer_->HostAccessibleMemoryPtr());
+      static_cast<uint8_t*>(transfer_buffer_->HostAccessibleMemoryPtr());
   for (uint32_t i = 0; i < GetVertexCount(); ++i) {
     uint8_t* ptr = ptr_in_stride_begin;
     for (uint32_t j = 0; j < formats_.size(); ++j) {
@@ -263,12 +263,12 @@ Result VertexBuffer::FillVertexBufferWithData(CommandBuffer* command) {
     ptr_in_stride_begin += Get4BytesAlignedStride();
   }
 
-  return buffer_->CopyToDevice(command);
+  return transfer_buffer_->CopyToDevice(command);
 }
 
 void VertexBuffer::BindToCommandBuffer(CommandBuffer* command) {
   const VkDeviceSize offset = 0;
-  const VkBuffer buffer = buffer_->GetVkBuffer();
+  const VkBuffer buffer = transfer_buffer_->GetVkBuffer();
   // TODO(jaebaek): Support multiple binding
   device_->GetPtrs()->vkCmdBindVertexBuffers(command->GetCommandBuffer(), 0, 1,
                                              &buffer, &offset);
@@ -286,10 +286,10 @@ Result VertexBuffer::SendVertexData(
 
   uint32_t bytes = Get4BytesAlignedStride() * n_vertices;
 
-  if (!buffer_) {
-    buffer_ = MakeUnique<Buffer>(device_, bytes, properties);
-    Result r = buffer_->Initialize(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+  if (!transfer_buffer_) {
+    transfer_buffer_ = MakeUnique<TransferBuffer>(device_, bytes, properties);
+    Result r = transfer_buffer_->Initialize(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                                            VK_BUFFER_USAGE_TRANSFER_DST_BIT);
     if (!r.IsSuccess())
       return r;
   }

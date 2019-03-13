@@ -20,7 +20,7 @@
 #include "gtest/gtest.h"
 #include "src/format.h"
 #include "src/make_unique.h"
-#include "src/vulkan/buffer.h"
+#include "src/vulkan/transfer_buffer.h"
 
 namespace amber {
 namespace vulkan {
@@ -29,12 +29,12 @@ namespace {
 const VkPhysicalDeviceMemoryProperties kMemoryProperties =
     VkPhysicalDeviceMemoryProperties();
 
-class BufferForTest : public Buffer {
+class BufferForTest : public TransferBuffer {
  public:
   BufferForTest(Device* device,
                 uint32_t size_in_bytes,
                 const VkPhysicalDeviceMemoryProperties& properties)
-      : Buffer(device, size_in_bytes, properties) {
+      : TransferBuffer(device, size_in_bytes, properties) {
     memory_.resize(4096);
     memory_ptr_ = memory_.data();
   }
@@ -54,7 +54,7 @@ class VertexBufferTest : public testing::Test {
   VertexBufferTest() {
     vertex_buffer_ = MakeUnique<VertexBuffer>(nullptr);
 
-    std::unique_ptr<Buffer> buffer =
+    std::unique_ptr<TransferBuffer> buffer =
         MakeUnique<BufferForTest>(nullptr, 0U, kMemoryProperties);
     buffer_memory_ = buffer->HostAccessibleMemoryPtr();
     vertex_buffer_->SetBufferForTest(std::move(buffer));
@@ -78,8 +78,8 @@ class VertexBufferTest : public testing::Test {
 
 }  // namespace
 
-void VertexBuffer::SetBufferForTest(std::unique_ptr<Buffer> buffer) {
-  buffer_ = std::move(buffer);
+void VertexBuffer::SetBufferForTest(std::unique_ptr<TransferBuffer> buffer) {
+  transfer_buffer_ = std::move(buffer);
 }
 
 TEST_F(VertexBufferTest, R8G8B8A8_UINT) {
