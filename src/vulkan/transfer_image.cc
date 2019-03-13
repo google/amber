@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/vulkan/image.h"
+#include "src/vulkan/transfer_image.h"
 
 #include <limits>
 
@@ -45,13 +45,13 @@ const VkImageCreateInfo kDefaultImageInfo = {
 
 }  // namespace
 
-Image::Image(Device* device,
-             VkFormat format,
-             VkImageAspectFlags aspect,
-             uint32_t x,
-             uint32_t y,
-             uint32_t z,
-             const VkPhysicalDeviceMemoryProperties& properties)
+TransferImage::TransferImage(Device* device,
+                             VkFormat format,
+                             VkImageAspectFlags aspect,
+                             uint32_t x,
+                             uint32_t y,
+                             uint32_t z,
+                             const VkPhysicalDeviceMemoryProperties& properties)
     : Resource(device, x * y * z * VkFormatToByteSize(format), properties),
       image_info_(kDefaultImageInfo),
       aspect_(aspect) {
@@ -59,11 +59,11 @@ Image::Image(Device* device,
   image_info_.extent = {x, y, z};
 }
 
-Image::~Image() = default;
+TransferImage::~TransferImage() = default;
 
-Result Image::Initialize(VkImageUsageFlags usage) {
+Result TransferImage::Initialize(VkImageUsageFlags usage) {
   if (image_ != VK_NULL_HANDLE)
-    return Result("Vulkan::Image was already initalized");
+    return Result("Vulkan::TransferImage was already initalized");
 
   image_info_.usage = usage;
 
@@ -90,7 +90,7 @@ Result Image::Initialize(VkImageUsageFlags usage) {
   return Resource::Initialize();
 }
 
-Result Image::CreateVkImageView() {
+Result TransferImage::CreateVkImageView() {
   VkImageViewCreateInfo image_view_info = VkImageViewCreateInfo();
   image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   image_view_info.image = image_;
@@ -120,7 +120,7 @@ Result Image::CreateVkImageView() {
   return {};
 }
 
-void Image::Shutdown() {
+void TransferImage::Shutdown() {
   if (view_ != VK_NULL_HANDLE) {
     device_->GetPtrs()->vkDestroyImageView(device_->GetDevice(), view_,
                                            nullptr);
@@ -135,7 +135,7 @@ void Image::Shutdown() {
   Resource::Shutdown();
 }
 
-Result Image::CopyToHost(CommandBuffer* command) {
+Result TransferImage::CopyToHost(CommandBuffer* command) {
   VkBufferImageCopy copy_region = VkBufferImageCopy();
   copy_region.bufferOffset = 0;
   // Row length of 0 results in tight packing of rows, so the row stride
@@ -160,11 +160,11 @@ Result Image::CopyToHost(CommandBuffer* command) {
   return {};
 }
 
-void Image::ChangeLayout(CommandBuffer* command,
-                         VkImageLayout old_layout,
-                         VkImageLayout new_layout,
-                         VkPipelineStageFlags from,
-                         VkPipelineStageFlags to) {
+void TransferImage::ChangeLayout(CommandBuffer* command,
+                                 VkImageLayout old_layout,
+                                 VkImageLayout new_layout,
+                                 VkPipelineStageFlags from,
+                                 VkPipelineStageFlags to) {
   VkImageMemoryBarrier barrier = VkImageMemoryBarrier();
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   barrier.oldLayout = old_layout;
@@ -239,14 +239,16 @@ void Image::ChangeLayout(CommandBuffer* command,
       command->GetCommandBuffer(), from, to, 0, 0, NULL, 0, NULL, 1, &barrier);
 }
 
-Result Image::AllocateAndBindMemoryToVkImage(VkImage image,
-                                             VkDeviceMemory* memory,
-                                             VkMemoryPropertyFlags flags,
-                                             bool force_flags,
-                                             uint32_t* memory_type_index) {
+Result TransferImage::AllocateAndBindMemoryToVkImage(
+    VkImage image,
+    VkDeviceMemory* memory,
+    VkMemoryPropertyFlags flags,
+    bool force_flags,
+    uint32_t* memory_type_index) {
   if (memory_type_index == nullptr) {
     return Result(
-        "Vulkan: Image::AllocateAndBindMemoryToVkImage memory_type_index is "
+        "Vulkan: TransferImage::AllocateAndBindMemoryToVkImage "
+        "memory_type_index is "
         "nullptr");
   }
 
@@ -276,7 +278,7 @@ Result Image::AllocateAndBindMemoryToVkImage(VkImage image,
   return {};
 }
 
-const VkMemoryRequirements Image::GetVkImageMemoryRequirements(
+const VkMemoryRequirements TransferImage::GetVkImageMemoryRequirements(
     VkImage image) const {
   VkMemoryRequirements requirement;
   device_->GetPtrs()->vkGetImageMemoryRequirements(device_->GetDevice(), image,

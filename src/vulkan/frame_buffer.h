@@ -19,7 +19,7 @@
 #include <vector>
 
 #include "src/pipeline.h"
-#include "src/vulkan/image.h"
+#include "src/vulkan/transfer_image.h"
 
 namespace amber {
 namespace vulkan {
@@ -66,8 +66,8 @@ class FrameBuffer {
   Device* device_ = nullptr;
   std::vector<const amber::Pipeline::BufferInfo*> color_attachments_;
   VkFramebuffer frame_ = VK_NULL_HANDLE;
-  std::vector<std::unique_ptr<Image>> color_images_;
-  std::unique_ptr<Image> depth_image_;
+  std::vector<std::unique_ptr<TransferImage>> color_images_;
+  std::unique_ptr<TransferImage> depth_image_;
   uint32_t width_ = 0;
   uint32_t height_ = 0;
   uint32_t depth_ = 1;
