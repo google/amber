@@ -46,7 +46,7 @@ TransferBuffer::TransferBuffer(
     : Resource(device, size_in_bytes, properties) {}
 
 TransferBuffer::~TransferBuffer() {
-    if (view_ != VK_NULL_HANDLE) {
+  if (view_ != VK_NULL_HANDLE) {
     device_->GetPtrs()->vkDestroyBufferView(device_->GetDevice(), view_,
                                             nullptr);
   }
