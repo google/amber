@@ -25,6 +25,7 @@
 #include "src/datum_type.h"
 #include "src/pipeline.h"
 #include "src/pipeline_data.h"
+#include "src/script.h"
 
 namespace amber {
 
@@ -35,7 +36,8 @@ namespace vkscript {
 
 class CommandParser {
  public:
-  CommandParser(Pipeline* pipeline,
+  CommandParser(Script* script,
+                Pipeline* pipeline,
                 size_t current_line,
                 const std::string& data);
   ~CommandParser();
@@ -158,6 +160,7 @@ class CommandParser {
   Result ParseComparator(const std::string& name,
                          ProbeSSBOCommand::Comparator* op);
 
+  Script* script_;
   Pipeline* pipeline_;
   PipelineData pipeline_data_;
   std::unique_ptr<Tokenizer> tokenizer_;

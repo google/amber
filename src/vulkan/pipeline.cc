@@ -262,14 +262,14 @@ Result Pipeline::AddPushConstant(const BufferCommand* command) {
   return push_constant_->AddBufferData(command);
 }
 
-Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
-  if (buffer_command == nullptr)
+Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
+  if (cmd == nullptr)
     return Result("Pipeline::AddDescriptor BufferCommand is nullptr");
 
-  if (!buffer_command->IsSSBO() && !buffer_command->IsUniform())
+  if (!cmd->IsSSBO() && !cmd->IsUniform())
     return Result("Pipeline::AddDescriptor not supported buffer type");
 
-  const uint32_t desc_set = buffer_command->GetDescriptorSet();
+  const uint32_t desc_set = cmd->GetDescriptorSet();
   if (desc_set >= descriptor_set_info_.size()) {
     for (size_t i = descriptor_set_info_.size();
          i <= static_cast<size_t>(desc_set); ++i) {
@@ -291,57 +291,44 @@ Result Pipeline::AddDescriptor(const BufferCommand* buffer_command) {
   auto& descriptors = descriptor_set_info_[desc_set].descriptors_;
   Descriptor* desc = nullptr;
   for (auto& descriptor : descriptors) {
-    if (descriptor->GetBinding() == buffer_command->GetBinding())
+    if (descriptor->GetBinding() == cmd->GetBinding())
       desc = descriptor.get();
   }
 
   if (desc == nullptr) {
-    auto desc_type = buffer_command->IsSSBO() ? DescriptorType::kStorageBuffer
-                                              : DescriptorType::kUniformBuffer;
+    auto desc_type = cmd->IsSSBO() ? DescriptorType::kStorageBuffer
+                                   : DescriptorType::kUniformBuffer;
     auto buffer_desc = MakeUnique<BufferDescriptor>(
-        desc_type, device_, buffer_command->GetDescriptorSet(),
-        buffer_command->GetBinding());
+        cmd->GetBuffer(), desc_type, device_, cmd->GetDescriptorSet(),
+        cmd->GetBinding());
     descriptors.push_back(std::move(buffer_desc));
 
     desc = descriptors.back().get();
   }
 
-  if (buffer_command->IsSSBO() && !desc->IsStorageBuffer()) {
+  if (cmd->IsSSBO() && !desc->IsStorageBuffer()) {
     return Result(
         "Vulkan::AddDescriptor BufferCommand for SSBO uses wrong descriptor "
         "set and binding");
   }
 
-  if (buffer_command->IsUniform() && !desc->IsUniformBuffer()) {
+  if (cmd->IsUniform() && !desc->IsUniformBuffer()) {
     return Result(
         "Vulkan::AddDescriptor BufferCommand for UBO uses wrong descriptor set "
         "and binding");
   }
 
-  desc->AddToBufferInputQueue(
-      buffer_command->GetDatumType().GetType(), buffer_command->GetOffset(),
-      buffer_command->GetSize(), buffer_command->GetValues());
+  auto* buf_desc = static_cast<BufferDescriptor*>(desc);
+  Result r =
+      buf_desc->AddToBuffer(cmd->GetDatumType().GetType(), cmd->GetOffset(),
+                            cmd->GetSize(), cmd->GetValues());
+  if (!r.IsSuccess())
+    return r;
 
   return {};
 }
 
 Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
-  bool data_send_needed = false;
-  for (auto& info : descriptor_set_info_) {
-    for (auto& desc : info.descriptors_) {
-      if (desc->HasDataNotSent()) {
-        data_send_needed = true;
-        break;
-      }
-    }
-
-    if (data_send_needed)
-      break;
-  }
-
-  if (!data_send_needed)
-    return {};
-
   Result r = command_->BeginIfNotInRecording();
   if (!r.IsSuccess())
     return r;
@@ -427,30 +414,6 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
   }
 
   return {};
-}
-
-Result Pipeline::GetDescriptorInfo(const uint32_t descriptor_set,
-                                   const uint32_t binding,
-                                   ResourceInfo* info) {
-  assert(info);
-
-  if (descriptor_set_info_.size() <= descriptor_set) {
-    return Result(
-        "Pipeline::GetDescriptorInfo no Descriptor class has given descriptor "
-        "set: " +
-        std::to_string(descriptor_set));
-  }
-
-  for (auto& desc : descriptor_set_info_[descriptor_set].descriptors_) {
-    if (desc->GetBinding() == binding) {
-      *info = desc->GetResourceInfo();
-      return {};
-    }
-  }
-
-  return Result("Vulkan::Pipeline descriptor with descriptor set: " +
-                std::to_string(descriptor_set) +
-                ", binding: " + std::to_string(binding) + " does not exist");
 }
 
 const char* Pipeline::GetEntryPointName(VkShaderStageFlagBits stage) const {

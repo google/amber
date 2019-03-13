@@ -31,7 +31,8 @@ clear
 # done)";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -68,7 +69,8 @@ TEST_F(CommandParserTest, DrawRect) {
   std::string data = "draw rect 1.2 2.3 200 400.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -89,7 +91,8 @@ TEST_F(CommandParserTest, DrawRectWithOrth) {
   std::string data = "draw rect ortho 1.2 2.3 200 400.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -110,7 +113,8 @@ TEST_F(CommandParserTest, DrawRectWithPatch) {
   std::string data = "draw rect patch 1.2 2.3 200 400.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -131,7 +135,8 @@ TEST_F(CommandParserTest, DrawRectWithOrthAndPatch) {
   std::string data = "draw rect ortho patch 1.2 2.3 200 400.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -152,7 +157,8 @@ TEST_F(CommandParserTest, DrawRectTooShort) {
   std::string data = "draw rect 1.2 2.3 400.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid conversion to double", r.Error());
@@ -162,7 +168,8 @@ TEST_F(CommandParserTest, DrawRectExtraParameters) {
   std::string data = "draw rect ortho patch 1.2 2.3 200 400.2 EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Extra parameter to draw rect command: EXTRA", r.Error());
@@ -172,7 +179,8 @@ TEST_F(CommandParserTest, DrawArrays) {
   std::string data = "draw arrays GL_LINES 2 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -193,7 +201,8 @@ TEST_F(CommandParserTest, DrawArraysIndexed) {
   std::string data = "draw arrays indexed TRIANGLE_FAN 2 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -214,7 +223,8 @@ TEST_F(CommandParserTest, DrawArraysExtraParams) {
   std::string data = "draw arrays indexed TRIANGLE_FAN 2 4 EXTRA_PARAM";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Extra parameter to draw arrays command: EXTRA_PARAM",
@@ -225,7 +235,8 @@ TEST_F(CommandParserTest, DrawArraysInstanced) {
   std::string data = "draw arrays instanced LINE_LIST_WITH_ADJACENCY 2 9";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -247,7 +258,8 @@ TEST_F(CommandParserTest, DrawArraysInstancedExtraParams) {
       "draw arrays instanced LINE_LIST_WITH_ADJACENCY 2 9 4 EXTRA_COMMAND";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Extra parameter to draw arrays command: EXTRA_COMMAND",
@@ -259,7 +271,8 @@ TEST_F(CommandParserTest, DrawArraysIndexedAndInstanced) {
       "draw arrays indexed instanced LINE_LIST_WITH_ADJACENCY 3 9";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -280,7 +293,8 @@ TEST_F(CommandParserTest, DrawArraysInstancedWithCount) {
   std::string data = "draw arrays instanced LINE_LIST_WITH_ADJACENCY 3 9 12";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -301,7 +315,8 @@ TEST_F(CommandParserTest, DrawArraysBadTopology) {
   std::string data = "draw arrays UNKNOWN_TOPO 1 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Unknown parameter to draw arrays: UNKNOWN_TOPO", r.Error());
@@ -311,7 +326,8 @@ TEST_F(CommandParserTest, DrawArraysTooShort) {
   std::string data = "draw arrays PATCH_LIST 1";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing integer vertex count value for draw arrays: ",
@@ -322,7 +338,8 @@ TEST_F(CommandParserTest, DrawArraysInstanceCountWithoutInstanced) {
   std::string data = "draw arrays PATCH_LIST 1 2 3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Extra parameter to draw arrays command: 3", r.Error());
@@ -332,7 +349,8 @@ TEST_F(CommandParserTest, DrawArraysMissingTopology) {
   std::string data = "draw arrays 1 2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing draw arrays topology", r.Error());
@@ -342,7 +360,8 @@ TEST_F(CommandParserTest, Compute) {
   std::string data = "compute 1 2 3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -360,7 +379,8 @@ TEST_F(CommandParserTest, ComputeTooShort) {
   std::string data = "compute 1 2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing integer value for compute Z entry: ", r.Error());
@@ -370,7 +390,8 @@ TEST_F(CommandParserTest, ComputeInvalidX) {
   std::string data = "compute 1.2 2 3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing integer value for compute X entry: 1.2", r.Error());
@@ -380,7 +401,8 @@ TEST_F(CommandParserTest, ComputeInvalidY) {
   std::string data = "compute 1 a 3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing integer value for compute Y entry: a", r.Error());
@@ -390,7 +412,8 @@ TEST_F(CommandParserTest, ComputeInvalidZ) {
   std::string data = "compute 1 2 1.5";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing integer value for compute Z entry: 1.5", r.Error());
@@ -400,7 +423,8 @@ TEST_F(CommandParserTest, ComputeExtraCommands) {
   std::string data = "compute 1 2 3 EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Extra parameter to compute command: EXTRA", r.Error());
@@ -410,7 +434,8 @@ TEST_F(CommandParserTest, Clear) {
   std::string data = "clear";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -423,7 +448,8 @@ TEST_F(CommandParserTest, ClearExtraParams) {
   std::string data = "clear EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Extra parameter to clear command: EXTRA", r.Error());
@@ -433,7 +459,8 @@ TEST_F(CommandParserTest, ClearDepth) {
   std::string data = "clear depth 0.8";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -449,7 +476,8 @@ TEST_F(CommandParserTest, ClearDepthMissingValue) {
   std::string data = "clear depth";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid conversion to double", r.Error());
@@ -459,7 +487,8 @@ TEST_F(CommandParserTest, ClearDepthExtraParameters) {
   std::string data = "clear depth 0.2 EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Extra parameter to clear depth command: EXTRA", r.Error());
@@ -469,7 +498,8 @@ TEST_F(CommandParserTest, ClearStencil) {
   std::string data = "clear stencil 8";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -485,7 +515,8 @@ TEST_F(CommandParserTest, ClearStencilMissingValue) {
   std::string data = "clear stencil";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing stencil value for clear stencil command: ", r.Error());
@@ -495,7 +526,8 @@ TEST_F(CommandParserTest, ClearStencilExtraParameters) {
   std::string data = "clear stencil 2 EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Extra parameter to clear stencil command: EXTRA", r.Error());
@@ -505,7 +537,8 @@ TEST_F(CommandParserTest, ClearStencilNotInteger) {
   std::string data = "clear stencil 2.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid stencil value for clear stencil command: 2.3",
@@ -516,7 +549,8 @@ TEST_F(CommandParserTest, ClearColor) {
   std::string data = "clear color 0.8 0.4 0.2 1.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -535,7 +569,8 @@ TEST_F(CommandParserTest, ClearColorMissingParams) {
   std::string data = "clear color 0.8 0.4 0.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid conversion to double", r.Error());
@@ -545,7 +580,8 @@ TEST_F(CommandParserTest, ClearColorExtraParams) {
   std::string data = "clear color 0.8 0.4 0.2 1.3 EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Extra parameter to clear color command: EXTRA", r.Error());
@@ -555,7 +591,8 @@ TEST_F(CommandParserTest, ClearColorBadR) {
   std::string data = "clear color a 0.4 0.2 0.4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid conversion to double", r.Error());
@@ -565,7 +602,8 @@ TEST_F(CommandParserTest, ClearColorBadG) {
   std::string data = "clear color 0.2 a 0.2 0.4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid conversion to double", r.Error());
@@ -575,7 +613,8 @@ TEST_F(CommandParserTest, ClearColorBadB) {
   std::string data = "clear color 0.2 0.4 a 0.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid conversion to double", r.Error());
@@ -585,7 +624,8 @@ TEST_F(CommandParserTest, ClearColorBadA) {
   std::string data = "clear color 0.2 0.4 0.2 a";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid conversion to double", r.Error());
@@ -595,7 +635,8 @@ TEST_F(CommandParserTest, PatchParameterVertices) {
   std::string data = "patch parameter vertices 9";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -611,7 +652,8 @@ TEST_F(CommandParserTest, PatchParameterVerticesMissingParameter) {
   std::string data = "patch vertices 5";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing parameter flag to patch command: vertices", r.Error());
@@ -621,7 +663,8 @@ TEST_F(CommandParserTest, PatchParameterVerticesMissingVertices) {
   std::string data = "patch parameter 5";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing vertices flag to patch command: 5", r.Error());
@@ -631,7 +674,8 @@ TEST_F(CommandParserTest, PatchParameterVerticesMissingParam) {
   std::string data = "patch parameter vertices";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid count parameter for patch parameter vertices: ",
@@ -642,7 +686,8 @@ TEST_F(CommandParserTest, PatchParameterVerticesInvalidParam) {
   std::string data = "patch parameter vertices invalid";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid count parameter for patch parameter vertices: invalid",
@@ -653,7 +698,8 @@ TEST_F(CommandParserTest, PatchParameterVerticesExtraParam) {
   std::string data = "patch parameter vertices 3 EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Extra parameter for patch parameter vertices command: EXTRA",
@@ -678,7 +724,8 @@ TEST_F(CommandParserTest, EntryPoint) {
     std::string data = std::string(ep.name) + " entrypoint main";
 
     Pipeline pipeline(PipelineType::kGraphics);
-    CommandParser cp(&pipeline, 1, data);
+    Script script;
+    CommandParser cp(&script, &pipeline, 1, data);
     Result r = cp.Parse();
     ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -697,7 +744,8 @@ TEST_F(CommandParserTest, EntryPointNameMissing) {
     std::string data = std::string(ep.name) + " entrypoint";
 
     Pipeline pipeline(PipelineType::kGraphics);
-    CommandParser cp(&pipeline, 1, data);
+    Script script;
+    CommandParser cp(&script, &pipeline, 1, data);
     Result r = cp.Parse();
     ASSERT_FALSE(r.IsSuccess());
     EXPECT_EQ("1: Missing entrypoint name", r.Error());
@@ -713,7 +761,8 @@ TEST_F(CommandParserTest, EntryPointEntryPointMissing) {
     std::string data = std::string(ep.name) + " main";
 
     Pipeline pipeline(PipelineType::kGraphics);
-    CommandParser cp(&pipeline, 1, data);
+    Script script;
+    CommandParser cp(&script, &pipeline, 1, data);
     Result r = cp.Parse();
     ASSERT_FALSE(r.IsSuccess());
     EXPECT_EQ("1: Unknown command: " + std::string(ep.name), r.Error());
@@ -725,7 +774,8 @@ TEST_F(CommandParserTest, EntryPointExtraParam) {
     std::string data = std::string(ep.name) + " entrypoint main EXTRA";
 
     Pipeline pipeline(PipelineType::kGraphics);
-    CommandParser cp(&pipeline, 1, data);
+    Script script;
+    CommandParser cp(&script, &pipeline, 1, data);
     Result r = cp.Parse();
     ASSERT_FALSE(r.IsSuccess());
     EXPECT_EQ("1: Extra parameter for entrypoint command: EXTRA", r.Error());
@@ -737,7 +787,8 @@ TEST_F(CommandParserTest, EntryPointInvalidValue) {
     std::string data = std::string(ep.name) + " entrypoint 123";
 
     Pipeline pipeline(PipelineType::kGraphics);
-    CommandParser cp(&pipeline, 1, data);
+    Script script;
+    CommandParser cp(&script, &pipeline, 1, data);
     Result r = cp.Parse();
     ASSERT_FALSE(r.IsSuccess());
     EXPECT_EQ("1: Entrypoint name must be a string: 123", r.Error());
@@ -748,7 +799,8 @@ TEST_F(CommandParserTest, TessellationEntryPointRequiresASuffix) {
   std::string data = "tessellation entrypoint main";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
@@ -761,7 +813,8 @@ TEST_F(CommandParserTest, TessellationEntryPointRequiresAKnownSuffix) {
   std::string data = "tessellation unknown entrypoint main";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
@@ -774,7 +827,8 @@ TEST_F(CommandParserTest, InvalidEntryPoint) {
   std::string data = "unknown entrypoint main";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Unknown command: unknown", r.Error());
@@ -792,7 +846,8 @@ TEST_P(CommandParserProbeTest, ProbeRgb) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << data << std::endl << r.Error();
 
@@ -826,7 +881,8 @@ TEST_P(CommandParserProbeTest, ProbeRgba) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << data << std::endl << r.Error();
 
@@ -861,7 +917,8 @@ TEST_P(CommandParserProbeTest, ProbeRect) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << data << std::endl << r.Error();
 
@@ -896,7 +953,8 @@ TEST_P(CommandParserProbeTest, ProbeNotRect) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << data << std::endl << r.Error();
 
@@ -933,7 +991,8 @@ TEST_F(CommandParserTest, ProbeAllRGB) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -959,7 +1018,8 @@ TEST_F(CommandParserTest, ProbeAllRGBA) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -986,7 +1046,8 @@ TEST_F(CommandParserTest, ProbeCommandRectBrackets) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -1017,7 +1078,8 @@ TEST_F(CommandParserTest, ProbeCommandNotRectBrackets) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -1048,7 +1110,8 @@ TEST_F(CommandParserTest, ProbeCommandColorBrackets) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -1079,7 +1142,8 @@ TEST_F(CommandParserTest, ProbeCommandColorOptionalCommas) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -1212,7 +1276,8 @@ TEST_F(CommandParserTest, ProbeErrors) {
     auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
     pipeline.AddColorAttachment(color_buf.get(), 0);
 
-    CommandParser cp(&pipeline, 1, probe.str);
+    Script script;
+    CommandParser cp(&script, &pipeline, 1, probe.str);
     Result r = cp.Parse();
     EXPECT_FALSE(r.IsSuccess()) << probe.str;
     EXPECT_EQ(std::string("1: ") + probe.err, r.Error()) << probe.str;
@@ -1223,7 +1288,8 @@ TEST_F(CommandParserTest, RelativeWithoutProbe) {
   std::string data = "relative unknown";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: relative must be used with probe: unknown", r.Error());
@@ -1236,7 +1302,8 @@ TEST_F(CommandParserTest, ProbeWithInvalidRGBA) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid token in probe command: 1", r.Error());
@@ -1249,7 +1316,8 @@ TEST_F(CommandParserTest, ProbeWithRectAndInvalidRGB) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid token in probe command: 1", r.Error());
@@ -1262,7 +1330,8 @@ TEST_F(CommandParserTest, ProbeWithRectMissingFormat) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid format specified to probe command: unknown", r.Error());
@@ -1275,7 +1344,8 @@ TEST_F(CommandParserTest, ProbeAllMissingFormat) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid format specified to probe command: unknown", r.Error());
@@ -1288,7 +1358,8 @@ TEST_F(CommandParserTest, ProbeAlWithInvalidRGB) {
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid format specified to probe command: unknown", r.Error());
@@ -1307,7 +1378,8 @@ TEST_P(CommandDataPipelineTopologyParser, Topology) {
   std::string data = "topology " + std::string(test_data.name);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(test_data.value, cp.PipelineDataForTesting()->GetTopology());
@@ -1355,7 +1427,8 @@ TEST_P(CommandDataPipelineDataInvalidParser, InvalidPipelineParamValue) {
   std::string data = std::string(test_data.name) + " 123";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
@@ -1369,7 +1442,8 @@ TEST_P(CommandDataPipelineDataInvalidParser, MissingTopologyValue) {
   std::string data = test_data.name;
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Missing value for ") + test_data.name + " command",
@@ -1382,7 +1456,8 @@ TEST_P(CommandDataPipelineDataInvalidParser, UnknownPipelineParamValue) {
   std::string data = std::string(test_data.name) + " UNKNOWN";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Unknown value for ") + test_data.name +
@@ -1401,7 +1476,8 @@ TEST_P(CommandDataPipelineDataInvalidParser, ExtraPipelineParamValue) {
       std::string(test_data.name) + " " + test_data.arg + " EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Extra parameter for ") + test_data.name +
@@ -1427,7 +1503,8 @@ TEST_F(CommandParserTest, BooleanTrue) {
 
   for (const auto& d : data) {
     Pipeline pipeline(PipelineType::kGraphics);
-    CommandParser cp(&pipeline, 1, "unused");
+    Script script;
+    CommandParser cp(&script, &pipeline, 1, "unused");
 
     bool value = false;
     Result r = cp.ParseBooleanForTesting(d.name, &value);
@@ -1443,7 +1520,8 @@ TEST_F(CommandParserTest, BooleanFalse) {
 
   for (const auto& d : data) {
     Pipeline pipeline(PipelineType::kGraphics);
-    CommandParser cp(&pipeline, 1, "unused");
+    Script script;
+    CommandParser cp(&script, &pipeline, 1, "unused");
 
     bool value = true;
     Result r = cp.ParseBooleanForTesting(d.name, &value);
@@ -1459,7 +1537,8 @@ TEST_F(CommandParserTest, BooleanInvalid) {
 
   for (const auto& d : data) {
     Pipeline pipeline(PipelineType::kGraphics);
-    CommandParser cp(&pipeline, 1, "unused");
+    Script script;
+    CommandParser cp(&script, &pipeline, 1, "unused");
 
     bool value = true;
     Result r = cp.ParseBooleanForTesting(d.name, &value);
@@ -1474,7 +1553,8 @@ TEST_F(CommandParserTest, PrimitiveRestartEnable) {
   std::string data = "primitiveRestartEnable true";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnablePrimitiveRestart());
@@ -1484,7 +1564,8 @@ TEST_F(CommandParserTest, PrimitiveRestartDisable) {
   std::string data = "primitiveRestartEnable false";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnablePrimitiveRestart());
@@ -1494,7 +1575,8 @@ TEST_F(CommandParserTest, DepthClampEnable) {
   std::string data = "depthClampEnable true";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableDepthClamp());
@@ -1504,7 +1586,8 @@ TEST_F(CommandParserTest, DepthClampDisable) {
   std::string data = "depthClampEnable false";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableDepthClamp());
@@ -1514,7 +1597,8 @@ TEST_F(CommandParserTest, RasterizerDiscardEnable) {
   std::string data = "rasterizerDiscardEnable true";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableRasterizerDiscard());
@@ -1524,7 +1608,8 @@ TEST_F(CommandParserTest, RasterizerDiscardDisable) {
   std::string data = "rasterizerDiscardEnable false";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableRasterizerDiscard());
@@ -1534,7 +1619,8 @@ TEST_F(CommandParserTest, DepthBiasEnable) {
   std::string data = "depthBiasEnable true";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableDepthBias());
@@ -1544,7 +1630,8 @@ TEST_F(CommandParserTest, DepthBiasDisable) {
   std::string data = "depthBiasEnable false";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableDepthBias());
@@ -1554,7 +1641,8 @@ TEST_F(CommandParserTest, LogicOpEnable) {
   std::string data = "logicOpEnable true";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableLogicOp());
@@ -1564,7 +1652,8 @@ TEST_F(CommandParserTest, LogicOpDisable) {
   std::string data = "logicOpEnable false";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableLogicOp());
@@ -1574,7 +1663,8 @@ TEST_F(CommandParserTest, BlendEnable) {
   std::string data = "blendEnable true";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableBlend());
@@ -1584,7 +1674,8 @@ TEST_F(CommandParserTest, BlendDisable) {
   std::string data = "blendEnable false";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableBlend());
@@ -1594,7 +1685,8 @@ TEST_F(CommandParserTest, DepthTestEnable) {
   std::string data = "depthTestEnable true";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableDepthTest());
@@ -1604,7 +1696,8 @@ TEST_F(CommandParserTest, DepthTestDisable) {
   std::string data = "depthTestEnable false";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableDepthTest());
@@ -1614,7 +1707,8 @@ TEST_F(CommandParserTest, DepthWriteEnable) {
   std::string data = "depthWriteEnable true";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableDepthWrite());
@@ -1624,7 +1718,8 @@ TEST_F(CommandParserTest, DepthWriteDisable) {
   std::string data = "depthWriteEnable false";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableDepthWrite());
@@ -1634,7 +1729,8 @@ TEST_F(CommandParserTest, DepthBoundsTestEnable) {
   std::string data = "depthBoundsTestEnable true";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableDepthBoundsTest());
@@ -1644,7 +1740,8 @@ TEST_F(CommandParserTest, DepthBoundsTestDisable) {
   std::string data = "depthBoundsTestEnable false";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableDepthBoundsTest());
@@ -1654,7 +1751,8 @@ TEST_F(CommandParserTest, StencilTestEnable) {
   std::string data = "stencilTestEnable true";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_TRUE(cp.PipelineDataForTesting()->GetEnableStencilTest());
@@ -1664,7 +1762,8 @@ TEST_F(CommandParserTest, StencilTestDisable) {
   std::string data = "stencilTestEnable false";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(cp.PipelineDataForTesting()->GetEnableStencilTest());
@@ -1681,7 +1780,8 @@ TEST_P(CommandParserBooleanTests, MissingParam) {
   std::string data = std::string(test_data.name);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Missing value for ") + test_data.name + " command",
@@ -1694,7 +1794,8 @@ TEST_P(CommandParserBooleanTests, IllegalParam) {
   std::string data = std::string(test_data.name) + " 123";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
@@ -1708,7 +1809,8 @@ TEST_P(CommandParserBooleanTests, ExtraParam) {
   std::string data = std::string(test_data.name) + " true EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Extra parameter for ") + test_data.name +
@@ -1744,7 +1846,8 @@ TEST_P(CommandDataPipelinePolygonModeParser, PolygonMode) {
   std::string data = "polygonMode " + std::string(test_data.name);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(test_data.value, cp.PipelineDataForTesting()->GetPolygonMode());
@@ -1773,7 +1876,8 @@ TEST_P(CommandDataPipelineCullModeParser, CullMode) {
   std::string data = "cullMode " + std::string(test_data.name);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(test_data.value, cp.PipelineDataForTesting()->GetCullMode());
@@ -1807,7 +1911,8 @@ TEST_P(CommandDataPipelineFrontFaceParser, FrontFace) {
   std::string data = "frontFace " + std::string(test_data.name);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(test_data.value, cp.PipelineDataForTesting()->GetFrontFace());
@@ -1836,7 +1941,8 @@ TEST_P(CommandDataPipelineLogicOpParser, LogicOp) {
   std::string data = "logicOp " + std::string(test_data.name);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(test_data.value, cp.PipelineDataForTesting()->GetLogicOp());
@@ -1868,7 +1974,8 @@ TEST_F(CommandParserTest, DepthBiasConstantFactor) {
   std::string data = "depthBiasConstantFactor 3.4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FLOAT_EQ(3.4f,
@@ -1879,7 +1986,8 @@ TEST_F(CommandParserTest, DepthBiasClamp) {
   std::string data = "depthBiasClamp 3.4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FLOAT_EQ(3.4f, cp.PipelineDataForTesting()->GetDepthBiasClamp());
@@ -1889,7 +1997,8 @@ TEST_F(CommandParserTest, DepthBiasSlopeFactor) {
   std::string data = "depthBiasSlopeFactor 3.4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FLOAT_EQ(3.4f, cp.PipelineDataForTesting()->GetDepthBiasSlopeFactor());
@@ -1899,7 +2008,8 @@ TEST_F(CommandParserTest, LineWidth) {
   std::string data = "lineWidth 3.4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FLOAT_EQ(3.4f, cp.PipelineDataForTesting()->GetLineWidth());
@@ -1909,7 +2019,8 @@ TEST_F(CommandParserTest, MinDepthBounds) {
   std::string data = "minDepthBounds 3.4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FLOAT_EQ(3.4f, cp.PipelineDataForTesting()->GetMinDepthBounds());
@@ -1919,7 +2030,8 @@ TEST_F(CommandParserTest, MaxDepthBounds) {
   std::string data = "maxDepthBounds 3.4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FLOAT_EQ(3.4f, cp.PipelineDataForTesting()->GetMaxDepthBounds());
@@ -1936,7 +2048,8 @@ TEST_P(CommandParserFloatTests, MissingParam) {
   std::string data = std::string(test_data.name);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Missing value for ") + test_data.name + " command",
@@ -1949,7 +2062,8 @@ TEST_P(CommandParserFloatTests, IllegalParam) {
   std::string data = std::string(test_data.name) + " INVALID";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid conversion to double", r.Error());
@@ -1961,7 +2075,8 @@ TEST_P(CommandParserFloatTests, ExtraParam) {
   std::string data = std::string(test_data.name) + " 3.2 EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Extra parameter for ") + test_data.name +
@@ -1984,7 +2099,8 @@ TEST_F(CommandParserTest, SrcColorBlendFactor) {
   std::string data = "srcColorBlendFactor VK_BLEND_FACTOR_DST_COLOR";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(BlendFactor::kDstColor,
@@ -1995,7 +2111,8 @@ TEST_F(CommandParserTest, DstColorBlendFactor) {
   std::string data = "dstColorBlendFactor VK_BLEND_FACTOR_DST_COLOR";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(BlendFactor::kDstColor,
@@ -2006,7 +2123,8 @@ TEST_F(CommandParserTest, SrcAlphaBlendFactor) {
   std::string data = "srcAlphaBlendFactor VK_BLEND_FACTOR_DST_COLOR";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(BlendFactor::kDstColor,
@@ -2017,7 +2135,8 @@ TEST_F(CommandParserTest, DstAlphaBlendFactor) {
   std::string data = "dstAlphaBlendFactor VK_BLEND_FACTOR_DST_COLOR";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(BlendFactor::kDstColor,
@@ -2034,7 +2153,8 @@ TEST_P(CommandParserBlendFactorParsing, Parse) {
   const auto& test_data = GetParam();
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, "unused");
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, "unused");
   BlendFactor factor = BlendFactor::kZero;
   Result r = cp.ParseBlendFactorNameForTesting(test_data.name, &factor);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -2079,7 +2199,8 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_F(CommandParserTest, BlendFactorParsingInvalid) {
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, "unused");
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, "unused");
   BlendFactor factor = BlendFactor::kZero;
   Result r = cp.ParseBlendFactorNameForTesting("INVALID", &factor);
   ASSERT_FALSE(r.IsSuccess());
@@ -2097,7 +2218,8 @@ TEST_P(CommandParserBlendFactorTests, MissingParam) {
   std::string data = std::string(test_data.name);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
@@ -2111,7 +2233,8 @@ TEST_P(CommandParserBlendFactorTests, IllegalParam) {
   std::string data = std::string(test_data.name) + " 1.23";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Invalid parameter for ") + test_data.name +
@@ -2125,7 +2248,8 @@ TEST_P(CommandParserBlendFactorTests, ExtraParam) {
   std::string data = std::string(test_data.name) + " VK_BLEND_FACTOR_ONE EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Extra parameter for ") + test_data.name +
@@ -2147,7 +2271,8 @@ TEST_F(CommandParserTest, ColorBlendOp) {
   std::string data = "colorBlendOp VK_BLEND_OP_XOR_EXT";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(BlendOp::kXor, cp.PipelineDataForTesting()->GetColorBlendOp());
@@ -2157,7 +2282,8 @@ TEST_F(CommandParserTest, AlphaBlendOp) {
   std::string data = "alphaBlendOp VK_BLEND_OP_XOR_EXT";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(BlendOp::kXor, cp.PipelineDataForTesting()->GetAlphaBlendOp());
@@ -2173,7 +2299,8 @@ TEST_P(CommandParserBlendOpParsing, Parse) {
   const auto& test_data = GetParam();
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, "unused");
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, "unused");
   BlendOp op = BlendOp::kAdd;
   Result r = cp.ParseBlendOpNameForTesting(test_data.name, &op);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -2246,7 +2373,8 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_F(CommandParserTest, BlendOpParsingInvalid) {
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, "unused");
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, "unused");
   BlendOp op = BlendOp::kAdd;
   Result r = cp.ParseBlendOpNameForTesting("INVALID", &op);
   ASSERT_FALSE(r.IsSuccess());
@@ -2264,7 +2392,8 @@ TEST_P(CommandParserBlendOpTests, MissingParam) {
   std::string data = std::string(test_data.name);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
@@ -2278,7 +2407,8 @@ TEST_P(CommandParserBlendOpTests, IllegalParam) {
   std::string data = std::string(test_data.name) + " 1.23";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Invalid parameter for ") + test_data.name +
@@ -2292,7 +2422,8 @@ TEST_P(CommandParserBlendOpTests, ExtraParam) {
   std::string data = std::string(test_data.name) + " VK_BLEND_OP_MAX EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Extra parameter for ") + test_data.name +
@@ -2311,7 +2442,8 @@ TEST_F(CommandParserTest, DepthCompareOp) {
   std::string data = "depthCompareOp VK_COMPARE_OP_EQUAL";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(CompareOp::kEqual,
@@ -2322,7 +2454,8 @@ TEST_F(CommandParserTest, FrontCompareOp) {
   std::string data = "front.compareOp VK_COMPARE_OP_EQUAL";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(CompareOp::kEqual,
@@ -2333,7 +2466,8 @@ TEST_F(CommandParserTest, BackCompareOp) {
   std::string data = "back.compareOp VK_COMPARE_OP_EQUAL";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(CompareOp::kEqual, cp.PipelineDataForTesting()->GetBackCompareOp());
@@ -2349,7 +2483,8 @@ TEST_P(CommandParserCompareOpParsing, Parse) {
   const auto& test_data = GetParam();
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, "unused");
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, "unused");
   CompareOp op = CompareOp::kNever;
   Result r = cp.ParseCompareOpNameForTesting(test_data.name, &op);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -2373,7 +2508,8 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_F(CommandParserTest, CompareOpParsingInvalid) {
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, "unused");
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, "unused");
   CompareOp op = CompareOp::kNever;
   Result r = cp.ParseCompareOpNameForTesting("INVALID", &op);
   ASSERT_FALSE(r.IsSuccess());
@@ -2391,7 +2527,8 @@ TEST_P(CommandParserCompareOpTests, MissingParam) {
   std::string data = std::string(test_data.name);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
@@ -2405,7 +2542,8 @@ TEST_P(CommandParserCompareOpTests, IllegalParam) {
   std::string data = std::string(test_data.name) + " 1.23";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Invalid parameter for ") + test_data.name +
@@ -2420,7 +2558,8 @@ TEST_P(CommandParserCompareOpTests, ExtraParam) {
       std::string(test_data.name) + " VK_COMPARE_OP_ALWAYS EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Extra parameter for ") + test_data.name +
@@ -2440,7 +2579,8 @@ TEST_F(CommandParserTest, FrontFailOp) {
   std::string data = "front.failOp VK_STENCIL_OP_REPLACE";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(StencilOp::kReplace, cp.PipelineDataForTesting()->GetFrontFailOp());
@@ -2450,7 +2590,8 @@ TEST_F(CommandParserTest, FrontPassOp) {
   std::string data = "front.passOp VK_STENCIL_OP_REPLACE";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(StencilOp::kReplace, cp.PipelineDataForTesting()->GetFrontPassOp());
@@ -2460,7 +2601,8 @@ TEST_F(CommandParserTest, FrontDepthFailOp) {
   std::string data = "front.depthFailOp VK_STENCIL_OP_REPLACE";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(StencilOp::kReplace,
@@ -2471,7 +2613,8 @@ TEST_F(CommandParserTest, BackFailOp) {
   std::string data = "back.failOp VK_STENCIL_OP_REPLACE";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(StencilOp::kReplace, cp.PipelineDataForTesting()->GetBackFailOp());
@@ -2481,7 +2624,8 @@ TEST_F(CommandParserTest, BackPassOp) {
   std::string data = "back.passOp VK_STENCIL_OP_REPLACE";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(StencilOp::kReplace, cp.PipelineDataForTesting()->GetBackPassOp());
@@ -2491,7 +2635,8 @@ TEST_F(CommandParserTest, BackDepthFailOp) {
   std::string data = "back.depthFailOp VK_STENCIL_OP_REPLACE";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(StencilOp::kReplace,
@@ -2508,7 +2653,8 @@ TEST_P(CommandParserStencilOpParsing, Parse) {
   const auto& test_data = GetParam();
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, "unused");
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, "unused");
   StencilOp op = StencilOp::kKeep;
   Result r = cp.ParseStencilOpNameForTesting(test_data.name, &op);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -2535,7 +2681,8 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_F(CommandParserTest, StencilOpParsingInvalid) {
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, "unused");
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, "unused");
   StencilOp op = StencilOp::kKeep;
   Result r = cp.ParseStencilOpNameForTesting("INVALID", &op);
   ASSERT_FALSE(r.IsSuccess());
@@ -2553,7 +2700,8 @@ TEST_P(CommandParserStencilOpTests, MissingParam) {
   std::string data = std::string(test_data.name);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
@@ -2567,7 +2715,8 @@ TEST_P(CommandParserStencilOpTests, IllegalParam) {
   std::string data = std::string(test_data.name) + " 1.23";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Invalid parameter for ") + test_data.name +
@@ -2582,7 +2731,8 @@ TEST_P(CommandParserStencilOpTests, ExtraParam) {
       std::string(test_data.name) + " VK_STENCIL_OP_REPLACE EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Extra parameter for ") + test_data.name +
@@ -2605,7 +2755,8 @@ TEST_F(CommandParserTest, FrontCompareMask) {
   std::string data = "front.compareMask 123";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: front.compareMask not implemented", r.Error());
@@ -2615,7 +2766,8 @@ TEST_F(CommandParserTest, FrontWriteMask) {
   std::string data = "front.writeMask 123";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: front.writeMask not implemented", r.Error());
@@ -2625,7 +2777,8 @@ TEST_F(CommandParserTest, BackCompareMask) {
   std::string data = "back.compareMask 123";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: back.compareMask not implemented", r.Error());
@@ -2635,7 +2788,8 @@ TEST_F(CommandParserTest, BackWriteMask) {
   std::string data = "back.writeMask 123";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: back.writeMask not implemented", r.Error());
@@ -2645,7 +2799,8 @@ TEST_F(CommandParserTest, FrontReference) {
   std::string data = "front.reference 10";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(10U, cp.PipelineDataForTesting()->GetFrontReference());
@@ -2655,7 +2810,8 @@ TEST_F(CommandParserTest, BackReference) {
   std::string data = "back.reference 10";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(10U, cp.PipelineDataForTesting()->GetBackReference());
@@ -2672,7 +2828,8 @@ TEST_P(CommandParserReferenceTests, FrontReferenceMissingValue) {
   std::string data = std::string(test_data.name);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
@@ -2685,7 +2842,8 @@ TEST_P(CommandParserReferenceTests, FrontReferenceExtraParameters) {
   std::string data = std::string(test_data.name) + " 10 EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Extra parameter for ") + test_data.name +
@@ -2698,7 +2856,8 @@ TEST_P(CommandParserReferenceTests, FrontReferenceInvalidParameters) {
   std::string data = std::string(test_data.name) + " INVALID";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(std::string("1: Invalid parameter for ") + test_data.name +
@@ -2724,7 +2883,8 @@ TEST_P(CommandParserColorMaskTests, ColorWriteMask) {
   std::string data = "colorWriteMask " + std::string(test_data.input);
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_EQ(test_data.result, cp.PipelineDataForTesting()->GetColorWriteMask());
@@ -2750,7 +2910,8 @@ TEST_F(CommandParserTest, ColorWriteMaskInvalid) {
   std::string data = "colorWriteMask INVALID";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Unknown parameter for colorWriteMask command: INVALID",
@@ -2761,7 +2922,8 @@ TEST_F(CommandParserTest, ColorWriteMaskInvalidAfterValid) {
   std::string data = "colorWriteMask VK_COLOR_COMPONENT_G_BIT | INVALID";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Unknown parameter for colorWriteMask command: INVALID",
@@ -2772,7 +2934,8 @@ TEST_F(CommandParserTest, ColorWriteMaskMissingParam) {
   std::string data = "colorWriteMask";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing parameter for colorWriteMask command", r.Error());
@@ -2784,7 +2947,8 @@ TEST_F(CommandParserTest, ColorWriteMaskExtraParam) {
       "EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Unknown parameter for colorWriteMask command: EXTRA",
@@ -2795,7 +2959,8 @@ TEST_F(CommandParserTest, SSBO) {
   std::string data = "ssbo 5 40";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -2814,7 +2979,8 @@ TEST_F(CommandParserTest, SSBOWithDescriptorSet) {
   std::string data = "ssbo 9:5 40";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -2833,7 +2999,8 @@ TEST_F(CommandParserTest, SSBOExtraParameter) {
   std::string data = "ssbo 5 40 EXTRA";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Extra parameter for ssbo command: EXTRA", r.Error());
@@ -2843,7 +3010,8 @@ TEST_F(CommandParserTest, SSBOInvalidFloatBinding) {
   std::string data = "ssbo 5.0 40";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid binding value for ssbo command", r.Error());
@@ -2853,7 +3021,8 @@ TEST_F(CommandParserTest, SSBOInvalidBinding) {
   std::string data = "ssbo abc 40";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid binding value for ssbo command", r.Error());
@@ -2863,7 +3032,8 @@ TEST_F(CommandParserTest, SSBOInvalidFloatSize) {
   std::string data = "ssbo 5 40.0";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid size value for ssbo command: 40.0", r.Error());
@@ -2873,7 +3043,8 @@ TEST_F(CommandParserTest, SSBOInvalidSize) {
   std::string data = "ssbo 5 abc";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid value for ssbo command: abc", r.Error());
@@ -2883,7 +3054,8 @@ TEST_F(CommandParserTest, SSBOMissingSize) {
   std::string data = "ssbo 5";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing size value for ssbo command: ", r.Error());
@@ -2893,7 +3065,8 @@ TEST_F(CommandParserTest, SSBOMissingBinding) {
   std::string data = "ssbo";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing binding and size values for ssbo command", r.Error());
@@ -2903,7 +3076,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithFloat) {
   std::string data = "ssbo 6 subdata vec3 2 2.3 4.2 1.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -2936,7 +3110,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithNegativeOffset) {
   std::string data = "ssbo 6 subdata vec3 -2 -4 -5 -6";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: offset for SSBO must be positive, got: -2", r.Error());
@@ -2946,7 +3121,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithDescriptorSet) {
   std::string data = "ssbo 5:6 subdata vec3 2 2.3 4.2 1.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -2979,7 +3155,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithInts) {
   std::string data = "ssbo 6 subdata i16vec3 2 2 4 1";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3012,7 +3189,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithMultipleVectors) {
   std::string data = "ssbo 6 subdata i16vec3 2 2 4 1 3 6 8";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3045,7 +3223,8 @@ TEST_F(CommandParserTest, SSBOSubdataMissingBinding) {
   std::string data = "ssbo subdata i16vec3 2 2 3 2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid binding value for ssbo command", r.Error());
@@ -3055,7 +3234,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithInvalidBinding) {
   std::string data = "ssbo INVALID subdata i16vec3 2 2 3 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid binding value for ssbo command", r.Error());
@@ -3065,7 +3245,8 @@ TEST_F(CommandParserTest, SSBOSubdataMissingSubdataCommand) {
   std::string data = "ssbo 6 INVALID i16vec3 2 2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid value for ssbo command: INVALID", r.Error());
@@ -3075,7 +3256,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithBadType) {
   std::string data = "ssbo 0 subdata INVALID 2 2 3 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid type provided: INVALID", r.Error());
@@ -3085,7 +3267,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithInvalidFloatOffset) {
   std::string data = "ssbo 0 subdata vec2 2.0 3 2 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid offset for ssbo command: 2.0", r.Error());
@@ -3095,7 +3278,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithInvalidStringOffset) {
   std::string data = "ssbo 0 subdata vec2 asdf 3 2 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid offset for ssbo command: asdf", r.Error());
@@ -3105,7 +3289,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithMissingData) {
   std::string data = "ssbo 6 subdata i16vec3 2 2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Incorrect number of values provided to ssbo command",
@@ -3116,7 +3301,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithMissingAllData) {
   std::string data = "ssbo 6 subdata i16vec3 2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Incorrect number of values provided to ssbo command",
@@ -3127,7 +3313,8 @@ TEST_F(CommandParserTest, Uniform) {
   std::string data = "uniform vec3 2 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3157,7 +3344,8 @@ TEST_F(CommandParserTest, UniformOffsetMustBePositive) {
   std::string data = "uniform vec3 -2 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: offset for uniform must be positive, got: -2", r.Error());
@@ -3167,7 +3355,8 @@ TEST_F(CommandParserTest, UniformWithContinuation) {
   std::string data = "uniform vec3 2 2.1 3.2 4.3 \\\n5.4 6.7 8.9";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3197,7 +3386,8 @@ TEST_F(CommandParserTest, UniformInvalidType) {
   std::string data = "uniform INVALID 0 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid type provided: INVALID", r.Error());
@@ -3207,7 +3397,8 @@ TEST_F(CommandParserTest, UniformInvalidFloatOffset) {
   std::string data = "uniform vec3 5.5 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid offset value for uniform command: 5.5", r.Error());
@@ -3217,7 +3408,8 @@ TEST_F(CommandParserTest, UniformInvalidStringOffset) {
   std::string data = "uniform vec3 INVALID 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid offset value for uniform command: INVALID", r.Error());
@@ -3227,7 +3419,8 @@ TEST_F(CommandParserTest, UniformMissingValues) {
   std::string data = "uniform vec3 2 2.1 3.2 4.3 5.5";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Incorrect number of values provided to uniform command",
@@ -3238,7 +3431,8 @@ TEST_F(CommandParserTest, UniformUBO) {
   std::string data = "uniform ubo 2 vec3 1 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3270,7 +3464,8 @@ TEST_F(CommandParserTest, UniformUBOOffsetMustBePositive) {
   std::string data = "uniform ubo 2 vec3 -1 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: offset for uniform must be positive, got: -1", r.Error());
@@ -3280,7 +3475,8 @@ TEST_F(CommandParserTest, UniformUBOWithDescriptorSet) {
   std::string data = "uniform ubo 3:2 vec3 1 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3312,7 +3508,8 @@ TEST_F(CommandParserTest, UniformUBOInvalidFloatBinding) {
   std::string data = "uniform ubo 0.0 vec3 0 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid binding value for uniform ubo command: 0.0", r.Error());
@@ -3322,7 +3519,8 @@ TEST_F(CommandParserTest, UniformUBOInvalidStringBinding) {
   std::string data = "uniform ubo INVALID vec3 0 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid binding value for uniform ubo command: INVALID",
@@ -3333,7 +3531,8 @@ TEST_F(CommandParserTest, UniformUBOInvalidType) {
   std::string data = "uniform ubo 0 INVALID 0 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid type provided: INVALID", r.Error());
@@ -3343,7 +3542,8 @@ TEST_F(CommandParserTest, UniformUBOInvalidFloatOffset) {
   std::string data = "uniform ubo 0 vec3 5.5 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid offset value for uniform command: 5.5", r.Error());
@@ -3353,7 +3553,8 @@ TEST_F(CommandParserTest, UniformUBOInvalidStringOffset) {
   std::string data = "uniform ubo 0 vec3 INVALID 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid offset value for uniform command: INVALID", r.Error());
@@ -3363,7 +3564,8 @@ TEST_F(CommandParserTest, UniformUBOMissingValues) {
   std::string data = "uniform ubo 0 vec3 2 2.1 3.2 4.3 5.5";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Incorrect number of values provided to uniform command",
@@ -3374,7 +3576,8 @@ TEST_F(CommandParserTest, ToleranceSingleFloatValue) {
   std::string data = "tolerance 0.5";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3388,7 +3591,8 @@ TEST_F(CommandParserTest, ToleranceSingleFloatPercent) {
   std::string data = "tolerance 0.5%";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3402,7 +3606,8 @@ TEST_F(CommandParserTest, ToleranceSingleIntValue) {
   std::string data = "tolerance 5";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3416,7 +3621,8 @@ TEST_F(CommandParserTest, ToleranceSingleIntPercent) {
   std::string data = "tolerance 5%";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3430,7 +3636,8 @@ TEST_F(CommandParserTest, ToleranceMultiFloatValue) {
   std::string data = "tolerance 0.5 2.4 3.9 99.7";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3447,7 +3654,8 @@ TEST_F(CommandParserTest, ToleranceMultiFloatValueWithPercent) {
   std::string data = "tolerance 0.5% 2.4 3.9% 99.7";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3468,7 +3676,8 @@ TEST_F(CommandParserTest, ToleranceMultiIntValue) {
   std::string data = "tolerance 5 4 3 99";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3485,7 +3694,8 @@ TEST_F(CommandParserTest, ToleranceMultiIntValueWithPercent) {
   std::string data = "tolerance 5% 4 3% 99";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3506,7 +3716,8 @@ TEST_F(CommandParserTest, ToleranceInvalidValue1) {
   std::string data = "tolerance INVALID";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid value for tolerance command: INVALID", r.Error());
@@ -3516,7 +3727,8 @@ TEST_F(CommandParserTest, ToleranceInvalidJustPercent) {
   std::string data = "tolerance %";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid value for tolerance command: %", r.Error());
@@ -3526,7 +3738,8 @@ TEST_F(CommandParserTest, ToleranceInvalidValue2) {
   std::string data = "tolerance 1 INVALID 3 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid value for tolerance command: INVALID", r.Error());
@@ -3536,7 +3749,8 @@ TEST_F(CommandParserTest, ToleranceInvalidValue3) {
   std::string data = "tolerance 1 2 INVALID 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid value for tolerance command: INVALID", r.Error());
@@ -3546,7 +3760,8 @@ TEST_F(CommandParserTest, ToleranceInvalidValue4) {
   std::string data = "tolerance 1 2 3 INVALID";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid value for tolerance command: INVALID", r.Error());
@@ -3556,7 +3771,8 @@ TEST_F(CommandParserTest, ToleranceMissingValues) {
   std::string data = "tolerance";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Missing value for tolerance command", r.Error());
@@ -3566,7 +3782,8 @@ TEST_F(CommandParserTest, ToleranceTooManyValues) {
   std::string data = "tolerance 1 2 3 4 5";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Extra parameter for tolerance command: 5", r.Error());
@@ -3576,7 +3793,8 @@ TEST_F(CommandParserTest, ToleranceInvalidWithNumber) {
   std::string data = "tolerance 1INVALID";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid value for tolerance command: INVALID", r.Error());
@@ -3586,7 +3804,8 @@ TEST_F(CommandParserTest, ToleranceInvalidWithMissingValue) {
   std::string data = "tolerance 1, , 3, 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid number of tolerance parameters provided", r.Error());
@@ -3596,7 +3815,8 @@ TEST_F(CommandParserTest, ToleranceWithCommas) {
   std::string data = "tolerance 1,2, 3 ,4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3615,7 +3835,8 @@ tolerance 2 3 4 5
 probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2)";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3644,7 +3865,8 @@ probe all rgba 0.2 0.3 0.4 0.5)";
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
   pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3668,7 +3890,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithDescriptorSet) {
   std::string data = "probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3700,7 +3923,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithFloats) {
   std::string data = "probe ssbo vec3 6 2 >= 2.3 4.2 1.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3733,7 +3957,8 @@ TEST_F(CommandParserTest, MultiProbeSSBOWithFloats) {
       "probe ssbo vec3 6 2 >= 2.3 4.2 1.2\nprobe ssbo vec3 6 2 >= 2.3 4.2 1.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3764,7 +3989,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithInts) {
   std::string data = "probe ssbo i16vec3 6 2 <= 2 4 1";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3795,7 +4021,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithMultipleVectors) {
   std::string data = "probe ssbo i16vec3 6 2 == 2 4 1 3 6 8";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -3826,7 +4053,8 @@ TEST_F(CommandParserTest, ProbeSSBOMissingBinding) {
   std::string data = "probe ssbo i16vec3 2 == 2 3 2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid value for probe ssbo command: ==", r.Error());
@@ -3836,7 +4064,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithInvalidBinding) {
   std::string data = "probe ssbo i16vec3 INVALID 2 == 2 3 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid binding value for probe ssbo command: INVALID",
@@ -3847,7 +4076,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithBadType) {
   std::string data = "probe ssbo INVALID 0 2 == 2 3 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid type provided: INVALID", r.Error());
@@ -3857,7 +4087,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithInvalidFloatOffset) {
   std::string data = "probe ssbo vec2 0 2.0 == 3 2 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid offset for probe ssbo command: 2.0", r.Error());
@@ -3867,7 +4098,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithInvalidStringOffset) {
   std::string data = "probe ssbo vec2 0 INVALID == 3 2 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid value for probe ssbo command: INVALID", r.Error());
@@ -3877,7 +4109,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithInvalidComparator) {
   std::string data = "probe ssbo vec2 6 2 INVALID 3 2 4";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Invalid comparator: INVALID", r.Error());
@@ -3887,7 +4120,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithMissingData) {
   std::string data = "probe ssbo i16vec3 6 2 == 2";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Incorrect number of values provided to probe ssbo command",
@@ -3898,7 +4132,8 @@ TEST_F(CommandParserTest, ProbeSSBOWithMissingAllData) {
   std::string data = "probe ssbo i16vec3 6 2 ==";
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, data);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: Incorrect number of values provided to probe ssbo command",
@@ -3915,7 +4150,8 @@ TEST_P(CommandParserComparatorTests, Comparator) {
   const auto& test_data = GetParam();
 
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, "unused");
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, "unused");
   ProbeSSBOCommand::Comparator result;
   Result r = cp.ParseComparatorForTesting(test_data.name, &result);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -3938,7 +4174,8 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_F(CommandParserTest, ComparatorInvalid) {
   Pipeline pipeline(PipelineType::kGraphics);
-  CommandParser cp(&pipeline, 1, "unused");
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, "unused");
   ProbeSSBOCommand::Comparator result;
   Result r = cp.ParseComparatorForTesting("INVALID", &result);
   ASSERT_FALSE(r.IsSuccess());

@@ -112,6 +112,7 @@ class Pipeline {
     return color_attachments_;
   }
   Result AddColorAttachment(Buffer* buf, uint32_t location);
+  Result GetLocationForColorAttachment(Buffer* buf, uint32_t* loc) const;
 
   Result SetDepthBuffer(Buffer* buf);
   const BufferInfo& GetDepthBuffer() const { return depth_buffer_; }
@@ -136,6 +137,8 @@ class Pipeline {
     info.location = location;
   }
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
+
+  Buffer* GetBufferForBinding(uint32_t descriptor_set, uint32_t binding) const;
 
   // Validates that the pipeline has been created correctly.
   Result Validate() const;

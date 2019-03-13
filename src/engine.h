@@ -34,20 +34,6 @@ struct EngineData {
   uint32_t fence_timeout_ms = 100;
 };
 
-/// Contains information relating to a backing resource from the engine.
-struct ResourceInfo {
-  /// The size in bytes of Vulkan memory pointed by |cpu_memory|.
-  /// For the case when it is an image resource, |size_in_bytes| must
-  /// be |image_info.row_stride * image_info.height * image_info.depth|.
-  size_t size_in_bytes = 0;
-
-  /// If the primitive type of resource is the same with the type
-  /// of actual data, the alignment must be properly determined by
-  /// Vulkan's internal memory allocation. In these cases, script
-  /// writers can assume that there is no alignment issues.
-  const void* cpu_memory = nullptr;
-};
-
 /// Abstract class which describes a backing engine for Amber.
 class Engine {
  public:
@@ -114,15 +100,6 @@ class Engine {
   /// Copy the content of the framebuffer into |values|, each value is a pixel
   /// in R8G8B8A8 format.
   virtual Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) = 0;
-
-  /// Copy the contents of the resource bound to the given descriptor
-  /// and get the resource information e.g., size for buffer, width,
-  /// height, depth for image of descriptor given as |descriptor_set|
-  /// and |binding|.
-  virtual Result GetDescriptorInfo(Pipeline* pipeline,
-                                   const uint32_t descriptor_set,
-                                   const uint32_t binding,
-                                   ResourceInfo* info) = 0;
 
   /// Sets the engine data to use.
   void SetEngineData(const EngineData& data) { engine_data_ = data; }

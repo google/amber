@@ -214,6 +214,17 @@ Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
   return {};
 }
 
+Result Pipeline::GetLocationForColorAttachment(Buffer* buf,
+                                               uint32_t* loc) const {
+  for (const auto& info : color_attachments_) {
+    if (info.buffer == buf) {
+      *loc = info.location;
+      return {};
+    }
+  }
+  return Result("Unable to find requested buffer");
+}
+
 Result Pipeline::SetDepthBuffer(Buffer* buf) {
   if (depth_buffer_.buffer != nullptr)
     return Result("can only bind one depth buffer in a PIPELINE");
@@ -266,6 +277,15 @@ std::unique_ptr<Buffer> Pipeline::GenerateDefaultDepthAttachmentBuffer() const {
   buf->SetName(kGeneratedDepthBuffer);
   buf->AsFormatBuffer()->SetFormat(fp.Parse(kDefaultDepthBufferFormat));
   return buf;
+}
+
+Buffer* Pipeline::GetBufferForBinding(uint32_t descriptor_set,
+                                      uint32_t binding) const {
+  for (const auto& info : buffers_) {
+    if (info.descriptor_set == descriptor_set && info.binding == binding)
+      return info.buffer;
+  }
+  return nullptr;
 }
 
 }  // namespace amber
