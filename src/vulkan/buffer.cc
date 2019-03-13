@@ -38,7 +38,7 @@ bool IsMemoryHostCoherent(const VkPhysicalDeviceMemoryProperties& props,
 }  // namespace
 
 Buffer::Buffer(Device* device,
-               size_t size_in_bytes,
+               uint32_t size_in_bytes,
                const VkPhysicalDeviceMemoryProperties& properties)
     : Resource(device, size_in_bytes, properties) {}
 

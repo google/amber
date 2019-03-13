@@ -59,11 +59,12 @@ class VertexBuffer {
     return vertex_binding_desc;
   }
 
-  size_t GetVertexCount() const {
+  uint32_t GetVertexCount() const {
     if (data_.empty())
       return 0;
 
-    return data_[0].size() / formats_[0].GetComponents().size();
+    return static_cast<uint32_t>(data_[0].size()) /
+           formats_[0].GetComponents().size();
   }
 
   void BindToCommandBuffer(CommandBuffer* command);

@@ -55,7 +55,7 @@ class BufferDescriptor : public Descriptor {
 
   Result AddToBuffer(DataType type,
                      uint32_t offset,
-                     size_t size_in_bytes,
+                     uint32_t size_in_bytes,
                      const std::vector<Value>& values);
 
  private:

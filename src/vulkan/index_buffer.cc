@@ -46,8 +46,9 @@ Result IndexBuffer::SendIndexData(
   if (values.empty())
     return Result("IndexBuffer::SendIndexData |values| is empty");
 
-  buffer_ =
-      MakeUnique<Buffer>(device_, sizeof(uint32_t) * values.size(), properties);
+  buffer_ = MakeUnique<Buffer>(
+      device_, static_cast<uint32_t>(sizeof(uint32_t) * values.size()),
+      properties);
   Result r = buffer_->Initialize(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                  VK_BUFFER_USAGE_TRANSFER_DST_BIT);
   if (!r.IsSuccess())
