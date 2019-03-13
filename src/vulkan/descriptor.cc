@@ -23,28 +23,10 @@ namespace vulkan {
 
 VkDescriptorType ToVkDescriptorType(DescriptorType type) {
   switch (type) {
-    case DescriptorType::kStorageImage:
-      return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    case DescriptorType::kSampler:
-      return VK_DESCRIPTOR_TYPE_SAMPLER;
-    case DescriptorType::kSampledImage:
-      return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    case DescriptorType::kCombinedImageSampler:
-      return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    case DescriptorType::kUniformTexelBuffer:
-      return VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
-    case DescriptorType::kStorageTexelBuffer:
-      return VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
     case DescriptorType::kStorageBuffer:
       return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     case DescriptorType::kUniformBuffer:
       return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    case DescriptorType::kDynamicUniformBuffer:
-      return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    case DescriptorType::kDynamicStorageBuffer:
-      return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
-    case DescriptorType::kInputAttachment:
-      return VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
   }
 
   assert(false && "Unknown resource type");
@@ -92,50 +74,6 @@ Result Descriptor::UpdateDescriptorSetForBuffer(
       return Result(
           "Vulkan::UpdateDescriptorSetForBuffer not descriptor based on "
           "buffer");
-  }
-
-  UpdateVkDescriptorSet(write);
-  return {};
-}
-
-Result Descriptor::UpdateDescriptorSetForImage(
-    VkDescriptorSet descriptor_set,
-    VkDescriptorType descriptor_type,
-    const VkDescriptorImageInfo& image_info) {
-  VkWriteDescriptorSet write =
-      GetWriteDescriptorSet(descriptor_set, descriptor_type);
-  switch (descriptor_type) {
-    case VK_DESCRIPTOR_TYPE_SAMPLER:
-    case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-    case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
-    case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
-    case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
-      write.pImageInfo = &image_info;
-      break;
-    default:
-      return Result(
-          "Vulkan::UpdateDescriptorSetForImage not descriptor based on image");
-  }
-
-  UpdateVkDescriptorSet(write);
-  return {};
-}
-
-Result Descriptor::UpdateDescriptorSetForBufferView(
-    VkDescriptorSet descriptor_set,
-    VkDescriptorType descriptor_type,
-    const VkBufferView& texel_view) {
-  VkWriteDescriptorSet write =
-      GetWriteDescriptorSet(descriptor_set, descriptor_type);
-  switch (descriptor_type) {
-    case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
-    case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
-      write.pTexelBufferView = &texel_view;
-      break;
-    default:
-      return Result(
-          "Vulkan::UpdateDescriptorSetForImage not descriptor based on buffer "
-          "view");
   }
 
   UpdateVkDescriptorSet(write);
