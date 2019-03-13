@@ -59,7 +59,7 @@ Result FrameBuffer::Initialize(
 
     attachments.resize(color_attachments_.size());
     for (auto* info : color_attachments_) {
-      color_images_.push_back(MakeUnique<Image>(
+      color_images_.push_back(MakeUnique<TransferImage>(
           device_,
           ToVkFormat(
               info->buffer->AsFormatBuffer()->GetFormat().GetFormatType()),
@@ -77,7 +77,7 @@ Result FrameBuffer::Initialize(
   }
 
   if (depth_format != VK_FORMAT_UNDEFINED) {
-    depth_image_ = MakeUnique<Image>(
+    depth_image_ = MakeUnique<TransferImage>(
         device_, depth_format,
         static_cast<VkImageAspectFlags>(
             VkFormatHasStencilComponent(depth_format)
