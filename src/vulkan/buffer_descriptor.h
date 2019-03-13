@@ -60,15 +60,13 @@ class BufferDescriptor : public Descriptor {
 
  private:
   VkBufferUsageFlagBits GetVkBufferUsage() const {
-    return IsStorageBuffer()
-               ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-               : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    return IsStorageBuffer() ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+                             : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
   }
 
   VkDescriptorType GetVkDescriptorType() const {
-    return IsStorageBuffer()
-               ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
-               : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    return IsStorageBuffer() ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
+                             : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   }
 
   Buffer* amber_buffer_ = nullptr;
