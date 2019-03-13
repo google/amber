@@ -33,8 +33,8 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 
-// Among Vulkan descriptor types, this class handles Storage Buffer
-// a.k.a. SSBO and Uniform Buffer a.k.a. UBO.
+// Among Vulkan descriptor types, this class handles Storage Buffers
+// and Uniform Buffers.
 class BufferDescriptor : public Descriptor {
  public:
   BufferDescriptor(Buffer* buffer,
@@ -60,15 +60,13 @@ class BufferDescriptor : public Descriptor {
 
  private:
   VkBufferUsageFlagBits GetVkBufferUsage() const {
-    return GetType() == DescriptorType::kStorageBuffer
-               ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-               : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    return IsStorageBuffer() ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+                             : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
   }
 
   VkDescriptorType GetVkDescriptorType() const {
-    return GetType() == DescriptorType::kStorageBuffer
-               ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
-               : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    return IsStorageBuffer() ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
+                             : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   }
 
   Buffer* amber_buffer_ = nullptr;
