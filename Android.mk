@@ -58,12 +58,12 @@ LOCAL_SRC_FILES:= \
     src/vulkan/format_data.cc \
     src/vulkan/frame_buffer.cc \
     src/vulkan/graphics_pipeline.cc \
-    src/vulkan/image.cc \
     src/vulkan/index_buffer.cc \
     src/vulkan/pipeline.cc \
     src/vulkan/push_constant.cc \
     src/vulkan/resource.cc \
     src/vulkan/transfer_buffer.cc \
+    src/vulkan/transfer_image.cc \
     src/vulkan/vertex_buffer.cc
 LOCAL_STATIC_LIBRARIES:=glslang SPIRV-Tools shaderc
 LOCAL_C_INCLUDES:=$(LOCAL_PATH)/include
