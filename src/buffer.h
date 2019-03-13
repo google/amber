@@ -64,18 +64,18 @@ class Buffer {
   std::string GetName() const { return name_; }
 
   /// Sets the number of items in the buffer.
-  void SetSize(size_t size) { size_ = size; }
+  void SetSize(uint32_t size) { size_ = size; }
 
   /// Returns the number of items in the buffer.
-  size_t GetSize() const { return size_; }
+  uint32_t GetSize() const { return size_; }
 
-  size_t GetWidth() const { return width_; }
-  void SetWidth(size_t width) { width_ = width; }
-  size_t GetHeight() const { return height_; }
-  void SetHeight(size_t height) { height_ = height; }
+  uint32_t GetWidth() const { return width_; }
+  void SetWidth(uint32_t width) { width_ = width; }
+  uint32_t GetHeight() const { return height_; }
+  void SetHeight(uint32_t height) { height_ = height; }
 
   /// Returns the number of bytes needed for the data in the buffer.
-  virtual size_t GetSizeInBytes() const = 0;
+  virtual uint32_t GetSizeInBytes() const = 0;
 
   /// Sets the data into the buffer. The size will also be updated to be the
   /// size of the data provided.
@@ -96,9 +96,9 @@ class Buffer {
   BufferType buffer_type_ = BufferType::kUnknown;
   std::vector<Value> data_;
   std::string name_;
-  size_t size_ = 0;
-  size_t width_ = 0;
-  size_t height_ = 0;
+  uint32_t size_ = 0;
+  uint32_t width_ = 0;
+  uint32_t height_ = 0;
   uint8_t location_ = 0;
   void* mem_ptr_ = nullptr;
 };
@@ -112,7 +112,7 @@ class DataBuffer : public Buffer {
 
   // Buffer
   bool IsDataBuffer() const override { return true; }
-  size_t GetSizeInBytes() const override {
+  uint32_t GetSizeInBytes() const override {
     return GetSize() * datum_type_.SizeInBytes();
   }
   void SetData(std::vector<Value>&& data) override {
@@ -138,7 +138,7 @@ class FormatBuffer : public Buffer {
 
   // Buffer
   bool IsFormatBuffer() const override { return true; }
-  size_t GetSizeInBytes() const override {
+  uint32_t GetSizeInBytes() const override {
     return GetSize() * format_->GetByteSize();
   }
   void SetData(std::vector<Value>&& data) override {
@@ -158,9 +158,7 @@ class FormatBuffer : public Buffer {
   // When copying the image to the host buffer, we specify a row length of 0
   // which results in tight packing of rows.  So the row stride is the product
   // of the texel stride and the number of texels in a row.
-  uint32_t GetRowStride() {
-    return GetTexelStride() * static_cast<uint32_t>(GetWidth());
-  }
+  uint32_t GetRowStride() { return GetTexelStride() * GetWidth(); }
 
  private:
   std::unique_ptr<Format> format_;
