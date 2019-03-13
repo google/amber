@@ -834,7 +834,16 @@ Result CommandParser::ProcessProbe(bool relative) {
   if (token->AsString() == "ssbo")
     return ProcessProbeSSBO();
 
-  auto cmd = MakeUnique<ProbeCommand>(pipeline_);
+  if (pipeline_->GetColorAttachments().empty())
+    return Result("Pipeline missing color buffers. Something went wrong.");
+
+  // VkScript has a single generated colour buffer which should always be
+  // available.
+  auto* buffer = pipeline_->GetColorAttachments()[0].buffer;
+  if (!buffer)
+    return Result("Pipeline missing color buffers, something went wrong.");
+
+  auto cmd = MakeUnique<ProbeCommand>(pipeline_, buffer);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   cmd->SetTolerances(current_tolerances_);

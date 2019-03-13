@@ -139,13 +139,13 @@ class Engine {
   /// DoProcessCommands() and since then no graphics pipeline drawing
   /// commands have occurred e.g., DoClear, DoDrawArrays, DoDrawRect.
   virtual Result GetFrameBufferInfo(Pipeline* pipeline,
-                                    size_t attachment_idx,
+                                    Buffer* buffer,
                                     ResourceInfo* info) = 0;
 
   /// Copy the content of the framebuffer into |values|, each value is a pixel
   /// in R8G8B8A8 format.
   virtual Result GetFrameBuffer(Pipeline* pipeline,
-                                size_t attachment_idx,
+                                Buffer* buffer,
                                 std::vector<Value>* values) = 0;
 
   /// Copy the contents of the resource bound to the given descriptor

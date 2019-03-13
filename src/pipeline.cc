@@ -215,6 +215,17 @@ Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
   return {};
 }
 
+Result Pipeline::GetLocationForColorAttachment(Buffer* buf,
+                                               uint32_t* loc) const {
+  for (const auto& info : color_attachments_) {
+    if (info.buffer == buf) {
+      *loc = info.location;
+      return {};
+    }
+  }
+  return Result("Unable to find requested buffer");
+}
+
 Result Pipeline::SetDepthBuffer(Buffer* buf) {
   if (depth_buffer_.buffer != nullptr)
     return Result("can only bind one depth buffer in a PIPELINE");
