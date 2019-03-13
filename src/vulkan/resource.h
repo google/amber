@@ -36,7 +36,7 @@ struct BufferInput {
   void UpdateBufferWithValues(void* buffer) const;
 
   uint32_t offset;
-  size_t size_in_bytes;
+  uint32_t size_in_bytes;
   DataType type;              // Type of |values|.
   std::vector<Value> values;  // Data whose type is |type|.
 };
@@ -64,11 +64,11 @@ class Resource {
 
   virtual void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
 
-  size_t GetSizeInBytes() const { return size_in_bytes_; }
+  uint32_t GetSizeInBytes() const { return size_in_bytes_; }
 
  protected:
   Resource(Device* device,
-           size_t size,
+           uint32_t size,
            const VkPhysicalDeviceMemoryProperties& properties);
   Result Initialize();
   Result CreateVkBuffer(VkBuffer* buffer, VkBufferUsageFlags usage);
@@ -110,7 +110,7 @@ class Resource {
   const VkMemoryRequirements GetVkBufferMemoryRequirements(
       VkBuffer buffer) const;
 
-  size_t size_in_bytes_ = 0;
+  uint32_t size_in_bytes_ = 0;
   VkPhysicalDeviceMemoryProperties physical_memory_properties_;
 
   VkBuffer host_accessible_buffer_ = VK_NULL_HANDLE;

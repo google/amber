@@ -60,7 +60,7 @@ class DatumType {
   void SetRowCount(uint32_t count) { row_count_ = count; }
   uint32_t RowCount() const { return row_count_; }
 
-  size_t SizeInBytes() const;
+  uint32_t SizeInBytes() const;
 
  private:
   DataType type_ = DataType::kUint8;

@@ -280,11 +280,11 @@ Result VertexBuffer::SendVertexData(
   if (!is_vertex_data_pending_)
     return Result("Vulkan::Vertices data was already sent");
 
-  const size_t n_vertices = GetVertexCount();
+  const uint32_t n_vertices = GetVertexCount();
   if (n_vertices == 0)
     return Result("Vulkan::Data for VertexBuffer is empty");
 
-  size_t bytes = static_cast<size_t>(Get4BytesAlignedStride()) * n_vertices;
+  uint32_t bytes = Get4BytesAlignedStride() * n_vertices;
 
   if (!transfer_buffer_) {
     transfer_buffer_ = MakeUnique<TransferBuffer>(device_, bytes, properties);

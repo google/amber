@@ -97,7 +97,7 @@ void BufferInput::UpdateBufferWithValues(void* buffer) const {
 }
 
 Resource::Resource(Device* device,
-                   size_t size_in_bytes,
+                   uint32_t size_in_bytes,
                    const VkPhysicalDeviceMemoryProperties& properties)
     : device_(device),
       size_in_bytes_(size_in_bytes),
