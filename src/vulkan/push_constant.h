@@ -59,13 +59,16 @@ class PushConstant : public Resource {
   Result AddBufferData(const BufferCommand* command);
 
   // Resource
-  VkDeviceMemory GetHostAccessMemory() const override { return VK_NULL_HANDLE; }
   Result CopyToHost(CommandBuffer*) override {
     return Result("Vulkan: should not call CopyToHost() for PushConstant");
   }
   void Shutdown() override {}
 
  private:
+  // Fill memory from |offset| of |data| to |offset| + |size_in_bytes|
+  // of |data| with |values| of |data|.
+  Result UpdateMemoryWithInput(const BufferInput& input);
+
   // maxPushConstantsSize of VkPhysicalDeviceLimits, which is an
   // element of VkPhysicalDeviceProperties getting from
   // vkGetPhysicalDeviceProperties().

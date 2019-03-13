@@ -36,17 +36,14 @@ class BufferForTest : public TransferBuffer {
                 const VkPhysicalDeviceMemoryProperties& properties)
       : TransferBuffer(device, size_in_bytes, properties) {
     memory_.resize(4096);
-    memory_ptr_ = memory_.data();
+    SetMemoryPtr(memory_.data());
   }
   ~BufferForTest() override = default;
-
-  void* HostAccessibleMemoryPtr() const override { return memory_ptr_; }
 
   Result CopyToDevice(CommandBuffer*) override { return Result(); }
 
  private:
   std::vector<uint8_t> memory_;
-  void* memory_ptr_ = nullptr;
 };
 
 class VertexBufferTest : public testing::Test {

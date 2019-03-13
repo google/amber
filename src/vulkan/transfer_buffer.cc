@@ -14,6 +14,8 @@
 
 #include "src/vulkan/transfer_buffer.h"
 
+#include <cstring>
+
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
@@ -111,8 +113,13 @@ void TransferBuffer::Shutdown() {
 
   if (buffer_ != VK_NULL_HANDLE)
     device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(), buffer_, nullptr);
+}
 
-  Resource::Shutdown();
+void TransferBuffer::UpdateMemoryWithRawData(
+    const std::vector<uint8_t>& raw_data) {
+  size_t effective_size =
+      raw_data.size() > GetSizeInBytes() ? GetSizeInBytes() : raw_data.size();
+  std::memcpy(HostAccessibleMemoryPtr(), raw_data.data(), effective_size);
 }
 
 }  // namespace vulkan
