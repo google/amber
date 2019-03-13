@@ -24,11 +24,11 @@ set(VULKAN_ENGINE_SOURCES
     frame_buffer.cc
     graphics_pipeline.cc
     index_buffer.cc
-    image.cc
     pipeline.cc
     push_constant.cc
     resource.cc
     transfer_buffer.cc
+    transfer_image.cc
     vertex_buffer.cc
     ${CMAKE_BINARY_DIR}/src/vk-wrappers.inc.fake
 )

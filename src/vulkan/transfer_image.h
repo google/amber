@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VULKAN_IMAGE_H_
-#define SRC_VULKAN_IMAGE_H_
+#ifndef SRC_VULKAN_TRANSFER_IMAGE_H_
+#define SRC_VULKAN_TRANSFER_IMAGE_H_
 
 #include "amber/result.h"
 #include "amber/vulkan_header.h"
@@ -25,16 +25,16 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 
-class Image : public Resource {
+class TransferImage : public Resource {
  public:
-  Image(Device* device,
-        VkFormat format,
-        VkImageAspectFlags aspect,
-        uint32_t x,
-        uint32_t y,
-        uint32_t z,
-        const VkPhysicalDeviceMemoryProperties& properties);
-  ~Image() override;
+  TransferImage(Device* device,
+                VkFormat format,
+                VkImageAspectFlags aspect,
+                uint32_t x,
+                uint32_t y,
+                uint32_t z,
+                const VkPhysicalDeviceMemoryProperties& properties);
+  ~TransferImage() override;
 
   Result Initialize(VkImageUsageFlags usage);
   VkImage GetVkImage() const { return image_; }
@@ -75,4 +75,4 @@ class Image : public Resource {
 }  // namespace vulkan
 }  // namespace amber
 
-#endif  // SRC_VULKAN_IMAGE_H_
+#endif  // SRC_VULKAN_TRANSFER_IMAGE_H_
