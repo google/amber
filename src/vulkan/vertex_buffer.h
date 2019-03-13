@@ -63,8 +63,8 @@ class VertexBuffer {
     if (data_.empty())
       return 0;
 
-    return static_cast<uint32_t>(data_[0].size()) /
-           formats_[0].GetComponents().size();
+    return static_cast<uint32_t>(data_[0].size() /
+                                 formats_[0].GetComponents().size());
   }
 
   void BindToCommandBuffer(CommandBuffer* command);
