@@ -158,7 +158,9 @@ class FormatBuffer : public Buffer {
   // When copying the image to the host buffer, we specify a row length of 0
   // which results in tight packing of rows.  So the row stride is the product
   // of the texel stride and the number of texels in a row.
-  uint32_t GetRowStride() { return GetTexelStride() * GetWidth(); }
+  uint32_t GetRowStride() {
+    return GetTexelStride() * static_cast<uint32_t>(GetWidth());
+  }
 
  private:
   std::unique_ptr<Format> format_;
