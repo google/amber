@@ -51,7 +51,7 @@ cmake -GNinja -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DCMAKE_C_COMPILER=cl.exe -DCMAKE_
 if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
 
 echo "Build everything... %DATE% %TIME%"
-ninja
+ninja -j10
 if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
 echo "Build Completed %DATE% %TIME%"
 
