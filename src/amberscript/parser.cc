@@ -850,7 +850,8 @@ Result Parser::ParseBufferInitializerData(DataBuffer* buffer) {
     values.emplace_back(v);
   }
 
-  size_t size_in_items = values.size() / type.RowCount() / type.ColumnCount();
+  uint32_t size_in_items = static_cast<uint32_t>(values.size()) /
+                           type.RowCount() / type.ColumnCount();
   buffer->SetSize(size_in_items);
 
   buffer->SetData(std::move(values));

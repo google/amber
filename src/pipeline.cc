@@ -179,20 +179,20 @@ Result Pipeline::ValidateCompute() const {
 }
 
 void Pipeline::UpdateFramebufferSizes() {
-  size_t size = fb_width_ * fb_height_;
+  uint32_t size = fb_width_ * fb_height_;
   if (size == 0)
     return;
 
   for (auto& attachment : color_attachments_) {
+    attachment.buffer->SetWidth(fb_width_);
+    attachment.buffer->SetHeight(fb_height_);
     attachment.buffer->SetSize(size);
-    attachment.width = fb_width_;
-    attachment.height = fb_height_;
   }
 
   if (depth_buffer_.buffer) {
+    depth_buffer_.buffer->SetWidth(fb_width_);
+    depth_buffer_.buffer->SetHeight(fb_height_);
     depth_buffer_.buffer->SetSize(size);
-    depth_buffer_.width = fb_width_;
-    depth_buffer_.height = fb_height_;
   }
 }
 
@@ -208,22 +208,10 @@ Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
 
   auto& info = color_attachments_.back();
   info.location = location;
-  info.width = fb_width_;
-  info.height = fb_height_;
-
+  buf->SetWidth(fb_width_);
+  buf->SetHeight(fb_height_);
   buf->SetSize(fb_width_ * fb_height_);
   return {};
-}
-
-Result Pipeline::GetLocationForColorAttachment(Buffer* buf,
-                                               uint32_t* loc) const {
-  for (const auto& info : color_attachments_) {
-    if (info.buffer == buf) {
-      *loc = info.location;
-      return {};
-    }
-  }
-  return Result("Unable to find requested buffer");
 }
 
 Result Pipeline::SetDepthBuffer(Buffer* buf) {
@@ -233,11 +221,9 @@ Result Pipeline::SetDepthBuffer(Buffer* buf) {
     return Result("expected a depth buffer");
 
   depth_buffer_.buffer = buf;
-  depth_buffer_.width = fb_width_;
-  depth_buffer_.height = fb_height_;
-
+  buf->SetWidth(fb_width_);
+  buf->SetHeight(fb_height_);
   buf->SetSize(fb_width_ * fb_height_);
-
   return {};
 }
 
