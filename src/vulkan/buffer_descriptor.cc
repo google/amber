@@ -50,7 +50,9 @@ Result BufferDescriptor::CreateResourceIfNeeded(
   if (amber_buffer_ && amber_buffer_->ValuePtr()->empty())
     return {};
 
-  size_t size_in_bytes = amber_buffer_ ? amber_buffer_->ValuePtr()->size() : 0;
+  uint32_t size_in_bytes =
+      amber_buffer_ ? static_cast<uint32_t>(amber_buffer_->ValuePtr()->size())
+                    : 0;
   transfer_buffer_ =
       MakeUnique<TransferBuffer>(device_, size_in_bytes, properties);
 
@@ -141,7 +143,7 @@ void BufferDescriptor::Shutdown() {
 
 Result BufferDescriptor::AddToBuffer(DataType type,
                                      uint32_t offset,
-                                     size_t size_in_bytes,
+                                     uint32_t size_in_bytes,
                                      const std::vector<Value>& values) {
   if (!amber_buffer_)
     return Result("missing amber_buffer for AddToBuffer call");

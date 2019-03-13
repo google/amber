@@ -179,7 +179,7 @@ Result Pipeline::ValidateCompute() const {
 }
 
 void Pipeline::UpdateFramebufferSizes() {
-  size_t size = fb_width_ * fb_height_;
+  uint32_t size = fb_width_ * fb_height_;
   if (size == 0)
     return;
 

@@ -32,7 +32,7 @@ const VkPhysicalDeviceMemoryProperties kMemoryProperties =
 class BufferForTest : public TransferBuffer {
  public:
   BufferForTest(Device* device,
-                size_t size_in_bytes,
+                uint32_t size_in_bytes,
                 const VkPhysicalDeviceMemoryProperties& properties)
       : TransferBuffer(device, size_in_bytes, properties) {
     memory_.resize(4096);

@@ -47,7 +47,8 @@ Result IndexBuffer::SendIndexData(
     return Result("IndexBuffer::SendIndexData |values| is empty");
 
   transfer_buffer_ = MakeUnique<TransferBuffer>(
-      device_, sizeof(uint32_t) * values.size(), properties);
+      device_, static_cast<uint32_t>(sizeof(uint32_t) * values.size()),
+      properties);
   Result r = transfer_buffer_->Initialize(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                           VK_BUFFER_USAGE_TRANSFER_DST_BIT);
   if (!r.IsSuccess())

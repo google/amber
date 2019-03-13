@@ -32,7 +32,7 @@ class Device;
 class TransferBuffer : public Resource {
  public:
   TransferBuffer(Device* device,
-                 size_t size_in_bytes,
+                 uint32_t size_in_bytes,
                  const VkPhysicalDeviceMemoryProperties& properties);
   ~TransferBuffer() override;
 
