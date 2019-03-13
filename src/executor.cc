@@ -71,8 +71,6 @@ Result Executor::Execute(Engine* engine,
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
     if (cmd->IsProbe()) {
-      ResourceInfo info;
-
       r = engine->DoProcessCommands(cmd->GetPipeline());
       if (!r.IsSuccess())
         return r;

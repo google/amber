@@ -116,7 +116,9 @@ class DataBuffer : public Buffer {
     return GetSize() * datum_type_.SizeInBytes();
   }
   void SetData(std::vector<Value>&& data) override {
-    SetSize(data.size() / datum_type_.ColumnCount() / datum_type_.RowCount());
+    uint32_t size = static_cast<uint32_t>(data.size()) /
+                    datum_type_.ColumnCount() / datum_type_.RowCount();
+    SetSize(size);
     Buffer::SetData(std::move(data));
   }
 
@@ -142,7 +144,7 @@ class FormatBuffer : public Buffer {
     return GetSize() * format_->GetByteSize();
   }
   void SetData(std::vector<Value>&& data) override {
-    SetSize(data.size());
+    SetSize(static_cast<uint32_t>(data.size()));
     Buffer::SetData(std::move(data));
   }
 
