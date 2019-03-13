@@ -28,17 +28,8 @@ namespace amber {
 namespace vulkan {
 
 enum class DescriptorType : uint8_t {
-  kStorageImage = 0,
-  kSampler,
-  kSampledImage,
-  kCombinedImageSampler,
-  kUniformTexelBuffer,
-  kStorageTexelBuffer,
-  kStorageBuffer,
+  kStorageBuffer = 0,
   kUniformBuffer,
-  kDynamicUniformBuffer,
-  kDynamicStorageBuffer,
-  kInputAttachment,
 };
 
 class CommandBuffer;
@@ -60,29 +51,11 @@ class Descriptor {
 
   DescriptorType GetType() const { return type_; }
 
-  bool IsStorageImage() const { return type_ == DescriptorType::kStorageImage; }
-  bool IsSampler() const { return type_ == DescriptorType::kSampler; }
-  bool IsSampledImage() const { return type_ == DescriptorType::kSampledImage; }
-  bool IsCombinedImageSampler() const {
-    return type_ == DescriptorType::kCombinedImageSampler;
-  }
-  bool IsUniformTexelBuffer() const {
-    return type_ == DescriptorType::kUniformTexelBuffer;
-  }
-  bool IsStorageTexelBuffer() const {
-    return type_ == DescriptorType::kStorageTexelBuffer;
-  }
   bool IsStorageBuffer() const {
     return type_ == DescriptorType::kStorageBuffer;
   }
   bool IsUniformBuffer() const {
     return type_ == DescriptorType::kUniformBuffer;
-  }
-  bool IsDynamicUniformBuffer() const {
-    return type_ == DescriptorType::kDynamicUniformBuffer;
-  }
-  bool IsDynamicStorageBuffer() const {
-    return type_ == DescriptorType::kDynamicStorageBuffer;
   }
 
   // Call vkUpdateDescriptorSets() to update the backing resource
@@ -122,12 +95,6 @@ class Descriptor {
       VkDescriptorSet descriptor_set,
       VkDescriptorType descriptor_type,
       const VkDescriptorBufferInfo& buffer_info);
-  Result UpdateDescriptorSetForImage(VkDescriptorSet descriptor_set,
-                                     VkDescriptorType descriptor_type,
-                                     const VkDescriptorImageInfo& image_info);
-  Result UpdateDescriptorSetForBufferView(VkDescriptorSet descriptor_set,
-                                          VkDescriptorType descriptor_type,
-                                          const VkBufferView& texel_view);
 
   void SetUpdateDescriptorSetNeeded() {
     is_descriptor_set_update_needed_ = true;
@@ -146,7 +113,7 @@ class Descriptor {
       VkDescriptorType descriptor_type) const;
   void UpdateVkDescriptorSet(const VkWriteDescriptorSet& write);
 
-  DescriptorType type_ = DescriptorType::kSampledImage;
+  DescriptorType type_ = DescriptorType::kStorageBuffer;
 
   bool is_descriptor_set_update_needed_ = false;
 };
