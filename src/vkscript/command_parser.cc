@@ -712,7 +712,7 @@ Result CommandParser::ProcessUniform() {
 
       auto* buffer = pipeline_->GetBufferForBinding(set, binding);
       if (!buffer) {
-        auto b = MakeUnique<Buffer>(BufferType::kStorage);
+        auto b = MakeUnique<Buffer>(BufferType::kUniform);
         b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
         buffer = b.get();
         script_->AddBuffer(std::move(b));
