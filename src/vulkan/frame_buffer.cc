@@ -37,7 +37,12 @@ FrameBuffer::FrameBuffer(
       width_(width),
       height_(height) {}
 
-FrameBuffer::~FrameBuffer() = default;
+FrameBuffer::~FrameBuffer() {
+  if (frame_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkDestroyFramebuffer(device_->GetDevice(), frame_,
+                                             nullptr);
+  }
+}
 
 Result FrameBuffer::Initialize(
     VkRenderPass render_pass,
@@ -168,19 +173,6 @@ Result FrameBuffer::ChangeFrameImageLayout(CommandBuffer* command,
   }
   frame_image_layout_ = FrameImageState::kClearOrDraw;
   return {};
-}
-
-void FrameBuffer::Shutdown() {
-  if (frame_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyFramebuffer(device_->GetDevice(), frame_,
-                                             nullptr);
-  }
-
-  for (auto& img : color_images_)
-    img->Shutdown();
-
-  if (depth_image_)
-    depth_image_->Shutdown();
 }
 
 Result FrameBuffer::CopyColorImagesToHost(CommandBuffer* command) {

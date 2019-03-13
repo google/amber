@@ -138,12 +138,9 @@ Result EngineVulkan::Shutdown() {
     }
 
     info.vk_pipeline->Shutdown();
-    if (info.vertex_buffer)
-      info.vertex_buffer->Shutdown();
   }
 
-  if (pool_)
-    pool_->Shutdown();
+  pool_ = nullptr;
 
   return {};
 }
@@ -363,7 +360,6 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   if (!r.IsSuccess())
     return r;
 
-  vertex_buffer->Shutdown();
   return {};
 }
 

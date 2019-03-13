@@ -29,11 +29,6 @@ IndexBuffer::IndexBuffer(Device* device) : device_(device) {}
 
 IndexBuffer::~IndexBuffer() = default;
 
-void IndexBuffer::Shutdown() {
-  if (transfer_buffer_)
-    transfer_buffer_->Shutdown();
-}
-
 Result IndexBuffer::SendIndexData(
     CommandBuffer* command,
     const VkPhysicalDeviceMemoryProperties& properties,

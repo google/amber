@@ -73,7 +73,7 @@ void Pipeline::Shutdown() {
     if (r.IsSuccess())
       command_->SubmitAndReset(fence_timeout_ms_);
 
-    command_->Shutdown();
+    command_ = nullptr;
   }
 
   for (auto& info : descriptor_set_info_) {
@@ -88,11 +88,6 @@ void Pipeline::Shutdown() {
     if (info.pool != VK_NULL_HANDLE) {
       device_->GetPtrs()->vkDestroyDescriptorPool(device_->GetDevice(),
                                                   info.pool, nullptr);
-    }
-
-    for (auto& desc : info.descriptors_) {
-      if (desc)
-        desc->Shutdown();
     }
   }
 }

@@ -45,7 +45,20 @@ TransferBuffer::TransferBuffer(
     const VkPhysicalDeviceMemoryProperties& properties)
     : Resource(device, size_in_bytes, properties) {}
 
-TransferBuffer::~TransferBuffer() = default;
+TransferBuffer::~TransferBuffer() {
+    if (view_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkDestroyBufferView(device_->GetDevice(), view_,
+                                            nullptr);
+  }
+
+  if (memory_ != VK_NULL_HANDLE) {
+    UnMapMemory(memory_);
+    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_, nullptr);
+  }
+
+  if (buffer_ != VK_NULL_HANDLE)
+    device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(), buffer_, nullptr);
+}
 
 Result TransferBuffer::Initialize(const VkBufferUsageFlags usage) {
   Result r = CreateVkBuffer(&buffer_, usage);
@@ -98,21 +111,6 @@ Result TransferBuffer::CopyToDevice(CommandBuffer* command) {
 Result TransferBuffer::CopyToHost(CommandBuffer* command) {
   MemoryBarrier(command);
   return {};
-}
-
-void TransferBuffer::Shutdown() {
-  if (view_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyBufferView(device_->GetDevice(), view_,
-                                            nullptr);
-  }
-
-  if (memory_ != VK_NULL_HANDLE) {
-    UnMapMemory(memory_);
-    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_, nullptr);
-  }
-
-  if (buffer_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(), buffer_, nullptr);
 }
 
 void TransferBuffer::UpdateMemoryWithRawData(

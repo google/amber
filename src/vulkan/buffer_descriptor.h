@@ -51,7 +51,6 @@ class BufferDescriptor : public Descriptor {
   Result RecordCopyDataToHost(CommandBuffer* command) override;
   Result MoveResourceToBufferOutput() override;
   Result UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
-  void Shutdown() override;
 
   Result AddToBuffer(DataType type,
                      uint32_t offset,

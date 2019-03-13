@@ -59,7 +59,29 @@ TransferImage::TransferImage(Device* device,
   image_info_.extent = {x, y, z};
 }
 
-TransferImage::~TransferImage() = default;
+TransferImage::~TransferImage() {
+  if (view_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkDestroyImageView(device_->GetDevice(), view_,
+                                           nullptr);
+  }
+
+  if (image_ != VK_NULL_HANDLE)
+    device_->GetPtrs()->vkDestroyImage(device_->GetDevice(), image_, nullptr);
+
+  if (memory_ != VK_NULL_HANDLE)
+    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_, nullptr);
+
+  if (host_accessible_memory_ != VK_NULL_HANDLE) {
+    UnMapMemory(host_accessible_memory_);
+    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(),
+                                     host_accessible_memory_, nullptr);
+  }
+
+  if (host_accessible_buffer_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(),
+                                        host_accessible_buffer_, nullptr);
+  }
+}
 
 Result TransferImage::Initialize(VkImageUsageFlags usage) {
   if (image_ != VK_NULL_HANDLE)
@@ -133,30 +155,6 @@ Result TransferImage::CreateVkImageView() {
   }
 
   return {};
-}
-
-void TransferImage::Shutdown() {
-  if (view_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyImageView(device_->GetDevice(), view_,
-                                           nullptr);
-  }
-
-  if (image_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkDestroyImage(device_->GetDevice(), image_, nullptr);
-
-  if (memory_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_, nullptr);
-
-  if (host_accessible_memory_ != VK_NULL_HANDLE) {
-    UnMapMemory(host_accessible_memory_);
-    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(),
-                                     host_accessible_memory_, nullptr);
-  }
-
-  if (host_accessible_buffer_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(),
-                                        host_accessible_buffer_, nullptr);
-  }
 }
 
 Result TransferImage::CopyToHost(CommandBuffer* command) {

@@ -53,8 +53,6 @@ class TransferImage : public Resource {
   // must be done later.
   Result CopyToHost(CommandBuffer* command) override;
 
-  void Shutdown() override;
-
  private:
   Result CreateVkImageView();
   Result AllocateAndBindMemoryToVkImage(VkImage image,

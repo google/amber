@@ -117,7 +117,6 @@ Result BufferDescriptor::MoveResourceToBufferOutput() {
                 size_in_bytes);
   }
 
-  transfer_buffer_->Shutdown();
   transfer_buffer_ = nullptr;
   return {};
 }
@@ -134,11 +133,6 @@ Result BufferDescriptor::UpdateDescriptorSetIfNeeded(
 
   return Descriptor::UpdateDescriptorSetForBuffer(
       descriptor_set, GetVkDescriptorType(), buffer_info);
-}
-
-void BufferDescriptor::Shutdown() {
-  if (transfer_buffer_)
-    transfer_buffer_->Shutdown();
 }
 
 Result BufferDescriptor::AddToBuffer(DataType type,
