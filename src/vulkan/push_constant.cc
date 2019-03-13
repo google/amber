@@ -117,5 +117,21 @@ Result PushConstant::AddBufferData(const BufferCommand* command) {
   return {};
 }
 
+Result PushConstant::UpdateMemoryWithInput(const BufferInput& input) {
+  if (static_cast<size_t>(input.offset) >= GetSizeInBytes()) {
+    return Result(
+        "Vulkan: UpdateMemoryWithInput BufferInput offset exceeds memory size");
+  }
+
+  if (input.size_in_bytes > (GetSizeInBytes() - input.offset)) {
+    return Result(
+        "Vulkan: UpdateMemoryWithInput BufferInput offset + size_in_bytes "
+        " exceeds memory size");
+  }
+
+  input.UpdateBufferWithValues(HostAccessibleMemoryPtr());
+  return {};
+}
+
 }  // namespace vulkan
 }  // namespace amber

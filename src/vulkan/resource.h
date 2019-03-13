@@ -47,22 +47,10 @@ class Resource {
  public:
   virtual ~Resource();
 
-  virtual VkDeviceMemory GetHostAccessMemory() const {
-    return host_accessible_memory_;
-  }
-
   virtual Result CopyToHost(CommandBuffer* command) = 0;
+  virtual void Shutdown() = 0;
 
-  virtual void Shutdown();
-
-  // Fill |memory_ptr_| from |offset| of |data| to |offset| + |size_in_bytes|
-  // of |data| with |values| of |data|.
-  Result UpdateMemoryWithInput(const BufferInput& input);
-
-  // Fill |memory_ptr_| from 0 to |raw_data.size()| with |raw_data|.
-  void UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data);
-
-  virtual void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
+  void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
 
   uint32_t GetSizeInBytes() const { return size_in_bytes_; }
 
@@ -70,10 +58,7 @@ class Resource {
   Resource(Device* device,
            uint32_t size,
            const VkPhysicalDeviceMemoryProperties& properties);
-  Result Initialize();
   Result CreateVkBuffer(VkBuffer* buffer, VkBufferUsageFlags usage);
-
-  VkBuffer GetHostAccessibleBuffer() const { return host_accessible_buffer_; }
 
   Result AllocateAndBindMemoryToVkBuffer(VkBuffer buffer,
                                          VkDeviceMemory* memory,
@@ -113,8 +98,6 @@ class Resource {
   uint32_t size_in_bytes_ = 0;
   VkPhysicalDeviceMemoryProperties physical_memory_properties_;
 
-  VkBuffer host_accessible_buffer_ = VK_NULL_HANDLE;
-  VkDeviceMemory host_accessible_memory_ = VK_NULL_HANDLE;
   void* memory_ptr_ = nullptr;
 };
 

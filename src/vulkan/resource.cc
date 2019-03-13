@@ -14,7 +14,6 @@
 
 #include "src/vulkan/resource.h"
 
-#include <cstring>
 #include <limits>
 
 #include "src/make_unique.h"
@@ -104,62 +103,6 @@ Resource::Resource(Device* device,
       physical_memory_properties_(properties) {}
 
 Resource::~Resource() = default;
-
-Result Resource::UpdateMemoryWithInput(const BufferInput& input) {
-  if (static_cast<size_t>(input.offset) >= size_in_bytes_) {
-    return Result(
-        "Vulkan: Resource::UpdateMemoryWithInput BufferInput offset exceeds "
-        "memory size");
-  }
-
-  if (input.size_in_bytes >
-      (size_in_bytes_ - static_cast<size_t>(input.offset))) {
-    return Result(
-        "Vulkan: Resource::UpdateMemoryWithInput BufferInput offset + size in "
-        "bytes exceeds memory size");
-  }
-
-  input.UpdateBufferWithValues(memory_ptr_);
-  return {};
-}
-
-void Resource::UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data) {
-  size_t effective_size =
-      raw_data.size() > size_in_bytes_ ? size_in_bytes_ : raw_data.size();
-  std::memcpy(memory_ptr_, raw_data.data(), effective_size);
-}
-
-void Resource::Shutdown() {
-  if (host_accessible_memory_ != VK_NULL_HANDLE) {
-    UnMapMemory(host_accessible_memory_);
-    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(),
-                                     host_accessible_memory_, nullptr);
-  }
-
-  if (host_accessible_buffer_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(),
-                                        host_accessible_buffer_, nullptr);
-  }
-}
-
-Result Resource::Initialize() {
-  Result r = CreateVkBuffer(
-      &host_accessible_buffer_,
-      VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-  if (!r.IsSuccess())
-    return r;
-
-  uint32_t memory_type_index = 0;
-  r = AllocateAndBindMemoryToVkBuffer(host_accessible_buffer_,
-                                      &host_accessible_memory_,
-                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                      true, &memory_type_index);
-  if (!r.IsSuccess())
-    return r;
-
-  return MapMemory(host_accessible_memory_);
-}
 
 Result Resource::CreateVkBuffer(VkBuffer* buffer, VkBufferUsageFlags usage) {
   if (buffer == nullptr)

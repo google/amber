@@ -64,6 +64,9 @@ class TransferImage : public Resource {
                                         uint32_t* memory_type_index);
   const VkMemoryRequirements GetVkImageMemoryRequirements(VkImage image) const;
 
+  VkBuffer host_accessible_buffer_ = VK_NULL_HANDLE;
+  VkDeviceMemory host_accessible_memory_ = VK_NULL_HANDLE;
+
   VkImageCreateInfo image_info_;
   VkImageAspectFlags aspect_;
 

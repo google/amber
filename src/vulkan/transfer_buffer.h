@@ -15,6 +15,8 @@
 #ifndef SRC_VULKAN_TRANSFER_BUFFER_H_
 #define SRC_VULKAN_TRANSFER_BUFFER_H_
 
+#include <vector>
+
 #include "amber/result.h"
 #include "amber/vulkan_header.h"
 #include "src/vulkan/resource.h"
@@ -51,8 +53,8 @@ class TransferBuffer : public Resource {
   // make it available to device domain.
   virtual Result CopyToDevice(CommandBuffer* command);
 
-  // Resource
-  VkDeviceMemory GetHostAccessMemory() const override { return memory_; }
+  // Fill memory from 0 to |raw_data.size()| with |raw_data|.
+  void UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data);
 
   // Since |buffer_| is mapped to host accessible and host coherent
   // memory |memory_|, this method only conducts memory barrier to

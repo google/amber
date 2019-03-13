@@ -87,7 +87,22 @@ Result TransferImage::Initialize(VkImageUsageFlags usage) {
   // is optimal, read/write data from CPU does not show correct values. We need
   // a secondary buffer to convert the GPU-optimial data to CPU-readable data
   // and vice versa.
-  return Resource::Initialize();
+  r = CreateVkBuffer(
+      &host_accessible_buffer_,
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+  if (!r.IsSuccess())
+    return r;
+
+  memory_type_index = 0;
+  r = AllocateAndBindMemoryToVkBuffer(host_accessible_buffer_,
+                                      &host_accessible_memory_,
+                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                      true, &memory_type_index);
+  if (!r.IsSuccess())
+    return r;
+
+  return MapMemory(host_accessible_memory_);
 }
 
 Result TransferImage::CreateVkImageView() {
@@ -132,7 +147,16 @@ void TransferImage::Shutdown() {
   if (memory_ != VK_NULL_HANDLE)
     device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_, nullptr);
 
-  Resource::Shutdown();
+  if (host_accessible_memory_ != VK_NULL_HANDLE) {
+    UnMapMemory(host_accessible_memory_);
+    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(),
+                                     host_accessible_memory_, nullptr);
+  }
+
+  if (host_accessible_buffer_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(),
+                                        host_accessible_buffer_, nullptr);
+  }
 }
 
 Result TransferImage::CopyToHost(CommandBuffer* command) {
@@ -154,7 +178,7 @@ Result TransferImage::CopyToHost(CommandBuffer* command) {
 
   device_->GetPtrs()->vkCmdCopyImageToBuffer(
       command->GetCommandBuffer(), image_, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      GetHostAccessibleBuffer(), 1, &copy_region);
+      host_accessible_buffer_, 1, &copy_region);
 
   MemoryBarrier(command);
   return {};
