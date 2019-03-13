@@ -25,12 +25,8 @@ namespace amber {
 namespace vulkan {
 
 PushConstant::PushConstant(Device* device, uint32_t max_push_constant_size)
-    : Resource(device,
-               max_push_constant_size,
-               VkPhysicalDeviceMemoryProperties()),
-      max_push_constant_size_(max_push_constant_size) {
+    : device_(device), max_push_constant_size_(max_push_constant_size) {
   memory_.resize(max_push_constant_size_);
-  SetMemoryPtr(static_cast<void*>(memory_.data()));
 }
 
 PushConstant::~PushConstant() = default;
@@ -118,18 +114,18 @@ Result PushConstant::AddBufferData(const BufferCommand* command) {
 }
 
 Result PushConstant::UpdateMemoryWithInput(const BufferInput& input) {
-  if (static_cast<size_t>(input.offset) >= GetSizeInBytes()) {
+  if (static_cast<size_t>(input.offset) >= max_push_constant_size_) {
     return Result(
         "Vulkan: UpdateMemoryWithInput BufferInput offset exceeds memory size");
   }
 
-  if (input.size_in_bytes > (GetSizeInBytes() - input.offset)) {
+  if (input.size_in_bytes > (max_push_constant_size_ - input.offset)) {
     return Result(
         "Vulkan: UpdateMemoryWithInput BufferInput offset + size_in_bytes "
         " exceeds memory size");
   }
 
-  input.UpdateBufferWithValues(HostAccessibleMemoryPtr());
+  input.UpdateBufferWithValues(memory_.data());
   return {};
 }
 

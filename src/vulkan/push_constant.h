@@ -30,14 +30,14 @@ class CommandBuffer;
 class Device;
 
 // Class to handle push constant.
-class PushConstant : public Resource {
+class PushConstant {
  public:
   // |max_push_constant_size| must be the same value with
   // maxPushConstantsSize of VkPhysicalDeviceLimits, which is an
   // element of VkPhysicalDeviceProperties getting from
   // vkGetPhysicalDeviceProperties().
   PushConstant(Device* device, uint32_t max_push_constant_size);
-  ~PushConstant() override;
+  ~PushConstant();
 
   // Return a VkPushConstantRange structure whose shader stage flag
   // is VK_SHADER_STAGE_ALL, offset is minimum |offset| among elements
@@ -58,16 +58,12 @@ class PushConstant : public Resource {
   // to be used on the next pipeline execution.
   Result AddBufferData(const BufferCommand* command);
 
-  // Resource
-  Result CopyToHost(CommandBuffer*) override {
-    return Result("Vulkan: should not call CopyToHost() for PushConstant");
-  }
-  void Shutdown() override {}
-
  private:
   // Fill memory from |offset| of |data| to |offset| + |size_in_bytes|
   // of |data| with |values| of |data|.
   Result UpdateMemoryWithInput(const BufferInput& input);
+
+  Device* device_;
 
   // maxPushConstantsSize of VkPhysicalDeviceLimits, which is an
   // element of VkPhysicalDeviceProperties getting from
