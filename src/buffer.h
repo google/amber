@@ -93,6 +93,9 @@ class Buffer {
     return reinterpret_cast<const T*>(values_.data());
   }
 
+  /// Copy the buffer values to an other one
+  virtual Result CopyTo(Buffer* buffer) const;
+
  protected:
   /// Create an un-typed buffer.
   Buffer();

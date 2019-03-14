@@ -34,6 +34,7 @@ class ClearColorCommand;
 class ClearDepthCommand;
 class ClearStencilCommand;
 class ComputeCommand;
+class CopyCommand;
 class DrawArraysCommand;
 class DrawRectCommand;
 class EntryPointCommand;
@@ -51,6 +52,7 @@ class Command {
     kClearDepth,
     kClearStencil,
     kCompute,
+    kCopy,
     kDrawArrays,
     kDrawRect,
     kEntryPoint,
@@ -66,6 +68,7 @@ class Command {
   bool IsDrawRect() const { return command_type_ == Type::kDrawRect; }
   bool IsDrawArrays() const { return command_type_ == Type::kDrawArrays; }
   bool IsCompute() const { return command_type_ == Type::kCompute; }
+  bool IsCopy() const { return command_type_ == Type::kCopy; }
   bool IsProbe() const { return command_type_ == Type::kProbe; }
   bool IsProbeSSBO() const { return command_type_ == Type::kProbeSSBO; }
   bool IsBuffer() const { return command_type_ == Type::kBuffer; }
@@ -83,6 +86,7 @@ class Command {
   ClearDepthCommand* AsClearDepth();
   ClearStencilCommand* AsClearStencil();
   ComputeCommand* AsCompute();
+  CopyCommand* AsCopy();
   DrawArraysCommand* AsDrawArrays();
   DrawRectCommand* AsDrawRect();
   EntryPointCommand* AsEntryPoint();
@@ -201,6 +205,19 @@ class ComputeCommand : public PipelineCommand {
   uint32_t x_ = 0;
   uint32_t y_ = 0;
   uint32_t z_ = 0;
+};
+
+class CopyCommand : public Command {
+ public:
+  CopyCommand(Buffer* buffer_from, Buffer* buffer_to);
+  ~CopyCommand() override;
+
+  Buffer* GetBufferFrom() const { return buffer_from_; }
+  Buffer* GetBufferTo() const { return buffer_to_; }
+
+ private:
+  Buffer* buffer_from_;
+  Buffer* buffer_to_;
 };
 
 class Probe : public Command {

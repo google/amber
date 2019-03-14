@@ -15,6 +15,8 @@
 #include "src/buffer.h"
 
 #include <cassert>
+#include <cstdlib>
+#include <cstring>
 
 namespace amber {
 namespace {
@@ -208,6 +210,18 @@ DataBuffer* Buffer::AsDataBuffer() {
 
 FormatBuffer* Buffer::AsFormatBuffer() {
   return static_cast<FormatBuffer*>(this);
+}
+
+Result Buffer::CopyTo(Buffer* buffer) const {
+  if (buffer->width_ != width_)
+    return Result("Buffer::CopyBaseFields() buffers have a different width");
+  if (buffer->height_ != height_)
+    return Result("Buffer::CopyBaseFields() buffers have a different height");
+  if (buffer->size_ != size_)
+    return Result("Buffer::CopyBaseFields() buffers have a different size");
+  buffer->values_.clear();
+  buffer->values_ = values_;
+  return {};
 }
 
 DataBuffer::DataBuffer() = default;

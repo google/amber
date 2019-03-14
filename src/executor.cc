@@ -97,6 +97,11 @@ Result Executor::Execute(Engine* engine,
       r = engine->DoClearDepth(cmd->AsClearDepth());
     } else if (cmd->IsClearStencil()) {
       r = engine->DoClearStencil(cmd->AsClearStencil());
+    } else if (cmd->IsCopy()) {
+      auto copy = cmd->AsCopy();
+      auto buffer_from = copy->GetBufferFrom();
+      auto buffer_to = copy->GetBufferTo();
+      r = buffer_from->CopyTo(buffer_to);
     } else if (cmd->IsDrawRect()) {
       r = engine->DoDrawRect(cmd->AsDrawRect());
     } else if (cmd->IsDrawArrays()) {

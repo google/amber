@@ -42,6 +42,10 @@ ComputeCommand* Command::AsCompute() {
   return static_cast<ComputeCommand*>(this);
 }
 
+CopyCommand* Command::AsCopy() {
+  return static_cast<CopyCommand*>(this);
+}
+
 DrawArraysCommand* Command::AsDrawArrays() {
   return static_cast<DrawArraysCommand*>(this);
 }
@@ -107,6 +111,11 @@ BufferCommand::BufferCommand(BufferType type, Pipeline* pipeline)
     : PipelineCommand(Type::kBuffer, pipeline), buffer_type_(type) {}
 
 BufferCommand::~BufferCommand() = default;
+
+CopyCommand::CopyCommand(Buffer* buffer_from, Buffer* buffer_to)
+    : Command(Type::kCopy), buffer_from_(buffer_from), buffer_to_(buffer_to) {}
+
+CopyCommand::~CopyCommand() = default;
 
 ClearCommand::ClearCommand(Pipeline* pipeline)
     : PipelineCommand(Type::kClear, pipeline) {}
