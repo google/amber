@@ -41,7 +41,6 @@ class CommandBuffer {
 
   Result Initialize();
   VkCommandBuffer GetCommandBuffer() const { return command_; }
-  void Shutdown();
 
   // Do nothing and return if it is already ready to record. If it is in
   // initial state, call command begin API and make it ready to record.

@@ -88,8 +88,6 @@ class Descriptor {
   // the command buffer. After copying the contents, it destroys |buffer_|.
   virtual Result MoveResourceToBufferOutput() = 0;
 
-  virtual void Shutdown() = 0;
-
  protected:
   Result UpdateDescriptorSetForBuffer(
       VkDescriptorSet descriptor_set,

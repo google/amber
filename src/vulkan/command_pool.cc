@@ -21,7 +21,13 @@ namespace vulkan {
 
 CommandPool::CommandPool(Device* device) : device_(device) {}
 
-CommandPool::~CommandPool() = default;
+CommandPool::~CommandPool() {
+  if (pool_ == VK_NULL_HANDLE)
+    return;
+
+  device_->GetPtrs()->vkDestroyCommandPool(device_->GetDevice(), pool_,
+                                           nullptr);
+}
 
 Result CommandPool::Initialize(uint32_t queue_family_index) {
   VkCommandPoolCreateInfo pool_info = VkCommandPoolCreateInfo();
@@ -35,14 +41,6 @@ Result CommandPool::Initialize(uint32_t queue_family_index) {
   }
 
   return {};
-}
-
-void CommandPool::Shutdown() {
-  if (pool_ == VK_NULL_HANDLE)
-    return;
-
-  device_->GetPtrs()->vkDestroyCommandPool(device_->GetDevice(), pool_,
-                                           nullptr);
 }
 
 }  // namespace vulkan

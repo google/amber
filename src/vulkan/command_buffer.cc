@@ -23,7 +23,15 @@ namespace vulkan {
 CommandBuffer::CommandBuffer(Device* device, CommandPool* pool, VkQueue queue)
     : device_(device), pool_(pool), queue_(queue) {}
 
-CommandBuffer::~CommandBuffer() = default;
+CommandBuffer::~CommandBuffer() {
+  if (fence_ != VK_NULL_HANDLE)
+    device_->GetPtrs()->vkDestroyFence(device_->GetDevice(), fence_, nullptr);
+
+  if (command_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkFreeCommandBuffers(
+        device_->GetDevice(), pool_->GetCommandPool(), 1, &command_);
+  }
+}
 
 Result CommandBuffer::Initialize() {
   VkCommandBufferAllocateInfo command_info = VkCommandBufferAllocateInfo();
@@ -108,16 +116,6 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
 
   state_ = CommandBufferState::kInitial;
   return {};
-}
-
-void CommandBuffer::Shutdown() {
-  if (fence_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkDestroyFence(device_->GetDevice(), fence_, nullptr);
-
-  if (command_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkFreeCommandBuffers(
-        device_->GetDevice(), pool_->GetCommandPool(), 1, &command_);
-  }
 }
 
 }  // namespace vulkan

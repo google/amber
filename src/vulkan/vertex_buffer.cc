@@ -202,11 +202,6 @@ VertexBuffer::VertexBuffer(Device* device) : device_(device) {}
 
 VertexBuffer::~VertexBuffer() = default;
 
-void VertexBuffer::Shutdown() {
-  if (transfer_buffer_)
-    transfer_buffer_->Shutdown();
-}
-
 void VertexBuffer::SetData(uint8_t location,
                            const Format& format,
                            const std::vector<Value>& values) {

@@ -39,9 +39,6 @@ class IndexBuffer {
   explicit IndexBuffer(Device* device);
   ~IndexBuffer();
 
-  // Destroy |buffer_| if it is not nullptr.
-  void Shutdown();
-
   // Assuming that |buffer_| is nullptr and |values| is not empty,
   // it creates |buffer_| whose size is |sizeof(uint32_t) * values.size()|
   // and coverts |values| as uint32 values and copies them to |buffer_|.

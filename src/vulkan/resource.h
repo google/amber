@@ -48,7 +48,6 @@ class Resource {
   virtual ~Resource();
 
   virtual Result CopyToHost(CommandBuffer* command) = 0;
-  virtual void Shutdown() = 0;
 
   void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
 

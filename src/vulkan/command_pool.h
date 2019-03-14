@@ -30,7 +30,6 @@ class CommandPool {
 
   Result Initialize(uint32_t queue_family_index);
   VkCommandPool GetCommandPool() const { return pool_; }
-  void Shutdown();
 
  private:
   Device* device_ = nullptr;

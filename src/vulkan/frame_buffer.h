@@ -45,7 +45,6 @@ class FrameBuffer {
   Result Initialize(VkRenderPass render_pass,
                     VkFormat depth_format,
                     const VkPhysicalDeviceMemoryProperties& properties);
-  void Shutdown();
 
   Result ChangeFrameImageLayout(CommandBuffer* command, FrameImageState layout);
 

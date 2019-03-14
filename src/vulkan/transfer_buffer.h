@@ -61,8 +61,6 @@ class TransferBuffer : public Resource {
   // make it available to host domain.
   Result CopyToHost(CommandBuffer* command) override;
 
-  void Shutdown() override;
-
  private:
   VkBuffer buffer_ = VK_NULL_HANDLE;
   VkBufferView view_ = VK_NULL_HANDLE;

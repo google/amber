@@ -930,18 +930,15 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
 
 Result GraphicsPipeline::ProcessCommands() {
   DeactivateRenderPassIfNeeded();
-
   return Pipeline::ProcessCommands();
 }
 
 void GraphicsPipeline::Shutdown() {
   DeactivateRenderPassIfNeeded();
 
-  if (index_buffer_)
-    index_buffer_->Shutdown();
-
+  index_buffer_ = nullptr;
   Pipeline::Shutdown();
-  frame_->Shutdown();
+  frame_ = nullptr;
 
   if (render_pass_ != VK_NULL_HANDLE) {
     device_->GetPtrs()->vkDestroyRenderPass(device_->GetDevice(), render_pass_,
