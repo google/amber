@@ -3724,7 +3724,7 @@ EXPECT my_pipeline BUFFER other_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 128 255)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectMissingIDX) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -3770,7 +3770,7 @@ EXPECT my_pipeline BUFFER my_fb IDX SIZE 250 250 EQ_RGB 0 128 255)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectMissingIdxY) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -3793,7 +3793,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 SIZE 250 250 EQ_RGB 0 128 255)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectIdxInvalidX) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -3839,7 +3839,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 INVALID SIZE 250 250 EQ_RGB 0 128 255)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectRGBMissingSize) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -3862,7 +3862,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 0 250 250 EQ_RGB 0 128 255)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectSizeMissingValues) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -3908,7 +3908,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 EQ_RGB 0 128 255)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectSizeInvalidWidth) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -3931,7 +3931,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE INVALID 250 EQ_RGB 0 128 255)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectSizeInvalidHeight) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -3954,7 +3954,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 INVALID EQ_RGB 0 128 255)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectSizeInvalidComparitor) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -3977,7 +3977,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 INVALID 0 128 255)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectRGBMissingValues) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -4000,7 +4000,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectRGBMissingB) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -4069,7 +4069,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGBA 0 128 255)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectRGBInvalidR) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -4092,7 +4092,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB INVALID 128 255)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectRGBInvalidG) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -4115,7 +4115,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 INVALID 255)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectRGBInvalidB) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -4138,7 +4138,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 128 INVALID)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectRGBAInvalidA) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -4162,7 +4162,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 \
 }
 
 TEST_F(AmberScriptParserTest, ExpectRGBExtraParam) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
@@ -4185,7 +4185,7 @@ EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 128 255 EXTRA)";
 }
 
 TEST_F(AmberScriptParserTest, ExpectRGBAExtraParam) {
-    std::string in = R"(
+  std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader

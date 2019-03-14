@@ -1008,8 +1008,8 @@ Result Parser::ParseExpect() {
   if (token->IsEOS() || token->IsEOL())
     return Result("missing BUFFER in EXPECT command");
   if (!token->IsString() || token->AsString() != "BUFFER") {
-    return Result("expected BUFFER got '" + token->ToOriginalString() + "' in "
-        + "EXPECT command");
+    return Result("expected BUFFER got '" + token->ToOriginalString() +
+                  "' in " + "EXPECT command");
   }
 
   token = tokenizer_->NextToken();
@@ -1065,13 +1065,15 @@ Result Parser::ParseExpect() {
 
     token = tokenizer_->NextToken();
     if (!token->IsString()) {
-      return Result("invalid token in EXPECT command:" + token->ToOriginalString());
+      return Result("invalid token in EXPECT command:" +
+                    token->ToOriginalString());
     }
 
     if (token->AsString() == "EQ_RGBA") {
       probe->SetIsRGBA();
     } else if (token->AsString() != "EQ_RGB") {
-      return Result("unknown comparator type in EXPECT: " + token->ToOriginalString());
+      return Result("unknown comparator type in EXPECT: " +
+                    token->ToOriginalString());
     }
 
     token = tokenizer_->NextToken();
@@ -1098,8 +1100,8 @@ Result Parser::ParseExpect() {
 
     script_->AddCommand(std::move(probe));
   } else {
-    return Result(
-        "unexpected token in EXPECT command: " + token->ToOriginalString());
+    return Result("unexpected token in EXPECT command: " +
+                  token->ToOriginalString());
   }
 
   return ValidateEndOfStatement("EXPECT command");
