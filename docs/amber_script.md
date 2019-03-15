@@ -6,9 +6,10 @@ is based on the Talvos format, VkRunner format, and VkScript proposed format.
 
 ## Specification
 All amber scripts must start with `#!amber` as the first line. Comments are
-specified by a # character and continue to the end of the line. Keywords are
-case sensitive. All names are made up of ASCII characters, and delimited by
-whitespace.
+specified by a # character and continue to the end of the line, except in
+inlined shader source code, where AmberScript comments are not
+possible. Keywords are case sensitive. All names are made up of ASCII
+characters, and delimited by whitespace.
 
 TODO(dneto): What characters are valid in a name?
 
