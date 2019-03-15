@@ -62,6 +62,7 @@ class Parser : public amber::Parser {
   Result ParsePipelineIndexData(Pipeline*);
   Result ParseRun();
   Result ParseClear();
+  Result ParseExpect();
 
   std::unique_ptr<Tokenizer> tokenizer_;
 };

@@ -3502,5 +3502,711 @@ CLEAR my_pipeline EXTRA)";
   EXPECT_EQ("12: extra parameters after CLEAR command", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, ExpectRGB) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 5 6 SIZE 250 150 EQ_RGB 2 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(1U, commands.size());
+
+  auto* cmd = commands[0].get();
+  ASSERT_TRUE(cmd->IsProbe());
+
+  auto* probe = cmd->AsProbe();
+  EXPECT_FALSE(probe->IsRGBA());
+  EXPECT_TRUE(probe->IsProbeRect());
+  EXPECT_FALSE(probe->IsRelative());
+  EXPECT_FALSE(probe->IsWholeWindow());
+  EXPECT_EQ(5U, probe->GetX());
+  EXPECT_EQ(6U, probe->GetY());
+  EXPECT_EQ(250U, probe->GetWidth());
+  EXPECT_EQ(150U, probe->GetHeight());
+  EXPECT_EQ(2U, probe->GetR());
+  EXPECT_EQ(128U, probe->GetG());
+  EXPECT_EQ(255U, probe->GetB());
+}
+
+TEST_F(AmberScriptParserTest, ExpectRGBA) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 2 7 SIZE 20 88 EQ_RGBA 2 128 255 99)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(1U, commands.size());
+
+  auto* cmd = commands[0].get();
+  ASSERT_TRUE(cmd->IsProbe());
+
+  auto* probe = cmd->AsProbe();
+  EXPECT_TRUE(probe->IsRGBA());
+  EXPECT_TRUE(probe->IsProbeRect());
+  EXPECT_FALSE(probe->IsRelative());
+  EXPECT_FALSE(probe->IsWholeWindow());
+  EXPECT_EQ(2U, probe->GetX());
+  EXPECT_EQ(7U, probe->GetY());
+  EXPECT_EQ(20U, probe->GetWidth());
+  EXPECT_EQ(88U, probe->GetHeight());
+  EXPECT_EQ(2U, probe->GetR());
+  EXPECT_EQ(128U, probe->GetG());
+  EXPECT_EQ(255U, probe->GetB());
+  EXPECT_EQ(99U, probe->GetA());
+}
+
+TEST_F(AmberScriptParserTest, ExpectMissingPipelineName) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: unknown pipeline name for EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectInvalidPipelineName) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT unknown_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: unknown pipeline name for EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectMissingBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline my_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: expected BUFFER got 'my_fb' in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectMissingBufferName) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER IDX 0 0 SIZE 250 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: unknown buffer name for EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectInvalidBufferName) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER unknown_buffer IDX 0 0 SIZE 250 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: unknown buffer name for EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectBufferNotInPipeline) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER other_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+EXPECT my_pipeline BUFFER other_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: buffer not in pipeline for EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectMissingIDX) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb 0 0 SIZE 250 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: missing IDX in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectMissingIDXValues) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX SIZE 250 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid X value in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectMissingIdxY) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 SIZE 250 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid Y value in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectIdxInvalidX) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX INVAILD 0 SIZE 250 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid X value in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectIdxInvalidY) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 INVALID SIZE 250 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid Y value in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectRGBMissingSize) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 250 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: unexpected token in EXPECT command: 250", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectSizeMissingValues) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid width in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectSizeMissingHeight) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid height in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectSizeInvalidWidth) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE INVALID 250 EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid width in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectSizeInvalidHeight) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 INVALID EQ_RGB 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid height in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectSizeInvalidComparitor) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 INVALID 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: unknown comparator type in EXPECT: INVALID", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectRGBMissingValues) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid R value in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectRGBMissingB) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 128)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid B value in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectRGBMissingG) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB 0)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid G value in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectRGBAMissingA) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGBA 0 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid A value in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectRGBInvalidR) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB INVALID 128 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid R value in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectRGBInvalidG) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 INVALID 255)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid G value in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectRGBInvalidB) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 128 INVALID)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid B value in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectRGBAInvalidA) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 \
+    EQ_RGBA 0 128 255 INVALID)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("16: invalid A value in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectRGBExtraParam) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 128 255 EXTRA)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: extra parameters after EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectRGBAExtraParam) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+END
+
+EXPECT my_pipeline BUFFER my_fb IDX 0 0 SIZE 250 250 \
+    EQ_RGBA 0 128 255 99 EXTRA)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("16: extra parameters after EXPECT command", r.Error());
+}
+
 }  // namespace amberscript
 }  // namespace amber

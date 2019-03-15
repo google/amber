@@ -137,7 +137,8 @@ Result EngineVulkan::Shutdown() {
                                                   nullptr);
     }
 
-    info.vk_pipeline->Shutdown();
+    if (info.vk_pipeline != VK_NULL_HANDLE)
+      info.vk_pipeline->Shutdown();
   }
 
   pool_ = nullptr;

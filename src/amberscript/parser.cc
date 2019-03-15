@@ -50,14 +50,16 @@ Result Parser::Parse(const std::string& data) {
     std::string tok = token->AsString();
     if (tok == "BUFFER") {
       r = ParseBuffer();
-    } else if (tok == "PIPELINE") {
-      r = ParsePipelineBlock();
-    } else if (tok == "SHADER") {
-      r = ParseShaderBlock();
-    } else if (tok == "RUN") {
-      r = ParseRun();
     } else if (tok == "CLEAR") {
       r = ParseClear();
+    } else if (tok == "EXPECT") {
+      r = ParseExpect();
+    } else if (tok == "PIPELINE") {
+      r = ParsePipelineBlock();
+    } else if (tok == "RUN") {
+      r = ParseRun();
+    } else if (tok == "SHADER") {
+      r = ParseShaderBlock();
     } else {
       r = Result("unknown token: " + tok);
     }
@@ -548,6 +550,8 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     if (!token->IsInteger())
       return Result("invalid value for BIND LOCATION");
 
+    buffer->SetBufferType(BufferType::kColor);
+
     Result r = pipeline->AddColorAttachment(buffer, token->AsUint32());
     if (!r.IsSuccess())
       return r;
@@ -987,6 +991,128 @@ Result Parser::ParseClear() {
   script_->AddCommand(std::move(cmd));
 
   return ValidateEndOfStatement("CLEAR command");
+}
+
+Result Parser::ParseExpect() {
+  auto token = tokenizer_->NextToken();
+  if (token->IsEOS() || token->IsEOL())
+    return Result("missing pipeline name in EXPECT command");
+  if (!token->IsString())
+    return Result("invalid pipeline name in EXPECT command");
+
+  auto* pipeline = script_->GetPipeline(token->AsString());
+  if (!pipeline)
+    return Result("unknown pipeline name for EXPECT command");
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOS() || token->IsEOL())
+    return Result("missing BUFFER in EXPECT command");
+  if (!token->IsString() || token->AsString() != "BUFFER") {
+    return Result("expected BUFFER got '" + token->ToOriginalString() +
+                  "' in " + "EXPECT command");
+  }
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("invalid buffer name in EXPECT command");
+
+  auto* buffer = script_->GetBuffer(token->AsString());
+  if (!buffer)
+    return Result("unknown buffer name for EXPECT command");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "IDX")
+    return Result("missing IDX in EXPECT command");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsInteger() || token->AsInt32() < 0)
+    return Result("invalid X value in EXPECT command");
+  token->ConvertToDouble();
+  float x = token->AsFloat();
+
+  token = tokenizer_->NextToken();
+  if (!token->IsInteger() || token->AsInt32() < 0)
+    return Result("invalid Y value in EXPECT command");
+  token->ConvertToDouble();
+  float y = token->AsFloat();
+
+  // TODO(dsinclair): Handle comparator && TOLERANCE
+
+  token = tokenizer_->NextToken();
+  if (token->IsString() && token->AsString() == "SIZE") {
+    bool found = false;
+    for (const auto& info : pipeline->GetColorAttachments()) {
+      if (info.buffer == buffer) {
+        found = true;
+        break;
+      }
+    }
+    if (!found)
+      return Result("buffer not in pipeline for EXPECT command");
+
+    auto probe = MakeUnique<ProbeCommand>(pipeline, buffer);
+    probe->SetX(x);
+    probe->SetY(y);
+    probe->SetProbeRect();
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger() || token->AsInt32() <= 0)
+      return Result("invalid width in EXPECT command");
+    token->ConvertToDouble();
+    probe->SetWidth(token->AsFloat());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger() || token->AsInt32() <= 0)
+      return Result("invalid height in EXPECT command");
+    token->ConvertToDouble();
+    probe->SetHeight(token->AsFloat());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString()) {
+      return Result("invalid token in EXPECT command:" +
+                    token->ToOriginalString());
+    }
+
+    if (token->AsString() == "EQ_RGBA") {
+      probe->SetIsRGBA();
+    } else if (token->AsString() != "EQ_RGB") {
+      return Result("unknown comparator type in EXPECT: " +
+                    token->ToOriginalString());
+    }
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255)
+      return Result("invalid R value in EXPECT command");
+    token->ConvertToDouble();
+    probe->SetR(token->AsFloat());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255)
+      return Result("invalid G value in EXPECT command");
+    token->ConvertToDouble();
+    probe->SetG(token->AsFloat());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255)
+      return Result("invalid B value in EXPECT command");
+    token->ConvertToDouble();
+    probe->SetB(token->AsFloat());
+
+    if (probe->IsRGBA()) {
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255)
+        return Result("invalid A value in EXPECT command");
+      token->ConvertToDouble();
+      probe->SetA(token->AsFloat());
+    }
+
+    script_->AddCommand(std::move(probe));
+  } else {
+    return Result("unexpected token in EXPECT command: " +
+                  token->ToOriginalString());
+  }
+
+  return ValidateEndOfStatement("EXPECT command");
 }
 
 }  // namespace amberscript
