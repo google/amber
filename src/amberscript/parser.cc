@@ -1027,12 +1027,14 @@ Result Parser::ParseExpect() {
   token = tokenizer_->NextToken();
   if (!token->IsInteger() || token->AsInt32() < 0)
     return Result("invalid X value in EXPECT command");
-  uint32_t x = token->AsUint32();
+  token->ConvertToDouble();
+  float x = token->AsFloat();
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger() || token->AsInt32() < 0)
     return Result("invalid Y value in EXPECT command");
-  uint32_t y = token->AsUint32();
+  token->ConvertToDouble();
+  float y = token->AsFloat();
 
   // TODO(dsinclair): Handle comparator && TOLERANCE
 
@@ -1056,12 +1058,14 @@ Result Parser::ParseExpect() {
     token = tokenizer_->NextToken();
     if (!token->IsInteger() || token->AsInt32() <= 0)
       return Result("invalid width in EXPECT command");
-    probe->SetWidth(token->AsUint32());
+    token->ConvertToDouble();
+    probe->SetWidth(token->AsFloat());
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger() || token->AsInt32() <= 0)
       return Result("invalid height in EXPECT command");
-    probe->SetHeight(token->AsUint32());
+    token->ConvertToDouble();
+    probe->SetHeight(token->AsFloat());
 
     token = tokenizer_->NextToken();
     if (!token->IsString()) {
@@ -1079,23 +1083,27 @@ Result Parser::ParseExpect() {
     token = tokenizer_->NextToken();
     if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255)
       return Result("invalid R value in EXPECT command");
-    probe->SetR(token->AsUint32());
+    token->ConvertToDouble();
+    probe->SetR(token->AsFloat());
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255)
       return Result("invalid G value in EXPECT command");
-    probe->SetG(token->AsUint32());
+    token->ConvertToDouble();
+    probe->SetG(token->AsFloat());
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255)
       return Result("invalid B value in EXPECT command");
-    probe->SetB(token->AsUint32());
+    token->ConvertToDouble();
+    probe->SetB(token->AsFloat());
 
     if (probe->IsRGBA()) {
       token = tokenizer_->NextToken();
       if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255)
         return Result("invalid A value in EXPECT command");
-      probe->SetA(token->AsUint32());
+      token->ConvertToDouble();
+      probe->SetA(token->AsFloat());
     }
 
     script_->AddCommand(std::move(probe));
