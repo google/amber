@@ -17,10 +17,20 @@ import base64
 import difflib
 import optparse
 import os
+import platform
 import re
 import subprocess
 import sys
 import tempfile
+
+SUPPRESSIONS = {
+  "Darwin": [
+    # No geometry shader on MoltenVK
+    "draw_triangle_list_using_geom_shader.vkscript",
+    # No tessellation shader on MoltenVK
+    "draw_triangle_list_using_tessellation.vkscript"
+  ]
+}
 
 class TestCase:
   def __init__(self, input_path, parse_only):
@@ -32,6 +42,12 @@ class TestCase:
   def IsExpectedFail(self):
     fail_re = re.compile('^.+[.]expect_fail[.][amber|vkscript]')
     return fail_re.match(self.GetInputPath())
+
+  def IsSuppressed(self):
+    system = platform.system()
+    if system in SUPPRESSIONS.keys():
+      return os.path.basename(self.input_path) in SUPPRESSIONS[system]
+    return False
 
   def IsParseOnly(self):
     return self.parse_only
@@ -54,13 +70,13 @@ class TestRunner:
 
     try:
       err = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-      if err != "" and not tc.IsExpectedFail():
+      if err != "" and not tc.IsExpectedFail() and not tc.IsSuppressed():
         sys.stdout.write(err)
         return False
 
     except Exception as e:
       print e.output
-      if not tc.IsExpectedFail():
+      if not tc.IsExpectedFail() and not tc.IsSuppressed():
         print e
       return False
 
@@ -71,11 +87,14 @@ class TestRunner:
     for tc in self.test_cases:
       result = self.RunTest(tc)
 
-      if not tc.IsExpectedFail() and not result:
-        self.failures.append(tc.GetInputPath())
-      elif tc.IsExpectedFail() and result:
-        print("Expected: " + tc.GetInputPath() + " to fail but passed.")
-        self.failures.append(tc.GetInputPath())
+      if tc.IsSuppressed():
+        self.suppressed.append(tc.GetInputPath())
+      else:
+        if not tc.IsExpectedFail() and not result:
+          self.failures.append(tc.GetInputPath())
+        elif tc.IsExpectedFail() and result:
+          print("Expected: " + tc.GetInputPath() + " to fail but passed.")
+          self.failures.append(tc.GetInputPath())
 
   def SummarizeResults(self):
     if len(self.failures) > 0:
@@ -85,10 +104,18 @@ class TestRunner:
       for failure in self.failures:
         print failure
 
+    if len(self.suppressed) > 0:
+      self.suppressed.sort()
+
+      print '\nSummary of Suppressions:'
+      for suppression in self.suppressed:
+        print suppression
+
     print
     print 'Test cases executed: %d' % len(self.test_cases)
-    print '  Successes: %d' % (len(self.test_cases) - len(self.failures))
-    print '  Failures:  %d' % len(self.failures)
+    print '  Successes:  %d' % (len(self.test_cases) - len(self.suppressed) - len(self.failures))
+    print '  Failures:   %d' % len(self.failures)
+    print '  Suppressed: %d' % len(self.suppressed)
     print
 
 
@@ -145,6 +172,7 @@ class TestRunner:
                   TestCase(input_path, self.options.parse_only))
 
     self.failures = []
+    self.suppressed = []
 
     self.RunTests()
     self.SummarizeResults()
