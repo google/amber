@@ -55,13 +55,7 @@ Result CommandBuffer::Initialize() {
   return {};
 }
 
-Result CommandBuffer::BeginIfNotInRecording() {
-  if (state_ == CommandBufferState::kRecording)
-    return {};
-
-  if (state_ != CommandBufferState::kInitial)
-    return Result("Vulkan::Begin CommandBuffer from Not Valid State");
-
+Result CommandBuffer::BeginRecording() {
   VkCommandBufferBeginInfo command_begin_info = VkCommandBufferBeginInfo();
   command_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   command_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -70,14 +64,10 @@ Result CommandBuffer::BeginIfNotInRecording() {
     return Result("Vulkan::Calling vkBeginCommandBuffer Fail");
   }
 
-  state_ = CommandBufferState::kRecording;
   return {};
 }
 
 Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
-  if (state_ != CommandBufferState::kRecording)
-    return Result("Vulkan::End CommandBuffer from Not Valid State");
-
   if (device_->GetPtrs()->vkEndCommandBuffer(command_) != VK_SUCCESS)
     return Result("Vulkan::Calling vkEndCommandBuffer Fail");
 
@@ -106,8 +96,27 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS)
     return Result("Vulkan::Calling vkResetCommandBuffer Fail");
 
-  state_ = CommandBufferState::kInitial;
   return {};
+}
+
+CommandBufferGuard::CommandBufferGuard(CommandBuffer* buffer) : buffer_(buffer) {
+  assert(!buffer_->guarded_);
+
+  buffer_->guarded_ = true;
+  result_ = buffer_->BeginRecording();
+}
+
+CommandBufferGuard::~CommandBufferGuard() {
+  assert(submitted_);
+}
+
+Result CommandBufferGuard::Submit(uint32_t timeout_ms) {
+  assert(buffer_->guarded_);
+
+  submitted_ = true;
+  result_ = buffer_->SubmitAndReset(timeout_ms);
+  buffer_->guarded_ = false;
+  return result_;
 }
 
 }  // namespace vulkan

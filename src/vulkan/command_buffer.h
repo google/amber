@@ -31,6 +31,7 @@ enum class CommandBufferState : uint8_t {
   kInvalid,
 };
 
+class CommandBufferGuard;
 class CommandPool;
 class Device;
 
@@ -42,20 +43,35 @@ class CommandBuffer {
   Result Initialize();
   VkCommandBuffer GetVkCommandBuffer() const { return command_; }
 
-  // Do nothing and return if it is already ready to record. If it is in
-  // initial state, call command begin API and make it ready to record.
-  // Otherwise, report error.
-  Result BeginIfNotInRecording();
+ private:
+  friend CommandBufferGuard;
 
+  Result BeginRecording();
   Result SubmitAndReset(uint32_t timeout_ms);
 
- private:
+  bool guarded_ = false;
+
   Device* device_ = nullptr;
   CommandPool* pool_ = nullptr;
   VkQueue queue_ = VK_NULL_HANDLE;
   VkCommandBuffer command_ = VK_NULL_HANDLE;
   VkFence fence_ = VK_NULL_HANDLE;
-  CommandBufferState state_ = CommandBufferState::kInitial;
+};
+
+class CommandBufferGuard {
+ public:
+  CommandBufferGuard(CommandBuffer* buffer);
+  ~CommandBufferGuard();
+
+  bool IsRecording() const { return result_.IsSuccess(); }
+  Result GetResult() { return result_; }
+
+  Result Submit(uint32_t timeout_ms);
+
+ private:
+  bool submitted_ = false;
+  Result result_;
+  CommandBuffer* buffer_;
 };
 
 }  // namespace vulkan

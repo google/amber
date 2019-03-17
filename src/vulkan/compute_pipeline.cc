@@ -90,23 +90,25 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
   if (!r.IsSuccess())
     return r;
 
-  r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
+  {
+    CommandBufferGuard guard(GetCommandBuffer());
+    if (!guard.IsRecording())
+      return guard.GetResult();
 
-  BindVkDescriptorSets(pipeline_layout);
+    BindVkDescriptorSets(pipeline_layout);
 
-  r = RecordPushConstant(pipeline_layout);
-  if (!r.IsSuccess())
-    return r;
+    r = RecordPushConstant(pipeline_layout);
+    if (!r.IsSuccess())
+      return r;
 
-  device_->GetPtrs()->vkCmdBindPipeline(
-      command_->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
-  device_->GetPtrs()->vkCmdDispatch(command_->GetVkCommandBuffer(), x, y, z);
+    device_->GetPtrs()->vkCmdBindPipeline(
+        command_->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+    device_->GetPtrs()->vkCmdDispatch(command_->GetVkCommandBuffer(), x, y, z);
 
-  r = command_->SubmitAndReset(GetFenceTimeout());
-  if (!r.IsSuccess())
-    return r;
+    r = guard.Submit(GetFenceTimeout());
+    if (!r.IsSuccess())
+      return r;
+  }
 
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())

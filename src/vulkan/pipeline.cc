@@ -68,10 +68,7 @@ Result Pipeline::Initialize(CommandPool* pool, VkQueue queue) {
 }
 
 void Pipeline::Shutdown() {
-  if (command_) {
-    command_->SubmitAndReset(fence_timeout_ms_);
-    command_ = nullptr;
-  }
+  command_ = nullptr;
 
   for (auto& info : descriptor_set_info_) {
     if (info.layout != VK_NULL_HANDLE) {
@@ -321,44 +318,42 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
 }
 
 Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
+  {
+    CommandBufferGuard guard(GetCommandBuffer());
+    if (!guard.IsRecording())
+      return guard.GetResult();
+
+    for (auto& info : descriptor_set_info_) {
+      for (auto& desc : info.descriptors_) {
+        Result r = desc->CreateResourceIfNeeded(memory_properties_);
+        if (!r.IsSuccess())
+          return r;
+      }
+    }
+
+    // Note that if a buffer for a descriptor is host accessible and
+    // does not need to record a command to copy data to device, it
+    // directly writes data to the buffer. The direct write must be
+    // done after resizing backed buffer i.e., copying data to the new
+    // buffer from the old one. Thus, we must submit commands here to
+    // guarantee this.
+    Result r = guard.Submit(GetFenceTimeout());
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  CommandBufferGuard guard(GetCommandBuffer());
+  if (!guard.IsRecording())
+    return guard.GetResult();
 
   for (auto& info : descriptor_set_info_) {
     for (auto& desc : info.descriptors_) {
-      r = desc->CreateResourceIfNeeded(memory_properties_);
+      Result r = desc->RecordCopyDataToResourceIfNeeded(command_.get());
       if (!r.IsSuccess())
         return r;
     }
   }
-
-  // Note that if a buffer for a descriptor is host accessible and
-  // does not need to record a command to copy data to device, it
-  // directly writes data to the buffer. The direct write must be
-  // done after resizing backed buffer i.e., copying data to the new
-  // buffer from the old one. Thus, we must submit commands here to
-  // guarantee this.
-  r = command_->SubmitAndReset(GetFenceTimeout());
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  for (auto& info : descriptor_set_info_) {
-    for (auto& desc : info.descriptors_) {
-      r = desc->RecordCopyDataToResourceIfNeeded(command_.get());
-      if (!r.IsSuccess())
-        return r;
-    }
-  }
-
-  r = command_->SubmitAndReset(GetFenceTimeout());
-  if (!r.IsSuccess())
-    return r;
-  return {};
+  return guard.Submit(GetFenceTimeout());
 }
 
 void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
@@ -376,25 +371,27 @@ void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
 }
 
 Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
+  {
+    CommandBufferGuard guard(GetCommandBuffer());
+    if (!guard.IsRecording())
+      return guard.GetResult();
 
-  for (auto& desc_set : descriptor_set_info_) {
-    for (auto& desc : desc_set.descriptors_) {
-      r = desc->RecordCopyDataToHost(command_.get());
-      if (!r.IsSuccess())
-        return r;
+    for (auto& desc_set : descriptor_set_info_) {
+      for (auto& desc : desc_set.descriptors_) {
+        Result r = desc->RecordCopyDataToHost(command_.get());
+        if (!r.IsSuccess())
+          return r;
+      }
     }
+
+    Result r = guard.Submit(GetFenceTimeout());
+    if (!r.IsSuccess())
+      return r;
   }
 
-  r = command_->SubmitAndReset(GetFenceTimeout());
-  if (!r.IsSuccess())
-    return r;
-
   for (auto& desc_set : descriptor_set_info_) {
     for (auto& desc : desc_set.descriptors_) {
-      r = desc->MoveResourceToBufferOutput();
+      Result r = desc->MoveResourceToBufferOutput();
       if (!r.IsSuccess())
         return r;
     }
