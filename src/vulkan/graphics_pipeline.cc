@@ -844,6 +844,8 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
 
   VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
   r = CreateVkPipelineLayout(&pipeline_layout);
+  if (!r.IsSuccess())
+    return r;
 
   VkPipeline pipeline = VK_NULL_HANDLE;
   r = CreateVkGraphicsPipeline(command->GetPipelineData(),
