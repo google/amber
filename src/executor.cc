@@ -72,14 +72,11 @@ Result Executor::Execute(Engine* engine,
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
     if (cmd->IsProbe()) {
-      r = engine->DoProcessCommands(cmd->GetPipeline());
-      if (!r.IsSuccess())
-        return r;
-
       assert(cmd->AsProbe()->GetBuffer()->IsFormatBuffer());
 
       auto* buffer = cmd->AsProbe()->GetBuffer()->AsFormatBuffer();
-      assert(buffer->GetMemPtr() != nullptr);
+      assert(buffer);
+      assert(buffer->GetMemPtr());
 
       r = verifier_.Probe(cmd->AsProbe(), &buffer->GetFormat(),
                           buffer->GetTexelStride(), buffer->GetRowStride(),
@@ -88,18 +85,9 @@ Result Executor::Execute(Engine* engine,
     } else if (cmd->IsProbeSSBO()) {
       auto probe_ssbo = cmd->AsProbeSSBO();
 
-      const auto* buffer = cmd->GetPipeline()->GetBufferForBinding(
-          probe_ssbo->GetDescriptorSet(), probe_ssbo->GetBinding());
-      if (!buffer) {
-        return Result("unable to find buffer at descriptor set " +
-                      std::to_string(probe_ssbo->GetDescriptorSet()) +
-                      " and binding " +
-                      std::to_string(probe_ssbo->GetBinding()));
-      }
-
-      r = engine->DoProcessCommands(cmd->GetPipeline());
-      if (!r.IsSuccess())
-        return r;
+      const auto* buffer = cmd->AsProbe()->GetBuffer();
+      assert(buffer);
+      assert(buffer->GetMemPtr());
 
       r = verifier_.ProbeSSBO(probe_ssbo, buffer->GetSize(),
                               buffer->GetMemPtr());

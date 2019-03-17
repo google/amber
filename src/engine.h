@@ -93,10 +93,6 @@ class Engine {
   /// This covers both Vulkan buffers and images.
   virtual Result DoBuffer(const BufferCommand* cmd) = 0;
 
-  /// Run all queued commands and copy frame buffer data to the host
-  /// if graphics pipeline.
-  virtual Result DoProcessCommands(amber::Pipeline* pipeline) = 0;
-
   /// Copy the content of the framebuffer into |values|, each value is a pixel
   /// in R8G8B8A8 format.
   virtual Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) = 0;

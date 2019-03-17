@@ -205,23 +205,24 @@ class Probe : public Command {
 
   ~Probe() override;
 
+  Buffer* GetBuffer() const { return buffer_; }
+
   bool HasTolerances() const { return !tolerances_.empty(); }
   void SetTolerances(const std::vector<Tolerance>& t) { tolerances_ = t; }
   const std::vector<Tolerance>& GetTolerances() const { return tolerances_; }
 
  protected:
-  explicit Probe(Type type, Pipeline* pipeline);
+  explicit Probe(Type type, Buffer* buffer);
 
  private:
+  Buffer* buffer_;
   std::vector<Tolerance> tolerances_;
 };
 
 class ProbeCommand : public Probe {
  public:
-  explicit ProbeCommand(Pipeline* pipeline, Buffer* buffer);
+  explicit ProbeCommand(Buffer* buffer);
   ~ProbeCommand() override;
-
-  Buffer* GetBuffer() const { return buffer_; }
 
   void SetWholeWindow() { is_whole_window_ = true; }
   bool IsWholeWindow() const { return is_whole_window_; }
@@ -265,8 +266,6 @@ class ProbeCommand : public Probe {
     kRGBA,
   };
 
-  Buffer* buffer_;
-
   bool is_whole_window_ = false;
   bool is_probe_rect_ = false;
   bool is_relative_ = false;
@@ -295,7 +294,7 @@ class ProbeSSBOCommand : public Probe {
     kGreaterOrEqual
   };
 
-  explicit ProbeSSBOCommand(Pipeline* pipeline);
+  explicit ProbeSSBOCommand(Buffer* buffer);
   ~ProbeSSBOCommand() override;
 
   void SetComparator(Comparator comp) { comparator_ = comp; }

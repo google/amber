@@ -403,10 +403,6 @@ Result EngineVulkan::DoPatchParameterVertices(
   return {};
 }
 
-Result EngineVulkan::DoProcessCommands(amber::Pipeline* pipeline) {
-  return pipeline_map_[pipeline].vk_pipeline->ProcessCommands();
-}
-
 Result EngineVulkan::GetFrameBuffer(Buffer* buffer,
                                     std::vector<Value>* values) {
   values->resize(0);

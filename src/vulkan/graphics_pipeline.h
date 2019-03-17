@@ -77,7 +77,6 @@ class GraphicsPipeline : public Pipeline {
 
   // Pipeline
   void Shutdown() override;
-  Result ProcessCommands() override;
 
  private:
   enum class RenderPassState : uint8_t {
