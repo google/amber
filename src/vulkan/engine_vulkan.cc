@@ -405,7 +405,7 @@ Result EngineVulkan::DoPatchParameterVertices(
 
 Result EngineVulkan::GetFrameBuffer(Buffer* buffer,
                                     std::vector<Value>* values) {
-  values->resize(0);
+  values->clear();
 
   // TODO(jaebaek): Support other formats
   if (buffer->AsFormatBuffer()->GetFormat().GetFormatType() !=
@@ -414,12 +414,16 @@ Result EngineVulkan::GetFrameBuffer(Buffer* buffer,
   }
 
   const uint8_t* cpu_memory = static_cast<const uint8_t*>(buffer->GetMemPtr());
+  if (!cpu_memory)
+    return Result("Vulkan::GetFrameBuffer missing memory pointer");
+
   const auto texel_stride = buffer->AsFormatBuffer()->GetTexelStride();
   const auto row_stride = buffer->AsFormatBuffer()->GetRowStride();
 
-  Value pixel;
   for (uint32_t y = 0; y < buffer->GetHeight(); ++y) {
     for (uint32_t x = 0; x < buffer->GetWidth(); ++x) {
+      Value pixel;
+
       const uint8_t* ptr_8 = cpu_memory + (row_stride * y) + (texel_stride * x);
       const uint32_t* ptr_32 = reinterpret_cast<const uint32_t*>(ptr_8);
       pixel.SetIntValue(*ptr_32);

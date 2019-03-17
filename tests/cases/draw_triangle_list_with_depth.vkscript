@@ -13,7 +13,7 @@
 # limitations under the License.
 
 [require]
-depthstencil D24_UNORM_S8_UINT
+depthstencil D32_SFLOAT_S8_UINT
 
 [vertex shader]
 #version 430

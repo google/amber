@@ -107,7 +107,7 @@ Result TransferImage::Initialize(VkImageUsageFlags usage) {
 
   // For images, we always make a secondary buffer. When the tiling of an image
   // is optimal, read/write data from CPU does not show correct values. We need
-  // a secondary buffer to convert the GPU-optimial data to CPU-readable data
+  // a secondary buffer to convert the GPU-optimal data to CPU-readable data
   // and vice versa.
   r = CreateVkBuffer(
       &host_accessible_buffer_,
