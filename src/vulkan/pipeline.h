@@ -62,11 +62,6 @@ class Pipeline {
     entry_points_[stage] = entry;
   }
 
-  // End recording command buffer if it is in recording state. This
-  // method also submits commands in the command buffer and reset
-  // the command buffer.
-  Result ProcessCommands();
-
   CommandBuffer* GetCommandBuffer() const { return command_.get(); }
   Device* GetDevice() const { return device_; }
 

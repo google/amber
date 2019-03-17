@@ -355,6 +355,9 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     }
   }
 
+  r = command_->SubmitAndReset(GetFenceTimeout());
+  if (!r.IsSuccess())
+    return r;
   return {};
 }
 
@@ -406,14 +409,6 @@ const char* Pipeline::GetEntryPointName(VkShaderStageFlagBits stage) const {
     return it->second.c_str();
 
   return kDefaultEntryPointName;
-}
-
-Result Pipeline::ProcessCommands() {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  return command_->SubmitAndReset(GetFenceTimeout());
 }
 
 }  // namespace vulkan
