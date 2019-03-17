@@ -74,20 +74,12 @@ Result CommandBuffer::BeginIfNotInRecording() {
   return {};
 }
 
-Result CommandBuffer::End() {
+Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (state_ != CommandBufferState::kRecording)
     return Result("Vulkan::End CommandBuffer from Not Valid State");
 
   if (device_->GetPtrs()->vkEndCommandBuffer(command_) != VK_SUCCESS)
     return Result("Vulkan::Calling vkEndCommandBuffer Fail");
-
-  state_ = CommandBufferState::kExecutable;
-  return {};
-}
-
-Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
-  if (state_ != CommandBufferState::kExecutable)
-    return Result("Vulkan::Submit CommandBuffer from Not Valid State");
 
   if (device_->GetPtrs()->vkResetFences(device_->GetDevice(), 1, &fence_) !=
       VK_SUCCESS) {

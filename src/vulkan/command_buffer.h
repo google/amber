@@ -47,7 +47,6 @@ class CommandBuffer {
   // Otherwise, report error.
   Result BeginIfNotInRecording();
 
-  Result End();
   Result SubmitAndReset(uint32_t timeout_ms);
 
  private:
