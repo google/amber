@@ -18,8 +18,7 @@
 
 namespace amber {
 
-Command::Command(Type type)
-    : command_type_(type) {}
+Command::Command(Type type) : command_type_(type) {}
 
 Command::~Command() = default;
 
