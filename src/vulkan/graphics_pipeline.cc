@@ -346,6 +346,41 @@ VkBlendOp ToVkBlendOp(BlendOp op) {
   return VK_BLEND_OP_ADD;
 }
 
+class RenderPassGuard {
+ public:
+  RenderPassGuard(GraphicsPipeline* pipeline) : pipeline_(pipeline) {
+    auto* frame = pipeline->GetFrame();
+    auto* cmd = pipeline->GetCommandBuffer();
+    result_ = frame->ChangeFrameImageLayout(cmd, FrameImageState::kClearOrDraw);
+    if (!result_.IsSuccess())
+      return;
+
+    VkRenderPassBeginInfo render_begin_info = VkRenderPassBeginInfo();
+    render_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    render_begin_info.renderPass = pipeline->GetRenderPass();
+    render_begin_info.framebuffer = frame->GetFrameBuffer();
+    render_begin_info.renderArea = {{0, 0},
+                                    {frame->GetWidth(), frame->GetHeight()}};
+    pipeline->GetDevice()->GetPtrs()->vkCmdBeginRenderPass(
+        cmd->GetVkCommandBuffer(), &render_begin_info,
+        VK_SUBPASS_CONTENTS_INLINE);
+  }
+
+  bool IsActive() const { return result_.IsSuccess(); }
+  Result GetResult() const { return result_; }
+
+  ~RenderPassGuard() {
+    if (result_.IsSuccess()) {
+      pipeline_->GetDevice()->GetPtrs()->vkCmdEndRenderPass(
+          pipeline_->GetCommandBuffer()->GetVkCommandBuffer());
+    }
+  }
+
+ private:
+  Result result_;
+  GraphicsPipeline* pipeline_;
+};
+
 }  // namespace
 
 GraphicsPipeline::GraphicsPipeline(
@@ -673,16 +708,8 @@ Result GraphicsPipeline::Initialize(uint32_t width,
 
 Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
     VertexBuffer* vertex_buffer) {
-  if (!vertex_buffer)
+  if (!vertex_buffer || vertex_buffer->VertexDataSent())
     return {};
-
-  if (vertex_buffer->VertexDataSent())
-    return {};
-
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
   return vertex_buffer->SendVertexData(command_.get(), memory_properties_);
 }
 
@@ -708,35 +735,6 @@ Result GraphicsPipeline::SetIndexBuffer(const std::vector<Value>& values) {
     return r;
 
   return command_->SubmitAndReset(GetFenceTimeout());
-}
-
-Result GraphicsPipeline::ActivateRenderPassIfNeeded() {
-  if (render_pass_state_ == RenderPassState::kActive)
-    return {};
-
-  Result r = frame_->ChangeFrameImageLayout(command_.get(),
-                                            FrameImageState::kClearOrDraw);
-  if (!r.IsSuccess())
-    return r;
-
-  VkRenderPassBeginInfo render_begin_info = VkRenderPassBeginInfo();
-  render_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  render_begin_info.renderPass = render_pass_;
-  render_begin_info.framebuffer = frame_->GetFrameBuffer();
-  render_begin_info.renderArea = {{0, 0}, {frame_width_, frame_height_}};
-  device_->GetPtrs()->vkCmdBeginRenderPass(command_->GetCommandBuffer(),
-                                           &render_begin_info,
-                                           VK_SUBPASS_CONTENTS_INLINE);
-  render_pass_state_ = RenderPassState::kActive;
-  return {};
-}
-
-void GraphicsPipeline::DeactivateRenderPassIfNeeded() {
-  if (render_pass_state_ == RenderPassState::kInactive)
-    return;
-
-  device_->GetPtrs()->vkCmdEndRenderPass(command_->GetCommandBuffer());
-  render_pass_state_ = RenderPassState::kInactive;
 }
 
 Result GraphicsPipeline::SetClearColor(float r, float g, float b, float a) {
@@ -796,24 +794,24 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   if (!r.IsSuccess())
     return r;
 
-  r = ActivateRenderPassIfNeeded();
-  if (!r.IsSuccess())
-    return r;
+  {
+    RenderPassGuard guard(this);
+    if (!guard.IsActive())
+      return guard.GetResult();
 
-  VkClearAttachment clear_attachment = VkClearAttachment();
-  clear_attachment.aspectMask = aspect;
-  clear_attachment.colorAttachment = 0;
-  clear_attachment.clearValue = clear_value;
+    VkClearAttachment clear_attachment = VkClearAttachment();
+    clear_attachment.aspectMask = aspect;
+    clear_attachment.colorAttachment = 0;
+    clear_attachment.clearValue = clear_value;
 
-  VkClearRect clear_rect;
-  clear_rect.rect = {{0, 0}, {frame_width_, frame_height_}};
-  clear_rect.baseArrayLayer = 0;
-  clear_rect.layerCount = 1;
+    VkClearRect clear_rect;
+    clear_rect.rect = {{0, 0}, {frame_width_, frame_height_}};
+    clear_rect.baseArrayLayer = 0;
+    clear_rect.layerCount = 1;
 
-  device_->GetPtrs()->vkCmdClearAttachments(command_->GetCommandBuffer(), 1,
-                                            &clear_attachment, 1, &clear_rect);
-
-  DeactivateRenderPassIfNeeded();
+    device_->GetPtrs()->vkCmdClearAttachments(
+        command_->GetVkCommandBuffer(), 1, &clear_attachment, 1, &clear_rect);
+  }
 
   r = frame_->CopyColorImagesToHost(command_.get());
   if (!r.IsSuccess())
@@ -875,51 +873,53 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  r = ActivateRenderPassIfNeeded();
-  if (!r.IsSuccess())
-    return r;
+  {
+    RenderPassGuard guard(this);
+    if (!guard.IsActive())
+      return guard.GetResult();
 
-  BindVkDescriptorSets(pipeline_layout);
+    BindVkDescriptorSets(pipeline_layout);
 
-  r = RecordPushConstant(pipeline_layout);
-  if (!r.IsSuccess())
-    return r;
-
-  device_->GetPtrs()->vkCmdBindPipeline(
-      command_->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-
-  if (vertex_buffer != nullptr)
-    vertex_buffer->BindToCommandBuffer(command_.get());
-
-  uint32_t instance_count = command->GetInstanceCount();
-  if (instance_count == 0 && command->GetVertexCount() != 0)
-    instance_count = 1;
-
-  if (command->IsIndexed()) {
-    if (!index_buffer_)
-      return Result("Vulkan: Draw indexed is used without given indices");
-
-    r = index_buffer_->BindToCommandBuffer(command_.get());
+    r = RecordPushConstant(pipeline_layout);
     if (!r.IsSuccess())
       return r;
 
-    // VkRunner spec says
-    //   "vertexCount will be used as the index count, firstVertex
-    //    becomes the vertex offset and firstIndex will always be zero."
-    device_->GetPtrs()->vkCmdDrawIndexed(
-        command_->GetCommandBuffer(),
-        command->GetVertexCount(), /* indexCount */
-        instance_count,            /* instanceCount */
-        0,                         /* firstIndex */
-        static_cast<int32_t>(command->GetFirstVertexIndex()), /* vertexOffset */
-        0 /* firstInstance */);
-  } else {
-    device_->GetPtrs()->vkCmdDraw(command_->GetCommandBuffer(),
-                                  command->GetVertexCount(), instance_count,
-                                  command->GetFirstVertexIndex(), 0);
-  }
+    device_->GetPtrs()->vkCmdBindPipeline(command_->GetVkCommandBuffer(),
+                                          VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                          pipeline);
 
-  DeactivateRenderPassIfNeeded();
+    if (vertex_buffer != nullptr)
+      vertex_buffer->BindToCommandBuffer(command_.get());
+
+    uint32_t instance_count = command->GetInstanceCount();
+    if (instance_count == 0 && command->GetVertexCount() != 0)
+      instance_count = 1;
+
+    if (command->IsIndexed()) {
+      if (!index_buffer_)
+        return Result("Vulkan: Draw indexed is used without given indices");
+
+      r = index_buffer_->BindToCommandBuffer(command_.get());
+      if (!r.IsSuccess())
+        return r;
+
+      // VkRunner spec says
+      //   "vertexCount will be used as the index count, firstVertex
+      //    becomes the vertex offset and firstIndex will always be zero."
+      device_->GetPtrs()->vkCmdDrawIndexed(
+          command_->GetVkCommandBuffer(),
+          command->GetVertexCount(), /* indexCount */
+          instance_count,            /* instanceCount */
+          0,                         /* firstIndex */
+          static_cast<int32_t>(
+              command->GetFirstVertexIndex()), /* vertexOffset */
+          0 /* firstInstance */);
+    } else {
+      device_->GetPtrs()->vkCmdDraw(command_->GetVkCommandBuffer(),
+                                    command->GetVertexCount(), instance_count,
+                                    command->GetFirstVertexIndex(), 0);
+    }
+  }
 
   r = frame_->CopyColorImagesToHost(command_.get());
   if (!r.IsSuccess())

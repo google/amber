@@ -250,7 +250,7 @@ void Resource::MemoryBarrier(CommandBuffer* command) {
   // ReadOnly Descriptors          host w         shader r
   //                           transfer w       transfer r
   device_->GetPtrs()->vkCmdPipelineBarrier(
-      command->GetCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+      command->GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1, &kMemoryBarrierForAll, 0,
       nullptr, 0, nullptr);
 }

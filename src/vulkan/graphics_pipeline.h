@@ -49,6 +49,9 @@ class GraphicsPipeline : public Pipeline {
       const std::vector<VkPipelineShaderStageCreateInfo>&);
   ~GraphicsPipeline() override;
 
+  // Pipeline
+  void Shutdown() override;
+
   Result Initialize(uint32_t width,
                     uint32_t height,
                     CommandPool* pool,
@@ -66,7 +69,8 @@ class GraphicsPipeline : public Pipeline {
 
   Result Draw(const DrawArraysCommand* command, VertexBuffer* vertex_buffer);
 
-  const FrameBuffer* GetFrame() const { return frame_.get(); }
+  VkRenderPass GetRenderPass() const { return render_pass_; }
+  FrameBuffer* GetFrame() const { return frame_.get(); }
 
   uint32_t GetWidth() const { return frame_width_; }
   uint32_t GetHeight() const { return frame_height_; }
@@ -75,15 +79,7 @@ class GraphicsPipeline : public Pipeline {
     patch_control_points_ = points;
   }
 
-  // Pipeline
-  void Shutdown() override;
-
- private:
-  enum class RenderPassState : uint8_t {
-    kActive = 0,
-    kInactive,
-  };
-
+private:
   Result CreateVkGraphicsPipeline(const PipelineData* pipeline_data,
                                   VkPrimitiveTopology topology,
                                   const VertexBuffer* vertex_buffer,
@@ -91,8 +87,6 @@ class GraphicsPipeline : public Pipeline {
                                   VkPipeline* pipeline);
 
   Result CreateRenderPass();
-  Result ActivateRenderPassIfNeeded();
-  void DeactivateRenderPassIfNeeded();
 
   Result SendVertexBufferDataIfNeeded(VertexBuffer* vertex_buffer);
 
@@ -110,7 +104,6 @@ class GraphicsPipeline : public Pipeline {
       const PipelineData* pipeline_data);
 
   VkRenderPass render_pass_ = VK_NULL_HANDLE;
-  RenderPassState render_pass_state_ = RenderPassState::kInactive;
 
   std::unique_ptr<FrameBuffer> frame_;
 

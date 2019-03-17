@@ -175,8 +175,9 @@ Result TransferImage::CopyToHost(CommandBuffer* command) {
                              image_info_.extent.height, 1};
 
   device_->GetPtrs()->vkCmdCopyImageToBuffer(
-      command->GetCommandBuffer(), image_, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      host_accessible_buffer_, 1, &copy_region);
+      command->GetVkCommandBuffer(), image_,
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, host_accessible_buffer_, 1,
+      &copy_region);
 
   MemoryBarrier(command);
   return {};
@@ -257,8 +258,9 @@ void TransferImage::ChangeLayout(CommandBuffer* command,
       break;
   }
 
-  device_->GetPtrs()->vkCmdPipelineBarrier(
-      command->GetCommandBuffer(), from, to, 0, 0, NULL, 0, NULL, 1, &barrier);
+  device_->GetPtrs()->vkCmdPipelineBarrier(command->GetVkCommandBuffer(), from,
+                                           to, 0, 0, NULL, 0, NULL, 1,
+                                           &barrier);
 }
 
 Result TransferImage::AllocateAndBindMemoryToVkImage(

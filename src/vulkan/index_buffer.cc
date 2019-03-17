@@ -63,7 +63,7 @@ Result IndexBuffer::BindToCommandBuffer(CommandBuffer* command) {
         "IndexBuffer::BindToCommandBuffer |transfer_buffer_| is nullptr");
   }
 
-  device_->GetPtrs()->vkCmdBindIndexBuffer(command->GetCommandBuffer(),
+  device_->GetPtrs()->vkCmdBindIndexBuffer(command->GetVkCommandBuffer(),
                                            transfer_buffer_->GetVkBuffer(), 0,
                                            VK_INDEX_TYPE_UINT32);
   return {};

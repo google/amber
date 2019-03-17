@@ -265,8 +265,8 @@ void VertexBuffer::BindToCommandBuffer(CommandBuffer* command) {
   const VkDeviceSize offset = 0;
   const VkBuffer buffer = transfer_buffer_->GetVkBuffer();
   // TODO(jaebaek): Support multiple binding
-  device_->GetPtrs()->vkCmdBindVertexBuffers(command->GetCommandBuffer(), 0, 1,
-                                             &buffer, &offset);
+  device_->GetPtrs()->vkCmdBindVertexBuffers(command->GetVkCommandBuffer(), 0,
+                                             1, &buffer, &offset);
 }
 
 Result VertexBuffer::SendVertexData(
