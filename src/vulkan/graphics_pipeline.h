@@ -79,7 +79,7 @@ class GraphicsPipeline : public Pipeline {
     patch_control_points_ = points;
   }
 
-private:
+ private:
   Result CreateVkGraphicsPipeline(const PipelineData* pipeline_data,
                                   VkPrimitiveTopology topology,
                                   const VertexBuffer* vertex_buffer,
