@@ -19,6 +19,7 @@
 #include <cstring>
 #include <iostream>
 #include <set>
+#include <sstream>
 
 #include "samples/log.h"
 
@@ -727,12 +728,11 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
 
         if (feature == kVariablePointers &&
             var_ptrs.variablePointers != VK_TRUE) {
-          return amber::Result("Missing variable pointers feature");
+          continue;
         }
         if (feature == kVariablePointersStorageBuffer &&
             var_ptrs.variablePointersStorageBuffer != VK_TRUE) {
-          return amber::Result(
-              "Missing variable pointers storage buffer feature");
+          continue;
         }
       }
 
@@ -768,7 +768,14 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
     }
   }
 
-  return amber::Result("Vulkan::No physical device supports Vulkan");
+  std::ostringstream out;
+  out << "Unable to find Vulkan device supporting:" << std::endl;
+  for (const auto& str : required_features)
+    out << "  " << str << std::endl;
+  for (const auto& str : required_extensions)
+    out << "  " << str << std::endl;
+
+  return amber::Result(out.str());
 }
 
 amber::Result ConfigHelperVulkan::CreateVulkanDevice(
