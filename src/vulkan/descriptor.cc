@@ -81,8 +81,8 @@ Result Descriptor::UpdateDescriptorSetForBuffer(
 }
 
 void Descriptor::UpdateVkDescriptorSet(const VkWriteDescriptorSet& write) {
-  device_->GetPtrs()->vkUpdateDescriptorSets(device_->GetDevice(), 1, &write, 0,
-                                             nullptr);
+  device_->GetPtrs()->vkUpdateDescriptorSets(device_->GetVkDevice(), 1, &write,
+                                             0, nullptr);
   is_descriptor_set_update_needed_ = false;
 }
 

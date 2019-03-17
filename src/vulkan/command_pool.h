@@ -29,7 +29,7 @@ class CommandPool {
   ~CommandPool();
 
   Result Initialize(uint32_t queue_family_index);
-  VkCommandPool GetCommandPool() const { return pool_; }
+  VkCommandPool GetVkCommandPool() const { return pool_; }
 
  private:
   Device* device_ = nullptr;

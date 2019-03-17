@@ -68,7 +68,7 @@ class EngineVulkan : public Engine {
         shaders;
   };
 
-  std::vector<VkPipelineShaderStageCreateInfo> GetShaderStageInfo(
+  std::vector<VkPipelineShaderStageCreateInfo> GetVkShaderStageInfo(
       amber::Pipeline* pipeline);
   bool IsFormatSupportedByPhysicalDevice(BufferType type,
                                          VkPhysicalDevice physical_device,

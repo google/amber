@@ -39,7 +39,7 @@ FrameBuffer::FrameBuffer(
 
 FrameBuffer::~FrameBuffer() {
   if (frame_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyFramebuffer(device_->GetDevice(), frame_,
+    device_->GetPtrs()->vkDestroyFramebuffer(device_->GetVkDevice(), frame_,
                                              nullptr);
   }
 }
@@ -108,7 +108,7 @@ Result FrameBuffer::Initialize(
   frame_buffer_info.height = height_;
   frame_buffer_info.layers = 1;
 
-  if (device_->GetPtrs()->vkCreateFramebuffer(device_->GetDevice(),
+  if (device_->GetPtrs()->vkCreateFramebuffer(device_->GetVkDevice(),
                                               &frame_buffer_info, nullptr,
                                               &frame_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateFramebuffer Fail");

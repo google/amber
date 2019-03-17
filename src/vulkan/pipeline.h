@@ -87,7 +87,7 @@ class Pipeline {
   // Record a Vulkan command for push contant.
   Result RecordPushConstant(const VkPipelineLayout& pipeline_layout);
 
-  const std::vector<VkPipelineShaderStageCreateInfo>& GetShaderStageInfo()
+  const std::vector<VkPipelineShaderStageCreateInfo>& GetVkShaderStageInfo()
       const {
     return shader_stage_info_;
   }
