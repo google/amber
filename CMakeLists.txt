@@ -86,8 +86,9 @@ endif()
 
 if (NOT ANDROID)
   include(src/dawn/find_dawn.cmake)
-  include(src/vulkan/find_vulkan.cmake)
 endif()
+
+include(src/vulkan/find_vulkan.cmake)
 
 add_definitions(-DAMBER_CTS_VULKAN_HEADER=$<BOOL:${VULKAN_CTS_HEADER}>)
 add_definitions(-DAMBER_ENGINE_VULKAN=$<BOOL:${Vulkan_FOUND}>)
