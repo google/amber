@@ -348,7 +348,7 @@ VkBlendOp ToVkBlendOp(BlendOp op) {
 
 class RenderPassGuard {
  public:
-  RenderPassGuard(GraphicsPipeline* pipeline) : pipeline_(pipeline) {
+  explicit RenderPassGuard(GraphicsPipeline* pipeline) : pipeline_(pipeline) {
     auto* frame = pipeline->GetFrame();
     auto* cmd = pipeline->GetCommandBuffer();
     result_ = frame->ChangeFrameImageLayout(cmd, FrameImageState::kClearOrDraw);
