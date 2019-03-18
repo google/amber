@@ -46,13 +46,13 @@ unsigned char byte3(uint32_t word) {
 
 }  // namespace
 
-std::pair<amber::Result, std::string> ConvertToPNG(
-    uint32_t width,
-    uint32_t height,
-    const std::vector<amber::Value>& values) {
+amber::Result ConvertToPNG(uint32_t width,
+                           uint32_t height,
+                           const std::vector<amber::Value>& values,
+                           std::vector<uint8_t>* buffer) {
   assert(values.size() == width * height);
 
-  std::vector<unsigned char> data;
+  std::vector<uint8_t> data;
 
   // Prepare data as lodepng expects it
   for (amber::Value value : values) {
@@ -63,7 +63,6 @@ std::pair<amber::Result, std::string> ConvertToPNG(
     data.push_back(byte3(pixel));  // A
   }
 
-  std::vector<unsigned char> png;
   lodepng::State state;
 
   // Force RGBA color type, otherwise many PNG decoders will ignore the alpha
@@ -74,13 +73,10 @@ std::pair<amber::Result, std::string> ConvertToPNG(
   state.info_png.color.colortype = LodePNGColorType::LCT_RGBA;
   state.info_png.color.bitdepth = 8;
 
-  unsigned error = lodepng::encode(png, data, width, height, state);
-  if (error) {
-    return std::make_pair(amber::Result("lodepng::encode() returned non-zero"),
-                          nullptr);
-  }
+  if (lodepng::encode(*buffer, data, width, height, state) != 0)
+    return amber::Result("lodepng::encode() returned non-zero");
 
-  return std::make_pair(amber::Result(), std::string(png.begin(), png.end()));
+  return {};
 }
 
 }  // namespace png

@@ -394,7 +394,7 @@ int main(int argc, const char** argv) {
     }
 
     if (!options.image_filename.empty()) {
-      std::string image;
+      std::vector<uint8_t> out_buf;
 
       auto pos = options.image_filename.find_last_of('.');
       bool usePNG = pos != std::string::npos &&
@@ -402,11 +402,12 @@ int main(int argc, const char** argv) {
       for (amber::BufferInfo buffer_info : amber_options.extractions) {
         if (buffer_info.buffer_name == "framebuffer") {
           if (usePNG) {
-            std::tie(result, image) = png::ConvertToPNG(
-                buffer_info.width, buffer_info.height, buffer_info.values);
+            result = png::ConvertToPNG(buffer_info.width, buffer_info.height,
+                                       buffer_info.values, &out_buf);
           } else {
-            std::tie(result, image) = ppm::ConvertToPPM(
-                buffer_info.width, buffer_info.height, buffer_info.values);
+            ppm::ConvertToPPM(buffer_info.width, buffer_info.height,
+                              buffer_info.values, &out_buf);
+            result = {};
           }
           break;
         }
@@ -420,7 +421,7 @@ int main(int argc, const char** argv) {
           std::cerr << options.image_filename << std::endl;
           continue;
         }
-        image_file << image;
+        image_file << std::string(out_buf.begin(), out_buf.end());
         image_file.close();
       } else {
         std::cerr << result.Error() << std::endl;
