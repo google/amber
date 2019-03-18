@@ -28,7 +28,15 @@ SUPPRESSIONS = {
     # No geometry shader on MoltenVK
     "draw_triangle_list_using_geom_shader.vkscript",
     # No tessellation shader on MoltenVK
-    "draw_triangle_list_using_tessellation.vkscript"
+    "draw_triangle_list_using_tessellation.vkscript",
+    # No std140 support for matrices in SPIRV-Cross
+    "compute_mat2x2.vkscript",
+    "compute_mat3x2.vkscript",
+    # Metal vertex shaders cannot simultaneously write to a buffer and return
+    # a value to the rasterizer rdar://48348476
+    # https://github.com/KhronosGroup/MoltenVK/issues/527
+    "multiple_ssbo_update_with_graphics_pipeline.vkscript",
+    "multiple_ubo_update_with_graphics_pipeline.vkscript"
   ]
 }
 
