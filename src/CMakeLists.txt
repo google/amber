@@ -91,6 +91,8 @@ if (${AMBER_ENABLE_TESTS})
     vkscript/datum_type_parser_test.cc
     vkscript/parser_test.cc
     vkscript/section_parser_test.cc
+    ../samples/ppm.cc
+    ../samples/ppm_test.cc
   )
 
   if (${Vulkan_FOUND})
