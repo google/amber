@@ -23,43 +23,45 @@ namespace ppm {
 
 namespace {
 
-char byte0(uint32_t word) {
-  return static_cast<char>(word);
+const uint32_t kMaximumColorValue = 255;
+
+uint8_t byte0(uint32_t word) {
+  return static_cast<uint8_t>(word & 0xff);
 }
 
-char byte1(uint32_t word) {
-  return static_cast<char>(word >> 8);
+uint8_t byte1(uint32_t word) {
+  return static_cast<uint8_t>((word >> 8) & 0xff);
 }
 
-char byte2(uint32_t word) {
-  return static_cast<char>(word >> 16);
+uint8_t byte2(uint32_t word) {
+  return static_cast<uint8_t>((word >> 16) & 0xff);
 }
 
 }  // namespace
 
-std::pair<amber::Result, std::string> ConvertToPPM(
-    uint32_t width,
-    uint32_t height,
-    const std::vector<amber::Value>& values) {
+void ConvertToPPM(uint32_t width,
+                  uint32_t height,
+                  const std::vector<amber::Value>& values,
+                  std::vector<uint8_t>* buffer) {
   assert(values.size() == width * height);
 
   // Write PPM header
-  const uint32_t maximum_color_value = 255;
   std::string image = "P6\n";
   image += std::to_string(width) + " " + std::to_string(height) + "\n";
-  image += std::to_string(maximum_color_value) + "\n";
+  image += std::to_string(kMaximumColorValue) + "\n";
+
+  for (char ch : image)
+    buffer->push_back(static_cast<uint8_t>(ch));
 
   // Write PPM data
   for (amber::Value value : values) {
     const uint32_t pixel = value.AsUint32();
     // We assume B8G8R8A8_UNORM here:
-    image.push_back(byte2(pixel));  // R
-    image.push_back(byte1(pixel));  // G
-    image.push_back(byte0(pixel));  // B
+    buffer->push_back(byte2(pixel));  // R
+    buffer->push_back(byte1(pixel));  // G
+    buffer->push_back(byte0(pixel));  // B
     // PPM does not support alpha channel
   }
-
-  return std::make_pair(amber::Result(), image);
 }
 
 }  // namespace ppm

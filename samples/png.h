@@ -26,10 +26,10 @@ namespace png {
 /// Converts the image of dimensions |width| and |height| and with pixels stored
 /// in row-major order in |values| with format B8G8R8A8 into PNG format,
 /// returning the PNG binary as a string.
-std::pair<amber::Result, std::string> ConvertToPNG(
-    uint32_t width,
-    uint32_t height,
-    const std::vector<amber::Value>& values);
+amber::Result ConvertToPNG(uint32_t width,
+                           uint32_t height,
+                           const std::vector<amber::Value>& values,
+                           std::vector<uint8_t>* buffer);
 
 }  // namespace png
 
