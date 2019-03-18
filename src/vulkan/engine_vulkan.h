@@ -58,7 +58,6 @@ class EngineVulkan : public Engine {
   Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) override;
   Result DoBuffer(const BufferCommand* cmd) override;
-  Result DoProcessCommands(amber::Pipeline* pipeline) override;
   Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) override;
 
  private:

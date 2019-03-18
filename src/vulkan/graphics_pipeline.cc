@@ -683,8 +683,6 @@ Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
   if (!r.IsSuccess())
     return r;
 
-  DeactivateRenderPassIfNeeded();
-
   return vertex_buffer->SendVertexData(command_.get(), memory_properties_);
 }
 
@@ -700,8 +698,6 @@ Result GraphicsPipeline::SetIndexBuffer(const std::vector<Value>& values) {
   Result r = command_->BeginIfNotInRecording();
   if (!r.IsSuccess())
     return r;
-
-  DeactivateRenderPassIfNeeded();
 
   r = index_buffer_->SendIndexData(command_.get(), memory_properties_, values);
   if (!r.IsSuccess())
@@ -819,7 +815,19 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
 
   DeactivateRenderPassIfNeeded();
 
-  return frame_->CopyColorImagesToHost(command_.get());
+  r = frame_->CopyColorImagesToHost(command_.get());
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->End();
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->SubmitAndReset(GetFenceTimeout());
+  if (!r.IsSuccess())
+    return r;
+
+  return {};
 }
 
 Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
@@ -827,8 +835,6 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   Result r = command_->BeginIfNotInRecording();
   if (!r.IsSuccess())
     return r;
-
-  DeactivateRenderPassIfNeeded();
 
   r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
@@ -919,6 +925,14 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
+  r = command_->End();
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->SubmitAndReset(GetFenceTimeout());
+  if (!r.IsSuccess())
+    return r;
+
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;
@@ -930,14 +944,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   return {};
 }
 
-Result GraphicsPipeline::ProcessCommands() {
-  DeactivateRenderPassIfNeeded();
-  return Pipeline::ProcessCommands();
-}
-
 void GraphicsPipeline::Shutdown() {
-  DeactivateRenderPassIfNeeded();
-
   index_buffer_ = nullptr;
   Pipeline::Shutdown();
   frame_ = nullptr;

@@ -116,6 +116,14 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
       command_->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
   device_->GetPtrs()->vkCmdDispatch(command_->GetCommandBuffer(), x, y, z);
 
+  r = command_->End();
+  if (!r.IsSuccess())
+    return r;
+
+  r = command_->SubmitAndReset(GetFenceTimeout());
+  if (!r.IsSuccess())
+    return r;
+
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;

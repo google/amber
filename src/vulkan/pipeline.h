@@ -65,7 +65,7 @@ class Pipeline {
   // End recording command buffer if it is in recording state. This
   // method also submits commands in the command buffer and reset
   // the command buffer.
-  virtual Result ProcessCommands();
+  Result ProcessCommands();
 
   virtual void Shutdown();
 

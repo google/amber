@@ -36,4 +36,4 @@ PIPELINE graphics my_pipeline
 END
 
 CLEAR my_pipeline
-EXPECT my_pipeline BUFFER img_buf IDX 0 0 SIZE 256 256 EQ_RGBA 0 0 0 0
+EXPECT img_buf IDX 0 0 SIZE 256 256 EQ_RGBA 0 0 0 0

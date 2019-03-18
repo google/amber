@@ -3831,6 +3831,7 @@ TEST_F(CommandParserTest, ToleranceWithCommas) {
 
 TEST_F(CommandParserTest, ProbeSSBOWithTolerance) {
   std::string data = R"(
+ssbo 3:6 2
 tolerance 2 3 4 5
 probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2)";
 
@@ -3841,10 +3842,10 @@ probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2)";
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsProbeSSBO());
+  ASSERT_EQ(2U, cmds.size());
+  ASSERT_TRUE(cmds[1]->IsProbeSSBO());
 
-  auto* cmd = cmds[0]->AsProbeSSBO();
+  auto* cmd = cmds[1]->AsProbeSSBO();
   ASSERT_TRUE(cmd->HasTolerances());
 
   auto& tolerances = cmd->GetTolerances();
@@ -3887,7 +3888,9 @@ probe all rgba 0.2 0.3 0.4 0.5)";
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithDescriptorSet) {
-  std::string data = "probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2";
+  std::string data = R"(
+ssbo 3:6 2
+probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2)";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3896,10 +3899,10 @@ TEST_F(CommandParserTest, ProbeSSBOWithDescriptorSet) {
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsProbeSSBO());
+  ASSERT_EQ(2U, cmds.size());
+  ASSERT_TRUE(cmds[1]->IsProbeSSBO());
 
-  auto* cmd = cmds[0]->AsProbeSSBO();
+  auto* cmd = cmds[1]->AsProbeSSBO();
   EXPECT_EQ(3U, cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(2U, cmd->GetOffset());
@@ -3920,7 +3923,9 @@ TEST_F(CommandParserTest, ProbeSSBOWithDescriptorSet) {
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithFloats) {
-  std::string data = "probe ssbo vec3 6 2 >= 2.3 4.2 1.2";
+  std::string data = R"(
+ssbo 6 2
+probe ssbo vec3 6 2 >= 2.3 4.2 1.2)";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3929,10 +3934,10 @@ TEST_F(CommandParserTest, ProbeSSBOWithFloats) {
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsProbeSSBO());
+  ASSERT_EQ(2U, cmds.size());
+  ASSERT_TRUE(cmds[1]->IsProbeSSBO());
 
-  auto* cmd = cmds[0]->AsProbeSSBO();
+  auto* cmd = cmds[1]->AsProbeSSBO();
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(2U, cmd->GetOffset());
@@ -3953,8 +3958,10 @@ TEST_F(CommandParserTest, ProbeSSBOWithFloats) {
 }
 
 TEST_F(CommandParserTest, MultiProbeSSBOWithFloats) {
-  std::string data =
-      "probe ssbo vec3 6 2 >= 2.3 4.2 1.2\nprobe ssbo vec3 6 2 >= 2.3 4.2 1.2";
+  std::string data = R"(
+ssbo 6 2
+probe ssbo vec3 6 2 >= 2.3 4.2 1.2
+probe ssbo vec3 6 2 >= 2.3 4.2 1.2)";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3963,10 +3970,10 @@ TEST_F(CommandParserTest, MultiProbeSSBOWithFloats) {
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
-  ASSERT_EQ(2U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsProbeSSBO());
+  ASSERT_EQ(3U, cmds.size());
+  ASSERT_TRUE(cmds[1]->IsProbeSSBO());
 
-  auto* cmd = cmds[0]->AsProbeSSBO();
+  auto* cmd = cmds[1]->AsProbeSSBO();
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(2U, cmd->GetOffset());
   EXPECT_EQ(ProbeSSBOCommand::Comparator::kGreaterOrEqual,
@@ -3986,7 +3993,9 @@ TEST_F(CommandParserTest, MultiProbeSSBOWithFloats) {
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithInts) {
-  std::string data = "probe ssbo i16vec3 6 2 <= 2 4 1";
+  std::string data = R"(
+ssbo 6 2
+probe ssbo i16vec3 6 2 <= 2 4 1)";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3995,10 +4004,10 @@ TEST_F(CommandParserTest, ProbeSSBOWithInts) {
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsProbeSSBO());
+  ASSERT_EQ(2U, cmds.size());
+  ASSERT_TRUE(cmds[1]->IsProbeSSBO());
 
-  auto* cmd = cmds[0]->AsProbeSSBO();
+  auto* cmd = cmds[1]->AsProbeSSBO();
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(2U, cmd->GetOffset());
@@ -4018,7 +4027,9 @@ TEST_F(CommandParserTest, ProbeSSBOWithInts) {
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithMultipleVectors) {
-  std::string data = "probe ssbo i16vec3 6 2 == 2 4 1 3 6 8";
+  std::string data = R"(
+ssbo 6 2
+probe ssbo i16vec3 6 2 == 2 4 1 3 6 8)";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -4027,10 +4038,10 @@ TEST_F(CommandParserTest, ProbeSSBOWithMultipleVectors) {
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto& cmds = cp.Commands();
-  ASSERT_EQ(1U, cmds.size());
-  ASSERT_TRUE(cmds[0]->IsProbeSSBO());
+  ASSERT_EQ(2U, cmds.size());
+  ASSERT_TRUE(cmds[1]->IsProbeSSBO());
 
-  auto* cmd = cmds[0]->AsProbeSSBO();
+  auto* cmd = cmds[1]->AsProbeSSBO();
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(2U, cmd->GetOffset());
@@ -4084,14 +4095,16 @@ TEST_F(CommandParserTest, ProbeSSBOWithBadType) {
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithInvalidFloatOffset) {
-  std::string data = "probe ssbo vec2 0 2.0 == 3 2 4";
+  std::string data = R"(
+ssbo 0 2
+probe ssbo vec2 0 2.0 == 3 2 4)";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: Invalid offset for probe ssbo command: 2.0", r.Error());
+  EXPECT_EQ("3: Invalid offset for probe ssbo command: 2.0", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithInvalidStringOffset) {
@@ -4106,37 +4119,43 @@ TEST_F(CommandParserTest, ProbeSSBOWithInvalidStringOffset) {
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithInvalidComparator) {
-  std::string data = "probe ssbo vec2 6 2 INVALID 3 2 4";
+  std::string data = R"(
+ssbo 6 2
+probe ssbo vec2 6 2 INVALID 3 2 4)";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: Invalid comparator: INVALID", r.Error());
+  EXPECT_EQ("3: Invalid comparator: INVALID", r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithMissingData) {
-  std::string data = "probe ssbo i16vec3 6 2 == 2";
+  std::string data = R"(
+ssbo 6 2
+probe ssbo i16vec3 6 2 == 2)";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: Incorrect number of values provided to probe ssbo command",
+  EXPECT_EQ("3: Incorrect number of values provided to probe ssbo command",
             r.Error());
 }
 
 TEST_F(CommandParserTest, ProbeSSBOWithMissingAllData) {
-  std::string data = "probe ssbo i16vec3 6 2 ==";
+  std::string data = R"(
+ssbo 6 2
+probe ssbo i16vec3 6 2 ==)";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: Incorrect number of values provided to probe ssbo command",
+  EXPECT_EQ("3: Incorrect number of values provided to probe ssbo command",
             r.Error());
 }
 

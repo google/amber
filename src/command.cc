@@ -86,24 +86,24 @@ ComputeCommand::ComputeCommand(Pipeline* pipeline)
 
 ComputeCommand::~ComputeCommand() = default;
 
-Probe::Probe(Type type, Pipeline* pipeline) : Command(type, pipeline) {}
+Probe::Probe(Type type, Buffer* buffer)
+    : Command(type, nullptr), buffer_(buffer) {}
 
 Probe::~Probe() = default;
 
-ProbeCommand::ProbeCommand(Pipeline* pipeline, Buffer* buffer)
-    : Probe(Type::kProbe, pipeline), buffer_(buffer) {}
+ProbeCommand::ProbeCommand(Buffer* buffer) : Probe(Type::kProbe, buffer) {}
 
 ProbeCommand::~ProbeCommand() = default;
+
+ProbeSSBOCommand::ProbeSSBOCommand(Buffer* buffer)
+    : Probe(Type::kProbeSSBO, buffer) {}
+
+ProbeSSBOCommand::~ProbeSSBOCommand() = default;
 
 BufferCommand::BufferCommand(BufferType type, Pipeline* pipeline)
     : Command(Type::kBuffer, pipeline), buffer_type_(type) {}
 
 BufferCommand::~BufferCommand() = default;
-
-ProbeSSBOCommand::ProbeSSBOCommand(Pipeline* pipeline)
-    : Probe(Type::kProbeSSBO, pipeline) {}
-
-ProbeSSBOCommand::~ProbeSSBOCommand() = default;
 
 ClearCommand::ClearCommand(Pipeline* pipeline)
     : Command(Type::kClear, pipeline) {}
