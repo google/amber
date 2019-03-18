@@ -442,9 +442,5 @@ Result EngineDawn::CreateFramebufferIfNeeded() {
   return {};
 }
 
-Result EngineDawn::GetFrameBuffer(Buffer*, std::vector<Value>*) {
-  return Result("Dawn::GetFrameBuffer not implemented");
-}
-
 }  // namespace dawn
 }  // namespace amber

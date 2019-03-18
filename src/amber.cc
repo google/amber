@@ -28,6 +28,41 @@
 #include "src/vkscript/parser.h"
 
 namespace amber {
+namespace {
+
+const FormatType kDefaultFramebufferFormat = FormatType::kB8G8R8A8_UNORM;
+
+Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) {
+  values->clear();
+
+  // TODO(jaebaek): Support other formats
+  if (buffer->AsFormatBuffer()->GetFormat().GetFormatType() !=
+      kDefaultFramebufferFormat) {
+    return Result("GetFrameBuffer Unsupported buffer format");
+  }
+
+  const uint8_t* cpu_memory = static_cast<const uint8_t*>(buffer->GetMemPtr());
+  if (!cpu_memory)
+    return Result("GetFrameBuffer missing memory pointer");
+
+  const auto texel_stride = buffer->AsFormatBuffer()->GetTexelStride();
+  const auto row_stride = buffer->AsFormatBuffer()->GetRowStride();
+
+  for (uint32_t y = 0; y < buffer->GetHeight(); ++y) {
+    for (uint32_t x = 0; x < buffer->GetWidth(); ++x) {
+      Value pixel;
+
+      const uint8_t* ptr_8 = cpu_memory + (row_stride * y) + (texel_stride * x);
+      const uint32_t* ptr_32 = reinterpret_cast<const uint32_t*>(ptr_8);
+      pixel.SetIntValue(*ptr_32);
+      values->push_back(pixel);
+    }
+  }
+
+  return {};
+}
+
+}  // namespace
 
 Delegate::~Delegate() = default;
 
@@ -139,7 +174,7 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
 
       buffer_info.width = buffer->GetWidth();
       buffer_info.height = buffer->GetHeight();
-      r = engine->GetFrameBuffer(buffer, &(buffer_info.values));
+      r = GetFrameBuffer(buffer, &(buffer_info.values));
       if (!r.IsSuccess())
         break;
 

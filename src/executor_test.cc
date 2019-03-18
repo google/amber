@@ -160,8 +160,6 @@ class EngineStub : public Engine {
     return {};
   }
 
-  Result GetFrameBuffer(Buffer*, std::vector<Value>*) override { return {}; }
-
  private:
   bool fail_clear_command_ = false;
   bool fail_clear_color_command_ = false;
