@@ -90,7 +90,10 @@ Result PushConstant::RecordPushConstantVkCommand(
 
   // Based on spec, offset and size in bytes of push constant must
   // be multiple of 4.
-  assert(push_const_range.offset % 4U == 0 && push_const_range.size % 4U == 0);
+  if (push_const_range.offset % 4U != 0)
+    return Result("PushConstant:: Offset must be a multiple of 4");
+  if (push_const_range.size % 4U != 0)
+    return Result("PushConstant:: Size must be a multiple of 4");
 
   device_->GetPtrs()->vkCmdPushConstants(
       command->GetVkCommandBuffer(), pipeline_layout, VK_SHADER_STAGE_ALL,

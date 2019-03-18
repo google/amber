@@ -14,24 +14,10 @@
 
 #include "src/vulkan/descriptor.h"
 
-#include <cassert>
-
 #include "src/vulkan/device.h"
 
 namespace amber {
 namespace vulkan {
-
-VkDescriptorType ToVkDescriptorType(DescriptorType type) {
-  switch (type) {
-    case DescriptorType::kStorageBuffer:
-      return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    case DescriptorType::kUniformBuffer:
-      return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  }
-
-  assert(false && "Unknown resource type");
-  return VK_DESCRIPTOR_TYPE_SAMPLER;
-}
 
 Descriptor::Descriptor(DescriptorType type,
                        Device* device,

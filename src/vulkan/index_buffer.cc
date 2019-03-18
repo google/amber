@@ -14,7 +14,6 @@
 
 #include "src/vulkan/index_buffer.h"
 
-#include <cassert>
 #include <cstring>
 
 #include "src/make_unique.h"
