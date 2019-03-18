@@ -200,11 +200,6 @@ Result EngineDawn::Initialize(EngineConfig* config,
   return {};
 }
 
-Result EngineDawn::Shutdown() {
-  device_ = nullptr;
-  return {};
-}
-
 Result EngineDawn::CreatePipeline(Pipeline* pipeline) {
   for (const auto& shader_info : pipeline->GetShaders()) {
     Result r = SetShader(shader_info.GetShaderType(), shader_info.GetData());
