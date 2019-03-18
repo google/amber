@@ -160,7 +160,6 @@ class EngineStub : public Engine {
     return {};
   }
 
-  Result DoProcessCommands(Pipeline*) override { return {}; }
   Result GetFrameBuffer(Buffer*, std::vector<Value>*) override { return {}; }
 
  private:

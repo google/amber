@@ -300,42 +300,14 @@ Result EngineDawn::DoClear(const ClearCommand*) {
 }
 
 Result EngineDawn::DoDrawRect(const DrawRectCommand*) {
-  return Result("Dawn:DoDrawRect not implemented");
-}
-
-Result EngineDawn::DoDrawArrays(const DrawArraysCommand*) {
-  return Result("Dawn:DoDrawArrays not implemented");
-}
-
-Result EngineDawn::DoCompute(const ComputeCommand*) {
-  return Result("Dawn:DoCompute not implemented");
-}
-
-Result EngineDawn::DoEntryPoint(const EntryPointCommand*) {
-  return Result("Dawn:DoEntryPoint not implemented");
-}
-
-Result EngineDawn::DoPatchParameterVertices(
-    const PatchParameterVerticesCommand*) {
-  return Result("Dawn:DoPatch not implemented");
-}
-
-Result EngineDawn::DoBuffer(const BufferCommand*) {
-  return Result("Dawn:DoBuffer not implemented");
-}
-
-Result EngineDawn::DoProcessCommands(Pipeline* pipeline) {
   Result result;
-
-  // TODO(dneto): How to distinguish the compute case: It won't have a
-  // framebuffer?
 
   // Add one more command to the command buffer builder, which is to
   // copy the framebuffer texture to the framebuffer host-side buffer.
   ::dawn::Buffer& fb_buffer = render_pipeline_info_.fb_buffer;
   if (!fb_buffer) {
     return Result(
-        "Dawn::DoProcessCommands: Framebuffer was not created.  Did you run "
+        "Dawn::DoDrawRect: Framebuffer was not created.  Did you run "
         "any graphics pipeline commands?");
   }
 
@@ -385,6 +357,27 @@ Result EngineDawn::DoProcessCommands(Pipeline* pipeline) {
   MapResult map = MapBuffer(*device_, fb_buffer, render_pipeline_info_.fb_size);
   render_pipeline_info_.fb_data = map.data;
   return map.result;
+}
+
+Result EngineDawn::DoDrawArrays(const DrawArraysCommand*) {
+  return Result("Dawn:DoDrawArrays not implemented");
+}
+
+Result EngineDawn::DoCompute(const ComputeCommand*) {
+  return Result("Dawn:DoCompute not implemented");
+}
+
+Result EngineDawn::DoEntryPoint(const EntryPointCommand*) {
+  return Result("Dawn:DoEntryPoint not implemented");
+}
+
+Result EngineDawn::DoPatchParameterVertices(
+    const PatchParameterVerticesCommand*) {
+  return Result("Dawn:DoPatch not implemented");
+}
+
+Result EngineDawn::DoBuffer(const BufferCommand*) {
+  return Result("Dawn:DoBuffer not implemented");
 }
 
 Result EngineDawn::CreateCommandBufferBuilderIfNeeded() {

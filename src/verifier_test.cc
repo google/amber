@@ -60,9 +60,8 @@ class VerifierTest : public testing::Test {
 TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetWholeWindow();
   probe.SetProbeRect();
   probe.SetIsRGBA();
@@ -98,9 +97,8 @@ TEST_F(VerifierTest, ProbeFrameBufferWholeWindow) {
 TEST_F(VerifierTest, ProbeFrameBufferRelative) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetProbeRect();
   probe.SetRelative();
   probe.SetIsRGBA();
@@ -132,9 +130,8 @@ TEST_F(VerifierTest, ProbeFrameBufferRelative) {
 TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetProbeRect();
   probe.SetRelative();
   probe.SetIsRGBA();
@@ -162,9 +159,8 @@ TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
 TEST_F(VerifierTest, ProbeFrameBuffer) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetProbeRect();
   probe.SetIsRGBA();
   probe.SetX(1.0f);
@@ -195,9 +191,8 @@ TEST_F(VerifierTest, ProbeFrameBuffer) {
 TEST_F(VerifierTest, ProbeFrameBufferUInt8) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -226,9 +221,8 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt8) {
 TEST_F(VerifierTest, ProbeFrameBufferUInt16) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -257,9 +251,8 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt16) {
 TEST_F(VerifierTest, ProbeFrameBufferUInt32) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -288,9 +281,8 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt32) {
 TEST_F(VerifierTest, ProbeFrameBufferUInt64) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -319,9 +311,8 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt64) {
 TEST_F(VerifierTest, ProbeFrameBufferSInt8) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -350,9 +341,8 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt8) {
 TEST_F(VerifierTest, ProbeFrameBufferSInt16) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -381,9 +371,8 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt16) {
 TEST_F(VerifierTest, ProbeFrameBufferSInt32) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -412,9 +401,8 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt32) {
 TEST_F(VerifierTest, ProbeFrameBufferSInt64) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -443,9 +431,8 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt64) {
 TEST_F(VerifierTest, ProbeFrameBufferFloat32) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -474,9 +461,8 @@ TEST_F(VerifierTest, ProbeFrameBufferFloat32) {
 TEST_F(VerifierTest, ProbeFrameBufferFloat64) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);
@@ -505,9 +491,8 @@ TEST_F(VerifierTest, ProbeFrameBufferFloat64) {
 TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetX(0.0f);
   probe.SetY(0.0f);
 
@@ -547,9 +532,8 @@ TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
 TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetX(0.0f);
   probe.SetY(0.0f);
 
@@ -589,9 +573,8 @@ TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
 TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetX(0.0f);
   probe.SetY(0.0f);
 
@@ -638,9 +621,8 @@ TEST_F(VerifierTest, ProbeFrameBufferNotRect) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetIsRGBA();
   probe.SetX(1.0f);
   probe.SetY(2.0f);
@@ -658,9 +640,8 @@ TEST_F(VerifierTest, ProbeFrameBufferNotRect) {
 TEST_F(VerifierTest, ProbeFrameBufferRGB) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetWholeWindow();
   probe.SetProbeRect();
   probe.SetB(0.5f);
@@ -694,9 +675,8 @@ TEST_F(VerifierTest, ProbeFrameBufferRGB) {
 TEST_F(VerifierTest, ProbeFrameBufferBadRowStride) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetWholeWindow();
   probe.SetProbeRect();
 
@@ -715,9 +695,8 @@ TEST_F(VerifierTest, ProbeFrameBufferBadRowStride) {
 TEST_F(VerifierTest, ProbeSSBOUint8Single) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kUint8);
@@ -741,9 +720,8 @@ TEST_F(VerifierTest, ProbeSSBOUint8Single) {
 TEST_F(VerifierTest, ProbeSSBOUint8Multiple) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kUint8);
@@ -768,9 +746,8 @@ TEST_F(VerifierTest, ProbeSSBOUint8Multiple) {
 TEST_F(VerifierTest, ProbeSSBOUint8Many) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kUint8);
@@ -800,9 +777,8 @@ TEST_F(VerifierTest, ProbeSSBOUint8Many) {
 TEST_F(VerifierTest, ProbeSSBOUint32Single) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kUint32);
@@ -826,9 +802,8 @@ TEST_F(VerifierTest, ProbeSSBOUint32Single) {
 TEST_F(VerifierTest, ProbeSSBOUint32Multiple) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kUint32);
@@ -854,9 +829,8 @@ TEST_F(VerifierTest, ProbeSSBOUint32Multiple) {
 TEST_F(VerifierTest, ProbeSSBOUint32Many) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kUint32);
@@ -886,9 +860,8 @@ TEST_F(VerifierTest, ProbeSSBOUint32Many) {
 TEST_F(VerifierTest, ProbeSSBOFloatSingle) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kFloat);
@@ -912,9 +885,8 @@ TEST_F(VerifierTest, ProbeSSBOFloatSingle) {
 TEST_F(VerifierTest, ProbeSSBOFloatMultiple) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kFloat);
@@ -940,9 +912,8 @@ TEST_F(VerifierTest, ProbeSSBOFloatMultiple) {
 TEST_F(VerifierTest, ProbeSSBOFloatMany) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kFloat);
@@ -972,9 +943,8 @@ TEST_F(VerifierTest, ProbeSSBOFloatMany) {
 TEST_F(VerifierTest, ProbeSSBODoubleSingle) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -998,9 +968,8 @@ TEST_F(VerifierTest, ProbeSSBODoubleSingle) {
 TEST_F(VerifierTest, ProbeSSBODoubleMultiple) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1026,9 +995,8 @@ TEST_F(VerifierTest, ProbeSSBODoubleMultiple) {
 TEST_F(VerifierTest, ProbeSSBODoubleMany) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1058,9 +1026,8 @@ TEST_F(VerifierTest, ProbeSSBODoubleMany) {
 TEST_F(VerifierTest, ProbeSSBOEqualFail) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1088,9 +1055,8 @@ TEST_F(VerifierTest, ProbeSSBOEqualFail) {
 TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteTolerance) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1125,9 +1091,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteTolerance) {
 TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteToleranceFail) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1159,9 +1124,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteToleranceFail) {
 TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeTolerance) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1196,9 +1160,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeTolerance) {
 TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeToleranceFail) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1230,9 +1193,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeToleranceFail) {
 TEST_F(VerifierTest, ProbeSSBONotEqual) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1258,9 +1220,8 @@ TEST_F(VerifierTest, ProbeSSBONotEqual) {
 TEST_F(VerifierTest, ProbeSSBONotEqualFail) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1288,9 +1249,8 @@ TEST_F(VerifierTest, ProbeSSBONotEqualFail) {
 TEST_F(VerifierTest, ProbeSSBOLess) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1316,9 +1276,8 @@ TEST_F(VerifierTest, ProbeSSBOLess) {
 TEST_F(VerifierTest, ProbeSSBOLessFail) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1346,9 +1305,8 @@ TEST_F(VerifierTest, ProbeSSBOLessFail) {
 TEST_F(VerifierTest, ProbeSSBOLessOrEqual) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1374,9 +1332,8 @@ TEST_F(VerifierTest, ProbeSSBOLessOrEqual) {
 TEST_F(VerifierTest, ProbeSSBOLessOrEqualFail) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1404,9 +1361,8 @@ TEST_F(VerifierTest, ProbeSSBOLessOrEqualFail) {
 TEST_F(VerifierTest, ProbeSSBOGreater) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1432,9 +1388,8 @@ TEST_F(VerifierTest, ProbeSSBOGreater) {
 TEST_F(VerifierTest, ProbeSSBOGreaterFail) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1462,9 +1417,8 @@ TEST_F(VerifierTest, ProbeSSBOGreaterFail) {
 TEST_F(VerifierTest, ProbeSSBOGreaterOrEqual) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1490,9 +1444,8 @@ TEST_F(VerifierTest, ProbeSSBOGreaterOrEqual) {
 TEST_F(VerifierTest, ProbeSSBOGreaterOrEqualFail) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeSSBOCommand probe_ssbo(&pipeline);
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   DatumType datum_type;
   datum_type.SetType(DataType::kDouble);
@@ -1520,9 +1473,8 @@ TEST_F(VerifierTest, ProbeSSBOGreaterOrEqualFail) {
 TEST_F(VerifierTest, CheckRGBAOrderForFailure) {
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
 
-  ProbeCommand probe(&pipeline, color_buf.get());
+  ProbeCommand probe(color_buf.get());
   probe.SetIsRGBA();
   probe.SetX(0.0f);
   probe.SetY(0.0f);

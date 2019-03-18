@@ -878,7 +878,7 @@ Result CommandParser::ProcessProbe(bool relative) {
   if (!buffer)
     return Result("Pipeline missing color buffers, something went wrong.");
 
-  auto cmd = MakeUnique<ProbeCommand>(pipeline_, buffer);
+  auto cmd = MakeUnique<ProbeCommand>(buffer);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   cmd->SetTolerances(current_tolerances_);
@@ -1978,9 +1978,7 @@ Result CommandParser::ParseComparator(const std::string& name,
 }
 
 Result CommandParser::ProcessProbeSSBO() {
-  auto cmd = MakeUnique<ProbeSSBOCommand>(pipeline_);
-  cmd->SetLine(tokenizer_->GetCurrentLine());
-  cmd->SetTolerances(current_tolerances_);
+  size_t cur_line = tokenizer_->GetCurrentLine();
 
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
@@ -1994,8 +1992,6 @@ Result CommandParser::ProcessProbeSSBO() {
   if (!r.IsSuccess())
     return r;
 
-  cmd->SetDatumType(tp.GetType());
-
   token = tokenizer_->NextToken();
   if (!token->IsInteger())
     return Result("Invalid binding value for probe ssbo command: " +
@@ -2003,11 +1999,13 @@ Result CommandParser::ProcessProbeSSBO() {
 
   uint32_t val = token->AsUint32();
 
+  uint32_t set = 0;
+  uint32_t binding = 0;
   token = tokenizer_->NextToken();
   if (token->IsString()) {
     auto& str = token->AsString();
     if (str.size() >= 2 && str[0] == ':') {
-      cmd->SetDescriptorSet(val);
+      set = val;
 
       auto substr = str.substr(1, str.size());
       uint64_t binding_val = strtoul(substr.c_str(), nullptr, 10);
@@ -2015,7 +2013,7 @@ Result CommandParser::ProcessProbeSSBO() {
         return Result("binding value too large in probe ssbo command: " +
                       token->ToOriginalString());
 
-      cmd->SetBinding(static_cast<uint32_t>(binding_val));
+      binding = static_cast<uint32_t>(binding_val);
     } else {
       return Result("Invalid value for probe ssbo command: " +
                     token->ToOriginalString());
@@ -2023,8 +2021,22 @@ Result CommandParser::ProcessProbeSSBO() {
 
     token = tokenizer_->NextToken();
   } else {
-    cmd->SetBinding(val);
+    binding = val;
   }
+
+  auto* buffer = pipeline_->GetBufferForBinding(set, binding);
+  if (!buffer) {
+    return Result("unable to find buffer at descriptor set " +
+                  std::to_string(set) + " and binding " +
+                  std::to_string(binding));
+  }
+
+  auto cmd = MakeUnique<ProbeSSBOCommand>(buffer);
+  cmd->SetLine(cur_line);
+  cmd->SetTolerances(current_tolerances_);
+  cmd->SetDatumType(tp.GetType());
+  cmd->SetDescriptorSet(set);
+  cmd->SetBinding(binding);
 
   if (!token->IsInteger())
     return Result("Invalid offset for probe ssbo command: " +

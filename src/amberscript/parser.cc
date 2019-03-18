@@ -995,24 +995,6 @@ Result Parser::ParseClear() {
 
 Result Parser::ParseExpect() {
   auto token = tokenizer_->NextToken();
-  if (token->IsEOS() || token->IsEOL())
-    return Result("missing pipeline name in EXPECT command");
-  if (!token->IsString())
-    return Result("invalid pipeline name in EXPECT command");
-
-  auto* pipeline = script_->GetPipeline(token->AsString());
-  if (!pipeline)
-    return Result("unknown pipeline name for EXPECT command");
-
-  token = tokenizer_->NextToken();
-  if (token->IsEOS() || token->IsEOL())
-    return Result("missing BUFFER in EXPECT command");
-  if (!token->IsString() || token->AsString() != "BUFFER") {
-    return Result("expected BUFFER got '" + token->ToOriginalString() +
-                  "' in " + "EXPECT command");
-  }
-
-  token = tokenizer_->NextToken();
   if (!token->IsString())
     return Result("invalid buffer name in EXPECT command");
 
@@ -1040,17 +1022,7 @@ Result Parser::ParseExpect() {
 
   token = tokenizer_->NextToken();
   if (token->IsString() && token->AsString() == "SIZE") {
-    bool found = false;
-    for (const auto& info : pipeline->GetColorAttachments()) {
-      if (info.buffer == buffer) {
-        found = true;
-        break;
-      }
-    }
-    if (!found)
-      return Result("buffer not in pipeline for EXPECT command");
-
-    auto probe = MakeUnique<ProbeCommand>(pipeline, buffer);
+    auto probe = MakeUnique<ProbeCommand>(buffer);
     probe->SetX(x);
     probe->SetY(y);
     probe->SetProbeRect();
