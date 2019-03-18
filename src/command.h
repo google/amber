@@ -94,17 +94,26 @@ class Command {
   void SetLine(size_t line) { line_ = line; }
   size_t GetLine() const { return line_; }
 
-  Pipeline* GetPipeline() const { return pipeline_; }
-
  protected:
-  explicit Command(Type type, Pipeline* pipeline);
+  explicit Command(Type type);
 
   Type command_type_;
-  Pipeline* pipeline_;
   size_t line_ = 1;
 };
 
-class DrawRectCommand : public Command {
+class PipelineCommand : public Command {
+ public:
+  ~PipelineCommand() override;
+
+  Pipeline* GetPipeline() const { return pipeline_; }
+
+ protected:
+  explicit PipelineCommand(Type type, Pipeline* pipeline);
+
+  Pipeline* pipeline_;
+};
+
+class DrawRectCommand : public PipelineCommand {
  public:
   explicit DrawRectCommand(Pipeline* pipeline, PipelineData data);
   ~DrawRectCommand() override;
@@ -139,7 +148,7 @@ class DrawRectCommand : public Command {
   float height_ = 0.0;
 };
 
-class DrawArraysCommand : public Command {
+class DrawArraysCommand : public PipelineCommand {
  public:
   explicit DrawArraysCommand(Pipeline* pipeline, PipelineData data);
   ~DrawArraysCommand() override;
@@ -174,7 +183,7 @@ class DrawArraysCommand : public Command {
   uint32_t instance_count_ = 0;
 };
 
-class ComputeCommand : public Command {
+class ComputeCommand : public PipelineCommand {
  public:
   explicit ComputeCommand(Pipeline* pipeline);
   ~ComputeCommand() override;
@@ -324,7 +333,7 @@ class ProbeSSBOCommand : public Probe {
   std::vector<Value> values_;
 };
 
-class BufferCommand : public Command {
+class BufferCommand : public PipelineCommand {
  public:
   enum class BufferType {
     kSSBO,
@@ -381,13 +390,13 @@ class BufferCommand : public Command {
   std::vector<Value> values_;
 };
 
-class ClearCommand : public Command {
+class ClearCommand : public PipelineCommand {
  public:
   explicit ClearCommand(Pipeline* pipeline);
   ~ClearCommand() override;
 };
 
-class ClearColorCommand : public Command {
+class ClearColorCommand : public PipelineCommand {
  public:
   explicit ClearColorCommand(Pipeline* pipeline);
   ~ClearColorCommand() override;
@@ -411,7 +420,7 @@ class ClearColorCommand : public Command {
   float a_ = 0.0;
 };
 
-class ClearDepthCommand : public Command {
+class ClearDepthCommand : public PipelineCommand {
  public:
   explicit ClearDepthCommand(Pipeline* pipeline);
   ~ClearDepthCommand() override;
@@ -423,7 +432,7 @@ class ClearDepthCommand : public Command {
   float value_ = 0.0;
 };
 
-class ClearStencilCommand : public Command {
+class ClearStencilCommand : public PipelineCommand {
  public:
   explicit ClearStencilCommand(Pipeline* pipeline);
   ~ClearStencilCommand() override;
@@ -435,7 +444,7 @@ class ClearStencilCommand : public Command {
   uint32_t value_ = 0;
 };
 
-class PatchParameterVerticesCommand : public Command {
+class PatchParameterVerticesCommand : public PipelineCommand {
  public:
   explicit PatchParameterVerticesCommand(Pipeline* pipeline);
   ~PatchParameterVerticesCommand() override;
@@ -447,7 +456,7 @@ class PatchParameterVerticesCommand : public Command {
   uint32_t control_point_count_ = 0;
 };
 
-class EntryPointCommand : public Command {
+class EntryPointCommand : public PipelineCommand {
  public:
   explicit EntryPointCommand(Pipeline* pipeline);
   ~EntryPointCommand() override;
