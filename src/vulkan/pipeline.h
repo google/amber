@@ -65,8 +65,6 @@ class Pipeline {
   CommandBuffer* GetCommandBuffer() const { return command_.get(); }
   Device* GetDevice() const { return device_; }
 
-  virtual void Shutdown();
-
  protected:
   Pipeline(
       PipelineType type,

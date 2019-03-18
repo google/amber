@@ -87,9 +87,6 @@ EngineVulkan::~EngineVulkan() {
         device_->GetPtrs()->vkDestroyShaderModule(vk_device, mod_it->second,
                                                   nullptr);
     }
-
-    if (info.vk_pipeline != VK_NULL_HANDLE)
-      info.vk_pipeline->Shutdown();
   }
 }
 
