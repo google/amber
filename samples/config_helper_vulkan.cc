@@ -599,7 +599,24 @@ ConfigHelperVulkan::ConfigHelperVulkan()
       variable_pointers_feature_(VkPhysicalDeviceVariablePointerFeaturesKHR()) {
 }
 
-ConfigHelperVulkan::~ConfigHelperVulkan() = default;
+ConfigHelperVulkan::~ConfigHelperVulkan() {
+  if (vulkan_device_)
+    vkDestroyDevice(vulkan_device_, nullptr);
+
+  if (vulkan_callback_) {
+    auto vkDestroyDebugReportCallbackEXT =
+        reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
+            vkGetInstanceProcAddr(vulkan_instance_,
+                                  "vkDestroyDebugReportCallbackEXT"));
+    if (vkDestroyDebugReportCallbackEXT) {
+      vkDestroyDebugReportCallbackEXT(vulkan_instance_, vulkan_callback_,
+                                    nullptr);
+    }
+  }
+
+  if (vulkan_instance_)
+    vkDestroyInstance(vulkan_instance_, nullptr);
+}
 
 amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     uint32_t engine_major,
@@ -939,33 +956,5 @@ amber::Result ConfigHelperVulkan::CreateConfig(
 
   return {};
 }
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-
-amber::Result ConfigHelperVulkan::Shutdown() {
-  if (vulkan_device_ != VK_NULL_HANDLE)
-    vkDestroyDevice(vulkan_device_, nullptr);
-
-  if (vulkan_callback_ != VK_NULL_HANDLE) {
-    auto vkDestroyDebugReportCallbackEXT =
-        reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
-            vkGetInstanceProcAddr(vulkan_instance_,
-                                  "vkDestroyDebugReportCallbackEXT"));
-    if (!vkDestroyDebugReportCallbackEXT)
-      return amber::Result(
-          "Sample: vkDestroyDebugReportCallbackEXT is nullptr");
-
-    vkDestroyDebugReportCallbackEXT(vulkan_instance_, vulkan_callback_,
-                                    nullptr);
-  }
-
-  if (vulkan_instance_ != VK_NULL_HANDLE)
-    vkDestroyInstance(vulkan_instance_, nullptr);
-
-  return {};
-}
-
-#pragma clang diagnostic pop
 
 }  // namespace sample

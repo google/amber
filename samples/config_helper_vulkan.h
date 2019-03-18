@@ -51,9 +51,6 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
       bool show_version_info,
       std::unique_ptr<amber::EngineConfig>* config) override;
 
-  // Destroy Vulkan instance and device.
-  amber::Result Shutdown() override;
-
  private:
   // Create Vulkan instance.
   amber::Result CreateVulkanInstance(
