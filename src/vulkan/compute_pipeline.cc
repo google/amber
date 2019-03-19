@@ -69,15 +69,7 @@ Result ComputePipeline::CreateVkComputePipeline(
 }
 
 Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  r = SendDescriptorDataToDeviceIfNeeded();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->SubmitAndReset(GetFenceTimeout());
+  Result r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
     return r;
 

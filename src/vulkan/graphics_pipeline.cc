@@ -822,15 +822,7 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
 
 Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
                               VertexBuffer* vertex_buffer) {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  r = SendDescriptorDataToDeviceIfNeeded();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->SubmitAndReset(GetFenceTimeout());
+  Result r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
     return r;
 
