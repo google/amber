@@ -3128,7 +3128,7 @@ RUN my_pipeline DRAW_RECT POS 2 4 SIZE 10 20)";
 
   auto* cmd = commands[0].get();
   ASSERT_TRUE(cmd->IsDrawRect());
-  EXPECT_FALSE(cmd->AsDrawRect()->IsOrtho());
+  EXPECT_TRUE(cmd->AsDrawRect()->IsOrtho());
   EXPECT_FALSE(cmd->AsDrawRect()->IsPatch());
   EXPECT_FLOAT_EQ(2.f, cmd->AsDrawRect()->GetX());
   EXPECT_FLOAT_EQ(4.f, cmd->AsDrawRect()->GetY());
