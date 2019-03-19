@@ -52,7 +52,6 @@ LOCAL_SRC_FILES:= \
     src/vulkan/command_buffer.cc \
     src/vulkan/command_pool.cc \
     src/vulkan/compute_pipeline.cc \
-    src/vulkan/descriptor.cc \
     src/vulkan/device.cc \
     src/vulkan/engine_vulkan.cc \
     src/vulkan/format_data.cc \

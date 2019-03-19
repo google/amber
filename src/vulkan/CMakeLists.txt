@@ -17,7 +17,6 @@ set(VULKAN_ENGINE_SOURCES
     command_buffer.cc
     command_pool.cc
     compute_pipeline.cc
-    descriptor.cc
     device.cc
     engine_vulkan.cc
     format_data.cc

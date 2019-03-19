@@ -23,6 +23,7 @@
 #include "src/engine.h"
 #include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
+#include "src/vulkan/device.h"
 
 namespace amber {
 namespace vulkan {
@@ -32,10 +33,11 @@ BufferDescriptor::BufferDescriptor(Buffer* buffer,
                                    Device* device,
                                    uint32_t desc_set,
                                    uint32_t binding)
-    : Descriptor(type, device, desc_set, binding), amber_buffer_(buffer) {
-  assert(type == DescriptorType::kStorageBuffer ||
-         type == DescriptorType::kUniformBuffer);
-}
+    : device_(device),
+      amber_buffer_(buffer),
+      type_(type),
+      descriptor_set_(desc_set),
+      binding_(binding) {}
 
 BufferDescriptor::~BufferDescriptor() = default;
 
@@ -56,17 +58,18 @@ Result BufferDescriptor::CreateResourceIfNeeded(
   transfer_buffer_ =
       MakeUnique<TransferBuffer>(device_, size_in_bytes, properties);
 
-  Result r = transfer_buffer_->Initialize(GetVkBufferUsage() |
-                                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-                                          VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+  Result r = transfer_buffer_->Initialize(
+      (IsStorageBuffer() ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+                         : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) |
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
   if (!r.IsSuccess())
     return r;
 
-  SetUpdateDescriptorSetNeeded();
+  is_descriptor_set_update_needed_ = true;
   return {};
 }
 
-Result BufferDescriptor::RecordCopyDataToResourceIfNeeded(
+void BufferDescriptor::RecordCopyDataToResourceIfNeeded(
     CommandBuffer* command) {
   if (amber_buffer_ && !amber_buffer_->ValuePtr()->empty()) {
     transfer_buffer_->UpdateMemoryWithRawData(*amber_buffer_->ValuePtr());
@@ -74,14 +77,12 @@ Result BufferDescriptor::RecordCopyDataToResourceIfNeeded(
   }
 
   transfer_buffer_->CopyToDevice(command);
-  return {};
 }
 
 Result BufferDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
   if (!transfer_buffer_) {
     return Result(
-        "Vulkan: BufferDescriptor::RecordCopyDataToHost() |vk_buffer| is "
-        "empty");
+        "Vulkan: BufferDescriptor::RecordCopyDataToHost() no transfer buffer");
   }
 
   return transfer_buffer_->CopyToHost(command);
@@ -90,8 +91,8 @@ Result BufferDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
 Result BufferDescriptor::MoveResourceToBufferOutput() {
   if (!transfer_buffer_) {
     return Result(
-        "Vulkan: BufferDescriptor::MoveResourceToBufferOutput() |vk_buffer| "
-        "is empty");
+        "Vulkan: BufferDescriptor::MoveResourceToBufferOutput() no transfer"
+        " buffer");
   }
 
   // Only need to copy the buffer back if we have an attached amber buffer to
@@ -100,8 +101,8 @@ Result BufferDescriptor::MoveResourceToBufferOutput() {
     void* resource_memory_ptr = transfer_buffer_->HostAccessibleMemoryPtr();
     if (!resource_memory_ptr) {
       return Result(
-          "Vulkan: BufferDescriptor::MoveResourceToBufferOutput() |vk_buffer| "
-          "has nullptr host accessible memory");
+          "Vulkan: BufferDescriptor::MoveResourceToBufferOutput() "
+          "no host accessible memory pointer");
     }
 
     if (!amber_buffer_->ValuePtr()->empty()) {
@@ -121,18 +122,29 @@ Result BufferDescriptor::MoveResourceToBufferOutput() {
   return {};
 }
 
-Result BufferDescriptor::UpdateDescriptorSetIfNeeded(
+void BufferDescriptor::UpdateDescriptorSetIfNeeded(
     VkDescriptorSet descriptor_set) {
-  if (!IsDescriptorSetUpdateNeeded())
-    return {};
+  if (!is_descriptor_set_update_needed_)
+    return;
 
   VkDescriptorBufferInfo buffer_info = VkDescriptorBufferInfo();
   buffer_info.buffer = transfer_buffer_->GetVkBuffer();
   buffer_info.offset = 0;
   buffer_info.range = VK_WHOLE_SIZE;
 
-  return Descriptor::UpdateDescriptorSetForBuffer(
-      descriptor_set, GetVkDescriptorType(), buffer_info);
+  VkWriteDescriptorSet write = VkWriteDescriptorSet();
+  write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write.dstSet = descriptor_set;
+  write.dstBinding = binding_;
+  write.dstArrayElement = 0;
+  write.descriptorCount = 1;
+  write.descriptorType = IsStorageBuffer() ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
+                                           : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  write.pBufferInfo = &buffer_info;
+
+  device_->GetPtrs()->vkUpdateDescriptorSets(device_->GetVkDevice(), 1, &write,
+                                             0, nullptr);
+  is_descriptor_set_update_needed_ = false;
 }
 
 Result BufferDescriptor::AddToBuffer(DataType type,
@@ -151,6 +163,11 @@ Result BufferDescriptor::AddToBuffer(DataType type,
   in.UpdateBufferWithValues(amber_buffer_->GetMemPtr());
 
   return {};
+}
+
+VkDescriptorType BufferDescriptor::GetVkDescriptorType() const {
+  return IsStorageBuffer() ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
+                           : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 }
 
 }  // namespace vulkan

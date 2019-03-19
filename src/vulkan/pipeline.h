@@ -24,8 +24,8 @@
 #include "amber/vulkan_header.h"
 #include "src/cast_hash.h"
 #include "src/engine.h"
+#include "src/vulkan/buffer_descriptor.h"
 #include "src/vulkan/command_buffer.h"
-#include "src/vulkan/descriptor.h"
 #include "src/vulkan/push_constant.h"
 
 namespace amber {
@@ -77,7 +77,7 @@ class Pipeline {
   // Initialize the pipeline.
   Result Initialize(CommandPool* pool, VkQueue queue);
 
-  Result UpdateDescriptorSetsIfNeeded();
+  void UpdateDescriptorSetsIfNeeded();
 
   Result SendDescriptorDataToDeviceIfNeeded();
   void BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout);
@@ -105,7 +105,7 @@ class Pipeline {
     VkDescriptorSetLayout layout = VK_NULL_HANDLE;
     VkDescriptorPool pool = VK_NULL_HANDLE;
     VkDescriptorSet vk_desc_set = VK_NULL_HANDLE;
-    std::vector<std::unique_ptr<Descriptor>> descriptors_;
+    std::vector<std::unique_ptr<BufferDescriptor>> buffer_descriptors;
   };
 
   // Create Vulkan descriptor related objects i.e.,

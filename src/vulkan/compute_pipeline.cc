@@ -86,9 +86,7 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
   // Note that a command updating a descriptor set and a command using
   // it must be submitted separately, because using a descriptor set
   // while updating it is not safe.
-  r = UpdateDescriptorSetsIfNeeded();
-  if (!r.IsSuccess())
-    return r;
+  UpdateDescriptorSetsIfNeeded();
 
   {
     CommandBufferGuard guard(GetCommandBuffer());
