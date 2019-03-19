@@ -93,7 +93,7 @@ Result PushConstant::RecordPushConstantVkCommand(
   assert(push_const_range.offset % 4U == 0 && push_const_range.size % 4U == 0);
 
   device_->GetPtrs()->vkCmdPushConstants(
-      command->GetCommandBuffer(), pipeline_layout, VK_SHADER_STAGE_ALL,
+      command->GetVkCommandBuffer(), pipeline_layout, VK_SHADER_STAGE_ALL,
       push_const_range.offset, push_const_range.size,
       memory_.data() + push_const_range.offset);
   return {};

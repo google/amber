@@ -113,8 +113,8 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
     return r;
 
   device_->GetPtrs()->vkCmdBindPipeline(
-      command_->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
-  device_->GetPtrs()->vkCmdDispatch(command_->GetCommandBuffer(), x, y, z);
+      command_->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+  device_->GetPtrs()->vkCmdDispatch(command_->GetVkCommandBuffer(), x, y, z);
 
   r = command_->End();
   if (!r.IsSuccess())

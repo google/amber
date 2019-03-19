@@ -371,7 +371,7 @@ void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
       continue;
 
     device_->GetPtrs()->vkCmdBindDescriptorSets(
-        command_->GetCommandBuffer(),
+        command_->GetVkCommandBuffer(),
         IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
                      : VK_PIPELINE_BIND_POINT_COMPUTE,
         pipeline_layout, static_cast<uint32_t>(i), 1,
