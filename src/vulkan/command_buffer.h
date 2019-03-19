@@ -60,7 +60,7 @@ class CommandBuffer {
 
 class CommandBufferGuard {
  public:
-  CommandBufferGuard(CommandBuffer* buffer);
+  explicit CommandBufferGuard(CommandBuffer* buffer);
   ~CommandBufferGuard();
 
   bool IsRecording() const { return result_.IsSuccess(); }

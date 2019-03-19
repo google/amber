@@ -726,7 +726,8 @@ Result GraphicsPipeline::SetIndexBuffer(const std::vector<Value>& values) {
   if (!guard.IsRecording())
     return guard.GetResult();
 
-  Result r = index_buffer_->SendIndexData(command_.get(), memory_properties_, values);
+  Result r =
+      index_buffer_->SendIndexData(command_.get(), memory_properties_, values);
   if (!r.IsSuccess())
     return r;
 
