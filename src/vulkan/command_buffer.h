@@ -69,7 +69,6 @@ class CommandBufferGuard {
   Result Submit(uint32_t timeout_ms);
 
  private:
-  bool submitted_ = false;
   Result result_;
   CommandBuffer* buffer_;
 };

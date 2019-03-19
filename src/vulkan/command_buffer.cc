@@ -14,8 +14,6 @@
 
 #include "src/vulkan/command_buffer.h"
 
-#include <cassert>
-
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 
@@ -109,14 +107,11 @@ CommandBufferGuard::CommandBufferGuard(CommandBuffer* buffer)
   result_ = buffer_->BeginRecording();
 }
 
-CommandBufferGuard::~CommandBufferGuard() {
-  assert(submitted_);
-}
+CommandBufferGuard::~CommandBufferGuard() = default;
 
 Result CommandBufferGuard::Submit(uint32_t timeout_ms) {
   assert(buffer_->guarded_);
 
-  submitted_ = true;
   result_ = buffer_->SubmitAndReset(timeout_ms);
   buffer_->guarded_ = false;
   return result_;
