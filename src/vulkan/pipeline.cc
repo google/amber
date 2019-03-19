@@ -69,10 +69,7 @@ Result Pipeline::Initialize(CommandPool* pool, VkQueue queue) {
 
 void Pipeline::Shutdown() {
   if (command_) {
-    Result r = command_->End();
-    if (r.IsSuccess())
-      command_->SubmitAndReset(fence_timeout_ms_);
-
+    command_->SubmitAndReset(fence_timeout_ms_);
     command_ = nullptr;
   }
 
@@ -336,10 +333,6 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     }
   }
 
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
   // Note that if a buffer for a descriptor is host accessible and
   // does not need to record a command to copy data to device, it
   // directly writes data to the buffer. The direct write must be
@@ -392,10 +385,6 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
     }
   }
 
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
   r = command_->SubmitAndReset(GetFenceTimeout());
   if (!r.IsSuccess())
     return r;
@@ -421,10 +410,6 @@ const char* Pipeline::GetEntryPointName(VkShaderStageFlagBits stage) const {
 
 Result Pipeline::ProcessCommands() {
   Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->End();
   if (!r.IsSuccess())
     return r;
 

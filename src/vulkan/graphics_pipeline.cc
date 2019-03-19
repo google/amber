@@ -730,10 +730,6 @@ Result GraphicsPipeline::SetIndexBuffer(const std::vector<Value>& values) {
   if (!r.IsSuccess())
     return r;
 
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
   return command_->SubmitAndReset(GetFenceTimeout());
 }
 
@@ -817,10 +813,6 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   if (!r.IsSuccess())
     return r;
 
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
   r = command_->SubmitAndReset(GetFenceTimeout());
   if (!r.IsSuccess())
     return r;
@@ -835,10 +827,6 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     return r;
 
   r = SendDescriptorDataToDeviceIfNeeded();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->End();
   if (!r.IsSuccess())
     return r;
 
@@ -922,10 +910,6 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   }
 
   r = frame_->CopyColorImagesToHost(command_.get());
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->End();
   if (!r.IsSuccess())
     return r;
 
