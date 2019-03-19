@@ -85,7 +85,8 @@ Result BufferDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
         "Vulkan: BufferDescriptor::RecordCopyDataToHost() no transfer buffer");
   }
 
-  return transfer_buffer_->CopyToHost(command);
+  transfer_buffer_->CopyToHost(command);
+  return {};
 }
 
 Result BufferDescriptor::MoveResourceToBufferOutput() {

@@ -56,7 +56,8 @@ Result VertexBuffer::FillVertexBufferWithData(CommandBuffer* command) {
     ptr_in_stride_begin += Get4BytesAlignedStride();
   }
 
-  return transfer_buffer_->CopyToDevice(command);
+  transfer_buffer_->CopyToDevice(command);
+  return {};
 }
 
 void VertexBuffer::BindToCommandBuffer(CommandBuffer* command) {
