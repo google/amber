@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "amber/result.h"
 #include "src/parser.h"
@@ -63,6 +64,10 @@ class Parser : public amber::Parser {
   Result ParseRun();
   Result ParseClear();
   Result ParseExpect();
+
+  Result ParseValues(const std::string& name,
+                     const DatumType& type,
+                     std::vector<Value>* values);
 
   std::unique_ptr<Tokenizer> tokenizer_;
 };

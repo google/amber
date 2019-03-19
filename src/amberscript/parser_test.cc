@@ -3733,7 +3733,7 @@ EXPECT my_fb IDX 0 INVALID SIZE 250 250 EQ_RGB 0 128 255)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("15: invalid Y value in EXPECT command", r.Error());
+  EXPECT_EQ("15: unexpected token in EXPECT command: INVALID", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectRGBMissingSize) {
@@ -4102,6 +4102,67 @@ EXPECT my_fb IDX 0 0 SIZE 250 250 EQ_RGBA 0 128 255 99 EXTRA)";
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("15: extra parameters after EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectEQ) {
+  std::string in = R"(
+BUFFER orig_buf DATA_TYPE int32 SIZE 100 FILL 11
+EXPECT orig_buf IDX 5 EQ 11)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(1U, commands.size());
+
+  auto* cmd = commands[0].get();
+  ASSERT_TRUE(cmd->IsProbeSSBO());
+
+  auto* probe = cmd->AsProbeSSBO();
+  EXPECT_EQ(ProbeSSBOCommand::Comparator::kEqual, probe->GetComparator());
+  EXPECT_EQ(5U, probe->GetOffset());
+  EXPECT_TRUE(probe->GetDatumType().IsInt32());
+  ASSERT_EQ(1U, probe->GetValues().size());
+  EXPECT_EQ(11U, probe->GetValues()[0].AsInt32());
+}
+
+TEST_F(AmberScriptParserTest, ExpectEqMissingValue) {
+  std::string in = R"(
+BUFFER orig_buf DATA_TYPE int32 SIZE 100 FILL 11
+EXPECT orig_buf IDX 5 EQ)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("3: missing comparison values for EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectEQExtraParams) {
+  std::string in = R"(
+BUFFER orig_buf DATA_TYPE int32 SIZE 100 FILL 11
+EXPECT orig_buf IDX 5 EQ 11 EXTRA)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("3: Invalid value provided to EXPECT command: EXTRA", r.Error());
+}
+
+
+TEST_F(AmberScriptParserTest, MultipleExpect) {
+  std::string in = R"(
+BUFFER orig_buf DATA_TYPE int32 SIZE 100 FILL 11
+BUFFER dest_buf DATA_TYPE int32 SIZE 100 FILL 22
+
+EXPECT orig_buf IDX 0 EQ 11
+EXPECT dest_buf IDX 0 EQ 22
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 }  // namespace amberscript
