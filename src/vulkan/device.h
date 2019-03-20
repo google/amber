@@ -28,7 +28,7 @@ namespace amber {
 namespace vulkan {
 
 struct VulkanPtrs {
-#include "src/vk-wrappers.h"
+#include "vk-wrappers.h"  // NOLINT(build/include)
 };
 
 class Device {
