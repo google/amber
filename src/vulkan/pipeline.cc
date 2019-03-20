@@ -276,7 +276,6 @@ Result Pipeline::AddPushConstant(const BufferCommand* command) {
 Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
   if (cmd == nullptr)
     return Result("Pipeline::AddDescriptor BufferCommand is nullptr");
-
   if (!cmd->IsSSBO() && !cmd->IsUniform())
     return Result("Pipeline::AddDescriptor not supported buffer type");
 

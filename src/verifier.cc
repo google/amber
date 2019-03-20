@@ -520,13 +520,10 @@ Result Verifier::Probe(const ProbeCommand* command,
                        const void* buf) {
   if (!command)
     return Result("Verifier::Probe given ProbeCommand is nullptr");
-
   if (!framebuffer_format)
     return Result("Verifier::Probe given texel's Format is nullptr");
-
   if (framebuffer_format->GetFormatType() == FormatType::kUnknown)
     return Result("Verifier::Probe given texel's Format is unknown");
-
   if (!buf)
     return Result("Verifier::Probe given buffer to probe is nullptr");
 

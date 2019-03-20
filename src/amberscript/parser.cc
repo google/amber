@@ -920,6 +920,8 @@ Result Parser::ParseRun() {
       return Result("missing X position for RUN command");
 
     auto cmd = MakeUnique<DrawRectCommand>(pipeline, PipelineData{});
+    cmd->EnableOrtho();
+
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
       return r;
