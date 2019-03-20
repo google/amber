@@ -93,10 +93,6 @@ class Engine {
   /// This covers both Vulkan buffers and images.
   virtual Result DoBuffer(const BufferCommand* cmd) = 0;
 
-  /// Copy the content of the framebuffer into |values|, each value is a pixel
-  /// in R8G8B8A8 format.
-  virtual Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) = 0;
-
   /// Sets the engine data to use.
   void SetEngineData(const EngineData& data) { engine_data_ = data; }
 
