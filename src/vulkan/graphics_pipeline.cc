@@ -713,7 +713,7 @@ Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
   return vertex_buffer->SendVertexData(command_.get(), memory_properties_);
 }
 
-Result GraphicsPipeline::SetIndexBuffer(const std::vector<Value>& values) {
+Result GraphicsPipeline::SetIndexBuffer(Buffer* buffer) {
   if (index_buffer_) {
     return Result(
         "GraphicsPipeline::SetIndexBuffer must be called once when "
@@ -727,7 +727,7 @@ Result GraphicsPipeline::SetIndexBuffer(const std::vector<Value>& values) {
     return guard.GetResult();
 
   Result r =
-      index_buffer_->SendIndexData(command_.get(), memory_properties_, values);
+      index_buffer_->SendIndexData(command_.get(), memory_properties_, buffer);
   if (!r.IsSuccess())
     return r;
 

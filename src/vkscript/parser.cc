@@ -326,7 +326,7 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
 
   if (!indices.empty()) {
     DatumType type;
-    type.SetType(DataType::kUint16);
+    type.SetType(DataType::kUint32);
 
     auto b = MakeUnique<DataBuffer>(BufferType::kIndex);
     auto* buf = b.get();
