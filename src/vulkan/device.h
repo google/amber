@@ -48,16 +48,17 @@ class Device {
                     const VkPhysicalDeviceFeatures2KHR& available_features2,
                     const std::vector<std::string>& available_extensions);
 
-  VkInstance GetInstance() const { return instance_; }
-  VkPhysicalDevice GetPhysicalDevice() { return physical_device_; }
-  VkDevice GetDevice() const { return device_; }
-  VkPhysicalDevice GetPhysicalDevice() const { return physical_device_; }
+  VkInstance GetVkInstance() const { return instance_; }
+  VkPhysicalDevice GetVkPhysicalDevice() { return physical_device_; }
+  VkDevice GetVkDevice() const { return device_; }
+  VkPhysicalDevice GetVkPhysicalDevice() const { return physical_device_; }
   uint32_t GetQueueFamilyIndex() const { return queue_family_index_; }
-  VkQueue GetQueue() const { return queue_; }
-  const VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() const {
+  VkQueue GetVkQueue() const { return queue_; }
+  const VkPhysicalDeviceProperties& GetVkPhysicalDeviceProperties() const {
     return physical_device_properties_;
   }
-  const VkPhysicalDeviceMemoryProperties& GetPhysicalMemoryProperties() const {
+  const VkPhysicalDeviceMemoryProperties& GetVkPhysicalMemoryProperties()
+      const {
     return physical_memory_properties_;
   }
 

@@ -62,10 +62,8 @@ class Pipeline {
     entry_points_[stage] = entry;
   }
 
-  // End recording command buffer if it is in recording state. This
-  // method also submits commands in the command buffer and reset
-  // the command buffer.
-  Result ProcessCommands();
+  CommandBuffer* GetCommandBuffer() const { return command_.get(); }
+  Device* GetDevice() const { return device_; }
 
   virtual void Shutdown();
 
@@ -89,7 +87,7 @@ class Pipeline {
   // Record a Vulkan command for push contant.
   Result RecordPushConstant(const VkPipelineLayout& pipeline_layout);
 
-  const std::vector<VkPipelineShaderStageCreateInfo>& GetShaderStageInfo()
+  const std::vector<VkPipelineShaderStageCreateInfo>& GetVkShaderStageInfo()
       const {
     return shader_stage_info_;
   }

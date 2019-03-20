@@ -346,6 +346,41 @@ VkBlendOp ToVkBlendOp(BlendOp op) {
   return VK_BLEND_OP_ADD;
 }
 
+class RenderPassGuard {
+ public:
+  explicit RenderPassGuard(GraphicsPipeline* pipeline) : pipeline_(pipeline) {
+    auto* frame = pipeline->GetFrame();
+    auto* cmd = pipeline->GetCommandBuffer();
+    result_ = frame->ChangeFrameImageLayout(cmd, FrameImageState::kClearOrDraw);
+    if (!result_.IsSuccess())
+      return;
+
+    VkRenderPassBeginInfo render_begin_info = VkRenderPassBeginInfo();
+    render_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    render_begin_info.renderPass = pipeline->GetVkRenderPass();
+    render_begin_info.framebuffer = frame->GetVkFrameBuffer();
+    render_begin_info.renderArea = {{0, 0},
+                                    {frame->GetWidth(), frame->GetHeight()}};
+    pipeline->GetDevice()->GetPtrs()->vkCmdBeginRenderPass(
+        cmd->GetVkCommandBuffer(), &render_begin_info,
+        VK_SUBPASS_CONTENTS_INLINE);
+  }
+
+  bool IsActive() const { return result_.IsSuccess(); }
+  Result GetResult() const { return result_; }
+
+  ~RenderPassGuard() {
+    if (result_.IsSuccess()) {
+      pipeline_->GetDevice()->GetPtrs()->vkCmdEndRenderPass(
+          pipeline_->GetCommandBuffer()->GetVkCommandBuffer());
+    }
+  }
+
+ private:
+  Result result_;
+  GraphicsPipeline* pipeline_;
+};
+
 }  // namespace
 
 GraphicsPipeline::GraphicsPipeline(
@@ -419,7 +454,7 @@ Result GraphicsPipeline::CreateRenderPass() {
   render_pass_info.subpassCount = 1;
   render_pass_info.pSubpasses = &subpass_desc;
 
-  if (device_->GetPtrs()->vkCreateRenderPass(device_->GetDevice(),
+  if (device_->GetPtrs()->vkCreateRenderPass(device_->GetVkDevice(),
                                              &render_pass_info, nullptr,
                                              &render_pass_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateRenderPass Fail");
@@ -429,7 +464,7 @@ Result GraphicsPipeline::CreateRenderPass() {
 }
 
 VkPipelineDepthStencilStateCreateInfo
-GraphicsPipeline::GetPipelineDepthStencilInfo(
+GraphicsPipeline::GetVkPipelineDepthStencilInfo(
     const PipelineData* pipeline_data) {
   VkPipelineDepthStencilStateCreateInfo depthstencil_info =
       VkPipelineDepthStencilStateCreateInfo();
@@ -473,7 +508,7 @@ GraphicsPipeline::GetPipelineDepthStencilInfo(
 }
 
 VkPipelineColorBlendAttachmentState
-GraphicsPipeline::GetPipelineColorBlendAttachmentState(
+GraphicsPipeline::GetVkPipelineColorBlendAttachmentState(
     const PipelineData* pipeline_data) {
   VkPipelineColorBlendAttachmentState colorblend_attachment =
       VkPipelineColorBlendAttachmentState();
@@ -515,8 +550,8 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   VkVertexInputBindingDescription vertex_binding_desc =
       VkVertexInputBindingDescription();
   if (vertex_buffer != nullptr) {
-    vertex_binding_desc = vertex_buffer->GetVertexInputBinding();
-    const auto& vertex_attr_desc = vertex_buffer->GetVertexInputAttr();
+    vertex_binding_desc = vertex_buffer->GetVkVertexInputBinding();
+    const auto& vertex_attr_desc = vertex_buffer->GetVkVertexInputAttr();
 
     vertex_input_info.pVertexBindingDescriptions = &vertex_binding_desc;
     vertex_input_info.vertexAttributeDescriptionCount =
@@ -555,7 +590,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   viewport_info.scissorCount = 1;
   viewport_info.pScissors = &scissor;
 
-  auto shader_stage_info = GetShaderStageInfo();
+  auto shader_stage_info = GetVkShaderStageInfo();
   bool is_tessellation_needed = false;
   for (auto& info : shader_stage_info) {
     info.pName = GetEntryPointName(info.stage);
@@ -616,7 +651,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
 
   VkPipelineDepthStencilStateCreateInfo depthstencil_info;
   if (depth_stencil_format_ != VK_FORMAT_UNDEFINED) {
-    depthstencil_info = GetPipelineDepthStencilInfo(pipeline_data);
+    depthstencil_info = GetVkPipelineDepthStencilInfo(pipeline_data);
     pipeline_info.pDepthStencilState = &depthstencil_info;
   }
 
@@ -624,7 +659,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
       VkPipelineColorBlendStateCreateInfo();
   VkPipelineColorBlendAttachmentState colorblend_attachment;
 
-  colorblend_attachment = GetPipelineColorBlendAttachmentState(pipeline_data);
+  colorblend_attachment = GetVkPipelineColorBlendAttachmentState(pipeline_data);
 
   colorblend_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -639,7 +674,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   pipeline_info.subpass = 0;
 
   if (device_->GetPtrs()->vkCreateGraphicsPipelines(
-          device_->GetDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
+          device_->GetVkDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
           pipeline) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateGraphicsPipelines Fail");
   }
@@ -673,16 +708,8 @@ Result GraphicsPipeline::Initialize(uint32_t width,
 
 Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
     VertexBuffer* vertex_buffer) {
-  if (!vertex_buffer)
+  if (!vertex_buffer || vertex_buffer->VertexDataSent())
     return {};
-
-  if (vertex_buffer->VertexDataSent())
-    return {};
-
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
   return vertex_buffer->SendVertexData(command_.get(), memory_properties_);
 }
 
@@ -695,48 +722,16 @@ Result GraphicsPipeline::SetIndexBuffer(const std::vector<Value>& values) {
 
   index_buffer_ = MakeUnique<IndexBuffer>(device_);
 
-  Result r = command_->BeginIfNotInRecording();
+  CommandBufferGuard guard(GetCommandBuffer());
+  if (!guard.IsRecording())
+    return guard.GetResult();
+
+  Result r =
+      index_buffer_->SendIndexData(command_.get(), memory_properties_, values);
   if (!r.IsSuccess())
     return r;
 
-  r = index_buffer_->SendIndexData(command_.get(), memory_properties_, values);
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
-  return command_->SubmitAndReset(GetFenceTimeout());
-}
-
-Result GraphicsPipeline::ActivateRenderPassIfNeeded() {
-  if (render_pass_state_ == RenderPassState::kActive)
-    return {};
-
-  Result r = frame_->ChangeFrameImageLayout(command_.get(),
-                                            FrameImageState::kClearOrDraw);
-  if (!r.IsSuccess())
-    return r;
-
-  VkRenderPassBeginInfo render_begin_info = VkRenderPassBeginInfo();
-  render_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  render_begin_info.renderPass = render_pass_;
-  render_begin_info.framebuffer = frame_->GetFrameBuffer();
-  render_begin_info.renderArea = {{0, 0}, {frame_width_, frame_height_}};
-  device_->GetPtrs()->vkCmdBeginRenderPass(command_->GetCommandBuffer(),
-                                           &render_begin_info,
-                                           VK_SUBPASS_CONTENTS_INLINE);
-  render_pass_state_ = RenderPassState::kActive;
-  return {};
-}
-
-void GraphicsPipeline::DeactivateRenderPassIfNeeded() {
-  if (render_pass_state_ == RenderPassState::kInactive)
-    return;
-
-  device_->GetPtrs()->vkCmdEndRenderPass(command_->GetCommandBuffer());
-  render_pass_state_ = RenderPassState::kInactive;
+  return guard.Submit(GetFenceTimeout());
 }
 
 Result GraphicsPipeline::SetClearColor(float r, float g, float b, float a) {
@@ -792,59 +787,39 @@ Result GraphicsPipeline::Clear() {
 
 Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
                                      VkImageAspectFlags aspect) {
-  Result r = command_->BeginIfNotInRecording();
+  CommandBufferGuard cmd_buf_guard(GetCommandBuffer());
+  if (!cmd_buf_guard.IsRecording())
+    return cmd_buf_guard.GetResult();
+
+  {
+    RenderPassGuard render_pass_guard(this);
+    if (!render_pass_guard.IsActive())
+      return render_pass_guard.GetResult();
+
+    VkClearAttachment clear_attachment = VkClearAttachment();
+    clear_attachment.aspectMask = aspect;
+    clear_attachment.colorAttachment = 0;
+    clear_attachment.clearValue = clear_value;
+
+    VkClearRect clear_rect;
+    clear_rect.rect = {{0, 0}, {frame_width_, frame_height_}};
+    clear_rect.baseArrayLayer = 0;
+    clear_rect.layerCount = 1;
+
+    device_->GetPtrs()->vkCmdClearAttachments(
+        command_->GetVkCommandBuffer(), 1, &clear_attachment, 1, &clear_rect);
+  }
+
+  Result r = frame_->CopyColorImagesToHost(command_.get());
   if (!r.IsSuccess())
     return r;
 
-  r = ActivateRenderPassIfNeeded();
-  if (!r.IsSuccess())
-    return r;
-
-  VkClearAttachment clear_attachment = VkClearAttachment();
-  clear_attachment.aspectMask = aspect;
-  clear_attachment.colorAttachment = 0;
-  clear_attachment.clearValue = clear_value;
-
-  VkClearRect clear_rect;
-  clear_rect.rect = {{0, 0}, {frame_width_, frame_height_}};
-  clear_rect.baseArrayLayer = 0;
-  clear_rect.layerCount = 1;
-
-  device_->GetPtrs()->vkCmdClearAttachments(command_->GetCommandBuffer(), 1,
-                                            &clear_attachment, 1, &clear_rect);
-
-  DeactivateRenderPassIfNeeded();
-
-  r = frame_->CopyColorImagesToHost(command_.get());
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->SubmitAndReset(GetFenceTimeout());
-  if (!r.IsSuccess())
-    return r;
-
-  return {};
+  return cmd_buf_guard.Submit(GetFenceTimeout());
 }
 
 Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
                               VertexBuffer* vertex_buffer) {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  r = SendDescriptorDataToDeviceIfNeeded();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->SubmitAndReset(GetFenceTimeout());
+  Result r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
     return r;
 
@@ -867,79 +842,79 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
+  {
+    CommandBufferGuard cmd_buf_guard(GetCommandBuffer());
+    if (!cmd_buf_guard.IsRecording())
+      return cmd_buf_guard.GetResult();
 
-  r = SendVertexBufferDataIfNeeded(vertex_buffer);
-  if (!r.IsSuccess())
-    return r;
-
-  r = ActivateRenderPassIfNeeded();
-  if (!r.IsSuccess())
-    return r;
-
-  BindVkDescriptorSets(pipeline_layout);
-
-  r = RecordPushConstant(pipeline_layout);
-  if (!r.IsSuccess())
-    return r;
-
-  device_->GetPtrs()->vkCmdBindPipeline(
-      command_->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-
-  if (vertex_buffer != nullptr)
-    vertex_buffer->BindToCommandBuffer(command_.get());
-
-  uint32_t instance_count = command->GetInstanceCount();
-  if (instance_count == 0 && command->GetVertexCount() != 0)
-    instance_count = 1;
-
-  if (command->IsIndexed()) {
-    if (!index_buffer_)
-      return Result("Vulkan: Draw indexed is used without given indices");
-
-    r = index_buffer_->BindToCommandBuffer(command_.get());
+    r = SendVertexBufferDataIfNeeded(vertex_buffer);
     if (!r.IsSuccess())
       return r;
 
-    // VkRunner spec says
-    //   "vertexCount will be used as the index count, firstVertex
-    //    becomes the vertex offset and firstIndex will always be zero."
-    device_->GetPtrs()->vkCmdDrawIndexed(
-        command_->GetCommandBuffer(),
-        command->GetVertexCount(), /* indexCount */
-        instance_count,            /* instanceCount */
-        0,                         /* firstIndex */
-        static_cast<int32_t>(command->GetFirstVertexIndex()), /* vertexOffset */
-        0 /* firstInstance */);
-  } else {
-    device_->GetPtrs()->vkCmdDraw(command_->GetCommandBuffer(),
-                                  command->GetVertexCount(), instance_count,
-                                  command->GetFirstVertexIndex(), 0);
+    {
+      RenderPassGuard render_pass_guard(this);
+      if (!render_pass_guard.IsActive())
+        return render_pass_guard.GetResult();
+
+      BindVkDescriptorSets(pipeline_layout);
+
+      r = RecordPushConstant(pipeline_layout);
+      if (!r.IsSuccess())
+        return r;
+
+      device_->GetPtrs()->vkCmdBindPipeline(command_->GetVkCommandBuffer(),
+                                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                            pipeline);
+
+      if (vertex_buffer != nullptr)
+        vertex_buffer->BindToCommandBuffer(command_.get());
+
+      uint32_t instance_count = command->GetInstanceCount();
+      if (instance_count == 0 && command->GetVertexCount() != 0)
+        instance_count = 1;
+
+      if (command->IsIndexed()) {
+        if (!index_buffer_)
+          return Result("Vulkan: Draw indexed is used without given indices");
+
+        r = index_buffer_->BindToCommandBuffer(command_.get());
+        if (!r.IsSuccess())
+          return r;
+
+        // VkRunner spec says
+        //   "vertexCount will be used as the index count, firstVertex
+        //    becomes the vertex offset and firstIndex will always be zero."
+        device_->GetPtrs()->vkCmdDrawIndexed(
+            command_->GetVkCommandBuffer(),
+            command->GetVertexCount(), /* indexCount */
+            instance_count,            /* instanceCount */
+            0,                         /* firstIndex */
+            static_cast<int32_t>(
+                command->GetFirstVertexIndex()), /* vertexOffset */
+            0 /* firstInstance */);
+      } else {
+        device_->GetPtrs()->vkCmdDraw(command_->GetVkCommandBuffer(),
+                                      command->GetVertexCount(), instance_count,
+                                      command->GetFirstVertexIndex(), 0);
+      }
+    }
+
+    r = frame_->CopyColorImagesToHost(command_.get());
+    if (!r.IsSuccess())
+      return r;
+
+    r = cmd_buf_guard.Submit(GetFenceTimeout());
+    if (!r.IsSuccess())
+      return r;
   }
-
-  DeactivateRenderPassIfNeeded();
-
-  r = frame_->CopyColorImagesToHost(command_.get());
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->SubmitAndReset(GetFenceTimeout());
-  if (!r.IsSuccess())
-    return r;
 
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;
 
-  device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline,
+  device_->GetPtrs()->vkDestroyPipeline(device_->GetVkDevice(), pipeline,
                                         nullptr);
-  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetDevice(),
+  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetVkDevice(),
                                               pipeline_layout, nullptr);
   return {};
 }
@@ -950,8 +925,8 @@ void GraphicsPipeline::Shutdown() {
   frame_ = nullptr;
 
   if (render_pass_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyRenderPass(device_->GetDevice(), render_pass_,
-                                            nullptr);
+    device_->GetPtrs()->vkDestroyRenderPass(device_->GetVkDevice(),
+                                            render_pass_, nullptr);
   }
 }
 

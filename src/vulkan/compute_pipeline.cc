@@ -42,7 +42,7 @@ Result ComputePipeline::Initialize(CommandPool* pool, VkQueue queue) {
 Result ComputePipeline::CreateVkComputePipeline(
     const VkPipelineLayout& pipeline_layout,
     VkPipeline* pipeline) {
-  auto shader_stage_info = GetShaderStageInfo();
+  auto shader_stage_info = GetVkShaderStageInfo();
   if (shader_stage_info.size() != 1) {
     return Result(
         "Vulkan::CreateVkComputePipeline number of shaders given to compute "
@@ -60,7 +60,7 @@ Result ComputePipeline::CreateVkComputePipeline(
   pipeline_info.layout = pipeline_layout;
 
   if (device_->GetPtrs()->vkCreateComputePipelines(
-          device_->GetDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
+          device_->GetVkDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
           pipeline) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateComputePipelines Fail");
   }
@@ -69,19 +69,7 @@ Result ComputePipeline::CreateVkComputePipeline(
 }
 
 Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  r = SendDescriptorDataToDeviceIfNeeded();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->SubmitAndReset(GetFenceTimeout());
+  Result r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
     return r;
 
@@ -102,35 +90,34 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
   if (!r.IsSuccess())
     return r;
 
-  r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
+  {
+    CommandBufferGuard guard(GetCommandBuffer());
+    if (!guard.IsRecording())
+      return guard.GetResult();
 
-  BindVkDescriptorSets(pipeline_layout);
+    BindVkDescriptorSets(pipeline_layout);
 
-  r = RecordPushConstant(pipeline_layout);
-  if (!r.IsSuccess())
-    return r;
+    r = RecordPushConstant(pipeline_layout);
+    if (!r.IsSuccess())
+      return r;
 
-  device_->GetPtrs()->vkCmdBindPipeline(
-      command_->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
-  device_->GetPtrs()->vkCmdDispatch(command_->GetCommandBuffer(), x, y, z);
+    device_->GetPtrs()->vkCmdBindPipeline(command_->GetVkCommandBuffer(),
+                                          VK_PIPELINE_BIND_POINT_COMPUTE,
+                                          pipeline);
+    device_->GetPtrs()->vkCmdDispatch(command_->GetVkCommandBuffer(), x, y, z);
 
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->SubmitAndReset(GetFenceTimeout());
-  if (!r.IsSuccess())
-    return r;
+    r = guard.Submit(GetFenceTimeout());
+    if (!r.IsSuccess())
+      return r;
+  }
 
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;
 
-  device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline,
+  device_->GetPtrs()->vkDestroyPipeline(device_->GetVkDevice(), pipeline,
                                         nullptr);
-  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetDevice(),
+  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetVkDevice(),
                                               pipeline_layout, nullptr);
 
   return {};

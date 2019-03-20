@@ -14,6 +14,8 @@
 
 #include "src/vulkan/command_buffer.h"
 
+#include <cassert>
+
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 
@@ -25,29 +27,29 @@ CommandBuffer::CommandBuffer(Device* device, CommandPool* pool, VkQueue queue)
 
 CommandBuffer::~CommandBuffer() {
   if (fence_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkDestroyFence(device_->GetDevice(), fence_, nullptr);
+    device_->GetPtrs()->vkDestroyFence(device_->GetVkDevice(), fence_, nullptr);
 
   if (command_ != VK_NULL_HANDLE) {
     device_->GetPtrs()->vkFreeCommandBuffers(
-        device_->GetDevice(), pool_->GetCommandPool(), 1, &command_);
+        device_->GetVkDevice(), pool_->GetVkCommandPool(), 1, &command_);
   }
 }
 
 Result CommandBuffer::Initialize() {
   VkCommandBufferAllocateInfo command_info = VkCommandBufferAllocateInfo();
   command_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  command_info.commandPool = pool_->GetCommandPool();
+  command_info.commandPool = pool_->GetVkCommandPool();
   command_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   command_info.commandBufferCount = 1;
 
   if (device_->GetPtrs()->vkAllocateCommandBuffers(
-          device_->GetDevice(), &command_info, &command_) != VK_SUCCESS) {
+          device_->GetVkDevice(), &command_info, &command_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkAllocateCommandBuffers Fail");
   }
 
   VkFenceCreateInfo fence_info = VkFenceCreateInfo();
   fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  if (device_->GetPtrs()->vkCreateFence(device_->GetDevice(), &fence_info,
+  if (device_->GetPtrs()->vkCreateFence(device_->GetVkDevice(), &fence_info,
                                         nullptr, &fence_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateFence Fail");
   }
@@ -55,13 +57,7 @@ Result CommandBuffer::Initialize() {
   return {};
 }
 
-Result CommandBuffer::BeginIfNotInRecording() {
-  if (state_ == CommandBufferState::kRecording)
-    return {};
-
-  if (state_ != CommandBufferState::kInitial)
-    return Result("Vulkan::Begin CommandBuffer from Not Valid State");
-
+Result CommandBuffer::BeginRecording() {
   VkCommandBufferBeginInfo command_begin_info = VkCommandBufferBeginInfo();
   command_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   command_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -70,26 +66,14 @@ Result CommandBuffer::BeginIfNotInRecording() {
     return Result("Vulkan::Calling vkBeginCommandBuffer Fail");
   }
 
-  state_ = CommandBufferState::kRecording;
-  return {};
-}
-
-Result CommandBuffer::End() {
-  if (state_ != CommandBufferState::kRecording)
-    return Result("Vulkan::End CommandBuffer from Not Valid State");
-
-  if (device_->GetPtrs()->vkEndCommandBuffer(command_) != VK_SUCCESS)
-    return Result("Vulkan::Calling vkEndCommandBuffer Fail");
-
-  state_ = CommandBufferState::kExecutable;
   return {};
 }
 
 Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
-  if (state_ != CommandBufferState::kExecutable)
-    return Result("Vulkan::Submit CommandBuffer from Not Valid State");
+  if (device_->GetPtrs()->vkEndCommandBuffer(command_) != VK_SUCCESS)
+    return Result("Vulkan::Calling vkEndCommandBuffer Fail");
 
-  if (device_->GetPtrs()->vkResetFences(device_->GetDevice(), 1, &fence_) !=
+  if (device_->GetPtrs()->vkResetFences(device_->GetVkDevice(), 1, &fence_) !=
       VK_SUCCESS) {
     return Result("Vulkan::Calling vkResetFences Fail");
   }
@@ -104,7 +88,7 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   }
 
   VkResult r = device_->GetPtrs()->vkWaitForFences(
-      device_->GetDevice(), 1, &fence_, VK_TRUE,
+      device_->GetVkDevice(), 1, &fence_, VK_TRUE,
       static_cast<uint64_t>(timeout_ms) * 1000ULL * 1000ULL /* nanosecond */);
   if (r == VK_TIMEOUT)
     return Result("Vulkan::Calling vkWaitForFences Timeout");
@@ -114,8 +98,25 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS)
     return Result("Vulkan::Calling vkResetCommandBuffer Fail");
 
-  state_ = CommandBufferState::kInitial;
   return {};
+}
+
+CommandBufferGuard::CommandBufferGuard(CommandBuffer* buffer)
+    : buffer_(buffer) {
+  assert(!buffer_->guarded_);
+
+  buffer_->guarded_ = true;
+  result_ = buffer_->BeginRecording();
+}
+
+CommandBufferGuard::~CommandBufferGuard() = default;
+
+Result CommandBufferGuard::Submit(uint32_t timeout_ms) {
+  assert(buffer_->guarded_);
+
+  result_ = buffer_->SubmitAndReset(timeout_ms);
+  buffer_->guarded_ = false;
+  return result_;
 }
 
 }  // namespace vulkan

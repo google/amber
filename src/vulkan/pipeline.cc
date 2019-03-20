@@ -68,17 +68,11 @@ Result Pipeline::Initialize(CommandPool* pool, VkQueue queue) {
 }
 
 void Pipeline::Shutdown() {
-  if (command_) {
-    Result r = command_->End();
-    if (r.IsSuccess())
-      command_->SubmitAndReset(fence_timeout_ms_);
-
-    command_ = nullptr;
-  }
+  command_ = nullptr;
 
   for (auto& info : descriptor_set_info_) {
     if (info.layout != VK_NULL_HANDLE) {
-      device_->GetPtrs()->vkDestroyDescriptorSetLayout(device_->GetDevice(),
+      device_->GetPtrs()->vkDestroyDescriptorSetLayout(device_->GetVkDevice(),
                                                        info.layout, nullptr);
     }
 
@@ -86,7 +80,7 @@ void Pipeline::Shutdown() {
       continue;
 
     if (info.pool != VK_NULL_HANDLE) {
-      device_->GetPtrs()->vkDestroyDescriptorPool(device_->GetDevice(),
+      device_->GetPtrs()->vkDestroyDescriptorPool(device_->GetVkDevice(),
                                                   info.pool, nullptr);
     }
   }
@@ -112,7 +106,7 @@ Result Pipeline::CreateDescriptorSetLayouts() {
     desc_info.pBindings = bindings.data();
 
     if (device_->GetPtrs()->vkCreateDescriptorSetLayout(
-            device_->GetDevice(), &desc_info, nullptr, &info.layout) !=
+            device_->GetVkDevice(), &desc_info, nullptr, &info.layout) !=
         VK_SUCCESS) {
       return Result("Vulkan::Calling vkCreateDescriptorSetLayout Fail");
     }
@@ -149,7 +143,7 @@ Result Pipeline::CreateDescriptorPools() {
     pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
     pool_info.pPoolSizes = pool_sizes.data();
 
-    if (device_->GetPtrs()->vkCreateDescriptorPool(device_->GetDevice(),
+    if (device_->GetPtrs()->vkCreateDescriptorPool(device_->GetVkDevice(),
                                                    &pool_info, nullptr,
                                                    &info.pool) != VK_SUCCESS) {
       return Result("Vulkan::Calling vkCreateDescriptorPool Fail");
@@ -172,7 +166,7 @@ Result Pipeline::CreateDescriptorSets() {
 
     VkDescriptorSet desc_set = VK_NULL_HANDLE;
     if (device_->GetPtrs()->vkAllocateDescriptorSets(
-            device_->GetDevice(), &desc_set_info, &desc_set) != VK_SUCCESS) {
+            device_->GetVkDevice(), &desc_set_info, &desc_set) != VK_SUCCESS) {
       return Result("Vulkan::Calling vkAllocateDescriptorSets Fail");
     }
     descriptor_set_info_[i].vk_desc_set = desc_set;
@@ -197,14 +191,15 @@ Result Pipeline::CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout) {
       static_cast<uint32_t>(descriptor_set_layouts.size());
   pipeline_layout_info.pSetLayouts = descriptor_set_layouts.data();
 
-  VkPushConstantRange push_const_range = push_constant_->GetPushConstantRange();
+  VkPushConstantRange push_const_range =
+      push_constant_->GetVkPushConstantRange();
   if (push_const_range.size) {
     pipeline_layout_info.pushConstantRangeCount = 1U;
     pipeline_layout_info.pPushConstantRanges = &push_const_range;
   }
 
   if (device_->GetPtrs()->vkCreatePipelineLayout(
-          device_->GetDevice(), &pipeline_layout_info, nullptr,
+          device_->GetVkDevice(), &pipeline_layout_info, nullptr,
           pipeline_layout) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreatePipelineLayout Fail");
   }
@@ -323,45 +318,42 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
 }
 
 Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
+  {
+    CommandBufferGuard guard(GetCommandBuffer());
+    if (!guard.IsRecording())
+      return guard.GetResult();
+
+    for (auto& info : descriptor_set_info_) {
+      for (auto& desc : info.descriptors_) {
+        Result r = desc->CreateResourceIfNeeded(memory_properties_);
+        if (!r.IsSuccess())
+          return r;
+      }
+    }
+
+    // Note that if a buffer for a descriptor is host accessible and
+    // does not need to record a command to copy data to device, it
+    // directly writes data to the buffer. The direct write must be
+    // done after resizing backed buffer i.e., copying data to the new
+    // buffer from the old one. Thus, we must submit commands here to
+    // guarantee this.
+    Result r = guard.Submit(GetFenceTimeout());
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  CommandBufferGuard guard(GetCommandBuffer());
+  if (!guard.IsRecording())
+    return guard.GetResult();
 
   for (auto& info : descriptor_set_info_) {
     for (auto& desc : info.descriptors_) {
-      r = desc->CreateResourceIfNeeded(memory_properties_);
+      Result r = desc->RecordCopyDataToResourceIfNeeded(command_.get());
       if (!r.IsSuccess())
         return r;
     }
   }
-
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
-  // Note that if a buffer for a descriptor is host accessible and
-  // does not need to record a command to copy data to device, it
-  // directly writes data to the buffer. The direct write must be
-  // done after resizing backed buffer i.e., copying data to the new
-  // buffer from the old one. Thus, we must submit commands here to
-  // guarantee this.
-  r = command_->SubmitAndReset(GetFenceTimeout());
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  for (auto& info : descriptor_set_info_) {
-    for (auto& desc : info.descriptors_) {
-      r = desc->RecordCopyDataToResourceIfNeeded(command_.get());
-      if (!r.IsSuccess())
-        return r;
-    }
-  }
-
-  return {};
+  return guard.Submit(GetFenceTimeout());
 }
 
 void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
@@ -370,7 +362,7 @@ void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
       continue;
 
     device_->GetPtrs()->vkCmdBindDescriptorSets(
-        command_->GetCommandBuffer(),
+        command_->GetVkCommandBuffer(),
         IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
                      : VK_PIPELINE_BIND_POINT_COMPUTE,
         pipeline_layout, static_cast<uint32_t>(i), 1,
@@ -379,29 +371,27 @@ void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
 }
 
 Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
+  {
+    CommandBufferGuard guard(GetCommandBuffer());
+    if (!guard.IsRecording())
+      return guard.GetResult();
 
-  for (auto& desc_set : descriptor_set_info_) {
-    for (auto& desc : desc_set.descriptors_) {
-      r = desc->RecordCopyDataToHost(command_.get());
-      if (!r.IsSuccess())
-        return r;
+    for (auto& desc_set : descriptor_set_info_) {
+      for (auto& desc : desc_set.descriptors_) {
+        Result r = desc->RecordCopyDataToHost(command_.get());
+        if (!r.IsSuccess())
+          return r;
+      }
     }
+
+    Result r = guard.Submit(GetFenceTimeout());
+    if (!r.IsSuccess())
+      return r;
   }
 
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->SubmitAndReset(GetFenceTimeout());
-  if (!r.IsSuccess())
-    return r;
-
   for (auto& desc_set : descriptor_set_info_) {
     for (auto& desc : desc_set.descriptors_) {
-      r = desc->MoveResourceToBufferOutput();
+      Result r = desc->MoveResourceToBufferOutput();
       if (!r.IsSuccess())
         return r;
     }
@@ -416,18 +406,6 @@ const char* Pipeline::GetEntryPointName(VkShaderStageFlagBits stage) const {
     return it->second.c_str();
 
   return kDefaultEntryPointName;
-}
-
-Result Pipeline::ProcessCommands() {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->End();
-  if (!r.IsSuccess())
-    return r;
-
-  return command_->SubmitAndReset(GetFenceTimeout());
 }
 
 }  // namespace vulkan

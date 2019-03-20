@@ -77,7 +77,7 @@ class Resource {
   // prevent hazards caused by out-of-order execution.
   void MemoryBarrier(CommandBuffer* command);
 
-  const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() const {
+  const VkPhysicalDeviceMemoryProperties& GetVkMemoryProperties() const {
     return physical_memory_properties_;
   }
 

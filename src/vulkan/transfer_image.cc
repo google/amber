@@ -61,24 +61,24 @@ TransferImage::TransferImage(Device* device,
 
 TransferImage::~TransferImage() {
   if (view_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyImageView(device_->GetDevice(), view_,
+    device_->GetPtrs()->vkDestroyImageView(device_->GetVkDevice(), view_,
                                            nullptr);
   }
 
   if (image_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkDestroyImage(device_->GetDevice(), image_, nullptr);
+    device_->GetPtrs()->vkDestroyImage(device_->GetVkDevice(), image_, nullptr);
 
   if (memory_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_, nullptr);
+    device_->GetPtrs()->vkFreeMemory(device_->GetVkDevice(), memory_, nullptr);
 
   if (host_accessible_memory_ != VK_NULL_HANDLE) {
     UnMapMemory(host_accessible_memory_);
-    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(),
+    device_->GetPtrs()->vkFreeMemory(device_->GetVkDevice(),
                                      host_accessible_memory_, nullptr);
   }
 
   if (host_accessible_buffer_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(),
+    device_->GetPtrs()->vkDestroyBuffer(device_->GetVkDevice(),
                                         host_accessible_buffer_, nullptr);
   }
 }
@@ -89,7 +89,7 @@ Result TransferImage::Initialize(VkImageUsageFlags usage) {
 
   image_info_.usage = usage;
 
-  if (device_->GetPtrs()->vkCreateImage(device_->GetDevice(), &image_info_,
+  if (device_->GetPtrs()->vkCreateImage(device_->GetVkDevice(), &image_info_,
                                         nullptr, &image_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateImage Fail");
   }
@@ -148,7 +148,7 @@ Result TransferImage::CreateVkImageView() {
       1,       /* layerCount */
   };
 
-  if (device_->GetPtrs()->vkCreateImageView(device_->GetDevice(),
+  if (device_->GetPtrs()->vkCreateImageView(device_->GetVkDevice(),
                                             &image_view_info, nullptr,
                                             &view_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateImageView Fail");
@@ -175,8 +175,9 @@ Result TransferImage::CopyToHost(CommandBuffer* command) {
                              image_info_.extent.height, 1};
 
   device_->GetPtrs()->vkCmdCopyImageToBuffer(
-      command->GetCommandBuffer(), image_, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      host_accessible_buffer_, 1, &copy_region);
+      command->GetVkCommandBuffer(), image_,
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, host_accessible_buffer_, 1,
+      &copy_region);
 
   MemoryBarrier(command);
   return {};
@@ -257,8 +258,9 @@ void TransferImage::ChangeLayout(CommandBuffer* command,
       break;
   }
 
-  device_->GetPtrs()->vkCmdPipelineBarrier(
-      command->GetCommandBuffer(), from, to, 0, 0, NULL, 0, NULL, 1, &barrier);
+  device_->GetPtrs()->vkCmdPipelineBarrier(command->GetVkCommandBuffer(), from,
+                                           to, 0, 0, NULL, 0, NULL, 1,
+                                           &barrier);
 }
 
 Result TransferImage::AllocateAndBindMemoryToVkImage(
@@ -292,7 +294,7 @@ Result TransferImage::AllocateAndBindMemoryToVkImage(
   if (!r.IsSuccess())
     return r;
 
-  if (device_->GetPtrs()->vkBindImageMemory(device_->GetDevice(), image,
+  if (device_->GetPtrs()->vkBindImageMemory(device_->GetVkDevice(), image,
                                             *memory, 0) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkBindImageMemory Fail");
   }
@@ -303,8 +305,8 @@ Result TransferImage::AllocateAndBindMemoryToVkImage(
 const VkMemoryRequirements TransferImage::GetVkImageMemoryRequirements(
     VkImage image) const {
   VkMemoryRequirements requirement;
-  device_->GetPtrs()->vkGetImageMemoryRequirements(device_->GetDevice(), image,
-                                                   &requirement);
+  device_->GetPtrs()->vkGetImageMemoryRequirements(device_->GetVkDevice(),
+                                                   image, &requirement);
   return requirement;
 }
 

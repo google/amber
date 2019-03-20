@@ -44,7 +44,7 @@ class PushConstant {
   // in |push_constant_data_| rounded down by 4, and size is maximum
   // |offset| + |size_in_bytes| among elements in |push_constant_data_|
   // rounded up by 4.
-  VkPushConstantRange GetPushConstantRange();
+  VkPushConstantRange GetVkPushConstantRange();
 
   // Call vkCmdPushConstants() to record a command for push constant
   // if size in bytes of push constant is not larger than

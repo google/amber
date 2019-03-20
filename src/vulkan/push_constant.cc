@@ -31,7 +31,7 @@ PushConstant::PushConstant(Device* device, uint32_t max_push_constant_size)
 
 PushConstant::~PushConstant() = default;
 
-VkPushConstantRange PushConstant::GetPushConstantRange() {
+VkPushConstantRange PushConstant::GetVkPushConstantRange() {
   if (push_constant_data_.empty())
     return VkPushConstantRange();
 
@@ -74,7 +74,7 @@ Result PushConstant::RecordPushConstantVkCommand(
   if (push_constant_data_.empty())
     return {};
 
-  auto push_const_range = GetPushConstantRange();
+  auto push_const_range = GetVkPushConstantRange();
   if (push_const_range.offset + push_const_range.size >
       max_push_constant_size_) {
     return Result(
@@ -93,7 +93,7 @@ Result PushConstant::RecordPushConstantVkCommand(
   assert(push_const_range.offset % 4U == 0 && push_const_range.size % 4U == 0);
 
   device_->GetPtrs()->vkCmdPushConstants(
-      command->GetCommandBuffer(), pipeline_layout, VK_SHADER_STAGE_ALL,
+      command->GetVkCommandBuffer(), pipeline_layout, VK_SHADER_STAGE_ALL,
       push_const_range.offset, push_const_range.size,
       memory_.data() + push_const_range.offset);
   return {};
