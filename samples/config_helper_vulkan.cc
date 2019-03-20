@@ -610,7 +610,7 @@ ConfigHelperVulkan::~ConfigHelperVulkan() {
                                   "vkDestroyDebugReportCallbackEXT"));
     if (vkDestroyDebugReportCallbackEXT) {
       vkDestroyDebugReportCallbackEXT(vulkan_instance_, vulkan_callback_,
-                                    nullptr);
+                                      nullptr);
     }
   }
 
