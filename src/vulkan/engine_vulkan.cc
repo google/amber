@@ -325,13 +325,14 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   float y = command->GetY();
   float width = command->GetWidth();
   float height = command->GetHeight();
+
   if (command->IsOrtho()) {
     const float frame_width = static_cast<float>(graphics->GetWidth());
     const float frame_height = static_cast<float>(graphics->GetHeight());
     x = ((x / frame_width) * 2.0f) - 1.0f;
     y = ((y / frame_height) * 2.0f) - 1.0f;
-    width = ((width / frame_width) * 2.0f) - 1.0f;
-    height = ((height / frame_height) * 2.0f) - 1.0f;
+    width = (width / frame_width) * 2.0f;
+    height = (height / frame_height) * 2.0f;
   }
 
   std::vector<Value> values(8);
