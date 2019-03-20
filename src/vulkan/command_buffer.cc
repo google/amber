@@ -14,6 +14,8 @@
 
 #include "src/vulkan/command_buffer.h"
 
+#include <cassert>
+
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 
