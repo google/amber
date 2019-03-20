@@ -722,15 +722,16 @@ Result GraphicsPipeline::SetIndexBuffer(const std::vector<Value>& values) {
 
   index_buffer_ = MakeUnique<IndexBuffer>(device_);
 
-  Result r = command_->BeginIfNotInRecording();
+  CommandBufferGuard guard(GetCommandBuffer());
+  if (!guard.IsRecording())
+    return guard.GetResult();
+
+  Result r =
+      index_buffer_->SendIndexData(command_.get(), memory_properties_, values);
   if (!r.IsSuccess())
     return r;
 
-  r = index_buffer_->SendIndexData(command_.get(), memory_properties_, values);
-  if (!r.IsSuccess())
-    return r;
-
-  return command_->SubmitAndReset(GetFenceTimeout());
+  return guard.Submit(GetFenceTimeout());
 }
 
 Result GraphicsPipeline::SetClearColor(float r, float g, float b, float a) {
@@ -786,14 +787,14 @@ Result GraphicsPipeline::Clear() {
 
 Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
                                      VkImageAspectFlags aspect) {
-  Result r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
+  CommandBufferGuard cmd_buf_guard(GetCommandBuffer());
+  if (!cmd_buf_guard.IsRecording())
+    return cmd_buf_guard.GetResult();
 
   {
-    RenderPassGuard guard(this);
-    if (!guard.IsActive())
-      return guard.GetResult();
+    RenderPassGuard render_pass_guard(this);
+    if (!render_pass_guard.IsActive())
+      return render_pass_guard.GetResult();
 
     VkClearAttachment clear_attachment = VkClearAttachment();
     clear_attachment.aspectMask = aspect;
@@ -809,15 +810,11 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
         command_->GetVkCommandBuffer(), 1, &clear_attachment, 1, &clear_rect);
   }
 
-  r = frame_->CopyColorImagesToHost(command_.get());
+  Result r = frame_->CopyColorImagesToHost(command_.get());
   if (!r.IsSuccess())
     return r;
 
-  r = command_->SubmitAndReset(GetFenceTimeout());
-  if (!r.IsSuccess())
-    return r;
-
-  return {};
+  return cmd_buf_guard.Submit(GetFenceTimeout());
 }
 
 Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
@@ -845,69 +842,71 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  r = command_->BeginIfNotInRecording();
-  if (!r.IsSuccess())
-    return r;
-
-  r = SendVertexBufferDataIfNeeded(vertex_buffer);
-  if (!r.IsSuccess())
-    return r;
-
   {
-    RenderPassGuard guard(this);
-    if (!guard.IsActive())
-      return guard.GetResult();
+    CommandBufferGuard cmd_buf_guard(GetCommandBuffer());
+    if (!cmd_buf_guard.IsRecording())
+      return cmd_buf_guard.GetResult();
 
-    BindVkDescriptorSets(pipeline_layout);
-
-    r = RecordPushConstant(pipeline_layout);
+    r = SendVertexBufferDataIfNeeded(vertex_buffer);
     if (!r.IsSuccess())
       return r;
 
-    device_->GetPtrs()->vkCmdBindPipeline(command_->GetVkCommandBuffer(),
-                                          VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                          pipeline);
+    {
+      RenderPassGuard render_pass_guard(this);
+      if (!render_pass_guard.IsActive())
+        return render_pass_guard.GetResult();
 
-    if (vertex_buffer != nullptr)
-      vertex_buffer->BindToCommandBuffer(command_.get());
+      BindVkDescriptorSets(pipeline_layout);
 
-    uint32_t instance_count = command->GetInstanceCount();
-    if (instance_count == 0 && command->GetVertexCount() != 0)
-      instance_count = 1;
-
-    if (command->IsIndexed()) {
-      if (!index_buffer_)
-        return Result("Vulkan: Draw indexed is used without given indices");
-
-      r = index_buffer_->BindToCommandBuffer(command_.get());
+      r = RecordPushConstant(pipeline_layout);
       if (!r.IsSuccess())
         return r;
 
-      // VkRunner spec says
-      //   "vertexCount will be used as the index count, firstVertex
-      //    becomes the vertex offset and firstIndex will always be zero."
-      device_->GetPtrs()->vkCmdDrawIndexed(
-          command_->GetVkCommandBuffer(),
-          command->GetVertexCount(), /* indexCount */
-          instance_count,            /* instanceCount */
-          0,                         /* firstIndex */
-          static_cast<int32_t>(
-              command->GetFirstVertexIndex()), /* vertexOffset */
-          0 /* firstInstance */);
-    } else {
-      device_->GetPtrs()->vkCmdDraw(command_->GetVkCommandBuffer(),
-                                    command->GetVertexCount(), instance_count,
-                                    command->GetFirstVertexIndex(), 0);
+      device_->GetPtrs()->vkCmdBindPipeline(command_->GetVkCommandBuffer(),
+                                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                            pipeline);
+
+      if (vertex_buffer != nullptr)
+        vertex_buffer->BindToCommandBuffer(command_.get());
+
+      uint32_t instance_count = command->GetInstanceCount();
+      if (instance_count == 0 && command->GetVertexCount() != 0)
+        instance_count = 1;
+
+      if (command->IsIndexed()) {
+        if (!index_buffer_)
+          return Result("Vulkan: Draw indexed is used without given indices");
+
+        r = index_buffer_->BindToCommandBuffer(command_.get());
+        if (!r.IsSuccess())
+          return r;
+
+        // VkRunner spec says
+        //   "vertexCount will be used as the index count, firstVertex
+        //    becomes the vertex offset and firstIndex will always be zero."
+        device_->GetPtrs()->vkCmdDrawIndexed(
+            command_->GetVkCommandBuffer(),
+            command->GetVertexCount(), /* indexCount */
+            instance_count,            /* instanceCount */
+            0,                         /* firstIndex */
+            static_cast<int32_t>(
+                command->GetFirstVertexIndex()), /* vertexOffset */
+            0 /* firstInstance */);
+      } else {
+        device_->GetPtrs()->vkCmdDraw(command_->GetVkCommandBuffer(),
+                                      command->GetVertexCount(), instance_count,
+                                      command->GetFirstVertexIndex(), 0);
+      }
     }
+
+    r = frame_->CopyColorImagesToHost(command_.get());
+    if (!r.IsSuccess())
+      return r;
+
+    r = cmd_buf_guard.Submit(GetFenceTimeout());
+    if (!r.IsSuccess())
+      return r;
   }
-
-  r = frame_->CopyColorImagesToHost(command_.get());
-  if (!r.IsSuccess())
-    return r;
-
-  r = command_->SubmitAndReset(GetFenceTimeout());
-  if (!r.IsSuccess())
-    return r;
 
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
