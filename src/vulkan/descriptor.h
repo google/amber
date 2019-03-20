@@ -35,8 +35,6 @@ enum class DescriptorType : uint8_t {
 class CommandBuffer;
 class Device;
 
-VkDescriptorType ToVkDescriptorType(DescriptorType type);
-
 class Descriptor {
  public:
   Descriptor(DescriptorType type,

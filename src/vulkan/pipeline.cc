@@ -15,7 +15,6 @@
 #include "src/vulkan/pipeline.h"
 
 #include <algorithm>
-#include <cassert>
 #include <limits>
 #include <utility>
 
@@ -32,6 +31,19 @@ namespace vulkan {
 namespace {
 
 const char* kDefaultEntryPointName = "main";
+
+Result ToVkDescriptorType(DescriptorType type, VkDescriptorType* ret) {
+  switch (type) {
+    case DescriptorType::kStorageBuffer:
+      *ret = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+      return {};
+    case DescriptorType::kUniformBuffer:
+      *ret = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      return {};
+  }
+  *ret = VK_DESCRIPTOR_TYPE_SAMPLER;
+  return Result("Unknown resource type");
+}
 
 }  // namespace
 
@@ -96,9 +108,14 @@ Result Pipeline::CreateDescriptorSetLayouts() {
     // need to create its layout and there will be no bindings.
     std::vector<VkDescriptorSetLayoutBinding> bindings;
     for (auto& desc : info.descriptors_) {
+      VkDescriptorType desc_type;
+      Result r = ToVkDescriptorType(desc->GetType(), &desc_type);
+      if (!r.IsSuccess())
+        return r;
+
       bindings.emplace_back();
       bindings.back().binding = desc->GetBinding();
-      bindings.back().descriptorType = ToVkDescriptorType(desc->GetType());
+      bindings.back().descriptorType = desc_type;
       bindings.back().descriptorCount = 1;
       bindings.back().stageFlags = VK_SHADER_STAGE_ALL;
     }
@@ -122,7 +139,11 @@ Result Pipeline::CreateDescriptorPools() {
 
     std::vector<VkDescriptorPoolSize> pool_sizes;
     for (auto& desc : info.descriptors_) {
-      auto type = ToVkDescriptorType(desc->GetType());
+      VkDescriptorType type;
+      Result r = ToVkDescriptorType(desc->GetType(), &type);
+      if (!r.IsSuccess())
+        return r;
+
       auto it = find_if(pool_sizes.begin(), pool_sizes.end(),
                         [&type](const VkDescriptorPoolSize& size) {
                           return size.type == type;

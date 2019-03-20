@@ -15,7 +15,6 @@
 #include "src/vulkan/engine_vulkan.h"
 
 #include <algorithm>
-#include <cassert>
 #include <set>
 #include <utility>
 
@@ -32,27 +31,32 @@ namespace {
 
 const FormatType kDefaultFramebufferFormat = FormatType::kB8G8R8A8_UNORM;
 
-VkShaderStageFlagBits ToVkShaderStage(ShaderType type) {
+Result ToVkShaderStage(ShaderType type, VkShaderStageFlagBits* ret) {
   switch (type) {
     case kShaderTypeGeometry:
-      return VK_SHADER_STAGE_GEOMETRY_BIT;
-    case kShaderTypeFragment:
-      return VK_SHADER_STAGE_FRAGMENT_BIT;
-    case kShaderTypeVertex:
-      return VK_SHADER_STAGE_VERTEX_BIT;
-    case kShaderTypeTessellationControl:
-      return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-    case kShaderTypeTessellationEvaluation:
-      return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-    case kShaderTypeCompute:
-      return VK_SHADER_STAGE_COMPUTE_BIT;
-    case kShaderTypeMulti:
-      // It's an error if this arrives here ...
+      *ret = VK_SHADER_STAGE_GEOMETRY_BIT;
       break;
+    case kShaderTypeFragment:
+      *ret = VK_SHADER_STAGE_FRAGMENT_BIT;
+      break;
+    case kShaderTypeVertex:
+      *ret = VK_SHADER_STAGE_VERTEX_BIT;
+      break;
+    case kShaderTypeTessellationControl:
+      *ret = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+      break;
+    case kShaderTypeTessellationEvaluation:
+      *ret = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+      break;
+    case kShaderTypeCompute:
+      *ret = VK_SHADER_STAGE_COMPUTE_BIT;
+      break;
+    case kShaderTypeMulti:
+      *ret = VK_SHADER_STAGE_FRAGMENT_BIT;
+      return Result("Vulkan::Unknown shader stage");
   }
 
-  assert(false && "Vulkan::Unknown shader stage");
-  return VK_SHADER_STAGE_FRAGMENT_BIT;
+  return {};
 }
 
 bool AreAllExtensionsSupported(
@@ -180,15 +184,20 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     depth_buffer_format = depth_fmt.GetFormatType();
   }
 
+  std::vector<VkPipelineShaderStageCreateInfo> stage_create_info;
+  Result r = GetVkShaderStageInfo(pipeline, &stage_create_info);
+  if (!r.IsSuccess())
+    return r;
+
   const auto& engine_data = GetEngineData();
   std::unique_ptr<Pipeline> vk_pipeline;
   if (pipeline->GetType() == PipelineType::kCompute) {
     vk_pipeline = MakeUnique<ComputePipeline>(
         device_.get(), device_->GetVkPhysicalDeviceProperties(),
         device_->GetVkPhysicalMemoryProperties(), engine_data.fence_timeout_ms,
-        GetVkShaderStageInfo(pipeline));
-    Result r = vk_pipeline->AsCompute()->Initialize(pool_.get(),
-                                                    device_->GetVkQueue());
+        stage_create_info);
+    r = vk_pipeline->AsCompute()->Initialize(pool_.get(),
+                                             device_->GetVkQueue());
     if (!r.IsSuccess())
       return r;
   } else {
@@ -196,9 +205,9 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
         device_.get(), device_->GetVkPhysicalDeviceProperties(),
         device_->GetVkPhysicalMemoryProperties(),
         pipeline->GetColorAttachments(), ToVkFormat(depth_buffer_format),
-        engine_data.fence_timeout_ms, GetVkShaderStageInfo(pipeline));
+        engine_data.fence_timeout_ms, stage_create_info);
 
-    Result r = vk_pipeline->AsGraphics()->Initialize(
+    r = vk_pipeline->AsGraphics()->Initialize(
         pipeline->GetFramebufferWidth(), pipeline->GetFramebufferHeight(),
         pool_.get(), device_->GetVkQueue());
     if (!r.IsSuccess())
@@ -254,22 +263,29 @@ Result EngineVulkan::SetShader(amber::Pipeline* pipeline,
   return {};
 }
 
-std::vector<VkPipelineShaderStageCreateInfo> EngineVulkan::GetVkShaderStageInfo(
-    amber::Pipeline* pipeline) {
+Result EngineVulkan::GetVkShaderStageInfo(
+    amber::Pipeline* pipeline,
+    std::vector<VkPipelineShaderStageCreateInfo>* out) {
   auto& info = pipeline_map_[pipeline];
 
   std::vector<VkPipelineShaderStageCreateInfo> stage_info(info.shaders.size());
   uint32_t stage_count = 0;
   for (auto it : info.shaders) {
+    VkShaderStageFlagBits stage;
+    Result r = ToVkShaderStage(it.first, &stage);
+    if (!r.IsSuccess())
+      return r;
+
     stage_info[stage_count] = VkPipelineShaderStageCreateInfo();
     stage_info[stage_count].sType =
         VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    stage_info[stage_count].stage = ToVkShaderStage(it.first);
+    stage_info[stage_count].stage = stage;
     stage_info[stage_count].module = it.second;
     stage_info[stage_count].pName = nullptr;
     ++stage_count;
   }
-  return stage_info;
+  *out = stage_info;
+  return {};
 }
 
 Result EngineVulkan::DoClearColor(const ClearColorCommand* command) {
@@ -389,8 +405,12 @@ Result EngineVulkan::DoEntryPoint(const EntryPointCommand* command) {
   if (!info.vk_pipeline)
     return Result("Vulkan::DoEntryPoint no Pipeline exists");
 
-  info.vk_pipeline->SetEntryPointName(ToVkShaderStage(command->GetShaderType()),
-                                      command->GetEntryPointName());
+  VkShaderStageFlagBits stage;
+  Result r = ToVkShaderStage(command->GetShaderType(), &stage);
+  if (!r.IsSuccess())
+    return r;
+
+  info.vk_pipeline->SetEntryPointName(stage, command->GetEntryPointName());
   return {};
 }
 
