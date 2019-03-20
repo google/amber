@@ -201,7 +201,7 @@ def main():
     wrapper_content = gen_direct(data)
     header_content = gen_direct_headers(data)
 
-  outfile = os.path.join(outdir, 'src', 'vk-wrappers.inc')
+  outfile = os.path.join(outdir, 'vk-wrappers.inc')
   if os.path.isfile(outfile):
     with open(outfile, 'r') as f:
       if wrapper_content == f.read():
@@ -209,7 +209,7 @@ def main():
   with open(outfile, 'w') as f:
     f.write(wrapper_content)
 
-  hdrfile = os.path.join(outdir, 'src', 'vk-wrappers.h')
+  hdrfile = os.path.join(outdir, 'vk-wrappers.h')
   if os.path.isfile(hdrfile):
     with open(hdrfile, 'r') as f:
       if header_content == f.read():

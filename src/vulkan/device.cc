@@ -365,7 +365,7 @@ Result Device::LoadVulkanPointers(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
   if (delegate && delegate->LogGraphicsCalls())
     delegate->Log("Loading Vulkan Pointers");
 
-#include "src/vk-wrappers.inc"
+#include "vk-wrappers.inc"
 
   return {};
 }
