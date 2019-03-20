@@ -43,12 +43,12 @@ class VertexBuffer {
                const Format& format,
                const std::vector<Value>& values);
 
-  const std::vector<VkVertexInputAttributeDescription>& GetVertexInputAttr()
+  const std::vector<VkVertexInputAttributeDescription>& GetVkVertexInputAttr()
       const {
     return vertex_attr_desc_;
   }
 
-  VkVertexInputBindingDescription GetVertexInputBinding() const {
+  VkVertexInputBindingDescription GetVkVertexInputBinding() const {
     VkVertexInputBindingDescription vertex_binding_desc =
         VkVertexInputBindingDescription();
     vertex_binding_desc.binding = 0;

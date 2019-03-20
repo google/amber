@@ -27,29 +27,29 @@ CommandBuffer::CommandBuffer(Device* device, CommandPool* pool, VkQueue queue)
 
 CommandBuffer::~CommandBuffer() {
   if (fence_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkDestroyFence(device_->GetDevice(), fence_, nullptr);
+    device_->GetPtrs()->vkDestroyFence(device_->GetVkDevice(), fence_, nullptr);
 
   if (command_ != VK_NULL_HANDLE) {
     device_->GetPtrs()->vkFreeCommandBuffers(
-        device_->GetDevice(), pool_->GetCommandPool(), 1, &command_);
+        device_->GetVkDevice(), pool_->GetVkCommandPool(), 1, &command_);
   }
 }
 
 Result CommandBuffer::Initialize() {
   VkCommandBufferAllocateInfo command_info = VkCommandBufferAllocateInfo();
   command_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  command_info.commandPool = pool_->GetCommandPool();
+  command_info.commandPool = pool_->GetVkCommandPool();
   command_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   command_info.commandBufferCount = 1;
 
   if (device_->GetPtrs()->vkAllocateCommandBuffers(
-          device_->GetDevice(), &command_info, &command_) != VK_SUCCESS) {
+          device_->GetVkDevice(), &command_info, &command_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkAllocateCommandBuffers Fail");
   }
 
   VkFenceCreateInfo fence_info = VkFenceCreateInfo();
   fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  if (device_->GetPtrs()->vkCreateFence(device_->GetDevice(), &fence_info,
+  if (device_->GetPtrs()->vkCreateFence(device_->GetVkDevice(), &fence_info,
                                         nullptr, &fence_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateFence Fail");
   }
@@ -73,7 +73,7 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (device_->GetPtrs()->vkEndCommandBuffer(command_) != VK_SUCCESS)
     return Result("Vulkan::Calling vkEndCommandBuffer Fail");
 
-  if (device_->GetPtrs()->vkResetFences(device_->GetDevice(), 1, &fence_) !=
+  if (device_->GetPtrs()->vkResetFences(device_->GetVkDevice(), 1, &fence_) !=
       VK_SUCCESS) {
     return Result("Vulkan::Calling vkResetFences Fail");
   }
@@ -88,7 +88,7 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   }
 
   VkResult r = device_->GetPtrs()->vkWaitForFences(
-      device_->GetDevice(), 1, &fence_, VK_TRUE,
+      device_->GetVkDevice(), 1, &fence_, VK_TRUE,
       static_cast<uint64_t>(timeout_ms) * 1000ULL * 1000ULL /* nanosecond */);
   if (r == VK_TIMEOUT)
     return Result("Vulkan::Calling vkWaitForFences Timeout");

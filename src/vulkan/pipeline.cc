@@ -72,7 +72,7 @@ void Pipeline::Shutdown() {
 
   for (auto& info : descriptor_set_info_) {
     if (info.layout != VK_NULL_HANDLE) {
-      device_->GetPtrs()->vkDestroyDescriptorSetLayout(device_->GetDevice(),
+      device_->GetPtrs()->vkDestroyDescriptorSetLayout(device_->GetVkDevice(),
                                                        info.layout, nullptr);
     }
 
@@ -80,7 +80,7 @@ void Pipeline::Shutdown() {
       continue;
 
     if (info.pool != VK_NULL_HANDLE) {
-      device_->GetPtrs()->vkDestroyDescriptorPool(device_->GetDevice(),
+      device_->GetPtrs()->vkDestroyDescriptorPool(device_->GetVkDevice(),
                                                   info.pool, nullptr);
     }
   }
@@ -106,7 +106,7 @@ Result Pipeline::CreateDescriptorSetLayouts() {
     desc_info.pBindings = bindings.data();
 
     if (device_->GetPtrs()->vkCreateDescriptorSetLayout(
-            device_->GetDevice(), &desc_info, nullptr, &info.layout) !=
+            device_->GetVkDevice(), &desc_info, nullptr, &info.layout) !=
         VK_SUCCESS) {
       return Result("Vulkan::Calling vkCreateDescriptorSetLayout Fail");
     }
@@ -143,7 +143,7 @@ Result Pipeline::CreateDescriptorPools() {
     pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
     pool_info.pPoolSizes = pool_sizes.data();
 
-    if (device_->GetPtrs()->vkCreateDescriptorPool(device_->GetDevice(),
+    if (device_->GetPtrs()->vkCreateDescriptorPool(device_->GetVkDevice(),
                                                    &pool_info, nullptr,
                                                    &info.pool) != VK_SUCCESS) {
       return Result("Vulkan::Calling vkCreateDescriptorPool Fail");
@@ -166,7 +166,7 @@ Result Pipeline::CreateDescriptorSets() {
 
     VkDescriptorSet desc_set = VK_NULL_HANDLE;
     if (device_->GetPtrs()->vkAllocateDescriptorSets(
-            device_->GetDevice(), &desc_set_info, &desc_set) != VK_SUCCESS) {
+            device_->GetVkDevice(), &desc_set_info, &desc_set) != VK_SUCCESS) {
       return Result("Vulkan::Calling vkAllocateDescriptorSets Fail");
     }
     descriptor_set_info_[i].vk_desc_set = desc_set;
@@ -191,14 +191,15 @@ Result Pipeline::CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout) {
       static_cast<uint32_t>(descriptor_set_layouts.size());
   pipeline_layout_info.pSetLayouts = descriptor_set_layouts.data();
 
-  VkPushConstantRange push_const_range = push_constant_->GetPushConstantRange();
+  VkPushConstantRange push_const_range =
+      push_constant_->GetVkPushConstantRange();
   if (push_const_range.size) {
     pipeline_layout_info.pushConstantRangeCount = 1U;
     pipeline_layout_info.pPushConstantRanges = &push_const_range;
   }
 
   if (device_->GetPtrs()->vkCreatePipelineLayout(
-          device_->GetDevice(), &pipeline_layout_info, nullptr,
+          device_->GetVkDevice(), &pipeline_layout_info, nullptr,
           pipeline_layout) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreatePipelineLayout Fail");
   }

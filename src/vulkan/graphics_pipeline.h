@@ -69,7 +69,7 @@ class GraphicsPipeline : public Pipeline {
 
   Result Draw(const DrawArraysCommand* command, VertexBuffer* vertex_buffer);
 
-  VkRenderPass GetRenderPass() const { return render_pass_; }
+  VkRenderPass GetVkRenderPass() const { return render_pass_; }
   FrameBuffer* GetFrame() const { return frame_.get(); }
 
   uint32_t GetWidth() const { return frame_width_; }
@@ -98,9 +98,9 @@ class GraphicsPipeline : public Pipeline {
                       const uint32_t height,
                       const ProbeCommand* command);
 
-  VkPipelineDepthStencilStateCreateInfo GetPipelineDepthStencilInfo(
+  VkPipelineDepthStencilStateCreateInfo GetVkPipelineDepthStencilInfo(
       const PipelineData* pipeline_data);
-  VkPipelineColorBlendAttachmentState GetPipelineColorBlendAttachmentState(
+  VkPipelineColorBlendAttachmentState GetVkPipelineColorBlendAttachmentState(
       const PipelineData* pipeline_data);
 
   VkRenderPass render_pass_ = VK_NULL_HANDLE;

@@ -25,7 +25,7 @@ CommandPool::~CommandPool() {
   if (pool_ == VK_NULL_HANDLE)
     return;
 
-  device_->GetPtrs()->vkDestroyCommandPool(device_->GetDevice(), pool_,
+  device_->GetPtrs()->vkDestroyCommandPool(device_->GetVkDevice(), pool_,
                                            nullptr);
 }
 
@@ -35,8 +35,8 @@ Result CommandPool::Initialize(uint32_t queue_family_index) {
   pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   pool_info.queueFamilyIndex = queue_family_index;
 
-  if (device_->GetPtrs()->vkCreateCommandPool(device_->GetDevice(), &pool_info,
-                                              nullptr, &pool_) != VK_SUCCESS) {
+  if (device_->GetPtrs()->vkCreateCommandPool(
+          device_->GetVkDevice(), &pool_info, nullptr, &pool_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateCommandPool Fail");
   }
 

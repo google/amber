@@ -131,7 +131,7 @@ Result EngineVulkan::Shutdown() {
 
     for (auto mod_it = info.shaders.begin(); mod_it != info.shaders.end();
          ++mod_it) {
-      auto vk_device = device_->GetDevice();
+      auto vk_device = device_->GetVkDevice();
       if (vk_device != VK_NULL_HANDLE && mod_it->second != VK_NULL_HANDLE)
         device_->GetPtrs()->vkDestroyShaderModule(vk_device, mod_it->second,
                                                   nullptr);
@@ -148,7 +148,7 @@ Result EngineVulkan::Shutdown() {
 
 bool EngineVulkan::VerifyFormatAvailable(const Format& format,
                                          BufferType type) {
-  return IsFormatSupportedByPhysicalDevice(type, device_->GetPhysicalDevice(),
+  return IsFormatSupportedByPhysicalDevice(type, device_->GetVkPhysicalDevice(),
                                            ToVkFormat(format.GetFormatType()));
 }
 
@@ -184,23 +184,23 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   std::unique_ptr<Pipeline> vk_pipeline;
   if (pipeline->GetType() == PipelineType::kCompute) {
     vk_pipeline = MakeUnique<ComputePipeline>(
-        device_.get(), device_->GetPhysicalDeviceProperties(),
-        device_->GetPhysicalMemoryProperties(), engine_data.fence_timeout_ms,
-        GetShaderStageInfo(pipeline));
-    Result r =
-        vk_pipeline->AsCompute()->Initialize(pool_.get(), device_->GetQueue());
+        device_.get(), device_->GetVkPhysicalDeviceProperties(),
+        device_->GetVkPhysicalMemoryProperties(), engine_data.fence_timeout_ms,
+        GetVkShaderStageInfo(pipeline));
+    Result r = vk_pipeline->AsCompute()->Initialize(pool_.get(),
+                                                    device_->GetVkQueue());
     if (!r.IsSuccess())
       return r;
   } else {
     vk_pipeline = MakeUnique<GraphicsPipeline>(
-        device_.get(), device_->GetPhysicalDeviceProperties(),
-        device_->GetPhysicalMemoryProperties(), pipeline->GetColorAttachments(),
-        ToVkFormat(depth_buffer_format), engine_data.fence_timeout_ms,
-        GetShaderStageInfo(pipeline));
+        device_.get(), device_->GetVkPhysicalDeviceProperties(),
+        device_->GetVkPhysicalMemoryProperties(),
+        pipeline->GetColorAttachments(), ToVkFormat(depth_buffer_format),
+        engine_data.fence_timeout_ms, GetVkShaderStageInfo(pipeline));
 
     Result r = vk_pipeline->AsGraphics()->Initialize(
         pipeline->GetFramebufferWidth(), pipeline->GetFramebufferHeight(),
-        pool_.get(), device_->GetQueue());
+        pool_.get(), device_->GetVkQueue());
     if (!r.IsSuccess())
       return r;
   }
@@ -244,8 +244,9 @@ Result EngineVulkan::SetShader(amber::Pipeline* pipeline,
   create_info.pCode = data.data();
 
   VkShaderModule shader;
-  if (device_->GetPtrs()->vkCreateShaderModule(
-          device_->GetDevice(), &create_info, nullptr, &shader) != VK_SUCCESS) {
+  if (device_->GetPtrs()->vkCreateShaderModule(device_->GetVkDevice(),
+                                               &create_info, nullptr,
+                                               &shader) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateShaderModule Fail");
   }
 
@@ -253,7 +254,7 @@ Result EngineVulkan::SetShader(amber::Pipeline* pipeline,
   return {};
 }
 
-std::vector<VkPipelineShaderStageCreateInfo> EngineVulkan::GetShaderStageInfo(
+std::vector<VkPipelineShaderStageCreateInfo> EngineVulkan::GetVkShaderStageInfo(
     amber::Pipeline* pipeline) {
   auto& info = pipeline_map_[pipeline];
 
@@ -439,7 +440,7 @@ Result EngineVulkan::DoBuffer(const BufferCommand* cmd) {
   if (cmd->IsPushConstant())
     return info.vk_pipeline->AddPushConstant(cmd);
 
-  if (!IsDescriptorSetInBounds(device_->GetPhysicalDevice(),
+  if (!IsDescriptorSetInBounds(device_->GetVkPhysicalDevice(),
                                cmd->GetDescriptorSet())) {
     return Result(
         "Vulkan::DoBuffer exceed maxBoundDescriptorSets limit of physical "

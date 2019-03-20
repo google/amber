@@ -42,7 +42,7 @@ Result ComputePipeline::Initialize(CommandPool* pool, VkQueue queue) {
 Result ComputePipeline::CreateVkComputePipeline(
     const VkPipelineLayout& pipeline_layout,
     VkPipeline* pipeline) {
-  auto shader_stage_info = GetShaderStageInfo();
+  auto shader_stage_info = GetVkShaderStageInfo();
   if (shader_stage_info.size() != 1) {
     return Result(
         "Vulkan::CreateVkComputePipeline number of shaders given to compute "
@@ -60,7 +60,7 @@ Result ComputePipeline::CreateVkComputePipeline(
   pipeline_info.layout = pipeline_layout;
 
   if (device_->GetPtrs()->vkCreateComputePipelines(
-          device_->GetDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
+          device_->GetVkDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
           pipeline) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateComputePipelines Fail");
   }
@@ -115,9 +115,9 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
   if (!r.IsSuccess())
     return r;
 
-  device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline,
+  device_->GetPtrs()->vkDestroyPipeline(device_->GetVkDevice(), pipeline,
                                         nullptr);
-  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetDevice(),
+  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetVkDevice(),
                                               pipeline_layout, nullptr);
 
   return {};

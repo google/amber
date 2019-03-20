@@ -48,7 +48,7 @@ class FrameBuffer {
 
   Result ChangeFrameImageLayout(CommandBuffer* command, FrameImageState layout);
 
-  VkFramebuffer GetFrameBuffer() const { return frame_; }
+  VkFramebuffer GetVkFrameBuffer() const { return frame_; }
   const void* GetColorBufferPtr(size_t idx) const {
     return color_images_[idx]->HostAccessibleMemoryPtr();
   }

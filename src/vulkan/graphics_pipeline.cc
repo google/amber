@@ -357,8 +357,8 @@ class RenderPassGuard {
 
     VkRenderPassBeginInfo render_begin_info = VkRenderPassBeginInfo();
     render_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_begin_info.renderPass = pipeline->GetRenderPass();
-    render_begin_info.framebuffer = frame->GetFrameBuffer();
+    render_begin_info.renderPass = pipeline->GetVkRenderPass();
+    render_begin_info.framebuffer = frame->GetVkFrameBuffer();
     render_begin_info.renderArea = {{0, 0},
                                     {frame->GetWidth(), frame->GetHeight()}};
     pipeline->GetDevice()->GetPtrs()->vkCmdBeginRenderPass(
@@ -454,7 +454,7 @@ Result GraphicsPipeline::CreateRenderPass() {
   render_pass_info.subpassCount = 1;
   render_pass_info.pSubpasses = &subpass_desc;
 
-  if (device_->GetPtrs()->vkCreateRenderPass(device_->GetDevice(),
+  if (device_->GetPtrs()->vkCreateRenderPass(device_->GetVkDevice(),
                                              &render_pass_info, nullptr,
                                              &render_pass_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateRenderPass Fail");
@@ -464,7 +464,7 @@ Result GraphicsPipeline::CreateRenderPass() {
 }
 
 VkPipelineDepthStencilStateCreateInfo
-GraphicsPipeline::GetPipelineDepthStencilInfo(
+GraphicsPipeline::GetVkPipelineDepthStencilInfo(
     const PipelineData* pipeline_data) {
   VkPipelineDepthStencilStateCreateInfo depthstencil_info =
       VkPipelineDepthStencilStateCreateInfo();
@@ -508,7 +508,7 @@ GraphicsPipeline::GetPipelineDepthStencilInfo(
 }
 
 VkPipelineColorBlendAttachmentState
-GraphicsPipeline::GetPipelineColorBlendAttachmentState(
+GraphicsPipeline::GetVkPipelineColorBlendAttachmentState(
     const PipelineData* pipeline_data) {
   VkPipelineColorBlendAttachmentState colorblend_attachment =
       VkPipelineColorBlendAttachmentState();
@@ -550,8 +550,8 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   VkVertexInputBindingDescription vertex_binding_desc =
       VkVertexInputBindingDescription();
   if (vertex_buffer != nullptr) {
-    vertex_binding_desc = vertex_buffer->GetVertexInputBinding();
-    const auto& vertex_attr_desc = vertex_buffer->GetVertexInputAttr();
+    vertex_binding_desc = vertex_buffer->GetVkVertexInputBinding();
+    const auto& vertex_attr_desc = vertex_buffer->GetVkVertexInputAttr();
 
     vertex_input_info.pVertexBindingDescriptions = &vertex_binding_desc;
     vertex_input_info.vertexAttributeDescriptionCount =
@@ -590,7 +590,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   viewport_info.scissorCount = 1;
   viewport_info.pScissors = &scissor;
 
-  auto shader_stage_info = GetShaderStageInfo();
+  auto shader_stage_info = GetVkShaderStageInfo();
   bool is_tessellation_needed = false;
   for (auto& info : shader_stage_info) {
     info.pName = GetEntryPointName(info.stage);
@@ -651,7 +651,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
 
   VkPipelineDepthStencilStateCreateInfo depthstencil_info;
   if (depth_stencil_format_ != VK_FORMAT_UNDEFINED) {
-    depthstencil_info = GetPipelineDepthStencilInfo(pipeline_data);
+    depthstencil_info = GetVkPipelineDepthStencilInfo(pipeline_data);
     pipeline_info.pDepthStencilState = &depthstencil_info;
   }
 
@@ -659,7 +659,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
       VkPipelineColorBlendStateCreateInfo();
   VkPipelineColorBlendAttachmentState colorblend_attachment;
 
-  colorblend_attachment = GetPipelineColorBlendAttachmentState(pipeline_data);
+  colorblend_attachment = GetVkPipelineColorBlendAttachmentState(pipeline_data);
 
   colorblend_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -674,7 +674,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   pipeline_info.subpass = 0;
 
   if (device_->GetPtrs()->vkCreateGraphicsPipelines(
-          device_->GetDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
+          device_->GetVkDevice(), VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
           pipeline) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateGraphicsPipelines Fail");
   }
@@ -912,9 +912,9 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   if (!r.IsSuccess())
     return r;
 
-  device_->GetPtrs()->vkDestroyPipeline(device_->GetDevice(), pipeline,
+  device_->GetPtrs()->vkDestroyPipeline(device_->GetVkDevice(), pipeline,
                                         nullptr);
-  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetDevice(),
+  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetVkDevice(),
                                               pipeline_layout, nullptr);
   return {};
 }
@@ -925,8 +925,8 @@ void GraphicsPipeline::Shutdown() {
   frame_ = nullptr;
 
   if (render_pass_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyRenderPass(device_->GetDevice(), render_pass_,
-                                            nullptr);
+    device_->GetPtrs()->vkDestroyRenderPass(device_->GetVkDevice(),
+                                            render_pass_, nullptr);
   }
 }
 

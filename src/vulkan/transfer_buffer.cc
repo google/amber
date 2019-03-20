@@ -47,17 +47,18 @@ TransferBuffer::TransferBuffer(
 
 TransferBuffer::~TransferBuffer() {
   if (view_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyBufferView(device_->GetDevice(), view_,
+    device_->GetPtrs()->vkDestroyBufferView(device_->GetVkDevice(), view_,
                                             nullptr);
   }
 
   if (memory_ != VK_NULL_HANDLE) {
     UnMapMemory(memory_);
-    device_->GetPtrs()->vkFreeMemory(device_->GetDevice(), memory_, nullptr);
+    device_->GetPtrs()->vkFreeMemory(device_->GetVkDevice(), memory_, nullptr);
   }
 
   if (buffer_ != VK_NULL_HANDLE)
-    device_->GetPtrs()->vkDestroyBuffer(device_->GetDevice(), buffer_, nullptr);
+    device_->GetPtrs()->vkDestroyBuffer(device_->GetVkDevice(), buffer_,
+                                        nullptr);
 }
 
 Result TransferBuffer::Initialize(const VkBufferUsageFlags usage) {
@@ -73,8 +74,8 @@ Result TransferBuffer::Initialize(const VkBufferUsageFlags usage) {
   if (!r.IsSuccess())
     return r;
 
-  if (!IsMemoryHostAccessible(GetMemoryProperties(), memory_type_index) ||
-      !IsMemoryHostCoherent(GetMemoryProperties(), memory_type_index)) {
+  if (!IsMemoryHostAccessible(GetVkMemoryProperties(), memory_type_index) ||
+      !IsMemoryHostCoherent(GetVkMemoryProperties(), memory_type_index)) {
     return Result(
         "Vulkan: TransferBuffer::Initialize() buffer is not host accessible or"
         " not host coherent.");
@@ -90,7 +91,7 @@ Result TransferBuffer::CreateVkBufferView(VkFormat format) {
   buffer_view_info.format = format;
   buffer_view_info.offset = 0;
   buffer_view_info.range = VK_WHOLE_SIZE;
-  if (device_->GetPtrs()->vkCreateBufferView(device_->GetDevice(),
+  if (device_->GetPtrs()->vkCreateBufferView(device_->GetVkDevice(),
                                              &buffer_view_info, nullptr,
                                              &view_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateBufferView Fail");
