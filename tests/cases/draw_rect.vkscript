@@ -26,5 +26,5 @@ void main() {
 }
 
 [test]
-draw rect -1 -1 1 1
+draw rect -1 -1 2 2
 probe rect rgba (0.0, 0.0, 250, 250) (1.0, 0, 0, 1.0)

@@ -1,0 +1,25 @@
+[require]
+vertexPipelineStoresAndAtomics
+
+[vertex shader passthrough]
+[fragment shader]
+#version 430
+
+layout(location = 0) out vec4 final_color;
+
+void main() {
+  final_color = vec4(1, 0, 0, 1);
+}
+
+[test]
+clear
+draw rect 0.0 0.0 0.6 0.6
+probe rect rgba (0, 0, 125, 125) (0.0, 0, 0, 0.0)
+probe rect rgba (125, 125, 75, 75) (1.0, 0, 0, 1.0)
+probe rect rgba (200, 200, 50, 50) (0.0, 0, 0, 0.0)
+
+clear
+draw rect ortho 125 125 75 75
+probe rect rgba (0, 0, 125, 125) (0.0, 0, 0, 0.0)
+probe rect rgba (125, 125, 75, 75) (1.0, 0, 0, 1.0)
+probe rect rgba (200, 200, 50, 50) (0.0, 0, 0, 0.0)
