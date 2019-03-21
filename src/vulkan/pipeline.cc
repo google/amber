@@ -33,14 +33,18 @@ namespace {
 const char* kDefaultEntryPointName = "main";
 
 Result ToVkDescriptorType(DescriptorType type, VkDescriptorType* ret) {
+  Result r = Result("Unknown resource type");
   switch (type) {
     case DescriptorType::kStorageBuffer:
       *ret = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-      return {};
+      r = {};
+      break;
     case DescriptorType::kUniformBuffer:
       *ret = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      return {};
+      r = {};
+      break;
   }
+  return r;
 }
 
 }  // namespace
