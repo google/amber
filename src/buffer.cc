@@ -302,7 +302,7 @@ Result FormatBuffer::CopyData(const std::vector<Value>& data) {
       bit_offset += bits;
     }
 
-    i += components.size();
+    i += static_cast<uint32_t>(components.size());
     ptr += format_->GetByteSize();
   }
   return {};
