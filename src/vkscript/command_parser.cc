@@ -2049,7 +2049,7 @@ Result CommandParser::ProcessProbeSSBO() {
     return Result("Invalid comparator for probe ssbo command: " +
                   token->ToOriginalString());
 
-  ProbeSSBOCommand::Comparator comp;
+  ProbeSSBOCommand::Comparator comp = ProbeSSBOCommand::Comparator::kEqual;
   r = ParseComparator(token->AsString(), &comp);
   if (!r.IsSuccess())
     return r;
