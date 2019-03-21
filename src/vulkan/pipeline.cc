@@ -41,7 +41,6 @@ Result ToVkDescriptorType(DescriptorType type, VkDescriptorType* ret) {
       *ret = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       return {};
   }
-  return Result("Unknown resource type");
 }
 
 }  // namespace
