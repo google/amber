@@ -41,7 +41,6 @@ Result ToVkDescriptorType(DescriptorType type, VkDescriptorType* ret) {
       *ret = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       return {};
   }
-  *ret = VK_DESCRIPTOR_TYPE_SAMPLER;
   return Result("Unknown resource type");
 }
 
