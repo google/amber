@@ -107,7 +107,7 @@ Result Pipeline::CreateDescriptorSetLayouts() {
     // need to create its layout and there will be no bindings.
     std::vector<VkDescriptorSetLayoutBinding> bindings;
     for (auto& desc : info.descriptors_) {
-      VkDescriptorType desc_type;
+      VkDescriptorType desc_type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
       Result r = ToVkDescriptorType(desc->GetType(), &desc_type);
       if (!r.IsSuccess())
         return r;
