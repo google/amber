@@ -148,7 +148,7 @@ Result BufferDescriptor::AddToBuffer(DataType type,
   }
 
   BufferInput in{offset, size_in_bytes, type, values};
-  in.UpdateBufferWithValues(amber_buffer_->GetMemPtr());
+  in.UpdateBufferWithValues(amber_buffer_->ValuePtr()->data());
 
   return {};
 }

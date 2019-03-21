@@ -76,7 +76,6 @@ Result FrameBuffer::Initialize(
         return r;
 
       attachments[info->location] = color_images_.back()->GetVkImageView();
-      info->buffer->SetMemPtr(color_images_.back()->HostAccessibleMemoryPtr());
     }
   }
 
@@ -182,6 +181,17 @@ Result FrameBuffer::CopyColorImagesToHost(CommandBuffer* command) {
       return r;
   }
   return {};
+}
+
+void FrameBuffer::CopyImagesToBuffers() {
+  for (size_t i = 0; i < color_images_.size(); ++i) {
+    auto& img = color_images_[i];
+    auto* info = color_attachments_[i];
+    auto* values = info->buffer->ValuePtr();
+    values->resize(info->buffer->GetSizeInBytes());
+    std::memcpy(values->data(), img->HostAccessibleMemoryPtr(),
+                info->buffer->GetSizeInBytes());
+  }
 }
 
 }  // namespace vulkan

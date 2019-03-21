@@ -85,21 +85,8 @@ class Buffer {
   /// size of the data provided.
   virtual Result SetData(std::vector<Value>&& data) = 0;
 
-  void SetMemPtr(void* ptr) { mem_ptr_ = ptr; }
-
-  const void* GetMemPtr() const {
-    if (mem_ptr_ == nullptr && !values_.empty())
-      return values_.data();
-    return mem_ptr_;
-  }
-
-  void* GetMemPtr() {
-    if (mem_ptr_ == nullptr && !values_.empty())
-      return values_.data();
-    return mem_ptr_;
-  }
-
   std::vector<uint8_t>* ValuePtr() { return &values_; }
+  const std::vector<uint8_t>* ValuePtr() const { return &values_; }
 
   template <typename T>
   const T* GetValues() const {
@@ -119,7 +106,6 @@ class Buffer {
   uint32_t width_ = 0;
   uint32_t height_ = 0;
   uint8_t location_ = 0;
-  void* mem_ptr_ = nullptr;
 };
 
 /// A buffer class where the data is described by a |DatumType| object.
