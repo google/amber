@@ -72,10 +72,4 @@ amber::Result ConfigHelper::CreateConfig(
       disable_validation_layer, show_version_info, config);
 }
 
-amber::Result ConfigHelper::Shutdown() {
-  if (!impl_)
-    return {};
-  return impl_->Shutdown();
-}
-
 }  // namespace sample

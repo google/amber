@@ -41,9 +41,6 @@ class ConfigHelperImpl {
       bool disable_validation_layer,
       bool show_version_info,
       std::unique_ptr<amber::EngineConfig>* config) = 0;
-
-  // Destroy instance and device.
-  virtual amber::Result Shutdown() = 0;
 };
 
 // Wrapper of ConfigHelperImpl.
@@ -67,9 +64,6 @@ class ConfigHelper {
       bool disable_validation_layer,
       bool show_version_info,
       std::unique_ptr<amber::EngineConfig>* config);
-
-  // Destroy instance and device.
-  amber::Result Shutdown();
 
  private:
   std::unique_ptr<ConfigHelperImpl> impl_;

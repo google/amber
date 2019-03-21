@@ -271,7 +271,7 @@ Result EngineVulkan::GetVkShaderStageInfo(
   std::vector<VkPipelineShaderStageCreateInfo> stage_info(info.shaders.size());
   uint32_t stage_count = 0;
   for (auto it : info.shaders) {
-    VkShaderStageFlagBits stage;
+    VkShaderStageFlagBits stage = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
     Result r = ToVkShaderStage(it.first, &stage);
     if (!r.IsSuccess())
       return r;
@@ -409,7 +409,7 @@ Result EngineVulkan::DoEntryPoint(const EntryPointCommand* command) {
   if (!info.vk_pipeline)
     return Result("Vulkan::DoEntryPoint no Pipeline exists");
 
-  VkShaderStageFlagBits stage;
+  VkShaderStageFlagBits stage = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
   Result r = ToVkShaderStage(command->GetShaderType(), &stage);
   if (!r.IsSuccess())
     return r;
