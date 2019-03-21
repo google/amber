@@ -28,7 +28,7 @@ This is not an officially supported Google product.
  * Git
  * CMake (version 3.7+ enables automatic discovery of an installed Vulkan SDK)
  * Ninja (or other build tool)
- * Recommended: Python, for fetching dependencies
+ * Python, for fetching dependencies and building Vulkan wrappers
 
 
 ## Building
