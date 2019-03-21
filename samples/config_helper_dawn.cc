@@ -58,9 +58,4 @@ amber::Result ConfigHelperDawn::CreateConfig(
   return {};
 }
 
-amber::Result ConfigHelperDawn::Shutdown() {
-  dawn_device_ = {};
-  return {};
-}
-
 }  // namespace sample

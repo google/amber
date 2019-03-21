@@ -467,7 +467,5 @@ int main(int argc, const char** argv) {
               << failures.size() << " fail" << std::endl;
   }
 
-  config_helper.Shutdown();
-
   return !failures.empty();
 }

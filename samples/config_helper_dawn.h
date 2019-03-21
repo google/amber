@@ -47,9 +47,6 @@ class ConfigHelperDawn : public ConfigHelperImpl {
       bool show_version_info,
       std::unique_ptr<amber::EngineConfig>* config) override;
 
-  // Destroy Dawn instance and device.
-  amber::Result Shutdown() override;
-
  private:
   ::dawn_native::Instance dawn_instance_;
   ::dawn::Device dawn_device_;
