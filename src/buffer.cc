@@ -14,6 +14,8 @@
 
 #include "src/buffer.h"
 
+#include <cassert>
+
 namespace amber {
 namespace {
 
