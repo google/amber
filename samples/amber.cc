@@ -399,7 +399,7 @@ int main(int argc, const char** argv) {
       auto pos = options.image_filename.find_last_of('.');
       bool usePNG = pos != std::string::npos &&
                     options.image_filename.substr(pos + 1) == "png";
-      for (amber::BufferInfo buffer_info : amber_options.extractions) {
+      for (amber::BufferInfo& buffer_info : amber_options.extractions) {
         if (buffer_info.buffer_name == "framebuffer") {
           if (usePNG) {
             result = png::ConvertToPNG(buffer_info.width, buffer_info.height,
@@ -435,7 +435,7 @@ int main(int argc, const char** argv) {
         std::cerr << "Cannot open file for buffer dump: ";
         std::cerr << options.buffer_filename << std::endl;
       } else {
-        for (amber::BufferInfo buffer_info : amber_options.extractions) {
+        for (amber::BufferInfo& buffer_info : amber_options.extractions) {
           if (buffer_info.buffer_name == "framebuffer")
             continue;
 

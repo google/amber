@@ -64,6 +64,22 @@ Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) {
 
 }  // namespace
 
+Options::Options()
+    : engine(amber::EngineType::kEngineTypeVulkan),
+      config(nullptr),
+      pipeline_create_only(false),
+      delegate(nullptr) {}
+
+Options::~Options() = default;
+
+BufferInfo::BufferInfo() : width(0), height(0) {}
+
+BufferInfo::BufferInfo(const BufferInfo&) = default;
+
+BufferInfo::~BufferInfo() = default;
+
+BufferInfo& BufferInfo::operator=(const BufferInfo&) = default;
+
 Delegate::~Delegate() = default;
 
 Amber::Amber() = default;

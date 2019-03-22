@@ -42,6 +42,12 @@ enum EngineType {
 struct EngineConfig {};
 
 struct BufferInfo {
+  BufferInfo();
+  BufferInfo(const BufferInfo&);
+  ~BufferInfo();
+
+  BufferInfo& operator=(const BufferInfo&);
+
   /// Holds the buffer name
   std::string buffer_name;
   /// Holds the buffer width
@@ -68,6 +74,9 @@ class Delegate {
 };
 
 struct Options {
+  Options();
+  ~Options();
+
   /// Sets the engine to be created. Default Vulkan.
   EngineType engine;
   /// Holds engine specific configuration. Ownership stays with the caller.
