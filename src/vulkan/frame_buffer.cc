@@ -15,6 +15,7 @@
 #include "src/vulkan/frame_buffer.h"
 
 #include <algorithm>
+#include <cstring>
 #include <limits>
 #include <vector>
 
