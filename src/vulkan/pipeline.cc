@@ -33,15 +33,18 @@ namespace {
 const char* kDefaultEntryPointName = "main";
 
 Result ToVkDescriptorType(DescriptorType type, VkDescriptorType* ret) {
+  Result r = Result("Unknown resource type");
   switch (type) {
     case DescriptorType::kStorageBuffer:
       *ret = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-      return {};
+      r = {};
+      break;
     case DescriptorType::kUniformBuffer:
       *ret = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      return {};
+      r = {};
+      break;
   }
-  return Result("Unknown resource type");
+  return r;
 }
 
 }  // namespace
@@ -107,7 +110,7 @@ Result Pipeline::CreateDescriptorSetLayouts() {
     // need to create its layout and there will be no bindings.
     std::vector<VkDescriptorSetLayoutBinding> bindings;
     for (auto& desc : info.descriptors_) {
-      VkDescriptorType desc_type;
+      VkDescriptorType desc_type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
       Result r = ToVkDescriptorType(desc->GetType(), &desc_type);
       if (!r.IsSuccess())
         return r;
