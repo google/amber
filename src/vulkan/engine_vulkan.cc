@@ -223,14 +223,16 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
     if (!info.vertex_buffer)
       info.vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
+    if (!vtex_info.buffer->IsFormatBuffer())
+      return Result("Vulkan vertex buffer is not a format buffer");
 
-    info.vertex_buffer->SetData(static_cast<uint8_t>(vtex_info.location), fmt,
-                                vtex_info.buffer->GetData());
+    info.vertex_buffer->SetData(static_cast<uint8_t>(vtex_info.location),
+                                vtex_info.buffer->AsFormatBuffer());
   }
 
   if (pipeline->GetIndexBuffer()) {
     auto* buf = pipeline->GetIndexBuffer();
-    info.vk_pipeline->AsGraphics()->SetIndexBuffer(buf->GetData());
+    info.vk_pipeline->AsGraphics()->SetIndexBuffer(buf);
   }
 
   return {};
@@ -326,15 +328,6 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
 
   auto* graphics = info.vk_pipeline->AsGraphics();
 
-  // |format| is not Format for frame buffer but for vertex buffer.
-  // Since draw rect command contains its vertex information and it
-  // does not include a format of vertex buffer, we can choose any
-  // one that is suitable. We use VK_FORMAT_R32G32_SFLOAT for it.
-  Format format;
-  format.SetFormatType(FormatType::kR32G32_SFLOAT);
-  format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
-  format.AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
-
   float x = command->GetX();
   float y = command->GetY();
   float width = command->GetWidth();
@@ -363,8 +356,21 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   values[6].SetDoubleValue(static_cast<double>(x + width));
   values[7].SetDoubleValue(static_cast<double>(y));
 
+  // |format| is not Format for frame buffer but for vertex buffer.
+  // Since draw rect command contains its vertex information and it
+  // does not include a format of vertex buffer, we can choose any
+  // one that is suitable. We use VK_FORMAT_R32G32_SFLOAT for it.
+  auto format = MakeUnique<Format>();
+  format->SetFormatType(FormatType::kR32G32_SFLOAT);
+  format->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
+  format->AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
+
+  auto buf = MakeUnique<FormatBuffer>();
+  buf->SetFormat(std::move(format));
+  buf->SetData(std::move(values));
+
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
-  vertex_buffer->SetData(0, format, values);
+  vertex_buffer->SetData(0, buf.get());
 
   DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
   draw.SetTopology(command->IsPatch() ? Topology::kPatchList

@@ -993,11 +993,10 @@ END)";
   EXPECT_EQ(7U * sizeof(uint32_t), buffer->GetSizeInBytes());
 
   std::vector<uint32_t> results = {1, 2, 3, 4, 55, 99, 1234};
-  const auto& data = buffer->GetData();
-  ASSERT_EQ(results.size(), data.size());
+  const auto* data = buffer->GetValues<uint32_t>();
+  ASSERT_EQ(results.size(), buffer->GetSize());
   for (size_t i = 0; i < results.size(); ++i) {
-    ASSERT_TRUE(data[i].IsInteger());
-    EXPECT_EQ(results[i], data[i].AsUint32());
+    EXPECT_EQ(results[i], data[i]);
   }
 }
 
@@ -1021,11 +1020,10 @@ TEST_F(AmberScriptParserTest, BufferFill) {
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
 
   std::vector<uint32_t> results = {5, 5, 5, 5, 5};
-  const auto& data = buffer->GetData();
-  ASSERT_EQ(results.size(), data.size());
+  const auto* data = buffer->GetValues<uint8_t>();
+  ASSERT_EQ(results.size(), buffer->GetSize());
   for (size_t i = 0; i < results.size(); ++i) {
-    ASSERT_TRUE(data[i].IsInteger());
-    EXPECT_EQ(results[i], data[i].AsUint8());
+    EXPECT_EQ(results[i], data[i]);
   }
 }
 
@@ -1049,11 +1047,10 @@ TEST_F(AmberScriptParserTest, BufferFillFloat) {
   EXPECT_EQ(5U * sizeof(float), buffer->GetSizeInBytes());
 
   std::vector<float> results = {5.2f, 5.2f, 5.2f, 5.2f, 5.2f};
-  const auto& data = buffer->GetData();
-  ASSERT_EQ(results.size(), data.size());
+  const auto* data = buffer->GetValues<float>();
+  ASSERT_EQ(results.size(), buffer->GetSize());
   for (size_t i = 0; i < results.size(); ++i) {
-    ASSERT_TRUE(data[i].IsFloat());
-    EXPECT_FLOAT_EQ(results[i], data[i].AsFloat());
+    EXPECT_FLOAT_EQ(results[i], data[i]);
   }
 }
 
@@ -1078,11 +1075,10 @@ TEST_F(AmberScriptParserTest, BufferSeries) {
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
 
   std::vector<uint8_t> results = {2, 3, 4, 5, 6};
-  const auto& data = buffer->GetData();
-  ASSERT_EQ(results.size(), data.size());
+  const auto* data = buffer->GetValues<uint8_t>();
+  ASSERT_EQ(results.size(), buffer->GetSize());
   for (size_t i = 0; i < results.size(); ++i) {
-    ASSERT_TRUE(data[i].IsInteger());
-    EXPECT_EQ(results[i], data[i].AsUint8());
+    EXPECT_EQ(results[i], data[i]);
   }
 }
 
@@ -1108,11 +1104,10 @@ TEST_F(AmberScriptParserTest, BufferSeriesFloat) {
   EXPECT_EQ(5U * sizeof(float), buffer->GetSizeInBytes());
 
   std::vector<float> results = {2.2f, 3.3f, 4.4f, 5.5f, 6.6f};
-  const auto& data = buffer->GetData();
-  ASSERT_EQ(results.size(), data.size());
+  const auto* data = buffer->GetValues<float>();
+  ASSERT_EQ(results.size(), buffer->GetSize());
   for (size_t i = 0; i < results.size(); ++i) {
-    ASSERT_TRUE(data[i].IsFloat());
-    EXPECT_FLOAT_EQ(results[i], data[i].AsFloat());
+    EXPECT_FLOAT_EQ(results[i], data[i]);
   }
 }
 
@@ -1141,11 +1136,10 @@ END)";
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
 
   std::vector<uint32_t> results0 = {5, 5, 5, 5, 5};
-  const auto& data0 = buffer->GetData();
-  ASSERT_EQ(results0.size(), data0.size());
+  const auto* data0 = buffer->GetValues<uint8_t>();
+  ASSERT_EQ(results0.size(), buffer->GetSize());
   for (size_t i = 0; i < results0.size(); ++i) {
-    ASSERT_TRUE(data0[i].IsInteger());
-    EXPECT_EQ(results0[i], data0[i].AsUint8());
+    EXPECT_EQ(results0[i], data0[i]);
   }
 
   ASSERT_TRUE(buffers[1] != nullptr);
@@ -1157,11 +1151,10 @@ END)";
   EXPECT_EQ(7U * sizeof(uint32_t), buffer->GetSizeInBytes());
 
   std::vector<uint32_t> results1 = {1, 2, 3, 4, 55, 99, 1234};
-  const auto& data1 = buffer->GetData();
-  ASSERT_EQ(results1.size(), data1.size());
+  const auto* data1 = buffer->GetValues<uint32_t>();
+  ASSERT_EQ(results1.size(), buffer->GetSize());
   for (size_t i = 0; i < results1.size(); ++i) {
-    ASSERT_TRUE(data1[i].IsInteger());
-    EXPECT_EQ(results1[i], data1[i].AsUint32());
+    EXPECT_EQ(results1[i], data1[i]);
   }
 }
 
@@ -1186,11 +1179,9 @@ BUFFER my_index_buffer DATA_TYPE vec2<int32> SIZE 5 FILL 2)";
   EXPECT_EQ(5U * 2 * sizeof(int32_t), buffer->GetSizeInBytes());
 
   std::vector<int32_t> results0 = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
-  const auto& data0 = buffer->GetData();
-  ASSERT_EQ(results0.size(), data0.size());
+  const auto* data0 = buffer->GetValues<int32_t>();
   for (size_t i = 0; i < results0.size(); ++i) {
-    ASSERT_TRUE(data0[i].IsInteger());
-    EXPECT_EQ(results0[i], data0[i].AsInt32());
+    EXPECT_EQ(results0[i], data0[i]);
   }
 }
 
@@ -1221,11 +1212,9 @@ END
   EXPECT_EQ(4U * 2 * sizeof(int32_t), buffer->GetSizeInBytes());
 
   std::vector<int32_t> results0 = {2, 3, 4, 5, 6, 7, 8, 9};
-  const auto& data0 = buffer->GetData();
-  ASSERT_EQ(results0.size(), data0.size());
+  const auto* data0 = buffer->GetValues<int32_t>();
   for (size_t i = 0; i < results0.size(); ++i) {
-    ASSERT_TRUE(data0[i].IsInteger());
-    EXPECT_EQ(results0[i], data0[i].AsInt32());
+    EXPECT_EQ(results0[i], data0[i]);
   }
 }
 
@@ -1256,11 +1245,10 @@ END
   EXPECT_EQ(4U * sizeof(uint32_t), buffer->GetSizeInBytes());
 
   std::vector<uint32_t> results0 = {4278190080, 16711680, 65280, 255};
-  const auto& data0 = buffer->GetData();
-  ASSERT_EQ(results0.size(), data0.size());
+  const auto* data0 = buffer->GetValues<uint32_t>();
+  ASSERT_EQ(results0.size(), buffer->GetSize());
   for (size_t i = 0; i < results0.size(); ++i) {
-    ASSERT_TRUE(data0[i].IsInteger());
-    EXPECT_EQ(results0[i], data0[i].AsUint32());
+    EXPECT_EQ(results0[i], data0[i]);
   }
 }
 

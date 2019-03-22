@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "amber/result.h"
 #include "amber/value.h"
 #include "src/buffer_data.h"
 #include "src/datum_type.h"
@@ -82,9 +83,7 @@ class Buffer {
 
   /// Sets the data into the buffer. The size will also be updated to be the
   /// size of the data provided.
-  virtual void SetData(std::vector<Value>&& data) { data_ = std::move(data); }
-  /// Returns the vector of Values stored in the buffer.
-  const std::vector<Value>& GetData() const { return data_; }
+  virtual Result SetData(std::vector<Value>&& data) = 0;
 
   void SetMemPtr(void* ptr) { mem_ptr_ = ptr; }
 
@@ -102,20 +101,25 @@ class Buffer {
 
   std::vector<uint8_t>* ValuePtr() { return &values_; }
 
+  template <typename T>
+  const T* GetValues() const {
+    return reinterpret_cast<const T*>(values_.data());
+  }
+
  protected:
   /// Create an un-typed buffer.
   Buffer();
 
+  std::vector<uint8_t> values_;
+
  private:
   BufferType buffer_type_ = BufferType::kUnknown;
-  std::vector<Value> data_;
   std::string name_;
   uint32_t size_ = 0;
   uint32_t width_ = 0;
   uint32_t height_ = 0;
   uint8_t location_ = 0;
   void* mem_ptr_ = nullptr;
-  std::vector<uint8_t> values_;
 };
 
 /// A buffer class where the data is described by a |DatumType| object.
@@ -130,12 +134,7 @@ class DataBuffer : public Buffer {
   uint32_t GetSizeInBytes() const override {
     return GetSize() * datum_type_.SizeInBytes();
   }
-  void SetData(std::vector<Value>&& data) override {
-    uint32_t size = static_cast<uint32_t>(data.size()) /
-                    datum_type_.ColumnCount() / datum_type_.RowCount();
-    SetSize(size);
-    Buffer::SetData(std::move(data));
-  }
+  Result SetData(std::vector<Value>&& data) override;
 
   /// Sets the DatumType of the buffer to |type|.
   void SetDatumType(const DatumType& type) { datum_type_ = type; }
@@ -143,6 +142,8 @@ class DataBuffer : public Buffer {
   const DatumType& GetDatumType() const { return datum_type_; }
 
  private:
+  Result CopyData(const std::vector<Value>& data);
+
   DatumType datum_type_;
 };
 
@@ -158,10 +159,7 @@ class FormatBuffer : public Buffer {
   uint32_t GetSizeInBytes() const override {
     return GetSize() * format_->GetByteSize();
   }
-  void SetData(std::vector<Value>&& data) override {
-    SetSize(static_cast<uint32_t>(data.size()));
-    Buffer::SetData(std::move(data));
-  }
+  Result SetData(std::vector<Value>&& data) override;
 
   /// Sets the Format of the buffer to |format|.
   void SetFormat(std::unique_ptr<Format> format) {
@@ -178,6 +176,8 @@ class FormatBuffer : public Buffer {
   uint32_t GetRowStride() { return GetTexelStride() * GetWidth(); }
 
  private:
+  Result CopyData(const std::vector<Value>& data);
+
   std::unique_ptr<Format> format_;
 };
 

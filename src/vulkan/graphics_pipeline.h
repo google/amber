@@ -57,7 +57,7 @@ class GraphicsPipeline : public Pipeline {
                     CommandPool* pool,
                     VkQueue queue);
 
-  Result SetIndexBuffer(const std::vector<Value>& values);
+  Result SetIndexBuffer(Buffer* buffer);
 
   Result Clear();
   Result ClearBuffer(const VkClearValue& clear_value,
