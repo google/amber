@@ -21,6 +21,7 @@
 #include "amber/result.h"
 #include "amber/value.h"
 #include "amber/vulkan_header.h"
+#include "src/buffer.h"
 #include "src/format.h"
 #include "src/vulkan/transfer_buffer.h"
 
@@ -44,7 +45,7 @@ class IndexBuffer {
   // and coverts |values| as uint32 values and copies them to |buffer_|.
   Result SendIndexData(CommandBuffer* command,
                        const VkPhysicalDeviceMemoryProperties& properties,
-                       const std::vector<Value>& values);
+                       Buffer* buffer);
 
   // Bind |buffer_| as index buffer if it is not nullptr.
   Result BindToCommandBuffer(CommandBuffer* command);

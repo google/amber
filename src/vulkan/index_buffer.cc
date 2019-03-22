@@ -31,27 +31,24 @@ IndexBuffer::~IndexBuffer() = default;
 Result IndexBuffer::SendIndexData(
     CommandBuffer* command,
     const VkPhysicalDeviceMemoryProperties& properties,
-    const std::vector<Value>& values) {
+    Buffer* buffer) {
   if (transfer_buffer_) {
     return Result(
         "IndexBuffer::SendIndexData must be called once when it is created");
   }
 
-  if (values.empty())
-    return Result("IndexBuffer::SendIndexData |values| is empty");
+  if (buffer->GetSize() == 0)
+    return Result("IndexBuffer::SendIndexData |buffer| is empty");
 
-  transfer_buffer_ = MakeUnique<TransferBuffer>(
-      device_, static_cast<uint32_t>(sizeof(uint32_t) * values.size()),
-      properties);
+  transfer_buffer_ =
+      MakeUnique<TransferBuffer>(device_, buffer->GetSizeInBytes(), properties);
   Result r = transfer_buffer_->Initialize(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                           VK_BUFFER_USAGE_TRANSFER_DST_BIT);
   if (!r.IsSuccess())
     return r;
 
-  uint32_t* ptr =
-      static_cast<uint32_t*>(transfer_buffer_->HostAccessibleMemoryPtr());
-  for (const auto& value : values)
-    *ptr++ = value.AsUint32();
+  std::memcpy(transfer_buffer_->HostAccessibleMemoryPtr(),
+              buffer->ValuePtr()->data(), buffer->GetSizeInBytes());
 
   return transfer_buffer_->CopyToDevice(command);
 }

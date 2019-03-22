@@ -21,6 +21,7 @@
 #include "amber/result.h"
 #include "amber/value.h"
 #include "amber/vulkan_header.h"
+#include "src/buffer.h"
 #include "src/format.h"
 #include "src/vulkan/transfer_buffer.h"
 
@@ -39,9 +40,7 @@ class VertexBuffer {
                         const VkPhysicalDeviceMemoryProperties& properties);
   bool VertexDataSent() const { return !is_vertex_data_pending_; }
 
-  void SetData(uint8_t location,
-               const Format& format,
-               const std::vector<Value>& values);
+  void SetData(uint8_t location, FormatBuffer* buffer);
 
   const std::vector<VkVertexInputAttributeDescription>& GetVkVertexInputAttr()
       const {
@@ -60,9 +59,7 @@ class VertexBuffer {
   uint32_t GetVertexCount() const {
     if (data_.empty())
       return 0;
-
-    return static_cast<uint32_t>(data_[0].size() /
-                                 formats_[0].GetComponents().size());
+    return data_[0]->GetSize();
   }
 
   void BindToCommandBuffer(CommandBuffer* command);
@@ -85,8 +82,7 @@ class VertexBuffer {
   std::unique_ptr<TransferBuffer> transfer_buffer_;
   uint32_t stride_in_bytes_ = 0;
 
-  std::vector<Format> formats_;
-  std::vector<std::vector<Value>> data_;
+  std::vector<FormatBuffer*> data_;
 
   std::vector<VkVertexInputAttributeDescription> vertex_attr_desc_;
 };
