@@ -201,15 +201,12 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
     }
   }
 
-  if (!executor_result.IsSuccess()) {
-    engine->Shutdown();
+  if (!executor_result.IsSuccess())
     return executor_result;
-  }
-  if (!r.IsSuccess()) {
-    engine->Shutdown();
+  if (!r.IsSuccess())
     return r;
-  }
-  return engine->Shutdown();
+
+  return {};
 }
 
 }  // namespace amber

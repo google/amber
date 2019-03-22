@@ -44,7 +44,6 @@ class EngineVulkan : public Engine {
                     const std::vector<std::string>& features,
                     const std::vector<std::string>& instance_extensions,
                     const std::vector<std::string>& device_extensions) override;
-  Result Shutdown() override;
   Result CreatePipeline(amber::Pipeline* type) override;
 
   Result DoClearColor(const ClearColorCommand* cmd) override;

@@ -76,7 +76,22 @@ bool AreAllExtensionsSupported(
 
 EngineVulkan::EngineVulkan() : Engine() {}
 
-EngineVulkan::~EngineVulkan() = default;
+EngineVulkan::~EngineVulkan() {
+  for (auto it = pipeline_map_.begin(); it != pipeline_map_.end(); ++it) {
+    auto& info = it->second;
+
+    for (auto mod_it = info.shaders.begin(); mod_it != info.shaders.end();
+         ++mod_it) {
+      auto vk_device = device_->GetVkDevice();
+      if (vk_device != VK_NULL_HANDLE && mod_it->second != VK_NULL_HANDLE)
+        device_->GetPtrs()->vkDestroyShaderModule(vk_device, mod_it->second,
+                                                  nullptr);
+    }
+
+    if (info.vk_pipeline != VK_NULL_HANDLE)
+      info.vk_pipeline->Shutdown();
+  }
+}
 
 Result EngineVulkan::Initialize(
     EngineConfig* config,
@@ -120,30 +135,6 @@ Result EngineVulkan::Initialize(
     if (!r.IsSuccess())
       return r;
   }
-
-  return {};
-}
-
-Result EngineVulkan::Shutdown() {
-  if (!device_)
-    return {};
-
-  for (auto it = pipeline_map_.begin(); it != pipeline_map_.end(); ++it) {
-    auto& info = it->second;
-
-    for (auto mod_it = info.shaders.begin(); mod_it != info.shaders.end();
-         ++mod_it) {
-      auto vk_device = device_->GetVkDevice();
-      if (vk_device != VK_NULL_HANDLE && mod_it->second != VK_NULL_HANDLE)
-        device_->GetPtrs()->vkDestroyShaderModule(vk_device, mod_it->second,
-                                                  nullptr);
-    }
-
-    if (info.vk_pipeline != VK_NULL_HANDLE)
-      info.vk_pipeline->Shutdown();
-  }
-
-  pool_ = nullptr;
 
   return {};
 }

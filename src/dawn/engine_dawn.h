@@ -42,7 +42,6 @@ class EngineDawn : public Engine {
                     const std::vector<std::string>& instance_extensions,
                     const std::vector<std::string>& device_extensions) override;
 
-  Result Shutdown() override;
   // Record info for a pipeline.  The Dawn render pipeline will be created
   // later.  Assumes necessary shader modules have been created.  A compute
   // pipeline requires a compute shader.  A graphics pipeline requires a vertex
