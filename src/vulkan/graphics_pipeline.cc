@@ -402,7 +402,12 @@ GraphicsPipeline::GraphicsPipeline(
     color_buffers_.push_back(&info);
 }
 
-GraphicsPipeline::~GraphicsPipeline() = default;
+GraphicsPipeline::~GraphicsPipeline() {
+  if (render_pass_) {
+    device_->GetPtrs()->vkDestroyRenderPass(device_->GetVkDevice(),
+                                            render_pass_, nullptr);
+  }
+}
 
 Result GraphicsPipeline::CreateRenderPass() {
   VkSubpassDescription subpass_desc = VkSubpassDescription();
@@ -917,17 +922,6 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetVkDevice(),
                                               pipeline_layout, nullptr);
   return {};
-}
-
-void GraphicsPipeline::Shutdown() {
-  index_buffer_ = nullptr;
-  Pipeline::Shutdown();
-  frame_ = nullptr;
-
-  if (render_pass_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroyRenderPass(device_->GetVkDevice(),
-                                            render_pass_, nullptr);
-  }
 }
 
 }  // namespace vulkan
