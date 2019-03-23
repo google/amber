@@ -44,8 +44,6 @@ class EngineStub : public Engine {
     return {};
   }
 
-  Result Shutdown() override { return {}; }
-
   const std::vector<std::string>& GetFeatures() const { return features_; }
   const std::vector<std::string>& GetDeviceExtensions() const {
     return device_extensions_;

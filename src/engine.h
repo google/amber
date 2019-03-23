@@ -54,9 +54,6 @@ class Engine {
       const std::vector<std::string>& instance_extensions,
       const std::vector<std::string>& device_extensions) = 0;
 
-  /// Shutdown the engine and cleanup any resources.
-  virtual Result Shutdown() = 0;
-
   /// Create graphics pipeline.
   virtual Result CreatePipeline(Pipeline* pipeline) = 0;
 
