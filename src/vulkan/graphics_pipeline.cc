@@ -819,7 +819,12 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   if (!r.IsSuccess())
     return r;
 
-  return cmd_buf_guard.Submit(GetFenceTimeout());
+  r = cmd_buf_guard.Submit(GetFenceTimeout());
+  if (!r.IsSuccess())
+    return r;
+
+  frame_->CopyImagesToBuffers();
+  return {};
 }
 
 Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
@@ -914,6 +919,8 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;
+
+  frame_->CopyImagesToBuffers();
 
   device_->GetPtrs()->vkDestroyPipeline(device_->GetVkDevice(), pipeline,
                                         nullptr);
