@@ -4150,7 +4150,6 @@ EXPECT orig_buf IDX 5 EQ 11 EXTRA)";
   EXPECT_EQ("3: Invalid value provided to EXPECT command: EXTRA", r.Error());
 }
 
-
 TEST_F(AmberScriptParserTest, MultipleExpect) {
   std::string in = R"(
 BUFFER orig_buf DATA_TYPE int32 SIZE 100 FILL 11
