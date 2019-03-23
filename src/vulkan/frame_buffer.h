@@ -58,6 +58,8 @@ class FrameBuffer {
   // of the command must be done later.
   Result CopyColorImagesToHost(CommandBuffer* command);
 
+  void CopyImagesToBuffers();
+
   uint32_t GetWidth() const { return width_; }
   uint32_t GetHeight() const { return height_; }
 

@@ -41,7 +41,7 @@ Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) {
     return Result("GetFrameBuffer Unsupported buffer format");
   }
 
-  const uint8_t* cpu_memory = static_cast<const uint8_t*>(buffer->GetMemPtr());
+  const uint8_t* cpu_memory = buffer->ValuePtr()->data();
   if (!cpu_memory)
     return Result("GetFrameBuffer missing memory pointer");
 
@@ -192,7 +192,7 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
     if (!buffer)
       break;
 
-    const uint8_t* ptr = static_cast<const uint8_t*>(buffer->GetMemPtr());
+    const uint8_t* ptr = buffer->ValuePtr()->data();
     auto& values = buffer_info.values;
     for (size_t i = 0; i < buffer->GetSize(); ++i) {
       values.emplace_back();

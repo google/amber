@@ -76,21 +76,19 @@ Result Executor::Execute(Engine* engine,
 
       auto* buffer = cmd->AsProbe()->GetBuffer()->AsFormatBuffer();
       assert(buffer);
-      assert(buffer->GetMemPtr());
 
       r = verifier_.Probe(cmd->AsProbe(), &buffer->GetFormat(),
                           buffer->GetTexelStride(), buffer->GetRowStride(),
                           buffer->GetWidth(), buffer->GetHeight(),
-                          buffer->GetMemPtr());
+                          buffer->ValuePtr()->data());
     } else if (cmd->IsProbeSSBO()) {
       auto probe_ssbo = cmd->AsProbeSSBO();
 
       const auto* buffer = cmd->AsProbe()->GetBuffer();
       assert(buffer);
-      assert(buffer->GetMemPtr());
 
       r = verifier_.ProbeSSBO(probe_ssbo, buffer->GetSize(),
-                              buffer->GetMemPtr());
+                              buffer->ValuePtr()->data());
     } else if (cmd->IsClear()) {
       r = engine->DoClear(cmd->AsClear());
     } else if (cmd->IsClearColor()) {
