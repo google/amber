@@ -49,9 +49,6 @@ class GraphicsPipeline : public Pipeline {
       const std::vector<VkPipelineShaderStageCreateInfo>&);
   ~GraphicsPipeline() override;
 
-  // Pipeline
-  void Shutdown() override;
-
   Result Initialize(uint32_t width,
                     uint32_t height,
                     CommandPool* pool,

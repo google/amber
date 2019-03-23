@@ -63,25 +63,9 @@ Pipeline::Pipeline(
       shader_stage_info_(shader_stage_info),
       fence_timeout_ms_(fence_timeout_ms) {}
 
-Pipeline::~Pipeline() = default;
-
-GraphicsPipeline* Pipeline::AsGraphics() {
-  return static_cast<GraphicsPipeline*>(this);
-}
-
-ComputePipeline* Pipeline::AsCompute() {
-  return static_cast<ComputePipeline*>(this);
-}
-
-Result Pipeline::Initialize(CommandPool* pool, VkQueue queue) {
-  push_constant_ = MakeUnique<PushConstant>(
-      device_, physical_device_properties_.limits.maxPushConstantsSize);
-
-  command_ = MakeUnique<CommandBuffer>(device_, pool, queue);
-  return command_->Initialize();
-}
-
-void Pipeline::Shutdown() {
+Pipeline::~Pipeline() {
+  // Command must be reset before we destroy descriptors or we get a validation
+  // error.
   command_ = nullptr;
 
   for (auto& info : descriptor_set_info_) {
@@ -98,6 +82,22 @@ void Pipeline::Shutdown() {
                                                   info.pool, nullptr);
     }
   }
+}
+
+GraphicsPipeline* Pipeline::AsGraphics() {
+  return static_cast<GraphicsPipeline*>(this);
+}
+
+ComputePipeline* Pipeline::AsCompute() {
+  return static_cast<ComputePipeline*>(this);
+}
+
+Result Pipeline::Initialize(CommandPool* pool, VkQueue queue) {
+  push_constant_ = MakeUnique<PushConstant>(
+      device_, physical_device_properties_.limits.maxPushConstantsSize);
+
+  command_ = MakeUnique<CommandBuffer>(device_, pool, queue);
+  return command_->Initialize();
 }
 
 Result Pipeline::CreateDescriptorSetLayouts() {
