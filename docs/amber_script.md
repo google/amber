@@ -314,7 +314,7 @@ CLEAR <pipeline>
 
 ```
 # Checks that |buffer_name| at |x| has the given |value|s when compared
-# using the given |comparator|.
+# with the given |comparator|.
 EXPECT <buffer_name> IDX <x> <comparator> <value>+
 
 # Checks that |buffer_name| at |x| has values within |tolerance| of |value|
