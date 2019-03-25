@@ -685,9 +685,8 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
 
 Result GraphicsPipeline::Initialize(uint32_t width,
                                     uint32_t height,
-                                    CommandPool* pool,
-                                    VkQueue queue) {
-  Result r = Pipeline::Initialize(pool, queue);
+                                    CommandPool* pool) {
+  Result r = Pipeline::Initialize(pool);
   if (!r.IsSuccess())
     return r;
 

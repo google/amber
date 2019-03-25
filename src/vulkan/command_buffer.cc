@@ -22,8 +22,8 @@
 namespace amber {
 namespace vulkan {
 
-CommandBuffer::CommandBuffer(Device* device, CommandPool* pool, VkQueue queue)
-    : device_(device), pool_(pool), queue_(queue) {}
+CommandBuffer::CommandBuffer(Device* device, CommandPool* pool)
+    : device_(device), pool_(pool) {}
 
 CommandBuffer::~CommandBuffer() {
   if (fence_ != VK_NULL_HANDLE)
@@ -82,8 +82,8 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submit_info.commandBufferCount = 1;
   submit_info.pCommandBuffers = &command_;
-  if (device_->GetPtrs()->vkQueueSubmit(queue_, 1, &submit_info, fence_) !=
-      VK_SUCCESS) {
+  if (device_->GetPtrs()->vkQueueSubmit(device_->GetVkQueue(), 1, &submit_info,
+                                        fence_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkQueueSubmit Fail");
   }
 

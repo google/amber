@@ -31,8 +31,8 @@ ComputePipeline::ComputePipeline(
 
 ComputePipeline::~ComputePipeline() = default;
 
-Result ComputePipeline::Initialize(CommandPool* pool, VkQueue queue) {
-  return Pipeline::Initialize(pool, queue);
+Result ComputePipeline::Initialize(CommandPool* pool) {
+  return Pipeline::Initialize(pool);
 }
 
 Result ComputePipeline::CreateVkComputePipeline(

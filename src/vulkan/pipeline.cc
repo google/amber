@@ -73,10 +73,10 @@ ComputePipeline* Pipeline::AsCompute() {
   return static_cast<ComputePipeline*>(this);
 }
 
-Result Pipeline::Initialize(CommandPool* pool, VkQueue queue) {
+Result Pipeline::Initialize(CommandPool* pool) {
   push_constant_ = MakeUnique<PushConstant>(device_);
 
-  command_ = MakeUnique<CommandBuffer>(device_, pool, queue);
+  command_ = MakeUnique<CommandBuffer>(device_, pool);
   return command_->Initialize();
 }
 
