@@ -37,7 +37,6 @@ class TransferImage : public Resource {
   ~TransferImage() override;
 
   Result Initialize(VkImageUsageFlags usage);
-  VkImage GetVkImage() const { return image_; }
   VkImageView GetVkImageView() const { return view_; }
 
   void ChangeLayout(CommandBuffer* command,
@@ -58,7 +57,6 @@ class TransferImage : public Resource {
                                         VkMemoryPropertyFlags flags,
                                         bool force_flags,
                                         uint32_t* memory_type_index);
-  const VkMemoryRequirements GetVkImageMemoryRequirements(VkImage image) const;
 
   VkBuffer host_accessible_buffer_ = VK_NULL_HANDLE;
   VkDeviceMemory host_accessible_memory_ = VK_NULL_HANDLE;
