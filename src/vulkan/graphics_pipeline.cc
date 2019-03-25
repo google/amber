@@ -815,11 +815,9 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
         command_->GetVkCommandBuffer(), 1, &clear_attachment, 1, &clear_rect);
   }
 
-  Result r = frame_->CopyColorImagesToHost(command_.get());
-  if (!r.IsSuccess())
-    return r;
+  frame_->CopyColorImagesToHost(command_.get());
 
-  r = cmd_buf_guard.Submit(GetFenceTimeout());
+  Result r = cmd_buf_guard.Submit(GetFenceTimeout());
   if (!r.IsSuccess())
     return r;
 
@@ -907,9 +905,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
       }
     }
 
-    r = frame_->CopyColorImagesToHost(command_.get());
-    if (!r.IsSuccess())
-      return r;
+    frame_->CopyColorImagesToHost(command_.get());
 
     r = cmd_buf_guard.Submit(GetFenceTimeout());
     if (!r.IsSuccess())

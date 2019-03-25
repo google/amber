@@ -174,14 +174,11 @@ Result FrameBuffer::ChangeFrameImageLayout(CommandBuffer* command,
   return {};
 }
 
-Result FrameBuffer::CopyColorImagesToHost(CommandBuffer* command) {
+void FrameBuffer::CopyColorImagesToHost(CommandBuffer* command) {
   for (auto& img : color_images_) {
     ChangeFrameImageLayout(command, FrameImageState::kProbe);
-    Result r = img->CopyToHost(command);
-    if (!r.IsSuccess())
-      return r;
+    img->CopyToHost(command);
   }
-  return {};
 }
 
 void FrameBuffer::CopyImagesToBuffers() {

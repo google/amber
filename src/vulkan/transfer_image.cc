@@ -157,7 +157,7 @@ Result TransferImage::CreateVkImageView() {
   return {};
 }
 
-Result TransferImage::CopyToHost(CommandBuffer* command) {
+void TransferImage::CopyToHost(CommandBuffer* command) {
   VkBufferImageCopy copy_region = VkBufferImageCopy();
   copy_region.bufferOffset = 0;
   // Row length of 0 results in tight packing of rows, so the row stride
@@ -180,7 +180,6 @@ Result TransferImage::CopyToHost(CommandBuffer* command) {
       &copy_region);
 
   MemoryBarrier(command);
-  return {};
 }
 
 void TransferImage::ChangeLayout(CommandBuffer* command,

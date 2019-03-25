@@ -56,7 +56,7 @@ class FrameBuffer {
   // Only record the command for copying the image that backs this
   // framebuffer to the host accessible buffer. The actual submission
   // of the command must be done later.
-  Result CopyColorImagesToHost(CommandBuffer* command);
+  void CopyColorImagesToHost(CommandBuffer* command);
 
   void CopyImagesToBuffers();
 
