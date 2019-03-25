@@ -103,7 +103,7 @@ Result TransferBuffer::CreateVkBufferView(VkFormat format) {
 void TransferBuffer::CopyToDevice(CommandBuffer* command) {
   // This is redundant because this buffer is always host visible
   // and coherent and vkQueueSubmit will make writes from host
-  // avaliable (See chapter 6.9. "Host Write Ordering Guarantees" in
+  // available (See chapter 6.9. "Host Write Ordering Guarantees" in
   // Vulkan spec), but we prefer to keep it to simplify our own code.
   MemoryBarrier(command);
 }

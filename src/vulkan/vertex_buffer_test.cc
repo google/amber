@@ -40,6 +40,8 @@ class BufferForTest : public TransferBuffer {
   }
   ~BufferForTest() override = default;
 
+  void CopyToDevice(CommandBuffer*) override {}
+
  private:
   std::vector<uint8_t> memory_;
 };
