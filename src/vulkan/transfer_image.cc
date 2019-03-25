@@ -18,7 +18,6 @@
 
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
-#include "src/vulkan/format_data.h"
 
 namespace amber {
 namespace vulkan {
@@ -46,15 +45,15 @@ const VkImageCreateInfo kDefaultImageInfo = {
 }  // namespace
 
 TransferImage::TransferImage(Device* device,
-                             VkFormat format,
+                             const Format& format,
                              VkImageAspectFlags aspect,
                              uint32_t x,
                              uint32_t y,
                              uint32_t z)
-    : Resource(device, x * y * z * VkFormatToByteSize(format)),
+    : Resource(device, x * y * z * format.GetByteSize()),
       image_info_(kDefaultImageInfo),
       aspect_(aspect) {
-  image_info_.format = format;
+  image_info_.format = device_->GetVkFormat(format);
   image_info_.extent = {x, y, z};
 }
 
