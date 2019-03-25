@@ -53,17 +53,16 @@ Result Executor::Execute(Engine* engine,
                          ExecutionType executionType) {
   engine->SetEngineData(script->GetEngineData());
 
-  if (script->GetPipelines().empty())
-    return Result("no pipelines defined");
-
-  Result r = CompileShaders(script, shader_map);
-  if (!r.IsSuccess())
-    return r;
-
-  for (auto& pipeline : script->GetPipelines()) {
-    r = engine->CreatePipeline(pipeline.get());
+  if (!script->GetPipelines().empty()) {
+    Result r = CompileShaders(script, shader_map);
     if (!r.IsSuccess())
       return r;
+
+    for (auto& pipeline : script->GetPipelines()) {
+      r = engine->CreatePipeline(pipeline.get());
+      if (!r.IsSuccess())
+        return r;
+    }
   }
 
   if (executionType == ExecutionType::kPipelineCreateOnly)
@@ -71,6 +70,7 @@ Result Executor::Execute(Engine* engine,
 
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
+    Result r;
     if (cmd->IsProbe()) {
       assert(cmd->AsProbe()->GetBuffer()->IsFormatBuffer());
 

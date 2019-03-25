@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "amber/result.h"
 #include "src/parser.h"
@@ -63,6 +64,14 @@ class Parser : public amber::Parser {
   Result ParseRun();
   Result ParseClear();
   Result ParseExpect();
+
+  // Parses a set of values out of the token stream. |name| is the name of the
+  // current command we're parsing for error purposes. The |type| is the type
+  // of data we expect for the current buffer. |values| will be appended to with
+  // the parsed values.
+  Result ParseValues(const std::string& name,
+                     const DatumType& type,
+                     std::vector<Value>* values);
 
   std::unique_ptr<Tokenizer> tokenizer_;
 };

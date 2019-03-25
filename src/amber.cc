@@ -175,6 +175,12 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   // Hold the executor result until the extractions are complete. This will let
   // us dump any buffers requested even on failure.
 
+  if (script->GetPipelines().empty()) {
+    if (!executor_result.IsSuccess())
+      return executor_result;
+    return {};
+  }
+
   // TODO(dsinclair): Figure out how extractions work with multiple pipelines.
   auto* pipeline = script->GetPipelines()[0].get();
 

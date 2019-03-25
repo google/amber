@@ -27,6 +27,30 @@
 
 namespace amber {
 namespace amberscript {
+namespace {
+
+bool IsComparator(const std::string& in) {
+  return in == "EQ" || in == "NE" || in == "GT" || in == "LT" || in == "GE" ||
+         in == "LE";
+}
+
+ProbeSSBOCommand::Comparator ToComparator(const std::string& in) {
+  if (in == "EQ")
+    return ProbeSSBOCommand::Comparator::kEqual;
+  if (in == "NE")
+    return ProbeSSBOCommand::Comparator::kNotEqual;
+  if (in == "GT")
+    return ProbeSSBOCommand::Comparator::kGreater;
+  if (in == "LT")
+    return ProbeSSBOCommand::Comparator::kLess;
+  if (in == "GE")
+    return ProbeSSBOCommand::Comparator::kGreaterOrEqual;
+
+  assert(in == "LE");
+  return ProbeSSBOCommand::Comparator::kLessOrEqual;
+}
+
+}  // namespace
 
 Parser::Parser() : amber::Parser() {}
 
@@ -995,6 +1019,41 @@ Result Parser::ParseClear() {
   return ValidateEndOfStatement("CLEAR command");
 }
 
+Result Parser::ParseValues(const std::string& name,
+                           const DatumType& type,
+                           std::vector<Value>* values) {
+  assert(values);
+
+  auto token = tokenizer_->NextToken();
+  while (!token->IsEOL() && !token->IsEOS()) {
+    Value v;
+
+    if ((type.IsFloat() || type.IsDouble())) {
+      if (!token->IsInteger() && !token->IsDouble()) {
+        return Result(std::string("Invalid value provided to ") + name +
+                      " command: " + token->ToOriginalString());
+      }
+
+      Result r = token->ConvertToDouble();
+      if (!r.IsSuccess())
+        return r;
+
+      v.SetDoubleValue(token->AsDouble());
+    } else {
+      if (!token->IsInteger()) {
+        return Result(std::string("Invalid value provided to ") + name +
+                      " command: " + token->ToOriginalString());
+      }
+
+      v.SetIntValue(token->AsUint64());
+    }
+
+    values->push_back(v);
+    token = tokenizer_->NextToken();
+  }
+  return {};
+}
+
 Result Parser::ParseExpect() {
   auto token = tokenizer_->NextToken();
   if (!token->IsString())
@@ -1014,16 +1073,24 @@ Result Parser::ParseExpect() {
   token->ConvertToDouble();
   float x = token->AsFloat();
 
+  bool has_y_val = false;
+  float y = 0;
   token = tokenizer_->NextToken();
-  if (!token->IsInteger() || token->AsInt32() < 0)
-    return Result("invalid Y value in EXPECT command");
-  token->ConvertToDouble();
-  float y = token->AsFloat();
+  if (token->IsInteger()) {
+    has_y_val = true;
 
-  // TODO(dsinclair): Handle comparator && TOLERANCE
+    if (token->AsInt32() < 0)
+      return Result("invalid Y value in EXPECT command");
+    token->ConvertToDouble();
+    y = token->AsFloat();
 
-  token = tokenizer_->NextToken();
+    token = tokenizer_->NextToken();
+  }
+
   if (token->IsString() && token->AsString() == "SIZE") {
+    if (!has_y_val)
+      return Result("invalid Y value in EXPECT command");
+
     auto probe = MakeUnique<ProbeCommand>(buffer);
     probe->SetX(x);
     probe->SetY(y);
@@ -1081,6 +1148,28 @@ Result Parser::ParseExpect() {
     }
 
     script_->AddCommand(std::move(probe));
+  } else if (token->IsString() && IsComparator(token->AsString())) {
+    if (has_y_val)
+      return Result("Y value not needed for non-color comparator");
+    if (!buffer->IsDataBuffer())
+      return Result("comparator must be provided a data buffer");
+
+    auto probe = MakeUnique<ProbeSSBOCommand>(buffer);
+    probe->SetComparator(ToComparator(token->AsString()));
+    probe->SetDatumType(buffer->AsDataBuffer()->GetDatumType());
+    probe->SetOffset(static_cast<uint32_t>(x));
+
+    std::vector<Value> values;
+    Result r =
+        ParseValues("EXPECT", buffer->AsDataBuffer()->GetDatumType(), &values);
+    if (!r.IsSuccess())
+      return r;
+
+    if (values.empty())
+      return Result("missing comparison values for EXPECT command");
+    probe->SetValues(std::move(values));
+    script_->AddCommand(std::move(probe));
+    return {};
   } else {
     return Result("unexpected token in EXPECT command: " +
                   token->ToOriginalString());

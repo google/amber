@@ -313,14 +313,14 @@ CLEAR <pipeline>
  * EQ\_RGBA
 
 ```
-# Checks that |buffer_name| at |x|, |y| has the given |value|s when compared
+# Checks that |buffer_name| at |x| has the given |value|s when compared
 # with the given |comparator|.
-EXPECT <buffer_name> IDX <x> <y> <comparator> <value>+
+EXPECT <buffer_name> IDX <x> <comparator> <value>+
 
-# Checks that |buffer_name| at |x|, |y| has values within |tolerance| of |value|
+# Checks that |buffer_name| at |x| has values within |tolerance| of |value|
 # when compared with the given |comparator|. The |tolerance| can be specified
 # as 1-4 float values separated by spaces.
-EXPECT <buffer_name> IDX <x> <y> TOLERANCE \
+EXPECT <buffer_name> IDX <x> TOLERANCE \
     <tolerance>{1,4} <comparator> <value>+
 
 # Checks that |buffer_name| at |x|, |y| for |width|x|height| pixels has the
