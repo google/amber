@@ -41,8 +41,6 @@ class GraphicsPipeline : public Pipeline {
  public:
   GraphicsPipeline(
       Device* device,
-      const VkPhysicalDeviceProperties& properties,
-      const VkPhysicalDeviceMemoryProperties& memory_properties,
       const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
       VkFormat depth_stencil_format,
       uint32_t fence_timeout_ms,

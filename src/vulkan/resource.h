@@ -54,9 +54,7 @@ class Resource {
   uint32_t GetSizeInBytes() const { return size_in_bytes_; }
 
  protected:
-  Resource(Device* device,
-           uint32_t size,
-           const VkPhysicalDeviceMemoryProperties& properties);
+  Resource(Device* device, uint32_t size);
   Result CreateVkBuffer(VkBuffer* buffer, VkBufferUsageFlags usage);
 
   Result AllocateAndBindMemoryToVkBuffer(VkBuffer buffer,
@@ -77,10 +75,6 @@ class Resource {
   // prevent hazards caused by out-of-order execution.
   void MemoryBarrier(CommandBuffer* command);
 
-  const VkPhysicalDeviceMemoryProperties& GetVkMemoryProperties() const {
-    return physical_memory_properties_;
-  }
-
   uint32_t ChooseMemory(uint32_t memory_type_bits,
                         VkMemoryPropertyFlags flags,
                         bool force_flags);
@@ -95,7 +89,6 @@ class Resource {
       VkBuffer buffer) const;
 
   uint32_t size_in_bytes_ = 0;
-  VkPhysicalDeviceMemoryProperties physical_memory_properties_;
 
   void* memory_ptr_ = nullptr;
 };

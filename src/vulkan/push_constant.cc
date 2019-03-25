@@ -24,9 +24,8 @@
 namespace amber {
 namespace vulkan {
 
-PushConstant::PushConstant(Device* device, uint32_t max_push_constant_size)
-    : device_(device), max_push_constant_size_(max_push_constant_size) {
-  memory_.resize(max_push_constant_size_);
+PushConstant::PushConstant(Device* device) : device_(device) {
+  memory_.resize(device_->GetMaxPushConstants());
 }
 
 PushConstant::~PushConstant() = default;
@@ -76,7 +75,7 @@ Result PushConstant::RecordPushConstantVkCommand(
 
   auto push_const_range = GetVkPushConstantRange();
   if (push_const_range.offset + push_const_range.size >
-      max_push_constant_size_) {
+      device_->GetMaxPushConstants()) {
     return Result(
         "PushConstant::RecordPushConstantVkCommand push constant size in bytes "
         "exceeds maxPushConstantsSize of VkPhysicalDeviceLimits");
@@ -117,12 +116,12 @@ Result PushConstant::AddBufferData(const BufferCommand* command) {
 }
 
 Result PushConstant::UpdateMemoryWithInput(const BufferInput& input) {
-  if (static_cast<size_t>(input.offset) >= max_push_constant_size_) {
+  if (static_cast<size_t>(input.offset) >= device_->GetMaxPushConstants()) {
     return Result(
         "Vulkan: UpdateMemoryWithInput BufferInput offset exceeds memory size");
   }
 
-  if (input.size_in_bytes > (max_push_constant_size_ - input.offset)) {
+  if (input.size_in_bytes > (device_->GetMaxPushConstants() - input.offset)) {
     return Result(
         "Vulkan: UpdateMemoryWithInput BufferInput offset + size_in_bytes "
         " exceeds memory size");

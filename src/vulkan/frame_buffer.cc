@@ -44,10 +44,8 @@ FrameBuffer::~FrameBuffer() {
   }
 }
 
-Result FrameBuffer::Initialize(
-    VkRenderPass render_pass,
-    VkFormat depth_format,
-    const VkPhysicalDeviceMemoryProperties& properties) {
+Result FrameBuffer::Initialize(VkRenderPass render_pass,
+                               VkFormat depth_format) {
   std::vector<VkImageView> attachments;
 
   if (!color_attachments_.empty()) {
@@ -68,7 +66,7 @@ Result FrameBuffer::Initialize(
           device_,
           ToVkFormat(
               info->buffer->AsFormatBuffer()->GetFormat().GetFormatType()),
-          VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_, properties));
+          VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_));
 
       Result r =
           color_images_.back()->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
@@ -87,7 +85,7 @@ Result FrameBuffer::Initialize(
             VkFormatHasStencilComponent(depth_format)
                 ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
                 : VK_IMAGE_ASPECT_DEPTH_BIT),
-        width_, height_, depth_, properties);
+        width_, height_, depth_);
 
     Result r =
         depth_image_->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |

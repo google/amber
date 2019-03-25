@@ -28,10 +28,7 @@ IndexBuffer::IndexBuffer(Device* device) : device_(device) {}
 
 IndexBuffer::~IndexBuffer() = default;
 
-Result IndexBuffer::SendIndexData(
-    CommandBuffer* command,
-    const VkPhysicalDeviceMemoryProperties& properties,
-    Buffer* buffer) {
+Result IndexBuffer::SendIndexData(CommandBuffer* command, Buffer* buffer) {
   if (transfer_buffer_) {
     return Result(
         "IndexBuffer::SendIndexData must be called once when it is created");
@@ -41,7 +38,7 @@ Result IndexBuffer::SendIndexData(
     return Result("IndexBuffer::SendIndexData |buffer| is empty");
 
   transfer_buffer_ =
-      MakeUnique<TransferBuffer>(device_, buffer->GetSizeInBytes(), properties);
+      MakeUnique<TransferBuffer>(device_, buffer->GetSizeInBytes());
   Result r = transfer_buffer_->Initialize(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                           VK_BUFFER_USAGE_TRANSFER_DST_BIT);
   if (!r.IsSuccess())

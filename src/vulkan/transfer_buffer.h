@@ -33,9 +33,7 @@ class Device;
 // to |buffer_|.
 class TransferBuffer : public Resource {
  public:
-  TransferBuffer(Device* device,
-                 uint32_t size_in_bytes,
-                 const VkPhysicalDeviceMemoryProperties& properties);
+  TransferBuffer(Device* device, uint32_t size_in_bytes);
   ~TransferBuffer() override;
 
   // Create |buffer_| whose usage is |usage| and allocate |memory_|

@@ -32,8 +32,7 @@ class TransferImage : public Resource {
                 VkImageAspectFlags aspect,
                 uint32_t x,
                 uint32_t y,
-                uint32_t z,
-                const VkPhysicalDeviceMemoryProperties& properties);
+                uint32_t z);
   ~TransferImage() override;
 
   Result Initialize(VkImageUsageFlags usage);

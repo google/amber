@@ -385,16 +385,12 @@ class RenderPassGuard {
 
 GraphicsPipeline::GraphicsPipeline(
     Device* device,
-    const VkPhysicalDeviceProperties& properties,
-    const VkPhysicalDeviceMemoryProperties& memory_properties,
     const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
     VkFormat depth_stencil_format,
     uint32_t fence_timeout_ms,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : Pipeline(PipelineType::kGraphics,
                device,
-               properties,
-               memory_properties,
                fence_timeout_ms,
                shader_stage_info),
       depth_stencil_format_(depth_stencil_format) {
@@ -700,8 +696,7 @@ Result GraphicsPipeline::Initialize(uint32_t width,
     return r;
 
   frame_ = MakeUnique<FrameBuffer>(device_, color_buffers_, width, height);
-  r = frame_->Initialize(render_pass_, depth_stencil_format_,
-                         memory_properties_);
+  r = frame_->Initialize(render_pass_, depth_stencil_format_);
   if (!r.IsSuccess())
     return r;
 
@@ -715,7 +710,7 @@ Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
     VertexBuffer* vertex_buffer) {
   if (!vertex_buffer || vertex_buffer->VertexDataSent())
     return {};
-  return vertex_buffer->SendVertexData(command_.get(), memory_properties_);
+  return vertex_buffer->SendVertexData(command_.get());
 }
 
 Result GraphicsPipeline::SetIndexBuffer(Buffer* buffer) {
@@ -731,8 +726,7 @@ Result GraphicsPipeline::SetIndexBuffer(Buffer* buffer) {
   if (!guard.IsRecording())
     return guard.GetResult();
 
-  Result r =
-      index_buffer_->SendIndexData(command_.get(), memory_properties_, buffer);
+  Result r = index_buffer_->SendIndexData(command_.get(), buffer);
   if (!r.IsSuccess())
     return r;
 

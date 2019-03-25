@@ -68,9 +68,7 @@ void VertexBuffer::BindToCommandBuffer(CommandBuffer* command) {
                                              1, &buffer, &offset);
 }
 
-Result VertexBuffer::SendVertexData(
-    CommandBuffer* command,
-    const VkPhysicalDeviceMemoryProperties& properties) {
+Result VertexBuffer::SendVertexData(CommandBuffer* command) {
   if (!is_vertex_data_pending_)
     return Result("Vulkan::Vertices data was already sent");
 
@@ -81,7 +79,7 @@ Result VertexBuffer::SendVertexData(
   uint32_t bytes = Get4BytesAlignedStride() * n_vertices;
 
   if (!transfer_buffer_) {
-    transfer_buffer_ = MakeUnique<TransferBuffer>(device_, bytes, properties);
+    transfer_buffer_ = MakeUnique<TransferBuffer>(device_, bytes);
     Result r = transfer_buffer_->Initialize(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
                                             VK_BUFFER_USAGE_TRANSFER_DST_BIT);
     if (!r.IsSuccess())

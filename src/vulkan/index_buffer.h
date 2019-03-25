@@ -43,9 +43,7 @@ class IndexBuffer {
   // Assuming that |buffer_| is nullptr and |values| is not empty,
   // it creates |buffer_| whose size is |sizeof(uint32_t) * values.size()|
   // and coverts |values| as uint32 values and copies them to |buffer_|.
-  Result SendIndexData(CommandBuffer* command,
-                       const VkPhysicalDeviceMemoryProperties& properties,
-                       Buffer* buffer);
+  Result SendIndexData(CommandBuffer* command, Buffer* buffer);
 
   // Bind |buffer_| as index buffer if it is not nullptr.
   Result BindToCommandBuffer(CommandBuffer* command);

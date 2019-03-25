@@ -21,29 +21,9 @@
 
 namespace amber {
 namespace vulkan {
-namespace {
 
-bool IsMemoryHostAccessible(const VkPhysicalDeviceMemoryProperties& props,
-                            uint32_t memory_type_index) {
-  return (props.memoryTypes[memory_type_index].propertyFlags &
-          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) ==
-         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-}
-
-bool IsMemoryHostCoherent(const VkPhysicalDeviceMemoryProperties& props,
-                          uint32_t memory_type_index) {
-  return (props.memoryTypes[memory_type_index].propertyFlags &
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) ==
-         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-}
-
-}  // namespace
-
-TransferBuffer::TransferBuffer(
-    Device* device,
-    uint32_t size_in_bytes,
-    const VkPhysicalDeviceMemoryProperties& properties)
-    : Resource(device, size_in_bytes, properties) {}
+TransferBuffer::TransferBuffer(Device* device, uint32_t size_in_bytes)
+    : Resource(device, size_in_bytes) {}
 
 TransferBuffer::~TransferBuffer() {
   if (view_ != VK_NULL_HANDLE) {
@@ -74,8 +54,8 @@ Result TransferBuffer::Initialize(const VkBufferUsageFlags usage) {
   if (!r.IsSuccess())
     return r;
 
-  if (!IsMemoryHostAccessible(GetVkMemoryProperties(), memory_type_index) ||
-      !IsMemoryHostCoherent(GetVkMemoryProperties(), memory_type_index)) {
+  if (!device_->IsMemoryHostAccessible(memory_type_index) ||
+      !device_->IsMemoryHostCoherent(memory_type_index)) {
     return Result(
         "Vulkan: TransferBuffer::Initialize() buffer is not host accessible or"
         " not host coherent.");
