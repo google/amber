@@ -40,8 +40,6 @@ class TransferImage : public Resource {
   VkImage GetVkImage() const { return image_; }
   VkImageView GetVkImageView() const { return view_; }
 
-  // TODO(jaebaek): Implement CopyToDevice
-
   void ChangeLayout(CommandBuffer* command,
                     VkImageLayout old_layout,
                     VkImageLayout new_layout,
@@ -51,7 +49,7 @@ class TransferImage : public Resource {
   // Only record the command for copying this image to its secondary
   // host-accessible buffer. The actual submission of the command
   // must be done later.
-  Result CopyToHost(CommandBuffer* command) override;
+  void CopyToHost(CommandBuffer* command) override;
 
  private:
   Result CreateVkImageView();

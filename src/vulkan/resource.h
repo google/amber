@@ -47,7 +47,7 @@ class Resource {
  public:
   virtual ~Resource();
 
-  virtual Result CopyToHost(CommandBuffer* command) = 0;
+  virtual void CopyToHost(CommandBuffer* command) = 0;
 
   void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
 

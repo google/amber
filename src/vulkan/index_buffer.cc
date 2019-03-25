@@ -50,7 +50,8 @@ Result IndexBuffer::SendIndexData(
   std::memcpy(transfer_buffer_->HostAccessibleMemoryPtr(),
               buffer->ValuePtr()->data(), buffer->GetSizeInBytes());
 
-  return transfer_buffer_->CopyToDevice(command);
+  transfer_buffer_->CopyToDevice(command);
+  return {};
 }
 
 Result IndexBuffer::BindToCommandBuffer(CommandBuffer* command) {

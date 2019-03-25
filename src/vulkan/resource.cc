@@ -105,7 +105,7 @@ Resource::Resource(Device* device,
 Resource::~Resource() = default;
 
 Result Resource::CreateVkBuffer(VkBuffer* buffer, VkBufferUsageFlags usage) {
-  if (buffer == nullptr)
+  if (!buffer)
     return Result("Vulkan::Given VkBuffer pointer is nullptr");
 
   VkBufferCreateInfo buffer_info = VkBufferCreateInfo();
