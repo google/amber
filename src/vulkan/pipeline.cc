@@ -32,21 +32,6 @@ namespace {
 
 const char* kDefaultEntryPointName = "main";
 
-Result ToVkDescriptorType(DescriptorType type, VkDescriptorType* ret) {
-  Result r = Result("Unknown resource type");
-  switch (type) {
-    case DescriptorType::kStorageBuffer:
-      *ret = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-      r = {};
-      break;
-    case DescriptorType::kUniformBuffer:
-      *ret = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      r = {};
-      break;
-  }
-  return r;
-}
-
 }  // namespace
 
 Pipeline::Pipeline(
@@ -109,15 +94,10 @@ Result Pipeline::CreateDescriptorSetLayouts() {
     // If there are no descriptors for this descriptor set we only
     // need to create its layout and there will be no bindings.
     std::vector<VkDescriptorSetLayoutBinding> bindings;
-    for (auto& desc : info.descriptors_) {
-      VkDescriptorType desc_type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-      Result r = ToVkDescriptorType(desc->GetType(), &desc_type);
-      if (!r.IsSuccess())
-        return r;
-
+    for (auto& desc : info.buffer_descriptors) {
       bindings.emplace_back();
       bindings.back().binding = desc->GetBinding();
-      bindings.back().descriptorType = desc_type;
+      bindings.back().descriptorType = desc->GetVkDescriptorType();
       bindings.back().descriptorCount = 1;
       bindings.back().stageFlags = VK_SHADER_STAGE_ALL;
     }
@@ -140,12 +120,8 @@ Result Pipeline::CreateDescriptorPools() {
       continue;
 
     std::vector<VkDescriptorPoolSize> pool_sizes;
-    for (auto& desc : info.descriptors_) {
-      VkDescriptorType type;
-      Result r = ToVkDescriptorType(desc->GetType(), &type);
-      if (!r.IsSuccess())
-        return r;
-
+    for (auto& desc : info.buffer_descriptors) {
+      VkDescriptorType type = desc->GetVkDescriptorType();
       auto it = find_if(pool_sizes.begin(), pool_sizes.end(),
                         [&type](const VkDescriptorPoolSize& size) {
                           return size.type == type;
@@ -250,16 +226,11 @@ Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
   return {};
 }
 
-Result Pipeline::UpdateDescriptorSetsIfNeeded() {
+void Pipeline::UpdateDescriptorSetsIfNeeded() {
   for (auto& info : descriptor_set_info_) {
-    for (auto& desc : info.descriptors_) {
-      Result r = desc->UpdateDescriptorSetIfNeeded(info.vk_desc_set);
-      if (!r.IsSuccess())
-        return r;
-    }
+    for (auto& desc : info.buffer_descriptors)
+      desc->UpdateDescriptorSetIfNeeded(info.vk_desc_set);
   }
-
-  return {};
 }
 
 Result Pipeline::RecordPushConstant(const VkPipelineLayout& pipeline_layout) {
@@ -300,8 +271,8 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
   }
   descriptor_set_info_[desc_set].empty = false;
 
-  auto& descriptors = descriptor_set_info_[desc_set].descriptors_;
-  Descriptor* desc = nullptr;
+  auto& descriptors = descriptor_set_info_[desc_set].buffer_descriptors;
+  BufferDescriptor* desc = nullptr;
   for (auto& descriptor : descriptors) {
     if (descriptor->GetBinding() == cmd->GetBinding())
       desc = descriptor.get();
@@ -347,7 +318,7 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
       return guard.GetResult();
 
     for (auto& info : descriptor_set_info_) {
-      for (auto& desc : info.descriptors_) {
+      for (auto& desc : info.buffer_descriptors) {
         Result r = desc->CreateResourceIfNeeded(memory_properties_);
         if (!r.IsSuccess())
           return r;
@@ -370,11 +341,8 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     return guard.GetResult();
 
   for (auto& info : descriptor_set_info_) {
-    for (auto& desc : info.descriptors_) {
-      Result r = desc->RecordCopyDataToResourceIfNeeded(command_.get());
-      if (!r.IsSuccess())
-        return r;
-    }
+    for (auto& desc : info.buffer_descriptors)
+      desc->RecordCopyDataToResourceIfNeeded(command_.get());
   }
   return guard.Submit(GetFenceTimeout());
 }
@@ -400,11 +368,8 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
       return guard.GetResult();
 
     for (auto& desc_set : descriptor_set_info_) {
-      for (auto& desc : desc_set.descriptors_) {
-        Result r = desc->RecordCopyDataToHost(command_.get());
-        if (!r.IsSuccess())
-          return r;
-      }
+      for (auto& desc : desc_set.buffer_descriptors)
+        desc->RecordCopyDataToHost(command_.get());
     }
 
     Result r = guard.Submit(GetFenceTimeout());
@@ -413,7 +378,7 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
   }
 
   for (auto& desc_set : descriptor_set_info_) {
-    for (auto& desc : desc_set.descriptors_) {
+    for (auto& desc : desc_set.buffer_descriptors) {
       Result r = desc->MoveResourceToBufferOutput();
       if (!r.IsSuccess())
         return r;

@@ -24,7 +24,6 @@
 #include "src/buffer.h"
 #include "src/datum_type.h"
 #include "src/engine.h"
-#include "src/vulkan/descriptor.h"
 #include "src/vulkan/transfer_buffer.h"
 
 namespace amber {
@@ -33,24 +32,40 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 
+enum class DescriptorType : uint8_t {
+  kStorageBuffer = 0,
+  kUniformBuffer,
+};
+
 // Among Vulkan descriptor types, this class handles Storage Buffers
 // and Uniform Buffers.
-class BufferDescriptor : public Descriptor {
+class BufferDescriptor {
  public:
   BufferDescriptor(Buffer* buffer,
                    DescriptorType type,
                    Device* device,
                    uint32_t desc_set,
                    uint32_t binding);
-  ~BufferDescriptor() override;
+  ~BufferDescriptor();
 
-  // Descriptor
+  uint32_t GetDescriptorSet() const { return descriptor_set_; }
+  uint32_t GetBinding() const { return binding_; }
+
+  VkDescriptorType GetVkDescriptorType() const;
+
+  bool IsStorageBuffer() const {
+    return type_ == DescriptorType::kStorageBuffer;
+  }
+  bool IsUniformBuffer() const {
+    return type_ == DescriptorType::kUniformBuffer;
+  }
+
   Result CreateResourceIfNeeded(
-      const VkPhysicalDeviceMemoryProperties& properties) override;
-  Result RecordCopyDataToResourceIfNeeded(CommandBuffer* command) override;
-  Result RecordCopyDataToHost(CommandBuffer* command) override;
-  Result MoveResourceToBufferOutput() override;
-  Result UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
+      const VkPhysicalDeviceMemoryProperties& properties);
+  void RecordCopyDataToResourceIfNeeded(CommandBuffer* command);
+  Result RecordCopyDataToHost(CommandBuffer* command);
+  Result MoveResourceToBufferOutput();
+  void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set);
 
   Result AddToBuffer(DataType type,
                      uint32_t offset,
@@ -58,18 +73,15 @@ class BufferDescriptor : public Descriptor {
                      const std::vector<Value>& values);
 
  private:
-  VkBufferUsageFlagBits GetVkBufferUsage() const {
-    return IsStorageBuffer() ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-                             : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-  }
-
-  VkDescriptorType GetVkDescriptorType() const {
-    return IsStorageBuffer() ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
-                             : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  }
-
+  Device* device_ = nullptr;
   Buffer* amber_buffer_ = nullptr;
   std::unique_ptr<TransferBuffer> transfer_buffer_;
+
+  DescriptorType type_ = DescriptorType::kStorageBuffer;
+
+  bool is_descriptor_set_update_needed_ = false;
+  uint32_t descriptor_set_ = 0;
+  uint32_t binding_ = 0;
 };
 
 }  // namespace vulkan

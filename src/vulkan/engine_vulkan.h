@@ -25,6 +25,7 @@
 #include "src/cast_hash.h"
 #include "src/engine.h"
 #include "src/pipeline.h"
+#include "src/vulkan/buffer_descriptor.h"
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/pipeline.h"

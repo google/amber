@@ -21,7 +21,6 @@
 #include "amber/amber_vulkan.h"
 #include "src/make_unique.h"
 #include "src/vulkan/compute_pipeline.h"
-#include "src/vulkan/descriptor.h"
 #include "src/vulkan/format_data.h"
 #include "src/vulkan/graphics_pipeline.h"
 
