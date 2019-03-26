@@ -207,7 +207,7 @@ TEST_F(VertexBufferTest, R16G16B16A16_SNORM) {
   values[3].SetIntValue(255);
 
   auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR16G16B16A16_UNORM);
+  format->SetFormatType(FormatType::kR16G16B16A16_SNORM);
   format->AddComponent(FormatComponentType::kR, FormatMode::kSNorm, 16);
   format->AddComponent(FormatComponentType::kG, FormatMode::kSNorm, 16);
   format->AddComponent(FormatComponentType::kB, FormatMode::kSNorm, 16);
