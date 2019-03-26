@@ -126,7 +126,6 @@ The COPY command copy all data, values and memory from <buffer_from> to
 
 ```
 COPY <buffer_from> TO <buffer_to>
-
 ```
 
 Both buffers must be declared, and of the same type.
