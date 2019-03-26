@@ -119,6 +119,20 @@ FILL <value>
 SERIES_FROM <start> INC_BY <inc>
 ```
 
+#### Buffer Copy
+
+The COPY command copy all data, values and memory from <buffer_from> to
+<buffer_to>.
+
+```
+COPY <buffer_from> TO <buffer_to>
+```
+
+Both buffers must be declared, and of the same type.
+
+Buffers used as copy destination can be used only as copy destination, and as
+argument to an EXPECT command.
+
 ### Pipelines
 
 #### Pipeline type

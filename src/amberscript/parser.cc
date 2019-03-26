@@ -76,6 +76,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParseBuffer();
     } else if (tok == "CLEAR") {
       r = ParseClear();
+    } else if (tok == "COPY") {
+      r = ParseCopy();
     } else if (tok == "EXPECT") {
       r = ParseExpect();
     } else if (tok == "PIPELINE") {
@@ -91,7 +93,7 @@ Result Parser::Parse(const std::string& data) {
       return Result(make_error(r.Error()));
   }
 
-  // Generate any  needed color and depth attachments. This is done before
+  // Generate any needed color and depth attachments. This is done before
   // validating in case one of the pipelines specifies the framebuffer size
   // it needs to be verified against all other pipelines.
   for (const auto& pipeline : script_->GetPipelines()) {
@@ -1176,6 +1178,61 @@ Result Parser::ParseExpect() {
   }
 
   return ValidateEndOfStatement("EXPECT command");
+}
+
+Result Parser::ParseCopy() {
+  auto token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing buffer name after COPY");
+  if (!token->IsString())
+    return Result("invalid buffer name after COPY");
+
+  auto name = token->AsString();
+  if (name == "TO")
+    return Result("missing buffer name between COPY and TO");
+
+  Buffer* buffer_from = script_->GetBuffer(name);
+  if (!buffer_from)
+    return Result("COPY origin buffer was not declared");
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing 'TO' after COPY and buffer name");
+  if (!token->IsString())
+    return Result("expected 'TO' after COPY and buffer name");
+
+  name = token->AsString();
+  if (name != "TO")
+    return Result("expected 'TO' after COPY and buffer name");
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing buffer name after TO");
+  if (!token->IsString())
+    return Result("invalid buffer name after TO");
+
+  name = token->AsString();
+  Buffer* buffer_to = script_->GetBuffer(name);
+  if (!buffer_to)
+    return Result("COPY destination buffer was not declared");
+
+  if (buffer_to->GetBufferType() == amber::BufferType::kUnknown) {
+    // Set destination buffer to mirror origin buffer
+    buffer_to->SetBufferType(buffer_from->GetBufferType());
+    buffer_to->SetWidth(buffer_from->GetWidth());
+    buffer_to->SetHeight(buffer_from->GetHeight());
+    buffer_to->SetSize(buffer_from->GetSize());
+  }
+
+  if (buffer_from->GetBufferType() != buffer_to->GetBufferType())
+    return Result("cannot COPY between buffers of different types");
+  if (buffer_from == buffer_to)
+    return Result("COPY origin and destination buffers are identical");
+
+  auto cmd = MakeUnique<CopyCommand>(buffer_from, buffer_to);
+  script_->AddCommand(std::move(cmd));
+
+  return ValidateEndOfStatement("COPY command");
 }
 
 }  // namespace amberscript
