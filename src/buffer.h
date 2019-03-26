@@ -94,7 +94,7 @@ class Buffer {
   }
 
   /// Copy the buffer values to an other one
-  virtual Result CopyTo(Buffer* buffer) const;
+  Result CopyTo(Buffer* buffer) const;
 
  protected:
   /// Create an un-typed buffer.

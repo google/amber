@@ -217,7 +217,6 @@ Result Buffer::CopyTo(Buffer* buffer) const {
     return Result("Buffer::CopyBaseFields() buffers have a different height");
   if (buffer->size_ != size_)
     return Result("Buffer::CopyBaseFields() buffers have a different size");
-  buffer->values_.clear();
   buffer->values_ = values_;
   return {};
 }
