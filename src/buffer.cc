@@ -15,8 +15,6 @@
 #include "src/buffer.h"
 
 #include <cassert>
-#include <cstdlib>
-#include <cstring>
 
 namespace amber {
 namespace {
