@@ -95,12 +95,8 @@ void BufferInput::UpdateBufferWithValues(void* buffer) const {
   }
 }
 
-Resource::Resource(Device* device,
-                   uint32_t size_in_bytes,
-                   const VkPhysicalDeviceMemoryProperties& properties)
-    : device_(device),
-      size_in_bytes_(size_in_bytes),
-      physical_memory_properties_(properties) {}
+Resource::Resource(Device* device, uint32_t size_in_bytes)
+    : device_(device), size_in_bytes_(size_in_bytes) {}
 
 Resource::~Resource() = default;
 
@@ -137,11 +133,8 @@ uint32_t Resource::ChooseMemory(uint32_t memory_type_bits,
       if (first_non_zero == std::numeric_limits<uint32_t>::max())
         first_non_zero = memory_type_index;
 
-      if ((physical_memory_properties_.memoryTypes[memory_type_index]
-               .propertyFlags &
-           flags) == flags) {
+      if (device_->HasMemoryFlags(memory_type_index, flags))
         return memory_type_index;
-      }
     }
 
     ++memory_type_index;

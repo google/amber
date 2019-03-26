@@ -41,8 +41,7 @@ BufferDescriptor::BufferDescriptor(Buffer* buffer,
 
 BufferDescriptor::~BufferDescriptor() = default;
 
-Result BufferDescriptor::CreateResourceIfNeeded(
-    const VkPhysicalDeviceMemoryProperties& properties) {
+Result BufferDescriptor::CreateResourceIfNeeded() {
   if (transfer_buffer_) {
     return Result(
         "Vulkan: BufferDescriptor::CreateResourceIfNeeded() must be called "
@@ -55,8 +54,7 @@ Result BufferDescriptor::CreateResourceIfNeeded(
   uint32_t size_in_bytes =
       amber_buffer_ ? static_cast<uint32_t>(amber_buffer_->ValuePtr()->size())
                     : 0;
-  transfer_buffer_ =
-      MakeUnique<TransferBuffer>(device_, size_in_bytes, properties);
+  transfer_buffer_ = MakeUnique<TransferBuffer>(device_, size_in_bytes);
 
   Result r = transfer_buffer_->Initialize(
       (IsStorageBuffer() ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT

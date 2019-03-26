@@ -22,14 +22,10 @@ namespace vulkan {
 
 ComputePipeline::ComputePipeline(
     Device* device,
-    const VkPhysicalDeviceProperties& properties,
-    const VkPhysicalDeviceMemoryProperties& memory_properties,
     uint32_t fence_timeout_ms,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : Pipeline(PipelineType::kCompute,
                device,
-               properties,
-               memory_properties,
                fence_timeout_ms,
                shader_stage_info) {}
 

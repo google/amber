@@ -60,8 +60,7 @@ class BufferDescriptor {
     return type_ == DescriptorType::kUniformBuffer;
   }
 
-  Result CreateResourceIfNeeded(
-      const VkPhysicalDeviceMemoryProperties& properties);
+  Result CreateResourceIfNeeded();
   void RecordCopyDataToResourceIfNeeded(CommandBuffer* command);
   Result RecordCopyDataToHost(CommandBuffer* command);
   Result MoveResourceToBufferOutput();

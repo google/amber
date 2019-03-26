@@ -36,7 +36,7 @@ class PushConstant {
   // maxPushConstantsSize of VkPhysicalDeviceLimits, which is an
   // element of VkPhysicalDeviceProperties getting from
   // vkGetPhysicalDeviceProperties().
-  PushConstant(Device* device, uint32_t max_push_constant_size);
+  explicit PushConstant(Device* device);
   ~PushConstant();
 
   // Return a VkPushConstantRange structure whose shader stage flag
@@ -64,11 +64,6 @@ class PushConstant {
   Result UpdateMemoryWithInput(const BufferInput& input);
 
   Device* device_;
-
-  // maxPushConstantsSize of VkPhysicalDeviceLimits, which is an
-  // element of VkPhysicalDeviceProperties getting from
-  // vkGetPhysicalDeviceProperties().
-  uint32_t max_push_constant_size_ = 0;
 
   // Keep the information of what and how to conduct push constant.
   // These are applied from lowest index to highest index, so that
