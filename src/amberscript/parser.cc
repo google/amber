@@ -76,6 +76,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParseBuffer();
     } else if (tok == "CLEAR") {
       r = ParseClear();
+    } else if (tok == "CLEAR_COLOR") {
+      r = ParseClearColor();
     } else if (tok == "COPY") {
       r = ParseCopy();
     } else if (tok == "EXPECT") {
@@ -1127,26 +1129,26 @@ Result Parser::ParseExpect() {
     if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255)
       return Result("invalid R value in EXPECT command");
     token->ConvertToDouble();
-    probe->SetR(token->AsFloat());
+    probe->SetR(token->AsFloat() / 255.f);
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255)
       return Result("invalid G value in EXPECT command");
     token->ConvertToDouble();
-    probe->SetG(token->AsFloat());
+    probe->SetG(token->AsFloat() / 255.f);
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255)
       return Result("invalid B value in EXPECT command");
     token->ConvertToDouble();
-    probe->SetB(token->AsFloat());
+    probe->SetB(token->AsFloat() / 255.f);
 
     if (probe->IsRGBA()) {
       token = tokenizer_->NextToken();
       if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255)
         return Result("invalid A value in EXPECT command");
       token->ConvertToDouble();
-      probe->SetA(token->AsFloat());
+      probe->SetA(token->AsFloat() / 255.f);
     }
 
     script_->AddCommand(std::move(probe));
@@ -1233,6 +1235,67 @@ Result Parser::ParseCopy() {
   script_->AddCommand(std::move(cmd));
 
   return ValidateEndOfStatement("COPY command");
+}
+
+Result Parser::ParseClearColor() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("missing pipeline name for CLEAR_COLOR command");
+
+  auto* pipeline = script_->GetPipeline(token->AsString());
+  if (!pipeline) {
+    return Result("unknown pipeline for CLEAR_COLOR command: " +
+                  token->AsString());
+  }
+  if (!pipeline->IsGraphics()) {
+    return Result(
+        "CLEAR_COLOR command requires graphics pipeline, got compute");
+  }
+
+  auto cmd = MakeUnique<ClearColorCommand>(pipeline);
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing R value for CLEAR_COLOR command");
+  if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255) {
+    return Result("invalid R value for CLEAR_COLOR command: " +
+                  token->ToOriginalString());
+  }
+  token->ConvertToDouble();
+  cmd->SetR(token->AsFloat() / 255.f);
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing G value for CLEAR_COLOR command");
+  if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255) {
+    return Result("invalid G value for CLEAR_COLOR command: " +
+                  token->ToOriginalString());
+  }
+  token->ConvertToDouble();
+  cmd->SetG(token->AsFloat() / 255.f);
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing B value for CLEAR_COLOR command");
+  if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255) {
+    return Result("invalid B value for CLEAR_COLOR command: " +
+                  token->ToOriginalString());
+  }
+  token->ConvertToDouble();
+  cmd->SetB(token->AsFloat() / 255.f);
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing A value for CLEAR_COLOR command");
+  if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255) {
+    return Result("invalid A value for CLEAR_COLOR command: " +
+                  token->ToOriginalString());
+  }
+  token->ConvertToDouble();
+  cmd->SetA(token->AsFloat() / 255.f);
+
+  script_->AddCommand(std::move(cmd));
+  return ValidateEndOfStatement("CLEAR_COLOR command");
 }
 
 }  // namespace amberscript
