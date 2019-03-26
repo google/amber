@@ -47,10 +47,7 @@ class GraphicsPipeline : public Pipeline {
       const std::vector<VkPipelineShaderStageCreateInfo>&);
   ~GraphicsPipeline() override;
 
-  Result Initialize(uint32_t width,
-                    uint32_t height,
-                    CommandPool* pool,
-                    VkQueue queue);
+  Result Initialize(uint32_t width, uint32_t height, CommandPool* pool);
 
   Result SetIndexBuffer(Buffer* buffer);
 

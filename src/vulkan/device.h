@@ -52,14 +52,13 @@ class Device {
 
   bool IsFormatSupportedByPhysicalDevice(const Format& format, BufferType type);
 
-  VkInstance GetVkInstance() const { return instance_; }
-  VkPhysicalDevice GetVkPhysicalDevice() { return physical_device_; }
   VkDevice GetVkDevice() const { return device_; }
-  VkPhysicalDevice GetVkPhysicalDevice() const { return physical_device_; }
-  uint32_t GetQueueFamilyIndex() const { return queue_family_index_; }
   VkQueue GetVkQueue() const { return queue_; }
 
+  uint32_t GetQueueFamilyIndex() const { return queue_family_index_; }
   uint32_t GetMaxPushConstants() const;
+
+  bool IsDescriptorSetInBounds(uint32_t descriptor_set) const;
 
   bool HasMemoryFlags(uint32_t memory_type_index,
                       const VkMemoryPropertyFlags flags) const;

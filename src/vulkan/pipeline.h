@@ -73,7 +73,7 @@ class Pipeline {
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
 
   // Initialize the pipeline.
-  Result Initialize(CommandPool* pool, VkQueue queue);
+  Result Initialize(CommandPool* pool);
 
   void UpdateDescriptorSetsIfNeeded();
 

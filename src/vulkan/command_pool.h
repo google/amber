@@ -28,7 +28,7 @@ class CommandPool {
   explicit CommandPool(Device* device);
   ~CommandPool();
 
-  Result Initialize(uint32_t queue_family_index);
+  Result Initialize();
   VkCommandPool GetVkCommandPool() const { return pool_; }
 
  private:

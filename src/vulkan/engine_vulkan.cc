@@ -127,7 +127,7 @@ Result EngineVulkan::Initialize(
 
   if (!pool_) {
     pool_ = MakeUnique<CommandPool>(device_.get());
-    r = pool_->Initialize(device_->GetQueueFamilyIndex());
+    r = pool_->Initialize();
     if (!r.IsSuccess())
       return r;
   }
@@ -176,8 +176,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   if (pipeline->GetType() == PipelineType::kCompute) {
     vk_pipeline = MakeUnique<ComputePipeline>(
         device_.get(), engine_data.fence_timeout_ms, stage_create_info);
-    r = vk_pipeline->AsCompute()->Initialize(pool_.get(),
-                                             device_->GetVkQueue());
+    r = vk_pipeline->AsCompute()->Initialize(pool_.get());
     if (!r.IsSuccess())
       return r;
   } else {
@@ -186,9 +185,9 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
         ToVkFormat(depth_buffer_format), engine_data.fence_timeout_ms,
         stage_create_info);
 
-    r = vk_pipeline->AsGraphics()->Initialize(
-        pipeline->GetFramebufferWidth(), pipeline->GetFramebufferHeight(),
-        pool_.get(), device_->GetVkQueue());
+    r = vk_pipeline->AsGraphics()->Initialize(pipeline->GetFramebufferWidth(),
+                                              pipeline->GetFramebufferHeight(),
+                                              pool_.get());
     if (!r.IsSuccess())
       return r;
   }
@@ -416,21 +415,12 @@ Result EngineVulkan::DoBuffer(const BufferCommand* cmd) {
   if (cmd->IsPushConstant())
     return info.vk_pipeline->AddPushConstant(cmd);
 
-  if (!IsDescriptorSetInBounds(device_->GetVkPhysicalDevice(),
-                               cmd->GetDescriptorSet())) {
+  if (!device_->IsDescriptorSetInBounds(cmd->GetDescriptorSet())) {
     return Result(
         "Vulkan::DoBuffer exceed maxBoundDescriptorSets limit of physical "
         "device");
   }
   return info.vk_pipeline->AddDescriptor(cmd);
-}
-
-bool EngineVulkan::IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
-                                           uint32_t descriptor_set) {
-  VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties();
-  device_->GetPtrs()->vkGetPhysicalDeviceProperties(physical_device,
-                                                    &properties);
-  return properties.limits.maxBoundDescriptorSets > descriptor_set;
 }
 
 }  // namespace vulkan

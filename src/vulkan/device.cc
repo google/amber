@@ -516,5 +516,11 @@ uint32_t Device::GetMaxPushConstants() const {
   return physical_device_properties_.limits.maxPushConstantsSize;
 }
 
+bool Device::IsDescriptorSetInBounds(uint32_t descriptor_set) const {
+  VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties();
+  GetPtrs()->vkGetPhysicalDeviceProperties(physical_device_, &properties);
+  return properties.limits.maxBoundDescriptorSets > descriptor_set;
+}
+
 }  // namespace vulkan
 }  // namespace amber
