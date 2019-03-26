@@ -37,14 +37,10 @@ const char* kDefaultEntryPointName = "main";
 Pipeline::Pipeline(
     PipelineType type,
     Device* device,
-    const VkPhysicalDeviceProperties& properties,
-    const VkPhysicalDeviceMemoryProperties& memory_properties,
     uint32_t fence_timeout_ms,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : device_(device),
-      memory_properties_(memory_properties),
       pipeline_type_(type),
-      physical_device_properties_(properties),
       shader_stage_info_(shader_stage_info),
       fence_timeout_ms_(fence_timeout_ms) {}
 
@@ -77,11 +73,10 @@ ComputePipeline* Pipeline::AsCompute() {
   return static_cast<ComputePipeline*>(this);
 }
 
-Result Pipeline::Initialize(CommandPool* pool, VkQueue queue) {
-  push_constant_ = MakeUnique<PushConstant>(
-      device_, physical_device_properties_.limits.maxPushConstantsSize);
+Result Pipeline::Initialize(CommandPool* pool) {
+  push_constant_ = MakeUnique<PushConstant>(device_);
 
-  command_ = MakeUnique<CommandBuffer>(device_, pool, queue);
+  command_ = MakeUnique<CommandBuffer>(device_, pool);
   return command_->Initialize();
 }
 
@@ -319,7 +314,7 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
 
     for (auto& info : descriptor_set_info_) {
       for (auto& desc : info.buffer_descriptors) {
-        Result r = desc->CreateResourceIfNeeded(memory_properties_);
+        Result r = desc->CreateResourceIfNeeded();
         if (!r.IsSuccess())
           return r;
       }

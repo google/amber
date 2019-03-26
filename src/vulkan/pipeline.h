@@ -69,13 +69,11 @@ class Pipeline {
   Pipeline(
       PipelineType type,
       Device* device,
-      const VkPhysicalDeviceProperties& properties,
-      const VkPhysicalDeviceMemoryProperties& memory_properties,
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
 
   // Initialize the pipeline.
-  Result Initialize(CommandPool* pool, VkQueue queue);
+  Result Initialize(CommandPool* pool);
 
   void UpdateDescriptorSetsIfNeeded();
 
@@ -96,7 +94,6 @@ class Pipeline {
   Result CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout);
 
   Device* device_ = nullptr;
-  VkPhysicalDeviceMemoryProperties memory_properties_;
   std::unique_ptr<CommandBuffer> command_;
 
  private:
@@ -118,7 +115,6 @@ class Pipeline {
   Result CreateDescriptorSets();
 
   PipelineType pipeline_type_;
-  VkPhysicalDeviceProperties physical_device_properties_;
   std::vector<DescriptorSetInfo> descriptor_set_info_;
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
 

@@ -28,13 +28,11 @@ class ComputePipeline : public Pipeline {
  public:
   ComputePipeline(
       Device* device,
-      const VkPhysicalDeviceProperties& properties,
-      const VkPhysicalDeviceMemoryProperties& memory_properties,
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
   ~ComputePipeline() override;
 
-  Result Initialize(CommandPool* pool, VkQueue queue);
+  Result Initialize(CommandPool* pool);
 
   Result Compute(uint32_t x, uint32_t y, uint32_t z);
 

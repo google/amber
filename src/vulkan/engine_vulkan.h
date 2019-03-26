@@ -75,7 +75,6 @@ class EngineVulkan : public Engine {
                                          VkFormat format);
   bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
                                uint32_t descriptor_set);
-  bool VerifyFormatAvailable(const Format& format, BufferType type);
 
   Result SetShader(amber::Pipeline* pipeline,
                    ShaderType type,

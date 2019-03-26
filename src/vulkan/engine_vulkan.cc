@@ -127,18 +127,12 @@ Result EngineVulkan::Initialize(
 
   if (!pool_) {
     pool_ = MakeUnique<CommandPool>(device_.get());
-    r = pool_->Initialize(device_->GetQueueFamilyIndex());
+    r = pool_->Initialize();
     if (!r.IsSuccess())
       return r;
   }
 
   return {};
-}
-
-bool EngineVulkan::VerifyFormatAvailable(const Format& format,
-                                         BufferType type) {
-  return IsFormatSupportedByPhysicalDevice(type, device_->GetVkPhysicalDevice(),
-                                           ToVkFormat(format.GetFormatType()));
 }
 
 Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
@@ -155,15 +149,18 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   for (const auto& colour_info : pipeline->GetColorAttachments()) {
     auto& fmt = colour_info.buffer->AsFormatBuffer()->GetFormat();
-    if (!VerifyFormatAvailable(fmt, colour_info.buffer->GetBufferType()))
+    if (!device_->IsFormatSupportedByPhysicalDevice(
+            fmt, colour_info.buffer->GetBufferType())) {
       return Result("Vulkan color attachment format is not supported");
+    }
   }
 
   FormatType depth_buffer_format = FormatType::kUnknown;
   if (pipeline->GetDepthBuffer().buffer) {
     const auto& depth_info = pipeline->GetDepthBuffer();
     auto& depth_fmt = depth_info.buffer->AsFormatBuffer()->GetFormat();
-    if (!VerifyFormatAvailable(depth_fmt, depth_info.buffer->GetBufferType()))
+    if (!device_->IsFormatSupportedByPhysicalDevice(
+            depth_fmt, depth_info.buffer->GetBufferType()))
       return Result("Vulkan depth attachment format is not supported");
 
     depth_buffer_format = depth_fmt.GetFormatType();
@@ -178,23 +175,19 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   std::unique_ptr<Pipeline> vk_pipeline;
   if (pipeline->GetType() == PipelineType::kCompute) {
     vk_pipeline = MakeUnique<ComputePipeline>(
-        device_.get(), device_->GetVkPhysicalDeviceProperties(),
-        device_->GetVkPhysicalMemoryProperties(), engine_data.fence_timeout_ms,
-        stage_create_info);
-    r = vk_pipeline->AsCompute()->Initialize(pool_.get(),
-                                             device_->GetVkQueue());
+        device_.get(), engine_data.fence_timeout_ms, stage_create_info);
+    r = vk_pipeline->AsCompute()->Initialize(pool_.get());
     if (!r.IsSuccess())
       return r;
   } else {
     vk_pipeline = MakeUnique<GraphicsPipeline>(
-        device_.get(), device_->GetVkPhysicalDeviceProperties(),
-        device_->GetVkPhysicalMemoryProperties(),
-        pipeline->GetColorAttachments(), ToVkFormat(depth_buffer_format),
-        engine_data.fence_timeout_ms, stage_create_info);
+        device_.get(), pipeline->GetColorAttachments(),
+        ToVkFormat(depth_buffer_format), engine_data.fence_timeout_ms,
+        stage_create_info);
 
-    r = vk_pipeline->AsGraphics()->Initialize(
-        pipeline->GetFramebufferWidth(), pipeline->GetFramebufferHeight(),
-        pool_.get(), device_->GetVkQueue());
+    r = vk_pipeline->AsGraphics()->Initialize(pipeline->GetFramebufferWidth(),
+                                              pipeline->GetFramebufferHeight(),
+                                              pool_.get());
     if (!r.IsSuccess())
       return r;
   }
@@ -205,7 +198,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     auto& fmt = vtex_info.buffer->IsFormatBuffer()
                     ? vtex_info.buffer->AsFormatBuffer()->GetFormat()
                     : Format();
-    if (!VerifyFormatAvailable(fmt, vtex_info.buffer->GetBufferType()))
+    if (!device_->IsFormatSupportedByPhysicalDevice(
+            fmt, vtex_info.buffer->GetBufferType()))
       return Result("Vulkan vertex buffer format is not supported");
 
     if (!info.vertex_buffer)
@@ -421,57 +415,12 @@ Result EngineVulkan::DoBuffer(const BufferCommand* cmd) {
   if (cmd->IsPushConstant())
     return info.vk_pipeline->AddPushConstant(cmd);
 
-  if (!IsDescriptorSetInBounds(device_->GetVkPhysicalDevice(),
-                               cmd->GetDescriptorSet())) {
+  if (!device_->IsDescriptorSetInBounds(cmd->GetDescriptorSet())) {
     return Result(
         "Vulkan::DoBuffer exceed maxBoundDescriptorSets limit of physical "
         "device");
   }
   return info.vk_pipeline->AddDescriptor(cmd);
-}
-
-bool EngineVulkan::IsFormatSupportedByPhysicalDevice(
-    BufferType type,
-    VkPhysicalDevice physical_device,
-    VkFormat format) {
-  VkFormatProperties properties = VkFormatProperties();
-  device_->GetPtrs()->vkGetPhysicalDeviceFormatProperties(physical_device,
-                                                          format, &properties);
-
-  VkFormatFeatureFlagBits flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
-  bool is_buffer_type_image = false;
-  switch (type) {
-    case BufferType::kColor:
-      flag = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
-      is_buffer_type_image = true;
-      break;
-    case BufferType::kDepth:
-      flag = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
-      is_buffer_type_image = true;
-      break;
-    case BufferType::kSampled:
-      flag = VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
-      is_buffer_type_image = true;
-      break;
-    case BufferType::kVertex:
-      flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
-      is_buffer_type_image = false;
-      break;
-    default:
-      return false;
-  }
-
-  return ((is_buffer_type_image ? properties.optimalTilingFeatures
-                                : properties.bufferFeatures) &
-          flag) == flag;
-}
-
-bool EngineVulkan::IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
-                                           uint32_t descriptor_set) {
-  VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties();
-  device_->GetPtrs()->vkGetPhysicalDeviceProperties(physical_device,
-                                                    &properties);
-  return properties.limits.maxBoundDescriptorSets > descriptor_set;
 }
 
 }  // namespace vulkan

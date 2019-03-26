@@ -29,11 +29,11 @@ CommandPool::~CommandPool() {
                                            nullptr);
 }
 
-Result CommandPool::Initialize(uint32_t queue_family_index) {
+Result CommandPool::Initialize() {
   VkCommandPoolCreateInfo pool_info = VkCommandPoolCreateInfo();
   pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  pool_info.queueFamilyIndex = queue_family_index;
+  pool_info.queueFamilyIndex = device_->GetQueueFamilyIndex();
 
   if (device_->GetPtrs()->vkCreateCommandPool(
           device_->GetVkDevice(), &pool_info, nullptr, &pool_) != VK_SUCCESS) {

@@ -50,9 +50,8 @@ TransferImage::TransferImage(Device* device,
                              VkImageAspectFlags aspect,
                              uint32_t x,
                              uint32_t y,
-                             uint32_t z,
-                             const VkPhysicalDeviceMemoryProperties& properties)
-    : Resource(device, x * y * z * VkFormatToByteSize(format), properties),
+                             uint32_t z)
+    : Resource(device, x * y * z * VkFormatToByteSize(format)),
       image_info_(kDefaultImageInfo),
       aspect_(aspect) {
   image_info_.format = format;

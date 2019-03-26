@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "src/make_unique.h"
+#include "src/vulkan/format_data.h"
 
 namespace amber {
 namespace vulkan {
@@ -458,6 +459,67 @@ Result Device::Initialize(
                                             &physical_memory_properties_);
 
   return {};
+}
+
+bool Device::IsFormatSupportedByPhysicalDevice(const Format& format,
+                                               BufferType type) {
+  VkFormat vk_format = ToVkFormat(format.GetFormatType());
+  VkFormatProperties properties = VkFormatProperties();
+  GetPtrs()->vkGetPhysicalDeviceFormatProperties(physical_device_, vk_format,
+                                                 &properties);
+
+  VkFormatFeatureFlagBits flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
+  bool is_buffer_type_image = false;
+  switch (type) {
+    case BufferType::kColor:
+      flag = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
+      is_buffer_type_image = true;
+      break;
+    case BufferType::kDepth:
+      flag = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+      is_buffer_type_image = true;
+      break;
+    case BufferType::kSampled:
+      flag = VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
+      is_buffer_type_image = true;
+      break;
+    case BufferType::kVertex:
+      flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
+      is_buffer_type_image = false;
+      break;
+    default:
+      return false;
+  }
+
+  return ((is_buffer_type_image ? properties.optimalTilingFeatures
+                                : properties.bufferFeatures) &
+          flag) == flag;
+}
+
+bool Device::HasMemoryFlags(uint32_t memory_type_index,
+                            const VkMemoryPropertyFlags flags) const {
+  return (physical_memory_properties_.memoryTypes[memory_type_index]
+              .propertyFlags &
+          flags) == flags;
+}
+
+bool Device::IsMemoryHostAccessible(uint32_t memory_type_index) const {
+  return HasMemoryFlags(memory_type_index, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+}
+
+bool Device::IsMemoryHostCoherent(uint32_t memory_type_index) const {
+  return HasMemoryFlags(memory_type_index,
+                        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+}
+
+uint32_t Device::GetMaxPushConstants() const {
+  return physical_device_properties_.limits.maxPushConstantsSize;
+}
+
+bool Device::IsDescriptorSetInBounds(uint32_t descriptor_set) const {
+  VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties();
+  GetPtrs()->vkGetPhysicalDeviceProperties(physical_device_, &properties);
+  return properties.limits.maxBoundDescriptorSets > descriptor_set;
 }
 
 }  // namespace vulkan

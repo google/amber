@@ -26,15 +26,10 @@ namespace amber {
 namespace vulkan {
 namespace {
 
-const VkPhysicalDeviceMemoryProperties kMemoryProperties =
-    VkPhysicalDeviceMemoryProperties();
-
 class BufferForTest : public TransferBuffer {
  public:
-  BufferForTest(Device* device,
-                uint32_t size_in_bytes,
-                const VkPhysicalDeviceMemoryProperties& properties)
-      : TransferBuffer(device, size_in_bytes, properties) {
+  BufferForTest(Device* device, uint32_t size_in_bytes)
+      : TransferBuffer(device, size_in_bytes) {
     memory_.resize(4096);
     SetMemoryPtr(memory_.data());
   }
@@ -52,7 +47,7 @@ class VertexBufferTest : public testing::Test {
     vertex_buffer_ = MakeUnique<VertexBuffer>(nullptr);
 
     std::unique_ptr<TransferBuffer> buffer =
-        MakeUnique<BufferForTest>(nullptr, 0U, kMemoryProperties);
+        MakeUnique<BufferForTest>(nullptr, 0U);
     buffer_memory_ = buffer->HostAccessibleMemoryPtr();
     vertex_buffer_->SetBufferForTest(std::move(buffer));
   }
@@ -67,7 +62,7 @@ class VertexBufferTest : public testing::Test {
     buffer->SetData(std::move(values));
 
     vertex_buffer_->SetData(location, buffer.get());
-    return vertex_buffer_->SendVertexData(nullptr, kMemoryProperties);
+    return vertex_buffer_->SendVertexData(nullptr);
   }
 
   Result SetDoubleData(uint8_t location,
@@ -78,7 +73,7 @@ class VertexBufferTest : public testing::Test {
     buffer->SetData(std::move(values));
 
     vertex_buffer_->SetData(location, buffer.get());
-    return vertex_buffer_->SendVertexData(nullptr, kMemoryProperties);
+    return vertex_buffer_->SendVertexData(nullptr);
   }
 
   const void* GetVkBufferPtr() const { return buffer_memory_; }

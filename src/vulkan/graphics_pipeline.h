@@ -41,18 +41,13 @@ class GraphicsPipeline : public Pipeline {
  public:
   GraphicsPipeline(
       Device* device,
-      const VkPhysicalDeviceProperties& properties,
-      const VkPhysicalDeviceMemoryProperties& memory_properties,
       const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
       VkFormat depth_stencil_format,
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>&);
   ~GraphicsPipeline() override;
 
-  Result Initialize(uint32_t width,
-                    uint32_t height,
-                    CommandPool* pool,
-                    VkQueue queue);
+  Result Initialize(uint32_t width, uint32_t height, CommandPool* pool);
 
   Result SetIndexBuffer(Buffer* buffer);
 

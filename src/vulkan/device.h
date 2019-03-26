@@ -23,6 +23,8 @@
 #include "amber/amber.h"
 #include "amber/result.h"
 #include "amber/vulkan_header.h"
+#include "src/buffer_data.h"
+#include "src/format.h"
 
 namespace amber {
 namespace vulkan {
@@ -48,19 +50,20 @@ class Device {
                     const VkPhysicalDeviceFeatures2KHR& available_features2,
                     const std::vector<std::string>& available_extensions);
 
-  VkInstance GetVkInstance() const { return instance_; }
-  VkPhysicalDevice GetVkPhysicalDevice() { return physical_device_; }
+  bool IsFormatSupportedByPhysicalDevice(const Format& format, BufferType type);
+
   VkDevice GetVkDevice() const { return device_; }
-  VkPhysicalDevice GetVkPhysicalDevice() const { return physical_device_; }
-  uint32_t GetQueueFamilyIndex() const { return queue_family_index_; }
   VkQueue GetVkQueue() const { return queue_; }
-  const VkPhysicalDeviceProperties& GetVkPhysicalDeviceProperties() const {
-    return physical_device_properties_;
-  }
-  const VkPhysicalDeviceMemoryProperties& GetVkPhysicalMemoryProperties()
-      const {
-    return physical_memory_properties_;
-  }
+
+  uint32_t GetQueueFamilyIndex() const { return queue_family_index_; }
+  uint32_t GetMaxPushConstants() const;
+
+  bool IsDescriptorSetInBounds(uint32_t descriptor_set) const;
+
+  bool HasMemoryFlags(uint32_t memory_type_index,
+                      const VkMemoryPropertyFlags flags) const;
+  bool IsMemoryHostAccessible(uint32_t memory_type_index) const;
+  bool IsMemoryHostCoherent(uint32_t memory_type_index) const;
 
   const VulkanPtrs* GetPtrs() const { return &ptrs_; }
 
