@@ -21,6 +21,15 @@
 #include "src/make_unique.h"
 
 namespace amber {
+namespace {
+
+const char* kDefaultColorBufferFormat = "B8G8R8A8_UNORM";
+const char* kDefaultDepthBufferFormat = "D32_SFLOAT_S8_UINT";
+
+}  // namespace
+
+const char* Pipeline::kGeneratedColorBuffer = "framebuffer";
+const char* Pipeline::kGeneratedDepthBuffer = "depth_buffer";
 
 Pipeline::ShaderInfo::ShaderInfo(const Shader* shader, ShaderType type)
     : shader_(shader), shader_type_(type), entry_point_("main") {}
@@ -28,11 +37,6 @@ Pipeline::ShaderInfo::ShaderInfo(const Shader* shader, ShaderType type)
 Pipeline::ShaderInfo::ShaderInfo(const ShaderInfo&) = default;
 
 Pipeline::ShaderInfo::~ShaderInfo() = default;
-
-const char* Pipeline::kDefaultColorBufferFormat = "B8G8R8A8_UNORM";
-const char* Pipeline::kDefaultDepthBufferFormat = "D32_SFLOAT_S8_UINT";
-const char* Pipeline::kGeneratedColorBuffer = "framebuffer";
-const char* Pipeline::kGeneratedDepthBuffer = "depth_buffer";
 
 Pipeline::Pipeline(PipelineType type) : pipeline_type_(type) {}
 
