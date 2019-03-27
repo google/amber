@@ -17,6 +17,7 @@
 
 #include "amber/result.h"
 #include "amber/vulkan_header.h"
+#include "src/format.h"
 #include "src/vulkan/resource.h"
 
 namespace amber {
@@ -28,7 +29,7 @@ class Device;
 class TransferImage : public Resource {
  public:
   TransferImage(Device* device,
-                VkFormat format,
+                const Format& format,
                 VkImageAspectFlags aspect,
                 uint32_t x,
                 uint32_t y,

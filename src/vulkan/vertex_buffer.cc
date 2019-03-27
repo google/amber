@@ -20,7 +20,6 @@
 #include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
-#include "src/vulkan/format_data.h"
 
 namespace amber {
 namespace vulkan {
@@ -35,8 +34,7 @@ void VertexBuffer::SetData(uint8_t location, FormatBuffer* buffer) {
   vertex_attr_desc_.back().binding = 0;
   vertex_attr_desc_.back().location = location;
   vertex_attr_desc_.back().offset = stride_in_bytes_;
-  vertex_attr_desc_.back().format =
-      ToVkFormat(buffer->GetFormat().GetFormatType());
+  vertex_attr_desc_.back().format = device_->GetVkFormat(buffer->GetFormat());
 
   stride_in_bytes_ += buffer->GetFormat().GetByteSize();
   data_.push_back(buffer);

@@ -22,7 +22,6 @@
 #include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
-#include "src/vulkan/format_data.h"
 
 namespace amber {
 namespace vulkan {
@@ -45,7 +44,7 @@ FrameBuffer::~FrameBuffer() {
 }
 
 Result FrameBuffer::Initialize(VkRenderPass render_pass,
-                               VkFormat depth_format) {
+                               const Format& depth_format) {
   std::vector<VkImageView> attachments;
 
   if (!color_attachments_.empty()) {
@@ -63,9 +62,7 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass,
     attachments.resize(color_attachments_.size());
     for (auto* info : color_attachments_) {
       color_images_.push_back(MakeUnique<TransferImage>(
-          device_,
-          ToVkFormat(
-              info->buffer->AsFormatBuffer()->GetFormat().GetFormatType()),
+          device_, info->buffer->AsFormatBuffer()->GetFormat(),
           VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_));
 
       Result r =
@@ -78,13 +75,13 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass,
     }
   }
 
-  if (depth_format != VK_FORMAT_UNDEFINED) {
+  if (depth_format.IsFormatKnown()) {
     depth_image_ = MakeUnique<TransferImage>(
         device_, depth_format,
-        static_cast<VkImageAspectFlags>(
-            VkFormatHasStencilComponent(depth_format)
-                ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-                : VK_IMAGE_ASPECT_DEPTH_BIT),
+        static_cast<VkImageAspectFlags>(depth_format.HasStencilComponent()
+                                            ? VK_IMAGE_ASPECT_DEPTH_BIT |
+                                                  VK_IMAGE_ASPECT_STENCIL_BIT
+                                            : VK_IMAGE_ASPECT_DEPTH_BIT),
         width_, height_, depth_);
 
     Result r =
