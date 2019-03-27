@@ -22,7 +22,7 @@ DatumType::~DatumType() = default;
 
 DatumType& DatumType::operator=(const DatumType&) = default;
 
-uint32_t DatumType::SizeInBytes() const {
+uint32_t DatumType::ElementSizeInBytes() const {
   uint32_t s;
   if (type_ == DataType::kInt8 || type_ == DataType::kUint8)
     s = 1;
@@ -37,7 +37,19 @@ uint32_t DatumType::SizeInBytes() const {
   else
     s = sizeof(double);
 
-  return s * column_count_ * row_count_;
+  return s;
+}
+
+uint32_t DatumType::SizeInBytes() const {
+  uint32_t s = ElementSizeInBytes();
+  uint32_t bytes = s * column_count_ * row_count_;
+
+  // For a vector of size 3 in std140 we need to have alignment of 4N. For a
+  // matrix, we update each row to 4N.
+  if (is_std140_ && row_count_ == 3)
+    bytes += (s * column_count_);
+
+  return bytes;
 }
 
 }  // namespace amber

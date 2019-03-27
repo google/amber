@@ -60,12 +60,14 @@ class DatumType {
   void SetRowCount(uint32_t count) { row_count_ = count; }
   uint32_t RowCount() const { return row_count_; }
 
+  uint32_t ElementSizeInBytes() const;
   uint32_t SizeInBytes() const;
 
  private:
   DataType type_ = DataType::kUint8;
   uint32_t column_count_ = 1;
   uint32_t row_count_ = 1;
+  bool is_std140_ = true;
 };
 
 }  // namespace amber

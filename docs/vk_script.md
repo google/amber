@@ -233,7 +233,7 @@ Sets the size of the SSBO at `binding` to `size`.
 
 Sets the value of the buffer at `binding` and `offset`. The `type` is from the
 *Data Types* section below. The `values` must be a non-zero multiple of the
-requested `type`.
+requested `type`. The offset must be a multiple of the _type_ size in bytes.
 
 
 ### Patch Parameters

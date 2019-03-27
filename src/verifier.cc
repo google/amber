@@ -650,8 +650,7 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
   }
 
   const auto& datum_type = command->GetDatumType();
-  size_t bytes_per_elem = datum_type.SizeInBytes() / datum_type.RowCount() /
-                          datum_type.ColumnCount();
+  size_t bytes_per_elem = datum_type.ElementSizeInBytes();
   size_t offset = static_cast<size_t>(command->GetOffset());
   if (values.size() * bytes_per_elem + offset > size_in_bytes) {
     return Result(

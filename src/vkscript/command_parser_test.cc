@@ -3073,7 +3073,7 @@ TEST_F(CommandParserTest, SSBOMissingBinding) {
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithFloat) {
-  std::string data = "ssbo 6 subdata vec3 2 2.3 4.2 1.2";
+  std::string data = "ssbo 6 subdata vec3 16 2.3 4.2 1.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3089,8 +3089,8 @@ TEST_F(CommandParserTest, SSBOSubdataWithFloat) {
   EXPECT_TRUE(cmd->IsSSBO());
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
-  EXPECT_EQ(2U, cmd->GetOffset());
-  EXPECT_EQ(12U, cmd->GetSize());
+  EXPECT_EQ(16U, cmd->GetOffset());
+  EXPECT_EQ(16U, cmd->GetSize());
   ASSERT_TRUE(cmd->IsSubdata());
 
   const auto& type = cmd->GetDatumType();
@@ -3118,7 +3118,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithNegativeOffset) {
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithDescriptorSet) {
-  std::string data = "ssbo 5:6 subdata vec3 2 2.3 4.2 1.2";
+  std::string data = "ssbo 5:6 subdata vec3 16 2.3 4.2 1.2";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3132,11 +3132,11 @@ TEST_F(CommandParserTest, SSBOSubdataWithDescriptorSet) {
 
   auto* cmd = cmds[0]->AsBuffer();
   EXPECT_TRUE(cmd->IsSSBO());
+  ASSERT_TRUE(cmd->IsSubdata());
   EXPECT_EQ(5U, cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
-  EXPECT_EQ(2U, cmd->GetOffset());
-  ASSERT_TRUE(cmd->IsSubdata());
-  EXPECT_EQ(12U, cmd->GetSize());
+  EXPECT_EQ(16U, cmd->GetOffset());
+  EXPECT_EQ(16U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsFloat());
@@ -3152,7 +3152,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithDescriptorSet) {
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithInts) {
-  std::string data = "ssbo 6 subdata i16vec3 2 2 4 1";
+  std::string data = "ssbo 6 subdata i16vec3 8 2 4 1";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3166,11 +3166,11 @@ TEST_F(CommandParserTest, SSBOSubdataWithInts) {
 
   auto* cmd = cmds[0]->AsBuffer();
   EXPECT_TRUE(cmd->IsSSBO());
+  ASSERT_TRUE(cmd->IsSubdata());
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
-  EXPECT_EQ(2U, cmd->GetOffset());
-  ASSERT_TRUE(cmd->IsSubdata());
-  EXPECT_EQ(6U, cmd->GetSize());
+  EXPECT_EQ(8U, cmd->GetOffset());
+  EXPECT_EQ(8U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsInt16());
@@ -3186,7 +3186,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithInts) {
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithMultipleVectors) {
-  std::string data = "ssbo 6 subdata i16vec3 2 2 4 1 3 6 8";
+  std::string data = "ssbo 6 subdata i16vec3 8 2 4 1 3 6 8";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3200,11 +3200,11 @@ TEST_F(CommandParserTest, SSBOSubdataWithMultipleVectors) {
 
   auto* cmd = cmds[0]->AsBuffer();
   EXPECT_TRUE(cmd->IsSSBO());
+  ASSERT_TRUE(cmd->IsSubdata());
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
-  EXPECT_EQ(2U, cmd->GetOffset());
-  ASSERT_TRUE(cmd->IsSubdata());
-  EXPECT_EQ(12U, cmd->GetSize());
+  EXPECT_EQ(8U, cmd->GetOffset());
+  EXPECT_EQ(16U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsInt16());
@@ -3220,7 +3220,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithMultipleVectors) {
 }
 
 TEST_F(CommandParserTest, SSBOSubdataMissingBinding) {
-  std::string data = "ssbo subdata i16vec3 2 2 3 2";
+  std::string data = "ssbo subdata i16vec3 0 2 3 2";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3286,7 +3286,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithInvalidStringOffset) {
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithMissingData) {
-  std::string data = "ssbo 6 subdata i16vec3 2 2";
+  std::string data = "ssbo 6 subdata i16vec3 0 2";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3298,7 +3298,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithMissingData) {
 }
 
 TEST_F(CommandParserTest, SSBOSubdataWithMissingAllData) {
-  std::string data = "ssbo 6 subdata i16vec3 2";
+  std::string data = "ssbo 6 subdata i16vec3 8";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3309,8 +3309,20 @@ TEST_F(CommandParserTest, SSBOSubdataWithMissingAllData) {
             r.Error());
 }
 
+TEST_F(CommandParserTest, SSBOSubdataWithNonDataTypeSizedOffset) {
+  std::string data = "ssbo 6 subdata i16vec3 2";
+
+  Pipeline pipeline(PipelineType::kGraphics);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
+  Result r = cp.Parse();
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("1: offset for SSBO must be a multiple of the data size expected 8",
+            r.Error());
+}
+
 TEST_F(CommandParserTest, Uniform) {
-  std::string data = "uniform vec3 2 2.1 3.2 4.3";
+  std::string data = "uniform vec3 32 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3324,8 +3336,8 @@ TEST_F(CommandParserTest, Uniform) {
 
   auto* cmd = cmds[0]->AsBuffer();
   EXPECT_TRUE(cmd->IsPushConstant());
-  EXPECT_EQ(2U, cmd->GetOffset());
-  EXPECT_EQ(12U, cmd->GetSize());
+  EXPECT_EQ(32U, cmd->GetOffset());
+  EXPECT_EQ(16U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsFloat());
@@ -3352,7 +3364,7 @@ TEST_F(CommandParserTest, UniformOffsetMustBePositive) {
 }
 
 TEST_F(CommandParserTest, UniformWithContinuation) {
-  std::string data = "uniform vec3 2 2.1 3.2 4.3 \\\n5.4 6.7 8.9";
+  std::string data = "uniform vec3 16 2.1 3.2 4.3 \\\n5.4 6.7 8.9";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3366,8 +3378,8 @@ TEST_F(CommandParserTest, UniformWithContinuation) {
 
   auto* cmd = cmds[0]->AsBuffer();
   EXPECT_TRUE(cmd->IsPushConstant());
-  EXPECT_EQ(2U, cmd->GetOffset());
-  EXPECT_EQ(24U, cmd->GetSize());
+  EXPECT_EQ(16U, cmd->GetOffset());
+  EXPECT_EQ(32U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsFloat());
@@ -3428,7 +3440,7 @@ TEST_F(CommandParserTest, UniformMissingValues) {
 }
 
 TEST_F(CommandParserTest, UniformUBO) {
-  std::string data = "uniform ubo 2 vec3 1 2.1 3.2 4.3";
+  std::string data = "uniform ubo 2 vec3 0 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3444,8 +3456,8 @@ TEST_F(CommandParserTest, UniformUBO) {
   EXPECT_TRUE(cmd->IsUniform());
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(2U, cmd->GetBinding());
-  EXPECT_EQ(1U, cmd->GetOffset());
-  EXPECT_EQ(12U, cmd->GetSize());
+  EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetOffset());
+  EXPECT_EQ(16U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsFloat());
@@ -3472,7 +3484,7 @@ TEST_F(CommandParserTest, UniformUBOOffsetMustBePositive) {
 }
 
 TEST_F(CommandParserTest, UniformUBOWithDescriptorSet) {
-  std::string data = "uniform ubo 3:2 vec3 1 2.1 3.2 4.3";
+  std::string data = "uniform ubo 3:2 vec3 16 2.1 3.2 4.3";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3488,8 +3500,8 @@ TEST_F(CommandParserTest, UniformUBOWithDescriptorSet) {
   EXPECT_TRUE(cmd->IsUniform());
   EXPECT_EQ(3U, cmd->GetDescriptorSet());
   EXPECT_EQ(2U, cmd->GetBinding());
-  EXPECT_EQ(1U, cmd->GetOffset());
-  EXPECT_EQ(12U, cmd->GetSize());
+  EXPECT_EQ(16U, cmd->GetOffset());
+  EXPECT_EQ(16U, cmd->GetSize());
 
   const auto& type = cmd->GetDatumType();
   EXPECT_TRUE(type.IsFloat());

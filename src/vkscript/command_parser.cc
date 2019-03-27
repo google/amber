@@ -624,6 +624,11 @@ Result CommandParser::ProcessSSBO() {
       return Result("offset for SSBO must be positive, got: " +
                     std::to_string(token->AsInt32()));
     }
+    if ((token->AsUint32() % cmd->GetDatumType().SizeInBytes()) != 0) {
+      return Result(
+          "offset for SSBO must be a multiple of the data size expected " +
+          std::to_string(cmd->GetDatumType().SizeInBytes()));
+    }
 
     cmd->SetOffset(token->AsUint32());
 
