@@ -23,7 +23,7 @@
 #include "amber/amber.h"
 #include "amber/result.h"
 #include "amber/vulkan_header.h"
-#include "src/buffer_data.h"
+#include "src/buffer.h"
 #include "src/format.h"
 
 namespace amber {
@@ -50,7 +50,7 @@ class Device {
                     const VkPhysicalDeviceFeatures2KHR& available_features2,
                     const std::vector<std::string>& available_extensions);
 
-  bool IsFormatSupportedByPhysicalDevice(const Format& format, BufferType type);
+  bool IsFormatSupportedByPhysicalDevice(const Format& format, Buffer* buffer);
 
   VkDevice GetVkDevice() const { return device_; }
   VkQueue GetVkQueue() const { return queue_; }

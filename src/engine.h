@@ -21,7 +21,7 @@
 
 #include "amber/amber.h"
 #include "amber/result.h"
-#include "src/buffer_data.h"
+#include "src/buffer.h"
 #include "src/command.h"
 #include "src/format.h"
 #include "src/pipeline.h"

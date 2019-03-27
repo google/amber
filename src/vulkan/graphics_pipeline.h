@@ -21,7 +21,6 @@
 #include "amber/result.h"
 #include "amber/value.h"
 #include "amber/vulkan_header.h"
-#include "src/buffer_data.h"
 #include "src/format.h"
 #include "src/pipeline.h"
 #include "src/vulkan/frame_buffer.h"
