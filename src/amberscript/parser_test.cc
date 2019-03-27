@@ -4305,7 +4305,8 @@ CLEAR_COLOR my_pipeline 255 128 64 32)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("10: CLEAR_COLOR command requires graphics pipeline, got compute", r.Error());
+  EXPECT_EQ("10: CLEAR_COLOR command requires graphics pipeline, got compute",
+            r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ClearColorMissingPipeline) {
@@ -4324,7 +4325,8 @@ TEST_F(AmberScriptParserTest, ClearColorInvalidPipeline) {
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
 
-  EXPECT_EQ("1: unknown pipeline for CLEAR_COLOR command: unknown_pipeline", r.Error());
+  EXPECT_EQ("1: unknown pipeline for CLEAR_COLOR command: unknown_pipeline",
+            r.Error());
 }
 
 struct ClearColorTestData {
@@ -4367,18 +4369,14 @@ INSTANTIATE_TEST_CASE_P(
                            "missing B value for CLEAR_COLOR command"},
         ClearColorTestData{"255 255 255",
                            "missing A value for CLEAR_COLOR command"},
-        ClearColorTestData{
-            "INVALID 255 255 255",
-            "invalid R value for CLEAR_COLOR command: INVALID"},
-        ClearColorTestData{
-            "255 INVALID 255 255",
-            "invalid G value for CLEAR_COLOR command: INVALID"},
-        ClearColorTestData{
-            "255 255 INVALID 255",
-            "invalid B value for CLEAR_COLOR command: INVALID"},
-        ClearColorTestData{
-            "255 255 255 INVALID",
-            "invalid A value for CLEAR_COLOR command: INVALID"},
+        ClearColorTestData{"INVALID 255 255 255",
+                           "invalid R value for CLEAR_COLOR command: INVALID"},
+        ClearColorTestData{"255 INVALID 255 255",
+                           "invalid G value for CLEAR_COLOR command: INVALID"},
+        ClearColorTestData{"255 255 INVALID 255",
+                           "invalid B value for CLEAR_COLOR command: INVALID"},
+        ClearColorTestData{"255 255 255 INVALID",
+                           "invalid A value for CLEAR_COLOR command: INVALID"},
         ClearColorTestData{"255 255 255 255 EXTRA",
                            "extra parameters after CLEAR_COLOR command"},
         ClearColorTestData{"-1 255 255 255",
