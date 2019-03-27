@@ -39,7 +39,9 @@ enum EngineType {
 };
 
 /// Override point of engines to add their own configuration.
-struct EngineConfig {};
+struct EngineConfig {
+  virtual ~EngineConfig();
+};
 
 struct BufferInfo {
   BufferInfo();

@@ -63,7 +63,8 @@ LOCAL_SRC_FILES:= \
     src/vulkan/resource.cc \
     src/vulkan/transfer_buffer.cc \
     src/vulkan/transfer_image.cc \
-    src/vulkan/vertex_buffer.cc
+    src/vulkan/vertex_buffer.cc \
+    src/vulkan_engine_config.cc
 LOCAL_STATIC_LIBRARIES:=glslang SPIRV-Tools shaderc
 LOCAL_C_INCLUDES:=$(LOCAL_PATH)/include
 LOCAL_EXPORT_C_INCLUDES:=$(LOCAL_PATH)/include
