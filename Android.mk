@@ -54,7 +54,6 @@ LOCAL_SRC_FILES:= \
     src/vulkan/compute_pipeline.cc \
     src/vulkan/device.cc \
     src/vulkan/engine_vulkan.cc \
-    src/vulkan/format_data.cc \
     src/vulkan/frame_buffer.cc \
     src/vulkan/graphics_pipeline.cc \
     src/vulkan/index_buffer.cc \

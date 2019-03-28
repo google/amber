@@ -43,8 +43,6 @@ class TransferBuffer : public Resource {
   Result Initialize(const VkBufferUsageFlags usage);
 
   VkBuffer GetVkBuffer() const { return buffer_; }
-  Result CreateVkBufferView(VkFormat format);
-  VkBufferView GetVkBufferView() const { return view_; }
 
   // Since |buffer_| is mapped to host accessible and host coherent
   // memory |memory_|, this method only conducts memory barrier to
@@ -61,7 +59,6 @@ class TransferBuffer : public Resource {
 
  private:
   VkBuffer buffer_ = VK_NULL_HANDLE;
-  VkBufferView view_ = VK_NULL_HANDLE;
   VkDeviceMemory memory_ = VK_NULL_HANDLE;
 };
 

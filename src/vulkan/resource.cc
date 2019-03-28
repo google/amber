@@ -19,7 +19,6 @@
 #include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
-#include "src/vulkan/format_data.h"
 
 namespace amber {
 namespace vulkan {
@@ -147,14 +146,6 @@ uint32_t Resource::ChooseMemory(uint32_t memory_type_bits,
   return first_non_zero;
 }
 
-const VkMemoryRequirements Resource::GetVkBufferMemoryRequirements(
-    VkBuffer buffer) const {
-  VkMemoryRequirements requirement;
-  device_->GetPtrs()->vkGetBufferMemoryRequirements(device_->GetVkDevice(),
-                                                    buffer, &requirement);
-  return requirement;
-}
-
 Result Resource::AllocateAndBindMemoryToVkBuffer(VkBuffer buffer,
                                                  VkDeviceMemory* memory,
                                                  VkMemoryPropertyFlags flags,
@@ -173,7 +164,9 @@ Result Resource::AllocateAndBindMemoryToVkBuffer(VkBuffer buffer,
   if (memory == nullptr)
     return Result("Vulkan::Given VkDeviceMemory pointer is nullptr");
 
-  auto requirement = GetVkBufferMemoryRequirements(buffer);
+  VkMemoryRequirements requirement;
+  device_->GetPtrs()->vkGetBufferMemoryRequirements(device_->GetVkDevice(),
+                                                    buffer, &requirement);
 
   *memory_type_index =
       ChooseMemory(requirement.memoryTypeBits, flags, force_flags);
