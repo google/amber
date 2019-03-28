@@ -21,7 +21,6 @@
 #include "src/make_unique.h"
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
-#include "src/vulkan/format_data.h"
 
 namespace amber {
 namespace vulkan {
@@ -349,7 +348,7 @@ VkBlendOp ToVkBlendOp(BlendOp op) {
 class RenderPassGuard {
  public:
   explicit RenderPassGuard(GraphicsPipeline* pipeline) : pipeline_(pipeline) {
-    auto* frame = pipeline->GetFrame();
+    auto* frame = pipeline->GetFrameBuffer();
     auto* cmd = pipeline->GetCommandBuffer();
     result_ = frame->ChangeFrameImageLayout(cmd, FrameImageState::kClearOrDraw);
     if (!result_.IsSuccess())
@@ -386,7 +385,7 @@ class RenderPassGuard {
 GraphicsPipeline::GraphicsPipeline(
     Device* device,
     const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
-    VkFormat depth_stencil_format,
+    const Format& depth_stencil_format,
     uint32_t fence_timeout_ms,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : Pipeline(PipelineType::kGraphics,
@@ -417,7 +416,7 @@ Result GraphicsPipeline::CreateRenderPass() {
   for (const auto* info : color_buffers_) {
     attachment_desc.push_back(kDefaultAttachmentDesc);
     attachment_desc.back().format =
-        ToVkFormat(info->buffer->AsFormatBuffer()->GetFormat().GetFormatType());
+        device_->GetVkFormat(info->buffer->AsFormatBuffer()->GetFormat());
     attachment_desc.back().initialLayout =
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     attachment_desc.back().finalLayout =
@@ -433,9 +432,9 @@ Result GraphicsPipeline::CreateRenderPass() {
     subpass_desc.pColorAttachments = color_refer.data();
   }
 
-  if (depth_stencil_format_ != VK_FORMAT_UNDEFINED) {
+  if (depth_stencil_format_.IsFormatKnown()) {
     attachment_desc.push_back(kDefaultAttachmentDesc);
-    attachment_desc.back().format = depth_stencil_format_;
+    attachment_desc.back().format = device_->GetVkFormat(depth_stencil_format_);
     attachment_desc.back().initialLayout =
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     attachment_desc.back().finalLayout =
@@ -651,7 +650,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   }
 
   VkPipelineDepthStencilStateCreateInfo depthstencil_info;
-  if (depth_stencil_format_ != VK_FORMAT_UNDEFINED) {
+  if (depth_stencil_format_.IsFormatKnown()) {
     depthstencil_info = GetVkPipelineDepthStencilInfo(pipeline_data);
     pipeline_info.pDepthStencilState = &depthstencil_info;
   }
@@ -741,7 +740,7 @@ Result GraphicsPipeline::SetClearColor(float r, float g, float b, float a) {
 }
 
 Result GraphicsPipeline::SetClearStencil(uint32_t stencil) {
-  if (depth_stencil_format_ == VK_FORMAT_UNDEFINED) {
+  if (!depth_stencil_format_.IsFormatKnown()) {
     return Result(
         "Vulkan::ClearStencilCommand No DepthStencil Buffer for FrameBuffer "
         "Exists");
@@ -752,7 +751,7 @@ Result GraphicsPipeline::SetClearStencil(uint32_t stencil) {
 }
 
 Result GraphicsPipeline::SetClearDepth(float depth) {
-  if (depth_stencil_format_ == VK_FORMAT_UNDEFINED) {
+  if (!depth_stencil_format_.IsFormatKnown()) {
     return Result(
         "Vulkan::ClearStencilCommand No DepthStencil Buffer for FrameBuffer "
         "Exists");
@@ -771,14 +770,14 @@ Result GraphicsPipeline::Clear() {
   if (!r.IsSuccess())
     return r;
 
-  if (depth_stencil_format_ == VK_FORMAT_UNDEFINED)
+  if (!depth_stencil_format_.IsFormatKnown())
     return {};
 
   VkClearValue depth_clear;
   depth_clear.depthStencil = {clear_depth_, clear_stencil_};
 
   return ClearBuffer(
-      depth_clear, VkFormatHasStencilComponent(depth_stencil_format_)
+      depth_clear, depth_stencil_format_.HasStencilComponent()
                        ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
                        : VK_IMAGE_ASPECT_DEPTH_BIT);
 }

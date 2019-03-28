@@ -85,11 +85,7 @@ class Resource {
   Device* device_ = nullptr;
 
  private:
-  const VkMemoryRequirements GetVkBufferMemoryRequirements(
-      VkBuffer buffer) const;
-
   uint32_t size_in_bytes_ = 0;
-
   void* memory_ptr_ = nullptr;
 };
 

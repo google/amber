@@ -19,7 +19,6 @@ set(VULKAN_ENGINE_SOURCES
     compute_pipeline.cc
     device.cc
     engine_vulkan.cc
-    format_data.cc
     frame_buffer.cc
     graphics_pipeline.cc
     index_buffer.cc
