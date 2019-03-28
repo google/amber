@@ -32,6 +32,8 @@
 
 namespace {
 
+const char* kGeneratedColorBuffer = "framebuffer";
+
 struct Options {
   std::vector<std::string> input_filenames;
 
@@ -376,7 +378,7 @@ int main(int argc, const char** argv) {
 
   if (!options.image_filename.empty()) {
     amber::BufferInfo buffer_info;
-    buffer_info.buffer_name = "framebuffer";
+    buffer_info.buffer_name = kGeneratedColorBuffer;
     amber_options.extractions.push_back(buffer_info);
   }
 
@@ -400,7 +402,7 @@ int main(int argc, const char** argv) {
       bool usePNG = pos != std::string::npos &&
                     options.image_filename.substr(pos + 1) == "png";
       for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
-        if (buffer_info.buffer_name == "framebuffer") {
+        if (buffer_info.buffer_name == kGeneratedColorBuffer) {
           if (usePNG) {
             result = png::ConvertToPNG(buffer_info.width, buffer_info.height,
                                        buffer_info.values, &out_buf);
@@ -436,7 +438,7 @@ int main(int argc, const char** argv) {
         std::cerr << options.buffer_filename << std::endl;
       } else {
         for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
-          if (buffer_info.buffer_name == "framebuffer")
+          if (buffer_info.buffer_name == kGeneratedColorBuffer)
             continue;
 
           buffer_file << buffer_info.buffer_name << std::endl;
