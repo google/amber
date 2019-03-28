@@ -80,6 +80,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParseClearColor();
     } else if (tok == "COPY") {
       r = ParseCopy();
+    } else if (tok == "DEVICE_FEATURE") {
+      r = ParseDeviceFeature();
     } else if (tok == "EXPECT") {
       r = ParseExpect();
     } else if (tok == "PIPELINE") {
@@ -1295,6 +1297,20 @@ Result Parser::ParseClearColor() {
 
   script_->AddCommand(std::move(cmd));
   return ValidateEndOfStatement("CLEAR_COLOR command");
+}
+
+Result Parser::ParseDeviceFeature() {
+  auto token = tokenizer_->NextToken();
+  if (token->IsEOS() || token->IsEOL())
+    return Result("missing feature name for DEVICE_FEATURE command");
+  if (!token->IsString())
+    return Result("invalid feature name for DEVICE_FEATURE command");
+  if (!script_->IsKnownFeature(token->AsString()))
+    return Result("unknown feature name for DEVICE_FEATURE command");
+
+  script_->AddRequiredFeature(token->AsString());
+
+  return ValidateEndOfStatement("DEVICE_FEATURE command");
 }
 
 }  // namespace amberscript

@@ -66,6 +66,7 @@ class Parser : public amber::Parser {
   Result ParseClearColor();
   Result ParseExpect();
   Result ParseCopy();
+  Result ParseDeviceFeature();
 
   // Parses a set of values out of the token stream. |name| is the name of the
   // current command we're parsing for error purposes. The |type| is the type

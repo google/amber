@@ -27,7 +27,7 @@ contexts:
       scope: keyword.control.amber
     - match: '\b(FORMAT|FRAMEBUFFER_SIZE|BIND|SAMPLER|VERTEX_DATA|INDEX_DATA|INDEXED)\b'
       scope: keyword.control.amber
-    - match : '\b(IMAGE_ATTACHMENT|DEPTH_STENCIL_ATTACHMENT|LOCATION)\b'
+    - match : '\b(IMAGE_ATTACHMENT|DEPTH_STENCIL_ATTACHMENT|LOCATION|DEVICE_FEATURE)\b'
       scope: keyword.control.amber
 
     - match: '\b(vertex|fragment|compute|geometry|tessellation_evaluation|tessellation_control)\b'
