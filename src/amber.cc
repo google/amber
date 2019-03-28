@@ -64,6 +64,8 @@ Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) {
 
 }  // namespace
 
+EngineConfig::~EngineConfig() = default;
+
 Options::Options()
     : engine(amber::EngineType::kEngineTypeVulkan),
       config(nullptr),
