@@ -67,6 +67,9 @@ class Parser : public amber::Parser {
   Result ParseExpect();
   Result ParseCopy();
   Result ParseDeviceFeature();
+  Result ParseRepeat();
+  bool isRepeatable(const std::string& name) const;
+  Result ParseRepeatableCommand(const std::string& name);
 
   // Parses a set of values out of the token stream. |name| is the name of the
   // current command we're parsing for error purposes. The |type| is the type
@@ -77,6 +80,7 @@ class Parser : public amber::Parser {
                      std::vector<Value>* values);
 
   std::unique_ptr<Tokenizer> tokenizer_;
+  std::vector<std::unique_ptr<Command>> command_list_;
 };
 
 }  // namespace amberscript

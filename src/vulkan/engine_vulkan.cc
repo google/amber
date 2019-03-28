@@ -211,6 +211,29 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     info.vk_pipeline->AsGraphics()->SetIndexBuffer(buf);
   }
 
+  for (const auto& buf_info : pipeline->GetBuffers()) {
+    BufferCommand::BufferType type = BufferCommand::BufferType::kSSBO;
+    if (buf_info.buffer->GetBufferType() == BufferType::kUniform) {
+      type = BufferCommand::BufferType::kUniform;
+    } else if (buf_info.buffer->GetBufferType() == BufferType::kPushConstant) {
+      type = BufferCommand::BufferType::kPushConstant;
+    } else if (buf_info.buffer->GetBufferType() != BufferType::kStorage) {
+      return Result("Vulkan: CreatePipeline - unknown buffer type: " +
+                    std::to_string(static_cast<uint32_t>(
+                        buf_info.buffer->GetBufferType())));
+    }
+
+    auto cmd = MakeUnique<BufferCommand>(type, pipeline);
+    cmd->SetDescriptorSet(buf_info.descriptor_set);
+    cmd->SetBinding(buf_info.binding);
+    cmd->SetBuffer(buf_info.buffer);
+    cmd->SetDatumType(buf_info.buffer->AsDataBuffer()->GetDatumType());
+
+    r = info.vk_pipeline->AddDescriptor(cmd.get());
+    if (!r.IsSuccess())
+      return r;
+  }
+
   return {};
 }
 
@@ -406,15 +429,12 @@ Result EngineVulkan::DoPatchParameterVertices(
 }
 
 Result EngineVulkan::DoBuffer(const BufferCommand* cmd) {
-  auto& info = pipeline_map_[cmd->GetPipeline()];
-  if (cmd->IsPushConstant())
-    return info.vk_pipeline->AddPushConstant(cmd);
-
   if (!device_->IsDescriptorSetInBounds(cmd->GetDescriptorSet())) {
     return Result(
         "Vulkan::DoBuffer exceed maxBoundDescriptorSets limit of physical "
         "device");
   }
+  auto& info = pipeline_map_[cmd->GetPipeline()];
   return info.vk_pipeline->AddDescriptor(cmd);
 }
 

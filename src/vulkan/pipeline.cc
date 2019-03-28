@@ -244,6 +244,8 @@ Result Pipeline::AddPushConstant(const BufferCommand* command) {
 Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
   if (cmd == nullptr)
     return Result("Pipeline::AddDescriptor BufferCommand is nullptr");
+  if (cmd->IsPushConstant())
+    return AddPushConstant(cmd);
   if (!cmd->IsSSBO() && !cmd->IsUniform())
     return Result("Pipeline::AddDescriptor not supported buffer type");
 
@@ -296,12 +298,14 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
         "and binding");
   }
 
-  auto* buf_desc = static_cast<BufferDescriptor*>(desc);
-  Result r =
-      buf_desc->AddToBuffer(cmd->GetDatumType().GetType(), cmd->GetOffset(),
-                            cmd->GetSize(), cmd->GetValues());
-  if (!r.IsSuccess())
-    return r;
+  if (!cmd->GetValues().empty()) {
+    auto* buf_desc = static_cast<BufferDescriptor*>(desc);
+    Result r =
+        buf_desc->AddToBuffer(cmd->GetDatumType().GetType(), cmd->GetOffset(),
+                              cmd->GetSize(), cmd->GetValues());
+    if (!r.IsSuccess())
+      return r;
+  }
 
   return {};
 }
