@@ -280,7 +280,9 @@ Result TransferImage::AllocateAndBindMemoryToVkImage(
   if (memory == nullptr)
     return Result("Vulkan::Given VkDeviceMemory pointer is nullptr");
 
-  auto requirement = GetVkImageMemoryRequirements(image);
+  VkMemoryRequirements requirement;
+  device_->GetPtrs()->vkGetImageMemoryRequirements(device_->GetVkDevice(),
+                                                   image, &requirement);
 
   *memory_type_index =
       ChooseMemory(requirement.memoryTypeBits, flags, force_flags);
@@ -297,14 +299,6 @@ Result TransferImage::AllocateAndBindMemoryToVkImage(
   }
 
   return {};
-}
-
-const VkMemoryRequirements TransferImage::GetVkImageMemoryRequirements(
-    VkImage image) const {
-  VkMemoryRequirements requirement;
-  device_->GetPtrs()->vkGetImageMemoryRequirements(device_->GetVkDevice(),
-                                                   image, &requirement);
-  return requirement;
 }
 
 }  // namespace vulkan
