@@ -23,7 +23,6 @@
 
 #include "amber/result.h"
 #include "amber/value.h"
-#include "src/buffer_data.h"
 #include "src/datum_type.h"
 #include "src/format.h"
 
@@ -31,6 +30,28 @@ namespace amber {
 
 class DataBuffer;
 class FormatBuffer;
+
+/// Types of buffers which can be created.
+enum class BufferType : int8_t {
+  /// Unknown buffer type
+  kUnknown = -1,
+  /// A color buffer.
+  kColor = 0,
+  /// A depth/stencil buffer.
+  kDepth,
+  /// An index buffer.
+  kIndex,
+  /// A sampled buffer.
+  kSampled,
+  /// A storage buffer.
+  kStorage,
+  /// A uniform buffer.
+  kUniform,
+  /// A push constant buffer.
+  kPushConstant,
+  /// A vertex buffer.
+  kVertex
+};
 
 /// A buffer stores data. The buffer maybe provided from the input script, or
 /// maybe created as needed. A buffer must have a unique name.
