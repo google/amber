@@ -72,8 +72,6 @@ class Pipeline {
     uint32_t location = 0;
   };
 
-  static const char* kDefaultColorBufferFormat;
-  static const char* kDefaultDepthBufferFormat;
   static const char* kGeneratedColorBuffer;
   static const char* kGeneratedDepthBuffer;
 
