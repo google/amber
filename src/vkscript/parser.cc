@@ -201,7 +201,7 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
     std::string str = token->AsString();
     if (IsKnownFeature(str)) {
       script_->AddRequiredFeature(str);
-    } else if (str == "framebuffer") {
+    } else if (str == Pipeline::kGeneratedColorBuffer) {
       token = tokenizer.NextToken();
       if (!token->IsString())
         return Result(make_error(tokenizer, "Missing framebuffer format"));
