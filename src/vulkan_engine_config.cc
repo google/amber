@@ -1,4 +1,4 @@
-// Copyright 2018 The Amber Authors.
+// Copyright 2019 The Amber Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AMBER_AMBER_DAWN_H_
-#define AMBER_AMBER_DAWN_H_
-
-#include "amber/amber.h"
-#include "dawn/dawncpp.h"
+#include "amber/amber_vulkan.h"
 
 namespace amber {
 
-/// Configuration for the Dawn engine.
-struct DawnEngineConfig : public EngineConfig {
-  ~DawnEngineConfig() override;
-
-  /// The Dawn Device to use for running tests.
-  ::dawn::Device* device;
-};
+VulkanEngineConfig::~VulkanEngineConfig() = default;
 
 }  // namespace amber
-
-#endif  // AMBER_AMBER_DAWN_H_

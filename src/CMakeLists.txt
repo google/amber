@@ -44,9 +44,11 @@ set(AMBER_SOURCES
 
 if (${Vulkan_FOUND})
   add_subdirectory(vulkan)
+  list(APPEND AMBER_SOURCES vulkan_engine_config.cc)
 endif()
 if (${Dawn_FOUND})
   add_subdirectory(dawn)
+  list(APPEND AMBER_SOURCES dawn_engine_config.cc)
 endif()
 
 add_library(libamber ${AMBER_SOURCES})
