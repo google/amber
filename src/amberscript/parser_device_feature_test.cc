@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/amberscript/parser.h"
 #include "gtest/gtest.h"
+#include "src/amberscript/parser.h"
 
 namespace amber {
 namespace amberscript {
@@ -33,7 +33,8 @@ DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer)";
   const auto& features = script->GetRequiredFeatures();
   ASSERT_EQ(2U, features.size());
   EXPECT_EQ("vertexPipelineStoresAndAtomics", features[0]);
-  EXPECT_EQ("VariablePointerFeatures.variablePointersStorageBuffer", features[1]);
+  EXPECT_EQ("VariablePointerFeatures.variablePointersStorageBuffer",
+            features[1]);
 }
 
 TEST_F(AmberScriptParserTest, DeviceFeatureMissingFeature) {
