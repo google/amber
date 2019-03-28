@@ -461,7 +461,7 @@ Result Device::Initialize(
 }
 
 bool Device::IsFormatSupportedByPhysicalDevice(const Format& format,
-                                               BufferType type) {
+                                               Buffer* buffer) {
   VkFormat vk_format = GetVkFormat(format);
   VkFormatProperties properties = VkFormatProperties();
   GetPtrs()->vkGetPhysicalDeviceFormatProperties(physical_device_, vk_format,
@@ -469,7 +469,7 @@ bool Device::IsFormatSupportedByPhysicalDevice(const Format& format,
 
   VkFormatFeatureFlagBits flag = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
   bool is_buffer_type_image = false;
-  switch (type) {
+  switch (buffer->GetBufferType()) {
     case BufferType::kColor:
       flag = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
       is_buffer_type_image = true;
