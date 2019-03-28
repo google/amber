@@ -19,7 +19,6 @@
 #include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
-#include "src/vulkan/format_data.h"
 
 namespace amber {
 namespace vulkan {

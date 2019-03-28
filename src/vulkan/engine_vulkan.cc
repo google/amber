@@ -21,7 +21,6 @@
 #include "amber/amber_vulkan.h"
 #include "src/make_unique.h"
 #include "src/vulkan/compute_pipeline.h"
-#include "src/vulkan/format_data.h"
 #include "src/vulkan/graphics_pipeline.h"
 
 namespace amber {
@@ -153,16 +152,15 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       return Result("Vulkan color attachment format is not supported");
   }
 
-  FormatType depth_buffer_format = FormatType::kUnknown;
+  Format depth_fmt;
   if (pipeline->GetDepthBuffer().buffer) {
     const auto& depth_info = pipeline->GetDepthBuffer();
-    auto& depth_fmt = depth_info.buffer->AsFormatBuffer()->GetFormat();
-    if (!device_->IsFormatSupportedByPhysicalDevice(depth_fmt,
-                                                    depth_info.buffer)) {
+
+    depth_fmt = depth_info.buffer->AsFormatBuffer()->GetFormat();
+    if (!device_->IsFormatSupportedByPhysicalDevice(
+            depth_fmt, depth_info.buffer)) {
       return Result("Vulkan depth attachment format is not supported");
     }
-
-    depth_buffer_format = depth_fmt.GetFormatType();
   }
 
   std::vector<VkPipelineShaderStageCreateInfo> stage_create_info;
@@ -180,9 +178,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       return r;
   } else {
     vk_pipeline = MakeUnique<GraphicsPipeline>(
-        device_.get(), pipeline->GetColorAttachments(),
-        ToVkFormat(depth_buffer_format), engine_data.fence_timeout_ms,
-        stage_create_info);
+        device_.get(), pipeline->GetColorAttachments(), depth_fmt,
+        engine_data.fence_timeout_ms, stage_create_info);
 
     r = vk_pipeline->AsGraphics()->Initialize(pipeline->GetFramebufferWidth(),
                                               pipeline->GetFramebufferHeight(),

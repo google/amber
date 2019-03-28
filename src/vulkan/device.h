@@ -54,6 +54,7 @@ class Device {
 
   VkDevice GetVkDevice() const { return device_; }
   VkQueue GetVkQueue() const { return queue_; }
+  VkFormat GetVkFormat(const Format& format) const;
 
   uint32_t GetQueueFamilyIndex() const { return queue_family_index_; }
   uint32_t GetMaxPushConstants() const;
