@@ -2988,8 +2988,7 @@ RUN my_pipeline 2 4 5)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  ASSERT_EQ("12: RUN command requires compute pipeline, got graphics",
-            r.Error());
+  ASSERT_EQ("12: RUN command requires compute pipeline", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, RunComputeMissingParams) {
@@ -3141,8 +3140,7 @@ RUN my_pipeline DRAW_RECT POS 2 4 SIZE 10 20)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  ASSERT_EQ("12: RUN command requires graphics pipeline, got compute",
-            r.Error());
+  ASSERT_EQ("12: RUN command requires graphics pipeline", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawRectWithMissingPipeline) {
@@ -3466,8 +3464,7 @@ CLEAR my_pipeline)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  ASSERT_EQ("12: CLEAR command requires graphics pipeline, got compute",
-            r.Error());
+  ASSERT_EQ("12: CLEAR command requires graphics pipeline", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ClearExtraParams) {
@@ -4305,8 +4302,7 @@ CLEAR_COLOR my_pipeline 255 128 64 32)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("10: CLEAR_COLOR command requires graphics pipeline, got compute",
-            r.Error());
+  EXPECT_EQ("10: CLEAR_COLOR command requires graphics pipeline", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ClearColorMissingPipeline) {

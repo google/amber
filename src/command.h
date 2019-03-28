@@ -419,7 +419,7 @@ class ClearColorCommand : public PipelineCommand {
   explicit ClearColorCommand(Pipeline* pipeline);
   ~ClearColorCommand() override;
 
-  // Colours are stored in the range 0.0-1.0
+  // Colours are stored in the range 0.0 - 1.0
   void SetR(float r) { r_ = r; }
   float GetR() const { return r_; }
 

@@ -905,7 +905,7 @@ Result Parser::ParseRun() {
 
   if (token->IsInteger()) {
     if (!pipeline->IsCompute())
-      return Result("RUN command requires compute pipeline, got graphics");
+      return Result("RUN command requires compute pipeline");
 
     auto cmd = MakeUnique<ComputeCommand>(pipeline);
     cmd->SetX(token->AsUint32());
@@ -932,7 +932,7 @@ Result Parser::ParseRun() {
 
   if (token->AsString() == "DRAW_RECT") {
     if (!pipeline->IsGraphics())
-      return Result("RUN command requires graphics pipeline, got compute");
+      return Result("RUN command requires graphics pipeline");
 
     token = tokenizer_->NextToken();
     if (token->IsEOS() || token->IsEOL())
@@ -994,7 +994,7 @@ Result Parser::ParseRun() {
 
   if (token->AsString() == "DRAW_ARRAY") {
     if (!pipeline->IsGraphics())
-      return Result("RUN command requires graphics pipeline, got compute");
+      return Result("RUN command requires graphics pipeline");
 
     auto cmd = MakeUnique<DrawArraysCommand>(pipeline, PipelineData{});
 
@@ -1015,7 +1015,7 @@ Result Parser::ParseClear() {
   if (!pipeline)
     return Result("unknown pipeline for CLEAR command: " + token->AsString());
   if (!pipeline->IsGraphics())
-    return Result("CLEAR command requires graphics pipeline, got compute");
+    return Result("CLEAR command requires graphics pipeline");
 
   auto cmd = MakeUnique<ClearCommand>(pipeline);
   script_->AddCommand(std::move(cmd));
@@ -1248,8 +1248,7 @@ Result Parser::ParseClearColor() {
                   token->AsString());
   }
   if (!pipeline->IsGraphics()) {
-    return Result(
-        "CLEAR_COLOR command requires graphics pipeline, got compute");
+    return Result("CLEAR_COLOR command requires graphics pipeline");
   }
 
   auto cmd = MakeUnique<ClearColorCommand>(pipeline);
