@@ -303,8 +303,6 @@ RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology> \
 ```
 # Sets the clear color to use for |pipeline| which must be a `graphics`
 # pipeline. The colors are integers from 0 - 255.
-# TODO(dsinclair): Do we need to allow different types here to handle different
-#                  buffer formats?
 CLEAR_COLOR <pipeline> <r (0 - 255)> <g (0 - 255)> <b (0 - 255)> <a (0 - 255)>
 
 # Instructs the |pipeline| which must be a `graphics` pipeline to execute the
