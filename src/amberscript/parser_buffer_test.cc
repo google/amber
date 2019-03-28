@@ -478,7 +478,6 @@ INSTANTIATE_TEST_CASE_P(
                     BufferData{"mat4x2<uint16>", DataType::kUint16, 4,
                                2}), );  // NOLINT(whitespace/parens)
 
-
 struct NameData {
   const char* name;
 };
