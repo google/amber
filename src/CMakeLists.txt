@@ -75,6 +75,18 @@ endif()
 
 if (${AMBER_ENABLE_TESTS})
   set(TEST_SRCS
+    amberscript/parser_attach_test.cc
+    amberscript/parser_bind_test.cc
+    amberscript/parser_buffer_test.cc
+    amberscript/parser_clear_color_test.cc
+    amberscript/parser_clear_test.cc
+    amberscript/parser_copy_test.cc
+    amberscript/parser_expect_test.cc
+    amberscript/parser_framebuffer_test.cc
+    amberscript/parser_pipeline_test.cc
+    amberscript/parser_run_test.cc
+    amberscript/parser_shader_opt_test.cc
+    amberscript/parser_shader_test.cc
     amberscript/parser_test.cc
     buffer_test.cc
     command_data_test.cc
