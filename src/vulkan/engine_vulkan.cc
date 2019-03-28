@@ -157,8 +157,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     const auto& depth_info = pipeline->GetDepthBuffer();
 
     depth_fmt = depth_info.buffer->AsFormatBuffer()->GetFormat();
-    if (!device_->IsFormatSupportedByPhysicalDevice(
-            depth_fmt, depth_info.buffer)) {
+    if (!device_->IsFormatSupportedByPhysicalDevice(depth_fmt,
+                                                    depth_info.buffer)) {
       return Result("Vulkan depth attachment format is not supported");
     }
   }
