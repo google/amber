@@ -23,6 +23,20 @@ user-specified (such as for buffer data).
 Hex values: Whenever an integer is expected, you may use a hexadecimal number,
 which is the characters `0x` followed by hexadecimal digits.
 
+### Requesting features
+
+If specific device featuers are required you can use the DEVICE_FEATURE command
+to enable them.
+
+```
+DEVICE_FEATURE vertexPipelineStoresAndAtomics
+DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer
+```
+
+Currently each of the items in `VkPhysicalDeviceFeatures` are recognized along
+with `VariablePointerFeatures.variablePointers` and
+`VariablePointerFeatures.variablePointersStorageBuffer`.
+
 ### Shaders
 
 #### Shader Type
