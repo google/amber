@@ -38,6 +38,8 @@ class Script : public RecipeImpl {
   Script();
   ~Script() override;
 
+  bool IsKnownFeature(const std::string& name) const;
+
   /// Retrieves information on the shaders in the given script.
   std::vector<ShaderInfo> GetShaderInfo() const override;
 

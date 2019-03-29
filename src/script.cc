@@ -46,4 +46,47 @@ void Script::AddRequiredExtension(const std::string& ext) {
     engine_info_.required_device_extensions.push_back(ext);
 }
 
+bool Script::IsKnownFeature(const std::string& name) const {
+  return name == "robustBufferAccess" || name == "fullDrawIndexUint32" ||
+         name == "imageCubeArray" || name == "independentBlend" ||
+         name == "geometryShader" || name == "tessellationShader" ||
+         name == "sampleRateShading" || name == "dualSrcBlend" ||
+         name == "logicOp" || name == "multiDrawIndirect" ||
+         name == "drawIndirectFirstInstance" || name == "depthClamp" ||
+         name == "depthBiasClamp" || name == "fillModeNonSolid" ||
+         name == "depthBounds" || name == "wideLines" ||
+         name == "largePoints" || name == "alphaToOne" ||
+         name == "multiViewport" || name == "samplerAnisotropy" ||
+         name == "textureCompressionETC2" ||
+         name == "textureCompressionASTC_LDR" ||
+         name == "textureCompressionBC" || name == "occlusionQueryPrecise" ||
+         name == "pipelineStatisticsQuery" ||
+         name == "vertexPipelineStoresAndAtomics" ||
+         name == "fragmentStoresAndAtomics" ||
+         name == "shaderTessellationAndGeometryPointSize" ||
+         name == "shaderImageGatherExtended" ||
+         name == "shaderStorageImageExtendedFormats" ||
+         name == "shaderStorageImageMultisample" ||
+         name == "shaderStorageImageReadWithoutFormat" ||
+         name == "shaderStorageImageWriteWithoutFormat" ||
+         name == "shaderUniformBufferArrayDynamicIndexing" ||
+         name == "shaderSampledImageArrayDynamicIndexing" ||
+         name == "shaderStorageBufferArrayDynamicIndexing" ||
+         name == "shaderStorageImageArrayDynamicIndexing" ||
+         name == "shaderClipDistance" || name == "shaderCullDistance" ||
+         name == "shaderFloat64" || name == "shaderInt64" ||
+         name == "shaderInt16" || name == "shaderResourceResidency" ||
+         name == "shaderResourceMinLod" || name == "sparseBinding" ||
+         name == "sparseResidencyBuffer" || name == "sparseResidencyImage2D" ||
+         name == "sparseResidencyImage3D" ||
+         name == "sparseResidency2Samples" ||
+         name == "sparseResidency4Samples" ||
+         name == "sparseResidency8Samples" ||
+         name == "sparseResidency16Samples" ||
+         name == "sparseResidencyAliased" ||
+         name == "variableMultisampleRate" || name == "inheritedQueries" ||
+         name == "VariablePointerFeatures.variablePointers" ||
+         name == "VariablePointerFeatures.variablePointersStorageBuffer";
+}
+
 }  // namespace amber
