@@ -43,12 +43,19 @@ amber::Result ConfigHelperDawn::CreateConfig(
   auto r = dawn::CreateMetalDevice(&dawn_instance_, &dawn_device_);
   if (!r.IsSuccess())
     return r;
-#else
-  return amber::Result("Can't make Dawn engine config");
+#else  // assuming VULKAN
+  dawn_instance_.DiscoverDefaultAdapters();
+  for (dawn_native::Adapter& adapter : dawn_instance_.GetAdapters()) {
+    if (adapter.GetBackendType() == ::dawn_native::BackendType::Vulkan) {
+      dawn_device_ = ::dawn::Device::Acquire(adapter.CreateDevice());
+    }
+  }
+  if (!dawn_device_)
+    return amber::Result("could not find Vulkan backend for Dawn");
 #endif
 
   // Set procedure table and error callback.
-  dawnProcTable backendProcs = dawn_native::GetProcs();
+  DawnProcTable backendProcs = dawn_native::GetProcs();
   dawnSetProcs(&backendProcs);
   backendProcs.deviceSetErrorCallback(dawn_device_.Get(), PrintDeviceError, 0);
 
