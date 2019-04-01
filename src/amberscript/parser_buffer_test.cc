@@ -80,6 +80,34 @@ TEST_F(AmberScriptParserTest, BufferDataOneLine) {
   }
 }
 
+TEST_F(AmberScriptParserTest, BufferDataFloat) {
+  std::string in = "BUFFER my_buffer DATA_TYPE float DATA 1 2 3 4 END";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  ASSERT_TRUE(buffers[0]->IsDataBuffer());
+  auto* buffer = buffers[0]->AsDataBuffer();
+  EXPECT_TRUE(buffer->GetDatumType().IsFloat());
+  EXPECT_EQ(4U, buffer->GetSize());
+  EXPECT_EQ(4U * sizeof(float), buffer->GetSizeInBytes());
+
+  std::vector<float> results = {1, 2, 3, 4};
+  const auto* data = buffer->GetValues<float>();
+  ASSERT_EQ(results.size(), buffer->GetSize());
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_FLOAT_EQ(results[i], data[i]);
+  }
+}
+
 TEST_F(AmberScriptParserTest, BufferFill) {
   std::string in = "BUFFER my_buffer DATA_TYPE uint8 SIZE 5 FILL 5";
 

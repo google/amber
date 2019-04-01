@@ -15,6 +15,7 @@
 #include "src/pipeline.h"
 
 #include "gtest/gtest.h"
+#include "src/make_unique.h"
 
 namespace amber {
 namespace {
@@ -25,7 +26,7 @@ struct ShaderTypeData {
 
 }  // namespace
 
-class AmberScriptPipelineTest : public testing::Test {
+class PipelineTest : public testing::Test {
  public:
   void TearDown() override {
     color_buffer_ = nullptr;
@@ -51,7 +52,7 @@ class AmberScriptPipelineTest : public testing::Test {
   std::unique_ptr<Buffer> depth_buffer_;
 };
 
-TEST_F(AmberScriptPipelineTest, AddShader) {
+TEST_F(PipelineTest, AddShader) {
   Shader v(kShaderTypeVertex);
   Shader f(kShaderTypeFragment);
 
@@ -69,14 +70,14 @@ TEST_F(AmberScriptPipelineTest, AddShader) {
   EXPECT_EQ(&f, shaders[1].GetShader());
 }
 
-TEST_F(AmberScriptPipelineTest, MissingShader) {
+TEST_F(PipelineTest, MissingShader) {
   Pipeline p(PipelineType::kGraphics);
   Result r = p.AddShader(nullptr, kShaderTypeVertex);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("shader can not be null when attached to pipeline", r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, DuplicateShaders) {
+TEST_F(PipelineTest, DuplicateShaders) {
   Shader v(kShaderTypeVertex);
   Shader f(kShaderTypeFragment);
 
@@ -90,19 +91,6 @@ TEST_F(AmberScriptPipelineTest, DuplicateShaders) {
   r = p.AddShader(&v, kShaderTypeVertex);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("can not add duplicate shader to pipeline", r.Error());
-}
-
-TEST_F(AmberScriptPipelineTest, DuplicateShaderType) {
-  Shader v(kShaderTypeVertex);
-  Shader f(kShaderTypeVertex);
-
-  Pipeline p(PipelineType::kGraphics);
-  Result r = p.AddShader(&v, kShaderTypeVertex);
-  ASSERT_TRUE(r.IsSuccess()) << r.Error();
-
-  r = p.AddShader(&f, kShaderTypeVertex);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("can not add duplicate shader type to pipeline", r.Error());
 }
 
 using AmberScriptPipelineComputePipelineTest =
@@ -129,7 +117,7 @@ INSTANTIATE_TEST_CASE_P(
         ShaderTypeData{
             kShaderTypeTessellationControl}), );  // NOLINT(whitespace/parens)
 
-TEST_F(AmberScriptPipelineTest, SettingComputeShaderToGraphicsPipeline) {
+TEST_F(PipelineTest, SettingComputeShaderToGraphicsPipeline) {
   Shader c(kShaderTypeCompute);
 
   Pipeline p(PipelineType::kGraphics);
@@ -138,7 +126,7 @@ TEST_F(AmberScriptPipelineTest, SettingComputeShaderToGraphicsPipeline) {
   EXPECT_EQ("can not add a compute shader to a graphics pipeline", r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, SetShaderOptimizations) {
+TEST_F(PipelineTest, SetShaderOptimizations) {
   Shader v(kShaderTypeVertex);
   Shader f(kShaderTypeFragment);
 
@@ -164,7 +152,7 @@ TEST_F(AmberScriptPipelineTest, SetShaderOptimizations) {
   EXPECT_EQ(first, shaders[1].GetShaderOptimizations());
 }
 
-TEST_F(AmberScriptPipelineTest, DuplicateShaderOptimizations) {
+TEST_F(PipelineTest, DuplicateShaderOptimizations) {
   Shader v(kShaderTypeVertex);
 
   Pipeline p(PipelineType::kGraphics);
@@ -177,14 +165,14 @@ TEST_F(AmberScriptPipelineTest, DuplicateShaderOptimizations) {
   EXPECT_EQ("duplicate optimization flag (One) set on shader", r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, SetOptimizationForMissingShader) {
+TEST_F(PipelineTest, SetOptimizationForMissingShader) {
   Pipeline p(PipelineType::kGraphics);
   Result r = p.SetShaderOptimizations(nullptr, {"One", "Two"});
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("invalid shader specified for optimizations", r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, SetOptimizationForInvalidShader) {
+TEST_F(PipelineTest, SetOptimizationForInvalidShader) {
   Shader v(kShaderTypeVertex);
   v.SetName("my_shader");
 
@@ -194,7 +182,7 @@ TEST_F(AmberScriptPipelineTest, SetOptimizationForInvalidShader) {
   EXPECT_EQ("unknown shader specified for optimizations: my_shader", r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, GraphicsPipelineRequiresColorAttachment) {
+TEST_F(PipelineTest, GraphicsPipelineRequiresColorAttachment) {
   Pipeline p(PipelineType::kGraphics);
   SetupDepthAttachment(&p);
 
@@ -203,16 +191,7 @@ TEST_F(AmberScriptPipelineTest, GraphicsPipelineRequiresColorAttachment) {
   EXPECT_EQ("PIPELINE missing color attachment", r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, GraphicsPipelineRequiresDepthAttachment) {
-  Pipeline p(PipelineType::kGraphics);
-  SetupColorAttachment(&p, 0);
-
-  Result r = p.Validate();
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("PIPELINE missing depth buffer", r.Error());
-}
-
-TEST_F(AmberScriptPipelineTest,
+TEST_F(PipelineTest,
        GraphicsPipelineRequiresVertexAndFragmentShader) {
   Shader v(kShaderTypeVertex);
   Shader f(kShaderTypeFragment);
@@ -235,7 +214,7 @@ TEST_F(AmberScriptPipelineTest,
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
-TEST_F(AmberScriptPipelineTest, GraphicsPipelineMissingFragmentShader) {
+TEST_F(PipelineTest, GraphicsPipelineMissingFragmentShader) {
   Shader v(kShaderTypeVertex);
   Shader g(kShaderTypeGeometry);
 
@@ -254,7 +233,7 @@ TEST_F(AmberScriptPipelineTest, GraphicsPipelineMissingFragmentShader) {
   EXPECT_EQ("graphics pipeline requires a fragment shader", r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, GraphicsPipelineMissingVertexShader) {
+TEST_F(PipelineTest, GraphicsPipelineMissingVertexShader) {
   Shader f(kShaderTypeFragment);
   Shader g(kShaderTypeGeometry);
 
@@ -273,7 +252,7 @@ TEST_F(AmberScriptPipelineTest, GraphicsPipelineMissingVertexShader) {
   EXPECT_EQ("graphics pipeline requires a vertex shader", r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest,
+TEST_F(PipelineTest,
        GraphicsPipelineMissingVertexAndFragmentShader) {
   Shader g(kShaderTypeGeometry);
 
@@ -290,7 +269,7 @@ TEST_F(AmberScriptPipelineTest,
             r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, GraphicsPipelineWihoutShaders) {
+TEST_F(PipelineTest, GraphicsPipelineWihoutShaders) {
   Pipeline p(PipelineType::kGraphics);
   SetupColorAttachment(&p, 0);
   SetupDepthAttachment(&p);
@@ -301,7 +280,7 @@ TEST_F(AmberScriptPipelineTest, GraphicsPipelineWihoutShaders) {
             r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, ComputePipelineRequiresComputeShader) {
+TEST_F(PipelineTest, ComputePipelineRequiresComputeShader) {
   Shader c(kShaderTypeCompute);
 
   Pipeline p(PipelineType::kCompute);
@@ -315,7 +294,7 @@ TEST_F(AmberScriptPipelineTest, ComputePipelineRequiresComputeShader) {
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
-TEST_F(AmberScriptPipelineTest, ComputePipelineWithoutShader) {
+TEST_F(PipelineTest, ComputePipelineWithoutShader) {
   Pipeline p(PipelineType::kCompute);
   SetupColorAttachment(&p, 0);
   SetupDepthAttachment(&p);
@@ -325,7 +304,7 @@ TEST_F(AmberScriptPipelineTest, ComputePipelineWithoutShader) {
   EXPECT_EQ("compute pipeline requires a compute shader", r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, SetEntryPointForMissingShader) {
+TEST_F(PipelineTest, SetEntryPointForMissingShader) {
   Shader c(kShaderTypeCompute);
   c.SetName("my_shader");
 
@@ -335,14 +314,14 @@ TEST_F(AmberScriptPipelineTest, SetEntryPointForMissingShader) {
   EXPECT_EQ("unknown shader specified for entry point: my_shader", r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, SetEntryPointForNullShader) {
+TEST_F(PipelineTest, SetEntryPointForNullShader) {
   Pipeline p(PipelineType::kCompute);
   Result r = p.SetShaderEntryPoint(nullptr, "test");
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ("invalid shader specified for entry point", r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, SetBlankEntryPoint) {
+TEST_F(PipelineTest, SetBlankEntryPoint) {
   Shader c(kShaderTypeCompute);
   Pipeline p(PipelineType::kCompute);
   Result r = p.AddShader(&c, kShaderTypeCompute);
@@ -353,7 +332,7 @@ TEST_F(AmberScriptPipelineTest, SetBlankEntryPoint) {
   EXPECT_EQ("entry point should not be blank", r.Error());
 }
 
-TEST_F(AmberScriptPipelineTest, ShaderDefaultEntryPoint) {
+TEST_F(PipelineTest, ShaderDefaultEntryPoint) {
   Shader c(kShaderTypeCompute);
   Pipeline p(PipelineType::kCompute);
   Result r = p.AddShader(&c, kShaderTypeCompute);
@@ -364,7 +343,7 @@ TEST_F(AmberScriptPipelineTest, ShaderDefaultEntryPoint) {
   EXPECT_EQ("main", shaders[0].GetEntryPoint());
 }
 
-TEST_F(AmberScriptPipelineTest, SetShaderEntryPoint) {
+TEST_F(PipelineTest, SetShaderEntryPoint) {
   Shader c(kShaderTypeCompute);
   Pipeline p(PipelineType::kCompute);
   Result r = p.AddShader(&c, kShaderTypeCompute);
@@ -378,7 +357,7 @@ TEST_F(AmberScriptPipelineTest, SetShaderEntryPoint) {
   EXPECT_EQ("my_main", shaders[0].GetEntryPoint());
 }
 
-TEST_F(AmberScriptPipelineTest, SetEntryPointMulitpleTimes) {
+TEST_F(PipelineTest, SetEntryPointMulitpleTimes) {
   Shader c(kShaderTypeCompute);
   Pipeline p(PipelineType::kCompute);
   Result r = p.AddShader(&c, kShaderTypeCompute);
@@ -390,6 +369,67 @@ TEST_F(AmberScriptPipelineTest, SetEntryPointMulitpleTimes) {
   r = p.SetShaderEntryPoint(&c, "another_main");
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ("multiple entry points given for the same shader", r.Error());
+}
+
+TEST_F(PipelineTest, Clone) {
+  Pipeline p(PipelineType::kGraphics);
+  p.SetName("my_pipeline");
+  p.SetFramebufferWidth(800);
+  p.SetFramebufferHeight(600);
+
+  SetupColorAttachment(&p, 0);
+  SetupDepthAttachment(&p);
+
+  Shader f(kShaderTypeFragment);
+  p.AddShader(&f, kShaderTypeFragment);
+  Shader v(kShaderTypeVertex);
+  p.AddShader(&v, kShaderTypeVertex);
+  p.SetShaderEntryPoint(&v, "my_main");
+
+  auto vtex_buf = MakeUnique<DataBuffer>(BufferType::kVertex);
+  vtex_buf->SetName("vertex_buffer");
+  p.AddVertexBuffer(vtex_buf.get(), 1);
+
+  auto idx_buf = MakeUnique<DataBuffer>(BufferType::kIndex);
+  idx_buf->SetName("Index Buffer");
+  p.SetIndexBuffer(idx_buf.get());
+
+  auto buf1 = MakeUnique<DataBuffer>(BufferType::kStorage);
+  buf1->SetName("buf1");
+  p.AddBuffer(buf1.get(), 1, 1);
+
+  auto buf2 = MakeUnique<DataBuffer>(BufferType::kStorage);
+  buf2->SetName("buf2");
+  p.AddBuffer(buf2.get(), 1, 2);
+
+  auto clone = p.Clone();
+  EXPECT_EQ("", clone->GetName());
+  EXPECT_EQ(800U, clone->GetFramebufferWidth());
+  EXPECT_EQ(600U, clone->GetFramebufferHeight());
+
+  auto shaders = clone->GetShaders();
+  ASSERT_EQ(2U, shaders.size());
+  EXPECT_EQ(kShaderTypeFragment, shaders[0].GetShaderType());
+  EXPECT_EQ(kShaderTypeVertex, shaders[1].GetShaderType());
+  EXPECT_EQ("my_main", shaders[1].GetEntryPoint());
+
+  ASSERT_TRUE(clone->GetIndexBuffer() != nullptr);
+  EXPECT_EQ("Index Buffer", clone->GetIndexBuffer()->GetName());
+
+  auto vtex_buffers = clone->GetVertexBuffers();
+  ASSERT_EQ(1U, vtex_buffers.size());
+  EXPECT_EQ(1, vtex_buffers[0].location);
+  EXPECT_EQ("vertex_buffer", vtex_buffers[0].buffer->GetName());
+
+  auto bufs = clone->GetBuffers();
+  ASSERT_EQ(2U, bufs.size());
+  EXPECT_EQ("buf1", bufs[0].buffer->GetName());
+  EXPECT_EQ(1U, bufs[0].descriptor_set);
+  EXPECT_EQ(1U, bufs[0].binding);
+
+  EXPECT_EQ("buf2", bufs[1].buffer->GetName());
+  EXPECT_EQ(1U, bufs[1].descriptor_set);
+  EXPECT_EQ(2U, bufs[1].binding);
 }
 
 }  // namespace amber

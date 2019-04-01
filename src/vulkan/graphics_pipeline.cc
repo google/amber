@@ -785,6 +785,8 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
     return cmd_buf_guard.GetResult();
 
   frame_->ChangeFrameToWriteLayout(GetCommandBuffer());
+  frame_->CopyBuffersToImages();
+  frame_->TransferColorImagesToDevice(GetCommandBuffer());
 
   {
     RenderPassGuard render_pass_guard(this);
@@ -846,6 +848,8 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
       return r;
 
     frame_->ChangeFrameToWriteLayout(GetCommandBuffer());
+    frame_->CopyBuffersToImages();
+    frame_->TransferColorImagesToDevice(GetCommandBuffer());
 
     {
       RenderPassGuard render_pass_guard(this);

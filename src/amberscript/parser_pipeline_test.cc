@@ -240,17 +240,29 @@ END)";
             r.Error());
 }
 
-TEST_F(AmberScriptParserTest, PipelineDefaultDepthBuffer) {
+TEST_F(AmberScriptParserTest, DerivePipeline) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
 END
+SHADER fragment other_fragment GLSL
+# GLSL Shader
+END
+BUFFER buf1 DATA_TYPE int32 SIZE 20 FILL 5
+BUFFER buf2 DATA_TYPE int32 SIZE 20 FILL 7
 
-PIPELINE graphics my_pipeline
+PIPELINE graphics parent_pipeline
   ATTACH my_shader
   ATTACH my_fragment
-END)";
+  BIND BUFFER buf1 AS storage DESCRIPTOR_SET 1 BINDING 3
+END
+
+DERIVE_PIPELINE child_pipeline FROM parent_pipeline
+  ATTACH other_fragment
+  BIND BUFFER buf2 AS storage DESCRIPTOR_SET 1 BINDING 3
+END
+)";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -258,17 +270,149 @@ END)";
 
   auto script = parser.GetScript();
   const auto& pipelines = script->GetPipelines();
-  ASSERT_EQ(1U, pipelines.size());
+  ASSERT_EQ(2U, pipelines.size());
 
-  const auto* pipeline = pipelines[0].get();
-  const auto& buf = pipeline->GetDepthBuffer();
+  const auto* pipeline1 = pipelines[0].get();
+  auto buffers1 = pipeline1->GetBuffers();
+  ASSERT_EQ(1U, buffers1.size());
+  EXPECT_EQ("buf1", buffers1[0].buffer->GetName());
+  EXPECT_EQ(1, buffers1[0].descriptor_set);
+  EXPECT_EQ(3, buffers1[0].binding);
 
-  ASSERT_TRUE(buf.buffer != nullptr);
-  EXPECT_EQ(FormatType::kD32_SFLOAT_S8_UINT,
-            buf.buffer->AsFormatBuffer()->GetFormat().GetFormatType());
-  EXPECT_EQ(250 * 250, buf.buffer->GetSize());
-  EXPECT_EQ(250 * 250 * (sizeof(float) + sizeof(uint8_t)),
-            buf.buffer->GetSizeInBytes());
+  auto shaders1 = pipeline1->GetShaders();
+  ASSERT_EQ(2U, shaders1.size());
+  EXPECT_EQ("my_shader", shaders1[0].GetShader()->GetName());
+  EXPECT_EQ("my_fragment", shaders1[1].GetShader()->GetName());
+
+  const auto* pipeline2 = pipelines[1].get();
+  EXPECT_EQ("child_pipeline", pipeline2->GetName());
+
+  auto buffers2 = pipeline2->GetBuffers();
+  ASSERT_EQ(1U, buffers2.size());
+  EXPECT_EQ("buf2", buffers2[0].buffer->GetName());
+  EXPECT_EQ(1, buffers2[0].descriptor_set);
+  EXPECT_EQ(3, buffers2[0].binding);
+
+  auto shaders2 = pipeline2->GetShaders();
+  ASSERT_EQ(2U, shaders2.size());
+  EXPECT_EQ("my_shader", shaders2[0].GetShader()->GetName());
+  EXPECT_EQ("other_fragment", shaders2[1].GetShader()->GetName());
+}
+
+TEST_F(AmberScriptParserTest, DerivePipelineMissingEnd) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics parent_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+DERIVE_PIPELINE derived_pipeline FROM parent_pipeline
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: DERIVE_PIPELINE missing END command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, DerivePipelineMissingPipelineName) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics parent_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+DERIVE_PIPELINE FROM parent_pipeline
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: missing pipeline name for DERIVE_PIPELINE command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, DerivePipelineMissingFrom) {
+  std::string in = R"(
+DERIVE_PIPELINE derived_pipeline parent_pipeline
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: missing FROM in DERIVE_PIPELINE command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, DerivePipelineMissingParentPipelineName) {
+  std::string in = R"(
+DERIVE_PIPELINE derived_pipeline FROM
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("3: missing parent pipeline name in DERIVE_PIPELINE command",
+            r.Error());
+}
+
+TEST_F(AmberScriptParserTest, DerivePipelineUnknownParentPipeline) {
+  std::string in = R"(
+DERIVE_PIPELINE derived_pipeline FROM parent_pipeline
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: unknown parent pipeline in DERIVE_PIPELINE command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, DerivePipelineDuplicatePipelineName) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics parent_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+DERIVE_PIPELINE parent_pipeline FROM parent_pipeline
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: duplicate pipeline name for DERIVE_PIPELINE command",
+            r.Error());
+}
+
+
+TEST_F(AmberScriptParserTest, DerivePipelineNoParams) {
+  std::string in = R"(
+DERIVE_PIPELINE
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("3: missing pipeline name for DERIVE_PIPELINE command", r.Error());
 }
 
 }  // namespace amberscript

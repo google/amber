@@ -923,62 +923,6 @@ END
             bufs[0].buffer->AsFormatBuffer()->GetFormat().GetFormatType());
 }
 
-TEST_F(AmberScriptParserTest, BindBufferWithIdx) {
-  std::string in = R"(
-SHADER vertex my_shader PASSTHROUGH
-SHADER fragment my_fragment GLSL
-# GLSL Shader
-END
-BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
-
-PIPELINE graphics my_pipeline
-  ATTACH my_shader
-  ATTACH my_fragment
-
-  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 IDX 5
-END)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_TRUE(r.IsSuccess()) << r.Error();
-
-  auto script = parser.GetScript();
-  const auto& pipelines = script->GetPipelines();
-  ASSERT_EQ(1U, pipelines.size());
-
-  const auto* pipeline = pipelines[0].get();
-  const auto& bufs = pipeline->GetBuffers();
-  ASSERT_EQ(1U, bufs.size());
-  EXPECT_EQ(BufferType::kUniform, bufs[0].buffer->GetBufferType());
-  EXPECT_EQ(1U, bufs[0].descriptor_set);
-  EXPECT_EQ(2U, bufs[0].binding);
-  EXPECT_EQ(5U, bufs[0].location);
-  EXPECT_TRUE(bufs[0].buffer->IsFormatBuffer());
-  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
-            bufs[0].buffer->AsFormatBuffer()->GetFormat().GetFormatType());
-}
-
-TEST_F(AmberScriptParserTest, BindBufferMissingIdxValue) {
-  std::string in = R"(
-SHADER vertex my_shader PASSTHROUGH
-SHADER fragment my_fragment GLSL
-# GLSL Shader
-END
-BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
-
-PIPELINE graphics my_pipeline
-  ATTACH my_shader
-  ATTACH my_fragment
-
-  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 IDX
-END)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("13: invalid value for IDX in BIND command", r.Error());
-}
-
 TEST_F(AmberScriptParserTest, BindBufferMissingBindingValue) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
@@ -1012,13 +956,13 @@ PIPELINE graphics my_pipeline
   ATTACH my_shader
   ATTACH my_fragment
 
-  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 IDX 5
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: missing BINDING for BIND command", r.Error());
+  EXPECT_EQ("13: missing BINDING for BIND command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindBufferMissingDescriptorSetValue) {
@@ -1084,48 +1028,6 @@ END)";
   EXPECT_EQ("12: extra parameters after BIND command", r.Error());
 }
 
-TEST_F(AmberScriptParserTest, BindingBufferIdxExtraParams) {
-  std::string in = R"(
-SHADER vertex my_shader PASSTHROUGH
-SHADER fragment my_fragment GLSL
-# GLSL Shader
-END
-BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
-
-PIPELINE graphics my_pipeline
-  ATTACH my_shader
-  ATTACH my_fragment
-
-  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 IDX 5 EXTRA
-END)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: extra parameters after BIND command", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, BindingBufferInvalidIdxValue) {
-  std::string in = R"(
-SHADER vertex my_shader PASSTHROUGH
-SHADER fragment my_fragment GLSL
-# GLSL Shader
-END
-BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
-
-PIPELINE graphics my_pipeline
-  ATTACH my_shader
-  ATTACH my_fragment
-
-  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 IDX INVALID
-END)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: invalid value for IDX in BIND command", r.Error());
-}
-
 TEST_F(AmberScriptParserTest, BindingBufferInvalidBindingValue) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
@@ -1180,7 +1082,7 @@ PIPELINE graphics my_pipeline
   ATTACH my_shader
   ATTACH my_fragment
 
-  BIND BUFFER my_buf AS INVALID DESCRIPTOR_SET 1 BINDING 2 IDX INVALID
+  BIND BUFFER my_buf AS INVALID DESCRIPTOR_SET 1 BINDING 2
 END)";
 
   Parser parser;

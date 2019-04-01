@@ -31,7 +31,7 @@ const char* kDefaultDepthBufferFormat = "D32_SFLOAT_S8_UINT";
 const char* Pipeline::kGeneratedColorBuffer = "framebuffer";
 const char* Pipeline::kGeneratedDepthBuffer = "depth_buffer";
 
-Pipeline::ShaderInfo::ShaderInfo(const Shader* shader, ShaderType type)
+Pipeline::ShaderInfo::ShaderInfo(Shader* shader, ShaderType type)
     : shader_(shader), shader_type_(type), entry_point_("main") {}
 
 Pipeline::ShaderInfo::ShaderInfo(const ShaderInfo&) = default;
@@ -42,7 +42,20 @@ Pipeline::Pipeline(PipelineType type) : pipeline_type_(type) {}
 
 Pipeline::~Pipeline() = default;
 
-Result Pipeline::AddShader(const Shader* shader, ShaderType shader_type) {
+std::unique_ptr<Pipeline> Pipeline::Clone() const {
+  auto clone = MakeUnique<Pipeline>(pipeline_type_);
+  clone->shaders_ = shaders_;
+  clone->color_attachments_ = color_attachments_;
+  clone->vertex_buffers_ = vertex_buffers_;
+  clone->buffers_ = buffers_;
+  clone->depth_buffer_ = depth_buffer_;
+  clone->index_buffer_ = index_buffer_;
+  clone->fb_width_ = fb_width_;
+  clone->fb_height_ = fb_height_;
+  return clone;
+}
+
+Result Pipeline::AddShader(Shader* shader, ShaderType shader_type) {
   if (!shader)
     return Result("shader can not be null when attached to pipeline");
 
@@ -55,12 +68,14 @@ Result Pipeline::AddShader(const Shader* shader, ShaderType shader_type) {
     return Result("can not add a compute shader to a graphics pipeline");
   }
 
-  for (const auto& info : shaders_) {
+  for (auto& info : shaders_) {
     const auto* is = info.GetShader();
     if (is == shader)
       return Result("can not add duplicate shader to pipeline");
-    if (is->GetType() == shader_type)
-      return Result("can not add duplicate shader type to pipeline");
+    if (is->GetType() == shader_type) {
+      info.SetShader(shader);
+      return {};
+    }
   }
 
   shaders_.emplace_back(shader, shader_type);
@@ -137,9 +152,7 @@ Result Pipeline::Validate() const {
     }
   }
 
-  if (depth_buffer_.buffer == nullptr)
-    return Result("PIPELINE missing depth buffer");
-  if (depth_buffer_.buffer->GetSize() != fb_size)
+  if (depth_buffer_.buffer && depth_buffer_.buffer->GetSize() != fb_size)
     return Result("shared depth buffer must have same size over all PIPELINES");
 
   if (pipeline_type_ == PipelineType::kGraphics)
@@ -290,6 +303,24 @@ Buffer* Pipeline::GetBufferForBinding(uint32_t descriptor_set,
       return info.buffer;
   }
   return nullptr;
+}
+
+void Pipeline::AddBuffer(Buffer* buf,
+               uint32_t descriptor_set,
+               uint32_t binding) {
+  // If this buffer binding already exists, overwrite with the new buffer.
+  for (auto& info : buffers_) {
+    if (info.descriptor_set == descriptor_set && info.binding == binding) {
+      info.buffer = buf;
+      return;
+    }
+  }
+
+  buffers_.push_back(BufferInfo{buf});
+
+  auto& info = buffers_.back();
+  info.descriptor_set = descriptor_set;
+  info.binding = binding;
 }
 
 }  // namespace amber
