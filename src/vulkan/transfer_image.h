@@ -39,12 +39,9 @@ class TransferImage : public Resource {
   Result Initialize(VkImageUsageFlags usage);
   VkImageView GetVkImageView() const { return view_; }
 
-  VkImageMemoryBarrier CreateBarrier(VkImageLayout old_layout,
-                                     VkImageLayout new_layout);
   void ImageBarrier(CommandBuffer* command,
-                    VkImageMemoryBarrier barrier,
-                    VkPipelineStageFlags from,
-                    VkPipelineStageFlags to) const;
+                    VkImageLayout to_layout,
+                    VkPipelineStageFlags to_stage);
 
   // Only record the command for copying this image to its secondary
   // host-accessible buffer. The actual submission of the command
@@ -68,6 +65,9 @@ class TransferImage : public Resource {
   VkImage image_ = VK_NULL_HANDLE;
   VkImageView view_ = VK_NULL_HANDLE;
   VkDeviceMemory memory_ = VK_NULL_HANDLE;
+
+  VkImageLayout layout_ = VK_IMAGE_LAYOUT_UNDEFINED;
+  VkPipelineStageFlags stage_ = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 };
 
 }  // namespace vulkan

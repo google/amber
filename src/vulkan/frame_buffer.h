@@ -65,6 +65,12 @@ class FrameBuffer {
   uint32_t GetHeight() const { return height_; }
 
  private:
+  void ChangeFrameLayout(CommandBuffer* command,
+                         VkImageLayout color_layout,
+                         VkPipelineStageFlags color_stage,
+                         VkImageLayout depth_layout,
+                         VkPipelineStageFlags depth_stage);
+
   Device* device_ = nullptr;
   std::vector<const amber::Pipeline::BufferInfo*> color_attachments_;
   VkFramebuffer frame_ = VK_NULL_HANDLE;
