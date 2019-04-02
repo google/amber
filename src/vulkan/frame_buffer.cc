@@ -168,5 +168,24 @@ void FrameBuffer::CopyImagesToBuffers() {
   }
 }
 
+void FrameBuffer::TransferColorImagesToDevice(CommandBuffer* command) {
+  for (auto& img : color_images_)
+    img->CopyToDevice(command);
+}
+
+void FrameBuffer::CopyBuffersToImages() {
+  for (size_t i = 0; i < color_images_.size(); ++i) {
+    auto& img = color_images_[i];
+    auto* info = color_attachments_[i];
+    auto* values = info->buffer->ValuePtr();
+    // Nothing to do if our local buffer is empty
+    if (values->empty())
+      continue;
+
+    std::memcpy(img->HostAccessibleMemoryPtr(), values->data(),
+                info->buffer->GetSizeInBytes());
+  }
+}
+
 }  // namespace vulkan
 }  // namespace amber

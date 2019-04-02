@@ -47,15 +47,15 @@ class TransferBuffer : public Resource {
   // Since |buffer_| is mapped to host accessible and host coherent
   // memory |memory_|, this method only conducts memory barrier to
   // make it available to device domain.
-  virtual void CopyToDevice(CommandBuffer* command);
-
-  // Fill memory from 0 to |raw_data.size()| with |raw_data|.
-  void UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data);
+  void CopyToDevice(CommandBuffer* command) override;
 
   // Since |buffer_| is mapped to host accessible and host coherent
   // memory |memory_|, this method only conducts memory barrier to
   // make it available to host domain.
   void CopyToHost(CommandBuffer* command) override;
+
+  // Fill memory from 0 to |raw_data.size()| with |raw_data|.
+  void UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data);
 
  private:
   VkBuffer buffer_ = VK_NULL_HANDLE;
