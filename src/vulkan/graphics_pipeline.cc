@@ -689,20 +689,15 @@ Result GraphicsPipeline::Initialize(uint32_t width,
   if (!r.IsSuccess())
     return r;
 
-  CommandBufferGuard guard(GetCommandBuffer());
-  if (!guard.IsRecording())
-    return guard.GetResult();
-
   frame_ = MakeUnique<FrameBuffer>(device_, color_buffers_, width, height);
-  r = frame_->Initialize(GetCommandBuffer(), render_pass_,
-                         depth_stencil_format_);
+  r = frame_->Initialize(render_pass_, depth_stencil_format_);
   if (!r.IsSuccess())
     return r;
 
   frame_width_ = width;
   frame_height_ = height;
 
-  return guard.Submit(GetFenceTimeout());
+  return {};
 }
 
 Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
@@ -789,6 +784,8 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   if (!cmd_buf_guard.IsRecording())
     return cmd_buf_guard.GetResult();
 
+  frame_->ChangeFrameToWriteLayout(GetCommandBuffer());
+
   {
     RenderPassGuard render_pass_guard(this);
 
@@ -847,6 +844,8 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     r = SendVertexBufferDataIfNeeded(vertex_buffer);
     if (!r.IsSuccess())
       return r;
+
+    frame_->ChangeFrameToWriteLayout(GetCommandBuffer());
 
     {
       RenderPassGuard render_pass_guard(this);
