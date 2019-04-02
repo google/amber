@@ -27,11 +27,10 @@ namespace vulkan {
 namespace {
 
 const VkAttachmentDescription kDefaultAttachmentDesc = {
-    0,                     /* flags */
-    VK_FORMAT_UNDEFINED,   /* format */
-    VK_SAMPLE_COUNT_1_BIT, /* samples */
-    // TODO(jaebaek): Set up proper loadOp, StoreOp.
-    VK_ATTACHMENT_LOAD_OP_DONT_CARE,      /* loadOp */
+    0,                                    /* flags */
+    VK_FORMAT_UNDEFINED,                  /* format */
+    VK_SAMPLE_COUNT_1_BIT,                /* samples */
+    VK_ATTACHMENT_LOAD_OP_LOAD,           /* loadOp */
     VK_ATTACHMENT_STORE_OP_STORE,         /* storeOp */
     VK_ATTACHMENT_LOAD_OP_LOAD,           /* stencilLoadOp */
     VK_ATTACHMENT_STORE_OP_STORE,         /* stencilStoreOp */
