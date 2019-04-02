@@ -347,35 +347,32 @@ VkBlendOp ToVkBlendOp(BlendOp op) {
 class RenderPassGuard {
  public:
   explicit RenderPassGuard(GraphicsPipeline* pipeline) : pipeline_(pipeline) {
-    auto* frame = pipeline->GetFrameBuffer();
-    auto* cmd = pipeline->GetCommandBuffer();
-    result_ = frame->ChangeFrameImageLayout(cmd, FrameImageState::kClearOrDraw);
-    if (!result_.IsSuccess())
-      return;
+    auto* frame = pipeline_->GetFrameBuffer();
+    auto* cmd = pipeline_->GetCommandBuffer();
+    frame->ChangeFrameToDrawLayout(cmd);
 
     VkRenderPassBeginInfo render_begin_info = VkRenderPassBeginInfo();
     render_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_begin_info.renderPass = pipeline->GetVkRenderPass();
+    render_begin_info.renderPass = pipeline_->GetVkRenderPass();
     render_begin_info.framebuffer = frame->GetVkFrameBuffer();
     render_begin_info.renderArea = {{0, 0},
                                     {frame->GetWidth(), frame->GetHeight()}};
-    pipeline->GetDevice()->GetPtrs()->vkCmdBeginRenderPass(
+    pipeline_->GetDevice()->GetPtrs()->vkCmdBeginRenderPass(
         cmd->GetVkCommandBuffer(), &render_begin_info,
         VK_SUBPASS_CONTENTS_INLINE);
   }
 
-  bool IsActive() const { return result_.IsSuccess(); }
-  Result GetResult() const { return result_; }
-
   ~RenderPassGuard() {
-    if (result_.IsSuccess()) {
-      pipeline_->GetDevice()->GetPtrs()->vkCmdEndRenderPass(
-          pipeline_->GetCommandBuffer()->GetVkCommandBuffer());
-    }
+    auto* cmd = pipeline_->GetCommandBuffer();
+
+    pipeline_->GetDevice()->GetPtrs()->vkCmdEndRenderPass(
+        cmd->GetVkCommandBuffer());
+
+    auto* frame = pipeline_->GetFrameBuffer();
+    frame->ChangeFrameToProbeLayout(cmd);
   }
 
  private:
-  Result result_;
   GraphicsPipeline* pipeline_;
 };
 
@@ -692,15 +689,20 @@ Result GraphicsPipeline::Initialize(uint32_t width,
   if (!r.IsSuccess())
     return r;
 
+  CommandBufferGuard guard(GetCommandBuffer());
+  if (!guard.IsRecording())
+    return guard.GetResult();
+
   frame_ = MakeUnique<FrameBuffer>(device_, color_buffers_, width, height);
-  r = frame_->Initialize(render_pass_, depth_stencil_format_);
+  r = frame_->Initialize(GetCommandBuffer(), render_pass_,
+                         depth_stencil_format_);
   if (!r.IsSuccess())
     return r;
 
   frame_width_ = width;
   frame_height_ = height;
 
-  return {};
+  return guard.Submit(GetFenceTimeout());
 }
 
 Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
@@ -789,8 +791,6 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
 
   {
     RenderPassGuard render_pass_guard(this);
-    if (!render_pass_guard.IsActive())
-      return render_pass_guard.GetResult();
 
     VkClearAttachment clear_attachment = VkClearAttachment();
     clear_attachment.aspectMask = aspect;
@@ -806,7 +806,7 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
         command_->GetVkCommandBuffer(), 1, &clear_attachment, 1, &clear_rect);
   }
 
-  frame_->CopyColorImagesToHost(command_.get());
+  frame_->TransferColorImagesToHost(command_.get());
 
   Result r = cmd_buf_guard.Submit(GetFenceTimeout());
   if (!r.IsSuccess())
@@ -850,8 +850,6 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
 
     {
       RenderPassGuard render_pass_guard(this);
-      if (!render_pass_guard.IsActive())
-        return render_pass_guard.GetResult();
 
       BindVkDescriptorSets(pipeline_layout);
 
@@ -896,7 +894,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
       }
     }
 
-    frame_->CopyColorImagesToHost(command_.get());
+    frame_->TransferColorImagesToHost(command_.get());
 
     r = cmd_buf_guard.Submit(GetFenceTimeout());
     if (!r.IsSuccess())
