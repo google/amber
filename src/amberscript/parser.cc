@@ -850,15 +850,11 @@ Result Parser::ParseBufferInitializerSeries(DataBuffer* buffer,
 }
 
 Result Parser::ParseBufferInitializerData(DataBuffer* buffer) {
-  auto token = tokenizer_->NextToken();
-  if (!token->IsEOL())
-    return Result("extra parameters after BUFFER data command");
-
   auto& type = buffer->GetDatumType();
   bool is_double_type = type.IsFloat() || type.IsDouble();
 
   std::vector<Value> values;
-  for (token = tokenizer_->NextToken();; token = tokenizer_->NextToken()) {
+  for (auto token = tokenizer_->NextToken();; token = tokenizer_->NextToken()) {
     if (token->IsEOL())
       continue;
     if (token->IsEOS())
@@ -866,10 +862,10 @@ Result Parser::ParseBufferInitializerData(DataBuffer* buffer) {
     if (token->IsString() && token->AsString() == "END")
       break;
     if (!token->IsInteger() && !token->IsDouble() && !token->IsHex())
-      return Result("invalid BUFFER data value");
+      return Result("invalid BUFFER data value: " + token->ToOriginalString());
 
     if (!is_double_type && token->IsDouble())
-      return Result("invalid BUFFER data value");
+      return Result("invalid BUFFER data value: " + token->ToOriginalString());
 
     Value v;
     if (is_double_type) {

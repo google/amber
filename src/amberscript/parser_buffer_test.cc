@@ -52,6 +52,34 @@ END)";
   }
 }
 
+TEST_F(AmberScriptParserTest, BufferDataOneLine) {
+  std::string in = "BUFFER my_buffer DATA_TYPE uint32 DATA 1 2 3 4 END";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  ASSERT_TRUE(buffers[0]->IsDataBuffer());
+  auto* buffer = buffers[0]->AsDataBuffer();
+  EXPECT_TRUE(buffer->GetDatumType().IsUint32());
+  EXPECT_EQ(4U, buffer->GetSize());
+  EXPECT_EQ(4U * sizeof(uint32_t), buffer->GetSizeInBytes());
+
+  std::vector<uint32_t> results = {1, 2, 3, 4};
+  const auto* data = buffer->GetValues<uint32_t>();
+  ASSERT_EQ(results.size(), buffer->GetSize());
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_EQ(results[i], data[i]);
+  }
+}
+
 TEST_F(AmberScriptParserTest, BufferFill) {
   std::string in = "BUFFER my_buffer DATA_TYPE uint8 SIZE 5 FILL 5";
 
@@ -407,13 +435,13 @@ INSTANTIATE_TEST_CASE_P(
                          "1: BUFFER series_from invalid command"},
         BufferParseError{
             "BUFFER my_index_buffer DATA_TYPE int32 DATA\n1.234\nEND",
-            "2: invalid BUFFER data value"},
+            "2: invalid BUFFER data value: 1.234"},
         BufferParseError{
             "BUFFER my_index_buffer DATA_TYPE int32 DATA\nINVALID\nEND",
-            "2: invalid BUFFER data value"},
+            "2: invalid BUFFER data value: INVALID"},
         BufferParseError{
             "BUFFER my_index_buffer DATA_TYPE int32 DATA INVALID\n123\nEND",
-            "1: extra parameters after BUFFER data command"},
+            "1: invalid BUFFER data value: INVALID"},
         BufferParseError{"BUFFER my_index_buffer DATA_TYPE int32 SIZE 256 FILL "
                          "5 INVALID\n123\nEND",
                          "1: extra parameters after BUFFER fill command"},
