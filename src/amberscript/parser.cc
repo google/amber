@@ -72,7 +72,7 @@ Result Parser::Parse(const std::string& data) {
 
     Result r;
     std::string tok = token->AsString();
-    if (isRepeatable(tok)) {
+    if (IsRepeatable(tok)) {
       r = ParseRepeatableCommand(tok);
     } else if (tok == "BUFFER") {
       r = ParseBuffer();
@@ -141,7 +141,7 @@ Result Parser::Parse(const std::string& data) {
   return {};
 }
 
-bool Parser::isRepeatable(const std::string& name) const {
+bool Parser::IsRepeatable(const std::string& name) const {
   return name == "CLEAR" || name == "CLEAR_COLOR" || name == "COPY" ||
          name == "EXPECT" || name == "RUN";
 }
@@ -1352,7 +1352,7 @@ Result Parser::ParseRepeat() {
     std::string tok = token->AsString();
     if (tok == "END")
       break;
-    if (!isRepeatable(tok))
+    if (!IsRepeatable(tok))
       return Result("unknown token: " + tok);
 
     Result r = ParseRepeatableCommand(tok);

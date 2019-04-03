@@ -68,7 +68,7 @@ class Parser : public amber::Parser {
   Result ParseCopy();
   Result ParseDeviceFeature();
   Result ParseRepeat();
-  bool isRepeatable(const std::string& name) const;
+  bool IsRepeatable(const std::string& name) const;
   Result ParseRepeatableCommand(const std::string& name);
 
   // Parses a set of values out of the token stream. |name| is the name of the
