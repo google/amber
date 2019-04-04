@@ -1078,13 +1078,56 @@ Result Parser::ParseExpect() {
   if (!token->IsString())
     return Result("invalid buffer name in EXPECT command");
 
+  if (token->AsString() == "IDX")
+    return Result("missing buffer name between EXPECT and IDX");
+  if (token->AsString() == "EQ_BUFFER")
+    return Result("missing buffer name between EXPECT and EQ_BUFFER");
+
   auto* buffer = script_->GetBuffer(token->AsString());
   if (!buffer)
-    return Result("unknown buffer name for EXPECT command");
+    return Result("unknown buffer name for EXPECT command: " +
+                  token->AsString());
 
   token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "IDX")
-    return Result("missing IDX in EXPECT command");
+
+  if (!token->IsString())
+    return Result("Invalid comparator in EXPECT command");
+
+  if (token->AsString() == "EQ_BUFFER") {
+    token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("invalid buffer name in EXPECT EQ_BUFFER command");
+
+    auto* buffer_2 = script_->GetBuffer(token->AsString());
+    if (!buffer_2) {
+      return Result("unknown buffer name for EXPECT EQ_BUFFER command: " +
+                    token->AsString());
+    }
+
+    if (buffer->GetBufferType() != buffer_2->GetBufferType())
+      return Result(
+          "EXPECT EQ_BUFFER command cannot compare buffers of different type");
+    if (buffer->GetSize() != buffer_2->GetSize())
+      return Result(
+          "EXPECT EQ_BUFFER command cannot compare buffers of different size");
+    if (buffer->GetWidth() != buffer_2->GetWidth())
+      return Result(
+          "EXPECT EQ_BUFFER command cannot compare buffers of different width");
+    if (buffer->GetHeight() != buffer_2->GetHeight()) {
+      return Result(
+          "EXPECT EQ_BUFFER command cannot compare buffers of different "
+          "height");
+    }
+
+    auto cmd = MakeUnique<CompareBufferCommand>(buffer, buffer_2);
+    command_list_.push_back(std::move(cmd));
+
+    // Early return
+    return ValidateEndOfStatement("EXPECT EQ_BUFFER command");
+  }
+
+  if (token->AsString() != "IDX")
+    return Result("Unknown comparator in EXPECT command");
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger() || token->AsInt32() < 0)

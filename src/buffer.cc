@@ -221,6 +221,45 @@ Result Buffer::CopyTo(Buffer* buffer) const {
   return {};
 }
 
+Result Buffer::IsEqual(Buffer* buffer) const {
+  if (buffer->buffer_type_ != buffer_type_)
+    return Result{"Buffers have a different type"};
+  if (buffer->size_ != size_)
+    return Result{"Buffers have a different size"};
+  if (buffer->width_ != width_)
+    return Result{"Buffers have a different width"};
+  if (buffer->height_ != height_)
+    return Result{"Buffers have a different height"};
+  if (buffer->values_.size() != values_.size())
+    return Result{"Buffers have a different number of values"};
+
+  uint32_t num_different = 0;
+  uint32_t first_different_index = 0;
+  uint8_t first_different_left = 0;
+  uint8_t first_different_right = 0;
+  for (uint32_t i = 0; i < values_.size(); ++i) {
+    if (values_[i] != buffer->values_[i]) {
+      if (num_different == 0) {
+        first_different_index = i;
+        first_different_left = values_[i];
+        first_different_right = buffer->values_[i];
+      }
+      num_different++;
+    }
+  }
+
+  if (num_different) {
+    return Result{"Buffers have different values. " +
+                  std::to_string(num_different) +
+                  " values differed, first difference at byte " +
+                  std::to_string(first_different_index) + " values " +
+                  std::to_string(first_different_left) +
+                  " != " + std::to_string(first_different_right)};
+  }
+
+  return {};
+}
+
 DataBuffer::DataBuffer() = default;
 
 DataBuffer::DataBuffer(BufferType type) : Buffer(type) {}
