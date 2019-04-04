@@ -1,8 +1,8 @@
 # Amber
 
-Amber is a multi-API shader test framework. Graphics bugs can be captured and
-communicated through a scripting interface. This removes the need to program
-to the low level interface when reproducing bugs.
+Amber is a multi-API shader test framework. Graphics and compute bugs can be
+captured and communicated through a scripting interface. This removes the need
+to program to the low level interface when reproducing bugs.
 
 Amber is broken into multiple layers: the applications, the parsing components
 and the script execution.
