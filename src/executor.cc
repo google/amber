@@ -97,6 +97,11 @@ Result Executor::Execute(Engine* engine,
       r = engine->DoClearDepth(cmd->AsClearDepth());
     } else if (cmd->IsClearStencil()) {
       r = engine->DoClearStencil(cmd->AsClearStencil());
+    } else if (cmd->IsCompareBuffer()) {
+      auto compare = cmd->AsCompareBuffer();
+      auto buffer_1 = compare->GetBuffer1();
+      auto buffer_2 = compare->GetBuffer2();
+      r = buffer_1->IsEqual(buffer_2);
     } else if (cmd->IsCopy()) {
       auto copy = cmd->AsCopy();
       auto buffer_from = copy->GetBufferFrom();

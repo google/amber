@@ -221,6 +221,21 @@ Result Buffer::CopyTo(Buffer* buffer) const {
   return {};
 }
 
+Result Buffer::IsEqual(Buffer* buffer) const {
+  if (buffer->buffer_type_ != buffer_type_)
+    return Result{"Buffers have a different type"};
+  if (buffer->size_ != size_)
+    return Result{"Buffers have a different size"};
+  if (buffer->width_ != width_)
+    return Result{"Buffers have a different width"};
+  if (buffer->height_ != height_)
+    return Result{"Buffers have a different height"};
+  if (buffer->values_ != values_)
+    return Result{"Buffers have different values"};
+
+  return {};
+}
+
 DataBuffer::DataBuffer() = default;
 
 DataBuffer::DataBuffer(BufferType type) : Buffer(type) {}

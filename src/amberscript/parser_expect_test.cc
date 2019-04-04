@@ -171,7 +171,7 @@ EXPECT my_fb 0 0 SIZE 250 250 EQ_RGB 0 128 255)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("15: missing IDX in EXPECT command", r.Error());
+  EXPECT_EQ("15: Invalid comparator in EXPECT command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectMissingIDXValues) {
@@ -692,6 +692,119 @@ EXPECT dest_buf IDX 0 EQ 22
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
+}
+
+TEST_F(AmberScriptParserTest, ExpectEqBuffer) {
+  std::string in = R"(
+BUFFER buf_1 DATA_TYPE int32 SIZE 10 FILL 11
+BUFFER buf_2 DATA_TYPE int32 SIZE 10 FILL 11
+
+EXPECT buf_1 EQ_BUFFER buf_2
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+}
+
+TEST_F(AmberScriptParserTest, ExpectEqBufferMissingFirstBuffer) {
+  std::string in = R"(
+BUFFER buf_2 DATA_TYPE int32 SIZE 10 FILL 22
+
+EXPECT EQ_BUFFER buf_2
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("4: unknown buffer name for EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectEqBufferMissingSecondBuffer) {
+  std::string in = R"(
+BUFFER buf_1 DATA_TYPE int32 SIZE 10 FILL 11
+
+EXPECT buf_1 EQ_BUFFER
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("5: invalid buffer name in EXPECT EQ_BUFFER command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectEqBufferInvalidFirstBuffer) {
+  std::string in = R"(
+EXPECT 123 EQ_BUFFER
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: invalid buffer name in EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectEqBufferUnknownFirstBuffer) {
+  std::string in = R"(
+EXPECT foo EQ_BUFFER
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: unknown buffer name for EXPECT command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectEqBufferInvalidSecondBuffer) {
+  std::string in = R"(
+BUFFER buf DATA_TYPE int32 SIZE 10 FILL 11
+EXPECT buf EQ_BUFFER 123
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("3: invalid buffer name in EXPECT EQ_BUFFER command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectEqBufferUnknownSecondBuffer) {
+  std::string in = R"(
+BUFFER buf DATA_TYPE int32 SIZE 10 FILL 11
+EXPECT buf EQ_BUFFER foo
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("3: unknown buffer name for EXPECT EQ_BUFFER command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectEqBufferDifferentSize) {
+  std::string in = R"(
+BUFFER buf_1 DATA_TYPE int32 SIZE 10 FILL 11
+BUFFER buf_2 DATA_TYPE int32 SIZE 99 FILL 11
+
+EXPECT buf_1 EQ_BUFFER buf_2
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("5: EXPECT EQ_BUFFER command cannot compare buffers of different size", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectEqBufferDifferentType) {
+  std::string in = R"(
+BUFFER buf_1 DATA_TYPE int32 SIZE 10 FILL 11
+BUFFER buf_2 FORMAT R32G32B32A32_SFLOAT
+
+EXPECT buf_1 EQ_BUFFER buf_2
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("5: EXPECT EQ_BUFFER command cannot compare buffers of different size", r.Error());
 }
 
 }  // namespace amberscript
