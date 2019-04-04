@@ -1082,9 +1082,10 @@ Result Parser::ParseExpect() {
       return Result("invalid buffer name in EXPECT EQ_BUFFER command");
 
     auto* buffer_2 = script_->GetBuffer(token->AsString());
-    if (!buffer_2)
+    if (!buffer_2) {
       return Result("unknown buffer name for EXPECT EQ_BUFFER command: " +
                     token->AsString());
+    }
 
     if (buffer->GetBufferType() != buffer_2->GetBufferType())
       return Result(
@@ -1095,10 +1096,11 @@ Result Parser::ParseExpect() {
     if (buffer->GetWidth() != buffer_2->GetWidth())
       return Result(
           "EXPECT EQ_BUFFER command cannot compare buffers of different width");
-    if (buffer->GetHeight() != buffer_2->GetHeight())
+    if (buffer->GetHeight() != buffer_2->GetHeight()) {
       return Result(
           "EXPECT EQ_BUFFER command cannot compare buffers of different "
           "height");
+    }
 
     auto cmd = MakeUnique<CompareBufferCommand>(buffer, buffer_2);
     script_->AddCommand(std::move(cmd));
