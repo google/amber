@@ -43,7 +43,8 @@ FrameBuffer::~FrameBuffer() {
   }
 }
 
-Result FrameBuffer::Initialize(VkRenderPass render_pass,
+Result FrameBuffer::Initialize(CommandBuffer* command_buffer,
+                               VkRenderPass render_pass,
                                const Format& depth_format) {
   std::vector<VkImageView> attachments;
 
@@ -108,43 +109,13 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass,
     return Result("Vulkan::Calling vkCreateFramebuffer Fail");
   }
 
+  ChangeFrameToDrawLayout(command_buffer);
   return {};
 }
 
-Result FrameBuffer::ChangeFrameImageLayout(CommandBuffer* command,
-                                           FrameImageState layout) {
-  if (layout == FrameImageState::kInit) {
-    return Result(
-        "FrameBuffer::ChangeFrameImageLayout new layout cannot be kInit");
-  }
-
-  if (layout == frame_image_layout_)
-    return {};
-
-  if (layout == FrameImageState::kProbe) {
-    if (frame_image_layout_ != FrameImageState::kClearOrDraw) {
-      return Result(
-          "FrameBuffer::ChangeFrameImageLayout new layout cannot be kProbe "
-          "from kInit");
-    }
-
-    for (auto& img : color_images_) {
-      img->ChangeLayout(command, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                        VK_PIPELINE_STAGE_TRANSFER_BIT);
-    }
-    if (depth_image_) {
-      depth_image_->ChangeLayout(
-          command, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-          VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-          VK_PIPELINE_STAGE_TRANSFER_BIT);
-    }
-
-    frame_image_layout_ = FrameImageState::kProbe;
-    return {};
-  }
+void FrameBuffer::ChangeFrameToDrawLayout(CommandBuffer* command) {
+  if (frame_image_layout_ == FrameImageState::kClearOrDraw)
+    return;
 
   VkImageLayout old_layout = frame_image_layout_ == FrameImageState::kInit
                                  ? VK_IMAGE_LAYOUT_UNDEFINED
@@ -156,24 +127,46 @@ Result FrameBuffer::ChangeFrameImageLayout(CommandBuffer* command,
           : VK_PIPELINE_STAGE_TRANSFER_BIT;
 
   for (auto& img : color_images_) {
-    img->ChangeLayout(command, old_layout,
-                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, source_stage,
+    auto barrier = img->CreateBarrier(old_layout,
+                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    img->ImageBarrier(command, barrier, source_stage,
                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
   }
   if (depth_image_) {
-    depth_image_->ChangeLayout(
-        command, old_layout, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        source_stage, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
+    auto barrier = depth_image_->CreateBarrier(
+        old_layout, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    depth_image_->ImageBarrier(command, barrier, source_stage,
+                               VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
   }
   frame_image_layout_ = FrameImageState::kClearOrDraw;
-  return {};
 }
 
-void FrameBuffer::CopyColorImagesToHost(CommandBuffer* command) {
+void FrameBuffer::ChangeFrameToProbeLayout(CommandBuffer* command) {
+  if (frame_image_layout_ == FrameImageState::kProbe)
+    return;
+
   for (auto& img : color_images_) {
-    ChangeFrameImageLayout(command, FrameImageState::kProbe);
-    img->CopyToHost(command);
+    auto barrier = img->CreateBarrier(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    img->ImageBarrier(command, barrier,
+                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                      VK_PIPELINE_STAGE_TRANSFER_BIT);
   }
+  if (depth_image_) {
+    auto barrier = depth_image_->CreateBarrier(
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    depth_image_->ImageBarrier(command, barrier,
+                               VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+                               VK_PIPELINE_STAGE_TRANSFER_BIT);
+  }
+
+  frame_image_layout_ = FrameImageState::kProbe;
+}
+
+void FrameBuffer::TransferColorImagesToHost(CommandBuffer* command) {
+  for (auto& img : color_images_)
+    img->CopyToHost(command);
 }
 
 void FrameBuffer::CopyImagesToBuffers() {
