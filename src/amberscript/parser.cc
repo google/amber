@@ -1080,13 +1080,18 @@ Result Parser::ParseExpect() {
       return Result("unknown buffer name for EXPECT EQ_BUFFER command");
 
     if (buffer->GetBufferType() != buffer_2->GetBufferType())
-      return Result("EXPECT EQ_BUFFER command cannot compare buffers of different type");
+      return Result(
+          "EXPECT EQ_BUFFER command cannot compare buffers of different type");
     if (buffer->GetSize() != buffer_2->GetSize())
-      return Result("EXPECT EQ_BUFFER command cannot compare buffers of different size");
+      return Result(
+          "EXPECT EQ_BUFFER command cannot compare buffers of different size");
     if (buffer->GetWidth() != buffer_2->GetWidth())
-      return Result("EXPECT EQ_BUFFER command cannot compare buffers of different width");
+      return Result(
+          "EXPECT EQ_BUFFER command cannot compare buffers of different width");
     if (buffer->GetHeight() != buffer_2->GetHeight())
-      return Result("EXPECT EQ_BUFFER command cannot compare buffers of different height");
+      return Result(
+          "EXPECT EQ_BUFFER command cannot compare buffers of different "
+          "height");
 
     auto cmd = MakeUnique<CompareBufferCommand>(buffer, buffer_2);
     script_->AddCommand(std::move(cmd));

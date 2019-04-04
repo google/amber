@@ -790,7 +790,9 @@ EXPECT buf_1 EQ_BUFFER buf_2
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("5: EXPECT EQ_BUFFER command cannot compare buffers of different size", r.Error());
+  EXPECT_EQ(
+      "5: EXPECT EQ_BUFFER command cannot compare buffers of different size",
+      r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectEqBufferDifferentType) {
@@ -804,7 +806,9 @@ EXPECT buf_1 EQ_BUFFER buf_2
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("5: EXPECT EQ_BUFFER command cannot compare buffers of different size", r.Error());
+  EXPECT_EQ(
+      "5: EXPECT EQ_BUFFER command cannot compare buffers of different size",
+      r.Error());
 }
 
 }  // namespace amberscript
