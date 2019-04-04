@@ -38,6 +38,10 @@ ClearStencilCommand* Command::AsClearStencil() {
   return static_cast<ClearStencilCommand*>(this);
 }
 
+CompareBufferCommand* Command::AsCompareBuffer() {
+  return static_cast<CompareBufferCommand*>(this);
+}
+
 ComputeCommand* Command::AsCompute() {
   return static_cast<ComputeCommand*>(this);
 }
@@ -88,6 +92,11 @@ DrawArraysCommand::DrawArraysCommand(Pipeline* pipeline, PipelineData data)
     : PipelineCommand(Type::kDrawArrays, pipeline), data_(data) {}
 
 DrawArraysCommand::~DrawArraysCommand() = default;
+
+CompareBufferCommand::CompareBufferCommand(Buffer* buffer_1, Buffer* buffer_2)
+    : Command(Type::kCompareBuffer), buffer_1_(buffer_1), buffer_2_(buffer_2) {}
+
+CompareBufferCommand::~CompareBufferCommand() = default;
 
 ComputeCommand::ComputeCommand(Pipeline* pipeline)
     : PipelineCommand(Type::kCompute, pipeline) {}
