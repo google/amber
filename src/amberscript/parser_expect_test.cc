@@ -125,7 +125,7 @@ EXPECT IDX 0 0 SIZE 250 250 EQ_RGB 0 128 255)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("15: unknown buffer name for EXPECT command", r.Error());
+  EXPECT_EQ("15: missing buffer name between EXPECT and IDX", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectInvalidBufferName) {
@@ -148,7 +148,8 @@ EXPECT unknown_buffer IDX 0 0 SIZE 250 250 EQ_RGB 0 128 255)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("15: unknown buffer name for EXPECT command", r.Error());
+  EXPECT_EQ("15: unknown buffer name for EXPECT command: unknown_buffer",
+            r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectMissingIDX) {
@@ -717,7 +718,7 @@ EXPECT EQ_BUFFER buf_2
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("4: unknown buffer name for EXPECT command", r.Error());
+  EXPECT_EQ("4: missing buffer name between EXPECT and EQ_BUFFER", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectEqBufferMissingSecondBuffer) {
@@ -746,13 +747,14 @@ EXPECT 123 EQ_BUFFER
 
 TEST_F(AmberScriptParserTest, ExpectEqBufferUnknownFirstBuffer) {
   std::string in = R"(
-EXPECT foo EQ_BUFFER
+EXPECT unknown_buffer EQ_BUFFER
 )";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("2: unknown buffer name for EXPECT command", r.Error());
+  EXPECT_EQ("2: unknown buffer name for EXPECT command: unknown_buffer",
+            r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectEqBufferInvalidSecondBuffer) {
@@ -770,13 +772,15 @@ EXPECT buf EQ_BUFFER 123
 TEST_F(AmberScriptParserTest, ExpectEqBufferUnknownSecondBuffer) {
   std::string in = R"(
 BUFFER buf DATA_TYPE int32 SIZE 10 FILL 11
-EXPECT buf EQ_BUFFER foo
+EXPECT buf EQ_BUFFER unknown_buffer
 )";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("3: unknown buffer name for EXPECT EQ_BUFFER command", r.Error());
+  EXPECT_EQ(
+      "3: unknown buffer name for EXPECT EQ_BUFFER command: unknown_buffer",
+      r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectEqBufferDifferentSize) {

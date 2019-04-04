@@ -1061,9 +1061,15 @@ Result Parser::ParseExpect() {
   if (!token->IsString())
     return Result("invalid buffer name in EXPECT command");
 
+  if (token->AsString() == "IDX")
+    return Result("missing buffer name between EXPECT and IDX");
+  if (token->AsString() == "EQ_BUFFER")
+    return Result("missing buffer name between EXPECT and EQ_BUFFER");
+
   auto* buffer = script_->GetBuffer(token->AsString());
   if (!buffer)
-    return Result("unknown buffer name for EXPECT command");
+    return Result("unknown buffer name for EXPECT command: " +
+                  token->AsString());
 
   token = tokenizer_->NextToken();
 
@@ -1077,7 +1083,8 @@ Result Parser::ParseExpect() {
 
     auto* buffer_2 = script_->GetBuffer(token->AsString());
     if (!buffer_2)
-      return Result("unknown buffer name for EXPECT EQ_BUFFER command");
+      return Result("unknown buffer name for EXPECT EQ_BUFFER command: " +
+                    token->AsString());
 
     if (buffer->GetBufferType() != buffer_2->GetBufferType())
       return Result(
