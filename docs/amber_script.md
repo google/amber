@@ -337,6 +337,7 @@ CLEAR <pipeline>
  * GE
  * EQ\_RGB
  * EQ\_RGBA
+ * EQ\_BUFFER
 
 ```
 # Checks that |buffer_name| at |x| has the given |value|s when compared
@@ -361,6 +362,9 @@ EXPECT <buffer_name> IDX <x_in_pixels> <y_in_pixels> \
 EXPECT <buffer_name> IDX <x_in_pixels> <y_in_pixels> \
   SIZE <width_in_pixels> <height_in_pixels> \
   EQ_RGBA <r (0 - 255)> <g (0 - 255)> <b (0 - 255)> <a (0 - 255)>
+
+# Checks that |buffer_1| contents are equal to those of |buffer_2|
+EXPECT <buffer_1> EQ_BUFFER <buffer_2>
 ```
 
 ## Examples

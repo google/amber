@@ -114,11 +114,14 @@ class Buffer {
     return reinterpret_cast<const T*>(values_.data());
   }
 
-  /// Copy the buffer values to an other one
+  /// Copies the buffer values to an other one
   Result CopyTo(Buffer* buffer) const;
 
+  /// Succeeds only if both buffer contents are equal
+  Result IsEqual(Buffer* buffer) const;
+
  protected:
-  /// Create an un-typed buffer.
+  /// Creates an un-typed buffer.
   Buffer();
 
   std::vector<uint8_t> values_;

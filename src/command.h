@@ -33,6 +33,7 @@ class ClearCommand;
 class ClearColorCommand;
 class ClearDepthCommand;
 class ClearStencilCommand;
+class CompareBufferCommand;
 class ComputeCommand;
 class CopyCommand;
 class DrawArraysCommand;
@@ -52,6 +53,7 @@ class Command {
     kClearDepth,
     kClearStencil,
     kCompute,
+    kCompareBuffer,
     kCopy,
     kDrawArrays,
     kDrawRect,
@@ -67,6 +69,7 @@ class Command {
 
   bool IsDrawRect() const { return command_type_ == Type::kDrawRect; }
   bool IsDrawArrays() const { return command_type_ == Type::kDrawArrays; }
+  bool IsCompareBuffer() const { return command_type_ == Type::kCompareBuffer; }
   bool IsCompute() const { return command_type_ == Type::kCompute; }
   bool IsCopy() const { return command_type_ == Type::kCopy; }
   bool IsProbe() const { return command_type_ == Type::kProbe; }
@@ -85,6 +88,7 @@ class Command {
   ClearColorCommand* AsClearColor();
   ClearDepthCommand* AsClearDepth();
   ClearStencilCommand* AsClearStencil();
+  CompareBufferCommand* AsCompareBuffer();
   ComputeCommand* AsCompute();
   CopyCommand* AsCopy();
   DrawArraysCommand* AsDrawArrays();
@@ -185,6 +189,19 @@ class DrawArraysCommand : public PipelineCommand {
   uint32_t first_vertex_index_ = 0;
   uint32_t vertex_count_ = 0;
   uint32_t instance_count_ = 0;
+};
+
+class CompareBufferCommand : public Command {
+ public:
+  CompareBufferCommand(Buffer* buffer_1, Buffer* buffer_2);
+  ~CompareBufferCommand() override;
+
+  Buffer* GetBuffer1() const { return buffer_1_; }
+  Buffer* GetBuffer2() const { return buffer_2_; }
+
+ private:
+  Buffer* buffer_1_;
+  Buffer* buffer_2_;
 };
 
 class ComputeCommand : public PipelineCommand {
