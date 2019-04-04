@@ -42,9 +42,12 @@ class FrameBuffer {
       uint32_t height);
   ~FrameBuffer();
 
-  Result Initialize(VkRenderPass render_pass, const Format& depth_format);
+  Result Initialize(CommandBuffer* command_buffer,
+                    VkRenderPass render_pass,
+                    const Format& depth_format);
 
-  Result ChangeFrameImageLayout(CommandBuffer* command, FrameImageState layout);
+  void ChangeFrameToDrawLayout(CommandBuffer* command);
+  void ChangeFrameToProbeLayout(CommandBuffer* command);
 
   VkFramebuffer GetVkFrameBuffer() const { return frame_; }
   const void* GetColorBufferPtr(size_t idx) const {
@@ -54,7 +57,7 @@ class FrameBuffer {
   // Only record the command for copying the image that backs this
   // framebuffer to the host accessible buffer. The actual submission
   // of the command must be done later.
-  void CopyColorImagesToHost(CommandBuffer* command);
+  void TransferColorImagesToHost(CommandBuffer* command);
 
   void CopyImagesToBuffers();
 
@@ -70,6 +73,7 @@ class FrameBuffer {
   uint32_t width_ = 0;
   uint32_t height_ = 0;
   uint32_t depth_ = 1;
+
   FrameImageState frame_image_layout_ = FrameImageState::kInit;
 };
 

@@ -39,11 +39,12 @@ class TransferImage : public Resource {
   Result Initialize(VkImageUsageFlags usage);
   VkImageView GetVkImageView() const { return view_; }
 
-  void ChangeLayout(CommandBuffer* command,
-                    VkImageLayout old_layout,
-                    VkImageLayout new_layout,
+  VkImageMemoryBarrier CreateBarrier(VkImageLayout old_layout,
+                                     VkImageLayout new_layout);
+  void ImageBarrier(CommandBuffer* command,
+                    VkImageMemoryBarrier barrier,
                     VkPipelineStageFlags from,
-                    VkPipelineStageFlags to);
+                    VkPipelineStageFlags to) const;
 
   // Only record the command for copying this image to its secondary
   // host-accessible buffer. The actual submission of the command

@@ -34,12 +34,11 @@ const VkImageCreateInfo kDefaultImageInfo = {
     1,                                   /* arrayLayers */
     VK_SAMPLE_COUNT_1_BIT,               /* samples */
     VK_IMAGE_TILING_OPTIMAL,             /* tiling */
-    VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, /* usage */
-    VK_SHARING_MODE_EXCLUSIVE,               /* sharingMode */
-    0,                                       /* queueFamilyIndexCount */
-    nullptr,                                 /* pQueueFamilyIndices */
-    VK_IMAGE_LAYOUT_UNDEFINED,               /* initialLayout */
+    0,                                   /* usage */
+    VK_SHARING_MODE_EXCLUSIVE,           /* sharingMode */
+    0,                                   /* queueFamilyIndexCount */
+    nullptr,                             /* pQueueFamilyIndices */
+    VK_IMAGE_LAYOUT_UNDEFINED,           /* initialLayout */
 };
 
 }  // namespace
@@ -180,11 +179,8 @@ void TransferImage::CopyToHost(CommandBuffer* command) {
   MemoryBarrier(command);
 }
 
-void TransferImage::ChangeLayout(CommandBuffer* command,
-                                 VkImageLayout old_layout,
-                                 VkImageLayout new_layout,
-                                 VkPipelineStageFlags from,
-                                 VkPipelineStageFlags to) {
+VkImageMemoryBarrier TransferImage::CreateBarrier(VkImageLayout old_layout,
+                                                  VkImageLayout new_layout) {
   VkImageMemoryBarrier barrier = VkImageMemoryBarrier();
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   barrier.oldLayout = old_layout;
@@ -254,7 +250,13 @@ void TransferImage::ChangeLayout(CommandBuffer* command,
       barrier.dstAccessMask = 0;
       break;
   }
+  return barrier;
+}
 
+void TransferImage::ImageBarrier(CommandBuffer* command,
+                                 VkImageMemoryBarrier barrier,
+                                 VkPipelineStageFlags from,
+                                 VkPipelineStageFlags to) const {
   device_->GetPtrs()->vkCmdPipelineBarrier(command->GetVkCommandBuffer(), from,
                                            to, 0, 0, NULL, 0, NULL, 1,
                                            &barrier);
