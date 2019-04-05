@@ -113,31 +113,28 @@ Result FrameBuffer::Initialize(CommandBuffer* command_buffer,
   return {};
 }
 
+void FrameBuffer::ChangeFrameLayout(CommandBuffer* command,
+                                    VkImageLayout color_layout,
+                                    VkPipelineStageFlags color_stage,
+                                    VkImageLayout depth_layout,
+                                    VkPipelineStageFlags depth_stage) {
+  for (auto& img : color_images_)
+    img->ImageBarrier(command, color_layout, color_stage);
+  if (depth_image_)
+    depth_image_->ImageBarrier(command, depth_layout, depth_stage);
+}
+
 void FrameBuffer::ChangeFrameToDrawLayout(CommandBuffer* command) {
   if (frame_image_layout_ == FrameImageState::kClearOrDraw)
     return;
 
-  VkImageLayout old_layout = frame_image_layout_ == FrameImageState::kInit
-                                 ? VK_IMAGE_LAYOUT_UNDEFINED
-                                 : VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-
-  VkPipelineStageFlagBits source_stage =
-      frame_image_layout_ == FrameImageState::kInit
-          ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
-          : VK_PIPELINE_STAGE_TRANSFER_BIT;
-
-  for (auto& img : color_images_) {
-    auto barrier = img->CreateBarrier(old_layout,
-                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    img->ImageBarrier(command, barrier, source_stage,
-                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-  }
-  if (depth_image_) {
-    auto barrier = depth_image_->CreateBarrier(
-        old_layout, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-    depth_image_->ImageBarrier(command, barrier, source_stage,
-                               VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
-  }
+  ChangeFrameLayout(command,
+                    // Color attachments
+                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                    // Depth attachment
+                    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                    VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
   frame_image_layout_ = FrameImageState::kClearOrDraw;
 }
 
@@ -145,21 +142,12 @@ void FrameBuffer::ChangeFrameToProbeLayout(CommandBuffer* command) {
   if (frame_image_layout_ == FrameImageState::kProbe)
     return;
 
-  for (auto& img : color_images_) {
-    auto barrier = img->CreateBarrier(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-    img->ImageBarrier(command, barrier,
-                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                      VK_PIPELINE_STAGE_TRANSFER_BIT);
-  }
-  if (depth_image_) {
-    auto barrier = depth_image_->CreateBarrier(
-        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-    depth_image_->ImageBarrier(command, barrier,
-                               VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-                               VK_PIPELINE_STAGE_TRANSFER_BIT);
-  }
+  ChangeFrameLayout(
+      command,
+      // Color attachments
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      // Depth attachments
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
   frame_image_layout_ = FrameImageState::kProbe;
 }

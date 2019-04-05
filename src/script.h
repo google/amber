@@ -143,11 +143,6 @@ class Script : public RecipeImpl {
     commands_ = std::move(cmds);
   }
 
-  /// Appends |cmd| to the end of the list of commands to execute.
-  void AddCommand(std::unique_ptr<Command> cmd) {
-    commands_.push_back(std::move(cmd));
-  }
-
   /// Retrieves the list of commands to execute against the engine.
   const std::vector<std::unique_ptr<Command>>& GetCommands() const {
     return commands_;

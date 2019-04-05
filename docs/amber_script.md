@@ -313,6 +313,24 @@ RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology> \
   START_IDX <value> COUNT <count_value>
 ```
 
+### Repeating commands
+
+It is sometimes useful to run a given draw command multiple times. This can be
+to detect deterministic rendering or other features.
+
+```
+REPEAT <count>
+<command>+
+END
+```
+
+The commands which can be used inside a `REPEAT` block are:
+  * `CLEAR`
+  * `CLEAR_COLOR`
+  * `COPY`
+  * `EXPECT`
+  * `RUN`
+
 ### Commands
 ```
 # Sets the clear color to use for |pipeline| which must be a `graphics`

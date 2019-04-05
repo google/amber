@@ -179,12 +179,13 @@ void TransferImage::CopyToHost(CommandBuffer* command) {
   MemoryBarrier(command);
 }
 
-VkImageMemoryBarrier TransferImage::CreateBarrier(VkImageLayout old_layout,
-                                                  VkImageLayout new_layout) {
+void TransferImage::ImageBarrier(CommandBuffer* command,
+                                 VkImageLayout to_layout,
+                                 VkPipelineStageFlags to_stage) {
   VkImageMemoryBarrier barrier = VkImageMemoryBarrier();
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  barrier.oldLayout = old_layout;
-  barrier.newLayout = new_layout;
+  barrier.oldLayout = layout_;
+  barrier.newLayout = to_layout;
   barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.image = image_;
@@ -196,7 +197,7 @@ VkImageMemoryBarrier TransferImage::CreateBarrier(VkImageLayout old_layout,
       1,       /* layerCount */
   };
 
-  switch (old_layout) {
+  switch (layout_) {
     case VK_IMAGE_LAYOUT_PREINITIALIZED:
       // Based on Vulkan spec, image in VK_IMAGE_LAYOUT_PREINITIALIZED is not
       // accessible by GPU.
@@ -223,7 +224,7 @@ VkImageMemoryBarrier TransferImage::CreateBarrier(VkImageLayout old_layout,
       break;
   }
 
-  switch (new_layout) {
+  switch (to_layout) {
     case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
       barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
       break;
@@ -250,16 +251,13 @@ VkImageMemoryBarrier TransferImage::CreateBarrier(VkImageLayout old_layout,
       barrier.dstAccessMask = 0;
       break;
   }
-  return barrier;
-}
 
-void TransferImage::ImageBarrier(CommandBuffer* command,
-                                 VkImageMemoryBarrier barrier,
-                                 VkPipelineStageFlags from,
-                                 VkPipelineStageFlags to) const {
-  device_->GetPtrs()->vkCmdPipelineBarrier(command->GetVkCommandBuffer(), from,
-                                           to, 0, 0, NULL, 0, NULL, 1,
-                                           &barrier);
+  device_->GetPtrs()->vkCmdPipelineBarrier(command->GetVkCommandBuffer(),
+                                           stage_, to_stage, 0, 0, NULL, 0,
+                                           NULL, 1, &barrier);
+
+  layout_ = to_layout;
+  stage_ = to_stage;
 }
 
 Result TransferImage::AllocateAndBindMemoryToVkImage(
