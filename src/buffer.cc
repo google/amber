@@ -267,8 +267,8 @@ DataBuffer::DataBuffer(BufferType type) : Buffer(type) {}
 DataBuffer::~DataBuffer() = default;
 
 Result DataBuffer::SetData(std::vector<Value>&& data) {
-  uint32_t size = static_cast<uint32_t>(data.size()) /
-                  datum_type_.ColumnCount() / datum_type_.RowCount();
+  uint32_t size = static_cast<uint32_t>(data.size()) / format_->ColumnCount() /
+                  format_->RowCount();
   SetSize(size);
   values_.resize(GetSizeInBytes());
   return CopyData(data);

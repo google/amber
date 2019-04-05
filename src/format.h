@@ -65,9 +65,29 @@ class Format {
            type_ == FormatType::kS8_UINT;
   }
 
+  uint32_t RowCount() const {
+    return static_cast<uint32_t>(components_.size());
+  }
+  uint32_t ColumnCount() const { return column_count_; }
+  void SetColumnCount(uint32_t c) { column_count_ = c; }
+
+  bool IsInt8() const { return AreAllComponents(FormatMode::kSInt, 8); }
+  bool IsInt16() const { return AreAllComponents(FormatMode::kSInt, 16); }
+  bool IsInt32() const { return AreAllComponents(FormatMode::kSInt, 32); }
+  bool IsInt64() const { return AreAllComponents(FormatMode::kSInt, 64); }
+  bool IsUint8() const { return AreAllComponents(FormatMode::kUInt, 8); }
+  bool IsUint16() const { return AreAllComponents(FormatMode::kUInt, 16); }
+  bool IsUint32() const { return AreAllComponents(FormatMode::kUInt, 32); }
+  bool IsUint64() const { return AreAllComponents(FormatMode::kUInt, 64); }
+  bool IsFloat() const { return AreAllComponents(FormatMode::kSFloat, 32); }
+  bool IsDouble() const { return AreAllComponents(FormatMode::kSFloat, 64); }
+
  private:
+  bool AreAllComponents(FormatMode mode, uint32_t bits) const;
+
   FormatType type_ = FormatType::kUnknown;
   uint8_t pack_size_in_bytes_ = 0;
+  uint32_t column_count_ = 1;
   std::vector<Component> components_;
 };
 

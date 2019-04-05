@@ -38,9 +38,8 @@ END)";
   ASSERT_TRUE(buffers[0] != nullptr);
   EXPECT_EQ("my_buffer", buffers[0]->GetName());
 
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
-  EXPECT_TRUE(buffer->GetDatumType().IsUint32());
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->IsUint32());
   EXPECT_EQ(7U, buffer->GetSize());
   EXPECT_EQ(7U * sizeof(uint32_t), buffer->GetSizeInBytes());
 
@@ -66,9 +65,8 @@ TEST_F(AmberScriptParserTest, BufferDataOneLine) {
   ASSERT_TRUE(buffers[0] != nullptr);
   EXPECT_EQ("my_buffer", buffers[0]->GetName());
 
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
-  EXPECT_TRUE(buffer->GetDatumType().IsUint32());
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->IsUint32());
   EXPECT_EQ(4U, buffer->GetSize());
   EXPECT_EQ(4U * sizeof(uint32_t), buffer->GetSizeInBytes());
 
@@ -120,10 +118,10 @@ TEST_F(AmberScriptParserTest, BufferFill) {
   ASSERT_EQ(1U, buffers.size());
 
   ASSERT_TRUE(buffers[0] != nullptr);
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
+
+  auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
-  EXPECT_TRUE(buffer->GetDatumType().IsUint8());
+  EXPECT_TRUE(buffer->GetFormat()->IsUint8());
   EXPECT_EQ(5U, buffer->GetSize());
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
 
@@ -147,10 +145,10 @@ TEST_F(AmberScriptParserTest, BufferFillFloat) {
   ASSERT_EQ(1U, buffers.size());
 
   ASSERT_TRUE(buffers[0] != nullptr);
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
+
+  auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
-  EXPECT_TRUE(buffer->GetDatumType().IsFloat());
+  EXPECT_TRUE(buffer->GetFormat()->IsFloat());
   EXPECT_EQ(5U, buffer->GetSize());
   EXPECT_EQ(5U * sizeof(float), buffer->GetSizeInBytes());
 
@@ -175,10 +173,10 @@ TEST_F(AmberScriptParserTest, BufferSeries) {
   ASSERT_EQ(1U, buffers.size());
 
   ASSERT_TRUE(buffers[0] != nullptr);
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
+
+  auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
-  EXPECT_TRUE(buffer->GetDatumType().IsUint8());
+  EXPECT_TRUE(buffer->GetFormat()->IsUint8());
   EXPECT_EQ(5U, buffer->GetSize());
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
 
@@ -204,10 +202,10 @@ TEST_F(AmberScriptParserTest, BufferSeriesFloat) {
   ASSERT_EQ(1U, buffers.size());
 
   ASSERT_TRUE(buffers[0] != nullptr);
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
+
+  auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
-  EXPECT_TRUE(buffer->GetDatumType().IsFloat());
+  EXPECT_TRUE(buffer->GetFormat()->IsFloat());
   EXPECT_EQ(5U, buffer->GetSize());
   EXPECT_EQ(5U * sizeof(float), buffer->GetSizeInBytes());
 
@@ -236,10 +234,10 @@ END)";
   ASSERT_EQ(2U, buffers.size());
 
   ASSERT_TRUE(buffers[0] != nullptr);
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
+
+  auto* buffer = buffers[0].get();
   EXPECT_EQ("color_buffer", buffer->GetName());
-  EXPECT_TRUE(buffer->GetDatumType().IsUint8());
+  EXPECT_TRUE(buffer->GetFormat()->IsUint8());
   EXPECT_EQ(5U, buffer->GetSize());
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
 
@@ -251,10 +249,10 @@ END)";
   }
 
   ASSERT_TRUE(buffers[1] != nullptr);
-  ASSERT_TRUE(buffers[1]->IsDataBuffer());
-  buffer = buffers[1]->AsDataBuffer();
+
+  buffer = buffers[1].get();
   EXPECT_EQ("storage_buffer", buffer->GetName());
-  EXPECT_TRUE(buffer->GetDatumType().IsUint32());
+  EXPECT_TRUE(buffer->GetFormat()->IsUint32());
   EXPECT_EQ(7U, buffer->GetSize());
   EXPECT_EQ(7U * sizeof(uint32_t), buffer->GetSizeInBytes());
 
@@ -279,10 +277,10 @@ BUFFER my_index_buffer DATA_TYPE vec2<int32> SIZE 5 FILL 2)";
   ASSERT_EQ(1U, buffers.size());
 
   ASSERT_TRUE(buffers[0] != nullptr);
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
+
+  auto* buffer = buffers[0].get();
   EXPECT_EQ("my_index_buffer", buffer->GetName());
-  EXPECT_TRUE(buffer->GetDatumType().IsInt32());
+  EXPECT_TRUE(buffer->GetFormat()->IsInt32());
   EXPECT_EQ(5U, buffer->GetSize());
   EXPECT_EQ(5U * 2 * sizeof(int32_t), buffer->GetSizeInBytes());
 
@@ -312,10 +310,10 @@ END
   ASSERT_EQ(1U, buffers.size());
 
   ASSERT_TRUE(buffers[0] != nullptr);
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
+
+  auto* buffer = buffers[0].get();
   EXPECT_EQ("my_index_buffer", buffer->GetName());
-  EXPECT_TRUE(buffer->GetDatumType().IsInt32());
+  EXPECT_TRUE(buffer->GetFormat()->IsInt32());
   EXPECT_EQ(4U, buffer->GetSize());
   EXPECT_EQ(4U * 2 * sizeof(int32_t), buffer->GetSizeInBytes());
 
@@ -345,10 +343,10 @@ END
   ASSERT_EQ(1U, buffers.size());
 
   ASSERT_TRUE(buffers[0] != nullptr);
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
+
+  auto* buffer = buffers[0].get();
   EXPECT_EQ("my_index_buffer", buffer->GetName());
-  EXPECT_TRUE(buffer->GetDatumType().IsUint32());
+  EXPECT_TRUE(buffer->GetFormat()->IsUint32());
   EXPECT_EQ(4U, buffer->GetSize());
   EXPECT_EQ(4U * sizeof(uint32_t), buffer->GetSizeInBytes());
 
@@ -373,7 +371,7 @@ TEST_F(AmberScriptParserTest, BufferFormat) {
 
   ASSERT_TRUE(buffers[0] != nullptr);
   ASSERT_TRUE(buffers[0]->IsFormatBuffer());
-  auto* buffer = buffers[0]->AsFormatBuffer();
+  auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buf", buffer->GetName());
 
   auto fmt = buffer->GetFormat();
@@ -485,7 +483,8 @@ INSTANTIATE_TEST_CASE_P(
 
 struct BufferData {
   const char* name;
-  DataType type;
+  FormatMode type;
+  size_t num_bits;
   size_t row_count;
   size_t column_count;
 };
@@ -506,32 +505,33 @@ TEST_P(AmberScriptParserBufferDataTypeTest, BufferTypes) {
   ASSERT_EQ(1U, buffers.size());
 
   ASSERT_TRUE(buffers[0] != nullptr);
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
-  auto& datum = buffer->GetDatumType();
-  EXPECT_EQ(test_data.type, datum.GetType());
-  EXPECT_EQ(test_data.row_count, datum.RowCount());
-  EXPECT_EQ(test_data.column_count, datum.ColumnCount());
+
+  auto* buffer = buffers[0].get();
+  auto fmt = buffer->GetFormat();
+  EXPECT_EQ(test_data.row_count, fmt->RowCount());
+  EXPECT_EQ(test_data.column_count, fmt->ColumnCount());
+  EXPECT_EQ(test_data.type, fmt->GetComponents()[0].mode);
+  EXPECT_EQ(test_data.num_bits, fmt->GetComponents()[0].num_bits);
 }
 INSTANTIATE_TEST_CASE_P(
     AmberScriptParserTestsDataType,
     AmberScriptParserBufferDataTypeTest,
-    testing::Values(BufferData{"int8", DataType::kInt8, 1, 1},
-                    BufferData{"int16", DataType::kInt16, 1, 1},
-                    BufferData{"int32", DataType::kInt32, 1, 1},
-                    BufferData{"int64", DataType::kInt64, 1, 1},
-                    BufferData{"uint8", DataType::kUint8, 1, 1},
-                    BufferData{"uint16", DataType::kUint16, 1, 1},
-                    BufferData{"uint32", DataType::kUint32, 1, 1},
-                    BufferData{"uint64", DataType::kUint64, 1, 1},
-                    BufferData{"float", DataType::kFloat, 1, 1},
-                    BufferData{"double", DataType::kDouble, 1, 1},
-                    BufferData{"vec2<int8>", DataType::kInt8, 2, 1},
-                    BufferData{"vec3<float>", DataType::kFloat, 3, 1},
-                    BufferData{"vec4<uint32>", DataType::kUint32, 4, 1},
-                    BufferData{"mat2x4<int32>", DataType::kInt32, 2, 4},
-                    BufferData{"mat3x3<float>", DataType::kFloat, 3, 3},
-                    BufferData{"mat4x2<uint16>", DataType::kUint16, 4,
+    testing::Values(BufferData{"int8", FormatMode::kSInt, 8, 1, 1},
+                    BufferData{"int16", FormatMode::kSInt, 16, 1, 1},
+                    BufferData{"int32", FormatMode::kSInt, 32, 1, 1},
+                    BufferData{"int64", FormatMode::kSInt, 64, 1, 1},
+                    BufferData{"uint8", FormatMode::kUInt, 8, 1, 1},
+                    BufferData{"uint16", FormatMode::kUInt, 16, 1, 1},
+                    BufferData{"uint32", FormatMode::kUInt, 32, 1, 1},
+                    BufferData{"uint64", FormatMode::kUInt, 64, 1, 1},
+                    BufferData{"float", FormatMode::kSFloat, 32, 1, 1},
+                    BufferData{"double", FormatMode::kSFloat, 64, 1, 1},
+                    BufferData{"vec2<int8>", FormatMode::kSInt, 8, 2, 1},
+                    BufferData{"vec3<float>", FormatMode::kSFloat, 32, 3, 1},
+                    BufferData{"vec4<uint32>", FormatMode::kUInt, 32, 4, 1},
+                    BufferData{"mat2x4<int32>", FormatMode::kSInt, 32, 2, 4},
+                    BufferData{"mat3x3<float>", FormatMode::kSFloat, 32, 3, 3},
+                    BufferData{"mat4x2<uint16>", FormatMode::kUInt, 16, 4,
                                2}), );  // NOLINT(whitespace/parens)
 
 struct NameData {
