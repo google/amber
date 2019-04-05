@@ -518,7 +518,7 @@ TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
   probe.SetB(0.1171875f);
 
   Format format;
-  format.SetFormatType(FormatType::kB8G8R8A8_UNORM);
+  format.SetFormatType(FormatType::kR32G32B32_SFLOAT);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 16);
   format.AddComponent(FormatComponentType::kG, FormatMode::kUFloat, 11);
   format.AddComponent(FormatComponentType::kB, FormatMode::kUFloat, 10);
@@ -559,7 +559,7 @@ TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
   probe.SetB(0.1171875f);
 
   Format format;
-  format.SetFormatType(FormatType::kB8G8R8A8_UNORM);
+  format.SetFormatType(FormatType::kR32G32B32_SFLOAT);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 11);
   format.AddComponent(FormatComponentType::kG, FormatMode::kUFloat, 16);
   format.AddComponent(FormatComponentType::kB, FormatMode::kUFloat, 10);

@@ -29,7 +29,7 @@ VertexBuffer::VertexBuffer(Device* device) : device_(device) {}
 VertexBuffer::~VertexBuffer() = default;
 
 void VertexBuffer::SetData(uint8_t location, Buffer* buffer) {
-  size_t size_in_bytes = 0;
+  uint32_t size_in_bytes = 0;
   VkFormat fmt;
 
   if (buffer->IsFormatBuffer()) {
