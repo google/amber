@@ -43,8 +43,7 @@ FrameBuffer::~FrameBuffer() {
   }
 }
 
-Result FrameBuffer::Initialize(CommandBuffer* command_buffer,
-                               VkRenderPass render_pass,
+Result FrameBuffer::Initialize(VkRenderPass render_pass,
                                const Format& depth_format) {
   std::vector<VkImageView> attachments;
 
@@ -66,9 +65,9 @@ Result FrameBuffer::Initialize(CommandBuffer* command_buffer,
           device_, info->buffer->AsFormatBuffer()->GetFormat(),
           VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_));
 
-      Result r =
-          color_images_.back()->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-                                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+      Result r = color_images_.back()->Initialize(
+          VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+          VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
       if (!r.IsSuccess())
         return r;
 
@@ -85,9 +84,9 @@ Result FrameBuffer::Initialize(CommandBuffer* command_buffer,
                                             : VK_IMAGE_ASPECT_DEPTH_BIT),
         width_, height_, depth_);
 
-    Result r =
-        depth_image_->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-                                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    Result r = depth_image_->Initialize(
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
     if (!r.IsSuccess())
       return r;
 
@@ -109,7 +108,6 @@ Result FrameBuffer::Initialize(CommandBuffer* command_buffer,
     return Result("Vulkan::Calling vkCreateFramebuffer Fail");
   }
 
-  ChangeFrameToDrawLayout(command_buffer);
   return {};
 }
 
@@ -120,14 +118,12 @@ void FrameBuffer::ChangeFrameLayout(CommandBuffer* command,
                                     VkPipelineStageFlags depth_stage) {
   for (auto& img : color_images_)
     img->ImageBarrier(command, color_layout, color_stage);
+
   if (depth_image_)
     depth_image_->ImageBarrier(command, depth_layout, depth_stage);
 }
 
 void FrameBuffer::ChangeFrameToDrawLayout(CommandBuffer* command) {
-  if (frame_image_layout_ == FrameImageState::kClearOrDraw)
-    return;
-
   ChangeFrameLayout(command,
                     // Color attachments
                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -135,21 +131,24 @@ void FrameBuffer::ChangeFrameToDrawLayout(CommandBuffer* command) {
                     // Depth attachment
                     VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                     VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
-  frame_image_layout_ = FrameImageState::kClearOrDraw;
 }
 
 void FrameBuffer::ChangeFrameToProbeLayout(CommandBuffer* command) {
-  if (frame_image_layout_ == FrameImageState::kProbe)
-    return;
-
   ChangeFrameLayout(
       command,
       // Color attachments
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
       // Depth attachments
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT);
+}
 
-  frame_image_layout_ = FrameImageState::kProbe;
+void FrameBuffer::ChangeFrameToWriteLayout(CommandBuffer* command) {
+  ChangeFrameLayout(
+      command,
+      // Color attachments
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      // Depth attachments
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT);
 }
 
 void FrameBuffer::TransferColorImagesToHost(CommandBuffer* command) {
