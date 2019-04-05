@@ -13,6 +13,9 @@
 // limitations under the License.
 
 #include "src/datum_type.h"
+
+#include <string>
+
 #include "src/format_parser.h"
 
 namespace amber {
