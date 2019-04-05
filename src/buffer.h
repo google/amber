@@ -152,7 +152,7 @@ class DataBuffer : public Buffer {
   /// Sets the DatumType of the buffer to |type|.
   void SetDatumType(const DatumType& type) { datum_type_ = type; }
   /// Returns the DatumType describing the buffer data.
-  const DatumType& GetDatumType() const { return datum_type_; }
+  const DatumType GetDatumType() const { return datum_type_; }
 
  private:
   Result CopyData(const std::vector<Value>& data);
@@ -179,7 +179,7 @@ class FormatBuffer : public Buffer {
     format_ = std::move(format);
   }
   /// Returns the Format describing the buffer data.
-  const Format& GetFormat() const { return *(format_.get()); }
+  const Format GetFormat() const { return *(format_.get()); }
 
   uint32_t GetTexelStride() { return format_->GetByteSize(); }
 

@@ -39,6 +39,7 @@ enum class DataType {
 class DatumType {
  public:
   DatumType();
+  DatumType(const DatumType&);
   ~DatumType();
 
   DatumType& operator=(const DatumType&);
@@ -66,7 +67,7 @@ class DatumType {
   uint32_t ElementSizeInBytes() const;
   uint32_t SizeInBytes() const;
 
-  std::unique_ptr<Format> AsFormat() const;
+  Format AsFormat() const;
 
  private:
   DataType type_ = DataType::kUint8;

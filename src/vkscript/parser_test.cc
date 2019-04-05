@@ -361,6 +361,7 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   EXPECT_EQ(static_cast<uint8_t>(0U), buffers[1]->GetLocation());
   EXPECT_EQ(FormatType::kR32G32_SFLOAT,
             buffers[1]->AsFormatBuffer()->GetFormat().GetFormatType());
+
   auto& comps1 = buffers[1]->AsFormatBuffer()->GetFormat().GetComponents();
   ASSERT_EQ(2U, comps1.size());
   EXPECT_EQ(FormatMode::kSFloat, comps1[0].mode);

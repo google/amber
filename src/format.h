@@ -54,7 +54,7 @@ class Format {
   void AddComponent(FormatComponentType type, FormatMode mode, uint8_t bits) {
     components_.emplace_back(type, mode, bits);
   }
-  const std::vector<Component>& GetComponents() const { return components_; }
+  const std::vector<Component> GetComponents() const { return components_; }
 
   uint32_t GetByteSize() const;
   bool IsFormatKnown() const { return type_ != FormatType::kUnknown; }
