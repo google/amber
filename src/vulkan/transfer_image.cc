@@ -182,6 +182,9 @@ void TransferImage::CopyToHost(CommandBuffer* command) {
 void TransferImage::ImageBarrier(CommandBuffer* command,
                                  VkImageLayout to_layout,
                                  VkPipelineStageFlags to_stage) {
+  if (to_layout == layout_ && to_stage == stage_)
+    return;
+
   VkImageMemoryBarrier barrier = VkImageMemoryBarrier();
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   barrier.oldLayout = layout_;
@@ -199,8 +202,6 @@ void TransferImage::ImageBarrier(CommandBuffer* command,
 
   switch (layout_) {
     case VK_IMAGE_LAYOUT_PREINITIALIZED:
-      // Based on Vulkan spec, image in VK_IMAGE_LAYOUT_PREINITIALIZED is not
-      // accessible by GPU.
       barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
       break;
     case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
@@ -210,11 +211,7 @@ void TransferImage::ImageBarrier(CommandBuffer* command,
       barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
       break;
     case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-      // An image becomes "transfer dst" only when we send a buffer data to
-      // it.
-      barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT |
-                              VK_ACCESS_SHADER_WRITE_BIT |
-                              VK_ACCESS_TRANSFER_WRITE_BIT;
+      barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
       break;
     case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
       barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
@@ -241,11 +238,7 @@ void TransferImage::ImageBarrier(CommandBuffer* command,
       barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
       break;
     case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-      // An image becomes "transfer dst" only when we send a buffer data to
-      // it.
-      barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT |
-                              VK_ACCESS_SHADER_WRITE_BIT |
-                              VK_ACCESS_TRANSFER_WRITE_BIT;
+      barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
       break;
     default:
       barrier.dstAccessMask = 0;
