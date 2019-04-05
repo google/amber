@@ -34,11 +34,11 @@ void VertexBuffer::SetData(uint8_t location, Buffer* buffer) {
 
   if (buffer->IsFormatBuffer()) {
     auto format = buffer->AsFormatBuffer()->GetFormat();
-    size_in_bytes = format.GetByteSize();
+    size_in_bytes = format.SizeInBytes();
     fmt = device_->GetVkFormat(format);
   } else {
     auto format = buffer->AsDataBuffer()->GetDatumType().AsFormat();
-    size_in_bytes = format.GetByteSize();
+    size_in_bytes = format.SizeInBytes();
     fmt = device_->GetVkFormat(format);
   }
 
@@ -63,10 +63,10 @@ Result VertexBuffer::FillVertexBufferWithData(CommandBuffer* command) {
       size_t bytes = 0;
       if (data_[j]->IsFormatBuffer()) {
         auto& format = data_[j]->AsFormatBuffer()->GetFormat();
-        bytes = format.GetByteSize();
+        bytes = format.SizeInBytes();
       } else {
         auto format = data_[j]->AsDataBuffer()->GetDatumType().AsFormat();
-        bytes = format.GetByteSize();
+        bytes = format.SizeInBytes();
       }
 
       std::memcpy(ptr, data_[j]->GetValues<uint8_t>() + (i * bytes), bytes);

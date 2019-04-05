@@ -170,7 +170,7 @@ class FormatBuffer : public Buffer {
   // Buffer
   bool IsFormatBuffer() const override { return true; }
   uint32_t GetSizeInBytes() const override {
-    return GetSize() * format_->GetByteSize();
+    return GetSize() * format_->SizeInBytes();
   }
   Result SetData(std::vector<Value>&& data) override;
 
@@ -181,7 +181,7 @@ class FormatBuffer : public Buffer {
   /// Returns the Format describing the buffer data.
   const Format GetFormat() const { return *(format_.get()); }
 
-  uint32_t GetTexelStride() { return format_->GetByteSize(); }
+  uint32_t GetTexelStride() { return format_->SizeInBytes(); }
 
   // When copying the image to the host buffer, we specify a row length of 0
   // which results in tight packing of rows.  So the row stride is the product

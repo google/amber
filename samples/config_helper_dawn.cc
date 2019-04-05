@@ -13,7 +13,9 @@
 // limitations under the License.
 
 #include "samples/config_helper_dawn.h"
+
 #include <iostream>
+
 #include "samples/dawn_device_metal.h"
 namespace sample {
 
@@ -38,7 +40,6 @@ amber::Result ConfigHelperDawn::CreateConfig(
     bool,
     bool,
     std::unique_ptr<amber::EngineConfig>* config) {
-
   // Set procedure table and error callback.
   DawnProcTable backendProcs = dawn_native::GetProcs();
   dawnSetProcs(&backendProcs);

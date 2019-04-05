@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/vkscript/section_parser.h"
+
 #include "gtest/gtest.h"
 #include "src/shader_data.h"
 

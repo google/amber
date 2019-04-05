@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/vkscript/command_parser.h"
+
 #include "gtest/gtest.h"
 #include "src/pipeline.h"
 #include "src/vkscript/section_parser.h"

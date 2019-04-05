@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "src/executor.h"
+
 #include <memory>
 #include <string>
 #include <utility>
@@ -19,7 +21,6 @@
 
 #include "gtest/gtest.h"
 #include "src/engine.h"
-#include "src/executor.h"
 #include "src/make_unique.h"
 #include "src/vkscript/parser.h"
 

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "src/verifier.h"
+
 #include <memory>
 #include <utility>
 #include <vector>
@@ -23,7 +25,6 @@
 #include "src/datum_type.h"
 #include "src/make_unique.h"
 #include "src/pipeline.h"
-#include "src/verifier.h"
 
 namespace amber {
 namespace {

@@ -353,7 +353,7 @@ Result FormatBuffer::CopyData(const std::vector<Value>& data) {
     }
 
     i += static_cast<uint32_t>(components.size());
-    ptr += format_->GetByteSize();
+    ptr += format_->SizeInBytes();
   }
   return {};
 }

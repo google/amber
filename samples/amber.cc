@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "amber/amber.h"
+
 #include <cassert>
 #include <cstdlib>
 #include <fstream>
@@ -21,7 +23,6 @@
 #include <utility>
 #include <vector>
 
-#include "amber/amber.h"
 #include "amber/recipe.h"
 #include "samples/config_helper.h"
 #include "samples/png.h"
