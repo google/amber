@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/datum_type.h"
+#include "src/format_parser.h"
 
 namespace amber {
 
@@ -50,6 +51,26 @@ uint32_t DatumType::SizeInBytes() const {
     bytes += (s * column_count_);
 
   return bytes;
+}
+
+std::unique_ptr<Format> DatumType::AsFormat() const {
+  uint32_t bits_per_element = ElementSizeInBytes() * 8;
+  static const char* prefixes = "RGBA";
+  std::string name = "";
+  for (size_t i = 0; i < row_count_; ++i)
+    name += prefixes[i] + std::to_string(bits_per_element);
+
+  name += "_";
+
+  if (IsFloat() || IsDouble())
+    name += "SFLOAT";
+  else if (IsInt8() || IsInt16() || IsInt32() || IsInt64())
+    name += "SINT";
+  else
+    name += "UINT";
+
+  FormatParser fp;
+  return fp.Parse(name);
 }
 
 }  // namespace amber
