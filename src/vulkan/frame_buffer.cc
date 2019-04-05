@@ -65,10 +65,9 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass,
           device_, info->buffer->AsFormatBuffer()->GetFormat(),
           VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_));
 
-      Result r =
-          color_images_.back()->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-                                           VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+      Result r = color_images_.back()->Initialize(
+          VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+          VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
       if (!r.IsSuccess())
         return r;
 
@@ -85,10 +84,9 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass,
                                             : VK_IMAGE_ASPECT_DEPTH_BIT),
         width_, height_, depth_);
 
-    Result r =
-        depth_image_->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-                                 VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    Result r = depth_image_->Initialize(
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
     if (!r.IsSuccess())
       return r;
 
@@ -146,11 +144,11 @@ void FrameBuffer::ChangeFrameToProbeLayout(CommandBuffer* command) {
 
 void FrameBuffer::ChangeFrameToWriteLayout(CommandBuffer* command) {
   ChangeFrameLayout(
-    command,
-    // Color attachments
-    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
-    // Depth attachments
-    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT);
+      command,
+      // Color attachments
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      // Depth attachments
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT);
 }
 
 void FrameBuffer::TransferColorImagesToHost(CommandBuffer* command) {
