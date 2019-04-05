@@ -17,6 +17,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
+
+#include "src/format.h"
 
 namespace amber {
 
@@ -62,6 +65,8 @@ class DatumType {
 
   uint32_t ElementSizeInBytes() const;
   uint32_t SizeInBytes() const;
+
+  std::unique_ptr<Format> AsFormat() const;
 
  private:
   DataType type_ = DataType::kUint8;
