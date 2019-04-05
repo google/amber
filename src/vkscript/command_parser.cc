@@ -647,7 +647,13 @@ Result CommandParser::ProcessSSBO() {
       return Result("Invalid size value for ssbo command: " +
                     token->ToOriginalString());
 
-    cmd->SetSize(token->AsUint32());
+    uint32_t size = token->AsUint32();
+    cmd->SetSize(size);
+
+    // Resize the buffer so we'll correctly create the descriptor sets.
+    auto* buf = cmd->GetBuffer();
+    buf->SetSize(size);
+    buf->ValuePtr()->resize(size);
 
     token = tokenizer_->NextToken();
     if (!token->IsEOS() && !token->IsEOL())

@@ -54,9 +54,6 @@ class Pipeline {
   // buffer data object and put it into buffer data queue in host.
   Result ReadbackDescriptorsToHostDataQueue();
 
-  // Add information of how and what to do with push constant.
-  Result AddPushConstant(const BufferCommand* command);
-
   void SetEntryPointName(VkShaderStageFlagBits stage,
                          const std::string& entry) {
     entry_points_[stage] = entry;
@@ -113,6 +110,9 @@ class Pipeline {
   Result CreateDescriptorSetLayouts();
   Result CreateDescriptorPools();
   Result CreateDescriptorSets();
+
+  // Add information of how and what to do with push constant.
+  Result AddPushConstant(const BufferCommand* command);
 
   PipelineType pipeline_type_;
   std::vector<DescriptorSetInfo> descriptor_set_info_;

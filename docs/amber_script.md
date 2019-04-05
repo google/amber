@@ -313,6 +313,24 @@ RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology> \
   START_IDX <value> COUNT <count_value>
 ```
 
+### Repeating commands
+
+It is sometimes useful to run a given draw command multiple times. This can be
+to detect deterministic rendering or other features.
+
+```
+REPEAT <count>
+<command>+
+END
+```
+
+The commands which can be used inside a `REPEAT` block are:
+  * `CLEAR`
+  * `CLEAR_COLOR`
+  * `COPY`
+  * `EXPECT`
+  * `RUN`
+
 ### Commands
 ```
 # Sets the clear color to use for |pipeline| which must be a `graphics`
@@ -387,7 +405,7 @@ void main() {
 }
 END  # shader
 
-BUFFER kComputeBuffer TYPE vec2<int32> SIZE 524288 FILL 0
+BUFFER kComputeBuffer DATA_TYPE vec2<int32> SIZE 524288 FILL 0
 
 PIPELINE compute kComputePipeline
   ATTACH kComputeShader
@@ -510,7 +528,7 @@ SHADER fragment kFragmentShader GLSL
   }
 END  # shader
 
-BUFFER kPosData TYPE vec2<int32> DATA
+BUFFER kPosData DATA_TYPE vec2<int32> DATA
 # Top-left
 -1 -1  
  0 -1  
@@ -533,7 +551,7 @@ BUFFER kPosData TYPE vec2<int32> DATA
  1  1
 END
 
-BUFFER kColorData TYPE uint32 DATA
+BUFFER kColorData DATA_TYPE uint32 DATA
 # red
 0xff0000ff
 0xff0000ff
@@ -559,7 +577,7 @@ BUFFER kColorData TYPE uint32 DATA
 0xff800080
 END
 
-BUFFER kIndices TYPE int32 DATA
+BUFFER kIndices DATA_TYPE int32 DATA
 0  1  2    2  1  3
 4  5  6    6  5  7
 8  9  10   10 9  11

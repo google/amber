@@ -16,6 +16,7 @@
 #define SRC_COMMAND_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -29,8 +30,9 @@
 
 namespace amber {
 
-class ClearCommand;
+class BufferCommand;
 class ClearColorCommand;
+class ClearCommand;
 class ClearDepthCommand;
 class ClearStencilCommand;
 class CompareBufferCommand;
@@ -43,7 +45,7 @@ class PatchParameterVerticesCommand;
 class Pipeline;
 class ProbeCommand;
 class ProbeSSBOCommand;
-class BufferCommand;
+class RepeatCommand;
 
 class Command {
  public:
@@ -62,10 +64,13 @@ class Command {
     kPipelineProperties,
     kProbe,
     kProbeSSBO,
-    kBuffer
+    kBuffer,
+    kRepeat
   };
 
   virtual ~Command();
+
+  Command::Type GetType() const { return command_type_; }
 
   bool IsDrawRect() const { return command_type_ == Type::kDrawRect; }
   bool IsDrawArrays() const { return command_type_ == Type::kDrawArrays; }
@@ -83,6 +88,7 @@ class Command {
     return command_type_ == Type::kPatchParameterVertices;
   }
   bool IsEntryPoint() const { return command_type_ == Type::kEntryPoint; }
+  bool IsRepeat() { return command_type_ == Type::kRepeat; }
 
   ClearCommand* AsClear();
   ClearColorCommand* AsClearColor();
@@ -98,6 +104,7 @@ class Command {
   ProbeCommand* AsProbe();
   ProbeSSBOCommand* AsProbeSSBO();
   BufferCommand* AsBuffer();
+  RepeatCommand* AsRepeat();
 
   void SetLine(size_t line) { line_ = line; }
   size_t GetLine() const { return line_; }
@@ -506,6 +513,28 @@ class EntryPointCommand : public PipelineCommand {
  private:
   ShaderType shader_type_ = kShaderTypeVertex;
   std::string entry_point_name_;
+};
+
+class RepeatCommand : public Command {
+ public:
+  explicit RepeatCommand(uint32_t count);
+  ~RepeatCommand() override;
+
+  uint32_t GetCount() const { return count_; }
+
+  /// Sets |cmds| to the list of commands to execute against the engine.
+  void SetCommands(std::vector<std::unique_ptr<Command>> cmds) {
+    commands_ = std::move(cmds);
+  }
+
+  /// Retrieves the list of commands to execute against the engine.
+  const std::vector<std::unique_ptr<Command>>& GetCommands() const {
+    return commands_;
+  }
+
+ private:
+  uint32_t count_ = 0;
+  std::vector<std::unique_ptr<Command>> commands_;
 };
 
 }  // namespace amber

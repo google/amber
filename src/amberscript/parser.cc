@@ -72,22 +72,16 @@ Result Parser::Parse(const std::string& data) {
 
     Result r;
     std::string tok = token->AsString();
-    if (tok == "BUFFER") {
+    if (IsRepeatable(tok)) {
+      r = ParseRepeatableCommand(tok);
+    } else if (tok == "BUFFER") {
       r = ParseBuffer();
-    } else if (tok == "CLEAR") {
-      r = ParseClear();
-    } else if (tok == "CLEAR_COLOR") {
-      r = ParseClearColor();
-    } else if (tok == "COPY") {
-      r = ParseCopy();
     } else if (tok == "DEVICE_FEATURE") {
       r = ParseDeviceFeature();
-    } else if (tok == "EXPECT") {
-      r = ParseExpect();
     } else if (tok == "PIPELINE") {
       r = ParsePipelineBlock();
-    } else if (tok == "RUN") {
-      r = ParseRun();
+    } else if (tok == "REPEAT") {
+      r = ParseRepeat();
     } else if (tok == "SHADER") {
       r = ParseShaderBlock();
     } else {
@@ -96,6 +90,7 @@ Result Parser::Parse(const std::string& data) {
     if (!r.IsSuccess())
       return Result(make_error(r.Error()));
   }
+  script_->SetCommands(std::move(command_list_));
 
   // Generate any needed color and depth attachments. This is done before
   // validating in case one of the pipelines specifies the framebuffer size
@@ -144,6 +139,28 @@ Result Parser::Parse(const std::string& data) {
   }
 
   return {};
+}
+
+bool Parser::IsRepeatable(const std::string& name) const {
+  return name == "CLEAR" || name == "CLEAR_COLOR" || name == "COPY" ||
+         name == "EXPECT" || name == "RUN";
+}
+
+// The given |name| must be one of the repeatable commands or this method
+// returns an error result.
+Result Parser::ParseRepeatableCommand(const std::string& name) {
+  if (name == "CLEAR")
+    return ParseClear();
+  if (name == "CLEAR_COLOR")
+    return ParseClearColor();
+  if (name == "COPY")
+    return ParseCopy();
+  if (name == "EXPECT")
+    return ParseExpect();
+  if (name == "RUN")
+    return ParseRun();
+
+  return Result("invalid repeatable command: " + name);
 }
 
 Result Parser::ToShaderType(const std::string& str, ShaderType* type) {
@@ -922,7 +939,7 @@ Result Parser::ParseRun() {
     }
     cmd->SetZ(token->AsUint32());
 
-    script_->AddCommand(std::move(cmd));
+    command_list_.push_back(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
   }
   if (!token->IsString())
@@ -986,7 +1003,7 @@ Result Parser::ParseRun() {
       return r;
     cmd->SetHeight(token->AsFloat());
 
-    script_->AddCommand(std::move(cmd));
+    command_list_.push_back(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
   }
 
@@ -996,7 +1013,7 @@ Result Parser::ParseRun() {
 
     auto cmd = MakeUnique<DrawArraysCommand>(pipeline, PipelineData{});
 
-    script_->AddCommand(std::move(cmd));
+    command_list_.push_back(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
   }
 
@@ -1016,7 +1033,7 @@ Result Parser::ParseClear() {
     return Result("CLEAR command requires graphics pipeline");
 
   auto cmd = MakeUnique<ClearCommand>(pipeline);
-  script_->AddCommand(std::move(cmd));
+  command_list_.push_back(std::move(cmd));
 
   return ValidateEndOfStatement("CLEAR command");
 }
@@ -1103,7 +1120,7 @@ Result Parser::ParseExpect() {
     }
 
     auto cmd = MakeUnique<CompareBufferCommand>(buffer, buffer_2);
-    script_->AddCommand(std::move(cmd));
+    command_list_.push_back(std::move(cmd));
 
     // Early return
     return ValidateEndOfStatement("EXPECT EQ_BUFFER command");
@@ -1192,7 +1209,7 @@ Result Parser::ParseExpect() {
       probe->SetA(token->AsFloat() / 255.f);
     }
 
-    script_->AddCommand(std::move(probe));
+    command_list_.push_back(std::move(probe));
   } else if (token->IsString() && IsComparator(token->AsString())) {
     if (has_y_val)
       return Result("Y value not needed for non-color comparator");
@@ -1213,7 +1230,7 @@ Result Parser::ParseExpect() {
     if (values.empty())
       return Result("missing comparison values for EXPECT command");
     probe->SetValues(std::move(values));
-    script_->AddCommand(std::move(probe));
+    command_list_.push_back(std::move(probe));
     return {};
   } else {
     return Result("unexpected token in EXPECT command: " +
@@ -1273,7 +1290,7 @@ Result Parser::ParseCopy() {
     return Result("COPY origin and destination buffers are identical");
 
   auto cmd = MakeUnique<CopyCommand>(buffer_from, buffer_to);
-  script_->AddCommand(std::move(cmd));
+  command_list_.push_back(std::move(cmd));
 
   return ValidateEndOfStatement("COPY command");
 }
@@ -1334,7 +1351,7 @@ Result Parser::ParseClearColor() {
   token->ConvertToDouble();
   cmd->SetA(token->AsFloat() / 255.f);
 
-  script_->AddCommand(std::move(cmd));
+  command_list_.push_back(std::move(cmd));
   return ValidateEndOfStatement("CLEAR_COLOR command");
 }
 
@@ -1350,6 +1367,51 @@ Result Parser::ParseDeviceFeature() {
   script_->AddRequiredFeature(token->AsString());
 
   return ValidateEndOfStatement("DEVICE_FEATURE command");
+}
+
+Result Parser::ParseRepeat() {
+  auto token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOL())
+    return Result("missing count parameter for REPEAT command");
+  if (!token->IsInteger()) {
+    return Result("invalid count parameter for REPEAT command: " +
+                  token->ToOriginalString());
+  }
+  if (token->AsInt32() <= 0)
+    return Result("count parameter must be > 0 for REPEAT command");
+
+  uint32_t count = token->AsUint32();
+
+  std::vector<std::unique_ptr<Command>> cur_commands;
+  std::swap(cur_commands, command_list_);
+
+  for (token = tokenizer_->NextToken(); !token->IsEOS();
+       token = tokenizer_->NextToken()) {
+    if (token->IsEOL())
+      continue;
+    if (!token->IsString())
+      return Result("expected string");
+
+    std::string tok = token->AsString();
+    if (tok == "END")
+      break;
+    if (!IsRepeatable(tok))
+      return Result("unknown token: " + tok);
+
+    Result r = ParseRepeatableCommand(tok);
+    if (!r.IsSuccess())
+      return r;
+  }
+  if (!token->IsString() || token->AsString() != "END")
+    return Result("missing END for REPEAT command");
+
+  auto cmd = MakeUnique<RepeatCommand>(count);
+  cmd->SetCommands(std::move(command_list_));
+
+  std::swap(cur_commands, command_list_);
+  command_list_.push_back(std::move(cmd));
+
+  return ValidateEndOfStatement("REPEAT command");
 }
 
 }  // namespace amberscript
