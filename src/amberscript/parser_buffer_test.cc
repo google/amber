@@ -376,8 +376,8 @@ TEST_F(AmberScriptParserTest, BufferFormat) {
   auto* buffer = buffers[0]->AsFormatBuffer();
   EXPECT_EQ("my_buf", buffer->GetName());
 
-  auto& fmt = buffer->GetFormat();
-  auto& comps = fmt.GetComponents();
+  auto fmt = buffer->GetFormat();
+  auto& comps = fmt->GetComponents();
   ASSERT_EQ(4U, comps.size());
 
   EXPECT_EQ(FormatComponentType::kR, comps[0].type);

@@ -36,10 +36,8 @@ Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) {
   values->clear();
 
   // TODO(jaebaek): Support other formats
-  if (buffer->AsFormatBuffer()->GetFormat().GetFormatType() !=
-      kDefaultFramebufferFormat) {
+  if (buffer->GetFormat()->GetFormatType() != kDefaultFramebufferFormat)
     return Result("GetFrameBuffer Unsupported buffer format");
-  }
 
   const uint8_t* cpu_memory = buffer->ValuePtr()->data();
   if (!cpu_memory)

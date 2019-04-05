@@ -133,7 +133,7 @@ TEST_F(VkScriptParserTest, RequireBlockFramebuffer) {
   EXPECT_EQ(BufferType::kColor, buffers[0]->GetBufferType());
   EXPECT_TRUE(buffers[0]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
-            buffers[0]->AsFormatBuffer()->GetFormat().GetFormatType());
+            buffers[0]->GetFormat()->GetFormatType());
 }
 
 TEST_F(VkScriptParserTest, RequireBlockDepthStencil) {
@@ -149,7 +149,7 @@ TEST_F(VkScriptParserTest, RequireBlockDepthStencil) {
   EXPECT_EQ(BufferType::kDepth, buffers[1]->GetBufferType());
   EXPECT_TRUE(buffers[1]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT,
-            buffers[1]->AsFormatBuffer()->GetFormat().GetFormatType());
+            buffers[1]->GetFormat()->GetFormatType());
 }
 
 TEST_F(VkScriptParserTest, RequireFbSize) {
@@ -232,12 +232,12 @@ inheritedQueries # line comment
   EXPECT_EQ(BufferType::kColor, buffers[0]->GetBufferType());
   EXPECT_TRUE(buffers[0]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
-            buffers[0]->AsFormatBuffer()->GetFormat().GetFormatType());
+            buffers[0]->GetFormat()->GetFormatType());
 
   EXPECT_EQ(BufferType::kDepth, buffers[1]->GetBufferType());
   EXPECT_TRUE(buffers[1]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT,
-            buffers[1]->AsFormatBuffer()->GetFormat().GetFormatType());
+            buffers[1]->GetFormat()->GetFormatType());
 
   auto feats = script->GetRequiredFeatures();
   EXPECT_EQ("sparseResidency4Samples", feats[0]);
@@ -337,13 +337,13 @@ TEST_F(VkScriptParserTest, VertexDataHeaderFormatString) {
   ASSERT_EQ(BufferType::kVertex, buffers[1]->GetBufferType());
   EXPECT_EQ(static_cast<uint8_t>(0U), buffers[1]->GetLocation());
   EXPECT_EQ(FormatType::kR32G32_SFLOAT,
-            buffers[1]->AsFormatBuffer()->GetFormat().GetFormatType());
+            buffers[1]->GetFormat()->GetFormatType());
   EXPECT_EQ(static_cast<uint32_t>(0), buffers[1]->GetSize());
 
   ASSERT_EQ(BufferType::kVertex, buffers[2]->GetBufferType());
   EXPECT_EQ(1U, buffers[2]->GetLocation());
   EXPECT_EQ(FormatType::kA8B8G8R8_UNORM_PACK32,
-            buffers[2]->AsFormatBuffer()->GetFormat().GetFormatType());
+            buffers[2]->GetFormat()->GetFormatType());
   EXPECT_EQ(static_cast<uint32_t>(0), buffers[2]->GetSize());
 }
 
@@ -362,10 +362,9 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   EXPECT_EQ(static_cast<uint8_t>(0U), buffers[1]->GetLocation());
 
   EXPECT_EQ(FormatType::kR32G32_SFLOAT,
-            buffers[1]->AsFormatBuffer()->GetFormat().GetFormatType());
+            buffers[1]->GetFormat()->GetFormatType());
 
-  auto fmt = buffers[1]->AsFormatBuffer()->GetFormat();
-  auto& comps1 = fmt.GetComponents();
+  auto& comps1 = buffers[1]->GetFormat()->GetComponents();
   ASSERT_EQ(2U, comps1.size());
   EXPECT_EQ(FormatMode::kSFloat, comps1[0].mode);
   EXPECT_EQ(FormatMode::kSFloat, comps1[1].mode);
@@ -374,10 +373,8 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   ASSERT_EQ(BufferType::kVertex, buffers[2]->GetBufferType());
   EXPECT_EQ(1U, buffers[2]->GetLocation());
   EXPECT_EQ(FormatType::kR32G32B32_SINT,
-            buffers[2]->AsFormatBuffer()->GetFormat().GetFormatType());
-
-  auto fmt2 = buffers[2]->AsFormatBuffer()->GetFormat();
-  auto& comps2 = fmt2.GetComponents();
+            buffers[2]->GetFormat()->GetFormatType());
+  auto& comps2 = buffers[2]->GetFormat()->GetComponents();
   ASSERT_EQ(3U, comps2.size());
   EXPECT_EQ(FormatMode::kSInt, comps2[0].mode);
   EXPECT_EQ(FormatMode::kSInt, comps2[1].mode);
