@@ -78,6 +78,10 @@ ProbeSSBOCommand* Command::AsProbeSSBO() {
   return static_cast<ProbeSSBOCommand*>(this);
 }
 
+RepeatCommand* Command::AsRepeat() {
+  return static_cast<RepeatCommand*>(this);
+}
+
 PipelineCommand::PipelineCommand(Type type, Pipeline* pipeline)
     : Command(type), pipeline_(pipeline) {}
 
@@ -155,5 +159,10 @@ EntryPointCommand::EntryPointCommand(Pipeline* pipeline)
     : PipelineCommand(Type::kEntryPoint, pipeline) {}
 
 EntryPointCommand::~EntryPointCommand() = default;
+
+RepeatCommand::RepeatCommand(uint32_t count)
+    : Command(Type::kRepeat), count_(count) {}
+
+RepeatCommand::~RepeatCommand() = default;
 
 }  // namespace amber

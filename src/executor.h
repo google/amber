@@ -41,6 +41,7 @@ class Executor {
 
  private:
   Result CompileShaders(const Script* script, const ShaderMap& shader_map);
+  Result ExecuteCommand(Engine* engine, Command* cmd);
 
   Verifier verifier_;
 };
