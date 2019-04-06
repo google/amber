@@ -29,8 +29,6 @@ std::unique_ptr<Format> FormatParser::Parse(const std::string& data) {
   if (data.empty())
     return nullptr;
 
-  auto fmt = MakeUnique<Format>();
-
   // See if this is a custom glsl string format.
   if (data.find('/', 0) != std::string::npos)
     return ParseGlslFormat(data);
@@ -39,6 +37,7 @@ std::unique_ptr<Format> FormatParser::Parse(const std::string& data) {
   if (type == FormatType::kUnknown)
     return nullptr;
 
+  auto fmt = MakeUnique<Format>();
   fmt->SetFormatType(type);
 
   size_t cur_pos = 0;
@@ -477,15 +476,10 @@ std::unique_ptr<Format> FormatParser::ParseGlslFormat(const std::string& fmt) {
   if (num_components > 4)
     return nullptr;
 
-  std::string new_name = "R" + std::to_string(bits);
-  --num_components;
-
-  if (num_components-- > 0)
-    new_name += "G" + std::to_string(bits);
-  if (num_components-- > 0)
-    new_name += "B" + std::to_string(bits);
-  if (num_components-- > 0)
-    new_name += "A" + std::to_string(bits);
+  std::string new_name = "";
+  static const char* prefix = "RGBA";
+  for (int8_t i = 0; i < num_components; ++i)
+    new_name += prefix[i] + std::to_string(bits);
 
   new_name += "_";
   if (mode == FormatMode::kSInt)
@@ -494,8 +488,6 @@ std::unique_ptr<Format> FormatParser::ParseGlslFormat(const std::string& fmt) {
     new_name += "UINT";
   else if (mode == FormatMode::kSFloat)
     new_name += "SFLOAT";
-  else
-    return nullptr;
 
   return Parse(new_name);
 }

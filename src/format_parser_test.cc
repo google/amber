@@ -1182,7 +1182,7 @@ TEST_F(FormatParserTest, Formats) {
     EXPECT_EQ(fmt.type, format->GetFormatType()) << fmt.name;
     EXPECT_EQ(fmt.pack_size, format->GetPackSize()) << fmt.name;
 
-    auto& comps = format->GetComponents();
+    auto comps = format->GetComponents();
     ASSERT_EQ(fmt.component_count, comps.size());
 
     for (size_t i = 0; i < fmt.component_count; ++i) {
@@ -1213,7 +1213,7 @@ TEST_F(FormatParserTest, GlslString) {
   EXPECT_EQ(FormatType::kR32G32B32_SFLOAT, format->GetFormatType());
   EXPECT_EQ(static_cast<size_t>(0U), format->GetPackSize());
 
-  auto& comps = format->GetComponents();
+  auto comps = format->GetComponents();
   ASSERT_EQ(3U, comps.size());
 
   EXPECT_EQ(FormatComponentType::kR, comps[0].type);

@@ -340,7 +340,7 @@ Result FormatBuffer::CopyData(const std::vector<Value>& data) {
       continue;
     }
 
-    const auto& components = format_->GetComponents();
+    const auto components = format_->GetComponents();
     uint32_t bit_offset = 0;
 
     for (uint32_t k = 0; k < components.size(); ++k) {

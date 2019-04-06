@@ -62,10 +62,10 @@ Result VertexBuffer::FillVertexBufferWithData(CommandBuffer* command) {
     for (uint32_t j = 0; j < data_.size(); ++j) {
       size_t bytes = 0;
       if (data_[j]->IsFormatBuffer()) {
-        auto& format =  data_[j]->AsFormatBuffer()->GetFormat();
+        auto& format = data_[j]->AsFormatBuffer()->GetFormat();
         bytes = format.GetByteSize();
       } else {
-        auto format =  data_[j]->AsDataBuffer()->GetDatumType().AsFormat();
+        auto format = data_[j]->AsDataBuffer()->GetDatumType().AsFormat();
         bytes = format.GetByteSize();
       }
 

@@ -191,9 +191,10 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   info.vk_pipeline = std::move(vk_pipeline);
 
   for (const auto& vtex_info : pipeline->GetVertexBuffers()) {
-    auto fmt = vtex_info.buffer->IsFormatBuffer() ?
-        vtex_info.buffer->AsFormatBuffer()->GetFormat() :
-        vtex_info.buffer->AsDataBuffer()->GetDatumType().AsFormat();
+    auto fmt =
+        vtex_info.buffer->IsFormatBuffer()
+            ? vtex_info.buffer->AsFormatBuffer()->GetFormat()
+            : vtex_info.buffer->AsDataBuffer()->GetDatumType().AsFormat();
 
     if (!device_->IsFormatSupportedByPhysicalDevice(fmt, vtex_info.buffer))
       return Result("Vulkan vertex buffer format is not supported");

@@ -85,11 +85,9 @@ Result Executor::ExecuteCommand(Engine* engine, Command* cmd) {
     assert(buffer);
 
     Format fmt = buffer->GetFormat();
-
-    return verifier_.Probe(cmd->AsProbe(), &fmt,
-                           buffer->GetTexelStride(), buffer->GetRowStride(),
-                           buffer->GetWidth(), buffer->GetHeight(),
-                           buffer->ValuePtr()->data());
+    return verifier_.Probe(cmd->AsProbe(), &fmt, buffer->GetTexelStride(),
+                           buffer->GetRowStride(), buffer->GetWidth(),
+                           buffer->GetHeight(), buffer->ValuePtr()->data());
   }
   if (cmd->IsProbeSSBO()) {
     auto probe_ssbo = cmd->AsProbeSSBO();

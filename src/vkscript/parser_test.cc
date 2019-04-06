@@ -359,10 +359,11 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
 
   ASSERT_EQ(BufferType::kVertex, buffers[1]->GetBufferType());
   EXPECT_EQ(static_cast<uint8_t>(0U), buffers[1]->GetLocation());
+
   EXPECT_EQ(FormatType::kR32G32_SFLOAT,
             buffers[1]->AsFormatBuffer()->GetFormat().GetFormatType());
 
-  auto& comps1 = buffers[1]->AsFormatBuffer()->GetFormat().GetComponents();
+  auto comps1 = buffers[1]->AsFormatBuffer()->GetFormat().GetComponents();
   ASSERT_EQ(2U, comps1.size());
   EXPECT_EQ(FormatMode::kSFloat, comps1[0].mode);
   EXPECT_EQ(FormatMode::kSFloat, comps1[1].mode);
@@ -372,7 +373,7 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   EXPECT_EQ(1U, buffers[2]->GetLocation());
   EXPECT_EQ(FormatType::kR32G32B32_SINT,
             buffers[2]->AsFormatBuffer()->GetFormat().GetFormatType());
-  auto& comps2 = buffers[2]->AsFormatBuffer()->GetFormat().GetComponents();
+  auto comps2 = buffers[2]->AsFormatBuffer()->GetFormat().GetComponents();
   ASSERT_EQ(3U, comps2.size());
   EXPECT_EQ(FormatMode::kSInt, comps2[0].mode);
   EXPECT_EQ(FormatMode::kSInt, comps2[1].mode);
