@@ -189,8 +189,7 @@ void TransferImage::CopyToDevice(CommandBuffer* command) {
 
   device_->GetPtrs()->vkCmdCopyBufferToImage(
       command->GetVkCommandBuffer(), host_accessible_buffer_, image_,
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
-      &copy_region);
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
 
   MemoryBarrier(command);
 }
