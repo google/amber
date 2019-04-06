@@ -194,7 +194,6 @@ void TransferImage::CopyToDevice(CommandBuffer* command) {
   MemoryBarrier(command);
 }
 
-
 void TransferImage::ImageBarrier(CommandBuffer* command,
                                  VkImageLayout to_layout,
                                  VkPipelineStageFlags to_stage) {
