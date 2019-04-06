@@ -379,7 +379,8 @@ Result Parser::ParsePipelineBlock() {
   return ParsePipelineBody("PIPELINE", std::move(pipeline));
 }
 
-Result Parser::ParsePipelineBody(const std::string& cmd_name, std::unique_ptr<Pipeline> pipeline) {
+Result Parser::ParsePipelineBody(const std::string& cmd_name,
+                                 std::unique_ptr<Pipeline> pipeline) {
   std::unique_ptr<Token> token;
   for (token = tokenizer_->NextToken(); !token->IsEOS();
        token = tokenizer_->NextToken()) {
