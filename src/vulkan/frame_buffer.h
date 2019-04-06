@@ -51,8 +51,10 @@ class FrameBuffer {
   // framebuffer to the host accessible buffer. The actual submission
   // of the command must be done later.
   void TransferColorImagesToHost(CommandBuffer* command);
+  void TransferColorImagesToDevice(CommandBuffer* command);
 
   void CopyImagesToBuffers();
+  void CopyBuffersToImages();
 
   uint32_t GetWidth() const { return width_; }
   uint32_t GetHeight() const { return height_; }

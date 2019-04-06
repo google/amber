@@ -47,6 +47,7 @@ class TransferImage : public Resource {
   // host-accessible buffer. The actual submission of the command
   // must be done later.
   void CopyToHost(CommandBuffer* command) override;
+  void CopyToDevice(CommandBuffer* command) override;
 
  private:
   Result CreateVkImageView();
@@ -55,6 +56,7 @@ class TransferImage : public Resource {
                                         VkMemoryPropertyFlags flags,
                                         bool force_flags,
                                         uint32_t* memory_type_index);
+  VkBufferImageCopy CreateBufferImageCopy();
 
   VkBuffer host_accessible_buffer_ = VK_NULL_HANDLE;
   VkDeviceMemory host_accessible_memory_ = VK_NULL_HANDLE;
