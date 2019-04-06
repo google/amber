@@ -48,6 +48,7 @@ class Resource {
   virtual ~Resource();
 
   virtual void CopyToHost(CommandBuffer* command) = 0;
+  virtual void CopyToDevice(CommandBuffer* command) = 0;
 
   void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
 
