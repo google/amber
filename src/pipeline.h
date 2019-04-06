@@ -128,9 +128,7 @@ class Pipeline {
   Result SetIndexBuffer(Buffer* buf);
   Buffer* GetIndexBuffer() const { return index_buffer_; }
 
-  void AddBuffer(Buffer* buf,
-                 uint32_t descriptor_set,
-                 uint32_t binding);
+  void AddBuffer(Buffer* buf, uint32_t descriptor_set, uint32_t binding);
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
 
   Buffer* GetBufferForBinding(uint32_t descriptor_set, uint32_t binding) const;

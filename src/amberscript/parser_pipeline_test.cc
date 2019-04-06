@@ -402,7 +402,6 @@ END
             r.Error());
 }
 
-
 TEST_F(AmberScriptParserTest, DerivePipelineNoParams) {
   std::string in = R"(
 DERIVE_PIPELINE

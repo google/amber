@@ -306,8 +306,8 @@ Buffer* Pipeline::GetBufferForBinding(uint32_t descriptor_set,
 }
 
 void Pipeline::AddBuffer(Buffer* buf,
-               uint32_t descriptor_set,
-               uint32_t binding) {
+                         uint32_t descriptor_set,
+                         uint32_t binding) {
   // If this buffer binding already exists, overwrite with the new buffer.
   for (auto& info : buffers_) {
     if (info.descriptor_set == descriptor_set && info.binding == binding) {

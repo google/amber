@@ -191,8 +191,7 @@ TEST_F(PipelineTest, GraphicsPipelineRequiresColorAttachment) {
   EXPECT_EQ("PIPELINE missing color attachment", r.Error());
 }
 
-TEST_F(PipelineTest,
-       GraphicsPipelineRequiresVertexAndFragmentShader) {
+TEST_F(PipelineTest, GraphicsPipelineRequiresVertexAndFragmentShader) {
   Shader v(kShaderTypeVertex);
   Shader f(kShaderTypeFragment);
   Shader g(kShaderTypeGeometry);
@@ -252,8 +251,7 @@ TEST_F(PipelineTest, GraphicsPipelineMissingVertexShader) {
   EXPECT_EQ("graphics pipeline requires a vertex shader", r.Error());
 }
 
-TEST_F(PipelineTest,
-       GraphicsPipelineMissingVertexAndFragmentShader) {
+TEST_F(PipelineTest, GraphicsPipelineMissingVertexAndFragmentShader) {
   Shader g(kShaderTypeGeometry);
 
   Pipeline p(PipelineType::kGraphics);
