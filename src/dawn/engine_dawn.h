@@ -78,14 +78,14 @@ class EngineDawn : public Engine {
 
   ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.
   ::dawn::Queue queue_;
-  ::dawn::CommandBufferBuilder command_buffer_builder_;
+  ::dawn::CommandEncoder command_buffer_builder_;
 
   std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
       module_for_type_;
-  // Accumulated data for the current compute pipeline.
-  ComputePipelineInfo compute_pipeline_info_;
-  // Accumulated data for the current render pipeline.
-  RenderPipelineInfo render_pipeline_info_;
+  // // Accumulated data for the current compute pipeline.
+  // ComputePipelineInfo compute_pipeline_info_;
+  // // Accumulated data for the current render pipeline.
+  // RenderPipelineInfo render_pipeline_info_;
 };
 
 }  // namespace dawn
