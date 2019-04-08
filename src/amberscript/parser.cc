@@ -1208,7 +1208,7 @@ Result Parser::ParseExpect() {
     auto probe = MakeUnique<ProbeSSBOCommand>(buffer);
     probe->SetLine(line);
     probe->SetComparator(ToComparator(token->AsString()));
-    probe->SetDatumType(buffer->AsDataBuffer()->GetDatumType());
+    probe->SetFormat(buffer->AsDataBuffer()->GetDatumType().AsFormat());
     probe->SetOffset(static_cast<uint32_t>(x));
 
     std::vector<Value> values;

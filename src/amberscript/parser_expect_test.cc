@@ -654,7 +654,7 @@ EXPECT orig_buf IDX 5 EQ 11)";
   auto* probe = cmd->AsProbeSSBO();
   EXPECT_EQ(ProbeSSBOCommand::Comparator::kEqual, probe->GetComparator());
   EXPECT_EQ(5U, probe->GetOffset());
-  EXPECT_TRUE(probe->GetDatumType().IsInt32());
+  EXPECT_TRUE(probe->GetFormat()->IsInt32());
   ASSERT_EQ(1U, probe->GetValues().size());
   EXPECT_EQ(11U, probe->GetValues()[0].AsInt32());
 }

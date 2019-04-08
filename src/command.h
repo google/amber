@@ -25,7 +25,6 @@
 #include "amber/value.h"
 #include "src/buffer.h"
 #include "src/command_data.h"
-#include "src/datum_type.h"
 #include "src/pipeline_data.h"
 
 namespace amber {
@@ -360,8 +359,8 @@ class ProbeSSBOCommand : public Probe {
   void SetOffset(uint32_t offset) { offset_ = offset; }
   uint32_t GetOffset() const { return offset_; }
 
-  void SetDatumType(const DatumType& type) { datum_type_ = type; }
-  const DatumType& GetDatumType() const { return datum_type_; }
+  void SetFormat(std::unique_ptr<Format> fmt) { format_ = std::move(fmt); }
+  Format* GetFormat() const { return format_.get(); }
 
   void SetValues(std::vector<Value>&& values) { values_ = std::move(values); }
   const std::vector<Value>& GetValues() const { return values_; }
@@ -371,7 +370,7 @@ class ProbeSSBOCommand : public Probe {
   uint32_t descriptor_set_id_ = 0;
   uint32_t binding_num_ = 0;
   uint32_t offset_ = 0;
-  DatumType datum_type_;
+  std::unique_ptr<Format> format_;
   std::vector<Value> values_;
 };
 

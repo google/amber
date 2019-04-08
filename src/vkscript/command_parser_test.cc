@@ -3922,10 +3922,10 @@ probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2)";
   EXPECT_EQ(ProbeSSBOCommand::Comparator::kGreaterOrEqual,
             cmd->GetComparator());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsFloat());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsFloat());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.3f, 4.2f, 1.2f};
@@ -3957,10 +3957,10 @@ probe ssbo vec3 6 2 >= 2.3 4.2 1.2)";
   EXPECT_EQ(ProbeSSBOCommand::Comparator::kGreaterOrEqual,
             cmd->GetComparator());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsFloat());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsFloat());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.3f, 4.2f, 1.2f};
@@ -3992,10 +3992,10 @@ probe ssbo vec3 6 2 >= 2.3 4.2 1.2)";
   EXPECT_EQ(ProbeSSBOCommand::Comparator::kGreaterOrEqual,
             cmd->GetComparator());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsFloat());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsFloat());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.3f, 4.2f, 1.2f};
@@ -4026,10 +4026,10 @@ probe ssbo i16vec3 6 2 <= 2 4 1)";
   EXPECT_EQ(2U, cmd->GetOffset());
   EXPECT_EQ(ProbeSSBOCommand::Comparator::kLessOrEqual, cmd->GetComparator());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsInt16());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsInt16());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<int16_t> results = {2, 4, 1};
@@ -4060,10 +4060,10 @@ probe ssbo i16vec3 6 2 == 2 4 1 3 6 8)";
   EXPECT_EQ(2U, cmd->GetOffset());
   EXPECT_EQ(ProbeSSBOCommand::Comparator::kEqual, cmd->GetComparator());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsInt16());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsInt16());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<int16_t> results = {2, 4, 1, 3, 6, 8};

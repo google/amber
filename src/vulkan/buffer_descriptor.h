@@ -22,11 +22,13 @@
 #include "amber/value.h"
 #include "amber/vulkan_header.h"
 #include "src/buffer.h"
-#include "src/datum_type.h"
 #include "src/engine.h"
 #include "src/vulkan/transfer_buffer.h"
 
 namespace amber {
+
+class Format;
+
 namespace vulkan {
 
 class CommandBuffer;
