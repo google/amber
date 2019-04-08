@@ -722,12 +722,18 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
   if (!token->IsString())
     return Result("BUFFER invalid data type");
 
-  DatumType type;
-  Result r = ToDatumType(token->AsString(), &type);
-  if (!r.IsSuccess())
-    return r;
+  FormatParser fp;
+  auto fmt = fp.Parse(token->AsString());
+  if (fmt != nullptr) {
+    buffer->SetFormat(std::move(fmt));
+  } else {
+    DatumType type;
+    Result r = ToDatumType(token->AsString(), &type);
+    if (!r.IsSuccess())
+      return r;
 
-  buffer->SetFormat(type.AsFormat());
+    buffer->SetFormat(type.AsFormat());
+  }
 
   token = tokenizer_->NextToken();
   if (!token->IsString())
@@ -986,8 +992,50 @@ Result Parser::ParseRun() {
     if (!pipeline->IsGraphics())
       return Result("RUN command requires graphics pipeline");
 
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "AS")
+      return Result("missing AS for RUN command");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString()) {
+      return Result("invalid topology for RUN command: " +
+                    token->ToOriginalString());
+    }
+
+    Topology topo = NameToTopology(token->AsString());
+    if (topo == Topology::kUnknown)
+      return Result("invalid topology for RUN command: " + token->AsString());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "START_IDX")
+      return Result("missing START_IDX for RUN command");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger()) {
+      return Result("invalid START_IDX value for RUN command: " +
+                    token->ToOriginalString());
+    }
+    if (token->AsInt32() < 0)
+      return Result("START_IDX value must be >= 0 for RUN command");
+    uint32_t start_idx = token->AsUint32();
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "COUNT")
+      return Result("missing COUNT for RUN command");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger()) {
+      return Result("invalid COUNT value for RUN command: " +
+                    token->ToOriginalString());
+    }
+    if (token->AsInt32() <= 0)
+      return Result("COUNT value must be > 0 for RUN command");
+
     auto cmd = MakeUnique<DrawArraysCommand>(pipeline, PipelineData{});
     cmd->SetLine(line);
+    cmd->SetTopology(topo);
+    cmd->SetFirstVertexIndex(start_idx);
+    cmd->SetVertexCount(token->AsUint32());
 
     command_list_.push_back(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
