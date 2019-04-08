@@ -89,7 +89,7 @@ class CommandParser {
   Result TokenToDouble(Token* token, double* val) const;
   Result ParseBoolean(const std::string& str, bool* result);
   Result ParseValues(const std::string& name,
-                     const DatumType& type,
+                     Format* fmt,
                      std::vector<Value>* values,
                      bool use_std430_layout);
 

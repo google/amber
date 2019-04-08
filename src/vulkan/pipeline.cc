@@ -300,9 +300,8 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
 
   if (!cmd->GetValues().empty()) {
     auto* buf_desc = static_cast<BufferDescriptor*>(desc);
-    Result r =
-        buf_desc->AddToBuffer(cmd->GetDatumType().GetType(), cmd->GetOffset(),
-                              cmd->GetSize(), cmd->GetValues());
+    Result r = buf_desc->AddToBuffer(cmd->GetFormat(), cmd->GetOffset(),
+                                     cmd->GetSize(), cmd->GetValues());
     if (!r.IsSuccess())
       return r;
   }

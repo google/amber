@@ -27,7 +27,11 @@ uint32_t Format::SizeInBytes() const {
   for (const auto& comp : components_)
     bits += comp.num_bits;
 
-  return (bits / 8) * column_count_;
+  if (is_std140_ && components_.size() == 3)
+    bits += components_[0].num_bits;
+
+  uint32_t bytes_per_element = bits / 8;
+  return bytes_per_element * column_count_;
 }
 
 bool Format::AreAllComponents(FormatMode mode, uint32_t bits) const {

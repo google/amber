@@ -3094,10 +3094,10 @@ TEST_F(CommandParserTest, SSBOSubdataWithFloat) {
   EXPECT_EQ(16U, cmd->GetSize());
   ASSERT_TRUE(cmd->IsSubdata());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsFloat());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsFloat());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.3f, 4.2f, 1.2f};
@@ -3139,10 +3139,10 @@ TEST_F(CommandParserTest, SSBOSubdataWithDescriptorSet) {
   EXPECT_EQ(16U, cmd->GetOffset());
   EXPECT_EQ(16U, cmd->GetSize());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsFloat());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsFloat());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.3f, 4.2f, 1.2f};
@@ -3173,10 +3173,10 @@ TEST_F(CommandParserTest, SSBOSubdataWithInts) {
   EXPECT_EQ(8U, cmd->GetOffset());
   EXPECT_EQ(8U, cmd->GetSize());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsInt16());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsInt16());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<int16_t> results = {2, 4, 1};
@@ -3207,10 +3207,10 @@ TEST_F(CommandParserTest, SSBOSubdataWithMultipleVectors) {
   EXPECT_EQ(8U, cmd->GetOffset());
   EXPECT_EQ(16U, cmd->GetSize());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsInt16());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsInt16());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<int16_t> results = {2, 4, 1, 3, 6, 8};
@@ -3340,10 +3340,10 @@ TEST_F(CommandParserTest, Uniform) {
   EXPECT_EQ(32U, cmd->GetOffset());
   EXPECT_EQ(16U, cmd->GetSize());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsFloat());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsFloat());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.1f, 3.2f, 4.3f};
@@ -3382,10 +3382,10 @@ TEST_F(CommandParserTest, UniformWithContinuation) {
   EXPECT_EQ(16U, cmd->GetOffset());
   EXPECT_EQ(32U, cmd->GetSize());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsFloat());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsFloat());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.1f, 3.2f, 4.3f, 5.4f, 6.7f, 8.9f};
@@ -3460,10 +3460,10 @@ TEST_F(CommandParserTest, UniformUBO) {
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetOffset());
   EXPECT_EQ(16U, cmd->GetSize());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsFloat());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsFloat());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.1f, 3.2f, 4.3f};
@@ -3504,10 +3504,10 @@ TEST_F(CommandParserTest, UniformUBOWithDescriptorSet) {
   EXPECT_EQ(16U, cmd->GetOffset());
   EXPECT_EQ(16U, cmd->GetSize());
 
-  const auto& type = cmd->GetDatumType();
-  EXPECT_TRUE(type.IsFloat());
-  EXPECT_EQ(1U, type.ColumnCount());
-  EXPECT_EQ(3U, type.RowCount());
+  auto* fmt = cmd->GetFormat();
+  EXPECT_TRUE(fmt->IsFloat());
+  EXPECT_EQ(1U, fmt->ColumnCount());
+  EXPECT_EQ(3U, fmt->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.1f, 3.2f, 4.3f};

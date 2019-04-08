@@ -60,38 +60,26 @@ void SetValuesForBuffer(void* buffer, const std::vector<Value>& values) {
 
 void BufferInput::UpdateBufferWithValues(void* buffer) const {
   uint8_t* ptr = static_cast<uint8_t*>(buffer) + offset;
-  switch (type) {
-    case DataType::kInt8:
-      SetValuesForBuffer<int8_t>(ptr, values);
-      break;
-    case DataType::kUint8:
-      SetValuesForBuffer<uint8_t>(ptr, values);
-      break;
-    case DataType::kInt16:
-      SetValuesForBuffer<int16_t>(ptr, values);
-      break;
-    case DataType::kUint16:
-      SetValuesForBuffer<uint16_t>(ptr, values);
-      break;
-    case DataType::kInt32:
-      SetValuesForBuffer<int32_t>(ptr, values);
-      break;
-    case DataType::kUint32:
-      SetValuesForBuffer<uint32_t>(ptr, values);
-      break;
-    case DataType::kInt64:
-      SetValuesForBuffer<int64_t>(ptr, values);
-      break;
-    case DataType::kUint64:
-      SetValuesForBuffer<uint64_t>(ptr, values);
-      break;
-    case DataType::kFloat:
-      SetValuesForBuffer<float>(ptr, values);
-      break;
-    case DataType::kDouble:
-      SetValuesForBuffer<double>(ptr, values);
-      break;
-  }
+  if (format->IsInt8())
+    SetValuesForBuffer<int8_t>(ptr, values);
+  else if (format->IsUint8())
+    SetValuesForBuffer<uint8_t>(ptr, values);
+  else if (format->IsInt16())
+    SetValuesForBuffer<int16_t>(ptr, values);
+  else if (format->IsUint16())
+    SetValuesForBuffer<uint16_t>(ptr, values);
+  else if (format->IsInt32())
+    SetValuesForBuffer<int32_t>(ptr, values);
+  else if (format->IsUint32())
+    SetValuesForBuffer<uint32_t>(ptr, values);
+  else if (format->IsInt64())
+    SetValuesForBuffer<int64_t>(ptr, values);
+  else if (format->IsUint64())
+    SetValuesForBuffer<uint64_t>(ptr, values);
+  else if (format->IsFloat())
+    SetValuesForBuffer<float>(ptr, values);
+  else if (format->IsDouble())
+    SetValuesForBuffer<double>(ptr, values);
 }
 
 Resource::Resource(Device* device, uint32_t size_in_bytes)
