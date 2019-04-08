@@ -40,7 +40,6 @@ amber::Result ConfigHelperDawn::CreateConfig(
   dawn_instance_.DiscoverDefaultAdapters();
 
   for (dawn_native::Adapter& adapter : dawn_instance_.GetAdapters()) {
-
 #if AMBER_DAWN_METAL
     ::dawn_native::BackendType backendType = ::dawn_native::BackendType::Metal;
 #else  // assuming VULKAN
