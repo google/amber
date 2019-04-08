@@ -67,8 +67,6 @@ class Buffer {
   /// Returns |true| if this is a buffer described by a |Format|.
   virtual bool IsFormatBuffer() const { return false; }
 
-  virtual Format* GetFormat() = 0;
-
   /// Converts the buffer to a |DataBuffer|. Note, |IsDataBuffer| must be true
   /// for this method to be used.
   DataBuffer* AsDataBuffer();
@@ -84,6 +82,13 @@ class Buffer {
   void SetLocation(uint8_t loc) { location_ = loc; }
   /// Get the location binding value for the buffer.
   uint8_t GetLocation() const { return location_; }
+
+  /// Sets the Format of the buffer to |format|.
+  void SetFormat(std::unique_ptr<Format> format) {
+    format_ = std::move(format);
+  }
+  /// Returns the Format describing the buffer data.
+  Format* GetFormat() { return format_.get(); }
 
   /// Sets the buffer |name|.
   void SetName(const std::string& name) { name_ = name; }
@@ -102,7 +107,9 @@ class Buffer {
   void SetHeight(uint32_t height) { height_ = height; }
 
   /// Returns the number of bytes needed for the data in the buffer.
-  virtual uint32_t GetSizeInBytes() const { return size_; }
+  virtual uint32_t GetSizeInBytes() const {
+    return GetSize() * format_->SizeInBytes();
+  }
 
   /// Sets the data into the buffer. The size will also be updated to be the
   /// size of the data provided.
@@ -127,6 +134,7 @@ class Buffer {
   Buffer();
 
   std::vector<uint8_t> values_;
+  std::unique_ptr<Format> format_;
 
  private:
   BufferType buffer_type_ = BufferType::kUnknown;
@@ -150,14 +158,6 @@ class DataBuffer : public Buffer {
     return GetSize() * datum_type_.SizeInBytes();
   }
   Result SetData(std::vector<Value>&& data) override;
-  Format* GetFormat() override {
-    if (format_)
-      return format_.get();
-
-    auto fmt = datum_type_.AsFormat();
-    format_.swap(fmt);
-    return format_.get();
-  }
 
   /// Sets the DatumType of the buffer to |type|.
   void SetDatumType(const DatumType& type) {
@@ -170,7 +170,6 @@ class DataBuffer : public Buffer {
  private:
   Result CopyData(const std::vector<Value>& data);
 
-  std::unique_ptr<Format> format_;
   DatumType datum_type_;
 };
 
@@ -183,17 +182,8 @@ class FormatBuffer : public Buffer {
 
   // Buffer
   bool IsFormatBuffer() const override { return true; }
-  uint32_t GetSizeInBytes() const override {
-    return GetSize() * format_->SizeInBytes();
-  }
-  Result SetData(std::vector<Value>&& data) override;
 
-  /// Sets the Format of the buffer to |format|.
-  void SetFormat(std::unique_ptr<Format> format) {
-    format_ = std::move(format);
-  }
-  /// Returns the Format describing the buffer data.
-  Format* GetFormat() override { return format_.get(); }
+  Result SetData(std::vector<Value>&& data) override;
 
   uint32_t GetTexelStride() { return format_->SizeInBytes(); }
 
@@ -204,8 +194,6 @@ class FormatBuffer : public Buffer {
 
  private:
   Result CopyData(const std::vector<Value>& data);
-
-  std::unique_ptr<Format> format_;
 };
 
 }  // namespace amber
