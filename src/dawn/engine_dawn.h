@@ -82,10 +82,10 @@ class EngineDawn : public Engine {
 
   std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
       module_for_type_;
-  // // Accumulated data for the current compute pipeline.
-  // ComputePipelineInfo compute_pipeline_info_;
-  // // Accumulated data for the current render pipeline.
-  // RenderPipelineInfo render_pipeline_info_;
+  // Accumulated data for the current compute pipeline.
+  ComputePipelineInfo compute_pipeline_info_;
+  // Accumulated data for the current render pipeline.
+  RenderPipelineInfo render_pipeline_info_;
 };
 
 }  // namespace dawn
