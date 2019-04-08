@@ -46,7 +46,7 @@ class EngineDawn : public Engine {
   // later.  Assumes necessary shader modules have been created.  A compute
   // pipeline requires a compute shader.  A graphics pipeline requires a vertex
   // and a fragment shader.
-  Result CreatePipeline(Pipeline*) override;
+  Result CreatePipeline(::amber::Pipeline*) override;
 
   Result DoClearColor(const ClearColorCommand* cmd) override;
   Result DoClearStencil(const ClearStencilCommand* cmd) override;
@@ -61,31 +61,32 @@ class EngineDawn : public Engine {
   Result DoBuffer(const BufferCommand* cmd) override;
 
  private:
-  // Creates a command buffer builder if it doesn't already exist.
-  Result CreateCommandBufferBuilderIfNeeded();
-  // Destroys the current command buffer builder.
-  void DestroyCommandBufferBuilder();
+  // Returns the Dawn-specific render pipepline for the given command,
+  // if it exists.  Returns nullptr otherwise.
+  RenderPipelineInfo* GetRenderPipeline(
+      const ::amber::PipelineCommand* command) {
+    return pipeline_map_[command->GetPipeline()].render_pipeline.get();
+  }
+
   // Creates Dawn objects necessary for a render pipeline.  This creates
   // a framebuffer texture, a framebuffer buffer, and a command buffer
   // builder.  Returns a result code.
-  Result CreateRenderObjectsIfNeeded();
+  Result CreateRenderObjectsIfNeeded(RenderPipelineInfo* render_pipeline);
   // If they don't already exist, creates the framebuffer texture for use
   // on the device, the buffer on the host that will eventually hold the
   // resulting pixels for use in checking expectations, and bookkeeping info
   // for that host-side buffer.
-  Result CreateFramebufferIfNeeded();
+  Result CreateFramebufferIfNeeded(RenderPipelineInfo* render_pipeline);
   Result SetShader(ShaderType type, const std::vector<uint32_t>& data);
 
   ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.
-  ::dawn::Queue queue_;
-  ::dawn::CommandEncoder command_buffer_builder_;
+
+  // Mapping from the generic engine's Pipeline object to our own Dawn-specific
+  // pipelines.
+  std::unordered_map<amber::Pipeline*, ::amber::dawn::Pipeline> pipeline_map_;
 
   std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
       module_for_type_;
-  // Accumulated data for the current compute pipeline.
-  ComputePipelineInfo compute_pipeline_info_;
-  // Accumulated data for the current render pipeline.
-  RenderPipelineInfo render_pipeline_info_;
 };
 
 }  // namespace dawn
