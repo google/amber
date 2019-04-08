@@ -87,12 +87,14 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_expect_test.cc
     amberscript/parser_framebuffer_test.cc
     amberscript/parser_pipeline_test.cc
+    amberscript/parser_repeat_test.cc
     amberscript/parser_run_test.cc
     amberscript/parser_shader_opt_test.cc
     amberscript/parser_shader_test.cc
     amberscript/parser_test.cc
     buffer_test.cc
     command_data_test.cc
+    datum_type_test.cc
     descriptor_set_and_binding_parser_test.cc
     executor_test.cc
     format_parser_test.cc

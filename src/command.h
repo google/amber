@@ -16,6 +16,7 @@
 #define SRC_COMMAND_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -29,10 +30,12 @@
 
 namespace amber {
 
-class ClearCommand;
+class BufferCommand;
 class ClearColorCommand;
+class ClearCommand;
 class ClearDepthCommand;
 class ClearStencilCommand;
+class CompareBufferCommand;
 class ComputeCommand;
 class CopyCommand;
 class DrawArraysCommand;
@@ -42,7 +45,7 @@ class PatchParameterVerticesCommand;
 class Pipeline;
 class ProbeCommand;
 class ProbeSSBOCommand;
-class BufferCommand;
+class RepeatCommand;
 
 class Command {
  public:
@@ -52,6 +55,7 @@ class Command {
     kClearDepth,
     kClearStencil,
     kCompute,
+    kCompareBuffer,
     kCopy,
     kDrawArrays,
     kDrawRect,
@@ -60,13 +64,17 @@ class Command {
     kPipelineProperties,
     kProbe,
     kProbeSSBO,
-    kBuffer
+    kBuffer,
+    kRepeat
   };
 
   virtual ~Command();
 
+  Command::Type GetType() const { return command_type_; }
+
   bool IsDrawRect() const { return command_type_ == Type::kDrawRect; }
   bool IsDrawArrays() const { return command_type_ == Type::kDrawArrays; }
+  bool IsCompareBuffer() const { return command_type_ == Type::kCompareBuffer; }
   bool IsCompute() const { return command_type_ == Type::kCompute; }
   bool IsCopy() const { return command_type_ == Type::kCopy; }
   bool IsProbe() const { return command_type_ == Type::kProbe; }
@@ -80,11 +88,13 @@ class Command {
     return command_type_ == Type::kPatchParameterVertices;
   }
   bool IsEntryPoint() const { return command_type_ == Type::kEntryPoint; }
+  bool IsRepeat() { return command_type_ == Type::kRepeat; }
 
   ClearCommand* AsClear();
   ClearColorCommand* AsClearColor();
   ClearDepthCommand* AsClearDepth();
   ClearStencilCommand* AsClearStencil();
+  CompareBufferCommand* AsCompareBuffer();
   ComputeCommand* AsCompute();
   CopyCommand* AsCopy();
   DrawArraysCommand* AsDrawArrays();
@@ -94,6 +104,7 @@ class Command {
   ProbeCommand* AsProbe();
   ProbeSSBOCommand* AsProbeSSBO();
   BufferCommand* AsBuffer();
+  RepeatCommand* AsRepeat();
 
   void SetLine(size_t line) { line_ = line; }
   size_t GetLine() const { return line_; }
@@ -185,6 +196,19 @@ class DrawArraysCommand : public PipelineCommand {
   uint32_t first_vertex_index_ = 0;
   uint32_t vertex_count_ = 0;
   uint32_t instance_count_ = 0;
+};
+
+class CompareBufferCommand : public Command {
+ public:
+  CompareBufferCommand(Buffer* buffer_1, Buffer* buffer_2);
+  ~CompareBufferCommand() override;
+
+  Buffer* GetBuffer1() const { return buffer_1_; }
+  Buffer* GetBuffer2() const { return buffer_2_; }
+
+ private:
+  Buffer* buffer_1_;
+  Buffer* buffer_2_;
 };
 
 class ComputeCommand : public PipelineCommand {
@@ -489,6 +513,28 @@ class EntryPointCommand : public PipelineCommand {
  private:
   ShaderType shader_type_ = kShaderTypeVertex;
   std::string entry_point_name_;
+};
+
+class RepeatCommand : public Command {
+ public:
+  explicit RepeatCommand(uint32_t count);
+  ~RepeatCommand() override;
+
+  uint32_t GetCount() const { return count_; }
+
+  /// Sets |cmds| to the list of commands to execute against the engine.
+  void SetCommands(std::vector<std::unique_ptr<Command>> cmds) {
+    commands_ = std::move(cmds);
+  }
+
+  /// Retrieves the list of commands to execute against the engine.
+  const std::vector<std::unique_ptr<Command>>& GetCommands() const {
+    return commands_;
+  }
+
+ private:
+  uint32_t count_ = 0;
+  std::vector<std::unique_ptr<Command>> commands_;
 };
 
 }  // namespace amber

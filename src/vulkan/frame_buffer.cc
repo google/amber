@@ -65,9 +65,9 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass,
           device_, info->buffer->AsFormatBuffer()->GetFormat(),
           VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_));
 
-      Result r =
-          color_images_.back()->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-                                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+      Result r = color_images_.back()->Initialize(
+          VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+          VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
       if (!r.IsSuccess())
         return r;
 
@@ -84,9 +84,9 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass,
                                             : VK_IMAGE_ASPECT_DEPTH_BIT),
         width_, height_, depth_);
 
-    Result r =
-        depth_image_->Initialize(VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-                                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    Result r = depth_image_->Initialize(
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
     if (!r.IsSuccess())
       return r;
 
@@ -111,69 +111,49 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass,
   return {};
 }
 
-Result FrameBuffer::ChangeFrameImageLayout(CommandBuffer* command,
-                                           FrameImageState layout) {
-  if (layout == FrameImageState::kInit) {
-    return Result(
-        "FrameBuffer::ChangeFrameImageLayout new layout cannot be kInit");
-  }
+void FrameBuffer::ChangeFrameLayout(CommandBuffer* command,
+                                    VkImageLayout color_layout,
+                                    VkPipelineStageFlags color_stage,
+                                    VkImageLayout depth_layout,
+                                    VkPipelineStageFlags depth_stage) {
+  for (auto& img : color_images_)
+    img->ImageBarrier(command, color_layout, color_stage);
 
-  if (layout == frame_image_layout_)
-    return {};
-
-  if (layout == FrameImageState::kProbe) {
-    if (frame_image_layout_ != FrameImageState::kClearOrDraw) {
-      return Result(
-          "FrameBuffer::ChangeFrameImageLayout new layout cannot be kProbe "
-          "from kInit");
-    }
-
-    for (auto& img : color_images_) {
-      img->ChangeLayout(command, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                        VK_PIPELINE_STAGE_TRANSFER_BIT);
-    }
-    if (depth_image_) {
-      depth_image_->ChangeLayout(
-          command, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-          VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-          VK_PIPELINE_STAGE_TRANSFER_BIT);
-    }
-
-    frame_image_layout_ = FrameImageState::kProbe;
-    return {};
-  }
-
-  VkImageLayout old_layout = frame_image_layout_ == FrameImageState::kInit
-                                 ? VK_IMAGE_LAYOUT_UNDEFINED
-                                 : VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-
-  VkPipelineStageFlagBits source_stage =
-      frame_image_layout_ == FrameImageState::kInit
-          ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
-          : VK_PIPELINE_STAGE_TRANSFER_BIT;
-
-  for (auto& img : color_images_) {
-    img->ChangeLayout(command, old_layout,
-                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, source_stage,
-                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-  }
-  if (depth_image_) {
-    depth_image_->ChangeLayout(
-        command, old_layout, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        source_stage, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
-  }
-  frame_image_layout_ = FrameImageState::kClearOrDraw;
-  return {};
+  if (depth_image_)
+    depth_image_->ImageBarrier(command, depth_layout, depth_stage);
 }
 
-void FrameBuffer::CopyColorImagesToHost(CommandBuffer* command) {
-  for (auto& img : color_images_) {
-    ChangeFrameImageLayout(command, FrameImageState::kProbe);
+void FrameBuffer::ChangeFrameToDrawLayout(CommandBuffer* command) {
+  ChangeFrameLayout(command,
+                    // Color attachments
+                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                    // Depth attachment
+                    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                    VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
+}
+
+void FrameBuffer::ChangeFrameToProbeLayout(CommandBuffer* command) {
+  ChangeFrameLayout(
+      command,
+      // Color attachments
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      // Depth attachments
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT);
+}
+
+void FrameBuffer::ChangeFrameToWriteLayout(CommandBuffer* command) {
+  ChangeFrameLayout(
+      command,
+      // Color attachments
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      // Depth attachments
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT);
+}
+
+void FrameBuffer::TransferColorImagesToHost(CommandBuffer* command) {
+  for (auto& img : color_images_)
     img->CopyToHost(command);
-  }
 }
 
 void FrameBuffer::CopyImagesToBuffers() {
@@ -183,6 +163,25 @@ void FrameBuffer::CopyImagesToBuffers() {
     auto* values = info->buffer->ValuePtr();
     values->resize(info->buffer->GetSizeInBytes());
     std::memcpy(values->data(), img->HostAccessibleMemoryPtr(),
+                info->buffer->GetSizeInBytes());
+  }
+}
+
+void FrameBuffer::TransferColorImagesToDevice(CommandBuffer* command) {
+  for (auto& img : color_images_)
+    img->CopyToDevice(command);
+}
+
+void FrameBuffer::CopyBuffersToImages() {
+  for (size_t i = 0; i < color_images_.size(); ++i) {
+    auto& img = color_images_[i];
+    auto* info = color_attachments_[i];
+    auto* values = info->buffer->ValuePtr();
+    // Nothing to do if our local buffer is empty
+    if (values->empty())
+      continue;
+
+    std::memcpy(img->HostAccessibleMemoryPtr(), values->data(),
                 info->buffer->GetSizeInBytes());
   }
 }

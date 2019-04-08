@@ -38,6 +38,10 @@ ClearStencilCommand* Command::AsClearStencil() {
   return static_cast<ClearStencilCommand*>(this);
 }
 
+CompareBufferCommand* Command::AsCompareBuffer() {
+  return static_cast<CompareBufferCommand*>(this);
+}
+
 ComputeCommand* Command::AsCompute() {
   return static_cast<ComputeCommand*>(this);
 }
@@ -74,6 +78,10 @@ ProbeSSBOCommand* Command::AsProbeSSBO() {
   return static_cast<ProbeSSBOCommand*>(this);
 }
 
+RepeatCommand* Command::AsRepeat() {
+  return static_cast<RepeatCommand*>(this);
+}
+
 PipelineCommand::PipelineCommand(Type type, Pipeline* pipeline)
     : Command(type), pipeline_(pipeline) {}
 
@@ -88,6 +96,11 @@ DrawArraysCommand::DrawArraysCommand(Pipeline* pipeline, PipelineData data)
     : PipelineCommand(Type::kDrawArrays, pipeline), data_(data) {}
 
 DrawArraysCommand::~DrawArraysCommand() = default;
+
+CompareBufferCommand::CompareBufferCommand(Buffer* buffer_1, Buffer* buffer_2)
+    : Command(Type::kCompareBuffer), buffer_1_(buffer_1), buffer_2_(buffer_2) {}
+
+CompareBufferCommand::~CompareBufferCommand() = default;
 
 ComputeCommand::ComputeCommand(Pipeline* pipeline)
     : PipelineCommand(Type::kCompute, pipeline) {}
@@ -146,5 +159,10 @@ EntryPointCommand::EntryPointCommand(Pipeline* pipeline)
     : PipelineCommand(Type::kEntryPoint, pipeline) {}
 
 EntryPointCommand::~EntryPointCommand() = default;
+
+RepeatCommand::RepeatCommand(uint32_t count)
+    : Command(Type::kRepeat), count_(count) {}
+
+RepeatCommand::~RepeatCommand() = default;
 
 }  // namespace amber

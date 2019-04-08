@@ -70,58 +70,78 @@ Result Executor::Execute(Engine* engine,
 
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
-    Result r;
-    if (cmd->IsProbe()) {
-      assert(cmd->AsProbe()->GetBuffer()->IsFormatBuffer());
-
-      auto* buffer = cmd->AsProbe()->GetBuffer()->AsFormatBuffer();
-      assert(buffer);
-
-      r = verifier_.Probe(cmd->AsProbe(), &buffer->GetFormat(),
-                          buffer->GetTexelStride(), buffer->GetRowStride(),
-                          buffer->GetWidth(), buffer->GetHeight(),
-                          buffer->ValuePtr()->data());
-    } else if (cmd->IsProbeSSBO()) {
-      auto probe_ssbo = cmd->AsProbeSSBO();
-
-      const auto* buffer = cmd->AsProbe()->GetBuffer();
-      assert(buffer);
-
-      r = verifier_.ProbeSSBO(probe_ssbo, buffer->GetSize(),
-                              buffer->ValuePtr()->data());
-    } else if (cmd->IsClear()) {
-      r = engine->DoClear(cmd->AsClear());
-    } else if (cmd->IsClearColor()) {
-      r = engine->DoClearColor(cmd->AsClearColor());
-    } else if (cmd->IsClearDepth()) {
-      r = engine->DoClearDepth(cmd->AsClearDepth());
-    } else if (cmd->IsClearStencil()) {
-      r = engine->DoClearStencil(cmd->AsClearStencil());
-    } else if (cmd->IsCopy()) {
-      auto copy = cmd->AsCopy();
-      auto buffer_from = copy->GetBufferFrom();
-      auto buffer_to = copy->GetBufferTo();
-      r = buffer_from->CopyTo(buffer_to);
-    } else if (cmd->IsDrawRect()) {
-      r = engine->DoDrawRect(cmd->AsDrawRect());
-    } else if (cmd->IsDrawArrays()) {
-      r = engine->DoDrawArrays(cmd->AsDrawArrays());
-    } else if (cmd->IsCompute()) {
-      r = engine->DoCompute(cmd->AsCompute());
-    } else if (cmd->IsEntryPoint()) {
-      r = engine->DoEntryPoint(cmd->AsEntryPoint());
-    } else if (cmd->IsPatchParameterVertices()) {
-      r = engine->DoPatchParameterVertices(cmd->AsPatchParameterVertices());
-    } else if (cmd->IsBuffer()) {
-      r = engine->DoBuffer(cmd->AsBuffer());
-    } else {
-      return Result("Unknown command type");
-    }
-
+    Result r = ExecuteCommand(engine, cmd.get());
     if (!r.IsSuccess())
       return r;
   }
   return {};
+}
+
+Result Executor::ExecuteCommand(Engine* engine, Command* cmd) {
+  if (cmd->IsProbe()) {
+    assert(cmd->AsProbe()->GetBuffer()->IsFormatBuffer());
+
+    auto* buffer = cmd->AsProbe()->GetBuffer()->AsFormatBuffer();
+    assert(buffer);
+
+    return verifier_.Probe(cmd->AsProbe(), &buffer->GetFormat(),
+                           buffer->GetTexelStride(), buffer->GetRowStride(),
+                           buffer->GetWidth(), buffer->GetHeight(),
+                           buffer->ValuePtr()->data());
+  }
+  if (cmd->IsProbeSSBO()) {
+    auto probe_ssbo = cmd->AsProbeSSBO();
+
+    const auto* buffer = cmd->AsProbe()->GetBuffer();
+    assert(buffer);
+
+    return verifier_.ProbeSSBO(probe_ssbo, buffer->GetSize(),
+                               buffer->ValuePtr()->data());
+  }
+  if (cmd->IsClear())
+    return engine->DoClear(cmd->AsClear());
+  if (cmd->IsClearColor())
+    return engine->DoClearColor(cmd->AsClearColor());
+  if (cmd->IsClearDepth())
+    return engine->DoClearDepth(cmd->AsClearDepth());
+  if (cmd->IsClearStencil())
+    return engine->DoClearStencil(cmd->AsClearStencil());
+  if (cmd->IsCompareBuffer()) {
+    auto compare = cmd->AsCompareBuffer();
+    auto buffer_1 = compare->GetBuffer1();
+    auto buffer_2 = compare->GetBuffer2();
+    return buffer_1->IsEqual(buffer_2);
+  }
+  if (cmd->IsCopy()) {
+    auto copy = cmd->AsCopy();
+    auto buffer_from = copy->GetBufferFrom();
+    auto buffer_to = copy->GetBufferTo();
+    return buffer_from->CopyTo(buffer_to);
+  }
+  if (cmd->IsDrawRect())
+    return engine->DoDrawRect(cmd->AsDrawRect());
+  if (cmd->IsDrawArrays())
+    return engine->DoDrawArrays(cmd->AsDrawArrays());
+  if (cmd->IsCompute())
+    return engine->DoCompute(cmd->AsCompute());
+  if (cmd->IsEntryPoint())
+    return engine->DoEntryPoint(cmd->AsEntryPoint());
+  if (cmd->IsPatchParameterVertices())
+    return engine->DoPatchParameterVertices(cmd->AsPatchParameterVertices());
+  if (cmd->IsBuffer())
+    return engine->DoBuffer(cmd->AsBuffer());
+  if (cmd->IsRepeat()) {
+    for (uint32_t i = 0; i < cmd->AsRepeat()->GetCount(); ++i) {
+      for (const auto& sub_cmd : cmd->AsRepeat()->GetCommands()) {
+        Result r = ExecuteCommand(engine, sub_cmd.get());
+        if (!r.IsSuccess())
+          return r;
+      }
+    }
+    return {};
+  }
+  return Result("Unknown command type: " +
+                std::to_string(static_cast<uint32_t>(cmd->GetType())));
 }
 
 }  // namespace amber

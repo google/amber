@@ -34,12 +34,11 @@ const VkImageCreateInfo kDefaultImageInfo = {
     1,                                   /* arrayLayers */
     VK_SAMPLE_COUNT_1_BIT,               /* samples */
     VK_IMAGE_TILING_OPTIMAL,             /* tiling */
-    VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, /* usage */
-    VK_SHARING_MODE_EXCLUSIVE,               /* sharingMode */
-    0,                                       /* queueFamilyIndexCount */
-    nullptr,                                 /* pQueueFamilyIndices */
-    VK_IMAGE_LAYOUT_UNDEFINED,               /* initialLayout */
+    0,                                   /* usage */
+    VK_SHARING_MODE_EXCLUSIVE,           /* sharingMode */
+    0,                                   /* queueFamilyIndexCount */
+    nullptr,                             /* pQueueFamilyIndices */
+    VK_IMAGE_LAYOUT_UNDEFINED,           /* initialLayout */
 };
 
 }  // namespace
@@ -155,7 +154,7 @@ Result TransferImage::CreateVkImageView() {
   return {};
 }
 
-void TransferImage::CopyToHost(CommandBuffer* command) {
+VkBufferImageCopy TransferImage::CreateBufferImageCopy() {
   VkBufferImageCopy copy_region = VkBufferImageCopy();
   copy_region.bufferOffset = 0;
   // Row length of 0 results in tight packing of rows, so the row stride
@@ -171,6 +170,11 @@ void TransferImage::CopyToHost(CommandBuffer* command) {
   copy_region.imageOffset = {0, 0, 0};
   copy_region.imageExtent = {image_info_.extent.width,
                              image_info_.extent.height, 1};
+  return copy_region;
+}
+
+void TransferImage::CopyToHost(CommandBuffer* command) {
+  auto copy_region = CreateBufferImageCopy();
 
   device_->GetPtrs()->vkCmdCopyImageToBuffer(
       command->GetVkCommandBuffer(), image_,
@@ -180,15 +184,26 @@ void TransferImage::CopyToHost(CommandBuffer* command) {
   MemoryBarrier(command);
 }
 
-void TransferImage::ChangeLayout(CommandBuffer* command,
-                                 VkImageLayout old_layout,
-                                 VkImageLayout new_layout,
-                                 VkPipelineStageFlags from,
-                                 VkPipelineStageFlags to) {
+void TransferImage::CopyToDevice(CommandBuffer* command) {
+  auto copy_region = CreateBufferImageCopy();
+
+  device_->GetPtrs()->vkCmdCopyBufferToImage(
+      command->GetVkCommandBuffer(), host_accessible_buffer_, image_,
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+
+  MemoryBarrier(command);
+}
+
+void TransferImage::ImageBarrier(CommandBuffer* command,
+                                 VkImageLayout to_layout,
+                                 VkPipelineStageFlags to_stage) {
+  if (to_layout == layout_ && to_stage == stage_)
+    return;
+
   VkImageMemoryBarrier barrier = VkImageMemoryBarrier();
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  barrier.oldLayout = old_layout;
-  barrier.newLayout = new_layout;
+  barrier.oldLayout = layout_;
+  barrier.newLayout = to_layout;
   barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.image = image_;
@@ -200,10 +215,8 @@ void TransferImage::ChangeLayout(CommandBuffer* command,
       1,       /* layerCount */
   };
 
-  switch (old_layout) {
+  switch (layout_) {
     case VK_IMAGE_LAYOUT_PREINITIALIZED:
-      // Based on Vulkan spec, image in VK_IMAGE_LAYOUT_PREINITIALIZED is not
-      // accessible by GPU.
       barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
       break;
     case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
@@ -213,11 +226,7 @@ void TransferImage::ChangeLayout(CommandBuffer* command,
       barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
       break;
     case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-      // An image becomes "transfer dst" only when we send a buffer data to
-      // it.
-      barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT |
-                              VK_ACCESS_SHADER_WRITE_BIT |
-                              VK_ACCESS_TRANSFER_WRITE_BIT;
+      barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
       break;
     case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
       barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
@@ -227,7 +236,7 @@ void TransferImage::ChangeLayout(CommandBuffer* command,
       break;
   }
 
-  switch (new_layout) {
+  switch (to_layout) {
     case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
       barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
       break;
@@ -244,20 +253,19 @@ void TransferImage::ChangeLayout(CommandBuffer* command,
       barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
       break;
     case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-      // An image becomes "transfer dst" only when we send a buffer data to
-      // it.
-      barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT |
-                              VK_ACCESS_SHADER_WRITE_BIT |
-                              VK_ACCESS_TRANSFER_WRITE_BIT;
+      barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
       break;
     default:
       barrier.dstAccessMask = 0;
       break;
   }
 
-  device_->GetPtrs()->vkCmdPipelineBarrier(command->GetVkCommandBuffer(), from,
-                                           to, 0, 0, NULL, 0, NULL, 1,
-                                           &barrier);
+  device_->GetPtrs()->vkCmdPipelineBarrier(command->GetVkCommandBuffer(),
+                                           stage_, to_stage, 0, 0, NULL, 0,
+                                           NULL, 1, &barrier);
+
+  layout_ = to_layout;
+  stage_ = to_stage;
 }
 
 Result TransferImage::AllocateAndBindMemoryToVkImage(

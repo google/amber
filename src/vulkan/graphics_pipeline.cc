@@ -27,11 +27,10 @@ namespace vulkan {
 namespace {
 
 const VkAttachmentDescription kDefaultAttachmentDesc = {
-    0,                     /* flags */
-    VK_FORMAT_UNDEFINED,   /* format */
-    VK_SAMPLE_COUNT_1_BIT, /* samples */
-    // TODO(jaebaek): Set up proper loadOp, StoreOp.
-    VK_ATTACHMENT_LOAD_OP_DONT_CARE,      /* loadOp */
+    0,                                    /* flags */
+    VK_FORMAT_UNDEFINED,                  /* format */
+    VK_SAMPLE_COUNT_1_BIT,                /* samples */
+    VK_ATTACHMENT_LOAD_OP_LOAD,           /* loadOp */
     VK_ATTACHMENT_STORE_OP_STORE,         /* storeOp */
     VK_ATTACHMENT_LOAD_OP_LOAD,           /* stencilLoadOp */
     VK_ATTACHMENT_STORE_OP_STORE,         /* stencilStoreOp */
@@ -348,35 +347,32 @@ VkBlendOp ToVkBlendOp(BlendOp op) {
 class RenderPassGuard {
  public:
   explicit RenderPassGuard(GraphicsPipeline* pipeline) : pipeline_(pipeline) {
-    auto* frame = pipeline->GetFrameBuffer();
-    auto* cmd = pipeline->GetCommandBuffer();
-    result_ = frame->ChangeFrameImageLayout(cmd, FrameImageState::kClearOrDraw);
-    if (!result_.IsSuccess())
-      return;
+    auto* frame = pipeline_->GetFrameBuffer();
+    auto* cmd = pipeline_->GetCommandBuffer();
+    frame->ChangeFrameToDrawLayout(cmd);
 
     VkRenderPassBeginInfo render_begin_info = VkRenderPassBeginInfo();
     render_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_begin_info.renderPass = pipeline->GetVkRenderPass();
+    render_begin_info.renderPass = pipeline_->GetVkRenderPass();
     render_begin_info.framebuffer = frame->GetVkFrameBuffer();
     render_begin_info.renderArea = {{0, 0},
                                     {frame->GetWidth(), frame->GetHeight()}};
-    pipeline->GetDevice()->GetPtrs()->vkCmdBeginRenderPass(
+    pipeline_->GetDevice()->GetPtrs()->vkCmdBeginRenderPass(
         cmd->GetVkCommandBuffer(), &render_begin_info,
         VK_SUBPASS_CONTENTS_INLINE);
   }
 
-  bool IsActive() const { return result_.IsSuccess(); }
-  Result GetResult() const { return result_; }
-
   ~RenderPassGuard() {
-    if (result_.IsSuccess()) {
-      pipeline_->GetDevice()->GetPtrs()->vkCmdEndRenderPass(
-          pipeline_->GetCommandBuffer()->GetVkCommandBuffer());
-    }
+    auto* cmd = pipeline_->GetCommandBuffer();
+
+    pipeline_->GetDevice()->GetPtrs()->vkCmdEndRenderPass(
+        cmd->GetVkCommandBuffer());
+
+    auto* frame = pipeline_->GetFrameBuffer();
+    frame->ChangeFrameToProbeLayout(cmd);
   }
 
  private:
-  Result result_;
   GraphicsPipeline* pipeline_;
 };
 
@@ -788,10 +784,10 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   if (!cmd_buf_guard.IsRecording())
     return cmd_buf_guard.GetResult();
 
+  frame_->ChangeFrameToWriteLayout(GetCommandBuffer());
+
   {
     RenderPassGuard render_pass_guard(this);
-    if (!render_pass_guard.IsActive())
-      return render_pass_guard.GetResult();
 
     VkClearAttachment clear_attachment = VkClearAttachment();
     clear_attachment.aspectMask = aspect;
@@ -807,7 +803,7 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
         command_->GetVkCommandBuffer(), 1, &clear_attachment, 1, &clear_rect);
   }
 
-  frame_->CopyColorImagesToHost(command_.get());
+  frame_->TransferColorImagesToHost(command_.get());
 
   Result r = cmd_buf_guard.Submit(GetFenceTimeout());
   if (!r.IsSuccess())
@@ -849,10 +845,10 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     if (!r.IsSuccess())
       return r;
 
+    frame_->ChangeFrameToWriteLayout(GetCommandBuffer());
+
     {
       RenderPassGuard render_pass_guard(this);
-      if (!render_pass_guard.IsActive())
-        return render_pass_guard.GetResult();
 
       BindVkDescriptorSets(pipeline_layout);
 
@@ -897,7 +893,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
       }
     }
 
-    frame_->CopyColorImagesToHost(command_.get());
+    frame_->TransferColorImagesToHost(command_.get());
 
     r = cmd_buf_guard.Submit(GetFenceTimeout());
     if (!r.IsSuccess())
