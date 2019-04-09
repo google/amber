@@ -16,12 +16,17 @@
 #include <iostream>
 #include "samples/dawn_device_metal.h"
 namespace sample {
+
 ConfigHelperDawn::ConfigHelperDawn() = default;
 ConfigHelperDawn::~ConfigHelperDawn() = default;
-namespace {  // Callback which prints a message from a Dawn device operation.
+
+namespace {
+
+// Callback which prints a message from a Dawn device operation.
 void PrintDeviceError(const char* message, ::dawn::CallbackUserdata) {
   std::cout << "Device error: " << message << std::endl;
 }
+
 }  // namespace
 
 amber::Result ConfigHelperDawn::CreateConfig(

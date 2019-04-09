@@ -118,7 +118,7 @@ Result MakeFramebufferBuffer(const ::dawn::Device& device,
 struct MapResult {
   Result result;
   const void* data = nullptr;
-  int dataLength = 0;
+  uint64_t dataLength = 0;
 };
 
 // Handles the update from an asynchronous buffer map request, updating the
@@ -128,7 +128,7 @@ struct MapResult {
 // not changed.
 void HandleBufferMapCallback(DawnBufferMapAsyncStatus status,
                              const void* data,
-                             uint32_t dataLength,
+                             uint64_t dataLength,
                              DawnCallbackUserdata userdata) {
   MapResult& map_result = *reinterpret_cast<MapResult*>(userdata);
   switch (status) {
@@ -279,10 +279,13 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   if (!result.IsSuccess())
     return result;
 
+  // TODO(sarahM0): Refactor this code later.  This backend is in transition
+  // between the old design and the new design of how Amber operates.
+
   ::dawn::RenderPassColorAttachmentDescriptor color_attachment =
       ::dawn::RenderPassColorAttachmentDescriptor();
   color_attachment.attachment =
-      render_pipeline_info_.fb_texture.CreateDefaultTextureView();
+      render_pipeline_info_.fb_texture.CreateDefaultView();
   color_attachment.resolveTarget = nullptr;
   color_attachment.clearColor = render_pipeline_info_.clear_color_value;
   color_attachment.loadOp = ::dawn::LoadOp::Clear;
@@ -325,7 +328,8 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
     auto& info = out_color_attachment[i];
     auto* values = info.buffer->ValuePtr();
     values->resize(info.buffer->GetSizeInBytes());
-    // assert map.size == info->buffer->GetSizeInBytes()
+    // TODO(sarahM0): Resolve the difference between the Dawn buffer's size
+    // and the Amber buffer's size.
     std::memcpy(values->data(), img.data, info.buffer->GetSizeInBytes());
   }
 
