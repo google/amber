@@ -159,7 +159,13 @@ argument to an EXPECT command.
 PIPELINE <pipeline_type> <pipeline_name>
 ...
 END
+
+# Create a pipeline and inherit from a previously declared pipeline.
+DERIVE_PIPELINE <<pipeline_name> FROM <parent_pipeline>
+...
+END
 ```
+
 
 ### Pipeline Content
 
@@ -225,10 +231,6 @@ attachment content, depth/stencil content, uniform buffers, etc.
   # and binding. The buffer will use a start index of 0.
   BIND BUFFER <buffer_name> AS <buffer_type> DESCRIPTOR_SET <id> \
        BINDING <id>
-  # Bind the buffer of the given |buffer_type| at the given descriptor set
-  # and binding and index at the given value.
-  BIND BUFFER <buffer_name> AS <buffer_type> DESCRIPTOR_SET <id> \
-       BINDING <id> IDX <val>
 
   # Bind the sampler at the given descriptor set and binding.
   BIND SAMPLER <sampler_name> DESCRIPTOR_SET <id> BINDING <id>
@@ -482,7 +484,7 @@ PIPELINE graphics kRedPipeline
   ATTACH kFragmentShader ENTRY_POINT red
 
   FRAMEBUFFER_SIZE 256 256
-  BIND BUFFER kImgBuffer AS image IDX 0
+  BIND BUFFER kImgBuffer AS color LOCATION 0
 END  # pipeline
 
 PIPELINE graphics kGreenPipeline
@@ -490,7 +492,7 @@ PIPELINE graphics kGreenPipeline
   ATTACH kFragmentShader ENTRY_POINT green
 
   FRAMEBUFFER_SIZE 256 256
-  BIND BUFFER kImgBuffer AS image IDX 0
+  BIND BUFFER kImgBuffer AS color LOCATION 0
 END  # pipeline
 
 RUN kRedPipeline DRAW_RECT POS 0 0 SIZE 256 256
@@ -597,7 +599,7 @@ CLEAR_COLOR kGraphicsPipeline 255 0 0 255
 CLEAR kGraphicsPipeline
 
 RUN kGraphicsPipeline DRAW_ARRAY AS triangle_list START_IDX 0 COUNT 24
- ```
+```
 
 ### Image Formats
   * A1R5G5B5_UNORM_PACK16

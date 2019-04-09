@@ -27,7 +27,9 @@ contexts:
       scope: keyword.control.amber
     - match: '\b(FORMAT|FRAMEBUFFER_SIZE|BIND|SAMPLER|VERTEX_DATA|INDEX_DATA|INDEXED)\b'
       scope: keyword.control.amber
-    - match : '\b(IMAGE_ATTACHMENT|DEPTH_STENCIL_ATTACHMENT|LOCATION|DEVICE_FEATURE)\b'
+    - match: '\b(IMAGE_ATTACHMENT|DEPTH_STENCIL_ATTACHMENT|LOCATION|DEVICE_FEATURE)\b'
+      scope: keyword.control.amber
+    - match: '\b(DERIVE_PIPELINE|FROM)\b'
       scope: keyword.control.amber
     - match : '\b(COPY|TOLERANCE|REPEAT)\b'
       scope: keyword.control.amber
