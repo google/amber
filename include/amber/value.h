@@ -28,16 +28,16 @@ class Value {
   Value& operator=(const Value&);
 
   void SetIntValue(uint64_t val) {
-    type_ = kValueTypeInteger;
+    type_ = Type::kInteger;
     uint_value_ = val;
   }
-  bool IsInteger() const { return type_ == kValueTypeInteger; }
+  bool IsInteger() const { return type_ == Type::kInteger; }
 
   void SetDoubleValue(double val) {
-    type_ = kValueTypeFloat;
+    type_ = Type::kFloat;
     double_value_ = val;
   }
-  bool IsFloat() const { return type_ == kValueTypeFloat; }
+  bool IsFloat() const { return type_ == Type::kFloat; }
 
   uint8_t AsUint8() const { return static_cast<uint8_t>(uint_value_); }
   uint16_t AsUint16() const { return static_cast<uint16_t>(uint_value_); }
@@ -53,10 +53,11 @@ class Value {
   double AsDouble() const { return double_value_; }
 
  private:
-  enum Type { kValueTypeFloat, kValueTypeInteger };
-  Type type_;
-  uint64_t uint_value_;
-  double double_value_;
+  enum class Type : uint8_t { kFloat = 0, kInteger };
+
+  Type type_ = Type::kFloat;
+  uint64_t uint_value_ = 0;
+  double double_value_ = 0.0;
 };
 
 }  // namespace amber

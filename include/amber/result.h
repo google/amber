@@ -39,7 +39,7 @@ class Result {
   const std::string& Error() const { return error_; }
 
  private:
-  bool succeeded_;
+  bool succeeded_ = true;
   std::string error_;
 };
 

@@ -712,12 +712,12 @@ struct EntryInfo {
   ShaderType type;
 };
 static const EntryInfo kEntryPoints[] = {
-    {"vertex", kShaderTypeVertex},
-    {"fragment", kShaderTypeFragment},
-    {"geometry", kShaderTypeGeometry},
-    {"compute", kShaderTypeCompute},
-    {"tessellation evaluation", kShaderTypeTessellationEvaluation},
-    {"tessellation control", kShaderTypeTessellationControl},
+    {"vertex", ShaderType::kVertex},
+    {"fragment", ShaderType::kFragment},
+    {"geometry", ShaderType::kGeometry},
+    {"compute", ShaderType::kCompute},
+    {"tessellation evaluation", ShaderType::kTessellationEvaluation},
+    {"tessellation control", ShaderType::kTessellationControl},
 };
 
 TEST_F(CommandParserTest, EntryPoint) {

@@ -52,13 +52,13 @@ END
 
   ASSERT_TRUE(shaders[0].GetShader() != nullptr);
   EXPECT_EQ("my_shader", shaders[0].GetShader()->GetName());
-  EXPECT_EQ(kShaderTypeVertex, shaders[0].GetShader()->GetType());
+  EXPECT_EQ(ShaderType::kVertex, shaders[0].GetShader()->GetType());
   EXPECT_EQ(static_cast<uint32_t>(0),
             shaders[0].GetShaderOptimizations().size());
 
   ASSERT_TRUE(shaders[1].GetShader() != nullptr);
   EXPECT_EQ("my_fragment", shaders[1].GetShader()->GetName());
-  EXPECT_EQ(kShaderTypeFragment, shaders[1].GetShader()->GetType());
+  EXPECT_EQ(ShaderType::kFragment, shaders[1].GetShader()->GetType());
   EXPECT_EQ(static_cast<uint32_t>(0),
             shaders[1].GetShaderOptimizations().size());
 }

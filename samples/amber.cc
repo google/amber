@@ -51,7 +51,7 @@ struct Options {
   bool show_version_info = false;
   bool log_graphics_calls = false;
   bool log_graphics_calls_time = false;
-  amber::EngineType engine = amber::kEngineTypeVulkan;
+  amber::EngineType engine = amber::EngineType::kVulkan;
   std::string spv_env;
 };
 
@@ -110,9 +110,9 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       }
       const std::string& engine = args[i];
       if (engine == "vulkan") {
-        opts->engine = amber::kEngineTypeVulkan;
+        opts->engine = amber::EngineType::kVulkan;
       } else if (engine == "dawn") {
-        opts->engine = amber::kEngineTypeDawn;
+        opts->engine = amber::EngineType::kDawn;
       } else {
         std::cerr
             << "Invalid value for -e argument. Must be one of: vulkan dawn"
@@ -363,7 +363,7 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  amber_options.config = config.get();
+  amber_options.config = std::move(config);
 
   if (!options.buffer_filename.empty()) {
     // Have a filename to dump, but no explicit buffer, set the default of 0:0.

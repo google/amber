@@ -24,6 +24,9 @@
 
 namespace amber {
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+
 /// Configuration for the Vulkan Engine. The following are all required when
 /// when using the vulkan backend.
 struct VulkanEngineConfig : public EngineConfig {
@@ -33,21 +36,22 @@ struct VulkanEngineConfig : public EngineConfig {
   PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
 
   /// The VkInstance to use.
-  VkInstance instance;
+  VkInstance instance = VK_NULL_HANDLE;
 
   /// The VkPhysicalDevice to use.
-  VkPhysicalDevice physical_device;
+  VkPhysicalDevice physical_device = VK_NULL_HANDLE;
 
   /// Physical device features available for |physical_device|. The
   /// |available_features| will be ignored if
   /// VK_KHR_get_physical_device_features2 is enabled, |available_features2|
   /// will be used in that case.
-  VkPhysicalDeviceFeatures available_features;
+  VkPhysicalDeviceFeatures available_features = VkPhysicalDeviceFeatures();
 
   /// Physical device features for |physical_device|.The |available_features2|
   /// will only be used if VK_KHR_get_physical_device_features2 is enabled. If
   /// the extension is not enabled, |available_features| will be used.
-  VkPhysicalDeviceFeatures2KHR available_features2;
+  VkPhysicalDeviceFeatures2KHR available_features2 =
+      VkPhysicalDeviceFeatures2KHR();
 
   /// Instance extensions available.
   std::vector<std::string> available_instance_extensions;
@@ -56,14 +60,16 @@ struct VulkanEngineConfig : public EngineConfig {
   std::vector<std::string> available_device_extensions;
 
   /// The given queue family index to use.
-  uint32_t queue_family_index;
+  uint32_t queue_family_index = 0;
 
   /// The VkDevice to use.
-  VkDevice device;
+  VkDevice device = VK_NULL_HANDLE;
 
   /// The VkQueue to use.
-  VkQueue queue;
+  VkQueue queue = VK_NULL_HANDLE;
 };
+
+#pragma clang diagnostic pop
 
 }  // namespace amber
 

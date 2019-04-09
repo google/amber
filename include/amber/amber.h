@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -29,13 +30,13 @@ namespace amber {
 
 /// The shader map is a map from the name of a shader to the spirv-binary
 /// which is the compiled representation of that named shader.
-typedef std::map<std::string, std::vector<uint32_t> > ShaderMap;
+using ShaderMap = std::map<std::string, std::vector<uint32_t>>;
 
-enum EngineType {
+enum class EngineType : uint8_t {
   /// Use the Vulkan backend, if available
-  kEngineTypeVulkan = 0,
+  kVulkan = 0,
   /// Use the Dawn backend, if available
-  kEngineTypeDawn,
+  kDawn,
 };
 
 /// Override point of engines to add their own configuration.
@@ -53,9 +54,9 @@ struct BufferInfo {
   /// Holds the buffer name
   std::string buffer_name;
   /// Holds the buffer width
-  uint32_t width;
+  uint32_t width = 0;
   /// Holds the buffer height
-  uint32_t height;
+  uint32_t height = 0;
   /// Contains the buffer internal data
   std::vector<Value> values;
 };
@@ -80,17 +81,17 @@ struct Options {
   ~Options();
 
   /// Sets the engine to be created. Default Vulkan.
-  EngineType engine;
-  /// Holds engine specific configuration. Ownership stays with the caller.
-  EngineConfig* config;
+  EngineType engine = EngineType::kVulkan;
+  /// Holds engine specific configuration.
+  std::unique_ptr<EngineConfig> config;
   /// The SPIR-V environment to target.
   std::string spv_env;
   /// Lists the buffers to extract at the end of the execution
   std::vector<BufferInfo> extractions;
   /// Terminate after creating the pipelines.
-  bool pipeline_create_only;
+  bool pipeline_create_only = false;
   /// Delegate implementation
-  Delegate* delegate;
+  Delegate* delegate = nullptr;
 };
 
 /// Main interface to the Amber environment.

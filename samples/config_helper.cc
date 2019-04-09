@@ -47,14 +47,14 @@ amber::Result ConfigHelper::CreateConfig(
     bool show_version_info,
     std::unique_ptr<amber::EngineConfig>* config) {
   switch (engine) {
-    case amber::kEngineTypeVulkan:
+    case amber::EngineType::kVulkan:
 #if AMBER_ENGINE_VULKAN
       impl_ = amber::MakeUnique<ConfigHelperVulkan>();
       break;
 #else
       return amber::Result("Unable to create engine config for Vulkan");
 #endif  // AMBER_ENGINE_VULKAN
-    case amber::kEngineTypeDawn:
+    case amber::EngineType::kDawn:
 #if AMBER_ENGINE_DAWN
       impl_ = amber::MakeUnique<ConfigHelperDawn>();
       break;

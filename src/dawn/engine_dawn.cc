@@ -257,7 +257,7 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
 
   switch (pipeline->GetType()) {
     case PipelineType::kCompute: {
-      auto module = module_for_type_[kShaderTypeCompute];
+      auto module = module_for_type_[ShaderType::kCompute];
       if (!module)
         return Result("CreatePipeline: no compute shader provided");
       pipeline_map_[pipeline].compute_pipeline.reset(
@@ -267,8 +267,8 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
 
     case PipelineType::kGraphics: {
       // TODO(dneto): Handle other shader types as well.  They are optional.
-      auto vs = module_for_type_[kShaderTypeVertex];
-      auto fs = module_for_type_[kShaderTypeFragment];
+      auto vs = module_for_type_[ShaderType::kVertex];
+      auto fs = module_for_type_[ShaderType::kFragment];
       if (!vs) {
         return Result(
             "CreatePipeline: no vertex shader provided for graphics pipeline");

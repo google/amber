@@ -152,19 +152,19 @@ Result Parser::ToShaderType(const std::string& str, ShaderType* type) {
   assert(type);
 
   if (str == "vertex")
-    *type = kShaderTypeVertex;
+    *type = ShaderType::kVertex;
   else if (str == "fragment")
-    *type = kShaderTypeFragment;
+    *type = ShaderType::kFragment;
   else if (str == "geometry")
-    *type = kShaderTypeGeometry;
+    *type = ShaderType::kGeometry;
   else if (str == "tessellation_evaluation")
-    *type = kShaderTypeTessellationEvaluation;
+    *type = ShaderType::kTessellationEvaluation;
   else if (str == "tessellation_control")
-    *type = kShaderTypeTessellationControl;
+    *type = ShaderType::kTessellationControl;
   else if (str == "compute")
-    *type = kShaderTypeCompute;
+    *type = ShaderType::kCompute;
   else if (str == "multi")
-    *type = kShaderTypeMulti;
+    *type = ShaderType::kMulti;
   else
     return Result("unknown shader type: " + str);
   return {};
@@ -174,11 +174,11 @@ Result Parser::ToShaderFormat(const std::string& str, ShaderFormat* fmt) {
   assert(fmt);
 
   if (str == "GLSL")
-    *fmt = kShaderFormatGlsl;
+    *fmt = ShaderFormat::kGlsl;
   else if (str == "SPIRV-ASM")
-    *fmt = kShaderFormatSpirvAsm;
+    *fmt = ShaderFormat::kSpirvAsm;
   else if (str == "SPIRV-HEX")
-    *fmt = kShaderFormatSpirvHex;
+    *fmt = ShaderFormat::kSpirvHex;
   else
     return Result("unknown shader format: " + str);
   return {};
@@ -292,7 +292,7 @@ Result Parser::ParseShaderBlock() {
   if (!token->IsString())
     return Result("invalid token when looking for shader type");
 
-  ShaderType type = kShaderTypeVertex;
+  ShaderType type = ShaderType::kVertex;
   Result r = ToShaderType(token->AsString(), &type);
   if (!r.IsSuccess())
     return r;
@@ -311,12 +311,12 @@ Result Parser::ParseShaderBlock() {
 
   std::string fmt = token->AsString();
   if (fmt == "PASSTHROUGH") {
-    if (type != kShaderTypeVertex) {
+    if (type != ShaderType::kVertex) {
       return Result(
           "invalid shader type for PASSTHROUGH. Only vertex "
           "PASSTHROUGH allowed");
     }
-    shader->SetFormat(kShaderFormatSpirvAsm);
+    shader->SetFormat(ShaderFormat::kSpirvAsm);
     shader->SetData(kPassThroughShader);
 
     r = script_->AddShader(std::move(shader));
@@ -326,7 +326,7 @@ Result Parser::ParseShaderBlock() {
     return ValidateEndOfStatement("SHADER PASSTHROUGH");
   }
 
-  ShaderFormat format = kShaderFormatGlsl;
+  ShaderFormat format = ShaderFormat::kGlsl;
   r = ToShaderFormat(fmt, &format);
   if (!r.IsSuccess())
     return r;
@@ -433,7 +433,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
 
   token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS()) {
-    if (shader->GetType() == kShaderTypeMulti)
+    if (shader->GetType() == ShaderType::kMulti)
       return Result("multi shader ATTACH requires TYPE");
 
     Result r = pipeline->AddShader(shader, shader->GetType());
@@ -467,7 +467,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
   if (type != "ENTRY_POINT")
     return Result("Unknown ATTACH parameter: " + type);
 
-  if (shader->GetType() == ShaderType::kShaderTypeMulti && !set_shader_type)
+  if (shader->GetType() == ShaderType::kMulti && !set_shader_type)
     return Result("ATTACH missing TYPE for multi shader");
 
   Result r = pipeline->AddShader(shader, shader_type);

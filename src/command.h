@@ -507,7 +507,7 @@ class EntryPointCommand : public PipelineCommand {
   std::string GetEntryPointName() const { return entry_point_name_; }
 
  private:
-  ShaderType shader_type_ = kShaderTypeVertex;
+  ShaderType shader_type_ = ShaderType::kVertex;
   std::string entry_point_name_;
 };
 

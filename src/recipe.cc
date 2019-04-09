@@ -19,11 +19,9 @@ RecipeImpl::RecipeImpl() = default;
 
 RecipeImpl::~RecipeImpl() = default;
 
-Recipe::Recipe() : impl_(nullptr) {}
+Recipe::Recipe() = default;
 
-Recipe::~Recipe() {
-  delete impl_;
-}
+Recipe::~Recipe() = default;
 
 std::vector<ShaderInfo> Recipe::GetShaderInfo() const {
   if (!impl_)

@@ -25,7 +25,7 @@ struct DawnEngineConfig : public EngineConfig {
   ~DawnEngineConfig() override;
 
   /// The Dawn Device to use for running tests.
-  ::dawn::Device* device;
+  ::dawn::Device* device = nullptr;
 };
 
 }  // namespace amber

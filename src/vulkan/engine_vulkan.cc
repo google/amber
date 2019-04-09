@@ -29,25 +29,25 @@ namespace {
 
 Result ToVkShaderStage(ShaderType type, VkShaderStageFlagBits* ret) {
   switch (type) {
-    case kShaderTypeGeometry:
+    case ShaderType::kGeometry:
       *ret = VK_SHADER_STAGE_GEOMETRY_BIT;
       break;
-    case kShaderTypeFragment:
+    case ShaderType::kFragment:
       *ret = VK_SHADER_STAGE_FRAGMENT_BIT;
       break;
-    case kShaderTypeVertex:
+    case ShaderType::kVertex:
       *ret = VK_SHADER_STAGE_VERTEX_BIT;
       break;
-    case kShaderTypeTessellationControl:
+    case ShaderType::kTessellationControl:
       *ret = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
       break;
-    case kShaderTypeTessellationEvaluation:
+    case ShaderType::kTessellationEvaluation:
       *ret = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
       break;
-    case kShaderTypeCompute:
+    case ShaderType::kCompute:
       *ret = VK_SHADER_STAGE_COMPUTE_BIT;
       break;
-    case kShaderTypeMulti:
+    case ShaderType::kMulti:
       *ret = VK_SHADER_STAGE_FRAGMENT_BIT;
       return Result("Vulkan::Unknown shader stage");
   }

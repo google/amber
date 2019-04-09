@@ -16,7 +16,7 @@
 
 namespace amber {
 
-Result::Result() : succeeded_(true) {}
+Result::Result() = default;
 
 Result::Result(const std::string& err) : succeeded_(false), error_(err) {}
 

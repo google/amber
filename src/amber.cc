@@ -60,19 +60,52 @@ Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) {
   return {};
 }
 
+// Create an engine initialize it, and check the recipe's requirements.
+// Returns a failing result if anything fails.  Otherwise pass the created
+// engine out through |engine_ptr| and the script via |script|.  The |script|
+// pointer is borrowed, and should not be freed.
+Result CreateEngineAndCheckRequirements(const Recipe* recipe,
+                                        Options* opts,
+                                        std::unique_ptr<Engine>* engine_ptr,
+                                        Script** script_ptr) {
+  if (!recipe)
+    return Result("Attempting to check an invalid recipe");
+
+  Script* script = static_cast<Script*>(recipe->GetImpl());
+  if (!script)
+    return Result("Recipe must contain a parsed script");
+
+  script->SetSpvTargetEnv(opts->spv_env);
+
+  auto engine = Engine::Create(opts->engine);
+  if (!engine) {
+    return Result("Failed to create engine");
+  }
+
+  // Engine initialization checks requirements.  Current backends don't do
+  // much else.  Refactor this if they end up doing to much here.
+  Result r = engine->Initialize(opts->config.get(), opts->delegate,
+                                script->GetRequiredFeatures(),
+                                script->GetRequiredInstanceExtensions(),
+                                script->GetRequiredDeviceExtensions());
+  if (!r.IsSuccess())
+    return r;
+
+  *engine_ptr = std::move(engine);
+  *script_ptr = script;
+
+  return r;
+}
+
 }  // namespace
 
 EngineConfig::~EngineConfig() = default;
 
-Options::Options()
-    : engine(amber::EngineType::kEngineTypeVulkan),
-      config(nullptr),
-      pipeline_create_only(false),
-      delegate(nullptr) {}
+Options::Options() = default;
 
 Options::~Options() = default;
 
-BufferInfo::BufferInfo() : width(0), height(0) {}
+BufferInfo::BufferInfo() = default;
 
 BufferInfo::BufferInfo(const BufferInfo&) = default;
 
@@ -100,49 +133,9 @@ amber::Result Amber::Parse(const std::string& input, amber::Recipe* recipe) {
   if (!r.IsSuccess())
     return r;
 
-  recipe->SetImpl(parser->GetScript().release());
+  recipe->SetImpl(parser->GetScript());
   return {};
 }
-
-namespace {
-
-// Create an engine initialize it, and check the recipe's requirements.
-// Returns a failing result if anything fails.  Otherwise pass the created
-// engine out through |engine_ptr| and the script via |script|.  The |script|
-// pointer is borrowed, and should not be freed.
-Result CreateEngineAndCheckRequirements(const Recipe* recipe,
-                                        Options* opts,
-                                        std::unique_ptr<Engine>* engine_ptr,
-                                        Script** script_ptr) {
-  if (!recipe)
-    return Result("Attempting to check an invalid recipe");
-
-  Script* script = static_cast<Script*>(recipe->GetImpl());
-  if (!script)
-    return Result("Recipe must contain a parsed script");
-
-  script->SetSpvTargetEnv(opts->spv_env);
-
-  auto engine = Engine::Create(opts->engine);
-  if (!engine) {
-    return Result("Failed to create engine");
-  }
-
-  // Engine initialization checks requirements.  Current backends don't do
-  // much else.  Refactor this if they end up doing to much here.
-  Result r = engine->Initialize(opts->config, opts->delegate,
-                                script->GetRequiredFeatures(),
-                                script->GetRequiredInstanceExtensions(),
-                                script->GetRequiredDeviceExtensions());
-  if (!r.IsSuccess())
-    return r;
-
-  *engine_ptr = std::move(engine);
-  *script_ptr = script;
-
-  return r;
-}
-}  // namespace
 
 amber::Result Amber::AreAllRequirementsSupported(const amber::Recipe* recipe,
                                                  Options* opts) {

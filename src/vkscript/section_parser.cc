@@ -49,17 +49,17 @@ Result SectionParser::NameToNodeType(const std::string& data,
   assert(shader_type);
   assert(fmt);
 
-  *fmt = kShaderFormatText;
+  *fmt = ShaderFormat::kText;
 
   std::string name;
   size_t pos = data.rfind(" spirv hex");
   if (pos != std::string::npos) {
-    *fmt = kShaderFormatSpirvHex;
+    *fmt = ShaderFormat::kSpirvHex;
     name = data.substr(0, pos);
   } else {
     pos = data.rfind(" spirv");
     if (pos != std::string::npos) {
-      *fmt = kShaderFormatSpirvAsm;
+      *fmt = ShaderFormat::kSpirvAsm;
       name = data.substr(0, pos);
     } else {
       name = data;
@@ -68,7 +68,7 @@ Result SectionParser::NameToNodeType(const std::string& data,
 
   pos = data.rfind(" passthrough");
   if (pos != std::string::npos) {
-    *fmt = kShaderFormatDefault;
+    *fmt = ShaderFormat::kDefault;
     name = data.substr(0, pos);
   }
 
@@ -84,41 +84,41 @@ Result SectionParser::NameToNodeType(const std::string& data,
     *section_type = NodeType::kVertexData;
   } else if (name == "compute shader") {
     *section_type = NodeType::kShader;
-    *shader_type = kShaderTypeCompute;
-    if (*fmt == kShaderFormatText)
-      *fmt = kShaderFormatGlsl;
+    *shader_type = ShaderType::kCompute;
+    if (*fmt == ShaderFormat::kText)
+      *fmt = ShaderFormat::kGlsl;
   } else if (name == "fragment shader") {
     *section_type = NodeType::kShader;
-    *shader_type = kShaderTypeFragment;
-    if (*fmt == kShaderFormatText)
-      *fmt = kShaderFormatGlsl;
+    *shader_type = ShaderType::kFragment;
+    if (*fmt == ShaderFormat::kText)
+      *fmt = ShaderFormat::kGlsl;
   } else if (name == "geometry shader") {
     *section_type = NodeType::kShader;
-    *shader_type = kShaderTypeGeometry;
-    if (*fmt == kShaderFormatText)
-      *fmt = kShaderFormatGlsl;
+    *shader_type = ShaderType::kGeometry;
+    if (*fmt == ShaderFormat::kText)
+      *fmt = ShaderFormat::kGlsl;
   } else if (name == "tessellation control shader") {
     *section_type = NodeType::kShader;
-    *shader_type = kShaderTypeTessellationControl;
-    if (*fmt == kShaderFormatText)
-      *fmt = kShaderFormatGlsl;
+    *shader_type = ShaderType::kTessellationControl;
+    if (*fmt == ShaderFormat::kText)
+      *fmt = ShaderFormat::kGlsl;
   } else if (name == "tessellation evaluation shader") {
     *section_type = NodeType::kShader;
-    *shader_type = kShaderTypeTessellationEvaluation;
-    if (*fmt == kShaderFormatText)
-      *fmt = kShaderFormatGlsl;
+    *shader_type = ShaderType::kTessellationEvaluation;
+    if (*fmt == ShaderFormat::kText)
+      *fmt = ShaderFormat::kGlsl;
   } else if (name == "vertex shader") {
     *section_type = NodeType::kShader;
-    *shader_type = kShaderTypeVertex;
-    if (*fmt == kShaderFormatText)
-      *fmt = kShaderFormatGlsl;
+    *shader_type = ShaderType::kVertex;
+    if (*fmt == ShaderFormat::kText)
+      *fmt = ShaderFormat::kGlsl;
   } else {
     return Result("Invalid name: " + data);
   }
 
   if (!SectionParser::HasShader(*section_type) &&
-      (*fmt == kShaderFormatGlsl || *fmt == kShaderFormatSpirvAsm ||
-       *fmt == kShaderFormatSpirvHex)) {
+      (*fmt == ShaderFormat::kGlsl || *fmt == ShaderFormat::kSpirvAsm ||
+       *fmt == ShaderFormat::kSpirvHex)) {
     return Result("Invalid source format: " + data);
   }
 
@@ -133,8 +133,8 @@ void SectionParser::AddSection(NodeType section_type,
   if (section_type == NodeType::kComment)
     return;
 
-  if (fmt == kShaderFormatDefault) {
-    sections_.push_back({section_type, shader_type, kShaderFormatSpirvAsm,
+  if (fmt == ShaderFormat::kDefault) {
+    sections_.push_back({section_type, shader_type, ShaderFormat::kSpirvAsm,
                          line_count, kPassThroughShader});
     return;
   }
@@ -159,8 +159,8 @@ Result SectionParser::SplitSections(const std::string& data) {
   bool in_section = false;
 
   NodeType current_type = NodeType::kComment;
-  ShaderType current_shader = kShaderTypeVertex;
-  ShaderFormat current_fmt = kShaderFormatText;
+  ShaderType current_shader = ShaderType::kVertex;
+  ShaderFormat current_fmt = ShaderFormat::kText;
   std::string section_contents;
 
   for (std::string line; std::getline(ss, line);) {
