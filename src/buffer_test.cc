@@ -24,7 +24,8 @@ using BufferTest = testing::Test;
 
 TEST_F(BufferTest, DataBufferEmptyByDefault) {
   DataBuffer b(BufferType::kColor);
-  EXPECT_EQ(static_cast<size_t>(0U), b.GetSize());
+  EXPECT_EQ(static_cast<size_t>(0U), b.ElementCount());
+  EXPECT_EQ(static_cast<size_t>(0U), b.ValueCount());
   EXPECT_EQ(static_cast<size_t>(0U), b.GetSizeInBytes());
 }
 
@@ -34,9 +35,10 @@ TEST_F(BufferTest, DataBufferSize) {
 
   DataBuffer b(BufferType::kColor);
   b.SetDatumType(type);
-  b.SetSize(10);
-  EXPECT_EQ(10, b.GetSize());
-  EXPECT_EQ(2 * 10, b.GetSizeInBytes());
+  b.SetElementCount(10);
+  EXPECT_EQ(10, b.ElementCount());
+  EXPECT_EQ(10, b.ValueCount());
+  EXPECT_EQ(10 * sizeof(int16_t), b.GetSizeInBytes());
 }
 
 TEST_F(BufferTest, DataBufferSizeFromData) {
@@ -50,8 +52,9 @@ TEST_F(BufferTest, DataBufferSizeFromData) {
   b.SetDatumType(type);
   b.SetData(std::move(values));
 
-  EXPECT_EQ(5, b.GetSize());
-  EXPECT_EQ(2 * 5, b.GetSizeInBytes());
+  EXPECT_EQ(5, b.ElementCount());
+  EXPECT_EQ(5, b.ValueCount());
+  EXPECT_EQ(5 * sizeof(int16_t), b.GetSizeInBytes());
 }
 
 TEST_F(BufferTest, DataBufferSizeFromDataOverrideSize) {
@@ -63,11 +66,12 @@ TEST_F(BufferTest, DataBufferSizeFromDataOverrideSize) {
 
   DataBuffer b(BufferType::kColor);
   b.SetDatumType(type);
-  b.SetSize(20);
+  b.SetElementCount(20);
   b.SetData(std::move(values));
 
-  EXPECT_EQ(5, b.GetSize());
-  EXPECT_EQ(2 * 5, b.GetSizeInBytes());
+  EXPECT_EQ(5, b.ElementCount());
+  EXPECT_EQ(5, b.ValueCount());
+  EXPECT_EQ(5 * sizeof(int16_t), b.GetSizeInBytes());
 }
 
 TEST_F(BufferTest, DataBufferSizeMatrix) {
@@ -78,9 +82,11 @@ TEST_F(BufferTest, DataBufferSizeMatrix) {
 
   DataBuffer b(BufferType::kColor);
   b.SetDatumType(type);
-  b.SetSize(10);
-  EXPECT_EQ(10, b.GetSize());
-  EXPECT_EQ(2 * 10 * 3 * 2, b.GetSizeInBytes());
+  b.SetElementCount(10);
+
+  EXPECT_EQ(10, b.ElementCount());
+  EXPECT_EQ(60, b.ValueCount());
+  EXPECT_EQ(60 * sizeof(int16_t), b.GetSizeInBytes());
 }
 
 }  // namespace amber

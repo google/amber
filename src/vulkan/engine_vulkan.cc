@@ -222,7 +222,6 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     cmd->SetDescriptorSet(buf_info.descriptor_set);
     cmd->SetBinding(buf_info.binding);
     cmd->SetBuffer(buf_info.buffer);
-    cmd->SetFormat(buf_info.buffer->AsDataBuffer()->GetDatumType().AsFormat());
 
     r = info.vk_pipeline->AddDescriptor(cmd.get());
     if (!r.IsSuccess())

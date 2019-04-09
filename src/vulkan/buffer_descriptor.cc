@@ -111,7 +111,8 @@ Result BufferDescriptor::MoveResourceToBufferOutput() {
     }
 
     auto size_in_bytes = transfer_buffer_->GetSizeInBytes();
-    amber_buffer_->SetSize(size_in_bytes);
+    amber_buffer_->SetElementCount(size_in_bytes /
+                                   amber_buffer_->GetFormat()->SizeInBytes());
     amber_buffer_->ValuePtr()->resize(size_in_bytes);
     std::memcpy(amber_buffer_->ValuePtr()->data(), resource_memory_ptr,
                 size_in_bytes);
@@ -146,8 +147,7 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   is_descriptor_set_update_needed_ = false;
 }
 
-Result BufferDescriptor::AddToBuffer(Format* fmt,
-                                     uint32_t offset,
+Result BufferDescriptor::AddToBuffer(uint32_t offset,
                                      uint32_t size_in_bytes,
                                      const std::vector<Value>& values) {
   if (!amber_buffer_)
@@ -155,10 +155,11 @@ Result BufferDescriptor::AddToBuffer(Format* fmt,
 
   if (amber_buffer_->ValuePtr()->size() < offset + size_in_bytes) {
     amber_buffer_->ValuePtr()->resize(offset + size_in_bytes);
-    amber_buffer_->SetSize(offset + size_in_bytes);
+    amber_buffer_->SetElementCount((offset + size_in_bytes) /
+                                   amber_buffer_->GetFormat()->SizeInBytes());
   }
 
-  BufferInput in{offset, size_in_bytes, fmt, values};
+  BufferInput in{offset, size_in_bytes, amber_buffer_->GetFormat(), values};
   in.UpdateBufferWithValues(amber_buffer_->ValuePtr()->data());
 
   return {};

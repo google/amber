@@ -40,12 +40,13 @@ END)";
 
   auto* buffer = buffers[0].get();
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
-  EXPECT_EQ(7U, buffer->GetSize());
+  EXPECT_EQ(7U, buffer->ElementCount());
+  EXPECT_EQ(7U, buffer->ValueCount());
   EXPECT_EQ(7U * sizeof(uint32_t), buffer->GetSizeInBytes());
 
   std::vector<uint32_t> results = {1, 2, 3, 4, 55, 99, 1234};
   const auto* data = buffer->GetValues<uint32_t>();
-  ASSERT_EQ(results.size(), buffer->GetSize());
+  ASSERT_EQ(results.size(), buffer->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_EQ(results[i], data[i]);
   }
@@ -67,12 +68,13 @@ TEST_F(AmberScriptParserTest, BufferDataOneLine) {
 
   auto* buffer = buffers[0].get();
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
-  EXPECT_EQ(4U, buffer->GetSize());
+  EXPECT_EQ(4U, buffer->ElementCount());
+  EXPECT_EQ(4U, buffer->ValueCount());
   EXPECT_EQ(4U * sizeof(uint32_t), buffer->GetSizeInBytes());
 
   std::vector<uint32_t> results = {1, 2, 3, 4};
   const auto* data = buffer->GetValues<uint32_t>();
-  ASSERT_EQ(results.size(), buffer->GetSize());
+  ASSERT_EQ(results.size(), buffer->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_EQ(results[i], data[i]);
   }
@@ -95,12 +97,13 @@ TEST_F(AmberScriptParserTest, BufferDataFloat) {
   ASSERT_TRUE(buffers[0]->IsDataBuffer());
   auto* buffer = buffers[0]->AsDataBuffer();
   EXPECT_TRUE(buffer->GetDatumType().IsFloat());
-  EXPECT_EQ(4U, buffer->GetSize());
+  EXPECT_EQ(4U, buffer->ElementCount());
+  EXPECT_EQ(4U, buffer->ValueCount());
   EXPECT_EQ(4U * sizeof(float), buffer->GetSizeInBytes());
 
   std::vector<float> results = {1, 2, 3, 4};
   const auto* data = buffer->GetValues<float>();
-  ASSERT_EQ(results.size(), buffer->GetSize());
+  ASSERT_EQ(results.size(), buffer->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FLOAT_EQ(results[i], data[i]);
   }
@@ -122,12 +125,13 @@ TEST_F(AmberScriptParserTest, BufferFill) {
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsUint8());
-  EXPECT_EQ(5U, buffer->GetSize());
+  EXPECT_EQ(5U, buffer->ElementCount());
+  EXPECT_EQ(5U, buffer->ValueCount());
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
 
   std::vector<uint32_t> results = {5, 5, 5, 5, 5};
   const auto* data = buffer->GetValues<uint8_t>();
-  ASSERT_EQ(results.size(), buffer->GetSize());
+  ASSERT_EQ(results.size(), buffer->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_EQ(results[i], data[i]);
   }
@@ -149,12 +153,13 @@ TEST_F(AmberScriptParserTest, BufferFillFloat) {
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsFloat());
-  EXPECT_EQ(5U, buffer->GetSize());
+  EXPECT_EQ(5U, buffer->ElementCount());
+  EXPECT_EQ(5U, buffer->ValueCount());
   EXPECT_EQ(5U * sizeof(float), buffer->GetSizeInBytes());
 
   std::vector<float> results = {5.2f, 5.2f, 5.2f, 5.2f, 5.2f};
   const auto* data = buffer->GetValues<float>();
-  ASSERT_EQ(results.size(), buffer->GetSize());
+  ASSERT_EQ(results.size(), buffer->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FLOAT_EQ(results[i], data[i]);
   }
@@ -177,12 +182,13 @@ TEST_F(AmberScriptParserTest, BufferSeries) {
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsUint8());
-  EXPECT_EQ(5U, buffer->GetSize());
+  EXPECT_EQ(5U, buffer->ElementCount());
+  EXPECT_EQ(5U, buffer->ValueCount());
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
 
   std::vector<uint8_t> results = {2, 3, 4, 5, 6};
   const auto* data = buffer->GetValues<uint8_t>();
-  ASSERT_EQ(results.size(), buffer->GetSize());
+  ASSERT_EQ(results.size(), buffer->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_EQ(results[i], data[i]);
   }
@@ -206,12 +212,13 @@ TEST_F(AmberScriptParserTest, BufferSeriesFloat) {
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsFloat());
-  EXPECT_EQ(5U, buffer->GetSize());
+  EXPECT_EQ(5U, buffer->ElementCount());
+  EXPECT_EQ(5U, buffer->ValueCount());
   EXPECT_EQ(5U * sizeof(float), buffer->GetSizeInBytes());
 
   std::vector<float> results = {2.2f, 3.3f, 4.4f, 5.5f, 6.6f};
   const auto* data = buffer->GetValues<float>();
-  ASSERT_EQ(results.size(), buffer->GetSize());
+  ASSERT_EQ(results.size(), buffer->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FLOAT_EQ(results[i], data[i]);
   }
@@ -238,12 +245,13 @@ END)";
   auto* buffer = buffers[0].get();
   EXPECT_EQ("color_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsUint8());
-  EXPECT_EQ(5U, buffer->GetSize());
+  EXPECT_EQ(5U, buffer->ElementCount());
+  EXPECT_EQ(5U, buffer->ValueCount());
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
 
   std::vector<uint32_t> results0 = {5, 5, 5, 5, 5};
   const auto* data0 = buffer->GetValues<uint8_t>();
-  ASSERT_EQ(results0.size(), buffer->GetSize());
+  ASSERT_EQ(results0.size(), buffer->ValueCount());
   for (size_t i = 0; i < results0.size(); ++i) {
     EXPECT_EQ(results0[i], data0[i]);
   }
@@ -253,12 +261,13 @@ END)";
   buffer = buffers[1].get();
   EXPECT_EQ("storage_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
-  EXPECT_EQ(7U, buffer->GetSize());
+  EXPECT_EQ(7U, buffer->ElementCount());
+  EXPECT_EQ(7U, buffer->ValueCount());
   EXPECT_EQ(7U * sizeof(uint32_t), buffer->GetSizeInBytes());
 
   std::vector<uint32_t> results1 = {1, 2, 3, 4, 55, 99, 1234};
   const auto* data1 = buffer->GetValues<uint32_t>();
-  ASSERT_EQ(results1.size(), buffer->GetSize());
+  ASSERT_EQ(results1.size(), buffer->ValueCount());
   for (size_t i = 0; i < results1.size(); ++i) {
     EXPECT_EQ(results1[i], data1[i]);
   }
@@ -281,8 +290,9 @@ BUFFER my_index_buffer DATA_TYPE vec2<int32> SIZE 5 FILL 2)";
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_index_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsInt32());
-  EXPECT_EQ(5U, buffer->GetSize());
-  EXPECT_EQ(5U * 2 * sizeof(int32_t), buffer->GetSizeInBytes());
+  EXPECT_EQ(5U, buffer->ElementCount());
+  EXPECT_EQ(10U, buffer->ValueCount());
+  EXPECT_EQ(10U * sizeof(int32_t), buffer->GetSizeInBytes());
 
   std::vector<int32_t> results0 = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
   const auto* data0 = buffer->GetValues<int32_t>();
@@ -314,10 +324,45 @@ END
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_index_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsInt32());
-  EXPECT_EQ(4U, buffer->GetSize());
-  EXPECT_EQ(4U * 2 * sizeof(int32_t), buffer->GetSizeInBytes());
+  EXPECT_EQ(4U, buffer->ElementCount());
+  EXPECT_EQ(8U, buffer->ValueCount());
+  EXPECT_EQ(8U * sizeof(int32_t), buffer->GetSizeInBytes());
 
   std::vector<int32_t> results0 = {2, 3, 4, 5, 6, 7, 8, 9};
+  const auto* data0 = buffer->GetValues<int32_t>();
+  for (size_t i = 0; i < results0.size(); ++i) {
+    EXPECT_EQ(results0[i], data0[i]);
+  }
+}
+
+TEST_F(AmberScriptParserTest, BufferDataStd140Resized) {
+  std::string in = R"(
+BUFFER my_index_buffer DATA_TYPE vec3<int32> DATA
+2 3 3
+4 5 5
+6 7 7
+8 9 9
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+
+  auto* buffer = buffers[0].get();
+  EXPECT_EQ("my_index_buffer", buffer->GetName());
+  EXPECT_TRUE(buffer->GetFormat()->IsInt32());
+  EXPECT_EQ(4U, buffer->ElementCount());
+  EXPECT_EQ(12U, buffer->ValueCount());
+  EXPECT_EQ(16U * sizeof(int32_t), buffer->GetSizeInBytes());
+
+  std::vector<int32_t> results0 = {2, 3, 3, 4, 5, 5, 6, 7, 7, 8, 9, 9};
   const auto* data0 = buffer->GetValues<int32_t>();
   for (size_t i = 0; i < results0.size(); ++i) {
     EXPECT_EQ(results0[i], data0[i]);
@@ -347,12 +392,13 @@ END
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_index_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
-  EXPECT_EQ(4U, buffer->GetSize());
+  EXPECT_EQ(4U, buffer->ElementCount());
+  EXPECT_EQ(4U, buffer->ValueCount());
   EXPECT_EQ(4U * sizeof(uint32_t), buffer->GetSizeInBytes());
 
   std::vector<uint32_t> results0 = {4278190080, 16711680, 65280, 255};
   const auto* data0 = buffer->GetValues<uint32_t>();
-  ASSERT_EQ(results0.size(), buffer->GetSize());
+  ASSERT_EQ(results0.size(), buffer->ValueCount());
   for (size_t i = 0; i < results0.size(); ++i) {
     EXPECT_EQ(results0[i], data0[i]);
   }

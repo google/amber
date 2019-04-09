@@ -55,7 +55,7 @@ class VertexBufferTest : public testing::Test {
   ~VertexBufferTest() = default;
 
   Result SetIntData(uint8_t location,
-                    std::unique_ptr<Format>&& format,
+                    std::unique_ptr<Format> format,
                     std::vector<Value> values) {
     auto buffer = MakeUnique<FormatBuffer>();
     buffer->SetFormat(std::move(format));
@@ -66,7 +66,7 @@ class VertexBufferTest : public testing::Test {
   }
 
   Result SetDoubleData(uint8_t location,
-                       std::unique_ptr<Format>&& format,
+                       std::unique_ptr<Format> format,
                        std::vector<Value> values) {
     auto buffer = MakeUnique<FormatBuffer>();
     buffer->SetFormat(std::move(format));
@@ -251,7 +251,7 @@ TEST_F(VertexBufferTest, R64G64B64A64_SINT) {
   values[3].SetIntValue(255);
 
   auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR64G64B64A64_SINT);
+  format->SetFormatType(FormatType::kR64G64B64_SINT);
   format->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 64);
   format->AddComponent(FormatComponentType::kG, FormatMode::kSInt, 64);
   format->AddComponent(FormatComponentType::kB, FormatMode::kSInt, 64);
@@ -263,105 +263,6 @@ TEST_F(VertexBufferTest, R64G64B64A64_SINT) {
   EXPECT_EQ(3, ptr[1]);
   EXPECT_EQ(-27, ptr[2]);
   EXPECT_EQ(255, ptr[3]);
-}
-
-TEST_F(VertexBufferTest, R16G11B10_SFLOAT) {
-  std::vector<Value> values(3);
-
-  // 16 bits float to float
-  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
-  //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
-  uint64_t expected = 50688ULL;
-  values[0].SetDoubleValue(-6.0);
-
-  // 11 bits float to float
-  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
-  //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
-  expected |= 1200ULL << 16ULL;
-  values[1].SetDoubleValue(14.0);
-
-  // 10 bits float to float
-  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
-  //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4
-  //                                                 = 0.1171875
-  expected |= 380ULL << (16ULL + 11ULL);
-  values[2].SetDoubleValue(0.1171875);
-
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR32G32_SFLOAT);  // big enough to cover.
-  format->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 16);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 11);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 10);
-
-  Result r = SetDoubleData(0, std::move(format), values);
-  const uint64_t* ptr = static_cast<const uint64_t*>(GetVkBufferPtr());
-  EXPECT_EQ(expected, *ptr);
-}
-
-TEST_F(VertexBufferTest, R10G16B11_SFLOAT) {
-  std::vector<Value> values(3);
-
-  // 10 bits float to float
-  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
-  //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4
-  //                                                 = 0.1171875
-  uint64_t expected = 380ULL;
-  values[0].SetDoubleValue(0.1171875);
-
-  // 16 bits float to float
-  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
-  //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
-  expected |= 50688ULL << 10ULL;
-  values[1].SetDoubleValue(-6.0);
-
-  // 11 bits float to float
-  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
-  //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
-  expected |= 1200ULL << (16ULL + 10ULL);
-  values[2].SetDoubleValue(14.0);
-
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR32G32_SFLOAT);  // big enough to cover.
-  format->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 10);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 16);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 11);
-
-  Result r = SetDoubleData(0, std::move(format), values);
-  const uint64_t* ptr = static_cast<const uint64_t*>(GetVkBufferPtr());
-  EXPECT_EQ(expected, *ptr);
-}
-
-TEST_F(VertexBufferTest, R11G16B10_SFLOAT) {
-  std::vector<Value> values(3);
-
-  // 11 bits float to float
-  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
-  //     0 /  18 /       48 -->   0 / 130 / 12582912 = 1.11(2) * 2^3 = 14
-  uint64_t expected = 1200ULL;
-  values[0].SetDoubleValue(14.0);
-
-  // 16 bits float to float
-  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
-  //     1 /  17 /      512 -->   1 / 129 /  4194304 = -1.1(2) * 2^2 = -6
-  expected |= 50688ULL << 11ULL;
-  values[1].SetDoubleValue(-6.0);
-
-  // 10 bits float to float
-  //   Sig / Exp / Mantissa     Sig / Exp / Mantissa
-  //     0 /  11 /       28 -->   1 / 123 / 14680064 = 1.111(2) * 2^-4
-  //                                                 = 0.1171875
-  expected |= 380ULL << (16ULL + 11ULL);
-  values[2].SetDoubleValue(0.1171875);
-
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR32G32_SFLOAT);  // big enough to cover.
-  format->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 11);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 16);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 10);
-
-  Result r = SetDoubleData(0, std::move(format), values);
-  const uint64_t* ptr = static_cast<const uint64_t*>(GetVkBufferPtr());
-  EXPECT_EQ(expected, *ptr);
 }
 
 TEST_F(VertexBufferTest, R32G32B32_SFLOAT) {
