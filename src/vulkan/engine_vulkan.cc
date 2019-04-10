@@ -147,8 +147,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   }
 
   for (const auto& colour_info : pipeline->GetColorAttachments()) {
-    auto& fmt = colour_info.buffer->AsFormatBuffer()->GetFormat();
-    if (!device_->IsFormatSupportedByPhysicalDevice(fmt, colour_info.buffer))
+    auto fmt = colour_info.buffer->GetFormat();
+    if (!device_->IsFormatSupportedByPhysicalDevice(*fmt, colour_info.buffer))
       return Result("Vulkan color attachment format is not supported");
   }
 
@@ -156,7 +156,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   if (pipeline->GetDepthBuffer().buffer) {
     const auto& depth_info = pipeline->GetDepthBuffer();
 
-    depth_fmt = depth_info.buffer->AsFormatBuffer()->GetFormat();
+    depth_fmt = *depth_info.buffer->GetFormat();
     if (!device_->IsFormatSupportedByPhysicalDevice(depth_fmt,
                                                     depth_info.buffer)) {
       return Result("Vulkan depth attachment format is not supported");
@@ -191,12 +191,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   info.vk_pipeline = std::move(vk_pipeline);
 
   for (const auto& vtex_info : pipeline->GetVertexBuffers()) {
-    auto fmt =
-        vtex_info.buffer->IsFormatBuffer()
-            ? vtex_info.buffer->AsFormatBuffer()->GetFormat()
-            : vtex_info.buffer->AsDataBuffer()->GetDatumType().AsFormat();
-
-    if (!device_->IsFormatSupportedByPhysicalDevice(fmt, vtex_info.buffer))
+    auto fmt = vtex_info.buffer->GetFormat();
+    if (!device_->IsFormatSupportedByPhysicalDevice(*fmt, vtex_info.buffer))
       return Result("Vulkan vertex buffer format is not supported");
     if (!info.vertex_buffer)
       info.vertex_buffer = MakeUnique<VertexBuffer>(device_.get());

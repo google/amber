@@ -84,8 +84,8 @@ Result Executor::ExecuteCommand(Engine* engine, Command* cmd) {
     auto* buffer = cmd->AsProbe()->GetBuffer()->AsFormatBuffer();
     assert(buffer);
 
-    Format fmt = buffer->GetFormat();
-    return verifier_.Probe(cmd->AsProbe(), &fmt, buffer->GetTexelStride(),
+    Format* fmt = buffer->GetFormat();
+    return verifier_.Probe(cmd->AsProbe(), fmt, buffer->GetTexelStride(),
                            buffer->GetRowStride(), buffer->GetWidth(),
                            buffer->GetHeight(), buffer->ValuePtr()->data());
   }

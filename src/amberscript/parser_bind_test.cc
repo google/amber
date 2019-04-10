@@ -920,7 +920,7 @@ END
   EXPECT_EQ(2U, bufs[0].binding);
   EXPECT_EQ(static_cast<uint32_t>(0), bufs[0].location);
   EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
-            bufs[0].buffer->AsFormatBuffer()->GetFormat().GetFormatType());
+            bufs[0].buffer->GetFormat()->GetFormatType());
 }
 
 TEST_F(AmberScriptParserTest, BindBufferMissingBindingValue) {
