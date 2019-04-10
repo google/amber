@@ -16,6 +16,7 @@
 #define SRC_DAWN_PIPELINE_INFO_H_
 
 #include <cstdint>
+#include <memory>
 #include <utility>
 
 #include "amber/result.h"
@@ -28,8 +29,12 @@ namespace dawn {
 
 struct RenderPipelineInfo {
   RenderPipelineInfo() {}
-  RenderPipelineInfo(::dawn::ShaderModule vert, ::dawn::ShaderModule frag)
-      : vertex_shader(vert), fragment_shader(frag) {}
+  RenderPipelineInfo(::amber::Pipeline* the_pipeline,
+                     ::dawn::ShaderModule vert,
+                     ::dawn::ShaderModule frag)
+      : pipeline(the_pipeline), vertex_shader(vert), fragment_shader(frag) {}
+
+  ::amber::Pipeline* pipeline = nullptr;
 
   ::dawn::ShaderModule vertex_shader;
   ::dawn::ShaderModule fragment_shader;
@@ -52,9 +57,6 @@ struct RenderPipelineInfo {
   uint32_t fb_num_rows = 0;
   // The number of data bytes in the framebuffer host-side buffer.
   uint32_t fb_size = 0;
-  const void* fb_data = nullptr;
-  // The framebuffer format.
-  ::amber::Format fb_format;
 
   // TODO(dneto): Record index data
   // TODO(dneto): Record buffer data
@@ -62,10 +64,18 @@ struct RenderPipelineInfo {
 
 struct ComputePipelineInfo {
   ComputePipelineInfo() {}
-  explicit ComputePipelineInfo(::dawn::ShaderModule comp)
-      : compute_shader(comp) {}
+  ComputePipelineInfo(::amber::Pipeline* the_pipeline,
+                      ::dawn::ShaderModule comp)
+      : pipeline(the_pipeline), compute_shader(comp) {}
 
+  ::amber::Pipeline* pipeline = nullptr;
   ::dawn::ShaderModule compute_shader;
+};
+
+// Holds either a render or compute pipeline.
+struct Pipeline {
+  std::unique_ptr<RenderPipelineInfo> render_pipeline;
+  std::unique_ptr<ComputePipelineInfo> compute_pipeline;
 };
 
 }  // namespace dawn
