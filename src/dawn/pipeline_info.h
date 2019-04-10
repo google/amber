@@ -57,8 +57,6 @@ struct RenderPipelineInfo {
   uint32_t fb_num_rows = 0;
   // The number of data bytes in the framebuffer host-side buffer.
   uint32_t fb_size = 0;
-  // The framebuffer format.
-  ::amber::Format fb_format;
 
   // TODO(dneto): Record index data
   // TODO(dneto): Record buffer data

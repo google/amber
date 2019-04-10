@@ -474,10 +474,6 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     render_pipeline->fb_row_stride = row_stride;
     render_pipeline->fb_num_rows = height;
     render_pipeline->fb_size = size;
-
-    // TODO(dneto): support other formats
-    render_pipeline->fb_format = ::amber::Format();
-    render_pipeline->fb_format.SetFormatType(kAmberFramebufferFormatType);
   }
   return {};
 }
