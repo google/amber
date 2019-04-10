@@ -24,12 +24,10 @@ Format::~Format() = default;
 
 uint32_t Format::SizeInBytes() const {
   uint32_t bits = 0;
-  // Add the number of bits per row for each column
-  for (uint32_t i = 0; i < column_count_; ++i) {
-    for (const auto& comp : components_)
-      bits += comp.num_bits;
-  }
-  return bits / 8;
+  for (const auto& comp : components_)
+    bits += comp.num_bits;
+
+  return (bits / 8) * column_count_;
 }
 
 bool Format::AreAllComponents(FormatMode mode, uint32_t bits) const {
