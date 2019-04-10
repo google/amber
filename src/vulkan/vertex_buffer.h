@@ -39,7 +39,7 @@ class VertexBuffer {
   Result SendVertexData(CommandBuffer* command);
   bool VertexDataSent() const { return !is_vertex_data_pending_; }
 
-  void SetData(uint8_t location, FormatBuffer* buffer);
+  void SetData(uint8_t location, Buffer* buffer);
 
   const std::vector<VkVertexInputAttributeDescription>& GetVkVertexInputAttr()
       const {
@@ -81,7 +81,7 @@ class VertexBuffer {
   std::unique_ptr<TransferBuffer> transfer_buffer_;
   uint32_t stride_in_bytes_ = 0;
 
-  std::vector<FormatBuffer*> data_;
+  std::vector<Buffer*> data_;
 
   std::vector<VkVertexInputAttributeDescription> vertex_attr_desc_;
 };

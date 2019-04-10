@@ -28,15 +28,28 @@ VertexBuffer::VertexBuffer(Device* device) : device_(device) {}
 
 VertexBuffer::~VertexBuffer() = default;
 
-void VertexBuffer::SetData(uint8_t location, FormatBuffer* buffer) {
+void VertexBuffer::SetData(uint8_t location, Buffer* buffer) {
+  uint32_t size_in_bytes = 0;
+  VkFormat fmt;
+
+  if (buffer->IsFormatBuffer()) {
+    auto format = buffer->AsFormatBuffer()->GetFormat();
+    size_in_bytes = format.GetByteSize();
+    fmt = device_->GetVkFormat(format);
+  } else {
+    auto format = buffer->AsDataBuffer()->GetDatumType().AsFormat();
+    size_in_bytes = format.GetByteSize();
+    fmt = device_->GetVkFormat(format);
+  }
+
   vertex_attr_desc_.emplace_back();
   // TODO(jaebaek): Support multiple binding
   vertex_attr_desc_.back().binding = 0;
   vertex_attr_desc_.back().location = location;
   vertex_attr_desc_.back().offset = stride_in_bytes_;
-  vertex_attr_desc_.back().format = device_->GetVkFormat(buffer->GetFormat());
+  vertex_attr_desc_.back().format = fmt;
 
-  stride_in_bytes_ += buffer->GetFormat().GetByteSize();
+  stride_in_bytes_ += size_in_bytes;
   data_.push_back(buffer);
 }
 
@@ -47,7 +60,15 @@ Result VertexBuffer::FillVertexBufferWithData(CommandBuffer* command) {
   for (uint32_t i = 0; i < GetVertexCount(); ++i) {
     uint8_t* ptr = ptr_in_stride_begin;
     for (uint32_t j = 0; j < data_.size(); ++j) {
-      size_t bytes = data_[j]->GetFormat().GetByteSize();
+      size_t bytes = 0;
+      if (data_[j]->IsFormatBuffer()) {
+        auto& format = data_[j]->AsFormatBuffer()->GetFormat();
+        bytes = format.GetByteSize();
+      } else {
+        auto format = data_[j]->AsDataBuffer()->GetDatumType().AsFormat();
+        bytes = format.GetByteSize();
+      }
+
       std::memcpy(ptr, data_[j]->GetValues<uint8_t>() + (i * bytes), bytes);
       ptr += bytes;
     }

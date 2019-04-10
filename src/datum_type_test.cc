@@ -33,8 +33,7 @@ TEST_P(DatumTypeTestFormat, ToFormat) {
   dt.SetRowCount(test_data.row_count);
 
   auto fmt = dt.AsFormat();
-  ASSERT_TRUE(fmt != nullptr);
-  EXPECT_EQ(test_data.format_type, fmt->GetFormatType());
+  EXPECT_EQ(test_data.format_type, fmt.GetFormatType());
 }
 INSTANTIATE_TEST_CASE_P(
     DatumTypeTestFormat,

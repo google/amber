@@ -22,6 +22,8 @@ namespace amber {
 
 DatumType::DatumType() = default;
 
+DatumType::DatumType(const DatumType&) = default;
+
 DatumType::~DatumType() = default;
 
 DatumType& DatumType::operator=(const DatumType&) = default;
@@ -56,7 +58,7 @@ uint32_t DatumType::SizeInBytes() const {
   return bytes;
 }
 
-std::unique_ptr<Format> DatumType::AsFormat() const {
+Format DatumType::AsFormat() const {
   uint32_t bits_per_element = ElementSizeInBytes() * 8;
   static const char* prefixes = "RGBA";
   std::string name = "";
@@ -73,7 +75,8 @@ std::unique_ptr<Format> DatumType::AsFormat() const {
     name += "UINT";
 
   FormatParser fp;
-  return fp.Parse(name);
+  auto fmt = fp.Parse(name);
+  return *(fmt.get());
 }
 
 }  // namespace amber
