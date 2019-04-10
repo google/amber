@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "amber/result.h"
+
 #include "gtest/gtest.h"
 
 namespace amber {

@@ -49,7 +49,7 @@ TransferImage::TransferImage(Device* device,
                              uint32_t x,
                              uint32_t y,
                              uint32_t z)
-    : Resource(device, x * y * z * format.GetByteSize()),
+    : Resource(device, x * y * z * format.SizeInBytes()),
       image_info_(kDefaultImageInfo),
       aspect_(aspect) {
   image_info_.format = device_->GetVkFormat(format);

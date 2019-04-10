@@ -15,6 +15,7 @@
 #include "src/dawn/pipeline_info.h"
 
 #include <cstdint>
+
 #include "dawn/dawncpp.h"
 #include "gmock/gmock.h"
 

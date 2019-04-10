@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/datum_type.h"
+
 #include "gtest/gtest.h"
 
 namespace amber {

@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "src/shader_compiler.h"
+
 #include <string>
 
 #include "gtest/gtest.h"
-#include "src/shader_compiler.h"
 #include "src/shader_data.h"
 
 namespace amber {

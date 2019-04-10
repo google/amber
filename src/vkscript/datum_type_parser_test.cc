@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/vkscript/datum_type_parser.h"
+
 #include "gtest/gtest.h"
 
 namespace amber {

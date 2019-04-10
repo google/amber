@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/amberscript/parser.h"
+
 #include "gtest/gtest.h"
 
 namespace amber {

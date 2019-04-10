@@ -15,6 +15,7 @@
 #include "samples/config_helper_vulkan.h"
 
 #include <vulkan/vulkan.h>
+
 #include <algorithm>
 #include <cstring>
 #include <iostream>

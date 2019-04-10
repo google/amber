@@ -56,7 +56,7 @@ class Format {
   }
   const std::vector<Component>& GetComponents() const { return components_; }
 
-  uint32_t GetByteSize() const;
+  uint32_t SizeInBytes() const;
   bool IsFormatKnown() const { return type_ != FormatType::kUnknown; }
   bool HasStencilComponent() const {
     return type_ == FormatType::kD24_UNORM_S8_UINT ||
