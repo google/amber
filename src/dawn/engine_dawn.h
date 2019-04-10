@@ -68,15 +68,12 @@ class EngineDawn : public Engine {
     return pipeline_map_[command->GetPipeline()].render_pipeline.get();
   }
 
-  // Creates Dawn objects necessary for a render pipeline.  This creates
-  // a framebuffer texture, a framebuffer buffer, and a command buffer
-  // builder.  Returns a result code.
-  Result CreateRenderObjectsIfNeeded(RenderPipelineInfo* render_pipeline);
   // If they don't already exist, creates the framebuffer texture for use
   // on the device, the buffer on the host that will eventually hold the
   // resulting pixels for use in checking expectations, and bookkeeping info
   // for that host-side buffer.
   Result CreateFramebufferIfNeeded(RenderPipelineInfo* render_pipeline);
+
   Result SetShader(ShaderType type, const std::vector<uint32_t>& data);
 
   ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.

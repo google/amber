@@ -294,7 +294,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
 
   // TODO(dneto): Likely, we can create the render objects during
   // CreatePipeline.
-  Result result = CreateRenderObjectsIfNeeded(render_pipeline);
+  Result result = CreateFramebufferIfNeeded(render_pipeline);
   if (!result.IsSuccess())
     return result;
 
@@ -435,11 +435,6 @@ Result EngineDawn::DoPatchParameterVertices(
 
 Result EngineDawn::DoBuffer(const BufferCommand*) {
   return Result("Dawn:DoBuffer not implemented");
-}
-
-Result EngineDawn::CreateRenderObjectsIfNeeded(
-    RenderPipelineInfo* render_pipeline) {
-  return CreateFramebufferIfNeeded(render_pipeline);
 }
 
 Result EngineDawn::CreateFramebufferIfNeeded(
