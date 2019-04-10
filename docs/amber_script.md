@@ -98,8 +98,6 @@ either image buffers or, what the target API would refer to as a buffer.
  * vec[2,3,4]\<type>
  * mat[2,3,4]x[2,3,4]\<type>    -- useful?
 
-TODO(dneto): Support half-precision floating point.
-
 Sized arrays and structures are not currently representable.
 
 ```
@@ -117,8 +115,6 @@ BUFFER <name> DATA_TYPE <type> SIZE <size_in_items> <initializer>
 # The buffer will be sized based on the `RENDER_SIZE` of the `PIPELINE`.
 BUFFER <name> FORMAT <format_string>
 ```
-
-TODO(dsinclair): Does framebuffer need a format attached to it?
 
 #### Buffer Initializers
 
@@ -142,7 +138,7 @@ The COPY command copy all data, values and memory from <buffer_from> to
 COPY <buffer_from> TO <buffer_to>
 ```
 
-Both buffers must be declared, and of the same type.
+Both buffers must be declared, and of the same data type.
 
 Buffers used as copy destination can be used only as copy destination, and as
 argument to an EXPECT command.
@@ -206,8 +202,6 @@ The following commands are all specified within the `PIPELINE` command.
  * push\_constant
  * uniform
  * storage
-
-TODO(dsinclair): Reserve `input` as a buffer type for input attachments.
 
 TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
@@ -348,9 +342,7 @@ CLEAR <pipeline>
 
 #### Comparators
  * EQ
- * EQ\_FLOAT
  * NE
- * NE\_FLOAT
  * LT
  * LE
  * GT
