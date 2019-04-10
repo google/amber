@@ -66,8 +66,8 @@ struct RenderPipelineInfo {
 
 struct ComputePipelineInfo {
   ComputePipelineInfo() {}
-  explicit ComputePipelineInfo(::amber::Pipeline* the_pipeline,
-                               ::dawn::ShaderModule comp)
+  ComputePipelineInfo(::amber::Pipeline* the_pipeline,
+                      ::dawn::ShaderModule comp)
       : pipeline(the_pipeline), compute_shader(comp) {}
 
   ::amber::Pipeline* pipeline = nullptr;

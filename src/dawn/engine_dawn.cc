@@ -299,7 +299,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
     return result;
 
   // TODO(sarahM0): Adapt this to the case where there might be many colour
-  // attachments. Also whne there is a depth/stencil attachment.
+  // attachments. Also when there is a depth/stencil attachment.
 
   // Record a render pass in a command on the command buffer.
   //

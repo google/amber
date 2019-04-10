@@ -61,7 +61,7 @@ class EngineDawn : public Engine {
   Result DoBuffer(const BufferCommand* cmd) override;
 
  private:
-  // Returns the Dawn-specific render pipepline for the given command,
+  // Returns the Dawn-specific render pipeline for the given command,
   // if it exists.  Returns nullptr otherwise.
   RenderPipelineInfo* GetRenderPipeline(
       const ::amber::PipelineCommand* command) {
