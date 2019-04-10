@@ -78,7 +78,7 @@ class EngineDawn : public Engine {
 
   ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.
   ::dawn::Queue queue_;
-  ::dawn::CommandBufferBuilder command_buffer_builder_;
+  ::dawn::CommandEncoder command_buffer_builder_;
 
   std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
       module_for_type_;

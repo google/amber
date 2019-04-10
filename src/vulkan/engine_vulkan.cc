@@ -211,7 +211,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   }
 
   for (const auto& buf_info : pipeline->GetBuffers()) {
-    BufferCommand::BufferType type = BufferCommand::BufferType::kSSBO;
+    auto type = BufferCommand::BufferType::kSSBO;
     if (buf_info.buffer->GetBufferType() == BufferType::kUniform) {
       type = BufferCommand::BufferType::kUniform;
     } else if (buf_info.buffer->GetBufferType() == BufferType::kPushConstant) {

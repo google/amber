@@ -13,21 +13,20 @@
 // limitations under the License.
 
 #include "samples/config_helper_dawn.h"
-
 #include <iostream>
 #include "samples/dawn_device_metal.h"
-
 namespace sample {
 
 ConfigHelperDawn::ConfigHelperDawn() = default;
-
 ConfigHelperDawn::~ConfigHelperDawn() = default;
 
 namespace {
+
 // Callback which prints a message from a Dawn device operation.
 void PrintDeviceError(const char* message, ::dawn::CallbackUserdata) {
   std::cout << "Device error: " << message << std::endl;
 }
+
 }  // namespace
 
 amber::Result ConfigHelperDawn::CreateConfig(
@@ -39,22 +38,32 @@ amber::Result ConfigHelperDawn::CreateConfig(
     bool,
     bool,
     std::unique_ptr<amber::EngineConfig>* config) {
-#if AMBER_DAWN_METAL
-  auto r = dawn::CreateMetalDevice(&dawn_instance_, &dawn_device_);
-  if (!r.IsSuccess())
-    return r;
-#else
-  return amber::Result("Can't make Dawn engine config");
-#endif
 
   // Set procedure table and error callback.
-  dawnProcTable backendProcs = dawn_native::GetProcs();
+  DawnProcTable backendProcs = dawn_native::GetProcs();
   dawnSetProcs(&backendProcs);
-  backendProcs.deviceSetErrorCallback(dawn_device_.Get(), PrintDeviceError, 0);
+  dawn_instance_.DiscoverDefaultAdapters();
 
+  for (dawn_native::Adapter& adapter : dawn_instance_.GetAdapters()) {
+#if AMBER_DAWN_METAL
+    ::dawn_native::BackendType backendType = ::dawn_native::BackendType::Metal;
+#else  // assuming VULKAN
+    ::dawn_native::BackendType backendType = ::dawn_native::BackendType::Vulkan;
+#endif
+
+    if (adapter.GetBackendType() == backendType) {
+      dawn_device_ = ::dawn::Device::Acquire(adapter.CreateDevice());
+    }
+  }
+
+  if (!dawn_device_)
+    return amber::Result("could not find Vulkan or Metal backend for Dawn");
+
+  backendProcs.deviceSetErrorCallback(dawn_device_.Get(), PrintDeviceError, 0);
   auto* dawn_config = new amber::DawnEngineConfig;
   dawn_config->device = &dawn_device_;
   config->reset(dawn_config);
+
   return {};
 }
 

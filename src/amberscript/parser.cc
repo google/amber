@@ -76,6 +76,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParseRepeatableCommand(tok);
     } else if (tok == "BUFFER") {
       r = ParseBuffer();
+    } else if (tok == "DERIVE_PIPELINE") {
+      r = ParseDerivePipelineBlock();
     } else if (tok == "DEVICE_FEATURE") {
       r = ParseDeviceFeature();
     } else if (tok == "PIPELINE") {
@@ -92,7 +94,7 @@ Result Parser::Parse(const std::string& data) {
   }
   script_->SetCommands(std::move(command_list_));
 
-  // Generate any needed color and depth attachments. This is done before
+  // Generate any needed color attachments. This is done before
   // validating in case one of the pipelines specifies the framebuffer size
   // it needs to be verified against all other pipelines.
   for (const auto& pipeline : script_->GetPipelines()) {
@@ -108,23 +110,6 @@ Result Parser::Parse(const std::string& data) {
           return r;
       }
       Result r = pipeline->AddColorAttachment(buf, 0);
-      if (!r.IsSuccess())
-        return r;
-    }
-
-    // Add a depth buffer if needed
-    if (pipeline->GetDepthBuffer().buffer == nullptr) {
-      auto* buf = script_->GetBuffer(Pipeline::kGeneratedDepthBuffer);
-      if (!buf) {
-        auto new_buf = pipeline->GenerateDefaultDepthAttachmentBuffer();
-        buf = new_buf.get();
-
-        Result r = script_->AddBuffer(std::move(new_buf));
-        if (!r.IsSuccess())
-          return r;
-      }
-
-      Result r = pipeline->SetDepthBuffer(buf);
       if (!r.IsSuccess())
         return r;
     }
@@ -391,6 +376,12 @@ Result Parser::ParsePipelineBlock() {
   if (!r.IsSuccess())
     return r;
 
+  return ParsePipelineBody("PIPELINE", std::move(pipeline));
+}
+
+Result Parser::ParsePipelineBody(const std::string& cmd_name,
+                                 std::unique_ptr<Pipeline> pipeline) {
+  std::unique_ptr<Token> token;
   for (token = tokenizer_->NextToken(); !token->IsEOS();
        token = tokenizer_->NextToken()) {
     if (token->IsEOL())
@@ -398,6 +389,7 @@ Result Parser::ParsePipelineBlock() {
     if (!token->IsString())
       return Result("expected string");
 
+    Result r;
     std::string tok = token->AsString();
     if (tok == "END") {
       break;
@@ -421,9 +413,9 @@ Result Parser::ParsePipelineBlock() {
   }
 
   if (!token->IsString() || token->AsString() != "END")
-    return Result("PIPELINE missing END command");
+    return Result(cmd_name + " missing END command");
 
-  r = script_->AddPipeline(std::move(pipeline));
+  Result r = script_->AddPipeline(std::move(pipeline));
   if (!r.IsSuccess())
     return r;
 
@@ -637,21 +629,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     token = tokenizer_->NextToken();
     if (!token->IsInteger())
       return Result("invalid value for BINDING in BIND command");
-    uint32_t binding = token->AsUint32();
-
-    token = tokenizer_->NextToken();
-    if (token->IsEOL() || token->IsEOS()) {
-      pipeline->AddBuffer(buffer, descriptor_set, binding, 0);
-      return {};
-    }
-    if (!token->IsString() || token->AsString() != "IDX")
-      return Result("extra parameters after BIND command");
-
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger())
-      return Result("invalid value for IDX in BIND command");
-
-    pipeline->AddBuffer(buffer, descriptor_set, binding, token->AsUint32());
+    pipeline->AddBuffer(buffer, descriptor_set, token->AsUint32());
   }
 
   return ValidateEndOfStatement("BIND command");
@@ -886,6 +864,8 @@ Result Parser::ParseBufferInitializerData(DataBuffer* buffer) {
 
     Value v;
     if (is_double_type) {
+      token->ConvertToDouble();
+
       double val = token->IsHex() ? static_cast<double>(token->AsHex())
                                   : token->AsDouble();
       v.SetDoubleValue(val);
@@ -910,6 +890,8 @@ Result Parser::ParseRun() {
   if (!token->IsString())
     return Result("missing pipeline name for RUN command");
 
+  size_t line = tokenizer_->GetCurrentLine();
+
   auto* pipeline = script_->GetPipeline(token->AsString());
   if (!pipeline)
     return Result("unknown pipeline for RUN command: " + token->AsString());
@@ -923,6 +905,7 @@ Result Parser::ParseRun() {
       return Result("RUN command requires compute pipeline");
 
     auto cmd = MakeUnique<ComputeCommand>(pipeline);
+    cmd->SetLine(line);
     cmd->SetX(token->AsUint32());
 
     token = tokenizer_->NextToken();
@@ -963,6 +946,7 @@ Result Parser::ParseRun() {
       return Result("missing X position for RUN command");
 
     auto cmd = MakeUnique<DrawRectCommand>(pipeline, PipelineData{});
+    cmd->SetLine(line);
     cmd->EnableOrtho();
 
     Result r = token->ConvertToDouble();
@@ -1012,6 +996,7 @@ Result Parser::ParseRun() {
       return Result("RUN command requires graphics pipeline");
 
     auto cmd = MakeUnique<DrawArraysCommand>(pipeline, PipelineData{});
+    cmd->SetLine(line);
 
     command_list_.push_back(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
@@ -1022,9 +1007,10 @@ Result Parser::ParseRun() {
 
 Result Parser::ParseClear() {
   auto token = tokenizer_->NextToken();
-
   if (!token->IsString())
     return Result("missing pipeline name for CLEAR command");
+
+  size_t line = tokenizer_->GetCurrentLine();
 
   auto* pipeline = script_->GetPipeline(token->AsString());
   if (!pipeline)
@@ -1033,6 +1019,7 @@ Result Parser::ParseClear() {
     return Result("CLEAR command requires graphics pipeline");
 
   auto cmd = MakeUnique<ClearCommand>(pipeline);
+  cmd->SetLine(line);
   command_list_.push_back(std::move(cmd));
 
   return ValidateEndOfStatement("CLEAR command");
@@ -1083,6 +1070,7 @@ Result Parser::ParseExpect() {
   if (token->AsString() == "EQ_BUFFER")
     return Result("missing buffer name between EXPECT and EQ_BUFFER");
 
+  size_t line = tokenizer_->GetCurrentLine();
   auto* buffer = script_->GetBuffer(token->AsString());
   if (!buffer)
     return Result("unknown buffer name for EXPECT command: " +
@@ -1154,6 +1142,7 @@ Result Parser::ParseExpect() {
       return Result("invalid Y value in EXPECT command");
 
     auto probe = MakeUnique<ProbeCommand>(buffer);
+    probe->SetLine(line);
     probe->SetX(x);
     probe->SetY(y);
     probe->SetProbeRect();
@@ -1217,6 +1206,7 @@ Result Parser::ParseExpect() {
       return Result("comparator must be provided a data buffer");
 
     auto probe = MakeUnique<ProbeSSBOCommand>(buffer);
+    probe->SetLine(line);
     probe->SetComparator(ToComparator(token->AsString()));
     probe->SetDatumType(buffer->AsDataBuffer()->GetDatumType());
     probe->SetOffset(static_cast<uint32_t>(x));
@@ -1246,6 +1236,8 @@ Result Parser::ParseCopy() {
     return Result("missing buffer name after COPY");
   if (!token->IsString())
     return Result("invalid buffer name after COPY");
+
+  size_t line = tokenizer_->GetCurrentLine();
 
   auto name = token->AsString();
   if (name == "TO")
@@ -1290,6 +1282,7 @@ Result Parser::ParseCopy() {
     return Result("COPY origin and destination buffers are identical");
 
   auto cmd = MakeUnique<CopyCommand>(buffer_from, buffer_to);
+  cmd->SetLine(line);
   command_list_.push_back(std::move(cmd));
 
   return ValidateEndOfStatement("COPY command");
@@ -1299,6 +1292,8 @@ Result Parser::ParseClearColor() {
   auto token = tokenizer_->NextToken();
   if (!token->IsString())
     return Result("missing pipeline name for CLEAR_COLOR command");
+
+  size_t line = tokenizer_->GetCurrentLine();
 
   auto* pipeline = script_->GetPipeline(token->AsString());
   if (!pipeline) {
@@ -1310,6 +1305,7 @@ Result Parser::ParseClearColor() {
   }
 
   auto cmd = MakeUnique<ClearColorCommand>(pipeline);
+  cmd->SetLine(line);
 
   token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
@@ -1412,6 +1408,37 @@ Result Parser::ParseRepeat() {
   command_list_.push_back(std::move(cmd));
 
   return ValidateEndOfStatement("REPEAT command");
+}
+
+Result Parser::ParseDerivePipelineBlock() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() == "FROM")
+    return Result("missing pipeline name for DERIVE_PIPELINE command");
+
+  std::string name = token->AsString();
+  if (script_->GetPipeline(name) != nullptr)
+    return Result("duplicate pipeline name for DERIVE_PIPELINE command");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "FROM")
+    return Result("missing FROM in DERIVE_PIPELINE command");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("missing parent pipeline name in DERIVE_PIPELINE command");
+
+  Pipeline* parent = script_->GetPipeline(token->AsString());
+  if (!parent)
+    return Result("unknown parent pipeline in DERIVE_PIPELINE command");
+
+  Result r = ValidateEndOfStatement("DERIVE_PIPELINE command");
+  if (!r.IsSuccess())
+    return r;
+
+  auto pipeline = parent->Clone();
+  pipeline->SetName(name);
+
+  return ParsePipelineBody("DERIVE_PIPELINE", std::move(pipeline));
 }
 
 }  // namespace amberscript

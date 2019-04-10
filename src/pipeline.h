@@ -32,9 +32,11 @@ class Pipeline {
  public:
   class ShaderInfo {
    public:
-    ShaderInfo(const Shader*, ShaderType type);
+    ShaderInfo(Shader*, ShaderType type);
     ShaderInfo(const ShaderInfo&);
     ~ShaderInfo();
+
+    ShaderInfo& operator=(const ShaderInfo&) = default;
 
     void SetShaderOptimizations(const std::vector<std::string>& opts) {
       shader_optimizations_ = opts;
@@ -43,6 +45,7 @@ class Pipeline {
       return shader_optimizations_;
     }
 
+    void SetShader(Shader* shader) { shader_ = shader; }
     const Shader* GetShader() const { return shader_; }
 
     void SetEntryPoint(const std::string& ep) { entry_point_ = ep; }
@@ -55,7 +58,7 @@ class Pipeline {
     void SetData(std::vector<uint32_t>&& data) { data_ = std::move(data); }
 
    private:
-    const Shader* shader_ = nullptr;
+    Shader* shader_ = nullptr;
     ShaderType shader_type_;
     std::vector<std::string> shader_optimizations_;
     std::string entry_point_;
@@ -78,6 +81,8 @@ class Pipeline {
   explicit Pipeline(PipelineType type);
   ~Pipeline();
 
+  std::unique_ptr<Pipeline> Clone() const;
+
   bool IsGraphics() const { return pipeline_type_ == PipelineType::kGraphics; }
   bool IsCompute() const { return pipeline_type_ == PipelineType::kCompute; }
   PipelineType GetType() const { return pipeline_type_; }
@@ -97,7 +102,7 @@ class Pipeline {
   }
   uint32_t GetFramebufferHeight() const { return fb_height_; }
 
-  Result AddShader(const Shader*, ShaderType);
+  Result AddShader(Shader*, ShaderType);
   std::vector<ShaderInfo>& GetShaders() { return shaders_; }
   const std::vector<ShaderInfo>& GetShaders() const { return shaders_; }
 
@@ -123,17 +128,7 @@ class Pipeline {
   Result SetIndexBuffer(Buffer* buf);
   Buffer* GetIndexBuffer() const { return index_buffer_; }
 
-  void AddBuffer(Buffer* buf,
-                 uint32_t descriptor_set,
-                 uint32_t binding,
-                 uint32_t location) {
-    buffers_.push_back(BufferInfo{buf});
-
-    auto& info = buffers_.back();
-    info.descriptor_set = descriptor_set;
-    info.binding = binding;
-    info.location = location;
-  }
+  void AddBuffer(Buffer* buf, uint32_t descriptor_set, uint32_t binding);
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
 
   Buffer* GetBufferForBinding(uint32_t descriptor_set, uint32_t binding) const;

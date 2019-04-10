@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <utility>
 #include <vector>
@@ -53,9 +54,9 @@ Result MakeFramebufferTexture(const ::dawn::Device& device,
   descriptor.size.width = kFramebufferWidth;
   descriptor.size.height = kFramebufferHeight;
   descriptor.size.depth = 1;
-  descriptor.arraySize = 1;
+  descriptor.arrayLayerCount = 1;
   descriptor.format = format;
-  descriptor.levelCount = 1;
+  descriptor.mipLevelCount = 1;
   descriptor.sampleCount = 1;
   descriptor.usage = ::dawn::TextureUsageBit::TransferSrc |
                      ::dawn::TextureUsageBit::OutputAttachment;
@@ -117,6 +118,7 @@ Result MakeFramebufferBuffer(const ::dawn::Device& device,
 struct MapResult {
   Result result;
   const void* data = nullptr;
+  uint64_t dataLength = 0;
 };
 
 // Handles the update from an asynchronous buffer map request, updating the
@@ -124,13 +126,15 @@ struct MapResult {
 // On a successful mapping outcome, set the data pointer in the map result.
 // Otherwise set the map result object to an error, and the data member is
 // not changed.
-void HandleBufferMapCallback(dawnBufferMapAsyncStatus status,
+void HandleBufferMapCallback(DawnBufferMapAsyncStatus status,
                              const void* data,
-                             dawnCallbackUserdata userdata) {
+                             uint64_t dataLength,
+                             DawnCallbackUserdata userdata) {
   MapResult& map_result = *reinterpret_cast<MapResult*>(userdata);
   switch (status) {
     case DAWN_BUFFER_MAP_ASYNC_STATUS_SUCCESS:
       map_result.data = data;
+      map_result.dataLength = dataLength;
       break;
     case DAWN_BUFFER_MAP_ASYNC_STATUS_ERROR:
       map_result.result = Result("Buffer map for reading failed: error");
@@ -150,12 +154,10 @@ void HandleBufferMapCallback(dawnBufferMapAsyncStatus status,
 // status saved in the .result member and the host pointer to the mapped data
 // in the |.data| member. Mapping a buffer can fail if the context is lost, for
 // example. In the failure case, the .data member of the result will be null.
-MapResult MapBuffer(const ::dawn::Device& device,
-                    const ::dawn::Buffer& buf,
-                    uint32_t size) {
+MapResult MapBuffer(const ::dawn::Device& device, const ::dawn::Buffer& buf) {
   MapResult map_result;
-  buf.MapReadAsync(0, size, HandleBufferMapCallback,
-                   static_cast<dawnCallbackUserdata>(
+  buf.MapReadAsync(HandleBufferMapCallback,
+                   static_cast<DawnCallbackUserdata>(
                        reinterpret_cast<uintptr_t>(&map_result)));
   device.Tick();
   // Wait until the callback has been processed.  Use an exponential backoff
@@ -272,26 +274,66 @@ Result EngineDawn::DoClearDepth(const ClearDepthCommand* command) {
   return {};
 }
 
-Result EngineDawn::DoClear(const ClearCommand*) {
+Result EngineDawn::DoClear(const ClearCommand* command) {
   Result result = CreateRenderObjectsIfNeeded();
   if (!result.IsSuccess())
     return result;
 
+  // TODO(sarahM0): Refactor this code later.  This backend is in transition
+  // between the old design and the new design of how Amber operates.
+
   ::dawn::RenderPassColorAttachmentDescriptor color_attachment =
       ::dawn::RenderPassColorAttachmentDescriptor();
   color_attachment.attachment =
-      render_pipeline_info_.fb_texture.CreateDefaultTextureView();
+      render_pipeline_info_.fb_texture.CreateDefaultView();
   color_attachment.resolveTarget = nullptr;
   color_attachment.clearColor = render_pipeline_info_.clear_color_value;
   color_attachment.loadOp = ::dawn::LoadOp::Clear;
   color_attachment.storeOp = ::dawn::StoreOp::Store;
 
-  ::dawn::RenderPassDescriptor rpd =
-      device_->CreateRenderPassDescriptorBuilder()
-          .SetColorAttachments(1, &color_attachment)
-          .GetResult();
-  command_buffer_builder_.BeginRenderPass(rpd).EndPass();
-  return {};
+  ::dawn::RenderPassColorAttachmentDescriptor* rpca[] = {&color_attachment};
+  ::dawn::RenderPassDescriptor rpd;
+  rpd.colorAttachmentCount = 1;
+  rpd.colorAttachments = rpca;
+  rpd.depthStencilAttachment = nullptr;
+  ::dawn::RenderPassEncoder pass =
+      command_buffer_builder_.BeginRenderPass(&rpd);
+  pass.EndPass();
+
+  // Make sure we have a queue.
+  if (!queue_)
+    queue_ = device_->CreateQueue();
+
+  // Now run the commands.
+  ::dawn::Buffer& fb_buffer = render_pipeline_info_.fb_buffer;
+  auto command_buffer = command_buffer_builder_.Finish();
+
+  if (render_pipeline_info_.fb_data != nullptr) {
+    fb_buffer.Unmap();
+    render_pipeline_info_.fb_data = nullptr;
+  }
+
+  queue_.Submit(1, &command_buffer);
+
+  auto* pipeline = command->GetPipeline();
+  const std::vector<amber::Pipeline::BufferInfo>& out_color_attachment =
+      pipeline->GetColorAttachments();
+
+  // And any further commands start afresh.
+  DestroyCommandBufferBuilder();
+  MapResult map = MapBuffer(*device_, fb_buffer);
+
+  for (size_t i = 0; i < 1; ++i) {
+    auto& img = map;
+    auto& info = out_color_attachment[i];
+    auto* values = info.buffer->ValuePtr();
+    values->resize(info.buffer->GetSizeInBytes());
+    // TODO(sarahM0): Resolve the difference between the Dawn buffer's size
+    // and the Amber buffer's size.
+    std::memcpy(values->data(), img.data, info.buffer->GetSizeInBytes());
+  }
+
+  return map.result;
 }
 
 Result EngineDawn::DoDrawRect(const DrawRectCommand*) {
@@ -337,7 +379,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand*) {
     queue_ = device_->CreateQueue();
 
   // Now run the commands.
-  auto command_buffer = command_buffer_builder_.GetResult();
+  auto command_buffer = command_buffer_builder_.Finish();
 
   if (render_pipeline_info_.fb_data != nullptr) {
     fb_buffer.Unmap();
@@ -349,7 +391,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand*) {
   // And any further commands start afresh.
   DestroyCommandBufferBuilder();
 
-  MapResult map = MapBuffer(*device_, fb_buffer, render_pipeline_info_.fb_size);
+  MapResult map = MapBuffer(*device_, fb_buffer);
   render_pipeline_info_.fb_data = map.data;
   return map.result;
 }
@@ -385,14 +427,14 @@ Result EngineDawn::CreateCommandBufferBuilderIfNeeded() {
         "EngineDawn: Can't create command buffer builder: device is not "
         "initialized");
   }
-  command_buffer_builder_ = device_->CreateCommandBufferBuilder();
+  command_buffer_builder_ = device_->CreateCommandEncoder();
   if (command_buffer_builder_)
     return {};
   return Result("EngineDawn: Can't create command buffer builder");
 }
 
 void EngineDawn::DestroyCommandBufferBuilder() {
-  command_buffer_builder_ = ::dawn::CommandBufferBuilder();
+  command_buffer_builder_ = ::dawn::CommandEncoder();
 }
 
 Result EngineDawn::CreateRenderObjectsIfNeeded() {
