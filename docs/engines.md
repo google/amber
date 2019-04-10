@@ -168,7 +168,7 @@ at (x,y) of size (width,height). The buffers must be read back into the backing
 `amber::Buffer` at the end of this method.
 
 
-### `DoDrawArrays`
+#### `DoDrawArrays`
 The `DoDrawArrays` instructs the engine to draw the given pipeline using
 the information in the attached vertex and index buffers.  The buffers must be
 read back into the backing `amber::Buffer` at the end of this method.
@@ -194,7 +194,7 @@ The `DoBuffer` command tells the engine that for a given pipeline the given
 data should be updated into the given buffer.
 
 
-### `SetEngineData`
+#### `SetEngineData`
 There are cases where there is extra data for a given engine created by the
 front end system. That data is stored in a `EngineData` structure and passed
 into the engine through the `SetEngineData` method. The engine should make
