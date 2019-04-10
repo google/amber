@@ -25,7 +25,7 @@ Format::~Format() = default;
 uint32_t Format::SizeInBytes() const {
   uint32_t bits = 0;
   // Add the number of bits per row for each column
-  for (size_t i = 0; i < column_count_; ++i) {
+  for (uint32_t i = 0; i < column_count_; ++i) {
     for (const auto& comp : components_)
       bits += comp.num_bits;
   }
