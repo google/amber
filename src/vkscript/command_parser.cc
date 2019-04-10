@@ -474,7 +474,7 @@ Result CommandParser::ProcessClear() {
 }
 
 Result CommandParser::ParseValues(const std::string& name,
-                                  const DatumType& type,
+                                  Format* fmt,
                                   std::vector<Value>* values,
                                   bool use_std430_layout) {
   assert(values);
@@ -493,10 +493,10 @@ Result CommandParser::ParseValues(const std::string& name,
     // stride of 3x2 UBO float matrix is 16 bytes but VkRunner script
     // is supposed to take only 2 float values for a row. We need two
     // more float values for a row.
-    if (type.ColumnCount() > 1U && type.RowCount() > 1U &&
-        row_index == type.RowCount()) {
-      if (use_std430_layout || type.RowCount() == 3U) {
-        if ((type.IsFloat() || type.IsDouble())) {
+    if (fmt->ColumnCount() > 1U && fmt->RowCount() > 1U &&
+        row_index == fmt->RowCount()) {
+      if (use_std430_layout || fmt->RowCount() == 3U) {
+        if ((fmt->IsFloat() || fmt->IsDouble())) {
           v.SetDoubleValue(0);
         } else {
           v.SetIntValue(0);
@@ -505,13 +505,13 @@ Result CommandParser::ParseValues(const std::string& name,
         // 4 * element size in bytes when row count is not 1.
         // For std140 layout, the stride of each row must be
         // 4 * element size in bytes when row count is 3 or 4.
-        for (uint32_t i = type.RowCount(); i < 4U; ++i)
+        for (uint32_t i = fmt->RowCount(); i < 4U; ++i)
           values->push_back(v);
       }
       row_index = 0;
     }
 
-    if ((type.IsFloat() || type.IsDouble())) {
+    if ((fmt->IsFloat() || fmt->IsDouble())) {
       if (!token->IsInteger() && !token->IsDouble()) {
         return Result(std::string("Invalid value provided to ") + name +
                       " command: " + token->ToOriginalString());
@@ -540,7 +540,7 @@ Result CommandParser::ParseValues(const std::string& name,
 
   // This could overflow, but I don't really expect us to get command files
   // that big ....
-  size_t num_per_row = type.ColumnCount() * type.RowCount();
+  size_t num_per_row = fmt->ColumnCount() * fmt->RowCount();
   if (seen == 0 || (seen % num_per_row) != 0) {
     return Result(std::string("Incorrect number of values provided to ") +
                   name + " command");
@@ -613,7 +613,7 @@ Result CommandParser::ProcessSSBO() {
     if (!r.IsSuccess())
       return r;
 
-    cmd->SetDatumType(tp.GetType());
+    cmd->SetFormat(tp.GetType().AsFormat());
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger()) {
@@ -624,16 +624,16 @@ Result CommandParser::ProcessSSBO() {
       return Result("offset for SSBO must be positive, got: " +
                     std::to_string(token->AsInt32()));
     }
-    if ((token->AsUint32() % cmd->GetDatumType().SizeInBytes()) != 0) {
+    if ((token->AsUint32() % cmd->GetFormat()->SizeInBytes()) != 0) {
       return Result(
           "offset for SSBO must be a multiple of the data size expected " +
-          std::to_string(cmd->GetDatumType().SizeInBytes()));
+          std::to_string(cmd->GetFormat()->SizeInBytes()));
     }
 
     cmd->SetOffset(token->AsUint32());
 
     std::vector<Value> values;
-    r = ParseValues("ssbo", cmd->GetDatumType(), &values, false);
+    r = ParseValues("ssbo", cmd->GetFormat(), &values, false);
     if (!r.IsSuccess())
       return r;
 
@@ -744,7 +744,7 @@ Result CommandParser::ProcessUniform() {
   if (!r.IsSuccess())
     return r;
 
-  cmd->SetDatumType(tp.GetType());
+  cmd->SetFormat(tp.GetType().AsFormat());
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger()) {
@@ -759,7 +759,7 @@ Result CommandParser::ProcessUniform() {
   cmd->SetOffset(token->AsUint32());
 
   std::vector<Value> values;
-  r = ParseValues("uniform", cmd->GetDatumType(), &values, use_std430_layout);
+  r = ParseValues("uniform", cmd->GetFormat(), &values, use_std430_layout);
   if (!r.IsSuccess())
     return r;
 
@@ -2068,7 +2068,8 @@ Result CommandParser::ProcessProbeSSBO() {
   cmd->SetComparator(comp);
 
   std::vector<Value> values;
-  r = ParseValues("probe ssbo", cmd->GetDatumType(), &values, false);
+  auto fmt = cmd->GetDatumType().AsFormat();
+  r = ParseValues("probe ssbo", fmt.get(), &values, false);
   if (!r.IsSuccess())
     return r;
 

@@ -37,8 +37,8 @@ struct BufferInput {
 
   uint32_t offset;
   uint32_t size_in_bytes;
-  DataType type;              // Type of |values|.
-  std::vector<Value> values;  // Data whose type is |type|.
+  Format* format;
+  std::vector<Value> values;
 };
 
 // Class for Vulkan resources. Its children are Vulkan Buffer, Vulkan Image,
