@@ -519,7 +519,7 @@ TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
   probe.SetB(0.1171875f);
 
   Format format;
-  format.SetFormatType(FormatType::kR32G32B32_SFLOAT);
+  format.SetFormatType(FormatType::kUnknown);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 16);
   format.AddComponent(FormatComponentType::kG, FormatMode::kUFloat, 11);
   format.AddComponent(FormatComponentType::kB, FormatMode::kUFloat, 10);
@@ -527,7 +527,7 @@ TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
   Verifier verifier;
   Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
                             static_cast<const void*>(&frame_buffer));
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
@@ -560,7 +560,7 @@ TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
   probe.SetB(0.1171875f);
 
   Format format;
-  format.SetFormatType(FormatType::kR32G32B32_SFLOAT);
+  format.SetFormatType(FormatType::kUnknown);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 11);
   format.AddComponent(FormatComponentType::kG, FormatMode::kUFloat, 16);
   format.AddComponent(FormatComponentType::kB, FormatMode::kUFloat, 10);
@@ -568,7 +568,7 @@ TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
   Verifier verifier;
   Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
                             static_cast<const void*>(&frame_buffer));
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
@@ -601,7 +601,7 @@ TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
   probe.SetB(-6.0f);
 
   Format format;
-  format.SetFormatType(FormatType::kB8G8R8A8_UNORM);
+  format.SetFormatType(FormatType::kUnknown);
   format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 10);
   format.AddComponent(FormatComponentType::kG, FormatMode::kUFloat, 11);
   format.AddComponent(FormatComponentType::kB, FormatMode::kUFloat, 16);
@@ -609,7 +609,7 @@ TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
   Verifier verifier;
   Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
                             static_cast<const void*>(&frame_buffer));
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeFrameBufferNotRect) {
