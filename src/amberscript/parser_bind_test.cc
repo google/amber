@@ -202,27 +202,6 @@ END)";
   EXPECT_EQ("12: extra parameters after BIND command", r.Error());
 }
 
-TEST_F(AmberScriptParserTest, BindColorBufferNonFormatBuffer) {
-  std::string in = R"(
-SHADER vertex my_shader PASSTHROUGH
-SHADER fragment my_fragment GLSL
-# GLSL Shader
-END
-BUFFER my_fb DATA_TYPE int32 SIZE 500 FILL 0
-
-PIPELINE graphics my_pipeline
-  ATTACH my_shader
-  ATTACH my_fragment
-
-  BIND BUFFER my_fb AS color LOCATION 0
-END)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: color buffer must be a FORMAT buffer", r.Error());
-}
-
 TEST_F(AmberScriptParserTest, BindColorBufferDuplicateLocation) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
@@ -437,27 +416,6 @@ END)";
   EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf.buffer->GetSizeInBytes());
 }
 
-TEST_F(AmberScriptParserTest, BindDepthBufferNonFormatBuffer) {
-  std::string in = R"(
-SHADER vertex my_shader PASSTHROUGH
-SHADER fragment my_fragment GLSL
-# GLSL Shader
-END
-BUFFER my_buf DATA_TYPE int32 SIZE 500 FILL 0
-
-PIPELINE graphics my_pipeline
-  ATTACH my_shader
-  ATTACH my_fragment
-
-  BIND BUFFER my_buf AS depth_stencil
-END)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: depth buffer must be a FORMAT buffer", r.Error());
-}
-
 TEST_F(AmberScriptParserTest, BindDepthBufferExtraParams) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
@@ -596,8 +554,8 @@ SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
 END
-BUFFER my_buf DATA_TYPE int8 SIZE 50 FILL 5
-BUFFER my_buf2 DATA_TYPE int8 SIZE 50 FILL 5
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+BUFFER my_buf2 DATA_TYPE int8 SIZE 5 FILL 5
 
 PIPELINE graphics my_pipeline
   ATTACH my_shader
@@ -621,12 +579,10 @@ END)";
 
   const auto& info1 = vertex_buffers[0];
   ASSERT_TRUE(info1.buffer != nullptr);
-  EXPECT_TRUE(info1.buffer->IsDataBuffer());
   EXPECT_EQ(0, info1.location);
 
   const auto& info2 = vertex_buffers[1];
   ASSERT_TRUE(info2.buffer != nullptr);
-  EXPECT_TRUE(info2.buffer->IsDataBuffer());
   EXPECT_EQ(1, info2.location);
 }
 
@@ -807,7 +763,6 @@ END)";
   const auto* pipeline = pipelines[0].get();
   const auto* buf = pipeline->GetIndexBuffer();
   ASSERT_TRUE(buf != nullptr);
-  EXPECT_TRUE(buf->IsDataBuffer());
 }
 
 TEST_F(AmberScriptParserTest, BindIndexataMissingBuffer) {

@@ -16,6 +16,7 @@
 #define SRC_FORMAT_H_
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include "src/format_data.h"
@@ -74,6 +75,8 @@ class Format {
   Format(const Format&);
   ~Format();
 
+  std::unique_ptr<Format> Clone() const;
+
   Format& operator=(const Format&) = default;
 
   bool Equal(const Format* b) const;
@@ -97,6 +100,8 @@ class Format {
   const std::vector<Component>& GetComponents() const { return components_; }
 
   uint32_t SizeInBytes() const;
+  uint32_t SizeInBytesPerRow() const;
+
   bool IsFormatKnown() const { return type_ != FormatType::kUnknown; }
   bool HasStencilComponent() const {
     return type_ == FormatType::kD24_UNORM_S8_UINT ||

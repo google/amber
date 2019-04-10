@@ -198,7 +198,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       info.vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
 
     info.vertex_buffer->SetData(static_cast<uint8_t>(vtex_info.location),
-                                vtex_info.buffer->AsFormatBuffer());
+                                vtex_info.buffer);
   }
 
   if (pipeline->GetIndexBuffer()) {
@@ -358,7 +358,7 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   format->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
   format->AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
 
-  auto buf = MakeUnique<FormatBuffer>();
+  auto buf = MakeUnique<Buffer>();
   buf->SetFormat(std::move(format));
   buf->SetData(std::move(values));
 
