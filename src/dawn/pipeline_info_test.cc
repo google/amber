@@ -52,7 +52,6 @@ TEST_F(DawnRenderPipelineInfoTest, DefaultValuesForMembers) {
   EXPECT_EQ(0u, rpi.fb_row_stride);
   EXPECT_EQ(0u, rpi.fb_num_rows);
   EXPECT_EQ(0u, rpi.fb_size);
-  EXPECT_EQ(nullptr, rpi.fb_data);
 }
 
 }  // namespace
