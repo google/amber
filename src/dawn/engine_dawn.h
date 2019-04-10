@@ -74,6 +74,7 @@ class EngineDawn : public Engine {
   // for that host-side buffer.
   Result CreateFramebufferIfNeeded(RenderPipelineInfo* render_pipeline);
 
+  // TODO(dneto): Remove this. Shaders are attached to the pipeline.
   Result SetShader(ShaderType type, const std::vector<uint32_t>& data);
 
   ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.
@@ -82,6 +83,7 @@ class EngineDawn : public Engine {
   // pipelines.
   std::unordered_map<amber::Pipeline*, ::amber::dawn::Pipeline> pipeline_map_;
 
+  // TODO(dneto): Remove this. Shaders are attached to the pipeline.
   std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
       module_for_type_;
 };
