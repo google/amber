@@ -412,7 +412,7 @@ Result GraphicsPipeline::CreateRenderPass() {
   for (const auto* info : color_buffers_) {
     attachment_desc.push_back(kDefaultAttachmentDesc);
     attachment_desc.back().format =
-        device_->GetVkFormat(info->buffer->AsFormatBuffer()->GetFormat());
+        device_->GetVkFormat(*info->buffer->GetFormat());
     attachment_desc.back().initialLayout =
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     attachment_desc.back().finalLayout =

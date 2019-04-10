@@ -62,8 +62,8 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass,
     attachments.resize(color_attachments_.size());
     for (auto* info : color_attachments_) {
       color_images_.push_back(MakeUnique<TransferImage>(
-          device_, info->buffer->AsFormatBuffer()->GetFormat(),
-          VK_IMAGE_ASPECT_COLOR_BIT, width_, height_, depth_));
+          device_, *info->buffer->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
+          width_, height_, depth_));
 
       Result r = color_images_.back()->Initialize(
           VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
