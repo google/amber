@@ -27,6 +27,7 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 
+/// Wrapper around a Vulkan FrameBuffer object.
 class FrameBuffer {
  public:
   FrameBuffer(

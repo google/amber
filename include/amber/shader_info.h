@@ -38,8 +38,11 @@ enum ShaderType {
   kShaderTypeMulti,
 };
 
+/// Stores information for a shader.
 struct ShaderInfo {
+  /// The format of the shader.
   ShaderFormat format;
+  /// The type of shader.
   ShaderType type;
   /// This is a unique name for this shader. The name is produced from the
   /// input script, possibly with extra prefix contents. This name, if used

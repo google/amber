@@ -36,6 +36,9 @@ enum class DataType {
   kDouble,
 };
 
+/// Stores information on a given type of data. This class should only be used
+/// as a simple way to create format objects. DatumType should not appear as a
+/// member of any classes.
 class DatumType {
  public:
   DatumType();

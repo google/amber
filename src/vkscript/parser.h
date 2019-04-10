@@ -28,6 +28,7 @@
 namespace amber {
 namespace vkscript {
 
+/// Parser for the `VkScript` data format.
 class Parser : public amber::Parser {
  public:
   Parser();

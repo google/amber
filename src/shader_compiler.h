@@ -25,12 +25,15 @@
 
 namespace amber {
 
+/// Class to wrap the compilation of shaders.
 class ShaderCompiler {
  public:
   ShaderCompiler();
   explicit ShaderCompiler(const std::string& env);
   ~ShaderCompiler();
 
+  /// Will compile the given |shader|. If |shader_map| is provided the shader
+  /// will be read from the map before we attempt to compile.
   std::pair<Result, std::vector<uint32_t>> Compile(
       const Shader* shader,
       const ShaderMap& shader_map) const;

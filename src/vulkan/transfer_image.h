@@ -26,6 +26,7 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 
+/// Wrapper around a Vulkan VkImage.
 class TransferImage : public Resource {
  public:
   TransferImage(Device* device,
@@ -43,9 +44,6 @@ class TransferImage : public Resource {
                     VkImageLayout to_layout,
                     VkPipelineStageFlags to_stage);
 
-  // Only record the command for copying this image to its secondary
-  // host-accessible buffer. The actual submission of the command
-  // must be done later.
   void CopyToHost(CommandBuffer* command) override;
   void CopyToDevice(CommandBuffer* command) override;
 
@@ -58,6 +56,8 @@ class TransferImage : public Resource {
                                         uint32_t* memory_type_index);
   VkBufferImageCopy CreateBufferImageCopy();
 
+  /// An extra `VkBuffer` is used to facilitate the transfer of data from the
+  /// host into the `VkImage` on the device.
   VkBuffer host_accessible_buffer_ = VK_NULL_HANDLE;
   VkDeviceMemory host_accessible_memory_ = VK_NULL_HANDLE;
 

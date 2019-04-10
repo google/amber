@@ -31,20 +31,21 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 
-// Contain information of filling memory
-// [|offset|, |offset| + |size_in_bytes|) with |values| whose data
-// type is |type|. This information is given by script.
+/// Contains information for data to be added to a buffer.
 struct BufferInput {
   void UpdateBufferWithValues(void* buffer) const;
 
+  /// Offset into the buffer to write the data.
   uint32_t offset;
+  /// Number of bytes this data consumes.
   uint32_t size_in_bytes;
+  /// The format of the data.
   Format* format;
+  /// The actual data values.
   std::vector<Value> values;
 };
 
-// Class for Vulkan resources. Its children are Vulkan Buffer, Vulkan Image,
-// and a class for push constant.
+/// Class for Vulkan resources.
 class Resource {
  public:
   virtual ~Resource();
@@ -68,14 +69,7 @@ class Resource {
 
   Result MapMemory(VkDeviceMemory memory);
   void UnMapMemory(VkDeviceMemory memory);
-
-  // Set |memory_ptr_| as |ptr|. This must be used for only push constant.
-  // For Vulkan buffer and image i.e., Buffer and Image classes, we should
-  // not call this but uses MapMemory() method.
   void SetMemoryPtr(void* ptr) { memory_ptr_ = ptr; }
-
-  // Make all memory operations before calling this method effective i.e.,
-  // prevent hazards caused by out-of-order execution.
   void MemoryBarrier(CommandBuffer* command);
 
   uint32_t ChooseMemory(uint32_t memory_type_bits,

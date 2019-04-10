@@ -34,8 +34,11 @@ enum class NodeType : uint8_t {
   kTest,
 };
 
+/// Parses the VkScript into the general sections. This includes things like
+/// the [test], [indices], [vertex data], etc.
 class SectionParser {
  public:
+  /// Structure describing a single section of the VkScript document.
   struct Section {
     NodeType section_type;
     ShaderType shader_type;  // Only valid when section_type == kShader
@@ -66,7 +69,7 @@ class SectionParser {
  private:
   Result SplitSections(const std::string& data);
   void AddSection(NodeType section_type,
-                  ShaderType shader_type,
+                  ShaderType shadesr_type,
                   ShaderFormat fmt,
                   size_t starting_line_number,
                   const std::string& contents);

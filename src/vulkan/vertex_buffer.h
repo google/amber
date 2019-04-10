@@ -31,6 +31,7 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 
+/// Wrapper around vertex data information.
 class VertexBuffer {
  public:
   explicit VertexBuffer(Device* device);
@@ -63,13 +64,11 @@ class VertexBuffer {
 
   void BindToCommandBuffer(CommandBuffer* command);
 
-  // Must be used only for unit tests.
   void SetBufferForTest(std::unique_ptr<TransferBuffer> buffer);
 
  private:
   Result FillVertexBufferWithData(CommandBuffer* command);
 
-  // Return |stride_in_bytes_| rounded up by 4.
   uint32_t Get4BytesAlignedStride() const {
     return ((stride_in_bytes_ + 3) / 4) * 4;
   }
@@ -82,7 +81,6 @@ class VertexBuffer {
   uint32_t stride_in_bytes_ = 0;
 
   std::vector<Buffer*> data_;
-
   std::vector<VkVertexInputAttributeDescription> vertex_attr_desc_;
 };
 

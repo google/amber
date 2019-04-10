@@ -23,6 +23,8 @@ namespace vulkan {
 
 class Device;
 
+/// Wrapper around a vulkan command pool. The `Initialize` method must be called
+/// before using the command pool.
 class CommandPool {
  public:
   explicit CommandPool(Device* device);

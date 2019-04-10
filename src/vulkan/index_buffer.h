@@ -31,21 +31,16 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 
-// A class providing abstraction for index buffer. Only a single
-// instance of this class must exist as a member of GraphicsPipeline
-// class. It must be created once when
-// GraphicsPipeline::SetIndexBuffer() is called.
+/// Stores information to be uploaded to the index buffer of the device.
 class IndexBuffer {
  public:
   explicit IndexBuffer(Device* device);
   ~IndexBuffer();
 
-  // Assuming that |buffer_| is nullptr and |values| is not empty,
-  // it creates |buffer_| whose size is |sizeof(uint32_t) * values.size()|
-  // and coverts |values| as uint32 values and copies them to |buffer_|.
+  /// Copy the data in this index buffer to the device.
   Result SendIndexData(CommandBuffer* command, Buffer* buffer);
 
-  // Bind |buffer_| as index buffer if it is not nullptr.
+  /// Bind the index buffer if needed.
   Result BindToCommandBuffer(CommandBuffer* command);
 
  private:

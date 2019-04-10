@@ -32,6 +32,7 @@ enum class TokenType : uint8_t {
   kHex,
 };
 
+/// A token read from the input source.
 class Token {
  public:
   explicit Token(TokenType type);
@@ -95,6 +96,7 @@ class Token {
   bool is_negative_ = false;
 };
 
+/// Splits the provided input into a stream of tokens.
 class Tokenizer {
  public:
   explicit Tokenizer(const std::string& data);

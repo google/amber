@@ -28,8 +28,10 @@ namespace amber {
 
 enum class PipelineType { kCompute = 0, kGraphics };
 
+/// Stores all information related to a pipeline.
 class Pipeline {
  public:
+  /// Information on a shader attached to this pipeline.
   class ShaderInfo {
    public:
     ShaderInfo(Shader*, ShaderType type);
@@ -65,6 +67,10 @@ class Pipeline {
     std::vector<uint32_t> data_;
   };
 
+  /// Information on a buffer attached to the pipeline.
+  ///
+  /// The BufferInfo will have either (descriptor_set, binding) or location
+  /// attached.
   struct BufferInfo {
     BufferInfo() = default;
     explicit BufferInfo(Buffer* buf) : buffer(buf) {}
@@ -85,58 +91,90 @@ class Pipeline {
 
   bool IsGraphics() const { return pipeline_type_ == PipelineType::kGraphics; }
   bool IsCompute() const { return pipeline_type_ == PipelineType::kCompute; }
+  /// Returns the type of this pipeline.
   PipelineType GetType() const { return pipeline_type_; }
 
+  /// Sets the name for this pipeline.
   void SetName(const std::string& name) { name_ = name; }
+  /// Returns the name for this pipeline.
   const std::string& GetName() const { return name_; }
 
+  /// Sets the width of the pipelines framebuffer to |fb_width|.
   void SetFramebufferWidth(uint32_t fb_width) {
     fb_width_ = fb_width;
     UpdateFramebufferSizes();
   }
+  /// Returns the width of the pipelines frame buffer.
   uint32_t GetFramebufferWidth() const { return fb_width_; }
 
+  /// Sets the height of the pipelines frame buffer to |fb_height|
   void SetFramebufferHeight(uint32_t fb_height) {
     fb_height_ = fb_height;
     UpdateFramebufferSizes();
   }
+  /// Returns the height of the pipelines framebuffer.
   uint32_t GetFramebufferHeight() const { return fb_height_; }
 
-  Result AddShader(Shader*, ShaderType);
+  /// Adds |shader| of |type| to the pipeline.
+  Result AddShader(Shader* shader, ShaderType type);
+  /// Returns information on all bound shaders in this pipeline.
   std::vector<ShaderInfo>& GetShaders() { return shaders_; }
+  /// Returns information on all bound shaders in this pipeline.
   const std::vector<ShaderInfo>& GetShaders() const { return shaders_; }
 
+  /// Sets the |type| of |shader| in the pipeline.
   Result SetShaderType(const Shader* shader, ShaderType type);
+  /// Sets the entry point |name| for |shader| in this pipeline.
   Result SetShaderEntryPoint(const Shader* shader, const std::string& name);
+  /// Sets the optimizations (|opts|) for |shader| in this pipeline.
   Result SetShaderOptimizations(const Shader* shader,
                                 const std::vector<std::string>& opts);
 
+  /// Returns a list of all colour attachments in this pipeline.
   const std::vector<BufferInfo>& GetColorAttachments() const {
     return color_attachments_;
   }
+  /// Adds |buf| as a colour attachment at |location| in the pipeline.
   Result AddColorAttachment(Buffer* buf, uint32_t location);
+  /// Retrieves the location that |buf| is bound to in the pipeline. The
+  /// location will be written to |loc|. An error result will be return if
+  /// something goes wrong.
   Result GetLocationForColorAttachment(Buffer* buf, uint32_t* loc) const;
 
+  /// Sets |buf| as the depth buffer for this pipeline.
   Result SetDepthBuffer(Buffer* buf);
+  /// Returns information on the depth buffer bound to the pipeline. If no
+  /// depth buffer is bound the |BufferInfo::buffer| parameter will be nullptr.
   const BufferInfo& GetDepthBuffer() const { return depth_buffer_; }
 
+  /// Returns information on all vertex buffers bound to the pipeline.
   const std::vector<BufferInfo>& GetVertexBuffers() const {
     return vertex_buffers_;
   }
+  /// Adds |buf| as a vertex buffer at |location| in the pipeline.
   Result AddVertexBuffer(Buffer* buf, uint32_t location);
 
+  /// Binds |buf| as the index buffer for this pipeline.
   Result SetIndexBuffer(Buffer* buf);
+  /// Returns the index buffer bound to this pipeline or nullptr if no index
+  /// buffer bound.
   Buffer* GetIndexBuffer() const { return index_buffer_; }
 
+  /// Adds |buf| to the pipeline at the given |descriptor_set| and |binding|.
   void AddBuffer(Buffer* buf, uint32_t descriptor_set, uint32_t binding);
+  /// Returns information on all buffers in this pipeline.
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
 
+  /// Returns the buffer which is currently bound to this pipeline at
+  /// |descriptor_set| and |binding|.
   Buffer* GetBufferForBinding(uint32_t descriptor_set, uint32_t binding) const;
 
-  // Validates that the pipeline has been created correctly.
+  /// Validates that the pipeline has been created correctly.
   Result Validate() const;
 
+  /// Generates a default color attachment in B8G8R8A8_UNORM.
   std::unique_ptr<Buffer> GenerateDefaultColorAttachmentBuffer() const;
+  /// Generates a default depth attachment in D32_SFLOAT_S8_UINT format.
   std::unique_ptr<Buffer> GenerateDefaultDepthAttachmentBuffer() const;
 
  private:
