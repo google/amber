@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -36,8 +37,6 @@ namespace {
 // The minimum multiple row pitch observed on Dawn on Metal.  Increase this
 // as needed for other Dawn backends.
 const uint32_t kMinimumImageRowPitch = 256;
-const auto kFramebufferFormat = ::dawn::TextureFormat::R8G8B8A8Unorm;
-const auto kAmberFramebufferFormatType = FormatType::kR8G8B8A8_UNORM;
 
 // Creates a device-side texture for the framebuffer, and returns it through
 // |result_ptr|.  Assumes the device exists and is valid.  Assumes result_ptr
@@ -87,8 +86,12 @@ Result MakeFramebufferBuffer(const ::dawn::Device& device,
   assert(size_ptr);
 
   // TODO(dneto): Handle other formats.
-  if (format != ::dawn::TextureFormat::R8G8B8A8Unorm) {
-    return Result("Dawn::MakeFramebufferBuffer: Unhandled framebuffer format");
+  // Actually, even better would be to pass the ::amber::Format down here,
+  // and use its GetSizeInBytes() method to determine the texel size in bytes.
+  if (format != ::dawn::TextureFormat::B8G8R8A8Unorm) {
+    return Result(
+        "Dawn::MakeFramebufferBuffer: Unhandled framebuffer format: " +
+        std::to_string(static_cast<uint32_t>(format)));
   }
   // Number of bytes for each texel in the default format.
   const uint32_t default_texel_bytes = 4;
@@ -174,6 +177,50 @@ MapResult MapBuffer(const ::dawn::Device& device, const ::dawn::Buffer& buf) {
     USleep(uint32_t(interval));
   }
   return map_result;
+}
+
+// Converts an Amber format to a Dawn texture format, and sends the result out
+// through |dawn_format_ptr|.  If the conversion fails, return an error result.
+Result GetDawnTextureFormat(const ::amber::Format& amber_format,
+                            ::dawn::TextureFormat* dawn_format_ptr) {
+  if (!dawn_format_ptr)
+    return Result("Internal error: format pointer argument is null");
+  ::dawn::TextureFormat& dawn_format = *dawn_format_ptr;
+
+  switch (amber_format.GetFormatType()) {
+    // TODO(dneto): These are all the formats that Dawn currently knows about.
+    case FormatType::kR8G8B8A8_UNORM:
+      dawn_format = ::dawn::TextureFormat::R8G8B8A8Unorm;
+      break;
+    case FormatType::kR8G8_UNORM:
+      dawn_format = ::dawn::TextureFormat::R8G8Unorm;
+      break;
+    case FormatType::kR8_UNORM:
+      dawn_format = ::dawn::TextureFormat::R8Unorm;
+      break;
+    case FormatType::kR8G8B8A8_UINT:
+      dawn_format = ::dawn::TextureFormat::R8G8B8A8Uint;
+      break;
+    case FormatType::kR8G8_UINT:
+      dawn_format = ::dawn::TextureFormat::R8G8Uint;
+      break;
+    case FormatType::kR8_UINT:
+      dawn_format = ::dawn::TextureFormat::R8Uint;
+      break;
+    case FormatType::kB8G8R8A8_UNORM:
+      dawn_format = ::dawn::TextureFormat::B8G8R8A8Unorm;
+      break;
+    case FormatType::kD32_SFLOAT_S8_UINT:
+      dawn_format = ::dawn::TextureFormat::D32FloatS8Uint;
+      break;
+    default:
+      return Result(
+          "Amber format " +
+          std::to_string(static_cast<uint32_t>(amber_format.GetFormatType())) +
+          " is invalid for Dawn");
+  }
+
+  return {};
 }
 
 }  // namespace
@@ -444,13 +491,24 @@ Result EngineDawn::CreateFramebufferIfNeeded(
   const uint32_t width = render_pipeline->pipeline->GetFramebufferWidth();
   const uint32_t height = render_pipeline->pipeline->GetFramebufferHeight();
 
+  // TODO(dneto): For now, assume color attachment 0 is the framebuffer.
+  auto* amber_format =
+      render_pipeline->pipeline->GetColorAttachments()[0].buffer->GetFormat();
+  if (!amber_format)
+    return Result("Color attachment 0 has no format!");
+
+  ::dawn::TextureFormat fb_format{};
+  result = GetDawnTextureFormat(*amber_format, &fb_format);
+  if (!result.IsSuccess())
+    return result;
+
   // First make the Dawn color attachment textures that the render pipeline will
   // write into.
   {
     ::dawn::Texture fb_texture;
 
-    result = MakeFramebufferTexture(*device_, kFramebufferFormat, width, height,
-                                    &fb_texture);
+    result =
+        MakeFramebufferTexture(*device_, fb_format, width, height, &fb_texture);
     if (!result.IsSuccess())
       return result;
     render_pipeline->fb_texture = std::move(fb_texture);
@@ -465,8 +523,8 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     uint32_t row_stride = 0;
     uint32_t size = 0;
     result =
-        MakeFramebufferBuffer(*device_, width, height, kFramebufferFormat,
-                              &fb_buffer, &texel_stride, &row_stride, &size);
+        MakeFramebufferBuffer(*device_, width, height, fb_format, &fb_buffer,
+                              &texel_stride, &row_stride, &size);
     if (!result.IsSuccess())
       return result;
     render_pipeline->fb_buffer = std::move(fb_buffer);
