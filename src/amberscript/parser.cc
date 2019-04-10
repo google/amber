@@ -777,11 +777,11 @@ Result Parser::ParseBufferInitializerFill(DataBuffer* buffer,
   if (!token->IsInteger() && !token->IsDouble())
     return Result("invalid BUFFER fill value");
 
-  auto& type = buffer->GetDatumType();
-  bool is_double_data = type.IsFloat() || type.IsDouble();
+  auto fmt = buffer->GetFormat();
+  bool is_double_data = fmt->IsFloat() || fmt->IsDouble();
 
   // Inflate the size because our items are multi-dimensional.
-  size_in_items = size_in_items * type.RowCount() * type.ColumnCount();
+  size_in_items = size_in_items * fmt->RowCount() * fmt->ColumnCount();
 
   std::vector<Value> values;
   values.resize(size_in_items);
@@ -803,11 +803,11 @@ Result Parser::ParseBufferInitializerSeries(DataBuffer* buffer,
   if (!token->IsInteger() && !token->IsDouble())
     return Result("invalid BUFFER series_from value");
 
-  auto& type = buffer->GetDatumType();
-  if (type.RowCount() > 1 || type.ColumnCount() > 1)
+  auto fmt = buffer->GetFormat();
+  if (fmt->RowCount() > 1 || fmt->ColumnCount() > 1)
     return Result("BUFFER series_from must not be multi-row/column types");
 
-  bool is_double_data = type.IsFloat() || type.IsDouble();
+  bool is_double_data = fmt->IsFloat() || fmt->IsDouble();
 
   Value counter;
   if (is_double_data)
@@ -845,8 +845,8 @@ Result Parser::ParseBufferInitializerSeries(DataBuffer* buffer,
 }
 
 Result Parser::ParseBufferInitializerData(DataBuffer* buffer) {
-  auto& type = buffer->GetDatumType();
-  bool is_double_type = type.IsFloat() || type.IsDouble();
+  auto fmt = buffer->GetFormat();
+  bool is_double_type = fmt->IsFloat() || fmt->IsDouble();
 
   std::vector<Value> values;
   for (auto token = tokenizer_->NextToken();; token = tokenizer_->NextToken()) {
@@ -878,7 +878,7 @@ Result Parser::ParseBufferInitializerData(DataBuffer* buffer) {
   }
 
   uint32_t size_in_items = static_cast<uint32_t>(values.size()) /
-                           type.RowCount() / type.ColumnCount();
+                           fmt->RowCount() / fmt->ColumnCount();
   buffer->SetSize(size_in_items);
 
   buffer->SetData(std::move(values));
@@ -1026,7 +1026,7 @@ Result Parser::ParseClear() {
 }
 
 Result Parser::ParseValues(const std::string& name,
-                           const DatumType& type,
+                           Format* fmt,
                            std::vector<Value>* values) {
   assert(values);
 
@@ -1034,7 +1034,7 @@ Result Parser::ParseValues(const std::string& name,
   while (!token->IsEOL() && !token->IsEOS()) {
     Value v;
 
-    if ((type.IsFloat() || type.IsDouble())) {
+    if (fmt->IsFloat() || fmt->IsDouble()) {
       if (!token->IsInteger() && !token->IsDouble()) {
         return Result(std::string("Invalid value provided to ") + name +
                       " command: " + token->ToOriginalString());
@@ -1212,8 +1212,7 @@ Result Parser::ParseExpect() {
     probe->SetOffset(static_cast<uint32_t>(x));
 
     std::vector<Value> values;
-    Result r =
-        ParseValues("EXPECT", buffer->AsDataBuffer()->GetDatumType(), &values);
+    Result r = ParseValues("EXPECT", buffer->GetFormat(), &values);
     if (!r.IsSuccess())
       return r;
 

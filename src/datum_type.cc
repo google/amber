@@ -75,7 +75,15 @@ std::unique_ptr<Format> DatumType::AsFormat() const {
     name += "UINT";
 
   FormatParser fp;
-  return fp.Parse(name);
+
+  auto fmt = fp.Parse(name);
+  // There is no format string equivalent to a matrix ...
+  if (column_count_ > 1) {
+    fmt->SetFormatType(FormatType::kUnknown);
+    fmt->SetColumnCount(column_count_);
+  }
+
+  return fmt;
 }
 
 }  // namespace amber

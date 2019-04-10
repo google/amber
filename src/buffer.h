@@ -160,7 +160,10 @@ class DataBuffer : public Buffer {
   }
 
   /// Sets the DatumType of the buffer to |type|.
-  void SetDatumType(const DatumType& type) { datum_type_ = type; }
+  void SetDatumType(const DatumType& type) {
+    datum_type_ = type;
+    format_ = datum_type_.AsFormat();
+  }
   /// Returns the DatumType describing the buffer data.
   const DatumType GetDatumType() const { return datum_type_; }
 

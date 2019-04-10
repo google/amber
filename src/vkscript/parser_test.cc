@@ -259,8 +259,8 @@ TEST_F(VkScriptParserTest, IndicesBlock) {
   auto buffer_ptr = buffers[1].get();
   ASSERT_TRUE(buffer_ptr->IsDataBuffer());
 
-  auto buffer = buffer_ptr->AsDataBuffer();
-  EXPECT_TRUE(buffer->GetDatumType().IsUint32());
+  auto buffer = buffer_ptr;
+  EXPECT_TRUE(buffer->GetFormat()->IsUint32());
   EXPECT_EQ(3U, buffer->GetSize());
 
   const auto* data = buffer->GetValues<uint32_t>();

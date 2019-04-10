@@ -79,7 +79,7 @@ class Parser : public amber::Parser {
   // of data we expect for the current buffer. |values| will be appended to with
   // the parsed values.
   Result ParseValues(const std::string& name,
-                     const DatumType& type,
+                     Format* fmt,
                      std::vector<Value>* values);
 
   std::unique_ptr<Tokenizer> tokenizer_;
