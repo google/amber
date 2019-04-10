@@ -38,9 +38,9 @@ contexts:
       scope: constant.character.escape.amber
     - match: '\b(framebuffer|graphics)\b'
       scope: constant.character.escape.amber
-    - match: '\b(uniform|storage|index|sampled|storage|color|depth|image|depth_stencil)\b'
+    - match: '\b(uniform|storage|push_constant)\b'
       scope: constant.character.escape.amber
-    - match: '\b(EQ|NE|LT|LE|GT|GE|EQ_RGB|EQ_RGBA)\b'
+    - match: '\b(EQ|NE|LT|LE|GT|GE|EQ_RGB|EQ_RGBA|EQ_BUFFER)\b'
       scope: constant.character.esape.amber
     - match: '\b(GLSL|HLSL|SPIRV-ASM|SPIRV-HEX|OPENCL-C)\b'
       scope: constant.character.escape.amber
