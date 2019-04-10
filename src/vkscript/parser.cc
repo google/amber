@@ -377,7 +377,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
         v.SetIntValue(token->AsHex());
         value_data.push_back(v);
       } else {
-        auto comps = header.format->GetComponents();
+        auto& comps = header.format->GetComponents();
         for (size_t i = 0; i < comps.size();
              ++i, token = tokenizer.NextToken()) {
           if (token->IsEOS() || token->IsEOL()) {
