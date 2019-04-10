@@ -146,7 +146,7 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   is_descriptor_set_update_needed_ = false;
 }
 
-Result BufferDescriptor::AddToBuffer(DataType type,
+Result BufferDescriptor::AddToBuffer(Format* fmt,
                                      uint32_t offset,
                                      uint32_t size_in_bytes,
                                      const std::vector<Value>& values) {
@@ -158,7 +158,7 @@ Result BufferDescriptor::AddToBuffer(DataType type,
     amber_buffer_->SetSize(offset + size_in_bytes);
   }
 
-  BufferInput in{offset, size_in_bytes, type, values};
+  BufferInput in{offset, size_in_bytes, fmt, values};
   in.UpdateBufferWithValues(amber_buffer_->ValuePtr()->data());
 
   return {};

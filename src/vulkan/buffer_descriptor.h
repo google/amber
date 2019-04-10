@@ -66,7 +66,7 @@ class BufferDescriptor {
   Result MoveResourceToBufferOutput();
   void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set);
 
-  Result AddToBuffer(DataType type,
+  Result AddToBuffer(Format* fmt,
                      uint32_t offset,
                      uint32_t size_in_bytes,
                      const std::vector<Value>& values);

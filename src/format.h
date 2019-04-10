@@ -44,6 +44,9 @@ class Format {
   void SetFormatType(FormatType type) { type_ = type; }
   FormatType GetFormatType() const { return type_; }
 
+  void SetIsStd140() { is_std140_ = true; }
+  bool IsStd140() const { return is_std140_; }
+
   /// Set the number of bytes this format is packed into, if provided.
   void SetPackSize(uint8_t size_in_bytes) {
     pack_size_in_bytes_ = size_in_bytes;
@@ -86,6 +89,7 @@ class Format {
   bool AreAllComponents(FormatMode mode, uint32_t bits) const;
 
   FormatType type_ = FormatType::kUnknown;
+  bool is_std140_ = false;
   uint8_t pack_size_in_bytes_ = 0;
   uint32_t column_count_ = 1;
   std::vector<Component> components_;
