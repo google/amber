@@ -347,7 +347,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
     return result;
 
   // TODO(sarahM0): Adapt this to the case where there might be many colour
-  // attachments. Also when there is a depth/stencil attachment.
+  // attachments.
 
   // Record a render pass in a command on the command buffer.
   //
@@ -361,6 +361,8 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   color_attachment.loadOp = ::dawn::LoadOp::Clear;
   color_attachment.storeOp = ::dawn::StoreOp::Store;
 
+  // Then describe the depthStencil attachment, and how it is initialized
+  // via the load ops. Both load op are "clear" to the clear values.
   ::dawn::RenderPassDepthStencilAttachmentDescriptor depthStencil_attachment =
       ::dawn::RenderPassDepthStencilAttachmentDescriptor();
   depthStencil_attachment.attachment =
@@ -372,7 +374,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   depthStencil_attachment.stencilLoadOp = ::dawn::LoadOp::Clear;
   depthStencil_attachment.stencilStoreOp = ::dawn::StoreOp::Store;
 
-  // Attach that colour attachment to the render pass.
+  // Attach the depthStencil and colour attachments to the render pass.
   ::dawn::RenderPassColorAttachmentDescriptor* rpca[] = {&color_attachment};
   ::dawn::RenderPassDepthStencilAttachmentDescriptor* rpda = {
       &depthStencil_attachment};
