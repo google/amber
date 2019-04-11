@@ -32,16 +32,16 @@ void main() {
 # MatrixStride == 16
 ssbo 0:0 subdata float 0 1.0 0.0 0.0 0.0 \
                          0.0 1.0 0.0 0.0 \
-                         0.0 0.0 1.0
+                         0.0 0.0 1.0 0.0
 # MatrixStride == 16
 uniform ubo 0:1 float 0 1.0 0.0 0.0 0.0 \
                         0.0 1.0 0.0 0.0 \
-                        0.0 0.0 1.0
+                        0.0 0.0 1.0 0.0
 
 compute 1 1 1
 
 tolerance 0.1%
 
-probe ssbo mat3 0:0  0 ~= 1.0 0.0 0.0 \
-                          0.0 1.0 0.0 \
-                          0.0 0.0 1.0
+probe ssbo float 0:0  0 ~= 1.0 0.0 0.0 0.0 \
+                           0.0 1.0 0.0 0.0 \
+                           0.0 0.0 1.0 0.0

@@ -16,42 +16,45 @@
 #version 430
 
 layout(set = 0, binding = 0) buffer block0 {
-  mat4x3 transform0;
+  mat3x2 transform0;
 };
 
-layout(push_constant) uniform block1 {
-  mat4x3 transform1;
+layout(set = 0, binding = 1) uniform block1 {
+  mat3x2 transform1;
 };
 
 layout(set = 0, binding = 2) buffer block3 {
-  vec4 test0;
-  vec4 test1;
+  vec3 test0;
+  vec3 test1;
 };
 
 void main() {
-  test0 = vec4(transform0 * test0, 0);
-  test1 = vec4(transform1 * test1, 0);
+  test0 = vec3(transform0 * test0, 1.0);
+  test1 = vec3(transform1 * test1, 1.0);
 }
 
 [test]
-# Fill mat4x3 using mat4x3
+# Fill mat3x2 using float
+# MatrixStride == 8
+ssbo 0:0 subdata float 0 1.0 0.0 \
+                         0.0 1.0 \
+                         0.0 1.0
 # MatrixStride == 16
-ssbo 0:0 subdata mat4x3 0 1.0 0.0 0.0 \
-                          0.0 1.0 0.0 \
-                          0.0 0.0 1.0 \
-                          0.0 0.0 1.0
-# MatrixStride == 16
-uniform mat4x3 0 1.0 0.0 0.0 \
-                 0.0 1.0 0.0 \
-                 0.0 0.0 1.0 \
-                 0.0 0.0 1.0
+uniform ubo 0:1 float 0 1.0 0.0 0.0 0.0 \
+                        0.0 1.0 0.0 0.0 \
+                        0.0 1.0
 
-ssbo 0:2 subdata vec4  0 7.3 9.4 -5.8 -0.2
-ssbo 0:2 subdata vec4 16 4.5 6.1 -3.8 -0.7
+ssbo 0:2 subdata vec3  0 7.3 9.4 -5.8
+ssbo 0:2 subdata vec3 16 4.5 6.1 -3.8
 
 compute 1 1 1
 
 tolerance 0.1%
 
-probe ssbo vec4 0:2  0 ~= 7.3 9.4 -6.0 0
-probe ssbo vec4 0:2 16 ~= 4.5 6.1 -4.5 0
+# 3.6 ==        9.4 +    -5.8
+#     i.e., test0.y + test0.z
+probe ssbo vec3 0:2  0 ~= 7.3 3.6 1.0
+
+# 2.3 ==        6.1 +    -3.8
+#     i.e., test1.y + test1.z
+probe ssbo vec3 0:2 16 ~= 4.5 2.3 1.0

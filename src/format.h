@@ -33,6 +33,41 @@ class Format {
     FormatComponentType type;
     FormatMode mode;
     uint8_t num_bits;
+
+    bool IsInt8() const {
+      return (mode == FormatMode::kSInt || mode == FormatMode::kSNorm ||
+              mode == FormatMode::kSScaled || mode == FormatMode::kSRGB) &&
+             num_bits == 8;
+    }
+    bool IsInt16() const {
+      return (mode == FormatMode::kSInt || mode == FormatMode::kSNorm) &&
+             num_bits == 16;
+    }
+    bool IsInt32() const { return mode == FormatMode::kSInt && num_bits == 32; }
+    bool IsInt64() const { return mode == FormatMode::kSInt && num_bits == 64; }
+    bool IsUint8() const {
+      return (mode == FormatMode::kUInt || mode == FormatMode::kUNorm ||
+              mode == FormatMode::kUScaled) &&
+             num_bits == 8;
+    }
+    bool IsUint16() const {
+      return mode == FormatMode::kUInt && num_bits == 16;
+    }
+    bool IsUint32() const {
+      return mode == FormatMode::kUInt && num_bits == 32;
+    }
+    bool IsUint64() const {
+      return mode == FormatMode::kUInt && num_bits == 64;
+    }
+    bool IsFloat16() const {
+      return mode == FormatMode::kSFloat && num_bits == 16;
+    }
+    bool IsFloat() const {
+      return mode == FormatMode::kSFloat && num_bits == 32;
+    }
+    bool IsDouble() const {
+      return mode == FormatMode::kSFloat && num_bits == 64;
+    }
   };
 
   Format();
@@ -40,6 +75,8 @@ class Format {
   ~Format();
 
   Format& operator=(const Format&) = default;
+
+  bool Equal(const Format* b) const;
 
   void SetFormatType(FormatType type) { type_ = type; }
   FormatType GetFormatType() const { return type_; }
@@ -67,6 +104,9 @@ class Format {
            type_ == FormatType::kD32_SFLOAT_S8_UINT ||
            type_ == FormatType::kS8_UINT;
   }
+
+  /// Returns the number of unique numbers for each instance of this format.
+  uint32_t ValuesPerElement() const { return RowCount() * column_count_; }
 
   uint32_t RowCount() const {
     return static_cast<uint32_t>(components_.size());

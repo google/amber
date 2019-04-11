@@ -50,7 +50,8 @@ END)";
   const auto& buf_info = color_buffers[0];
   ASSERT_TRUE(buf_info.buffer != nullptr);
   EXPECT_EQ(0, buf_info.location);
-  EXPECT_EQ(250 * 250, buf_info.buffer->GetSize());
+  EXPECT_EQ(250 * 250, buf_info.buffer->ElementCount());
+  EXPECT_EQ(250 * 250 * 4, buf_info.buffer->ValueCount());
   EXPECT_EQ(250 * 250 * 4 * sizeof(float), buf_info.buffer->GetSizeInBytes());
 }
 
@@ -318,7 +319,8 @@ END)";
   const auto& buf1 = color_buffers1[0];
   ASSERT_TRUE(buf1.buffer != nullptr);
   EXPECT_EQ(0, buf1.location);
-  EXPECT_EQ(90 * 180, buf1.buffer->GetSize());
+  EXPECT_EQ(90 * 180, buf1.buffer->ElementCount());
+  EXPECT_EQ(90 * 180 * 4, buf1.buffer->ValueCount());
   EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf1.buffer->GetSizeInBytes());
 
   pipeline = pipelines[1].get();
@@ -326,8 +328,9 @@ END)";
   const auto& buf2 = color_buffers2[0];
   ASSERT_TRUE(buf2.buffer != nullptr);
   EXPECT_EQ(9, buf2.location);
-  EXPECT_EQ(256 * 300, buf2.buffer->GetSize());
-  EXPECT_EQ(256 * 300 * sizeof(uint32_t), buf2.buffer->GetSizeInBytes());
+  EXPECT_EQ(256 * 300, buf2.buffer->ElementCount());
+  EXPECT_EQ(256 * 300 * 4, buf2.buffer->ValueCount());
+  EXPECT_EQ(256 * 300 * 4 * sizeof(uint8_t), buf2.buffer->GetSizeInBytes());
 }
 
 TEST_F(AmberScriptParserTest, BindColorFBSizeSetBeforeBuffer) {
@@ -361,7 +364,8 @@ END)";
   const auto& buf1 = color_buffers1[0];
   ASSERT_TRUE(buf1.buffer != nullptr);
   EXPECT_EQ(0, buf1.location);
-  EXPECT_EQ(90 * 180, buf1.buffer->GetSize());
+  EXPECT_EQ(90 * 180, buf1.buffer->ElementCount());
+  EXPECT_EQ(90 * 180 * 4, buf1.buffer->ValueCount());
   EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf1.buffer->GetSizeInBytes());
 }
 
@@ -396,7 +400,8 @@ END)";
   const auto& buf1 = color_buffers1[0];
   ASSERT_TRUE(buf1.buffer != nullptr);
   EXPECT_EQ(0, buf1.location);
-  EXPECT_EQ(90 * 180, buf1.buffer->GetSize());
+  EXPECT_EQ(90 * 180, buf1.buffer->ElementCount());
+  EXPECT_EQ(90 * 180 * 4, buf1.buffer->ValueCount());
   EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf1.buffer->GetSizeInBytes());
 }
 
@@ -427,7 +432,8 @@ END)";
   const auto* pipeline = pipelines[0].get();
   const auto& buf = pipeline->GetDepthBuffer();
   ASSERT_TRUE(buf.buffer != nullptr);
-  EXPECT_EQ(90 * 180, buf.buffer->GetSize());
+  EXPECT_EQ(90 * 180, buf.buffer->ElementCount());
+  EXPECT_EQ(90 * 180 * 4, buf.buffer->ValueCount());
   EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf.buffer->GetSizeInBytes());
 }
 
