@@ -25,6 +25,7 @@
 namespace amber {
 namespace {
 
+const uint8_t kBitsPerByte = 8;
 const double kEpsilon = 0.000001;
 const double kDefaultTexelTolerance = 0.002;
 
@@ -36,13 +37,13 @@ void CopyBitsOfMemoryToBuffer(uint8_t* dst,
                               uint8_t bits) {
   while (src_bit_offset > static_cast<uint8_t>(7)) {
     ++src;
-    src_bit_offset = static_cast<uint8_t>(src_bit_offset - 8);
+    src_bit_offset = static_cast<uint8_t>(src_bit_offset - kBitsPerByte);
   }
 
   // Number of bytes greater than or equal to |(src_bit_offset + bits) / 8|.
   const uint8_t size_in_bytes =
-      static_cast<uint8_t>((src_bit_offset + bits + 7) / 8);
-  assert(size_in_bytes <= static_cast<uint8_t>(8));
+      static_cast<uint8_t>((src_bit_offset + bits + 7) / kBitsPerByte);
+  assert(size_in_bytes <= static_cast<uint8_t>(kBitsPerByte));
 
   uint64_t data = 0;
   uint8_t* ptr = reinterpret_cast<uint8_t*>(&data);
@@ -54,7 +55,7 @@ void CopyBitsOfMemoryToBuffer(uint8_t* dst,
   if (bits != 64)
     data &= (1ULL << bits) - 1ULL;
 
-  std::memcpy(dst, &data, static_cast<size_t>((bits + 7) / 8));
+  std::memcpy(dst, &data, static_cast<size_t>((bits + 7) / kBitsPerByte));
 }
 
 // Convert float |value| whose size is 16 bits to 32 bits float
@@ -649,8 +650,8 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
 
   auto* fmt = command->GetFormat();
   // TODO(dsinclair): This assumes that all components are the same number
-  // of bits which may not alway shold.
-  size_t bytes_per_elem = fmt->GetComponents()[0].num_bits / 8;
+  // of bits which may not always hold.
+  size_t bytes_per_elem = fmt->GetComponents()[0].num_bits / kBitsPerByte;
   size_t offset = static_cast<size_t>(command->GetOffset());
   if (values.size() * bytes_per_elem + offset > size_in_bytes) {
     return Result(
