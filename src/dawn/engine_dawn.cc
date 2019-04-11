@@ -37,15 +37,16 @@ namespace {
 // The minimum multiple row pitch observed on Dawn on Metal.  Increase this
 // as needed for other Dawn backends.
 const uint32_t kMinimumImageRowPitch = 256;
+const auto kDepthStencilFormat = ::dawn::TextureFormat::D32FloatS8Uint;
 
 // Creates a device-side texture for the framebuffer, and returns it through
 // |result_ptr|.  Assumes the device exists and is valid.  Assumes result_ptr
 // is not null.  Returns a result code.
-Result MakeFramebufferTexture(const ::dawn::Device& device,
-                              ::dawn::TextureFormat format,
-                              uint32_t width,
-                              uint32_t height,
-                              ::dawn::Texture* result_ptr) {
+Result MakeTexture(const ::dawn::Device& device,
+                   ::dawn::TextureFormat format,
+                   uint32_t width,
+                   uint32_t height,
+                   ::dawn::Texture* result_ptr) {
   assert(device);
   assert(result_ptr);
   ::dawn::TextureDescriptor descriptor;
@@ -360,12 +361,25 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   color_attachment.loadOp = ::dawn::LoadOp::Clear;
   color_attachment.storeOp = ::dawn::StoreOp::Store;
 
+  ::dawn::RenderPassDepthStencilAttachmentDescriptor depthStencil_attachment =
+      ::dawn::RenderPassDepthStencilAttachmentDescriptor();
+  depthStencil_attachment.attachment =
+      render_pipeline->depthStencil_texture.CreateDefaultView();
+  depthStencil_attachment.clearDepth = render_pipeline->clear_depth_value;
+  depthStencil_attachment.clearStencil = render_pipeline->clear_stencil_value;
+  depthStencil_attachment.depthLoadOp = ::dawn::LoadOp::Clear;
+  depthStencil_attachment.depthStoreOp = ::dawn::StoreOp::Store;
+  depthStencil_attachment.stencilLoadOp = ::dawn::LoadOp::Clear;
+  depthStencil_attachment.stencilStoreOp = ::dawn::StoreOp::Store;
+
   // Attach that colour attachment to the render pass.
   ::dawn::RenderPassColorAttachmentDescriptor* rpca[] = {&color_attachment};
+  ::dawn::RenderPassDepthStencilAttachmentDescriptor* rpda = {
+      &depthStencil_attachment};
   ::dawn::RenderPassDescriptor rpd;
   rpd.colorAttachmentCount = 1;
   rpd.colorAttachments = rpca;
-  rpd.depthStencilAttachment = nullptr;
+  rpd.depthStencilAttachment = rpda;
 
   // Record the render pass as a command.
   auto encoder = device_->CreateCommandEncoder();
@@ -488,6 +502,8 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     RenderPipelineInfo* render_pipeline) {
   Result result;
 
+  // First make the Dawn color attachment textures that the render pipeline will
+  // write into.
   const uint32_t width = render_pipeline->pipeline->GetFramebufferWidth();
   const uint32_t height = render_pipeline->pipeline->GetFramebufferHeight();
 
@@ -502,16 +518,39 @@ Result EngineDawn::CreateFramebufferIfNeeded(
   if (!result.IsSuccess())
     return result;
 
-  // First make the Dawn color attachment textures that the render pipeline will
-  // write into.
   {
     ::dawn::Texture fb_texture;
 
-    result =
-        MakeFramebufferTexture(*device_, fb_format, width, height, &fb_texture);
+    result = MakeTexture(*device_, fb_format, width, height, &fb_texture);
     if (!result.IsSuccess())
       return result;
     render_pipeline->fb_texture = std::move(fb_texture);
+  }
+
+  // Then make the depthStencil attachment textures that the render pipeline
+  // will write into.
+  ::dawn::TextureFormat depthStencil_format{};
+  auto depthBuffer = render_pipeline->pipeline->GetDepthBuffer().buffer;
+  if (!depthBuffer)
+    depthStencil_format = kDepthStencilFormat;
+  else {
+    auto* amber_depthStencil_format = depthBuffer->GetFormat();
+    if (!amber_depthStencil_format)
+      return Result("Color attachment 0 has no format!");
+    result =
+        GetDawnTextureFormat(*amber_depthStencil_format, &depthStencil_format);
+    if (!result.IsSuccess())
+      return result;
+  }
+
+  {
+    ::dawn::Texture depthStencil_texture;
+
+    result = MakeTexture(*device_, depthStencil_format, width, height,
+                         &depthStencil_texture);
+    if (!result.IsSuccess())
+      return result;
+    render_pipeline->depthStencil_texture = std::move(depthStencil_texture);
   }
 
   // Now create the Dawn buffer to hold the framebuffer contents, but on the
