@@ -21,9 +21,11 @@
 #include "amber/result.h"
 #include "amber/value.h"
 #include "amber/vulkan_header.h"
-#include "src/datum_type.h"
 
 namespace amber {
+
+class Format;
+
 namespace vulkan {
 
 class CommandBuffer;

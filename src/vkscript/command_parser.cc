@@ -2045,7 +2045,7 @@ Result CommandParser::ProcessProbeSSBO() {
   auto cmd = MakeUnique<ProbeSSBOCommand>(buffer);
   cmd->SetLine(cur_line);
   cmd->SetTolerances(current_tolerances_);
-  cmd->SetDatumType(tp.GetType());
+  cmd->SetFormat(tp.GetType().AsFormat());
   cmd->SetDescriptorSet(set);
   cmd->SetBinding(binding);
 
@@ -2068,8 +2068,7 @@ Result CommandParser::ProcessProbeSSBO() {
   cmd->SetComparator(comp);
 
   std::vector<Value> values;
-  auto fmt = cmd->GetDatumType().AsFormat();
-  r = ParseValues("probe ssbo", fmt.get(), &values, false);
+  r = ParseValues("probe ssbo", cmd->GetFormat(), &values, false);
   if (!r.IsSuccess())
     return r;
 
