@@ -55,7 +55,7 @@ bool Format::Equal(const Format* b) const {
   if (components_.size() != b->components_.size())
     return false;
 
-  for (size_t i = 0; i < components_.size(); ++i) {
+  for (uint32_t i = 0; i < components_.size(); ++i) {
     if (components_[i].type != b->components_[i].type ||
         components_[i].mode != b->components_[i].mode ||
         components_[i].num_bits != b->components_[i].num_bits) {
