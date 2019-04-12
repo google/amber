@@ -47,148 +47,6 @@ uint16_t FloatToHexFloat16(const float value) {
       static_cast<uint16_t>(FloatMantissa(*hex) >> 13U));
 }
 
-// Convert 32 bits float |value| to 11 bits float based on IEEE-754.
-uint16_t FloatToHexFloat11(const float value) {
-  const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
-  assert(FloatSign(*hex) == 0);
-  return static_cast<uint16_t>(
-      static_cast<uint16_t>(FloatExponent(*hex) << 6U) |
-      static_cast<uint16_t>(FloatMantissa(*hex) >> 17U));
-}
-
-// Convert 32 bits float |value| to 10 bits float based on IEEE-754.
-uint16_t FloatToHexFloat10(const float value) {
-  const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
-  assert(FloatSign(*hex) == 0);
-  return static_cast<uint16_t>(
-      static_cast<uint16_t>(FloatExponent(*hex) << 5U) |
-      static_cast<uint16_t>(FloatMantissa(*hex) >> 18U));
-}
-
-// Convert float to small float format.
-// See https://www.khronos.org/opengl/wiki/Small_Float_Formats
-// and https://en.wikipedia.org/wiki/IEEE_754.
-//
-//    Sign Exponent Mantissa Exponent-Bias
-// 16    1        5       10            15
-// 11    0        5        6            15
-// 10    0        5        5            15
-// 32    1        8       23           127
-// 64    1       11       52          1023
-//
-// 11 and 10 bits floats are always positive.
-// 14 bits float is used only RGB9_E5 format in OpenGL but it does not exist
-// in Vulkan.
-//
-// For example, 1234 in 32 bits float = 1.0011010010 * 2^10 with base 2.
-//
-// 1.0011010010 * 2^10 --> 0 (sign) / 10 + 127 (exp) / 0011010010 (Mantissa)
-//                     --> 0x449a4000
-uint16_t FloatToHexFloat(float value, uint8_t bits) {
-  switch (bits) {
-    case 10:
-      return FloatToHexFloat10(value);
-    case 11:
-      return FloatToHexFloat11(value);
-    case 16:
-      return FloatToHexFloat16(value);
-  }
-
-  assert(false && "Invalid bits");
-  return 0;
-}
-
-Result ValueToUint64(const Value& src, uint8_t bits, uint64_t* out) {
-  uint64_t data = 0;
-  if (src.IsInteger()) {
-    switch (bits) {
-      case 8: {
-        uint8_t* ptr = reinterpret_cast<uint8_t*>(&data);
-        *ptr = src.AsUint8();
-        break;
-      }
-      case 16: {
-        uint16_t* ptr = reinterpret_cast<uint16_t*>(&data);
-        *ptr = src.AsUint16();
-        break;
-      }
-      case 32: {
-        uint32_t* ptr = reinterpret_cast<uint32_t*>(&data);
-        *ptr = src.AsUint32();
-        break;
-      }
-      case 64: {
-        uint64_t* ptr = reinterpret_cast<uint64_t*>(&data);
-        *ptr = src.AsUint64();
-        break;
-      }
-      default: {
-        return Result("Vulkan: Invalid int bits for CopyBitsOfValueToBuffer");
-      }
-    }
-  } else {
-    if (bits == 64) {
-      double* ptr = reinterpret_cast<double*>(&data);
-      *ptr = src.AsDouble();
-    } else {
-      switch (bits) {
-        case 32: {
-          float* float_ptr = reinterpret_cast<float*>(&data);
-          *float_ptr = src.AsFloat();
-          break;
-        }
-        case 16:
-        case 11:
-        case 10: {
-          uint16_t* uint16_ptr = reinterpret_cast<uint16_t*>(&data);
-          *uint16_ptr =
-              static_cast<uint16_t>(FloatToHexFloat(src.AsFloat(), bits));
-          break;
-        }
-        default: {
-          return Result(
-              "Vulkan: Invalid float bits for CopyBitsOfValueToBuffer");
-        }
-      }
-    }
-  }
-  *out = data;
-  return {};
-}
-
-// Copy [0, bits) bits of |src| to
-// [dst_bit_offset, dst_bit_offset + bits) of |dst|. If |bits| is
-// less than 32 and the type is float, this method uses
-// FloatToHexFloat() to convert it into small bits float.
-Result CopyBitsOfValueToBuffer(uint8_t* dst,
-                               const Value& src,
-                               uint32_t dst_bit_offset,
-                               uint8_t bits) {
-  uint64_t data = 0;
-  Result r = ValueToUint64(src, bits, &data);
-  if (!r.IsSuccess())
-    return r;
-
-  // Shift memory pointer to the start of the byte to write into.
-  while (dst_bit_offset > 7) {
-    ++dst;
-    dst_bit_offset -= 8;
-  }
-
-  // No overflow will happen. |dst_bit_offset| is based on VkFormat
-  // and if |bits| is 64, |dst_bit_offset| must be 0. No component
-  // has |bits| bigger than 64.
-  data <<= dst_bit_offset;
-
-  uint64_t* dst64 = reinterpret_cast<uint64_t*>(dst);
-  uint64_t dst_lower_bits = *dst64 & ((1UL << dst_bit_offset) - 1UL);
-  uint64_t dst_upper_bits =
-      *dst64 & ~(((1ULL << (dst_bit_offset + bits)) - 1ULL));
-
-  *dst64 = dst_lower_bits | data | dst_upper_bits;
-  return {};
-}
-
 template <typename T>
 T* ValuesAs(uint8_t* values) {
   return reinterpret_cast<T*>(values);
@@ -215,7 +73,7 @@ Result Buffer::CopyTo(Buffer* buffer) const {
     return Result("Buffer::CopyBaseFields() buffers have a different width");
   if (buffer->height_ != height_)
     return Result("Buffer::CopyBaseFields() buffers have a different height");
-  if (buffer->size_ != size_)
+  if (buffer->element_count_ != element_count_)
     return Result("Buffer::CopyBaseFields() buffers have a different size");
   buffer->values_ = values_;
   return {};
@@ -224,7 +82,7 @@ Result Buffer::CopyTo(Buffer* buffer) const {
 Result Buffer::IsEqual(Buffer* buffer) const {
   if (buffer->buffer_type_ != buffer_type_)
     return Result{"Buffers have a different type"};
-  if (buffer->size_ != size_)
+  if (buffer->element_count_ != element_count_)
     return Result{"Buffers have a different size"};
   if (buffer->width_ != width_)
     return Result{"Buffers have a different width"};
@@ -266,10 +124,8 @@ DataBuffer::DataBuffer(BufferType type) : Buffer(type) {}
 
 DataBuffer::~DataBuffer() = default;
 
-Result DataBuffer::SetData(std::vector<Value>&& data) {
-  uint32_t size = static_cast<uint32_t>(data.size()) / format_->ColumnCount() /
-                  format_->RowCount();
-  SetSize(size);
+Result DataBuffer::SetData(const std::vector<Value>& data) {
+  SetValueCount(static_cast<uint32_t>(data.size()));
   values_.resize(GetSizeInBytes());
   return CopyData(data);
 }
@@ -319,8 +175,8 @@ FormatBuffer::FormatBuffer(BufferType type) : Buffer(type) {}
 
 FormatBuffer::~FormatBuffer() = default;
 
-Result FormatBuffer::SetData(std::vector<Value>&& data) {
-  SetSize(static_cast<uint32_t>(data.size()));
+Result FormatBuffer::SetData(const std::vector<Value>& data) {
+  SetValueCount(static_cast<uint32_t>(data.size()));
   values_.resize(GetSizeInBytes());
   return CopyData(data);
 }
@@ -331,29 +187,63 @@ Result FormatBuffer::CopyData(const std::vector<Value>& data) {
   for (uint32_t i = 0; i < data.size();) {
     const auto pack_size = format_->GetPackSize();
     if (pack_size) {
-      Result r = CopyBitsOfValueToBuffer(ptr, data[i], 0, pack_size);
-      if (!r.IsSuccess())
-        return r;
-
-      ptr += pack_size / 8;
+      if (pack_size == 8) {
+        *(ValuesAs<uint8_t>(ptr)) = data[i].AsUint8();
+        ptr += sizeof(uint8_t);
+      } else if (pack_size == 16) {
+        *(ValuesAs<uint16_t>(ptr)) = data[i].AsUint16();
+        ptr += sizeof(uint16_t);
+      } else if (pack_size == 32) {
+        *(ValuesAs<uint32_t>(ptr)) = data[i].AsUint32();
+        ptr += sizeof(uint32_t);
+      }
       ++i;
       continue;
     }
 
-    const auto& components = format_->GetComponents();
-    uint32_t bit_offset = 0;
-
-    for (uint32_t k = 0; k < components.size(); ++k) {
-      uint8_t bits = components[k].num_bits;
-      Result r = CopyBitsOfValueToBuffer(ptr, data[i + k], bit_offset, bits);
-      if (!r.IsSuccess())
-        return r;
-
-      bit_offset += bits;
+    for (const auto& comp : format_->GetComponents()) {
+      if (comp.IsInt8()) {
+        *(ValuesAs<int8_t>(ptr)) = data[i].AsInt8();
+        ptr += sizeof(int8_t);
+      } else if (comp.IsInt16()) {
+        *(ValuesAs<int16_t>(ptr)) = data[i].AsInt16();
+        ptr += sizeof(int16_t);
+      } else if (comp.IsInt32()) {
+        *(ValuesAs<int32_t>(ptr)) = data[i].AsInt32();
+        ptr += sizeof(int32_t);
+      } else if (comp.IsInt64()) {
+        *(ValuesAs<int64_t>(ptr)) = data[i].AsInt64();
+        ptr += sizeof(int64_t);
+      } else if (comp.IsUint8()) {
+        *(ValuesAs<uint8_t>(ptr)) = data[i].AsUint8();
+        ptr += sizeof(uint8_t);
+      } else if (comp.IsUint16()) {
+        *(ValuesAs<uint16_t>(ptr)) = data[i].AsUint16();
+        ptr += sizeof(uint16_t);
+      } else if (comp.IsUint32()) {
+        *(ValuesAs<uint32_t>(ptr)) = data[i].AsUint32();
+        ptr += sizeof(uint32_t);
+      } else if (comp.IsUint64()) {
+        *(ValuesAs<uint64_t>(ptr)) = data[i].AsUint64();
+        ptr += sizeof(uint64_t);
+      } else if (comp.IsFloat()) {
+        *(ValuesAs<float>(ptr)) = data[i].AsFloat();
+        ptr += sizeof(float);
+      } else if (comp.IsDouble()) {
+        *(ValuesAs<double>(ptr)) = data[i].AsDouble();
+        ptr += sizeof(double);
+      } else if (comp.IsFloat16()) {
+        *(ValuesAs<uint16_t>(ptr)) = FloatToHexFloat16(data[i].AsFloat());
+        ptr += sizeof(uint16_t);
+      } else {
+        // The float 10 and float 11 sizes are only used in PACKED formats.
+        assert(false && "Not reached");
+      }
+      ++i;
     }
-
-    i += static_cast<uint32_t>(components.size());
-    ptr += format_->SizeInBytes();
+    // Need to add an extra element if this is std140 and there are 3 elements.
+    if (format_->IsStd140() && format_->RowCount() == 3)
+      ptr += (format_->GetComponents()[0].num_bits / 8);
   }
   return {};
 }

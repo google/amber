@@ -95,25 +95,52 @@ class Buffer {
   /// Returns the name of the buffer.
   std::string GetName() const { return name_; }
 
-  /// Sets the number of items in the buffer.
-  void SetSize(uint32_t size) { size_ = size; }
-
-  /// Returns the number of items in the buffer.
-  uint32_t GetSize() const { return size_; }
-
   uint32_t GetWidth() const { return width_; }
   void SetWidth(uint32_t width) { width_ = width; }
   uint32_t GetHeight() const { return height_; }
   void SetHeight(uint32_t height) { height_ = height; }
 
+  // | ---------- Element ---------- | ElementCount == 1
+  // | Value | Value | Value | Value |   ValueCount == 4
+  // | | | | | | | | | | | | | | | | |  SizeInBytes == 16
+  // Note, the SizeInBytes maybe be greater then the size of the values. If
+  // the format IsStd140() and there are 3 rows, the SizeInBytes will be
+  // inflated to 4 values per row, instead of 3.
+
+  /// Sets the number of elements in the buffer.
+  void SetElementCount(uint32_t count) { element_count_ = count; }
+  uint32_t ElementCount() const { return element_count_; }
+
+  /// Sets the number of values in the buffer.
+  void SetValueCount(uint32_t count) {
+    if (!format_) {
+      element_count_ = 0;
+      return;
+    }
+    if (format_->GetPackSize() > 0)
+      element_count_ = count;
+    else
+      element_count_ = count / format_->ValuesPerElement();
+  }
+  uint32_t ValueCount() const {
+    if (!format_)
+      return 0;
+    // Packed formats are single values.
+    if (format_->GetPackSize() > 0)
+      return element_count_;
+    return element_count_ * format_->ValuesPerElement();
+  }
+
   /// Returns the number of bytes needed for the data in the buffer.
-  virtual uint32_t GetSizeInBytes() const {
-    return GetSize() * format_->SizeInBytes();
+  uint32_t GetSizeInBytes() const {
+    if (!format_)
+      return 0;
+    return ElementCount() * format_->SizeInBytes();
   }
 
   /// Sets the data into the buffer. The size will also be updated to be the
   /// size of the data provided.
-  virtual Result SetData(std::vector<Value>&& data) = 0;
+  virtual Result SetData(const std::vector<Value>& data) = 0;
 
   std::vector<uint8_t>* ValuePtr() { return &values_; }
   const std::vector<uint8_t>* ValuePtr() const { return &values_; }
@@ -130,7 +157,6 @@ class Buffer {
   Result IsEqual(Buffer* buffer) const;
 
  protected:
-  /// Creates an un-typed buffer.
   Buffer();
 
   std::vector<uint8_t> values_;
@@ -139,7 +165,7 @@ class Buffer {
  private:
   BufferType buffer_type_ = BufferType::kUnknown;
   std::string name_;
-  uint32_t size_ = 0;
+  uint32_t element_count_ = 0;
   uint32_t width_ = 0;
   uint32_t height_ = 0;
   uint8_t location_ = 0;
@@ -154,10 +180,7 @@ class DataBuffer : public Buffer {
 
   // Buffer
   bool IsDataBuffer() const override { return true; }
-  uint32_t GetSizeInBytes() const override {
-    return GetSize() * datum_type_.SizeInBytes();
-  }
-  Result SetData(std::vector<Value>&& data) override;
+  Result SetData(const std::vector<Value>& data) override;
 
   /// Sets the DatumType of the buffer to |type|.
   void SetDatumType(const DatumType& type) {
@@ -183,7 +206,7 @@ class FormatBuffer : public Buffer {
   // Buffer
   bool IsFormatBuffer() const override { return true; }
 
-  Result SetData(std::vector<Value>&& data) override;
+  Result SetData(const std::vector<Value>& data) override;
 
   uint32_t GetTexelStride() { return format_->SizeInBytes(); }
 

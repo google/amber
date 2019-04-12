@@ -225,7 +225,7 @@ multiple of the requested `type`.
 ### SSBO size
  * `ssbo _binding_ _size_`
 
-Sets the size of the SSBO at `binding` to `size`.
+Sets the number of elements in the SSBO at `binding` to `size`.
 
 
 ### SSBO subdata

@@ -638,34 +638,38 @@ Result Verifier::Probe(const ProbeCommand* command,
 }
 
 Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
-                           size_t size_in_bytes,
-                           const void* cpu_memory) {
+                           uint32_t buffer_element_count,
+                           const void* buffer) {
   const auto& values = command->GetValues();
-  if (!cpu_memory) {
-    return values.empty() ? Result()
-                          : Result(
-                                "Verifier::ProbeSSBO actual data is empty "
-                                "while expected data is not");
+  if (!buffer) {
+    if (values.empty())
+      return {};
+    return Result(
+        "Verifier::ProbeSSBO actual data is empty while expected "
+        "data is not");
   }
 
   auto* fmt = command->GetFormat();
-  // TODO(dsinclair): This assumes that all components are the same number
-  // of bits which may not always hold.
-  size_t bytes_per_elem = fmt->GetComponents()[0].num_bits / kBitsPerByte;
+  size_t elem_count = values.size() / fmt->ValuesPerElement();
   size_t offset = static_cast<size_t>(command->GetOffset());
-  if (values.size() * bytes_per_elem + offset > size_in_bytes) {
-    return Result(
-        "Line " + std::to_string(command->GetLine()) +
-        ": Verifier::ProbeSSBO has more expected values than SSBO size");
+  size_t size_in_bytes = buffer_element_count * fmt->SizeInBytes();
+  if ((elem_count * fmt->SizeInBytes()) + offset > size_in_bytes) {
+    return Result("Line " + std::to_string(command->GetLine()) +
+                  ": Verifier::ProbeSSBO request to access to byte " +
+                  std::to_string((elem_count * fmt->SizeInBytes()) + offset) +
+                  " would read outside buffer of size " +
+                  std::to_string(size_in_bytes) + " bytes");
   }
 
-  if (offset % bytes_per_elem != 0) {
-    return Result(
-        "Line " + std::to_string(command->GetLine()) +
-        ": Verifier::ProbeSSBO given offset is not multiple of bytes_per_elem");
+  if (offset % fmt->SizeInBytes() != 0) {
+    return Result("Line " + std::to_string(command->GetLine()) +
+                  ": Verifier::ProbeSSBO given offset (" +
+                  std::to_string(offset) + ") " +
+                  "is not multiple of element size (" +
+                  std::to_string(fmt->SizeInBytes()) + ")");
   }
 
-  const uint8_t* ptr = static_cast<const uint8_t*>(cpu_memory) + offset;
+  const uint8_t* ptr = static_cast<const uint8_t*>(buffer) + offset;
   if (fmt->IsInt8())
     return CheckValue<int8_t>(command, ptr, values);
   if (fmt->IsUint8())

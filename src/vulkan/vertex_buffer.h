@@ -58,7 +58,7 @@ class VertexBuffer {
   uint32_t GetVertexCount() const {
     if (data_.empty())
       return 0;
-    return data_[0]->GetSize();
+    return data_[0]->ElementCount();
   }
 
   void BindToCommandBuffer(CommandBuffer* command);

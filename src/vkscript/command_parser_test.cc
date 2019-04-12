@@ -3094,7 +3094,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithFloat) {
   EXPECT_EQ(16U, cmd->GetSize());
   ASSERT_TRUE(cmd->IsSubdata());
 
-  auto* fmt = cmd->GetFormat();
+  auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsFloat());
   EXPECT_EQ(1U, fmt->ColumnCount());
   EXPECT_EQ(3U, fmt->RowCount());
@@ -3139,7 +3139,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithDescriptorSet) {
   EXPECT_EQ(16U, cmd->GetOffset());
   EXPECT_EQ(16U, cmd->GetSize());
 
-  auto* fmt = cmd->GetFormat();
+  auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsFloat());
   EXPECT_EQ(1U, fmt->ColumnCount());
   EXPECT_EQ(3U, fmt->RowCount());
@@ -3173,7 +3173,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithInts) {
   EXPECT_EQ(8U, cmd->GetOffset());
   EXPECT_EQ(8U, cmd->GetSize());
 
-  auto* fmt = cmd->GetFormat();
+  auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsInt16());
   EXPECT_EQ(1U, fmt->ColumnCount());
   EXPECT_EQ(3U, fmt->RowCount());
@@ -3207,7 +3207,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithMultipleVectors) {
   EXPECT_EQ(8U, cmd->GetOffset());
   EXPECT_EQ(16U, cmd->GetSize());
 
-  auto* fmt = cmd->GetFormat();
+  auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsInt16());
   EXPECT_EQ(1U, fmt->ColumnCount());
   EXPECT_EQ(3U, fmt->RowCount());
@@ -3340,7 +3340,7 @@ TEST_F(CommandParserTest, Uniform) {
   EXPECT_EQ(32U, cmd->GetOffset());
   EXPECT_EQ(16U, cmd->GetSize());
 
-  auto* fmt = cmd->GetFormat();
+  auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsFloat());
   EXPECT_EQ(1U, fmt->ColumnCount());
   EXPECT_EQ(3U, fmt->RowCount());
@@ -3382,7 +3382,7 @@ TEST_F(CommandParserTest, UniformWithContinuation) {
   EXPECT_EQ(16U, cmd->GetOffset());
   EXPECT_EQ(32U, cmd->GetSize());
 
-  auto* fmt = cmd->GetFormat();
+  auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsFloat());
   EXPECT_EQ(1U, fmt->ColumnCount());
   EXPECT_EQ(3U, fmt->RowCount());
@@ -3460,7 +3460,7 @@ TEST_F(CommandParserTest, UniformUBO) {
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetOffset());
   EXPECT_EQ(16U, cmd->GetSize());
 
-  auto* fmt = cmd->GetFormat();
+  auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsFloat());
   EXPECT_EQ(1U, fmt->ColumnCount());
   EXPECT_EQ(3U, fmt->RowCount());
@@ -3504,7 +3504,7 @@ TEST_F(CommandParserTest, UniformUBOWithDescriptorSet) {
   EXPECT_EQ(16U, cmd->GetOffset());
   EXPECT_EQ(16U, cmd->GetSize());
 
-  auto* fmt = cmd->GetFormat();
+  auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsFloat());
   EXPECT_EQ(1U, fmt->ColumnCount());
   EXPECT_EQ(3U, fmt->RowCount());
@@ -3844,7 +3844,7 @@ TEST_F(CommandParserTest, ToleranceWithCommas) {
 
 TEST_F(CommandParserTest, ProbeSSBOWithTolerance) {
   std::string data = R"(
-ssbo 3:6 2
+ssbo 3:6 3
 tolerance 2 3 4 5
 probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2)";
 
