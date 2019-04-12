@@ -1,3 +1,4 @@
+#!amber
 # Copyright 2019 The Amber Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Requesting a depthstencil format causes the engine to create a depth-stencil texture and to attach it to the pipeline.
-[require]
-depthstencil D32_SFLOAT_S8_UINT
-
-[vertex shader passthrough]
-
-[fragment shader]
+SHADER vertex vtex_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
 #version 430
 
 layout(location = 0) in vec4 color_in;
@@ -27,11 +23,24 @@ layout(location = 0) out vec4 color_out;
 void main() {
   color_out = color_in;
 }
+END
+
+BUFFER depthStencil_buf FORMAT D32_SFLOAT_S8_UINT
+BUFFER img_buf FORMAT B8G8R8A8_UNORM
+
+PIPELINE graphics my_pipeline
+  ATTACH vtex_shader
+  ATTACH frag_shader
+
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER img_buf AS color LOCATION 0
+  BIND BUFFER depthStencil_buf AS depth_stencil
+END
 
 # This probe causes the pipeline clear to be executed, exercising the depth-stencil support.
 # However, there is no way to read a depth-stencil attachment directly, so we can't probe its output.
 # We would need a second pipeline or a depth test on the pipeline to observe the effects of the
 # depth-stencil clear.
-clear
-[test]
-relative probe rect rgba (0.0, 0.0, 1.0, 1.0) (0, 0, 0, 0)
+
+CLEAR my_pipeline
+EXPECT img_buf IDX 0 0 SIZE 256 256 EQ_RGBA 0 0 0 0
