@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 # Requesting a depthstencil format causes the engine to create a depth-stencil texture and to attach it to the pipeline.
+
 [require]
 depthstencil D32_SFLOAT_S8_UINT
 
@@ -28,10 +28,10 @@ void main() {
   color_out = color_in;
 }
 
+[test]
 # This probe causes the pipeline clear to be executed, exercising the depth-stencil support.
 # However, there is no way to read a depth-stencil attachment directly, so we can't probe its output.
 # We would need a second pipeline or a depth test on the pipeline to observe the effects of the
 # depth-stencil clear.
 clear
-[test]
 relative probe rect rgba (0.0, 0.0, 1.0, 1.0) (0, 0, 0, 0)

@@ -19,6 +19,8 @@ SHADER fragment frag_shader GLSL
 
 layout(location = 0) in vec4 color_in;
 layout(location = 0) out vec4 color_out;
+layout(location = 1) in vec4 color_in_1;
+layout(location = 1) out vec4 color_out_1;
 
 void main() {
   color_out = color_in;
@@ -27,6 +29,7 @@ END
 
 BUFFER depthStencil_buf FORMAT D32_SFLOAT_S8_UINT
 BUFFER img_buf FORMAT B8G8R8A8_UNORM
+BUFFER img_buf_1 FORMAT B8G8R8A8_UNORM
 
 PIPELINE graphics my_pipeline
   ATTACH vtex_shader
@@ -34,6 +37,7 @@ PIPELINE graphics my_pipeline
 
   FRAMEBUFFER_SIZE 256 256
   BIND BUFFER img_buf AS color LOCATION 0
+  BIND BUFFER img_buf_1 AS color LOCATION 1
   BIND BUFFER depthStencil_buf AS depth_stencil
 END
 
@@ -44,3 +48,4 @@ END
 
 CLEAR my_pipeline
 EXPECT img_buf IDX 0 0 SIZE 256 256 EQ_RGBA 0 0 0 0
+EXPECT img_buf_1 IDX 0 0 SIZE 256 256 EQ_RGBA 0 0 0 0

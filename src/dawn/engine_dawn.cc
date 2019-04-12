@@ -398,20 +398,30 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   queue.Submit(1, &command_buffer);
 
   // Copy the framebuffer contents back into the host-side framebuffer-buffer.
+  // Dawn buffer is always aligned to 256 so it might have padding
+  // therefore memcopy is done row by row
   ::dawn::Buffer& fb_buffer = render_pipeline->fb_buffer;
   MapResult map = MapBuffer(*device_, fb_buffer);
-  // For now, we assume there is only one colour attachment, and that
-  // corresponds to the framebuffer texture.
   const std::vector<amber::Pipeline::BufferInfo>& out_color_attachment =
       render_pipeline->pipeline->GetColorAttachments();
-  for (size_t i = 0; i < 1; ++i) {
+
+  for (size_t i = 0; i < out_color_attachment.size(); ++i) {
     auto& info = out_color_attachment[i];
     auto* values = info.buffer->ValuePtr();
-    values->resize(map.dataLength);
-    // TODO(sarahM0): Resolve the difference between the Dawn buffer's size
-    // and the Amber buffer's size.
-    std::memcpy(values->data(), map.data, map.dataLength);
+    auto height = info.buffer->GetHeight();
+    auto row_stride =
+        info.buffer->GetWidth() * info.buffer->GetFormat()->SizeInBytes();
+    values->resize(row_stride * height);
+    auto dawn_row_stride = map.dataLength / height;
+    assert(map.dataLength % height == 0);
+
+    for (uint h = 0; h < height; h++) {
+      std::memcpy(values->data() + h * row_stride,
+                  static_cast<const uint8_t*>(map.data) + h * dawn_row_stride,
+                  row_stride);
+    }
   }
+
   // Always unmap the buffer at the end of the engine's command.
   fb_buffer.Unmap();
 
