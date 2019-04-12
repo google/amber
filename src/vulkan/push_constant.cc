@@ -107,7 +107,7 @@ Result PushConstant::AddBufferData(const BufferCommand* command) {
         "PushConstant::AddBufferData BufferCommand type is not push constant");
 
   push_constant_data_.emplace_back();
-  push_constant_data_.back().format = command->GetFormat();
+  push_constant_data_.back().format = command->GetBuffer()->GetFormat();
   push_constant_data_.back().offset = command->GetOffset();
   push_constant_data_.back().size_in_bytes = command->GetSize();
   push_constant_data_.back().values = command->GetValues();

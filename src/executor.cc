@@ -95,7 +95,7 @@ Result Executor::ExecuteCommand(Engine* engine, Command* cmd) {
     const auto* buffer = cmd->AsProbe()->GetBuffer();
     assert(buffer);
 
-    return verifier_.ProbeSSBO(probe_ssbo, buffer->GetSize(),
+    return verifier_.ProbeSSBO(probe_ssbo, buffer->ElementCount(),
                                buffer->ValuePtr()->data());
   }
   if (cmd->IsClear())

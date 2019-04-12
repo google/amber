@@ -23,8 +23,8 @@ void main() {
 }
 
 [test]
-ssbo 1:2 subdata vec4  0 0.1 0.2 0.3 0.4
-ssbo 1:2 subdata vec4 16 0.5 0.6 0.7 0.8
+ssbo 1:2 subdata float  0 0.1 0.2 0.3 0.4
+ssbo 1:2 subdata float 16 0.5 0.6 0.7 0.8
 probe ssbo float 1:2  0 ~= 0.1 0.2 0.3 0.4
 probe ssbo float 1:2 16 ~= 0.5 0.6 0.7 0.8
 

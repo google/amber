@@ -755,7 +755,7 @@ Result Parser::ParseBufferInitializerSize(DataBuffer* buffer) {
     return Result("BUFFER size invalid");
 
   uint32_t size_in_items = token->AsUint32();
-  buffer->SetSize(size_in_items);
+  buffer->SetElementCount(size_in_items);
 
   token = tokenizer_->NextToken();
   if (!token->IsString())
@@ -877,10 +877,7 @@ Result Parser::ParseBufferInitializerData(DataBuffer* buffer) {
     values.emplace_back(v);
   }
 
-  uint32_t size_in_items = static_cast<uint32_t>(values.size()) /
-                           fmt->RowCount() / fmt->ColumnCount();
-  buffer->SetSize(size_in_items);
-
+  buffer->SetValueCount(static_cast<uint32_t>(values.size()));
   buffer->SetData(std::move(values));
   return ValidateEndOfStatement("BUFFER data command");
 }
@@ -1095,7 +1092,7 @@ Result Parser::ParseExpect() {
     if (buffer->GetBufferType() != buffer_2->GetBufferType())
       return Result(
           "EXPECT EQ_BUFFER command cannot compare buffers of different type");
-    if (buffer->GetSize() != buffer_2->GetSize())
+    if (buffer->ElementCount() != buffer_2->ElementCount())
       return Result(
           "EXPECT EQ_BUFFER command cannot compare buffers of different size");
     if (buffer->GetWidth() != buffer_2->GetWidth())
@@ -1272,7 +1269,7 @@ Result Parser::ParseCopy() {
     buffer_to->SetBufferType(buffer_from->GetBufferType());
     buffer_to->SetWidth(buffer_from->GetWidth());
     buffer_to->SetHeight(buffer_from->GetHeight());
-    buffer_to->SetSize(buffer_from->GetSize());
+    buffer_to->SetElementCount(buffer_from->ElementCount());
   }
 
   if (buffer_from->GetBufferType() != buffer_to->GetBufferType())

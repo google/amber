@@ -261,7 +261,9 @@ TEST_F(VkScriptParserTest, IndicesBlock) {
 
   auto buffer = buffer_ptr;
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
-  EXPECT_EQ(3U, buffer->GetSize());
+  EXPECT_EQ(3U, buffer->ElementCount());
+  EXPECT_EQ(3U, buffer->ValueCount());
+  EXPECT_EQ(3U * sizeof(uint32_t), buffer->GetSizeInBytes());
 
   const auto* data = buffer->GetValues<uint32_t>();
   EXPECT_EQ(1, data[0]);
@@ -288,7 +290,7 @@ TEST_F(VkScriptParserTest, IndicesBlockMultipleLines) {
 
   const auto* data = buffers[1]->GetValues<uint32_t>();
   std::vector<uint16_t> results = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-  ASSERT_EQ(results.size(), buffers[1]->GetSize());
+  ASSERT_EQ(results.size(), buffers[1]->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_EQ(results[i], data[i]);
   }
@@ -338,13 +340,13 @@ TEST_F(VkScriptParserTest, VertexDataHeaderFormatString) {
   EXPECT_EQ(static_cast<uint8_t>(0U), buffers[1]->GetLocation());
   EXPECT_EQ(FormatType::kR32G32_SFLOAT,
             buffers[1]->GetFormat()->GetFormatType());
-  EXPECT_EQ(static_cast<uint32_t>(0), buffers[1]->GetSize());
+  EXPECT_EQ(static_cast<uint32_t>(0), buffers[1]->ElementCount());
 
   ASSERT_EQ(BufferType::kVertex, buffers[2]->GetBufferType());
   EXPECT_EQ(1U, buffers[2]->GetLocation());
   EXPECT_EQ(FormatType::kA8B8G8R8_UNORM_PACK32,
             buffers[2]->GetFormat()->GetFormatType());
-  EXPECT_EQ(static_cast<uint32_t>(0), buffers[2]->GetSize());
+  EXPECT_EQ(static_cast<uint32_t>(0), buffers[2]->ElementCount());
 }
 
 TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
@@ -368,7 +370,7 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   ASSERT_EQ(2U, comps1.size());
   EXPECT_EQ(FormatMode::kSFloat, comps1[0].mode);
   EXPECT_EQ(FormatMode::kSFloat, comps1[1].mode);
-  EXPECT_EQ(static_cast<uint32_t>(0), buffers[1]->GetSize());
+  EXPECT_EQ(static_cast<uint32_t>(0), buffers[1]->ElementCount());
 
   ASSERT_EQ(BufferType::kVertex, buffers[2]->GetBufferType());
   EXPECT_EQ(1U, buffers[2]->GetLocation());
@@ -379,7 +381,7 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   EXPECT_EQ(FormatMode::kSInt, comps2[0].mode);
   EXPECT_EQ(FormatMode::kSInt, comps2[1].mode);
   EXPECT_EQ(FormatMode::kSInt, comps2[2].mode);
-  EXPECT_EQ(static_cast<uint32_t>(0), buffers[2]->GetSize());
+  EXPECT_EQ(static_cast<uint32_t>(0), buffers[2]->ElementCount());
 }
 
 TEST_F(VkScriptParserTest, TestBlock) {
@@ -434,7 +436,7 @@ TEST_F(VkScriptParserTest, VertexDataRows) {
 
   std::vector<float> seg_0 = {-1.f, -1.f, 0.25f, 0.25f, -1.f, 0.25f};
   const auto* values_0 = buffers[1]->GetValues<float>();
-  ASSERT_EQ(seg_0.size(), buffers[1]->GetSize());
+  ASSERT_EQ(seg_0.size(), buffers[1]->ValueCount());
   for (size_t i = 0; i < seg_0.size(); ++i) {
     EXPECT_FLOAT_EQ(seg_0[i], values_0[i]);
   }
@@ -443,7 +445,7 @@ TEST_F(VkScriptParserTest, VertexDataRows) {
 
   std::vector<uint8_t> seg_1 = {255, 128, 1, 255, 128, 255};
   const auto* values_1 = buffers[2]->GetValues<uint8_t>();
-  ASSERT_EQ(seg_1.size(), buffers[2]->GetSize());
+  ASSERT_EQ(seg_1.size(), buffers[2]->ValueCount());
   for (size_t i = 0; i < seg_1.size(); ++i) {
     EXPECT_EQ(seg_1[i], values_1[i]);
   }
@@ -493,7 +495,7 @@ TEST_F(VkScriptParserTest, VertexDataRowsWithHex) {
 
   std::vector<uint32_t> seg_0 = {0xff0000ff, 0xffff0000};
   const auto* values_0 = buffers[1]->GetValues<uint32_t>();
-  ASSERT_EQ(seg_0.size(), buffers[1]->GetSize());
+  ASSERT_EQ(seg_0.size(), buffers[1]->ValueCount());
 
   for (size_t i = 0; i < seg_0.size(); ++i) {
     EXPECT_EQ(seg_0[i], values_0[i]);

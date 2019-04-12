@@ -613,7 +613,13 @@ Result CommandParser::ProcessSSBO() {
     if (!r.IsSuccess())
       return r;
 
-    cmd->SetFormat(tp.GetType().AsFormat());
+    auto fmt = tp.GetType().AsFormat();
+    if (cmd->GetBuffer()->GetFormat() &&
+        !cmd->GetBuffer()->GetFormat()->Equal(fmt.get())) {
+      return Result("probe ssbo format does not match buffer format");
+    }
+    if (!cmd->GetBuffer()->GetFormat())
+      cmd->GetBuffer()->SetFormat(std::move(fmt));
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger()) {
@@ -624,16 +630,17 @@ Result CommandParser::ProcessSSBO() {
       return Result("offset for SSBO must be positive, got: " +
                     std::to_string(token->AsInt32()));
     }
-    if ((token->AsUint32() % cmd->GetFormat()->SizeInBytes()) != 0) {
+    if ((token->AsUint32() % cmd->GetBuffer()->GetFormat()->SizeInBytes()) !=
+        0) {
       return Result(
           "offset for SSBO must be a multiple of the data size expected " +
-          std::to_string(cmd->GetFormat()->SizeInBytes()));
+          std::to_string(cmd->GetBuffer()->GetFormat()->SizeInBytes()));
     }
 
     cmd->SetOffset(token->AsUint32());
 
     std::vector<Value> values;
-    r = ParseValues("ssbo", cmd->GetFormat(), &values, false);
+    r = ParseValues("ssbo", cmd->GetBuffer()->GetFormat(), &values, false);
     if (!r.IsSuccess())
       return r;
 
@@ -652,7 +659,7 @@ Result CommandParser::ProcessSSBO() {
 
     // Resize the buffer so we'll correctly create the descriptor sets.
     auto* buf = cmd->GetBuffer();
-    buf->SetSize(size);
+    buf->SetElementCount(size);
     buf->ValuePtr()->resize(size);
 
     token = tokenizer_->NextToken();
@@ -716,22 +723,6 @@ Result CommandParser::ProcessUniform() {
       cmd->SetBinding(val);
     }
 
-    {
-      // Generate an internal buffer for this binding if needed.
-      auto set = cmd->GetDescriptorSet();
-      auto binding = cmd->GetBinding();
-
-      auto* buffer = pipeline_->GetBufferForBinding(set, binding);
-      if (!buffer) {
-        auto b = MakeUnique<DataBuffer>(BufferType::kUniform);
-        b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
-        buffer = b.get();
-        script_->AddBuffer(std::move(b));
-        pipeline_->AddBuffer(buffer, set, binding);
-      }
-      cmd->SetBuffer(buffer);
-    }
-
     use_std430_layout = true;
   } else {
     cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kPushConstant,
@@ -739,12 +730,34 @@ Result CommandParser::ProcessUniform() {
     cmd->SetLine(tokenizer_->GetCurrentLine());
   }
 
+  {
+    // Generate an internal buffer for this binding if needed.
+    auto set = cmd->GetDescriptorSet();
+    auto binding = cmd->GetBinding();
+
+    auto* buffer = pipeline_->GetBufferForBinding(set, binding);
+    if (!buffer) {
+      auto b = MakeUnique<DataBuffer>(BufferType::kUniform);
+      b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
+      buffer = b.get();
+      script_->AddBuffer(std::move(b));
+      pipeline_->AddBuffer(buffer, set, binding);
+    }
+    cmd->SetBuffer(buffer);
+  }
+
   DatumTypeParser tp;
   Result r = tp.Parse(token->AsString());
   if (!r.IsSuccess())
     return r;
 
-  cmd->SetFormat(tp.GetType().AsFormat());
+  auto fmt = tp.GetType().AsFormat();
+  if (cmd->GetBuffer()->GetFormat() &&
+      !cmd->GetBuffer()->GetFormat()->Equal(fmt.get())) {
+    return Result("probe ssbo format does not match buffer format");
+  }
+  if (!cmd->GetBuffer()->GetFormat())
+    cmd->GetBuffer()->SetFormat(std::move(fmt));
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger()) {
@@ -759,7 +772,8 @@ Result CommandParser::ProcessUniform() {
   cmd->SetOffset(token->AsUint32());
 
   std::vector<Value> values;
-  r = ParseValues("uniform", cmd->GetFormat(), &values, use_std430_layout);
+  r = ParseValues("uniform", cmd->GetBuffer()->GetFormat(), &values,
+                  use_std430_layout);
   if (!r.IsSuccess())
     return r;
 
@@ -2042,10 +2056,17 @@ Result CommandParser::ProcessProbeSSBO() {
                   std::to_string(binding));
   }
 
+  auto fmt = tp.GetType().AsFormat();
+  if (buffer->GetFormat() && !buffer->GetFormat()->Equal(fmt.get()))
+    return Result("probe format does not match buffer format");
+
+  if (!buffer->GetFormat())
+    buffer->SetFormat(tp.GetType().AsFormat());
+
   auto cmd = MakeUnique<ProbeSSBOCommand>(buffer);
   cmd->SetLine(cur_line);
   cmd->SetTolerances(current_tolerances_);
-  cmd->SetFormat(tp.GetType().AsFormat());
+  cmd->SetFormat(std::move(fmt));
   cmd->SetDescriptorSet(set);
   cmd->SetBinding(binding);
 

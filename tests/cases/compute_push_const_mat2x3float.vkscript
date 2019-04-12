@@ -16,42 +16,37 @@
 #version 430
 
 layout(set = 0, binding = 0) buffer block0 {
-  mat4x3 transform0;
+  mat2x3 transform0;
 };
 
 layout(push_constant) uniform block1 {
-  mat4x3 transform1;
+  mat2x3 transform1;
 };
 
 layout(set = 0, binding = 2) buffer block3 {
-  vec4 test0;
-  vec4 test1;
+  vec2 test0;
+  vec2 test1;
 };
 
 void main() {
-  test0 = vec4(transform0 * test0, 0);
-  test1 = vec4(transform1 * test1, 0);
+  test0 = (transform0 * test0).xy;
+  test1 = (transform1 * test1).xy;
 }
 
 [test]
-# Fill mat4x3 using mat4x3
-# MatrixStride == 16
-ssbo 0:0 subdata mat4x3 0 1.0 0.0 0.0 \
-                          0.0 1.0 0.0 \
-                          0.0 0.0 1.0 \
-                          0.0 0.0 1.0
-# MatrixStride == 16
-uniform mat4x3 0 1.0 0.0 0.0 \
-                 0.0 1.0 0.0 \
-                 0.0 0.0 1.0 \
-                 0.0 0.0 1.0
 
-ssbo 0:2 subdata vec4  0 7.3 9.4 -5.8 -0.2
-ssbo 0:2 subdata vec4 16 4.5 6.1 -3.8 -0.7
+# Fill mat2x3 using float
+# MatrixStride == 16
+ssbo 0:0 subdata float 0 1.0 0.0 0.0 0.0 \
+                         0.0 1.0 1.0
+# MatrixStride == 16
+uniform float 0 1.0 0.0 0.0 0.0 \
+                0.0 1.0 1.0
+
+ssbo 0:2 subdata vec2 0 3.7 9.4
+ssbo 0:2 subdata vec2 8 4.5 6.1
 
 compute 1 1 1
 
-tolerance 0.1%
-
-probe ssbo vec4 0:2  0 ~= 7.3 9.4 -6.0 0
-probe ssbo vec4 0:2 16 ~= 4.5 6.1 -4.5 0
+probe ssbo vec2 0:2 0 ~= 3.7 9.4
+probe ssbo vec2 0:2 8 ~= 4.5 6.1

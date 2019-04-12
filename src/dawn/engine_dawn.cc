@@ -345,9 +345,6 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   if (!result.IsSuccess())
     return result;
 
-  // TODO(sarahM0): Adapt this to the case where there might be many colour
-  // attachments.
-
   // Record a render pass in a command on the command buffer.
   //
   // First describe the color attachments, and how they are initialized

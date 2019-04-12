@@ -31,6 +31,10 @@ uint32_t Format::SizeInBytes() const {
     bits += components_[0].num_bits;
 
   uint32_t bytes_per_element = bits / 8;
+  // Odd number of bits, inflate or byte count to accommodate
+  if ((bits % 8) != 0)
+    bytes_per_element += 1;
+
   return bytes_per_element * column_count_;
 }
 
@@ -38,6 +42,25 @@ bool Format::AreAllComponents(FormatMode mode, uint32_t bits) const {
   for (const auto& comp : components_) {
     if (comp.mode != mode || comp.num_bits != bits)
       return false;
+  }
+  return true;
+}
+
+bool Format::Equal(const Format* b) const {
+  if (type_ != b->type_ || is_std140_ != b->is_std140_ ||
+      pack_size_in_bytes_ != b->pack_size_in_bytes_ ||
+      column_count_ != b->column_count_) {
+    return false;
+  }
+  if (components_.size() != b->components_.size())
+    return false;
+
+  for (uint32_t i = 0; i < components_.size(); ++i) {
+    if (components_[i].type != b->components_[i].type ||
+        components_[i].mode != b->components_[i].mode ||
+        components_[i].num_bits != b->components_[i].num_bits) {
+      return false;
+    }
   }
   return true;
 }

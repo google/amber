@@ -16,14 +16,14 @@
 #version 430
 
 layout(set = 0, binding = 0) buffer block0 {
-  float data_set0_binding0[];
+  uint data_set0_binding0[];
 };
 
 // push_constant compiled as std430 by glslang
 layout(push_constant) uniform block1 {
-  float constant0[3];  // Offset:  0, array stride:  4
+  uint constant0[3];  // Offset:  0, array stride:  4
   uint constant1;      //         12
-  vec3 constant2[3];   //         16, array stride: 16
+  uvec3 constant2[3];   //         16, array stride: 16
   uint constant3;      //         64
 };
 
@@ -42,20 +42,20 @@ void main() {
 }
 
 [test]
-ssbo 0:0 128
+ssbo 0:0 56
 
-uniform float  0  1  2  3
-uniform uint  12  4
-uniform float 16  5  6  7  0 \
+uniform uint  0  1  2  3
+uniform uint 12  4
+uniform uint 16  5  6  7  0 \
                   8  9 10  0 \
                  11 12 13
-uniform uint  64 14
+uniform uint 64 14
 
 compute 3 1 1
 
-probe ssbo float 0:0  0 ~=  1  2  3
-probe ssbo float 0:0 12 ~=  4
-probe ssbo float 0:0 16 ~=  5  6  7 \
-                            8  9 10 \
+probe ssbo uint 0:0  0 ==  1  2  3
+probe ssbo uint 0:0 12 ==  4
+probe ssbo uint 0:0 16 ==  5  6  7 \
+                           8  9  10 \
                            11 12 13
-probe ssbo float 0:0 52 ~= 14
+probe ssbo uint 0:0 52 ==  14

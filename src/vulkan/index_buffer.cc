@@ -33,7 +33,7 @@ Result IndexBuffer::SendIndexData(CommandBuffer* command, Buffer* buffer) {
         "IndexBuffer::SendIndexData must be called once when it is created");
   }
 
-  if (buffer->GetSize() == 0)
+  if (buffer->ElementCount() == 0)
     return Result("IndexBuffer::SendIndexData |buffer| is empty");
 
   transfer_buffer_ =
