@@ -43,8 +43,8 @@ class Verifier {
   /// Check |command| against |cpu_memory|. The result will be success if the
   /// probe passes correctly.
   Result ProbeSSBO(const ProbeSSBOCommand* command,
-                   size_t size,
-                   const void* cpu_memory);
+                   uint32_t buffer_element_count,
+                   const void* buffer);
 };
 
 }  // namespace amber

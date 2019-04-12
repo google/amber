@@ -216,7 +216,7 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
 
     const uint8_t* ptr = buffer->ValuePtr()->data();
     auto& values = buffer_info.values;
-    for (size_t i = 0; i < buffer->GetSize(); ++i) {
+    for (size_t i = 0; i < buffer->GetSizeInBytes(); ++i) {
       values.emplace_back();
       values.back().SetIntValue(*ptr);
       ++ptr;

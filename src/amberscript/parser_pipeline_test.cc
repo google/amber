@@ -200,8 +200,9 @@ END)";
   ASSERT_TRUE(buffer1->IsFormatBuffer());
   EXPECT_EQ(FormatType::kB8G8R8A8_UNORM, buffer1->GetFormat()->GetFormatType());
   EXPECT_EQ(0, buf1.location);
-  EXPECT_EQ(250 * 250, buffer1->GetSize());
-  EXPECT_EQ(250 * 250 * sizeof(uint32_t), buffer1->GetSizeInBytes());
+  EXPECT_EQ(250 * 250, buffer1->ElementCount());
+  EXPECT_EQ(250 * 250 * 4, buffer1->ValueCount());
+  EXPECT_EQ(250 * 250 * 4 * sizeof(uint8_t), buffer1->GetSizeInBytes());
 
   ASSERT_EQ(1U, pipelines[1]->GetColorAttachments().size());
   const auto& buf2 = pipelines[1]->GetColorAttachments()[0];
@@ -210,8 +211,9 @@ END)";
   EXPECT_EQ(0, buf2.location);
   EXPECT_EQ(FormatType::kB8G8R8A8_UNORM,
             buf2.buffer->GetFormat()->GetFormatType());
-  EXPECT_EQ(250 * 250, buf2.buffer->GetSize());
-  EXPECT_EQ(250 * 250 * sizeof(uint32_t), buf2.buffer->GetSizeInBytes());
+  EXPECT_EQ(250 * 250, buf2.buffer->ElementCount());
+  EXPECT_EQ(250 * 250 * 4, buf2.buffer->ValueCount());
+  EXPECT_EQ(250 * 250 * 4 * sizeof(uint8_t), buf2.buffer->GetSizeInBytes());
 }
 
 TEST_F(AmberScriptParserTest, PipelineDefaultColorBufferMismatchSize) {

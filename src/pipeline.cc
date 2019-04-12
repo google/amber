@@ -146,13 +146,13 @@ Result Pipeline::SetShaderType(const Shader* shader, ShaderType type) {
 Result Pipeline::Validate() const {
   size_t fb_size = fb_width_ * fb_height_;
   for (const auto& attachment : color_attachments_) {
-    if (attachment.buffer->GetSize() != fb_size) {
+    if (attachment.buffer->ElementCount() != fb_size) {
       return Result(
           "shared framebuffer must have same size over all PIPELINES");
     }
   }
 
-  if (depth_buffer_.buffer && depth_buffer_.buffer->GetSize() != fb_size)
+  if (depth_buffer_.buffer && depth_buffer_.buffer->ElementCount() != fb_size)
     return Result("shared depth buffer must have same size over all PIPELINES");
 
   if (pipeline_type_ == PipelineType::kGraphics)
@@ -203,13 +203,13 @@ void Pipeline::UpdateFramebufferSizes() {
   for (auto& attachment : color_attachments_) {
     attachment.buffer->SetWidth(fb_width_);
     attachment.buffer->SetHeight(fb_height_);
-    attachment.buffer->SetSize(size);
+    attachment.buffer->SetElementCount(size);
   }
 
   if (depth_buffer_.buffer) {
     depth_buffer_.buffer->SetWidth(fb_width_);
     depth_buffer_.buffer->SetHeight(fb_height_);
-    depth_buffer_.buffer->SetSize(size);
+    depth_buffer_.buffer->SetElementCount(size);
   }
 }
 
@@ -227,7 +227,7 @@ Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
   info.location = location;
   buf->SetWidth(fb_width_);
   buf->SetHeight(fb_height_);
-  buf->SetSize(fb_width_ * fb_height_);
+  buf->SetElementCount(fb_width_ * fb_height_);
   return {};
 }
 
@@ -251,7 +251,7 @@ Result Pipeline::SetDepthBuffer(Buffer* buf) {
   depth_buffer_.buffer = buf;
   buf->SetWidth(fb_width_);
   buf->SetHeight(fb_height_);
-  buf->SetSize(fb_width_ * fb_height_);
+  buf->SetElementCount(fb_width_ * fb_height_);
   return {};
 }
 

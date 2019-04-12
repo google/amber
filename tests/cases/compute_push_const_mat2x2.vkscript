@@ -34,31 +34,6 @@ void main() {
 }
 
 [test]
-
-# Fill mat2x2 using float
-# MatrixStride == 8
-ssbo 0:0 subdata float 0 1.0 0.0 \
-                         0.0 1.0
-# MatrixStride == 8
-uniform float 0 1.0 0.0 \
-                0.0 1.0
-
-ssbo 0:2 subdata vec2 0 3.7 9.4
-ssbo 0:2 subdata vec2 8 4.5 6.1
-
-compute 1 1 1
-
-probe ssbo vec2 0:2 0 ~= 3.7 9.4
-probe ssbo vec2 0:2 8 ~= 4.5 6.1
-
-
-# Clear matrices
-ssbo 0:0 subdata float 0 0.0 0.0 \
-                         0.0 0.0
-uniform float 0 0.0 0.0 0.0 0.0 \
-                0.0 0.0
-
-
 # Fill mat2x2 using mat2
 # MatrixStride == 8
 ssbo 0:0 subdata mat2 0 1.0 0.0 \

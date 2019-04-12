@@ -711,8 +711,8 @@ TEST_F(VerifierTest, ProbeSSBOUint8Single) {
   uint8_t ssbo = 13U;
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(uint8_t),
-                                static_cast<const void*>(&ssbo));
+  Result r =
+      verifier.ProbeSSBO(&probe_ssbo, 1, static_cast<const void*>(&ssbo));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -736,7 +736,7 @@ TEST_F(VerifierTest, ProbeSSBOUint8Multiple) {
   const uint8_t ssbo[3] = {2U, 0U, 10U};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(uint8_t) * 3, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 3, ssbo);
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -764,8 +764,7 @@ TEST_F(VerifierTest, ProbeSSBOUint8Many) {
   }
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(uint8_t) * ssbo.size(),
-                                ssbo.data());
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 200, ssbo.data());
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -787,8 +786,8 @@ TEST_F(VerifierTest, ProbeSSBOUint32Single) {
   uint32_t ssbo = 13U;
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(uint32_t),
-                                static_cast<const void*>(&ssbo));
+  Result r =
+      verifier.ProbeSSBO(&probe_ssbo, 1, static_cast<const void*>(&ssbo));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -813,7 +812,7 @@ TEST_F(VerifierTest, ProbeSSBOUint32Multiple) {
   const uint32_t ssbo[4] = {2U, 0U, 10U, 1234U};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(uint32_t) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -841,8 +840,7 @@ TEST_F(VerifierTest, ProbeSSBOUint32Many) {
   }
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(uint32_t) * ssbo.size(),
-                                ssbo.data());
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 200, ssbo.data());
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -864,8 +862,8 @@ TEST_F(VerifierTest, ProbeSSBOFloatSingle) {
   float ssbo = 13.7f;
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(float),
-                                static_cast<const void*>(&ssbo));
+  Result r =
+      verifier.ProbeSSBO(&probe_ssbo, 1, static_cast<const void*>(&ssbo));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -890,7 +888,7 @@ TEST_F(VerifierTest, ProbeSSBOFloatMultiple) {
   const float ssbo[4] = {2.9f, 0.73f, 10.0f, 1234.56f};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(float) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -918,8 +916,7 @@ TEST_F(VerifierTest, ProbeSSBOFloatMany) {
   }
 
   Verifier verifier;
-  Result r =
-      verifier.ProbeSSBO(&probe_ssbo, sizeof(float) * ssbo.size(), ssbo.data());
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 200, ssbo.data());
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -941,8 +938,8 @@ TEST_F(VerifierTest, ProbeSSBODoubleSingle) {
   double ssbo = 13.7;
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double),
-                                static_cast<const void*>(&ssbo));
+  Result r =
+      verifier.ProbeSSBO(&probe_ssbo, 1, static_cast<const void*>(&ssbo));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -967,7 +964,7 @@ TEST_F(VerifierTest, ProbeSSBODoubleMultiple) {
   const double ssbo[4] = {2.9, 0.73, 10.0, 1234.56};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -995,8 +992,7 @@ TEST_F(VerifierTest, ProbeSSBODoubleMany) {
   }
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * ssbo.size(),
-                                ssbo.data());
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 200, ssbo.data());
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -1021,7 +1017,7 @@ TEST_F(VerifierTest, ProbeSSBOEqualFail) {
   const double ssbo[4] = {2.8, 0.72, 9.0, 1234.55};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ("Line 1: Verifier failed: 2.800000 == 2.900000, at index 0",
             r.Error());
@@ -1052,12 +1048,12 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteTolerance) {
   const double ssbo_more[4] = {2.999, 0.829, 10.099, 1234.659};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo_more);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo_more);
   EXPECT_TRUE(r.IsSuccess());
 
   const double ssbo_less[4] = {2.801, 0.631, 9.901, 1234.461};
 
-  r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo_less);
+  r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo_less);
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -1086,7 +1082,7 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteToleranceFail) {
   const double ssbo[4] = {3.001, 0.831, 10.101, 1234.661};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ("Line 1: Verifier failed: 3.001000 ~= 2.900000, at index 0",
             r.Error());
@@ -1117,7 +1113,7 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeTolerance) {
   const double ssbo_more[4] = {2.9028, 0.73072, 10.009, 1235.79455};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo_more);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo_more);
   EXPECT_TRUE(r.IsSuccess());
 
   const double ssbo_less[4] = {2.8972, 0.72928, 9.991, 1233.32545};
@@ -1151,7 +1147,7 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeToleranceFail) {
   const double ssbo[4] = {2.903, 0.73074, 10.011, 1235.79457};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ("Line 1: Verifier failed: 2.903000 ~= 2.900000, at index 0",
             r.Error());
@@ -1178,7 +1174,7 @@ TEST_F(VerifierTest, ProbeSSBONotEqual) {
   const double ssbo[4] = {3.9, 0.83, 10.1, 1234.57};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -1203,7 +1199,7 @@ TEST_F(VerifierTest, ProbeSSBONotEqualFail) {
   const double ssbo[4] = {2.9, 0.73, 10.0, 1234.56};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ("Line 1: Verifier failed: 2.900000 != 2.900000, at index 0",
             r.Error());
@@ -1230,7 +1226,7 @@ TEST_F(VerifierTest, ProbeSSBOLess) {
   const double ssbo[4] = {1.9, 0.63, 9.99, 1234.559};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -1255,7 +1251,7 @@ TEST_F(VerifierTest, ProbeSSBOLessFail) {
   const double ssbo[4] = {3.9, 0.83, 10.1, 1234.57};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ("Line 1: Verifier failed: 3.900000 < 2.900000, at index 0",
             r.Error());
@@ -1282,7 +1278,7 @@ TEST_F(VerifierTest, ProbeSSBOLessOrEqual) {
   const double ssbo[4] = {1.9, 0.73, 9.99, 1234.560};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -1307,7 +1303,7 @@ TEST_F(VerifierTest, ProbeSSBOLessOrEqualFail) {
   const double ssbo[4] = {1.9, 0.73, 9.99, 1234.561};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ("Line 1: Verifier failed: 1234.561000 <= 1234.560000, at index 3",
             r.Error());
@@ -1334,7 +1330,7 @@ TEST_F(VerifierTest, ProbeSSBOGreater) {
   const double ssbo[4] = {3.9, 0.83, 10.1, 1234.57};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -1359,7 +1355,7 @@ TEST_F(VerifierTest, ProbeSSBOGreaterFail) {
   const double ssbo[4] = {3.9, 0.73, 10.1, 1234.57};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ("Line 1: Verifier failed: 0.730000 > 0.730000, at index 1",
             r.Error());
@@ -1411,7 +1407,7 @@ TEST_F(VerifierTest, ProbeSSBOGreaterOrEqualFail) {
   const double ssbo[4] = {3.9, 0.73, 10.1, 1234.559};
 
   Verifier verifier;
-  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ("Line 1: Verifier failed: 1234.559000 >= 1234.560000, at index 3",
             r.Error());

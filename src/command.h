@@ -406,13 +406,11 @@ class BufferCommand : public PipelineCommand {
   void SetSize(uint32_t size) { size_ = size; }
   uint32_t GetSize() const { return size_; }
 
-  void SetFormat(std::unique_ptr<Format> fmt) { format_ = std::move(fmt); }
-  Format* GetFormat() const { return format_.get(); }
-
   void SetValues(std::vector<Value>&& values) {
     values_ = std::move(values);
-    size_ = static_cast<uint32_t>(values_.size() * format_->SizeInBytes()) /
-            format_->ColumnCount() / format_->RowCount();
+    auto fmt = buffer_->GetFormat();
+    size_ = static_cast<uint32_t>(values_.size() * fmt->SizeInBytes()) /
+            fmt->ValuesPerElement();
   }
   const std::vector<Value>& GetValues() const { return values_; }
 
@@ -427,7 +425,6 @@ class BufferCommand : public PipelineCommand {
   uint32_t binding_num_ = 0;
   uint32_t size_ = 0;
   uint32_t offset_ = 0;
-  std::unique_ptr<Format> format_;
   std::vector<Value> values_;
 };
 
