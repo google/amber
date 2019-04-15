@@ -322,32 +322,75 @@ Result EngineDawn::DoClearDepth(const ClearDepthCommand* command) {
   return {};
 }
 
-struct ReadbackReservation {
-  ::dawn::Buffer buffer;
-  size_t slot;
-  uint64_t offset;
-};
-
-ReadbackReservation ReserveReadback(uint64_t readbackSize,
-                                    const ::dawn::Device& device) {
-  ::dawn::BufferDescriptor descriptor;
-  descriptor.size = readbackSize;
-  descriptor.usage =
-      ::dawn::BufferUsageBit::MapRead | ::dawn::BufferUsageBit::TransferDst;
-
-  ReadbackReservation reservation;
-  reservation.buffer = device.CreateBuffer(&descriptor);
-  reservation.slot = 0;
-  reservation.offset = 0;
-
-  return reservation;
-}
-
 uint32_t Align(uint32_t value, size_t alignment) {
   assert(alignment <= UINT32_MAX);
   assert(alignment != 0);
   uint32_t alignment32 = static_cast<uint32_t>(alignment);
   return (value + (alignment32 - 1)) & ~(alignment32 - 1);
+}
+
+MapResult MapFramebufferTextureToHostBuffer(RenderPipelineInfo& render_pipeline,
+                                            ::dawn::Device& device) {
+  const auto width = render_pipeline.pipeline->GetFramebufferWidth();
+  const auto height = render_pipeline.pipeline->GetFramebufferHeight();
+  const auto pixelSize = render_pipeline.pipeline->GetColorAttachments()[0]
+                             .buffer->GetFormat()
+                             ->SizeInBytes();
+  const auto dawn_row_pitch = Align(width * pixelSize, kMinimumImageRowPitch);
+  const auto fb_buffer_size = dawn_row_pitch * (height - 1) + width * pixelSize;
+
+  ::dawn::BufferDescriptor descriptor;
+  descriptor.size = fb_buffer_size;
+  descriptor.usage =
+      ::dawn::BufferUsageBit::MapRead | ::dawn::BufferUsageBit::TransferDst;
+  ::dawn::Buffer fb_buffer = device.CreateBuffer(&descriptor);
+
+  ::dawn::TextureCopyView textureCopyView;
+  textureCopyView.texture = render_pipeline.fb_texture;
+  textureCopyView.level = 0;
+  textureCopyView.slice = 0;
+  textureCopyView.origin = {0, 0, 0};
+
+  ::dawn::BufferCopyView bufferCopyView;
+  bufferCopyView.buffer = fb_buffer;
+  bufferCopyView.offset = 0;
+  bufferCopyView.rowPitch = dawn_row_pitch;
+  bufferCopyView.imageHeight = 0;
+
+  ::dawn::Extent3D copySize = {width, height, 1};
+
+  auto encoder2 = device.CreateCommandEncoder();
+  encoder2.CopyTextureToBuffer(&textureCopyView, &bufferCopyView, &copySize);
+
+  auto commands = encoder2.Finish();
+  auto queue = device.CreateQueue();
+  queue.Submit(1, &commands);
+
+  MapResult map = MapBuffer(device, fb_buffer);
+  const std::vector<amber::Pipeline::BufferInfo>& out_color_attachment =
+      render_pipeline.pipeline->GetColorAttachments();
+
+  for (size_t i = 0; i < out_color_attachment.size(); ++i) {
+    auto& info = out_color_attachment[i];
+    auto* values = info.buffer->ValuePtr();
+    auto row_stride = pixelSize * width;
+    // Each Dawn row has enough data to fill the target row.
+    assert(dawn_row_pitch >= row_stride);
+    values->resize(row_stride * height);
+    // Copy the framebuffer contents back into the host-side
+    // framebuffer-buffer. In the Dawn buffer, the row stride is a multiple of
+    // kMinimumImageRowPitch bytes, so it might have padding therefore memcpy
+    // is done row by row.
+    for (uint h = 0; h < height; h++) {
+      std::memcpy(values->data() + h * row_stride,
+                  static_cast<const uint8_t*>(map.data) + h * dawn_row_pitch,
+                  row_stride);
+    }
+  }
+  // Always unmap the buffer at the end of the engine's command.
+  fb_buffer.Unmap();
+
+  return map;
 }
 
 Result EngineDawn::DoClear(const ClearCommand* command) {
@@ -400,81 +443,13 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   auto encoder = device_->CreateCommandEncoder();
   ::dawn::RenderPassEncoder pass = encoder.BeginRenderPass(&rpd);
   pass.EndPass();
-
   // Finish recording the command buffer.  It only has one command.
   auto command_buffer = encoder.Finish();
   // Submit the command.
   auto queue = device_->CreateQueue();
   queue.Submit(1, &command_buffer);
-
-  // Readback
-  const auto width = render_pipeline->pipeline->GetFramebufferWidth();
-  const auto height = render_pipeline->pipeline->GetFramebufferHeight();
-  const auto pixelSize = render_pipeline->pipeline->GetColorAttachments()[0]
-                             .buffer->GetFormat()
-                             ->SizeInBytes();
-  uint32_t rowPitch = Align(width * pixelSize, 256);
-  uint32_t size = rowPitch * (height - 1) + width * pixelSize;
-
-  ::dawn::BufferDescriptor descriptor;
-  descriptor.size = size;
-  descriptor.usage =
-      ::dawn::BufferUsageBit::MapRead | ::dawn::BufferUsageBit::TransferDst;
-
-  ::dawn::Buffer fb_buffer = device_->CreateBuffer(&descriptor);
-
-  // We need to enqueue the copy immediately because by the time we resolve the
-  // expectation, the texture might have been modified.
-
-  ::dawn::TextureCopyView textureCopyView;
-  textureCopyView.texture = render_pipeline->fb_texture;
-  textureCopyView.level = 0;
-  textureCopyView.slice = 0;
-  textureCopyView.origin = {0, 0, 0};
-
-  ::dawn::BufferCopyView bufferCopyView;
-  bufferCopyView.buffer = fb_buffer;
-  bufferCopyView.offset = 0;
-  bufferCopyView.rowPitch = rowPitch;
-  bufferCopyView.imageHeight = 0;
-
-  ::dawn::Extent3D copySize = {width, height, 1};
-
-  auto encoder2 = device_->CreateCommandEncoder();
-  encoder2.CopyTextureToBuffer(&textureCopyView, &bufferCopyView, &copySize);
-
-  auto commands = encoder2.Finish();
-  queue.Submit(1, &commands);
-
-  //::dawn::Buffer& fb_buffer = render_pipeline->fb_buffer;
-  MapResult map = MapBuffer(*device_, fb_buffer);
-  const std::vector<amber::Pipeline::BufferInfo>& out_color_attachment =
-      render_pipeline->pipeline->GetColorAttachments();
-
-  for (size_t i = 0; i < out_color_attachment.size(); ++i) {
-    auto& info = out_color_attachment[i];
-    auto* values = info.buffer->ValuePtr();
-    // Copy the framebuffer contents back into the host-side
-    // framebuffer-buffer. In the Dawn buffer, the row stride is a multiple of
-    // 256 bytes, so it might have padding therefore memcpy is done row by
-    // row.
-    values->resize(pixelSize * width * height);
-    // Each Dawn row has enough data to fill the target row.
-    // auto dawn_row_stride = map.dataLength / height;
-    // std::cout<< rowPitch << " " << dawn_row_stride;
-    // assert(dawn_row_stride >= rowPitch);
-    // assert(map.dataLength % height == 0);
-    for (uint h = 0; h < height; h++) {
-      // printf("%x ",
-      //        *(static_cast<const uint8_t*>(map.data) + h * rowPitch));
-      std::memcpy(values->data() + h * width * pixelSize,
-                  static_cast<const uint8_t*>(map.data) + h * rowPitch,
-                  width * pixelSize);
-    }
-  }
-
-  // Always unmap the buffer at the end of the engine's command.
-  fb_buffer.Unmap();
+  // Copy result back
+  MapResult map = MapFramebufferTextureToHostBuffer(*render_pipeline, *device_);
 
   return map.result;
 }
@@ -567,8 +542,8 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     RenderPipelineInfo* render_pipeline) {
   Result result;
 
-  // First make the Dawn color attachment textures that the render pipeline will
-  // write into.
+  // First make the Dawn color attachment textures that the render pipeline
+  // will write into.
   const uint32_t width = render_pipeline->pipeline->GetFramebufferWidth();
   const uint32_t height = render_pipeline->pipeline->GetFramebufferHeight();
 
