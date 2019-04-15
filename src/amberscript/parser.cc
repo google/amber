@@ -1423,7 +1423,7 @@ Result Parser::ParseDerivePipelineBlock() {
   if (!r.IsSuccess())
     return r;
 
-  auto pipeline = MakeUnique<Pipeline>(*parent);
+  auto pipeline = parent->Clone();
   pipeline->SetName(name);
 
   return ParsePipelineBody("DERIVE_PIPELINE", std::move(pipeline));
