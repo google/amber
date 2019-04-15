@@ -1197,7 +1197,7 @@ Result Parser::ParseExpect() {
     auto probe = MakeUnique<ProbeSSBOCommand>(buffer);
     probe->SetLine(line);
     probe->SetComparator(ToComparator(token->AsString()));
-    probe->SetFormat(buffer->GetFormat()->Clone());
+    probe->SetFormat(MakeUnique<Format>(*buffer->GetFormat()));
     probe->SetOffset(static_cast<uint32_t>(x));
 
     std::vector<Value> values;
@@ -1423,7 +1423,7 @@ Result Parser::ParseDerivePipelineBlock() {
   if (!r.IsSuccess())
     return r;
 
-  auto pipeline = parent->Clone();
+  auto pipeline = MakeUnique<Pipeline>(*parent);
   pipeline->SetName(name);
 
   return ParsePipelineBody("DERIVE_PIPELINE", std::move(pipeline));

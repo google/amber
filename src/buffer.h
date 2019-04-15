@@ -136,12 +136,12 @@ class Buffer {
   /// size of the data provided.
   Result SetData(const std::vector<Value>& data);
 
-  std::vector<uint8_t>* ValuePtr() { return &values_; }
-  const std::vector<uint8_t>* ValuePtr() const { return &values_; }
+  std::vector<uint8_t>* ValuePtr() { return &bytes_; }
+  const std::vector<uint8_t>* ValuePtr() const { return &bytes_; }
 
   template <typename T>
   const T* GetValues() const {
-    return reinterpret_cast<const T*>(values_.data());
+    return reinterpret_cast<const T*>(bytes_.data());
   }
 
   /// Copies the buffer values to an other one
@@ -157,7 +157,7 @@ class Buffer {
   uint32_t width_ = 0;
   uint32_t height_ = 0;
   uint8_t location_ = 0;
-  std::vector<uint8_t> values_;
+  std::vector<uint8_t> bytes_;
   std::unique_ptr<Format> format_;
 };
 

@@ -75,8 +75,6 @@ class Format {
   Format(const Format&);
   ~Format();
 
-  std::unique_ptr<Format> Clone() const;
-
   Format& operator=(const Format&) = default;
 
   bool Equal(const Format* b) const;

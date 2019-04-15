@@ -24,16 +24,6 @@ Format::Format(const Format&) = default;
 
 Format::~Format() = default;
 
-std::unique_ptr<Format> Format::Clone() const {
-  auto ret = MakeUnique<Format>();
-  ret->type_ = type_;
-  ret->is_std140_ = is_std140_;
-  ret->pack_size_in_bytes_ = pack_size_in_bytes_;
-  ret->column_count_ = column_count_;
-  ret->components_ = components_;
-  return ret;
-}
-
 uint32_t Format::SizeInBytesPerRow() const {
   uint32_t bits = 0;
   for (const auto& comp : components_)
