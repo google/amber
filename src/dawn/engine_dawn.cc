@@ -41,8 +41,10 @@ const uint32_t kMinimumImageRowPitch = 256;
 // Creates a device-side texture, and returns it through |result_ptr|.
 // Assumes the device exists and is valid.  Assumes result_ptr is not null.
 // Returns a result code.
-Result MakeTexture(const ::dawn::Device& device, ::dawn::TextureFormat format,
-                   uint32_t width, uint32_t height,
+Result MakeTexture(const ::dawn::Device& device,
+                   ::dawn::TextureFormat format,
+                   uint32_t width,
+                   uint32_t height,
                    ::dawn::Texture* result_ptr) {
   assert(device);
   assert(result_ptr);
@@ -59,18 +61,22 @@ Result MakeTexture(const ::dawn::Device& device, ::dawn::TextureFormat format,
                      ::dawn::TextureUsageBit::OutputAttachment;
   // TODO(dneto): Get a better message by using the Dawn error callback.
   *result_ptr = device.CreateTexture(&descriptor);
-  if (*result_ptr) return {};
+  if (*result_ptr)
+    return {};
   return Result("Dawn: Failed to allocate a framebuffer texture");
 }
 
 // Creates a host-side buffer for the framebuffer, and returns it through
 // |result_ptr|. The buffer will be used as a transfer destination and
 // for mapping-for-read.  Returns a result code.
-Result MakeFramebufferBuffer(const ::dawn::Device& device, uint32_t width,
-                             uint32_t height, ::dawn::TextureFormat format,
+Result MakeFramebufferBuffer(const ::dawn::Device& device,
+                             uint32_t width,
+                             uint32_t height,
+                             ::dawn::TextureFormat format,
                              ::dawn::Buffer* result_ptr,
                              uint32_t* texel_stride_ptr,
-                             uint32_t* row_stride_ptr, uint32_t* size_ptr) {
+                             uint32_t* row_stride_ptr,
+                             uint32_t* size_ptr) {
   assert(device);
   assert(width > 0);
   assert(height > 0);
@@ -94,7 +100,8 @@ Result MakeFramebufferBuffer(const ::dawn::Device& device, uint32_t width,
   {
     // Round up the stride to the minimum image row pitch.
     const uint32_t spillover = row_stride % kMinimumImageRowPitch;
-    if (spillover > 0) row_stride += (kMinimumImageRowPitch - spillover);
+    if (spillover > 0)
+      row_stride += (kMinimumImageRowPitch - spillover);
     assert(0 == (row_stride % kMinimumImageRowPitch));
   }
 
@@ -121,7 +128,8 @@ struct MapResult {
 // On a successful mapping outcome, set the data pointer in the map result.
 // Otherwise set the map result object to an error, and the data member is
 // not changed.
-void HandleBufferMapCallback(DawnBufferMapAsyncStatus status, const void* data,
+void HandleBufferMapCallback(DawnBufferMapAsyncStatus status,
+                             const void* data,
                              uint64_t dataLength,
                              DawnCallbackUserdata userdata) {
   MapResult& map_result = *reinterpret_cast<MapResult*>(userdata);
@@ -221,13 +229,16 @@ EngineDawn::EngineDawn() : Engine() {}
 
 EngineDawn::~EngineDawn() = default;
 
-Result EngineDawn::Initialize(EngineConfig* config, Delegate*,
+Result EngineDawn::Initialize(EngineConfig* config,
+                              Delegate*,
                               const std::vector<std::string>&,
                               const std::vector<std::string>&,
                               const std::vector<std::string>&) {
-  if (device_) return Result("Dawn:Initialize device_ already exists");
+  if (device_)
+    return Result("Dawn:Initialize device_ already exists");
 
-  if (!config) return Result("Dawn::Initialize config is null");
+  if (!config)
+    return Result("Dawn::Initialize config is null");
   DawnEngineConfig* dawn_config = static_cast<DawnEngineConfig*>(config);
   if (dawn_config->device == nullptr)
     return Result("Dawn:Initialize device is a null pointer");
@@ -240,13 +251,15 @@ Result EngineDawn::Initialize(EngineConfig* config, Delegate*,
 Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
   for (const auto& shader_info : pipeline->GetShaders()) {
     Result r = SetShader(shader_info.GetShaderType(), shader_info.GetData());
-    if (!r.IsSuccess()) return r;
+    if (!r.IsSuccess())
+      return r;
   }
 
   switch (pipeline->GetType()) {
     case PipelineType::kCompute: {
       auto module = module_for_type_[kShaderTypeCompute];
-      if (!module) return Result("CreatePipeline: no compute shader provided");
+      if (!module)
+        return Result("CreatePipeline: no compute shader provided");
       pipeline_map_[pipeline].compute_pipeline.reset(
           new ComputePipelineInfo(pipeline, module));
       break;
@@ -329,8 +342,8 @@ uint32_t Align(uint32_t value, size_t alignment) {
   return (value + (alignment32 - 1)) & ~(alignment32 - 1);
 }
 
-MapResult MapFramebufferTextureToHostBuffer(RenderPipelineInfo& render_pipeline,
-                                            ::dawn::Device& device) {
+MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
+                                 const ::dawn::Device& device) {
   const auto width = render_pipeline.pipeline->GetFramebufferWidth();
   const auto height = render_pipeline.pipeline->GetFramebufferHeight();
   const auto pixelSize = render_pipeline.pipeline->GetColorAttachments()[0]
@@ -359,10 +372,10 @@ MapResult MapFramebufferTextureToHostBuffer(RenderPipelineInfo& render_pipeline,
 
   ::dawn::Extent3D copySize = {width, height, 1};
 
-  auto encoder2 = device.CreateCommandEncoder();
-  encoder2.CopyTextureToBuffer(&textureCopyView, &bufferCopyView, &copySize);
+  auto encoder = device.CreateCommandEncoder();
+  encoder.CopyTextureToBuffer(&textureCopyView, &bufferCopyView, &copySize);
 
-  auto commands = encoder2.Finish();
+  auto commands = encoder.Finish();
   auto queue = device.CreateQueue();
   queue.Submit(1, &commands);
 
@@ -374,9 +387,10 @@ MapResult MapFramebufferTextureToHostBuffer(RenderPipelineInfo& render_pipeline,
     auto& info = out_color_attachment[i];
     auto* values = info.buffer->ValuePtr();
     auto row_stride = pixelSize * width;
+    assert(row_stride * height == info.buffer->GetSizeInBytes());
     // Each Dawn row has enough data to fill the target row.
     assert(dawn_row_pitch >= row_stride);
-    values->resize(row_stride * height);
+    values->resize(info.buffer->GetSizeInBytes());
     // Copy the framebuffer contents back into the host-side
     // framebuffer-buffer. In the Dawn buffer, the row stride is a multiple of
     // kMinimumImageRowPitch bytes, so it might have padding therefore memcpy
@@ -401,7 +415,8 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   // TODO(dneto): Likely, we can create the render objects during
   // CreatePipeline.
   Result result = CreateFramebufferIfNeeded(render_pipeline);
-  if (!result.IsSuccess()) return result;
+  if (!result.IsSuccess())
+    return result;
 
   // Record a render pass in a command on the command buffer.
   //
@@ -414,30 +429,33 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   color_attachment.clearColor = render_pipeline->clear_color_value;
   color_attachment.loadOp = ::dawn::LoadOp::Clear;
   color_attachment.storeOp = ::dawn::StoreOp::Store;
-  ::dawn::RenderPassColorAttachmentDescriptor* rpca[] = {&color_attachment};
+  ::dawn::RenderPassColorAttachmentDescriptor* color_attachment_descriptor[] = {
+      &color_attachment};
 
   // Then describe the depthStencil attachment, and how it is initialized
   // via the load ops. Both load op are "clear" to the clear values.
-  ::dawn::RenderPassDepthStencilAttachmentDescriptor depthStencil_attachment =
+  ::dawn::RenderPassDepthStencilAttachmentDescriptor depth_stencil_attachment =
       ::dawn::RenderPassDepthStencilAttachmentDescriptor();
-  ::dawn::RenderPassDepthStencilAttachmentDescriptor* rpda = nullptr;
-  if (render_pipeline->depthStencil_texture) {
-    depthStencil_attachment.attachment =
-        render_pipeline->depthStencil_texture.CreateDefaultView();
-    depthStencil_attachment.clearDepth = render_pipeline->clear_depth_value;
-    depthStencil_attachment.clearStencil = render_pipeline->clear_stencil_value;
-    depthStencil_attachment.depthLoadOp = ::dawn::LoadOp::Clear;
-    depthStencil_attachment.depthStoreOp = ::dawn::StoreOp::Store;
-    depthStencil_attachment.stencilLoadOp = ::dawn::LoadOp::Clear;
-    depthStencil_attachment.stencilStoreOp = ::dawn::StoreOp::Store;
-    rpda = &depthStencil_attachment;
+  ::dawn::RenderPassDepthStencilAttachmentDescriptor* depth_stencil_descriptor =
+      nullptr;
+  if (render_pipeline->depth_stencil_texture) {
+    depth_stencil_attachment.attachment =
+        render_pipeline->depth_stencil_texture.CreateDefaultView();
+    depth_stencil_attachment.clearDepth = render_pipeline->clear_depth_value;
+    depth_stencil_attachment.clearStencil =
+        render_pipeline->clear_stencil_value;
+    depth_stencil_attachment.depthLoadOp = ::dawn::LoadOp::Clear;
+    depth_stencil_attachment.depthStoreOp = ::dawn::StoreOp::Store;
+    depth_stencil_attachment.stencilLoadOp = ::dawn::LoadOp::Clear;
+    depth_stencil_attachment.stencilStoreOp = ::dawn::StoreOp::Store;
+    depth_stencil_descriptor = &depth_stencil_attachment;
   }
 
-  // Attach the depthStencil and colour attachments to the render pass.
+  // Attach the depth/stencil and colour attachments to the render pass.
   ::dawn::RenderPassDescriptor rpd;
   rpd.colorAttachmentCount = 1;
-  rpd.colorAttachments = rpca;
-  rpd.depthStencilAttachment = rpda;
+  rpd.colorAttachments = color_attachment_descriptor;
+  rpd.depthStencilAttachment = depth_stencil_descriptor;
 
   // Record the render pass as a command.
   auto encoder = device_->CreateCommandEncoder();
@@ -449,7 +467,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   auto queue = device_->CreateQueue();
   queue.Submit(1, &command_buffer);
   // Copy result back
-  MapResult map = MapFramebufferTextureToHostBuffer(*render_pipeline, *device_);
+  MapResult map = MapTextureToHostBuffer(*render_pipeline, *device_);
 
   return map.result;
 }
@@ -550,17 +568,20 @@ Result EngineDawn::CreateFramebufferIfNeeded(
   // TODO(dneto): For now, assume color attachment 0 is the framebuffer.
   auto* amber_format =
       render_pipeline->pipeline->GetColorAttachments()[0].buffer->GetFormat();
-  if (!amber_format) return Result("Color attachment 0 has no format!");
+  if (!amber_format)
+    return Result("Color attachment 0 has no format!");
 
   ::dawn::TextureFormat fb_format{};
   result = GetDawnTextureFormat(*amber_format, &fb_format);
-  if (!result.IsSuccess()) return result;
+  if (!result.IsSuccess())
+    return result;
 
   {
     ::dawn::Texture fb_texture;
 
     result = MakeTexture(*device_, fb_format, width, height, &fb_texture);
-    if (!result.IsSuccess()) return result;
+    if (!result.IsSuccess())
+      return result;
     render_pipeline->fb_texture = std::move(fb_texture);
   }
 
@@ -568,22 +589,24 @@ Result EngineDawn::CreateFramebufferIfNeeded(
   // depth-stencil texture exists.
   auto* depthBuffer = render_pipeline->pipeline->GetDepthBuffer().buffer;
   if (depthBuffer) {
-    auto* amber_depthStencil_format = depthBuffer->GetFormat();
+    auto* amber_depth_stencil_format = depthBuffer->GetFormat();
 
-    if (!amber_depthStencil_format)
-      return Result("The depthStensil attachment has no format!");
+    if (!amber_depth_stencil_format)
+      return Result("The depth/stencil attachment has no format!");
 
-    ::dawn::TextureFormat depthStencil_format{};
-    result =
-        GetDawnTextureFormat(*amber_depthStencil_format, &depthStencil_format);
-    if (!result.IsSuccess()) return result;
+    ::dawn::TextureFormat depth_stencil_format{};
+    result = GetDawnTextureFormat(*amber_depth_stencil_format,
+                                  &depth_stencil_format);
+    if (!result.IsSuccess())
+      return result;
 
-    ::dawn::Texture depthStencil_texture;
+    ::dawn::Texture depth_stencil_texture;
 
-    result = MakeTexture(*device_, depthStencil_format, width, height,
-                         &depthStencil_texture);
-    if (!result.IsSuccess()) return result;
-    render_pipeline->depthStencil_texture = std::move(depthStencil_texture);
+    result = MakeTexture(*device_, depth_stencil_format, width, height,
+                         &depth_stencil_texture);
+    if (!result.IsSuccess())
+      return result;
+    render_pipeline->depth_stencil_texture = std::move(depth_stencil_texture);
   }
 
   // Now create the Dawn buffer to hold the framebuffer contents, but on the
@@ -597,7 +620,8 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     result =
         MakeFramebufferBuffer(*device_, width, height, fb_format, &fb_buffer,
                               &texel_stride, &row_stride, &size);
-    if (!result.IsSuccess()) return result;
+    if (!result.IsSuccess())
+      return result;
     render_pipeline->fb_buffer = std::move(fb_buffer);
     render_pipeline->fb_texel_stride = texel_stride;
     render_pipeline->fb_row_stride = row_stride;
@@ -605,7 +629,7 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     render_pipeline->fb_size = size;
   }
   return {};
-}  // namespace dawn
+}
 
 }  // namespace dawn
 }  // namespace amber
