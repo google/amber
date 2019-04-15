@@ -362,7 +362,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   // via the load ops. Both load op are "clear" to the clear values.
   ::dawn::RenderPassDepthStencilAttachmentDescriptor depthStencil_attachment =
       ::dawn::RenderPassDepthStencilAttachmentDescriptor();
-  ::dawn::RenderPassDepthStencilAttachmentDescriptor* rpda;
+  ::dawn::RenderPassDepthStencilAttachmentDescriptor* rpda = nullptr;
   if (render_pipeline->depthStencil_texture) {
     depthStencil_attachment.attachment =
         render_pipeline->depthStencil_texture.CreateDefaultView();
@@ -373,8 +373,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
     depthStencil_attachment.stencilLoadOp = ::dawn::LoadOp::Clear;
     depthStencil_attachment.stencilStoreOp = ::dawn::StoreOp::Store;
     rpda = &depthStencil_attachment;
-  } else
-    rpda = nullptr;
+  }
 
   // Attach the depthStencil and colour attachments to the render pass.
   ::dawn::RenderPassDescriptor rpd;
@@ -394,9 +393,6 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   auto queue = device_->CreateQueue();
   queue.Submit(1, &command_buffer);
 
-  // Copy the framebuffer contents back into the host-side framebuffer-buffer.
-  // Dawn buffer is always aligned to 256 so it might have padding
-  // therefore memcopy is done row by row
   ::dawn::Buffer& fb_buffer = render_pipeline->fb_buffer;
   MapResult map = MapBuffer(*device_, fb_buffer);
   const std::vector<amber::Pipeline::BufferInfo>& out_color_attachment =
@@ -405,11 +401,16 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   for (size_t i = 0; i < out_color_attachment.size(); ++i) {
     auto& info = out_color_attachment[i];
     auto* values = info.buffer->ValuePtr();
+    // Copy the framebuffer contents back into the host-side framebuffer-buffer.
+    // In the Dawn buffer, the row stride is a multiple of 256 bytes, so it
+    // might have padding therefore memcopy is done row by row.
     auto height = info.buffer->GetHeight();
     auto row_stride =
         info.buffer->GetWidth() * info.buffer->GetFormat()->SizeInBytes();
     values->resize(row_stride * height);
     auto dawn_row_stride = map.dataLength / height;
+    // Each Dawn row has enough data to fill the target row.
+    assert(dawn_row_stride >= row_stride);
     assert(map.dataLength % height == 0);
 
     for (uint h = 0; h < height; h++) {
@@ -540,7 +541,6 @@ Result EngineDawn::CreateFramebufferIfNeeded(
 
   // After that, only create the Dawn depth-stencil texture if the Amber
   // depth-stencil texture exists.
-  ::dawn::TextureFormat depthStencil_format{};
   auto* depthBuffer = render_pipeline->pipeline->GetDepthBuffer().buffer;
   if (depthBuffer) {
     auto* amber_depthStencil_format = depthBuffer->GetFormat();
@@ -548,6 +548,7 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     if (!amber_depthStencil_format)
       return Result("The depthStensil attachment has no format!");
 
+    ::dawn::TextureFormat depthStencil_format{};
     result =
         GetDawnTextureFormat(*amber_depthStencil_format, &depthStencil_format);
     if (!result.IsSuccess())
