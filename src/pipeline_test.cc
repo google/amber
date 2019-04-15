@@ -93,10 +93,8 @@ TEST_F(PipelineTest, DuplicateShaders) {
   EXPECT_EQ("can not add duplicate shader to pipeline", r.Error());
 }
 
-using PipelineComputePipelineTest =
-    testing::TestWithParam<ShaderTypeData>;
-TEST_P(PipelineComputePipelineTest,
-       SettingGraphicsShaderToComputePipeline) {
+using PipelineComputePipelineTest = testing::TestWithParam<ShaderTypeData>;
+TEST_P(PipelineComputePipelineTest, SettingGraphicsShaderToComputePipeline) {
   const auto test_data = GetParam();
 
   Shader s(test_data.type);
