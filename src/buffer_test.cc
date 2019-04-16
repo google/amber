@@ -17,71 +17,65 @@
 #include <utility>
 
 #include "gtest/gtest.h"
+#include "src/format_parser.h"
 
 namespace amber {
 
 using BufferTest = testing::Test;
 
-TEST_F(BufferTest, DataBufferEmptyByDefault) {
-  DataBuffer b(BufferType::kColor);
+TEST_F(BufferTest, EmptyByDefault) {
+  Buffer b(BufferType::kColor);
   EXPECT_EQ(static_cast<size_t>(0U), b.ElementCount());
   EXPECT_EQ(static_cast<size_t>(0U), b.ValueCount());
   EXPECT_EQ(static_cast<size_t>(0U), b.GetSizeInBytes());
 }
 
-TEST_F(BufferTest, DataBufferSize) {
-  DatumType type;
-  type.SetType(DataType::kInt16);
-
-  DataBuffer b(BufferType::kColor);
-  b.SetDatumType(type);
+TEST_F(BufferTest, Size) {
+  FormatParser fp;
+  Buffer b(BufferType::kColor);
+  b.SetFormat(fp.Parse("R16_SINT"));
   b.SetElementCount(10);
   EXPECT_EQ(10, b.ElementCount());
   EXPECT_EQ(10, b.ValueCount());
   EXPECT_EQ(10 * sizeof(int16_t), b.GetSizeInBytes());
 }
 
-TEST_F(BufferTest, DataBufferSizeFromData) {
-  DatumType type;
-  type.SetType(DataType::kInt16);
-
+TEST_F(BufferTest, SizeFromData) {
   std::vector<Value> values;
   values.resize(5);
 
-  DataBuffer b(BufferType::kColor);
-  b.SetDatumType(type);
+  FormatParser fp;
+  Buffer b(BufferType::kColor);
+  b.SetFormat(fp.Parse("R32_SFLOAT"));
   b.SetData(std::move(values));
 
   EXPECT_EQ(5, b.ElementCount());
   EXPECT_EQ(5, b.ValueCount());
-  EXPECT_EQ(5 * sizeof(int16_t), b.GetSizeInBytes());
+  EXPECT_EQ(5 * sizeof(float), b.GetSizeInBytes());
 }
 
-TEST_F(BufferTest, DataBufferSizeFromDataOverrideSize) {
-  DatumType type;
-  type.SetType(DataType::kInt16);
-
+TEST_F(BufferTest, SizeFromDataOverrideSize) {
   std::vector<Value> values;
   values.resize(5);
 
-  DataBuffer b(BufferType::kColor);
-  b.SetDatumType(type);
+  FormatParser fp;
+  Buffer b(BufferType::kColor);
+  b.SetFormat(fp.Parse("R32_SFLOAT"));
   b.SetElementCount(20);
   b.SetData(std::move(values));
 
   EXPECT_EQ(5, b.ElementCount());
   EXPECT_EQ(5, b.ValueCount());
-  EXPECT_EQ(5 * sizeof(int16_t), b.GetSizeInBytes());
+  EXPECT_EQ(5 * sizeof(float), b.GetSizeInBytes());
 }
 
-TEST_F(BufferTest, DataBufferSizeMatrix) {
-  DatumType type;
-  type.SetType(DataType::kInt16);
-  type.SetRowCount(2);
-  type.SetColumnCount(3);
+TEST_F(BufferTest, SizeMatrix) {
+  FormatParser fp;
+  auto fmt = fp.Parse("R16G16_SINT");
+  fmt->SetColumnCount(3);
 
-  DataBuffer b(BufferType::kColor);
-  b.SetDatumType(type);
+  Buffer b(BufferType::kColor);
+  b.SetFormat(std::move(fmt));
   b.SetElementCount(10);
 
   EXPECT_EQ(10, b.ElementCount());

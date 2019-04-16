@@ -79,9 +79,7 @@ Result Executor::Execute(Engine* engine,
 
 Result Executor::ExecuteCommand(Engine* engine, Command* cmd) {
   if (cmd->IsProbe()) {
-    assert(cmd->AsProbe()->GetBuffer()->IsFormatBuffer());
-
-    auto* buffer = cmd->AsProbe()->GetBuffer()->AsFormatBuffer();
+    auto* buffer = cmd->AsProbe()->GetBuffer();
     assert(buffer);
 
     Format* fmt = buffer->GetFormat();

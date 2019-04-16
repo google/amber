@@ -578,9 +578,6 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     return Result("invalid token for BUFFER type");
 
   if (token->AsString() == "color") {
-    if (!buffer->IsFormatBuffer())
-      return Result("color buffer must be a FORMAT buffer");
-
     token = tokenizer_->NextToken();
     if (!token->IsString() || token->AsString() != "LOCATION")
       return Result("BIND missing LOCATION");
@@ -595,9 +592,6 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     if (!r.IsSuccess())
       return r;
   } else if (token->AsString() == "depth_stencil") {
-    if (!buffer->IsFormatBuffer())
-      return Result("depth buffer must be a FORMAT buffer");
-
     buffer->SetBufferType(BufferType::kDepth);
     Result r = pipeline->SetDepthBuffer(buffer);
     if (!r.IsSuccess())
@@ -693,9 +687,9 @@ Result Parser::ParseBuffer() {
   std::unique_ptr<Buffer> buffer;
   auto& cmd = token->AsString();
   if (cmd == "DATA_TYPE") {
-    buffer = MakeUnique<DataBuffer>();
+    buffer = MakeUnique<Buffer>();
 
-    Result r = ParseBufferInitializer(buffer->AsDataBuffer());
+    Result r = ParseBufferInitializer(buffer.get());
     if (!r.IsSuccess())
       return r;
   } else if (cmd == "FORMAT") {
@@ -703,14 +697,14 @@ Result Parser::ParseBuffer() {
     if (!token->IsString())
       return Result("BUFFER FORMAT must be a string");
 
-    buffer = MakeUnique<FormatBuffer>();
+    buffer = MakeUnique<Buffer>();
 
     FormatParser fmt_parser;
     auto fmt = fmt_parser.Parse(token->AsString());
     if (fmt == nullptr)
       return Result("invalid BUFFER FORMAT");
 
-    buffer->AsFormatBuffer()->SetFormat(std::move(fmt));
+    buffer->SetFormat(std::move(fmt));
   } else {
     return Result("unknown BUFFER command provided: " + cmd);
   }
@@ -723,7 +717,7 @@ Result Parser::ParseBuffer() {
   return {};
 }
 
-Result Parser::ParseBufferInitializer(DataBuffer* buffer) {
+Result Parser::ParseBufferInitializer(Buffer* buffer) {
   auto token = tokenizer_->NextToken();
   if (!token->IsString())
     return Result("BUFFER invalid data type");
@@ -733,7 +727,7 @@ Result Parser::ParseBufferInitializer(DataBuffer* buffer) {
   if (!r.IsSuccess())
     return r;
 
-  buffer->SetDatumType(type);
+  buffer->SetFormat(type.AsFormat());
 
   token = tokenizer_->NextToken();
   if (!token->IsString())
@@ -747,7 +741,7 @@ Result Parser::ParseBufferInitializer(DataBuffer* buffer) {
   return Result("unknown initializer for BUFFER");
 }
 
-Result Parser::ParseBufferInitializerSize(DataBuffer* buffer) {
+Result Parser::ParseBufferInitializerSize(Buffer* buffer) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
     return Result("BUFFER size missing");
@@ -769,7 +763,7 @@ Result Parser::ParseBufferInitializerSize(DataBuffer* buffer) {
   return Result("invalid BUFFER initializer provided");
 }
 
-Result Parser::ParseBufferInitializerFill(DataBuffer* buffer,
+Result Parser::ParseBufferInitializerFill(Buffer* buffer,
                                           uint32_t size_in_items) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
@@ -795,7 +789,7 @@ Result Parser::ParseBufferInitializerFill(DataBuffer* buffer,
   return ValidateEndOfStatement("BUFFER fill command");
 }
 
-Result Parser::ParseBufferInitializerSeries(DataBuffer* buffer,
+Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
                                             uint32_t size_in_items) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
@@ -844,7 +838,7 @@ Result Parser::ParseBufferInitializerSeries(DataBuffer* buffer,
   return ValidateEndOfStatement("BUFFER series_from command");
 }
 
-Result Parser::ParseBufferInitializerData(DataBuffer* buffer) {
+Result Parser::ParseBufferInitializerData(Buffer* buffer) {
   auto fmt = buffer->GetFormat();
   bool is_double_type = fmt->IsFloat() || fmt->IsDouble();
 
@@ -1199,13 +1193,11 @@ Result Parser::ParseExpect() {
   } else if (token->IsString() && IsComparator(token->AsString())) {
     if (has_y_val)
       return Result("Y value not needed for non-color comparator");
-    if (!buffer->IsDataBuffer())
-      return Result("comparator must be provided a data buffer");
 
     auto probe = MakeUnique<ProbeSSBOCommand>(buffer);
     probe->SetLine(line);
     probe->SetComparator(ToComparator(token->AsString()));
-    probe->SetFormat(buffer->AsDataBuffer()->GetDatumType().AsFormat());
+    probe->SetFormat(MakeUnique<Format>(*buffer->GetFormat()));
     probe->SetOffset(static_cast<uint32_t>(x));
 
     std::vector<Value> values;

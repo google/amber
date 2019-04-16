@@ -170,8 +170,7 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       }
       script_->GetPipeline(kDefaultPipelineName)
           ->GetColorAttachments()[0]
-          .buffer->AsFormatBuffer()
-          ->SetFormat(std::move(fmt));
+          .buffer->SetFormat(std::move(fmt));
 
     } else if (str == "depthstencil") {
       token = tokenizer.NextToken();
@@ -192,7 +191,7 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
 
       // Generate and add a depth buffer
       auto depth_buf = pipeline->GenerateDefaultDepthAttachmentBuffer();
-      depth_buf->AsFormatBuffer()->SetFormat(std::move(fmt));
+      depth_buf->SetFormat(std::move(fmt));
       Result r = pipeline->SetDepthBuffer(depth_buf.get());
       if (!r.IsSuccess())
         return r;
@@ -283,10 +282,10 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
     DatumType type;
     type.SetType(DataType::kUint32);
 
-    auto b = MakeUnique<DataBuffer>(BufferType::kIndex);
+    auto b = MakeUnique<Buffer>(BufferType::kIndex);
     auto* buf = b.get();
     b->SetName("indices");
-    b->SetDatumType(type);
+    b->SetFormat(type.AsFormat());
     b->SetData(std::move(indices));
     Result r = script_->AddBuffer(std::move(b));
     if (!r.IsSuccess())
@@ -410,7 +409,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
 
   auto* pipeline = script_->GetPipeline(kDefaultPipelineName);
   for (size_t i = 0; i < headers.size(); ++i) {
-    auto buffer = MakeUnique<FormatBuffer>(BufferType::kVertex);
+    auto buffer = MakeUnique<Buffer>(BufferType::kVertex);
     auto* buf = buffer.get();
     buffer->SetName("Vertices" + std::to_string(i));
     buffer->SetFormat(std::move(headers[i].format));

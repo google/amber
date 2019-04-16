@@ -14,6 +14,8 @@
 
 #include "src/format.h"
 
+#include "src/make_unique.h"
+
 namespace amber {
 
 Format::Format() = default;
@@ -22,7 +24,7 @@ Format::Format(const Format&) = default;
 
 Format::~Format() = default;
 
-uint32_t Format::SizeInBytes() const {
+uint32_t Format::SizeInBytesPerRow() const {
   uint32_t bits = 0;
   for (const auto& comp : components_)
     bits += comp.num_bits;
@@ -35,7 +37,11 @@ uint32_t Format::SizeInBytes() const {
   if ((bits % 8) != 0)
     bytes_per_element += 1;
 
-  return bytes_per_element * column_count_;
+  return bytes_per_element;
+}
+
+uint32_t Format::SizeInBytes() const {
+  return SizeInBytesPerRow() * column_count_;
 }
 
 bool Format::AreAllComponents(FormatMode mode, uint32_t bits) const {

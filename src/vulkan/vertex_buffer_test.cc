@@ -57,7 +57,7 @@ class VertexBufferTest : public testing::Test {
   Result SetIntData(uint8_t location,
                     std::unique_ptr<Format> format,
                     std::vector<Value> values) {
-    auto buffer = MakeUnique<FormatBuffer>();
+    auto buffer = MakeUnique<Buffer>();
     buffer->SetFormat(std::move(format));
     buffer->SetData(std::move(values));
 
@@ -68,7 +68,7 @@ class VertexBufferTest : public testing::Test {
   Result SetDoubleData(uint8_t location,
                        std::unique_ptr<Format> format,
                        std::vector<Value> values) {
-    auto buffer = MakeUnique<FormatBuffer>();
+    auto buffer = MakeUnique<Buffer>();
     buffer->SetFormat(std::move(format));
     buffer->SetData(std::move(values));
 
