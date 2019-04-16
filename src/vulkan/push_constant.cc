@@ -101,10 +101,20 @@ Result PushConstant::RecordPushConstantVkCommand(
   return {};
 }
 
+Result PushConstant::AddBuffer(const Buffer* buffer) {
+  push_constant_data_.emplace_back();
+  push_constant_data_.back().offset = 0;
+  push_constant_data_.back().buffer = buffer;
+  push_constant_data_.back().format = buffer->GetFormat();
+  push_constant_data_.back().size_in_bytes = buffer->GetSizeInBytes();
+  return {};
+}
+
 Result PushConstant::AddBufferData(const BufferCommand* command) {
-  if (!command->IsPushConstant())
+  if (!command->IsPushConstant()) {
     return Result(
         "PushConstant::AddBufferData BufferCommand type is not push constant");
+  }
 
   auto* fmt = command->GetBuffer()->GetFormat();
   push_constant_data_.emplace_back();
@@ -134,7 +144,12 @@ Result PushConstant::UpdateMemoryWithInput(const BufferInput& input) {
     return Result("Vulkan: push constants must all have the same format");
 
   buffer_->SetFormat(MakeUnique<Format>(*input.format));
-  buffer_->SetDataWithOffset(input.values, input.offset);
+
+  if (input.buffer)
+    buffer_->SetDataFromBuffer(input.buffer, input.offset);
+  else
+    buffer_->SetDataWithOffset(input.values, input.offset);
+
   return {};
 }
 

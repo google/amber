@@ -278,6 +278,16 @@ Result Pipeline::AddVertexBuffer(Buffer* buf, uint32_t location) {
   return {};
 }
 
+Result Pipeline::SetPushConstantBuffer(Buffer* buf) {
+  if (push_constant_buffer_.buffer != nullptr)
+    return Result("can only bind one push constant buffer in a PIPELINE");
+  if (buf->GetBufferType() != BufferType::kPushConstant)
+    return Result("expected a push constant buffer");
+
+  push_constant_buffer_.buffer = buf;
+  return {};
+}
+
 std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() const {
   FormatParser fp;
 
