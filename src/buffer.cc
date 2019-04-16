@@ -60,14 +60,6 @@ Buffer::Buffer(BufferType type) : buffer_type_(type) {}
 
 Buffer::~Buffer() = default;
 
-DataBuffer* Buffer::AsDataBuffer() {
-  return static_cast<DataBuffer*>(this);
-}
-
-FormatBuffer* Buffer::AsFormatBuffer() {
-  return static_cast<FormatBuffer*>(this);
-}
-
 Result Buffer::CopyTo(Buffer* buffer) const {
   if (buffer->width_ != width_)
     return Result("Buffer::CopyBaseFields() buffers have a different width");
@@ -75,7 +67,7 @@ Result Buffer::CopyTo(Buffer* buffer) const {
     return Result("Buffer::CopyBaseFields() buffers have a different height");
   if (buffer->element_count_ != element_count_)
     return Result("Buffer::CopyBaseFields() buffers have a different size");
-  buffer->values_ = values_;
+  buffer->bytes_ = bytes_;
   return {};
 }
 
@@ -88,19 +80,19 @@ Result Buffer::IsEqual(Buffer* buffer) const {
     return Result{"Buffers have a different width"};
   if (buffer->height_ != height_)
     return Result{"Buffers have a different height"};
-  if (buffer->values_.size() != values_.size())
+  if (buffer->bytes_.size() != bytes_.size())
     return Result{"Buffers have a different number of values"};
 
   uint32_t num_different = 0;
   uint32_t first_different_index = 0;
   uint8_t first_different_left = 0;
   uint8_t first_different_right = 0;
-  for (uint32_t i = 0; i < values_.size(); ++i) {
-    if (values_[i] != buffer->values_[i]) {
+  for (uint32_t i = 0; i < bytes_.size(); ++i) {
+    if (bytes_[i] != buffer->bytes_[i]) {
       if (num_different == 0) {
         first_different_index = i;
-        first_different_left = values_[i];
-        first_different_right = buffer->values_[i];
+        first_different_left = bytes_[i];
+        first_different_right = buffer->bytes_[i];
       }
       num_different++;
     }
@@ -118,72 +110,11 @@ Result Buffer::IsEqual(Buffer* buffer) const {
   return {};
 }
 
-DataBuffer::DataBuffer() = default;
-
-DataBuffer::DataBuffer(BufferType type) : Buffer(type) {}
-
-DataBuffer::~DataBuffer() = default;
-
-Result DataBuffer::SetData(const std::vector<Value>& data) {
+Result Buffer::SetData(const std::vector<Value>& data) {
   SetValueCount(static_cast<uint32_t>(data.size()));
-  values_.resize(GetSizeInBytes());
-  return CopyData(data);
-}
+  bytes_.resize(GetSizeInBytes());
 
-Result DataBuffer::CopyData(const std::vector<Value>& data) {
-  uint8_t* values = values_.data();
-
-  for (const auto& val : data) {
-    if (datum_type_.IsInt8()) {
-      *(ValuesAs<int8_t>(values)) = val.AsInt8();
-      values += sizeof(int8_t);
-    } else if (datum_type_.IsInt16()) {
-      *(ValuesAs<int16_t>(values)) = val.AsInt16();
-      values += sizeof(int16_t);
-    } else if (datum_type_.IsInt32()) {
-      *(ValuesAs<int32_t>(values)) = val.AsInt32();
-      values += sizeof(int32_t);
-    } else if (datum_type_.IsInt64()) {
-      *(ValuesAs<int64_t>(values)) = val.AsInt64();
-      values += sizeof(int64_t);
-    } else if (datum_type_.IsUint8()) {
-      *(ValuesAs<uint8_t>(values)) = val.AsUint8();
-      values += sizeof(uint8_t);
-    } else if (datum_type_.IsUint16()) {
-      *(ValuesAs<uint16_t>(values)) = val.AsUint16();
-      values += sizeof(uint16_t);
-    } else if (datum_type_.IsUint32()) {
-      *(ValuesAs<uint32_t>(values)) = val.AsUint32();
-      values += sizeof(uint32_t);
-    } else if (datum_type_.IsUint64()) {
-      *(ValuesAs<uint64_t>(values)) = val.AsUint64();
-      values += sizeof(uint64_t);
-    } else if (datum_type_.IsFloat()) {
-      *(ValuesAs<float>(values)) = val.AsFloat();
-      values += sizeof(float);
-    } else if (datum_type_.IsDouble()) {
-      *(ValuesAs<double>(values)) = val.AsDouble();
-      values += sizeof(double);
-    }
-  }
-  return {};
-}
-
-FormatBuffer::FormatBuffer() = default;
-
-FormatBuffer::FormatBuffer(BufferType type) : Buffer(type) {}
-
-FormatBuffer::~FormatBuffer() = default;
-
-Result FormatBuffer::SetData(const std::vector<Value>& data) {
-  SetValueCount(static_cast<uint32_t>(data.size()));
-  values_.resize(GetSizeInBytes());
-  return CopyData(data);
-}
-
-Result FormatBuffer::CopyData(const std::vector<Value>& data) {
-  uint8_t* ptr = values_.data();
-
+  uint8_t* ptr = bytes_.data();
   for (uint32_t i = 0; i < data.size();) {
     const auto pack_size = format_->GetPackSize();
     if (pack_size) {

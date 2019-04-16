@@ -94,9 +94,8 @@ TEST_F(AmberScriptParserTest, BufferDataFloat) {
   ASSERT_TRUE(buffers[0] != nullptr);
   EXPECT_EQ("my_buffer", buffers[0]->GetName());
 
-  ASSERT_TRUE(buffers[0]->IsDataBuffer());
-  auto* buffer = buffers[0]->AsDataBuffer();
-  EXPECT_TRUE(buffer->GetDatumType().IsFloat());
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->IsFloat());
   EXPECT_EQ(4U, buffer->ElementCount());
   EXPECT_EQ(4U, buffer->ValueCount());
   EXPECT_EQ(4U * sizeof(float), buffer->GetSizeInBytes());
@@ -362,7 +361,8 @@ END
   EXPECT_EQ(12U, buffer->ValueCount());
   EXPECT_EQ(16U * sizeof(int32_t), buffer->GetSizeInBytes());
 
-  std::vector<int32_t> results0 = {2, 3, 3, 4, 5, 5, 6, 7, 7, 8, 9, 9};
+  std::vector<int32_t> results0 = {2, 3, 3, 0, 4, 5, 5, 0,
+                                   6, 7, 7, 0, 8, 9, 9, 0};
   const auto* data0 = buffer->GetValues<int32_t>();
   for (size_t i = 0; i < results0.size(); ++i) {
     EXPECT_EQ(results0[i], data0[i]);
@@ -416,7 +416,6 @@ TEST_F(AmberScriptParserTest, BufferFormat) {
   ASSERT_EQ(1U, buffers.size());
 
   ASSERT_TRUE(buffers[0] != nullptr);
-  ASSERT_TRUE(buffers[0]->IsFormatBuffer());
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buf", buffer->GetName());
 

@@ -384,19 +384,19 @@ TEST_F(PipelineTest, Clone) {
   p.AddShader(&v, kShaderTypeVertex);
   p.SetShaderEntryPoint(&v, "my_main");
 
-  auto vtex_buf = MakeUnique<DataBuffer>(BufferType::kVertex);
+  auto vtex_buf = MakeUnique<Buffer>(BufferType::kVertex);
   vtex_buf->SetName("vertex_buffer");
   p.AddVertexBuffer(vtex_buf.get(), 1);
 
-  auto idx_buf = MakeUnique<DataBuffer>(BufferType::kIndex);
+  auto idx_buf = MakeUnique<Buffer>(BufferType::kIndex);
   idx_buf->SetName("Index Buffer");
   p.SetIndexBuffer(idx_buf.get());
 
-  auto buf1 = MakeUnique<DataBuffer>(BufferType::kStorage);
+  auto buf1 = MakeUnique<Buffer>(BufferType::kStorage);
   buf1->SetName("buf1");
   p.AddBuffer(buf1.get(), 1, 1);
 
-  auto buf2 = MakeUnique<DataBuffer>(BufferType::kStorage);
+  auto buf2 = MakeUnique<Buffer>(BufferType::kStorage);
   buf2->SetName("buf2");
   p.AddBuffer(buf2.get(), 1, 2);
 
