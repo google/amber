@@ -38,14 +38,14 @@ namespace {
 // as needed for other Dawn backends.
 const uint32_t kMinimumImageRowPitch = 256;
 
-// Creates a device-side texture for the framebuffer, and returns it through
-// |result_ptr|.  Assumes the device exists and is valid.  Assumes result_ptr
-// is not null.  Returns a result code.
-Result MakeFramebufferTexture(const ::dawn::Device& device,
-                              ::dawn::TextureFormat format,
-                              uint32_t width,
-                              uint32_t height,
-                              ::dawn::Texture* result_ptr) {
+// Creates a device-side texture, and returns it through |result_ptr|.
+// Assumes the device exists and is valid.  Assumes result_ptr is not null.
+// Returns a result code.
+Result MakeTexture(const ::dawn::Device& device,
+                   ::dawn::TextureFormat format,
+                   uint32_t width,
+                   uint32_t height,
+                   ::dawn::Texture* result_ptr) {
   assert(device);
   assert(result_ptr);
   ::dawn::TextureDescriptor descriptor;
@@ -313,6 +313,7 @@ Result EngineDawn::DoClearColor(const ClearColorCommand* command) {
 
   render_pipeline->clear_color_value = ::dawn::Color{
       command->GetR(), command->GetG(), command->GetB(), command->GetA()};
+
   return {};
 }
 
@@ -334,6 +335,77 @@ Result EngineDawn::DoClearDepth(const ClearDepthCommand* command) {
   return {};
 }
 
+uint32_t Align(uint32_t value, size_t alignment) {
+  assert(alignment <= UINT32_MAX);
+  assert(alignment != 0);
+  uint32_t alignment32 = static_cast<uint32_t>(alignment);
+  return (value + (alignment32 - 1)) & ~(alignment32 - 1);
+}
+
+MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
+                                 const ::dawn::Device& device) {
+  const auto width = render_pipeline.pipeline->GetFramebufferWidth();
+  const auto height = render_pipeline.pipeline->GetFramebufferHeight();
+  const auto pixelSize = render_pipeline.pipeline->GetColorAttachments()[0]
+                             .buffer->GetTexelStride();
+  const auto dawn_row_pitch = Align(width * pixelSize, kMinimumImageRowPitch);
+  const auto fb_buffer_size = dawn_row_pitch * (height - 1) + width * pixelSize;
+
+  ::dawn::BufferDescriptor descriptor;
+  descriptor.size = fb_buffer_size;
+  descriptor.usage =
+      ::dawn::BufferUsageBit::MapRead | ::dawn::BufferUsageBit::TransferDst;
+  ::dawn::Buffer fb_buffer = device.CreateBuffer(&descriptor);
+
+  ::dawn::TextureCopyView textureCopyView;
+  textureCopyView.texture = render_pipeline.fb_texture;
+  textureCopyView.level = 0;
+  textureCopyView.slice = 0;
+  textureCopyView.origin = {0, 0, 0};
+
+  ::dawn::BufferCopyView bufferCopyView;
+  bufferCopyView.buffer = fb_buffer;
+  bufferCopyView.offset = 0;
+  bufferCopyView.rowPitch = dawn_row_pitch;
+  bufferCopyView.imageHeight = 0;
+
+  ::dawn::Extent3D copySize = {width, height, 1};
+
+  auto encoder = device.CreateCommandEncoder();
+  encoder.CopyTextureToBuffer(&textureCopyView, &bufferCopyView, &copySize);
+
+  auto commands = encoder.Finish();
+  auto queue = device.CreateQueue();
+  queue.Submit(1, &commands);
+
+  MapResult map = MapBuffer(device, fb_buffer);
+  const std::vector<amber::Pipeline::BufferInfo>& out_color_attachment =
+      render_pipeline.pipeline->GetColorAttachments();
+
+  for (size_t i = 0; i < out_color_attachment.size(); ++i) {
+    auto& info = out_color_attachment[i];
+    auto* values = info.buffer->ValuePtr();
+    auto row_stride = pixelSize * width;
+    assert(row_stride * height == info.buffer->GetSizeInBytes());
+    // Each Dawn row has enough data to fill the target row.
+    assert(dawn_row_pitch >= row_stride);
+    values->resize(info.buffer->GetSizeInBytes());
+    // Copy the framebuffer contents back into the host-side
+    // framebuffer-buffer. In the Dawn buffer, the row stride is a multiple of
+    // kMinimumImageRowPitch bytes, so it might have padding therefore memcpy
+    // is done row by row.
+    for (uint h = 0; h < height; h++) {
+      std::memcpy(values->data() + h * row_stride,
+                  static_cast<const uint8_t*>(map.data) + h * dawn_row_pitch,
+                  row_stride);
+    }
+  }
+  // Always unmap the buffer at the end of the engine's command.
+  fb_buffer.Unmap();
+
+  return map;
+}
+
 Result EngineDawn::DoClear(const ClearCommand* command) {
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
   if (!render_pipeline)
@@ -344,9 +416,6 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   Result result = CreateFramebufferIfNeeded(render_pipeline);
   if (!result.IsSuccess())
     return result;
-
-  // TODO(sarahM0): Adapt this to the case where there might be many colour
-  // attachments. Also when there is a depth/stencil attachment.
 
   // Record a render pass in a command on the command buffer.
   //
@@ -359,43 +428,45 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   color_attachment.clearColor = render_pipeline->clear_color_value;
   color_attachment.loadOp = ::dawn::LoadOp::Clear;
   color_attachment.storeOp = ::dawn::StoreOp::Store;
+  ::dawn::RenderPassColorAttachmentDescriptor* color_attachment_descriptor[] = {
+      &color_attachment};
 
-  // Attach that colour attachment to the render pass.
-  ::dawn::RenderPassColorAttachmentDescriptor* rpca[] = {&color_attachment};
+  // Then describe the depthStencil attachment, and how it is initialized
+  // via the load ops. Both load op are "clear" to the clear values.
+  ::dawn::RenderPassDepthStencilAttachmentDescriptor depth_stencil_attachment =
+      ::dawn::RenderPassDepthStencilAttachmentDescriptor();
+  ::dawn::RenderPassDepthStencilAttachmentDescriptor* depth_stencil_descriptor =
+      nullptr;
+  if (render_pipeline->depth_stencil_texture) {
+    depth_stencil_attachment.attachment =
+        render_pipeline->depth_stencil_texture.CreateDefaultView();
+    depth_stencil_attachment.clearDepth = render_pipeline->clear_depth_value;
+    depth_stencil_attachment.clearStencil =
+        render_pipeline->clear_stencil_value;
+    depth_stencil_attachment.depthLoadOp = ::dawn::LoadOp::Clear;
+    depth_stencil_attachment.depthStoreOp = ::dawn::StoreOp::Store;
+    depth_stencil_attachment.stencilLoadOp = ::dawn::LoadOp::Clear;
+    depth_stencil_attachment.stencilStoreOp = ::dawn::StoreOp::Store;
+    depth_stencil_descriptor = &depth_stencil_attachment;
+  }
+
+  // Attach the depth/stencil and colour attachments to the render pass.
   ::dawn::RenderPassDescriptor rpd;
   rpd.colorAttachmentCount = 1;
-  rpd.colorAttachments = rpca;
-  rpd.depthStencilAttachment = nullptr;
+  rpd.colorAttachments = color_attachment_descriptor;
+  rpd.depthStencilAttachment = depth_stencil_descriptor;
 
   // Record the render pass as a command.
   auto encoder = device_->CreateCommandEncoder();
   ::dawn::RenderPassEncoder pass = encoder.BeginRenderPass(&rpd);
   pass.EndPass();
-
   // Finish recording the command buffer.  It only has one command.
   auto command_buffer = encoder.Finish();
-
   // Submit the command.
   auto queue = device_->CreateQueue();
   queue.Submit(1, &command_buffer);
-
-  // Copy the framebuffer contents back into the host-side framebuffer-buffer.
-  ::dawn::Buffer& fb_buffer = render_pipeline->fb_buffer;
-  MapResult map = MapBuffer(*device_, fb_buffer);
-  // For now, we assume there is only one colour attachment, and that
-  // corresponds to the framebuffer texture.
-  const std::vector<amber::Pipeline::BufferInfo>& out_color_attachment =
-      render_pipeline->pipeline->GetColorAttachments();
-  for (size_t i = 0; i < 1; ++i) {
-    auto& info = out_color_attachment[i];
-    auto* values = info.buffer->ValuePtr();
-    values->resize(map.dataLength);
-    // TODO(sarahM0): Resolve the difference between the Dawn buffer's size
-    // and the Amber buffer's size.
-    std::memcpy(values->data(), map.data, map.dataLength);
-  }
-  // Always unmap the buffer at the end of the engine's command.
-  fb_buffer.Unmap();
+  // Copy result back
+  MapResult map = MapTextureToHostBuffer(*render_pipeline, *device_);
 
   return map.result;
 }
@@ -488,6 +559,8 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     RenderPipelineInfo* render_pipeline) {
   Result result;
 
+  // First make the Dawn color attachment textures that the render pipeline
+  // will write into.
   const uint32_t width = render_pipeline->pipeline->GetFramebufferWidth();
   const uint32_t height = render_pipeline->pipeline->GetFramebufferHeight();
 
@@ -502,16 +575,37 @@ Result EngineDawn::CreateFramebufferIfNeeded(
   if (!result.IsSuccess())
     return result;
 
-  // First make the Dawn color attachment textures that the render pipeline will
-  // write into.
   {
     ::dawn::Texture fb_texture;
 
-    result =
-        MakeFramebufferTexture(*device_, fb_format, width, height, &fb_texture);
+    result = MakeTexture(*device_, fb_format, width, height, &fb_texture);
     if (!result.IsSuccess())
       return result;
     render_pipeline->fb_texture = std::move(fb_texture);
+  }
+
+  // After that, only create the Dawn depth-stencil texture if the Amber
+  // depth-stencil texture exists.
+  auto* depthBuffer = render_pipeline->pipeline->GetDepthBuffer().buffer;
+  if (depthBuffer) {
+    auto* amber_depth_stencil_format = depthBuffer->GetFormat();
+
+    if (!amber_depth_stencil_format)
+      return Result("The depth/stencil attachment has no format!");
+
+    ::dawn::TextureFormat depth_stencil_format{};
+    result = GetDawnTextureFormat(*amber_depth_stencil_format,
+                                  &depth_stencil_format);
+    if (!result.IsSuccess())
+      return result;
+
+    ::dawn::Texture depth_stencil_texture;
+
+    result = MakeTexture(*device_, depth_stencil_format, width, height,
+                         &depth_stencil_texture);
+    if (!result.IsSuccess())
+      return result;
+    render_pipeline->depth_stencil_texture = std::move(depth_stencil_texture);
   }
 
   // Now create the Dawn buffer to hold the framebuffer contents, but on the
