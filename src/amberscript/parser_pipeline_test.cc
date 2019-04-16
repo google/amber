@@ -197,7 +197,6 @@ END)";
   ASSERT_TRUE(buf1.buffer != nullptr);
 
   Buffer* buffer1 = buf1.buffer;
-  ASSERT_TRUE(buffer1->IsFormatBuffer());
   EXPECT_EQ(FormatType::kB8G8R8A8_UNORM, buffer1->GetFormat()->GetFormatType());
   EXPECT_EQ(0, buf1.location);
   EXPECT_EQ(250 * 250, buffer1->ElementCount());

@@ -43,8 +43,8 @@ Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) {
   if (!cpu_memory)
     return Result("GetFrameBuffer missing memory pointer");
 
-  const auto texel_stride = buffer->AsFormatBuffer()->GetTexelStride();
-  const auto row_stride = buffer->AsFormatBuffer()->GetRowStride();
+  const auto texel_stride = buffer->GetTexelStride();
+  const auto row_stride = buffer->GetRowStride();
 
   for (uint32_t y = 0; y < buffer->GetHeight(); ++y) {
     for (uint32_t x = 0; x < buffer->GetWidth(); ++x) {
