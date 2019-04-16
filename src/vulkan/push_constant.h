@@ -21,7 +21,6 @@
 #include "amber/result.h"
 #include "amber/vulkan_header.h"
 #include "src/command.h"
-#include "src/vulkan/resource.h"
 
 namespace amber {
 namespace vulkan {
@@ -46,6 +45,16 @@ class PushConstant {
   Result AddBufferData(const BufferCommand* command);
 
  private:
+  // Contain information of filling memory
+  // [|offset|, |offset| + |size_in_bytes|) with |values| whose data
+  // type is |type|. This information is given by script.
+  struct BufferInput {
+    uint32_t offset;
+    uint32_t size_in_bytes;
+    Format* format;
+    std::vector<Value> values;
+  };
+
   Result UpdateMemoryWithInput(const BufferInput& input);
 
   Device* device_;
@@ -54,7 +63,7 @@ class PushConstant {
   /// These are applied from lowest index to highest index, so that
   /// if address ranges overlap, then the later values take effect.
   std::vector<BufferInput> push_constant_data_;
-  std::vector<uint8_t> memory_;
+  std::unique_ptr<Buffer> buffer_;
 };
 
 }  // namespace vulkan

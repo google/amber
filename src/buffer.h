@@ -146,6 +146,15 @@ class Buffer {
   /// Sets the data into the buffer.
   Result SetData(const std::vector<Value>& data);
 
+  /// Resizes the buffer to hold |element_count| elements. This is separate
+  /// from SetElementCount() because we may not know the format when we set the
+  /// initial count. This requires the format to have been set.
+  void ResizeTo(uint32_t element_count);
+
+  /// Write |data| into the buffer |offset| bytes from the start. Write
+  /// |size_in_bytes| of data.
+  Result SetDataWithOffset(const std::vector<Value>& data, uint32_t offset);
+
   /// Returns a pointer to the internal storage of the buffer.
   std::vector<uint8_t>* ValuePtr() { return &bytes_; }
   /// Returns a pointer to the internal storage of the buffer.
@@ -164,6 +173,10 @@ class Buffer {
   Result IsEqual(Buffer* buffer) const;
 
  private:
+  uint32_t WriteValueFromComponent(const Value& value,
+                                   const Format::Component& comp,
+                                   uint8_t* ptr);
+
   BufferType buffer_type_ = BufferType::kUnknown;
   std::string name_;
   uint32_t element_count_ = 0;

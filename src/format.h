@@ -146,7 +146,7 @@ class Format {
 
   /// Returns the number of values for a given row.
   uint32_t ValuesPerRow() const {
-    if (is_std140_ || RowCount() == 3)
+    if ((is_std140_ && column_count_ > 1) || RowCount() == 3)
       return 4;
     return RowCount();
   }

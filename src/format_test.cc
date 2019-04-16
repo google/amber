@@ -144,6 +144,9 @@ INSTANTIATE_TEST_CASE_P(
         StdData{"mat4x2-std430", "R32G32_SFLOAT", 4, false, 8U, 8U, 32U},
         StdData{"mat4x3-std430", "R32G32B32_SFLOAT", 4, false, 16U, 16U, 64U},
         StdData{"mat4x4-std430", "R32G32B32A32_SFLOAT", 4, false, 16U, 16U,
-                64U}), );  // NOLINT(whitespace/parens)
+                64U},
+        StdData{"float-std140", "R32_SFLOAT", 1, true, 1U, 4U, 4U},
+        StdData{"float-std430", "R32_SFLOAT", 1, false, 1U, 4U,
+                4U}), );  // NOLINT(whitespace/parens)
 
 }  // namespace amber

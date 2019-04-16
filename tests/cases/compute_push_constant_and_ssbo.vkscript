@@ -47,7 +47,7 @@ ssbo 0:0 56
 uniform uint  0  1  2  3
 uniform uint 12  4
 uniform uint 16  5  6  7  0 \
-                  8  9 10  0 \
+                 8  9  10 0 \
                  11 12 13
 uniform uint 64 14
 
@@ -55,7 +55,7 @@ compute 3 1 1
 
 probe ssbo uint 0:0  0 ==  1  2  3
 probe ssbo uint 0:0 12 ==  4
-probe ssbo uint 0:0 16 ==  5  6  7 \
+probe ssbo uint 0:0 16 ==  5  6  7  \
                            8  9  10 \
                            11 12 13
 probe ssbo uint 0:0 52 ==  14

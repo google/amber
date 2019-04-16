@@ -298,10 +298,13 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
         "and binding");
   }
 
-  if (!cmd->GetValues().empty()) {
-    auto* buf_desc = static_cast<BufferDescriptor*>(desc);
-    Result r = buf_desc->AddToBuffer(cmd->GetOffset(), cmd->GetSize(),
-                                     cmd->GetValues());
+  auto* buf_desc = static_cast<BufferDescriptor*>(desc);
+  if (cmd->GetValues().empty()) {
+    Result r = buf_desc->ResizeTo(cmd->GetBuffer()->ElementCount());
+    if (!r.IsSuccess())
+      return r;
+  } else {
+    Result r = buf_desc->AddToBuffer(cmd->GetValues(), cmd->GetOffset());
     if (!r.IsSuccess())
       return r;
   }

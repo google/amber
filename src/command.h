@@ -433,15 +433,7 @@ class BufferCommand : public PipelineCommand {
   void SetOffset(uint32_t offset) { offset_ = offset; }
   uint32_t GetOffset() const { return offset_; }
 
-  void SetSize(uint32_t size) { size_ = size; }
-  uint32_t GetSize() const { return size_; }
-
-  void SetValues(std::vector<Value>&& values) {
-    values_ = std::move(values);
-    auto fmt = buffer_->GetFormat();
-    size_ = static_cast<uint32_t>(values_.size() * fmt->SizeInBytes()) /
-            fmt->InputNeededPerElement();
-  }
+  void SetValues(std::vector<Value>&& values) { values_ = std::move(values); }
   const std::vector<Value>& GetValues() const { return values_; }
 
   void SetBuffer(Buffer* buffer) { buffer_ = buffer; }
@@ -455,7 +447,6 @@ class BufferCommand : public PipelineCommand {
   bool is_subdata_ = false;
   uint32_t descriptor_set_ = 0;
   uint32_t binding_num_ = 0;
-  uint32_t size_ = 0;
   uint32_t offset_ = 0;
   std::vector<Value> values_;
 };
