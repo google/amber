@@ -28,9 +28,6 @@
 
 namespace amber {
 
-class DataBuffer;
-class FormatBuffer;
-
 /// Types of buffers which can be created.
 enum class BufferType : int8_t {
   /// Unknown buffer type
@@ -57,22 +54,12 @@ enum class BufferType : int8_t {
 /// maybe created as needed. A buffer must have a unique name.
 class Buffer {
  public:
+  /// Create a buffer of unknown type.
+  Buffer();
   /// Create a buffer of |type_|.
   explicit Buffer(BufferType type);
 
-  virtual ~Buffer();
-
-  /// Returns |true| if this is a buffer described by a |DatumType|.
-  virtual bool IsDataBuffer() const { return false; }
-  /// Returns |true| if this is a buffer described by a |Format|.
-  virtual bool IsFormatBuffer() const { return false; }
-
-  /// Converts the buffer to a |DataBuffer|. Note, |IsDataBuffer| must be true
-  /// for this method to be used.
-  DataBuffer* AsDataBuffer();
-  /// Converts the buffer to a |FormatBuffer|. Note, |IsFormatBuffer| must be
-  /// true for this method to be used.
-  FormatBuffer* AsFormatBuffer();
+  ~Buffer();
 
   /// Returns the BufferType of this buffer.
   BufferType GetBufferType() const { return buffer_type_; }
@@ -138,16 +125,23 @@ class Buffer {
     return ElementCount() * format_->SizeInBytes();
   }
 
+  uint32_t GetTexelStride() { return format_->SizeInBytes(); }
+
+  // When copying the image to the host buffer, we specify a row length of 0
+  // which results in tight packing of rows.  So the row stride is the product
+  // of the texel stride and the number of texels in a row.
+  uint32_t GetRowStride() { return GetTexelStride() * GetWidth(); }
+
   /// Sets the data into the buffer. The size will also be updated to be the
   /// size of the data provided.
-  virtual Result SetData(const std::vector<Value>& data) = 0;
+  Result SetData(const std::vector<Value>& data);
 
-  std::vector<uint8_t>* ValuePtr() { return &values_; }
-  const std::vector<uint8_t>* ValuePtr() const { return &values_; }
+  std::vector<uint8_t>* ValuePtr() { return &bytes_; }
+  const std::vector<uint8_t>* ValuePtr() const { return &bytes_; }
 
   template <typename T>
   const T* GetValues() const {
-    return reinterpret_cast<const T*>(values_.data());
+    return reinterpret_cast<const T*>(bytes_.data());
   }
 
   /// Copies the buffer values to an other one
@@ -156,12 +150,6 @@ class Buffer {
   /// Succeeds only if both buffer contents are equal
   Result IsEqual(Buffer* buffer) const;
 
- protected:
-  Buffer();
-
-  std::vector<uint8_t> values_;
-  std::unique_ptr<Format> format_;
-
  private:
   BufferType buffer_type_ = BufferType::kUnknown;
   std::string name_;
@@ -169,54 +157,8 @@ class Buffer {
   uint32_t width_ = 0;
   uint32_t height_ = 0;
   uint8_t location_ = 0;
-};
-
-/// A buffer class where the data is described by a |DatumType| object.
-class DataBuffer : public Buffer {
- public:
-  DataBuffer();
-  explicit DataBuffer(BufferType type);
-  ~DataBuffer() override;
-
-  // Buffer
-  bool IsDataBuffer() const override { return true; }
-  Result SetData(const std::vector<Value>& data) override;
-
-  /// Sets the DatumType of the buffer to |type|.
-  void SetDatumType(const DatumType& type) {
-    datum_type_ = type;
-    format_ = datum_type_.AsFormat();
-  }
-  /// Returns the DatumType describing the buffer data.
-  const DatumType GetDatumType() const { return datum_type_; }
-
- private:
-  Result CopyData(const std::vector<Value>& data);
-
-  DatumType datum_type_;
-};
-
-/// A buffer class where the data is described by a |format| object.
-class FormatBuffer : public Buffer {
- public:
-  FormatBuffer();
-  explicit FormatBuffer(BufferType type);
-  ~FormatBuffer() override;
-
-  // Buffer
-  bool IsFormatBuffer() const override { return true; }
-
-  Result SetData(const std::vector<Value>& data) override;
-
-  uint32_t GetTexelStride() { return format_->SizeInBytes(); }
-
-  // When copying the image to the host buffer, we specify a row length of 0
-  // which results in tight packing of rows.  So the row stride is the product
-  // of the texel stride and the number of texels in a row.
-  uint32_t GetRowStride() { return GetTexelStride() * GetWidth(); }
-
- private:
-  Result CopyData(const std::vector<Value>& data);
+  std::vector<uint8_t> bytes_;
+  std::unique_ptr<Format> format_;
 };
 
 }  // namespace amber

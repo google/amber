@@ -131,7 +131,6 @@ TEST_F(VkScriptParserTest, RequireBlockFramebuffer) {
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
   EXPECT_EQ(BufferType::kColor, buffers[0]->GetBufferType());
-  EXPECT_TRUE(buffers[0]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
             buffers[0]->GetFormat()->GetFormatType());
 }
@@ -147,7 +146,6 @@ TEST_F(VkScriptParserTest, RequireBlockDepthStencil) {
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(2U, buffers.size());
   EXPECT_EQ(BufferType::kDepth, buffers[1]->GetBufferType());
-  EXPECT_TRUE(buffers[1]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT,
             buffers[1]->GetFormat()->GetFormatType());
 }
@@ -230,12 +228,10 @@ inheritedQueries # line comment
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(2U, buffers.size());
   EXPECT_EQ(BufferType::kColor, buffers[0]->GetBufferType());
-  EXPECT_TRUE(buffers[0]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
             buffers[0]->GetFormat()->GetFormatType());
 
   EXPECT_EQ(BufferType::kDepth, buffers[1]->GetBufferType());
-  EXPECT_TRUE(buffers[1]->IsFormatBuffer());
   EXPECT_EQ(FormatType::kD24_UNORM_S8_UINT,
             buffers[1]->GetFormat()->GetFormatType());
 
@@ -257,8 +253,6 @@ TEST_F(VkScriptParserTest, IndicesBlock) {
   ASSERT_EQ(BufferType::kIndex, buffers[1]->GetBufferType());
 
   auto buffer_ptr = buffers[1].get();
-  ASSERT_TRUE(buffer_ptr->IsDataBuffer());
-
   auto buffer = buffer_ptr;
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
   EXPECT_EQ(3U, buffer->ElementCount());
