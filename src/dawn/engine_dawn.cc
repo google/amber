@@ -347,8 +347,7 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
   const auto width = render_pipeline.pipeline->GetFramebufferWidth();
   const auto height = render_pipeline.pipeline->GetFramebufferHeight();
   const auto pixelSize = render_pipeline.pipeline->GetColorAttachments()[0]
-                             .buffer->GetFormat()
-                             ->SizeInBytes();
+                             .buffer->GetTexelStride();
   const auto dawn_row_pitch = Align(width * pixelSize, kMinimumImageRowPitch);
   const auto fb_buffer_size = dawn_row_pitch * (height - 1) + width * pixelSize;
 
