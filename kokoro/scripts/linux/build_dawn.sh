@@ -45,16 +45,14 @@ unzip -q ninja-linux.zip
 export PATH="$PWD:$PATH"
 
 # Make a directory for Dawn dependencies
-mkdir dawn-deps && cd dawn-deps
+mkdir -p $SRC/build/out/dawn-deps && cd $SRC/build/out/dawn-deps
 
 # Get depot tools
 git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-cd depot_tools/
-export PATH="$PWD:$PATH"
-cd ..
+export PATH="$PWD/depot_tools:$PATH"
 
 # Clone the repo as "dawn"
-git clone https://dawn.googlesource.com/dawn dawn && cd dawn
+git clone --depth 1 https://dawn.googlesource.com/dawn dawn && cd dawn
 DAWN=$PWD
 
 # Bootstrap the gclient configuration
@@ -63,17 +61,18 @@ cp scripts/standalone.gclient .gclient
 # Fetch external dependencies and toolchains with gclient
 gclient sync
 
-#  Generate build files
-echo out/Release/args.gn
+# Generate build files
+mkdir -p out/Release
+touch out/Release/args.gn
+gn gen out/Release
 
 # build dawn
 ninja -C out/Release
 
-
 cd $SRC
 ./tools/git-sync-deps
 
-mkdir build && cd $SRC/build
+cd $SRC/build
 
 # Invoke the build.
 BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
@@ -86,7 +85,10 @@ cmake -GNinja ..\
  -DDawn_GEN_INCLUDE_DIR=$DAWN/out/Release/gen\
  -DDawn_LIBRARY_DIR=$DAWN/out/Release
 
-
 echo $(date): Build everything...
 ninja
 echo $(date): Build completed.
+
+echo $(date): Starting amber_unittests...
+./amber_unittests
+echo $(date): amber_unittests completed.
