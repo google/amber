@@ -63,6 +63,7 @@ class Buffer {
 
   /// Returns the BufferType of this buffer.
   BufferType GetBufferType() const { return buffer_type_; }
+  /// Sets the BufferType for this buffer.
   void SetBufferType(BufferType type) { buffer_type_ = type; }
 
   /// Set the location binding value for the buffer.
@@ -82,9 +83,13 @@ class Buffer {
   /// Returns the name of the buffer.
   std::string GetName() const { return name_; }
 
+  /// Gets the number of elements this buffer is wide.
   uint32_t GetWidth() const { return width_; }
+  /// Set the number of elements wide for the buffer.
   void SetWidth(uint32_t width) { width_ = width; }
+  /// Get the number of elements this buffer is high.
   uint32_t GetHeight() const { return height_; }
+  /// Set the number of elements high for the buffer.
   void SetHeight(uint32_t height) { height_ = height; }
 
   // | ---------- Element ---------- | ElementCount == 1
@@ -96,6 +101,7 @@ class Buffer {
 
   /// Sets the number of elements in the buffer.
   void SetElementCount(uint32_t count) { element_count_ = count; }
+  /// Returns the number of elements in the buffer.
   uint32_t ElementCount() const { return element_count_; }
 
   /// Sets the number of values in the buffer.
@@ -109,6 +115,7 @@ class Buffer {
     else
       element_count_ = count / format_->ValuesPerElement();
   }
+  /// Returns the number of values in the buffer.
   uint32_t ValueCount() const {
     if (!format_)
       return 0;
@@ -125,20 +132,21 @@ class Buffer {
     return ElementCount() * format_->SizeInBytes();
   }
 
+  /// Returns the number of bytes for one element in the buffer.
   uint32_t GetTexelStride() { return format_->SizeInBytes(); }
 
-  // When copying the image to the host buffer, we specify a row length of 0
-  // which results in tight packing of rows.  So the row stride is the product
-  // of the texel stride and the number of texels in a row.
+  /// Returns the number of bytes for one row of elements in the buffer.
   uint32_t GetRowStride() { return GetTexelStride() * GetWidth(); }
 
-  /// Sets the data into the buffer. The size will also be updated to be the
-  /// size of the data provided.
+  /// Sets the data into the buffer.
   Result SetData(const std::vector<Value>& data);
 
+  /// Returns a pointer to the internal storage of the buffer.
   std::vector<uint8_t>* ValuePtr() { return &bytes_; }
+  /// Returns a pointer to the internal storage of the buffer.
   const std::vector<uint8_t>* ValuePtr() const { return &bytes_; }
 
+  /// Returns a casted pointer to the internal storage of the buffer.
   template <typename T>
   const T* GetValues() const {
     return reinterpret_cast<const T*>(bytes_.data());

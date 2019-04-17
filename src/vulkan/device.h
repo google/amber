@@ -33,6 +33,7 @@ struct VulkanPtrs {
 #include "vk-wrappers.h"  // NOLINT(build/include)
 };
 
+/// Wrapper around a Vulkan Device object.
 class Device {
  public:
   Device(VkInstance instance,
@@ -50,6 +51,8 @@ class Device {
                     const VkPhysicalDeviceFeatures2KHR& available_features2,
                     const std::vector<std::string>& available_extensions);
 
+  /// Returns true if |format| and the |buffer|s buffer type combination is
+  /// supported by the physical device.
   bool IsFormatSupportedByPhysicalDevice(const Format& format, Buffer* buffer);
 
   VkDevice GetVkDevice() const { return device_; }
@@ -59,13 +62,19 @@ class Device {
   uint32_t GetQueueFamilyIndex() const { return queue_family_index_; }
   uint32_t GetMaxPushConstants() const;
 
+  /// Returns true if the given |descriptor_set| is within the bounds of
+  /// this device.
   bool IsDescriptorSetInBounds(uint32_t descriptor_set) const;
 
+  /// Returns true if the memory at |memory_type_index| has |flags| set.
   bool HasMemoryFlags(uint32_t memory_type_index,
                       const VkMemoryPropertyFlags flags) const;
+  /// Returns true if the memory at |memory_type_index| is host accessible.
   bool IsMemoryHostAccessible(uint32_t memory_type_index) const;
+  /// Returns true if the memory at |memory_type_index| is host corherent.
   bool IsMemoryHostCoherent(uint32_t memory_type_index) const;
 
+  /// Returns the pointers to the Vulkan API methods.
   const VulkanPtrs* GetPtrs() const { return &ptrs_; }
 
  private:

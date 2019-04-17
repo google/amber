@@ -38,6 +38,7 @@ class ComputePipeline;
 class Device;
 class GraphicsPipeline;
 
+/// Base class for a pipeline in Vulkan.
 class Pipeline {
  public:
   virtual ~Pipeline();
@@ -50,8 +51,8 @@ class Pipeline {
 
   Result AddDescriptor(const BufferCommand*);
 
-  // Read back the contents of resources of all descriptors to a
-  // buffer data object and put it into buffer data queue in host.
+  /// Reads back the contents of resources of all descriptors to a
+  /// buffer data object and put it into buffer data queue in host.
   Result ReadbackDescriptorsToHostDataQueue();
 
   void SetEntryPointName(VkShaderStageFlagBits stage,
@@ -69,7 +70,7 @@ class Pipeline {
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
 
-  // Initialize the pipeline.
+  /// Initializes the pipeline.
   Result Initialize(CommandPool* pool);
 
   void UpdateDescriptorSetsIfNeeded();
@@ -77,7 +78,7 @@ class Pipeline {
   Result SendDescriptorDataToDeviceIfNeeded();
   void BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout);
 
-  // Record a Vulkan command for push contant.
+  /// Records a Vulkan command for push contant.
   Result RecordPushConstant(const VkPipelineLayout& pipeline_layout);
 
   const std::vector<VkPipelineShaderStageCreateInfo>& GetVkShaderStageInfo()
@@ -102,16 +103,13 @@ class Pipeline {
     std::vector<std::unique_ptr<BufferDescriptor>> buffer_descriptors;
   };
 
-  // Create Vulkan descriptor related objects i.e.,
-  // VkDescriptorSetLayout, VkDescriptorPool, VkDescriptorSet if
-  // |descriptor_related_objects_already_created_| is false.
+  /// Creates Vulkan descriptor related objects.
   Result CreateVkDescriptorRelatedObjectsIfNeeded();
-
   Result CreateDescriptorSetLayouts();
   Result CreateDescriptorPools();
   Result CreateDescriptorSets();
 
-  // Add information of how and what to do with push constant.
+  /// Adds push constant information.
   Result AddPushConstant(const BufferCommand* command);
 
   PipelineType pipeline_type_;

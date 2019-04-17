@@ -21,8 +21,7 @@
 namespace amber {
 namespace vulkan {
 
-// Command buffer states based on "5.1. Command Buffer Lifecycle" of Vulkan
-// spec
+/// Command buffer states.
 enum class CommandBufferState : uint8_t {
   kInitial = 0,
   kRecording,
@@ -35,6 +34,8 @@ class CommandBufferGuard;
 class CommandPool;
 class Device;
 
+/// Wrapper around a Vulkan command buffer. This is designed to not be used
+/// directly, but should always be used through the `CommandBufferGuard` class.
 class CommandBuffer {
  public:
   CommandBuffer(Device* device, CommandPool* pool);
@@ -57,14 +58,30 @@ class CommandBuffer {
   VkFence fence_ = VK_NULL_HANDLE;
 };
 
+/// Wrapper around a `CommandBuffer`.
+///
+/// Usage follows the pattern:
+/// ```
+/// CommandBufferGuard guard(cb);
+/// if (!guard.IsRecording())
+///   return guard.GetResult();
+/// ...
+/// Result r = guard.Submit(timeout);
+/// if (!r.IsSuccess())
+///   return r;
+/// ```
 class CommandBufferGuard {
  public:
+  /// Creates a command buffer guard and sets the command buffer to recording.
   explicit CommandBufferGuard(CommandBuffer* buffer);
   ~CommandBufferGuard();
 
+  /// Returns true if the command buffer was successfully set to recording.
   bool IsRecording() const { return result_.IsSuccess(); }
+  /// Returns the result object if the command buffer recording failed.
   Result GetResult() { return result_; }
 
+  /// Submits and resets the internal command buffer.
   Result Submit(uint32_t timeout_ms);
 
  private:

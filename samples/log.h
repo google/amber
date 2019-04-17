@@ -19,7 +19,7 @@
 
 namespace sample {
 
-// This method is used for debug reports from Vulkan validation layers.
+/// This method is used for debug reports from Vulkan validation layers.
 void LogError(const std::string& msg);
 
 }  // namespace sample

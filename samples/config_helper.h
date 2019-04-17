@@ -23,15 +23,15 @@
 
 namespace sample {
 
-// Proof of concept implementation showing how to provide and use
-// EngineConfig within sample amber program.
+/// Proof of concept implementation showing how to provide and use
+/// EngineConfig within sample amber program.
 class ConfigHelperImpl {
  public:
   virtual ~ConfigHelperImpl();
 
-  // Create instance and device and return them as amber::EngineConfig.
-  // |required_features| and |required_extensions| contain lists of
-  // required features and required extensions, respectively.
+  /// Create instance and device and return them as amber::EngineConfig.
+  /// |required_features| and |required_extensions| contain lists of
+  /// required features and required extensions, respectively.
   virtual amber::Result CreateConfig(
       uint32_t engine_major,
       uint32_t engine_minor,
@@ -43,17 +43,17 @@ class ConfigHelperImpl {
       std::unique_ptr<amber::EngineConfig>* config) = 0;
 };
 
-// Wrapper of ConfigHelperImpl.
+/// Wrapper of ConfigHelperImpl.
 class ConfigHelper {
  public:
   ConfigHelper();
   ~ConfigHelper();
 
-  // Create instance and device and return them as amber::EngineConfig.
-  // |required_features| and |required_extensions| contain lists of
-  // required features and required extensions, respectively. |engine|
-  // indicates whether the caller required VulkanEngineConfig or
-  // DawnEngineConfig.
+  /// Create instance and device and return them as amber::EngineConfig.
+  /// |required_features| and |required_extensions| contain lists of
+  /// required features and required extensions, respectively. |engine|
+  /// indicates whether the caller required VulkanEngineConfig or
+  /// DawnEngineConfig.
   amber::Result CreateConfig(
       amber::EngineType engine,
       uint32_t engine_major,

@@ -36,6 +36,7 @@ namespace vulkan {
 
 class CommandPool;
 
+/// Wrapper around a graphics pipeline.
 class GraphicsPipeline : public Pipeline {
  public:
   GraphicsPipeline(
@@ -76,18 +77,8 @@ class GraphicsPipeline : public Pipeline {
                                   const VertexBuffer* vertex_buffer,
                                   const VkPipelineLayout& pipeline_layout,
                                   VkPipeline* pipeline);
-
   Result CreateRenderPass();
-
   Result SendVertexBufferDataIfNeeded(VertexBuffer* vertex_buffer);
-
-  // TODO(jaebaek): Implement image/ssbo probe.
-  Result SubmitProbeCommand();
-  Result VerifyPixels(const uint32_t x,
-                      const uint32_t y,
-                      const uint32_t width,
-                      const uint32_t height,
-                      const ProbeCommand* command);
 
   VkPipelineDepthStencilStateCreateInfo GetVkPipelineDepthStencilInfo(
       const PipelineData* pipeline_data);
@@ -95,7 +86,6 @@ class GraphicsPipeline : public Pipeline {
       const PipelineData* pipeline_data);
 
   VkRenderPass render_pass_ = VK_NULL_HANDLE;
-
   std::unique_ptr<FrameBuffer> frame_;
 
   // color buffers are owned by the amber::Pipeline.

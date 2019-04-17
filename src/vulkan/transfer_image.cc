@@ -173,28 +173,28 @@ VkBufferImageCopy TransferImage::CreateBufferImageCopy() {
   return copy_region;
 }
 
-void TransferImage::CopyToHost(CommandBuffer* command) {
+void TransferImage::CopyToHost(CommandBuffer* command_buffer) {
   auto copy_region = CreateBufferImageCopy();
 
   device_->GetPtrs()->vkCmdCopyImageToBuffer(
-      command->GetVkCommandBuffer(), image_,
+      command_buffer->GetVkCommandBuffer(), image_,
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, host_accessible_buffer_, 1,
       &copy_region);
 
-  MemoryBarrier(command);
+  MemoryBarrier(command_buffer);
 }
 
-void TransferImage::CopyToDevice(CommandBuffer* command) {
+void TransferImage::CopyToDevice(CommandBuffer* command_buffer) {
   auto copy_region = CreateBufferImageCopy();
 
   device_->GetPtrs()->vkCmdCopyBufferToImage(
-      command->GetVkCommandBuffer(), host_accessible_buffer_, image_,
+      command_buffer->GetVkCommandBuffer(), host_accessible_buffer_, image_,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
 
-  MemoryBarrier(command);
+  MemoryBarrier(command_buffer);
 }
 
-void TransferImage::ImageBarrier(CommandBuffer* command,
+void TransferImage::ImageBarrier(CommandBuffer* command_buffer,
                                  VkImageLayout to_layout,
                                  VkPipelineStageFlags to_stage) {
   if (to_layout == layout_ && to_stage == stage_)
@@ -260,7 +260,7 @@ void TransferImage::ImageBarrier(CommandBuffer* command,
       break;
   }
 
-  device_->GetPtrs()->vkCmdPipelineBarrier(command->GetVkCommandBuffer(),
+  device_->GetPtrs()->vkCmdPipelineBarrier(command_buffer->GetVkCommandBuffer(),
                                            stage_, to_stage, 0, 0, NULL, 0,
                                            NULL, 1, &barrier);
 

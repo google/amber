@@ -16,7 +16,6 @@
 
 #include <iostream>
 
-#include "samples/dawn_device_metal.h"
 namespace sample {
 
 ConfigHelperDawn::ConfigHelperDawn() = default;
