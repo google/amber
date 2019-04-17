@@ -28,7 +28,7 @@ which is the characters `0x` followed by hexadecimal digits.
 If specific device featuers are required you can use the DEVICE_FEATURE command
 to enable them.
 
-```
+```groovy
 DEVICE_FEATURE vertexPipelineStoresAndAtomics
 DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer
 ```
@@ -66,7 +66,7 @@ types, but in that case must only provide a single shader type in the module.
  * `SPIRV-HEX` (decoded straight to spv)
  * `OPENCL-C` (with clspv)  --- potentially?  -- future
 
-```
+```groovy
 # Creates a passthrough vertex shader. The shader passes the vec4 at input
 # location 0 through to the `gl_Position`.
 SHADER vertex {shader_name} PASSTHROUGH
@@ -101,7 +101,7 @@ either image buffers or, what the target API would refer to as a buffer.
 
 Sized arrays and structures are not currently representable.
 
-```
+```groovy
 # Filling the buffer with a given set of data. The values must be
 # of |type| data. The data can be provided as the type or as a hex value.
 BUFFER {name} DATA_TYPE {type} DATA
@@ -119,7 +119,7 @@ BUFFER {name} FORMAT {format_string}
 
 #### Buffer Initializers
 
-```
+```groovy
 # Fill the buffer with a single value.
 FILL _value_
 
@@ -132,7 +132,7 @@ SERIES_FROM _start_ INC_BY _inc_
 
 #### Buffer Copy
 
-```
+```groovy
 # Copies all data, values and memory from |buffer_from| to |buffer_to|.
 # Both buffers must be declared, and of the same data type.
 # Buffers used as copy destination can be used only as copy destination, and as
@@ -146,7 +146,7 @@ COPY {buffer_from} TO {buffer_to}
  * `compute`
  * `graphics`
 
-```
+```groovy
 # The PIPELINE command creates a pipeline. This can be either compute or
 # graphics. Shaders are attached to the pipeline at pipeline creation time.
 PIPELINE {pipeline_type} {pipeline_name}
@@ -162,7 +162,7 @@ END
 ### Pipeline Content
 
 The following commands are all specified within the `PIPELINE` command.
-```
+```groovy
   # Attach the shader provided by |name_of_shader| to the pipeline and set
   # the entry point to be |name|. The provided shader for ATTACH must _not_ be
   # a 'multi' shader.
@@ -178,7 +178,7 @@ The following commands are all specified within the `PIPELINE` command.
   ATTACH {name_of_multi_shader} TYPE {shader_type} ENTRY_POINT {name}
 ```
 
-```
+```groovy
   # Set the SPIRV-Tools optimization passes to use for a given shader. The
   # default is to run no optimization passes.
   SHADER_OPTIMIZATION {shader_name}
@@ -186,7 +186,7 @@ The following commands are all specified within the `PIPELINE` command.
   END
 ```
 
-```
+```groovy
   # Set the size of the render buffers. |width| and |height| are integers and
   # default to 250x250.
   FRAMEBUFFER_SIZE _width_ _height_
@@ -204,7 +204,7 @@ TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 A `pipeline` can have buffers bound. This includes buffers to contain image
 attachment content, depth/stencil content, uniform buffers, etc.
 
-```
+```groovy
   # Attach |buffer_name| as an output color attachment at location |idx|.
   # The provided buffer must be a `FORMAT` buffer. If no color attachments are
   # provided a single attachment with format `B8G8R8A8_UNORM` will be created
@@ -226,7 +226,7 @@ attachment content, depth/stencil content, uniform buffers, etc.
   BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
 ```
 
-```
+```groovy
   # Set |buffer_name| as the vertex data at location |val|.
   VERTEX_DATA {buffer_name} LOCATION _val_
 
@@ -260,7 +260,7 @@ command (although, `START_IDX` is required if `COUNT` is provided). The default
 value for `START_IDX` is 0. The default value for `COUNT` is the item count of
 vertex buffer minus the `START_IDX`.
 
-```
+```groovy
 # Run the given |pipeline_name| which must be a `compute` pipeline. The
 # pipeline will be run with the given number of workgroups in the |x|, |y|, |z|
 # dimensions. Each of the x, y and z values must be a uint32.
@@ -273,7 +273,7 @@ RUN {pipeline_name} \
   SIZE _width_in_pixels_ _height_in_pixels_
 ```
 
-```
+```groovy
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data must be attached to the pipeline. A start index of 0 will be used
 # and a count of the number of elements in the vertex buffer.
@@ -292,7 +292,7 @@ RUN {pipeline_name} DRAW_ARRAY AS {topology} START_IDX _value_ \
   COUNT _count_value_
 ```
 
-```
+```groovy
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data and  index data must be attached to the pipeline. The vertices will be
 # drawn using the given |topology|. A start index of 0 will be used and the
@@ -315,7 +315,7 @@ RUN {pipeline_name} DRAW_ARRAY INDEXED AS {topology} \
 
 ### Repeating commands
 
-```
+```groovy
 # It is sometimes useful to run a given draw command multiple times. This can be
 # to detect deterministic rendering or other features.
 REPEAT {count}
@@ -332,7 +332,7 @@ The commands which can be used inside a `REPEAT` block are:
 
 ### Commands
 
-```
+```groovy
 # Sets the clear color to use for |pipeline| which must be a `graphics`
 # pipeline. The colors are integers from 0 - 255.
 CLEAR_COLOR {pipeline} _r (0 - 255)_ _g (0 - 255)_ _b (0 - 255)_ _a (0 - 255)_
@@ -355,7 +355,7 @@ CLEAR {pipeline}
  * `EQ_RGBA`
  * `EQ_BUFFER`
 
-```
+```groovy
 # Checks that |buffer_name| at |x| has the given |value|s when compared
 # with the given |comparator|.
 EXPECT {buffer_name} IDX _x_ {comparator} _value_+
@@ -386,7 +386,7 @@ EXPECT {buffer_1} EQ_BUFFER {buffer_2}
 ## Examples
 
 ### Compute Shader
-```
+```groovy
 #!amber
 # Simple amber compute shader.
 
@@ -423,7 +423,7 @@ EXPECT kComputeBuffer IDX 263168 EQ 128 128
 ```
 
 ### Entry Points
-```
+```groovy
 #!amber
 
 SHADER vertex kVertexShader PASSTHROUGH
@@ -499,7 +499,7 @@ EXPECT kImgBuffer IDX 128 128 SIZE 128 128 EQ_RGB 0 255 0
 ```
 
 ### Buffers
-```
+```groovy
 #!amber
 
 SHADER vertex kVertexShader GLSL
