@@ -27,34 +27,23 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 
-// Class managing Vulkan Buffer i.e., VkBuffer |buffer_|. |memory_|
-// has VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT and
-// VK_MEMORY_PROPERTY_HOST_COHERENT_BIT properties and it is mapped
-// to |buffer_|.
+/// Wrapper around a Vulkan VkBuffer object.
 class TransferBuffer : public Resource {
  public:
   TransferBuffer(Device* device, uint32_t size_in_bytes);
   ~TransferBuffer() override;
 
-  // Create |buffer_| whose usage is |usage| and allocate |memory_|
-  // with VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT and
-  // VK_MEMORY_PROPERTY_HOST_COHERENT_BIT properties. It also maps
-  // |memory_| to |buffer_|
   Result Initialize(const VkBufferUsageFlags usage);
 
   VkBuffer GetVkBuffer() const { return buffer_; }
 
-  // Since |buffer_| is mapped to host accessible and host coherent
-  // memory |memory_|, this method only conducts memory barrier to
-  // make it available to device domain.
-  void CopyToDevice(CommandBuffer* command) override;
+  /// Records a command on |command_buffer| to copy the buffer contents from the
+  /// host to the device.
+  void CopyToDevice(CommandBuffer* command_buffer) override;
+  /// Records a command on |command_buffer| to copy the buffer contents from the
+  /// device to the host.
+  void CopyToHost(CommandBuffer* command_buffer) override;
 
-  // Since |buffer_| is mapped to host accessible and host coherent
-  // memory |memory_|, this method only conducts memory barrier to
-  // make it available to host domain.
-  void CopyToHost(CommandBuffer* command) override;
-
-  // Fill memory from 0 to |raw_data.size()| with |raw_data|.
   void UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data);
 
  private:

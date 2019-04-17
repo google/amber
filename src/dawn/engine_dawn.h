@@ -29,6 +29,7 @@
 namespace amber {
 namespace dawn {
 
+/// Engine implementation using the Dawn API.
 class EngineDawn : public Engine {
  public:
   EngineDawn();

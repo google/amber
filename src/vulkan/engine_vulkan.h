@@ -34,6 +34,7 @@
 namespace amber {
 namespace vulkan {
 
+/// Engine implementation based on Vulkan.
 class EngineVulkan : public Engine {
  public:
   EngineVulkan();

@@ -43,6 +43,7 @@ struct EngineConfig {
   virtual ~EngineConfig();
 };
 
+/// Stores information for a biffer.
 struct BufferInfo {
   BufferInfo();
   BufferInfo(const BufferInfo&);
@@ -75,6 +76,7 @@ class Delegate {
   virtual uint64_t GetTimestampNs() const = 0;
 };
 
+/// Stores configuration options for Amber.
 struct Options {
   Options();
   ~Options();

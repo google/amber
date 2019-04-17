@@ -107,7 +107,7 @@ Result Resource::CreateVkBuffer(VkBuffer* buffer, VkBufferUsageFlags usage) {
 
 uint32_t Resource::ChooseMemory(uint32_t memory_type_bits,
                                 VkMemoryPropertyFlags flags,
-                                bool force_flags) {
+                                bool require_flags_found) {
   // Based on Vulkan spec about VkMemoryRequirements, N th bit of
   // |memory_type_bits| is 1 where N can be the proper memory type index.
   // This code is looking for the first non-zero bit whose memory type
@@ -128,7 +128,7 @@ uint32_t Resource::ChooseMemory(uint32_t memory_type_bits,
     memory_type_bits >>= 1;
   }
 
-  if (force_flags)
+  if (require_flags_found)
     return std::numeric_limits<uint32_t>::max();
 
   return first_non_zero;
@@ -137,7 +137,7 @@ uint32_t Resource::ChooseMemory(uint32_t memory_type_bits,
 Result Resource::AllocateAndBindMemoryToVkBuffer(VkBuffer buffer,
                                                  VkDeviceMemory* memory,
                                                  VkMemoryPropertyFlags flags,
-                                                 bool force_flags,
+                                                 bool require_flags_found,
                                                  uint32_t* memory_type_index) {
   if (memory_type_index == nullptr) {
     return Result(
@@ -157,7 +157,7 @@ Result Resource::AllocateAndBindMemoryToVkBuffer(VkBuffer buffer,
                                                     buffer, &requirement);
 
   *memory_type_index =
-      ChooseMemory(requirement.memoryTypeBits, flags, force_flags);
+      ChooseMemory(requirement.memoryTypeBits, flags, require_flags_found);
   if (*memory_type_index == std::numeric_limits<uint32_t>::max())
     return Result("Vulkan::Find Proper Memory Fail");
 
@@ -202,7 +202,7 @@ void Resource::UnMapMemory(VkDeviceMemory memory) {
   device_->GetPtrs()->vkUnmapMemory(device_->GetVkDevice(), memory);
 }
 
-void Resource::MemoryBarrier(CommandBuffer* command) {
+void Resource::MemoryBarrier(CommandBuffer* command_buffer) {
   // TODO(jaebaek): Current memory barrier is natively implemented.
   // Update it with the following access flags:
   // (r = read, w = write)
@@ -224,7 +224,7 @@ void Resource::MemoryBarrier(CommandBuffer* command) {
   // ReadOnly Descriptors          host w         shader r
   //                           transfer w       transfer r
   device_->GetPtrs()->vkCmdPipelineBarrier(
-      command->GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+      command_buffer->GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1, &kMemoryBarrierForAll, 0,
       nullptr, 0, nullptr);
 }

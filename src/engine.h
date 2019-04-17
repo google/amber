@@ -35,6 +35,22 @@ struct EngineData {
 };
 
 /// Abstract class which describes a backing engine for Amber.
+///
+/// The engine class has a defined lifecycle.
+///  1. The engine is created through Engine::Create.
+///  2. Engine::Initialize is called to provide the engine with the configured
+///     graphics device.
+///  3. Engine::CreatePipeline is called for each pipeline. The pipelines are
+///     fully specified at this point and include:
+///     * All compiled shader binaries
+///     * Vertex, Index, Storage, Uniform, Push Constant buffers
+///     * Colour attachment, and depth/stencil attachment buffers.
+///     * Extra engine data.
+///     The buffers all may have default values to be loaded into the device.
+///  4. Engine::Do* is called for each command.
+///     Note, it is assumed that the amber::Buffers are updated at the end of
+///     each Do* command and can be used immediately for comparisons.
+///  5. Engine destructor is called.
 class Engine {
  public:
   /// Creates a new engine of the requested |type|.

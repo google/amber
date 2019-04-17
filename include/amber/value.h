@@ -19,6 +19,8 @@
 
 namespace amber {
 
+/// Wrapper for a single value. The value will be either an integer or a
+/// floating point value.
 class Value {
  public:
   Value();

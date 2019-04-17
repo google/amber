@@ -34,6 +34,8 @@ class Token;
 
 namespace vkscript {
 
+/// Parses the contents of the [test] section of a VkScript file into individual
+/// commands.
 class CommandParser {
  public:
   CommandParser(Script* script,
