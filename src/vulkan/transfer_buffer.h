@@ -37,8 +37,12 @@ class TransferBuffer : public Resource {
 
   VkBuffer GetVkBuffer() const { return buffer_; }
 
-  void CopyToDevice(CommandBuffer* command) override;
-  void CopyToHost(CommandBuffer* command) override;
+  /// Records a command on |command_buffer| to copy the buffer contents from the
+  /// host to the device.
+  void CopyToDevice(CommandBuffer* command_buffer) override;
+  /// Records a command on |command_buffer| to copy the buffer contents from the
+  /// device to the host.
+  void CopyToHost(CommandBuffer* command_buffer) override;
 
   void UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data);
 

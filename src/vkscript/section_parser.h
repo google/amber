@@ -69,7 +69,7 @@ class SectionParser {
  private:
   Result SplitSections(const std::string& data);
   void AddSection(NodeType section_type,
-                  ShaderType shadesr_type,
+                  ShaderType shader_type,
                   ShaderFormat fmt,
                   size_t starting_line_number,
                   const std::string& contents);

@@ -59,16 +59,16 @@ Result TransferBuffer::Initialize(const VkBufferUsageFlags usage) {
   return MapMemory(memory_);
 }
 
-void TransferBuffer::CopyToDevice(CommandBuffer* command) {
+void TransferBuffer::CopyToDevice(CommandBuffer* command_buffer) {
   // This is redundant because this buffer is always host visible
   // and coherent and vkQueueSubmit will make writes from host
   // available (See chapter 6.9. "Host Write Ordering Guarantees" in
   // Vulkan spec), but we prefer to keep it to simplify our own code.
-  MemoryBarrier(command);
+  MemoryBarrier(command_buffer);
 }
 
-void TransferBuffer::CopyToHost(CommandBuffer* command) {
-  MemoryBarrier(command);
+void TransferBuffer::CopyToHost(CommandBuffer* command_buffer) {
+  MemoryBarrier(command_buffer);
 }
 
 void TransferBuffer::UpdateMemoryWithRawData(

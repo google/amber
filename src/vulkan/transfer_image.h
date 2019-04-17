@@ -40,12 +40,16 @@ class TransferImage : public Resource {
   Result Initialize(VkImageUsageFlags usage);
   VkImageView GetVkImageView() const { return view_; }
 
-  void ImageBarrier(CommandBuffer* command,
+  void ImageBarrier(CommandBuffer* command_buffer,
                     VkImageLayout to_layout,
                     VkPipelineStageFlags to_stage);
 
-  void CopyToHost(CommandBuffer* command) override;
-  void CopyToDevice(CommandBuffer* command) override;
+  /// Records a command on |command_buffer| to copy the buffer contents from the
+  /// host to the device.
+  void CopyToDevice(CommandBuffer* command_buffer) override;
+  /// Records a command on |command_buffer| to copy the buffer contents from the
+  /// device to the host.
+  void CopyToHost(CommandBuffer* command_buffer) override;
 
  private:
   Result CreateVkImageView();

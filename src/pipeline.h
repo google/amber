@@ -91,28 +91,22 @@ class Pipeline {
 
   bool IsGraphics() const { return pipeline_type_ == PipelineType::kGraphics; }
   bool IsCompute() const { return pipeline_type_ == PipelineType::kCompute; }
-  /// Returns the type of this pipeline.
+
   PipelineType GetType() const { return pipeline_type_; }
 
-  /// Sets the name for this pipeline.
   void SetName(const std::string& name) { name_ = name; }
-  /// Returns the name for this pipeline.
   const std::string& GetName() const { return name_; }
 
-  /// Sets the width of the pipelines framebuffer to |fb_width|.
   void SetFramebufferWidth(uint32_t fb_width) {
     fb_width_ = fb_width;
     UpdateFramebufferSizes();
   }
-  /// Returns the width of the pipelines frame buffer.
   uint32_t GetFramebufferWidth() const { return fb_width_; }
 
-  /// Sets the height of the pipelines frame buffer to |fb_height|
   void SetFramebufferHeight(uint32_t fb_height) {
     fb_height_ = fb_height;
     UpdateFramebufferSizes();
   }
-  /// Returns the height of the pipelines framebuffer.
   uint32_t GetFramebufferHeight() const { return fb_height_; }
 
   /// Adds |shader| of |type| to the pipeline.

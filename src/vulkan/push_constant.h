@@ -42,7 +42,7 @@ class PushConstant {
   Result RecordPushConstantVkCommand(CommandBuffer* command,
                                      VkPipelineLayout pipeline_layout);
 
-  /// Add data into the push constant buffer.
+  /// Adds data into the push constant buffer.
   Result AddBufferData(const BufferCommand* command);
 
  private:
@@ -50,7 +50,7 @@ class PushConstant {
 
   Device* device_;
 
-  /// Keep the information of what and how to conduct push constant.
+  /// Keeps the information of what and how to conduct push constant.
   /// These are applied from lowest index to highest index, so that
   /// if address ranges overlap, then the later values take effect.
   std::vector<BufferInput> push_constant_data_;

@@ -32,8 +32,10 @@ class ShaderCompiler {
   explicit ShaderCompiler(const std::string& env);
   ~ShaderCompiler();
 
-  /// Will compile the given |shader|. If |shader_map| is provided the shader
-  /// will be read from the map before we attempt to compile.
+  /// Returns a result code and a compilation of the given shader.
+  /// If the |shader| has a corresponding entry in the |shader_map|, then the
+  /// compilation result is copied from that entry. Otherwise a compiler is
+  /// invoked to produce the compilation result.
   std::pair<Result, std::vector<uint32_t>> Compile(
       const Shader* shader,
       const ShaderMap& shader_map) const;

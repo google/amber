@@ -135,7 +135,7 @@ class Buffer {
   /// Returns the number of bytes for one element in the buffer.
   uint32_t GetTexelStride() { return format_->SizeInBytes(); }
 
-  /// Return sthe number of bytes for one row of elements in the buffer.
+  /// Returns the number of bytes for one row of elements in the buffer.
   uint32_t GetRowStride() { return GetTexelStride() * GetWidth(); }
 
   /// Sets the data into the buffer.

@@ -123,7 +123,6 @@ class PipelineCommand : public Command {
  public:
   ~PipelineCommand() override;
 
-  /// Returns the pipeline associated with this command.
   Pipeline* GetPipeline() const { return pipeline_; }
 
  protected:
@@ -138,37 +137,24 @@ class DrawRectCommand : public PipelineCommand {
   explicit DrawRectCommand(Pipeline* pipeline, PipelineData data);
   ~DrawRectCommand() override;
 
-  /// Retrieves the pipeline data associated with this draw command.
   const PipelineData* GetPipelineData() const { return &data_; }
 
-  /// Sets the draw command into ortho mode.
   void EnableOrtho() { is_ortho_ = true; }
-  /// Returns true if the command has been set in ortho mode.
   bool IsOrtho() const { return is_ortho_; }
 
-  /// Sets the draw command into patch mode
   void EnablePatch() { is_patch_ = true; }
-  /// Returns true if the draw command is in patch mode.
   bool IsPatch() const { return is_patch_; }
 
-  /// Sets the starting x coordinate for the draw.
   void SetX(float x) { x_ = x; }
-  /// Returns the starting x coordinate for the draw.
   float GetX() const { return x_; }
 
-  /// Sets the starting y coordinate for the draw.
   void SetY(float y) { y_ = y; }
-  /// Returns the starting y coordinate for the draw.
   float GetY() const { return y_; }
 
-  /// Sets the number of pixels wide for the draw.
   void SetWidth(float w) { width_ = w; }
-  /// Returns the pixel width of the draw.
   float GetWidth() const { return width_; }
 
-  /// Sets the number of pixels high for the draw.
   void SetHeight(float h) { height_ = h; }
-  /// Returns the pixel height of the draw.
   float GetHeight() const { return height_; }
 
  private:
@@ -187,37 +173,24 @@ class DrawArraysCommand : public PipelineCommand {
   explicit DrawArraysCommand(Pipeline* pipeline, PipelineData data);
   ~DrawArraysCommand() override;
 
-  /// Retrieves the pipeline data for this draw command.
   const PipelineData* GetPipelineData() const { return &data_; }
 
-  /// Sets the draw command in indexed mode.
   void EnableIndexed() { is_indexed_ = true; }
-  /// Returns true if the draw command is indexed.
   bool IsIndexed() const { return is_indexed_; }
 
-  /// Sets the draw command in instanced mode.
   void EnableInstanced() { is_instanced_ = true; }
-  /// Returns true if the draw command is instanced.
   bool IsInstanced() const { return is_instanced_; }
 
-  /// Sets the topology for the draw command.
   void SetTopology(Topology topo) { topology_ = topo; }
-  /// Retrieves the topology for the draw command.
   Topology GetTopology() const { return topology_; }
 
-  /// Sets the first value in the vertex buffer to use for this draw command.
   void SetFirstVertexIndex(uint32_t idx) { first_vertex_index_ = idx; }
-  /// Retrieves the first value in the vertex buffer to use for this command.
   uint32_t GetFirstVertexIndex() const { return first_vertex_index_; }
 
-  /// Sets the number of vertices to draw.
   void SetVertexCount(uint32_t count) { vertex_count_ = count; }
-  /// Retrieves the number of vertices to draw.
   uint32_t GetVertexCount() const { return vertex_count_; }
 
-  /// Sets the number of instances to draw.
   void SetInstanceCount(uint32_t count) { instance_count_ = count; }
-  /// Retrieves the number of instances to draw.
   uint32_t GetInstanceCount() const { return instance_count_; }
 
  private:
@@ -566,12 +539,10 @@ class RepeatCommand : public Command {
 
   uint32_t GetCount() const { return count_; }
 
-  /// Sets |cmds| to the list of commands to execute against the engine.
   void SetCommands(std::vector<std::unique_ptr<Command>> cmds) {
     commands_ = std::move(cmds);
   }
 
-  /// Retrieves the list of commands to execute against the engine.
   const std::vector<std::unique_ptr<Command>>& GetCommands() const {
     return commands_;
   }

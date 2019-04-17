@@ -97,14 +97,11 @@ class Format {
 
   /// Sets the type of the format. For image types this maps closely to the
   /// list of Vulkan formats. For data types, this maybe Unknown if the data
-  /// type can not be represented by the image format (i.e. matrix types)
+  /// type can not be represented by the image format (e.g. matrix types)
   void SetFormatType(FormatType type) { type_ = type; }
-  /// Returns the type for this format object.
   FormatType GetFormatType() const { return type_; }
 
-  /// Sets this format to represent data in std140 mode.
   void SetIsStd140() { is_std140_ = true; }
-  /// Returns true if this format is a std140 representation.
   bool IsStd140() const { return is_std140_; }
 
   /// Set the number of bytes this format is packed into, if provided.
@@ -114,11 +111,9 @@ class Format {
   /// Retrieves the number of bytes this format is packed into.
   uint8_t GetPackSize() const { return pack_size_in_bytes_; }
 
-  /// Adds a component to this format.
   void AddComponent(FormatComponentType type, FormatMode mode, uint8_t bits) {
     components_.emplace_back(type, mode, bits);
   }
-  /// Retrieves the components this format describes
   const std::vector<Component>& GetComponents() const { return components_; }
 
   /// Returns the number of bytes this format requires.
@@ -126,9 +121,7 @@ class Format {
   /// Returns the number of bytes per single row this format requires.
   uint32_t SizeInBytesPerRow() const;
 
-  /// Returns true if the format is not unknown.
   bool IsFormatKnown() const { return type_ != FormatType::kUnknown; }
-  /// Returns true if this format has a stencil component.
   bool HasStencilComponent() const {
     return type_ == FormatType::kD24_UNORM_S8_UINT ||
            type_ == FormatType::kD16_UNORM_S8_UINT ||
@@ -139,13 +132,10 @@ class Format {
   /// Returns the number of values for each instance of this format.
   uint32_t ValuesPerElement() const { return RowCount() * column_count_; }
 
-  /// Returns the number of rows this format describes
   uint32_t RowCount() const {
     return static_cast<uint32_t>(components_.size());
   }
-  /// Returns the number of columns this format describes.
   uint32_t ColumnCount() const { return column_count_; }
-  /// Sets the number of columns this format describes.
   void SetColumnCount(uint32_t c) { column_count_ = c; }
 
   /// Returns true if all components of this format are an 8 bit signed int.
