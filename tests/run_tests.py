@@ -31,7 +31,11 @@ SUPPRESSIONS = {
     "draw_triangle_list_using_tessellation.vkscript",
     # No std140 support for matrices in SPIRV-Cross
     "compute_mat2x2.vkscript",
+    "compute_mat2x2float.vkscript",
+    "compute_mat2x2.amber",
     "compute_mat3x2.vkscript",
+    "compute_mat3x2float.vkscript",
+    "compute_mat3x2.amber",
     # Metal vertex shaders cannot simultaneously write to a buffer and return
     # a value to the rasterizer rdar://48348476
     # https://github.com/KhronosGroup/MoltenVK/issues/527
