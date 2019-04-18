@@ -142,9 +142,7 @@ class Format {
   /// Returns the number of input values required for an item of this format.
   /// This differs from ValuesPerElement because it doesn't take padding into
   /// account.
-  uint32_t InputNeededPerElement() const {
-    return RowCount() * column_count_;
-  }
+  uint32_t InputNeededPerElement() const { return RowCount() * column_count_; }
 
   /// Returns the number of values for a given row.
   uint32_t ValuesPerRow() const {
@@ -154,9 +152,7 @@ class Format {
   }
 
   /// Returns the number of values for each instance of this format.
-  uint32_t ValuesPerElement() const {
-    return ValuesPerRow() * column_count_;
-  }
+  uint32_t ValuesPerElement() const { return ValuesPerRow() * column_count_; }
 
   uint32_t RowCount() const {
     return static_cast<uint32_t>(components_.size());
