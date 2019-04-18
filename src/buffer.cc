@@ -175,7 +175,7 @@ Result Buffer::SetData(const std::vector<Value>& data) {
     // For formats which we've padded to the the layout, make sure we skip over
     // the space in the buffer.
     size_t pad = format_->ValuesPerRow() - format_->GetComponents().size();
-    for (size_t i = 0; i < pad; ++i)
+    for (size_t j = 0; j < pad; ++j)
       ptr += (format_->GetComponents()[0].num_bits / 8);
   }
   return {};
