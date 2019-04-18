@@ -650,7 +650,7 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
   }
 
   auto* fmt = command->GetFormat();
-  size_t elem_count = values.size() / fmt->ValuesPerElement();
+  size_t elem_count = values.size() / fmt->InputNeededPerElement();
   size_t offset = static_cast<size_t>(command->GetOffset());
   size_t size_in_bytes = buffer_element_count * fmt->SizeInBytes();
   if ((elem_count * fmt->SizeInBytes()) + offset > size_in_bytes) {

@@ -110,10 +110,15 @@ class Buffer {
       element_count_ = 0;
       return;
     }
-    if (format_->GetPackSize() > 0)
+    if (format_->GetPackSize() > 0) {
       element_count_ = count;
-    else
-      element_count_ = count / format_->ValuesPerElement();
+    } else {
+      // This divides by the needed input values, not the values per element.
+      // The assumption being the values coming in are read from the input,
+      // where components are specified. The needed values maybe less then the
+      // values per element.
+      element_count_ = count / format_->InputNeededPerElement();
+    }
   }
   /// Returns the number of values in the buffer.
   uint32_t ValueCount() const {

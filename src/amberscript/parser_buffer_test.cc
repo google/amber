@@ -334,41 +334,6 @@ END
   }
 }
 
-TEST_F(AmberScriptParserTest, BufferDataStd140Resized) {
-  std::string in = R"(
-BUFFER my_index_buffer DATA_TYPE vec3<int32> DATA
-2 3 3
-4 5 5
-6 7 7
-8 9 9
-END
-)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_TRUE(r.IsSuccess()) << r.Error();
-
-  auto script = parser.GetScript();
-  const auto& buffers = script->GetBuffers();
-  ASSERT_EQ(1U, buffers.size());
-
-  ASSERT_TRUE(buffers[0] != nullptr);
-
-  auto* buffer = buffers[0].get();
-  EXPECT_EQ("my_index_buffer", buffer->GetName());
-  EXPECT_TRUE(buffer->GetFormat()->IsInt32());
-  EXPECT_EQ(4U, buffer->ElementCount());
-  EXPECT_EQ(12U, buffer->ValueCount());
-  EXPECT_EQ(16U * sizeof(int32_t), buffer->GetSizeInBytes());
-
-  std::vector<int32_t> results0 = {2, 3, 3, 0, 4, 5, 5, 0,
-                                   6, 7, 7, 0, 8, 9, 9, 0};
-  const auto* data0 = buffer->GetValues<int32_t>();
-  for (size_t i = 0; i < results0.size(); ++i) {
-    EXPECT_EQ(results0[i], data0[i]);
-  }
-}
-
 TEST_F(AmberScriptParserTest, BufferDataHex) {
   std::string in = R"(
 BUFFER my_index_buffer DATA_TYPE uint32 DATA

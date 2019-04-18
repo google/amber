@@ -424,7 +424,7 @@ class BufferCommand : public PipelineCommand {
     values_ = std::move(values);
     auto fmt = buffer_->GetFormat();
     size_ = static_cast<uint32_t>(values_.size() * fmt->SizeInBytes()) /
-            fmt->ValuesPerElement();
+            fmt->InputNeededPerElement();
   }
   const std::vector<Value>& GetValues() const { return values_; }
 

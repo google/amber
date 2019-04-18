@@ -29,11 +29,18 @@ uint32_t Format::SizeInBytesPerRow() const {
   for (const auto& comp : components_)
     bits += comp.num_bits;
 
-  if (is_std140_ && components_.size() == 3)
+  uint32_t inflate = 0;
+  // Std140 always has 4 elements. std430 expands 3 elements to 4.
+  if (is_std140_)
+    inflate = 4 - components_.size();
+  else if (components_.size() == 3)
+    inflate = 1;
+
+  for (uint32_t i = 0; i < inflate; ++i)
     bits += components_[0].num_bits;
 
   uint32_t bytes_per_element = bits / 8;
-  // Odd number of bits, inflate or byte count to accommodate
+  // Odd number of bits, inflate byte count to accommodate
   if ((bits % 8) != 0)
     bytes_per_element += 1;
 

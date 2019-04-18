@@ -24,6 +24,16 @@
 namespace amber {
 
 /// The format class describes requested image formats. (eg. R8G8B8A8_UINT).
+///
+/// There is a distinction between the input values needed and the values needed
+/// for a given format. The input values is the number needed to be read to fill
+/// out the format. The number of values is the number needed in memory to fill
+/// out the format. These two numbers maybe different. The number of values will
+/// always be equal or greater then the number of input values needed.
+///
+/// The place these differ is a) std140 layouts and b) vectors with 3 items. In
+/// both those cases we inflate the to 4 elements. So the input data will be
+/// smaller then the values per element.
 class Format {
  public:
   /// Describes an individual component of a format.
@@ -129,8 +139,24 @@ class Format {
            type_ == FormatType::kS8_UINT;
   }
 
+  /// Returns the number of input values required for an item of this format.
+  /// This differs from ValuesPerElement because it doesn't take padding into
+  /// account.
+  uint32_t InputNeededPerElement() const {
+    return RowCount() * column_count_;
+  }
+
+  /// Returns the number of values for a given row.
+  uint32_t ValuesPerRow() const {
+    if (is_std140_ || RowCount() == 3)
+      return 4;
+    return RowCount();
+  }
+
   /// Returns the number of values for each instance of this format.
-  uint32_t ValuesPerElement() const { return RowCount() * column_count_; }
+  uint32_t ValuesPerElement() const {
+    return ValuesPerRow() * column_count_;
+  }
 
   uint32_t RowCount() const {
     return static_cast<uint32_t>(components_.size());
