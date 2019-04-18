@@ -781,7 +781,7 @@ Result Parser::ParseBufferInitializerFill(Buffer* buffer,
   bool is_double_data = fmt->IsFloat() || fmt->IsDouble();
 
   // Inflate the size because our items are multi-dimensional.
-  size_in_items = size_in_items * fmt->RowCount() * fmt->ColumnCount();
+  size_in_items = size_in_items * fmt->InputNeededPerElement();
 
   std::vector<Value> values;
   values.resize(size_in_items);
@@ -858,7 +858,6 @@ Result Parser::ParseBufferInitializerData(Buffer* buffer) {
       break;
     if (!token->IsInteger() && !token->IsDouble() && !token->IsHex())
       return Result("invalid BUFFER data value: " + token->ToOriginalString());
-
     if (!is_double_type && token->IsDouble())
       return Result("invalid BUFFER data value: " + token->ToOriginalString());
 

@@ -82,8 +82,6 @@ std::unique_ptr<Format> DatumType::AsFormat() const {
     fmt->SetFormatType(FormatType::kUnknown);
     fmt->SetColumnCount(column_count_);
   }
-  // Always pretend to be std140 as that's what datum type does.
-  fmt->SetIsStd140();
 
   return fmt;
 }
