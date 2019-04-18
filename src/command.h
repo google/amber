@@ -106,6 +106,8 @@ class Command {
   BufferCommand* AsBuffer();
   RepeatCommand* AsRepeat();
 
+  virtual std::string ToString() const = 0;
+
   /// Sets the input file line number this command is declared on.
   void SetLine(size_t line) { line_ = line; }
   /// Returns the input file line this command was declared on.
@@ -157,6 +159,8 @@ class DrawRectCommand : public PipelineCommand {
   void SetHeight(float h) { height_ = h; }
   float GetHeight() const { return height_; }
 
+  std::string ToString() const override { return "DrawRectCommand"; }
+
  private:
   PipelineData data_;
   bool is_ortho_ = false;
@@ -193,6 +197,8 @@ class DrawArraysCommand : public PipelineCommand {
   void SetInstanceCount(uint32_t count) { instance_count_ = count; }
   uint32_t GetInstanceCount() const { return instance_count_; }
 
+  std::string ToString() const override { return "DrawArraysCommand"; }
+
  private:
   PipelineData data_;
   bool is_indexed_ = false;
@@ -211,6 +217,8 @@ class CompareBufferCommand : public Command {
 
   Buffer* GetBuffer1() const { return buffer_1_; }
   Buffer* GetBuffer2() const { return buffer_2_; }
+
+  std::string ToString() const override { return "CompareBufferCommand"; }
 
  private:
   Buffer* buffer_1_;
@@ -232,6 +240,8 @@ class ComputeCommand : public PipelineCommand {
   void SetZ(uint32_t z) { z_ = z; }
   uint32_t GetZ() const { return z_; }
 
+  std::string ToString() const override { return "ComputeCommand"; }
+
  private:
   uint32_t x_ = 0;
   uint32_t y_ = 0;
@@ -246,6 +256,8 @@ class CopyCommand : public Command {
 
   Buffer* GetBufferFrom() const { return buffer_from_; }
   Buffer* GetBufferTo() const { return buffer_to_; }
+
+  std::string ToString() const override { return "CopyCommand"; }
 
  private:
   Buffer* buffer_from_;
@@ -322,6 +334,8 @@ class ProbeCommand : public Probe {
   void SetA(float a) { a_ = a; }
   float GetA() const { return a_; }
 
+  std::string ToString() const override { return "ProbeCommand"; }
+
  private:
   enum class ColorFormat {
     kRGB = 0,
@@ -378,6 +392,8 @@ class ProbeSSBOCommand : public Probe {
   void SetValues(std::vector<Value>&& values) { values_ = std::move(values); }
   const std::vector<Value>& GetValues() const { return values_; }
 
+  std::string ToString() const override { return "ProbeSSBOCommand"; }
+
  private:
   Comparator comparator_ = Comparator::kEqual;
   uint32_t descriptor_set_id_ = 0;
@@ -431,6 +447,8 @@ class BufferCommand : public PipelineCommand {
   void SetBuffer(Buffer* buffer) { buffer_ = buffer; }
   Buffer* GetBuffer() const { return buffer_; }
 
+  std::string ToString() const override { return "BufferCommand"; }
+
  private:
   Buffer* buffer_ = nullptr;
   BufferType buffer_type_;
@@ -447,6 +465,8 @@ class ClearCommand : public PipelineCommand {
  public:
   explicit ClearCommand(Pipeline* pipeline);
   ~ClearCommand() override;
+
+  std::string ToString() const override { return "ClearCommand"; }
 };
 
 /// Command to set the colour for the clear command.
@@ -468,6 +488,8 @@ class ClearColorCommand : public PipelineCommand {
   void SetA(float a) { a_ = a; }
   float GetA() const { return a_; }
 
+  std::string ToString() const override { return "ClearColorCommand"; }
+
  private:
   float r_ = 0.0;
   float g_ = 0.0;
@@ -484,6 +506,8 @@ class ClearDepthCommand : public PipelineCommand {
   void SetValue(float val) { value_ = val; }
   float GetValue() const { return value_; }
 
+  std::string ToString() const override { return "ClearDepthCommand"; }
+
  private:
   float value_ = 0.0;
 };
@@ -497,6 +521,8 @@ class ClearStencilCommand : public PipelineCommand {
   void SetValue(uint32_t val) { value_ = val; }
   uint32_t GetValue() const { return value_; }
 
+  std::string ToString() const override { return "ClearStencilCommand"; }
+
  private:
   uint32_t value_ = 0;
 };
@@ -509,6 +535,10 @@ class PatchParameterVerticesCommand : public PipelineCommand {
 
   void SetControlPointCount(uint32_t count) { control_point_count_ = count; }
   uint32_t GetControlPointCount() const { return control_point_count_; }
+
+  std::string ToString() const override {
+    return "PatchParameterVerticesCommand";
+  }
 
  private:
   uint32_t control_point_count_ = 0;
@@ -525,6 +555,8 @@ class EntryPointCommand : public PipelineCommand {
 
   void SetEntryPointName(const std::string& name) { entry_point_name_ = name; }
   std::string GetEntryPointName() const { return entry_point_name_; }
+
+  std::string ToString() const override { return "EntryPointCommand"; }
 
  private:
   ShaderType shader_type_ = kShaderTypeVertex;
@@ -546,6 +578,8 @@ class RepeatCommand : public Command {
   const std::vector<std::unique_ptr<Command>>& GetCommands() const {
     return commands_;
   }
+
+  std::string ToString() const override { return "RepeatCommand"; }
 
  private:
   uint32_t count_ = 0;
