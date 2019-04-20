@@ -28,7 +28,7 @@ which is the characters `0x` followed by hexadecimal digits.
 If specific device featuers are required you can use the DEVICE_FEATURE command
 to enable them.
 
-```
+```groovy
 DEVICE_FEATURE vertexPipelineStoresAndAtomics
 DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer
 ```
@@ -40,13 +40,13 @@ with `VariablePointerFeatures.variablePointers` and
 ### Shaders
 
 #### Shader Type
- * vertex
- * fragment
- * geometry
- * tessellation\_evaluation
- * tessellation\_control
- * compute
- * multi
+ * `vertex`
+ * `fragment`
+ * `geometry`
+ * `tessellation_evaluation`
+ * `tessellation_control`
+ * `compute`
+ * `multi`
 
 The compute pipeline can only contain compute shaders. The graphics pipeline
 can not contain compute shaders, and must contain a vertex shader and a fragment
@@ -60,21 +60,21 @@ Note, `SPIRV-ASM` and `SPIRV-HEX` can also be used with each of the other shader
 types, but in that case must only provide a single shader type in the module.
 
 #### Shader Format
- * GLSL  (with glslang)
- * HLSL  (with dxc or glslang if dxc disabled)  -- future
- * SPIRV-ASM (with spirv-as)
- * SPIRV-HEX (decoded straight to spv)
- * OPENCL-C (with clspv)  --- potentially?  -- future
+ * `GLSL`  (with glslang)
+ * `HLSL`  (with dxc or glslang if dxc disabled)  -- future
+ * `SPIRV-ASM` (with spirv-as)
+ * `SPIRV-HEX` (decoded straight to spv)
+ * `OPENCL-C` (with clspv)  --- potentially?  -- future
 
-```
+```groovy
 # Creates a passthrough vertex shader. The shader passes the vec4 at input
 # location 0 through to the `gl_Position`.
-SHADER vertex <shader_name> PASSTHROUGH
+SHADER vertex {shader_name} PASSTHROUGH
 
 # Creates a shader of |shader_type| with the given |shader_name|. The shader
 # will be of |shader_format|. The shader should then be inlined before the
 # |END| tag.
-SHADER <shader_type> <shader_name> <shader_format>
+SHADER {shader_type} {shader_name} {shader_format}
 ...
 END
 ```
@@ -85,113 +85,108 @@ An AmberScript buffer represents a set of contiguous bits. This can be used for
 either image buffers or, what the target API would refer to as a buffer.
 
 #### Data Types
- * int8
- * int16
- * int32
- * int64
- * uint8
- * uint16
- * uint32
- * uint64
- * float
- * double
- * vec[2,3,4]\<type>
- * mat[2,3,4]x[2,3,4]\<type>    -- useful?
+ * `int8`
+ * `int16`
+ * `int32`
+ * `int64`
+ * `uint8`
+ * `uint16`
+ * `uint32`
+ * `uint64`
+ * `float`
+ * `double`
+ * vec[2,3,4]{type}
+ * mat[2,3,4]x[2,3,4]{type}
  * Any of the `Image Formats` listed below.
 
 Sized arrays and structures are not currently representable.
 
-```
+```groovy
 # Filling the buffer with a given set of data. The values must be
-# of <type> data. The data can be provided as the type or as a hex value.
-BUFFER <name> DATA_TYPE <type> DATA
-<value>+
+# of |type| data. The data can be provided as the type or as a hex value.
+BUFFER {name} DATA_TYPE {type} DATA
+_value_+
 END
 
 # Defines a buffer which is filled with data as specified by the `initializer`.
-BUFFER <name> DATA_TYPE <type> SIZE <size_in_items> <initializer>
+BUFFER {name} DATA_TYPE {type} SIZE _size_in_items_ {initializer}
 
 # Creates a buffer which will store the given `FORMAT` of data. These
 # buffers are used as image and depth buffers in the `PIPELINE` commands.
 # The buffer will be sized based on the `RENDER_SIZE` of the `PIPELINE`.
-BUFFER <name> FORMAT <format_string>
+BUFFER {name} FORMAT {format_string}
 ```
 
 #### Buffer Initializers
 
-```
+```groovy
 # Fill the buffer with a single value.
-FILL <value>
+FILL _value_
 
-# Fill the buffer with an increasing value from \<start> increasing by \<inc>.
-# Floating point data uses floating point addition to generate increasting
+# Fill the buffer with an increasing value from |start| increasing by |inc|.
+# Floating point data uses floating point addition to generate increasing
 # values. Likewise, integer data uses integer addition to generate increasing
 # values.
-SERIES_FROM <start> INC_BY <inc>
+SERIES_FROM _start_ INC_BY _inc_
 ```
 
 #### Buffer Copy
 
-The COPY command copy all data, values and memory from <buffer_from> to
-<buffer_to>.
-
+```groovy
+# Copies all data, values and memory from |buffer_from| to |buffer_to|.
+# Both buffers must be declared, and of the same data type.
+# Buffers used as copy destination can be used only as copy destination, and as
+# argument to an EXPECT command.
+COPY {buffer_from} TO {buffer_to}
 ```
-COPY <buffer_from> TO <buffer_to>
-```
-
-Both buffers must be declared, and of the same data type.
-
-Buffers used as copy destination can be used only as copy destination, and as
-argument to an EXPECT command.
 
 ### Pipelines
 
 #### Pipeline type
- * compute
- * graphics
+ * `compute`
+ * `graphics`
 
-```
+```groovy
 # The PIPELINE command creates a pipeline. This can be either compute or
 # graphics. Shaders are attached to the pipeline at pipeline creation time.
-PIPELINE <pipeline_type> <pipeline_name>
+PIPELINE {pipeline_type} {pipeline_name}
 ...
 END
 
 # Create a pipeline and inherit from a previously declared pipeline.
-DERIVE_PIPELINE <<pipeline_name> FROM <parent_pipeline>
+DERIVE_PIPELINE {pipeline_name} FROM {parent_pipeline}
 ...
 END
 ```
 
-
 ### Pipeline Content
 
 The following commands are all specified within the `PIPELINE` command.
-```
+```groovy
   # Attach the shader provided by |name_of_shader| to the pipeline and set
   # the entry point to be |name|. The provided shader for ATTACH must _not_ be
   # a 'multi' shader.
-  ATTACH <name_of_shader> ENTRY_POINT <name>
+  ATTACH {name_of_shader} ENTRY_POINT {name}
 
   # Attach the shader provided by |name_of_shader| to the pipeline and set
   # the entry point to be 'main'. The provided shader for ATTACH must _not_ be
   # a 'multi' shader.
-  ATTACH <name_of_shader>
+  ATTACH {name_of_shader}
 
   # Attach a 'multi' shader to the pipeline of |shader_type| and use the entry
   # point with |name|. The provided shader _must_ be a 'multi' shader.
-  ATTACH <name_of_multi_shader> TYPE <shader_type> ENTRY_POINT <name>
+  ATTACH {name_of_multi_shader} TYPE {shader_type} ENTRY_POINT {name}
 ```
 
-```
+```groovy
   # Set the SPIRV-Tools optimization passes to use for a given shader. The
   # default is to run no optimization passes.
-  SHADER_OPTIMIZATION <shader_name>
-    <optimization_name>+
+  SHADER_OPTIMIZATION {shader_name}
+    {optimization_name}+
   END
 ```
 
-```
+```groovy
   # Set the size of the render buffers. |width| and |height| are integers and
   # default to 250x250.
   FRAMEBUFFER_SIZE _width_ _height_
@@ -200,57 +195,57 @@ The following commands are all specified within the `PIPELINE` command.
 ### Pipeline Buffers
 
 #### Buffer Types
- * push\_constant
- * uniform
- * storage
+ * `push_constant`
+ * `uniform`
+ * `storage`
 
 TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
 A `pipeline` can have buffers bound. This includes buffers to contain image
 attachment content, depth/stencil content, uniform buffers, etc.
 
-```
+```groovy
   # Attach |buffer_name| as an output color attachment at location |idx|.
   # The provided buffer must be a `FORMAT` buffer. If no color attachments are
   # provided a single attachment with format `B8G8R8A8_UNORM` will be created
   # for graphics pipelines.
-  BIND BUFFER <buffer_name> AS color LOCATION <idx>
+  BIND BUFFER {buffer_name} AS color LOCATION _idx_
 
   # Attach |buffer_name| as the depth/stencil buffer. The provided buffer must
   # be a `FORMAT` buffer. If no depth/stencil buffer is specified a default
   # buffer of format `D32_SFLOAT_S8_UINT` will be created for graphics
   # pipelines.
-  BIND BUFFER <buffer_name> AS depth_stencil
+  BIND BUFFER {buffer_name} AS depth_stencil
 
   # Bind the buffer of the given |buffer_type| at the given descriptor set
   # and binding. The buffer will use a start index of 0.
-  BIND BUFFER <buffer_name> AS <buffer_type> DESCRIPTOR_SET <id> \
-       BINDING <id>
+  BIND BUFFER {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
+       BINDING _id_
 
   # Bind the sampler at the given descriptor set and binding.
-  BIND SAMPLER <sampler_name> DESCRIPTOR_SET <id> BINDING <id>
+  BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
 ```
 
-```
+```groovy
   # Set |buffer_name| as the vertex data at location |val|.
-  VERTEX_DATA <buffer_name> LOCATION <val>
+  VERTEX_DATA {buffer_name} LOCATION _val_
 
   # Set |buffer_name| as the index data to use for `INDEXED` draw commands.
-  INDEX_DATA <buffer_name>
+  INDEX_DATA {buffer_name}
 ```
 
 ##### Topologies
- * point\_list
- * line\_list
- * line\_list\_with\_adjacency
- * line\_strip
- * line\_strip\_with\_adjacency
- * triangle\_list
- * triangle\_list\_with\_adjacency
- * triangle\_strip
- * triangle\_strip\_with\_adjacency
- * triangle\_fan
- * patch\_list
+ * `point_list`
+ * `line_list`
+ * `line_list_with_adjacency`
+ * `line_strip`
+ * `line_strip_with_adjacency`
+ * `triangle_list`
+ * `triangle_list_with_adjacency`
+ * `triangle_strip`
+ * `triangle_strip_with_adjacency`
+ * `triangle_fan`
+ * `patch_list`
 
 ### Run a pipeline.
 
@@ -265,59 +260,66 @@ command (although, `START_IDX` is required if `COUNT` is provided). The default
 value for `START_IDX` is 0. The default value for `COUNT` is the item count of
 vertex buffer minus the `START_IDX`.
 
-```
+```groovy
 # Run the given |pipeline_name| which must be a `compute` pipeline. The
 # pipeline will be run with the given number of workgroups in the |x|, |y|, |z|
 # dimensions. Each of the x, y and z values must be a uint32.
-RUN <pipeline_name> <x> <y> <z>
+RUN {pipeline_name} _x_ _y_ _z_
 
 # Run the given |pipeline_name| which must be a `graphics` pipeline. The
 # rectangle at |x|, |y|, |width|x|height| will be rendered.
-RUN <pipeline_name> \
-  DRAW_RECT POS <x_in_pixels> <y_in_pixels> \
-  SIZE <width_in_pixels> <height_in_pixels>
+RUN {pipeline_name} \
+  DRAW_RECT POS _x_in_pixels_ _y_in_pixels_ \
+  SIZE _width_in_pixels_ _height_in_pixels_
+```
 
+```groovy
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data must be attached to the pipeline. A start index of 0 will be used
 # and a count of the number of elements in the vertex buffer.
-RUN <pipeline_name> DRAW_ARRAY AS <topology>
+RUN {pipeline_name} DRAW_ARRAY AS {topology}
+
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data must be attached to the pipeline. A start index of |value| will be used
 # and a count of the number of items from |value| to the end of the vertex
 # buffer.
-RUN <pipeline_name> DRAW_ARRAY AS <topology> START_IDX <value>
+RUN {pipeline_name} DRAW_ARRAY AS {topology} START_IDX _value_
+
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data must be attached to the pipeline. A start index of |value| will be used
 # and a count |count_value| will be used.
-RUN <pipeline_name> DRAW_ARRAY AS <topology> START_IDX <value> \
-  COUNT <count_value>
+RUN {pipeline_name} DRAW_ARRAY AS {topology} START_IDX _value_ \
+  COUNT _count_value_
+```
 
+```groovy
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data and  index data must be attached to the pipeline. The vertices will be
 # drawn using the given |topology|. A start index of 0 will be used and the
 # count will be determined by the size of the index data buffer.
-RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology>
+RUN {pipeline_name} DRAW_ARRAY INDEXED AS {topology}
+
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data and  index data must be attached to the pipeline. The vertices will be
 # drawn using the given |topology|. A start index of |value| will be used and
 # the count will be determined by the size of the index data buffer.
-RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology> START_IDX <value>
+RUN {pipeline_name} DRAW_ARRAY INDEXED AS {topology} START_IDX _value_
+
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data and  index data must be attached to the pipeline. The vertices will be
 # drawn using the given |topology|. A start index of |value| will be used and
 # the count of |count_value| items will be processed.
-RUN <pipeline_name> DRAW_ARRAY INDEXED AS <topology> \
-  START_IDX <value> COUNT <count_value>
+RUN {pipeline_name} DRAW_ARRAY INDEXED AS {topology} \
+  START_IDX _value_ COUNT _count_value_
 ```
 
 ### Repeating commands
 
-It is sometimes useful to run a given draw command multiple times. This can be
-to detect deterministic rendering or other features.
-
-```
-REPEAT <count>
-<command>+
+```groovy
+# It is sometimes useful to run a given draw command multiple times. This can be
+# to detect deterministic rendering or other features.
+REPEAT {count}
+{command}+
 END
 ```
 
@@ -329,61 +331,62 @@ The commands which can be used inside a `REPEAT` block are:
   * `RUN`
 
 ### Commands
-```
+
+```groovy
 # Sets the clear color to use for |pipeline| which must be a `graphics`
 # pipeline. The colors are integers from 0 - 255.
-CLEAR_COLOR <pipeline> <r (0 - 255)> <g (0 - 255)> <b (0 - 255)> <a (0 - 255)>
+CLEAR_COLOR {pipeline} _r (0 - 255)_ _g (0 - 255)_ _b (0 - 255)_ _a (0 - 255)_
 
 # Instructs the |pipeline| which must be a `graphics` pipeline to execute the
 # clear command.
-CLEAR <pipeline>
+CLEAR {pipeline}
 ```
 
 ### Expectations
 
 #### Comparators
- * EQ
- * NE
- * LT
- * LE
- * GT
- * GE
- * EQ\_RGB
- * EQ\_RGBA
- * EQ\_BUFFER
+ * `EQ`
+ * `NE`
+ * `LT`
+ * `LE`
+ * `GT`
+ * `GE`
+ * `EQ_RGB`
+ * `EQ_RGBA`
+ * `EQ_BUFFER`
 
-```
+```groovy
 # Checks that |buffer_name| at |x| has the given |value|s when compared
 # with the given |comparator|.
-EXPECT <buffer_name> IDX <x> <comparator> <value>+
+EXPECT {buffer_name} IDX _x_ {comparator} _value_+
 
 # Checks that |buffer_name| at |x| has values within |tolerance| of |value|
 # when compared with the given |comparator|. The |tolerance| can be specified
 # as 1-4 float values separated by spaces.
-EXPECT <buffer_name> IDX <x> TOLERANCE \
-    <tolerance>{1,4} <comparator> <value>+
+EXPECT {buffer_name} IDX _x_ TOLERANCE \
+    _tolerance_{1,4} {comparator} _value_+
 
 # Checks that |buffer_name| at |x|, |y| for |width|x|height| pixels has the
 # given |r|, |g|, |b| values. Each r, g, b value is an integer from 0-255.
-EXPECT <buffer_name> IDX <x_in_pixels> <y_in_pixels> \
-  SIZE <width_in_pixels> <height_in_pixels> \
-  EQ_RGB <r (0 - 255)> <g (0 - 255)> <b (0 - 255)>
+EXPECT {buffer_name} IDX _x_in_pixels_ _y_in_pixels_ \
+  SIZE _width_in_pixels_ _height_in_pixels_ \
+  EQ_RGB _r (0 - 255)_ _g (0 - 255)_ _b (0 - 255)_
 
 # Checks that |buffer_name| at |x|, |y| for |width|x|height| pixels has the
 # given |r|, |g|, |b|, |a| values. Each r, g, b, a value is an integer
 # from 0-255.
-EXPECT <buffer_name> IDX <x_in_pixels> <y_in_pixels> \
-  SIZE <width_in_pixels> <height_in_pixels> \
-  EQ_RGBA <r (0 - 255)> <g (0 - 255)> <b (0 - 255)> <a (0 - 255)>
+EXPECT {buffer_name} IDX _x_in_pixels_ _y_in_pixels_ \
+  SIZE _width_in_pixels_ _height_in_pixels_ \
+  EQ_RGBA _r (0 - 255)_ _g (0 - 255)_ _b (0 - 255)_ _a (0 - 255)_
 
 # Checks that |buffer_1| contents are equal to those of |buffer_2|
-EXPECT <buffer_1> EQ_BUFFER <buffer_2>
+EXPECT {buffer_1} EQ_BUFFER {buffer_2}
 ```
 
 ## Examples
 
 ### Compute Shader
-```
+```groovy
 #!amber
 # Simple amber compute shader.
 
@@ -420,7 +423,7 @@ EXPECT kComputeBuffer IDX 263168 EQ 128 128
 ```
 
 ### Entry Points
-```
+```groovy
 #!amber
 
 SHADER vertex kVertexShader PASSTHROUGH
@@ -496,7 +499,7 @@ EXPECT kImgBuffer IDX 128 128 SIZE 128 128 EQ_RGB 0 255 0
 ```
 
 ### Buffers
-```
+```groovy
 #!amber
 
 SHADER vertex kVertexShader GLSL
@@ -595,132 +598,132 @@ RUN kGraphicsPipeline DRAW_ARRAY AS triangle_list START_IDX 0 COUNT 24
 ```
 
 ### Image Formats
-  * A1R5G5B5_UNORM_PACK16
-  * A2B10G10R10_SINT_PACK32
-  * A2B10G10R10_SNORM_PACK32
-  * A2B10G10R10_SSCALED_PACK32
-  * A2B10G10R10_UINT_PACK32
-  * A2B10G10R10_UNORM_PACK32
-  * A2B10G10R10_USCALED_PACK32
-  * A2R10G10B10_SINT_PACK32
-  * A2R10G10B10_SNORM_PACK32
-  * A2R10G10B10_SSCALED_PACK32
-  * A2R10G10B10_UINT_PACK32
-  * A2R10G10B10_UNORM_PACK32
-  * A2R10G10B10_USCALED_PACK32
-  * A8B8G8R8_SINT_PACK32
-  * A8B8G8R8_SNORM_PACK32
-  * A8B8G8R8_SRGB_PACK32
-  * A8B8G8R8_SSCALED_PACK32
-  * A8B8G8R8_UINT_PACK32
-  * A8B8G8R8_UNORM_PACK32
-  * A8B8G8R8_USCALED_PACK32
-  * B10G11R11_UFLOAT_PACK32
-  * B4G4R4A4_UNORM_PACK16
-  * B5G5R5A1_UNORM_PACK16
-  * B5G6R5_UNORM_PACK16
-  * B8G8R8A8_SINT
-  * B8G8R8A8_SNORM
-  * B8G8R8A8_SRGB
-  * B8G8R8A8_SSCALED
-  * B8G8R8A8_UINT
-  * B8G8R8A8_UNORM
-  * B8G8R8A8_USCALED
-  * B8G8R8_SINT
-  * B8G8R8_SNORM
-  * B8G8R8_SRGB
-  * B8G8R8_SSCALED
-  * B8G8R8_UINT
-  * B8G8R8_UNORM
-  * B8G8R8_USCALED
-  * D16_UNORM
-  * D16_UNORM_S8_UINT
-  * D24_UNORM_S8_UINT
-  * D32_SFLOAT
-  * D32_SFLOAT_S8_UINT
-  * R16G16B16A16_SFLOAT
-  * R16G16B16A16_SINT
-  * R16G16B16A16_SNORM
-  * R16G16B16A16_SSCALED
-  * R16G16B16A16_UINT
-  * R16G16B16A16_UNORM
-  * R16G16B16A16_USCALED
-  * R16G16B16_SFLOAT
-  * R16G16B16_SINT
-  * R16G16B16_SNORM
-  * R16G16B16_SSCALED
-  * R16G16B16_UINT
-  * R16G16B16_UNORM
-  * R16G16B16_USCALED
-  * R16G16_SFLOAT
-  * R16G16_SINT
-  * R16G16_SNORM
-  * R16G16_SSCALED
-  * R16G16_UINT
-  * R16G16_UNORM
-  * R16G16_USCALED
-  * R16_SFLOAT
-  * R16_SINT
-  * R16_SNORM
-  * R16_SSCALED
-  * R16_UINT
-  * R16_UNORM
-  * R16_USCALED
-  * R32G32B32A32_SFLOAT
-  * R32G32B32A32_SINT
-  * R32G32B32A32_UINT
-  * R32G32B32_SFLOAT
-  * R32G32B32_SINT
-  * R32G32B32_UINT
-  * R32G32_SFLOAT
-  * R32G32_SINT
-  * R32G32_UINT
-  * R32_SFLOAT
-  * R32_SINT
-  * R32_UINT
-  * R4G4B4A4_UNORM_PACK16
-  * R4G4_UNORM_PACK8
-  * R5G5B5A1_UNORM_PACK16
-  * R5G6B5_UNORM_PACK16
-  * R64G64B64A64_SFLOAT
-  * R64G64B64A64_SINT
-  * R64G64B64A64_UINT
-  * R64G64B64_SFLOAT
-  * R64G64B64_SINT
-  * R64G64B64_UINT
-  * R64G64_SFLOAT
-  * R64G64_SINT
-  * R64G64_UINT
-  * R64_SFLOAT
-  * R64_SINT
-  * R64_UINT
-  * R8G8B8A8_SINT
-  * R8G8B8A8_SNORM
-  * R8G8B8A8_SRGB
-  * R8G8B8A8_SSCALED
-  * R8G8B8A8_UINT
-  * R8G8B8A8_UNORM
-  * R8G8B8A8_USCALED
-  * R8G8B8_SINT
-  * R8G8B8_SNORM
-  * R8G8B8_SRGB
-  * R8G8B8_SSCALED
-  * R8G8B8_UINT
-  * R8G8B8_UNORM
-  * R8G8B8_USCALED
-  * R8G8_SINT
-  * R8G8_SNORM
-  * R8G8_SRGB
-  * R8G8_SSCALED
-  * R8G8_UINT
-  * R8G8_UNORM
-  * R8G8_USCALED
-  * R8_SINT
-  * R8_SNORM
-  * R8_SRGB
-  * R8_SSCALED
-  * R8_UINT
-  * R8_UNORM
-  * R8_USCALED
-  * S8_UINT
-  * X8_D24_UNORM_PACK32
+  * `A1R5G5B5_UNORM_PACK16`
+  * `A2B10G10R10_SINT_PACK32`
+  * `A2B10G10R10_SNORM_PACK32`
+  * `A2B10G10R10_SSCALED_PACK32`
+  * `A2B10G10R10_UINT_PACK32`
+  * `A2B10G10R10_UNORM_PACK32`
+  * `A2B10G10R10_USCALED_PACK32`
+  * `A2R10G10B10_SINT_PACK32`
+  * `A2R10G10B10_SNORM_PACK32`
+  * `A2R10G10B10_SSCALED_PACK32`
+  * `A2R10G10B10_UINT_PACK32`
+  * `A2R10G10B10_UNORM_PACK32`
+  * `A2R10G10B10_USCALED_PACK32`
+  * `A8B8G8R8_SINT_PACK32`
+  * `A8B8G8R8_SNORM_PACK32`
+  * `A8B8G8R8_SRGB_PACK32`
+  * `A8B8G8R8_SSCALED_PACK32`
+  * `A8B8G8R8_UINT_PACK32`
+  * `A8B8G8R8_UNORM_PACK32`
+  * `A8B8G8R8_USCALED_PACK32`
+  * `B10G11R11_UFLOAT_PACK32`
+  * `B4G4R4A4_UNORM_PACK16`
+  * `B5G5R5A1_UNORM_PACK16`
+  * `B5G6R5_UNORM_PACK16`
+  * `B8G8R8A8_SINT`
+  * `B8G8R8A8_SNORM`
+  * `B8G8R8A8_SRGB`
+  * `B8G8R8A8_SSCALED`
+  * `B8G8R8A8_UINT`
+  * `B8G8R8A8_UNORM`
+  * `B8G8R8A8_USCALED`
+  * `B8G8R8_SINT`
+  * `B8G8R8_SNORM`
+  * `B8G8R8_SRGB`
+  * `B8G8R8_SSCALED`
+  * `B8G8R8_UINT`
+  * `B8G8R8_UNORM`
+  * `B8G8R8_USCALED`
+  * `D16_UNORM`
+  * `D16_UNORM_S8_UINT`
+  * `D24_UNORM_S8_UINT`
+  * `D32_SFLOAT`
+  * `D32_SFLOAT_S8_UINT`
+  * `R16G16B16A16_SFLOAT`
+  * `R16G16B16A16_SINT`
+  * `R16G16B16A16_SNORM`
+  * `R16G16B16A16_SSCALED`
+  * `R16G16B16A16_UINT`
+  * `R16G16B16A16_UNORM`
+  * `R16G16B16A16_USCALED`
+  * `R16G16B16_SFLOAT`
+  * `R16G16B16_SINT`
+  * `R16G16B16_SNORM`
+  * `R16G16B16_SSCALED`
+  * `R16G16B16_UINT`
+  * `R16G16B16_UNORM`
+  * `R16G16B16_USCALED`
+  * `R16G16_SFLOAT`
+  * `R16G16_SINT`
+  * `R16G16_SNORM`
+  * `R16G16_SSCALED`
+  * `R16G16_UINT`
+  * `R16G16_UNORM`
+  * `R16G16_USCALED`
+  * `R16_SFLOAT`
+  * `R16_SINT`
+  * `R16_SNORM`
+  * `R16_SSCALED`
+  * `R16_UINT`
+  * `R16_UNORM`
+  * `R16_USCALED`
+  * `R32G32B32A32_SFLOAT`
+  * `R32G32B32A32_SINT`
+  * `R32G32B32A32_UINT`
+  * `R32G32B32_SFLOAT`
+  * `R32G32B32_SINT`
+  * `R32G32B32_UINT`
+  * `R32G32_SFLOAT`
+  * `R32G32_SINT`
+  * `R32G32_UINT`
+  * `R32_SFLOAT`
+  * `R32_SINT`
+  * `R32_UINT`
+  * `R4G4B4A4_UNORM_PACK16`
+  * `R4G4_UNORM_PACK8`
+  * `R5G5B5A1_UNORM_PACK16`
+  * `R5G6B5_UNORM_PACK16`
+  * `R64G64B64A64_SFLOAT`
+  * `R64G64B64A64_SINT`
+  * `R64G64B64A64_UINT`
+  * `R64G64B64_SFLOAT`
+  * `R64G64B64_SINT`
+  * `R64G64B64_UINT`
+  * `R64G64_SFLOAT`
+  * `R64G64_SINT`
+  * `R64G64_UINT`
+  * `R64_SFLOAT`
+  * `R64_SINT`
+  * `R64_UINT`
+  * `R8G8B8A8_SINT`
+  * `R8G8B8A8_SNORM`
+  * `R8G8B8A8_SRGB`
+  * `R8G8B8A8_SSCALED`
+  * `R8G8B8A8_UINT`
+  * `R8G8B8A8_UNORM`
+  * `R8G8B8A8_USCALED`
+  * `R8G8B8_SINT`
+  * `R8G8B8_SNORM`
+  * `R8G8B8_SRGB`
+  * `R8G8B8_SSCALED`
+  * `R8G8B8_UINT`
+  * `R8G8B8_UNORM`
+  * `R8G8B8_USCALED`
+  * `R8G8_SINT`
+  * `R8G8_SNORM`
+  * `R8G8_SRGB`
+  * `R8G8_SSCALED`
+  * `R8G8_UINT`
+  * `R8G8_UNORM`
+  * `R8G8_USCALED`
+  * `R8_SINT`
+  * `R8_SNORM`
+  * `R8_SRGB`
+  * `R8_SSCALED`
+  * `R8_UINT`
+  * `R8_UNORM`
+  * `R8_USCALED`
+  * `S8_UINT`
+  * `X8_D24_UNORM_PACK32`

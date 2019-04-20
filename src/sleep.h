@@ -19,7 +19,7 @@
 
 namespace amber {
 
-// Pause execution for the given number of microseconds, or longer.
+/// Pause execution for the given number of microseconds, or longer.
 void USleep(uint32_t microseconds);
 
 }  // namespace amber

@@ -23,6 +23,7 @@
 namespace amber {
 namespace vkscript {
 
+/// Parses a data description on the VkScript format into a DatumType object.
 class DatumTypeParser {
  public:
   DatumTypeParser();

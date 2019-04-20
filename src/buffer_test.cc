@@ -83,4 +83,18 @@ TEST_F(BufferTest, SizeMatrix) {
   EXPECT_EQ(60 * sizeof(int16_t), b.GetSizeInBytes());
 }
 
+TEST_F(BufferTest, SizeMatrixPadded) {
+  FormatParser fp;
+  auto fmt = fp.Parse("R32G32B32_SINT");
+  fmt->SetColumnCount(3);
+
+  Buffer b(BufferType::kColor);
+  b.SetFormat(std::move(fmt));
+  b.SetValueCount(9);
+
+  EXPECT_EQ(1U, b.ElementCount());
+  EXPECT_EQ(12U, b.ValueCount());
+  EXPECT_EQ(12U * sizeof(int32_t), b.GetSizeInBytes());
+}
+
 }  // namespace amber

@@ -15,6 +15,7 @@
 #ifndef SRC_EXECUTOR_H_
 #define SRC_EXECUTOR_H_
 
+#include "amber/amber.h"
 #include "amber/result.h"
 #include "src/engine.h"
 #include "src/script.h"
@@ -36,6 +37,7 @@ class Executor {
   /// used as the shader binary.
   Result Execute(Engine* engine,
                  const Script* script,
+                 Delegate* delegate,
                  const ShaderMap& map,
                  ExecutionType executionType);
 

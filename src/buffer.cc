@@ -172,8 +172,10 @@ Result Buffer::SetData(const std::vector<Value>& data) {
       }
       ++i;
     }
-    // Need to add an extra element if this is std140 and there are 3 elements.
-    if (format_->IsStd140() && format_->RowCount() == 3)
+    // For formats which we've padded to the the layout, make sure we skip over
+    // the space in the buffer.
+    size_t pad = format_->ValuesPerRow() - format_->GetComponents().size();
+    for (size_t j = 0; j < pad; ++j)
       ptr += (format_->GetComponents()[0].num_bits / 8);
   }
   return {};

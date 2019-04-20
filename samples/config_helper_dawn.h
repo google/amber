@@ -24,19 +24,18 @@
 #include "amber/amber_dawn.h"
 #include "dawn_native/DawnNative.h"
 #include "samples/config_helper.h"
-#include "samples/dawn_device_metal.h"
 
 namespace sample {
 
-// Child class of ConfigHelperImpl for Dawn.
+/// Child class of ConfigHelperImpl for Dawn.
 class ConfigHelperDawn : public ConfigHelperImpl {
  public:
   ConfigHelperDawn();
   ~ConfigHelperDawn() override;
 
-  // Create a Dawn instance and device and return them as
-  // amber::DawnEngineConfig.  Engine version number and features
-  // and extension lists are ignored.
+  /// Create a Dawn instance and device and return them as
+  /// amber::DawnEngineConfig.  Engine version number and features
+  /// and extension lists are ignored.
   amber::Result CreateConfig(
       uint32_t engine_major,
       uint32_t engine_minor,

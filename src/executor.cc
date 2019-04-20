@@ -49,6 +49,7 @@ Result Executor::CompileShaders(const amber::Script* script,
 
 Result Executor::Execute(Engine* engine,
                          const amber::Script* script,
+                         Delegate* delegate,
                          const ShaderMap& shader_map,
                          ExecutionType executionType) {
   engine->SetEngineData(script->GetEngineData());
@@ -70,6 +71,9 @@ Result Executor::Execute(Engine* engine,
 
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
+    if (delegate && delegate->LogExecuteCalls())
+      delegate->Log(std::to_string(cmd->GetLine()) + ": " + cmd->ToString());
+
     Result r = ExecuteCommand(engine, cmd.get());
     if (!r.IsSuccess())
       return r;
