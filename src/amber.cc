@@ -169,7 +169,7 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
 
   Executor executor;
   Result executor_result = executor.Execute(
-      engine.get(), script, shader_data,
+      engine.get(), script, opts->delegate, shader_data,
       opts->pipeline_create_only ? ExecutionType::kPipelineCreateOnly
                                  : ExecutionType::kExecute);
   // Hold the executor result until the extractions are complete. This will let
