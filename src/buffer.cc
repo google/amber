@@ -111,10 +111,20 @@ Result Buffer::IsEqual(Buffer* buffer) const {
 }
 
 Result Buffer::SetData(const std::vector<Value>& data) {
-  SetValueCount(static_cast<uint32_t>(data.size()));
+  return SetDataWithOffset(data, 0);
+}
+
+Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
+                                 uint32_t offset) {
+  // Multiply by the input needed because the value count will use the needed
+  // input as the multiplier
+  uint32_t value_count =
+      ((offset / format_->SizeInBytes()) * format_->InputNeededPerElement()) +
+      static_cast<uint32_t>(data.size());
+  SetValueCount(value_count);
   bytes_.resize(GetSizeInBytes());
 
-  uint8_t* ptr = bytes_.data();
+  uint8_t* ptr = bytes_.data() + offset;
   for (uint32_t i = 0; i < data.size();) {
     const auto pack_size = format_->GetPackSize();
     if (pack_size) {
@@ -133,52 +143,76 @@ Result Buffer::SetData(const std::vector<Value>& data) {
     }
 
     for (const auto& comp : format_->GetComponents()) {
-      if (comp.IsInt8()) {
-        *(ValuesAs<int8_t>(ptr)) = data[i].AsInt8();
-        ptr += sizeof(int8_t);
-      } else if (comp.IsInt16()) {
-        *(ValuesAs<int16_t>(ptr)) = data[i].AsInt16();
-        ptr += sizeof(int16_t);
-      } else if (comp.IsInt32()) {
-        *(ValuesAs<int32_t>(ptr)) = data[i].AsInt32();
-        ptr += sizeof(int32_t);
-      } else if (comp.IsInt64()) {
-        *(ValuesAs<int64_t>(ptr)) = data[i].AsInt64();
-        ptr += sizeof(int64_t);
-      } else if (comp.IsUint8()) {
-        *(ValuesAs<uint8_t>(ptr)) = data[i].AsUint8();
-        ptr += sizeof(uint8_t);
-      } else if (comp.IsUint16()) {
-        *(ValuesAs<uint16_t>(ptr)) = data[i].AsUint16();
-        ptr += sizeof(uint16_t);
-      } else if (comp.IsUint32()) {
-        *(ValuesAs<uint32_t>(ptr)) = data[i].AsUint32();
-        ptr += sizeof(uint32_t);
-      } else if (comp.IsUint64()) {
-        *(ValuesAs<uint64_t>(ptr)) = data[i].AsUint64();
-        ptr += sizeof(uint64_t);
-      } else if (comp.IsFloat()) {
-        *(ValuesAs<float>(ptr)) = data[i].AsFloat();
-        ptr += sizeof(float);
-      } else if (comp.IsDouble()) {
-        *(ValuesAs<double>(ptr)) = data[i].AsDouble();
-        ptr += sizeof(double);
-      } else if (comp.IsFloat16()) {
-        *(ValuesAs<uint16_t>(ptr)) = FloatToHexFloat16(data[i].AsFloat());
-        ptr += sizeof(uint16_t);
-      } else {
-        // The float 10 and float 11 sizes are only used in PACKED formats.
-        assert(false && "Not reached");
-      }
+      ptr += WriteValueFromComponent(data[i], comp, ptr);
       ++i;
     }
     // For formats which we've padded to the the layout, make sure we skip over
     // the space in the buffer.
     size_t pad = format_->ValuesPerRow() - format_->GetComponents().size();
-    for (size_t j = 0; j < pad; ++j)
-      ptr += (format_->GetComponents()[0].num_bits / 8);
+    for (size_t j = 0; j < pad; ++j) {
+      Value v;
+      ptr += WriteValueFromComponent(v, format_->GetComponents()[0], ptr);
+    }
   }
   return {};
+}
+
+uint32_t Buffer::WriteValueFromComponent(const Value& value,
+                                         const Format::Component& comp,
+                                         uint8_t* ptr) {
+  if (comp.IsInt8()) {
+    *(ValuesAs<int8_t>(ptr)) = value.AsInt8();
+    return sizeof(int8_t);
+  }
+  if (comp.IsInt16()) {
+    *(ValuesAs<int16_t>(ptr)) = value.AsInt16();
+    return sizeof(int16_t);
+  }
+  if (comp.IsInt32()) {
+    *(ValuesAs<int32_t>(ptr)) = value.AsInt32();
+    return sizeof(int32_t);
+  }
+  if (comp.IsInt64()) {
+    *(ValuesAs<int64_t>(ptr)) = value.AsInt64();
+    return sizeof(int64_t);
+  }
+  if (comp.IsUint8()) {
+    *(ValuesAs<uint8_t>(ptr)) = value.AsUint8();
+    return sizeof(uint8_t);
+  }
+  if (comp.IsUint16()) {
+    *(ValuesAs<uint16_t>(ptr)) = value.AsUint16();
+    return sizeof(uint16_t);
+  }
+  if (comp.IsUint32()) {
+    *(ValuesAs<uint32_t>(ptr)) = value.AsUint32();
+    return sizeof(uint32_t);
+  }
+  if (comp.IsUint64()) {
+    *(ValuesAs<uint64_t>(ptr)) = value.AsUint64();
+    return sizeof(uint64_t);
+  }
+  if (comp.IsFloat()) {
+    *(ValuesAs<float>(ptr)) = value.AsFloat();
+    return sizeof(float);
+  }
+  if (comp.IsDouble()) {
+    *(ValuesAs<double>(ptr)) = value.AsDouble();
+    return sizeof(double);
+  }
+  if (comp.IsFloat16()) {
+    *(ValuesAs<uint16_t>(ptr)) = FloatToHexFloat16(value.AsFloat());
+    return sizeof(uint16_t);
+  }
+
+  // The float 10 and float 11 sizes are only used in PACKED formats.
+  assert(false && "Not reached");
+  return 0;
+}
+
+void Buffer::ResizeTo(uint32_t element_count) {
+  element_count_ = element_count;
+  bytes_.resize(element_count * format_->SizeInBytes());
 }
 
 }  // namespace amber

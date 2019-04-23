@@ -18,15 +18,15 @@
 #include <cassert>
 #include <limits>
 
+#include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
 namespace amber {
 namespace vulkan {
 
-PushConstant::PushConstant(Device* device) : device_(device) {
-  memory_.resize(device_->GetMaxPushConstants());
-}
+PushConstant::PushConstant(Device* device)
+    : device_(device), buffer_(MakeUnique<Buffer>()) {}
 
 PushConstant::~PushConstant() = default;
 
@@ -97,7 +97,7 @@ Result PushConstant::RecordPushConstantVkCommand(
   device_->GetPtrs()->vkCmdPushConstants(
       command->GetVkCommandBuffer(), pipeline_layout, VK_SHADER_STAGE_ALL,
       push_const_range.offset, push_const_range.size,
-      memory_.data() + push_const_range.offset);
+      buffer_->GetValues<uint8_t*>() + push_const_range.offset);
   return {};
 }
 
@@ -106,12 +106,15 @@ Result PushConstant::AddBufferData(const BufferCommand* command) {
     return Result(
         "PushConstant::AddBufferData BufferCommand type is not push constant");
 
+  auto* fmt = command->GetBuffer()->GetFormat();
   push_constant_data_.emplace_back();
-  push_constant_data_.back().format = command->GetBuffer()->GetFormat();
+  push_constant_data_.back().format = fmt;
   push_constant_data_.back().offset = command->GetOffset();
-  push_constant_data_.back().size_in_bytes = command->GetSize();
+  push_constant_data_.back().size_in_bytes =
+      (static_cast<uint32_t>(command->GetValues().size()) /
+       fmt->InputNeededPerElement()) *
+      fmt->SizeInBytes();
   push_constant_data_.back().values = command->GetValues();
-
   return {};
 }
 
@@ -127,7 +130,11 @@ Result PushConstant::UpdateMemoryWithInput(const BufferInput& input) {
         " exceeds memory size");
   }
 
-  input.UpdateBufferWithValues(memory_.data());
+  if (buffer_->GetFormat() && !buffer_->GetFormat()->Equal(input.format))
+    return Result("Vulkan: push constants must all have the same format");
+
+  buffer_->SetFormat(MakeUnique<Format>(*input.format));
+  buffer_->SetDataWithOffset(input.values, input.offset);
   return {};
 }
 

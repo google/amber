@@ -2973,7 +2973,7 @@ TEST_F(CommandParserTest, SSBO) {
   EXPECT_TRUE(cmd->IsSSBO());
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(5U, cmd->GetBinding());
-  EXPECT_EQ(40U, cmd->GetSize());
+  EXPECT_EQ(40U, cmd->GetBuffer()->ElementCount());
 }
 
 TEST_F(CommandParserTest, SSBOWithDescriptorSet) {
@@ -2993,7 +2993,7 @@ TEST_F(CommandParserTest, SSBOWithDescriptorSet) {
   EXPECT_TRUE(cmd->IsSSBO());
   EXPECT_EQ(9U, cmd->GetDescriptorSet());
   EXPECT_EQ(5U, cmd->GetBinding());
-  EXPECT_EQ(40U, cmd->GetSize());
+  EXPECT_EQ(40U, cmd->GetBuffer()->ElementCount());
 }
 
 TEST_F(CommandParserTest, SSBOExtraParameter) {
@@ -3091,7 +3091,6 @@ TEST_F(CommandParserTest, SSBOSubdataWithFloat) {
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(16U, cmd->GetOffset());
-  EXPECT_EQ(16U, cmd->GetSize());
   ASSERT_TRUE(cmd->IsSubdata());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
@@ -3137,7 +3136,6 @@ TEST_F(CommandParserTest, SSBOSubdataWithDescriptorSet) {
   EXPECT_EQ(5U, cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(16U, cmd->GetOffset());
-  EXPECT_EQ(16U, cmd->GetSize());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsFloat());
@@ -3171,7 +3169,6 @@ TEST_F(CommandParserTest, SSBOSubdataWithInts) {
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(8U, cmd->GetOffset());
-  EXPECT_EQ(8U, cmd->GetSize());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsInt16());
@@ -3205,7 +3202,6 @@ TEST_F(CommandParserTest, SSBOSubdataWithMultipleVectors) {
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(6U, cmd->GetBinding());
   EXPECT_EQ(8U, cmd->GetOffset());
-  EXPECT_EQ(16U, cmd->GetSize());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsInt16());
@@ -3338,7 +3334,6 @@ TEST_F(CommandParserTest, Uniform) {
   auto* cmd = cmds[0]->AsBuffer();
   EXPECT_TRUE(cmd->IsPushConstant());
   EXPECT_EQ(32U, cmd->GetOffset());
-  EXPECT_EQ(16U, cmd->GetSize());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsFloat());
@@ -3380,7 +3375,6 @@ TEST_F(CommandParserTest, UniformWithContinuation) {
   auto* cmd = cmds[0]->AsBuffer();
   EXPECT_TRUE(cmd->IsPushConstant());
   EXPECT_EQ(16U, cmd->GetOffset());
-  EXPECT_EQ(32U, cmd->GetSize());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsFloat());
@@ -3429,7 +3423,7 @@ TEST_F(CommandParserTest, UniformInvalidStringOffset) {
 }
 
 TEST_F(CommandParserTest, UniformMissingValues) {
-  std::string data = "uniform vec3 2 2.1 3.2 4.3 5.5";
+  std::string data = "uniform vec3 0 2.1 3.2 4.3 5.5";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
@@ -3458,7 +3452,6 @@ TEST_F(CommandParserTest, UniformUBO) {
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetDescriptorSet());
   EXPECT_EQ(2U, cmd->GetBinding());
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetOffset());
-  EXPECT_EQ(16U, cmd->GetSize());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsFloat());
@@ -3471,6 +3464,18 @@ TEST_F(CommandParserTest, UniformUBO) {
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FLOAT_EQ(results[i], values[i].AsFloat());
   }
+}
+
+TEST_F(CommandParserTest, UniformUBODisallowUpdatingInMiddleOfElement) {
+  std::string data = "uniform ubo 2 vec3 4 2.1 3.2 4.3";
+
+  Pipeline pipeline(PipelineType::kGraphics);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
+  Result r = cp.Parse();
+  ASSERT_FALSE(r.IsSuccess());
+
+  EXPECT_EQ("1: offset for uniform must be multiple of data size", r.Error());
 }
 
 TEST_F(CommandParserTest, UniformUBOOffsetMustBePositive) {
@@ -3502,7 +3507,6 @@ TEST_F(CommandParserTest, UniformUBOWithDescriptorSet) {
   EXPECT_EQ(3U, cmd->GetDescriptorSet());
   EXPECT_EQ(2U, cmd->GetBinding());
   EXPECT_EQ(16U, cmd->GetOffset());
-  EXPECT_EQ(16U, cmd->GetSize());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
   EXPECT_TRUE(fmt->IsFloat());
@@ -3574,7 +3578,7 @@ TEST_F(CommandParserTest, UniformUBOInvalidStringOffset) {
 }
 
 TEST_F(CommandParserTest, UniformUBOMissingValues) {
-  std::string data = "uniform ubo 0 vec3 2 2.1 3.2 4.3 5.5";
+  std::string data = "uniform ubo 0 vec3 0 2.1 3.2 4.3 5.5";
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;

@@ -75,7 +75,6 @@ std::unique_ptr<Format> DatumType::AsFormat() const {
     name += "UINT";
 
   FormatParser fp;
-
   auto fmt = fp.Parse(name);
   // There is no format string equivalent to a matrix ...
   if (column_count_ > 1) {

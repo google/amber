@@ -31,21 +31,8 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 
-/// Contains information for data to be added to a buffer.
-struct BufferInput {
-  void UpdateBufferWithValues(void* buffer) const;
-
-  /// Offset into the buffer to write the data.
-  uint32_t offset;
-  /// Number of bytes this data consumes.
-  uint32_t size_in_bytes;
-  /// The format of the data.
-  Format* format;
-  /// The actual data values.
-  std::vector<Value> values;
-};
-
-/// Class for Vulkan resources.
+// Class for Vulkan resources. Its children are Vulkan Buffer, Vulkan Image,
+// and a class for push constant.
 class Resource {
  public:
   virtual ~Resource();

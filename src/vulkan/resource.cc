@@ -45,42 +45,7 @@ VkMemoryBarrier kMemoryBarrierForAll = {
         VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT |
         VK_ACCESS_HOST_READ_BIT | VK_ACCESS_HOST_WRITE_BIT};
 
-// Fill the contents of |buffer| with |values|.
-template <typename T>
-void SetValuesForBuffer(void* buffer, const std::vector<Value>& values) {
-  T* ptr = static_cast<T*>(buffer);
-  for (const auto& v : values) {
-    *ptr = v.IsInteger() ? static_cast<T>(v.AsUint64())
-                         : static_cast<T>(v.AsDouble());
-    ++ptr;
-  }
-}
-
 }  // namespace
-
-void BufferInput::UpdateBufferWithValues(void* buffer) const {
-  uint8_t* ptr = static_cast<uint8_t*>(buffer) + offset;
-  if (format->IsInt8())
-    SetValuesForBuffer<int8_t>(ptr, values);
-  else if (format->IsUint8())
-    SetValuesForBuffer<uint8_t>(ptr, values);
-  else if (format->IsInt16())
-    SetValuesForBuffer<int16_t>(ptr, values);
-  else if (format->IsUint16())
-    SetValuesForBuffer<uint16_t>(ptr, values);
-  else if (format->IsInt32())
-    SetValuesForBuffer<int32_t>(ptr, values);
-  else if (format->IsUint32())
-    SetValuesForBuffer<uint32_t>(ptr, values);
-  else if (format->IsInt64())
-    SetValuesForBuffer<int64_t>(ptr, values);
-  else if (format->IsUint64())
-    SetValuesForBuffer<uint64_t>(ptr, values);
-  else if (format->IsFloat())
-    SetValuesForBuffer<float>(ptr, values);
-  else if (format->IsDouble())
-    SetValuesForBuffer<double>(ptr, values);
-}
 
 Resource::Resource(Device* device, uint32_t size_in_bytes)
     : device_(device), size_in_bytes_(size_in_bytes) {}

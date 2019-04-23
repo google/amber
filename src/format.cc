@@ -31,10 +31,8 @@ uint32_t Format::SizeInBytesPerRow() const {
 
   uint32_t inflate = 0;
   // Std140 always has 4 elements. std430 expands 3 elements to 4.
-  if (is_std140_)
+  if ((is_std140_ && column_count_ > 1) || components_.size() == 3)
     inflate = 4U - static_cast<uint32_t>(components_.size());
-  else if (components_.size() == 3)
-    inflate = 1;
 
   for (uint32_t i = 0; i < inflate; ++i)
     bits += components_[0].num_bits;
