@@ -112,7 +112,8 @@ Result PushConstant::AddBufferData(const BufferCommand* command) {
   push_constant_data_.back().offset = command->GetOffset();
   push_constant_data_.back().size_in_bytes =
       (static_cast<uint32_t>(command->GetValues().size()) /
-        fmt->InputNeededPerElement()) * fmt->SizeInBytes();
+       fmt->InputNeededPerElement()) *
+      fmt->SizeInBytes();
   push_constant_data_.back().values = command->GetValues();
   return {};
 }
