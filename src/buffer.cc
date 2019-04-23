@@ -221,7 +221,8 @@ Result Buffer::SetDataFromBuffer(const Buffer* src, uint32_t offset) {
     bytes_.resize(offset + src->bytes_.size());
 
   std::memcpy(bytes_.data() + offset, src->bytes_.data(), src->bytes_.size());
-  element_count_ = bytes_.size() / format_->SizeInBytes();
+  element_count_ =
+      static_cast<uint32_t>(bytes_.size()) / format_->SizeInBytes();
   return {};
 }
 
