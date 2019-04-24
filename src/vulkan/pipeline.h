@@ -51,6 +51,9 @@ class Pipeline {
 
   Result AddDescriptor(const BufferCommand*);
 
+  /// Add buffer data to the push constants.
+  Result AddPushConstantBuffer(const Buffer* buf);
+
   /// Reads back the contents of resources of all descriptors to a
   /// buffer data object and put it into buffer data queue in host.
   Result ReadbackDescriptorsToHostDataQueue();

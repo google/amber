@@ -187,7 +187,7 @@ Result Pipeline::CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout) {
 
   VkPushConstantRange push_const_range =
       push_constant_->GetVkPushConstantRange();
-  if (push_const_range.size) {
+  if (push_const_range.size > 0) {
     pipeline_layout_info.pushConstantRangeCount = 1U;
     pipeline_layout_info.pPushConstantRanges = &push_const_range;
   }
@@ -239,6 +239,10 @@ Result Pipeline::AddPushConstant(const BufferCommand* command) {
         "Pipeline::AddPushConstant BufferCommand type is not push constant");
 
   return push_constant_->AddBufferData(command);
+}
+
+Result Pipeline::AddPushConstantBuffer(const Buffer* buf) {
+  return push_constant_->AddBuffer(buf);
 }
 
 Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
