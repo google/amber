@@ -90,6 +90,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_pipeline_test.cc
     amberscript/parser_repeat_test.cc
     amberscript/parser_run_test.cc
+    amberscript/parser_set_test.cc
     amberscript/parser_shader_opt_test.cc
     amberscript/parser_shader_test.cc
     amberscript/parser_test.cc

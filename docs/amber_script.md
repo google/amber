@@ -39,9 +39,23 @@ with `VariablePointerFeatures.variablePointers` and
 
 Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
 commands.
+
 ```groovy
 DEVICE_EXTENSION VK_KHR_get_physical_device_properties2
 INSTANCE_EXTENSION VK_KHR_storage_buffer_storage_class
+```
+
+### Setting Engine Configuration
+
+In some instances there is extra data we want to provide to an engine for
+configuration purposes. The `SET ENGINE_DATA` command allows that for the given
+set of data types.
+
+#### Engine Data Variables
+  * `fence_timeout_ms`  - value must be a single uint32 in milliseconds.
+
+```groovy
+SET ENGINE_DATA {engine data variable} {value}*
 ```
 
 ### Shaders
@@ -70,7 +84,7 @@ types, but in that case must only provide a single shader type in the module.
  * `GLSL`  (with glslang)
  * `HLSL`  (with dxc or glslang if dxc disabled)  -- future
  * `SPIRV-ASM` (with spirv-as)
- * `SPIRV-HEX` (decoded straight to spv)
+ * `SPIRV-HEX` (decoded straight to SPIR-V)
  * `OPENCL-C` (with clspv)  --- potentially?  -- future
 
 ```groovy
