@@ -84,6 +84,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParsePipelineBlock();
     } else if (tok == "REPEAT") {
       r = ParseRepeat();
+    } else if (tok == "SET") {
+      r = ParseSet();
     } else if (tok == "SHADER") {
       r = ParseShaderBlock();
     } else {
@@ -994,6 +996,9 @@ Result Parser::ParseRun() {
     if (!pipeline->IsGraphics())
       return Result("RUN command requires graphics pipeline");
 
+    if (pipeline->GetVertexBuffers().empty())
+      return Result("RUN DRAW_ARRAY requires attached vertex buffer");
+
     token = tokenizer_->NextToken();
     if (!token->IsString() || token->AsString() != "AS")
       return Result("missing AS for RUN command");
@@ -1009,35 +1014,55 @@ Result Parser::ParseRun() {
       return Result("invalid topology for RUN command: " + token->AsString());
 
     token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "START_IDX")
-      return Result("missing START_IDX for RUN command");
+    uint32_t start_idx = 0;
+    uint32_t count = 0;
+    if (!token->IsEOS() && !token->IsEOL()) {
+      if (!token->IsString() || token->AsString() != "START_IDX")
+        return Result("missing START_IDX for RUN command");
 
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger()) {
-      return Result("invalid START_IDX value for RUN command: " +
-                    token->ToOriginalString());
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger()) {
+        return Result("invalid START_IDX value for RUN command: " +
+                      token->ToOriginalString());
+      }
+      if (token->AsInt32() < 0)
+        return Result("START_IDX value must be >= 0 for RUN command");
+      start_idx = token->AsUint32();
+
+      token = tokenizer_->NextToken();
+
+      if (!token->IsEOS() && !token->IsEOL()) {
+        if (!token->IsString() || token->AsString() != "COUNT")
+          return Result("missing COUNT for RUN command");
+
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger()) {
+          return Result("invalid COUNT value for RUN command: " +
+                        token->ToOriginalString());
+        }
+        if (token->AsInt32() <= 0)
+          return Result("COUNT value must be > 0 for RUN command");
+
+        count = token->AsUint32();
+      }
     }
-    if (token->AsInt32() < 0)
-      return Result("START_IDX value must be >= 0 for RUN command");
-    uint32_t start_idx = token->AsUint32();
-
-    token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "COUNT")
-      return Result("missing COUNT for RUN command");
-
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger()) {
-      return Result("invalid COUNT value for RUN command: " +
-                    token->ToOriginalString());
+    // If we get here then we never set count, as if count was set it must
+    // be > 0.
+    if (count == 0) {
+      count =
+          pipeline->GetVertexBuffers()[0].buffer->ElementCount() - start_idx;
     }
-    if (token->AsInt32() <= 0)
-      return Result("COUNT value must be > 0 for RUN command");
+
+    if (start_idx + count >
+        pipeline->GetVertexBuffers()[0].buffer->ElementCount()) {
+      return Result("START_IDX plus COUNT exceeds vertex buffer data size");
+    }
 
     auto cmd = MakeUnique<DrawArraysCommand>(pipeline, PipelineData{});
     cmd->SetLine(line);
     cmd->SetTopology(topo);
     cmd->SetFirstVertexIndex(start_idx);
-    cmd->SetVertexCount(token->AsUint32());
+    cmd->SetVertexCount(count);
 
     command_list_.push_back(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
@@ -1484,6 +1509,32 @@ Result Parser::ParseDerivePipelineBlock() {
   pipeline->SetName(name);
 
   return ParsePipelineBody("DERIVE_PIPELINE", std::move(pipeline));
+}
+
+Result Parser::ParseSet() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "ENGINE_DATA")
+    return Result("SET missing ENGINE_DATA");
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOS() || token->IsEOL())
+    return Result("SET missing variable to be set");
+
+  if (!token->IsString())
+    return Result("SET invalid variable to set: " + token->ToOriginalString());
+
+  if (token->AsString() != "fence_timeout_ms")
+    return Result("SET unknown variable provided: " + token->AsString());
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOS() || token->IsEOL())
+    return Result("SET missing value for fence_timeout_ms");
+  if (!token->IsInteger())
+    return Result("SET invalid value for fence_timeout_ms, must be uint32");
+
+  script_->GetEngineData().fence_timeout_ms = token->AsUint32();
+
+  return ValidateEndOfStatement("SET command");
 }
 
 }  // namespace amberscript
