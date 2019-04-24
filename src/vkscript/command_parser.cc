@@ -709,7 +709,8 @@ Result CommandParser::ProcessUniform() {
       b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
       buffer = b.get();
       script_->AddBuffer(std::move(b));
-      pipeline_->AddBuffer(buffer, set, binding);
+      if (!cmd->IsPushConstant())
+        pipeline_->AddBuffer(buffer, set, binding);
     }
     cmd->SetBuffer(buffer);
   }
