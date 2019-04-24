@@ -76,7 +76,7 @@ class Buffer {
     format_ = std::move(format);
   }
   /// Returns the Format describing the buffer data.
-  Format* GetFormat() { return format_.get(); }
+  Format* GetFormat() const { return format_.get(); }
 
   /// Sets the buffer |name|.
   void SetName(const std::string& name) { name_ = name; }
@@ -154,6 +154,9 @@ class Buffer {
   /// Write |data| into the buffer |offset| bytes from the start. Write
   /// |size_in_bytes| of data.
   Result SetDataWithOffset(const std::vector<Value>& data, uint32_t offset);
+
+  /// Writes |src| data into buffer at |offset|.
+  Result SetDataFromBuffer(const Buffer* src, uint32_t offset);
 
   /// Returns a pointer to the internal storage of the buffer.
   std::vector<uint8_t>* ValuePtr() { return &bytes_; }

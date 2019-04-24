@@ -15,6 +15,7 @@
 #include "src/buffer.h"
 
 #include <cassert>
+#include <cstring>
 
 namespace amber {
 namespace {
@@ -72,8 +73,8 @@ Result Buffer::CopyTo(Buffer* buffer) const {
 }
 
 Result Buffer::IsEqual(Buffer* buffer) const {
-  if (buffer->buffer_type_ != buffer_type_)
-    return Result{"Buffers have a different type"};
+  if (!buffer->format_->Equal(format_.get()))
+    return Result{"Buffers have a different format"};
   if (buffer->element_count_ != element_count_)
     return Result{"Buffers have a different size"};
   if (buffer->width_ != width_)
@@ -213,6 +214,16 @@ uint32_t Buffer::WriteValueFromComponent(const Value& value,
 void Buffer::ResizeTo(uint32_t element_count) {
   element_count_ = element_count;
   bytes_.resize(element_count * format_->SizeInBytes());
+}
+
+Result Buffer::SetDataFromBuffer(const Buffer* src, uint32_t offset) {
+  if (bytes_.size() < offset + src->bytes_.size())
+    bytes_.resize(offset + src->bytes_.size());
+
+  std::memcpy(bytes_.data() + offset, src->bytes_.data(), src->bytes_.size());
+  element_count_ =
+      static_cast<uint32_t>(bytes_.size()) / format_->SizeInBytes();
+  return {};
 }
 
 }  // namespace amber
