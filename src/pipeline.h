@@ -163,6 +163,11 @@ class Pipeline {
   /// |descriptor_set| and |binding|.
   Buffer* GetBufferForBinding(uint32_t descriptor_set, uint32_t binding) const;
 
+  Result SetPushConstantBuffer(Buffer* buf);
+  const BufferInfo& GetPushConstantBuffer() const {
+    return push_constant_buffer_;
+  }
+
   /// Validates that the pipeline has been created correctly.
   Result Validate() const;
 
@@ -184,6 +189,7 @@ class Pipeline {
   std::vector<BufferInfo> vertex_buffers_;
   std::vector<BufferInfo> buffers_;
   BufferInfo depth_buffer_;
+  BufferInfo push_constant_buffer_;
   Buffer* index_buffer_ = nullptr;
 
   uint32_t fb_width_ = 250;

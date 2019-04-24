@@ -542,9 +542,7 @@ Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
 
 Result Parser::ToBufferType(const std::string& name, BufferType* type) {
   assert(type);
-  if (name == "push_constant")
-    *type = BufferType::kPushConstant;
-  else if (name == "uniform")
+  if (name == "uniform")
     *type = BufferType::kUniform;
   else if (name == "storage")
     *type = BufferType::kStorage;
@@ -594,6 +592,11 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
   } else if (token->AsString() == "depth_stencil") {
     buffer->SetBufferType(BufferType::kDepth);
     Result r = pipeline->SetDepthBuffer(buffer);
+    if (!r.IsSuccess())
+      return r;
+  } else if (token->AsString() == "push_constant") {
+    buffer->SetBufferType(BufferType::kPushConstant);
+    Result r = pipeline->SetPushConstantBuffer(buffer);
     if (!r.IsSuccess())
       return r;
   } else {
@@ -1153,15 +1156,22 @@ Result Parser::ParseExpect() {
                     token->AsString());
     }
 
-    if (buffer->GetBufferType() != buffer_2->GetBufferType())
+    if (!buffer->GetFormat()->Equal(buffer_2->GetFormat())) {
       return Result(
-          "EXPECT EQ_BUFFER command cannot compare buffers of different type");
-    if (buffer->ElementCount() != buffer_2->ElementCount())
+          "EXPECT EQ_BUFFER command cannot compare buffers of differing "
+          "format");
+    }
+    if (buffer->ElementCount() != buffer_2->ElementCount()) {
       return Result(
-          "EXPECT EQ_BUFFER command cannot compare buffers of different size");
-    if (buffer->GetWidth() != buffer_2->GetWidth())
+          "EXPECT EQ_BUFFER command cannot compare buffers of different "
+          "size: " +
+          std::to_string(buffer->ElementCount()) + " vs " +
+          std::to_string(buffer_2->ElementCount()));
+    }
+    if (buffer->GetWidth() != buffer_2->GetWidth()) {
       return Result(
           "EXPECT EQ_BUFFER command cannot compare buffers of different width");
+    }
     if (buffer->GetHeight() != buffer_2->GetHeight()) {
       return Result(
           "EXPECT EQ_BUFFER command cannot compare buffers of different "

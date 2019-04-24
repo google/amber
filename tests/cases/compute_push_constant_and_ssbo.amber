@@ -1,0 +1,71 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER compute compute_shader GLSL
+#version 430
+
+layout(set = 0, binding = 0) buffer block0 {
+  uint data_set0_binding0[];
+};
+
+// push_constant compiled as std430 by glslang
+layout(push_constant) uniform block1 {
+  uint constant0[3];   // Offset:  0, array stride:  4
+  uint constant1;      //         12
+  uvec3 constant2[3];  //         16, array stride: 16
+  uint constant3;      //         64
+};
+
+void main() {
+  int offset = 0;
+  for (int i = 0; i < 3; ++i)
+    data_set0_binding0[offset++] = constant0[i];
+
+  data_set0_binding0[offset++] = constant1;
+
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j)
+      data_set0_binding0[offset++] = constant2[i][j];
+  }
+
+  data_set0_binding0[offset++] = constant3;
+}
+END
+
+BUFFER buf0 DATA_TYPE uint32 SIZE 14 FILL 0
+BUFFER const_buf DATA_TYPE uint32 DATA
+ 1  2  3  4  # constant0[3] + constant1
+ 5  6  7  0  # constant2[0]
+ 8  9 10  0  # constant2[1]
+11 12 13  0  # constant2[2]
+14           # constant3
+END
+
+PIPELINE compute pipeline
+  ATTACH compute_shader
+
+  BIND BUFFER buf0 AS storage DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER const_buf AS push_constant
+END
+
+RUN pipeline 3 1 1
+
+BUFFER result DATA_TYPE uint32 DATA
+ 1  2  3  4
+ 5  6  7  8
+ 9 10 11 12
+13 14
+END
+EXPECT buf0 EQ_BUFFER result
