@@ -20,7 +20,6 @@
 #include "amber/value.h"
 
 namespace ppm {
-
 namespace {
 
 const uint32_t kMaximumColorValue = 255;
@@ -39,11 +38,15 @@ uint8_t byte2(uint32_t word) {
 
 }  // namespace
 
-void ConvertToPPM(uint32_t width,
-                  uint32_t height,
-                  const std::vector<amber::Value>& values,
-                  std::vector<uint8_t>* buffer) {
-  assert(values.size() == width * height);
+amber::Result ConvertToPPM(uint32_t width,
+                           uint32_t height,
+                           const std::vector<amber::Value>& values,
+                           std::vector<uint8_t>* buffer) {
+  if (values.size() != (width * height)) {
+    return amber::Result("Values size (" + std::to_string(values.size()) +
+                         ") != " + "width * height (" +
+                         std::to_string(width * height) + ")");
+  }
 
   // Write PPM header
   std::string image = "P6\n";
@@ -62,6 +65,8 @@ void ConvertToPPM(uint32_t width,
     buffer->push_back(byte0(pixel));  // B
     // PPM does not support alpha channel
   }
+
+  return {};
 }
 
 }  // namespace ppm
