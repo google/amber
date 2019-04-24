@@ -41,9 +41,9 @@ std::vector<ShaderInfo> Script::GetShaderInfo() const {
 void Script::AddRequiredExtension(const std::string& ext) {
   // Make this smarter when we have more instance extensions to match.
   if (ext == "VK_KHR_get_physical_device_properties2")
-    engine_info_.required_instance_extensions.push_back(ext);
+    AddRequiredInstanceExtension(ext);
   else
-    engine_info_.required_device_extensions.push_back(ext);
+    AddRequiredDeviceExtension(ext);
 }
 
 bool Script::IsKnownFeature(const std::string& name) const {
