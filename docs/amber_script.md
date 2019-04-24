@@ -25,7 +25,7 @@ which is the characters `0x` followed by hexadecimal digits.
 
 ### Requesting features
 
-If specific device featuers are required you can use the DEVICE_FEATURE command
+If specific device features are required you can use the DEVICE\_FEATURE command
 to enable them.
 
 ```groovy
@@ -36,6 +36,19 @@ DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer
 Currently each of the items in `VkPhysicalDeviceFeatures` are recognized along
 with `VariablePointerFeatures.variablePointers` and
 `VariablePointerFeatures.variablePointersStorageBuffer`.
+
+### Setting Engine Configuration
+
+In some instances there is extra data we want to provide to an engine for
+configuration purposes. The `SET ENGINE_DATA` command allows that for the given
+set of data types.
+
+#### Engine Data Variables
+  * `fence_timeout_ms`  - value must be a single uint32 in milliseconds.
+
+```groovy
+SET ENGINE_DATA {engine data variable} {value}*
+```
 
 ### Shaders
 
@@ -63,7 +76,7 @@ types, but in that case must only provide a single shader type in the module.
  * `GLSL`  (with glslang)
  * `HLSL`  (with dxc or glslang if dxc disabled)  -- future
  * `SPIRV-ASM` (with spirv-as)
- * `SPIRV-HEX` (decoded straight to spv)
+ * `SPIRV-HEX` (decoded straight to SPIR-V)
  * `OPENCL-C` (with clspv)  --- potentially?  -- future
 
 ```groovy
