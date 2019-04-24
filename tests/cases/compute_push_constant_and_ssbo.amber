@@ -1,3 +1,4 @@
+#!amber
 # Copyright 2019 The Amber Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[compute shader]
+SHADER compute compute_shader GLSL
 #version 430
 
 layout(set = 0, binding = 0) buffer block0 {
@@ -21,9 +22,9 @@ layout(set = 0, binding = 0) buffer block0 {
 
 // push_constant compiled as std430 by glslang
 layout(push_constant) uniform block1 {
-  uint constant0[3];  // Offset:  0, array stride:  4
+  uint constant0[3];   // Offset:  0, array stride:  4
   uint constant1;      //         12
-  uvec3 constant2[3];   //         16, array stride: 16
+  uvec3 constant2[3];  //         16, array stride: 16
   uint constant3;      //         64
 };
 
@@ -34,28 +35,37 @@ void main() {
 
   data_set0_binding0[offset++] = constant1;
 
-  for (int i = 0; i < 3; ++i)
+  for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j)
       data_set0_binding0[offset++] = constant2[i][j];
+  }
 
   data_set0_binding0[offset++] = constant3;
 }
+END
 
-[test]
-ssbo 0:0 56
+BUFFER buf0 DATA_TYPE uint32 SIZE 14 FILL 0
+BUFFER const_buf DATA_TYPE uint32 DATA
+ 1  2  3  4  # constant0[3] + constant1
+ 5  6  7  0  # constant2[0]
+ 8  9 10  0  # constant2[1]
+11 12 13  0  # constant2[2]
+14           # constant3
+END
 
-uniform uint  0  1  2  3
-uniform uint 12  4
-uniform uint 16  5  6  7  0 \
-                 8  9  10 0 \
-                 11 12 13
-uniform uint 64 14
+PIPELINE compute pipeline
+  ATTACH compute_shader
 
-compute 3 1 1
+  BIND BUFFER buf0 AS storage DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER const_buf AS push_constant
+END
 
-probe ssbo uint 0:0  0 ==  1  2  3
-probe ssbo uint 0:0 12 ==  4
-probe ssbo uint 0:0 16 ==  5  6  7  \
-                           8  9  10 \
-                           11 12 13
-probe ssbo uint 0:0 52 ==  14
+RUN pipeline 3 1 1
+
+BUFFER result DATA_TYPE uint32 DATA
+ 1  2  3  4
+ 5  6  7  8
+ 9 10 11 12
+13 14
+END
+EXPECT buf0 EQ_BUFFER result

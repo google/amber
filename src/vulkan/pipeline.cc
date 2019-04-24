@@ -187,7 +187,7 @@ Result Pipeline::CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout) {
 
   VkPushConstantRange push_const_range =
       push_constant_->GetVkPushConstantRange();
-  if (push_const_range.size) {
+  if (push_const_range.size > 0) {
     pipeline_layout_info.pushConstantRangeCount = 1U;
     pipeline_layout_info.pPushConstantRanges = &push_const_range;
   }
@@ -239,6 +239,10 @@ Result Pipeline::AddPushConstant(const BufferCommand* command) {
         "Pipeline::AddPushConstant BufferCommand type is not push constant");
 
   return push_constant_->AddBufferData(command);
+}
+
+Result Pipeline::AddPushConstantBuffer(const Buffer* buf) {
+  return push_constant_->AddBuffer(buf);
 }
 
 Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
@@ -298,10 +302,13 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
         "and binding");
   }
 
-  if (!cmd->GetValues().empty()) {
-    auto* buf_desc = static_cast<BufferDescriptor*>(desc);
-    Result r = buf_desc->AddToBuffer(cmd->GetOffset(), cmd->GetSize(),
-                                     cmd->GetValues());
+  auto* buf_desc = static_cast<BufferDescriptor*>(desc);
+  if (cmd->GetValues().empty()) {
+    Result r = buf_desc->ResizeTo(cmd->GetBuffer()->ElementCount());
+    if (!r.IsSuccess())
+      return r;
+  } else {
+    Result r = buf_desc->AddToBuffer(cmd->GetValues(), cmd->GetOffset());
     if (!r.IsSuccess())
       return r;
   }

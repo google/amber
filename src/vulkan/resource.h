@@ -31,26 +31,18 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 
-// Contain information of filling memory
-// [|offset|, |offset| + |size_in_bytes|) with |values| whose data
-// type is |type|. This information is given by script.
-struct BufferInput {
-  void UpdateBufferWithValues(void* buffer) const;
-
-  uint32_t offset;
-  uint32_t size_in_bytes;
-  Format* format;
-  std::vector<Value> values;
-};
-
 // Class for Vulkan resources. Its children are Vulkan Buffer, Vulkan Image,
 // and a class for push constant.
 class Resource {
  public:
   virtual ~Resource();
 
-  virtual void CopyToHost(CommandBuffer* command) = 0;
-  virtual void CopyToDevice(CommandBuffer* command) = 0;
+  /// Records a command on |command_buffer| to copy the buffer contents from the
+  /// host to the device.
+  virtual void CopyToDevice(CommandBuffer* command_buffer) = 0;
+  /// Records a command on |command_buffer| to copy the buffer contents from the
+  /// device to the host.
+  virtual void CopyToHost(CommandBuffer* command_buffer) = 0;
 
   void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
 
@@ -68,19 +60,21 @@ class Resource {
 
   Result MapMemory(VkDeviceMemory memory);
   void UnMapMemory(VkDeviceMemory memory);
-
-  // Set |memory_ptr_| as |ptr|. This must be used for only push constant.
-  // For Vulkan buffer and image i.e., Buffer and Image classes, we should
-  // not call this but uses MapMemory() method.
   void SetMemoryPtr(void* ptr) { memory_ptr_ = ptr; }
 
-  // Make all memory operations before calling this method effective i.e.,
-  // prevent hazards caused by out-of-order execution.
-  void MemoryBarrier(CommandBuffer* command);
+  /// Records a memory barrier on |command_buffer|, to ensure prior writes to
+  /// this buffer have completed and are available to subsequent commands.
+  void MemoryBarrier(CommandBuffer* command_buffer);
 
+  /// Returns a memory index for the given Vulkan device, for a memory type
+  /// which has the given |flags| set. If no memory is found with the given
+  /// |flags| set then the first non-zero memory index is returned. If
+  /// |require_flags_found| is true then if no memory is found with the given
+  /// |flags| then the maximum uint32_t value is returned instead of the
+  /// first non-zero memory index.
   uint32_t ChooseMemory(uint32_t memory_type_bits,
                         VkMemoryPropertyFlags flags,
-                        bool force_flags);
+                        bool require_flags_found);
   Result AllocateMemory(VkDeviceMemory* memory,
                         VkDeviceSize size,
                         uint32_t memory_type_index);

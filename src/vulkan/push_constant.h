@@ -21,7 +21,6 @@
 #include "amber/result.h"
 #include "amber/vulkan_header.h"
 #include "src/command.h"
-#include "src/vulkan/resource.h"
 
 namespace amber {
 namespace vulkan {
@@ -29,48 +28,50 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 
-// Class to handle push constant.
+/// Class to handle push constants.
 class PushConstant {
  public:
-  // |max_push_constant_size| must be the same value with
-  // maxPushConstantsSize of VkPhysicalDeviceLimits, which is an
-  // element of VkPhysicalDeviceProperties getting from
-  // vkGetPhysicalDeviceProperties().
   explicit PushConstant(Device* device);
   ~PushConstant();
 
-  // Return a VkPushConstantRange structure whose shader stage flag
-  // is VK_SHADER_STAGE_ALL, offset is minimum |offset| among elements
-  // in |push_constant_data_| rounded down by 4, and size is maximum
-  // |offset| + |size_in_bytes| among elements in |push_constant_data_|
-  // rounded up by 4.
+  /// Retrieves a `VkPushConstantRange` class describing our push constant
+  /// requirements.
   VkPushConstantRange GetVkPushConstantRange();
 
-  // Call vkCmdPushConstants() to record a command for push constant
-  // if size in bytes of push constant is not larger than
-  // |max_push_constant_size_|. |command_buffer| is a Vulkan command
-  // buffer that keeps the recorded command and |pipeline_layout| is
-  // the graphics / compute pipeline that it currently uses.
   Result RecordPushConstantVkCommand(CommandBuffer* command,
                                      VkPipelineLayout pipeline_layout);
 
-  // Add a new set of values in an offset range to the push constants
-  // to be used on the next pipeline execution.
+  /// Add a set of values from the given |buffer| to the push constants
+  /// to be used on the next pipeline execution.
+  Result AddBuffer(const Buffer* buffer);
+
+  /// Adds data into the push constant buffer.
   Result AddBufferData(const BufferCommand* command);
 
  private:
-  // Fill memory from |offset| of |data| to |offset| + |size_in_bytes|
-  // of |data| with |values| of |data|.
+  // Contain information of filling memory.
+  // If the |buffer| is provided the buffer memory will be copied into the
+  // result buffer at |offset|. If |buffer| is not provided then
+  // |size_in_bytes|, |format| and |values| must be provided and will be copied
+  // into the result buffer at |offset|.
+  struct BufferInput {
+    uint32_t offset = 0;
+    const Buffer* buffer = nullptr;
+
+    uint32_t size_in_bytes = 0;
+    Format* format = nullptr;
+    std::vector<Value> values;
+  };
+
   Result UpdateMemoryWithInput(const BufferInput& input);
 
   Device* device_;
 
-  // Keep the information of what and how to conduct push constant.
-  // These are applied from lowest index to highest index, so that
-  // if address ranges overlap, then the later values take effect.
+  /// Keeps the information of what and how to conduct push constant.
+  /// These are applied from lowest index to highest index, so that
+  /// if address ranges overlap, then the later values take effect.
   std::vector<BufferInput> push_constant_data_;
-
-  std::vector<uint8_t> memory_;
+  std::unique_ptr<Buffer> buffer_;
 };
 
 }  // namespace vulkan

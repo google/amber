@@ -34,6 +34,8 @@ class Token;
 
 namespace vkscript {
 
+/// Parses the contents of the [test] section of a VkScript file into individual
+/// commands.
 class CommandParser {
  public:
   CommandParser(Script* script,
@@ -90,8 +92,7 @@ class CommandParser {
   Result ParseBoolean(const std::string& str, bool* result);
   Result ParseValues(const std::string& name,
                      Format* fmt,
-                     std::vector<Value>* values,
-                     bool use_std430_layout);
+                     std::vector<Value>* values);
 
   Result ProcessDrawRect();
   Result ProcessDrawArrays();

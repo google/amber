@@ -63,6 +63,7 @@ class Buffer {
 
   /// Returns the BufferType of this buffer.
   BufferType GetBufferType() const { return buffer_type_; }
+  /// Sets the BufferType for this buffer.
   void SetBufferType(BufferType type) { buffer_type_ = type; }
 
   /// Set the location binding value for the buffer.
@@ -75,16 +76,20 @@ class Buffer {
     format_ = std::move(format);
   }
   /// Returns the Format describing the buffer data.
-  Format* GetFormat() { return format_.get(); }
+  Format* GetFormat() const { return format_.get(); }
 
   /// Sets the buffer |name|.
   void SetName(const std::string& name) { name_ = name; }
   /// Returns the name of the buffer.
   std::string GetName() const { return name_; }
 
+  /// Gets the number of elements this buffer is wide.
   uint32_t GetWidth() const { return width_; }
+  /// Set the number of elements wide for the buffer.
   void SetWidth(uint32_t width) { width_ = width; }
+  /// Get the number of elements this buffer is high.
   uint32_t GetHeight() const { return height_; }
+  /// Set the number of elements high for the buffer.
   void SetHeight(uint32_t height) { height_ = height; }
 
   // | ---------- Element ---------- | ElementCount == 1
@@ -96,6 +101,7 @@ class Buffer {
 
   /// Sets the number of elements in the buffer.
   void SetElementCount(uint32_t count) { element_count_ = count; }
+  /// Returns the number of elements in the buffer.
   uint32_t ElementCount() const { return element_count_; }
 
   /// Sets the number of values in the buffer.
@@ -104,11 +110,17 @@ class Buffer {
       element_count_ = 0;
       return;
     }
-    if (format_->GetPackSize() > 0)
+    if (format_->GetPackSize() > 0) {
       element_count_ = count;
-    else
-      element_count_ = count / format_->ValuesPerElement();
+    } else {
+      // This divides by the needed input values, not the values per element.
+      // The assumption being the values coming in are read from the input,
+      // where components are specified. The needed values maybe less then the
+      // values per element.
+      element_count_ = count / format_->InputNeededPerElement();
+    }
   }
+  /// Returns the number of values in the buffer.
   uint32_t ValueCount() const {
     if (!format_)
       return 0;
@@ -125,20 +137,33 @@ class Buffer {
     return ElementCount() * format_->SizeInBytes();
   }
 
+  /// Returns the number of bytes for one element in the buffer.
   uint32_t GetTexelStride() { return format_->SizeInBytes(); }
 
-  // When copying the image to the host buffer, we specify a row length of 0
-  // which results in tight packing of rows.  So the row stride is the product
-  // of the texel stride and the number of texels in a row.
+  /// Returns the number of bytes for one row of elements in the buffer.
   uint32_t GetRowStride() { return GetTexelStride() * GetWidth(); }
 
-  /// Sets the data into the buffer. The size will also be updated to be the
-  /// size of the data provided.
+  /// Sets the data into the buffer.
   Result SetData(const std::vector<Value>& data);
 
+  /// Resizes the buffer to hold |element_count| elements. This is separate
+  /// from SetElementCount() because we may not know the format when we set the
+  /// initial count. This requires the format to have been set.
+  void ResizeTo(uint32_t element_count);
+
+  /// Write |data| into the buffer |offset| bytes from the start. Write
+  /// |size_in_bytes| of data.
+  Result SetDataWithOffset(const std::vector<Value>& data, uint32_t offset);
+
+  /// Writes |src| data into buffer at |offset|.
+  Result SetDataFromBuffer(const Buffer* src, uint32_t offset);
+
+  /// Returns a pointer to the internal storage of the buffer.
   std::vector<uint8_t>* ValuePtr() { return &bytes_; }
+  /// Returns a pointer to the internal storage of the buffer.
   const std::vector<uint8_t>* ValuePtr() const { return &bytes_; }
 
+  /// Returns a casted pointer to the internal storage of the buffer.
   template <typename T>
   const T* GetValues() const {
     return reinterpret_cast<const T*>(bytes_.data());
@@ -151,6 +176,10 @@ class Buffer {
   Result IsEqual(Buffer* buffer) const;
 
  private:
+  uint32_t WriteValueFromComponent(const Value& value,
+                                   const Format::Component& comp,
+                                   uint8_t* ptr);
+
   BufferType buffer_type_ = BufferType::kUnknown;
   std::string name_;
   uint32_t element_count_ = 0;

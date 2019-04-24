@@ -206,6 +206,13 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     info.vk_pipeline->AsGraphics()->SetIndexBuffer(buf);
   }
 
+  if (pipeline->GetPushConstantBuffer().buffer != nullptr) {
+    r = info.vk_pipeline->AddPushConstantBuffer(
+        pipeline->GetPushConstantBuffer().buffer);
+    if (!r.IsSuccess())
+      return r;
+  }
+
   for (const auto& buf_info : pipeline->GetBuffers()) {
     auto type = BufferCommand::BufferType::kSSBO;
     if (buf_info.buffer->GetBufferType() == BufferType::kUniform) {

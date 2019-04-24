@@ -21,6 +21,7 @@
 
 namespace amber {
 
+/// Stores information used to configure a pipeline.
 class PipelineData {
  public:
   PipelineData();

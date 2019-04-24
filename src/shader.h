@@ -36,7 +36,9 @@ class Shader {
   void SetFormat(ShaderFormat fmt) { shader_format_ = fmt; }
   ShaderFormat GetFormat() const { return shader_format_; }
 
+  /// Sets the compiled shader to |data|.
   void SetData(const std::string& data) { data_ = data; }
+  /// Returns the compiled shader source.
   const std::string& GetData() const { return data_; }
 
  private:

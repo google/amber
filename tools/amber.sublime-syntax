@@ -34,11 +34,11 @@ contexts:
     - match : '\b(COPY|TOLERANCE|REPEAT)\b'
       scope: keyword.control.amber
 
-    - match: '\b(vertex|fragment|compute|geometry|tessellation_evaluation|tessellation_control)\b'
+    - match: '\b(vertex|fragment|compute|geometry|tessellation_evaluation|tessellation_control|multi)\b'
       scope: constant.character.escape.amber
     - match: '\b(framebuffer|graphics)\b'
       scope: constant.character.escape.amber
-    - match: '\b(uniform|storage|push_constant)\b'
+    - match: '\b(uniform|storage|push_constant|color|depth_stencil)\b'
       scope: constant.character.escape.amber
     - match: '\b(EQ|NE|LT|LE|GT|GE|EQ_RGB|EQ_RGBA|EQ_BUFFER)\b'
       scope: constant.character.esape.amber

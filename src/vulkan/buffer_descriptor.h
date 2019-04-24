@@ -39,8 +39,8 @@ enum class DescriptorType : uint8_t {
   kUniformBuffer,
 };
 
-// Among Vulkan descriptor types, this class handles Storage Buffers
-// and Uniform Buffers.
+/// Stores descriptor set and binding information for storage and uniform
+/// buffers.
 class BufferDescriptor {
  public:
   BufferDescriptor(Buffer* buffer,
@@ -68,9 +68,8 @@ class BufferDescriptor {
   Result MoveResourceToBufferOutput();
   void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set);
 
-  Result AddToBuffer(uint32_t offset,
-                     uint32_t size_in_bytes,
-                     const std::vector<Value>& values);
+  Result ResizeTo(uint32_t element_count);
+  Result AddToBuffer(const std::vector<Value>& values, uint32_t offset);
 
  private:
   Device* device_ = nullptr;

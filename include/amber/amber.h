@@ -44,6 +44,7 @@ struct EngineConfig {
   virtual ~EngineConfig();
 };
 
+/// Stores information for a biffer.
 struct BufferInfo {
   BufferInfo();
   BufferInfo(const BufferInfo&);
@@ -74,8 +75,11 @@ class Delegate {
   virtual bool LogGraphicsCallsTime() const = 0;
   /// Returns the current timestamp in nanoseconds
   virtual uint64_t GetTimestampNs() const = 0;
+  /// Tells whether to log each test as it's executed
+  virtual bool LogExecuteCalls() const = 0;
 };
 
+/// Stores configuration options for Amber.
 struct Options {
   Options();
   ~Options();

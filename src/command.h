@@ -46,6 +46,7 @@ class ProbeCommand;
 class ProbeSSBOCommand;
 class RepeatCommand;
 
+/// Base class for all commands.
 class Command {
  public:
   enum class Type : uint8_t {
@@ -105,7 +106,11 @@ class Command {
   BufferCommand* AsBuffer();
   RepeatCommand* AsRepeat();
 
+  virtual std::string ToString() const = 0;
+
+  /// Sets the input file line number this command is declared on.
   void SetLine(size_t line) { line_ = line; }
+  /// Returns the input file line this command was declared on.
   size_t GetLine() const { return line_; }
 
  protected:
@@ -115,6 +120,7 @@ class Command {
   size_t line_ = 1;
 };
 
+/// Base class for commands which contain a pipeline.
 class PipelineCommand : public Command {
  public:
   ~PipelineCommand() override;
@@ -124,9 +130,10 @@ class PipelineCommand : public Command {
  protected:
   explicit PipelineCommand(Type type, Pipeline* pipeline);
 
-  Pipeline* pipeline_;
+  Pipeline* pipeline_ = nullptr;
 };
 
+/// Command to draw a rectangle on screen.
 class DrawRectCommand : public PipelineCommand {
  public:
   explicit DrawRectCommand(Pipeline* pipeline, PipelineData data);
@@ -152,6 +159,8 @@ class DrawRectCommand : public PipelineCommand {
   void SetHeight(float h) { height_ = h; }
   float GetHeight() const { return height_; }
 
+  std::string ToString() const override { return "DrawRectCommand"; }
+
  private:
   PipelineData data_;
   bool is_ortho_ = false;
@@ -162,6 +171,7 @@ class DrawRectCommand : public PipelineCommand {
   float height_ = 0.0;
 };
 
+/// Command to draw from a vertex and index buffer.
 class DrawArraysCommand : public PipelineCommand {
  public:
   explicit DrawArraysCommand(Pipeline* pipeline, PipelineData data);
@@ -187,6 +197,8 @@ class DrawArraysCommand : public PipelineCommand {
   void SetInstanceCount(uint32_t count) { instance_count_ = count; }
   uint32_t GetInstanceCount() const { return instance_count_; }
 
+  std::string ToString() const override { return "DrawArraysCommand"; }
+
  private:
   PipelineData data_;
   bool is_indexed_ = false;
@@ -197,6 +209,7 @@ class DrawArraysCommand : public PipelineCommand {
   uint32_t instance_count_ = 0;
 };
 
+/// A command to compare two buffers.
 class CompareBufferCommand : public Command {
  public:
   CompareBufferCommand(Buffer* buffer_1, Buffer* buffer_2);
@@ -205,11 +218,14 @@ class CompareBufferCommand : public Command {
   Buffer* GetBuffer1() const { return buffer_1_; }
   Buffer* GetBuffer2() const { return buffer_2_; }
 
+  std::string ToString() const override { return "CompareBufferCommand"; }
+
  private:
   Buffer* buffer_1_;
   Buffer* buffer_2_;
 };
 
+/// Command to execute a compute command.
 class ComputeCommand : public PipelineCommand {
  public:
   explicit ComputeCommand(Pipeline* pipeline);
@@ -224,12 +240,15 @@ class ComputeCommand : public PipelineCommand {
   void SetZ(uint32_t z) { z_ = z; }
   uint32_t GetZ() const { return z_; }
 
+  std::string ToString() const override { return "ComputeCommand"; }
+
  private:
   uint32_t x_ = 0;
   uint32_t y_ = 0;
   uint32_t z_ = 0;
 };
 
+/// Command to copy data from one buffer to another.
 class CopyCommand : public Command {
  public:
   CopyCommand(Buffer* buffer_from, Buffer* buffer_to);
@@ -238,13 +257,17 @@ class CopyCommand : public Command {
   Buffer* GetBufferFrom() const { return buffer_from_; }
   Buffer* GetBufferTo() const { return buffer_to_; }
 
+  std::string ToString() const override { return "CopyCommand"; }
+
  private:
   Buffer* buffer_from_;
   Buffer* buffer_to_;
 };
 
+/// Base class for probe commands.
 class Probe : public Command {
  public:
+  /// Wrapper around tolerance information for the probe.
   struct Tolerance {
     Tolerance(bool percent, double val) : is_percent(percent), value(val) {}
 
@@ -268,6 +291,7 @@ class Probe : public Command {
   std::vector<Tolerance> tolerances_;
 };
 
+/// Command to probe an image buffer.
 class ProbeCommand : public Probe {
  public:
   explicit ProbeCommand(Buffer* buffer);
@@ -310,6 +334,8 @@ class ProbeCommand : public Probe {
   void SetA(float a) { a_ = a; }
   float GetA() const { return a_; }
 
+  std::string ToString() const override { return "ProbeCommand"; }
+
  private:
   enum class ColorFormat {
     kRGB = 0,
@@ -332,6 +358,7 @@ class ProbeCommand : public Probe {
   float a_ = 0.0;
 };
 
+/// Command to probe a data buffer.
 class ProbeSSBOCommand : public Probe {
  public:
   enum class Comparator {
@@ -365,6 +392,8 @@ class ProbeSSBOCommand : public Probe {
   void SetValues(std::vector<Value>&& values) { values_ = std::move(values); }
   const std::vector<Value>& GetValues() const { return values_; }
 
+  std::string ToString() const override { return "ProbeSSBOCommand"; }
+
  private:
   Comparator comparator_ = Comparator::kEqual;
   uint32_t descriptor_set_id_ = 0;
@@ -374,6 +403,7 @@ class ProbeSSBOCommand : public Probe {
   std::vector<Value> values_;
 };
 
+/// Command to set the size of a buffer, or update a buffers contents.
 class BufferCommand : public PipelineCommand {
  public:
   enum class BufferType {
@@ -403,19 +433,13 @@ class BufferCommand : public PipelineCommand {
   void SetOffset(uint32_t offset) { offset_ = offset; }
   uint32_t GetOffset() const { return offset_; }
 
-  void SetSize(uint32_t size) { size_ = size; }
-  uint32_t GetSize() const { return size_; }
-
-  void SetValues(std::vector<Value>&& values) {
-    values_ = std::move(values);
-    auto fmt = buffer_->GetFormat();
-    size_ = static_cast<uint32_t>(values_.size() * fmt->SizeInBytes()) /
-            fmt->ValuesPerElement();
-  }
+  void SetValues(std::vector<Value>&& values) { values_ = std::move(values); }
   const std::vector<Value>& GetValues() const { return values_; }
 
   void SetBuffer(Buffer* buffer) { buffer_ = buffer; }
   Buffer* GetBuffer() const { return buffer_; }
+
+  std::string ToString() const override { return "BufferCommand"; }
 
  private:
   Buffer* buffer_ = nullptr;
@@ -423,17 +447,20 @@ class BufferCommand : public PipelineCommand {
   bool is_subdata_ = false;
   uint32_t descriptor_set_ = 0;
   uint32_t binding_num_ = 0;
-  uint32_t size_ = 0;
   uint32_t offset_ = 0;
   std::vector<Value> values_;
 };
 
+/// Command to clear the colour attachments.
 class ClearCommand : public PipelineCommand {
  public:
   explicit ClearCommand(Pipeline* pipeline);
   ~ClearCommand() override;
+
+  std::string ToString() const override { return "ClearCommand"; }
 };
 
+/// Command to set the colour for the clear command.
 class ClearColorCommand : public PipelineCommand {
  public:
   explicit ClearColorCommand(Pipeline* pipeline);
@@ -452,6 +479,8 @@ class ClearColorCommand : public PipelineCommand {
   void SetA(float a) { a_ = a; }
   float GetA() const { return a_; }
 
+  std::string ToString() const override { return "ClearColorCommand"; }
+
  private:
   float r_ = 0.0;
   float g_ = 0.0;
@@ -459,6 +488,7 @@ class ClearColorCommand : public PipelineCommand {
   float a_ = 0.0;
 };
 
+/// Command to set the depth value for the clear command.
 class ClearDepthCommand : public PipelineCommand {
  public:
   explicit ClearDepthCommand(Pipeline* pipeline);
@@ -467,10 +497,13 @@ class ClearDepthCommand : public PipelineCommand {
   void SetValue(float val) { value_ = val; }
   float GetValue() const { return value_; }
 
+  std::string ToString() const override { return "ClearDepthCommand"; }
+
  private:
   float value_ = 0.0;
 };
 
+/// Command to set the stencil value for the clear command.
 class ClearStencilCommand : public PipelineCommand {
  public:
   explicit ClearStencilCommand(Pipeline* pipeline);
@@ -479,10 +512,13 @@ class ClearStencilCommand : public PipelineCommand {
   void SetValue(uint32_t val) { value_ = val; }
   uint32_t GetValue() const { return value_; }
 
+  std::string ToString() const override { return "ClearStencilCommand"; }
+
  private:
   uint32_t value_ = 0;
 };
 
+/// Command to set the patch parameter vertices.
 class PatchParameterVerticesCommand : public PipelineCommand {
  public:
   explicit PatchParameterVerticesCommand(Pipeline* pipeline);
@@ -491,10 +527,15 @@ class PatchParameterVerticesCommand : public PipelineCommand {
   void SetControlPointCount(uint32_t count) { control_point_count_ = count; }
   uint32_t GetControlPointCount() const { return control_point_count_; }
 
+  std::string ToString() const override {
+    return "PatchParameterVerticesCommand";
+  }
+
  private:
   uint32_t control_point_count_ = 0;
 };
 
+/// Command to set the entry point to use for a given shader type.
 class EntryPointCommand : public PipelineCommand {
  public:
   explicit EntryPointCommand(Pipeline* pipeline);
@@ -506,11 +547,14 @@ class EntryPointCommand : public PipelineCommand {
   void SetEntryPointName(const std::string& name) { entry_point_name_ = name; }
   std::string GetEntryPointName() const { return entry_point_name_; }
 
+  std::string ToString() const override { return "EntryPointCommand"; }
+
  private:
   ShaderType shader_type_ = ShaderType::kVertex;
   std::string entry_point_name_;
 };
 
+/// Command to repeat the given set of commands a number of times.
 class RepeatCommand : public Command {
  public:
   explicit RepeatCommand(uint32_t count);
@@ -518,15 +562,15 @@ class RepeatCommand : public Command {
 
   uint32_t GetCount() const { return count_; }
 
-  /// Sets |cmds| to the list of commands to execute against the engine.
   void SetCommands(std::vector<std::unique_ptr<Command>> cmds) {
     commands_ = std::move(cmds);
   }
 
-  /// Retrieves the list of commands to execute against the engine.
   const std::vector<std::unique_ptr<Command>>& GetCommands() const {
     return commands_;
   }
+
+  std::string ToString() const override { return "RepeatCommand"; }
 
  private:
   uint32_t count_ = 0;

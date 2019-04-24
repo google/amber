@@ -69,6 +69,9 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
 
 void BufferDescriptor::RecordCopyDataToResourceIfNeeded(
     CommandBuffer* command) {
+  if (!transfer_buffer_)
+    return;
+
   if (amber_buffer_ && !amber_buffer_->ValuePtr()->empty()) {
     transfer_buffer_->UpdateMemoryWithRawData(*amber_buffer_->ValuePtr());
     amber_buffer_->ValuePtr()->clear();
@@ -147,21 +150,20 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   is_descriptor_set_update_needed_ = false;
 }
 
-Result BufferDescriptor::AddToBuffer(uint32_t offset,
-                                     uint32_t size_in_bytes,
-                                     const std::vector<Value>& values) {
+Result BufferDescriptor::ResizeTo(uint32_t element_count) {
+  if (!amber_buffer_)
+    return Result("missing amber_buffer for ResizeTo call");
+
+  amber_buffer_->ResizeTo(element_count);
+  return {};
+}
+
+Result BufferDescriptor::AddToBuffer(const std::vector<Value>& values,
+                                     uint32_t offset) {
   if (!amber_buffer_)
     return Result("missing amber_buffer for AddToBuffer call");
 
-  if (amber_buffer_->ValuePtr()->size() < offset + size_in_bytes) {
-    amber_buffer_->ValuePtr()->resize(offset + size_in_bytes);
-    amber_buffer_->SetElementCount((offset + size_in_bytes) /
-                                   amber_buffer_->GetFormat()->SizeInBytes());
-  }
-
-  BufferInput in{offset, size_in_bytes, amber_buffer_->GetFormat(), values};
-  in.UpdateBufferWithValues(amber_buffer_->ValuePtr()->data());
-
+  amber_buffer_->SetDataWithOffset(values, offset);
   return {};
 }
 

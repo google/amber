@@ -24,6 +24,7 @@
 namespace amber {
 namespace vulkan {
 
+/// Pipepline to handle compute commands.
 class ComputePipeline : public Pipeline {
  public:
   ComputePipeline(

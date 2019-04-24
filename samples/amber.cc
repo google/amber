@@ -51,6 +51,7 @@ struct Options {
   bool show_version_info = false;
   bool log_graphics_calls = false;
   bool log_graphics_calls_time = false;
+  bool log_execute_calls = false;
   amber::EngineType engine = amber::EngineType::kVulkan;
   std::string spv_env;
 };
@@ -72,6 +73,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -V, --version             -- Output version information for Amber and libraries.
   --log-graphics-calls      -- Log graphics API calls (only for Vulkan so far).
   --log-graphics-calls-time -- Log timing of graphics API calls timing (Vulkan only).
+  --log-execute-calls       -- Log each execute call before run.
   -h                        -- This help text.
 )";
 
@@ -169,6 +171,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->log_graphics_calls = true;
     } else if (arg == "--log-graphics-calls-time") {
       opts->log_graphics_calls_time = true;
+    } else if (arg == "--log-execute-calls") {
+      opts->log_execute_calls = true;
     } else if (arg.size() > 0 && arg[0] == '-') {
       std::cerr << "Unrecognized option " << arg << std::endl;
       return false;
@@ -217,8 +221,7 @@ std::string ReadFile(const std::string& input_file) {
 
 class SampleDelegate : public amber::Delegate {
  public:
-  SampleDelegate()
-      : log_graphics_calls_(false), log_graphics_calls_time_(false) {}
+  SampleDelegate() = default;
   ~SampleDelegate() override = default;
 
   void Log(const std::string& message) override {
@@ -226,15 +229,18 @@ class SampleDelegate : public amber::Delegate {
   }
 
   bool LogGraphicsCalls() const override { return log_graphics_calls_; }
-
   void SetLogGraphicsCalls(bool log_graphics_calls) {
     log_graphics_calls_ = log_graphics_calls;
+  }
+
+  bool LogExecuteCalls() const override { return log_execute_calls_; }
+  void SetLogExecuteCalls(bool log_execute_calls) {
+    log_execute_calls_ = log_execute_calls;
   }
 
   bool LogGraphicsCallsTime() const override {
     return log_graphics_calls_time_;
   }
-
   void SetLogGraphicsCallsTime(bool log_graphics_calls_time) {
     log_graphics_calls_time_ = log_graphics_calls_time;
     if (log_graphics_calls_time) {
@@ -248,8 +254,9 @@ class SampleDelegate : public amber::Delegate {
   }
 
  private:
-  bool log_graphics_calls_;
-  bool log_graphics_calls_time_;
+  bool log_graphics_calls_ = false;
+  bool log_graphics_calls_time_ = false;
+  bool log_execute_calls_ = false;
 };
 
 }  // namespace
@@ -314,12 +321,12 @@ int main(int argc, const char** argv) {
     return 0;
 
   SampleDelegate delegate;
-  if (options.log_graphics_calls) {
+  if (options.log_graphics_calls)
     delegate.SetLogGraphicsCalls(true);
-  }
-  if (options.log_graphics_calls_time) {
+  if (options.log_graphics_calls_time)
     delegate.SetLogGraphicsCallsTime(true);
-  }
+  if (options.log_execute_calls)
+    delegate.SetLogExecuteCalls(true);
 
   amber::Options amber_options;
   amber_options.engine = options.engine;

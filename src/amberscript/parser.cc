@@ -542,9 +542,7 @@ Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
 
 Result Parser::ToBufferType(const std::string& name, BufferType* type) {
   assert(type);
-  if (name == "push_constant")
-    *type = BufferType::kPushConstant;
-  else if (name == "uniform")
+  if (name == "uniform")
     *type = BufferType::kUniform;
   else if (name == "storage")
     *type = BufferType::kStorage;
@@ -594,6 +592,11 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
   } else if (token->AsString() == "depth_stencil") {
     buffer->SetBufferType(BufferType::kDepth);
     Result r = pipeline->SetDepthBuffer(buffer);
+    if (!r.IsSuccess())
+      return r;
+  } else if (token->AsString() == "push_constant") {
+    buffer->SetBufferType(BufferType::kPushConstant);
+    Result r = pipeline->SetPushConstantBuffer(buffer);
     if (!r.IsSuccess())
       return r;
   } else {
@@ -722,12 +725,18 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
   if (!token->IsString())
     return Result("BUFFER invalid data type");
 
-  DatumType type;
-  Result r = ToDatumType(token->AsString(), &type);
-  if (!r.IsSuccess())
-    return r;
+  FormatParser fp;
+  auto fmt = fp.Parse(token->AsString());
+  if (fmt != nullptr) {
+    buffer->SetFormat(std::move(fmt));
+  } else {
+    DatumType type;
+    Result r = ToDatumType(token->AsString(), &type);
+    if (!r.IsSuccess())
+      return r;
 
-  buffer->SetFormat(type.AsFormat());
+    buffer->SetFormat(type.AsFormat());
+  }
 
   token = tokenizer_->NextToken();
   if (!token->IsString())
@@ -775,7 +784,7 @@ Result Parser::ParseBufferInitializerFill(Buffer* buffer,
   bool is_double_data = fmt->IsFloat() || fmt->IsDouble();
 
   // Inflate the size because our items are multi-dimensional.
-  size_in_items = size_in_items * fmt->RowCount() * fmt->ColumnCount();
+  size_in_items = size_in_items * fmt->InputNeededPerElement();
 
   std::vector<Value> values;
   values.resize(size_in_items);
@@ -852,7 +861,6 @@ Result Parser::ParseBufferInitializerData(Buffer* buffer) {
       break;
     if (!token->IsInteger() && !token->IsDouble() && !token->IsHex())
       return Result("invalid BUFFER data value: " + token->ToOriginalString());
-
     if (!is_double_type && token->IsDouble())
       return Result("invalid BUFFER data value: " + token->ToOriginalString());
 
@@ -986,8 +994,50 @@ Result Parser::ParseRun() {
     if (!pipeline->IsGraphics())
       return Result("RUN command requires graphics pipeline");
 
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "AS")
+      return Result("missing AS for RUN command");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString()) {
+      return Result("invalid topology for RUN command: " +
+                    token->ToOriginalString());
+    }
+
+    Topology topo = NameToTopology(token->AsString());
+    if (topo == Topology::kUnknown)
+      return Result("invalid topology for RUN command: " + token->AsString());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "START_IDX")
+      return Result("missing START_IDX for RUN command");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger()) {
+      return Result("invalid START_IDX value for RUN command: " +
+                    token->ToOriginalString());
+    }
+    if (token->AsInt32() < 0)
+      return Result("START_IDX value must be >= 0 for RUN command");
+    uint32_t start_idx = token->AsUint32();
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "COUNT")
+      return Result("missing COUNT for RUN command");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger()) {
+      return Result("invalid COUNT value for RUN command: " +
+                    token->ToOriginalString());
+    }
+    if (token->AsInt32() <= 0)
+      return Result("COUNT value must be > 0 for RUN command");
+
     auto cmd = MakeUnique<DrawArraysCommand>(pipeline, PipelineData{});
     cmd->SetLine(line);
+    cmd->SetTopology(topo);
+    cmd->SetFirstVertexIndex(start_idx);
+    cmd->SetVertexCount(token->AsUint32());
 
     command_list_.push_back(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
@@ -1083,15 +1133,22 @@ Result Parser::ParseExpect() {
                     token->AsString());
     }
 
-    if (buffer->GetBufferType() != buffer_2->GetBufferType())
+    if (!buffer->GetFormat()->Equal(buffer_2->GetFormat())) {
       return Result(
-          "EXPECT EQ_BUFFER command cannot compare buffers of different type");
-    if (buffer->ElementCount() != buffer_2->ElementCount())
+          "EXPECT EQ_BUFFER command cannot compare buffers of differing "
+          "format");
+    }
+    if (buffer->ElementCount() != buffer_2->ElementCount()) {
       return Result(
-          "EXPECT EQ_BUFFER command cannot compare buffers of different size");
-    if (buffer->GetWidth() != buffer_2->GetWidth())
+          "EXPECT EQ_BUFFER command cannot compare buffers of different "
+          "size: " +
+          std::to_string(buffer->ElementCount()) + " vs " +
+          std::to_string(buffer_2->ElementCount()));
+    }
+    if (buffer->GetWidth() != buffer_2->GetWidth()) {
       return Result(
           "EXPECT EQ_BUFFER command cannot compare buffers of different width");
+    }
     if (buffer->GetHeight() != buffer_2->GetHeight()) {
       return Result(
           "EXPECT EQ_BUFFER command cannot compare buffers of different "

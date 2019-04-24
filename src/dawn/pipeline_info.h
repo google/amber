@@ -27,6 +27,7 @@
 namespace amber {
 namespace dawn {
 
+/// Stores information relating to a graphics pipeline in Dawn.
 struct RenderPipelineInfo {
   RenderPipelineInfo() {}
   RenderPipelineInfo(::amber::Pipeline* the_pipeline,
@@ -42,28 +43,29 @@ struct RenderPipelineInfo {
   float clear_depth_value = 1.0f;
   uint32_t clear_stencil_value = 0;
 
-  // The framebuffer color render target.  This resides on the GPU.
+  /// The framebuffer color render target.  This resides on the GPU.
   ::dawn::Texture fb_texture;
-  // The depth and stencil target.  This resides on the GPU.
+  /// The depth and stencil target.  This resides on the GPU.
   ::dawn::Texture depth_stencil_texture;
-  // The buffer to which we will copy the rendered pixel values, for
-  // use on the host.
+  /// The buffer to which we will copy the rendered pixel values, for
+  /// use on the host.
   ::dawn::Buffer fb_buffer;
-  // The number of bytes between successive texels in framebuffer host-side
-  // buffer.
+  /// The number of bytes between successive texels in framebuffer host-side
+  /// buffer.
   uint32_t fb_texel_stride = 0;
-  // The number of bytes between successive rows of texels in framebuffer
-  // host-side buffer.
+  /// The number of bytes between successive rows of texels in framebuffer
+  /// host-side buffer.
   uint32_t fb_row_stride = 0;
-  // The number of rows in the framebuffer.
+  /// The number of rows in the framebuffer.
   uint32_t fb_num_rows = 0;
-  // The number of data bytes in the framebuffer host-side buffer.
+  /// The number of data bytes in the framebuffer host-side buffer.
   uint32_t fb_size = 0;
 
   // TODO(dneto): Record index data
   // TODO(dneto): Record buffer data
 };
 
+/// Stores information relating to a compute pipeline in Dawn.
 struct ComputePipelineInfo {
   ComputePipelineInfo() {}
   ComputePipelineInfo(::amber::Pipeline* the_pipeline,
@@ -74,7 +76,7 @@ struct ComputePipelineInfo {
   ::dawn::ShaderModule compute_shader;
 };
 
-// Holds either a render or compute pipeline.
+/// Holds either a render or compute pipeline.
 struct Pipeline {
   std::unique_ptr<RenderPipelineInfo> render_pipeline;
   std::unique_ptr<ComputePipelineInfo> compute_pipeline;
