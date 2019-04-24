@@ -84,6 +84,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParsePipelineBlock();
     } else if (tok == "REPEAT") {
       r = ParseRepeat();
+    } else if (tok == "SET") {
+      r = ParseSet();
     } else if (tok == "SHADER") {
       r = ParseShaderBlock();
     } else {
@@ -1507,6 +1509,32 @@ Result Parser::ParseDerivePipelineBlock() {
   pipeline->SetName(name);
 
   return ParsePipelineBody("DERIVE_PIPELINE", std::move(pipeline));
+}
+
+Result Parser::ParseSet() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "ENGINE_DATA")
+    return Result("SET missing ENGINE_DATA");
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOS() || token->IsEOL())
+    return Result("SET missing variable to be set");
+
+  if (!token->IsString())
+    return Result("SET invalid variable to set: " + token->ToOriginalString());
+
+  if (token->AsString() != "fence_timeout_ms")
+    return Result("SET unknown variable provided: " + token->AsString());
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOS() || token->IsEOL())
+    return Result("SET missing value for fence_timeout_ms");
+  if (!token->IsInteger())
+    return Result("SET invalid value for fence_timeout_ms, must be uint32");
+
+  script_->GetEngineData().fence_timeout_ms = token->AsUint32();
+
+  return ValidateEndOfStatement("SET command");
 }
 
 }  // namespace amberscript
