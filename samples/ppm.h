@@ -20,16 +20,17 @@
 #include <vector>
 
 #include "amber/amber.h"
+#include "amber/result.h"
 
 namespace ppm {
 
 /// Converts the image of dimensions |width| and |height| and with pixels stored
 /// in row-major order in |values| with format B8G8R8A8 into PPM format,
 /// returning the PPM binary in |buffer|.
-void ConvertToPPM(uint32_t width,
-                  uint32_t height,
-                  const std::vector<amber::Value>& values,
-                  std::vector<uint8_t>* buffer);
+amber::Result ConvertToPPM(uint32_t width,
+                           uint32_t height,
+                           const std::vector<amber::Value>& values,
+                           std::vector<uint8_t>* buffer);
 
 }  // namespace ppm
 
