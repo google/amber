@@ -1092,11 +1092,62 @@ PIPELINE graphics my_pipeline
 INSTANTIATE_TEST_CASE_P(
     AmberScriptParserBufferTypeTest,
     AmberScriptParserBufferTypeTest,
-    testing::Values(BufferTypeData{"push_constant", BufferType::kPushConstant},
-                    BufferTypeData{"uniform", BufferType::kUniform},
+    testing::Values(BufferTypeData{"uniform", BufferType::kUniform},
                     BufferTypeData{
                         "storage",
                         BufferType::kStorage}), );  // NOLINT(whitespace/parens)
+
+TEST_F(AmberScriptParserTest, BindPushConstants) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE float SIZE 20 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS push_constant
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& buf = pipeline->GetPushConstantBuffer();
+  ASSERT_TRUE(buf.buffer != nullptr);
+  EXPECT_EQ(20, buf.buffer->ElementCount());
+  EXPECT_EQ(20, buf.buffer->ValueCount());
+  EXPECT_EQ(20 * sizeof(float), buf.buffer->GetSizeInBytes());
+}
+
+TEST_F(AmberScriptParserTest, BindPushConstantsExtraParams) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE float SIZE 20 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS push_constant EXTRA
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: extra parameters after BIND command", r.Error());
+}
 
 }  // namespace amberscript
 }  // namespace amber

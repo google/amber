@@ -195,7 +195,6 @@ The following commands are all specified within the `PIPELINE` command.
 ### Pipeline Buffers
 
 #### Buffer Types
- * `push_constant`
  * `uniform`
  * `storage`
 
@@ -216,6 +215,10 @@ attachment content, depth/stencil content, uniform buffers, etc.
   # buffer of format `D32_SFLOAT_S8_UINT` will be created for graphics
   # pipelines.
   BIND BUFFER {buffer_name} AS depth_stencil
+
+  # Attach |buffer_name| as the push_constant buffer. There can be only one
+  # push constant buffer attached to a pipeline.
+  BIND BUFFER <buffer_name> AS push_constant
 
   # Bind the buffer of the given |buffer_type| at the given descriptor set
   # and binding. The buffer will use a start index of 0.
