@@ -1020,6 +1020,9 @@ Result Parser::ParseRun() {
     token = tokenizer_->NextToken();
     bool indexed = false;
     if (token->IsString() && token->AsString() == "INDEXED") {
+      if (!pipeline->GetIndexBuffer())
+        return Result("RUN DRAW_ARRAYS INDEXED requires attached index buffer");
+
       indexed = true;
       token = tokenizer_->NextToken();
     }
