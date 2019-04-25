@@ -68,6 +68,8 @@ class Parser : public amber::Parser {
   Result ParseExpect();
   Result ParseCopy();
   Result ParseDeviceFeature();
+  Result ParseDeviceExtension();
+  Result ParseInstanceExtension();
   Result ParseRepeat();
   Result ParseSet();
   bool IsRepeatable(const std::string& name) const;

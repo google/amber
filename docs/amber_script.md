@@ -25,8 +25,8 @@ which is the characters `0x` followed by hexadecimal digits.
 
 ### Requesting features
 
-If specific device features are required you can use the DEVICE\_FEATURE command
-to enable them.
+If specific device features are required you can use the `DEVICE_FEATURE`
+command to enable them.
 
 ```groovy
 DEVICE_FEATURE vertexPipelineStoresAndAtomics
@@ -36,6 +36,14 @@ DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer
 Currently each of the items in `VkPhysicalDeviceFeatures` are recognized along
 with `VariablePointerFeatures.variablePointers` and
 `VariablePointerFeatures.variablePointersStorageBuffer`.
+
+Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
+commands.
+
+```groovy
+DEVICE_EXTENSION VK_KHR_get_physical_device_properties2
+INSTANCE_EXTENSION VK_KHR_storage_buffer_storage_class
+```
 
 ### Setting Engine Configuration
 
