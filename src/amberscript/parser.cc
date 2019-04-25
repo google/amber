@@ -1018,6 +1018,15 @@ Result Parser::ParseRun() {
       return Result("invalid topology for RUN command: " + token->AsString());
 
     token = tokenizer_->NextToken();
+    bool indexed = false;
+    if (token->IsString() && token->AsString() == "INDEXED") {
+      if (!pipeline->GetIndexBuffer())
+        return Result("RUN DRAW_ARRAYS INDEXED requires attached index buffer");
+
+      indexed = true;
+      token = tokenizer_->NextToken();
+    }
+
     uint32_t start_idx = 0;
     uint32_t count = 0;
     if (!token->IsEOS() && !token->IsEOL()) {
@@ -1067,6 +1076,9 @@ Result Parser::ParseRun() {
     cmd->SetTopology(topo);
     cmd->SetFirstVertexIndex(start_idx);
     cmd->SetVertexCount(count);
+
+    if (indexed)
+      cmd->EnableIndexed();
 
     command_list_.push_back(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
