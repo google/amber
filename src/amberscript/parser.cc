@@ -80,6 +80,10 @@ Result Parser::Parse(const std::string& data) {
       r = ParseDerivePipelineBlock();
     } else if (tok == "DEVICE_FEATURE") {
       r = ParseDeviceFeature();
+    } else if (tok == "DEVICE_EXTENSION") {
+      r = ParseDeviceExtension();
+    } else if (tok == "INSTANCE_EXTENSION") {
+      r = ParseInstanceExtension();
     } else if (tok == "PIPELINE") {
       r = ParsePipelineBlock();
     } else if (tok == "REPEAT") {
@@ -1509,6 +1513,34 @@ Result Parser::ParseDerivePipelineBlock() {
   pipeline->SetName(name);
 
   return ParsePipelineBody("DERIVE_PIPELINE", std::move(pipeline));
+}
+
+Result Parser::ParseDeviceExtension() {
+  auto token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("DEVICE_EXTENSION missing name");
+  if (!token->IsString()) {
+    return Result("DEVICE_EXTENSION invalid name: " +
+                  token->ToOriginalString());
+  }
+
+  script_->AddRequiredDeviceExtension(token->AsString());
+
+  return ValidateEndOfStatement("DEVICE_EXTENSION command");
+}
+
+Result Parser::ParseInstanceExtension() {
+  auto token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("INSTANCE_EXTENSION missing name");
+  if (!token->IsString()) {
+    return Result("INSTANCE_EXTENSION invalid name: " +
+                  token->ToOriginalString());
+  }
+
+  script_->AddRequiredInstanceExtension(token->AsString());
+
+  return ValidateEndOfStatement("INSTANCE_EXTENSION command");
 }
 
 Result Parser::ParseSet() {
