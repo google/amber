@@ -113,6 +113,11 @@ The available flags which can be defined are:
 cmake -DAMBER_SKIP_TESTS=True -DAMBER_SKIP_SPIRV_TOOLS=True -GNinja ../..
 ```
 
+#### DXC
+
+DXC can be enabled in Amber by adding the `-DAMBER_USE_DXC=true` flag when
+running cmake.
+
 ## Build Bots
 
 There are a number of build bots to verify Amber continues to compile and run

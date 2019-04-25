@@ -43,6 +43,7 @@ class ShaderCompiler {
  private:
   Result ParseHex(const std::string& data, std::vector<uint32_t>* result) const;
   Result CompileGlsl(const Shader* shader, std::vector<uint32_t>* result) const;
+  Result CompileHlsl(const Shader* shader, std::vector<uint32_t>* result) const;
 
   std::string spv_env_;
 };

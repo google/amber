@@ -5,8 +5,10 @@ vars = {
   'khronos_git': 'https://github.com/KhronosGroup',
   'lvandeve_git':  'https://github.com/lvandeve',
   'swiftshader_git': 'https://swiftshader.googlesource.com',
+  'microsoft_git': 'https://github.com/Microsoft',
 
   'cpplint_revision': '9f41862c0efa7681e2147910d39629c73a2b2702',
+  'dxc_revision': '7342a3b9be25bd4787fd24a4041795796e7ec49f',
   'glslang_revision': 'f44b17ee135d5e153ce000e88b806b5377812b11',
   'googletest_revision': 'd5932506d6eed73ac80b9bcc47ed723c8c74eb1e',
   'lodepng_revision': 'ba9fc1f084f03b5fbf8c9a5df9448173f27544b1',
@@ -21,6 +23,9 @@ vars = {
 deps = {
   'third_party/cpplint': vars['google_git'] + '/styleguide.git@' +
       vars['cpplint_revision'],
+
+  'third_party/dxc': vars['microsoft_git'] + '/DirectXShaderCompiler.git@' +
+      vars['dxc_revision'],
 
   'third_party/googletest': vars['google_git'] + '/googletest.git@' +
       vars['googletest_revision'],

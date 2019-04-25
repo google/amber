@@ -40,8 +40,18 @@ SUPPRESSIONS = {
     # a value to the rasterizer rdar://48348476
     # https://github.com/KhronosGroup/MoltenVK/issues/527
     "multiple_ssbo_update_with_graphics_pipeline.vkscript",
-    "multiple_ubo_update_with_graphics_pipeline.vkscript"
-  ]
+    "multiple_ubo_update_with_graphics_pipeline.vkscript",
+    # DXC not currently building on bot
+    "draw_triangle_list_hlsl.amber"
+  ],
+  "Linux": [
+    # DXC not currently building on bot
+    "draw_triangle_list_hlsl.amber"
+  ],
+  "Win": [
+    # DXC not currently building on bot
+    "draw_triangle_list_hlsl.amber"
+   ]
 }
 
 class TestCase:

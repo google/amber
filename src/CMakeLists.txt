@@ -51,10 +51,31 @@ if (${Dawn_FOUND})
   list(APPEND AMBER_SOURCES dawn_engine_config.cc)
 endif()
 
+if (${AMBER_ENABLE_DXC})
+  list(APPEND AMBER_SOURCES dxc_helper.cc)
+endif()
+
 add_library(libamber ${AMBER_SOURCES})
 amber_default_compile_options(libamber)
 target_include_directories(libamber PRIVATE "${CMAKE_BINARY_DIR}")
 set_target_properties(libamber PROPERTIES OUTPUT_NAME "amber")
+
+if (${AMBER_ENABLE_DXC})
+  target_include_directories(libamber PRIVATE
+    "${PROJECT_SOURCE_DIR}/third_party/dxc/include"
+    "${CMAKE_BINARY_DIR}/third_party/dxc/include"
+  )
+
+  add_dependencies(libamber dxcompiler)
+  target_link_libraries(libamber
+    dl
+    dxcompiler
+    LLVMDxcSupport
+    LLVMOption
+    LLVMHLSL
+    LLVMScalarOpts
+  )
+endif()
 
 if (${AMBER_ENABLE_SPIRV_TOOLS})
   target_link_libraries(libamber SPIRV-Tools)
