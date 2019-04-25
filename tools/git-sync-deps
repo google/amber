@@ -151,7 +151,7 @@ def git_checkout_to_directory(git, repo, checkoutable, directory, verbose):
   """
   if not os.path.isdir(directory):
     subprocess.check_call(
-      [git, 'clone', '--quiet', repo, directory])
+      [git, 'clone', '--recursive', '--quiet', repo, directory])
 
   if not is_git_toplevel(git, directory):
     # if the directory exists, but isn't a git repo, you will modify

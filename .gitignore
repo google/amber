@@ -16,3 +16,4 @@ third_party/vulkan-loader
 # C-Lion
 .idea
 cmake-build-debug
+third_party/dxc

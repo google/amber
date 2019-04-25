@@ -50,6 +50,18 @@ if (${Dawn_FOUND})
   add_subdirectory(dawn)
   list(APPEND AMBER_SOURCES dawn_engine_config.cc)
 endif()
+if (${AMBER_ENABLE_DXC})
+  set(DXC_BUILD_FIXES
+    /W3
+    /wd4267)
+
+  set(CXX_BACK ${CMAKE_CXX_FLAGS})
+  SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "${DXC_BUILD_FIXES}"
+      CACHE STRING "compile flags" FORCE)
+  STRING(REGEX REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  add_subdirectory(dxcutil)
+  set(CMAKE_CXX_FLAGS ${CXX_BACK})
+endif()
 
 add_library(libamber ${AMBER_SOURCES})
 amber_default_compile_options(libamber)
@@ -62,6 +74,10 @@ endif()
 
 if (${AMBER_ENABLE_SHADERC})
   target_link_libraries(libamber shaderc SPIRV)
+endif()
+
+if (${AMBER_ENABLE_DXC})
+  target_link_libraries(libamber libamber_dxc_util)
 endif()
 
 if (NOT MSVC AND NOT ANDROID)

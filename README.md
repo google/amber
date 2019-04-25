@@ -100,6 +100,8 @@ cd /data/local/tmp
 
 ### Optional Components
 
+#### Disabling testing, SPIRV-Tools and Shaderc
+
 Amber, by default, enables testing, SPIRV-Tools and Shaderc. Each of these can
 be disabled by using the appropriate flags to CMake. Note, disabling SPIRV-Tools
 will disable Shaderc automatically.
@@ -111,6 +113,19 @@ The available flags which can be defined are:
 
 ```
 cmake -DAMBER_SKIP_TESTS=True -DAMBER_SKIP_SPIRV_TOOLS=True -GNinja ../..
+```
+
+#### Enabling DXC
+
+Amber, by default, does not support DXC build nor HLSL shaders, but you can
+enable DXC/HLSL support using `AMBER_USE_DXC`. Note that the current DXC
+integration for Amber works only on Windows in release mode and you must
+set both `AMBER_SKIP_SPIRV_TOOLS` and `AMBER_SKIP_TESTS` true because of
+the conflict between libraries inside glslang, SPIRV-Tools, and DXC.
+
+```
+cmake -GNinja -DAMBER_USE_DXC:BOOL=TRUE -DCMAKE_BUILD_TYPE=Release \
+      -DAMBER_SKIP_SPIRV_TOOLS:BOOL=TRUE -DAMBER_SKIP_TESTS:BOOL=TRUE ../..
 ```
 
 ## Build Bots

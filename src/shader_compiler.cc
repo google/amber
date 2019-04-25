@@ -34,6 +34,10 @@
 #pragma clang diagnostic pop
 #endif  // AMBER_ENABLE_SHADERC
 
+#if AMBER_ENABLE_DXC
+#include "src/dxcutil/dxc_util.h"
+#endif  // AMBER_ENABLE_DXC
+
 namespace amber {
 
 ShaderCompiler::ShaderCompiler() = default;
@@ -104,6 +108,13 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
       return {Result("Shader assembly failed: " + spv_errors), {}};
     }
 #endif  // AMBER_ENABLE_SPIRV_TOOLS
+
+#if AMBER_ENABLE_DXC
+  } else if (shader->GetFormat() == kShaderFormatHlsl) {
+    Result r = CompileHlsl(shader, &results);
+    if (!r.IsSuccess())
+      return {r, {}};
+#endif  // AMBER_ENABLE_SHADERC
 
   } else {
     return {Result("Invalid shader format"), results};
@@ -177,6 +188,37 @@ Result ShaderCompiler::CompileGlsl(const Shader* shader,
 }
 #else
 Result ShaderCompiler::CompileGlsl(const Shader*,
+                                   std::vector<uint32_t>*) const {
+  return {};
+}
+#endif  // AMBER_ENABLE_SHADERC
+
+#if AMBER_ENABLE_DXC
+Result ShaderCompiler::CompileHlsl(const Shader* shader,
+                                   std::vector<uint32_t>* result) const {
+  std::string args = std::string("-E main -spirv -T ");
+  if (shader->GetType() == kShaderTypeCompute)
+    args += "cs_6_0";
+  else if (shader->GetType() == kShaderTypeFragment)
+    args += "ps_6_0";
+  else if (shader->GetType() == kShaderTypeGeometry)
+    args += "gs_6_0";
+  else if (shader->GetType() == kShaderTypeVertex)
+    args += "vs_6_0";
+  else
+    return Result("Unknown shader type");
+
+  std::string target;
+  std::string entry;
+  std::vector<std::string> rest;
+  Result r = ProcessRunCommandArgs(args, &target, &entry, &rest);
+  if (!r.IsSuccess())
+    return r;
+
+  return RunDXC(shader->GetData(), entry, target, rest, result);
+}
+#else
+Result ShaderCompiler::CompileHlsl(const Shader*,
                                    std::vector<uint32_t>*) const {
   return {};
 }

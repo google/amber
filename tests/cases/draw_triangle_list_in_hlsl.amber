@@ -13,26 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-SHADER vertex vtex_shader GLSL
-#version 430
+SHADER vertex vtex_shader HLSL
+struct VS_OUTPUT {
+  float4 pos : SV_POSITION;
+  float4 color : COLOR;
+};
 
-layout(location = 0) in vec4 position;
-layout(location = 1) in vec4 vert_color;
-layout(location = 0) out vec4 frag_color;
-
-void main() {
-  gl_Position = position;
-  frag_color = vert_color;
+VS_OUTPUT main(float4 pos : POSITION,
+               float4 color : COLOR)
+{
+  VS_OUTPUT vout;
+  vout.pos = pos;
+  vout.color = color;
+  return vout;
 }
 END
-SHADER fragment frag_shader GLSL
-#version 430
-
-layout(location = 0) in vec4 frag_color;
-layout(location = 0) out vec4 final_color;
-
-void main() {
-  final_color = frag_color;
+SHADER fragment frag_shader HLSL
+float4 main(float4 color : COLOR) : SV_TARGET
+{
+  return color;
 }
 END
 
