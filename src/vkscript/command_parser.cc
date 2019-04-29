@@ -692,14 +692,7 @@ Result CommandParser::ProcessUniform() {
       cmd->SetBinding(val);
     }
     is_ubo = true;
-  } else {
-    cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kPushConstant,
-                                    pipeline_);
-    cmd->SetLine(tokenizer_->GetCurrentLine());
-  }
 
-  {
-    // Generate an internal buffer for this binding if needed.
     auto set = cmd->GetDescriptorSet();
     auto binding = cmd->GetBinding();
 
@@ -709,10 +702,22 @@ Result CommandParser::ProcessUniform() {
       b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
       buffer = b.get();
       script_->AddBuffer(std::move(b));
-      if (!cmd->IsPushConstant())
-        pipeline_->AddBuffer(buffer, set, binding);
+      pipeline_->AddBuffer(buffer, set, binding);
     }
     cmd->SetBuffer(buffer);
+
+  } else {
+    cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kPushConstant,
+                                    pipeline_);
+    cmd->SetLine(tokenizer_->GetCurrentLine());
+
+    // Push constants don't have descriptor set and binding values. So, we do
+    // not want to try to lookup the buffer or we'll accidentally get whatever
+    // is bound at 0:0.
+    auto b = MakeUnique<Buffer>(BufferType::kUniform);
+    b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
+    cmd->SetBuffer(b.get());
+    script_->AddBuffer(std::move(b));
   }
 
   DatumTypeParser tp;
@@ -755,7 +760,10 @@ Result CommandParser::ProcessUniform() {
   if (!r.IsSuccess())
     return r;
 
-  cmd->SetValues(std::move(values));
+  if (cmd->IsPushConstant())
+    cmd->GetBuffer()->SetData(values);
+  else
+    cmd->SetValues(std::move(values));
 
   commands_.push_back(std::move(cmd));
   return {};
