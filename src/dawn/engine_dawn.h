@@ -29,6 +29,10 @@
 namespace amber {
 namespace dawn {
 
+static constexpr uint32_t kMaxColorAttachments = 4u;
+static constexpr uint32_t kMaxVertexInputs = 16u;
+static constexpr uint32_t kMaxVertexAttributes = 16u;
+
 /// Engine implementation using the Dawn API.
 class EngineDawn : public Engine {
  public:
@@ -37,8 +41,7 @@ class EngineDawn : public Engine {
 
   // Engine
   // Initialize with given configuration data.
-  Result Initialize(EngineConfig* config,
-                    Delegate*,
+  Result Initialize(EngineConfig* config, Delegate*,
                     const std::vector<std::string>& features,
                     const std::vector<std::string>& instance_extensions,
                     const std::vector<std::string>& device_extensions) override;
@@ -68,6 +71,41 @@ class EngineDawn : public Engine {
       const ::amber::PipelineCommand* command) {
     return pipeline_map_[command->GetPipeline()].render_pipeline.get();
   }
+
+  // Helper stuff
+  struct Helper {
+    ::dawn::RenderPassColorAttachmentDescriptor*
+        cColorAttachmentsInfoPtr[kMaxColorAttachments];
+    ::dawn::RenderPassDepthStencilAttachmentDescriptor
+        cDepthStencilAttachmentInfo;
+    std::array<::dawn::RenderPassColorAttachmentDescriptor,
+               kMaxColorAttachments>
+        mColorAttachmentsInfo;
+
+    std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments>
+        cColorStates;
+    ::dawn::DepthStencilStateDescriptor cDepthStencilState;
+    ::dawn::ColorStateDescriptor mColorStates[kMaxColorAttachments];
+    ::dawn::InputStateDescriptor tempInputState = {};
+    ::dawn::PipelineStageDescriptor cFragmentStage;
+    ::dawn::PipelineStageDescriptor cVertexStage;
+    ::dawn::StencilStateFaceDescriptor stencilFace;
+    ::dawn::VertexInputDescriptor vertexInput;
+    std::array<::dawn::VertexInputDescriptor, kMaxVertexInputs> tempInputs;
+    std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
+        tempAttributes;
+    ::dawn::VertexAttributeDescriptor vertexAttribute;
+    ::dawn::BlendDescriptor blend;
+    ::dawn::ColorStateDescriptor colorStateDescriptor;
+
+    ::dawn::RenderPipelineDescriptor* CreatRenderPipelineDescriptor(
+        const RenderPipelineInfo& render_pipeline,
+        const ::dawn::Device& device);
+
+    ::dawn::RenderPassDescriptor* CreateRenderPassDescriptor(
+        const RenderPipelineInfo& render_pipeline,
+        const ::dawn::Device& device);
+  };
 
   // If they don't already exist, creates the framebuffer texture for use
   // on the device, the buffer on the host that will eventually hold the

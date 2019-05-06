@@ -38,9 +38,7 @@ namespace {
 // The minimum multiple row pitch observed on Dawn on Metal.  Increase this
 // as needed for other Dawn backends.
 const uint32_t kMinimumImageRowPitch = 256;
-static constexpr uint32_t kMaxColorAttachments = 4u;
-static constexpr uint32_t kMaxVertexInputs = 16u;
-static constexpr uint32_t kMaxVertexAttributes = 16u;
+
 
 // Creates a device-side texture, and returns it through |result_ptr|.
 // Assumes the device exists and is valid.  Assumes result_ptr is not null.
@@ -636,12 +634,9 @@ shaderc_shader_kind ShadercShaderKind(::dawn::ShaderStage stage) {
   return CreateShaderModuleFromResult(device, result);
 }
 
-std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments> cColorStates;
-::dawn::DepthStencilStateDescriptor cDepthStencilState;
-::dawn::ColorStateDescriptor mColorStates[kMaxColorAttachments];
-::dawn::PipelineStageDescriptor cVertexStage;
 
-::dawn::RenderPipelineDescriptor* CreatRenderPipelineDescriptor(
+
+::dawn::RenderPipelineDescriptor* EngineDawn::Helper::CreatRenderPipelineDescriptor(
     const RenderPipelineInfo& render_pipeline, const ::dawn::Device& device) {
   ::dawn::RenderPipelineDescriptor* renderDescriptor =
       new ::dawn::RenderPipelineDescriptor();
@@ -657,20 +652,14 @@ std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments> cColorStates;
   renderDescriptor->vertexStage = std::move(&cVertexStage);
 
   // Set defaults for the fragment stage desriptor.
-  ::dawn::PipelineStageDescriptor cFragmentStage;
   cFragmentStage.module = render_pipeline.fragment_shader;
   cFragmentStage.entryPoint = "main";
   renderDescriptor->fragmentStage = std::move(&cFragmentStage);
 
   // Set defaults for the input state descriptors.
-  ::dawn::InputStateDescriptor tempInputState = {};
-  std::array<::dawn::VertexInputDescriptor, kMaxVertexInputs> tempInputs;
-  std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
-      tempAttributes;
 
   tempInputState.indexFormat = ::dawn::IndexFormat::Uint32;
   // Fill the default values for vertexInput.
-  ::dawn::VertexInputDescriptor vertexInput;
   vertexInput.inputSlot = 0;
   vertexInput.stride = 0;
   vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
@@ -681,7 +670,6 @@ std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments> cColorStates;
   tempInputState.inputs = std::move(&tempInputs[0]);
 
   // Fill the default values for vertexAttribute.
-  ::dawn::VertexAttributeDescriptor vertexAttribute;
   vertexAttribute.shaderLocation = 0;
   vertexAttribute.inputSlot = 0;
   vertexAttribute.offset = 0;
@@ -699,11 +687,9 @@ std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments> cColorStates;
   // Set defaults for the color state descriptors.
   renderDescriptor->colorStateCount = 1;
 
-  ::dawn::BlendDescriptor blend;
   blend.operation = ::dawn::BlendOperation::Add;
   blend.srcFactor = ::dawn::BlendFactor::One;
   blend.dstFactor = ::dawn::BlendFactor::Zero;
-  ::dawn::ColorStateDescriptor colorStateDescriptor;
   colorStateDescriptor.format = ::dawn::TextureFormat::B8G8R8A8Unorm;
   colorStateDescriptor.alphaBlend = blend;
   colorStateDescriptor.colorBlend = blend;
@@ -716,7 +702,6 @@ std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments> cColorStates;
   renderDescriptor->colorStates = std::move(&cColorStates[0]);
 
   // Set defaults for the depth stencil state descriptors.
-  ::dawn::StencilStateFaceDescriptor stencilFace;
   stencilFace.compare = ::dawn::CompareFunction::Always;
   stencilFace.failOp = ::dawn::StencilOperation::Keep;
   stencilFace.depthFailOp = ::dawn::StencilOperation::Keep;
@@ -735,13 +720,7 @@ std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments> cColorStates;
   return renderDescriptor;
 }
 
-::dawn::RenderPassColorAttachmentDescriptor*
-    cColorAttachmentsInfoPtr[kMaxColorAttachments];
-::dawn::RenderPassDepthStencilAttachmentDescriptor cDepthStencilAttachmentInfo;
-std::array<::dawn::RenderPassColorAttachmentDescriptor, kMaxColorAttachments>
-    mColorAttachmentsInfo;
-
-::dawn::RenderPassDescriptor* CreateRenderPassDescriptor(
+::dawn::RenderPassDescriptor* EngineDawn::Helper::CreateRenderPassDescriptor(
     const RenderPipelineInfo& render_pipeline, const ::dawn::Device& device) {
   ::dawn::RenderPassDescriptor* renderPassDescriptor =
       new ::dawn::RenderPassDescriptor();
@@ -845,110 +824,112 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
       device, vertexData, sizeof(vertexData), ::dawn::BufferUsageBit::Vertex);
 
   //----------------------------------------------------------------------------
-  ::dawn::RenderPipelineDescriptor renderDescriptor = {};
-  //*CreatRenderPipelineDescriptor(*render_pipeline, *device_);
+    Helper helper;
+  ::dawn::RenderPipelineDescriptor renderDescriptor =
+      *helper.CreatRenderPipelineDescriptor(*render_pipeline, *device_);
 
-  std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments> cColorStates;
-  ::dawn::DepthStencilStateDescriptor cDepthStencilState;
-  ::dawn::ColorStateDescriptor mColorStates[kMaxColorAttachments];
+  // std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments>
+  // cColorStates;
+  // ::dawn::DepthStencilStateDescriptor cDepthStencilState;
+  // ::dawn::ColorStateDescriptor mColorStates[kMaxColorAttachments];
 
-  //--------------------
-  renderDescriptor.layout = MakeBasicPipelineLayout(device, nullptr);
-  renderDescriptor.primitiveTopology = ::dawn::PrimitiveTopology::TriangleList;
-  renderDescriptor.sampleCount = 1;
+  // //--------------------
+  // renderDescriptor.layout = MakeBasicPipelineLayout(device, nullptr);
+  // renderDescriptor.primitiveTopology =
+  // ::dawn::PrimitiveTopology::TriangleList; renderDescriptor.sampleCount = 1;
 
-  // Set defaults for the vertex stage descriptor.
-  {
-    ::dawn::PipelineStageDescriptor cVertexStage;
-    cVertexStage.module = render_pipeline->vertex_shader;
-    cVertexStage.entryPoint = "main";
-    renderDescriptor.vertexStage = std::move(&cVertexStage);
-  }
+  // // Set defaults for the vertex stage descriptor.
+  // {
+  //   ::dawn::PipelineStageDescriptor cVertexStage;
+  //   cVertexStage.module = render_pipeline->vertex_shader;
+  //   cVertexStage.entryPoint = "main";
+  //   renderDescriptor.vertexStage = std::move(&cVertexStage);
+  // }
 
-  // Set defaults for the fragment stage desriptor.
-  ::dawn::PipelineStageDescriptor cFragmentStage;
-  cFragmentStage.module = render_pipeline->fragment_shader;
-  cFragmentStage.entryPoint = "main";
-  renderDescriptor.fragmentStage = &cFragmentStage;
+  // // Set defaults for the fragment stage desriptor.
+  // ::dawn::PipelineStageDescriptor cFragmentStage;
+  // cFragmentStage.module = render_pipeline->fragment_shader;
+  // cFragmentStage.entryPoint = "main";
+  // renderDescriptor.fragmentStage = &cFragmentStage;
 
-  // Set defaults for the input state descriptors.
-  ::dawn::InputStateDescriptor tempInputState = {};
-  std::array<::dawn::VertexInputDescriptor, kMaxVertexInputs> tempInputs;
-  std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
-      tempAttributes;
+  // // Set defaults for the input state descriptors.
+  // ::dawn::InputStateDescriptor tempInputState = {};
+  // std::array<::dawn::VertexInputDescriptor, kMaxVertexInputs> tempInputs;
+  // std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
+  //     tempAttributes;
 
-  tempInputState.indexFormat = ::dawn::IndexFormat::Uint32;
-  // Fill the default values for vertexInput.
-  tempInputState.numInputs = 0;
-  ::dawn::VertexInputDescriptor vertexInput;
-  vertexInput.inputSlot = 0;
-  vertexInput.stride = 0;
-  vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
-  for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
-    tempInputs[i] = vertexInput;
-  }
-  tempInputState.inputs = &tempInputs[0];
+  // tempInputState.indexFormat = ::dawn::IndexFormat::Uint32;
+  // // Fill the default values for vertexInput.
+  // tempInputState.numInputs = 0;
+  // ::dawn::VertexInputDescriptor vertexInput;
+  // vertexInput.inputSlot = 0;
+  // vertexInput.stride = 0;
+  // vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
+  // for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
+  //   tempInputs[i] = vertexInput;
+  // }
+  // tempInputState.inputs = &tempInputs[0];
 
-  // Fill the default values for vertexAttribute.
-  tempInputState.numAttributes = 0;
-  ::dawn::VertexAttributeDescriptor vertexAttribute;
-  vertexAttribute.shaderLocation = 0;
-  vertexAttribute.inputSlot = 0;
-  vertexAttribute.offset = 0;
-  vertexAttribute.format = ::dawn::VertexFormat::Float;
-  for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
-    tempAttributes[i] = vertexAttribute;
-  }
-  tempInputState.attributes = &tempAttributes[0];
+  // // Fill the default values for vertexAttribute.
+  // tempInputState.numAttributes = 0;
+  // ::dawn::VertexAttributeDescriptor vertexAttribute;
+  // vertexAttribute.shaderLocation = 0;
+  // vertexAttribute.inputSlot = 0;
+  // vertexAttribute.offset = 0;
+  // vertexAttribute.format = ::dawn::VertexFormat::Float;
+  // for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
+  //   tempAttributes[i] = vertexAttribute;
+  // }
+  // tempInputState.attributes = &tempAttributes[0];
 
-  tempInputState.numAttributes = 1;
-  tempAttributes[0].format = ::dawn::VertexFormat::Float4;
-  tempInputState.numInputs = 1;
-  tempInputs[0].stride = 4 * sizeof(float);
-  renderDescriptor.inputState = &tempInputState;
+  // tempInputState.numAttributes = 1;
+  // tempAttributes[0].format = ::dawn::VertexFormat::Float4;
+  // tempInputState.numInputs = 1;
+  // tempInputs[0].stride = 4 * sizeof(float);
+  // renderDescriptor.inputState = &tempInputState;
 
-  // Set defaults for the color state descriptors.
-  renderDescriptor.colorStateCount = 1;
-  renderDescriptor.colorStates = &cColorStates[0];
+  // // Set defaults for the color state descriptors.
+  // renderDescriptor.colorStateCount = 1;
+  // renderDescriptor.colorStates = &cColorStates[0];
 
-  ::dawn::BlendDescriptor blend;
-  blend.operation = ::dawn::BlendOperation::Add;
-  blend.srcFactor = ::dawn::BlendFactor::One;
-  blend.dstFactor = ::dawn::BlendFactor::Zero;
-  ::dawn::ColorStateDescriptor colorStateDescriptor;
-  colorStateDescriptor.format = ::dawn::TextureFormat::B8G8R8A8Unorm;
-  colorStateDescriptor.alphaBlend = blend;
-  colorStateDescriptor.colorBlend = blend;
-  colorStateDescriptor.colorWriteMask = ::dawn::ColorWriteMask::All;
-  for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
-    mColorStates[i] = colorStateDescriptor;
-    cColorStates[i] = &mColorStates[i];
-  }
-  cColorStates[0]->format = ::dawn::TextureFormat::B8G8R8A8Unorm;
+  // ::dawn::BlendDescriptor blend;
+  // blend.operation = ::dawn::BlendOperation::Add;
+  // blend.srcFactor = ::dawn::BlendFactor::One;
+  // blend.dstFactor = ::dawn::BlendFactor::Zero;
+  // ::dawn::ColorStateDescriptor colorStateDescriptor;
+  // colorStateDescriptor.format = ::dawn::TextureFormat::B8G8R8A8Unorm;
+  // colorStateDescriptor.alphaBlend = blend;
+  // colorStateDescriptor.colorBlend = blend;
+  // colorStateDescriptor.colorWriteMask = ::dawn::ColorWriteMask::All;
+  // for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
+  //   mColorStates[i] = colorStateDescriptor;
+  //   cColorStates[i] = &mColorStates[i];
+  // }
+  // cColorStates[0]->format = ::dawn::TextureFormat::B8G8R8A8Unorm;
 
-  // Set defaults for the depth stencil state descriptors.
-  ::dawn::StencilStateFaceDescriptor stencilFace;
-  stencilFace.compare = ::dawn::CompareFunction::Always;
-  stencilFace.failOp = ::dawn::StencilOperation::Keep;
-  stencilFace.depthFailOp = ::dawn::StencilOperation::Keep;
-  stencilFace.passOp = ::dawn::StencilOperation::Keep;
+  // // Set defaults for the depth stencil state descriptors.
+  // ::dawn::StencilStateFaceDescriptor stencilFace;
+  // stencilFace.compare = ::dawn::CompareFunction::Always;
+  // stencilFace.failOp = ::dawn::StencilOperation::Keep;
+  // stencilFace.depthFailOp = ::dawn::StencilOperation::Keep;
+  // stencilFace.passOp = ::dawn::StencilOperation::Keep;
 
-  renderDescriptor.depthStencilState = &cDepthStencilState;
-  cDepthStencilState.format = ::dawn::TextureFormat::D32FloatS8Uint;
-  cDepthStencilState.depthWriteEnabled = false;
-  cDepthStencilState.depthCompare = ::dawn::CompareFunction::Always;
-  cDepthStencilState.stencilBack = stencilFace;
-  cDepthStencilState.stencilFront = stencilFace;
-  cDepthStencilState.stencilReadMask = 0xff;
-  cDepthStencilState.stencilWriteMask = 0xff;
-  cDepthStencilState.format = ::dawn::TextureFormat::D32FloatS8Uint;
+  // renderDescriptor.depthStencilState = &cDepthStencilState;
+  // cDepthStencilState.format = ::dawn::TextureFormat::D32FloatS8Uint;
+  // cDepthStencilState.depthWriteEnabled = false;
+  // cDepthStencilState.depthCompare = ::dawn::CompareFunction::Always;
+  // cDepthStencilState.stencilBack = stencilFace;
+  // cDepthStencilState.stencilFront = stencilFace;
+  // cDepthStencilState.stencilReadMask = 0xff;
+  // cDepthStencilState.stencilWriteMask = 0xff;
+  // cDepthStencilState.format = ::dawn::TextureFormat::D32FloatS8Uint;
 
   ::dawn::RenderPipeline pipeline =
       device.CreateRenderPipeline(&renderDescriptor);
   // ----------------------------------------------------------------------------
 
   const ::dawn::RenderPassDescriptor* renderPassDescriptor =
-      CreateRenderPassDescriptor(*render_pipeline, *device_);
+      helper.CreateRenderPassDescriptor(*render_pipeline, *device_);
   // std::initializer_list<::dawn::TextureView> colorAttachmentInfo = {
   //     render_pipeline->fb_texture.CreateDefaultView()};
 
