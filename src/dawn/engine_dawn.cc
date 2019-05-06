@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <shaderc/shaderc.hpp>
 #include <string>
 #include <utility>
 #include <vector>
@@ -37,14 +38,15 @@ namespace {
 // The minimum multiple row pitch observed on Dawn on Metal.  Increase this
 // as needed for other Dawn backends.
 const uint32_t kMinimumImageRowPitch = 256;
+static constexpr uint32_t kMaxColorAttachments = 4u;
+static constexpr uint32_t kMaxVertexInputs = 16u;
+static constexpr uint32_t kMaxVertexAttributes = 16u;
 
 // Creates a device-side texture, and returns it through |result_ptr|.
 // Assumes the device exists and is valid.  Assumes result_ptr is not null.
 // Returns a result code.
-Result MakeTexture(const ::dawn::Device& device,
-                   ::dawn::TextureFormat format,
-                   uint32_t width,
-                   uint32_t height,
+Result MakeTexture(const ::dawn::Device& device, ::dawn::TextureFormat format,
+                   uint32_t width, uint32_t height,
                    ::dawn::Texture* result_ptr) {
   assert(device);
   assert(result_ptr);
@@ -61,22 +63,18 @@ Result MakeTexture(const ::dawn::Device& device,
                      ::dawn::TextureUsageBit::OutputAttachment;
   // TODO(dneto): Get a better message by using the Dawn error callback.
   *result_ptr = device.CreateTexture(&descriptor);
-  if (*result_ptr)
-    return {};
+  if (*result_ptr) return {};
   return Result("Dawn: Failed to allocate a framebuffer texture");
 }
 
 // Creates a host-side buffer for the framebuffer, and returns it through
 // |result_ptr|. The buffer will be used as a transfer destination and
 // for mapping-for-read.  Returns a result code.
-Result MakeFramebufferBuffer(const ::dawn::Device& device,
-                             uint32_t width,
-                             uint32_t height,
-                             ::dawn::TextureFormat format,
+Result MakeFramebufferBuffer(const ::dawn::Device& device, uint32_t width,
+                             uint32_t height, ::dawn::TextureFormat format,
                              ::dawn::Buffer* result_ptr,
                              uint32_t* texel_stride_ptr,
-                             uint32_t* row_stride_ptr,
-                             uint32_t* size_ptr) {
+                             uint32_t* row_stride_ptr, uint32_t* size_ptr) {
   assert(device);
   assert(width > 0);
   assert(height > 0);
@@ -100,8 +98,7 @@ Result MakeFramebufferBuffer(const ::dawn::Device& device,
   {
     // Round up the stride to the minimum image row pitch.
     const uint32_t spillover = row_stride % kMinimumImageRowPitch;
-    if (spillover > 0)
-      row_stride += (kMinimumImageRowPitch - spillover);
+    if (spillover > 0) row_stride += (kMinimumImageRowPitch - spillover);
     assert(0 == (row_stride % kMinimumImageRowPitch));
   }
 
@@ -128,8 +125,7 @@ struct MapResult {
 // On a successful mapping outcome, set the data pointer in the map result.
 // Otherwise set the map result object to an error, and the data member is
 // not changed.
-void HandleBufferMapCallback(DawnBufferMapAsyncStatus status,
-                             const void* data,
+void HandleBufferMapCallback(DawnBufferMapAsyncStatus status, const void* data,
                              uint64_t dataLength,
                              DawnCallbackUserdata userdata) {
   MapResult& map_result = *reinterpret_cast<MapResult*>(userdata);
@@ -152,7 +148,7 @@ void HandleBufferMapCallback(DawnBufferMapAsyncStatus status,
 }
 
 // Maps the given buffer.  Assumes the buffer has usage bit
-// dawn::BufferUsageBit::MapRead set.  Returns a MapResult structure, with the
+// ::dawn::BufferUsageBit::MapRead set.  Returns a MapResult structure, with the
 // status saved in the .result member and the host pointer to the mapped data
 // in the |.data| member. Mapping a buffer can fail if the context is lost, for
 // example. In the failure case, the .data member of the result will be null.
@@ -229,16 +225,13 @@ EngineDawn::EngineDawn() : Engine() {}
 
 EngineDawn::~EngineDawn() = default;
 
-Result EngineDawn::Initialize(EngineConfig* config,
-                              Delegate*,
+Result EngineDawn::Initialize(EngineConfig* config, Delegate*,
                               const std::vector<std::string>&,
                               const std::vector<std::string>&,
                               const std::vector<std::string>&) {
-  if (device_)
-    return Result("Dawn:Initialize device_ already exists");
+  if (device_) return Result("Dawn:Initialize device_ already exists");
 
-  if (!config)
-    return Result("Dawn::Initialize config is null");
+  if (!config) return Result("Dawn::Initialize config is null");
   DawnEngineConfig* dawn_config = static_cast<DawnEngineConfig*>(config);
   if (dawn_config->device == nullptr)
     return Result("Dawn:Initialize device is a null pointer");
@@ -251,15 +244,13 @@ Result EngineDawn::Initialize(EngineConfig* config,
 Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
   for (const auto& shader_info : pipeline->GetShaders()) {
     Result r = SetShader(shader_info.GetShaderType(), shader_info.GetData());
-    if (!r.IsSuccess())
-      return r;
+    if (!r.IsSuccess()) return r;
   }
 
   switch (pipeline->GetType()) {
     case PipelineType::kCompute: {
       auto module = module_for_type_[kShaderTypeCompute];
-      if (!module)
-        return Result("CreatePipeline: no compute shader provided");
+      if (!module) return Result("CreatePipeline: no compute shader provided");
       pipeline_map_[pipeline].compute_pipeline.reset(
           new ComputePipelineInfo(pipeline, module));
       break;
@@ -349,7 +340,7 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
   const auto pixelSize = render_pipeline.pipeline->GetColorAttachments()[0]
                              .buffer->GetTexelStride();
   const auto dawn_row_pitch = Align(width * pixelSize, kMinimumImageRowPitch);
-  const auto fb_buffer_size = dawn_row_pitch * (height - 1) + width * pixelSize;
+  const auto fb_buffer_size = dawn_row_pitch * height + width * pixelSize;
 
   ::dawn::BufferDescriptor descriptor;
   descriptor.size = fb_buffer_size;
@@ -414,8 +405,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   // TODO(dneto): Likely, we can create the render objects during
   // CreatePipeline.
   Result result = CreateFramebufferIfNeeded(render_pipeline);
-  if (!result.IsSuccess())
-    return result;
+  if (!result.IsSuccess()) return result;
 
   // Record a render pass in a command on the command buffer.
   //
@@ -471,67 +461,561 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   return map.result;
 }
 
-Result EngineDawn::DoDrawRect(const DrawRectCommand*) {
-  Result result;
+::dawn::Buffer CreateBufferFromData(const ::dawn::Device& device,
+                                    const void* data, uint64_t size,
+                                    ::dawn::BufferUsageBit usage) {
+  ::dawn::BufferDescriptor descriptor;
+  descriptor.size = size;
+  descriptor.usage = usage | ::dawn::BufferUsageBit::TransferDst;
 
-#if 0
-  // Add one more command to the command buffer builder, which is to
-  // copy the framebuffer texture to the framebuffer host-side buffer.
-  ::dawn::Buffer& fb_buffer = render_pipeline_info_.fb_buffer;
-  if (!fb_buffer) {
-    return Result(
-        "Dawn::DoDrawRect: Framebuffer was not created.  Did you run "
-        "any graphics pipeline commands?");
+  ::dawn::Buffer buffer = device.CreateBuffer(&descriptor);
+  buffer.SetSubData(0, size, reinterpret_cast<const uint8_t*>(data));
+  return buffer;
+}
+
+::dawn::SamplerDescriptor GetDefaultSamplerDescriptor() {
+  ::dawn::SamplerDescriptor desc;
+
+  float kLodMin = 0.0;
+  float kLodMax = 1000.0;
+
+  desc.minFilter = ::dawn::FilterMode::Linear;
+  desc.magFilter = ::dawn::FilterMode::Linear;
+  desc.mipmapFilter = ::dawn::FilterMode::Linear;
+  desc.addressModeU = ::dawn::AddressMode::Repeat;
+  desc.addressModeV = ::dawn::AddressMode::Repeat;
+  desc.addressModeW = ::dawn::AddressMode::Repeat;
+  desc.lodMinClamp = kLodMin;
+  desc.lodMaxClamp = kLodMax;
+  desc.compareFunction = ::dawn::CompareFunction::Never;
+
+  return desc;
+}
+
+::dawn::BufferCopyView CreateBufferCopyView(::dawn::Buffer buffer,
+                                            uint64_t offset, uint32_t rowPitch,
+                                            uint32_t imageHeight) {
+  ::dawn::BufferCopyView bufferCopyView;
+  bufferCopyView.buffer = buffer;
+  bufferCopyView.offset = offset;
+  bufferCopyView.rowPitch = rowPitch;
+  bufferCopyView.imageHeight = imageHeight;
+
+  return bufferCopyView;
+}
+
+::dawn::TextureCopyView CreateTextureCopyView(::dawn::Texture texture,
+                                              uint32_t level, uint32_t slice,
+                                              ::dawn::Origin3D origin) {
+  ::dawn::TextureCopyView textureCopyView;
+  textureCopyView.texture = texture;
+  textureCopyView.level = level;
+  textureCopyView.slice = slice;
+  textureCopyView.origin = origin;
+
+  return textureCopyView;
+}
+
+::dawn::BindGroupLayout MakeBindGroupLayout(
+    const ::dawn::Device& device,
+    std::initializer_list<::dawn::BindGroupLayoutBinding> bindingsInitializer) {
+  constexpr ::dawn::ShaderStageBit kNoStages{};
+
+  std::vector<::dawn::BindGroupLayoutBinding> bindings;
+  for (const ::dawn::BindGroupLayoutBinding& binding : bindingsInitializer) {
+    if (binding.visibility != kNoStages) {
+      bindings.push_back(binding);
+    }
   }
 
-  result = CreateCommandBufferBuilderIfNeeded();
-  if (!result.IsSuccess())
-    return result;
+  ::dawn::BindGroupLayoutDescriptor descriptor;
+  descriptor.bindingCount = static_cast<uint32_t>(bindings.size());
+  descriptor.bindings = bindings.data();
+  return device.CreateBindGroupLayout(&descriptor);
+}
 
+::dawn::PipelineLayout MakeBasicPipelineLayout(
+    const ::dawn::Device& device,
+    const ::dawn::BindGroupLayout* bindGroupLayout) {
+  ::dawn::PipelineLayoutDescriptor descriptor;
+  if (bindGroupLayout) {
+    descriptor.bindGroupLayoutCount = 1;
+    descriptor.bindGroupLayouts = bindGroupLayout;
+  } else {
+    descriptor.bindGroupLayoutCount = 0;
+    descriptor.bindGroupLayouts = nullptr;
+  }
+  return device.CreatePipelineLayout(&descriptor);
+}
+
+::dawn::TextureView CreateDefaultDepthStencilView(
+    const ::dawn::Device& device) {
+  ::dawn::TextureDescriptor descriptor;
+  descriptor.dimension = ::dawn::TextureDimension::e2D;
+  descriptor.size.width = 250;
+  descriptor.size.height = 250;
+  descriptor.size.depth = 1;
+  descriptor.arrayLayerCount = 1;
+  descriptor.sampleCount = 1;
+  descriptor.format = ::dawn::TextureFormat::D32FloatS8Uint;
+  descriptor.mipLevelCount = 1;
+  descriptor.usage = ::dawn::TextureUsageBit::OutputAttachment;
+  auto depthStencilTexture = device.CreateTexture(&descriptor);
+  return depthStencilTexture.CreateDefaultView();
+}
+
+::dawn::ShaderModule CreateShaderModuleFromResult(
+    const ::dawn::Device& device, const shaderc::SpvCompilationResult& result) {
+  // result.cend and result.cbegin return pointers to uint32_t.
+  const uint32_t* resultBegin = result.cbegin();
+  const uint32_t* resultEnd = result.cend();
+  // So this size is in units of sizeof(uint32_t).
+  ptrdiff_t resultSize = resultEnd - resultBegin;
+  // SetSource takes data as uint32_t*.
+
+  ::dawn::ShaderModuleDescriptor descriptor;
+  descriptor.codeSize = static_cast<uint32_t>(resultSize);
+  descriptor.code = result.cbegin();
+  return device.CreateShaderModule(&descriptor);
+}
+
+shaderc_shader_kind ShadercShaderKind(::dawn::ShaderStage stage) {
+  switch (stage) {
+    case ::dawn::ShaderStage::Vertex:
+      return shaderc_glsl_vertex_shader;
+    case ::dawn::ShaderStage::Fragment:
+      return shaderc_glsl_fragment_shader;
+    case ::dawn::ShaderStage::Compute:
+      return shaderc_glsl_compute_shader;
+    default:
+      return shaderc_glsl_vertex_shader;
+  }
+}
+
+::dawn::ShaderModule CreateShaderModule(const ::dawn::Device& device,
+                                        ::dawn::ShaderStage stage,
+                                        const char* source) {
+  shaderc_shader_kind kind = ShadercShaderKind(stage);
+
+  shaderc::Compiler compiler;
+  auto result =
+      compiler.CompileGlslToSpv(source, strlen(source), kind, "myshader?");
+  if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
+    std::cerr << result.GetErrorMessage();
+    return {};
+  }
+#ifdef DUMP_SPIRV_ASSEMBLY
   {
-    const int x = 0, y = 0, z = 0, depth = 1, level = 0, slice = 0,
-              buffer_offset = 0;
+    shaderc::CompileOptions options;
+    auto resultAsm = compiler.CompileGlslToSpvAssembly(
+        source, strlen(source), kind, "myshader?", options);
+    size_t sizeAsm = (resultAsm.cend() - resultAsm.cbegin());
 
-    ::dawn::TextureCopyView texture_copy_view = ::dawn::TextureCopyView();
-    texture_copy_view.texture = render_pipeline_info_.fb_texture;
-    texture_copy_view.level = level;
-    texture_copy_view.slice = slice;
-    texture_copy_view.origin = {x, y, z};
-
-    ::dawn::BufferCopyView buffer_copy_view = ::dawn::BufferCopyView();
-    buffer_copy_view.buffer = fb_buffer;
-    buffer_copy_view.offset = buffer_offset;
-    buffer_copy_view.rowPitch = render_pipeline_info_.fb_row_stride;
-    buffer_copy_view.imageHeight = render_pipeline_info_.fb_num_rows;
-
-    ::dawn::Extent3D extent = {kFramebufferWidth, kFramebufferHeight, depth};
-
-    command_buffer_builder_.CopyTextureToBuffer(&texture_copy_view,
-                                                &buffer_copy_view, &extent);
+    char* buffer = reinterpret_cast<char*>(malloc(sizeAsm + 1));
+    memcpy(buffer, resultAsm.cbegin(), sizeAsm);
+    buffer[sizeAsm] = '\0';
+    printf("SPIRV ASSEMBLY DUMP START\n%s\nSPIRV ASSEMBLY DUMP END\n", buffer);
+    free(buffer);
   }
-
-  // Make sure we have a queue.
-  if (!queue_)
-    queue_ = device_->CreateQueue();
-
-  // Now run the commands.
-  auto command_buffer = command_buffer_builder_.Finish();
-
-  if (render_pipeline_info_.fb_data != nullptr) {
-    fb_buffer.Unmap();
-    render_pipeline_info_.fb_data = nullptr;
-  }
-
-  queue_.Submit(1, &command_buffer);
-
-  // And any further commands start afresh.
-  DestroyCommandBufferBuilder();
-
-  MapResult map = MapBuffer(*device_, fb_buffer);
-  render_pipeline_info_.fb_data = map.data;
-  return map.result;
 #endif
-  return Result("Dawn:DoDrawRect not implemented");
+
+#ifdef DUMP_SPIRV_JS_ARRAY
+  printf("SPIRV JS ARRAY DUMP START\n");
+  for (size_t i = 0; i < size; i++) {
+    printf("%#010x", result.cbegin()[i]);
+    if ((i + 1) % 4 == 0) {
+      printf(",\n");
+    } else {
+      printf(", ");
+    }
+  }
+  printf("\n");
+  printf("SPIRV JS ARRAY DUMP END\n");
+#endif
+
+  return CreateShaderModuleFromResult(device, result);
+}
+
+std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments> cColorStates;
+::dawn::DepthStencilStateDescriptor cDepthStencilState;
+::dawn::ColorStateDescriptor mColorStates[kMaxColorAttachments];
+::dawn::PipelineStageDescriptor cVertexStage;
+
+::dawn::RenderPipelineDescriptor* CreatRenderPipelineDescriptor(
+    const RenderPipelineInfo& render_pipeline, const ::dawn::Device& device) {
+  ::dawn::RenderPipelineDescriptor* renderDescriptor =
+      new ::dawn::RenderPipelineDescriptor();
+
+  //--------------------
+  renderDescriptor->layout = MakeBasicPipelineLayout(device, nullptr);
+  renderDescriptor->primitiveTopology = ::dawn::PrimitiveTopology::TriangleList;
+  renderDescriptor->sampleCount = 1;
+
+  // Set defaults for the vertex stage descriptor.
+  cVertexStage.module = render_pipeline.vertex_shader;
+  cVertexStage.entryPoint = "main";
+  renderDescriptor->vertexStage = std::move(&cVertexStage);
+
+  // Set defaults for the fragment stage desriptor.
+  ::dawn::PipelineStageDescriptor cFragmentStage;
+  cFragmentStage.module = render_pipeline.fragment_shader;
+  cFragmentStage.entryPoint = "main";
+  renderDescriptor->fragmentStage = std::move(&cFragmentStage);
+
+  // Set defaults for the input state descriptors.
+  ::dawn::InputStateDescriptor tempInputState = {};
+  std::array<::dawn::VertexInputDescriptor, kMaxVertexInputs> tempInputs;
+  std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
+      tempAttributes;
+
+  tempInputState.indexFormat = ::dawn::IndexFormat::Uint32;
+  // Fill the default values for vertexInput.
+  ::dawn::VertexInputDescriptor vertexInput;
+  vertexInput.inputSlot = 0;
+  vertexInput.stride = 0;
+  vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
+  for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
+    tempInputs[i] = vertexInput;
+  }
+  tempInputs[0].stride = 4 * sizeof(float);
+  tempInputState.inputs = std::move(&tempInputs[0]);
+
+  // Fill the default values for vertexAttribute.
+  ::dawn::VertexAttributeDescriptor vertexAttribute;
+  vertexAttribute.shaderLocation = 0;
+  vertexAttribute.inputSlot = 0;
+  vertexAttribute.offset = 0;
+  vertexAttribute.format = ::dawn::VertexFormat::Float;
+  for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
+    tempAttributes[i] = vertexAttribute;
+  }
+  tempAttributes[0].format = ::dawn::VertexFormat::Float4;
+  tempInputState.attributes = std::move(&tempAttributes[0]);
+
+  tempInputState.numAttributes = 1;
+  tempInputState.numInputs = 1;
+  renderDescriptor->inputState = std::move(&tempInputState);
+
+  // Set defaults for the color state descriptors.
+  renderDescriptor->colorStateCount = 1;
+
+  ::dawn::BlendDescriptor blend;
+  blend.operation = ::dawn::BlendOperation::Add;
+  blend.srcFactor = ::dawn::BlendFactor::One;
+  blend.dstFactor = ::dawn::BlendFactor::Zero;
+  ::dawn::ColorStateDescriptor colorStateDescriptor;
+  colorStateDescriptor.format = ::dawn::TextureFormat::B8G8R8A8Unorm;
+  colorStateDescriptor.alphaBlend = blend;
+  colorStateDescriptor.colorBlend = blend;
+  colorStateDescriptor.colorWriteMask = ::dawn::ColorWriteMask::All;
+  for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
+    mColorStates[i] = colorStateDescriptor;
+    cColorStates[i] = std::move(&mColorStates[i]);
+  }
+  cColorStates[0]->format = ::dawn::TextureFormat::B8G8R8A8Unorm;
+  renderDescriptor->colorStates = std::move(&cColorStates[0]);
+
+  // Set defaults for the depth stencil state descriptors.
+  ::dawn::StencilStateFaceDescriptor stencilFace;
+  stencilFace.compare = ::dawn::CompareFunction::Always;
+  stencilFace.failOp = ::dawn::StencilOperation::Keep;
+  stencilFace.depthFailOp = ::dawn::StencilOperation::Keep;
+  stencilFace.passOp = ::dawn::StencilOperation::Keep;
+
+  cDepthStencilState.format = ::dawn::TextureFormat::D32FloatS8Uint;
+  cDepthStencilState.depthWriteEnabled = false;
+  cDepthStencilState.depthCompare = ::dawn::CompareFunction::Always;
+  cDepthStencilState.stencilBack = stencilFace;
+  cDepthStencilState.stencilFront = stencilFace;
+  cDepthStencilState.stencilReadMask = 0xff;
+  cDepthStencilState.stencilWriteMask = 0xff;
+  cDepthStencilState.format = ::dawn::TextureFormat::D32FloatS8Uint;
+  renderDescriptor->depthStencilState = std::move(&cDepthStencilState);
+
+  return renderDescriptor;
+}
+
+::dawn::RenderPassColorAttachmentDescriptor*
+    cColorAttachmentsInfoPtr[kMaxColorAttachments];
+::dawn::RenderPassDepthStencilAttachmentDescriptor cDepthStencilAttachmentInfo;
+std::array<::dawn::RenderPassColorAttachmentDescriptor, kMaxColorAttachments>
+    mColorAttachmentsInfo;
+
+::dawn::RenderPassDescriptor* CreateRenderPassDescriptor(
+    const RenderPipelineInfo& render_pipeline, const ::dawn::Device& device) {
+  ::dawn::RenderPassDescriptor* renderPassDescriptor =
+      new ::dawn::RenderPassDescriptor();
+
+  std::initializer_list<::dawn::TextureView> colorAttachmentInfo = {
+      render_pipeline.fb_texture.CreateDefaultView()};
+
+  for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
+    mColorAttachmentsInfo[i].loadOp = ::dawn::LoadOp::Clear;
+    mColorAttachmentsInfo[i].storeOp = ::dawn::StoreOp::Store;
+    mColorAttachmentsInfo[i].clearColor = {0.0f, 0.0f, 0.0f, 0.0f};
+    cColorAttachmentsInfoPtr[i] = nullptr;
+  }
+
+  cDepthStencilAttachmentInfo.clearDepth = 1.0f;
+  cDepthStencilAttachmentInfo.clearStencil = 0;
+  cDepthStencilAttachmentInfo.depthLoadOp = ::dawn::LoadOp::Clear;
+  cDepthStencilAttachmentInfo.depthStoreOp = ::dawn::StoreOp::Store;
+  cDepthStencilAttachmentInfo.stencilLoadOp = ::dawn::LoadOp::Clear;
+  cDepthStencilAttachmentInfo.stencilStoreOp = ::dawn::StoreOp::Store;
+
+  renderPassDescriptor->colorAttachmentCount =
+      static_cast<uint32_t>(colorAttachmentInfo.size());
+  uint32_t colorAttachmentIndex = 0;
+  for (const ::dawn::TextureView& colorAttachment : colorAttachmentInfo) {
+    if (colorAttachment.Get() != nullptr) {
+      mColorAttachmentsInfo[colorAttachmentIndex].attachment = colorAttachment;
+      cColorAttachmentsInfoPtr[colorAttachmentIndex] =
+          &mColorAttachmentsInfo[colorAttachmentIndex];
+    }
+    ++colorAttachmentIndex;
+  }
+  renderPassDescriptor->colorAttachments = cColorAttachmentsInfoPtr;
+
+  ::dawn::TextureView depthStencilView = CreateDefaultDepthStencilView(device);
+  if (depthStencilView.Get() != nullptr) {
+    cDepthStencilAttachmentInfo.attachment = depthStencilView;
+    renderPassDescriptor->depthStencilAttachment = &cDepthStencilAttachmentInfo;
+  } else {
+    renderPassDescriptor->depthStencilAttachment = nullptr;
+  }
+
+  return renderPassDescriptor;
+}
+
+Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
+  RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
+  if (!render_pipeline)
+    return Result("Clear invoked on invalid or missing render pipeline");
+  Result result = CreateFramebufferIfNeeded(render_pipeline);
+  if (!result.IsSuccess()) return result;
+
+  float x = command->GetX();
+  float y = command->GetY();
+  float rectangleWidth = command->GetWidth();
+  float rectangleHeight = command->GetHeight();
+
+  // std::cout << x << " " << y << " " << rectangleWidth << " " <<
+  // rectangleHeight
+  //           << " ";
+
+  const uint32_t width = render_pipeline->pipeline->GetFramebufferWidth();
+  const uint32_t height = render_pipeline->pipeline->GetFramebufferHeight();
+
+  ::dawn::Device device = *device_;
+
+  static const uint32_t indexData[3 * 2] = {
+      0, 1, 2, 0, 2, 3,
+  };
+  ::dawn::Buffer indexBuffer = CreateBufferFromData(
+      device, indexData, sizeof(indexData), ::dawn::BufferUsageBit::Index);
+
+  std::vector<Value> values(8);
+  // Top left
+  values[0].SetDoubleValue(static_cast<double>(x / (width / 2) - 1));
+  values[1].SetDoubleValue(static_cast<double>(y / (height / 2) - 1));
+  // Top right
+  values[2].SetDoubleValue(
+      static_cast<double>((x + rectangleWidth) / (width / 2) - 1));
+  values[3].SetDoubleValue(static_cast<double>(y / (height / 2) - 1));
+  // Bottom right
+  values[4].SetDoubleValue(
+      static_cast<double>((x + rectangleWidth) / (width / 2) - 1));
+  values[5].SetDoubleValue(
+      static_cast<double>((y + rectangleHeight) / (height / 2) - 1));
+  // Bottom left
+  values[6].SetDoubleValue(static_cast<double>(x / (width / 2) - 1));
+  values[7].SetDoubleValue(
+      static_cast<double>((y + rectangleHeight) / (height / 2) - 1));
+
+  static const float vertexData[4 * 4] = {
+      values[0].AsFloat(), values[1].AsFloat(), 0.0f, 1.0f,
+      values[2].AsFloat(), values[3].AsFloat(), 0.0f, 1.0f,
+      values[4].AsFloat(), values[5].AsFloat(), 0.0f, 1.0f,
+      values[6].AsFloat(), values[7].AsFloat(), 0.0f, 1.0f,
+  };
+
+  // for (int i = 0; i < 8; i++) std::cout << values[i].AsFloat() << ", ";
+
+  ::dawn::Buffer vertexBuffer = CreateBufferFromData(
+      device, vertexData, sizeof(vertexData), ::dawn::BufferUsageBit::Vertex);
+
+  //----------------------------------------------------------------------------
+  ::dawn::RenderPipelineDescriptor renderDescriptor = {};
+  //*CreatRenderPipelineDescriptor(*render_pipeline, *device_);
+
+  std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments> cColorStates;
+  ::dawn::DepthStencilStateDescriptor cDepthStencilState;
+  ::dawn::ColorStateDescriptor mColorStates[kMaxColorAttachments];
+
+  //--------------------
+  renderDescriptor.layout = MakeBasicPipelineLayout(device, nullptr);
+  renderDescriptor.primitiveTopology = ::dawn::PrimitiveTopology::TriangleList;
+  renderDescriptor.sampleCount = 1;
+
+  // Set defaults for the vertex stage descriptor.
+  {
+    ::dawn::PipelineStageDescriptor cVertexStage;
+    cVertexStage.module = render_pipeline->vertex_shader;
+    cVertexStage.entryPoint = "main";
+    renderDescriptor.vertexStage = std::move(&cVertexStage);
+  }
+
+  // Set defaults for the fragment stage desriptor.
+  ::dawn::PipelineStageDescriptor cFragmentStage;
+  cFragmentStage.module = render_pipeline->fragment_shader;
+  cFragmentStage.entryPoint = "main";
+  renderDescriptor.fragmentStage = &cFragmentStage;
+
+  // Set defaults for the input state descriptors.
+  ::dawn::InputStateDescriptor tempInputState = {};
+  std::array<::dawn::VertexInputDescriptor, kMaxVertexInputs> tempInputs;
+  std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
+      tempAttributes;
+
+  tempInputState.indexFormat = ::dawn::IndexFormat::Uint32;
+  // Fill the default values for vertexInput.
+  tempInputState.numInputs = 0;
+  ::dawn::VertexInputDescriptor vertexInput;
+  vertexInput.inputSlot = 0;
+  vertexInput.stride = 0;
+  vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
+  for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
+    tempInputs[i] = vertexInput;
+  }
+  tempInputState.inputs = &tempInputs[0];
+
+  // Fill the default values for vertexAttribute.
+  tempInputState.numAttributes = 0;
+  ::dawn::VertexAttributeDescriptor vertexAttribute;
+  vertexAttribute.shaderLocation = 0;
+  vertexAttribute.inputSlot = 0;
+  vertexAttribute.offset = 0;
+  vertexAttribute.format = ::dawn::VertexFormat::Float;
+  for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
+    tempAttributes[i] = vertexAttribute;
+  }
+  tempInputState.attributes = &tempAttributes[0];
+
+  tempInputState.numAttributes = 1;
+  tempAttributes[0].format = ::dawn::VertexFormat::Float4;
+  tempInputState.numInputs = 1;
+  tempInputs[0].stride = 4 * sizeof(float);
+  renderDescriptor.inputState = &tempInputState;
+
+  // Set defaults for the color state descriptors.
+  renderDescriptor.colorStateCount = 1;
+  renderDescriptor.colorStates = &cColorStates[0];
+
+  ::dawn::BlendDescriptor blend;
+  blend.operation = ::dawn::BlendOperation::Add;
+  blend.srcFactor = ::dawn::BlendFactor::One;
+  blend.dstFactor = ::dawn::BlendFactor::Zero;
+  ::dawn::ColorStateDescriptor colorStateDescriptor;
+  colorStateDescriptor.format = ::dawn::TextureFormat::B8G8R8A8Unorm;
+  colorStateDescriptor.alphaBlend = blend;
+  colorStateDescriptor.colorBlend = blend;
+  colorStateDescriptor.colorWriteMask = ::dawn::ColorWriteMask::All;
+  for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
+    mColorStates[i] = colorStateDescriptor;
+    cColorStates[i] = &mColorStates[i];
+  }
+  cColorStates[0]->format = ::dawn::TextureFormat::B8G8R8A8Unorm;
+
+  // Set defaults for the depth stencil state descriptors.
+  ::dawn::StencilStateFaceDescriptor stencilFace;
+  stencilFace.compare = ::dawn::CompareFunction::Always;
+  stencilFace.failOp = ::dawn::StencilOperation::Keep;
+  stencilFace.depthFailOp = ::dawn::StencilOperation::Keep;
+  stencilFace.passOp = ::dawn::StencilOperation::Keep;
+
+  renderDescriptor.depthStencilState = &cDepthStencilState;
+  cDepthStencilState.format = ::dawn::TextureFormat::D32FloatS8Uint;
+  cDepthStencilState.depthWriteEnabled = false;
+  cDepthStencilState.depthCompare = ::dawn::CompareFunction::Always;
+  cDepthStencilState.stencilBack = stencilFace;
+  cDepthStencilState.stencilFront = stencilFace;
+  cDepthStencilState.stencilReadMask = 0xff;
+  cDepthStencilState.stencilWriteMask = 0xff;
+  cDepthStencilState.format = ::dawn::TextureFormat::D32FloatS8Uint;
+
+  ::dawn::RenderPipeline pipeline =
+      device.CreateRenderPipeline(&renderDescriptor);
+  // ----------------------------------------------------------------------------
+
+  const ::dawn::RenderPassDescriptor* renderPassDescriptor =
+      CreateRenderPassDescriptor(*render_pipeline, *device_);
+  // std::initializer_list<::dawn::TextureView> colorAttachmentInfo = {
+  //     render_pipeline->fb_texture.CreateDefaultView()};
+
+  // ::dawn::RenderPassColorAttachmentDescriptor*
+  //     cColorAttachmentsInfoPtr[kMaxColorAttachments];
+  // ::dawn::RenderPassDepthStencilAttachmentDescriptor
+  //     cDepthStencilAttachmentInfo;
+  // std::array<::dawn::RenderPassColorAttachmentDescriptor,
+  // kMaxColorAttachments>
+  //     mColorAttachmentsInfo;
+
+  // for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
+  //   mColorAttachmentsInfo[i].loadOp = ::dawn::LoadOp::Clear;
+  //   mColorAttachmentsInfo[i].storeOp = ::dawn::StoreOp::Store;
+  //   mColorAttachmentsInfo[i].clearColor = {0.0f, 0.0f, 0.0f, 0.0f};
+  //   cColorAttachmentsInfoPtr[i] = nullptr;
+  // }
+
+  // cDepthStencilAttachmentInfo.clearDepth = 1.0f;
+  // cDepthStencilAttachmentInfo.clearStencil = 0;
+  // cDepthStencilAttachmentInfo.depthLoadOp = ::dawn::LoadOp::Clear;
+  // cDepthStencilAttachmentInfo.depthStoreOp = ::dawn::StoreOp::Store;
+  // cDepthStencilAttachmentInfo.stencilLoadOp = ::dawn::LoadOp::Clear;
+  // cDepthStencilAttachmentInfo.stencilStoreOp = ::dawn::StoreOp::Store;
+
+  // renderPassDescriptor.colorAttachmentCount =
+  //     static_cast<uint32_t>(colorAttachmentInfo.size());
+  // uint32_t colorAttachmentIndex = 0;
+  // for (const ::dawn::TextureView& colorAttachment : colorAttachmentInfo) {
+  //   if (colorAttachment.Get() != nullptr) {
+  //     mColorAttachmentsInfo[colorAttachmentIndex].attachment =
+  //     colorAttachment; cColorAttachmentsInfoPtr[colorAttachmentIndex] =
+  //         &mColorAttachmentsInfo[colorAttachmentIndex];
+  //   }
+  //   ++colorAttachmentIndex;
+  // }
+  // renderPassDescriptor.colorAttachments = cColorAttachmentsInfoPtr;
+
+  // ::dawn::TextureView depthStencilView =
+  // CreateDefaultDepthStencilView(device); if (depthStencilView.Get() !=
+  // nullptr) {
+  //   cDepthStencilAttachmentInfo.attachment = depthStencilView;
+  //   renderPassDescriptor.depthStencilAttachment =
+  //   &cDepthStencilAttachmentInfo;
+  // } else {
+  //   renderPassDescriptor.depthStencilAttachment = nullptr;
+  // }
+  //----------------------------------------------------------------------------
+
+  static const uint64_t vertexBufferOffsets[1] = {0};
+  ::dawn::CommandEncoder encoder = device.CreateCommandEncoder();
+  ::dawn::RenderPassEncoder pass =
+      encoder.BeginRenderPass(renderPassDescriptor);
+  pass.SetPipeline(pipeline);
+  pass.SetVertexBuffers(0, 1, &vertexBuffer, vertexBufferOffsets);
+  pass.SetIndexBuffer(indexBuffer, 0);
+  pass.DrawIndexed(6, 1, 0, 0, 0);
+  pass.EndPass();
+
+  ::dawn::CommandBuffer commands = encoder.Finish();
+  ::dawn::Queue queue = device_->CreateQueue();
+  queue.Submit(1, &commands);
+
+  // Copy result back
+  MapResult map = MapTextureToHostBuffer(*render_pipeline, *device_);
+
+  return map.result;
 }
 
 Result EngineDawn::DoDrawArrays(const DrawArraysCommand*) {
@@ -567,20 +1051,17 @@ Result EngineDawn::CreateFramebufferIfNeeded(
   // TODO(dneto): For now, assume color attachment 0 is the framebuffer.
   auto* amber_format =
       render_pipeline->pipeline->GetColorAttachments()[0].buffer->GetFormat();
-  if (!amber_format)
-    return Result("Color attachment 0 has no format!");
+  if (!amber_format) return Result("Color attachment 0 has no format!");
 
   ::dawn::TextureFormat fb_format{};
   result = GetDawnTextureFormat(*amber_format, &fb_format);
-  if (!result.IsSuccess())
-    return result;
+  if (!result.IsSuccess()) return result;
 
   {
     ::dawn::Texture fb_texture;
 
     result = MakeTexture(*device_, fb_format, width, height, &fb_texture);
-    if (!result.IsSuccess())
-      return result;
+    if (!result.IsSuccess()) return result;
     render_pipeline->fb_texture = std::move(fb_texture);
   }
 
@@ -596,15 +1077,13 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     ::dawn::TextureFormat depth_stencil_format{};
     result = GetDawnTextureFormat(*amber_depth_stencil_format,
                                   &depth_stencil_format);
-    if (!result.IsSuccess())
-      return result;
+    if (!result.IsSuccess()) return result;
 
     ::dawn::Texture depth_stencil_texture;
 
     result = MakeTexture(*device_, depth_stencil_format, width, height,
                          &depth_stencil_texture);
-    if (!result.IsSuccess())
-      return result;
+    if (!result.IsSuccess()) return result;
     render_pipeline->depth_stencil_texture = std::move(depth_stencil_texture);
   }
 
@@ -619,8 +1098,7 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     result =
         MakeFramebufferBuffer(*device_, width, height, fb_format, &fb_buffer,
                               &texel_stride, &row_stride, &size);
-    if (!result.IsSuccess())
-      return result;
+    if (!result.IsSuccess()) return result;
     render_pipeline->fb_buffer = std::move(fb_buffer);
     render_pipeline->fb_texel_stride = texel_stride;
     render_pipeline->fb_row_stride = row_stride;
