@@ -98,13 +98,14 @@ class EngineDawn : public Engine {
     ::dawn::BlendDescriptor blend;
     ::dawn::ColorStateDescriptor colorStateDescriptor;
 
-    ::dawn::RenderPipelineDescriptor* CreatRenderPipelineDescriptor(
-        const RenderPipelineInfo& render_pipeline,
-        const ::dawn::Device& device);
+    ::dawn::RenderPassDescriptor renderPassDescriptor;
 
-    ::dawn::RenderPassDescriptor* CreateRenderPassDescriptor(
-        const RenderPipelineInfo& render_pipeline,
-        const ::dawn::Device& device);
+    Result CreatRenderPipelineDescriptor(
+        const RenderPipelineInfo& render_pipeline, const ::dawn::Device& device,
+        ::dawn::RenderPipelineDescriptor* renderDescriptorPtr);
+
+    Result CreateRenderPassDescriptor(
+        const RenderPipelineInfo& render_pipeline, const ::dawn::Device& device);
   };
 
   // If they don't already exist, creates the framebuffer texture for use
