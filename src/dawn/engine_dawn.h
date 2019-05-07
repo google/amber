@@ -15,6 +15,8 @@
 #ifndef SRC_DAWN_ENGINE_DAWN_H_
 #define SRC_DAWN_ENGINE_DAWN_H_
 
+#include <shaderc/shaderc.hpp>
+
 #include <cstdint>
 #include <string>
 #include <unordered_map>
@@ -41,7 +43,8 @@ class EngineDawn : public Engine {
 
   // Engine
   // Initialize with given configuration data.
-  Result Initialize(EngineConfig* config, Delegate*,
+  Result Initialize(EngineConfig* config,
+                    Delegate*,
                     const std::vector<std::string>& features,
                     const std::vector<std::string>& instance_extensions,
                     const std::vector<std::string>& device_extensions) override;
@@ -122,10 +125,6 @@ class EngineDawn : public Engine {
   // Mapping from the generic engine's Pipeline object to our own Dawn-specific
   // pipelines.
   std::unordered_map<amber::Pipeline*, ::amber::dawn::Pipeline> pipeline_map_;
-
-  // TODO(dneto): Remove this. Shaders are attached to the pipeline.
-  std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
-      module_for_type_;
 };
 
 }  // namespace dawn

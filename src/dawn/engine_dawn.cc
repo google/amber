@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
-#include <shaderc/shaderc.hpp>
 #include <string>
 #include <utility>
 #include <vector>
@@ -43,8 +42,10 @@ const uint32_t kMinimumImageRowPitch = 256;
 // Creates a device-side texture, and returns it through |result_ptr|.
 // Assumes the device exists and is valid.  Assumes result_ptr is not null.
 // Returns a result code.
-Result MakeTexture(const ::dawn::Device& device, ::dawn::TextureFormat format,
-                   uint32_t width, uint32_t height,
+Result MakeTexture(const ::dawn::Device& device,
+                   ::dawn::TextureFormat format,
+                   uint32_t width,
+                   uint32_t height,
                    ::dawn::Texture* result_ptr) {
   assert(device);
   assert(result_ptr);
@@ -61,18 +62,22 @@ Result MakeTexture(const ::dawn::Device& device, ::dawn::TextureFormat format,
                      ::dawn::TextureUsageBit::OutputAttachment;
   // TODO(dneto): Get a better message by using the Dawn error callback.
   *result_ptr = device.CreateTexture(&descriptor);
-  if (*result_ptr) return {};
+  if (*result_ptr)
+    return {};
   return Result("Dawn: Failed to allocate a framebuffer texture");
 }
 
 // Creates a host-side buffer for the framebuffer, and returns it through
 // |result_ptr|. The buffer will be used as a transfer destination and
 // for mapping-for-read.  Returns a result code.
-Result MakeFramebufferBuffer(const ::dawn::Device& device, uint32_t width,
-                             uint32_t height, ::dawn::TextureFormat format,
+Result MakeFramebufferBuffer(const ::dawn::Device& device,
+                             uint32_t width,
+                             uint32_t height,
+                             ::dawn::TextureFormat format,
                              ::dawn::Buffer* result_ptr,
                              uint32_t* texel_stride_ptr,
-                             uint32_t* row_stride_ptr, uint32_t* size_ptr) {
+                             uint32_t* row_stride_ptr,
+                             uint32_t* size_ptr) {
   assert(device);
   assert(width > 0);
   assert(height > 0);
@@ -96,7 +101,8 @@ Result MakeFramebufferBuffer(const ::dawn::Device& device, uint32_t width,
   {
     // Round up the stride to the minimum image row pitch.
     const uint32_t spillover = row_stride % kMinimumImageRowPitch;
-    if (spillover > 0) row_stride += (kMinimumImageRowPitch - spillover);
+    if (spillover > 0)
+      row_stride += (kMinimumImageRowPitch - spillover);
     assert(0 == (row_stride % kMinimumImageRowPitch));
   }
 
@@ -123,7 +129,8 @@ struct MapResult {
 // On a successful mapping outcome, set the data pointer in the map result.
 // Otherwise set the map result object to an error, and the data member is
 // not changed.
-void HandleBufferMapCallback(DawnBufferMapAsyncStatus status, const void* data,
+void HandleBufferMapCallback(DawnBufferMapAsyncStatus status,
+                             const void* data,
                              uint64_t dataLength,
                              DawnCallbackUserdata userdata) {
   MapResult& map_result = *reinterpret_cast<MapResult*>(userdata);
@@ -247,7 +254,8 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
 }
 
 ::dawn::Buffer CreateBufferFromData(const ::dawn::Device& device,
-                                    const void* data, uint64_t size,
+                                    const void* data,
+                                    uint64_t size,
                                     ::dawn::BufferUsageBit usage) {
   ::dawn::BufferDescriptor descriptor;
   descriptor.size = size;
@@ -278,7 +286,8 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
 }
 
 ::dawn::BufferCopyView CreateBufferCopyView(::dawn::Buffer buffer,
-                                            uint64_t offset, uint32_t rowPitch,
+                                            uint64_t offset,
+                                            uint32_t rowPitch,
                                             uint32_t imageHeight) {
   ::dawn::BufferCopyView bufferCopyView;
   bufferCopyView.buffer = buffer;
@@ -290,7 +299,8 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
 }
 
 ::dawn::TextureCopyView CreateTextureCopyView(::dawn::Texture texture,
-                                              uint32_t level, uint32_t slice,
+                                              uint32_t level,
+                                              uint32_t slice,
                                               ::dawn::Origin3D origin) {
   ::dawn::TextureCopyView textureCopyView;
   textureCopyView.texture = texture;
@@ -351,7 +361,8 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
 }
 
 ::dawn::ShaderModule CreateShaderModuleFromResult(
-    const ::dawn::Device& device, const shaderc::SpvCompilationResult& result) {
+    const ::dawn::Device& device,
+    const shaderc::SpvCompilationResult& result) {
   // result.cend and result.cbegin return pointers to uint32_t.
   const uint32_t* resultBegin = result.cbegin();
   const uint32_t* resultEnd = result.cend();
@@ -491,15 +502,33 @@ Result EngineDawn::Initialize(EngineConfig* config,
 }
 
 Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
+  if (!device_) {
+    return Result("Dawn::SetShader: device is not created");
+  }
+  std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
+      module_for_type;
+  ::dawn::ShaderModuleDescriptor descriptor;
+  descriptor.nextInChain = nullptr;
+
   for (const auto& shader_info : pipeline->GetShaders()) {
-    Result r = SetShader(shader_info.GetShaderType(), shader_info.GetData());
-    if (!r.IsSuccess())
-      return r;
+    ShaderType type = shader_info.GetShaderType();
+    const std::vector<uint32_t>& code = shader_info.GetData();
+    descriptor.code = code.data();
+    descriptor.codeSize = uint32_t(code.size());
+
+    auto shader = device_->CreateShaderModule(&descriptor);
+    if (!shader) {
+      return Result("Dawn::SetShader: failed to create shader");
+    }
+    if (module_for_type.count(type)) {
+      Result("Dawn::SetShader: module for type already exists");
+    }
+    module_for_type[type] = shader;
   }
 
   switch (pipeline->GetType()) {
     case PipelineType::kCompute: {
-      auto module = module_for_type_[kShaderTypeCompute];
+      auto module = module_for_type[kShaderTypeCompute];
       if (!module)
         return Result("CreatePipeline: no compute shader provided");
       pipeline_map_[pipeline].compute_pipeline.reset(
@@ -509,8 +538,8 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
 
     case PipelineType::kGraphics: {
       // TODO(dneto): Handle other shader types as well.  They are optional.
-      auto vs = module_for_type_[kShaderTypeVertex];
-      auto fs = module_for_type_[kShaderTypeFragment];
+      auto vs = module_for_type[kShaderTypeVertex];
+      auto fs = module_for_type[kShaderTypeFragment];
       if (!vs) {
         return Result(
             "CreatePipeline: no vertex shader provided for graphics "
@@ -527,26 +556,6 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
     }
   }
 
-  return {};
-}
-
-Result EngineDawn::SetShader(ShaderType type,
-                             const std::vector<uint32_t>& code) {
-  ::dawn::ShaderModuleDescriptor descriptor;
-  descriptor.nextInChain = nullptr;
-  descriptor.code = code.data();
-  descriptor.codeSize = uint32_t(code.size());
-  if (!device_) {
-    return Result("Dawn::SetShader: device is not created");
-  }
-  auto shader = device_->CreateShaderModule(&descriptor);
-  if (!shader) {
-    return Result("Dawn::SetShader: failed to create shader");
-  }
-  if (module_for_type_.count(type)) {
-    Result("Dawn::SetShader: module for type already exists");
-  }
-  module_for_type_[type] = shader;
   return {};
 }
 
@@ -651,10 +660,12 @@ Result EngineDawn::Helper::CreateRenderPipelineDescriptor(
 
   auto* amber_format =
       render_pipeline.pipeline->GetColorAttachments()[0].buffer->GetFormat();
-  if (!amber_format) return Result("Color attachment 0 has no format!");
+  if (!amber_format)
+    return Result("Color attachment 0 has no format!");
   ::dawn::TextureFormat fb_format{};
   GetDawnTextureFormat(*amber_format, &fb_format);
-  if (!result.IsSuccess()) return result;
+  if (!result.IsSuccess())
+    return result;
 
   ::dawn::TextureFormat depth_stencil_format{};
   auto* depthBuffer = render_pipeline.pipeline->GetDepthBuffer().buffer;
@@ -664,7 +675,8 @@ Result EngineDawn::Helper::CreateRenderPipelineDescriptor(
       return Result("The depth/stencil attachment has no format!");
     result = GetDawnTextureFormat(*amber_depth_stencil_format,
                                   &depth_stencil_format);
-    if (!result.IsSuccess()) return result;
+    if (!result.IsSuccess())
+      return result;
   } else {
     depth_stencil_format = ::dawn::TextureFormat::D32FloatS8Uint;
   }
@@ -743,7 +755,8 @@ Result EngineDawn::Helper::CreateRenderPipelineDescriptor(
 }
 
 Result EngineDawn::Helper::CreateRenderPassDescriptor(
-    const RenderPipelineInfo& render_pipeline, const ::dawn::Device& device) {
+    const RenderPipelineInfo& render_pipeline,
+    const ::dawn::Device& device) {
   std::initializer_list<::dawn::TextureView> colorAttachmentInfo = {
       render_pipeline.fb_texture.CreateDefaultView()};
 
@@ -782,7 +795,8 @@ Result EngineDawn::Helper::CreateRenderPassDescriptor(
       return Result("The depth/stencil attachment has no format!");
     Result result = GetDawnTextureFormat(*amber_depth_stencil_format,
                                          &depth_stencil_format);
-    if (!result.IsSuccess()) return result;
+    if (!result.IsSuccess())
+      return result;
   } else {
     depth_stencil_format = ::dawn::TextureFormat::D32FloatS8Uint;
   }
@@ -804,7 +818,8 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   if (!render_pipeline)
     return Result("Clear invoked on invalid or missing render pipeline");
   Result result = CreateFramebufferIfNeeded(render_pipeline);
-  if (!result.IsSuccess()) return result;
+  if (!result.IsSuccess())
+    return result;
 
   float x = command->GetX();
   float y = command->GetY();
@@ -914,17 +929,20 @@ Result EngineDawn::CreateFramebufferIfNeeded(
   // TODO(dneto): For now, assume color attachment 0 is the framebuffer.
   auto* amber_format =
       render_pipeline->pipeline->GetColorAttachments()[0].buffer->GetFormat();
-  if (!amber_format) return Result("Color attachment 0 has no format!");
+  if (!amber_format)
+    return Result("Color attachment 0 has no format!");
 
   ::dawn::TextureFormat fb_format{};
   result = GetDawnTextureFormat(*amber_format, &fb_format);
-  if (!result.IsSuccess()) return result;
+  if (!result.IsSuccess())
+    return result;
 
   {
     ::dawn::Texture fb_texture;
 
     result = MakeTexture(*device_, fb_format, width, height, &fb_texture);
-    if (!result.IsSuccess()) return result;
+    if (!result.IsSuccess())
+      return result;
     render_pipeline->fb_texture = std::move(fb_texture);
   }
 
@@ -940,13 +958,15 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     ::dawn::TextureFormat depth_stencil_format{};
     result = GetDawnTextureFormat(*amber_depth_stencil_format,
                                   &depth_stencil_format);
-    if (!result.IsSuccess()) return result;
+    if (!result.IsSuccess())
+      return result;
 
     ::dawn::Texture depth_stencil_texture;
 
     result = MakeTexture(*device_, depth_stencil_format, width, height,
                          &depth_stencil_texture);
-    if (!result.IsSuccess()) return result;
+    if (!result.IsSuccess())
+      return result;
     render_pipeline->depth_stencil_texture = std::move(depth_stencil_texture);
   }
 
@@ -961,7 +981,8 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     result =
         MakeFramebufferBuffer(*device_, width, height, fb_format, &fb_buffer,
                               &texel_stride, &row_stride, &size);
-    if (!result.IsSuccess()) return result;
+    if (!result.IsSuccess())
+      return result;
     render_pipeline->fb_buffer = std::move(fb_buffer);
     render_pipeline->fb_texel_stride = texel_stride;
     render_pipeline->fb_row_stride = row_stride;
