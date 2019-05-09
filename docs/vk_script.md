@@ -213,6 +213,9 @@ Sets the push constants at `offset`. The `type` is from the *Data Types*
 section below. The `values` must be a non-zero multiple of the requested
 `type`.
 
+When setting push constant data each call to `uniform` must use the same
+`type` or the script will be rejected as invalid.
+
 
 ### Unifom UBO
  * `uniform ubo _binding_ _type_ _offset_ _values_+`
@@ -220,6 +223,9 @@ section below. The `values` must be a non-zero multiple of the requested
 Sets the values in the uniform buffer at `binding` and `offset`. The `type`
 is from the *Data Types* section below. The `values` must be a non-zero
 multiple of the requested `type`.
+
+When setting data into a single `binding`, each call to `uniform ubo` must
+use the same `type` or the script will be rejected as invalid.
 
 
 ### SSBO size
@@ -234,6 +240,9 @@ Sets the number of elements in the SSBO at `binding` to `size`.
 Sets the value of the buffer at `binding` and `offset`. The `type` is from the
 *Data Types* section below. The `values` must be a non-zero multiple of the
 requested `type`. The offset must be a multiple of the _type_ size in bytes.
+
+When setting data into a single `binding`, each call to `ssbo subdata` must
+use the same `type` or the script will be rejected as invalid.
 
 
 ### Patch Parameters

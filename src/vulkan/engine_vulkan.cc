@@ -208,7 +208,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   if (pipeline->GetPushConstantBuffer().buffer != nullptr) {
     r = info.vk_pipeline->AddPushConstantBuffer(
-        pipeline->GetPushConstantBuffer().buffer);
+        pipeline->GetPushConstantBuffer().buffer, 0);
     if (!r.IsSuccess())
       return r;
   }
@@ -217,8 +217,6 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     auto type = BufferCommand::BufferType::kSSBO;
     if (buf_info.buffer->GetBufferType() == BufferType::kUniform) {
       type = BufferCommand::BufferType::kUniform;
-    } else if (buf_info.buffer->GetBufferType() == BufferType::kPushConstant) {
-      type = BufferCommand::BufferType::kPushConstant;
     } else if (buf_info.buffer->GetBufferType() != BufferType::kStorage) {
       return Result("Vulkan: CreatePipeline - unknown buffer type: " +
                     std::to_string(static_cast<uint32_t>(
