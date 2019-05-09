@@ -51,8 +51,8 @@ class Pipeline {
 
   Result AddDescriptor(const BufferCommand*);
 
-  /// Add buffer data to the push constants.
-  Result AddPushConstantBuffer(const Buffer* buf);
+  /// Add |buffer| data to the push constants at |offset|.
+  Result AddPushConstantBuffer(const Buffer* buf, uint32_t offset);
 
   /// Reads back the contents of resources of all descriptors to a
   /// buffer data object and put it into buffer data queue in host.
@@ -111,9 +111,6 @@ class Pipeline {
   Result CreateDescriptorSetLayouts();
   Result CreateDescriptorPools();
   Result CreateDescriptorSets();
-
-  /// Adds push constant information.
-  Result AddPushConstant(const BufferCommand* command);
 
   PipelineType pipeline_type_;
   std::vector<DescriptorSetInfo> descriptor_set_info_;
