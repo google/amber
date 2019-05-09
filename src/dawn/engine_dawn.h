@@ -15,8 +15,6 @@
 #ifndef SRC_DAWN_ENGINE_DAWN_H_
 #define SRC_DAWN_ENGINE_DAWN_H_
 
-#include <shaderc/shaderc.hpp>
-
 #include <cstdint>
 #include <string>
 #include <unordered_map>
@@ -74,42 +72,6 @@ class EngineDawn : public Engine {
       const ::amber::PipelineCommand* command) {
     return pipeline_map_[command->GetPipeline()].render_pipeline.get();
   }
-
-  // Helper stuff
-  struct Helper {
-    ::dawn::RenderPassColorAttachmentDescriptor*
-        cColorAttachmentsInfoPtr[kMaxColorAttachments];
-    ::dawn::RenderPassDepthStencilAttachmentDescriptor
-        cDepthStencilAttachmentInfo;
-    std::array<::dawn::RenderPassColorAttachmentDescriptor,
-               kMaxColorAttachments>
-        mColorAttachmentsInfo;
-
-    std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments>
-        cColorStates;
-    ::dawn::DepthStencilStateDescriptor cDepthStencilState;
-    ::dawn::ColorStateDescriptor mColorStates[kMaxColorAttachments];
-    ::dawn::InputStateDescriptor tempInputState = {};
-    ::dawn::PipelineStageDescriptor cFragmentStage;
-    ::dawn::PipelineStageDescriptor cVertexStage;
-    ::dawn::StencilStateFaceDescriptor stencilFace;
-    ::dawn::VertexInputDescriptor vertexInput;
-    std::array<::dawn::VertexInputDescriptor, kMaxVertexInputs> tempInputs;
-    std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
-        tempAttributes;
-    ::dawn::VertexAttributeDescriptor vertexAttribute;
-    ::dawn::BlendDescriptor blend;
-    ::dawn::ColorStateDescriptor colorStateDescriptor;
-    ::dawn::RenderPipelineDescriptor renderPipelineDescriptor;
-    ::dawn::RenderPassDescriptor renderPassDescriptor;
-
-    Result CreateRenderPipelineDescriptor(
-        const RenderPipelineInfo& render_pipeline,
-        const ::dawn::Device& device);
-
-    Result CreateRenderPassDescriptor(const RenderPipelineInfo& render_pipeline,
-                                      const ::dawn::Device& device);
-  };
 
   // If they don't already exist, creates the framebuffer texture for use
   // on the device, the buffer on the host that will eventually hold the
