@@ -644,6 +644,7 @@ Result Helper::CreateRenderPipelineDescriptor(
   // Set defaults for the vertex stage descriptor.
   snprintf(entryPoint,
            sizeof(render_pipeline.pipeline->GetShaders()[0].GetEntryPoint()),
+           "%s",
            render_pipeline.pipeline->GetShaders()[0].GetEntryPoint().c_str());
   cVertexStage.module = render_pipeline.vertex_shader;
   cVertexStage.entryPoint = entryPoint;
