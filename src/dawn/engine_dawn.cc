@@ -642,14 +642,14 @@ Result Helper::CreateRenderPipelineDescriptor(
   renderPipelineDescriptor.sampleCount = 1;
 
   // Set defaults for the vertex stage descriptor.
-  std::strcpy(
-      entryPoint,
-      render_pipeline.pipeline->GetShaders()[0].GetEntryPoint().c_str());
+  snprintf(entryPoint,
+           sizeof(render_pipeline.pipeline->GetShaders()[0].GetEntryPoint()),
+           render_pipeline.pipeline->GetShaders()[0].GetEntryPoint().c_str());
   cVertexStage.module = render_pipeline.vertex_shader;
   cVertexStage.entryPoint = entryPoint;
   renderPipelineDescriptor.vertexStage = &cVertexStage;
 
-  // Set defaults for the fragment stage desriptor.
+  // Set defaults for the fragment stage descriptor.
   cFragmentStage.module = render_pipeline.fragment_shader;
   cFragmentStage.entryPoint = entryPoint;
   renderPipelineDescriptor.fragmentStage = std::move(&cFragmentStage);
