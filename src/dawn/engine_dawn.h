@@ -29,10 +29,6 @@
 namespace amber {
 namespace dawn {
 
-static constexpr uint32_t kMaxColorAttachments = 4u;
-static constexpr uint32_t kMaxVertexInputs = 16u;
-static constexpr uint32_t kMaxVertexAttributes = 16u;
-
 /// Engine implementation using the Dawn API.
 class EngineDawn : public Engine {
  public:
@@ -87,6 +83,9 @@ class EngineDawn : public Engine {
   // Mapping from the generic engine's Pipeline object to our own Dawn-specific
   // pipelines.
   std::unordered_map<amber::Pipeline*, ::amber::dawn::Pipeline> pipeline_map_;
+
+  std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
+      module_for_type;
 };
 
 }  // namespace dawn
