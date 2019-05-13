@@ -231,7 +231,9 @@ use the same `type` or the script will be rejected as invalid.
 ### SSBO size
  * `ssbo _binding_ _size_`
 
-Sets the number of elements in the SSBO at `binding` to `size`.
+Sets the number of elements in the SSBO at `binding` to `size`. Note, Amber
+requires a buffer to have a format. So, a `subdata` or `probe ssbo` call must
+be made with this buffer in order to set the buffer format.
 
 
 ### SSBO subdata
