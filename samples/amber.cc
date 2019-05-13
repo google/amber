@@ -40,6 +40,7 @@ struct Options {
 
   std::string image_filename;
   std::string buffer_filename;
+  std::string fb_name = kGeneratedColorBuffer;
   std::vector<amber::BufferInfo> buffer_to_dump;
   uint32_t engine_major = 1;
   uint32_t engine_minor = 0;
@@ -65,6 +66,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -d                        -- Disable validation layers.
   -t <spirv_env>            -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
   -i <filename>             -- Write rendering to <filename> as a PNG image if it ends with '.png', or as a PPM image otherwise.
+  -I <buffername>           -- Name of framebuffer to dump. Defaults to 'framebuffer'.
   -b <filename>             -- Write contents of a UBO or SSBO to <filename>.
   -B [<desc set>:]<binding> -- Descriptor set and binding of buffer to write.
                                Default is [0:]0.
@@ -87,6 +89,14 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         return false;
       }
       opts->image_filename = args[i];
+
+    } else if (arg == "-I") {
+      ++i;
+      if (i >= args.size()) {
+        std::cerr << "Missing value for -I argument." << std::endl;
+        return false;
+      }
+      opts->fb_name = args[i];
 
     } else if (arg == "-b") {
       ++i;
@@ -386,7 +396,8 @@ int main(int argc, const char** argv) {
 
   if (!options.image_filename.empty()) {
     amber::BufferInfo buffer_info;
-    buffer_info.buffer_name = kGeneratedColorBuffer;
+    buffer_info.buffer_name = options.fb_name;
+    buffer_info.is_image_buffer = true;
     amber_options.extractions.push_back(buffer_info);
   }
 
@@ -410,7 +421,7 @@ int main(int argc, const char** argv) {
       bool usePNG = pos != std::string::npos &&
                     options.image_filename.substr(pos + 1) == "png";
       for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
-        if (buffer_info.buffer_name == kGeneratedColorBuffer) {
+        if (buffer_info.buffer_name == options.fb_name) {
           if (usePNG) {
             result = png::ConvertToPNG(buffer_info.width, buffer_info.height,
                                        buffer_info.values, &out_buf);
@@ -446,7 +457,7 @@ int main(int argc, const char** argv) {
         std::cerr << options.buffer_filename << std::endl;
       } else {
         for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
-          if (buffer_info.buffer_name == kGeneratedColorBuffer)
+          if (buffer_info.buffer_name == options.fb_name)
             continue;
 
           buffer_file << buffer_info.buffer_name << std::endl;
