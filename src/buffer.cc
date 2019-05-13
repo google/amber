@@ -122,7 +122,14 @@ Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
   uint32_t value_count =
       ((offset / format_->SizeInBytes()) * format_->InputNeededPerElement()) +
       static_cast<uint32_t>(data.size());
-  SetValueCount(value_count);
+  // The buffer should only be resized to become bigger. This means that if a
+  // command was run to set the buffer size we'll honour that size until a
+  // request happens to make the buffer bigger.
+  if (value_count > ValueCount())
+    SetValueCount(value_count);
+
+  // Even if the value count doesn't change, the buffer is still resized because
+  // this maybe the first time data is set into the buffer.
   bytes_.resize(GetSizeInBytes());
 
   uint8_t* ptr = bytes_.data() + offset;
