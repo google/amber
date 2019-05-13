@@ -62,7 +62,7 @@ Result Parser::Parse(const std::string& input) {
 
   if (!skip_validation_for_test_) {
     for (const auto& pipeline : script_->GetPipelines()) {
-      Result r = pipeline->Validate();
+      r = pipeline->Validate();
       if (!r.IsSuccess())
         return r;
     }
