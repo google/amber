@@ -89,6 +89,7 @@ TEST_F(VkScriptParserTest, RequireBlockNoArgumentFeatures) {
     std::string in = std::string("[require]\n") + feature.name + "\n";
 
     Parser parser;
+    parser.SkipValidationForTest();
     Result r = parser.Parse(in);
     ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -106,6 +107,7 @@ VK_KHR_variable_pointers
 VK_KHR_get_physical_device_properties2)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -124,6 +126,7 @@ TEST_F(VkScriptParserTest, RequireBlockFramebuffer) {
   std::string block = "[require]\nframebuffer R32G32B32A32_SFLOAT";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess());
 
@@ -139,6 +142,7 @@ TEST_F(VkScriptParserTest, RequireBlockDepthStencil) {
   std::string block = "[require]\ndepthstencil D24_UNORM_S8_UINT";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -154,6 +158,7 @@ TEST_F(VkScriptParserTest, RequireFbSize) {
   std::string block = "[require]\nfbsize 300 400";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -221,6 +226,7 @@ inheritedQueries # line comment
 )";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -244,6 +250,7 @@ TEST_F(VkScriptParserTest, IndicesBlock) {
   std::string block = "[indices]\n1 2 3";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -274,6 +281,7 @@ TEST_F(VkScriptParserTest, IndicesBlockMultipleLines) {
 )";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -312,6 +320,7 @@ TEST_F(VkScriptParserTest, VertexDataEmpty) {
   std::string block = "[vertex data]\n#comment\n";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess());
 
@@ -323,6 +332,7 @@ TEST_F(VkScriptParserTest, VertexDataHeaderFormatString) {
   std::string block = "[vertex data]\n0/R32G32_SFLOAT 1/A8B8G8R8_UNORM_PACK32";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -347,6 +357,7 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   std::string block = "[vertex data]\n0/float/vec2 1/int/vec3";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -386,6 +397,7 @@ clear stencil 2
 clear)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -419,6 +431,7 @@ TEST_F(VkScriptParserTest, VertexDataRows) {
 )";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -479,6 +492,7 @@ TEST_F(VkScriptParserTest, VertexDataRowsWithHex) {
 )";
 
   Parser parser;
+  parser.SkipValidationForTest();
   Result r = parser.Parse(block);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 

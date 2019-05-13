@@ -218,6 +218,7 @@ robustBufferAccess
 logicOp)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto script = parser.GetScript();
@@ -248,6 +249,7 @@ VK_KHR_storage_buffer_storage_class
 VK_KHR_variable_pointers)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto script = parser.GetScript();
@@ -278,6 +280,7 @@ framebuffer R32G32B32A32_SFLOAT
 depthstencil D24_UNORM_S8_UINT)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto script = parser.GetScript();
@@ -305,6 +308,7 @@ TEST_F(VkScriptExecutorTest, ExecutesRequiredFenceTimeout) {
 fence_timeout 12345)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto script = parser.GetScript();
@@ -338,6 +342,7 @@ depthstencil D24_UNORM_S8_UINT
 fence_timeout 12345)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto script = parser.GetScript();
@@ -369,6 +374,7 @@ TEST_F(VkScriptExecutorTest, ClearCommand) {
 clear)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -387,6 +393,7 @@ TEST_F(VkScriptExecutorTest, ClearCommandFailure) {
 clear)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -406,6 +413,7 @@ TEST_F(VkScriptExecutorTest, ClearColorCommand) {
 clear color 244 123 123 13)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -433,6 +441,7 @@ TEST_F(VkScriptExecutorTest, ClearColorCommandFailure) {
 clear color 123 123 123 123)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -452,6 +461,7 @@ TEST_F(VkScriptExecutorTest, ClearDepthCommand) {
 clear depth 24)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -470,6 +480,7 @@ TEST_F(VkScriptExecutorTest, ClearDepthCommandFailure) {
 clear depth 24)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -489,6 +500,7 @@ TEST_F(VkScriptExecutorTest, ClearStencilCommand) {
 clear stencil 24)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -507,6 +519,7 @@ TEST_F(VkScriptExecutorTest, ClearStencilCommandFailure) {
 clear stencil 24)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -526,6 +539,7 @@ TEST_F(VkScriptExecutorTest, DrawRectCommand) {
 draw rect 2 4 10 20)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -544,6 +558,7 @@ TEST_F(VkScriptExecutorTest, DrawRectCommandFailure) {
 draw rect 2 4 10 20)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -563,6 +578,7 @@ TEST_F(VkScriptExecutorTest, DrawArraysCommand) {
 draw arrays TRIANGLE_LIST 0 0)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -581,6 +597,7 @@ TEST_F(VkScriptExecutorTest, DrawArraysCommandFailure) {
 draw arrays TRIANGLE_LIST 0 0)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -600,6 +617,7 @@ TEST_F(VkScriptExecutorTest, ComputeCommand) {
 compute 2 3 4)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -618,6 +636,7 @@ TEST_F(VkScriptExecutorTest, ComputeCommandFailure) {
 compute 2 3 4)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -637,6 +656,7 @@ TEST_F(VkScriptExecutorTest, EntryPointCommand) {
 vertex entrypoint main)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -655,6 +675,7 @@ TEST_F(VkScriptExecutorTest, EntryPointCommandFailure) {
 vertex entrypoint main)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -674,6 +695,7 @@ TEST_F(VkScriptExecutorTest, PatchParameterVerticesCommand) {
 patch parameter vertices 10)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -692,6 +714,7 @@ TEST_F(VkScriptExecutorTest, PatchParameterVerticesCommandFailure) {
 patch parameter vertices 10)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -748,6 +771,7 @@ TEST_F(VkScriptExecutorTest, BufferCommand) {
 ssbo 0 24)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
@@ -766,6 +790,7 @@ TEST_F(VkScriptExecutorTest, BufferCommandFailure) {
 ssbo 0 24)";
 
   Parser parser;
+  parser.SkipValidationForTest();
   ASSERT_TRUE(parser.Parse(input).IsSuccess());
 
   auto engine = MakeEngine();
