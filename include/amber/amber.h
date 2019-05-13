@@ -51,6 +51,8 @@ struct BufferInfo {
 
   BufferInfo& operator=(const BufferInfo&);
 
+  /// Determines if this is an image buffer.
+  bool is_image_buffer;
   /// Holds the buffer name
   std::string buffer_name;
   /// Holds the buffer width
