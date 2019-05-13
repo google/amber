@@ -77,7 +77,7 @@ struct DawnPipelineHelper {
   ::dawn::VertexAttributeDescriptor vertexAttribute;
   ::dawn::BlendDescriptor blend;
   ::dawn::ColorStateDescriptor colorStateDescriptor;
-  std::string vertextEntryPoint;
+  std::string vertexEntryPoint;
   std::string fragmentEntryPoint;
 };
 
@@ -667,7 +667,7 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   // Lookup shaders' entrypoints
   for (const auto& shader_info : render_pipeline.pipeline->GetShaders()) {
     if (shader_info.GetShaderType() == kShaderTypeVertex) {
-      vertextEntryPoint = shader_info.GetEntryPoint();
+      vertexEntryPoint = shader_info.GetEntryPoint();
     } else if (shader_info.GetShaderType() == kShaderTypeFragment) {
       fragmentEntryPoint = shader_info.GetEntryPoint();
     } else {
@@ -679,7 +679,7 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
 
   // Set defaults for the vertex stage descriptor.
   vertexStage.module = render_pipeline.vertex_shader;
-  vertexStage.entryPoint = vertextEntryPoint.c_str();
+  vertexStage.entryPoint = vertexEntryPoint.c_str();
   renderPipelineDescriptor.vertexStage = &vertexStage;
 
   // Set defaults for the fragment stage descriptor.
