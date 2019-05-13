@@ -72,7 +72,7 @@ Options::Options()
 
 Options::~Options() = default;
 
-BufferInfo::BufferInfo() : width(0), height(0) {}
+BufferInfo::BufferInfo() : is_image_buffer(false), width(0), height(0) {}
 
 BufferInfo::BufferInfo(const BufferInfo&) = default;
 
@@ -189,7 +189,7 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   // extractor fails before running the pipeline that will trigger the dumps
   // to almost always fail.
   for (BufferInfo& buffer_info : opts->extractions) {
-    if (buffer_info.buffer_name == Pipeline::kGeneratedColorBuffer) {
+    if (buffer_info.is_image_buffer) {
       auto* buffer = script->GetBuffer(buffer_info.buffer_name);
       if (!buffer)
         break;
