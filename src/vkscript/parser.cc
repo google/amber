@@ -60,6 +60,14 @@ Result Parser::Parse(const std::string& input) {
       return r;
   }
 
+  if (!skip_validation_for_test_) {
+    for (const auto& pipeline : script_->GetPipelines()) {
+      r = pipeline->Validate();
+      if (!r.IsSuccess())
+        return r;
+    }
+  }
+
   return {};
 }
 
