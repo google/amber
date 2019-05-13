@@ -25,8 +25,8 @@ which is the characters `0x` followed by hexadecimal digits.
 
 ### Requesting features
 
-If specific device features are required you can use the DEVICE\_FEATURE command
-to enable them.
+If specific device features are required you can use the `DEVICE_FEATURE`
+command to enable them.
 
 ```groovy
 DEVICE_FEATURE vertexPipelineStoresAndAtomics
@@ -36,6 +36,14 @@ DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer
 Currently each of the items in `VkPhysicalDeviceFeatures` are recognized along
 with `VariablePointerFeatures.variablePointers` and
 `VariablePointerFeatures.variablePointersStorageBuffer`.
+
+Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
+commands.
+
+```groovy
+DEVICE_EXTENSION VK_KHR_get_physical_device_properties2
+INSTANCE_EXTENSION VK_KHR_storage_buffer_storage_class
+```
 
 ### Setting Engine Configuration
 
@@ -313,19 +321,19 @@ RUN {pipeline_name} DRAW_ARRAY AS {topology} START_IDX _value_ \
 # data and  index data must be attached to the pipeline. The vertices will be
 # drawn using the given |topology|. A start index of 0 will be used and the
 # count will be determined by the size of the index data buffer.
-RUN {pipeline_name} DRAW_ARRAY INDEXED AS {topology}
+RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED
 
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data and  index data must be attached to the pipeline. The vertices will be
 # drawn using the given |topology|. A start index of |value| will be used and
 # the count will be determined by the size of the index data buffer.
-RUN {pipeline_name} DRAW_ARRAY INDEXED AS {topology} START_IDX _value_
+RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED START_IDX _value_
 
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data and  index data must be attached to the pipeline. The vertices will be
 # drawn using the given |topology|. A start index of |value| will be used and
 # the count of |count_value| items will be processed.
-RUN {pipeline_name} DRAW_ARRAY INDEXED AS {topology} \
+RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
   START_IDX _value_ COUNT _count_value_
 ```
 

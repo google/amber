@@ -3340,11 +3340,12 @@ TEST_F(CommandParserTest, Uniform) {
   EXPECT_EQ(1U, fmt->ColumnCount());
   EXPECT_EQ(3U, fmt->RowCount());
 
-  const auto& values = cmd->GetValues();
-  std::vector<float> results = {2.1f, 3.2f, 4.3f};
-  ASSERT_EQ(results.size(), values.size());
+  const auto* buf = cmd->GetBuffer();
+  const auto* values = buf->GetValues<float>();
+  std::vector<float> results = {2.1f, 3.2f, 4.3f, 0.f};
+  ASSERT_EQ(results.size(), buf->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
-    EXPECT_FLOAT_EQ(results[i], values[i].AsFloat());
+    EXPECT_FLOAT_EQ(results[i], values[i]);
   }
 }
 
@@ -3381,11 +3382,12 @@ TEST_F(CommandParserTest, UniformWithContinuation) {
   EXPECT_EQ(1U, fmt->ColumnCount());
   EXPECT_EQ(3U, fmt->RowCount());
 
-  const auto& values = cmd->GetValues();
-  std::vector<float> results = {2.1f, 3.2f, 4.3f, 5.4f, 6.7f, 8.9f};
-  ASSERT_EQ(results.size(), values.size());
+  const auto* buf = cmd->GetBuffer();
+  const auto* values = buf->GetValues<float>();
+  std::vector<float> results = {2.1f, 3.2f, 4.3f, 0.f, 5.4f, 6.7f, 8.9f, 0.f};
+  ASSERT_EQ(results.size(), buf->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
-    EXPECT_FLOAT_EQ(results[i], values[i].AsFloat());
+    EXPECT_FLOAT_EQ(results[i], values[i]);
   }
 }
 

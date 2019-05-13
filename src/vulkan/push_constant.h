@@ -42,25 +42,19 @@ class PushConstant {
                                      VkPipelineLayout pipeline_layout);
 
   /// Add a set of values from the given |buffer| to the push constants
-  /// to be used on the next pipeline execution.
-  Result AddBuffer(const Buffer* buffer);
+  /// to be used on the next pipeline execution. The data will be added to
+  /// the push constants at |offset|.
+  Result AddBuffer(const Buffer* buffer, uint32_t offset);
 
   /// Adds data into the push constant buffer.
   Result AddBufferData(const BufferCommand* command);
 
  private:
-  // Contain information of filling memory.
-  // If the |buffer| is provided the buffer memory will be copied into the
-  // result buffer at |offset|. If |buffer| is not provided then
-  // |size_in_bytes|, |format| and |values| must be provided and will be copied
-  // into the result buffer at |offset|.
+  // Information on filling the push constant buffer. The |buffer| memory will
+  // be copied into the result buffer at |offset|.
   struct BufferInput {
     uint32_t offset = 0;
     const Buffer* buffer = nullptr;
-
-    uint32_t size_in_bytes = 0;
-    Format* format = nullptr;
-    std::vector<Value> values;
   };
 
   Result UpdateMemoryWithInput(const BufferInput& input);

@@ -608,6 +608,80 @@ RUN my_pipeline DRAW_ARRAY AS TRIANGLE_LIST)";
   EXPECT_EQ(3U, cmd->GetVertexCount());
 }
 
+TEST_F(AmberScriptParserTest, RunDrawArraysIndexed) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER vtex_buf DATA_TYPE vec3<float> DATA
+1 2 3
+4 5 6
+7 8 9
+END
+BUFFER idx_buf DATA_TYPE vec3<float> DATA
+9 8 7
+6 5 4
+3 2 1
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+  VERTEX_DATA vtex_buf LOCATION 0
+  INDEX_DATA idx_buf
+END
+
+RUN my_pipeline DRAW_ARRAY AS TRIANGLE_LIST INDEXED)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(1U, commands.size());
+
+  ASSERT_TRUE(commands[0]->IsDrawArrays());
+
+  auto* cmd = commands[0]->AsDrawArrays();
+  EXPECT_TRUE(cmd->IsIndexed());
+  EXPECT_FALSE(cmd->IsInstanced());
+  EXPECT_EQ(static_cast<uint32_t>(0U), cmd->GetInstanceCount());
+  EXPECT_EQ(Topology::kTriangleList, cmd->GetTopology());
+  EXPECT_EQ(static_cast<uint32_t>(0U), cmd->GetFirstVertexIndex());
+  // There are 3 elements in the vertex buffer.
+  EXPECT_EQ(3U, cmd->GetVertexCount());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawArraysIndexedMissingIndexData) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER vtex_buf DATA_TYPE vec3<float> DATA
+1 2 3
+4 5 6
+7 8 9
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+  VERTEX_DATA vtex_buf LOCATION 0
+END
+
+RUN my_pipeline DRAW_ARRAY AS TRIANGLE_LIST INDEXED)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+
+  EXPECT_EQ("18: RUN DRAW_ARRAYS INDEXED requires attached index buffer",
+            r.Error());
+}
+
 TEST_F(AmberScriptParserTest, RunDrawArraysMissingVertexBuffer) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH

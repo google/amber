@@ -155,6 +155,13 @@ Result Pipeline::Validate() const {
   if (depth_buffer_.buffer && depth_buffer_.buffer->ElementCount() != fb_size)
     return Result("shared depth buffer must have same size over all PIPELINES");
 
+  for (auto& buf : GetBuffers()) {
+    if (buf.buffer->GetFormat() == nullptr) {
+      return Result("buffer (" + std::to_string(buf.descriptor_set) + ":" +
+                    std::to_string(buf.binding) + ") requires a format");
+    }
+  }
+
   if (pipeline_type_ == PipelineType::kGraphics)
     return ValidateGraphics();
   return ValidateCompute();

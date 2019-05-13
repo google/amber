@@ -233,23 +233,17 @@ Result Pipeline::RecordPushConstant(const VkPipelineLayout& pipeline_layout) {
                                                      pipeline_layout);
 }
 
-Result Pipeline::AddPushConstant(const BufferCommand* command) {
-  if (!command->IsPushConstant())
-    return Result(
-        "Pipeline::AddPushConstant BufferCommand type is not push constant");
-
-  return push_constant_->AddBufferData(command);
-}
-
-Result Pipeline::AddPushConstantBuffer(const Buffer* buf) {
-  return push_constant_->AddBuffer(buf);
+Result Pipeline::AddPushConstantBuffer(const Buffer* buf, uint32_t offset) {
+  if (!buf)
+    return Result("Missing push constant buffer data");
+  return push_constant_->AddBuffer(buf, offset);
 }
 
 Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
   if (cmd == nullptr)
     return Result("Pipeline::AddDescriptor BufferCommand is nullptr");
   if (cmd->IsPushConstant())
-    return AddPushConstant(cmd);
+    return AddPushConstantBuffer(cmd->GetBuffer(), cmd->GetOffset());
   if (!cmd->IsSSBO() && !cmd->IsUniform())
     return Result("Pipeline::AddDescriptor not supported buffer type");
 

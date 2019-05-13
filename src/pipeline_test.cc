@@ -300,6 +300,18 @@ TEST_F(PipelineTest, ComputePipelineWithoutShader) {
   EXPECT_EQ("compute pipeline requires a compute shader", r.Error());
 }
 
+TEST_F(PipelineTest, PipelineBufferWithoutFormat) {
+  Pipeline p(PipelineType::kCompute);
+
+  auto buf = MakeUnique<Buffer>(BufferType::kStorage);
+  buf->SetName("MyBuffer");
+  p.AddBuffer(buf.get(), 0, 0);
+
+  Result r = p.Validate();
+  EXPECT_FALSE(r.IsSuccess()) << r.Error();
+  EXPECT_EQ("buffer (0:0) requires a format", r.Error());
+}
+
 TEST_F(PipelineTest, SetEntryPointForMissingShader) {
   Shader c(ShaderType::kCompute);
   c.SetName("my_shader");
