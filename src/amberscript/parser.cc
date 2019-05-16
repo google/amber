@@ -1204,7 +1204,7 @@ Result Parser::ParseExpect() {
   }
 
   if (token->AsString() != "IDX")
-    return Result("Unknown comparator in EXPECT command");
+    return Result("missing IDX in EXPECT command");
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger() || token->AsInt32() < 0)
@@ -1288,32 +1288,73 @@ Result Parser::ParseExpect() {
     }
 
     command_list_.push_back(std::move(probe));
-  } else if (token->IsString() && IsComparator(token->AsString())) {
-    if (has_y_val)
-      return Result("Y value not needed for non-color comparator");
+    return ValidateEndOfStatement("EXPECT command");
+  }
 
-    auto probe = MakeUnique<ProbeSSBOCommand>(buffer);
-    probe->SetLine(line);
-    probe->SetComparator(ToComparator(token->AsString()));
-    probe->SetFormat(MakeUnique<Format>(*buffer->GetFormat()));
-    probe->SetOffset(static_cast<uint32_t>(x));
+  auto probe = MakeUnique<ProbeSSBOCommand>(buffer);
+  probe->SetLine(line);
 
-    std::vector<Value> values;
-    Result r = ParseValues("EXPECT", buffer->GetFormat(), &values);
-    if (!r.IsSuccess())
-      return r;
+  if (token->IsString() && token->AsString() == "TOLERANCE") {
+    std::vector<Probe::Tolerance> tolerances;
 
-    if (values.empty())
-      return Result("missing comparison values for EXPECT command");
-    probe->SetValues(std::move(values));
-    command_list_.push_back(std::move(probe));
-    return {};
-  } else {
+    token = tokenizer_->NextToken();
+    while (!token->IsEOL() && !token->IsEOS()) {
+      if (!token->IsInteger() && !token->IsDouble())
+        break;
+
+      Result r = token->ConvertToDouble();
+      if (!r.IsSuccess())
+        return r;
+
+      double value = token->AsDouble();
+      token = tokenizer_->NextToken();
+      if (token->IsString() && token->AsString() == "%") {
+        tolerances.push_back(Probe::Tolerance{true, value});
+        token = tokenizer_->NextToken();
+      } else {
+        tolerances.push_back(Probe::Tolerance{false, value});
+      }
+    }
+    if (tolerances.empty())
+      return Result("TOLERANCE specified but no tolerances provided");
+    if (tolerances.size() > 4)
+      return Result("TOLERANCE has a maximum of 4 values");
+
+    probe->SetTolerances(std::move(tolerances));
+  }
+
+  if (!token->IsString() || !IsComparator(token->AsString())) {
     return Result("unexpected token in EXPECT command: " +
                   token->ToOriginalString());
   }
 
-  return ValidateEndOfStatement("EXPECT command");
+  if (has_y_val)
+    return Result("Y value not needed for non-color comparator");
+
+  auto cmp = ToComparator(token->AsString());
+  if (probe->HasTolerances()) {
+    if (cmp != ProbeSSBOCommand::Comparator::kEqual)
+      return Result("TOLERANCE only available with EQ probes");
+
+    cmp = ProbeSSBOCommand::Comparator::kFuzzyEqual;
+  }
+
+  probe->SetComparator(cmp);
+  probe->SetFormat(MakeUnique<Format>(*buffer->GetFormat()));
+  probe->SetOffset(static_cast<uint32_t>(x));
+
+  std::vector<Value> values;
+  Result r = ParseValues("EXPECT", buffer->GetFormat(), &values);
+  if (!r.IsSuccess())
+    return r;
+
+  if (values.empty())
+    return Result("missing comparison values for EXPECT command");
+
+  probe->SetValues(std::move(values));
+  command_list_.push_back(std::move(probe));
+
+  return {};
 }
 
 Result Parser::ParseCopy() {
