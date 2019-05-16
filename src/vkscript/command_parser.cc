@@ -756,8 +756,7 @@ Result CommandParser::ProcessUniform() {
                   std::to_string(token->AsInt32()));
   }
 
-  auto buf_size =
-      static_cast<int32_t>(buf->GetFormat()->SizeInBytes());
+  auto buf_size = static_cast<int32_t>(buf->GetFormat()->SizeInBytes());
   if (token->AsInt32() % buf_size != 0)
     return Result("offset for uniform must be multiple of data size");
 
