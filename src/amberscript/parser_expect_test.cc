@@ -843,7 +843,7 @@ EXPECT orig_buf IDX 5 TOLERANCE 1 EQ 11)";
   auto& tolerances = probe->GetTolerances();
   ASSERT_EQ(1U, tolerances.size());
   EXPECT_FALSE(tolerances[0].is_percent);
-  EXPECT_FLOAT_EQ(1.f, tolerances[0].value);
+  EXPECT_FLOAT_EQ(1.0, tolerances[0].value);
 }
 
 TEST_F(AmberScriptParserTest, ExpectToleranceOneValuePercent) {
@@ -873,7 +873,7 @@ EXPECT orig_buf IDX 5 TOLERANCE 1% EQ 11)";
   auto& tolerances = probe->GetTolerances();
   ASSERT_EQ(1U, tolerances.size());
   EXPECT_TRUE(tolerances[0].is_percent);
-  EXPECT_FLOAT_EQ(1.f, tolerances[0].value);
+  EXPECT_FLOAT_EQ(1.0, tolerances[0].value);
 }
 
 TEST_F(AmberScriptParserTest, ExpectToleranceMultiValue) {
@@ -904,16 +904,16 @@ EXPECT orig_buf IDX 5 TOLERANCE 1% .2 3.7% 4 EQ 11)";
   ASSERT_EQ(4U, tolerances.size());
 
   EXPECT_TRUE(tolerances[0].is_percent);
-  EXPECT_FLOAT_EQ(1.f, tolerances[0].value);
+  EXPECT_FLOAT_EQ(1.0, tolerances[0].value);
 
   EXPECT_FALSE(tolerances[1].is_percent);
-  EXPECT_FLOAT_EQ(.2f, tolerances[1].value);
+  EXPECT_FLOAT_EQ(0.2, tolerances[1].value);
 
   EXPECT_TRUE(tolerances[2].is_percent);
-  EXPECT_FLOAT_EQ(3.7f, tolerances[2].value);
+  EXPECT_FLOAT_EQ(3.7, tolerances[2].value);
 
   EXPECT_FALSE(tolerances[3].is_percent);
-  EXPECT_FLOAT_EQ(4.f, tolerances[3].value);
+  EXPECT_FLOAT_EQ(4.0, tolerances[3].value);
 }
 
 TEST_F(AmberScriptParserTest, ExpectToleranceNoValues) {
