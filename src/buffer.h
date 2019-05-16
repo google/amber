@@ -73,10 +73,14 @@ class Buffer {
 
   /// Sets the Format of the buffer to |format|.
   void SetFormat(std::unique_ptr<Format> format) {
+    format_is_default_ = false;
     format_ = std::move(format);
   }
   /// Returns the Format describing the buffer data.
   Format* GetFormat() const { return format_.get(); }
+
+  void SetFormatIsDefault(bool val) { format_is_default_ = val; }
+  bool FormatIsDefault() const { return format_is_default_; }
 
   /// Sets the buffer |name|.
   void SetName(const std::string& name) { name_ = name; }
@@ -186,6 +190,7 @@ class Buffer {
   uint32_t width_ = 0;
   uint32_t height_ = 0;
   uint8_t location_ = 0;
+  bool format_is_default_ = false;
   std::vector<uint8_t> bytes_;
   std::unique_ptr<Format> format_;
 };

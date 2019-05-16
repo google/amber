@@ -587,12 +587,11 @@ Result CommandParser::ProcessSSBO() {
       return r;
 
     auto fmt = tp.GetType().AsFormat();
-    if (cmd->GetBuffer()->GetFormat() &&
-        !cmd->GetBuffer()->GetFormat()->Equal(fmt.get())) {
+    auto* buf = cmd->GetBuffer();
+    if (buf->FormatIsDefault() || !buf->GetFormat())
+      buf->SetFormat(std::move(fmt));
+    else if (!buf->GetFormat()->Equal(fmt.get()))
       return Result("probe ssbo format does not match buffer format");
-    }
-    if (!cmd->GetBuffer()->GetFormat())
-      cmd->GetBuffer()->SetFormat(std::move(fmt));
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger()) {
@@ -603,17 +602,16 @@ Result CommandParser::ProcessSSBO() {
       return Result("offset for SSBO must be positive, got: " +
                     std::to_string(token->AsInt32()));
     }
-    if ((token->AsUint32() % cmd->GetBuffer()->GetFormat()->SizeInBytes()) !=
-        0) {
+    if ((token->AsUint32() % buf->GetFormat()->SizeInBytes()) != 0) {
       return Result(
           "offset for SSBO must be a multiple of the data size expected " +
-          std::to_string(cmd->GetBuffer()->GetFormat()->SizeInBytes()));
+          std::to_string(buf->GetFormat()->SizeInBytes()));
     }
 
     cmd->SetOffset(token->AsUint32());
 
     std::vector<Value> values;
-    r = ParseValues("ssbo", cmd->GetBuffer()->GetFormat(), &values);
+    r = ParseValues("ssbo", buf->GetFormat(), &values);
     if (!r.IsSuccess())
       return r;
 
@@ -630,6 +628,17 @@ Result CommandParser::ProcessSSBO() {
     // Resize the buffer so we'll correctly create the descriptor sets.
     auto* buf = cmd->GetBuffer();
     buf->SetElementCount(token->AsUint32());
+
+    // Set a default format into the buffer if needed.
+    if (!buf->GetFormat()) {
+      auto fmt = MakeUnique<Format>();
+      fmt->SetFormatType(FormatType::kR8_SINT);
+      fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 8);
+      buf->SetFormat(std::move(fmt));
+      // This has to come after the SetFormat() call because SetFormat() resets
+      // the value back to false.
+      buf->SetFormatIsDefault(true);
+    }
 
     token = tokenizer_->NextToken();
     if (!token->IsEOS() && !token->IsEOL())
@@ -731,12 +740,11 @@ Result CommandParser::ProcessUniform() {
   if (is_ubo)
     fmt->SetIsStd140();
 
-  if (cmd->GetBuffer()->GetFormat() &&
-      !cmd->GetBuffer()->GetFormat()->Equal(fmt.get())) {
+  auto* buf = cmd->GetBuffer();
+  if (buf->FormatIsDefault() || !buf->GetFormat())
+    buf->SetFormat(std::move(fmt));
+  else if (!buf->GetFormat()->Equal(fmt.get()))
     return Result("probe ssbo format does not match buffer format");
-  }
-  if (!cmd->GetBuffer()->GetFormat())
-    cmd->GetBuffer()->SetFormat(std::move(fmt));
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger()) {
@@ -749,19 +757,19 @@ Result CommandParser::ProcessUniform() {
   }
 
   auto buf_size =
-      static_cast<int32_t>(cmd->GetBuffer()->GetFormat()->SizeInBytes());
+      static_cast<int32_t>(buf->GetFormat()->SizeInBytes());
   if (token->AsInt32() % buf_size != 0)
     return Result("offset for uniform must be multiple of data size");
 
   cmd->SetOffset(token->AsUint32());
 
   std::vector<Value> values;
-  r = ParseValues("uniform", cmd->GetBuffer()->GetFormat(), &values);
+  r = ParseValues("uniform", buf->GetFormat(), &values);
   if (!r.IsSuccess())
     return r;
 
   if (cmd->IsPushConstant())
-    cmd->GetBuffer()->SetData(values);
+    buf->SetData(values);
   else
     cmd->SetValues(std::move(values));
 
@@ -2043,11 +2051,10 @@ Result CommandParser::ProcessProbeSSBO() {
   }
 
   auto fmt = tp.GetType().AsFormat();
-  if (buffer->GetFormat() && !buffer->GetFormat()->Equal(fmt.get()))
-    return Result("probe format does not match buffer format");
-
-  if (!buffer->GetFormat())
+  if (buffer->FormatIsDefault() || !buffer->GetFormat())
     buffer->SetFormat(tp.GetType().AsFormat());
+  else if (buffer->GetFormat() && !buffer->GetFormat()->Equal(fmt.get()))
+    return Result("probe format does not match buffer format");
 
   auto cmd = MakeUnique<ProbeSSBOCommand>(buffer);
   cmd->SetLine(cur_line);
