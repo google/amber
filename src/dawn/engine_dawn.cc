@@ -355,6 +355,75 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
   return desc;
 }
 
+// Creates a bind group.
+// Copied from Dawn utils source code.
+
+// Helpers to make creating bind groups look nicer:
+//
+//   utils::MakeBindGroup(device, layout, {
+//       {0, mySampler},
+//       {1, myBuffer, offset, size},
+//       {3, myTexture}
+//   });
+
+// Structure with one constructor per-type of bindings, so that the
+// initializer_list accepts bindings with the right type and no extra
+// information.
+struct BindingInitializationHelper {
+  BindingInitializationHelper(uint32_t binding, const ::dawn::Sampler& sampler);
+  BindingInitializationHelper(uint32_t binding,
+                              const ::dawn::TextureView& textureView);
+  BindingInitializationHelper(uint32_t binding,
+                              const ::dawn::Buffer& buffer,
+                              uint64_t offset,
+                              uint64_t size);
+
+  ::dawn::BindGroupBinding GetAsBinding() const;
+
+  uint32_t binding;
+  ::dawn::Sampler sampler;
+  ::dawn::TextureView textureView;
+  ::dawn::Buffer buffer;
+  uint64_t offset = 0;
+  uint64_t size = 0;
+};
+BindingInitializationHelper::BindingInitializationHelper(
+    uint32_t binding,
+    const ::dawn::Buffer& buffer,
+    uint64_t offset,
+    uint64_t size)
+    : binding(binding), buffer(buffer), offset(offset), size(size) {}
+
+::dawn::BindGroupBinding BindingInitializationHelper::GetAsBinding() const {
+  ::dawn::BindGroupBinding result;
+
+  result.binding = binding;
+  result.sampler = sampler;
+  result.textureView = textureView;
+  result.buffer = buffer;
+  result.offset = offset;
+  result.size = size;
+
+  return result;
+}
+
+::dawn::BindGroup MakeBindGroup(
+    const ::dawn::Device& device,
+    const ::dawn::BindGroupLayout& layout,
+    std::initializer_list<BindingInitializationHelper> bindingsInitializer) {
+  std::vector<::dawn::BindGroupBinding> bindings;
+  for (const BindingInitializationHelper& helper : bindingsInitializer) {
+    bindings.push_back(helper.GetAsBinding());
+  }
+
+  ::dawn::BindGroupDescriptor descriptor;
+  descriptor.layout = layout;
+  descriptor.bindingCount = bindings.size();
+  descriptor.bindings = bindings.data();
+
+  return device.CreateBindGroup(&descriptor);
+}
+
 // Creates a bind group layout.
 // Copied from Dawn utils source code.
 ::dawn::BindGroupLayout MakeBindGroupLayout(
@@ -659,7 +728,12 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     depth_stencil_format = ::dawn::TextureFormat::D32FloatS8Uint;
   }
 
-  renderPipelineDescriptor.layout = MakeBasicPipelineLayout(device, nullptr);
+  if (render_pipeline.hasBinding)
+    renderPipelineDescriptor.layout =
+        MakeBasicPipelineLayout(device, &render_pipeline.bindGroupLayout);
+  else
+    renderPipelineDescriptor.layout = MakeBasicPipelineLayout(device, nullptr);
+
   renderPipelineDescriptor.primitiveTopology =
       ::dawn::PrimitiveTopology::TriangleList;
   renderPipelineDescriptor.sampleCount = 1;
@@ -808,7 +882,7 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
 Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
   if (!render_pipeline)
-    return Result("Clear invoked on invalid or missing render pipeline");
+    return Result("DrawRect invoked on invalid or missing render pipeline");
   Result result = CreateFramebufferIfNeeded(render_pipeline);
   if (!result.IsSuccess())
     return result;
@@ -876,6 +950,9 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   pass.SetPipeline(pipeline);
   pass.SetVertexBuffers(0, 1, &vertexBuffer, vertexBufferOffsets);
   pass.SetIndexBuffer(indexBuffer, 0);
+  if (render_pipeline->hasBinding) {
+    pass.SetBindGroup(0, render_pipeline->bindGroup, 0, nullptr);
+  }
   pass.DrawIndexed(6, 1, 0, 0, 0);
   pass.EndPass();
 
@@ -905,8 +982,71 @@ Result EngineDawn::DoPatchParameterVertices(
   return Result("Dawn:DoPatch not implemented");
 }
 
-Result EngineDawn::DoBuffer(const BufferCommand*) {
-  return Result("Dawn:DoBuffer not implemented");
+// ::dawn::CommandBuffer CreateSimpleComputeCommandBuffer(
+//     const dawn::ComputePipeline& pipeline, const dawn::BindGroup& bindGroup)
+//     {
+//   dawn::CommandEncoder encoder = device.CreateCommandEncoder();
+//   dawn::ComputePassEncoder pass = encoder.BeginComputePass();
+//   pass.SetPipeline(pipeline);
+//   pass.SetBindGroup(0, bindGroup, 0, nullptr);
+//   pass.Dispatch(1, 1, 1);
+//   pass.EndPass();
+//   return encoder.Finish();
+// }
+
+Result EngineDawn::DoBuffer(const BufferCommand* command) {
+  // TODO(SarahM0): it can be a compute pipeline too
+  RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
+  if (!render_pipeline)
+    return Result("DoBuffer invoked on invalid or missing render pipeline");
+  Result result = CreateFramebufferIfNeeded(render_pipeline);
+  if (!result.IsSuccess())
+    return result;
+
+  if (!command->IsSSBO() && !command->IsUniform())
+    return Result("EngineDawn::DoBuffer not supported buffer type");
+
+  const std::vector<Value> values = command->GetValues();
+  std::vector<float> fValues;
+  float* f = new float[values.size()];
+  for (uint i = 0; i < values.size(); i++)
+    f[i] = values[i].AsFloat();
+
+  ::dawn::Buffer buffer;
+  if (command->IsSSBO())
+    buffer = CreateBufferFromData(*device_, f, sizeof(f),
+                                  ::dawn::BufferUsageBit::Storage |
+                                      ::dawn::BufferUsageBit::TransferSrc |
+                                      ::dawn::BufferUsageBit::TransferDst);
+  else if (command->IsUniform())
+    buffer = CreateBufferFromData(*device_, f, sizeof(f),
+                                  ::dawn::BufferUsageBit::Uniform |
+                                      ::dawn::BufferUsageBit::TransferSrc |
+                                      ::dawn::BufferUsageBit::TransferDst);
+  else
+    return Result("EngineDawn::DoBuffer not supported buffer type");
+
+  ::dawn::ShaderStageBit kAllStages =
+      ::dawn::ShaderStageBit::Vertex | ::dawn::ShaderStageBit::Fragment;
+
+  render_pipeline->bindGroupLayout = MakeBindGroupLayout(
+      *device_, {
+                    {0, kAllStages, ::dawn::BindingType::StorageBuffer},
+                });
+
+  render_pipeline->hasBinding = true;
+
+  render_pipeline->bindGroup =
+      MakeBindGroup(*device_, render_pipeline->bindGroupLayout,
+                    {
+                        {
+                            command->GetBinding(),
+                            buffer,
+                            0,
+                            sizeof(f),
+                        },
+                    });
+  return {};
 }
 
 Result EngineDawn::CreateFramebufferIfNeeded(
