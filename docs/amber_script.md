@@ -197,6 +197,10 @@ The following commands are all specified within the `PIPELINE` command.
   # Attach a 'multi' shader to the pipeline of |shader_type| and use the entry
   # point with |name|. The provided shader _must_ be a 'multi' shader.
   ATTACH {name_of_multi_shader} TYPE {shader_type} ENTRY_POINT {name}
+
+  # Attach specialized shader. Specialization can be specified multiple times.
+  ATTACH {name_of_shader} ENTRY_POINT {name} SPECIALIZE 1 AS uint32 4
+  ATTACH {name_of_shader} ENTRY_POINT {name} SPECIALIZE 1 AS uint32 4 SPECIALIZE 4 AS float 1.0
 ```
 
 ```groovy

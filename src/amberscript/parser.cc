@@ -488,7 +488,73 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
   if (!r.IsSuccess())
     return r;
 
-  return ValidateEndOfStatement("ATTACH command");
+  while (true) {
+    token = tokenizer_->NextToken();
+    if (token->IsString() && token->AsString() == "SPECIALIZE") {
+      r = ParseShaderSpecialization(pipeline);
+      if (!r.IsSuccess())
+        return r;
+    } else {
+      if (token->IsEOL() || token->IsEOS())
+        return {};
+      return Result("extra parameters after ATTACH command");
+    }
+  }
+}
+
+Result Parser::ParseShaderSpecialization(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsInteger())
+    return Result("specialization ID must be an integer");
+
+  auto spec_id = token->AsUint32();
+  if (spec_id == 0)
+    return Result("specialization ID must be greater than 0");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "AS")
+    return Result("expected AS as next token");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("expected data type in SPECIALIZE subcommand");
+
+  DatumType type;
+  auto r = ToDatumType(token->AsString(), &type);
+  if (!r.IsSuccess())
+    return r;
+
+  token = tokenizer_->NextToken();
+  uint32_t value = 0;
+  switch (type.GetType()) {
+    case DataType::kUint32:
+      value = token->AsUint32();
+      break;
+    case DataType::kInt32: {
+      union {
+        uint32_t u;
+        int32_t i;
+      } u;
+      u.i = token->AsInt32();
+      value = u.u;
+      break;
+    }
+    case DataType::kFloat: {
+      union {
+        uint32_t u;
+        float f;
+      } u;
+      u.f = token->AsFloat();
+      value = u.u;
+      break;
+    }
+    default:
+      return Result(
+          "only 32-bit types are currently accepted for specialization values");
+  }
+  auto& shader = pipeline->GetShaders()[pipeline->GetShaders().size() - 1];
+  shader.AddSpecialization(spec_id, value);
+  return {};
 }
 
 Result Parser::ParsePipelineShaderOptimizations(Pipeline* pipeline) {
