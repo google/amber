@@ -258,6 +258,31 @@ Result EngineVulkan::SetShader(amber::Pipeline* pipeline,
   }
 
   info.shaders[type] = shader;
+
+  for (auto& shader_info : pipeline->GetShaders()) {
+    if (shader_info.GetShaderType() == type) {
+      const auto& shader_spec_info = shader_info.GetSpecialization();
+      if (!shader_spec_info.empty()) {
+        auto& entries = info.specialization_entries[type];
+        auto& entry_data = info.specialization_data[type];
+        uint32_t i = 0;
+        for (auto pair : shader_spec_info) {
+          entries.push_back({pair.first,
+                             static_cast<uint32_t>(i * sizeof(uint32_t)),
+                             static_cast<uint32_t>(sizeof(uint32_t))});
+          entry_data.push_back(pair.second);
+          ++i;
+        }
+        auto& spec_info = info.specialization_info[type];
+        spec_info.mapEntryCount =
+            static_cast<uint32_t>(shader_spec_info.size());
+        spec_info.pMapEntries = entries.data();
+        spec_info.dataSize = sizeof(uint32_t) * shader_spec_info.size();
+        spec_info.pData = entry_data.data();
+      }
+    }
+  }
+
   return {};
 }
 
@@ -280,6 +305,10 @@ Result EngineVulkan::GetVkShaderStageInfo(
     stage_info[stage_count].stage = stage;
     stage_info[stage_count].module = it.second;
     stage_info[stage_count].pName = nullptr;
+    auto spec_iter = info.specialization_info.find(it.first);
+    if (spec_iter != info.specialization_info.end()) {
+      stage_info[stage_count].pSpecializationInfo = &spec_iter->second;
+    }
     ++stage_count;
   }
   *out = stage_info;

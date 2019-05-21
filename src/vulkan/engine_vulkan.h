@@ -66,6 +66,14 @@ class EngineVulkan : public Engine {
     std::unique_ptr<VertexBuffer> vertex_buffer;
     std::unordered_map<ShaderType, VkShaderModule, CastHash<ShaderType>>
         shaders;
+    std::unordered_map<ShaderType,
+                       std::vector<VkSpecializationMapEntry>,
+                       CastHash<ShaderType>>
+        specialization_entries;
+    std::unordered_map<ShaderType, std::vector<uint32_t>, CastHash<ShaderType>>
+        specialization_data;
+    std::unordered_map<ShaderType, VkSpecializationInfo, CastHash<ShaderType>>
+        specialization_info;
   };
 
   Result GetVkShaderStageInfo(
