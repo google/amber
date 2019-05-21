@@ -385,10 +385,11 @@ CLEAR {pipeline}
 EXPECT {buffer_name} IDX _x_ {comparator} _value_+
 
 # Checks that |buffer_name| at |x| has values within |tolerance| of |value|
-# when compared with the given |comparator|. The |tolerance| can be specified
-# as 1-4 float values separated by spaces.
-EXPECT {buffer_name} IDX _x_ TOLERANCE \
-    _tolerance_{1,4} {comparator} _value_+
+# The |tolerance| can be specified as 1-4 float values separated by spaces.
+# The tolerances may be given as a percentage by placing a '%' symbol after
+# the value. If less tolerance values are provided then are needed for a given
+# data component the default tolerance will be applied.
+EXPECT {buffer_name} IDX _x_ TOLERANCE _tolerance_{1,4} EQ _value_+
 
 # Checks that |buffer_name| at |x|, |y| for |width|x|height| pixels has the
 # given |r|, |g|, |b| values. Each r, g, b value is an integer from 0-255.
