@@ -13,18 +13,23 @@
 # limitations under the License.
 
 [compute shader]
-#version 430
+#version 450
 
-layout(set = 0, binding = 1) buffer block0 {
-  int data[2];
-};
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(binding = 1) buffer data_buf {
+    int val0;
+    int val1;
+} data;
 
 void main() {
-  data[0] = 0;
-  data[1] = 1;
+    data.val0 = 100;
+    data.val1 = 200;
 }
 
 [test]
-ssbo 0:0 2
+ssbo 0:1 8
+ssbo 0:1 subdata int 0 0
 
 compute 1 1 1
+
+probe ssbo int 0:1 0 == 100 200
