@@ -178,7 +178,10 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     -Wno-newline-eof
     -Wno-non-virtual-dtor
     -Wno-old-style-cast
+    -Wno-range-loop-analysis
     -Wno-redundant-parens
+    -Wno-reserved-id-macro
+    -Wno-return-std-move-in-c++11
     -Wno-shift-sign-overflow
     -Wno-sign-conversion
     -Wno-signed-enum-bitfield
@@ -186,8 +189,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     -Wno-shadow-field
     -Wno-shadow-field-in-constructor
     -Wno-shorten-64-to-32
-    -Wno-range-loop-analysis
-    -Wno-reserved-id-macro
+    -Wno-tautological-unsigned-zero-compare
     -Wno-undef
     -Wno-undefined-func-template
     -Wno-undefined-reinterpret-cast
