@@ -42,6 +42,9 @@ option(AMBER_SKIP_SHADERC
 option(AMBER_SKIP_SAMPLES
   "Skip building sample application" ${AMBER_SKIP_SAMPLES})
 option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
+option(AMBER_ENABLE_SWIFTSHADER
+  "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
+option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
 
 if (${AMBER_SKIP_SPIRV_TOOLS})
   set(AMBER_ENABLE_SPIRV_TOOLS FALSE)
@@ -66,6 +69,11 @@ else()
   set(AMBER_ENABLE_SAMPLES TRUE)
 endif()
 
+if (${AMBER_ENABLE_SWIFTSHADER})
+  # Swiftshader requires the loader to be built.
+  set(AMBER_USE_LOCAL_VULKAN TRUE)
+endif()
+
 if (${AMBER_USE_LOCAL_VULKAN})
   message(STATUS "Using python3")
   # vulkan-loaders requires python 3
@@ -76,6 +84,7 @@ message(STATUS "Amber enable SPIRV-Tools: ${AMBER_ENABLE_SPIRV_TOOLS}")
 message(STATUS "Amber enable Shaderc: ${AMBER_ENABLE_SHADERC}")
 message(STATUS "Amber enable tests: ${AMBER_ENABLE_TESTS}")
 message(STATUS "Amber enable samples: ${AMBER_ENABLE_SAMPLES}")
+message(STATUS "Amber enable SwiftShader: ${AMBER_ENABLE_SWIFTSHADER}")
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}")

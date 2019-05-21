@@ -146,6 +146,65 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(VULKAN_LOADER_BUILD_FIXES
     -Wno-unknown-warning-option
   )
+
+  set(SWIFTSHADER_BUILD_FIXES
+    -Wno-cast-align
+    -Wno-cast-qual
+    -Wno-comma
+    -Wno-conditional-uninitialized
+    -Wno-conversion
+    -Wno-covered-switch-default
+    -Wno-deprecated
+    -Wno-disabled-macro-expansion
+    -Wno-documentation-unknown-command
+    -Wno-double-promotion
+    -Wno-error
+    -Wno-exit-time-destructors
+    -Wno-extra-semi
+    -Wno-float-equal
+    -Wno-format-nonliteral
+    -Wno-global-constructors
+    -Wno-gnu-anonymous-struct
+    -Wno-gnu-zero-variadic-macro-arguments
+    -Wno-header-hygiene
+    -Wno-implicit-fallthrough
+    -Wno-inconsistent-missing-destructor-override
+    -Wno-keyword-macro
+    -Wno-missing-field-initializers
+    -Wno-missing-noreturn
+    -Wno-missing-prototypes
+    -Wno-missing-variable-declarations
+    -Wno-nested-anon-types
+    -Wno-newline-eof
+    -Wno-non-virtual-dtor
+    -Wno-old-style-cast
+    -Wno-range-loop-analysis
+    -Wno-redundant-parens
+    -Wno-reserved-id-macro
+    -Wno-return-std-move-in-c++11
+    -Wno-shift-sign-overflow
+    -Wno-sign-conversion
+    -Wno-signed-enum-bitfield
+    -Wno-shadow
+    -Wno-shadow-field
+    -Wno-shadow-field-in-constructor
+    -Wno-shorten-64-to-32
+    -Wno-tautological-unsigned-zero-compare
+    -Wno-undef
+    -Wno-undefined-func-template
+    -Wno-undefined-reinterpret-cast
+    -Wno-used-but-marked-unused
+    -Wno-unused-parameter
+    -Wno-unused-macros
+    -Wno-unused-member-function
+    -Wno-unused-template
+    -Wno-unreachable-code
+    -Wno-unreachable-code-break
+    -Wno-unreachable-code-return
+    -Wno-weak-template-vtables
+    -Wno-weak-vtables
+    -Wno-zero-as-null-pointer-constant
+  )
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -166,10 +225,16 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(SPIRV_TOOLS_BUILD_FIXES "")
 
   set(SHADERC_BUILD_FIXES
-      -Wno-missing-field-initializers
-      -Wno-pedantic)
+    -Wno-missing-field-initializers
+    -Wno-pedantic)
 
   set(VULKAN_LOADER_BUILD_FIXES "")
+
+  set(SWIFTSHADER_BUILD_FIXES
+    -Wno-all
+    -Wno-error
+    -Wno-pedantic
+  )
 endif()
 
 if (MSVC)
@@ -250,6 +315,10 @@ if (MSVC)
   set(VULKAN_LOADER_BUILD_FIXES
     /W3
   )
+
+  set(SWIFTSHADER_BUILD_FIXES
+    /W3
+  )
 endif()
 
 if (${AMBER_ENABLE_TESTS})
@@ -318,3 +387,17 @@ if (${AMBER_USE_LOCAL_VULKAN})
   set(CMAKE_CXX_FLAGS ${CXX_BACK})
 endif()
 
+if (${AMBER_ENABLE_SWIFTSHADER})
+  set(CXX_BACK ${CMAKE_CXX_FLAGS})
+  SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "${SWIFTSHADER_BUILD_FIXES}")
+  STRING(REGEX REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
+  set(BUILD_EGL FALSE CACHE BOOL FALSE)
+  set(BUILD_GLESv2 FALSE CACHE BOOL FALSE)
+  set(BUILD_GLES_CM FALSE CACHE BOOL FALSE)
+  set(BUILD_VULKAN TRUE CACHE BOOL TRUE)
+  set(BUILD_SAMPLES FALSE CACHE BOOL FALSE)
+  set(BUILD_TESTS FALSE CACHE BOOL FALSE)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/swiftshader)
+  set(CMAKE_CXX_FLAGS ${CXX_BACK})
+endif()
