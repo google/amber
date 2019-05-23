@@ -116,81 +116,63 @@ if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") OR
   set(COMPILER_IS_LIKE_GNU TRUE)
 endif()
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  set(CUSTOM_CXX_FLAGS
-    ${CUSTOM_CXX_FLAGS}
-    -std=c++11
-    -fvisibility=hidden
-    -Wall
-    -Werror
-    -Weverything
-    -Wextra
-    -Wno-c++98-compat
-    -Wno-c++98-compat-pedantic
-    -Wno-format-pedantic
-    -Wno-padded
-    -Wno-switch-enum
-    -Wno-unknown-pragmas
-    -Wno-unknown-warning-option)
-
-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  set(CUSTOM_CXX_FLAGS
-    ${CUSTOM_CXX_FLAGS}
-    -std=c++11
-    -fvisibility=hidden
-    -Wall
-    -Werror
-    -Wextra
-    -Wno-unknown-pragmas
-    -Wpedantic
-    -pedantic-errors)
-elseif(MSVC)
-  # We don't want to have to copy the C Runtime DLL everywhere the executable
-  # goes.  So compile code to assume the CRT is statically linked, i.e. use
-  # /MT* options.  For debug builds use /MTd, and for release builds use /MT.
-  if(CMAKE_BUILD_TYPE MATCHES "Debug")
-    set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MTd)
-    message(STATUS "Setting /MTd")
-  elseif(CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
-    set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MT)
-    message(STATUS "Setting /MT")
-  else()
-    set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MT)
-    message(STATUS "Setting /MT")
-  endif()
-
-  set(CUSTOM_CXX_FLAGS
-    ${CUSTOM_CXX_FLAGS}
-    /bigobj
-    /EHsc
-    /W3
-    /WX
-    /wd4068
-    /wd4514
-    /wd4571
-    /wd4625
-    /wd4626
-    /wd4710
-    /wd4774
-    /wd4820
-    /wd5026
-    /wd5027
-  )
-endif()
-
-SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "${CUSTOM_CXX_FLAGS}")
-STRING(REGEX REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-
 function(amber_default_compile_options TARGET)
   if (${COMPILER_IS_LIKE_GNU})
     target_compile_options(${TARGET} PRIVATE
-        -fno-exceptions
-        -fno-rtti)
+      -std=c++11
+      -fno-exceptions
+      -fno-rtti
+      -fvisibility=hidden
+      -Wall
+      -Werror
+      -Wextra
+      -Wno-c++98-compat
+      -Wno-c++98-compat-pedantic
+      -Wno-format-pedantic
+      -Wno-padded
+      -Wno-switch-enum
+      -Wno-unknown-pragmas
+      -Wno-unknown-warning-option
+      -pedantic-errors
+    )
+
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+      target_compile_options(${TARGET} PRIVATE -Weverything)
+    endif()
   endif()
 
   if (MSVC)
     # Specify /EHs for exception handling.
-    target_compile_options(${TARGET} PRIVATE /EHs)
+    target_compile_options(${TARGET} PRIVATE
+      /bigobj
+      /EHsc
+      /W3
+      /WX
+      /wd4068
+      /wd4514
+      /wd4571
+      /wd4625
+      /wd4626
+      /wd4710
+      /wd4774
+      /wd4820
+      /wd5026
+      /wd5027
+    )
+
+    # We don't want to have to copy the C Runtime DLL everywhere the executable
+    # goes.  So compile code to assume the CRT is statically linked, i.e. use
+    # /MT* options.  For debug builds use /MTd, and for release builds use /MT.
+    if(CMAKE_BUILD_TYPE MATCHES "Debug")
+      target_compile_options(${TARGET} PRIVATE /MTd)
+      message(STATUS "Setting /MTd")
+    elseif(CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
+      target_compile_options(${TARGET} PRIVATE /MT)
+      message(STATUS "Setting /MT")
+    else()
+      target_compile_options(${TARGET} PRIVATE /MT)
+      message(STATUS "Setting /MT")
+    endif()
   endif()
 
   # For MinGW cross compile, statically link to the C++ runtime.
