@@ -78,10 +78,11 @@ EngineVulkan::~EngineVulkan() {
   for (auto it = pipeline_map_.begin(); it != pipeline_map_.end(); ++it) {
     auto& info = it->second;
 
-    for (auto mod_it = info.shader_info.begin(); mod_it != info.shader_info.end();
-         ++mod_it) {
+    for (auto mod_it = info.shader_info.begin();
+         mod_it != info.shader_info.end(); ++mod_it) {
       auto vk_device = device_->GetVkDevice();
-      if (vk_device != VK_NULL_HANDLE && mod_it->second.shader != VK_NULL_HANDLE)
+      if (vk_device != VK_NULL_HANDLE &&
+          mod_it->second.shader != VK_NULL_HANDLE)
         device_->GetPtrs()->vkDestroyShaderModule(
             vk_device, mod_it->second.shader, nullptr);
     }
@@ -294,7 +295,8 @@ Result EngineVulkan::GetVkShaderStageInfo(
     std::vector<VkPipelineShaderStageCreateInfo>* out) {
   auto& info = pipeline_map_[pipeline];
 
-  std::vector<VkPipelineShaderStageCreateInfo> stage_info(info.shader_info.size());
+  std::vector<VkPipelineShaderStageCreateInfo> stage_info(
+      info.shader_info.size());
   uint32_t stage_count = 0;
   for (auto& it : info.shader_info) {
     VkShaderStageFlagBits stage = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
