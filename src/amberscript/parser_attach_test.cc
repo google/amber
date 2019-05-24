@@ -515,6 +515,5 @@ END)";
   EXPECT_EQ(4, shaders[0].GetSpecialization().at(1));
 }
 
-
 }  // namespace amberscript
 }  // namespace amber

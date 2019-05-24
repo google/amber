@@ -72,7 +72,7 @@ class EngineVulkan : public Engine {
       std::unique_ptr<VkSpecializationInfo> specialization_info;
     };
     std::unordered_map<ShaderType, ShaderInfo, CastHash<ShaderType>>
-      shader_info;
+        shader_info;
   };
 
   Result GetVkShaderStageInfo(
