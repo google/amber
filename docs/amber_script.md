@@ -199,8 +199,9 @@ The following commands are all specified within the `PIPELINE` command.
   ATTACH {name_of_multi_shader} TYPE {shader_type} ENTRY_POINT {name}
 
   # Attach specialized shader. Specialization can be specified multiple times.
-  ATTACH {name_of_shader} ENTRY_POINT {name} SPECIALIZE 1 AS uint32 4
-  ATTACH {name_of_shader} ENTRY_POINT {name} SPECIALIZE 1 AS uint32 4 SPECIALIZE 4 AS float 1.0
+  # Specialization values must be a 32-bit type.
+  ATTACH SPECIALIZE 1 AS uint32 4
+  ATTACH SPECIALIZE 1 AS uint32 4 SPECIALIZE 4 AS float 1.0
 ```
 
 ```groovy
