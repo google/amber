@@ -215,7 +215,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: extra parameters after ATTACH command", r.Error());
+  EXPECT_EQ("6: Unknown ATTACH parameter: INVALID", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PiplineMultiShaderAttach) {
@@ -318,6 +318,7 @@ END)";
 
   Parser parser;
   Result r = parser.Parse(in);
+  EXPECT_EQ(r.Error(), "");
   ASSERT_TRUE(r.IsSuccess());
 
   auto script = parser.GetScript();
@@ -458,6 +459,62 @@ END)";
       "6: only 32-bit types are currently accepted for specialization values",
       r.Error());
 }
+
+TEST_F(AmberScriptParserTest, PipelineSpecializationMultipleSpecializations) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+#shaders
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader TYPE compute ENTRY_POINT my_ep \
+      SPECIALIZE 1 AS uint32 4 \
+      SPECIALIZE 2 AS uint32 5 \
+      SPECIALIZE 5 AS uint32 1
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& shaders = pipeline->GetShaders();
+  ASSERT_EQ(1U, shaders.size());
+
+  EXPECT_EQ(3, shaders[0].GetSpecialization().size());
+  EXPECT_EQ(4, shaders[0].GetSpecialization().at(1));
+  EXPECT_EQ(5, shaders[0].GetSpecialization().at(2));
+  EXPECT_EQ(1, shaders[0].GetSpecialization().at(5));
+}
+
+TEST_F(AmberScriptParserTest, PipelineSpecializationNoType) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+#shaders
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader SPECIALIZE 1 AS uint32 4
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& shaders = pipeline->GetShaders();
+  ASSERT_EQ(1U, shaders.size());
+
+  EXPECT_EQ(1, shaders[0].GetSpecialization().size());
+  EXPECT_EQ(4, shaders[0].GetSpecialization().at(1));
+}
+
 
 }  // namespace amberscript
 }  // namespace amber

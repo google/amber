@@ -470,7 +470,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
 
     type = token->AsString();
   }
-  if (type != "ENTRY_POINT")
+  if (set_shader_type && type != "ENTRY_POINT")
     return Result("Unknown ATTACH parameter: " + type);
 
   if (shader->GetType() == ShaderType::kShaderTypeMulti && !set_shader_type)
@@ -480,23 +480,30 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
   if (!r.IsSuccess())
     return r;
 
-  token = tokenizer_->NextToken();
-  if (!token->IsString())
-    return Result("missing shader name in ATTACH ENTRY_POINT command");
+  if (type == "ENTRY_POINT") {
+    token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("missing shader name in ATTACH ENTRY_POINT command");
 
-  r = pipeline->SetShaderEntryPoint(shader, token->AsString());
-  if (!r.IsSuccess())
-    return r;
+    r = pipeline->SetShaderEntryPoint(shader, token->AsString());
+    if (!r.IsSuccess())
+      return r;
+
+    token = tokenizer_->NextToken();
+  }
 
   while (true) {
-    token = tokenizer_->NextToken();
     if (token->IsString() && token->AsString() == "SPECIALIZE") {
       r = ParseShaderSpecialization(pipeline);
       if (!r.IsSuccess())
         return r;
+
+      token = tokenizer_->NextToken();
     } else {
       if (token->IsEOL() || token->IsEOS())
         return {};
+      if (token->IsString())
+        return Result("Unknown ATTACH parameter: " + token->AsString());
       return Result("extra parameters after ATTACH command");
     }
   }
