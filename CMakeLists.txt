@@ -46,6 +46,14 @@ option(AMBER_ENABLE_SWIFTSHADER
   "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
 option(AMBER_USE_DXC "Enable DXC integration" ${AMBER_USE_DXC})
 
+if(WIN32)
+  # On Windows, CMake by default compiles with the shared CRT.
+  # Default it to the static CRT.
+  option(AMBER_ENABLE_SHARED_CRT
+         "Amber: Use the shared CRT with MSVC instead of the static CRT"
+	 ${AMBER_ENABLE_SHARED_CRT})
+endif(WIN32)
+
 if (${AMBER_SKIP_SPIRV_TOOLS})
   set(AMBER_ENABLE_SPIRV_TOOLS FALSE)
   set(AMBER_ENABLE_SHADERC FALSE)
@@ -136,6 +144,25 @@ if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") OR
   set(COMPILER_IS_LIKE_GNU TRUE)
 endif()
 
+if(MSVC)
+  # We don't want to have to copy the C Runtime DLL everywhere the executable
+  # goes.  So by default compile code to assume the CRT is statically linked,
+  # i.e. use /MT* options.  For debug builds use /MTd, and for release builds
+  # use /MT.  If AMBER_ENABLE_SHARED_CRT is ON, then use the shared C runtime.
+  # Modify the project-wide options variables. This is ugly, but seems to be
+  # the state of the art.
+  if(NOT ${AMBER_ENABLE_SHARED_CRT})
+    message(STATUS "Amber: Static C runtime selected: replacing /MD* with /MT*")
+    foreach (flag_var
+	     CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+	     CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
+	     CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+	     CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+      string(REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+    endforeach()
+  endif()
+endif()
+
 function(amber_default_compile_options TARGET)
   if (${COMPILER_IS_LIKE_GNU})
     target_compile_options(${TARGET} PRIVATE
@@ -179,30 +206,18 @@ function(amber_default_compile_options TARGET)
       /wd5026
       /wd5027
     )
-
-    # We don't want to have to copy the C Runtime DLL everywhere the executable
-    # goes.  So compile code to assume the CRT is statically linked, i.e. use
-    # /MT* options.  For debug builds use /MTd, and for release builds use /MT.
-    if(CMAKE_BUILD_TYPE MATCHES "Debug")
-      target_compile_options(${TARGET} PRIVATE /MTd)
-      message(STATUS "Setting /MTd")
-    elseif(CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
-      target_compile_options(${TARGET} PRIVATE /MT)
-      message(STATUS "Setting /MT")
-    else()
-      target_compile_options(${TARGET} PRIVATE /MT)
-      message(STATUS "Setting /MT")
-    endif()
   endif()
 
-  # For MinGW cross compile, statically link to the C++ runtime.
-  # But it still depends on MSVCRT.dll.
-  if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-      set_target_properties(${TARGET} PROPERTIES LINK_FLAGS
-        -static
-        -static-libgcc
-        -static-libstdc++)
+  if (NOT ${AMBER_ENABLE_SHARED_CRT})
+    # For MinGW cross compile, statically link to the C++ runtime.
+    # But it still depends on MSVCRT.dll.
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+      if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+	set_target_properties(${TARGET} PROPERTIES LINK_FLAGS
+	  -static
+	  -static-libgcc
+	  -static-libstdc++)
+      endif()
     endif()
   endif()
 endfunction()
