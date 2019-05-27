@@ -515,8 +515,6 @@ Result Parser::ParseShaderSpecialization(Pipeline* pipeline) {
     return Result("specialization ID must be an integer");
 
   auto spec_id = token->AsUint32();
-  if (spec_id == 0)
-    return Result("specialization ID must be greater than 0");
 
   token = tokenizer_->NextToken();
   if (!token->IsString() || token->AsString() != "AS")
