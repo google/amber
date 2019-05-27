@@ -42,6 +42,14 @@ cmake -GNinja ../..
 ninja
 ```
 
+Alternatives:
+
+* On Windows, Amber normally statically links against the C runtime library.
+  To override this and link against a shared C runtime, CMake option
+  `-DAMBER_ENABLE_SHARED_CRT`.
+  This will cause Amber to be built with `/MD` for release builds or `/MDd` for
+  debug builds.
+
 ### Android
 
 * Android build needs Android SDK 28, Android NDK 16, Java 8. If you prefer
