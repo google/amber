@@ -398,21 +398,6 @@ END)";
   EXPECT_EQ("6: specialization ID must be an integer", r.Error());
 }
 
-TEST_F(AmberScriptParserTest, PipelineSpecializationIDIsZero) {
-  std::string in = R"(
-SHADER compute my_shader GLSL
-#shaders
-END
-PIPELINE compute my_pipeline
-  ATTACH my_shader TYPE compute ENTRY_POINT my_ep SPECIALIZE 0 AS float 1.1
-END)";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: specialization ID must be greater than 0", r.Error());
-}
-
 TEST_F(AmberScriptParserTest, PipelineSpecializationNoAS) {
   std::string in = R"(
 SHADER compute my_shader GLSL
