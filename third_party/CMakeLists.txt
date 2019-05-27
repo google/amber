@@ -13,6 +13,9 @@
 # limitations under the License.
 
 if (${AMBER_ENABLE_TESTS})
+  if (${AMBER_ENABLE_SHARED_CRT})
+    set(gtest_force_shared_crt ON)
+  endif()
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/googletest EXCLUDE_FROM_ALL)
 endif()
 

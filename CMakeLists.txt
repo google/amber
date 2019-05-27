@@ -45,6 +45,14 @@ option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
 option(AMBER_ENABLE_SWIFTSHADER
   "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
 option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
+if(WIN32)
+  # On Windows, CMake by default compiles with the shared CRT.
+  # Default it to the static CRT.
+  option(AMBER_ENABLE_SHARED_CRT
+         "Amber: Use the shared CRT with MSVC instead of the static CRT"
+	 ${AMBER_ENABLE_SHARED_CRT})
+endif(WIN32)
+
 
 if (${AMBER_SKIP_SPIRV_TOOLS})
   set(AMBER_ENABLE_SPIRV_TOOLS FALSE)
@@ -161,28 +169,44 @@ function(amber_default_compile_options TARGET)
     )
 
     # We don't want to have to copy the C Runtime DLL everywhere the executable
-    # goes.  So compile code to assume the CRT is statically linked, i.e. use
-    # /MT* options.  For debug builds use /MTd, and for release builds use /MT.
-    if(CMAKE_BUILD_TYPE MATCHES "Debug")
-      target_compile_options(${TARGET} PRIVATE /MTd)
-      message(STATUS "Setting /MTd")
-    elseif(CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
-      target_compile_options(${TARGET} PRIVATE /MT)
-      message(STATUS "Setting /MT")
+    # goes.  So by default compile code to assume the CRT is statically linked,
+    # i.e. use /MT* options.  For debug builds use /MTd, and for release builds
+    # use /MT.  If AMBER_ENABLE_SHARED_CRT is ON, then use the shared C runtime.
+    if(NOT ${AMBER_ENABLE_SHARED_CRT})
+      if(CMAKE_BUILD_TYPE MATCHES "Debug")
+	target_compile_options(${TARGET} PRIVATE /MTd)
+	message(STATUS "Amber: Setting /MTd")
+      elseif(CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
+	target_compile_options(${TARGET} PRIVATE /MT)
+	message(STATUS "Amber: Setting /MT")
+      else()
+	target_compile_options(${TARGET} PRIVATE /MT)
+	message(STATUS "Amber: Setting /MT")
+      endif()
     else()
-      target_compile_options(${TARGET} PRIVATE /MT)
-      message(STATUS "Setting /MT")
+      if(CMAKE_BUILD_TYPE MATCHES "Debug")
+	target_compile_options(${TARGET} PRIVATE /MDd)
+	message(STATUS "Amber: Setting /MDd")
+      elseif(CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
+	target_compile_options(${TARGET} PRIVATE /MD)
+	message(STATUS "Amber: Setting /MD")
+      else()
+	target_compile_options(${TARGET} PRIVATE /MD)
+	message(STATUS "Amber: Setting /MD")
+      endif()
     endif()
   endif()
 
-  # For MinGW cross compile, statically link to the C++ runtime.
-  # But it still depends on MSVCRT.dll.
-  if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-      set_target_properties(${TARGET} PROPERTIES LINK_FLAGS
-        -static
-        -static-libgcc
-        -static-libstdc++)
+  if (NOT ${AMBER_ENABLE_SHARED_CRT})
+    # For MinGW cross compile, statically link to the C++ runtime.
+    # But it still depends on MSVCRT.dll.
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+      if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+	set_target_properties(${TARGET} PROPERTIES LINK_FLAGS
+	  -static
+	  -static-libgcc
+	  -static-libstdc++)
+      endif()
     endif()
   endif()
 endfunction()
