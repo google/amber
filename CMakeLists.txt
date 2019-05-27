@@ -124,6 +124,25 @@ if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") OR
   set(COMPILER_IS_LIKE_GNU TRUE)
 endif()
 
+if(MSVC)
+  # We don't want to have to copy the C Runtime DLL everywhere the executable
+  # goes.  So by default compile code to assume the CRT is statically linked,
+  # i.e. use /MT* options.  For debug builds use /MTd, and for release builds
+  # use /MT.  If AMBER_ENABLE_SHARED_CRT is ON, then use the shared C runtime.
+  # Modify the project-wide options variables. This is ugly, but seems to be
+  # the state of the art.
+  if(NOT ${AMBER_ENABLE_SHARED_CRT})
+    message(STATUS "Amber: Static C runtime selected: replacing /MD* with /MT*")
+    foreach (flag_var
+	     CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+	     CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
+	     CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+	     CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+      string(REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+    endforeach()
+  endif()
+endif()
+
 function(amber_default_compile_options TARGET)
   if (${COMPILER_IS_LIKE_GNU})
     target_compile_options(${TARGET} PRIVATE
@@ -167,34 +186,6 @@ function(amber_default_compile_options TARGET)
       /wd5026
       /wd5027
     )
-
-    # We don't want to have to copy the C Runtime DLL everywhere the executable
-    # goes.  So by default compile code to assume the CRT is statically linked,
-    # i.e. use /MT* options.  For debug builds use /MTd, and for release builds
-    # use /MT.  If AMBER_ENABLE_SHARED_CRT is ON, then use the shared C runtime.
-    if(NOT ${AMBER_ENABLE_SHARED_CRT})
-      if(CMAKE_BUILD_TYPE MATCHES "Debug")
-	target_compile_options(${TARGET} PRIVATE /MTd)
-	message(STATUS "Amber: Setting /MTd")
-      elseif(CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
-	target_compile_options(${TARGET} PRIVATE /MT)
-	message(STATUS "Amber: Setting /MT")
-      else()
-	target_compile_options(${TARGET} PRIVATE /MT)
-	message(STATUS "Amber: Setting /MT")
-      endif()
-    else()
-      if(CMAKE_BUILD_TYPE MATCHES "Debug")
-	target_compile_options(${TARGET} PRIVATE /MDd)
-	message(STATUS "Amber: Setting /MDd")
-      elseif(CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
-	target_compile_options(${TARGET} PRIVATE /MD)
-	message(STATUS "Amber: Setting /MD")
-      else()
-	target_compile_options(${TARGET} PRIVATE /MD)
-	message(STATUS "Amber: Setting /MD")
-      endif()
-    endif()
   endif()
 
   if (NOT ${AMBER_ENABLE_SHARED_CRT})
