@@ -44,7 +44,6 @@ option(AMBER_SKIP_SAMPLES
 option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
 option(AMBER_ENABLE_SWIFTSHADER
   "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
-option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
 if(WIN32)
   # On Windows, CMake by default compiles with the shared CRT.
   # Default it to the static CRT.
