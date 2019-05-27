@@ -25,12 +25,15 @@
 #pragma warning(disable : 4003)
 #endif  // AMBER_PLATFORM_WINDOWS
 
+// clang-format off
+// The order here matters, so don't reformat.
 #include "third_party/dxc/include/dxc/Support/WinAdapter.h"
 #include "third_party/dxc/include/dxc/Support/WinIncludes.h"
 #include "third_party/dxc/include/dxc/Support/Global.h"
 #include "third_party/dxc/include/dxc/Support/HLSLOptions.h"
 #include "third_party/dxc/include/dxc/Support/dxcapi.use.h"
 #include "third_party/dxc/include/dxc/dxcapi.h"
+// clang-format on
 
 #if AMBER_PLATFORM_WINDOWS
 #pragma warning(pop)
