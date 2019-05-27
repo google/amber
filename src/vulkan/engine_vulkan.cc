@@ -82,9 +82,10 @@ EngineVulkan::~EngineVulkan() {
          mod_it != info.shader_info.end(); ++mod_it) {
       auto vk_device = device_->GetVkDevice();
       if (vk_device != VK_NULL_HANDLE &&
-          mod_it->second.shader != VK_NULL_HANDLE)
+          mod_it->second.shader != VK_NULL_HANDLE) {
         device_->GetPtrs()->vkDestroyShaderModule(
             vk_device, mod_it->second.shader, nullptr);
+      }
     }
   }
 }
@@ -261,30 +262,31 @@ Result EngineVulkan::SetShader(amber::Pipeline* pipeline,
   info.shader_info[type].shader = shader;
 
   for (auto& shader_info : pipeline->GetShaders()) {
-    if (shader_info.GetShaderType() == type) {
-      const auto& shader_spec_info = shader_info.GetSpecialization();
-      if (!shader_spec_info.empty()) {
-        auto& entries = info.shader_info[type].specialization_entries;
-        entries.reset(new std::vector<VkSpecializationMapEntry>());
-        auto& entry_data = info.shader_info[type].specialization_data;
-        entry_data.reset(new std::vector<uint32_t>());
-        uint32_t i = 0;
-        for (auto pair : shader_spec_info) {
-          entries->push_back({pair.first,
-                              static_cast<uint32_t>(i * sizeof(uint32_t)),
-                              static_cast<uint32_t>(sizeof(uint32_t))});
-          entry_data->push_back(pair.second);
-          ++i;
-        }
-        auto& spec_info = info.shader_info[type].specialization_info;
-        spec_info.reset(new VkSpecializationInfo());
-        spec_info->mapEntryCount =
-            static_cast<uint32_t>(shader_spec_info.size());
-        spec_info->pMapEntries = entries->data();
-        spec_info->dataSize = sizeof(uint32_t) * shader_spec_info.size();
-        spec_info->pData = entry_data->data();
-      }
+    if (shader_info.GetShaderType() != type)
+      continue;
+
+    const auto& shader_spec_info = shader_info.GetSpecialization();
+    if (shader_spec_info.empty())
+      continue;
+
+    auto& entries = info.shader_info[type].specialization_entries;
+    entries.reset(new std::vector<VkSpecializationMapEntry>());
+    auto& entry_data = info.shader_info[type].specialization_data;
+    entry_data.reset(new std::vector<uint32_t>());
+    uint32_t i = 0;
+    for (auto pair : shader_spec_info) {
+      entries->push_back({pair.first,
+                          static_cast<uint32_t>(i * sizeof(uint32_t)),
+                          static_cast<uint32_t>(sizeof(uint32_t))});
+      entry_data->push_back(pair.second);
+      ++i;
     }
+    auto& spec_info = info.shader_info[type].specialization_info;
+    spec_info.reset(new VkSpecializationInfo());
+    spec_info->mapEntryCount = static_cast<uint32_t>(shader_spec_info.size());
+    spec_info->pMapEntries = entries->data();
+    spec_info->dataSize = sizeof(uint32_t) * shader_spec_info.size();
+    spec_info->pData = entry_data->data();
   }
 
   return {};

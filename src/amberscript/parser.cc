@@ -535,18 +535,13 @@ Result Parser::ParseShaderSpecialization(Pipeline* pipeline) {
   uint32_t value = 0;
   switch (type.GetType()) {
     case DataType::kUint32:
+    case DataType::kInt32:
       value = token->AsUint32();
       break;
-    case DataType::kInt32: {
-      union {
-        uint32_t u;
-        int32_t i;
-      } u;
-      u.i = token->AsInt32();
-      value = u.u;
-      break;
-    }
     case DataType::kFloat: {
+      r = token->ConvertToDouble();
+      if (!r.IsSuccess())
+        return Result("value is not a floating point value");
       union {
         uint32_t u;
         float f;
