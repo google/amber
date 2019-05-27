@@ -68,7 +68,6 @@ if (${AMBER_ENABLE_DXC})
 
   add_dependencies(libamber dxcompiler)
   target_link_libraries(libamber
-    dl
     dxcompiler
     LLVMDxcSupport
     LLVMOption

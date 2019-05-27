@@ -63,9 +63,9 @@ if (${AMBER_ENABLE_SWIFTSHADER})
 endif()
 
 if (${AMBER_ENABLE_DXC})
-  set(DXC_EXTERNAL_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "" FORCE)
-  set(DXC_SPIRV_HEADERS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/spirv-headers CACHE PATH "" FORCE)
-  set(DXC_SPIRV_TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/spirv-tools CACHE PATH "" FORCE)
+  set(DXC_EXTERNAL_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "" FORCE)
+  set(DXC_SPIRV_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/spirv-headers" CACHE PATH "" FORCE)
+  set(DXC_SPIRV_TOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/spirv-tools" CACHE PATH "" FORCE)
 
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "")
   set(LLVM_APPEND_VC_REV ON CACHE BOOL "")
@@ -102,4 +102,17 @@ if (${AMBER_ENABLE_DXC})
   set(BUILD_SHARED_LIBS OFF CACHE BOOL "")
 
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/dxc EXCLUDE_FROM_ALL)
+
+  if (MSVC)
+    add_custom_target(dxc-binary ALL
+      DEPENDS "${CMAKE_BINARY_DIR}/third_party/dxc/bin/dxcompiler.dll"
+      COMMENT "dxc-binary custom target")
+
+      ADD_CUSTOM_COMMAND(
+        TARGET dxc-binary
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+        ARGS -E copy ${CMAKE_BINARY_DIR}/third_party/dxc/bin/dxcompiler.dll ${CMAKE_BINARY_DIR}
+      )
+  endif()
 endif()

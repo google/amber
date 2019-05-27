@@ -112,10 +112,17 @@ add_definitions(-DAMBER_ENABLE_SPIRV_TOOLS=$<BOOL:${AMBER_ENABLE_SPIRV_TOOLS}>)
 add_definitions(-DAMBER_ENABLE_SHADERC=$<BOOL:${AMBER_ENABLE_SHADERC}>)
 add_definitions(-DAMBER_ENABLE_DXC=$<BOOL:${AMBER_ENABLE_DXC}>)
 
+set(CMAKE_DEBUG_POSTFIX "")
+
 # This has to be done very early so the link path will get set correctly for all
 # the various libraries and binaries.
 if (${AMBER_ENABLE_DXC})
   link_directories("${CMAKE_BINARY_DIR}/third_party/dxc/lib")
+
+  if (MSVC)
+    # DXC turns this off all over the place so we have to do the same.
+    add_definitions(/D_ITERATOR_DEBUG_LEVEL=0)
+  endif()
 endif()
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
