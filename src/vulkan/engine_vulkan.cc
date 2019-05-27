@@ -312,7 +312,8 @@ Result EngineVulkan::GetVkShaderStageInfo(
     stage_info[stage_count].stage = stage;
     stage_info[stage_count].module = it.second.shader;
     stage_info[stage_count].pName = nullptr;
-    if (!it.second.specialization_entries->empty()) {
+    if (it.second.specialization_entries &&
+        !it.second.specialization_entries->empty()) {
       stage_info[stage_count].pSpecializationInfo =
           it.second.specialization_info.get();
     }
