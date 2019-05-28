@@ -181,6 +181,8 @@ Result Parser::ToShaderFormat(const std::string& str, ShaderFormat* fmt) {
 
   if (str == "GLSL")
     *fmt = kShaderFormatGlsl;
+  else if (str == "HLSL")
+    *fmt = kShaderFormatHlsl;
   else if (str == "SPIRV-ASM")
     *fmt = kShaderFormatSpirvAsm;
   else if (str == "SPIRV-HEX")

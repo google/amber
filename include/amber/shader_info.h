@@ -24,6 +24,7 @@ enum ShaderFormat {
   kShaderFormatDefault = 0,
   kShaderFormatText,
   kShaderFormatGlsl,
+  kShaderFormatHlsl,
   kShaderFormatSpirvAsm,
   kShaderFormatSpirvHex,
 };
