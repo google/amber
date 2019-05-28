@@ -215,7 +215,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: extra parameters after ATTACH command", r.Error());
+  EXPECT_EQ("6: Unknown ATTACH parameter: INVALID", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PiplineMultiShaderAttach) {
@@ -305,6 +305,199 @@ END)";
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("6: ATTACH missing TYPE for multi shader", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, PipelineSpecializationUint32) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+#shaders
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader TYPE compute ENTRY_POINT my_ep SPECIALIZE 1 AS uint32 4
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  EXPECT_EQ(r.Error(), "");
+  ASSERT_TRUE(r.IsSuccess());
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& shaders = pipeline->GetShaders();
+  ASSERT_EQ(1U, shaders.size());
+
+  EXPECT_EQ(1, shaders[0].GetSpecialization().size());
+  EXPECT_EQ(4, shaders[0].GetSpecialization().at(1));
+}
+
+TEST_F(AmberScriptParserTest, PipelineSpecializationInt32) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+#shaders
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader TYPE compute ENTRY_POINT my_ep SPECIALIZE 2 AS int32 -1
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& shaders = pipeline->GetShaders();
+  ASSERT_EQ(1U, shaders.size());
+
+  EXPECT_EQ(1, shaders[0].GetSpecialization().size());
+  EXPECT_EQ(0xffffffff, shaders[0].GetSpecialization().at(2));
+}
+
+TEST_F(AmberScriptParserTest, PipelineSpecializationFloat) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+#shaders
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader TYPE compute ENTRY_POINT my_ep SPECIALIZE 3 AS float 1.1
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& shaders = pipeline->GetShaders();
+  ASSERT_EQ(1U, shaders.size());
+
+  EXPECT_EQ(1, shaders[0].GetSpecialization().size());
+  EXPECT_EQ(0x3f8ccccd, shaders[0].GetSpecialization().at(3));
+}
+
+TEST_F(AmberScriptParserTest, PipelineSpecializationIDIsString) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+#shaders
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader TYPE compute ENTRY_POINT my_ep SPECIALIZE s3 AS float 1.1
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("6: specialization ID must be an integer", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, PipelineSpecializationNoAS) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+#shaders
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader TYPE compute ENTRY_POINT my_ep SPECIALIZE 1 ASa float 1.1
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("6: expected AS as next token", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, PipelineSpecializationNotDataType) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+#shaders
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader TYPE compute ENTRY_POINT my_ep SPECIALIZE 1 AS uint 1.1
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("6: invalid data_type provided", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, PipelineSpecializationBadDataType) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+#shaders
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader ENTRY_POINT my_ep SPECIALIZE 1 AS uint8 1.1
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ(
+      "6: only 32-bit types are currently accepted for specialization values",
+      r.Error());
+}
+
+TEST_F(AmberScriptParserTest, PipelineSpecializationMultipleSpecializations) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+#shaders
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader TYPE compute ENTRY_POINT my_ep \
+      SPECIALIZE 1 AS uint32 4 \
+      SPECIALIZE 2 AS uint32 5 \
+      SPECIALIZE 5 AS uint32 1
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& shaders = pipeline->GetShaders();
+  ASSERT_EQ(1U, shaders.size());
+
+  EXPECT_EQ(3, shaders[0].GetSpecialization().size());
+  EXPECT_EQ(4, shaders[0].GetSpecialization().at(1));
+  EXPECT_EQ(5, shaders[0].GetSpecialization().at(2));
+  EXPECT_EQ(1, shaders[0].GetSpecialization().at(5));
+}
+
+TEST_F(AmberScriptParserTest, PipelineSpecializationNoType) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+#shaders
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader SPECIALIZE 1 AS uint32 4
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& shaders = pipeline->GetShaders();
+  ASSERT_EQ(1U, shaders.size());
+
+  EXPECT_EQ(1, shaders[0].GetSpecialization().size());
+  EXPECT_EQ(4, shaders[0].GetSpecialization().at(1));
 }
 
 }  // namespace amberscript

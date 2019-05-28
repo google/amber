@@ -15,6 +15,7 @@
 #ifndef SRC_PIPELINE_H_
 #define SRC_PIPELINE_H_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -59,12 +60,20 @@ class Pipeline {
     const std::vector<uint32_t> GetData() const { return data_; }
     void SetData(std::vector<uint32_t>&& data) { data_ = std::move(data); }
 
+    const std::map<uint32_t, uint32_t>& GetSpecialization() const {
+      return specialization_;
+    }
+    void AddSpecialization(uint32_t spec_id, uint32_t value) {
+      specialization_[spec_id] = value;
+    }
+
    private:
     Shader* shader_ = nullptr;
     ShaderType shader_type_;
     std::vector<std::string> shader_optimizations_;
     std::string entry_point_;
     std::vector<uint32_t> data_;
+    std::map<uint32_t, uint32_t> specialization_;
   };
 
   /// Information on a buffer attached to the pipeline.
