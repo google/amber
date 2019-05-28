@@ -1,0 +1,122 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER compute my_compute SPIRV-ASM
+OpCapability Shader
+OpExtension "SPV_KHR_storage_buffer_storage_class"
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main" %lid_var %gid_var %idx_var %wgid_var
+OpDecorate %lid_var BuiltIn LocalInvocationId
+OpDecorate %gid_var BuiltIn GlobalInvocationId
+OpDecorate %idx_var BuiltIn LocalInvocationIndex
+OpDecorate %wgid_var BuiltIn WorkgroupId
+OpDecorate %wg_size BuiltIn WorkgroupSize
+OpDecorate %x SpecId 1
+OpDecorate %y SpecId 2
+OpDecorate %z SpecId 3
+OpDecorate %struct Block
+OpMemberDecorate %struct 0 Offset 0
+OpDecorate %rta ArrayStride 4
+OpDecorate %x_var DescriptorSet 0
+OpDecorate %x_var Binding 0
+OpDecorate %y_var DescriptorSet 0
+OpDecorate %y_var Binding 1
+OpDecorate %z_var DescriptorSet 0
+OpDecorate %z_var Binding 2
+OpDecorate %s_var DescriptorSet 0
+OpDecorate %s_var Binding 3
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%device = OpConstant %int 1
+%relaxed = OpConstant %int 0
+%int3 = OpTypeVector %int 3
+%x = OpSpecConstant %int 1
+%y = OpSpecConstant %int 1
+%z = OpSpecConstant %int 1
+%wg_size = OpSpecConstantComposite %int3 %x %y %z
+%rta = OpTypeRuntimeArray %int
+%struct = OpTypeStruct %rta
+%ptr_input_int3 = OpTypePointer Input %int3
+%ptr_input_int = OpTypePointer Input %int
+%lid_var = OpVariable %ptr_input_int3 Input
+%gid_var = OpVariable %ptr_input_int3 Input
+%idx_var = OpVariable %ptr_input_int Input
+%wgid_var = OpVariable %ptr_input_int3 Input
+%ptr_ssbo_struct = OpTypePointer StorageBuffer %struct
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%x_var = OpVariable %ptr_ssbo_struct StorageBuffer
+%y_var = OpVariable %ptr_ssbo_struct StorageBuffer
+%z_var = OpVariable %ptr_ssbo_struct StorageBuffer
+%s_var = OpVariable %ptr_ssbo_struct StorageBuffer
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%lid = OpLoad %int3 %lid_var
+%lid_x = OpCompositeExtract %int %lid 0
+%lid_y = OpCompositeExtract %int %lid 1
+%lid_z = OpCompositeExtract %int %lid 2
+%gid = OpLoad %int3 %gid_var
+%gid_x = OpCompositeExtract %int %gid 0
+%gid_y = OpCompositeExtract %int %gid 1
+%gid_z = OpCompositeExtract %int %gid 2
+%wgid = OpLoad %int3 %wgid_var
+%wgid_x = OpCompositeExtract %int %wgid 0
+%wgid_y = OpCompositeExtract %int %wgid 1
+%wgid_z = OpCompositeExtract %int %wgid 2
+%local_index = OpLoad %int %idx_var
+%wg_x = OpCompositeExtract %int %wg_size 0
+%wg_y = OpCompositeExtract %int %wg_size 1
+%wg_z = OpCompositeExtract %int %wg_size 2
+%x_y = OpIMul %int %wg_x %wg_y
+%x_y_z = OpIMul %int %x_y %wg_z
+%mul = OpIMul %int %wgid_x %x_y_z
+; only support multiple wgs on x
+%linear = OpIAdd %int %mul %local_index
+%x_gep = OpAccessChain %ptr_ssbo_int %x_var %int_0 %linear
+%y_gep = OpAccessChain %ptr_ssbo_int %y_var %int_0 %linear
+%z_gep = OpAccessChain %ptr_ssbo_int %z_var %int_0 %linear
+%s_gep = OpAccessChain %ptr_ssbo_int %s_var %int_0 %linear
+OpStore %x_gep %lid_x
+OpStore %y_gep %lid_y
+OpStore %z_gep %lid_z
+OpStore %s_gep %linear
+OpReturn
+OpFunctionEnd
+END
+
+BUFFER x_buf DATA_TYPE uint32 SIZE 16 FILL 0
+BUFFER y_buf DATA_TYPE uint32 SIZE 16 FILL 0
+BUFFER z_buf DATA_TYPE uint32 SIZE 16 FILL 0
+BUFFER s_buf DATA_TYPE uint32 SIZE 16 FILL 0
+
+PIPELINE compute small
+  ATTACH my_compute \
+    SPECIALIZE 1 AS uint32 2 \
+    SPECIALIZE 2 AS uint32 2 \
+    SPECIALIZE 3 AS uint32 2
+  BIND BUFFER x_buf AS storage DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER y_buf AS storage DESCRIPTOR_SET 0 BINDING 1
+  BIND BUFFER z_buf AS storage DESCRIPTOR_SET 0 BINDING 2
+  BIND BUFFER s_buf AS storage DESCRIPTOR_SET 0 BINDING 3
+END
+
+RUN small 2 1 1
+
+EXPECT s_buf IDX 0 EQ 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+EXPECT x_buf IDX 0 EQ 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1
+EXPECT y_buf IDX 0 EQ 0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+EXPECT z_buf IDX 0 EQ 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1
+

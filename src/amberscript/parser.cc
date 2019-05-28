@@ -181,6 +181,8 @@ Result Parser::ToShaderFormat(const std::string& str, ShaderFormat* fmt) {
 
   if (str == "GLSL")
     *fmt = kShaderFormatGlsl;
+  else if (str == "HLSL")
+    *fmt = kShaderFormatHlsl;
   else if (str == "SPIRV-ASM")
     *fmt = kShaderFormatSpirvAsm;
   else if (str == "SPIRV-HEX")
@@ -470,7 +472,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
 
     type = token->AsString();
   }
-  if (type != "ENTRY_POINT")
+  if (set_shader_type && type != "ENTRY_POINT")
     return Result("Unknown ATTACH parameter: " + type);
 
   if (shader->GetType() == ShaderType::kShaderTypeMulti && !set_shader_type)
@@ -480,15 +482,81 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
   if (!r.IsSuccess())
     return r;
 
+  if (type == "ENTRY_POINT") {
+    token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("missing shader name in ATTACH ENTRY_POINT command");
+
+    r = pipeline->SetShaderEntryPoint(shader, token->AsString());
+    if (!r.IsSuccess())
+      return r;
+
+    token = tokenizer_->NextToken();
+  }
+
+  while (true) {
+    if (token->IsString() && token->AsString() == "SPECIALIZE") {
+      r = ParseShaderSpecialization(pipeline);
+      if (!r.IsSuccess())
+        return r;
+
+      token = tokenizer_->NextToken();
+    } else {
+      if (token->IsEOL() || token->IsEOS())
+        return {};
+      if (token->IsString())
+        return Result("Unknown ATTACH parameter: " + token->AsString());
+      return Result("extra parameters after ATTACH command");
+    }
+  }
+}
+
+Result Parser::ParseShaderSpecialization(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsInteger())
+    return Result("specialization ID must be an integer");
+
+  auto spec_id = token->AsUint32();
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "AS")
+    return Result("expected AS as next token");
+
   token = tokenizer_->NextToken();
   if (!token->IsString())
-    return Result("missing shader name in ATTACH ENTRY_POINT command");
+    return Result("expected data type in SPECIALIZE subcommand");
 
-  r = pipeline->SetShaderEntryPoint(shader, token->AsString());
+  DatumType type;
+  auto r = ToDatumType(token->AsString(), &type);
   if (!r.IsSuccess())
     return r;
 
-  return ValidateEndOfStatement("ATTACH command");
+  token = tokenizer_->NextToken();
+  uint32_t value = 0;
+  switch (type.GetType()) {
+    case DataType::kUint32:
+    case DataType::kInt32:
+      value = token->AsUint32();
+      break;
+    case DataType::kFloat: {
+      r = token->ConvertToDouble();
+      if (!r.IsSuccess())
+        return Result("value is not a floating point value");
+      union {
+        uint32_t u;
+        float f;
+      } u;
+      u.f = token->AsFloat();
+      value = u.u;
+      break;
+    }
+    default:
+      return Result(
+          "only 32-bit types are currently accepted for specialization values");
+  }
+  auto& shader = pipeline->GetShaders()[pipeline->GetShaders().size() - 1];
+  shader.AddSpecialization(spec_id, value);
+  return {};
 }
 
 Result Parser::ParsePipelineShaderOptimizations(Pipeline* pipeline) {
