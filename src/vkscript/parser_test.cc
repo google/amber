@@ -340,14 +340,20 @@ TEST_F(VkScriptParserTest, VertexDataHeaderFormatString) {
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(3U, buffers.size());
 
+  ASSERT_EQ(1U, script->GetPipelines().size());
+  const auto* pipeline = script->GetPipelines()[0].get();
+
+  ASSERT_EQ(2U, pipeline->GetVertexBuffers().size());
+  const auto& pipeline_buffers = pipeline->GetVertexBuffers();
+
   ASSERT_EQ(BufferType::kVertex, buffers[1]->GetBufferType());
-  EXPECT_EQ(static_cast<uint8_t>(0U), buffers[1]->GetLocation());
+  EXPECT_EQ(static_cast<uint8_t>(0U), pipeline_buffers[0].location);
   EXPECT_EQ(FormatType::kR32G32_SFLOAT,
             buffers[1]->GetFormat()->GetFormatType());
   EXPECT_EQ(static_cast<uint32_t>(0), buffers[1]->ElementCount());
 
   ASSERT_EQ(BufferType::kVertex, buffers[2]->GetBufferType());
-  EXPECT_EQ(1U, buffers[2]->GetLocation());
+  EXPECT_EQ(1U, pipeline_buffers[1].location);
   EXPECT_EQ(FormatType::kA8B8G8R8_UNORM_PACK32,
             buffers[2]->GetFormat()->GetFormatType());
   EXPECT_EQ(static_cast<uint32_t>(0), buffers[2]->ElementCount());
@@ -365,8 +371,14 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(3U, buffers.size());
 
+  ASSERT_EQ(1U, script->GetPipelines().size());
+  const auto* pipeline = script->GetPipelines()[0].get();
+
+  ASSERT_EQ(2U, pipeline->GetVertexBuffers().size());
+  const auto& pipeline_buffers = pipeline->GetVertexBuffers();
+
   ASSERT_EQ(BufferType::kVertex, buffers[1]->GetBufferType());
-  EXPECT_EQ(static_cast<uint8_t>(0U), buffers[1]->GetLocation());
+  EXPECT_EQ(static_cast<uint8_t>(0U), pipeline_buffers[0].location);
 
   EXPECT_EQ(FormatType::kR32G32_SFLOAT,
             buffers[1]->GetFormat()->GetFormatType());
@@ -378,7 +390,7 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   EXPECT_EQ(static_cast<uint32_t>(0), buffers[1]->ElementCount());
 
   ASSERT_EQ(BufferType::kVertex, buffers[2]->GetBufferType());
-  EXPECT_EQ(1U, buffers[2]->GetLocation());
+  EXPECT_EQ(1U, pipeline_buffers[1].location);
   EXPECT_EQ(FormatType::kR32G32B32_SINT,
             buffers[2]->GetFormat()->GetFormatType());
   auto& comps2 = buffers[2]->GetFormat()->GetComponents();
