@@ -119,3 +119,30 @@ if (${AMBER_ENABLE_DXC})
       )
   endif()
 endif()
+
+if (${AMBER_ENABLE_CLSPV})
+  set(EXTERNAL_LLVM 1 CACHE INT "")
+
+  set(CLSPV_LLVM_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/clspv-llvm" CACHE STRING "")
+  set(CLSPV_CLANG_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/clspv-clang" CACHE STRING "")
+  set(CLSPV_LLVM_BINARY_DIR "${CMAKE_BINARY_DIR}" CACHE STRING "")
+  set(SPIRV_HEADERS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/spirv-headers" CACHE STRING "")
+  set(SPIRV_TOOLS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/spirv-tools" CACHE STRING "")
+
+  set(LLVM_BINARY_DIR "${CMAKE_BINARY_DIR}" CACHE STRING "")
+
+  set(LLVM_INCLUDE_UTILS OFF CACHE BOOL "")
+  set(LLVM_INCLUDE_TESTS OFF CACHE BOOL "")
+  set(LLVM_BUILD_TESTS OFF CACHE BOOL "")
+  set(LLVM_BUILD_STATIC ON CACHE BOOL "")
+
+  # First tell LLVM where to find clang.
+  set(LLVM_EXTERNAL_CLANG_SOURCE_DIR ${CLSPV_CLANG_SOURCE_DIR})
+
+  # Tell LLVM not to build any targets.
+  set(LLVM_TARGETS_TO_BUILD "all"
+      CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
+
+  add_subdirectory(${CLSPV_LLVM_SOURCE_DIR} EXCLUDE_FROM_ALL)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/clspv)
+endif()
