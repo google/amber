@@ -43,6 +43,8 @@ option(AMBER_SKIP_SAMPLES
   "Skip building sample application" ${AMBER_SKIP_SAMPLES})
 option(AMBER_USE_DXC "Enable DXC integration" ${AMBER_USE_DXC})
 option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
+option(AMBER_USE_DXC "Enable DXC integration" ${AMBER_USE_DXC})
+option(AMBER_USE_CLSPV "Build with CLSPV support" OFF)
 option(AMBER_ENABLE_SWIFTSHADER
   "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
 
@@ -90,6 +92,13 @@ else()
   set(AMBER_ENABLE_DXC FALSE)
 endif()
 
+if (${AMBER_USE_CLSPV})
+  set(AMBER_ENABLE_CLSPV TRUE)
+  set(AMBER_ENABLE_SPIRV_TOOLS TRUE)
+else()
+  set(AMBER_ENABLE_CLSPV FALSE)
+endif()
+
 message(STATUS "Using python3")
 find_package(PythonInterp 3 REQUIRED)
 
@@ -99,6 +108,7 @@ message(STATUS "Amber enable tests: ${AMBER_ENABLE_TESTS}")
 message(STATUS "Amber enable samples: ${AMBER_ENABLE_SAMPLES}")
 message(STATUS "Amber enable SwiftShader: ${AMBER_ENABLE_SWIFTSHADER}")
 message(STATUS "Amber enable DXC: ${AMBER_ENABLE_DXC}")
+message(STATUS "Amber enable CLSPV: ${AMBER_ENABLE_CLSPV}")
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}")
