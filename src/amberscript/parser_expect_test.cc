@@ -816,5 +816,138 @@ EXPECT buf_1 EQ_BUFFER buf_2
       r.Error());
 }
 
+TEST_F(AmberScriptParserTest, ExpectToleranceOneValue) {
+  std::string in = R"(
+BUFFER orig_buf DATA_TYPE int32 SIZE 100 FILL 11
+EXPECT orig_buf IDX 5 TOLERANCE 1 EQ 11)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(1U, commands.size());
+
+  auto* cmd = commands[0].get();
+  ASSERT_TRUE(cmd->IsProbeSSBO());
+
+  auto* probe = cmd->AsProbeSSBO();
+  EXPECT_EQ(ProbeSSBOCommand::Comparator::kFuzzyEqual, probe->GetComparator());
+  EXPECT_EQ(5U, probe->GetOffset());
+  EXPECT_TRUE(probe->GetFormat()->IsInt32());
+  ASSERT_EQ(1U, probe->GetValues().size());
+  EXPECT_EQ(11U, probe->GetValues()[0].AsInt32());
+  EXPECT_TRUE(probe->HasTolerances());
+
+  auto& tolerances = probe->GetTolerances();
+  ASSERT_EQ(1U, tolerances.size());
+  EXPECT_FALSE(tolerances[0].is_percent);
+  EXPECT_FLOAT_EQ(1.f, static_cast<float>(tolerances[0].value));
+}
+
+TEST_F(AmberScriptParserTest, ExpectToleranceOneValuePercent) {
+  std::string in = R"(
+BUFFER orig_buf DATA_TYPE int32 SIZE 100 FILL 11
+EXPECT orig_buf IDX 5 TOLERANCE 1% EQ 11)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(1U, commands.size());
+
+  auto* cmd = commands[0].get();
+  ASSERT_TRUE(cmd->IsProbeSSBO());
+
+  auto* probe = cmd->AsProbeSSBO();
+  EXPECT_EQ(ProbeSSBOCommand::Comparator::kFuzzyEqual, probe->GetComparator());
+  EXPECT_EQ(5U, probe->GetOffset());
+  EXPECT_TRUE(probe->GetFormat()->IsInt32());
+  ASSERT_EQ(1U, probe->GetValues().size());
+  EXPECT_EQ(11U, probe->GetValues()[0].AsInt32());
+  EXPECT_TRUE(probe->HasTolerances());
+
+  auto& tolerances = probe->GetTolerances();
+  ASSERT_EQ(1U, tolerances.size());
+  EXPECT_TRUE(tolerances[0].is_percent);
+  EXPECT_FLOAT_EQ(1.f, static_cast<float>(tolerances[0].value));
+}
+
+TEST_F(AmberScriptParserTest, ExpectToleranceMultiValue) {
+  std::string in = R"(
+BUFFER orig_buf DATA_TYPE int32 SIZE 100 FILL 11
+EXPECT orig_buf IDX 5 TOLERANCE 1% .2 3.7% 4 EQ 11)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(1U, commands.size());
+
+  auto* cmd = commands[0].get();
+  ASSERT_TRUE(cmd->IsProbeSSBO());
+
+  auto* probe = cmd->AsProbeSSBO();
+  EXPECT_EQ(ProbeSSBOCommand::Comparator::kFuzzyEqual, probe->GetComparator());
+  EXPECT_EQ(5U, probe->GetOffset());
+  EXPECT_TRUE(probe->GetFormat()->IsInt32());
+  ASSERT_EQ(1U, probe->GetValues().size());
+  EXPECT_EQ(11U, probe->GetValues()[0].AsInt32());
+
+  EXPECT_TRUE(probe->HasTolerances());
+  auto& tolerances = probe->GetTolerances();
+  ASSERT_EQ(4U, tolerances.size());
+
+  EXPECT_TRUE(tolerances[0].is_percent);
+  EXPECT_FLOAT_EQ(1.f, static_cast<float>(tolerances[0].value));
+
+  EXPECT_FALSE(tolerances[1].is_percent);
+  EXPECT_FLOAT_EQ(.2f, static_cast<float>(tolerances[1].value));
+
+  EXPECT_TRUE(tolerances[2].is_percent);
+  EXPECT_FLOAT_EQ(3.7f, static_cast<float>(tolerances[2].value));
+
+  EXPECT_FALSE(tolerances[3].is_percent);
+  EXPECT_FLOAT_EQ(4.f, static_cast<float>(tolerances[3].value));
+}
+
+TEST_F(AmberScriptParserTest, ExpectToleranceNoValues) {
+  std::string in = R"(
+BUFFER orig_buf DATA_TYPE int32 SIZE 100 FILL 11
+EXPECT orig_buf IDX 5 TOLERANCE EQ 11)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("3: TOLERANCE specified but no tolerances provided", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectToleranceTooManyValues) {
+  std::string in = R"(
+BUFFER orig_buf DATA_TYPE int32 SIZE 100 FILL 11
+EXPECT orig_buf IDX 5 TOLERANCE 1 2 3 4 5 EQ 11)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("3: TOLERANCE has a maximum of 4 values", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, ExpectToleranceNonEqCompator) {
+  std::string in = R"(
+BUFFER orig_buf DATA_TYPE int32 SIZE 100 FILL 11
+EXPECT orig_buf IDX 5 TOLERANCE 1 2 3 4 NE 11)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("3: TOLERANCE only available with EQ probes", r.Error());
+}
+
 }  // namespace amberscript
 }  // namespace amber

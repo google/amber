@@ -42,6 +42,14 @@ cmake -GNinja ../..
 ninja
 ```
 
+Alternatives:
+
+* On Windows, Amber normally statically links against the C runtime library.
+  To override this and link against a shared C runtime, CMake option
+  `-DAMBER_ENABLE_SHARED_CRT`.
+  This will cause Amber to be built with `/MD` for release builds or `/MDd` for
+  debug builds.
+
 ### Android
 
 * Android build needs Android SDK 28, Android NDK 16, Java 8. If you prefer
@@ -112,6 +120,11 @@ The available flags which can be defined are:
 ```
 cmake -DAMBER_SKIP_TESTS=True -DAMBER_SKIP_SPIRV_TOOLS=True -GNinja ../..
 ```
+
+#### DXC
+
+DXC can be enabled in Amber by adding the `-DAMBER_USE_DXC=true` flag when
+running cmake.
 
 ## Build Bots
 
@@ -193,3 +206,15 @@ Please see the [CONTRIBUTING](CONTRIBUTING.md) and
 [Talvos]: https://talvos.github.io/
 [Vulkan-Headers]: https://github.com/KhronosGroup/Vulkan-Headers
 [VkRunner]: https://github.com/igalia/vkrunner
+
+### Using SwiftShader as a backend
+
+```
+mkdir out/sw
+cd out/sw
+cmake -GNinja -DAMBER_ENABLE_SWIFTSHADER=TRUE ../..
+ninja
+export VK_ICD_FILENAMES=$PWD/Linux/vk_swiftshader_icd.json
+./amber -d -V    # Should see SwiftShader listed as device
+./amber -d ../../tests/cases/clear.vkscript
+```

@@ -181,6 +181,8 @@ Result Parser::ToShaderFormat(const std::string& str, ShaderFormat* fmt) {
 
   if (str == "GLSL")
     *fmt = ShaderFormat::kGlsl;
+  else if (str == "HLSL")
+    *fmt = ShaderFormat::kHlsl;
   else if (str == "SPIRV-ASM")
     *fmt = ShaderFormat::kSpirvAsm;
   else if (str == "SPIRV-HEX")
@@ -470,7 +472,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
 
     type = token->AsString();
   }
-  if (type != "ENTRY_POINT")
+  if (set_shader_type && type != "ENTRY_POINT")
     return Result("Unknown ATTACH parameter: " + type);
 
   if (shader->GetType() == ShaderType::kMulti && !set_shader_type)
@@ -480,15 +482,81 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
   if (!r.IsSuccess())
     return r;
 
+  if (type == "ENTRY_POINT") {
+    token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("missing shader name in ATTACH ENTRY_POINT command");
+
+    r = pipeline->SetShaderEntryPoint(shader, token->AsString());
+    if (!r.IsSuccess())
+      return r;
+
+    token = tokenizer_->NextToken();
+  }
+
+  while (true) {
+    if (token->IsString() && token->AsString() == "SPECIALIZE") {
+      r = ParseShaderSpecialization(pipeline);
+      if (!r.IsSuccess())
+        return r;
+
+      token = tokenizer_->NextToken();
+    } else {
+      if (token->IsEOL() || token->IsEOS())
+        return {};
+      if (token->IsString())
+        return Result("Unknown ATTACH parameter: " + token->AsString());
+      return Result("extra parameters after ATTACH command");
+    }
+  }
+}
+
+Result Parser::ParseShaderSpecialization(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsInteger())
+    return Result("specialization ID must be an integer");
+
+  auto spec_id = token->AsUint32();
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "AS")
+    return Result("expected AS as next token");
+
   token = tokenizer_->NextToken();
   if (!token->IsString())
-    return Result("missing shader name in ATTACH ENTRY_POINT command");
+    return Result("expected data type in SPECIALIZE subcommand");
 
-  r = pipeline->SetShaderEntryPoint(shader, token->AsString());
+  DatumType type;
+  auto r = ToDatumType(token->AsString(), &type);
   if (!r.IsSuccess())
     return r;
 
-  return ValidateEndOfStatement("ATTACH command");
+  token = tokenizer_->NextToken();
+  uint32_t value = 0;
+  switch (type.GetType()) {
+    case DataType::kUint32:
+    case DataType::kInt32:
+      value = token->AsUint32();
+      break;
+    case DataType::kFloat: {
+      r = token->ConvertToDouble();
+      if (!r.IsSuccess())
+        return Result("value is not a floating point value");
+      union {
+        uint32_t u;
+        float f;
+      } u;
+      u.f = token->AsFloat();
+      value = u.u;
+      break;
+    }
+    default:
+      return Result(
+          "only 32-bit types are currently accepted for specialization values");
+  }
+  auto& shader = pipeline->GetShaders()[pipeline->GetShaders().size() - 1];
+  shader.AddSpecialization(spec_id, value);
+  return {};
 }
 
 Result Parser::ParsePipelineShaderOptimizations(Pipeline* pipeline) {
@@ -1204,7 +1272,7 @@ Result Parser::ParseExpect() {
   }
 
   if (token->AsString() != "IDX")
-    return Result("Unknown comparator in EXPECT command");
+    return Result("missing IDX in EXPECT command");
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger() || token->AsInt32() < 0)
@@ -1288,32 +1356,73 @@ Result Parser::ParseExpect() {
     }
 
     command_list_.push_back(std::move(probe));
-  } else if (token->IsString() && IsComparator(token->AsString())) {
-    if (has_y_val)
-      return Result("Y value not needed for non-color comparator");
+    return ValidateEndOfStatement("EXPECT command");
+  }
 
-    auto probe = MakeUnique<ProbeSSBOCommand>(buffer);
-    probe->SetLine(line);
-    probe->SetComparator(ToComparator(token->AsString()));
-    probe->SetFormat(MakeUnique<Format>(*buffer->GetFormat()));
-    probe->SetOffset(static_cast<uint32_t>(x));
+  auto probe = MakeUnique<ProbeSSBOCommand>(buffer);
+  probe->SetLine(line);
 
-    std::vector<Value> values;
-    Result r = ParseValues("EXPECT", buffer->GetFormat(), &values);
-    if (!r.IsSuccess())
-      return r;
+  if (token->IsString() && token->AsString() == "TOLERANCE") {
+    std::vector<Probe::Tolerance> tolerances;
 
-    if (values.empty())
-      return Result("missing comparison values for EXPECT command");
-    probe->SetValues(std::move(values));
-    command_list_.push_back(std::move(probe));
-    return {};
-  } else {
+    token = tokenizer_->NextToken();
+    while (!token->IsEOL() && !token->IsEOS()) {
+      if (!token->IsInteger() && !token->IsDouble())
+        break;
+
+      Result r = token->ConvertToDouble();
+      if (!r.IsSuccess())
+        return r;
+
+      double value = token->AsDouble();
+      token = tokenizer_->NextToken();
+      if (token->IsString() && token->AsString() == "%") {
+        tolerances.push_back(Probe::Tolerance{true, value});
+        token = tokenizer_->NextToken();
+      } else {
+        tolerances.push_back(Probe::Tolerance{false, value});
+      }
+    }
+    if (tolerances.empty())
+      return Result("TOLERANCE specified but no tolerances provided");
+    if (tolerances.size() > 4)
+      return Result("TOLERANCE has a maximum of 4 values");
+
+    probe->SetTolerances(std::move(tolerances));
+  }
+
+  if (!token->IsString() || !IsComparator(token->AsString())) {
     return Result("unexpected token in EXPECT command: " +
                   token->ToOriginalString());
   }
 
-  return ValidateEndOfStatement("EXPECT command");
+  if (has_y_val)
+    return Result("Y value not needed for non-color comparator");
+
+  auto cmp = ToComparator(token->AsString());
+  if (probe->HasTolerances()) {
+    if (cmp != ProbeSSBOCommand::Comparator::kEqual)
+      return Result("TOLERANCE only available with EQ probes");
+
+    cmp = ProbeSSBOCommand::Comparator::kFuzzyEqual;
+  }
+
+  probe->SetComparator(cmp);
+  probe->SetFormat(MakeUnique<Format>(*buffer->GetFormat()));
+  probe->SetOffset(static_cast<uint32_t>(x));
+
+  std::vector<Value> values;
+  Result r = ParseValues("EXPECT", buffer->GetFormat(), &values);
+  if (!r.IsSuccess())
+    return r;
+
+  if (values.empty())
+    return Result("missing comparison values for EXPECT command");
+
+  probe->SetValues(std::move(values));
+  command_list_.push_back(std::move(probe));
+
+  return {};
 }
 
 Result Parser::ParseCopy() {

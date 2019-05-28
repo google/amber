@@ -42,6 +42,17 @@ option(AMBER_SKIP_SHADERC
 option(AMBER_SKIP_SAMPLES
   "Skip building sample application" ${AMBER_SKIP_SAMPLES})
 option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
+option(AMBER_ENABLE_SWIFTSHADER
+  "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
+option(AMBER_USE_DXC "Enable DXC integration" ${AMBER_USE_DXC})
+
+if(WIN32)
+  # On Windows, CMake by default compiles with the shared CRT.
+  # Default it to the static CRT.
+  option(AMBER_ENABLE_SHARED_CRT
+         "Amber: Use the shared CRT with MSVC instead of the static CRT"
+	 ${AMBER_ENABLE_SHARED_CRT})
+endif(WIN32)
 
 if (${AMBER_SKIP_SPIRV_TOOLS})
   set(AMBER_ENABLE_SPIRV_TOOLS FALSE)
@@ -55,27 +66,39 @@ else()
     set(AMBER_ENABLE_SHADERC TRUE)
   endif()
 endif()
+
 if (${AMBER_SKIP_TESTS})
   set(AMBER_ENABLE_TESTS FALSE)
 else()
   set(AMBER_ENABLE_TESTS TRUE)
 endif()
+
 if (${AMBER_SKIP_SAMPLES})
   set(AMBER_ENABLE_SAMPLES FALSE)
 else()
   set(AMBER_ENABLE_SAMPLES TRUE)
 endif()
 
-if (${AMBER_USE_LOCAL_VULKAN})
-  message(STATUS "Using python3")
-  # vulkan-loaders requires python 3
-  find_package(PythonInterp 3 REQUIRED)
+if (${AMBER_ENABLE_SWIFTSHADER})
+  # Swiftshader requires the loader to be built.
+  set(AMBER_USE_LOCAL_VULKAN TRUE)
 endif()
+
+if (${AMBER_USE_DXC})
+  set(AMBER_ENABLE_DXC TRUE)
+else()
+  set(AMBER_ENABLE_DXC FALSE)
+endif()
+
+message(STATUS "Using python3")
+find_package(PythonInterp 3 REQUIRED)
 
 message(STATUS "Amber enable SPIRV-Tools: ${AMBER_ENABLE_SPIRV_TOOLS}")
 message(STATUS "Amber enable Shaderc: ${AMBER_ENABLE_SHADERC}")
 message(STATUS "Amber enable tests: ${AMBER_ENABLE_TESTS}")
 message(STATUS "Amber enable samples: ${AMBER_ENABLE_SAMPLES}")
+message(STATUS "Amber enable SwiftShader: ${AMBER_ENABLE_SWIFTSHADER}")
+message(STATUS "Amber enable DXC: ${AMBER_ENABLE_DXC}")
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}")
@@ -95,6 +118,20 @@ add_definitions(-DAMBER_ENGINE_VULKAN=$<BOOL:${Vulkan_FOUND}>)
 add_definitions(-DAMBER_ENGINE_DAWN=$<BOOL:${Dawn_FOUND}>)
 add_definitions(-DAMBER_ENABLE_SPIRV_TOOLS=$<BOOL:${AMBER_ENABLE_SPIRV_TOOLS}>)
 add_definitions(-DAMBER_ENABLE_SHADERC=$<BOOL:${AMBER_ENABLE_SHADERC}>)
+add_definitions(-DAMBER_ENABLE_DXC=$<BOOL:${AMBER_ENABLE_DXC}>)
+
+set(CMAKE_DEBUG_POSTFIX "")
+
+# This has to be done very early so the link path will get set correctly for all
+# the various libraries and binaries.
+if (${AMBER_ENABLE_DXC})
+  link_directories("${CMAKE_BINARY_DIR}/third_party/dxc/lib")
+
+  if (MSVC)
+    # DXC turns this off all over the place so we have to do the same.
+    add_definitions(/D_ITERATOR_DEBUG_LEVEL=0)
+  endif()
+endif()
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   message(STATUS "No build type selected, default to Debug")
@@ -107,91 +144,80 @@ if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") OR
   set(COMPILER_IS_LIKE_GNU TRUE)
 endif()
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  set(CUSTOM_CXX_FLAGS
-    ${CUSTOM_CXX_FLAGS}
-    -std=c++11
-    -fvisibility=hidden
-    -Wall
-    -Werror
-    -Weverything
-    -Wextra
-    -Wno-c++98-compat
-    -Wno-c++98-compat-pedantic
-    -Wno-format-pedantic
-    -Wno-padded
-    -Wno-switch-enum
-    -Wno-unknown-pragmas
-    -Wno-unknown-warning-option)
-
-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  set(CUSTOM_CXX_FLAGS
-    ${CUSTOM_CXX_FLAGS}
-    -std=c++11
-    -fvisibility=hidden
-    -Wall
-    -Werror
-    -Wextra
-    -Wno-unknown-pragmas
-    -Wpedantic
-    -pedantic-errors)
-elseif(MSVC)
+if(MSVC)
   # We don't want to have to copy the C Runtime DLL everywhere the executable
-  # goes.  So compile code to assume the CRT is statically linked, i.e. use
-  # /MT* options.  For debug builds use /MTd, and for release builds use /MT.
-  if(CMAKE_BUILD_TYPE MATCHES "Debug")
-    set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MTd)
-    message(STATUS "Setting /MTd")
-  elseif(CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
-    set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MT)
-    message(STATUS "Setting /MT")
-  else()
-    set(CUSTOM_CXX_FLAGS ${CUSTOM_CXX_FLAGS} /MT)
-    message(STATUS "Setting /MT")
+  # goes.  So by default compile code to assume the CRT is statically linked,
+  # i.e. use /MT* options.  For debug builds use /MTd, and for release builds
+  # use /MT.  If AMBER_ENABLE_SHARED_CRT is ON, then use the shared C runtime.
+  # Modify the project-wide options variables. This is ugly, but seems to be
+  # the state of the art.
+  if(NOT ${AMBER_ENABLE_SHARED_CRT})
+    message(STATUS "Amber: Static C runtime selected: replacing /MD* with /MT*")
+    foreach (flag_var
+	     CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+	     CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
+	     CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+	     CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+      string(REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+    endforeach()
   endif()
-
-  set(CUSTOM_CXX_FLAGS
-    ${CUSTOM_CXX_FLAGS}
-    /bigobj
-    /EHsc
-    /W3
-    /WX
-    /wd4068
-    /wd4514
-    /wd4571
-    /wd4625
-    /wd4626
-    /wd4710
-    /wd4774
-    /wd4820
-    /wd5026
-    /wd5027
-  )
 endif()
-
-SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "${CUSTOM_CXX_FLAGS}")
-STRING(REGEX REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 function(amber_default_compile_options TARGET)
   if (${COMPILER_IS_LIKE_GNU})
     target_compile_options(${TARGET} PRIVATE
-        -fno-exceptions
-        -fno-rtti)
+      -std=c++11
+      -fno-exceptions
+      -fno-rtti
+      -fvisibility=hidden
+      -Wall
+      -Werror
+      -Wextra
+      -Wno-c++98-compat
+      -Wno-c++98-compat-pedantic
+      -Wno-format-pedantic
+      -Wno-padded
+      -Wno-switch-enum
+      -Wno-unknown-pragmas
+      -Wno-unknown-warning-option
+      -pedantic-errors
+    )
+
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+      target_compile_options(${TARGET} PRIVATE -Weverything)
+    endif()
   endif()
 
   if (MSVC)
     # Specify /EHs for exception handling.
-    target_compile_options(${TARGET} PRIVATE /EHs)
+    target_compile_options(${TARGET} PRIVATE
+      /bigobj
+      /EHsc
+      /W3
+      /WX
+      /wd4068
+      /wd4514
+      /wd4571
+      /wd4625
+      /wd4626
+      /wd4710
+      /wd4774
+      /wd4820
+      /wd5026
+      /wd5027
+    )
   endif()
 
-  # For MinGW cross compile, statically link to the C++ runtime.
-  # But it still depends on MSVCRT.dll.
-  if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-      set_target_properties(${TARGET} PROPERTIES LINK_FLAGS
-        -static
-        -static-libgcc
-        -static-libstdc++)
+  if (NOT ${AMBER_ENABLE_SHARED_CRT})
+    # For MinGW cross compile, statically link to the C++ runtime.
+    # But it still depends on MSVCRT.dll.
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+      if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+	set_target_properties(${TARGET} PROPERTIES LINK_FLAGS
+	  -static
+	  -static-libgcc
+	  -static-libstdc++)
+      endif()
     endif()
   endif()
 endfunction()

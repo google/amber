@@ -414,5 +414,41 @@ END
   EXPECT_EQ("3: missing pipeline name for DERIVE_PIPELINE command", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, DerivePipelineSpecialized) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+#shaders
+END
+PIPELINE compute p1
+  ATTACH my_shader SPECIALIZE 3 AS uint32 4
+END
+DERIVE_PIPELINE p2 FROM p1
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  EXPECT_EQ("", r.Error());
+  ASSERT_TRUE(r.IsSuccess());
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(2U, pipelines.size());
+
+  const auto* p1 = pipelines[0].get();
+  const auto& s1 = p1->GetShaders();
+  ASSERT_EQ(1U, s1.size());
+
+  EXPECT_EQ(1, s1[0].GetSpecialization().size());
+  EXPECT_EQ(4, s1[0].GetSpecialization().at(3));
+
+  const auto* p2 = pipelines[1].get();
+  const auto& s2 = p2->GetShaders();
+  ASSERT_EQ(1U, s2.size());
+
+  EXPECT_EQ(1, s2[0].GetSpecialization().size());
+  EXPECT_EQ(4, s2[0].GetSpecialization().at(3));
+}
+
 }  // namespace amberscript
 }  // namespace amber

@@ -24,6 +24,7 @@ enum class ShaderFormat : uint8_t {
   kDefault = 0,
   kText,
   kGlsl,
+  kHlsl,
   kSpirvAsm,
   kSpirvHex,
 };

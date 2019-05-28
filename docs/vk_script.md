@@ -231,7 +231,9 @@ use the same `type` or the script will be rejected as invalid.
 ### SSBO size
  * `ssbo _binding_ _size_`
 
-Sets the number of elements in the SSBO at `binding` to `size`.
+Sets the number of elements in the SSBO at `binding` to `size`. The buffer will
+be created with a default format of `char`. This default format will be
+overridden by a call to `ssbo subdata` or `probe ssbo`.
 
 
 ### SSBO subdata

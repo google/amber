@@ -54,7 +54,7 @@ TEST_F(BufferTest, SizeFromData) {
   EXPECT_EQ(5 * sizeof(float), b.GetSizeInBytes());
 }
 
-TEST_F(BufferTest, SizeFromDataOverrideSize) {
+TEST_F(BufferTest, SizeFromDataDoesNotOverrideSize) {
   std::vector<Value> values;
   values.resize(5);
 
@@ -64,9 +64,9 @@ TEST_F(BufferTest, SizeFromDataOverrideSize) {
   b.SetElementCount(20);
   b.SetData(std::move(values));
 
-  EXPECT_EQ(5, b.ElementCount());
-  EXPECT_EQ(5, b.ValueCount());
-  EXPECT_EQ(5 * sizeof(float), b.GetSizeInBytes());
+  EXPECT_EQ(20, b.ElementCount());
+  EXPECT_EQ(20, b.ValueCount());
+  EXPECT_EQ(20 * sizeof(float), b.GetSizeInBytes());
 }
 
 TEST_F(BufferTest, SizeMatrix) {

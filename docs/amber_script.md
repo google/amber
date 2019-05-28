@@ -197,6 +197,12 @@ The following commands are all specified within the `PIPELINE` command.
   # Attach a 'multi' shader to the pipeline of |shader_type| and use the entry
   # point with |name|. The provided shader _must_ be a 'multi' shader.
   ATTACH {name_of_multi_shader} TYPE {shader_type} ENTRY_POINT {name}
+
+  # Attach specialized shader. Specialization can be specified multiple times.
+  # Specialization values must be a 32-bit type. Shader type and entry point
+  # must be specified prior to specializing the shader.
+  ATTACH {name_of_shader} SPECIALIZE 1 AS uint32 4
+  ATTACH {name_of_shader} SPECIALIZE 1 AS uint32 4 SPECIALIZE 4 AS float 1.0
 ```
 
 ```groovy
@@ -385,10 +391,11 @@ CLEAR {pipeline}
 EXPECT {buffer_name} IDX _x_ {comparator} _value_+
 
 # Checks that |buffer_name| at |x| has values within |tolerance| of |value|
-# when compared with the given |comparator|. The |tolerance| can be specified
-# as 1-4 float values separated by spaces.
-EXPECT {buffer_name} IDX _x_ TOLERANCE \
-    _tolerance_{1,4} {comparator} _value_+
+# The |tolerance| can be specified as 1-4 float values separated by spaces.
+# The tolerances may be given as a percentage by placing a '%' symbol after
+# the value. If less tolerance values are provided then are needed for a given
+# data component the default tolerance will be applied.
+EXPECT {buffer_name} IDX _x_ TOLERANCE _tolerance_{1,4} EQ _value_+
 
 # Checks that |buffer_name| at |x|, |y| for |width|x|height| pixels has the
 # given |r|, |g|, |b| values. Each r, g, b value is an integer from 0-255.
