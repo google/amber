@@ -66,11 +66,6 @@ class Buffer {
   /// Sets the BufferType for this buffer.
   void SetBufferType(BufferType type) { buffer_type_ = type; }
 
-  /// Set the location binding value for the buffer.
-  void SetLocation(uint8_t loc) { location_ = loc; }
-  /// Get the location binding value for the buffer.
-  uint8_t GetLocation() const { return location_; }
-
   /// Sets the Format of the buffer to |format|.
   void SetFormat(std::unique_ptr<Format> format) {
     format_is_default_ = false;
@@ -189,7 +184,6 @@ class Buffer {
   uint32_t element_count_ = 0;
   uint32_t width_ = 0;
   uint32_t height_ = 0;
-  uint8_t location_ = 0;
   bool format_is_default_ = false;
   std::vector<uint8_t> bytes_;
   std::unique_ptr<Format> format_;

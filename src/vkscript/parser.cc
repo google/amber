@@ -421,7 +421,6 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
     auto* buf = buffer.get();
     buffer->SetName("Vertices" + std::to_string(i));
     buffer->SetFormat(std::move(headers[i].format));
-    buffer->SetLocation(headers[i].location);
     buffer->SetData(std::move(values[i]));
     script_->AddBuffer(std::move(buffer));
 
