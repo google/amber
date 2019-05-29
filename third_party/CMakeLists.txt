@@ -51,6 +51,16 @@ if (${AMBER_USE_LOCAL_VULKAN})
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-headers)
 
   set(BUILD_TESTS FALSE)
+
+  # The vulkan-loader CMake file assumes that directory exists if
+  # Wayland support is to be built.
+  if(NOT EXISTS ${WAYLAND_CLIENT_INCLUDE_DIR})
+    message(STATUS "Amber: Disabling Wayland support in Vulkan-Loader")
+    set(BUILD_WSI_WAYLAND_SUPPORT OFF CACHE BOOL "" FORCE)
+  endif()
+  message(STATUS "Amber: Disabling X11 support in Vulkan-Loader")
+  set(BUILD_WSI_XLIB_SUPPORT OFF CACHE BOOL "" FORCE)
+
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-loader)
 endif()
 

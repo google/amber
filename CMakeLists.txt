@@ -41,10 +41,10 @@ option(AMBER_SKIP_SHADERC
   "Skip building Shaderc into the library" ${AMBER_SKIP_SHADERC})
 option(AMBER_SKIP_SAMPLES
   "Skip building sample application" ${AMBER_SKIP_SAMPLES})
+option(AMBER_USE_DXC "Enable DXC integration" ${AMBER_USE_DXC})
 option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
 option(AMBER_ENABLE_SWIFTSHADER
   "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
-option(AMBER_USE_DXC "Enable DXC integration" ${AMBER_USE_DXC})
 
 if(WIN32)
   # On Windows, CMake by default compiles with the shared CRT.
