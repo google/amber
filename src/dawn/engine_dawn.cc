@@ -44,7 +44,8 @@ static const float kLodMax = 1000.0;
 static const uint32_t kMaxColorAttachments = 4u;
 static const uint32_t kMaxVertexInputs = 16u;
 static const uint32_t kMaxVertexAttributes = 16u;
-
+static ::dawn::BindGroupLayout bindGroupLayout;
+static bool hasBinding = false;
 // This structure is a container for a few variables that are created during
 // CreateRenderPipelineDescriptor and CreateRenderPassDescriptor and we want to
 // make sure they don't go out of scope before we are done with them
@@ -410,6 +411,23 @@ BindingInitializationHelper::BindingInitializationHelper(
 ::dawn::BindGroup MakeBindGroup(
     const ::dawn::Device& device,
     const ::dawn::BindGroupLayout& layout,
+    std::vector<BindingInitializationHelper> bindingsInitializer) {
+  std::vector<::dawn::BindGroupBinding> bindings;
+  for (const BindingInitializationHelper& helper : bindingsInitializer) {
+    bindings.push_back(helper.GetAsBinding());
+  }
+
+  ::dawn::BindGroupDescriptor descriptor;
+  descriptor.layout = layout;
+  descriptor.bindingCount = bindings.size();
+  descriptor.bindings = bindings.data();
+
+  return device.CreateBindGroup(&descriptor);
+}
+
+::dawn::BindGroup MakeBindGroup(
+    const ::dawn::Device& device,
+    const ::dawn::BindGroupLayout& layout,
     std::initializer_list<BindingInitializationHelper> bindingsInitializer) {
   std::vector<::dawn::BindGroupBinding> bindings;
   for (const BindingInitializationHelper& helper : bindingsInitializer) {
@@ -422,6 +440,26 @@ BindingInitializationHelper::BindingInitializationHelper(
   descriptor.bindings = bindings.data();
 
   return device.CreateBindGroup(&descriptor);
+}
+
+// Creates a bind group layout.
+// Copied from Dawn utils source code.
+::dawn::BindGroupLayout MakeBindGroupLayout(
+    const ::dawn::Device& device,
+    std::vector<::dawn::BindGroupLayoutBinding> bindingsInitializer) {
+  constexpr ::dawn::ShaderStageBit kNoStages{};
+
+  std::vector<::dawn::BindGroupLayoutBinding> bindings;
+  for (const ::dawn::BindGroupLayoutBinding& binding : bindingsInitializer) {
+    if (binding.visibility != kNoStages) {
+      bindings.push_back(binding);
+    }
+  }
+
+  ::dawn::BindGroupLayoutDescriptor descriptor;
+  descriptor.bindingCount = static_cast<uint32_t>(bindings.size());
+  descriptor.bindings = bindings.data();
+  return device.CreateBindGroupLayout(&descriptor);
 }
 
 // Creates a bind group layout.
@@ -565,13 +603,63 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
 
     auto shader = device_->CreateShaderModule(&descriptor);
     if (!shader) {
-      return Result("Dawn::SetShader: failed to create shader");
+      return Result("Dawn::CreatePipeline: failed to create shader");
     }
     if (module_for_type.count(type)) {
-      return Result("Dawn::SetShader: module for type already exists");
+      return Result("Dawn::CreatePipeline: module for type already exists");
     }
     module_for_type[type] = shader;
   }
+
+  std::vector<BindingInitializationHelper> bih;
+  std::vector<::dawn::BindGroupLayoutBinding> bi;
+  ::dawn::ShaderStageBit kAllStages =
+      ::dawn::ShaderStageBit::Vertex | ::dawn::ShaderStageBit::Fragment;
+  for (const auto& buf_info : pipeline->GetBuffers()) {
+#if 0
+    std::cout << buf_info.buffer->ValueCount() << " ";
+    const auto* data = buf_info.buffer->GetValues<float>();
+    for (uint i = 0; i < buf_info.buffer->ValueCount(); i++) {
+      std::cout << data[i] << " ";
+    }
+    std::cout << buf_info.descriptor_set << " ";
+    std::cout << buf_info.binding << " ";
+    std::cout << "\n";
+#endif
+
+    ::dawn::Buffer buffer;
+    if (buf_info.buffer->GetBufferType() == BufferType::kStorage) {
+      buffer =
+          CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
+                               buf_info.buffer->GetSizeInBytes(),
+                               ::dawn::BufferUsageBit::Storage |
+                                   ::dawn::BufferUsageBit::TransferSrc |
+                                   ::dawn::BufferUsageBit::TransferDst);
+    } else if (buf_info.buffer->GetBufferType() == BufferType::kUniform) {
+      buffer =
+          CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
+                               buf_info.buffer->GetSizeInBytes(),
+                               ::dawn::BufferUsageBit::Uniform |
+                                   ::dawn::BufferUsageBit::TransferSrc |
+                                   ::dawn::BufferUsageBit::TransferDst);
+    } else {
+      return Result("Dawn: CreatePipeline - unknown buffer type: " +
+                    std::to_string(static_cast<uint32_t>(
+                        buf_info.buffer->GetBufferType())));
+    }
+
+    ::dawn::BindGroupLayoutBinding temp;
+    temp.binding = buf_info.binding;
+    temp.visibility = kAllStages;
+    temp.type = ::dawn::BindingType::StorageBuffer;
+    bi.push_back(temp);
+
+    BindingInitializationHelper temp_bih(buf_info.binding, buffer, 0,
+                                         buf_info.buffer->GetSizeInBytes());
+    bih.push_back(temp_bih);
+  }
+  if (bi.size() > 0)
+    bindGroupLayout = MakeBindGroupLayout(*device_, bi);
 
   switch (pipeline->GetType()) {
     case PipelineType::kCompute: {
@@ -599,6 +687,11 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
       }
       pipeline_map_[pipeline].render_pipeline.reset(
           new RenderPipelineInfo(pipeline, vs, fs));
+      if (bih.size() > 0) {
+        pipeline_map_[pipeline].render_pipeline->bindGroup =
+            MakeBindGroup(*device_, bindGroupLayout, bih);
+        hasBinding = true;
+      }
       break;
     }
   }
@@ -728,9 +821,9 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     depth_stencil_format = ::dawn::TextureFormat::D32FloatS8Uint;
   }
 
-  if (render_pipeline.hasBinding)
+  if (hasBinding)
     renderPipelineDescriptor.layout =
-        MakeBasicPipelineLayout(device, &render_pipeline.bindGroupLayout);
+        MakeBasicPipelineLayout(device, &bindGroupLayout);
   else
     renderPipelineDescriptor.layout = MakeBasicPipelineLayout(device, nullptr);
 
@@ -983,7 +1076,8 @@ Result EngineDawn::DoPatchParameterVertices(
 }
 
 // ::dawn::CommandBuffer CreateSimpleComputeCommandBuffer(
-//     const dawn::ComputePipeline& pipeline, const dawn::BindGroup& bindGroup)
+//     const dawn::ComputePipeline& pipeline, const dawn::BindGroup&
+//     bindGroup)
 //     {
 //   dawn::CommandEncoder encoder = device.CreateCommandEncoder();
 //   dawn::ComputePassEncoder pass = encoder.BeginComputePass();

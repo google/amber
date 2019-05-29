@@ -48,8 +48,7 @@ BUFFER data_buf2 DATA_TYPE vec4<float> DATA  0 1  0 1 END
 BUFFER data_buf3 DATA_TYPE vec4<float> DATA  0 0  1 1 END
 BUFFER data_buf4 DATA_TYPE vec4<float> DATA .5 0 .5 1 END
 
-
-BUFFER frame FORMAT B8G8R8A8_UNORM
+BUFFER frame FORMAT R32G32B32A32_SFLOAT
 
 PIPELINE graphics pipeline1
   ATTACH vtex_shader
