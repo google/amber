@@ -18,14 +18,10 @@ set BUILD_ROOT=%cd%
 set SRC=%cd%\github\amber
 set BUILD_TYPE=%1
 
-set PATH=C:\python27;%PATH%
+set PATH=C:\python36;%PATH%
 
 cd %SRC%
 python tools\git-sync-deps
-
-:: Force usage of python 3.6
-:: Change this after the git-sync-deps as that requires python2 ...
-set PATH=C:\python36;%PATH%
 
 :: #########################################
 :: set up msvc build env
