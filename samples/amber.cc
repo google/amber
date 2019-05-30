@@ -210,6 +210,7 @@ std::string ReadFile(const std::string& input_file) {
   uint64_t tell_file_size = static_cast<uint64_t>(ftell(file));
   if (tell_file_size <= 0) {
     std::cerr << "Input file of incorrect size: " << input_file << std::endl;
+    fclose(file);
     return {};
   }
   fseek(file, 0, SEEK_SET);
