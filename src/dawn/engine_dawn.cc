@@ -425,48 +425,10 @@ BindingInitializationHelper::BindingInitializationHelper(
   return device.CreateBindGroup(&descriptor);
 }
 
-::dawn::BindGroup MakeBindGroup(
-    const ::dawn::Device& device,
-    const ::dawn::BindGroupLayout& layout,
-    std::initializer_list<BindingInitializationHelper> bindingsInitializer) {
-  std::vector<::dawn::BindGroupBinding> bindings;
-  for (const BindingInitializationHelper& helper : bindingsInitializer) {
-    bindings.push_back(helper.GetAsBinding());
-  }
-
-  ::dawn::BindGroupDescriptor descriptor;
-  descriptor.layout = layout;
-  descriptor.bindingCount = bindings.size();
-  descriptor.bindings = bindings.data();
-
-  return device.CreateBindGroup(&descriptor);
-}
-
 // Creates a bind group layout.
-// Copied from Dawn utils source code.
 ::dawn::BindGroupLayout MakeBindGroupLayout(
     const ::dawn::Device& device,
     std::vector<::dawn::BindGroupLayoutBinding> bindingsInitializer) {
-  constexpr ::dawn::ShaderStageBit kNoStages{};
-
-  std::vector<::dawn::BindGroupLayoutBinding> bindings;
-  for (const ::dawn::BindGroupLayoutBinding& binding : bindingsInitializer) {
-    if (binding.visibility != kNoStages) {
-      bindings.push_back(binding);
-    }
-  }
-
-  ::dawn::BindGroupLayoutDescriptor descriptor;
-  descriptor.bindingCount = static_cast<uint32_t>(bindings.size());
-  descriptor.bindings = bindings.data();
-  return device.CreateBindGroupLayout(&descriptor);
-}
-
-// Creates a bind group layout.
-// Copied from Dawn utils source code.
-::dawn::BindGroupLayout MakeBindGroupLayout(
-    const ::dawn::Device& device,
-    std::initializer_list<::dawn::BindGroupLayoutBinding> bindingsInitializer) {
   constexpr ::dawn::ShaderStageBit kNoStages{};
 
   std::vector<::dawn::BindGroupLayoutBinding> bindings;
@@ -611,10 +573,11 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
     module_for_type[type] = shader;
   }
 
-  std::vector<BindingInitializationHelper> bih;
-  std::vector<::dawn::BindGroupLayoutBinding> bi;
   ::dawn::ShaderStageBit kAllStages =
       ::dawn::ShaderStageBit::Vertex | ::dawn::ShaderStageBit::Fragment;
+  std::vector<BindingInitializationHelper> bindingInitalizerHelper;
+  std::vector<::dawn::BindGroupLayoutBinding> bindGroup;
+
   for (const auto& buf_info : pipeline->GetBuffers()) {
 #if 0
     std::cout << buf_info.buffer->ValueCount() << " ";
@@ -626,40 +589,45 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
     std::cout << buf_info.binding << " ";
     std::cout << "\n";
 #endif
-
-    ::dawn::Buffer buffer;
-    if (buf_info.buffer->GetBufferType() == BufferType::kStorage) {
-      buffer =
-          CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
-                               buf_info.buffer->GetSizeInBytes(),
-                               ::dawn::BufferUsageBit::Storage |
-                                   ::dawn::BufferUsageBit::TransferSrc |
-                                   ::dawn::BufferUsageBit::TransferDst);
-    } else if (buf_info.buffer->GetBufferType() == BufferType::kUniform) {
-      buffer =
-          CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
-                               buf_info.buffer->GetSizeInBytes(),
-                               ::dawn::BufferUsageBit::Uniform |
-                                   ::dawn::BufferUsageBit::TransferSrc |
-                                   ::dawn::BufferUsageBit::TransferDst);
-    } else {
-      return Result("Dawn: CreatePipeline - unknown buffer type: " +
-                    std::to_string(static_cast<uint32_t>(
-                        buf_info.buffer->GetBufferType())));
+    ::dawn::BufferUsageBit bufferType;
+    ::dawn::BindingType bindingType;
+    switch (buf_info.buffer->GetBufferType()) {
+      case BufferType::kStorage: {
+        bufferType = ::dawn::BufferUsageBit::Storage;
+        bindingType = ::dawn::BindingType::StorageBuffer;
+        break;
+      }
+      case BufferType::kUniform: {
+        bufferType = ::dawn::BufferUsageBit::Uniform;
+        bindingType = ::dawn::BindingType::UniformBuffer;
+        break;
+      }
+      default: {
+        return Result("Dawn: CreatePipeline - unknown buffer type: " +
+                      std::to_string(static_cast<uint32_t>(
+                          buf_info.buffer->GetBufferType())));
+        break;
+      }
     }
 
-    ::dawn::BindGroupLayoutBinding temp;
-    temp.binding = buf_info.binding;
-    temp.visibility = kAllStages;
-    temp.type = ::dawn::BindingType::StorageBuffer;
-    bi.push_back(temp);
+    ::dawn::Buffer buffer =
+        CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
+                             buf_info.buffer->GetSizeInBytes(),
+                             bufferType | ::dawn::BufferUsageBit::TransferSrc |
+                                 ::dawn::BufferUsageBit::TransferDst);
 
-    BindingInitializationHelper temp_bih(buf_info.binding, buffer, 0,
-                                         buf_info.buffer->GetSizeInBytes());
-    bih.push_back(temp_bih);
+    ::dawn::BindGroupLayoutBinding bglb;
+    bglb.binding = buf_info.binding;
+    bglb.visibility = kAllStages;
+    bglb.type = bindingType;
+    bindGroup.push_back(bglb);
+
+    bindingInitalizerHelper.push_back(BindingInitializationHelper(
+        buf_info.binding, buffer, 0, buf_info.buffer->GetSizeInBytes()));
   }
-  if (bi.size() > 0)
-    bindGroupLayout = MakeBindGroupLayout(*device_, bi);
+  if (bindGroup.size() > 0) {
+    bindGroupLayout = MakeBindGroupLayout(*device_, bindGroup);
+  }
 
   switch (pipeline->GetType()) {
     case PipelineType::kCompute: {
@@ -687,9 +655,9 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
       }
       pipeline_map_[pipeline].render_pipeline.reset(
           new RenderPipelineInfo(pipeline, vs, fs));
-      if (bih.size() > 0) {
+      if (bindingInitalizerHelper.size() > 0) {
         pipeline_map_[pipeline].render_pipeline->bindGroup =
-            MakeBindGroup(*device_, bindGroupLayout, bih);
+            MakeBindGroup(*device_, bindGroupLayout, bindingInitalizerHelper);
         hasBinding = true;
       }
       break;
