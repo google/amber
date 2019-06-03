@@ -15,7 +15,7 @@ vars = {
   'shaderc_revision': '53c776f776821bc037b31b8b3b79db2fa54b4ce7',
   'spirv_headers_revision': '03a081524afabdde274d885880c2fef213e46a59',
   'spirv_tools_revision': '07f80c4df1b0619ee484c38e79a7ad71f672ca14',
-  'swiftshader_revision': 'a453ba42f72d0e513ada6bb29409bcde5d298612',
+  'swiftshader_revision': 'bb575d48d5f9f96cef08a5d23b0d51ce3c57ae1a',
   'vulkan_headers_revision': '8e2c4cd554b644592a6d904f2c8000ebbd4aa77f',
   'vulkan_loader_revision': '15fa85d92454f7823febeb68b56038d427e2a7a4',
 }
