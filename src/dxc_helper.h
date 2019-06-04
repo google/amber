@@ -28,6 +28,7 @@ namespace dxchelper {
 Result Compile(const std::string& src_str,
                const std::string& entry_str,
                const std::string& profile_str,
+               const std::string& spv_env,
                std::vector<uint32_t>* generated_binary);
 
 }  // namespace dxchelper
