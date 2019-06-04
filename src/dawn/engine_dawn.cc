@@ -589,16 +589,16 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
     std::cout << buf_info.binding << " ";
     std::cout << "\n";
 #endif
-    ::dawn::BufferUsageBit bufferType;
+    ::dawn::BufferUsageBit bufferUsage;
     ::dawn::BindingType bindingType;
     switch (buf_info.buffer->GetBufferType()) {
       case BufferType::kStorage: {
-        bufferType = ::dawn::BufferUsageBit::Storage;
+        bufferUsage = ::dawn::BufferUsageBit::Storage;
         bindingType = ::dawn::BindingType::StorageBuffer;
         break;
       }
       case BufferType::kUniform: {
-        bufferType = ::dawn::BufferUsageBit::Uniform;
+        bufferUsage = ::dawn::BufferUsageBit::Uniform;
         bindingType = ::dawn::BindingType::UniformBuffer;
         break;
       }
@@ -613,7 +613,7 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
     ::dawn::Buffer buffer =
         CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
                              buf_info.buffer->GetSizeInBytes(),
-                             bufferType | ::dawn::BufferUsageBit::TransferSrc |
+                             bufferUsage | ::dawn::BufferUsageBit::TransferSrc |
                                  ::dawn::BufferUsageBit::TransferDst);
 
     ::dawn::BindGroupLayoutBinding bglb;
@@ -622,8 +622,9 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
     bglb.type = bindingType;
     bindGroup.push_back(bglb);
 
-    bindingInitalizerHelper.push_back(BindingInitializationHelper(
-        buf_info.binding, buffer, 0, buf_info.buffer->GetSizeInBytes()));
+    BindingInitializationHelper tempBinding = BindingInitializationHelper(
+        buf_info.binding, buffer, 0, buf_info.buffer->GetSizeInBytes());
+    bindingInitalizerHelper.push_back(tempBinding);
   }
   if (bindGroup.size() > 0) {
     bindGroupLayout = MakeBindGroupLayout(*device_, bindGroup);
@@ -1008,12 +1009,13 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
   ::dawn::RenderPassEncoder pass =
       encoder.BeginRenderPass(renderPassDescriptor);
+
   pass.SetPipeline(pipeline);
-  pass.SetVertexBuffers(0, 1, &vertexBuffer, vertexBufferOffsets);
-  pass.SetIndexBuffer(indexBuffer, 0);
-  if (render_pipeline->hasBinding) {
+  if (hasBinding) {
     pass.SetBindGroup(0, render_pipeline->bindGroup, 0, nullptr);
   }
+  pass.SetVertexBuffers(0, 1, &vertexBuffer, vertexBufferOffsets);
+  pass.SetIndexBuffer(indexBuffer, 0);
   pass.DrawIndexed(6, 1, 0, 0, 0);
   pass.EndPass();
 
@@ -1056,7 +1058,9 @@ Result EngineDawn::DoPatchParameterVertices(
 //   return encoder.Finish();
 // }
 
-Result EngineDawn::DoBuffer(const BufferCommand* command) {
+Result EngineDawn::DoBuffer(const BufferCommand*) {
+  return Result("Dawn:DoBuffer not implemented");
+#if 0
   // TODO(SarahM0): it can be a compute pipeline too
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
   if (!render_pipeline)
@@ -1109,6 +1113,7 @@ Result EngineDawn::DoBuffer(const BufferCommand* command) {
                         },
                     });
   return {};
+#endif
 }
 
 Result EngineDawn::CreateFramebufferIfNeeded(
