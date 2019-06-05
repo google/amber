@@ -198,17 +198,18 @@ Result ShaderCompiler::CompileHlsl(const Shader* shader,
                                    std::vector<uint32_t>* result) const {
   std::string target;
   if (shader->GetType() == kShaderTypeCompute)
-    target = "cs_6_0";
+    target = "cs_6_2";
   else if (shader->GetType() == kShaderTypeFragment)
-    target = "ps_6_0";
+    target = "ps_6_2";
   else if (shader->GetType() == kShaderTypeGeometry)
-    target = "gs_6_0";
+    target = "gs_6_2";
   else if (shader->GetType() == kShaderTypeVertex)
-    target = "vs_6_0";
+    target = "vs_6_2";
   else
     return Result("Unknown shader type");
 
-  return dxchelper::Compile(shader->GetData(), "main", target, result);
+  return dxchelper::Compile(shader->GetData(), "main", target, spv_env_,
+                            result);
 }
 #else
 Result ShaderCompiler::CompileHlsl(const Shader*,

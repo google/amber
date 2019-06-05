@@ -64,7 +64,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -ps                       -- Parse input files, create pipelines; Don't execute.
   -q                        -- Disable summary output.
   -d                        -- Disable validation layers.
-  -t <spirv_env>            -- The target SPIR-V environment. Defaults to SPV_ENV_UNIVERSAL_1_0.
+  -t <spirv_env>            -- The target SPIR-V environment e.g., spv1.3, vulkan1.1. Defaults to spv1.0.
   -i <filename>             -- Write rendering to <filename> as a PNG image if it ends with '.png', or as a PPM image otherwise.
   -I <buffername>           -- Name of framebuffer to dump. Defaults to 'framebuffer'.
   -b <filename>             -- Write contents of a UBO or SSBO to <filename>.

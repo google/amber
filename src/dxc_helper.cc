@@ -44,8 +44,9 @@ namespace dxchelper {
 namespace {
 
 const wchar_t* kDxcFlags[] = {
-    L"-spirv",  // SPIR-V compilation
-    L"-Vd"      // Disable validation.
+    L"-spirv",               // SPIR-V compilation
+    L"-fcgl",                // No SPIR-V Optimization
+    L"-enable-16bit-types",  // Enabling 16bit types
 };
 const size_t kDxcFlagsCount = sizeof(kDxcFlags) / sizeof(const wchar_t*);
 
@@ -66,6 +67,7 @@ void ConvertIDxcBlobToUint32(IDxcBlob* blob,
 Result Compile(const std::string& src,
                const std::string& entry,
                const std::string& profile,
+               const std::string& spv_env,
                std::vector<uint32_t>* generated_binary) {
   DxcInitThreadMalloc();
 
@@ -105,17 +107,32 @@ Result Compile(const std::string& src,
   IDxcOperationResult* result;
   std::wstring src_filename =
       L"amber." + std::wstring(profile.begin(), profile.end());
+
+  std::vector<const wchar_t*> dxc_flags(kDxcFlags, &kDxcFlags[kDxcFlagsCount]);
+  const wchar_t* target_env = nullptr;
+  if (!spv_env.compare("spv1.3") || !spv_env.compare("vulkan1.1")) {
+    target_env = L"-fspv-target-env=vulkan1.1";
+  } else if (!spv_env.compare("spv1.0") || !spv_env.compare("vulkan1.0")) {
+    target_env = L"-fspv-target-env=vulkan1.0";
+  } else if (!spv_env.empty()) {
+    return Result(
+        "Invalid target environment. Choose spv1.3 or vulkan1.1 for vulkan1.1 "
+        "and spv1.0 or vulkan1.0 for vulkan1.0.");
+  }
+  if (target_env)
+    dxc_flags.push_back(target_env);
+
   if (compiler->Compile(source,               /* source text */
                         src_filename.c_str(), /* original file source */
                         std::wstring(entry.begin(), entry.end())
                             .c_str(), /* entry point name */
                         std::wstring(profile.begin(), profile.end())
-                            .c_str(),    /* shader profile to compile */
-                        kDxcFlags,       /* arguments */
-                        kDxcFlagsCount,  /* argument count */
-                        nullptr,         /* defines */
-                        0,               /* define count */
-                        include_handler, /* handler for #include */
+                            .c_str(),     /* shader profile to compile */
+                        dxc_flags.data(), /* arguments */
+                        dxc_flags.size(), /* argument count */
+                        nullptr,          /* defines */
+                        0,                /* define count */
+                        include_handler,  /* handler for #include */
                         &result /* output status */) < 0) {
     DxcCleanupThreadMalloc();
     return Result("DXC compile failure: Compile");
