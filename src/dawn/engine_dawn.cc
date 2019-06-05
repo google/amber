@@ -714,7 +714,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   // via the load op. The load op is "clear" to the clear colour.
   ::dawn::RenderPassColorAttachmentDescriptor color_attachment =
       ::dawn::RenderPassColorAttachmentDescriptor();
-  color_attachment.attachment = render_pipeline->fb_texture.CreateDefaultView();
+  color_attachment.attachment = render_pipeline->textureView;
   color_attachment.resolveTarget = nullptr;
   color_attachment.clearColor = render_pipeline->clear_color_value;
   color_attachment.loadOp = ::dawn::LoadOp::Clear;
@@ -886,7 +886,7 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
     const RenderPipelineInfo& render_pipeline,
     const ::dawn::Device& device) {
   std::initializer_list<::dawn::TextureView> colorAttachmentInfo = {
-      render_pipeline.fb_texture.CreateDefaultView()};
+      render_pipeline.textureView};
 
   for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
     colorAttachmentsInfo[i].loadOp = ::dawn::LoadOp::Clear;
@@ -971,25 +971,27 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   ::dawn::Buffer indexBuffer = CreateBufferFromData(
       *device_, indexData, sizeof(indexData), ::dawn::BufferUsageBit::Index);
 
-  std::vector<Value> values(8);
-  // Bottom left
-  values[0].SetDoubleValue(static_cast<double>(x));
-  values[1].SetDoubleValue(static_cast<double>(y + rectangleHeight));
-  // Top left
-  values[2].SetDoubleValue(static_cast<double>(x));
-  values[3].SetDoubleValue(static_cast<double>(y));
-  // Top right
-  values[4].SetDoubleValue(static_cast<double>(x + rectangleWidth));
-  values[5].SetDoubleValue(static_cast<double>(y));
-  // Bottom right
-  values[6].SetDoubleValue(static_cast<double>(x + rectangleWidth));
-  values[7].SetDoubleValue(static_cast<double>(y + rectangleHeight));
-
-  static const float vertexData[4 * 4] = {
-      values[0].AsFloat(), values[1].AsFloat(), 0.0f, 1.0f,
-      values[2].AsFloat(), values[3].AsFloat(), 0.0f, 1.0f,
-      values[4].AsFloat(), values[5].AsFloat(), 0.0f, 1.0f,
-      values[6].AsFloat(), values[7].AsFloat(), 0.0f, 1.0f,
+  const float vertexData[4 * 4] = {
+      // Bottom left
+      x,
+      y + rectangleHeight,
+      0.0f,
+      1.0f,
+      // Top left
+      x,
+      y,
+      0.0f,
+      1.0f,
+      // Top right
+      x + rectangleWidth,
+      y,
+      0.0f,
+      1.0f,
+      // Bottom right
+      x + rectangleWidth,
+      y + rectangleHeight,
+      0.0f,
+      1.0f,
   };
 
   ::dawn::Buffer vertexBuffer = CreateBufferFromData(
@@ -1125,25 +1127,48 @@ Result EngineDawn::CreateFramebufferIfNeeded(
   const uint32_t width = render_pipeline->pipeline->GetFramebufferWidth();
   const uint32_t height = render_pipeline->pipeline->GetFramebufferHeight();
 
-  // TODO(dneto): For now, assume color attachment 0 is the framebuffer.
+  for (auto colorAttachment :
+       render_pipeline->pipeline->GetColorAttachments()) {
+    auto* amber_format = colorAttachment.buffer->GetFormat();
+    if (!amber_format)
+      return Result("Color attachment 0 has no format!");
+    ::dawn::TextureFormat fb_format{};
+    result = GetDawnTextureFormat(*amber_format, &fb_format);
+    if (!result.IsSuccess())
+      return result;
+
+    uint32_t location;
+    render_pipeline->pipeline->GetLocationForColorAttachment(
+        colorAttachment.buffer, &location);
+    if (colorAttachmentLocationToTextureView_map_.find(location) ==
+        colorAttachmentLocationToTextureView_map_.end()) {
+      ::dawn::Texture fb_texture;
+      result = MakeTexture(*device_, fb_format, width, height, &fb_texture);
+      if (!result.IsSuccess())
+        return result;
+      render_pipeline->fb_texture = std::move(fb_texture);
+      colorAttachmentLocationToTexture_map_[location] =
+          &render_pipeline->fb_texture;
+      render_pipeline->textureView =
+          render_pipeline->fb_texture.CreateDefaultView();
+      colorAttachmentLocationToTextureView_map_[location] =
+          &render_pipeline->textureView;
+    } else {
+      render_pipeline->textureView =
+          *colorAttachmentLocationToTextureView_map_[location];
+      render_pipeline->fb_texture =
+          *colorAttachmentLocationToTexture_map_[location];
+    }
+  }
+
   auto* amber_format =
       render_pipeline->pipeline->GetColorAttachments()[0].buffer->GetFormat();
   if (!amber_format)
     return Result("Color attachment 0 has no format!");
-
   ::dawn::TextureFormat fb_format{};
   result = GetDawnTextureFormat(*amber_format, &fb_format);
   if (!result.IsSuccess())
     return result;
-
-  {
-    ::dawn::Texture fb_texture;
-
-    result = MakeTexture(*device_, fb_format, width, height, &fb_texture);
-    if (!result.IsSuccess())
-      return result;
-    render_pipeline->fb_texture = std::move(fb_texture);
-  }
 
   // After that, only create the Dawn depth-stencil texture if the Amber
   // depth-stencil texture exists.

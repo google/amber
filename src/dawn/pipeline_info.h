@@ -46,6 +46,7 @@ struct RenderPipelineInfo {
 
   /// The framebuffer color render target.  This resides on the GPU.
   ::dawn::Texture fb_texture;
+  ::dawn::TextureView textureView;
   /// The depth and stencil target.  This resides on the GPU.
   ::dawn::Texture depth_stencil_texture;
   /// The buffer to which we will copy the rendered pixel values, for
