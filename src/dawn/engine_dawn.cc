@@ -792,7 +792,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   static const uint32_t indexData[3 * 2] = {
       0, 1, 2, 0, 2, 3,
   };
-  ::dawn::Buffer indexBuffer = CreateBufferFromData(
+  render_pipeline->index_buffer = CreateBufferFromData(
       *device_, indexData, sizeof(indexData), ::dawn::BufferUsageBit::Index);
 
   const float vertexData[4 * 4] = {
@@ -813,7 +813,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
       0.0f,
       1.0f,
   };
-  ::dawn::Buffer vertexBuffer = CreateBufferFromData(
+  render_pipeline->vertex_buffer = CreateBufferFromData(
       *device_, vertexData, sizeof(vertexData), ::dawn::BufferUsageBit::Vertex);
 
   DawnPipelineHelper helper;
@@ -831,8 +831,9 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   ::dawn::RenderPassEncoder pass =
       encoder.BeginRenderPass(renderPassDescriptor);
   pass.SetPipeline(pipeline);
-  pass.SetVertexBuffers(0, 1, &vertexBuffer, vertexBufferOffsets);
-  pass.SetIndexBuffer(indexBuffer, 0);
+  pass.SetVertexBuffers(0, 1, &render_pipeline->vertex_buffer,
+                        vertexBufferOffsets);
+  pass.SetIndexBuffer(render_pipeline->index_buffer, 0);
   pass.DrawIndexed(6, 1, 0, 0, 0);
   pass.EndPass();
 
@@ -913,8 +914,7 @@ Result EngineDawn::AttachBuffersAndTextures(
     render_pipeline->fb_buffer = fb_buffer_;
   }
 
-  // After that, only create the Dawn depth-stencil texture if the Amber
-  // depth-stencil texture exists.
+  // Attach depth-stencil texture
   auto* depthBuffer = render_pipeline->pipeline->GetDepthBuffer().buffer;
   if (depthBuffer) {
     if (!ds_is_created_) {
@@ -936,6 +936,22 @@ Result EngineDawn::AttachBuffersAndTextures(
     } else {
       render_pipeline->depth_stencil_texture = depth_stencil_texture_;
     }
+  }
+
+  // Attach index buffer
+  if (render_pipeline->pipeline->GetIndexBuffer()) {
+    render_pipeline->index_buffer = CreateBufferFromData(
+        *device_, render_pipeline->pipeline->GetIndexBuffer()->ValuePtr(),
+        render_pipeline->pipeline->GetIndexBuffer()->GetSizeInBytes(),
+        ::dawn::BufferUsageBit::Index);
+  }
+
+  // TODO(sarahM0): rewrite this for more than one VERTEX_DATA.
+  // Attach vertex buffers
+  for (auto vertex_info : render_pipeline->pipeline->GetVertexBuffers()) {
+    render_pipeline->vertex_buffer = CreateBufferFromData(
+        *device_, vertex_info.buffer->ValuePtr(),
+        vertex_info.buffer->GetSizeInBytes(), ::dawn::BufferUsageBit::Vertex);
   }
 
   return {};

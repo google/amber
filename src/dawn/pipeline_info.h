@@ -53,8 +53,8 @@ struct RenderPipelineInfo {
   /// The number of bytes between successive texels in framebuffer host-side
   /// buffer.
 
-  // TODO(dneto): Record index data
-  // TODO(dneto): Record buffer data
+  ::dawn::Buffer vertex_buffer;
+  ::dawn::Buffer index_buffer;
 };
 
 /// Stores information relating to a compute pipeline in Dawn.
