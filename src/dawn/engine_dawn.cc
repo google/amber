@@ -954,6 +954,11 @@ Result EngineDawn::AttachBuffersAndTextures(
         vertex_info.buffer->GetSizeInBytes(), ::dawn::BufferUsageBit::Vertex);
   }
 
+  // Do not attach pushConstants
+  if (render_pipeline->pipeline->GetPushConstantBuffer().buffer != nullptr) {
+    return Result("Dawn does not support push constants!");
+  }
+
   return {};
 }
 
