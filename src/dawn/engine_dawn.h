@@ -73,12 +73,18 @@ class EngineDawn : public Engine {
   // on the device, the buffer on the host that will eventually hold the
   // resulting pixels for use in checking expectations, and bookkeeping info
   // for that host-side buffer.
-  Result CreateFramebufferIfNeeded(RenderPipelineInfo* render_pipeline);
-
-  // TODO(dneto): Remove this. Shaders are attached to the pipeline.
-  Result SetShader(ShaderType type, const std::vector<uint32_t>& data);
+  Result AttachBuffersAndTextures(RenderPipelineInfo* render_pipeline);
 
   ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.
+  ::dawn::Buffer fb_buffer_;
+  bool fb_is_created_ = false;
+
+  ::dawn::TextureView texture_view_;
+  ::dawn::Texture fb_texture_;
+  bool ft_is_created_ = false;
+
+  ::dawn::Texture depth_stencil_texture_;
+  bool ds_is_created_ = false;
 
   // Mapping from the generic engine's Pipeline object to our own Dawn-specific
   // pipelines.

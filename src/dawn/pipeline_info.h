@@ -52,14 +52,6 @@ struct RenderPipelineInfo {
   ::dawn::Buffer fb_buffer;
   /// The number of bytes between successive texels in framebuffer host-side
   /// buffer.
-  uint32_t fb_texel_stride = 0;
-  /// The number of bytes between successive rows of texels in framebuffer
-  /// host-side buffer.
-  uint32_t fb_row_stride = 0;
-  /// The number of rows in the framebuffer.
-  uint32_t fb_num_rows = 0;
-  /// The number of data bytes in the framebuffer host-side buffer.
-  uint32_t fb_size = 0;
 
   // TODO(dneto): Record index data
   // TODO(dneto): Record buffer data
