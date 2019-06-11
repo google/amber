@@ -22,7 +22,7 @@ SHADER vertex vtex_shader GLSL
 layout(location = 0) in vec4 position;
 layout(location = 0) out vec4 frag_color;
 
-layout(set = 0, binding = 0) buffer block1 {
+layout(set = 0, binding = 0) readonly buffer block1 {
   vec4 in_color;
 };
 
@@ -48,7 +48,7 @@ BUFFER data_buf2 DATA_TYPE vec4<float> DATA  0 1  0 1 END
 BUFFER data_buf3 DATA_TYPE vec4<float> DATA  0 0  1 1 END
 BUFFER data_buf4 DATA_TYPE vec4<float> DATA .5 0 .5 1 END
 
-BUFFER frame FORMAT R32G32B32A32_SFLOAT
+BUFFER frame FORMAT B8G8R8A8_UNORM
 
 PIPELINE graphics pipeline1
   ATTACH vtex_shader
@@ -77,4 +77,4 @@ RUN pipeline4 DRAW_RECT POS 400 300 SIZE 400 300
 EXPECT frame IDX   0   0 SIZE 400 300 EQ_RGBA 255   0   0 255
 EXPECT frame IDX   0 300 SIZE 400 300 EQ_RGBA   0 255   0 255
 EXPECT frame IDX 400   0 SIZE 400 300 EQ_RGBA   0   0 255 255
-EXPECT frame IDX 400 300 SIZE 400 300 EQ_RGBA 128   0 128 255
+EXPECT frame IDX 400 300 SIZE 400 300 EQ_RGBA 127   0 127 255

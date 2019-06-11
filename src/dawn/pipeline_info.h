@@ -50,11 +50,13 @@ struct RenderPipelineInfo {
   /// The buffer to which we will copy the rendered pixel values, for
   /// use on the host.
   ::dawn::Buffer fb_buffer;
-  /// The number of bytes between successive texels in framebuffer host-side
-  /// buffer.
 
   ::dawn::Buffer vertex_buffer;
   ::dawn::Buffer index_buffer;
+
+  bool hasBinding = false;
+  ::dawn::BindGroup bindGroup;
+  ::dawn::BindGroupLayout bindGroupLayout;
 };
 
 /// Stores information relating to a compute pipeline in Dawn.

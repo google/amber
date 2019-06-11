@@ -318,12 +318,78 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
 
   return desc;
 }
+// Creates a bind group.
+// Helpers to make creating bind groups look nicer:
+//
+//   utils::MakeBindGroup(device, layout, {
+//       {0, mySampler},
+//       {1, myBuffer, offset, size},
+//       {3, myTexture}
+//   });
+
+// Structure with one constructor per-type of bindings, so that the
+// initializer_list accepts bindings with the right type and no extra
+// information.
+struct BindingInitializationHelper {
+  BindingInitializationHelper(uint32_t binding, const ::dawn::Sampler& sampler);
+  BindingInitializationHelper(uint32_t binding,
+                              const ::dawn::TextureView& textureView);
+  BindingInitializationHelper(uint32_t binding,
+                              const ::dawn::Buffer& buffer,
+                              uint64_t offset,
+                              uint64_t size);
+
+  ::dawn::BindGroupBinding GetAsBinding() const;
+
+  uint32_t binding;
+  ::dawn::Sampler sampler;
+  ::dawn::TextureView textureView;
+  ::dawn::Buffer buffer;
+  uint64_t offset = 0;
+  uint64_t size = 0;
+};
+BindingInitializationHelper::BindingInitializationHelper(
+    uint32_t binding,
+    const ::dawn::Buffer& buffer,
+    uint64_t offset,
+    uint64_t size)
+    : binding(binding), buffer(buffer), offset(offset), size(size) {}
+
+::dawn::BindGroupBinding BindingInitializationHelper::GetAsBinding() const {
+  ::dawn::BindGroupBinding result;
+
+  result.binding = binding;
+  result.sampler = sampler;
+  result.textureView = textureView;
+  result.buffer = buffer;
+  result.offset = offset;
+  result.size = size;
+
+  return result;
+}
+
+::dawn::BindGroup MakeBindGroup(
+    const ::dawn::Device& device,
+    const ::dawn::BindGroupLayout& layout,
+    std::vector<BindingInitializationHelper> bindingsInitializer) {
+  std::vector<::dawn::BindGroupBinding> bindings;
+  for (const BindingInitializationHelper& helper : bindingsInitializer) {
+    bindings.push_back(helper.GetAsBinding());
+  }
+
+  ::dawn::BindGroupDescriptor descriptor;
+  descriptor.layout = layout;
+  descriptor.bindingCount = bindings.size();
+  descriptor.bindings = bindings.data();
+
+  return device.CreateBindGroup(&descriptor);
+}
 
 // Creates a bind group layout.
 // Copied from Dawn utils source code.
 ::dawn::BindGroupLayout MakeBindGroupLayout(
     const ::dawn::Device& device,
-    std::initializer_list<::dawn::BindGroupLayoutBinding> bindingsInitializer) {
+    std::vector<::dawn::BindGroupLayoutBinding> bindingsInitializer) {
   constexpr ::dawn::ShaderStageBit kNoStages{};
 
   std::vector<::dawn::BindGroupLayoutBinding> bindings;
@@ -492,13 +558,14 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
             "Dawn::CreatePipeline: no fragment shader provided for graphics "
             "pipeline");
       }
+
       pipeline_map_[pipeline].render_pipeline.reset(
           new RenderPipelineInfo(pipeline, vs, fs));
-
       Result result = AttachBuffersAndTextures(
           pipeline_map_[pipeline].render_pipeline.get());
       if (!result.IsSuccess())
         return result;
+
       break;
     }
   }
@@ -545,7 +612,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   // via the load op. The load op is "clear" to the clear colour.
   ::dawn::RenderPassColorAttachmentDescriptor color_attachment =
       ::dawn::RenderPassColorAttachmentDescriptor();
-  color_attachment.attachment = render_pipeline->fb_texture.CreateDefaultView();
+  color_attachment.attachment = texture_view_;
   color_attachment.resolveTarget = nullptr;
   color_attachment.clearColor = render_pipeline->clear_color_value;
   color_attachment.loadOp = ::dawn::LoadOp::Clear;
@@ -621,7 +688,11 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     depth_stencil_format = ::dawn::TextureFormat::D32FloatS8Uint;
   }
 
-  renderPipelineDescriptor.layout = MakeBasicPipelineLayout(device, nullptr);
+  if (render_pipeline.hasBinding)
+    renderPipelineDescriptor.layout =
+        MakeBasicPipelineLayout(device, &render_pipeline.bindGroupLayout);
+  else
+    renderPipelineDescriptor.layout = MakeBasicPipelineLayout(device, nullptr);
   renderPipelineDescriptor.primitiveTopology =
       ::dawn::PrimitiveTopology::TriangleList;
   renderPipelineDescriptor.sampleCount = 1;
@@ -796,18 +867,22 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
       *device_, indexData, sizeof(indexData), ::dawn::BufferUsageBit::Index);
 
   const float vertexData[4 * 4] = {
+      // Bottom left
       x,
       y + rectangleHeight,
       0.0f,
       1.0f,
+      // Top left
       x,
       y,
       0.0f,
       1.0f,
+      // Top right
       x + rectangleWidth,
       y,
       0.0f,
       1.0f,
+      // Bottom right
       x + rectangleWidth,
       y + rectangleHeight,
       0.0f,
@@ -831,6 +906,9 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   ::dawn::RenderPassEncoder pass =
       encoder.BeginRenderPass(renderPassDescriptor);
   pass.SetPipeline(pipeline);
+  if (render_pipeline->hasBinding) {
+    pass.SetBindGroup(0, render_pipeline->bindGroup, 0, nullptr);
+  }
   pass.SetVertexBuffers(0, 1, &render_pipeline->vertex_buffer,
                         vertexBufferOffsets);
   pass.SetIndexBuffer(render_pipeline->index_buffer, 0);
@@ -948,7 +1026,7 @@ Result EngineDawn::AttachBuffersAndTextures(
 
   // TODO(sarahM0): rewrite this for more than one VERTEX_DATA.
   // Attach vertex buffers
-  for (auto vertex_info : render_pipeline->pipeline->GetVertexBuffers()) {
+  for (auto &vertex_info : render_pipeline->pipeline->GetVertexBuffers()) {
     render_pipeline->vertex_buffer = CreateBufferFromData(
         *device_, vertex_info.buffer->ValuePtr(),
         vertex_info.buffer->GetSizeInBytes(), ::dawn::BufferUsageBit::Vertex);
@@ -957,6 +1035,57 @@ Result EngineDawn::AttachBuffersAndTextures(
   // Do not attach pushConstants
   if (render_pipeline->pipeline->GetPushConstantBuffer().buffer != nullptr) {
     return Result("Dawn does not support push constants!");
+  }
+
+  ::dawn::ShaderStageBit kAllStages =
+      ::dawn::ShaderStageBit::Vertex | ::dawn::ShaderStageBit::Fragment;
+  std::vector<BindingInitializationHelper> bindingInitalizerHelper;
+  std::vector<::dawn::BindGroupLayoutBinding> bindGroup;
+
+  for (const auto& buf_info : render_pipeline->pipeline->GetBuffers()) {
+    ::dawn::BufferUsageBit bufferUsage;
+    ::dawn::BindingType bindingType;
+    switch (buf_info.buffer->GetBufferType()) {
+      case BufferType::kStorage: {
+        bufferUsage = ::dawn::BufferUsageBit::Storage;
+        bindingType = ::dawn::BindingType::StorageBuffer;
+        break;
+      }
+      case BufferType::kUniform: {
+        bufferUsage = ::dawn::BufferUsageBit::Uniform;
+        bindingType = ::dawn::BindingType::UniformBuffer;
+        break;
+      }
+      default: {
+        return Result("Dawn: CreatePipeline - unknown buffer type: " +
+                      std::to_string(static_cast<uint32_t>(
+                          buf_info.buffer->GetBufferType())));
+        break;
+      }
+    }
+
+    ::dawn::Buffer buffer =
+        CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
+                             buf_info.buffer->GetSizeInBytes(),
+                             bufferUsage | ::dawn::BufferUsageBit::TransferSrc |
+                                 ::dawn::BufferUsageBit::TransferDst);
+
+    ::dawn::BindGroupLayoutBinding bglb;
+    bglb.binding = buf_info.binding;
+    bglb.visibility = kAllStages;
+    bglb.type = bindingType;
+    bindGroup.push_back(bglb);
+
+    BindingInitializationHelper tempBinding = BindingInitializationHelper(
+        buf_info.binding, buffer, 0, buf_info.buffer->GetSizeInBytes());
+    bindingInitalizerHelper.push_back(tempBinding);
+  }
+
+  if (bindGroup.size() > 0 && bindingInitalizerHelper.size() > 0) {
+    render_pipeline->bindGroupLayout = MakeBindGroupLayout(*device_, bindGroup);
+    render_pipeline->bindGroup = MakeBindGroup(
+        *device_, render_pipeline->bindGroupLayout, bindingInitalizerHelper);
+    render_pipeline->hasBinding = true;
   }
 
   return {};
