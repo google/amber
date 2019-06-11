@@ -572,60 +572,6 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
     module_for_type[type] = shader;
   }
 
-  ::dawn::ShaderStageBit kAllStages =
-      ::dawn::ShaderStageBit::Vertex | ::dawn::ShaderStageBit::Fragment;
-  std::vector<BindingInitializationHelper> bindingInitalizerHelper;
-  std::vector<::dawn::BindGroupLayoutBinding> bindGroup;
-
-  for (const auto& buf_info : pipeline->GetBuffers()) {
-#if 0
-    std::cout << buf_info.buffer->ValueCount() << " ";
-    const auto* data = buf_info.buffer->GetValues<float>();
-    for (uint i = 0; i < buf_info.buffer->ValueCount(); i++) {
-      std::cout << data[i] << " ";
-    }
-    std::cout << buf_info.descriptor_set << " ";
-    std::cout << buf_info.binding << " ";
-    std::cout << "\n";
-#endif
-    ::dawn::BufferUsageBit bufferUsage;
-    ::dawn::BindingType bindingType;
-    switch (buf_info.buffer->GetBufferType()) {
-      case BufferType::kStorage: {
-        bufferUsage = ::dawn::BufferUsageBit::Storage;
-        bindingType = ::dawn::BindingType::StorageBuffer;
-        break;
-      }
-      case BufferType::kUniform: {
-        bufferUsage = ::dawn::BufferUsageBit::Uniform;
-        bindingType = ::dawn::BindingType::UniformBuffer;
-        break;
-      }
-      default: {
-        return Result("Dawn: CreatePipeline - unknown buffer type: " +
-                      std::to_string(static_cast<uint32_t>(
-                          buf_info.buffer->GetBufferType())));
-        break;
-      }
-    }
-
-    ::dawn::Buffer buffer =
-        CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
-                             buf_info.buffer->GetSizeInBytes(),
-                             bufferUsage | ::dawn::BufferUsageBit::TransferSrc |
-                                 ::dawn::BufferUsageBit::TransferDst);
-
-    ::dawn::BindGroupLayoutBinding bglb;
-    bglb.binding = buf_info.binding;
-    bglb.visibility = kAllStages;
-    bglb.type = bindingType;
-    bindGroup.push_back(bglb);
-
-    BindingInitializationHelper tempBinding = BindingInitializationHelper(
-        buf_info.binding, buffer, 0, buf_info.buffer->GetSizeInBytes());
-    bindingInitalizerHelper.push_back(tempBinding);
-  }
-
   switch (pipeline->GetType()) {
     case PipelineType::kCompute: {
       auto& module = module_for_type[kShaderTypeCompute];
@@ -652,16 +598,7 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
       }
       pipeline_map_[pipeline].render_pipeline.reset(
           new RenderPipelineInfo(pipeline, vs, fs));
-      if (bindGroup.size() > 0) {
-        pipeline_map_[pipeline].render_pipeline->bindGroupLayout =
-            MakeBindGroupLayout(*device_, bindGroup);
-      }
-      if (bindingInitalizerHelper.size() > 0) {
-        pipeline_map_[pipeline].render_pipeline->bindGroup = MakeBindGroup(
-            *device_, pipeline_map_[pipeline].render_pipeline->bindGroupLayout,
-            bindingInitalizerHelper);
-        pipeline_map_[pipeline].render_pipeline->hasBinding = true;
-      }
+      CreateFramebufferIfNeeded(pipeline_map_[pipeline].render_pipeline.get());
       break;
     }
   }
@@ -702,12 +639,6 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
   if (!render_pipeline)
     return Result("Clear invoked on invalid or missing render pipeline");
-
-  // TODO(dneto): Likely, we can create the render objects during
-  // CreatePipeline.
-  Result result = CreateFramebufferIfNeeded(render_pipeline);
-  if (!result.IsSuccess())
-    return result;
 
   // Record a render pass in a command on the command buffer.
   //
@@ -890,7 +821,7 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
       render_pipeline.textureView};
 
   for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
-    colorAttachmentsInfo[i].loadOp = ::dawn::LoadOp::Clear;
+    colorAttachmentsInfo[i].loadOp = ::dawn::LoadOp::Load;
     colorAttachmentsInfo[i].storeOp = ::dawn::StoreOp::Store;
     colorAttachmentsInfo[i].clearColor = render_pipeline.clear_color_value;
     colorAttachmentsInfoPtr[i] = nullptr;
@@ -946,9 +877,6 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
   if (!render_pipeline)
     return Result("DrawRect invoked on invalid or missing render pipeline");
-  Result result = CreateFramebufferIfNeeded(render_pipeline);
-  if (!result.IsSuccess())
-    return result;
 
   float x = command->GetX();
   float y = command->GetY();
@@ -1213,6 +1141,67 @@ Result EngineDawn::CreateFramebufferIfNeeded(
     render_pipeline->fb_row_stride = row_stride;
     render_pipeline->fb_num_rows = height;
     render_pipeline->fb_size = size;
+  }
+
+  ::dawn::ShaderStageBit kAllStages =
+      ::dawn::ShaderStageBit::Vertex | ::dawn::ShaderStageBit::Fragment;
+  std::vector<BindingInitializationHelper> bindingInitalizerHelper;
+  std::vector<::dawn::BindGroupLayoutBinding> bindGroup;
+
+  for (const auto& buf_info : render_pipeline->pipeline->GetBuffers()) {
+#if 0
+    std::cout << buf_info.buffer->ValueCount() << " ";
+    const auto* data = buf_info.buffer->GetValues<float>();
+    for (uint i = 0; i < buf_info.buffer->ValueCount(); i++) {
+      std::cout << data[i] << " ";
+    }
+    std::cout << buf_info.descriptor_set << " ";
+    std::cout << buf_info.binding << " ";
+    std::cout << "\n";
+#endif
+    ::dawn::BufferUsageBit bufferUsage;
+    ::dawn::BindingType bindingType;
+    switch (buf_info.buffer->GetBufferType()) {
+      case BufferType::kStorage: {
+        bufferUsage = ::dawn::BufferUsageBit::Storage;
+        bindingType = ::dawn::BindingType::StorageBuffer;
+        break;
+      }
+      case BufferType::kUniform: {
+        bufferUsage = ::dawn::BufferUsageBit::Uniform;
+        bindingType = ::dawn::BindingType::UniformBuffer;
+        break;
+      }
+      default: {
+        return Result("Dawn: CreatePipeline - unknown buffer type: " +
+                      std::to_string(static_cast<uint32_t>(
+                          buf_info.buffer->GetBufferType())));
+        break;
+      }
+    }
+
+    ::dawn::Buffer buffer =
+        CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
+                             buf_info.buffer->GetSizeInBytes(),
+                             bufferUsage | ::dawn::BufferUsageBit::TransferSrc |
+                                 ::dawn::BufferUsageBit::TransferDst);
+
+    ::dawn::BindGroupLayoutBinding bglb;
+    bglb.binding = buf_info.binding;
+    bglb.visibility = kAllStages;
+    bglb.type = bindingType;
+    bindGroup.push_back(bglb);
+
+    BindingInitializationHelper tempBinding = BindingInitializationHelper(
+        buf_info.binding, buffer, 0, buf_info.buffer->GetSizeInBytes());
+    bindingInitalizerHelper.push_back(tempBinding);
+  }
+
+  if (bindGroup.size() > 0 && bindingInitalizerHelper.size() > 0) {
+    render_pipeline->bindGroupLayout = MakeBindGroupLayout(*device_, bindGroup);
+    render_pipeline->bindGroup = MakeBindGroup(
+        *device_, render_pipeline->bindGroupLayout, bindingInitalizerHelper);
+    render_pipeline->hasBinding = true;
   }
 
   return {};
