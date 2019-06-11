@@ -44,8 +44,7 @@ static const float kLodMax = 1000.0;
 static const uint32_t kMaxColorAttachments = 4u;
 static const uint32_t kMaxVertexInputs = 16u;
 static const uint32_t kMaxVertexAttributes = 16u;
-static ::dawn::BindGroupLayout bindGroupLayout;
-static bool hasBinding = false;
+
 // This structure is a container for a few variables that are created during
 // CreateRenderPipelineDescriptor and CreateRenderPassDescriptor and we want to
 // make sure they don't go out of scope before we are done with them
@@ -626,9 +625,6 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
         buf_info.binding, buffer, 0, buf_info.buffer->GetSizeInBytes());
     bindingInitalizerHelper.push_back(tempBinding);
   }
-  if (bindGroup.size() > 0) {
-    bindGroupLayout = MakeBindGroupLayout(*device_, bindGroup);
-  }
 
   switch (pipeline->GetType()) {
     case PipelineType::kCompute: {
@@ -656,10 +652,15 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
       }
       pipeline_map_[pipeline].render_pipeline.reset(
           new RenderPipelineInfo(pipeline, vs, fs));
+      if (bindGroup.size() > 0) {
+        pipeline_map_[pipeline].render_pipeline->bindGroupLayout =
+            MakeBindGroupLayout(*device_, bindGroup);
+      }
       if (bindingInitalizerHelper.size() > 0) {
-        pipeline_map_[pipeline].render_pipeline->bindGroup =
-            MakeBindGroup(*device_, bindGroupLayout, bindingInitalizerHelper);
-        hasBinding = true;
+        pipeline_map_[pipeline].render_pipeline->bindGroup = MakeBindGroup(
+            *device_, pipeline_map_[pipeline].render_pipeline->bindGroupLayout,
+            bindingInitalizerHelper);
+        pipeline_map_[pipeline].render_pipeline->hasBinding = true;
       }
       break;
     }
@@ -790,9 +791,9 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     depth_stencil_format = ::dawn::TextureFormat::D32FloatS8Uint;
   }
 
-  if (hasBinding)
+  if (render_pipeline.hasBinding)
     renderPipelineDescriptor.layout =
-        MakeBasicPipelineLayout(device, &bindGroupLayout);
+        MakeBasicPipelineLayout(device, &render_pipeline.bindGroupLayout);
   else
     renderPipelineDescriptor.layout = MakeBasicPipelineLayout(device, nullptr);
 
@@ -1013,7 +1014,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
       encoder.BeginRenderPass(renderPassDescriptor);
 
   pass.SetPipeline(pipeline);
-  if (hasBinding) {
+  if (render_pipeline->hasBinding) {
     pass.SetBindGroup(0, render_pipeline->bindGroup, 0, nullptr);
   }
   pass.SetVertexBuffers(0, 1, &vertexBuffer, vertexBufferOffsets);

@@ -30,8 +30,7 @@ namespace dawn {
 /// Stores information relating to a graphics pipeline in Dawn.
 struct RenderPipelineInfo {
   RenderPipelineInfo() {}
-  RenderPipelineInfo(::amber::Pipeline* the_pipeline,
-                     ::dawn::ShaderModule vert,
+  RenderPipelineInfo(::amber::Pipeline* the_pipeline, ::dawn::ShaderModule vert,
                      ::dawn::ShaderModule frag)
       : pipeline(the_pipeline), vertex_shader(vert), fragment_shader(frag) {}
 
@@ -39,7 +38,6 @@ struct RenderPipelineInfo {
 
   ::dawn::ShaderModule vertex_shader;
   ::dawn::ShaderModule fragment_shader;
-  ::dawn::BindGroup bindGroup = {};
   ::dawn::Color clear_color_value = {0.f, 0.f, 0.f, 0.f};
   float clear_depth_value = 1.0f;
   uint32_t clear_stencil_value = 0;
@@ -62,6 +60,10 @@ struct RenderPipelineInfo {
   uint32_t fb_num_rows = 0;
   /// The number of data bytes in the framebuffer host-side buffer.
   uint32_t fb_size = 0;
+
+  bool hasBinding = false;
+  ::dawn::BindGroup bindGroup;
+  ::dawn::BindGroupLayout bindGroupLayout;
 
   // TODO(dneto): Record index data
   // TODO(dneto): Record buffer data
