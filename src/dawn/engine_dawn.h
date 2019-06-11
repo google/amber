@@ -76,15 +76,15 @@ class EngineDawn : public Engine {
   Result AttachBuffersAndTextures(RenderPipelineInfo* render_pipeline);
 
   ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.
+
+  // Host-side buffer for the framebuffer
   ::dawn::Buffer fb_buffer_;
-  bool fb_is_created_ = false;
-
-  ::dawn::TextureView texture_view_;
+  // Dawn color attachment texture
   ::dawn::Texture fb_texture_;
-  bool ft_is_created_ = false;
-
+  // A view into fb_texture_
+  ::dawn::TextureView texture_view_;
+  // Dawn depth/stencil texture
   ::dawn::Texture depth_stencil_texture_;
-  bool ds_is_created_ = false;
 
   // Mapping from the generic engine's Pipeline object to our own Dawn-specific
   // pipelines.

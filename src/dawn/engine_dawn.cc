@@ -111,8 +111,8 @@ Result MakeTexture(const ::dawn::Device& device,
   return Result("Dawn: Failed to allocate a framebuffer texture");
 }
 
-// Creates a host-side buffer for the framebuffer, and returns it through
-// |result_ptr|. The buffer will be used as a transfer destination and
+// Creates a host-side buffer  of |size| for the framebuffer, and returns it
+// through |result_ptr|. The buffer will be used as a transfer destination and
 // for mapping-for-read.  Returns a result code.
 Result MakeFramebufferBuffer(const ::dawn::Device& device,
                              ::dawn::Buffer* result_ptr,
@@ -233,7 +233,11 @@ MapResult MapBuffer(const ::dawn::Device& device, const ::dawn::Buffer& buf) {
   return textureCopyView;
 }
 
-// Creates and submits a command to copy the result back to the host-side
+// Creates and submits a command to copy the colour attachments back to the
+// host.
+// TODO(sarahM0): Handle more than one colour attachment
+// TODO(sarahM0): Copy the buffer data for buffers that are not
+// colour-attachments back into the Amber buffer objects.
 MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
                                  const ::dawn::Device& device) {
   const auto width = render_pipeline.pipeline->GetFramebufferWidth();
@@ -282,7 +286,6 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
   }
   // Always unmap the buffer at the end of the engine's command.
   render_pipeline.fb_buffer.Unmap();
-
   return map;
 }
 
@@ -331,15 +334,22 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
 // initializer_list accepts bindings with the right type and no extra
 // information.
 struct BindingInitializationHelper {
-  BindingInitializationHelper(uint32_t binding, const ::dawn::Sampler& sampler);
-  BindingInitializationHelper(uint32_t binding,
-                              const ::dawn::TextureView& textureView);
   BindingInitializationHelper(uint32_t binding,
                               const ::dawn::Buffer& buffer,
                               uint64_t offset,
-                              uint64_t size);
+                              uint64_t size)
+      : binding(binding), buffer(buffer), offset(offset), size(size) {}
 
-  ::dawn::BindGroupBinding GetAsBinding() const;
+  ::dawn::BindGroupBinding GetAsBinding() const {
+    ::dawn::BindGroupBinding result;
+    result.binding = binding;
+    result.sampler = sampler;
+    result.textureView = textureView;
+    result.buffer = buffer;
+    result.offset = offset;
+    result.size = size;
+    return result;
+  }
 
   uint32_t binding;
   ::dawn::Sampler sampler;
@@ -348,30 +358,11 @@ struct BindingInitializationHelper {
   uint64_t offset = 0;
   uint64_t size = 0;
 };
-BindingInitializationHelper::BindingInitializationHelper(
-    uint32_t binding,
-    const ::dawn::Buffer& buffer,
-    uint64_t offset,
-    uint64_t size)
-    : binding(binding), buffer(buffer), offset(offset), size(size) {}
-
-::dawn::BindGroupBinding BindingInitializationHelper::GetAsBinding() const {
-  ::dawn::BindGroupBinding result;
-
-  result.binding = binding;
-  result.sampler = sampler;
-  result.textureView = textureView;
-  result.buffer = buffer;
-  result.offset = offset;
-  result.size = size;
-
-  return result;
-}
 
 ::dawn::BindGroup MakeBindGroup(
     const ::dawn::Device& device,
     const ::dawn::BindGroupLayout& layout,
-    std::vector<BindingInitializationHelper> bindingsInitializer) {
+    const std::vector<BindingInitializationHelper>& bindingsInitializer) {
   std::vector<::dawn::BindGroupBinding> bindings;
   for (const BindingInitializationHelper& helper : bindingsInitializer) {
     bindings.push_back(helper.GetAsBinding());
@@ -389,7 +380,7 @@ BindingInitializationHelper::BindingInitializationHelper(
 // Copied from Dawn utils source code.
 ::dawn::BindGroupLayout MakeBindGroupLayout(
     const ::dawn::Device& device,
-    std::vector<::dawn::BindGroupLayoutBinding> bindingsInitializer) {
+    const std::vector<::dawn::BindGroupLayoutBinding>& bindingsInitializer) {
   constexpr ::dawn::ShaderStageBit kNoStages{};
 
   std::vector<::dawn::BindGroupLayoutBinding> bindings;
@@ -688,9 +679,9 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     depth_stencil_format = ::dawn::TextureFormat::D32FloatS8Uint;
   }
 
-  if (render_pipeline.hasBinding)
+  if (render_pipeline.bind_group)
     renderPipelineDescriptor.layout =
-        MakeBasicPipelineLayout(device, &render_pipeline.bindGroupLayout);
+        MakeBasicPipelineLayout(device, &render_pipeline.bind_group_layout);
   else
     renderPipelineDescriptor.layout = MakeBasicPipelineLayout(device, nullptr);
   renderPipelineDescriptor.primitiveTopology =
@@ -906,8 +897,8 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   ::dawn::RenderPassEncoder pass =
       encoder.BeginRenderPass(renderPassDescriptor);
   pass.SetPipeline(pipeline);
-  if (render_pipeline->hasBinding) {
-    pass.SetBindGroup(0, render_pipeline->bindGroup, 0, nullptr);
+  if (render_pipeline->bind_group) {
+    pass.SetBindGroup(0, render_pipeline->bind_group, 0, nullptr);
   }
   pass.SetVertexBuffers(0, 1, &render_pipeline->vertex_buffer,
                         vertexBufferOffsets);
@@ -968,13 +959,12 @@ Result EngineDawn::AttachBuffersAndTextures(
 
   // First make the Dawn color attachment textures that the render pipeline
   // will write into.
-  if (!ft_is_created_) {
+  if (!fb_texture_) {
     result = MakeTexture(*device_, fb_format, width, height, &fb_texture_);
     if (!result.IsSuccess())
       return result;
     render_pipeline->fb_texture = fb_texture_;
     texture_view_ = render_pipeline->fb_texture.CreateDefaultView();
-    ft_is_created_ = true;
   } else {
     render_pipeline->fb_texture = fb_texture_;
   }
@@ -982,12 +972,11 @@ Result EngineDawn::AttachBuffersAndTextures(
   // Now create the Dawn buffer to hold the framebuffer contents, but on the
   // host side.  This has to match dimensions of the framebuffer, but also
   // be linearly addressible by the CPU.
-  if (!fb_is_created_) {
+  if (!fb_buffer_) {
     result = MakeFramebufferBuffer(*device_, &fb_buffer_, size);
     if (!result.IsSuccess())
       return result;
     render_pipeline->fb_buffer = fb_buffer_;
-    fb_is_created_ = true;
   } else {
     render_pipeline->fb_buffer = fb_buffer_;
   }
@@ -995,7 +984,7 @@ Result EngineDawn::AttachBuffersAndTextures(
   // Attach depth-stencil texture
   auto* depthBuffer = render_pipeline->pipeline->GetDepthBuffer().buffer;
   if (depthBuffer) {
-    if (!ds_is_created_) {
+    if (!depth_stencil_texture_) {
       auto* amber_depth_stencil_format = depthBuffer->GetFormat();
       if (!amber_depth_stencil_format)
         return Result("The depth/stencil attachment has no format!");
@@ -1010,7 +999,6 @@ Result EngineDawn::AttachBuffersAndTextures(
       if (!result.IsSuccess())
         return result;
       render_pipeline->depth_stencil_texture = depth_stencil_texture_;
-      ds_is_created_ = true;
     } else {
       render_pipeline->depth_stencil_texture = depth_stencil_texture_;
     }
@@ -1026,7 +1014,7 @@ Result EngineDawn::AttachBuffersAndTextures(
 
   // TODO(sarahM0): rewrite this for more than one VERTEX_DATA.
   // Attach vertex buffers
-  for (auto &vertex_info : render_pipeline->pipeline->GetVertexBuffers()) {
+  for (auto& vertex_info : render_pipeline->pipeline->GetVertexBuffers()) {
     render_pipeline->vertex_buffer = CreateBufferFromData(
         *device_, vertex_info.buffer->ValuePtr(),
         vertex_info.buffer->GetSizeInBytes(), ::dawn::BufferUsageBit::Vertex);
@@ -1040,7 +1028,7 @@ Result EngineDawn::AttachBuffersAndTextures(
   ::dawn::ShaderStageBit kAllStages =
       ::dawn::ShaderStageBit::Vertex | ::dawn::ShaderStageBit::Fragment;
   std::vector<BindingInitializationHelper> bindingInitalizerHelper;
-  std::vector<::dawn::BindGroupLayoutBinding> bindGroup;
+  std::vector<::dawn::BindGroupLayoutBinding> bindings;
 
   for (const auto& buf_info : render_pipeline->pipeline->GetBuffers()) {
     ::dawn::BufferUsageBit bufferUsage;
@@ -1074,18 +1062,18 @@ Result EngineDawn::AttachBuffersAndTextures(
     bglb.binding = buf_info.binding;
     bglb.visibility = kAllStages;
     bglb.type = bindingType;
-    bindGroup.push_back(bglb);
+    bindings.push_back(bglb);
 
     BindingInitializationHelper tempBinding = BindingInitializationHelper(
         buf_info.binding, buffer, 0, buf_info.buffer->GetSizeInBytes());
     bindingInitalizerHelper.push_back(tempBinding);
   }
 
-  if (bindGroup.size() > 0 && bindingInitalizerHelper.size() > 0) {
-    render_pipeline->bindGroupLayout = MakeBindGroupLayout(*device_, bindGroup);
-    render_pipeline->bindGroup = MakeBindGroup(
-        *device_, render_pipeline->bindGroupLayout, bindingInitalizerHelper);
-    render_pipeline->hasBinding = true;
+  if (bindings.size() > 0 && bindingInitalizerHelper.size() > 0) {
+    render_pipeline->bind_group_layout =
+        MakeBindGroupLayout(*device_, bindings);
+    render_pipeline->bind_group = MakeBindGroup(
+        *device_, render_pipeline->bind_group_layout, bindingInitalizerHelper);
   }
 
   return {};

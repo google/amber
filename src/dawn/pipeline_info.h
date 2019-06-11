@@ -50,13 +50,11 @@ struct RenderPipelineInfo {
   /// The buffer to which we will copy the rendered pixel values, for
   /// use on the host.
   ::dawn::Buffer fb_buffer;
-
   ::dawn::Buffer vertex_buffer;
   ::dawn::Buffer index_buffer;
 
-  bool hasBinding = false;
-  ::dawn::BindGroup bindGroup;
-  ::dawn::BindGroupLayout bindGroupLayout;
+  ::dawn::BindGroup bind_group;
+  ::dawn::BindGroupLayout bind_group_layout;
 };
 
 /// Stores information relating to a compute pipeline in Dawn.
