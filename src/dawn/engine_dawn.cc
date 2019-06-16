@@ -111,9 +111,9 @@ Result MakeTexture(const ::dawn::Device& device,
   return Result("Dawn: Failed to allocate a framebuffer texture");
 }
 
-// Creates a host-side buffer  of |size| for the framebuffer, and returns it
-// through |result_ptr|. The buffer will be used as a transfer destination and
-// for mapping-for-read.  Returns a result code.
+// Creates a host-side buffer  of |size| bytes for the framebuffer, and returns
+// it through |result_ptr|. The buffer will be used as a transfer destination
+// and for mapping-for-read.  Returns a result code.
 Result MakeFramebufferBuffer(const ::dawn::Device& device,
                              ::dawn::Buffer* result_ptr,
                              uint32_t size) {
