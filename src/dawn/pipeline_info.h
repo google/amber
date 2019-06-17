@@ -50,19 +50,11 @@ struct RenderPipelineInfo {
   /// The buffer to which we will copy the rendered pixel values, for
   /// use on the host.
   ::dawn::Buffer fb_buffer;
-  /// The number of bytes between successive texels in framebuffer host-side
-  /// buffer.
-  uint32_t fb_texel_stride = 0;
-  /// The number of bytes between successive rows of texels in framebuffer
-  /// host-side buffer.
-  uint32_t fb_row_stride = 0;
-  /// The number of rows in the framebuffer.
-  uint32_t fb_num_rows = 0;
-  /// The number of data bytes in the framebuffer host-side buffer.
-  uint32_t fb_size = 0;
+  ::dawn::Buffer vertex_buffer;
+  ::dawn::Buffer index_buffer;
 
-  // TODO(dneto): Record index data
-  // TODO(dneto): Record buffer data
+  ::dawn::BindGroup bind_group;
+  ::dawn::BindGroupLayout bind_group_layout;
 };
 
 /// Stores information relating to a compute pipeline in Dawn.
