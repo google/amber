@@ -45,6 +45,53 @@ static const uint32_t kMaxColorAttachments = 4u;
 static const uint32_t kMaxVertexInputs = 16u;
 static const uint32_t kMaxVertexAttributes = 16u;
 
+// A DS for creating and setting the defaults for VertexInputDescriptor
+// Copied from Dawn utils source code.
+struct ComboVertexInputDescriptor {
+  ComboVertexInputDescriptor() {
+    ::dawn::VertexInputDescriptor* descriptor =
+        reinterpret_cast<::dawn::VertexInputDescriptor*>(this);
+
+    descriptor->indexFormat = ::dawn::IndexFormat::Uint16;
+    descriptor->bufferCount = 0;
+    descriptor->nextInChain = nullptr;
+
+    // Fill the default values for vertexBuffers and vertexAttributes in
+    // buffers.
+    ::dawn::VertexAttributeDescriptor vertexAttribute;
+    vertexAttribute.shaderLocation = 0;
+    vertexAttribute.offset = 0;
+    vertexAttribute.format = ::dawn::VertexFormat::Float;
+    for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
+      cAttributes[i] = vertexAttribute;
+    }
+    for (uint32_t i = 0; i < kMaxVertexBuffers; ++i) {
+      cBuffers[i].stride = 0;
+      cBuffers[i].stepMode = ::dawn::InputStepMode::Vertex;
+      cBuffers[i].attributeCount = 0;
+      cBuffers[i].attributes = nullptr;
+    }
+    // cBuffers[i].attributes points to somewhere in cAttributes.
+    // cBuffers[0].attributes points to &cAttributes[0] by default. Assuming
+    // cBuffers[0] has two attributes, then cBuffers[1].attributes should
+    // point to &cAttributes[2]. Likewise, if cBuffers[1] has 3 attributes,
+    // then cBuffers[2].attributes should point to &cAttributes[5].
+    cBuffers[0].attributes = &cAttributes[0];
+    descriptor->buffers = &cBuffers[0];
+  }
+
+  static const uint32_t kMaxVertexBuffers = 16u;
+  static const uint32_t kMaxVertexBufferStride = 2048u;
+  const void* nextInChain = nullptr;
+  ::dawn::IndexFormat indexFormat;
+  uint32_t bufferCount;
+  ::dawn::VertexBufferDescriptor const* buffers;
+
+  std::array<::dawn::VertexBufferDescriptor, kMaxVertexBuffers> cBuffers;
+  std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
+      cAttributes;
+};
+
 // This structure is a container for a few variables that are created during
 // CreateRenderPipelineDescriptor and CreateRenderPassDescriptor and we want to
 // make sure they don't go out of scope before we are done with them
@@ -57,8 +104,13 @@ struct DawnPipelineHelper {
                                     const ::dawn::TextureView texture_view);
   ::dawn::RenderPipelineDescriptor renderPipelineDescriptor;
   ::dawn::RenderPassDescriptor renderPassDescriptor;
+  ComboVertexInputDescriptor* vertexInputDescriptor;
+  ::dawn::RasterizationStateDescriptor cRasterizationState;
 
  private:
+  ::dawn::PipelineStageDescriptor fragmentStage;
+  ::dawn::PipelineStageDescriptor vertexStage;
+
   ::dawn::RenderPassColorAttachmentDescriptor*
       colorAttachmentsInfoPtr[kMaxColorAttachments];
   ::dawn::RenderPassDepthStencilAttachmentDescriptor depthStencilAttachmentInfo;
@@ -67,17 +119,9 @@ struct DawnPipelineHelper {
   std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments> colorStates;
   ::dawn::DepthStencilStateDescriptor depthStencilState;
   ::dawn::ColorStateDescriptor colorStatesDescriptor[kMaxColorAttachments];
-  ::dawn::InputStateDescriptor tempInputState = {};
-  ::dawn::PipelineStageDescriptor fragmentStage;
-  ::dawn::PipelineStageDescriptor vertexStage;
-  ::dawn::StencilStateFaceDescriptor stencilFace;
-  ::dawn::VertexInputDescriptor vertexInput;
-  std::array<::dawn::VertexInputDescriptor, kMaxVertexInputs> tempInputs;
-  std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
-      tempAttributes;
-  ::dawn::VertexAttributeDescriptor vertexAttribute;
-  ::dawn::BlendDescriptor blend;
   ::dawn::ColorStateDescriptor colorStateDescriptor;
+  ::dawn::StencilStateFaceDescriptor stencilFace;
+  ::dawn::BlendDescriptor blend;
   std::string vertexEntryPoint;
   std::string fragmentEntryPoint;
 };
@@ -146,7 +190,7 @@ struct MapResult {
 void HandleBufferMapCallback(DawnBufferMapAsyncStatus status,
                              const void* data,
                              uint64_t dataLength,
-                             DawnCallbackUserdata userdata) {
+                             void* userdata) {
   MapResult& map_result = *reinterpret_cast<MapResult*>(userdata);
   switch (status) {
     case DAWN_BUFFER_MAP_ASYNC_STATUS_SUCCESS:
@@ -182,9 +226,10 @@ uint32_t Align(uint32_t value, size_t alignment) {
 // lost, for example. In the failure case, the |data| member will be null.
 MapResult MapBuffer(const ::dawn::Device& device, const ::dawn::Buffer& buf) {
   MapResult map_result;
-  buf.MapReadAsync(HandleBufferMapCallback,
-                   static_cast<DawnCallbackUserdata>(
-                       reinterpret_cast<uintptr_t>(&map_result)));
+
+  buf.MapReadAsync(
+      HandleBufferMapCallback,
+      reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&map_result)));
   device.Tick();
   // Wait until the callback has been processed.  Use an exponential backoff
   // interval, but cap it at one second intervals.  But never loop forever.
@@ -712,29 +757,29 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   renderPipelineDescriptor.fragmentStage = std::move(&fragmentStage);
 
   // Set defaults for the input state descriptors.
-  tempInputState.indexFormat = ::dawn::IndexFormat::Uint32;
-  // Fill the default values for vertexInput.
-  vertexInput.inputSlot = 0;
-  vertexInput.stride = 0;
-  vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
-  for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
-    tempInputs[i] = vertexInput;
+  vertexInputDescriptor = new ComboVertexInputDescriptor();
+  vertexInputDescriptor->bufferCount = render_pipeline.vertex_buffer.size();
+  for (unsigned int i = 0; i < render_pipeline.vertex_buffer.size(); ++i) {
+    vertexInputDescriptor->cBuffers[i].attributeCount = 1;
+    vertexInputDescriptor->cBuffers[i].stride = 4 * sizeof(float);
+    vertexInputDescriptor->cBuffers[i].attributes =
+        &vertexInputDescriptor->cAttributes[i];
+    vertexInputDescriptor->cAttributes[i].shaderLocation = i;
+    vertexInputDescriptor->cAttributes[i].format = ::dawn::VertexFormat::Float4;
   }
-  tempInputs[0].stride = 4 * sizeof(float);
-  tempInputState.inputs = std::move(&tempInputs[0]);
-  // Fill the default values for vertexAttribute.
-  vertexAttribute.shaderLocation = 0;
-  vertexAttribute.inputSlot = 0;
-  vertexAttribute.offset = 0;
-  vertexAttribute.format = ::dawn::VertexFormat::Float;
-  for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
-    tempAttributes[i] = vertexAttribute;
+  renderPipelineDescriptor.vertexInput =
+      reinterpret_cast<::dawn::VertexInputDescriptor*>(vertexInputDescriptor);
+
+  // Set defaults for the rasterization state descriptor.
+  {
+    cRasterizationState.frontFace = ::dawn::FrontFace::CCW;
+    cRasterizationState.cullMode = ::dawn::CullMode::None;
+
+    cRasterizationState.depthBias = 0;
+    cRasterizationState.depthBiasSlopeScale = 0.0;
+    cRasterizationState.depthBiasClamp = 0.0;
+    renderPipelineDescriptor.rasterizationState = &cRasterizationState;
   }
-  tempAttributes[0].format = ::dawn::VertexFormat::Float4;
-  tempInputState.attributes = &tempAttributes[0];
-  tempInputState.numAttributes = 1;
-  tempInputState.numInputs = 1;
-  renderPipelineDescriptor.inputState = &tempInputState;
 
   // Set defaults for the color state descriptors.
   renderPipelineDescriptor.colorStateCount = 1;
@@ -744,7 +789,7 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   colorStateDescriptor.format = fb_format;
   colorStateDescriptor.alphaBlend = blend;
   colorStateDescriptor.colorBlend = blend;
-  colorStateDescriptor.colorWriteMask = ::dawn::ColorWriteMask::All;
+  colorStateDescriptor.writeMask = ::dawn::ColorWriteMask::All;
   for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
     colorStatesDescriptor[i] = colorStateDescriptor;
     colorStates[i] = &colorStatesDescriptor[i];
@@ -786,9 +831,9 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
 
   depthStencilAttachmentInfo.clearDepth = render_pipeline.clear_depth_value;
   depthStencilAttachmentInfo.clearStencil = render_pipeline.clear_stencil_value;
-  depthStencilAttachmentInfo.depthLoadOp = ::dawn::LoadOp::Clear;
+  depthStencilAttachmentInfo.depthLoadOp = ::dawn::LoadOp::Load;
   depthStencilAttachmentInfo.depthStoreOp = ::dawn::StoreOp::Store;
-  depthStencilAttachmentInfo.stencilLoadOp = ::dawn::LoadOp::Clear;
+  depthStencilAttachmentInfo.stencilLoadOp = ::dawn::LoadOp::Load;
   depthStencilAttachmentInfo.stencilStoreOp = ::dawn::StoreOp::Store;
 
   renderPassDescriptor.colorAttachmentCount =
@@ -879,8 +924,9 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
       0.0f,
       1.0f,
   };
-  render_pipeline->vertex_buffer = CreateBufferFromData(
-      *device_, vertexData, sizeof(vertexData), ::dawn::BufferUsageBit::Vertex);
+  render_pipeline->vertex_buffer.push_back(
+      CreateBufferFromData(*device_, vertexData, sizeof(vertexData),
+                           ::dawn::BufferUsageBit::Vertex));
 
   DawnPipelineHelper helper;
   helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_);
@@ -900,7 +946,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   if (render_pipeline->bind_group) {
     pass.SetBindGroup(0, render_pipeline->bind_group, 0, nullptr);
   }
-  pass.SetVertexBuffers(0, 1, &render_pipeline->vertex_buffer,
+  pass.SetVertexBuffers(0, 1, render_pipeline->vertex_buffer.data(),
                         vertexBufferOffsets);
   pass.SetIndexBuffer(render_pipeline->index_buffer, 0);
   pass.DrawIndexed(6, 1, 0, 0, 0);
@@ -1015,9 +1061,9 @@ Result EngineDawn::AttachBuffersAndTextures(
   // TODO(sarahM0): rewrite this for more than one VERTEX_DATA.
   // Attach vertex buffers
   for (auto& vertex_info : render_pipeline->pipeline->GetVertexBuffers()) {
-    render_pipeline->vertex_buffer = CreateBufferFromData(
+    render_pipeline->vertex_buffer.push_back(CreateBufferFromData(
         *device_, vertex_info.buffer->ValuePtr(),
-        vertex_info.buffer->GetSizeInBytes(), ::dawn::BufferUsageBit::Vertex);
+        vertex_info.buffer->GetSizeInBytes(), ::dawn::BufferUsageBit::Vertex));
   }
 
   // Do not attach pushConstants
