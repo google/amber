@@ -964,7 +964,7 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
 
   // dummy index buffer for testing purposes
   static const uint32_t indexData[3 * 2] = {
-      0, 1, 2, 0, 2, 3,
+      0, 1, 2, 3, 4, 5,
   };
   render_pipeline->index_buffer = CreateBufferFromData(
       *device_, indexData, sizeof(indexData), ::dawn::BufferUsageBit::Index);
@@ -1007,7 +1007,7 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
     } else {
       helper.vertexAttribute.shaderLocation = 0;
       helper.vertexAttribute.inputSlot = 0;
-      helper.vertexAttribute.format = ::dawn::VertexFormat::Float4;
+      helper.vertexAttribute.format = ::dawn::VertexFormat::Float;
     }
     helper.tempAttributes[i] = helper.vertexAttribute;
   }
@@ -1016,7 +1016,6 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
 
   renderPipelineDescriptor->inputState = &helper.tempInputState;
   //////////////////////////////////////////////////////////////////////
-  // static const uint64_t zeroOffsets[1] = {0};
   static const uint64_t vertexBufferOffsets[1] = {0};
   const ::dawn::RenderPipeline pipeline =
       device_->CreateRenderPipeline(renderPipelineDescriptor);
@@ -1131,7 +1130,8 @@ Result EngineDawn::AttachBuffersAndTextures(
   // Attach index buffer
   if (render_pipeline->pipeline->GetIndexBuffer()) {
     render_pipeline->index_buffer = CreateBufferFromData(
-        *device_, render_pipeline->pipeline->GetIndexBuffer()->ValuePtr(),
+        *device_,
+        render_pipeline->pipeline->GetIndexBuffer()->ValuePtr()->data(),
         render_pipeline->pipeline->GetIndexBuffer()->GetSizeInBytes(),
         ::dawn::BufferUsageBit::Index);
   }
@@ -1139,7 +1139,7 @@ Result EngineDawn::AttachBuffersAndTextures(
   // Attach vertex buffers
   for (auto& vertex_info : render_pipeline->pipeline->GetVertexBuffers()) {
     render_pipeline->vertex_buffer.emplace_back(CreateBufferFromData(
-        *device_, vertex_info.buffer->ValuePtr(),
+        *device_, vertex_info.buffer->ValuePtr()->data(),
         vertex_info.buffer->GetSizeInBytes(), ::dawn::BufferUsageBit::Vertex));
   }
 

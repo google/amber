@@ -36,9 +36,7 @@ BUFFER position_buf DATA_TYPE vec4<float> DATA
 -1 -1 0 1
  1  1 0 1
  1 -1 0 1
-
 END
-
 
 BUFFER framebuffer FORMAT B8G8R8A8_UNORM
 
