@@ -37,6 +37,7 @@ class Parser : public amber::Parser {
   // amber::Parser
   Result Parse(const std::string& data) override;
 
+  /// Disables validation after parse.
   void SkipValidationForTest() { skip_validation_for_test_ = true; }
 
  private:

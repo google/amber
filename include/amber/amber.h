@@ -105,8 +105,10 @@ class Amber {
   Amber();
   ~Amber();
 
-  /// Parse the given |data| into the |recipe|.
-  amber::Result Parse(const std::string& data, amber::Recipe* recipe);
+  /// Parse the given |data| into the |recipe|. Perform validation if
+  /// |validate| set to true.
+  amber::Result Parse(const std::string& data, amber::Recipe* recipe,
+                      const bool validate = true);
 
   /// Determines whether the engine supports all features required by the
   /// |recipe|. Modifies the |recipe| by applying some of the |opts| to the

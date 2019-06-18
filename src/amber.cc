@@ -86,7 +86,9 @@ Amber::Amber() = default;
 
 Amber::~Amber() = default;
 
-amber::Result Amber::Parse(const std::string& input, amber::Recipe* recipe) {
+amber::Result Amber::Parse(const std::string& input,
+                           amber::Recipe* recipe,
+                           const bool validate) {
   if (!recipe)
     return Result("Recipe must be provided to Parse.");
 
@@ -95,6 +97,9 @@ amber::Result Amber::Parse(const std::string& input, amber::Recipe* recipe) {
     parser = MakeUnique<amberscript::Parser>();
   else
     parser = MakeUnique<vkscript::Parser>();
+
+  if (!validate)
+    parser->SkipValidationForTest();
 
   Result r = parser->Parse(input);
   if (!r.IsSuccess())

@@ -39,7 +39,12 @@ class Parser : public amber::Parser {
   // amber::Parser
   Result Parse(const std::string& data) override;
 
+  /// Disables validation after parse.
+  void SkipValidationForTest() { skip_validation_for_test_ = true; }
+
  private:
+  bool skip_validation_for_test_ = false;
+
   std::string make_error(const std::string& err);
   Result ToShaderType(const std::string& str, ShaderType* type);
   Result ToBufferType(const std::string& str, BufferType* type);
