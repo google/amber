@@ -170,28 +170,18 @@ Result Pipeline::Validate() const {
 Result Pipeline::ValidateGraphics() const {
   if (color_attachments_.empty())
     return Result("PIPELINE missing color attachment");
-  if (shaders_.empty())
-    return Result("graphics pipeline requires vertex and fragment shaders");
 
   bool found_vertex = false;
-  bool found_fragment = false;
   for (const auto& info : shaders_) {
     const auto* is = info.GetShader();
-    if (is->GetType() == kShaderTypeVertex)
+    if (is->GetType() == kShaderTypeVertex){
       found_vertex = true;
-    if (is->GetType() == kShaderTypeFragment)
-      found_fragment = true;
-    if (found_vertex && found_fragment)
       break;
+    }
   }
 
-  if (!found_vertex && !found_fragment)
-    return Result("graphics pipeline requires vertex and fragment shaders");
   if (!found_vertex)
     return Result("graphics pipeline requires a vertex shader");
-  if (!found_fragment)
-    return Result("graphics pipeline requires a fragment shader");
-
   return {};
 }
 
