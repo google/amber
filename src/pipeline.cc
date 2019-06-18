@@ -173,8 +173,8 @@ Result Pipeline::ValidateGraphics() const {
 
   bool found_vertex = false;
   for (const auto& info : shaders_) {
-    const auto* is = info.GetShader();
-    if (is->GetType() == kShaderTypeVertex) {
+    const auto* s = info.GetShader();
+    if (s->GetType() == kShaderTypeVertex) {
       found_vertex = true;
       break;
     }
