@@ -213,25 +213,6 @@ TEST_F(PipelineTest, GraphicsPipelineRequiresVertexAndFragmentShader) {
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
-TEST_F(PipelineTest, GraphicsPipelineMissingFragmentShader) {
-  Shader v(kShaderTypeVertex);
-  Shader g(kShaderTypeGeometry);
-
-  Pipeline p(PipelineType::kGraphics);
-  SetupColorAttachment(&p, 0);
-  SetupDepthAttachment(&p);
-
-  Result r = p.AddShader(&v, kShaderTypeVertex);
-  EXPECT_TRUE(r.IsSuccess()) << r.Error();
-
-  r = p.AddShader(&g, kShaderTypeGeometry);
-  EXPECT_TRUE(r.IsSuccess()) << r.Error();
-
-  r = p.Validate();
-  EXPECT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("graphics pipeline requires a fragment shader", r.Error());
-}
-
 TEST_F(PipelineTest, GraphicsPipelineMissingVertexShader) {
   Shader f(kShaderTypeFragment);
   Shader g(kShaderTypeGeometry);
@@ -249,33 +230,6 @@ TEST_F(PipelineTest, GraphicsPipelineMissingVertexShader) {
   r = p.Validate();
   EXPECT_FALSE(r.IsSuccess()) << r.Error();
   EXPECT_EQ("graphics pipeline requires a vertex shader", r.Error());
-}
-
-TEST_F(PipelineTest, GraphicsPipelineMissingVertexAndFragmentShader) {
-  Shader g(kShaderTypeGeometry);
-
-  Pipeline p(PipelineType::kGraphics);
-  SetupColorAttachment(&p, 0);
-  SetupDepthAttachment(&p);
-
-  Result r = p.AddShader(&g, kShaderTypeGeometry);
-  EXPECT_TRUE(r.IsSuccess()) << r.Error();
-
-  r = p.Validate();
-  EXPECT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("graphics pipeline requires vertex and fragment shaders",
-            r.Error());
-}
-
-TEST_F(PipelineTest, GraphicsPipelineWihoutShaders) {
-  Pipeline p(PipelineType::kGraphics);
-  SetupColorAttachment(&p, 0);
-  SetupDepthAttachment(&p);
-
-  Result r = p.Validate();
-  EXPECT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("graphics pipeline requires vertex and fragment shaders",
-            r.Error());
 }
 
 TEST_F(PipelineTest, ComputePipelineRequiresComputeShader) {
