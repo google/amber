@@ -15,9 +15,9 @@
 
 SHADER vertex vtex_shader GLSL
 #version 430
-layout(location = 0) in vec4 position;
+layout(location = 0) in vec3 position;
 void main() {
-  gl_Position = position;
+  gl_Position = vec4(position, 1.0);
 }
 END
 
@@ -29,13 +29,10 @@ void main() {
 }
 END
 
-BUFFER position_buf DATA_TYPE vec4<float> DATA
--1 -1 0 1
- 1  1 0 1
--1  1 0 1
--1 -1 0 1
- 1  1 0 1
- 1 -1 0 1
+BUFFER position_buf DATA_TYPE vec3<float> DATA
+-1  1 0
+-1 -1 0
+ 1  1 0
 END
 
 BUFFER framebuffer FORMAT B8G8R8A8_UNORM
@@ -50,5 +47,5 @@ PIPELINE graphics pipeline
 
 END
 
-RUN pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 6
+RUN pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 3
 EXPECT framebuffer IDX 0 0 SIZE 250 250 EQ_RGBA 255 0 0 255
