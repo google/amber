@@ -13,9 +13,9 @@ vars = {
   'googletest_revision': 'd5932506d6eed73ac80b9bcc47ed723c8c74eb1e',
   'lodepng_revision': 'ba9fc1f084f03b5fbf8c9a5df9448173f27544b1',
   'shaderc_revision': '53c776f776821bc037b31b8b3b79db2fa54b4ce7',
-  'spirv_headers_revision': '03a081524afabdde274d885880c2fef213e46a59',
-  'spirv_tools_revision': '07f80c4df1b0619ee484c38e79a7ad71f672ca14',
-  'swiftshader_revision': 'bb575d48d5f9f96cef08a5d23b0d51ce3c57ae1a',
+  'spirv_headers_revision': 'de99d4d834aeb51dd9f099baa285bd44fd04bb3d',
+  'spirv_tools_revision': '001e823b65345145bcaaeb94d39290b10f8661b3',
+  'swiftshader_revision': 'ef44b4402722658648ec9d10a76bd990776be1c0',
   'vulkan_headers_revision': '8e2c4cd554b644592a6d904f2c8000ebbd4aa77f',
   'vulkan_loader_revision': '15fa85d92454f7823febeb68b56038d427e2a7a4',
 }
