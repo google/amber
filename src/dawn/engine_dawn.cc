@@ -64,6 +64,7 @@ struct DawnPipelineHelper {
   std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
       tempAttributes;
   ::dawn::VertexAttributeDescriptor vertexAttribute;
+  ::amber::Buffer dummy_vertex_buffer;
 
  private:
   ::dawn::RenderPassColorAttachmentDescriptor*
@@ -497,6 +498,12 @@ Result GetDawnVertexFormat(const ::amber::Format& amber_format,
     case FormatType::kR32G32B32A32_SFLOAT:
       dawn_format = ::dawn::VertexFormat::Float4;
       break;
+    case FormatType::kR8G8_SNORM:
+      dawn_format = ::dawn::VertexFormat::Char2Norm;
+      break;
+    case FormatType::kR8G8B8A8_UNORM:
+      dawn_format = ::dawn::VertexFormat::UChar4Norm;
+      break;
     default:
       return Result(
           "Amber format " +
@@ -730,45 +737,45 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
           "the render pipeline");
     }
   }
-  // // Fill the default values for vertexInput.
-  // for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
-  //   if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
-  //     vertexInput.inputSlot = i;
-  //     vertexInput.stride = render_pipeline.pipeline->GetVertexBuffers()[i]
-  //                              .buffer->GetTexelStride();
-  //     // TODO(sarahM0): what is InputStepMode
-  //     vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
-  //   } else {
-  //     vertexInput.inputSlot = 0;
-  //     vertexInput.stride = 0;
-  //     vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
-  //   }
-  //   tempInputs[i] = vertexInput;
-  // }
-  // tempInputState.numInputs = render_pipeline.vertex_buffer.size();
-  // tempInputState.inputs = tempInputs.data();
-  // tempInputState.indexFormat = ::dawn::IndexFormat::Uint32;
+  // Fill the default values for vertexInput.
+  for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
+    if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
+      vertexInput.inputSlot = i;
+      vertexInput.stride = render_pipeline.pipeline->GetVertexBuffers()[i]
+                               .buffer->GetTexelStride();
+      // TODO(sarahM0): what is InputStepMode
+      vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
+    } else {
+      vertexInput.inputSlot = 0;
+      vertexInput.stride = 0;
+      vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
+    }
+    tempInputs[i] = vertexInput;
+  }
+  tempInputState.numInputs = render_pipeline.vertex_buffer.size();
+  tempInputState.inputs = tempInputs.data();
+  tempInputState.indexFormat = ::dawn::IndexFormat::Uint32;
 
-  // // Fill the default values for vertexAttribute.
-  // vertexAttribute.offset = 0;
-  // for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
-  //   if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
-  //     vertexAttribute.shaderLocation = i;
-  //     vertexAttribute.inputSlot = i;
-  //     auto* amber_format =
-  //         render_pipeline.pipeline->GetVertexBuffers()[i].buffer->GetFormat();
-  //     GetDawnVertexFormat(*amber_format, &vertexAttribute.format);
-  //   } else {
-  //     vertexAttribute.shaderLocation = 0;
-  //     vertexAttribute.inputSlot = 0;
-  //     vertexAttribute.format = ::dawn::VertexFormat::Float;
-  //   }
-  //   tempAttributes[i] = vertexAttribute;
-  // }
-  // tempInputState.numAttributes = render_pipeline.vertex_buffer.size();
-  // tempInputState.attributes = tempAttributes.data();
-  // // Set input state descriptors, assuming: #inputs == #attributes.
-  // renderPipelineDescriptor.inputState = &tempInputState;
+  // Fill the default values for vertexAttribute.
+  vertexAttribute.offset = 0;
+  for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
+    if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
+      vertexAttribute.shaderLocation = i;
+      vertexAttribute.inputSlot = i;
+      auto* amber_format =
+          render_pipeline.pipeline->GetVertexBuffers()[i].buffer->GetFormat();
+      GetDawnVertexFormat(*amber_format, &vertexAttribute.format);
+    } else {
+      vertexAttribute.shaderLocation = 0;
+      vertexAttribute.inputSlot = 0;
+      vertexAttribute.format = ::dawn::VertexFormat::Float;
+    }
+    tempAttributes[i] = vertexAttribute;
+  }
+  tempInputState.numAttributes = render_pipeline.vertex_buffer.size();
+  tempInputState.attributes = tempAttributes.data();
+  // Set input state descriptors, assuming: #inputs == #attributes.
+  renderPipelineDescriptor.inputState = &tempInputState;
   // Set defaults for the vertex stage descriptor.
   vertexStage.module = render_pipeline.vertex_shader;
   vertexStage.entryPoint = vertexEntryPoint.c_str();
@@ -926,33 +933,36 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
       CreateBufferFromData(*device_, vertexData, sizeof(vertexData),
                            ::dawn::BufferUsageBit::Vertex));
 
-  // // create and attach a vertex buffer to the pipeline
-  // {
-  //   std::vector<Value> values(8);
-  //   // Bottom left
-  //   values[0].SetDoubleValue(static_cast<double>(x));
-  //   values[1].SetDoubleValue(static_cast<double>(y + rectangleHeight));
-  //   // Top left
-  //   values[2].SetDoubleValue(static_cast<double>(x));
-  //   values[3].SetDoubleValue(static_cast<double>(y));
-  //   // Bottom right
-  //   values[4].SetDoubleValue(static_cast<double>(x + rectangleWidth));
-  //   values[5].SetDoubleValue(static_cast<double>(y + rectangleHeight));
-  //   // Top right
-  //   values[6].SetDoubleValue(static_cast<double>(x + rectangleWidth));
-  //   values[7].SetDoubleValue(static_cast<double>(y));
+  // create and attach a vertex buffer to the pipeline
 
-  //   auto format = MakeUnique<Format>();
-  //   format->SetFormatType(FormatType::kR32G32_SFLOAT);
-  //   format->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
-  //   format->AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
+  std::vector<Value> values(8);
+  // Bottom left
+  values[0].SetDoubleValue(static_cast<double>(x));
+  values[1].SetDoubleValue(static_cast<double>(y + rectangleHeight));
+  // Top left
+  values[2].SetDoubleValue(static_cast<double>(x));
+  values[3].SetDoubleValue(static_cast<double>(y));
+  // Bottom right
+  values[4].SetDoubleValue(static_cast<double>(x + rectangleWidth));
+  values[5].SetDoubleValue(static_cast<double>(y + rectangleHeight));
+  // Top right
+  values[6].SetDoubleValue(static_cast<double>(x + rectangleWidth));
+  values[7].SetDoubleValue(static_cast<double>(y));
 
-  //   auto buf = MakeUnique<Buffer>();
-  //   buf->SetFormat(std::move(format));
-  //   buf->SetData(std::move(values));
-  //   buf->SetBufferType(BufferType::kVertex);
-  //   render_pipeline->pipeline->AddVertexBuffer(buf.get(), 0);
-  // }
+  auto format = MakeUnique<Format>();
+  format->SetFormatType(FormatType::kR32G32B32A32_SFLOAT);
+  format->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
+  format->AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
+  format->AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 32);
+  format->AddComponent(FormatComponentType::kA, FormatMode::kSFloat, 32);
+
+  uint32_t location = render_pipeline->pipeline->GetVertexBuffers().size();
+  auto buffer = MakeUnique<Buffer>(BufferType::kVertex);
+  buffer->SetName("Vertices" + std::to_string(location - 1));
+  auto* buf = buffer.get();
+  buffer->SetFormat(std::move(format));
+  buffer->SetData(std::move(values));
+  render_pipeline->pipeline->AddVertexBuffer(buf, location);
 
   DawnPipelineHelper helper;
   helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_);
@@ -961,46 +971,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
       &helper.renderPipelineDescriptor;
   ::dawn::RenderPassDescriptor* renderPassDescriptor =
       &helper.renderPassDescriptor;
-  // //////////////////////////////////////////////////////////////////////
-  // // Set defaults for the input state descriptors, assuming:
-  // // #inputs == #attributes.
 
-  // Fill the default values for vertexInput.
-  for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
-    if (i < render_pipeline->vertex_buffer.size()) {
-      helper.vertexInput.inputSlot = i;
-      helper.vertexInput.stride = 4 * sizeof(float);
-      helper.vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
-    } else {
-      helper.vertexInput.inputSlot = 0;
-      helper.vertexInput.stride = 0;
-      helper.vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
-    }
-    helper.tempInputs[i] = helper.vertexInput;
-  }
-  helper.tempInputState.numInputs = render_pipeline->vertex_buffer.size();
-  helper.tempInputState.inputs = helper.tempInputs.data();
-  helper.tempInputState.indexFormat = ::dawn::IndexFormat::Uint32;
-
-  // Fill the default values for vertexAttribute.
-  helper.vertexAttribute.offset = 0;
-  for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
-    if (i < render_pipeline->vertex_buffer.size()) {
-      helper.vertexAttribute.shaderLocation = i;
-      helper.vertexAttribute.inputSlot = i;
-      helper.vertexAttribute.format = ::dawn::VertexFormat::Float4;
-    } else {
-      helper.vertexAttribute.shaderLocation = 0;
-      helper.vertexAttribute.inputSlot = 0;
-      helper.vertexAttribute.format = ::dawn::VertexFormat::Float;
-    }
-    helper.tempAttributes[i] = helper.vertexAttribute;
-  }
-  helper.tempInputState.numAttributes = render_pipeline->vertex_buffer.size();
-  helper.tempInputState.attributes = helper.tempAttributes.data();
-
-  renderPipelineDescriptor->inputState = &helper.tempInputState;
-  //////////////////////////////////////////////////////////////////////
   const ::dawn::RenderPipeline pipeline =
       device_->CreateRenderPipeline(renderPipelineDescriptor);
   static const uint64_t vertexBufferOffsets[1] = {0};
@@ -1025,51 +996,6 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
 
   return map.result;
 }
-
-// Set defaults for the input state descriptors, assuming:
-// #inputs == #attributes.
-// Result DawnPipelineHelper::CreatInputState(
-//     const RenderPipelineInfo& render_pipeline) {
-//   // Fill the default values for vertexInput.
-//   for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
-//     if (i < render_pipeline->vertex_buffer.size()) {
-//       helper.vertexInput.inputSlot = i;
-//       helper.vertexInput.stride =
-//           render_pipeline->pipeline->GetVertexBuffers()[i]
-//               .buffer->GetTexelStride();
-//       // TODO(sarahM0): what is InputStepMode
-//       helper.vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
-//     } else {
-//       helper.vertexInput.inputSlot = 0;
-//       helper.vertexInput.stride = 0;
-//       helper.vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
-//     }
-//     helper.tempInputs[i] = helper.vertexInput;
-//   }
-//   helper.tempInputState.numInputs = render_pipeline->vertex_buffer.size();
-//   helper.tempInputState.inputs = helper.tempInputs.data();
-//   helper.tempInputState.indexFormat = ::dawn::IndexFormat::Uint32;
-
-//   // Fill the default values for vertexAttribute.
-//   helper.vertexAttribute.offset = 0;
-//   for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
-//     if (i < render_pipeline->vertex_buffer.size()) {
-//       helper.vertexAttribute.shaderLocation = i;
-//       helper.vertexAttribute.inputSlot = i;
-//       auto* amber_format =
-//           render_pipeline->pipeline->GetVertexBuffers()[i].buffer->GetFormat();
-//       GetDawnVertexFormat(*amber_format, &helper.vertexAttribute.format);
-//     } else {
-//       helper.vertexAttribute.shaderLocation = 0;
-//       helper.vertexAttribute.inputSlot = 0;
-//       helper.vertexAttribute.format = ::dawn::VertexFormat::Float;
-//     }
-//     helper.tempAttributes[i] = helper.vertexAttribute;
-//   }
-//   helper.tempInputState.numAttributes =
-//   render_pipeline->vertex_buffer.size(); helper.tempInputState.attributes =
-//   helper.tempAttributes.data();
-// }
 
 Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
@@ -1100,9 +1026,7 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
       &helper.renderPipelineDescriptor;
   ::dawn::RenderPassDescriptor* renderPassDescriptor =
       &helper.renderPassDescriptor;
-  // //////////////////////////////////////////////////////////////////////
-  // renderPipelineDescriptor->inputState = &helper.tempInputState;
-  //////////////////////////////////////////////////////////////////////
+
   static const uint64_t vertexBufferOffsets[1] = {0};
   const ::dawn::RenderPipeline pipeline =
       device_->CreateRenderPipeline(renderPipelineDescriptor);
