@@ -51,7 +51,8 @@ static const uint32_t kMaxVertexAttributes = 16u;
 struct DawnPipelineHelper {
   Result CreateRenderPipelineDescriptor(
       const RenderPipelineInfo& render_pipeline,
-      const ::dawn::Device& device);
+      const ::dawn::Device& device,
+      const bool isDrawRectCommand);
   Result CreateRenderPassDescriptor(const RenderPipelineInfo& render_pipeline,
                                     const ::dawn::Device& device,
                                     const ::dawn::TextureView texture_view);
@@ -64,7 +65,6 @@ struct DawnPipelineHelper {
   std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
       tempAttributes;
   ::dawn::VertexAttributeDescriptor vertexAttribute;
-  ::amber::Buffer dummy_vertex_buffer;
 
  private:
   ::dawn::RenderPassColorAttachmentDescriptor*
@@ -506,9 +506,31 @@ Result GetDawnVertexFormat(const ::amber::Format& amber_format,
       break;
     default:
       return Result(
-          "Amber format " +
+          "Amber vertex format " +
           std::to_string(static_cast<uint32_t>(amber_format.GetFormatType())) +
           " is invalid for Dawn or is not supported in amber-dawn");
+  }
+  return {};
+}
+
+// Converts an Amber format to a Dawn Index format, and sends the result out
+// through |dawn_format_ptr|.  If the conversion fails, return an error
+// result.
+Result GetDawnIndexFormat(const ::amber::Format& amber_format,
+                          ::dawn::IndexFormat* dawn_format_ptr) {
+  ::dawn::IndexFormat& dawn_format = *dawn_format_ptr;
+  switch (amber_format.GetFormatType()) {
+    case FormatType::kR16_UINT:
+      dawn_format = ::dawn::IndexFormat::Uint16;
+      break;
+    case FormatType::kR32_UINT:
+      dawn_format = ::dawn::IndexFormat::Uint32;
+      break;
+    default:
+      return Result(
+          "Amber index format " +
+          std::to_string(static_cast<uint32_t>(amber_format.GetFormatType())) +
+          " is invalid for Dawn");
   }
   return {};
 }
@@ -689,7 +711,8 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
 
 Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     const RenderPipelineInfo& render_pipeline,
-    const ::dawn::Device& device) {
+    const ::dawn::Device& device,
+    const bool isDrawRectCommand) {
   Result result;
 
   auto* amber_format =
@@ -738,13 +761,24 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     }
   }
   // Fill the default values for vertexInput.
+  // assuming #inputs = #attributes
+  // if isDrawRectCommand == true ignore index/vertex buffers that are are
+  // attached to the pipeline and attach one buffer with format of Float4  and
+  // 4*sizeof(float) stride (format and stride of the buffer that we create in
+  // DoDrawRect)
+  int num_inputs = 0;
   for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
-    if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
+    if (isDrawRectCommand && i == 0) {
+      vertexInput.inputSlot = i;
+      vertexInput.stride = 4 * sizeof(float);
+      vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
+      num_inputs = 1;
+    } else if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
       vertexInput.inputSlot = i;
       vertexInput.stride = render_pipeline.pipeline->GetVertexBuffers()[i]
                                .buffer->GetTexelStride();
-      // TODO(sarahM0): what is InputStepMode
       vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
+      num_inputs = render_pipeline.pipeline->GetVertexBuffers().size();
     } else {
       vertexInput.inputSlot = 0;
       vertexInput.stride = 0;
@@ -752,19 +786,33 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     }
     tempInputs[i] = vertexInput;
   }
-  tempInputState.numInputs = render_pipeline.vertex_buffer.size();
+  tempInputState.numInputs = num_inputs;
   tempInputState.inputs = tempInputs.data();
-  tempInputState.indexFormat = ::dawn::IndexFormat::Uint32;
-
+  if (render_pipeline.pipeline->GetIndexBuffer()) {
+    auto* amber_index_format =
+        render_pipeline.pipeline->GetIndexBuffer()->GetFormat();
+    GetDawnIndexFormat(*amber_index_format, &tempInputState.indexFormat);
+    if (!result.IsSuccess())
+      return result;
+  } else {
+    tempInputState.indexFormat = ::dawn::IndexFormat::Uint32;
+  }
   // Fill the default values for vertexAttribute.
   vertexAttribute.offset = 0;
   for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
-    if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
+    if (isDrawRectCommand && i == 0) {
       vertexAttribute.shaderLocation = i;
       vertexAttribute.inputSlot = i;
-      auto* amber_format =
+      vertexAttribute.format = ::dawn::VertexFormat::Float4;
+    } else if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
+      vertexAttribute.shaderLocation = i;
+      vertexAttribute.inputSlot = i;
+      auto* amber_vertex_format =
           render_pipeline.pipeline->GetVertexBuffers()[i].buffer->GetFormat();
-      GetDawnVertexFormat(*amber_format, &vertexAttribute.format);
+      result =
+          GetDawnVertexFormat(*amber_vertex_format, &vertexAttribute.format);
+      if (!result.IsSuccess())
+        return result;
     } else {
       vertexAttribute.shaderLocation = 0;
       vertexAttribute.inputSlot = 0;
@@ -772,9 +820,9 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     }
     tempAttributes[i] = vertexAttribute;
   }
-  tempInputState.numAttributes = render_pipeline.vertex_buffer.size();
+  tempInputState.numAttributes = num_inputs;
   tempInputState.attributes = tempAttributes.data();
-  // Set input state descriptors, assuming: #inputs == #attributes.
+  // Set input state descriptors
   renderPipelineDescriptor.inputState = &tempInputState;
   // Set defaults for the vertex stage descriptor.
   vertexStage.module = render_pipeline.vertex_shader;
@@ -904,7 +952,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   static const uint32_t indexData[3 * 2] = {
       0, 1, 2, 0, 2, 3,
   };
-  render_pipeline->index_buffer = CreateBufferFromData(
+  auto index_buffer = CreateBufferFromData(
       *device_, indexData, sizeof(indexData), ::dawn::BufferUsageBit::Index);
 
   const float vertexData[4 * 4] = {
@@ -929,43 +977,12 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
       0.0f,
       1.0f,
   };
-  render_pipeline->vertex_buffer.emplace_back(
-      CreateBufferFromData(*device_, vertexData, sizeof(vertexData),
-                           ::dawn::BufferUsageBit::Vertex));
 
-  // create and attach a vertex buffer to the pipeline
-
-  std::vector<Value> values(8);
-  // Bottom left
-  values[0].SetDoubleValue(static_cast<double>(x));
-  values[1].SetDoubleValue(static_cast<double>(y + rectangleHeight));
-  // Top left
-  values[2].SetDoubleValue(static_cast<double>(x));
-  values[3].SetDoubleValue(static_cast<double>(y));
-  // Bottom right
-  values[4].SetDoubleValue(static_cast<double>(x + rectangleWidth));
-  values[5].SetDoubleValue(static_cast<double>(y + rectangleHeight));
-  // Top right
-  values[6].SetDoubleValue(static_cast<double>(x + rectangleWidth));
-  values[7].SetDoubleValue(static_cast<double>(y));
-
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR32G32B32A32_SFLOAT);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 32);
-  format->AddComponent(FormatComponentType::kA, FormatMode::kSFloat, 32);
-
-  uint32_t location = render_pipeline->pipeline->GetVertexBuffers().size();
-  auto buffer = MakeUnique<Buffer>(BufferType::kVertex);
-  buffer->SetName("Vertices" + std::to_string(location - 1));
-  auto* buf = buffer.get();
-  buffer->SetFormat(std::move(format));
-  buffer->SetData(std::move(values));
-  render_pipeline->pipeline->AddVertexBuffer(buf, location);
+  auto vertex_buffer = CreateBufferFromData(
+      *device_, vertexData, sizeof(vertexData), ::dawn::BufferUsageBit::Vertex);
 
   DawnPipelineHelper helper;
-  helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_);
+  helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_, true);
   helper.CreateRenderPassDescriptor(*render_pipeline, *device_, texture_view_);
   ::dawn::RenderPipelineDescriptor* renderPipelineDescriptor =
       &helper.renderPipelineDescriptor;
@@ -982,9 +999,8 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   if (render_pipeline->bind_group) {
     pass.SetBindGroup(0, render_pipeline->bind_group, 0, nullptr);
   }
-  pass.SetVertexBuffers(0, 1, render_pipeline->vertex_buffer.data(),
-                        vertexBufferOffsets);
-  pass.SetIndexBuffer(render_pipeline->index_buffer, 0);
+  pass.SetVertexBuffers(0, 1, &vertex_buffer, vertexBufferOffsets);
+  pass.SetIndexBuffer(index_buffer, 0);
   pass.DrawIndexed(6, 1, 0, 0, 0);
   pass.EndPass();
 
@@ -1020,7 +1036,7 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
     instance_count = 1;
 
   DawnPipelineHelper helper;
-  helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_);
+  helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_, false);
   helper.CreateRenderPassDescriptor(*render_pipeline, *device_, texture_view_);
   ::dawn::RenderPipelineDescriptor* renderPipelineDescriptor =
       &helper.renderPipelineDescriptor;
