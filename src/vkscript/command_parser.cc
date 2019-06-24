@@ -615,6 +615,10 @@ Result CommandParser::ProcessSSBO() {
     if (!r.IsSuccess())
       return r;
 
+    // Resize the buffer so we'll know the max size
+    if (buf->ElementCount() < values.size())
+      buf->SetElementCount(values.size());
+
     cmd->SetValues(std::move(values));
 
   } else {
