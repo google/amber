@@ -535,6 +535,35 @@ Result GetDawnIndexFormat(const ::amber::Format& amber_format,
   return {};
 }
 
+// Converts an Amber topology to a Dawn topology, and sends the result out
+// through |dawn_topology_ptr|. It the conversion fails, return an error result.
+Result GetDawnTopology(const ::amber::Topology& amber_topology,
+                       ::dawn::PrimitiveTopology* dawn_topology_ptr) {
+  ::dawn::PrimitiveTopology& dawn_topology = *dawn_topology_ptr;
+  switch (amber_topology) {
+    case Topology::kPointList:
+      dawn_topology = ::dawn::PrimitiveTopology::PointList;
+      break;
+    case Topology::kLineList:
+      dawn_topology = ::dawn::PrimitiveTopology::LineList;
+      break;
+    case Topology::kLineStrip:
+      dawn_topology = ::dawn::PrimitiveTopology::LineStrip;
+      break;
+    case Topology::kTriangleList:
+      dawn_topology = ::dawn::PrimitiveTopology::TriangleList;
+      break;
+    case Topology::kTriangleStrip:
+      dawn_topology = ::dawn::PrimitiveTopology::TriangleStrip;
+      break;
+    default:
+      return Result("Amber PrimitiveTopology " +
+                    std::to_string(static_cast<uint32_t>(amber_topology)) +
+                    " is not supported in Dawn");
+  }
+  return {};
+}
+
 EngineDawn::EngineDawn() : Engine() {}
 
 EngineDawn::~EngineDawn() = default;
@@ -1014,6 +1043,8 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
 }
 
 Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
+  Result result;
+
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
   if (!render_pipeline)
     return Result("DrawArrays invoked on invalid or missing render pipeline");
@@ -1022,13 +1053,14 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
     if (!render_pipeline->index_buffer)
       return Result("DrawArrays: Draw indexed is used without given indices");
   } else {
-    std::vector<uint32_t> indexData(command->GetVertexCount());
-    for (uint32_t i = 0; i < command->GetVertexCount(); i++) {
-      indexData[i] = i;
+    std::vector<uint32_t> indexData;
+    for (uint32_t i = 0;
+         i < command->GetFirstVertexIndex() + command->GetVertexCount(); i++) {
+      indexData.emplace_back(i);
     }
-    render_pipeline->index_buffer =
-        CreateBufferFromData(*device_, indexData.data(), sizeof(indexData),
-                             ::dawn::BufferUsageBit::Index);
+    render_pipeline->index_buffer = CreateBufferFromData(
+        *device_, indexData.data(), indexData.size() * sizeof(uint32_t),
+        ::dawn::BufferUsageBit::Index);
   }
 
   uint32_t instance_count = command->GetInstanceCount();
@@ -1036,12 +1068,24 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
     instance_count = 1;
 
   DawnPipelineHelper helper;
-  helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_, false);
-  helper.CreateRenderPassDescriptor(*render_pipeline, *device_, texture_view_);
+  result =
+      helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_, false);
+  if (!result.IsSuccess())
+    return result;
+  result = helper.CreateRenderPassDescriptor(*render_pipeline, *device_,
+                                             texture_view_);
+  if (!result.IsSuccess())
+    return result;
+
   ::dawn::RenderPipelineDescriptor* renderPipelineDescriptor =
       &helper.renderPipelineDescriptor;
   ::dawn::RenderPassDescriptor* renderPassDescriptor =
       &helper.renderPassDescriptor;
+
+  result = GetDawnTopology(command->GetTopology(),
+                           &renderPipelineDescriptor->primitiveTopology);
+  if (!result.IsSuccess())
+    return result;
 
   static const uint64_t vertexBufferOffsets[1] = {0};
   const ::dawn::RenderPipeline pipeline =
@@ -1064,12 +1108,11 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   // TODO(sarahM0): figure out what this offset means
   pass.SetIndexBuffer(render_pipeline->index_buffer, /* buffer */
                       0);                            /*offset*/
-  pass.DrawIndexed(
-      command->GetVertexCount(),                            /* indexCount */
-      instance_count,                                       /* instanceCount */
-      0,                                                    /* firstIndex */
-      static_cast<int32_t>(command->GetFirstVertexIndex()), /* baseVertex */
-      0 /* firstInstance */);
+  pass.DrawIndexed(command->GetVertexCount(),        /* indexCount */
+                   instance_count,                   /* instanceCount */
+                   command->GetFirstVertexIndex(),   /* firstIndex */
+                   0,                                /* baseVertex */
+                   0 /* firstInstance */);
 
   pass.EndPass();
   ::dawn::CommandBuffer commands = encoder.Finish();
