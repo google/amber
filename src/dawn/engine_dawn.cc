@@ -961,6 +961,10 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
   if (!render_pipeline)
     return Result("DrawRect invoked on invalid or missing render pipeline");
+  if (render_pipeline->vertex_buffers.size() > 1)
+    return Result(
+        "DrawRect invoked on a render pipeline with more than one "
+        "VERTEX_DATA attached");
 
   float x = command->GetX();
   float y = command->GetY();
@@ -1099,11 +1103,11 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   }
 
   // TODO(sarahM0): figure out what are startSlot, count and offsets
-  for (uint32_t i = 0; i < render_pipeline->vertex_buffer.size(); i++) {
-    pass.SetVertexBuffers(i,                                  /* startSlot */
-                          1,                                  /* count */
-                          &render_pipeline->vertex_buffer[i], /* buffer */
-                          vertexBufferOffsets);               /* offsets */
+  for (uint32_t i = 0; i < render_pipeline->vertex_buffers.size(); i++) {
+    pass.SetVertexBuffers(i,                                   /* startSlot */
+                          1,                                   /* count */
+                          &render_pipeline->vertex_buffers[i], /* buffer */
+                          vertexBufferOffsets);                /* offsets */
   }
   // TODO(sarahM0): figure out what this offset means
   pass.SetIndexBuffer(render_pipeline->index_buffer, /* buffer */
@@ -1220,7 +1224,7 @@ Result EngineDawn::AttachBuffersAndTextures(
 
   // Attach vertex buffers
   for (auto& vertex_info : render_pipeline->pipeline->GetVertexBuffers()) {
-    render_pipeline->vertex_buffer.emplace_back(CreateBufferFromData(
+    render_pipeline->vertex_buffers.emplace_back(CreateBufferFromData(
         *device_, vertex_info.buffer->ValuePtr()->data(),
         vertex_info.buffer->GetSizeInBytes(), ::dawn::BufferUsageBit::Vertex));
   }
