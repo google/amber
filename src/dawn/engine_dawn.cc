@@ -300,7 +300,8 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
   descriptor.usage = usage | ::dawn::BufferUsageBit::TransferDst;
 
   ::dawn::Buffer buffer = device.CreateBuffer(&descriptor);
-  buffer.SetSubData(0, size, reinterpret_cast<const uint8_t*>(data));
+  if (data != nullptr)
+    buffer.SetSubData(0, size, reinterpret_cast<const uint8_t*>(data));
   return buffer;
 }
 
@@ -932,8 +933,13 @@ Result EngineDawn::DoPatchParameterVertices(
   return Result("Dawn:DoPatch not implemented");
 }
 
-Result EngineDawn::DoBuffer(const BufferCommand*) {
-  return Result("Dawn:DoBuffer not implemented");
+Result EngineDawn::DoBuffer(const BufferCommand* command) {
+  ::dawn::Buffer* buffer = buffer_map_[command->GetBinding()];
+  buffer->SetSubData(
+      command->GetOffset(), command->GetBuffer()->GetSizeInBytes(),
+      reinterpret_cast<const uint8_t*>(command->GetValues().data()));
+  // return Result("Dawn:DoBuffer not implemented");
+  return {};
 }
 
 Result EngineDawn::AttachBuffersAndTextures(
@@ -1052,11 +1058,13 @@ Result EngineDawn::AttachBuffersAndTextures(
       }
     }
 
-    ::dawn::Buffer buffer =
+    buffers_.emplace_back(
         CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
                              buf_info.buffer->GetSizeInBytes(),
                              bufferUsage | ::dawn::BufferUsageBit::TransferSrc |
-                                 ::dawn::BufferUsageBit::TransferDst);
+                                 ::dawn::BufferUsageBit::TransferDst));
+
+    buffer_map_[buf_info.binding] = &buffers_.back();
 
     ::dawn::BindGroupLayoutBinding bglb;
     bglb.binding = buf_info.binding;
@@ -1064,8 +1072,9 @@ Result EngineDawn::AttachBuffersAndTextures(
     bglb.type = bindingType;
     bindings.push_back(bglb);
 
-    BindingInitializationHelper tempBinding = BindingInitializationHelper(
-        buf_info.binding, buffer, 0, buf_info.buffer->GetSizeInBytes());
+    BindingInitializationHelper tempBinding =
+        BindingInitializationHelper(buf_info.binding, buffers_.back(), 0,
+                                    buf_info.buffer->GetSizeInBytes());
     bindingInitalizerHelper.push_back(tempBinding);
   }
 
