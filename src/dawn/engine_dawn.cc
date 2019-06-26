@@ -941,14 +941,20 @@ Result EngineDawn::DoBuffer(const BufferCommand* command) {
   if (!render_pipeline)
     return Result("DoBuffer invoked on invalid or missing render pipeline");
   if (!command->IsSSBO() && !command->IsUniform())
-    return Result("DoBUfer not supported buffer type");
-
-  Buffer* amber_buffer = command->GetBuffer();
-  amber_buffer->SetDataWithOffset(command->GetValues(), command->GetOffset());
+    return Result("DoBuffer not supported buffer type");
 
   ::dawn::Buffer* dawn_buffer = buffer_map_[command->GetBinding()];
-  dawn_buffer->SetSubData(command->GetOffset(), amber_buffer->GetSizeInBytes(),
-                          amber_buffer->ValuePtr()->data());
+  if (dawn_buffer) {
+    Buffer* amber_buffer = command->GetBuffer();
+    if (amber_buffer) {
+      amber_buffer->SetDataWithOffset(command->GetValues(),
+                                      command->GetOffset());
+
+      dawn_buffer->SetSubData(command->GetOffset(),
+                              amber_buffer->GetSizeInBytes(),
+                              amber_buffer->ValuePtr()->data());
+    }
+  }
   return {};
 }
 
