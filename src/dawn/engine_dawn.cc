@@ -289,7 +289,7 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
   return map;
 }
 
-// creates a dawn buffer for TransferDst
+// creates a dawn buffer of |size| bytes with TransferDst and the given usage
 // copied from Dawn utils source code
 ::dawn::Buffer CreateBufferFromData(const ::dawn::Device& device,
                                     const void* data,
@@ -934,11 +934,21 @@ Result EngineDawn::DoPatchParameterVertices(
 }
 
 Result EngineDawn::DoBuffer(const BufferCommand* command) {
-  ::dawn::Buffer* buffer = buffer_map_[command->GetBinding()];
-  buffer->SetSubData(
-      command->GetOffset(), command->GetBuffer()->GetSizeInBytes(),
-      reinterpret_cast<const uint8_t*>(command->GetValues().data()));
-  // return Result("Dawn:DoBuffer not implemented");
+  Result result;
+
+  // TODO(SarahM0): Make this work for compute pipeline
+  RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
+  if (!render_pipeline)
+    return Result("DoBuffer invoked on invalid or missing render pipeline");
+  if (!command->IsSSBO() && !command->IsUniform())
+    return Result("DoBUfer not supported buffer type");
+
+  Buffer* amber_buffer = command->GetBuffer();
+  amber_buffer->SetDataWithOffset(command->GetValues(), command->GetOffset());
+
+  ::dawn::Buffer* dawn_buffer = buffer_map_[command->GetBinding()];
+  dawn_buffer->SetSubData(command->GetOffset(), amber_buffer->GetSizeInBytes(),
+                          amber_buffer->ValuePtr()->data());
   return {};
 }
 
