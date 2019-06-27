@@ -130,7 +130,6 @@ SUPPRESSIONS_DAWN = [
   "ssbo_with_graphics_pipeline.vkscript"
 ]
 
-
 class TestCase:
   def __init__(self, input_path, parse_only, use_dawn):
     self.input_path = input_path
@@ -173,7 +172,7 @@ class TestRunner:
     if tc.IsParseOnly():
       cmd += ['-p']
     if tc.IsUseDawn():
-      cmd += ['-e'] +  ['dawn']
+      cmd += ['-e', 'dawn']
     cmd += [tc.GetInputPath()]
 
     try:
