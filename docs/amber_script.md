@@ -297,7 +297,8 @@ vertex buffer minus the `START_IDX`.
 RUN {pipeline_name} _x_ _y_ _z_
 
 # Run the given |pipeline_name| which must be a `graphics` pipeline. The
-# rectangle at |x|, |y|, |width|x|height| will be rendered.
+# rectangle at |x|, |y|, |width|x|height| will be rendered. Ignores VERTEX_DATA
+# and INDEX_DATA on the given pipeline.
 RUN {pipeline_name} \
   DRAW_RECT POS _x_in_pixels_ _y_in_pixels_ \
   SIZE _width_in_pixels_ _height_in_pixels_
