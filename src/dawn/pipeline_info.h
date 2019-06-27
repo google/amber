@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "amber/result.h"
 #include "dawn/dawncpp.h"
@@ -50,7 +51,7 @@ struct RenderPipelineInfo {
   /// The buffer to which we will copy the rendered pixel values, for
   /// use on the host.
   ::dawn::Buffer fb_buffer;
-  ::dawn::Buffer vertex_buffer;
+  std::vector<::dawn::Buffer> vertex_buffers;
   ::dawn::Buffer index_buffer;
 
   ::dawn::BindGroup bind_group;
