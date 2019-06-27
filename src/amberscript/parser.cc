@@ -1005,6 +1005,11 @@ Result Parser::ParseRun() {
     if (!pipeline->IsGraphics())
       return Result("RUN command requires graphics pipeline");
 
+    if (pipeline->GetVertexBuffers().size() > 1)
+      return Result(
+          "RUN DRAW_RECT is not supported in a pipeline with more than one "
+          "vertex buffers attached");
+
     token = tokenizer_->NextToken();
     if (token->IsEOS() || token->IsEOL())
       return Result("RUN DRAW_RECT command requires parameters");
