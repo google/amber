@@ -52,7 +52,84 @@ SUPPRESSIONS = {
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber"
    ]
-}
+ }
+
+SUPPRESSIONS_DAWN = [
+  "compute_accumulated_ubo_definition.amber",
+  "compute_accumulated_ubo_definition.vkscript",
+  "compute_mat2x2.amber",
+  "compute_mat2x2.vkscript",
+  "compute_mat2x2float.vkscript",
+  "compute_mat2x3.vkscript",
+  "compute_mat2x3float.vkscript",
+  "compute_mat3x2.vkscript",
+  "compute_mat3x2float.vkscript",
+  "compute_mat3x3.vkscript",
+  "compute_mat3x3float.vkscript",
+  "compute_mat3x4.vkscript",
+  "compute_mat3x4float.vkscript",
+  "compute_mat4x3.vkscript",
+  "compute_mat4x3float.vkscript",
+  "compute_nothing.vkscript",
+  "compute_nothing_with_ssbo.vkscript",
+  "compute_probe_mat3.vkscript",
+  "compute_push_const_mat2x2.vkscript",
+  "compute_push_const_mat2x2float.vkscript",
+  "compute_push_const_mat2x3.vkscript",
+  "compute_push_const_mat2x3float.vkscript",
+  "compute_push_const_mat3x2.vkscript",
+  "compute_push_const_mat3x2float.vkscript",
+  "compute_push_const_mat3x3.vkscript",
+  "compute_push_const_mat3x3float.vkscript",
+  "compute_push_const_mat3x4.vkscript",
+  "compute_push_const_mat3x4float.vkscript",
+  "compute_push_const_mat4x3.vkscript",
+  "compute_push_const_mat4x3float.vkscript",
+  "compute_push_constant_and_ssbo.amber",
+  "compute_push_constant_and_ssbo.vkscript",
+  "compute_ssbo.vkscript",
+  "compute_ssbo_with_entrypoint_command.vkscript",
+  "compute_ssbo_with_tolerance.amber",
+  "compute_ssbo_with_tolerance.vkscript",
+  "compute_ssbo_without_probe.vkscript",
+  "compute_ubo_and_ssbo.vkscript",
+  "draw_array_after_draw_rect.vkscript",
+  "draw_rect_after_draw_array.vkscript",
+  "draw_rect_and_draw_array_mixed.vkscript",
+  "draw_rect_and_ortho.vkscript",
+  "draw_rect_multiple_color_attachment.amber",
+  "draw_rectangles.vkscript",
+  "draw_rectangles_once.vkscript",
+  "draw_rectangles_without_probe.vkscript",
+  "draw_triangle_list.amber",
+  "draw_triangle_list.vkscript",
+  "draw_triangle_list_in_r16g16b16a16_snorm_color_frame.vkscript",
+  "draw_triangle_list_in_r16g16b16a16_uint_color_frame.vkscript",
+  "draw_triangle_list_in_r32g32b32a32_sfloat_color_frame.vkscript",
+  "draw_triangle_list_in_r8g8b8a8_snorm_color_frame.vkscript",
+  "draw_triangle_list_in_r8g8b8a8_srgb_color_frame.vkscript",
+  "draw_triangle_list_using_geom_shader.vkscript",
+  "draw_triangle_list_using_tessellation.vkscript",
+  "draw_triangle_list_with_depth.vkscript",
+  "draw_triangle_list_with_index_buffer.vkscript",
+  "draw_triangle_list_with_index_buffer_and_vertex_offset.vkscript",
+  "draw_triangle_list_with_probe_point.vkscript",
+  "entry_point.amber",
+  "graphics_push_constants.amber",
+  "graphics_push_constants.vkscript",
+  "multiple_ssbo_update_with_graphics_pipeline.vkscript",
+  "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
+  "multiple_ubo_update_with_graphics_pipeline.vkscript",
+  "position_to_ssbo.amber",
+  "probe_no_compute_with_multiple_ssbo_commands.vkscript",
+  "probe_no_compute_with_ssbo.vkscript",
+  "repeat.amber",
+  "scratch_ssbo.vkscript",
+  "shader_specialization.amber",
+  "ssbo_subdata_size.vkscript",
+  "ssbo_with_graphics_pipeline.vkscript"
+]
+
 
 class TestCase:
   def __init__(self, input_path, parse_only, use_dawn):
@@ -69,7 +146,10 @@ class TestCase:
   def IsSuppressed(self):
     system = platform.system()
     if system in SUPPRESSIONS.keys():
-      return os.path.basename(self.input_path) in SUPPRESSIONS[system]
+      is_system_suppressed = os.path.basename(self.input_path) in SUPPRESSIONS[system]
+      is_dawn_suppressed = os.path.basename(self.input_path) in SUPPRESSIONS_DAWN
+      return is_system_suppressed | (self.use_dawn & is_dawn_suppressed)
+
     return False
 
   def IsParseOnly(self):
@@ -171,7 +251,7 @@ class TestRunner:
                       help='only parse test cases; do not execute')
     parser.add_option('--use-dawn',
                       action="store_true", default=False,
-                      help='Use dawn as the backend. Default is Vulkan.')
+                      help='Use dawn as the backend; Default is Vulkan')
 
     self.options, self.args = parser.parse_args()
 
