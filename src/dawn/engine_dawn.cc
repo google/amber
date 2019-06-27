@@ -52,7 +52,7 @@ struct DawnPipelineHelper {
   Result CreateRenderPipelineDescriptor(
       const RenderPipelineInfo& render_pipeline,
       const ::dawn::Device& device,
-      const bool isDrawRectCommand);
+      const bool ignore_vertex_and_Index_buffers);
   Result CreateRenderPassDescriptor(const RenderPipelineInfo& render_pipeline,
                                     const ::dawn::Device& device,
                                     const ::dawn::TextureView texture_view);
@@ -738,10 +738,15 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   return map.result;
 }
 
+// Creates a Dawn render pipeline descriptor for the given pipeline on the given
+// device. When |ignore_vertex_and_Index_buffers| is true, ignores the vertex
+// and index buffers attached to |render_pipeline| and instead configures the
+// resulting descriptor to have a single vertex buffer with an attribute format
+// of Float4 and input stride of 4*sizeof(float)
 Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     const RenderPipelineInfo& render_pipeline,
     const ::dawn::Device& device,
-    const bool isDrawRectCommand) {
+    const bool ignore_vertex_and_Index_buffers) {
   Result result;
 
   auto* amber_format =
@@ -791,27 +796,31 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   }
   // Fill the default values for vertexInput.
   // assuming #inputs = #attributes
-  // if isDrawRectCommand == true ignore index/vertex buffers that are are
-  // attached to the pipeline and attach one buffer with format of Float4  and
-  // 4*sizeof(float) stride (format and stride of the buffer that we create in
-  // DoDrawRect)
   int num_inputs = 0;
   for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
-    if (isDrawRectCommand && i == 0) {
-      vertexInput.inputSlot = i;
-      vertexInput.stride = 4 * sizeof(float);
-      vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
-      num_inputs = 1;
-    } else if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
-      vertexInput.inputSlot = i;
-      vertexInput.stride = render_pipeline.pipeline->GetVertexBuffers()[i]
-                               .buffer->GetTexelStride();
-      vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
-      num_inputs = render_pipeline.pipeline->GetVertexBuffers().size();
+    if (ignore_vertex_and_Index_buffers) {
+      if (i == 0) {
+        vertexInput.inputSlot = 0;
+        vertexInput.stride = 4 * sizeof(float);
+        vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
+        num_inputs = 1;
+      } else {
+        vertexInput.inputSlot = 0;
+        vertexInput.stride = 0;
+        vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
+      }
     } else {
-      vertexInput.inputSlot = 0;
-      vertexInput.stride = 0;
-      vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
+      if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
+        vertexInput.inputSlot = i;
+        vertexInput.stride = render_pipeline.pipeline->GetVertexBuffers()[i]
+                                 .buffer->GetTexelStride();
+        vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
+        num_inputs = render_pipeline.pipeline->GetVertexBuffers().size();
+      } else {
+        vertexInput.inputSlot = 0;
+        vertexInput.stride = 0;
+        vertexInput.stepMode = ::dawn::InputStepMode::Vertex;
+      }
     }
     tempInputs[i] = vertexInput;
   }
@@ -829,23 +838,31 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   // Fill the default values for vertexAttribute.
   vertexAttribute.offset = 0;
   for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
-    if (isDrawRectCommand && i == 0) {
-      vertexAttribute.shaderLocation = i;
-      vertexAttribute.inputSlot = i;
-      vertexAttribute.format = ::dawn::VertexFormat::Float4;
-    } else if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
-      vertexAttribute.shaderLocation = i;
-      vertexAttribute.inputSlot = i;
-      auto* amber_vertex_format =
-          render_pipeline.pipeline->GetVertexBuffers()[i].buffer->GetFormat();
-      result =
-          GetDawnVertexFormat(*amber_vertex_format, &vertexAttribute.format);
-      if (!result.IsSuccess())
-        return result;
+    if (ignore_vertex_and_Index_buffers) {
+      if (i == 0) {
+        vertexAttribute.shaderLocation = 0;
+        vertexAttribute.inputSlot = 0;
+        vertexAttribute.format = ::dawn::VertexFormat::Float4;
+      } else {
+        vertexAttribute.shaderLocation = 0;
+        vertexAttribute.inputSlot = 0;
+        vertexAttribute.format = ::dawn::VertexFormat::Float;
+      }
     } else {
-      vertexAttribute.shaderLocation = 0;
-      vertexAttribute.inputSlot = 0;
-      vertexAttribute.format = ::dawn::VertexFormat::Float;
+      if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
+        vertexAttribute.shaderLocation = i;
+        vertexAttribute.inputSlot = i;
+        auto* amber_vertex_format =
+            render_pipeline.pipeline->GetVertexBuffers()[i].buffer->GetFormat();
+        result =
+            GetDawnVertexFormat(*amber_vertex_format, &vertexAttribute.format);
+        if (!result.IsSuccess())
+          return result;
+      } else {
+        vertexAttribute.shaderLocation = 0;
+        vertexAttribute.inputSlot = 0;
+        vertexAttribute.format = ::dawn::VertexFormat::Float;
+      }
     }
     tempAttributes[i] = vertexAttribute;
   }
