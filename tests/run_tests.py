@@ -55,9 +55,10 @@ SUPPRESSIONS = {
 }
 
 class TestCase:
-  def __init__(self, input_path, parse_only):
+  def __init__(self, input_path, parse_only, use_dawn):
     self.input_path = input_path
     self.parse_only = parse_only
+    self.use_dawn = use_dawn
 
     self.results = {}
 
@@ -74,6 +75,9 @@ class TestCase:
   def IsParseOnly(self):
     return self.parse_only
 
+  def IsUseDawn(self):
+    return self.use_dawn
+
   def GetInputPath(self):
     return self.input_path
 
@@ -88,6 +92,8 @@ class TestRunner:
     cmd = [self.options.test_prog_path, '-q']
     if tc.IsParseOnly():
       cmd += ['-p']
+    if tc.IsUseDawn():
+      cmd += ['-e'] +  ['dawn']
     cmd += [tc.GetInputPath()]
 
     try:
@@ -117,6 +123,8 @@ class TestRunner:
         elif tc.IsExpectedFail() and result:
           print("Expected: " + tc.GetInputPath() + " to fail but passed.")
           self.failures.append(tc.GetInputPath())
+        else:
+          self.successes.append(tc.GetInputPath())
 
   def SummarizeResults(self):
     if len(self.failures) > 0:
@@ -125,6 +133,10 @@ class TestRunner:
       print '\nSummary of Failures:'
       for failure in self.failures:
         print failure
+
+      print '\nSummary of Successes:'
+      for success in self.successes:
+        print success
 
     if len(self.suppressed) > 0:
       self.suppressed.sort()
@@ -157,6 +169,9 @@ class TestRunner:
     parser.add_option('--parse-only',
                       action="store_true", default=False,
                       help='only parse test cases; do not execute')
+    parser.add_option('--use-dawn',
+                      action="store_true", default=False,
+                      help='Use dawn as the backend. Default is Vulkan.')
 
     self.options, self.args = parser.parse_args()
 
@@ -182,7 +197,7 @@ class TestRunner:
           print "Cannot find test file '%s'" % filename
           return 1
 
-        self.test_cases.append(TestCase(input_path, self.options.parse_only))
+        self.test_cases.append(TestCase(input_path, self.options.parse_only, self.options.use_dawn))
 
     else:
       for file_dir, _, filename_list in os.walk(self.options.test_dir):
@@ -191,8 +206,9 @@ class TestRunner:
             input_path = os.path.join(file_dir, input_filename)
             if os.path.isfile(input_path):
               self.test_cases.append(
-                  TestCase(input_path, self.options.parse_only))
+                  TestCase(input_path, self.options.parse_only, self.options.use_dawn))
 
+    self.successes = []
     self.failures = []
     self.suppressed = []
 
