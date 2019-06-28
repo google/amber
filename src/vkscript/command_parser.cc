@@ -257,7 +257,7 @@ Result CommandParser::ProcessDrawRect() {
   if (pipeline_->GetVertexBuffers().size() > 1)
     return Result(
         "draw rect command is not supported in a pipeline with more than one "
-        "vertex buffers attached");
+        "vertex buffer attached");
 
   auto token = tokenizer_->NextToken();
   while (token->IsString()) {
