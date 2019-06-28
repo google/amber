@@ -55,6 +55,7 @@ SUPPRESSIONS = {
  }
 
 SUPPRESSIONS_DAWN = [
+   # not implemented in Dawn backend
   "compute_accumulated_ubo_definition.amber",
   "compute_accumulated_ubo_definition.vkscript",
   "compute_mat2x2.amber",
@@ -202,8 +203,6 @@ class TestRunner:
         elif tc.IsExpectedFail() and result:
           print("Expected: " + tc.GetInputPath() + " to fail but passed.")
           self.failures.append(tc.GetInputPath())
-        else:
-          self.successes.append(tc.GetInputPath())
 
   def SummarizeResults(self):
     if len(self.failures) > 0:
@@ -212,10 +211,6 @@ class TestRunner:
       print '\nSummary of Failures:'
       for failure in self.failures:
         print failure
-
-      print '\nSummary of Successes:'
-      for success in self.successes:
-        print success
 
     if len(self.suppressed) > 0:
       self.suppressed.sort()
@@ -287,7 +282,6 @@ class TestRunner:
               self.test_cases.append(
                   TestCase(input_path, self.options.parse_only, self.options.use_dawn))
 
-    self.successes = []
     self.failures = []
     self.suppressed = []
 
