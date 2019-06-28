@@ -254,6 +254,12 @@ Result CommandParser::ProcessDrawRect() {
   auto cmd = MakeUnique<DrawRectCommand>(pipeline_, pipeline_data_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
+  if (pipeline_->GetVertexBuffers().size() > 1) {
+    return Result(
+        "draw rect command is not supported in a pipeline with more than one "
+        "vertex buffer attached");
+  }
+
   auto token = tokenizer_->NextToken();
   while (token->IsString()) {
     std::string str = token->AsString();
