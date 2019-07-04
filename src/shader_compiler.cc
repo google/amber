@@ -30,7 +30,7 @@
 #pragma clang diagnostic ignored "-Wold-style-cast"
 #pragma clang diagnostic ignored "-Wshadow-uncaptured-local"
 #pragma clang diagnostic ignored "-Wweak-vtables"
-#include "third_party/shaderc/libshaderc/include/shaderc/shaderc.hpp"
+#include "shaderc/shaderc.hpp"
 #pragma clang diagnostic pop
 #endif  // AMBER_ENABLE_SHADERC
 
