@@ -55,7 +55,9 @@ SUPPRESSIONS = {
  }
 
 SUPPRESSIONS_DAWN = [
-   # not implemented in Dawn backend
+  # Dawn requires a fragmentStage now and in the medium term
+  "position_to_ssbo.amber",
+  # not implemented in Dawn backend
   "compute_accumulated_ubo_definition.amber",
   "compute_accumulated_ubo_definition.vkscript",
   "compute_mat2x2.amber",
@@ -102,8 +104,6 @@ SUPPRESSIONS_DAWN = [
   "draw_rectangles.vkscript",
   "draw_rectangles_once.vkscript",
   "draw_rectangles_without_probe.vkscript",
-  "draw_triangle_list.amber",
-  "draw_triangle_list.vkscript",
   "draw_triangle_list_in_r16g16b16a16_snorm_color_frame.vkscript",
   "draw_triangle_list_in_r16g16b16a16_uint_color_frame.vkscript",
   "draw_triangle_list_in_r32g32b32a32_sfloat_color_frame.vkscript",
@@ -121,7 +121,6 @@ SUPPRESSIONS_DAWN = [
   "multiple_ssbo_update_with_graphics_pipeline.vkscript",
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
   "multiple_ubo_update_with_graphics_pipeline.vkscript",
-  "position_to_ssbo.amber",
   "probe_no_compute_with_multiple_ssbo_commands.vkscript",
   "probe_no_compute_with_ssbo.vkscript",
   "repeat.amber",
