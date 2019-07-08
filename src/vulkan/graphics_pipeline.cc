@@ -422,11 +422,9 @@ Result GraphicsPipeline::CreateRenderPass() {
     ref.attachment = static_cast<uint32_t>(attachment_desc.size() - 1);
     ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     color_refer.push_back(ref);
-
-    subpass_desc.colorAttachmentCount =
-        static_cast<uint32_t>(color_refer.size());
-    subpass_desc.pColorAttachments = color_refer.data();
   }
+  subpass_desc.colorAttachmentCount = static_cast<uint32_t>(color_refer.size());
+  subpass_desc.pColorAttachments = color_refer.data();
 
   if (depth_stencil_format_.IsFormatKnown()) {
     attachment_desc.push_back(kDefaultAttachmentDesc);
@@ -503,26 +501,31 @@ GraphicsPipeline::GetVkPipelineDepthStencilInfo(
   return depthstencil_info;
 }
 
-VkPipelineColorBlendAttachmentState
+std::vector<VkPipelineColorBlendAttachmentState>
 GraphicsPipeline::GetVkPipelineColorBlendAttachmentState(
     const PipelineData* pipeline_data) {
-  VkPipelineColorBlendAttachmentState colorblend_attachment =
-      VkPipelineColorBlendAttachmentState();
-  colorblend_attachment.blendEnable = pipeline_data->GetEnableBlend();
-  colorblend_attachment.srcColorBlendFactor =
-      ToVkBlendFactor(pipeline_data->GetSrcColorBlendFactor());
-  colorblend_attachment.dstColorBlendFactor =
-      ToVkBlendFactor(pipeline_data->GetDstColorBlendFactor());
-  colorblend_attachment.colorBlendOp =
-      ToVkBlendOp(pipeline_data->GetColorBlendOp());
-  colorblend_attachment.srcAlphaBlendFactor =
-      ToVkBlendFactor(pipeline_data->GetSrcAlphaBlendFactor());
-  colorblend_attachment.dstAlphaBlendFactor =
-      ToVkBlendFactor(pipeline_data->GetDstAlphaBlendFactor());
-  colorblend_attachment.alphaBlendOp =
-      ToVkBlendOp(pipeline_data->GetAlphaBlendOp());
-  colorblend_attachment.colorWriteMask = pipeline_data->GetColorWriteMask();
-  return colorblend_attachment;
+  std::vector<VkPipelineColorBlendAttachmentState> states;
+
+  for (size_t i = 0; i < color_buffers_.size(); ++i) {
+    VkPipelineColorBlendAttachmentState colorblend_attachment =
+        VkPipelineColorBlendAttachmentState();
+    colorblend_attachment.blendEnable = pipeline_data->GetEnableBlend();
+    colorblend_attachment.srcColorBlendFactor =
+        ToVkBlendFactor(pipeline_data->GetSrcColorBlendFactor());
+    colorblend_attachment.dstColorBlendFactor =
+        ToVkBlendFactor(pipeline_data->GetDstColorBlendFactor());
+    colorblend_attachment.colorBlendOp =
+        ToVkBlendOp(pipeline_data->GetColorBlendOp());
+    colorblend_attachment.srcAlphaBlendFactor =
+        ToVkBlendFactor(pipeline_data->GetSrcAlphaBlendFactor());
+    colorblend_attachment.dstAlphaBlendFactor =
+        ToVkBlendFactor(pipeline_data->GetDstAlphaBlendFactor());
+    colorblend_attachment.alphaBlendOp =
+        ToVkBlendOp(pipeline_data->GetAlphaBlendOp());
+    colorblend_attachment.colorWriteMask = pipeline_data->GetColorWriteMask();
+    states.push_back(colorblend_attachment);
+  }
+  return states;
 }
 
 Result GraphicsPipeline::CreateVkGraphicsPipeline(
@@ -653,16 +656,17 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
 
   VkPipelineColorBlendStateCreateInfo colorblend_info =
       VkPipelineColorBlendStateCreateInfo();
-  VkPipelineColorBlendAttachmentState colorblend_attachment;
 
-  colorblend_attachment = GetVkPipelineColorBlendAttachmentState(pipeline_data);
+  auto colorblend_attachment =
+      GetVkPipelineColorBlendAttachmentState(pipeline_data);
 
   colorblend_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   colorblend_info.logicOpEnable = pipeline_data->GetEnableLogicOp();
   colorblend_info.logicOp = ToVkLogicOp(pipeline_data->GetLogicOp());
-  colorblend_info.attachmentCount = 1;
-  colorblend_info.pAttachments = &colorblend_attachment;
+  colorblend_info.attachmentCount =
+      static_cast<uint32_t>(colorblend_attachment.size());
+  colorblend_info.pAttachments = colorblend_attachment.data();
   pipeline_info.pColorBlendState = &colorblend_info;
 
   pipeline_info.layout = pipeline_layout;
