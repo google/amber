@@ -89,9 +89,6 @@ class EngineDawn : public Engine {
   // Mapping from the generic engine's Pipeline object to our own Dawn-specific
   // pipelines.
   std::unordered_map<amber::Pipeline*, ::amber::dawn::Pipeline> pipeline_map_;
-
-  std::unordered_map<uint32_t, ::dawn::Buffer*> buffer_map_;
-  std::vector<::dawn::Buffer> buffers_;
 };
 
 }  // namespace dawn

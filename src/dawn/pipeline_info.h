@@ -17,6 +17,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <set>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -27,6 +29,15 @@
 
 namespace amber {
 namespace dawn {
+
+struct hash_pair {
+  template <class T1, class T2>
+  size_t operator()(const std::pair<T1, T2>& p) const {
+    auto hash1 = std::hash<T1>{}(p.first);
+    auto hash2 = std::hash<T2>{}(p.second);
+    return hash1 ^ hash2;
+  }
+};
 
 /// Stores information relating to a graphics pipeline in Dawn.
 struct RenderPipelineInfo {
@@ -53,9 +64,16 @@ struct RenderPipelineInfo {
   ::dawn::Buffer fb_buffer;
   std::vector<::dawn::Buffer> vertex_buffers;
   ::dawn::Buffer index_buffer;
+  /// storage and uniform buffers
+  std::vector<::dawn::Buffer> buffers_;
 
-  ::dawn::BindGroup bind_group;
-  ::dawn::BindGroupLayout bind_group_layout;
+  std::vector<::dawn::BindGroup> bind_groups;
+  std::vector<::dawn::BindGroupLayout> bind_group_layouts;
+
+  // Mapping from the <descriptor_set, binding> to dawn buffer index in buffers_
+  std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, hash_pair>
+      buffer_map_;
+  std::set<int> used_descriptor_set;
 };
 
 /// Stores information relating to a compute pipeline in Dawn.
