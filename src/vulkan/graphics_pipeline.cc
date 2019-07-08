@@ -423,8 +423,7 @@ Result GraphicsPipeline::CreateRenderPass() {
     ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     color_refer.push_back(ref);
   }
-  subpass_desc.colorAttachmentCount =
-        static_cast<uint32_t>(color_refer.size());
+  subpass_desc.colorAttachmentCount = static_cast<uint32_t>(color_refer.size());
   subpass_desc.pColorAttachments = color_refer.data();
 
   if (depth_stencil_format_.IsFormatKnown()) {
