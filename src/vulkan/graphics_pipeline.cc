@@ -658,7 +658,8 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   VkPipelineColorBlendStateCreateInfo colorblend_info =
       VkPipelineColorBlendStateCreateInfo();
 
-  auto colorblend_attachment = GetVkPipelineColorBlendAttachmentState(pipeline_data);
+  auto colorblend_attachment =
+      GetVkPipelineColorBlendAttachmentState(pipeline_data);
 
   colorblend_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
