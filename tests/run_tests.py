@@ -106,22 +106,25 @@ SUPPRESSIONS_DAWN = [
   # Dawn DoCommands require a pipeline
   "probe_no_compute_with_multiple_ssbo_commands.vkscript",
   "probe_no_compute_with_ssbo.vkscript",
-  # Sparse descriptor sets are not in Dawn backend
+  # Sparse descriptor sets are not supported in Dawn backend (issue #573)
   "multiple_ssbo_update_with_graphics_pipeline.vkscript",
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
   "multiple_ubo_update_with_graphics_pipeline.vkscript",
   # DoEntryPoint is not supported in Dawn backend
   "entry_point.amber",
-  # Currently not working, under investigation
-  "draw_array_after_draw_rect.vkscript",
-  "draw_rect_after_draw_array.vkscript",
-  "draw_rect_and_draw_array_mixed.vkscript",
-  "draw_rect_multiple_color_attachment.amber",
+  # framebuffer format is not supported according to table "Mandatory format
+  # support" in Vulkan spec: VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT = 0
   "draw_triangle_list_in_r16g16b16a16_snorm_color_frame.vkscript",
   "draw_triangle_list_in_r16g16b16a16_uint_color_frame.vkscript",
   "draw_triangle_list_in_r32g32b32a32_sfloat_color_frame.vkscript",
   "draw_triangle_list_in_r8g8b8a8_snorm_color_frame.vkscript",
   "draw_triangle_list_in_r8g8b8a8_srgb_color_frame.vkscript",
+  # Currently not working, an issue is created
+  "draw_rect_multiple_color_attachment.amber",
+  # Currently not working, under investigation
+  "draw_array_after_draw_rect.vkscript",
+  "draw_rect_after_draw_array.vkscript",
+  "draw_rect_and_draw_array_mixed.vkscript",
   "draw_triangle_list_using_geom_shader.vkscript",
   "draw_triangle_list_using_tessellation.vkscript",
   "draw_triangle_list_with_depth.vkscript",
