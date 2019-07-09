@@ -82,8 +82,8 @@ class GraphicsPipeline : public Pipeline {
 
   VkPipelineDepthStencilStateCreateInfo GetVkPipelineDepthStencilInfo(
       const PipelineData* pipeline_data);
-  VkPipelineColorBlendAttachmentState GetVkPipelineColorBlendAttachmentState(
-      const PipelineData* pipeline_data);
+  std::vector<VkPipelineColorBlendAttachmentState>
+  GetVkPipelineColorBlendAttachmentState(const PipelineData* pipeline_data);
 
   VkRenderPass render_pass_ = VK_NULL_HANDLE;
   std::unique_ptr<FrameBuffer> frame_;
