@@ -55,9 +55,11 @@ SUPPRESSIONS = {
  }
 
 SUPPRESSIONS_DAWN = [
-  # Dawn does not support push constants
+  # Dawn does not support push constants, tessellation, geometry shader
   "graphics_push_constants.amber",
   "graphics_push_constants.vkscript",
+  "draw_triangle_list_using_geom_shader.vkscript",
+  "draw_triangle_list_using_tessellation.vkscript",
   # Dawn requires a fragmentStage now and in the medium term
   "position_to_ssbo.amber",
   # DoCompute is not implemented in Dawn backend
@@ -125,8 +127,6 @@ SUPPRESSIONS_DAWN = [
   "draw_array_after_draw_rect.vkscript",
   "draw_rect_after_draw_array.vkscript",
   "draw_rect_and_draw_array_mixed.vkscript",
-  "draw_triangle_list_using_geom_shader.vkscript",
-  "draw_triangle_list_using_tessellation.vkscript",
   "draw_triangle_list_with_depth.vkscript",
   "draw_triangle_list_with_index_buffer_and_vertex_offset.vkscript",
   "draw_triangle_list_with_probe_point.vkscript",
