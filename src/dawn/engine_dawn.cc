@@ -501,6 +501,9 @@ Result GetDawnVertexFormat(const ::amber::Format& amber_format,
     case FormatType::kR8G8B8A8_UNORM:
       dawn_format = ::dawn::VertexFormat::UChar4Norm;
       break;
+    case FormatType::kR8G8B8A8_SNORM:
+      dawn_format = ::dawn::VertexFormat::Char4Norm;
+      break;
     default:
       return Result(
           "Amber vertex format " +
@@ -1161,9 +1164,9 @@ Result EngineDawn::DoBuffer(const BufferCommand* command) {
   // TODO(SarahM0): Make this work for compute pipeline
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
   if (!render_pipeline)
-    return Result("DoBuffer invoked on invalid or missing render pipeline");
+    return Result("DoBuffer: invoked on invalid or missing render pipeline");
   if (!command->IsSSBO() && !command->IsUniform())
-    return Result("DoBuffer not supported buffer type");
+    return Result("DoBuffer: only supports SSBO and uniform buffer type");
 
   if (render_pipeline->buffer_map_.find(
           {command->GetDescriptorSet(), command->GetBinding()}) !=
@@ -1339,10 +1342,12 @@ Result EngineDawn::AttachBuffersAndTextures(
     bindingInitalizerHelper[buf_info.descriptor_set].push_back(tempBinding);
   }
 
-  // TODO(sarahM0): investigate if Dawn support sparse descriptor sets
-  if (render_pipeline->used_descriptor_set.size() - 1 != max_descriptor_set) {
+  // TODO(sarahM0): fix issue: Add support for doBuffer with sparse descriptor
+  // sets #573
+  if (render_pipeline->used_descriptor_set.size() != 0 &&
+      render_pipeline->used_descriptor_set.size() != max_descriptor_set + 1) {
     return Result(
-        "AttachBuffersAndTextures: sparse descriptor_set is not supported");
+        "AttachBuffersAndTextures: Sparse descriptor_set is not supported");
   }
 
   for (uint32_t i = 0; i < kMaxDawnBindGroup; i++) {

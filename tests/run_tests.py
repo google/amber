@@ -55,9 +55,12 @@ SUPPRESSIONS = {
  }
 
 SUPPRESSIONS_DAWN = [
+  # Dawn does not support push constants
+  "graphics_push_constants.amber",
+  "graphics_push_constants.vkscript",
   # Dawn requires a fragmentStage now and in the medium term
   "position_to_ssbo.amber",
-  # not implemented in Dawn backend
+  # Compute pipeline is not implemented in Dawn backend
   "compute_accumulated_ubo_definition.amber",
   "compute_accumulated_ubo_definition.vkscript",
   "compute_mat2x2.amber",
@@ -99,11 +102,8 @@ SUPPRESSIONS_DAWN = [
   "draw_array_after_draw_rect.vkscript",
   "draw_rect_after_draw_array.vkscript",
   "draw_rect_and_draw_array_mixed.vkscript",
-  "draw_rect_and_ortho.vkscript",
   "draw_rect_multiple_color_attachment.amber",
   "draw_rectangles.vkscript",
-  "draw_rectangles_once.vkscript",
-  "draw_rectangles_without_probe.vkscript",
   "draw_triangle_list_in_r16g16b16a16_snorm_color_frame.vkscript",
   "draw_triangle_list_in_r16g16b16a16_uint_color_frame.vkscript",
   "draw_triangle_list_in_r32g32b32a32_sfloat_color_frame.vkscript",
@@ -112,12 +112,9 @@ SUPPRESSIONS_DAWN = [
   "draw_triangle_list_using_geom_shader.vkscript",
   "draw_triangle_list_using_tessellation.vkscript",
   "draw_triangle_list_with_depth.vkscript",
-  "draw_triangle_list_with_index_buffer.vkscript",
   "draw_triangle_list_with_index_buffer_and_vertex_offset.vkscript",
   "draw_triangle_list_with_probe_point.vkscript",
   "entry_point.amber",
-  "graphics_push_constants.amber",
-  "graphics_push_constants.vkscript",
   "multiple_ssbo_update_with_graphics_pipeline.vkscript",
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
   "multiple_ubo_update_with_graphics_pipeline.vkscript",
@@ -127,7 +124,6 @@ SUPPRESSIONS_DAWN = [
   "scratch_ssbo.vkscript",
   "shader_specialization.amber",
   "ssbo_subdata_size.vkscript",
-  "ssbo_with_graphics_pipeline.vkscript"
 ]
 
 class TestCase:
