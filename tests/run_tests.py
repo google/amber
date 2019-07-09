@@ -124,9 +124,6 @@ SUPPRESSIONS_DAWN = [
   # Currently not working, an issue is created
   "draw_rect_multiple_color_attachment.amber",
   # Currently not working, under investigation
-  "draw_array_after_draw_rect.vkscript",
-  "draw_rect_after_draw_array.vkscript",
-  "draw_rect_and_draw_array_mixed.vkscript",
   "draw_triangle_list_with_depth.vkscript",
   "draw_triangle_list_with_index_buffer_and_vertex_offset.vkscript",
   "draw_triangle_list_with_probe_point.vkscript",

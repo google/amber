@@ -633,10 +633,6 @@ Result CommandParser::ProcessSSBO() {
     if (value_count > buf->ValueCount())
       buf->SetValueCount(value_count);
 
-    // Even if the value count doesn't change, the buffer is still resized
-    // because this maybe the first time data is set into the buffer.
-    buf->ResizeTo(buf->GetSizeInBytes());
-
     cmd->SetValues(std::move(values));
 
   } else {
