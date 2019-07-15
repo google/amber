@@ -192,6 +192,18 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   info.vk_pipeline = std::move(vk_pipeline);
 
+  // Set the entry point names for the pipeline.
+  for (const auto& shader_info : pipeline->GetShaders()) {
+    VkShaderStageFlagBits stage = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+    r = ToVkShaderStage(shader_info.GetShaderType(), &stage);
+    if (!r.IsSuccess())
+      return r;
+    const auto& name = shader_info.GetEntryPoint();
+    if (!name.empty()) {
+      info.vk_pipeline->SetEntryPointName(stage, name);
+    }
+  }
+
   for (const auto& vtex_info : pipeline->GetVertexBuffers()) {
     auto fmt = vtex_info.buffer->GetFormat();
     if (!device_->IsFormatSupportedByPhysicalDevice(*fmt, vtex_info.buffer))
