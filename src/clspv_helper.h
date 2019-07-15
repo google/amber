@@ -32,4 +32,3 @@ Result Compile(const std::string& src_str,
 }  // namespace amber
 
 #endif  // SRC_CLSPV_HELPER_H_
-
