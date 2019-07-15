@@ -54,9 +54,6 @@ export PATH="$PWD/depot_tools:$PATH"
 # Clone the repo as "dawn"
 git clone https://dawn.googlesource.com/dawn dawn && cd dawn
 DAWN=$PWD
-# Dawn creators are doing a major refactoring so let's use this old version
-# till they're done
-git checkout 51fd66e3dd35d4ed80dc64244a6dd132e2321fa7
 
 # Bootstrap the gclient configuration
 cp scripts/standalone.gclient .gclient
