@@ -198,7 +198,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     r = ToVkShaderStage(shader_info.GetShaderType(), &stage);
     if (!r.IsSuccess())
       return r;
-    const auto& name = shader_info.GetEntryPointName();
+    const auto& name = shader_info.GetEntryPoint();
     if (!name.empty()) {
       info.vk_pipeline->SetEntryPointName(stage, name);
     }
