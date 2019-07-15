@@ -126,7 +126,7 @@ END)";
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
   EXPECT_EQ("9: only compute shaders allowed in a compute pipeline", r.Error());
 }
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserPipelineAttachTests,
     AmberScriptParserPipelineAttachTest,
     testing::Values(
@@ -137,7 +137,7 @@ INSTANTIATE_TEST_CASE_P(
                        kShaderTypeTessellationEvaluation},
         ShaderTypeData{
             "tessellation_control",
-            kShaderTypeTessellationControl}), );  // NOLINT(whitespace/parens)
+            kShaderTypeTessellationControl}));  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptParserTest, PipelineEntryPoint) {
   std::string in = R"(

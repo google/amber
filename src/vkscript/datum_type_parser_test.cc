@@ -41,6 +41,7 @@ struct DatumTypeData {
   uint32_t column_count;
   uint32_t row_count;
 };
+
 using DatumTypeDataTest = testing::TestWithParam<DatumTypeData>;
 
 TEST_P(DatumTypeDataTest, Parser) {
@@ -55,7 +56,7 @@ TEST_P(DatumTypeDataTest, Parser) {
   EXPECT_EQ(test_data.row_count, t.RowCount());
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     DatumTypeParserTest1,
     DatumTypeDataTest,
     testing::Values(DatumTypeData{"int", DataType::kInt32, 1, 1},
@@ -87,9 +88,9 @@ INSTANTIATE_TEST_CASE_P(
                     DatumTypeData{"u8vec3", DataType::kUint8, 1, 3},
                     DatumTypeData{"u8vec4", DataType::kUint8, 1, 4},
                     DatumTypeData{"i16vec2", DataType::kInt16, 1,
-                                  2}), );  // NOLINT(whitespace/parens)
+                                  2}));  // NOLINT(whitespace/parens)
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     DatumTypeParserTest2,
     DatumTypeDataTest,
     testing::Values(DatumTypeData{"i16vec3", DataType::kInt16, 1, 3},
@@ -127,7 +128,7 @@ INSTANTIATE_TEST_CASE_P(
                     DatumTypeData{"dmat4x2", DataType::kDouble, 4, 2},
                     DatumTypeData{"dmat4x3", DataType::kDouble, 4, 3},
                     DatumTypeData{"dmat4x4", DataType::kDouble, 4,
-                                  4}), );  // NOLINT(whitespace/parens)
+                                  4}));  // NOLINT(whitespace/parens)
 
 }  // namespace vkscript
 }  // namespace amber
