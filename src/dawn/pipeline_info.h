@@ -65,12 +65,12 @@ struct RenderPipelineInfo {
   std::vector<::dawn::Buffer> vertex_buffers;
   ::dawn::Buffer index_buffer;
   /// storage and uniform buffers
-  std::vector<::dawn::Buffer> buffers_;
+  std::vector<::dawn::Buffer> buffers;
 
   std::vector<::dawn::BindGroup> bind_groups;
   std::vector<::dawn::BindGroupLayout> bind_group_layouts;
 
-  // Mapping from the <descriptor_set, binding> to dawn buffer index in buffers_
+  // Mapping from the <descriptor_set, binding> to dawn buffer index in buffers
   std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, hash_pair>
       buffer_map_;
   std::set<int> used_descriptor_set;

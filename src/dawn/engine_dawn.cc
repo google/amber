@@ -1174,7 +1174,7 @@ Result EngineDawn::DoBuffer(const BufferCommand* command) {
     auto dawn_buffer_index =
         render_pipeline
             ->buffer_map_[{command->GetDescriptorSet(), command->GetBinding()}];
-    ::dawn::Buffer& dawn_buffer = render_pipeline->buffers_[dawn_buffer_index];
+    ::dawn::Buffer& dawn_buffer = render_pipeline->buffers[dawn_buffer_index];
 
     Buffer* amber_buffer = command->GetBuffer();
     if (amber_buffer) {
@@ -1318,14 +1318,14 @@ Result EngineDawn::AttachBuffersAndTextures(
           "(descriptor sets)");
     }
 
-    render_pipeline->buffers_.emplace_back(
+    render_pipeline->buffers.emplace_back(
         CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
                              buf_info.buffer->GetSizeInBytes(),
                              bufferUsage | ::dawn::BufferUsageBit::TransferSrc |
                                  ::dawn::BufferUsageBit::TransferDst));
 
     render_pipeline->buffer_map_[{buf_info.descriptor_set, buf_info.binding}] =
-        render_pipeline->buffers_.size() - 1;
+        render_pipeline->buffers.size() - 1;
 
     render_pipeline->used_descriptor_set.insert(buf_info.descriptor_set);
     max_descriptor_set = std::max(max_descriptor_set, buf_info.descriptor_set);
@@ -1337,7 +1337,7 @@ Result EngineDawn::AttachBuffersAndTextures(
     layouts_info[buf_info.descriptor_set].push_back(layout_info);
 
     BindingInitializationHelper tempBinding = BindingInitializationHelper(
-        buf_info.binding, render_pipeline->buffers_.back(), 0,
+        buf_info.binding, render_pipeline->buffers.back(), 0,
         buf_info.buffer->GetSizeInBytes());
     bindingInitalizerHelper[buf_info.descriptor_set].push_back(tempBinding);
   }
