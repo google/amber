@@ -72,7 +72,7 @@ struct RenderPipelineInfo {
 
   // Mapping from the <descriptor_set, binding> to dawn buffer index in buffers
   std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, hash_pair>
-      buffer_map_;
+      buffer_map;
   std::set<int> used_descriptor_set;
 };
 
