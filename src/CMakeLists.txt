@@ -170,6 +170,9 @@ if (${AMBER_ENABLE_TESTS})
   target_include_directories(amber_unittests PRIVATE
       ${gmock_SOURCE_DIR}/include)
   target_link_libraries(amber_unittests libamber gmock_main)
+  if (${AMBER_ENABLE_SHADERC})
+    target_link_libraries(amber_unittests shaderc SPIRV)
+  endif()
   amber_default_compile_options(amber_unittests)
   add_test(NAME amber_unittests COMMAND amber_unittests)
 
