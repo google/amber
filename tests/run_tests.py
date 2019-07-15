@@ -55,7 +55,14 @@ SUPPRESSIONS = {
  }
 
 SUPPRESSIONS_DAWN = [
-   # not implemented in Dawn backend
+  # Dawn does not support push constants, tessellation, geometry shader
+  "graphics_push_constants.amber",
+  "graphics_push_constants.vkscript",
+  "draw_triangle_list_using_geom_shader.vkscript",
+  "draw_triangle_list_using_tessellation.vkscript",
+  # Dawn requires a fragmentStage now and in the medium term
+  "position_to_ssbo.amber",
+  # DoCompute is not implemented in Dawn backend
   "compute_accumulated_ubo_definition.amber",
   "compute_accumulated_ubo_definition.vkscript",
   "compute_mat2x2.amber",
@@ -94,41 +101,32 @@ SUPPRESSIONS_DAWN = [
   "compute_ssbo_with_tolerance.vkscript",
   "compute_ssbo_without_probe.vkscript",
   "compute_ubo_and_ssbo.vkscript",
-  "draw_array_after_draw_rect.vkscript",
-  "draw_rect_after_draw_array.vkscript",
-  "draw_rect_and_draw_array_mixed.vkscript",
-  "draw_rect_and_ortho.vkscript",
-  "draw_rect_multiple_color_attachment.amber",
-  "draw_rectangles.vkscript",
-  "draw_rectangles_once.vkscript",
-  "draw_rectangles_without_probe.vkscript",
-  "draw_triangle_list.amber",
-  "draw_triangle_list.vkscript",
+  "repeat.amber",
+  "scratch_ssbo.vkscript",
+  "shader_specialization.amber",
+  "ssbo_subdata_size.vkscript",
+  # Dawn DoCommands require a pipeline
+  "probe_no_compute_with_multiple_ssbo_commands.vkscript",
+  "probe_no_compute_with_ssbo.vkscript",
+  # Sparse descriptor sets are not supported in Dawn backend (issue #573)
+  "multiple_ssbo_update_with_graphics_pipeline.vkscript",
+  "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
+  "multiple_ubo_update_with_graphics_pipeline.vkscript",
+  # DoEntryPoint is not supported in Dawn backend
+  "entry_point.amber",
+  # framebuffer format is not supported according to table "Mandatory format
+  # support" in Vulkan spec: VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT = 0
   "draw_triangle_list_in_r16g16b16a16_snorm_color_frame.vkscript",
   "draw_triangle_list_in_r16g16b16a16_uint_color_frame.vkscript",
   "draw_triangle_list_in_r32g32b32a32_sfloat_color_frame.vkscript",
   "draw_triangle_list_in_r8g8b8a8_snorm_color_frame.vkscript",
   "draw_triangle_list_in_r8g8b8a8_srgb_color_frame.vkscript",
-  "draw_triangle_list_using_geom_shader.vkscript",
-  "draw_triangle_list_using_tessellation.vkscript",
+  # Currently not working, an issue is created
+  "draw_rect_multiple_color_attachment.amber",
+  # Currently not working, under investigation
   "draw_triangle_list_with_depth.vkscript",
-  "draw_triangle_list_with_index_buffer.vkscript",
   "draw_triangle_list_with_index_buffer_and_vertex_offset.vkscript",
   "draw_triangle_list_with_probe_point.vkscript",
-  "entry_point.amber",
-  "graphics_push_constants.amber",
-  "graphics_push_constants.vkscript",
-  "multiple_ssbo_update_with_graphics_pipeline.vkscript",
-  "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
-  "multiple_ubo_update_with_graphics_pipeline.vkscript",
-  "position_to_ssbo.amber",
-  "probe_no_compute_with_multiple_ssbo_commands.vkscript",
-  "probe_no_compute_with_ssbo.vkscript",
-  "repeat.amber",
-  "scratch_ssbo.vkscript",
-  "shader_specialization.amber",
-  "ssbo_subdata_size.vkscript",
-  "ssbo_with_graphics_pipeline.vkscript"
 ]
 
 class TestCase:
