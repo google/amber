@@ -44,6 +44,7 @@ static const float kLodMax = 1000.0;
 static const uint32_t kMaxColorAttachments = 4u;
 static const uint32_t kMaxVertexInputs = 16u;
 static const uint32_t kMaxVertexAttributes = 16u;
+static const uint32_t kMaxDawnBindGroup = 4u;
 
 // This structure is a container for a few variables that are created during
 // CreateRenderPipelineDescriptor and CreateRenderPassDescriptor and we want to
@@ -291,7 +292,7 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
   return map;
 }
 
-// creates a dawn buffer for TransferDst
+// Creates a dawn buffer of |size| bytes with TransferDst and the given usage
 // copied from Dawn utils source code
 ::dawn::Buffer CreateBufferFromData(const ::dawn::Device& device,
                                     const void* data,
@@ -302,11 +303,12 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
   descriptor.usage = usage | ::dawn::BufferUsageBit::TransferDst;
 
   ::dawn::Buffer buffer = device.CreateBuffer(&descriptor);
-  buffer.SetSubData(0, size, reinterpret_cast<const uint8_t*>(data));
+  if (data != nullptr)
+    buffer.SetSubData(0, size, reinterpret_cast<const uint8_t*>(data));
   return buffer;
 }
 
-// creates a default sampler descriptor. It does not set the sampling
+// Creates a default sampler descriptor. It does not set the sampling
 // coordinates meaning it's set to default, normalized.
 // copied from Dawn utils source code
 ::dawn::SamplerDescriptor GetDefaultSamplerDescriptor() {
@@ -402,15 +404,10 @@ struct BindingInitializationHelper {
 // Copied from Dawn utils source code.
 ::dawn::PipelineLayout MakeBasicPipelineLayout(
     const ::dawn::Device& device,
-    const ::dawn::BindGroupLayout* bindGroupLayout) {
+    std::vector<::dawn::BindGroupLayout> bindingInitializer) {
   ::dawn::PipelineLayoutDescriptor descriptor;
-  if (bindGroupLayout) {
-    descriptor.bindGroupLayoutCount = 1;
-    descriptor.bindGroupLayouts = bindGroupLayout;
-  } else {
-    descriptor.bindGroupLayoutCount = 0;
-    descriptor.bindGroupLayouts = nullptr;
-  }
+  descriptor.bindGroupLayoutCount = bindingInitializer.size();
+  descriptor.bindGroupLayouts = bindingInitializer.data();
   return device.CreatePipelineLayout(&descriptor);
 }
 
@@ -503,6 +500,9 @@ Result GetDawnVertexFormat(const ::amber::Format& amber_format,
       break;
     case FormatType::kR8G8B8A8_UNORM:
       dawn_format = ::dawn::VertexFormat::UChar4Norm;
+      break;
+    case FormatType::kR8G8B8A8_SNORM:
+      dawn_format = ::dawn::VertexFormat::Char4Norm;
       break;
     default:
       return Result(
@@ -772,11 +772,8 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     depth_stencil_format = ::dawn::TextureFormat::D32FloatS8Uint;
   }
 
-  if (render_pipeline.bind_group)
-    renderPipelineDescriptor.layout =
-        MakeBasicPipelineLayout(device, &render_pipeline.bind_group_layout);
-  else
-    renderPipelineDescriptor.layout = MakeBasicPipelineLayout(device, nullptr);
+  renderPipelineDescriptor.layout =
+      MakeBasicPipelineLayout(device, render_pipeline.bind_group_layouts);
 
   renderPipelineDescriptor.primitiveTopology =
       ::dawn::PrimitiveTopology::TriangleList;
@@ -1046,8 +1043,10 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   ::dawn::RenderPassEncoder pass =
       encoder.BeginRenderPass(renderPassDescriptor);
   pass.SetPipeline(pipeline);
-  if (render_pipeline->bind_group) {
-    pass.SetBindGroup(0, render_pipeline->bind_group, 0, nullptr);
+  for (uint32_t i = 0; i < render_pipeline->bind_groups.size(); i++) {
+    if (render_pipeline->bind_groups[i]) {
+      pass.SetBindGroup(i, render_pipeline->bind_groups[i], 0, nullptr);
+    }
   }
   pass.SetVertexBuffers(0, 1, &vertex_buffer, vertexBufferOffsets);
   pass.SetIndexBuffer(index_buffer, 0);
@@ -1115,10 +1114,11 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   ::dawn::RenderPassEncoder pass =
       encoder.BeginRenderPass(renderPassDescriptor);
   pass.SetPipeline(pipeline);
-  if (render_pipeline->bind_group) {
-    pass.SetBindGroup(0, render_pipeline->bind_group, 0, nullptr);
+  for (uint32_t i = 0; i < render_pipeline->bind_groups.size(); i++) {
+    if (render_pipeline->bind_groups[i]) {
+      pass.SetBindGroup(i, render_pipeline->bind_groups[i], 0, nullptr);
+    }
   }
-
   // TODO(sarahM0): figure out what are startSlot, count and offsets
   for (uint32_t i = 0; i < render_pipeline->vertex_buffers.size(); i++) {
     pass.SetVertexBuffers(i,                                   /* startSlot */
@@ -1158,8 +1158,34 @@ Result EngineDawn::DoPatchParameterVertices(
   return Result("Dawn:DoPatch not implemented");
 }
 
-Result EngineDawn::DoBuffer(const BufferCommand*) {
-  return Result("Dawn:DoBuffer not implemented");
+Result EngineDawn::DoBuffer(const BufferCommand* command) {
+  Result result;
+
+  // TODO(SarahM0): Make this work for compute pipeline
+  RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
+  if (!render_pipeline)
+    return Result("DoBuffer: invoked on invalid or missing render pipeline");
+  if (!command->IsSSBO() && !command->IsUniform())
+    return Result("DoBuffer: only supports SSBO and uniform buffer type");
+
+  if (render_pipeline->buffer_map_.find(
+          {command->GetDescriptorSet(), command->GetBinding()}) !=
+      render_pipeline->buffer_map_.end()) {
+    auto dawn_buffer_index =
+        render_pipeline
+            ->buffer_map_[{command->GetDescriptorSet(), command->GetBinding()}];
+    ::dawn::Buffer& dawn_buffer = render_pipeline->buffers[dawn_buffer_index];
+
+    Buffer* amber_buffer = command->GetBuffer();
+    if (amber_buffer) {
+      amber_buffer->SetDataWithOffset(command->GetValues(),
+                                      command->GetOffset());
+
+      dawn_buffer.SetSubData(0, amber_buffer->GetSizeInBytes(),
+                             amber_buffer->ValuePtr()->data());
+    }
+  }
+  return {};
 }
 
 Result EngineDawn::AttachBuffersAndTextures(
@@ -1177,7 +1203,8 @@ Result EngineDawn::AttachBuffersAndTextures(
   auto* amber_format =
       render_pipeline->pipeline->GetColorAttachments()[0].buffer->GetFormat();
   if (!amber_format)
-    return Result("Color attachment 0 has no format!");
+    return Result(
+        "AttachBuffersAndTextures: Color attachment 0 has no format!");
   ::dawn::TextureFormat fb_format{};
   result = GetDawnTextureFormat(*amber_format, &fb_format);
   if (!result.IsSuccess())
@@ -1213,7 +1240,9 @@ Result EngineDawn::AttachBuffersAndTextures(
     if (!depth_stencil_texture_) {
       auto* amber_depth_stencil_format = depthBuffer->GetFormat();
       if (!amber_depth_stencil_format)
-        return Result("The depth/stencil attachment has no format!");
+        return Result(
+            "AttachBuffersAndTextures: The depth/stencil attachment has no "
+            "format!");
       ::dawn::TextureFormat depth_stencil_format{};
       result = GetDawnTextureFormat(*amber_depth_stencil_format,
                                     &depth_stencil_format);
@@ -1248,14 +1277,19 @@ Result EngineDawn::AttachBuffersAndTextures(
 
   // Do not attach pushConstants
   if (render_pipeline->pipeline->GetPushConstantBuffer().buffer != nullptr) {
-    return Result("Dawn does not support push constants!");
+    return Result(
+        "AttachBuffersAndTextures: Dawn does not support push constants!");
   }
 
   ::dawn::ShaderStageBit kAllStages =
       ::dawn::ShaderStageBit::Vertex | ::dawn::ShaderStageBit::Fragment;
-  std::vector<BindingInitializationHelper> bindingInitalizerHelper;
-  std::vector<::dawn::BindGroupLayoutBinding> bindings;
+  std::vector<std::vector<BindingInitializationHelper>> bindingInitalizerHelper(
+      kMaxDawnBindGroup);
+  std::vector<std::vector<::dawn::BindGroupLayoutBinding>> layouts_info(
+      kMaxDawnBindGroup);
+  uint32_t max_descriptor_set = 0;
 
+  // Attach storage/uniform buffers
   for (const auto& buf_info : render_pipeline->pipeline->GetBuffers()) {
     ::dawn::BufferUsageBit bufferUsage;
     ::dawn::BindingType bindingType;
@@ -1271,35 +1305,62 @@ Result EngineDawn::AttachBuffersAndTextures(
         break;
       }
       default: {
-        return Result("Dawn: CreatePipeline - unknown buffer type: " +
+        return Result("AttachBuffersAndTextures: unknown buffer type: " +
                       std::to_string(static_cast<uint32_t>(
                           buf_info.buffer->GetBufferType())));
         break;
       }
     }
 
-    ::dawn::Buffer buffer =
+    if (buf_info.descriptor_set > kMaxDawnBindGroup - 1) {
+      return Result(
+          "AttachBuffersAndTextures: Dawn has maximum of 4 bindGroups "
+          "(descriptor sets)");
+    }
+
+    render_pipeline->buffers.emplace_back(
         CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
                              buf_info.buffer->GetSizeInBytes(),
                              bufferUsage | ::dawn::BufferUsageBit::TransferSrc |
-                                 ::dawn::BufferUsageBit::TransferDst);
+                                 ::dawn::BufferUsageBit::TransferDst));
 
-    ::dawn::BindGroupLayoutBinding bglb;
-    bglb.binding = buf_info.binding;
-    bglb.visibility = kAllStages;
-    bglb.type = bindingType;
-    bindings.push_back(bglb);
+    render_pipeline->buffer_map_[{buf_info.descriptor_set, buf_info.binding}] =
+        render_pipeline->buffers.size() - 1;
+
+    render_pipeline->used_descriptor_set.insert(buf_info.descriptor_set);
+    max_descriptor_set = std::max(max_descriptor_set, buf_info.descriptor_set);
+
+    ::dawn::BindGroupLayoutBinding layout_info;
+    layout_info.binding = buf_info.binding;
+    layout_info.visibility = kAllStages;
+    layout_info.type = bindingType;
+    layouts_info[buf_info.descriptor_set].push_back(layout_info);
 
     BindingInitializationHelper tempBinding = BindingInitializationHelper(
-        buf_info.binding, buffer, 0, buf_info.buffer->GetSizeInBytes());
-    bindingInitalizerHelper.push_back(tempBinding);
+        buf_info.binding, render_pipeline->buffers.back(), 0,
+        buf_info.buffer->GetSizeInBytes());
+    bindingInitalizerHelper[buf_info.descriptor_set].push_back(tempBinding);
   }
 
-  if (bindings.size() > 0 && bindingInitalizerHelper.size() > 0) {
-    render_pipeline->bind_group_layout =
-        MakeBindGroupLayout(*device_, bindings);
-    render_pipeline->bind_group = MakeBindGroup(
-        *device_, render_pipeline->bind_group_layout, bindingInitalizerHelper);
+  // TODO(sarahM0): fix issue: Add support for doBuffer with sparse descriptor
+  // sets #573
+  if (render_pipeline->used_descriptor_set.size() != 0 &&
+      render_pipeline->used_descriptor_set.size() != max_descriptor_set + 1) {
+    return Result(
+        "AttachBuffersAndTextures: Sparse descriptor_set is not supported");
+  }
+
+  for (uint32_t i = 0; i < kMaxDawnBindGroup; i++) {
+    if (layouts_info[i].size() > 0 && bindingInitalizerHelper[i].size() > 0) {
+      ::dawn::BindGroupLayout bindGroupLayout =
+          MakeBindGroupLayout(*device_, layouts_info[i]);
+      render_pipeline->bind_group_layouts.push_back(bindGroupLayout);
+
+      ::dawn::BindGroup bindGroup =
+          MakeBindGroup(*device_, render_pipeline->bind_group_layouts[i],
+                        bindingInitalizerHelper[i]);
+      render_pipeline->bind_groups.push_back(bindGroup);
+    }
   }
 
   return {};
