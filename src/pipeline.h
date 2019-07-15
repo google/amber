@@ -52,7 +52,7 @@ class Pipeline {
     const Shader* GetShader() const { return shader_; }
 
     void SetEntryPoint(const std::string& ep) { entry_point_ = ep; }
-    std::string GetEntryPoint() const { return entry_point_; }
+    const std::string& GetEntryPoint() const { return entry_point_; }
 
     void SetShaderType(ShaderType type) { shader_type_ = type; }
     ShaderType GetShaderType() const { return shader_type_; }
