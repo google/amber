@@ -55,6 +55,10 @@ if (${AMBER_ENABLE_DXC})
   list(APPEND AMBER_SOURCES dxc_helper.cc)
 endif()
 
+if (${AMBER_ENABLE_CLSPV})
+  list(APPEND AMBER_SOURCES clspv_helper.cc)
+endif()
+
 add_library(libamber ${AMBER_SOURCES})
 amber_default_compile_options(libamber)
 target_include_directories(libamber PRIVATE "${CMAKE_BINARY_DIR}")
@@ -73,6 +77,17 @@ if (${AMBER_ENABLE_DXC})
     LLVMOption
     LLVMHLSL
     LLVMScalarOpts
+  )
+endif()
+
+if (${AMBER_ENABLE_CLSPV})
+  target_include_directories(libamber PRIVATE
+    "${PROJECT_SOURCE_DIR}/third_party/clspv/include"
+  )
+
+  target_link_libraries(libamber
+    clspv_core
+    clspv_passes
   )
 endif()
 
