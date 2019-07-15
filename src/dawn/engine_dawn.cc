@@ -131,8 +131,6 @@ struct DawnPipelineHelper {
   ::dawn::BlendDescriptor blend;
   std::string vertexEntryPoint;
   std::string fragmentEntryPoint;
-
-  // deleted
   std::array<::dawn::RenderPassColorAttachmentDescriptor, kMaxColorAttachments>
       colorAttachmentsInfo;
 };
@@ -502,7 +500,7 @@ Result GetDawnTextureFormat(const ::amber::Format& amber_format,
       dawn_format = ::dawn::TextureFormat::R8Uint;
       break;
     case FormatType::kB8G8R8A8_UNORM:
-      dawn_format = ::dawn::TextureFormat::RGBA8Unorm;
+      dawn_format = ::dawn::TextureFormat::BGRA8Unorm;
       break;
     // TODO(sarahM0): figure out what kD32_SFLOAT_S8_UINT converts to
     default:
@@ -879,7 +877,11 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
                        &vertexInputDescriptor->indexFormat);
     if (!result.IsSuccess())
       return result;
+  }else{
+    vertexInputDescriptor->indexFormat = ::dawn::IndexFormat::Uint16;
   }
+  renderPipelineDescriptor.vertexInput =
+      reinterpret_cast<::dawn::VertexInputDescriptor*>(vertexInputDescriptor);
 
   // Set defaults for the vertex stage descriptor.
   vertexStage.module = render_pipeline.vertex_shader;
@@ -891,8 +893,6 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   fragmentStage.entryPoint = fragmentEntryPoint.c_str();
   renderPipelineDescriptor.fragmentStage = std::move(&fragmentStage);
 
-  renderPipelineDescriptor.vertexInput =
-      reinterpret_cast<::dawn::VertexInputDescriptor*>(vertexInputDescriptor);
 
   // Set defaults for the rasterization state descriptor.
   {
