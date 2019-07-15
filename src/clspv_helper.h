@@ -28,7 +28,7 @@ namespace clspvhelper {
 Result Compile(const std::string& src_str,
                std::vector<uint32_t>* generated_binary);
 
-}  // namespace dxchelper
+}  // namespace clspvhelper
 }  // namespace amber
 
 #endif  // SRC_CLSPV_HELPER_H_

@@ -24,8 +24,9 @@ Result Compile(const std::string& src_str,
   // TODO(alan-baker): Parse the descriptor map.
   std::vector<clspv::version0::DescriptorMapEntry> entries;
   if (clspv::CompileFromSourceString(src_str, "", "", generated_binary,
-                                     &entries))
+                                     &entries)) {
     return Result("Clspv compile failed");
+  }
 
   return Result();
 }
