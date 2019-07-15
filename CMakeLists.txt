@@ -93,6 +93,7 @@ else()
 endif()
 
 if (${AMBER_USE_CLSPV})
+  enable_language(ASM)
   set(AMBER_ENABLE_CLSPV TRUE)
   set(AMBER_ENABLE_SPIRV_TOOLS TRUE)
 else()
