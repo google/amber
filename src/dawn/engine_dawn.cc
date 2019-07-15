@@ -1168,12 +1168,12 @@ Result EngineDawn::DoBuffer(const BufferCommand* command) {
   if (!command->IsSSBO() && !command->IsUniform())
     return Result("DoBuffer: only supports SSBO and uniform buffer type");
 
-  if (render_pipeline->buffer_map_.find(
+  if (render_pipeline->buffer_map.find(
           {command->GetDescriptorSet(), command->GetBinding()}) !=
-      render_pipeline->buffer_map_.end()) {
+      render_pipeline->buffer_map.end()) {
     auto dawn_buffer_index =
         render_pipeline
-            ->buffer_map_[{command->GetDescriptorSet(), command->GetBinding()}];
+            ->buffer_map[{command->GetDescriptorSet(), command->GetBinding()}];
     ::dawn::Buffer& dawn_buffer = render_pipeline->buffers[dawn_buffer_index];
 
     Buffer* amber_buffer = command->GetBuffer();
@@ -1324,7 +1324,7 @@ Result EngineDawn::AttachBuffersAndTextures(
                              bufferUsage | ::dawn::BufferUsageBit::TransferSrc |
                                  ::dawn::BufferUsageBit::TransferDst));
 
-    render_pipeline->buffer_map_[{buf_info.descriptor_set, buf_info.binding}] =
+    render_pipeline->buffer_map[{buf_info.descriptor_set, buf_info.binding}] =
         render_pipeline->buffers.size() - 1;
 
     render_pipeline->used_descriptor_set.insert(buf_info.descriptor_set);
