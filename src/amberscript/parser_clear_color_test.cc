@@ -121,7 +121,7 @@ CLEAR_COLOR my_pipeline )" +
   EXPECT_EQ(std::string("13: ") + test_data.error, r.Error()) << test_data.data;
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserClearColorTests,
     AmberScriptParserClearColorTest,
     testing::Values(
@@ -165,7 +165,7 @@ INSTANTIATE_TEST_CASE_P(
                            "invalid A value for CLEAR_COLOR command: 5.2"},
         ClearColorTestData{"255 255 255 256",
                            "invalid A value for CLEAR_COLOR "
-                           "command: 256"}), );  // NOLINT(whitespace/parens)
+                           "command: 256"}));  // NOLINT(whitespace/parens)
 
 }  // namespace amberscript
 }  // namespace amber
