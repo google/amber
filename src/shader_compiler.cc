@@ -38,6 +38,10 @@
 #include "src/dxc_helper.h"
 #endif  // AMBER_ENABLE_DXC
 
+#ifdef AMBER_ENABLE_CLSPV
+#include "src/clspv_helper.h"
+#endif  // AMBER_ENABLE_CLSPV
+
 namespace amber {
 
 ShaderCompiler::ShaderCompiler() = default;
@@ -115,6 +119,13 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
       return {Result("Shader assembly failed: " + spv_errors), {}};
     }
 #endif  // AMBER_ENABLE_SPIRV_TOOLS
+
+#if AMBER_ENABLE_CLSPV
+  } else if (shader->GetFormat() == kShaderFormatOpenCLC) {
+    Result r = CompileOpenCLC(shader, &results);
+    if (!r.IsSuccess())
+      return {r, {}};
+#endif  // AMBER_ENABLE_CLSPV
 
   } else {
     return {Result("Invalid shader format"), results};
@@ -217,5 +228,17 @@ Result ShaderCompiler::CompileHlsl(const Shader*,
   return {};
 }
 #endif  // AMBER_ENABLE_DXC
+
+#if AMBER_ENABLE_CLSPV
+Result ShaderCompiler::CompileOpenCLC(const Shader* shader,
+                                      std::vector<uint32_t>* result) const {
+  return clspvhelper::Compile(shader->GetData(), result);
+}
+#else
+Result ShaderCompiler::CompileOpenCLC(const Shader*,
+                                      std::vector<uint32_t>*) const {
+  return {};
+}
+#endif  // AMBER_ENABLE_CLSPV
 
 }  // namespace amber

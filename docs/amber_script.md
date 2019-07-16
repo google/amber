@@ -85,7 +85,7 @@ types, but in that case must only provide a single shader type in the module.
  * `HLSL`  (with dxc or glslang if dxc disabled)  -- future
  * `SPIRV-ASM` (with spirv-as)
  * `SPIRV-HEX` (decoded straight to SPIR-V)
- * `OPENCL-C` (with clspv)  --- potentially?  -- future
+ * `OPENCL-C` (with clspv)
 
 ```groovy
 # Creates a passthrough vertex shader. The shader passes the vec4 at input

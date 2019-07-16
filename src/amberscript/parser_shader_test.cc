@@ -340,5 +340,29 @@ END)";
   EXPECT_EQ("7: duplicate shader name provided", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, OpenCLCKernel) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+# shader
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+}
+
+TEST_F(AmberScriptParserTest, OpenCLCMultiKernel) {
+  std::string in = R"(
+SHADER multi my_shader OPENCL-C
+# shader
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+}
+
 }  // namespace amberscript
 }  // namespace amber
