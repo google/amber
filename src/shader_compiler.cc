@@ -314,7 +314,7 @@ Result ParseSpvEnv(const std::string& spv_env,
     values = {kVulkan, kVulkan_1_1, kSpv_1_3};
   } else if (spv_env == "spv1.4") {
     values = {kVulkan, kVulkan_1_1, kSpv_1_4};
-  } else if (spv_env == "Vulkan1.0") {
+  } else if (spv_env == "vulkan1.0") {
     values = {kVulkan, kVulkan_1_0, kSpv_1_0};
   } else if (spv_env == "vulkan1.1") {
     // Vulkan 1.1 requires support for SPIR-V 1.3.
