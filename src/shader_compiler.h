@@ -50,10 +50,9 @@ class ShaderCompiler {
   std::string spv_env_;
 };
 
-// Parses the SPIR-V environment string, and returns three values
-// corresponding to Shaderc's values for shaderc_target_env,
-// shaderc_env_version, and shaderc_spirv_version.  Returns a failure
-// value if the env string is invalid.
+// Parses the SPIR-V environment string, and returns the corresponding
+// |target_env|, |target_env_version|, and |spirv_versoin|. Returns a failure
+// value if the |spv_env| is invalid.
 Result ParseSpvEnv(const std::string& spv_env,
                    uint32_t* target_env,
                    uint32_t* target_env_version,

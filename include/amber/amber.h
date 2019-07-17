@@ -90,14 +90,14 @@ struct Options {
   /// Holds engine specific configuration. Ownership stays with the caller.
   EngineConfig* config;
   /// The SPIR-V environment to target.
-  /// E.g. spv1.0, spv1.3, vulkan1.0, vulkan1.1spv1.4.
+  /// E.g. "spv1.0", "spv1.3", "vulkan1.0", "vulkan1.1spv1.4".
   /// If a Vulkan environment, uses the highest version of SPIR-V required
   /// to be supported by that Vulkan environment.  For SPIR-V 1.4 in
-  /// Vulkan, use vulkan1.1spv1.4.
+  /// Vulkan, use "vulkan1.1spv1.4".
   /// If a SPIR-V environment is specified, assume the lowest version
   /// of Vulkan that requires support for that version of SPIR-V.
   /// Shader compilers may limit the list of supported environments.
-  /// The default is an empty string, and is the same as spv1.0.
+  /// If empty, a default of "spv1.0" is used.
   std::string spv_env;
   /// Lists the buffers to extract at the end of the execution
   std::vector<BufferInfo> extractions;
