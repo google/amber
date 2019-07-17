@@ -172,6 +172,17 @@ Result ShaderCompiler::CompileGlsl(const Shader* shader,
   shaderc::Compiler compiler;
   shaderc::CompileOptions options;
 
+  uint32_t env = 0u;
+  uint32_t env_version = 0u;
+  uint32_t spirv_version = 0u;
+  auto r = ParseSpvEnv(spv_env_, &env, &env_version, &spirv_version);
+  if (!r.IsSuccess())
+    return r;
+
+  options.SetTargetEnvironment(static_cast<shaderc_target_env>(env),
+                               env_version);
+  options.SetTargetSpirv(static_cast<shaderc_spirv_version>(spirv_version));
+
   shaderc_shader_kind kind;
   if (shader->GetType() == kShaderTypeCompute)
     kind = shaderc_compute_shader;
@@ -240,5 +251,84 @@ Result ShaderCompiler::CompileOpenCLC(const Shader*,
   return {};
 }
 #endif  // AMBER_ENABLE_CLSPV
+
+namespace {
+
+// Value for the Vulkan API, used in the Shaderc API
+const uint32_t kVulkan = 0;
+// Values for versions of the Vulkan API, used in the Shaderc API
+const uint32_t kVulkan_1_0 = (uint32_t(1) << 22);
+const uint32_t kVulkan_1_1 = (uint32_t(1) << 22) | (1 << 12);
+// Values for SPIR-V versions, used in the Shaderc API
+const uint32_t kSpv_1_0 = uint32_t(0x10000);
+const uint32_t kSpv_1_1 = uint32_t(0x10100);
+const uint32_t kSpv_1_2 = uint32_t(0x10200);
+const uint32_t kSpv_1_3 = uint32_t(0x10300);
+const uint32_t kSpv_1_4 = uint32_t(0x10400);
+
+#if AMBER_ENABLE_SHADERC
+// Check that we have the right values, from the original definitions
+// in the Shaderc API.
+static_assert(kVulkan == shaderc_target_env_vulkan,
+              "enum vulkan* value mismatch");
+static_assert(kVulkan_1_0 == shaderc_env_version_vulkan_1_0,
+              "enum vulkan1.0 value mismatch");
+static_assert(kVulkan_1_1 == shaderc_env_version_vulkan_1_1,
+              "enum vulkan1.1 value mismatch");
+static_assert(kSpv_1_0 == shaderc_spirv_version_1_0,
+              "enum spv1.0 value mismatch");
+static_assert(kSpv_1_1 == shaderc_spirv_version_1_1,
+              "enum spv1.1 value mismatch");
+static_assert(kSpv_1_2 == shaderc_spirv_version_1_2,
+              "enum spv1.2 value mismatch");
+static_assert(kSpv_1_3 == shaderc_spirv_version_1_3,
+              "enum spv1.3 value mismatch");
+static_assert(kSpv_1_4 == shaderc_spirv_version_1_4,
+              "enum spv1.4 value mismatch");
+#endif
+
+}  // namespace
+
+Result ParseSpvEnv(const std::string& spv_env,
+                   uint32_t* target_env,
+                   uint32_t* target_env_version,
+                   uint32_t* spirv_version) {
+  if (!target_env || !target_env_version || !spirv_version)
+    return Result("ParseSpvEnv: null pointer parameter");
+
+  // Use the same values as in Shaderc's shaderc/env.h
+  struct Values {
+    uint32_t env;
+    uint32_t env_version;
+    uint32_t spirv_version;
+  };
+  Values values{kVulkan, kVulkan_1_0, kSpv_1_0};
+
+  if (spv_env == "" || spv_env == "spv1.0") {
+    values = {kVulkan, kVulkan_1_0, kSpv_1_0};
+  } else if (spv_env == "spv1.1") {
+    values = {kVulkan, kVulkan_1_1, kSpv_1_1};
+  } else if (spv_env == "spv1.2") {
+    values = {kVulkan, kVulkan_1_1, kSpv_1_2};
+  } else if (spv_env == "spv1.3") {
+    values = {kVulkan, kVulkan_1_1, kSpv_1_3};
+  } else if (spv_env == "spv1.4") {
+    values = {kVulkan, kVulkan_1_1, kSpv_1_4};
+  } else if (spv_env == "vulkan1.0") {
+    values = {kVulkan, kVulkan_1_0, kSpv_1_0};
+  } else if (spv_env == "vulkan1.1") {
+    // Vulkan 1.1 requires support for SPIR-V 1.3.
+    values = {kVulkan, kVulkan_1_1, kSpv_1_3};
+  } else if (spv_env == "vulkan1.1spv1.4") {
+    values = {kVulkan, kVulkan_1_1, kSpv_1_4};
+  } else {
+    return Result(std::string("Unrecognized environment ") + spv_env);
+  }
+
+  *target_env = values.env;
+  *target_env_version = values.env_version;
+  *spirv_version = values.spirv_version;
+  return {};
+}
 
 }  // namespace amber

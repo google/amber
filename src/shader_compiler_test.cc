@@ -15,9 +15,13 @@
 #include "src/shader_compiler.h"
 
 #include <string>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "src/shader_data.h"
+#if AMBER_ENABLE_SHADERC
+#include "shaderc/env.h"
+#endif
 
 namespace amber {
 namespace {
@@ -215,5 +219,69 @@ TEST_F(ShaderCompilerTest, ReturnsCachedShader) {
     EXPECT_EQ(src_bytes[i], binary[i]);
   }
 }
+
+struct ParseSpvEnvCase {
+  std::string env_str;
+  bool ok;
+  uint32_t target_env;
+  uint32_t env_version;
+  uint32_t spirv_version;
+};
+
+using ParseSpvEnvTest = ::testing::TestWithParam<ParseSpvEnvCase>;
+
+TEST_P(ParseSpvEnvTest, Samples) {
+  uint32_t target_env = 42u;
+  uint32_t env_version = 43u;
+  uint32_t spirv_version = 44u;
+  auto r = amber::ParseSpvEnv(GetParam().env_str, &target_env, &env_version,
+                              &spirv_version);
+  if (GetParam().ok) {
+    EXPECT_TRUE(r.IsSuccess());
+    EXPECT_EQ(GetParam().target_env, target_env) << GetParam().env_str;
+    EXPECT_EQ(GetParam().env_version, env_version) << GetParam().env_str;
+    EXPECT_EQ(GetParam().spirv_version, spirv_version) << GetParam().env_str;
+  } else {
+    EXPECT_FALSE(r.IsSuccess());
+  }
+}
+
+// See also shaderc/env.h
+const uint32_t vulkan = 0;
+const uint32_t vulkan_1_0 = ((uint32_t(1) << 22));
+const uint32_t vulkan_1_1 = ((uint32_t(1) << 22) | (1 << 12));
+const uint32_t spv_1_0 = uint32_t(0x10000);
+const uint32_t spv_1_1 = uint32_t(0x10100);
+const uint32_t spv_1_2 = uint32_t(0x10200);
+const uint32_t spv_1_3 = uint32_t(0x10300);
+const uint32_t spv_1_4 = uint32_t(0x10400);
+
+INSTANTIATE_TEST_SUITE_P(ParseSpvEnvFailures,
+                         ParseSpvEnvTest,
+                         ::testing::ValuesIn(std::vector<ParseSpvEnvCase>{
+                             {"foobar", false, 0u, 0u, 0u},
+                             {"spv99", false, 0u, 0u, 0u},
+                             {"spv99.9", false, 0u, 0u, 0u},
+                             {"spv1.0.1", false, 0u, 0u, 0u},
+                             {"spv1.0.1", false, 0u, 0u, 0u},
+                             {"spv1.5", false, 0u, 0u, 0u},
+                             {"vulkan99", false, 0u, 0u, 0u},
+                             {"vulkan99.9", false, 0u, 0u, 0u},
+                         }));
+
+INSTANTIATE_TEST_SUITE_P(ParseSpvEnvSuccesses,
+                         ParseSpvEnvTest,
+                         ::testing::ValuesIn(std::vector<ParseSpvEnvCase>{
+                             {"", true, vulkan, vulkan_1_0, spv_1_0},
+                             {"spv1.0", true, vulkan, vulkan_1_0, spv_1_0},
+                             {"spv1.1", true, vulkan, vulkan_1_1, spv_1_1},
+                             {"spv1.2", true, vulkan, vulkan_1_1, spv_1_2},
+                             {"spv1.3", true, vulkan, vulkan_1_1, spv_1_3},
+                             {"spv1.4", true, vulkan, vulkan_1_1, spv_1_4},
+                             {"vulkan1.0", true, vulkan, vulkan_1_0, spv_1_0},
+                             {"vulkan1.1", true, vulkan, vulkan_1_1, spv_1_3},
+                             {"vulkan1.1spv1.4", true, vulkan, vulkan_1_1,
+                              spv_1_4},
+                         }));
 
 }  // namespace amber
