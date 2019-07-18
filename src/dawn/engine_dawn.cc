@@ -53,7 +53,7 @@ struct ComboVertexInputDescriptor {
     ::dawn::VertexInputDescriptor* descriptor =
         reinterpret_cast<::dawn::VertexInputDescriptor*>(this);
 
-    descriptor->indexFormat = ::dawn::IndexFormat::Uint16;
+    descriptor->indexFormat = ::dawn::IndexFormat::Uint32;
     descriptor->bufferCount = 0;
     descriptor->nextInChain = nullptr;
 
@@ -77,6 +77,10 @@ struct ComboVertexInputDescriptor {
     // cBuffers[0] has two attributes, then cBuffers[1].attributes should
     // point to &cAttributes[2]. Likewise, if cBuffers[1] has 3 attributes,
     // then cBuffers[2].attributes should point to &cAttributes[5].
+
+    // In amber-dawn, it is the vertex input descriptor is always created
+    // assuming these relationships are one to one i.e. cBuffers[i].attributes
+    // is always pointing to &cAttributes[i] and cBuffers[i].attributeCount == 1
     cBuffers[0].attributes = &cAttributes[0];
     descriptor->buffers = &cBuffers[0];
   }
@@ -107,15 +111,8 @@ struct DawnPipelineHelper {
   ::dawn::RenderPipelineDescriptor renderPipelineDescriptor;
   ::dawn::RenderPassDescriptor renderPassDescriptor;
 
-  ComboVertexInputDescriptor* vertexInputDescriptor;
+  ComboVertexInputDescriptor vertexInputDescriptor;
   ::dawn::RasterizationStateDescriptor cRasterizationState;
-  // deleted
-  // ::dawn::InputStateDescriptor tempInputState = {};
-  // ::dawn::VertexInputDescriptor vertexInput;
-  // std::array<::dawn::VertexInputDescriptor, kMaxVertexInputs> tempInputs;
-  // std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
-  //     tempAttributes;
-  // ::dawn::VertexAttributeDescriptor vertexAttribute;
 
  private:
   ::dawn::PipelineStageDescriptor fragmentStage;
@@ -256,7 +253,7 @@ MapResult MapBuffer(const ::dawn::Device& device, const ::dawn::Buffer& buf) {
     USleep(uint32_t(interval));
   }
   return map_result;
-}  // namespace
+}
 
 // Creates and returns a dawn BufferCopyView
 // Copied from Dawn utils source code.
@@ -830,58 +827,57 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   }
   // Fill the default values for vertexInput (buffers and attributes).
   // assuming #buffers == #attributes
-  vertexInputDescriptor = new ComboVertexInputDescriptor();
-  vertexInputDescriptor->bufferCount =
+  vertexInputDescriptor.bufferCount =
       render_pipeline.pipeline->GetVertexBuffers().size();
 
   for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
     if (ignore_vertex_and_Index_buffers) {
       if (i == 0) {
-        vertexInputDescriptor->cBuffers[0].attributeCount = 1;
-        vertexInputDescriptor->cBuffers[0].stride = 4 * sizeof(float);
-        vertexInputDescriptor->cBuffers[0].attributes =
-            &vertexInputDescriptor->cAttributes[i];
+        vertexInputDescriptor.bufferCount = 1;
+        vertexInputDescriptor.cBuffers[0].attributeCount = 1;
+        vertexInputDescriptor.cBuffers[0].stride = 4 * sizeof(float);
+        vertexInputDescriptor.cBuffers[0].attributes =
+            &vertexInputDescriptor.cAttributes[0];
 
-        vertexInputDescriptor->cAttributes[0].shaderLocation = 0;
-        vertexInputDescriptor->cAttributes[0].format =
+        vertexInputDescriptor.cAttributes[0].shaderLocation = 0;
+        vertexInputDescriptor.cAttributes[0].format =
             ::dawn::VertexFormat::Float4;
       }
     } else {
       if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
-        vertexInputDescriptor->cBuffers[i].attributeCount = 1;
-        vertexInputDescriptor->cBuffers[i].stride =
+        vertexInputDescriptor.cBuffers[i].attributeCount = 1;
+        vertexInputDescriptor.cBuffers[i].stride =
             render_pipeline.pipeline->GetVertexBuffers()[i]
                 .buffer->GetTexelStride();
-        vertexInputDescriptor->cBuffers[i].stepMode =
+        vertexInputDescriptor.cBuffers[i].stepMode =
             ::dawn::InputStepMode::Vertex;
-        vertexInputDescriptor->cBuffers[i].attributes =
-            &vertexInputDescriptor->cAttributes[i];
+        vertexInputDescriptor.cBuffers[i].attributes =
+            &vertexInputDescriptor.cAttributes[i];
 
-        vertexInputDescriptor->cAttributes[i].shaderLocation = i;
+        vertexInputDescriptor.cAttributes[i].shaderLocation = i;
         auto* amber_vertex_format =
             render_pipeline.pipeline->GetVertexBuffers()[i].buffer->GetFormat();
         result =
             GetDawnVertexFormat(*amber_vertex_format,
-                                &vertexInputDescriptor->cAttributes[i].format);
+                                &vertexInputDescriptor.cAttributes[i].format);
         if (!result.IsSuccess())
           return result;
       }
     }
   }
 
-  // set index format
+  // set index buffer format
   if (render_pipeline.pipeline->GetIndexBuffer()) {
     auto* amber_index_format =
         render_pipeline.pipeline->GetIndexBuffer()->GetFormat();
     GetDawnIndexFormat(*amber_index_format,
-                       &vertexInputDescriptor->indexFormat);
+                       &vertexInputDescriptor.indexFormat);
     if (!result.IsSuccess())
       return result;
-  }else{
-    vertexInputDescriptor->indexFormat = ::dawn::IndexFormat::Uint16;
   }
+
   renderPipelineDescriptor.vertexInput =
-      reinterpret_cast<::dawn::VertexInputDescriptor*>(vertexInputDescriptor);
+      reinterpret_cast<::dawn::VertexInputDescriptor*>(&vertexInputDescriptor);
 
   // Set defaults for the vertex stage descriptor.
   vertexStage.module = render_pipeline.vertex_shader;
@@ -892,7 +888,6 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   fragmentStage.module = render_pipeline.fragment_shader;
   fragmentStage.entryPoint = fragmentEntryPoint.c_str();
   renderPipelineDescriptor.fragmentStage = std::move(&fragmentStage);
-
 
   // Set defaults for the rasterization state descriptor.
   {
@@ -1159,8 +1154,8 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
                       0);                            /*offset*/
   pass.DrawIndexed(command->GetVertexCount(),        /* indexCount */
                    instance_count,                   /* instanceCount */
-                   command->GetFirstVertexIndex(),   /* firstIndex */
-                   0,                                /* baseVertex */
+                   0,                                /* firstIndex */
+                   command->GetFirstVertexIndex(),   /* baseVertex */
                    0 /* firstInstance */);
 
   pass.EndPass();
