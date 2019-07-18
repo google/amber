@@ -417,7 +417,7 @@ TEST_P(AmberScriptParserBufferParseErrorTest, Test) {
   EXPECT_EQ(std::string(test_data.err), r.Error()) << test_data.in;
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserBufferParseErrorTest,
     AmberScriptParserBufferParseErrorTest,
     testing::Values(
@@ -489,7 +489,7 @@ INSTANTIATE_TEST_CASE_P(
         BufferParseError{"BUFFER my_buf DATA_TYPE int32 SIZE 5 FILL 5\nBUFFER "
                          "my_buf DATA_TYPE int16 SIZE 5 FILL 2",
                          // NOLINTNEXTLINE(whitespace/parens)
-                         "2: duplicate buffer name provided"}), );
+                         "2: duplicate buffer name provided"}));
 
 struct BufferData {
   const char* name;
@@ -523,7 +523,7 @@ TEST_P(AmberScriptParserBufferDataTypeTest, BufferTypes) {
   EXPECT_EQ(test_data.type, fmt->GetComponents()[0].mode);
   EXPECT_EQ(test_data.num_bits, fmt->GetComponents()[0].num_bits);
 }
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserTestsDataType,
     AmberScriptParserBufferDataTypeTest,
     testing::Values(BufferData{"int8", FormatMode::kSInt, 8, 1, 1},
@@ -543,7 +543,7 @@ INSTANTIATE_TEST_CASE_P(
                     BufferData{"mat3x3<float>", FormatMode::kSFloat, 32, 3, 3},
                     BufferData{"mat4x2<uint16>", FormatMode::kUInt, 16, 4, 2},
                     BufferData{"B8G8R8_UNORM", FormatMode::kUNorm, 8, 3,
-                               1}), );  // NOLINT(whitespace/parens)
+                               1}));  // NOLINT(whitespace/parens)
 
 struct NameData {
   const char* name;
@@ -562,8 +562,8 @@ TEST_P(AmberScriptParserBufferDataTypeInvalidTest, BufferTypes) {
   ASSERT_FALSE(r.IsSuccess()) << test_data.name;
   EXPECT_EQ("1: invalid data_type provided", r.Error()) << test_data.name;
 }
-INSTANTIATE_TEST_CASE_P(
-    AmberScriptParserBufferDataTypeInvalidTest,
+INSTANTIATE_TEST_SUITE_P(
+    AmberScriptParserBufferDataTypeInvalidTestSamples,
     AmberScriptParserBufferDataTypeInvalidTest,
     testing::Values(NameData{"int17"},
                     NameData{"uintt0"},
@@ -587,7 +587,7 @@ INSTANTIATE_TEST_CASE_P(
                     NameData{"mat2x2<mat3x3<double>>"},
                     NameData{"mat2x2<unit7>"},
                     NameData{"mat2x2"},
-                    NameData{"mat2x2<>"}), );  // NOLINT(whitespace/parens)
+                    NameData{"mat2x2<>"}));  // NOLINT(whitespace/parens)
 
 }  // namespace amberscript
 }  // namespace amber

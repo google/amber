@@ -64,8 +64,15 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -ps                       -- Parse input files, create pipelines; Don't execute.
   -q                        -- Disable summary output.
   -d                        -- Disable validation layers.
-  -t <spirv_env>            -- The target SPIR-V environment e.g., spv1.3, vulkan1.1. Defaults to spv1.0.
-  -i <filename>             -- Write rendering to <filename> as a PNG image if it ends with '.png', or as a PPM image otherwise.
+  -t <spirv_env>            -- The target SPIR-V environment e.g., spv1.3, vulkan1.1.
+                               If a SPIR-V environment, assume the lowest version of Vulkan that
+                               requires support of that version of SPIR-V.
+                               If a Vulkan environment, use the highest version of SPIR-V required
+                               to be supported by that version of Vulkan.
+                               Use vulkan1.1spv1.4 for SPIR-V 1.4 with Vulkan 1.1.
+                               Defaults to spv1.0.
+  -i <filename>             -- Write rendering to <filename> as a PNG image if it ends with '.png',
+                               or as a PPM image otherwise.
   -I <buffername>           -- Name of framebuffer to dump. Defaults to 'framebuffer'.
   -b <filename>             -- Write contents of a UBO or SSBO to <filename>.
   -B [<desc set>:]<binding> -- Descriptor set and binding of buffer to write.

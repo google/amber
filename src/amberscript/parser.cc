@@ -187,6 +187,8 @@ Result Parser::ToShaderFormat(const std::string& str, ShaderFormat* fmt) {
     *fmt = kShaderFormatSpirvAsm;
   else if (str == "SPIRV-HEX")
     *fmt = kShaderFormatSpirvHex;
+  else if (str == "OPENCL-C")
+    *fmt = kShaderFormatOpenCLC;
   else
     return Result("unknown shader format: " + str);
   return {};

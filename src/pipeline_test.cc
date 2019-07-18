@@ -106,7 +106,7 @@ TEST_P(AmberScriptPipelineComputePipelineTest,
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("only compute shaders allowed in a compute pipeline", r.Error());
 }
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AmberScriptPipelineComputePipelineTests,
     AmberScriptPipelineComputePipelineTest,
     testing::Values(
@@ -115,7 +115,7 @@ INSTANTIATE_TEST_CASE_P(
         ShaderTypeData{kShaderTypeGeometry},
         ShaderTypeData{kShaderTypeTessellationEvaluation},
         ShaderTypeData{
-            kShaderTypeTessellationControl}), );  // NOLINT(whitespace/parens)
+            kShaderTypeTessellationControl}));  // NOLINT(whitespace/parens)
 
 TEST_F(PipelineTest, SettingComputeShaderToGraphicsPipeline) {
   Shader c(kShaderTypeCompute);

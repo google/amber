@@ -27,6 +27,7 @@ enum ShaderFormat {
   kShaderFormatHlsl,
   kShaderFormatSpirvAsm,
   kShaderFormatSpirvHex,
+  kShaderFormatOpenCLC,
 };
 
 enum ShaderType {

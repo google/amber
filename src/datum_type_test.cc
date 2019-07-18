@@ -36,8 +36,8 @@ TEST_P(DatumTypeTestFormat, ToFormat) {
   auto fmt = dt.AsFormat();
   EXPECT_EQ(test_data.format_type, fmt->GetFormatType());
 }
-INSTANTIATE_TEST_CASE_P(
-    DatumTypeTestFormat,
+INSTANTIATE_TEST_SUITE_P(
+    DatumTypeTestFormatSamples,
     DatumTypeTestFormat,
     testing::Values(
         Data{DataType::kInt8, 1, FormatType::kR8_SINT},
@@ -82,8 +82,7 @@ INSTANTIATE_TEST_CASE_P(
         Data{DataType::kDouble, 1, FormatType::kR64_SFLOAT},
         Data{DataType::kDouble, 2, FormatType::kR64G64_SFLOAT},
         Data{DataType::kDouble, 3, FormatType::kR64G64B64_SFLOAT},
-        Data{
-            DataType::kDouble, 4,
-            FormatType::kR64G64B64A64_SFLOAT}), );  // NOLINT(whitespace/parens)
+        Data{DataType::kDouble, 4,
+             FormatType::kR64G64B64A64_SFLOAT}));  // NOLINT(whitespace/parens)
 
 }  // namespace amber

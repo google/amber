@@ -85,7 +85,7 @@ TEST_P(AmberScriptParserShaderPassThroughTest, ShaderPassThroughWithoutVertex) {
       "allowed",
       r.Error());
 }
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserShaderPassThroughTests,
     AmberScriptParserShaderPassThroughTest,
     testing::Values(NameData{"fragment"},
@@ -93,7 +93,7 @@ INSTANTIATE_TEST_CASE_P(
                     NameData{"tessellation_evaluation"},
                     NameData{"tessellation_control"},
                     NameData{"compute"},
-                    NameData{"multi"}), );  // NOLINT(whitespace/parens)
+                    NameData{"multi"}));  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptParserTest, ShaderPassThroughUnknownShaderType) {
   std::string in = "SHADER UNKNOWN my_shader PASSTHROUGH";
@@ -269,7 +269,7 @@ void main() {
   EXPECT_EQ(kShaderFormatGlsl, shader->GetFormat());
   EXPECT_EQ(shader_result, shader->GetData());
 }
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserTestsShaderType,
     AmberScriptParserShaderTypeTest,
     testing::Values(
@@ -281,7 +281,7 @@ INSTANTIATE_TEST_CASE_P(
         ShaderTypeData{"tessellation_control", kShaderTypeTessellationControl},
         ShaderTypeData{"compute", kShaderTypeCompute},
         ShaderTypeData{"multi",
-                       kShaderTypeMulti}), );  // NOLINT(whitespace/parens)
+                       kShaderTypeMulti}));  // NOLINT(whitespace/parens)
 
 struct ShaderFormatData {
   const char* name;
@@ -315,15 +315,14 @@ TEST_P(AmberScriptParserShaderFormatTest, ShaderFormats) {
   EXPECT_EQ(test_data.format, shader->GetFormat());
   EXPECT_EQ(shader_result, shader->GetData());
 }
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserTestsShaderFormat,
     AmberScriptParserShaderFormatTest,
-    testing::Values(
-        ShaderFormatData{"GLSL", kShaderFormatGlsl},
-        ShaderFormatData{"SPIRV-ASM", kShaderFormatSpirvAsm},
-        ShaderFormatData{
-            "SPIRV-HEX",
-            kShaderFormatSpirvHex}), );  // NOLINT(whitespace/parens)
+    testing::Values(ShaderFormatData{"GLSL", kShaderFormatGlsl},
+                    ShaderFormatData{"SPIRV-ASM", kShaderFormatSpirvAsm},
+                    ShaderFormatData{
+                        "SPIRV-HEX",
+                        kShaderFormatSpirvHex}));  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptParserTest, DuplicateShaderName) {
   std::string in = R"(
@@ -338,6 +337,30 @@ END)";
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("7: duplicate shader name provided", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, OpenCLCKernel) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+# shader
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+}
+
+TEST_F(AmberScriptParserTest, OpenCLCMultiKernel) {
+  std::string in = R"(
+SHADER multi my_shader OPENCL-C
+# shader
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
 }
 
 }  // namespace amberscript
