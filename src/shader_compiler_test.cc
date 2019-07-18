@@ -105,7 +105,8 @@ void main() {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(binary.empty());
   EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
@@ -122,7 +123,8 @@ TEST_F(ShaderCompilerTest, CompilesSpirvAsm) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_FALSE(binary.empty());
   EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
@@ -140,7 +142,8 @@ TEST_F(ShaderCompilerTest, InvalidSpirvHex) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("Invalid shader: error: line 0: Invalid SPIR-V magic number.\n",
             r.Error());
@@ -155,7 +158,8 @@ TEST_F(ShaderCompilerTest, InvalidHex) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("Invalid shader: error: line 0: Invalid SPIR-V magic number.\n",
             r.Error());
@@ -171,7 +175,8 @@ TEST_F(ShaderCompilerTest, CompilesSpirvHex) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_FALSE(binary.empty());
   EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
@@ -188,7 +193,8 @@ TEST_F(ShaderCompilerTest, FailsOnInvalidShader) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
 }
 
@@ -211,7 +217,8 @@ TEST_F(ShaderCompilerTest, ReturnsCachedShader) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, map);
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, map);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   ASSERT_EQ(binary.size(), src_bytes.size());

@@ -14,18 +14,64 @@
 
 #include "src/clspv_helper.h"
 
+#include "clspv/ArgKind.h"
 #include "clspv/Compiler.h"
 
 namespace amber {
 namespace clspvhelper {
 
-Result Compile(const std::string& src_str,
+Result Compile(Pipeline::ShaderInfo* shader_info,
                std::vector<uint32_t>* generated_binary) {
-  // TODO(alan-baker): Parse the descriptor map.
   std::vector<clspv::version0::DescriptorMapEntry> entries;
+  const auto& src_str = shader_info->GetShader()->GetData();
   if (clspv::CompileFromSourceString(src_str, "", "", generated_binary,
                                      &entries)) {
     return Result("Clspv compile failed");
+  }
+
+  for (auto& entry : entries) {
+    if (entry.kind != clspv::version0::DescriptorMapEntry::KernelArg) {
+      return Result(
+          "Only kernel argument descriptor entries are currently supported");
+    }
+
+    Pipeline::ShaderInfo::DescriptorMapEntry descriptor_entry;
+    descriptor_entry.descriptor_set = entry.descriptor_set;
+    descriptor_entry.binding = entry.binding;
+    descriptor_entry.pod_offset = 0;
+    descriptor_entry.pod_arg_size = 0;
+    switch (entry.kernel_arg_data.arg_kind) {
+      case clspv::ArgKind::Buffer:
+        descriptor_entry.kind =
+            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SSBO;
+        break;
+      case clspv::ArgKind::BufferUBO:
+        descriptor_entry.kind =
+            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::UBO;
+        break;
+      case clspv::ArgKind::Pod:
+        descriptor_entry.kind =
+            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::Pod;
+        break;
+      case clspv::ArgKind::PodUBO:
+        descriptor_entry.kind =
+            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::PodUBO;
+        break;
+      default:
+        return Result("Unsupported kernel argument descriptor entry");
+    }
+
+    if (entry.kernel_arg_data.arg_kind == clspv::ArgKind::Pod ||
+        entry.kernel_arg_data.arg_kind == clspv::ArgKind::PodUBO) {
+      descriptor_entry.pod_offset = entry.kernel_arg_data.pod_offset;
+      descriptor_entry.pod_arg_size = entry.kernel_arg_data.pod_arg_size;
+    }
+
+    descriptor_entry.arg_name = entry.kernel_arg_data.arg_name;
+    descriptor_entry.arg_ordinal = entry.kernel_arg_data.arg_ordinal;
+
+    shader_info->AddDescriptorEntry(entry.kernel_arg_data.kernel_name,
+                                    std::move(descriptor_entry));
   }
 
   return Result();

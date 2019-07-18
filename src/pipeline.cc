@@ -330,4 +330,34 @@ void Pipeline::AddBuffer(Buffer* buf,
   info.binding = binding;
 }
 
+void Pipeline::AddBuffer(Buffer* buf, const std::string& arg_name) {
+  // If this buffer binding already exists, overwrite with the new buffer.
+  for (auto& info : buffers_) {
+    if (info.arg_name == arg_name) {
+      info.buffer = buf;
+      return;
+    }
+  }
+
+  buffers_.push_back(BufferInfo{buf});
+
+  auto& info = buffers_.back();
+  info.arg_name = arg_name;
+}
+
+void Pipeline::AddBuffer(Buffer* buf, uint32_t arg_no) {
+  // If this buffer binding already exists, overwrite with the new buffer.
+  for (auto& info : buffers_) {
+    if (info.arg_no == arg_no) {
+      info.buffer = buf;
+      return;
+    }
+  }
+
+  buffers_.push_back(BufferInfo{buf});
+
+  auto& info = buffers_.back();
+  info.arg_no = arg_no;
+}
+
 }  // namespace amber

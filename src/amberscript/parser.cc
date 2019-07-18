@@ -687,22 +687,47 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
       return Result("buffer type does not match intended usage");
 
     token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "DESCRIPTOR_SET")
-      return Result("missing DESCRIPTOR_SET for BIND command");
+    if (token->IsString() && token->AsString() == "DESCRIPTOR_SET") {
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("invalid value for DESCRIPTOR_SET in BIND command");
+      uint32_t descriptor_set = token->AsUint32();
 
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger())
-      return Result("invalid value for DESCRIPTOR_SET in BIND command");
-    uint32_t descriptor_set = token->AsUint32();
+      token = tokenizer_->NextToken();
+      if (!token->IsString() || token->AsString() != "BINDING")
+        return Result("missing BINDING for BIND command");
 
-    token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "BINDING")
-      return Result("missing BINDING for BIND command");
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("invalid value for BINDING in BIND command");
+      pipeline->AddBuffer(buffer, descriptor_set, token->AsUint32());
+    } else {
+      if (!token->IsString())
+        return Result("missing DESCRIPTOR_SET for BIND command");
 
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger())
-      return Result("invalid value for BINDING in BIND command");
-    pipeline->AddBuffer(buffer, descriptor_set, token->AsUint32());
+      if (token->AsString() != "KERNEL")
+        return Result("missing DESCRIPTOR_SET for BIND command");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsString())
+        return Result("missing kernel arg identifier");
+
+      if (token->AsString() == "ARG") {
+        token = tokenizer_->NextToken();
+        if (!token->IsString())
+          return Result("expected argument identifier");
+
+        pipeline->AddBuffer(buffer, token->AsString());
+      } else if (token->AsString() == "ARGNO") {
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger())
+          return Result("expected argument identifier number");
+
+        pipeline->AddBuffer(buffer, token->AsUint32());
+      } else {
+        return Result("missing ARG or ARGNO keyword");
+      }
+    }
   }
 
   return ValidateEndOfStatement("BIND command");
