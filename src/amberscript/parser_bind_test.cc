@@ -1089,13 +1089,13 @@ PIPELINE graphics my_pipeline
   ASSERT_EQ(1U, bufs.size());
   EXPECT_EQ(test_data.type, bufs[0].buffer->GetBufferType());
 }
-INSTANTIATE_TEST_CASE_P(
-    AmberScriptParserBufferTypeTest,
+INSTANTIATE_TEST_SUITE_P(
+    AmberScriptParserBufferTypeTestSamples,
     AmberScriptParserBufferTypeTest,
     testing::Values(BufferTypeData{"uniform", BufferType::kUniform},
                     BufferTypeData{
                         "storage",
-                        BufferType::kStorage}), );  // NOLINT(whitespace/parens)
+                        BufferType::kStorage}));  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptParserTest, BindPushConstants) {
   std::string in = R"(

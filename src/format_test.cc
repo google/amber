@@ -121,8 +121,8 @@ TEST_P(FormatStdTest, Test) {
       << test_data.name;
 }
 
-INSTANTIATE_TEST_CASE_P(
-    FormatStdTest,
+INSTANTIATE_TEST_SUITE_P(
+    FormatStdTestSamples,
     FormatStdTest,
     testing::Values(
         StdData{"mat2x2-std140", "R32G32_SFLOAT", 2, true, 8U, 16U, 32U},
@@ -147,6 +147,6 @@ INSTANTIATE_TEST_CASE_P(
                 64U},
         StdData{"float-std140", "R32_SFLOAT", 1, true, 1U, 4U, 4U},
         StdData{"float-std430", "R32_SFLOAT", 1, false, 1U, 4U,
-                4U}), );  // NOLINT(whitespace/parens)
+                4U}));  // NOLINT(whitespace/parens)
 
 }  // namespace amber
