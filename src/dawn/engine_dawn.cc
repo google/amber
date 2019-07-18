@@ -857,9 +857,8 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
         vertexInputDescriptor.cAttributes[i].shaderLocation = i;
         auto* amber_vertex_format =
             render_pipeline.pipeline->GetVertexBuffers()[i].buffer->GetFormat();
-        result =
-            GetDawnVertexFormat(*amber_vertex_format,
-                                &vertexInputDescriptor.cAttributes[i].format);
+        result = GetDawnVertexFormat(
+            *amber_vertex_format, &vertexInputDescriptor.cAttributes[i].format);
         if (!result.IsSuccess())
           return result;
       }
@@ -870,8 +869,7 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   if (render_pipeline.pipeline->GetIndexBuffer()) {
     auto* amber_index_format =
         render_pipeline.pipeline->GetIndexBuffer()->GetFormat();
-    GetDawnIndexFormat(*amber_index_format,
-                       &vertexInputDescriptor.indexFormat);
+    GetDawnIndexFormat(*amber_index_format, &vertexInputDescriptor.indexFormat);
     if (!result.IsSuccess())
       return result;
   }
