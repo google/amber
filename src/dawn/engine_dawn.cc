@@ -78,9 +78,9 @@ struct ComboVertexInputDescriptor {
     // point to &cAttributes[2]. Likewise, if cBuffers[1] has 3 attributes,
     // then cBuffers[2].attributes should point to &cAttributes[5].
 
-    // In amber-dawn, it is the vertex input descriptor is always created
-    // assuming these relationships are one to one i.e. cBuffers[i].attributes
-    // is always pointing to &cAttributes[i] and cBuffers[i].attributeCount == 1
+    // In amber-dawn, the vertex input descriptor is always created assuming
+    // these relationships are one to one i.e. cBuffers[i].attributes is always
+    // pointing to &cAttributes[i] and cBuffers[i].attributeCount == 1
     cBuffers[0].attributes = &cAttributes[0];
     descriptor->buffers = &cBuffers[0];
   }
