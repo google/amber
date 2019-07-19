@@ -1158,7 +1158,7 @@ BUFFER my_buf DATA_TYPE uint32 DATA 1 END
 
 PIPELINE compute my_pipeline
   ATTACH my_shader
-  BIND BUFFER my_buf AS storage KERNEL ARG arg
+  BIND BUFFER my_buf AS storage KERNEL ARG_NAME arg
 END)";
 
   Parser parser;
@@ -1175,7 +1175,7 @@ BUFFER my_buf DATA_TYPE uint32 DATA 1 END
 
 PIPELINE compute my_pipeline
   ATTACH my_shader
-  BIND BUFFER my_buf AS storage KERNEL ARGNO 0
+  BIND BUFFER my_buf AS storage KERNEL ARG_NUMBER 0
 END)";
 
   Parser parser;
@@ -1192,7 +1192,7 @@ BUFFER my_buf DATA_TYPE uint32 DATA 1 END
 
 PIPELINE compute my_pipeline
   ATTACH my_shader
-  BIND BUFFER my_buf AS storage ARG arg
+  BIND BUFFER my_buf AS storage ARG_NAME arg
 END)";
 
   Parser parser;
@@ -1216,7 +1216,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("9: missing ARG or ARGNO keyword", r.Error());
+  EXPECT_EQ("9: missing ARG_NAME or ARG_NUMBER keyword", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindBufferOpenCLMissingArgName) {
@@ -1228,7 +1228,7 @@ BUFFER my_buf DATA_TYPE uint32 DATA 1 END
 
 PIPELINE compute my_pipeline
   ATTACH my_shader
-  BIND BUFFER my_buf AS storage KERNEL ARG
+  BIND BUFFER my_buf AS storage KERNEL ARG_NAME
 END)";
 
   Parser parser;
@@ -1246,7 +1246,7 @@ BUFFER my_buf DATA_TYPE uint32 DATA 1 END
 
 PIPELINE compute my_pipeline
   ATTACH my_shader
-  BIND BUFFER my_buf AS storage KERNEL ARGNO
+  BIND BUFFER my_buf AS storage KERNEL ARG_NUMBER
 END)";
 
   Parser parser;
@@ -1264,7 +1264,7 @@ BUFFER my_buf DATA_TYPE uint32 DATA 1 END
 
 PIPELINE compute my_pipeline
   ATTACH my_shader
-  BIND BUFFER my_buf AS storage KERNEL ARG 0
+  BIND BUFFER my_buf AS storage KERNEL ARG_NAME 0
 END)";
 
   Parser parser;
@@ -1282,7 +1282,7 @@ BUFFER my_buf DATA_TYPE uint32 DATA 1 END
 
 PIPELINE compute my_pipeline
   ATTACH my_shader
-  BIND BUFFER my_buf AS storage KERNEL ARGNO in
+  BIND BUFFER my_buf AS storage KERNEL ARG_NUMBER in
 END)";
 
   Parser parser;

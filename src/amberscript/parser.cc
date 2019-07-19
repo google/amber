@@ -712,20 +712,20 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
       if (!token->IsString())
         return Result("missing kernel arg identifier");
 
-      if (token->AsString() == "ARG") {
+      if (token->AsString() == "ARG_NAME") {
         token = tokenizer_->NextToken();
         if (!token->IsString())
           return Result("expected argument identifier");
 
         pipeline->AddBuffer(buffer, token->AsString());
-      } else if (token->AsString() == "ARGNO") {
+      } else if (token->AsString() == "ARG_NUMBER") {
         token = tokenizer_->NextToken();
         if (!token->IsInteger())
           return Result("expected argument identifier number");
 
         pipeline->AddBuffer(buffer, token->AsUint32());
       } else {
-        return Result("missing ARG or ARGNO keyword");
+        return Result("missing ARG_NAME or ARG_NUMBER keyword");
       }
     }
   }

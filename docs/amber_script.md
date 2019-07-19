@@ -256,10 +256,10 @@ attachment content, depth/stencil content, uniform buffers, etc.
   BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
 
   # Bind OpenCL argument buffer by name.
-  BIND BUFFER {buffer_name} AS {buffer_type} KERNEL ARG _name_
+  BIND BUFFER {buffer_name} AS {buffer_type} KERNEL ARG_NAME _name_
 
   # Bind OpenCL argument buffer by argument ordinal.
-  BIND BUFFER {buffer_name} AS {buffer_type} KERNEL ARGNO _number_
+  BIND BUFFER {buffer_name} AS {buffer_type} KERNEL ARG_NUMBER _number_
 ```
 
 ```groovy
