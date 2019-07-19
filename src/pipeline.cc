@@ -367,8 +367,7 @@ void Pipeline::AddBuffer(Buffer* buf, uint32_t arg_no) {
 }
 
 void Pipeline::UpdateOpenCLBufferBindings() {
-  if (!IsCompute() ||
-      GetShaders().empty() ||
+  if (!IsCompute() || GetShaders().empty() ||
       GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC)
     return;
 
