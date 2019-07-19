@@ -50,8 +50,8 @@ PIPELINE compute my_pipeline
     SPECIALIZE 1 AS uint32 2 \
     SPECIALIZE 2 AS uint32 2
 
-  BIND BUFFER in_buf AS storage KERNEL ARG_NAME in
-  BIND BUFFER out_buf AS storage KERNEL ARG_NUMBER 1
+  BIND BUFFER in_buf KERNEL ARG_NAME in
+  BIND BUFFER out_buf KERNEL ARG_NUMBER 1
 END
 
 RUN my_pipeline 2 2 2

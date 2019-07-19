@@ -60,7 +60,9 @@ Result Executor::Execute(Engine* engine,
       return r;
 
     for (auto& pipeline : script->GetPipelines()) {
-      pipeline->UpdateOpenCLBufferBindings();
+      r = pipeline->UpdateOpenCLBufferBindings();
+      if (!r.IsSuccess())
+        return r;
       r = engine->CreatePipeline(pipeline.get());
       if (!r.IsSuccess())
         return r;

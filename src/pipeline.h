@@ -73,10 +73,11 @@ class Pipeline {
       std::string arg_name = "";
 
       enum class Kind : int {
+        UNKNOWN,
         SSBO,
         UBO,
-        Pod,
-        PodUBO,
+        POD,
+        POD_UBO,
       } kind;
 
       uint32_t descriptor_set = 0;
@@ -206,7 +207,7 @@ class Pipeline {
 
   /// Updates the descriptor set and binding info for the OpenCL-C kernel bound
   /// to the pipeline. No effect for other shader formats.
-  void UpdateOpenCLBufferBindings();
+  Result UpdateOpenCLBufferBindings();
 
   /// Returns the buffer which is currently bound to this pipeline at
   /// |descriptor_set| and |binding|.

@@ -644,50 +644,57 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     return Result("unknown buffer: " + token->AsString());
 
   token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "AS")
-    return Result("BUFFER command missing AS keyword");
-
-  token = tokenizer_->NextToken();
-  if (!token->IsString())
-    return Result("invalid token for BUFFER type");
-
-  if (token->AsString() == "color") {
+  if (token->IsString() && token->AsString() == "AS") {
     token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "LOCATION")
-      return Result("BIND missing LOCATION");
+    if (!token->IsString())
+      return Result("invalid token for BUFFER type");
 
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger())
-      return Result("invalid value for BIND LOCATION");
+    if (token->AsString() == "color") {
+      token = tokenizer_->NextToken();
+      if (!token->IsString() || token->AsString() != "LOCATION")
+        return Result("BIND missing LOCATION");
 
-    buffer->SetBufferType(BufferType::kColor);
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("invalid value for BIND LOCATION");
 
-    Result r = pipeline->AddColorAttachment(buffer, token->AsUint32());
-    if (!r.IsSuccess())
-      return r;
-  } else if (token->AsString() == "depth_stencil") {
-    buffer->SetBufferType(BufferType::kDepth);
-    Result r = pipeline->SetDepthBuffer(buffer);
-    if (!r.IsSuccess())
-      return r;
-  } else if (token->AsString() == "push_constant") {
-    buffer->SetBufferType(BufferType::kPushConstant);
-    Result r = pipeline->SetPushConstantBuffer(buffer);
-    if (!r.IsSuccess())
-      return r;
-  } else {
-    BufferType type = BufferType::kColor;
-    Result r = ToBufferType(token->AsString(), &type);
-    if (!r.IsSuccess())
-      return r;
+      buffer->SetBufferType(BufferType::kColor);
 
-    if (buffer->GetBufferType() == BufferType::kUnknown)
-      buffer->SetBufferType(type);
-    else if (buffer->GetBufferType() != type)
-      return Result("buffer type does not match intended usage");
+      Result r = pipeline->AddColorAttachment(buffer, token->AsUint32());
+      if (!r.IsSuccess())
+        return r;
+    } else if (token->AsString() == "depth_stencil") {
+      buffer->SetBufferType(BufferType::kDepth);
+      Result r = pipeline->SetDepthBuffer(buffer);
+      if (!r.IsSuccess())
+        return r;
+    } else if (token->AsString() == "push_constant") {
+      buffer->SetBufferType(BufferType::kPushConstant);
+      Result r = pipeline->SetPushConstantBuffer(buffer);
+      if (!r.IsSuccess())
+        return r;
+    } else {
+      BufferType type = BufferType::kColor;
+      Result r = ToBufferType(token->AsString(), &type);
+      if (!r.IsSuccess())
+        return r;
 
-    token = tokenizer_->NextToken();
-    if (token->IsString() && token->AsString() == "DESCRIPTOR_SET") {
+      if (buffer->GetBufferType() == BufferType::kUnknown)
+        buffer->SetBufferType(type);
+      else if (buffer->GetBufferType() != type)
+        return Result("buffer type does not match intended usage");
+    }
+  }
+
+  if (buffer->GetBufferType() == BufferType::kUnknown ||
+      buffer->GetBufferType() == BufferType::kStorage ||
+      buffer->GetBufferType() == BufferType::kUniform) {
+    // If AS was parsed above consume the next token.
+    if (buffer->GetBufferType() != BufferType::kUnknown)
+      token = tokenizer_->NextToken();
+    // DESCRIPTOR_SET requires a buffer type to have been specified.
+    if (buffer->GetBufferType() != BufferType::kUnknown && token->IsString() &&
+        token->AsString() == "DESCRIPTOR_SET") {
       token = tokenizer_->NextToken();
       if (!token->IsInteger())
         return Result("invalid value for DESCRIPTOR_SET in BIND command");

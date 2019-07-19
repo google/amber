@@ -255,11 +255,15 @@ attachment content, depth/stencil content, uniform buffers, etc.
   # Bind the sampler at the given descriptor set and binding.
   BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
 
-  # Bind OpenCL argument buffer by name.
-  BIND BUFFER {buffer_name} AS {buffer_type} KERNEL ARG_NAME _name_
+  # Bind OpenCL argument buffer by name. Specifying the buffer type is optional.
+  # Amber will set the type as appropriate for the argument buffer. All uses
+  # of the buffer must be across all pipelines.
+  BIND BUFFER {buffer_name} [AS {buffer_type}] KERNEL ARG_NAME _name_
 
-  # Bind OpenCL argument buffer by argument ordinal.
-  BIND BUFFER {buffer_name} AS {buffer_type} KERNEL ARG_NUMBER _number_
+  # Bind OpenCL argument buffer by argument ordinal. Specifying the buffer type
+  # is optional. Amber will set the type as appropriate for the argument
+  # buffer. All uses of the buffer must be across all pipelines.
+  BIND BUFFER {buffer_name} [AS {buffer_type}] KERNEL ARG_NUMBER _number_
 ```
 
 ```groovy

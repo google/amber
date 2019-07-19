@@ -366,19 +366,19 @@ void Pipeline::AddBuffer(Buffer* buf, uint32_t arg_no) {
   info.binding = std::numeric_limits<uint32_t>::max();
 }
 
-void Pipeline::UpdateOpenCLBufferBindings() {
+Result Pipeline::UpdateOpenCLBufferBindings() {
   if (!IsCompute() || GetShaders().empty() ||
       GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC)
-    return;
+    return {};
 
   const auto& shader_info = GetShaders()[0];
   const auto& descriptor_map = shader_info.GetDescriptorMap();
   if (descriptor_map.empty())
-    return;
+    return {};
 
   const auto iter = descriptor_map.find(shader_info.GetEntryPoint());
   if (iter == descriptor_map.end())
-    return;
+    return {};
 
   for (auto& info : buffers_) {
     if (info.descriptor_set == std::numeric_limits<uint32_t>::max() &&
@@ -386,12 +386,48 @@ void Pipeline::UpdateOpenCLBufferBindings() {
       for (const auto& entry : iter->second) {
         if (entry.arg_name == info.arg_name ||
             entry.arg_ordinal == info.arg_no) {
+          // Buffer storage class consistency checks.
+          if (info.buffer->GetBufferType() == BufferType::kUnknown) {
+            // Set the appropriate buffer type.
+            switch (entry.kind) {
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::UBO:
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO:
+                info.buffer->SetBufferType(BufferType::kUniform);
+                break;
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SSBO:
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD:
+                info.buffer->SetBufferType(BufferType::kStorage);
+                break;
+              default:
+                return Result("Unhandled buffer type for OPENCL-C shader");
+            }
+          } else if (info.buffer->GetBufferType() == BufferType::kUniform) {
+            if (entry.kind !=
+                    Pipeline::ShaderInfo::DescriptorMapEntry::Kind::UBO &&
+                entry.kind !=
+                    Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO) {
+              return Result("Buffer " + info.buffer->GetName() +
+                            " must be an uniform binding");
+            }
+          } else if (info.buffer->GetBufferType() == BufferType::kStorage) {
+            if (entry.kind !=
+                    Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SSBO &&
+                entry.kind !=
+                    Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD) {
+              return Result("Buffer " + info.buffer->GetName() +
+                            " must be a storage binding");
+            }
+          } else {
+            return Result("Unhandled buffer type for OPENCL-C shader");
+          }
           info.descriptor_set = entry.descriptor_set;
           info.binding = entry.binding;
         }
       }
     }
   }
+
+  return {};
 }
 
 }  // namespace amber

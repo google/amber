@@ -1166,7 +1166,7 @@ END)";
   ASSERT_TRUE(r.IsSuccess());
 }
 
-TEST_F(AmberScriptParserTest, BindBufferOpenCLArgNo) {
+TEST_F(AmberScriptParserTest, BindBufferOpenCLArgNumber) {
   std::string in = R"(
 SHADER compute my_shader OPENCL-C
 #shader
@@ -1176,6 +1176,40 @@ BUFFER my_buf DATA_TYPE uint32 DATA 1 END
 PIPELINE compute my_pipeline
   ATTACH my_shader
   BIND BUFFER my_buf AS storage KERNEL ARG_NUMBER 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferOpenCLArgNameTypeless) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+BUFFER my_buf DATA_TYPE uint32 DATA 1 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND BUFFER my_buf KERNEL ARG_NAME arg
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferOpenCLArgNumberTypeless) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+BUFFER my_buf DATA_TYPE uint32 DATA 1 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND BUFFER my_buf KERNEL ARG_NUMBER 0
 END)";
 
   Parser parser;
@@ -1228,7 +1262,7 @@ BUFFER my_buf DATA_TYPE uint32 DATA 1 END
 
 PIPELINE compute my_pipeline
   ATTACH my_shader
-  BIND BUFFER my_buf AS storage KERNEL ARG_NAME
+  BIND BUFFER my_buf KERNEL ARG_NAME
 END)";
 
   Parser parser;
@@ -1237,7 +1271,7 @@ END)";
   EXPECT_EQ("10: expected argument identifier", r.Error());
 }
 
-TEST_F(AmberScriptParserTest, BindBufferOpenCLMissingArgNo) {
+TEST_F(AmberScriptParserTest, BindBufferOpenCLMissingArgNumber) {
   std::string in = R"(
 SHADER compute my_shader OPENCL-C
 #shader
@@ -1273,7 +1307,7 @@ END)";
   EXPECT_EQ("9: expected argument identifier", r.Error());
 }
 
-TEST_F(AmberScriptParserTest, BindBufferOpenCLArgNoNotInteger) {
+TEST_F(AmberScriptParserTest, BindBufferOpenCLArgNumberNotInteger) {
   std::string in = R"(
 SHADER compute my_shader OPENCL-C
 #shader
@@ -1282,7 +1316,7 @@ BUFFER my_buf DATA_TYPE uint32 DATA 1 END
 
 PIPELINE compute my_pipeline
   ATTACH my_shader
-  BIND BUFFER my_buf AS storage KERNEL ARG_NUMBER in
+  BIND BUFFER my_buf KERNEL ARG_NUMBER in
 END)";
 
   Parser parser;

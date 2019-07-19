@@ -53,11 +53,11 @@ Result Compile(Pipeline::ShaderInfo* shader_info,
         break;
       case clspv::ArgKind::Pod:
         descriptor_entry.kind =
-            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::Pod;
+            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD;
         break;
       case clspv::ArgKind::PodUBO:
         descriptor_entry.kind =
-            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::PodUBO;
+            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO;
         break;
       case clspv::ArgKind::Local:
         // Local arguments are handled via specialization constants.
