@@ -257,12 +257,13 @@ attachment content, depth/stencil content, uniform buffers, etc.
 
   # Bind OpenCL argument buffer by name. Specifying the buffer type is optional.
   # Amber will set the type as appropriate for the argument buffer. All uses
-  # of the buffer must be across all pipelines.
+  # of the buffer must have a consistent |buffer_type| across all pipelines.
   BIND BUFFER {buffer_name} [AS {buffer_type}] KERNEL ARG_NAME _name_
 
-  # Bind OpenCL argument buffer by argument ordinal. Specifying the buffer type
-  # is optional. Amber will set the type as appropriate for the argument
-  # buffer. All uses of the buffer must be across all pipelines.
+  # Bind OpenCL argument buffer by argument ordinal. Arguments use 0-based
+  # numbering. Specifying the buffer type is optional. Amber will set the
+  # type as appropriate for the argument buffer. All uses of the buffer
+  # must have a consistent |buffer_type| across all pipelines.
   BIND BUFFER {buffer_name} [AS {buffer_type}] KERNEL ARG_NUMBER _number_
 ```
 
