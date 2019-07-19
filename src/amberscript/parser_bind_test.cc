@@ -965,7 +965,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: missing DESCRIPTOR_SET for BIND command", r.Error());
+  EXPECT_EQ("12: missing DESCRIPTOR_SET or KERNEL for BIND command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindingBufferExtraParams) {
@@ -1198,7 +1198,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("9: missing DESCRIPTOR_SET for BIND command", r.Error());
+  EXPECT_EQ("9: missing DESCRIPTOR_SET or KERNEL for BIND command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindBufferOpenCLMissingArg) {
@@ -1252,7 +1252,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("10: expected argument identifier number", r.Error());
+  EXPECT_EQ("10: expected argument number", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindBufferOpenCLArgNameNotString) {
@@ -1288,7 +1288,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("9: expected argument identifier number", r.Error());
+  EXPECT_EQ("9: expected argument number", r.Error());
 }
 
 }  // namespace amberscript

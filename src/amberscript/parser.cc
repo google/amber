@@ -701,13 +701,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
       if (!token->IsInteger())
         return Result("invalid value for BINDING in BIND command");
       pipeline->AddBuffer(buffer, descriptor_set, token->AsUint32());
-    } else {
-      if (!token->IsString())
-        return Result("missing DESCRIPTOR_SET for BIND command");
-
-      if (token->AsString() != "KERNEL")
-        return Result("missing DESCRIPTOR_SET for BIND command");
-
+    } else if (token->IsString() && token->AsString() == "KERNEL") {
       token = tokenizer_->NextToken();
       if (!token->IsString())
         return Result("missing kernel arg identifier");
@@ -721,12 +715,14 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
       } else if (token->AsString() == "ARG_NUMBER") {
         token = tokenizer_->NextToken();
         if (!token->IsInteger())
-          return Result("expected argument identifier number");
+          return Result("expected argument number");
 
         pipeline->AddBuffer(buffer, token->AsUint32());
       } else {
         return Result("missing ARG_NAME or ARG_NUMBER keyword");
       }
+    } else {
+      return Result("missing DESCRIPTOR_SET or KERNEL for BIND command");
     }
   }
 
