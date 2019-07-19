@@ -254,6 +254,12 @@ attachment content, depth/stencil content, uniform buffers, etc.
 
   # Bind the sampler at the given descriptor set and binding.
   BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
+
+  # Bind OpenCL argument buffer by name.
+  BIND BUFFER {buffer_name} AS {buffer_type} KERNEL ARG _name_
+
+  # Bind OpenCL argument buffer by argument ordinal.
+  BIND BUFFER {buffer_name} AS {buffer_type} KERNEL ARGNO _number_
 ```
 
 ```groovy
