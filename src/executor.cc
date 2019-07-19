@@ -37,7 +37,7 @@ Result Executor::CompileShaders(const amber::Script* script,
 
       Result r;
       std::vector<uint32_t> data;
-      std::tie(r, data) = sc.Compile(shader_info.GetShader(), shader_map);
+      std::tie(r, data) = sc.Compile(&shader_info, shader_map);
       if (!r.IsSuccess())
         return r;
 
@@ -60,6 +60,9 @@ Result Executor::Execute(Engine* engine,
       return r;
 
     for (auto& pipeline : script->GetPipelines()) {
+      r = pipeline->UpdateOpenCLBufferBindings();
+      if (!r.IsSuccess())
+        return r;
       r = engine->CreatePipeline(pipeline.get());
       if (!r.IsSuccess())
         return r;
