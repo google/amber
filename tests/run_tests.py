@@ -62,6 +62,11 @@ SUPPRESSIONS_DAWN = [
   "draw_triangle_list_using_tessellation.vkscript",
   # Dawn requires a fragmentStage now and in the medium term
   "position_to_ssbo.amber",
+  # Draw rect command is not supported in a pipeline with more than one vertex
+  # buffer attached
+  "draw_array_after_draw_rect.vkscript",
+  "draw_rect_after_draw_array.vkscript",
+  "draw_rect_and_draw_array_mixed.vkscript",
   # DoCompute is not implemented in Dawn backend
   "compute_accumulated_ubo_definition.amber",
   "compute_accumulated_ubo_definition.vkscript",
@@ -125,8 +130,8 @@ SUPPRESSIONS_DAWN = [
   "draw_rect_multiple_color_attachment.amber",
   # Currently not working, under investigation
   "draw_triangle_list_with_depth.vkscript",
-  "draw_triangle_list_with_index_buffer_and_vertex_offset.vkscript",
-  "draw_triangle_list_with_probe_point.vkscript",
+  "non_default_entry_point.amber",
+  "clear_with_depth.amber"
 ]
 
 class TestCase:
