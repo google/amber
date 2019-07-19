@@ -68,12 +68,20 @@ class EngineDawn : public Engine {
       const ::amber::PipelineCommand* command) {
     return pipeline_map_[command->GetPipeline()].render_pipeline.get();
   }
+  // Returns the Dawn-specific compute pipeline for the given command,
+  // if it exists.  Returns nullptr otherwise.
+  ComputePipelineInfo* GetComputePipeline(
+      const ::amber::PipelineCommand* command) {
+    return pipeline_map_[command->GetPipeline()].compute_pipeline.get();
+  }
 
   // If they don't already exist, creates the framebuffer texture for use
   // on the device, the buffer on the host that will eventually hold the
   // resulting pixels for use in checking expectations, and bookkeeping info
   // for that host-side buffer.
   Result AttachBuffersAndTextures(RenderPipelineInfo* render_pipeline);
+
+  Result AttachBuffers(ComputePipelineInfo* compute_pipeline);
 
   ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.
 

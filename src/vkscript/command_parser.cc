@@ -789,6 +789,21 @@ Result CommandParser::ProcessUniform() {
   if (!r.IsSuccess())
     return r;
 
+  // Multiply by the input needed because the value count will use the needed
+  // input as the multiplier
+  uint32_t value_count = ((cmd->GetOffset() / buf->GetFormat()->SizeInBytes()) *
+                          buf->GetFormat()->InputNeededPerElement()) +
+                         static_cast<uint32_t>(values.size());
+  // The buffer should only be resized to become bigger. This means that if a
+  // command was run to set the buffer size we'll honour that size until a
+  // request happens to make the buffer bigger.
+  if (value_count > buf->ValueCount())
+    buf->SetValueCount(value_count);
+
+  // Even if the value count doesn't change, the buffer is still resized
+  // because this maybe the first time data is set into the buffer.
+  buf->ResizeTo(buf->GetSizeInBytes());
+
   if (cmd->IsPushConstant())
     buf->SetData(values);
   else

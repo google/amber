@@ -288,8 +288,6 @@ MapResult MapBuffer(const ::dawn::Device& device, const ::dawn::Buffer& buf) {
 // Creates and submits a command to copy the colour attachments back to the
 // host.
 // TODO(sarahM0): Handle more than one colour attachment
-// TODO(sarahM0): Copy the buffer data for buffers that are not
-// colour-attachments back into the Amber buffer objects.
 MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
                                  const ::dawn::Device& device) {
   const auto width = render_pipeline.pipeline->GetFramebufferWidth();
@@ -345,6 +343,65 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
   return map;
 }
 
+// // Creates and submits a command to copy buffers back to the host.
+// MapResult MapDeviceBufferToHostBuffer(const ComputePipelineInfo&
+// compute_pipeline,
+//                                  const ::dawn::Device& device) {
+//   const auto width = render_pipeline.pipeline->GetFramebufferWidth();
+//   const auto height = render_pipeline.pipeline->GetFramebufferHeight();
+//   const auto pixelSize = render_pipeline.pipeline->GetColorAttachments()[0]
+//                              .buffer->GetTexelStride();
+//   const auto dawn_row_pitch = Align(width * pixelSize,
+//   kMinimumImageRowPitch);
+//   {
+//     ::dawn::Origin3D origin3D;
+//     origin3D.x = 0;
+//     origin3D.y = 0;
+//     origin3D.z = 0;
+//     ::dawn::BufferCopyView source =
+//         CreateBufferCopyView(compoute_pipeline.buffers[i], 0, 0, origin3D);
+
+//     ::dawn::BufferCopyView destination =
+//         CreateBufferCopyView(render_pipeline.fb_buffer, 0, dawn_row_pitch,
+//         0);
+
+//     ::dawn::Extent3D copySize = {width, height, 1};
+
+//     auto encoder = device.CreateCommandEncoder();
+//     encoder.CopyBufferToBuffer(&textureCopyView, &bufferCopyView, &copySize);
+
+//     auto commands = encoder.Finish();
+//     auto queue = device.CreateQueue();
+//     queue.Submit(1, &commands);
+//   }
+
+//   MapResult map = MapBuffer(device, render_pipeline.fb_buffer);
+//   const std::vector<amber::Pipeline::BufferInfo>& out_color_attachment =
+//       render_pipeline.pipeline->GetColorAttachments();
+
+//   for (size_t i = 0; i < out_color_attachment.size(); ++i) {
+//     auto& info = out_color_attachment[i];
+//     auto* values = info.buffer->ValuePtr();
+//     auto row_stride = pixelSize * width;
+//     assert(row_stride * height == info.buffer->GetSizeInBytes());
+//     // Each Dawn row has enough data to fill the target row.
+//     assert(dawn_row_pitch >= row_stride);
+//     values->resize(info.buffer->GetSizeInBytes());
+//     // Copy the framebuffer contents back into the host-side
+//     // framebuffer-buffer. In the Dawn buffer, the row stride is a multiple
+//     of
+//     // kMinimumImageRowPitch bytes, so it might have padding therefore memcpy
+//     // is done row by row.
+//     for (uint h = 0; h < height; h++) {
+//       std::memcpy(values->data() + h * row_stride,
+//                   static_cast<const uint8_t*>(map.data) + h * dawn_row_pitch,
+//                   row_stride);
+//     }
+//   }
+//   // Always unmap the buffer at the end of the engine's command.
+//   render_pipeline.fb_buffer.Unmap();
+//   return map;
+// }
 // Creates a dawn buffer of |size| bytes with TransferDst and the given usage
 // copied from Dawn utils source code
 ::dawn::Buffer CreateBufferFromData(const ::dawn::Device& device,
@@ -651,8 +708,13 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
       auto& module = module_for_type[kShaderTypeCompute];
       if (!module)
         return Result("Dawn::CreatePipeline: no compute shader provided");
+
       pipeline_map_[pipeline].compute_pipeline.reset(
           new ComputePipelineInfo(pipeline, module));
+      Result result =
+          AttachBuffers(pipeline_map_[pipeline].compute_pipeline.get());
+      if (!result.IsSuccess())
+        return result;
       break;
     }
 
@@ -1166,8 +1228,43 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   return map.result;
 }  // namespace dawn
 
-Result EngineDawn::DoCompute(const ComputeCommand*) {
-  return Result("Dawn:DoCompute not implemented");
+Result EngineDawn::DoCompute(const ComputeCommand* command) {
+  Result reslut;
+
+  ComputePipelineInfo* compute_pipeline = GetComputePipeline(command);
+  if (!compute_pipeline)
+    return Result("DoComput: invoked on invalid or missing compute pipeline");
+
+  ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
+  ::dawn::ComputePassEncoder pass = encoder.BeginComputePass();
+
+  ::dawn::ComputePipelineDescriptor computePipelineDescriptor;
+  computePipelineDescriptor.layout = MakeBasicPipelineLayout(
+      device_->Get(), compute_pipeline->bind_group_layouts);
+  ::dawn::PipelineStageDescriptor pipelineStageDescriptor;
+  pipelineStageDescriptor.module = compute_pipeline->compute_shader;
+  pipelineStageDescriptor.entryPoint = "main";
+  computePipelineDescriptor.computeStage = &pipelineStageDescriptor;
+  ::dawn::ComputePipeline pipeline =
+      device_->CreateComputePipeline(&computePipelineDescriptor);
+
+  pass.SetPipeline(pipeline);
+  for (uint32_t i = 0; i < compute_pipeline->bind_groups.size(); i++) {
+    if (compute_pipeline->bind_groups[i]) {
+      pass.SetBindGroup(i, compute_pipeline->bind_groups[i], 0, nullptr);
+    }
+  }
+  pass.Dispatch(command->GetX(), command->GetY(), command->GetZ());
+  pass.EndPass();
+  // Finish recording the command buffer.  It only has one command.
+  auto command_buffer = encoder.Finish();
+  // Submit the command.
+  auto queue = device_->CreateQueue();
+  queue.Submit(1, &command_buffer);
+  // Copy result back
+  // MapResult map = MapTextureToHostBuffer(*compute_pipeline, *device_);
+
+  return {};  // map.result;
 }
 
 Result EngineDawn::DoEntryPoint(const EntryPointCommand*) {
@@ -1182,30 +1279,43 @@ Result EngineDawn::DoPatchParameterVertices(
 Result EngineDawn::DoBuffer(const BufferCommand* command) {
   Result result;
 
-  // TODO(SarahM0): Make this work for compute pipeline
+  ::dawn::Buffer* dawn_buffer;
+
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
-  if (!render_pipeline)
-    return Result("DoBuffer: invoked on invalid or missing render pipeline");
+  if (render_pipeline) {
+    if (render_pipeline->buffer_map.find(
+            {command->GetDescriptorSet(), command->GetBinding()}) !=
+        render_pipeline->buffer_map.end()) {
+      auto dawn_buffer_index = render_pipeline->buffer_map[{
+          command->GetDescriptorSet(), command->GetBinding()}];
+      dawn_buffer = &render_pipeline->buffers[dawn_buffer_index];
+    }
+  }
+
+  ComputePipelineInfo* compute_pipeline = GetComputePipeline(command);
+  if (compute_pipeline) {
+    if (compute_pipeline->buffer_map.find(
+            {command->GetDescriptorSet(), command->GetBinding()}) !=
+        compute_pipeline->buffer_map.end()) {
+      auto dawn_buffer_index = compute_pipeline->buffer_map[{
+          command->GetDescriptorSet(), command->GetBinding()}];
+      dawn_buffer = &compute_pipeline->buffers[dawn_buffer_index];
+    }
+  }
+
+  if (!render_pipeline && !compute_pipeline)
+    return Result("DoBuffer: invoked on invalid or missing pipeline");
   if (!command->IsSSBO() && !command->IsUniform())
     return Result("DoBuffer: only supports SSBO and uniform buffer type");
 
-  if (render_pipeline->buffer_map.find(
-          {command->GetDescriptorSet(), command->GetBinding()}) !=
-      render_pipeline->buffer_map.end()) {
-    auto dawn_buffer_index =
-        render_pipeline
-            ->buffer_map[{command->GetDescriptorSet(), command->GetBinding()}];
-    ::dawn::Buffer& dawn_buffer = render_pipeline->buffers[dawn_buffer_index];
+  Buffer* amber_buffer = command->GetBuffer();
+  if (amber_buffer) {
+    amber_buffer->SetDataWithOffset(command->GetValues(), command->GetOffset());
 
-    Buffer* amber_buffer = command->GetBuffer();
-    if (amber_buffer) {
-      amber_buffer->SetDataWithOffset(command->GetValues(),
-                                      command->GetOffset());
-
-      dawn_buffer.SetSubData(0, amber_buffer->GetSizeInBytes(),
-                             amber_buffer->ValuePtr()->data());
-    }
+    dawn_buffer->SetSubData(0, amber_buffer->GetSizeInBytes(),
+                            amber_buffer->ValuePtr()->data());
   }
+
   return {};
 }
 
@@ -1381,6 +1491,96 @@ Result EngineDawn::AttachBuffersAndTextures(
           MakeBindGroup(*device_, render_pipeline->bind_group_layouts[i],
                         bindingInitalizerHelper[i]);
       render_pipeline->bind_groups.push_back(bindGroup);
+    }
+  }
+
+  return {};
+}
+
+Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
+  Result result;
+
+  // Do not attach pushConstants
+  if (compute_pipeline->pipeline->GetPushConstantBuffer().buffer != nullptr) {
+    return Result("AttachBuffers: Dawn does not support push constants!");
+  }
+
+  std::vector<std::vector<BindingInitializationHelper>> bindingInitalizerHelper(
+      kMaxDawnBindGroup);
+  std::vector<std::vector<::dawn::BindGroupLayoutBinding>> layouts_info(
+      kMaxDawnBindGroup);
+  uint32_t max_descriptor_set = 0;
+
+  // Attach storage/uniform buffers
+  for (const auto& buf_info : compute_pipeline->pipeline->GetBuffers()) {
+    ::dawn::BufferUsageBit bufferUsage;
+    ::dawn::BindingType bindingType;
+    switch (buf_info.buffer->GetBufferType()) {
+      case BufferType::kStorage: {
+        bufferUsage = ::dawn::BufferUsageBit::Storage;
+        bindingType = ::dawn::BindingType::StorageBuffer;
+        break;
+      }
+      case BufferType::kUniform: {
+        bufferUsage = ::dawn::BufferUsageBit::Uniform;
+        bindingType = ::dawn::BindingType::UniformBuffer;
+        break;
+      }
+      default: {
+        return Result("AttachBuffers: unknown buffer type: " +
+                      std::to_string(static_cast<uint32_t>(
+                          buf_info.buffer->GetBufferType())));
+        break;
+      }
+    }
+
+    if (buf_info.descriptor_set > kMaxDawnBindGroup - 1) {
+      return Result(
+          "AttachBuffers: Dawn has maximum of 4 bindGroups "
+          "(descriptor sets)");
+    }
+
+    compute_pipeline->buffers.emplace_back(
+        CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
+                             buf_info.buffer->GetSizeInBytes(),
+                             bufferUsage | ::dawn::BufferUsageBit::CopySrc |
+                                 ::dawn::BufferUsageBit::CopyDst));
+
+    compute_pipeline->buffer_map[{buf_info.descriptor_set, buf_info.binding}] =
+        compute_pipeline->buffers.size() - 1;
+
+    compute_pipeline->used_descriptor_set.insert(buf_info.descriptor_set);
+    max_descriptor_set = std::max(max_descriptor_set, buf_info.descriptor_set);
+
+    ::dawn::BindGroupLayoutBinding layout_info;
+    layout_info.binding = buf_info.binding;
+    layout_info.visibility = ::dawn::ShaderStageBit::Compute;
+    layout_info.type = bindingType;
+    layouts_info[buf_info.descriptor_set].push_back(layout_info);
+
+    BindingInitializationHelper tempBinding = BindingInitializationHelper(
+        buf_info.binding, compute_pipeline->buffers.back(), 0,
+        buf_info.buffer->GetSizeInBytes());
+    bindingInitalizerHelper[buf_info.descriptor_set].push_back(tempBinding);
+  }
+
+  // TODO(sarahM0): fix issue: Add support for doBuffer with sparse descriptor
+  // sets #573
+  if (compute_pipeline->used_descriptor_set.size() != 0 &&
+      compute_pipeline->used_descriptor_set.size() != max_descriptor_set + 1) {
+    return Result("AttachBuffers: Sparse descriptor_set is not supported");
+  }
+
+  for (uint32_t i = 0; i < kMaxDawnBindGroup; i++) {
+    if (layouts_info[i].size() > 0 && bindingInitalizerHelper[i].size() > 0) {
+      ::dawn::BindGroupLayout bindGroupLayout =
+          MakeBindGroupLayout(*device_, layouts_info[i]);
+      compute_pipeline->bind_group_layouts.push_back(bindGroupLayout);
+
+      ::dawn::BindGroup bindGroup =
+          MakeBindGroup(*device_, compute_pipeline->bind_group_layouts[i],
+                        bindingInitalizerHelper[i]);
+      compute_pipeline->bind_groups.push_back(bindGroup);
     }
   }
 
