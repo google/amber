@@ -102,7 +102,8 @@ class Pipeline {
     std::string entry_point_;
     std::vector<uint32_t> data_;
     std::map<uint32_t, uint32_t> specialization_;
-    std::unordered_map<std::string, std::vector<DescriptorMapEntry>> descriptor_map_;
+    std::unordered_map<std::string, std::vector<DescriptorMapEntry>>
+        descriptor_map_;
   };
 
   /// Information on a buffer attached to the pipeline.

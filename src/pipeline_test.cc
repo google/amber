@@ -441,6 +441,6 @@ TEST_F(PipelineTest, ClspvUpdateBindings) {
   EXPECT_EQ(3U, bufs[1].descriptor_set);
   EXPECT_EQ(1U, bufs[1].binding);
 }
-#endif //  AMBER_ENABLE_CLSPV
+#endif  // AMBER_ENABLE_CLSPV
 
 }  // namespace amber

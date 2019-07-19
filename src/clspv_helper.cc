@@ -14,6 +14,8 @@
 
 #include "src/clspv_helper.h"
 
+#include <utility>
+
 #include "clspv/ArgKind.h"
 #include "clspv/Compiler.h"
 
