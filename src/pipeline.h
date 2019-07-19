@@ -18,6 +18,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -67,6 +68,34 @@ class Pipeline {
       specialization_[spec_id] = value;
     }
 
+    /// Descriptor information for an OpenCL-C shader.
+    struct DescriptorMapEntry {
+      std::string arg_name = "";
+
+      enum class Kind : int {
+        UNKNOWN,
+        SSBO,
+        UBO,
+        POD,
+        POD_UBO,
+      } kind;
+
+      uint32_t descriptor_set = 0;
+      uint32_t binding = 0;
+      uint32_t arg_ordinal = 0;
+      uint32_t pod_offset = 0;
+      uint32_t pod_arg_size = 0;
+    };
+
+    void AddDescriptorEntry(const std::string& kernel,
+                            DescriptorMapEntry&& entry) {
+      descriptor_map_[kernel].emplace_back(std::move(entry));
+    }
+    const std::unordered_map<std::string, std::vector<DescriptorMapEntry>>&
+    GetDescriptorMap() const {
+      return descriptor_map_;
+    }
+
    private:
     Shader* shader_ = nullptr;
     ShaderType shader_type_;
@@ -74,6 +103,8 @@ class Pipeline {
     std::string entry_point_;
     std::vector<uint32_t> data_;
     std::map<uint32_t, uint32_t> specialization_;
+    std::unordered_map<std::string, std::vector<DescriptorMapEntry>>
+        descriptor_map_;
   };
 
   /// Information on a buffer attached to the pipeline.
@@ -88,6 +119,8 @@ class Pipeline {
     uint32_t descriptor_set = 0;
     uint32_t binding = 0;
     uint32_t location = 0;
+    std::string arg_name = "";
+    uint32_t arg_no = 0;
   };
 
   static const char* kGeneratedColorBuffer;
@@ -165,8 +198,16 @@ class Pipeline {
 
   /// Adds |buf| to the pipeline at the given |descriptor_set| and |binding|.
   void AddBuffer(Buffer* buf, uint32_t descriptor_set, uint32_t binding);
+  /// Adds |buf| to the pipeline at the given |arg_name|.
+  void AddBuffer(Buffer* buf, const std::string& arg_name);
+  /// Adds |buf| to the pipeline at the given |arg_no|.
+  void AddBuffer(Buffer* buf, uint32_t arg_no);
   /// Returns information on all buffers in this pipeline.
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
+
+  /// Updates the descriptor set and binding info for the OpenCL-C kernel bound
+  /// to the pipeline. No effect for other shader formats.
+  Result UpdateOpenCLBufferBindings();
 
   /// Returns the buffer which is currently bound to this pipeline at
   /// |descriptor_set| and |binding|.

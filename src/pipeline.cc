@@ -15,6 +15,7 @@
 #include "src/pipeline.h"
 
 #include <algorithm>
+#include <limits>
 #include <set>
 
 #include "src/format_parser.h"
@@ -328,6 +329,105 @@ void Pipeline::AddBuffer(Buffer* buf,
   auto& info = buffers_.back();
   info.descriptor_set = descriptor_set;
   info.binding = binding;
+}
+
+void Pipeline::AddBuffer(Buffer* buf, const std::string& arg_name) {
+  // If this buffer binding already exists, overwrite with the new buffer.
+  for (auto& info : buffers_) {
+    if (info.arg_name == arg_name) {
+      info.buffer = buf;
+      return;
+    }
+  }
+
+  buffers_.push_back(BufferInfo{buf});
+
+  auto& info = buffers_.back();
+  info.arg_name = arg_name;
+  info.descriptor_set = std::numeric_limits<uint32_t>::max();
+  info.binding = std::numeric_limits<uint32_t>::max();
+  info.arg_no = std::numeric_limits<uint32_t>::max();
+}
+
+void Pipeline::AddBuffer(Buffer* buf, uint32_t arg_no) {
+  // If this buffer binding already exists, overwrite with the new buffer.
+  for (auto& info : buffers_) {
+    if (info.arg_no == arg_no) {
+      info.buffer = buf;
+      return;
+    }
+  }
+
+  buffers_.push_back(BufferInfo{buf});
+
+  auto& info = buffers_.back();
+  info.arg_no = arg_no;
+  info.descriptor_set = std::numeric_limits<uint32_t>::max();
+  info.binding = std::numeric_limits<uint32_t>::max();
+}
+
+Result Pipeline::UpdateOpenCLBufferBindings() {
+  if (!IsCompute() || GetShaders().empty() ||
+      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC)
+    return {};
+
+  const auto& shader_info = GetShaders()[0];
+  const auto& descriptor_map = shader_info.GetDescriptorMap();
+  if (descriptor_map.empty())
+    return {};
+
+  const auto iter = descriptor_map.find(shader_info.GetEntryPoint());
+  if (iter == descriptor_map.end())
+    return {};
+
+  for (auto& info : buffers_) {
+    if (info.descriptor_set == std::numeric_limits<uint32_t>::max() &&
+        info.binding == std::numeric_limits<uint32_t>::max()) {
+      for (const auto& entry : iter->second) {
+        if (entry.arg_name == info.arg_name ||
+            entry.arg_ordinal == info.arg_no) {
+          // Buffer storage class consistency checks.
+          if (info.buffer->GetBufferType() == BufferType::kUnknown) {
+            // Set the appropriate buffer type.
+            switch (entry.kind) {
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::UBO:
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO:
+                info.buffer->SetBufferType(BufferType::kUniform);
+                break;
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SSBO:
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD:
+                info.buffer->SetBufferType(BufferType::kStorage);
+                break;
+              default:
+                return Result("Unhandled buffer type for OPENCL-C shader");
+            }
+          } else if (info.buffer->GetBufferType() == BufferType::kUniform) {
+            if (entry.kind !=
+                    Pipeline::ShaderInfo::DescriptorMapEntry::Kind::UBO &&
+                entry.kind !=
+                    Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO) {
+              return Result("Buffer " + info.buffer->GetName() +
+                            " must be an uniform binding");
+            }
+          } else if (info.buffer->GetBufferType() == BufferType::kStorage) {
+            if (entry.kind !=
+                    Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SSBO &&
+                entry.kind !=
+                    Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD) {
+              return Result("Buffer " + info.buffer->GetName() +
+                            " must be a storage binding");
+            }
+          } else {
+            return Result("Unhandled buffer type for OPENCL-C shader");
+          }
+          info.descriptor_set = entry.descriptor_set;
+          info.binding = entry.binding;
+        }
+      }
+    }
+  }
+
+  return {};
 }
 
 }  // namespace amber
