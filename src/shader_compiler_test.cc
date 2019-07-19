@@ -227,6 +227,53 @@ TEST_F(ShaderCompilerTest, ReturnsCachedShader) {
   }
 }
 
+#if AMBER_ENABLE_CLSPV
+TEST_F(ShaderCompilerTest, ClspvCompile) {
+  Shader shader(kShaderTypeCompute);
+  shader.SetName("TestShader");
+  shader.SetFormat(kShaderFormatOpenCLC);
+  shader.SetData(R"(
+kernel void TestShader(global int* in, global int* out) {
+  *out = *in;
+}
+  )");
+
+  ShaderCompiler sc;
+  Result r;
+  std::vector<uint32_t> binary;
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
+  ASSERT_TRUE(r.IsSuccess());
+  EXPECT_FALSE(binary.empty());
+  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+}
+
+TEST_F(ShaderCompilerTest, ClspvDisallowCaching) {
+  Shader shader(kShaderTypeCompute);
+  std::string name = "TestShader";
+  shader.SetName(name);
+  shader.SetFormat(kShaderFormatOpenCLC);
+  shader.SetData(R"(
+kernel void TestShader(global int* in, global int* out) {
+  *out = *in;
+}
+  )");
+
+  std::vector<uint32_t> src_bytes = {1, 2, 3, 4, 5};
+
+  ShaderMap map;
+  map[name] = src_bytes;
+
+  ShaderCompiler sc;
+  Result r;
+  std::vector<uint32_t> binary;
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, map);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_TRUE(binary.empty());
+}
+#endif  // AMBER_ENABLE_CLSPV
+
 struct ParseSpvEnvCase {
   std::string env_str;
   bool ok;

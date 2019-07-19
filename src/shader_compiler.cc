@@ -55,8 +55,15 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
     const ShaderMap& shader_map) const {
   const auto shader = shader_info->GetShader();
   auto it = shader_map.find(shader->GetName());
-  if (it != shader_map.end())
+  if (it != shader_map.end()) {
+#if AMBER_ENABLE_CLSPV
+    if (shader->GetFormat() == kShaderFormatOpenCLC) {
+      return {Result("OPENCL-C shaders do not support pre-compiled shaders"),
+              {}};
+    }
+#endif  // AMBER_ENABLE_CLSPV
     return {{}, it->second};
+  }
 
 #if AMBER_ENABLE_SPIRV_TOOLS
   std::string spv_errors;

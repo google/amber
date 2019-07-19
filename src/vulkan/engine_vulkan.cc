@@ -237,29 +237,9 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
                         buf_info.buffer->GetBufferType())));
     }
 
-    // Bind OpenCL arguments if they are specified.
-    uint32_t descriptor_set = buf_info.descriptor_set;
-    uint32_t binding = buf_info.binding;
-    const auto& descriptor_map = pipeline->GetShaders()[0].GetDescriptorMap();
-    if (!descriptor_map.empty()) {
-      const std::string& entry_point =
-          pipeline->GetShaders()[0].GetEntryPoint();
-      auto iter = descriptor_map.find(entry_point);
-      if (iter != descriptor_map.end()) {
-        for (const auto& entry : iter->second) {
-          if (entry.arg_name == buf_info.arg_name ||
-              entry.arg_ordinal == buf_info.arg_no) {
-            descriptor_set = entry.descriptor_set;
-            binding = entry.binding;
-            break;
-          }
-        }
-      }
-    }
-
     auto cmd = MakeUnique<BufferCommand>(type, pipeline);
-    cmd->SetDescriptorSet(descriptor_set);
-    cmd->SetBinding(binding);
+    cmd->SetDescriptorSet(buf_info.descriptor_set);
+    cmd->SetBinding(buf_info.binding);
     cmd->SetBuffer(buf_info.buffer);
 
     r = info.vk_pipeline->AddDescriptor(cmd.get());

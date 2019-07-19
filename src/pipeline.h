@@ -70,7 +70,7 @@ class Pipeline {
 
     /// Descriptor information for an OpenCL-C shader.
     struct DescriptorMapEntry {
-      std::string arg_name;
+      std::string arg_name = "";
 
       enum class Kind : int {
         SSBO,
@@ -79,11 +79,11 @@ class Pipeline {
         PodUBO,
       } kind;
 
-      uint32_t descriptor_set;
-      uint32_t binding;
-      uint32_t arg_ordinal;
-      uint32_t pod_offset;
-      uint32_t pod_arg_size;
+      uint32_t descriptor_set = 0;
+      uint32_t binding = 0;
+      uint32_t arg_ordinal = 0;
+      uint32_t pod_offset = 0;
+      uint32_t pod_arg_size = 0;
     };
 
     void AddDescriptorEntry(const std::string& kernel,
@@ -202,6 +202,10 @@ class Pipeline {
   void AddBuffer(Buffer* buf, uint32_t arg_no);
   /// Returns information on all buffers in this pipeline.
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
+
+  /// Updates the descriptor set and binding info for the OpenCL-C kernel bound
+  /// to the pipeline. No effect for other shader formats.
+  void UpdateOpenCLBufferBindings();
 
   /// Returns the buffer which is currently bound to this pipeline at
   /// |descriptor_set| and |binding|.

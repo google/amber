@@ -57,12 +57,17 @@ Result Compile(Pipeline::ShaderInfo* shader_info,
         descriptor_entry.kind =
             Pipeline::ShaderInfo::DescriptorMapEntry::Kind::PodUBO;
         break;
+      case clspv::ArgKind::Local:
+        // Local arguments are handled via specialization constants.
+        break;
       default:
         return Result("Unsupported kernel argument descriptor entry");
     }
 
     if (entry.kernel_arg_data.arg_kind == clspv::ArgKind::Pod ||
         entry.kernel_arg_data.arg_kind == clspv::ArgKind::PodUBO) {
+      if (entry.kernel_arg_data.pod_offset != 0)
+        return Result("Clustered PoD arguments are not currently supported");
       descriptor_entry.pod_offset = entry.kernel_arg_data.pod_offset;
       descriptor_entry.pod_arg_size = entry.kernel_arg_data.pod_arg_size;
     }

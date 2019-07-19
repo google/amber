@@ -15,6 +15,7 @@
 #include "src/pipeline.h"
 
 #include <algorithm>
+#include <limits>
 #include <set>
 
 #include "src/format_parser.h"
@@ -343,6 +344,9 @@ void Pipeline::AddBuffer(Buffer* buf, const std::string& arg_name) {
 
   auto& info = buffers_.back();
   info.arg_name = arg_name;
+  info.descriptor_set = std::numeric_limits<uint32_t>::max();
+  info.binding = std::numeric_limits<uint32_t>::max();
+  info.arg_no = std::numeric_limits<uint32_t>::max();
 }
 
 void Pipeline::AddBuffer(Buffer* buf, uint32_t arg_no) {
@@ -358,6 +362,37 @@ void Pipeline::AddBuffer(Buffer* buf, uint32_t arg_no) {
 
   auto& info = buffers_.back();
   info.arg_no = arg_no;
+  info.descriptor_set = std::numeric_limits<uint32_t>::max();
+  info.binding = std::numeric_limits<uint32_t>::max();
+}
+
+void Pipeline::UpdateOpenCLBufferBindings() {
+  if (!IsCompute() ||
+      GetShaders().empty() ||
+      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC)
+    return;
+
+  const auto& shader_info = GetShaders()[0];
+  const auto& descriptor_map = shader_info.GetDescriptorMap();
+  if (descriptor_map.empty())
+    return;
+
+  const auto iter = descriptor_map.find(shader_info.GetEntryPoint());
+  if (iter == descriptor_map.end())
+    return;
+
+  for (auto& info : buffers_) {
+    if (info.descriptor_set == std::numeric_limits<uint32_t>::max() &&
+        info.binding == std::numeric_limits<uint32_t>::max()) {
+      for (const auto& entry : iter->second) {
+        if (entry.arg_name == info.arg_name ||
+            entry.arg_ordinal == info.arg_no) {
+          info.descriptor_set = entry.descriptor_set;
+          info.binding = entry.binding;
+        }
+      }
+    }
+  }
 }
 
 }  // namespace amber
