@@ -415,6 +415,8 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelineVertexData(pipeline.get());
     } else if (tok == "INDEX_DATA") {
       r = ParsePipelineIndexData(pipeline.get());
+    } else if (tok == "SET") {
+      r = ParsePipelineSet(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -776,6 +778,59 @@ Result Parser::ParsePipelineIndexData(Pipeline* pipeline) {
     return r;
 
   return ValidateEndOfStatement("INDEX_DATA command");
+}
+
+Result Parser::ParsePipelineSet(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "KERNEL")
+    return Result("missing KERNEL in SET command");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("expected ARG_NAME or ARG_NUMBER");
+
+  std::string arg_name = "";
+  uint32_t arg_no = std::numeric_limits<uint32_t>::max();
+  if (token->AsString() == "ARG_NAME") {
+    token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("expected argument identifier");
+    arg_name = token->AsString();
+  } else if (token->AsString() == "ARG_NUMBER") {
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("expected argument number");
+    arg_no = token->AsUint32();
+  } else {
+    return Result("expected ARG_NAME or ARG_NUMBER");
+  }
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "AS")
+    return Result("missing AS in SET command");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("expected data type");
+
+  DatumType arg_type;
+  auto r = ToDatumType(token->AsString(), &arg_type);
+  if (!r.IsSuccess())
+    return r;
+
+  token = tokenizer_->NextToken();
+  if (!token->IsInteger() && !token->IsDouble())
+    return Result("expected data value");
+
+  Value value;
+  if (arg_type.IsFloat() || arg_type.IsDouble())
+    value.SetDoubleValue(token->AsDouble());
+  else
+    value.SetIntValue(token->AsUint64());
+
+  (void)pipeline;
+  //pipeline->SetPODValue(arg_name, arg_no, arg_type, value);
+  return ValidateEndOfStatement("SET command");
 }
 
 Result Parser::ParseBuffer() {
