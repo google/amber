@@ -62,6 +62,7 @@ class Parser : public amber::Parser {
   Result ParsePipelineBind(Pipeline*);
   Result ParsePipelineVertexData(Pipeline*);
   Result ParsePipelineIndexData(Pipeline*);
+  Result ParsePipelineSet(Pipeline*);
   Result ParseRun();
   Result ParseClear();
   Result ParseClearColor();
