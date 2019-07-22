@@ -275,6 +275,20 @@ attachment content, depth/stencil content, uniform buffers, etc.
   INDEX_DATA {buffer_name}
 ```
 
+##### OpenCL Plain-Old-Data Arguments
+OpenCL kernels can have plain-old-data (pod or pod_ubo in the desriptor map)
+arguments set their data via this command. Amber will generate the appropriate
+buffers for the pipeline populated with the specified data.
+
+```groovy
+  # Set argument |name| to |data_type| with value |val|.
+  SET KERNEL ARG_NAME _name_ AS {data_type} _val_
+
+  # Set argument number |number| to |data_type| with value |val|.
+  # Arguments use 0-based numbering.
+  SET KERNEL ARG_NUMBER _number_ AS {data_type} _val_
+```
+
 ##### Topologies
  * `point_list`
  * `line_list`
