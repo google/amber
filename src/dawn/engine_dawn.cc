@@ -343,65 +343,39 @@ MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
   return map;
 }
 
-// // Creates and submits a command to copy buffers back to the host.
-// MapResult MapDeviceBufferToHostBuffer(const ComputePipelineInfo&
-// compute_pipeline,
-//                                  const ::dawn::Device& device) {
-//   const auto width = render_pipeline.pipeline->GetFramebufferWidth();
-//   const auto height = render_pipeline.pipeline->GetFramebufferHeight();
-//   const auto pixelSize = render_pipeline.pipeline->GetColorAttachments()[0]
-//                              .buffer->GetTexelStride();
-//   const auto dawn_row_pitch = Align(width * pixelSize,
-//   kMinimumImageRowPitch);
-//   {
-//     ::dawn::Origin3D origin3D;
-//     origin3D.x = 0;
-//     origin3D.y = 0;
-//     origin3D.z = 0;
-//     ::dawn::BufferCopyView source =
-//         CreateBufferCopyView(compoute_pipeline.buffers[i], 0, 0, origin3D);
+// Maps device buffers back to the host buffers
+Result MapDeviceBufferToHostBuffer(const ComputePipelineInfo& compute_pipeline,
+                                   const ::dawn::Device& device) {
+  for (uint32_t i = 0; i < compute_pipeline.pipeline->GetBuffers().size();
+       i++) {
+    auto& device_buffer = compute_pipeline.buffers[i];
+    auto& host_buffer = compute_pipeline.pipeline->GetBuffers()[i];
 
-//     ::dawn::BufferCopyView destination =
-//         CreateBufferCopyView(render_pipeline.fb_buffer, 0, dawn_row_pitch,
-//         0);
+    const auto width = host_buffer.buffer->GetWidth();
+    const auto height = host_buffer.buffer->GetHeight();
+    const auto pixelSize = host_buffer.buffer->GetTexelStride();
+    const auto dawn_row_pitch = Align(width * pixelSize, kMinimumImageRowPitch);
 
-//     ::dawn::Extent3D copySize = {width, height, 1};
-
-//     auto encoder = device.CreateCommandEncoder();
-//     encoder.CopyBufferToBuffer(&textureCopyView, &bufferCopyView, &copySize);
-
-//     auto commands = encoder.Finish();
-//     auto queue = device.CreateQueue();
-//     queue.Submit(1, &commands);
-//   }
-
-//   MapResult map = MapBuffer(device, render_pipeline.fb_buffer);
-//   const std::vector<amber::Pipeline::BufferInfo>& out_color_attachment =
-//       render_pipeline.pipeline->GetColorAttachments();
-
-//   for (size_t i = 0; i < out_color_attachment.size(); ++i) {
-//     auto& info = out_color_attachment[i];
-//     auto* values = info.buffer->ValuePtr();
-//     auto row_stride = pixelSize * width;
-//     assert(row_stride * height == info.buffer->GetSizeInBytes());
-//     // Each Dawn row has enough data to fill the target row.
-//     assert(dawn_row_pitch >= row_stride);
-//     values->resize(info.buffer->GetSizeInBytes());
-//     // Copy the framebuffer contents back into the host-side
-//     // framebuffer-buffer. In the Dawn buffer, the row stride is a multiple
-//     of
-//     // kMinimumImageRowPitch bytes, so it might have padding therefore memcpy
-//     // is done row by row.
-//     for (uint h = 0; h < height; h++) {
-//       std::memcpy(values->data() + h * row_stride,
-//                   static_cast<const uint8_t*>(map.data) + h * dawn_row_pitch,
-//                   row_stride);
-//     }
-//   }
-//   // Always unmap the buffer at the end of the engine's command.
-//   render_pipeline.fb_buffer.Unmap();
-//   return map;
-// }
+    MapResult mapped_device_buffer = MapBuffer(device, device_buffer);
+    auto* values = host_buffer.buffer->ValuePtr();
+    auto row_stride = pixelSize * width;
+    assert(row_stride * height == host_buffer.buffer->GetSizeInBytes());
+    // Each Dawn row has enough data to fill the target row.
+    assert(dawn_row_pitch >= row_stride);
+    values->resize(host_buffer.buffer->GetSizeInBytes());
+    for (uint h = 0; h < height; h++) {
+      std::memcpy(values->data() + h * row_stride,
+                  static_cast<const uint8_t*>(mapped_device_buffer.data) +
+                      h * dawn_row_pitch,
+                  row_stride);
+    }
+    // Always unmap the buffer at the end of the engine's command.
+    device_buffer.Unmap();
+    if (!mapped_device_buffer.result.IsSuccess())
+      return Result("couldn't copy");
+  }
+  return {};
+}
 // Creates a dawn buffer of |size| bytes with TransferDst and the given usage
 // copied from Dawn utils source code
 ::dawn::Buffer CreateBufferFromData(const ::dawn::Device& device,
