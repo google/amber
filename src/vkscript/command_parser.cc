@@ -802,7 +802,7 @@ Result CommandParser::ProcessUniform() {
 
   // Even if the value count doesn't change, the buffer is still resized
   // because this maybe the first time data is set into the buffer.
-  // buf->ResizeTo(buf->GetSizeInBytes());
+  buf->ResizeTo(buf->GetSizeInBytes());
 
   if (cmd->IsPushConstant())
     buf->SetData(values);
