@@ -21,6 +21,7 @@
 
 #include "amber/amber.h"
 #include "amber/result.h"
+#include "src/pipeline.h"
 #include "src/shader.h"
 
 namespace amber {
@@ -37,14 +38,14 @@ class ShaderCompiler {
   /// compilation result is copied from that entry. Otherwise a compiler is
   /// invoked to produce the compilation result.
   std::pair<Result, std::vector<uint32_t>> Compile(
-      const Shader* shader,
+      Pipeline::ShaderInfo* shader_info,
       const ShaderMap& shader_map) const;
 
  private:
   Result ParseHex(const std::string& data, std::vector<uint32_t>* result) const;
   Result CompileGlsl(const Shader* shader, std::vector<uint32_t>* result) const;
   Result CompileHlsl(const Shader* shader, std::vector<uint32_t>* result) const;
-  Result CompileOpenCLC(const Shader* shader,
+  Result CompileOpenCLC(Pipeline::ShaderInfo* shader,
                         std::vector<uint32_t>* result) const;
 
   std::string spv_env_;

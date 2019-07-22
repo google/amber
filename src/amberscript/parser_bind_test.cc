@@ -965,7 +965,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: missing DESCRIPTOR_SET for BIND command", r.Error());
+  EXPECT_EQ("12: missing DESCRIPTOR_SET or KERNEL for BIND command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindingBufferExtraParams) {
@@ -1147,6 +1147,182 @@ END)";
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("12: extra parameters after BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferOpenCLArgName) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+BUFFER my_buf DATA_TYPE uint32 DATA 1 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND BUFFER my_buf AS storage KERNEL ARG_NAME arg
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferOpenCLArgNumber) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+BUFFER my_buf DATA_TYPE uint32 DATA 1 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND BUFFER my_buf AS storage KERNEL ARG_NUMBER 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferOpenCLArgNameTypeless) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+BUFFER my_buf DATA_TYPE uint32 DATA 1 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND BUFFER my_buf KERNEL ARG_NAME arg
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferOpenCLArgNumberTypeless) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+BUFFER my_buf DATA_TYPE uint32 DATA 1 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND BUFFER my_buf KERNEL ARG_NUMBER 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferOpenCLMissingKernel) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+BUFFER my_buf DATA_TYPE uint32 DATA 1 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND BUFFER my_buf AS storage ARG_NAME arg
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("9: missing DESCRIPTOR_SET or KERNEL for BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferOpenCLMissingArg) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+BUFFER my_buf DATA_TYPE uint32 DATA 1 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND BUFFER my_buf AS storage KERNEL arg
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("9: missing ARG_NAME or ARG_NUMBER keyword", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferOpenCLMissingArgName) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+BUFFER my_buf DATA_TYPE uint32 DATA 1 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND BUFFER my_buf KERNEL ARG_NAME
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("10: expected argument identifier", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferOpenCLMissingArgNumber) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+BUFFER my_buf DATA_TYPE uint32 DATA 1 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND BUFFER my_buf AS storage KERNEL ARG_NUMBER
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("10: expected argument number", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferOpenCLArgNameNotString) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+BUFFER my_buf DATA_TYPE uint32 DATA 1 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND BUFFER my_buf AS storage KERNEL ARG_NAME 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("9: expected argument identifier", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferOpenCLArgNumberNotInteger) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+BUFFER my_buf DATA_TYPE uint32 DATA 1 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND BUFFER my_buf KERNEL ARG_NUMBER in
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("9: expected argument number", r.Error());
 }
 
 }  // namespace amberscript
