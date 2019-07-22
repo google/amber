@@ -61,7 +61,7 @@ Result Executor::Execute(Engine* engine,
 
 
     // OpenCL specific pipeline updates.
-    for (auto& pipeline: script->GetPipelines()) {
+    for (auto& pipeline : script->GetPipelines()) {
       r = pipeline->UpdateOpenCLBufferBindings();
       if (!r.IsSuccess())
         return r;

@@ -454,7 +454,8 @@ Result Pipeline::GenerateOpenCLPoDBuffers() {
     uint32_t offset = 0;
     uint32_t arg_size = 0;
     bool uses_name = !arg_info.name.empty();
-    Pipeline::ShaderInfo::DescriptorMapEntry::Kind kind;
+    Pipeline::ShaderInfo::DescriptorMapEntry::Kind kind =
+        Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD;
     for (const auto& entry : iter->second) {
       if (entry.kind != Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD &&
           entry.kind !=
