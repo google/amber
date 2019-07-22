@@ -351,31 +351,41 @@ Result MapDeviceBufferToHostBuffer(const ComputePipelineInfo& compute_pipeline,
     auto& device_buffer = compute_pipeline.buffers[i];
     auto& host_buffer = compute_pipeline.pipeline->GetBuffers()[i];
 
-    const auto width = host_buffer.buffer->GetWidth();
-    const auto height = host_buffer.buffer->GetHeight();
-    const auto pixelSize = host_buffer.buffer->GetTexelStride();
-    const auto dawn_row_pitch = Align(width * pixelSize, kMinimumImageRowPitch);
+    // Create a copy of device buffer to it in a map read operation.
+    // It's not possible to simply set this bit on the existing buffers since:
+    // Device error: Only CopyDst is allowed with MapRead
+    ::dawn::BufferDescriptor descriptor;
+    descriptor.size = host_buffer.buffer->GetSizeInBytes();
+    descriptor.usage =
+        ::dawn::BufferUsageBit::CopyDst | ::dawn::BufferUsageBit::MapRead;
+    const auto copy_device_buffer = device.CreateBuffer(&descriptor);
+    const uint64_t source_offset = 0;
+    const uint64_t destination_offset = 0;
+    const uint64_t copy_size =
+        static_cast<uint64_t>(host_buffer.buffer->GetSizeInBytes());
+    auto encoder = device.CreateCommandEncoder();
+    encoder.CopyBufferToBuffer(device_buffer, source_offset, copy_device_buffer,
+                               destination_offset, copy_size);
+    auto commands = encoder.Finish();
+    auto queue = device.CreateQueue();
+    queue.Submit(1, &commands);
 
-    MapResult mapped_device_buffer = MapBuffer(device, device_buffer);
+    MapResult mapped_device_buffer = MapBuffer(device, copy_device_buffer);
     auto* values = host_buffer.buffer->ValuePtr();
-    auto row_stride = pixelSize * width;
-    assert(row_stride * height == host_buffer.buffer->GetSizeInBytes());
-    // Each Dawn row has enough data to fill the target row.
-    assert(dawn_row_pitch >= row_stride);
     values->resize(host_buffer.buffer->GetSizeInBytes());
-    for (uint h = 0; h < height; h++) {
-      std::memcpy(values->data() + h * row_stride,
-                  static_cast<const uint8_t*>(mapped_device_buffer.data) +
-                      h * dawn_row_pitch,
-                  row_stride);
-    }
-    // Always unmap the buffer at the end of the engine's command.
-    device_buffer.Unmap();
+    // TODO(sarahM0): At the moment all compute tests pass. Investigate
+    // if ever alignment is an issue and if it's necessary to copy line by line
+    std::memcpy(values->data(),
+                static_cast<const uint8_t*>(mapped_device_buffer.data),
+                copy_size);
+
+    copy_device_buffer.Unmap();
     if (!mapped_device_buffer.result.IsSuccess())
-      return Result("couldn't copy");
+      return mapped_device_buffer.result;
   }
   return {};
 }
+
 // Creates a dawn buffer of |size| bytes with TransferDst and the given usage
 // copied from Dawn utils source code
 ::dawn::Buffer CreateBufferFromData(const ::dawn::Device& device,
@@ -1203,25 +1213,24 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
 }  // namespace dawn
 
 Result EngineDawn::DoCompute(const ComputeCommand* command) {
-  Result reslut;
+  Result result;
 
   ComputePipelineInfo* compute_pipeline = GetComputePipeline(command);
   if (!compute_pipeline)
     return Result("DoComput: invoked on invalid or missing compute pipeline");
 
-  ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
-  ::dawn::ComputePassEncoder pass = encoder.BeginComputePass();
-
   ::dawn::ComputePipelineDescriptor computePipelineDescriptor;
   computePipelineDescriptor.layout = MakeBasicPipelineLayout(
       device_->Get(), compute_pipeline->bind_group_layouts);
+
   ::dawn::PipelineStageDescriptor pipelineStageDescriptor;
   pipelineStageDescriptor.module = compute_pipeline->compute_shader;
   pipelineStageDescriptor.entryPoint = "main";
   computePipelineDescriptor.computeStage = &pipelineStageDescriptor;
   ::dawn::ComputePipeline pipeline =
       device_->CreateComputePipeline(&computePipelineDescriptor);
-
+  ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
+  ::dawn::ComputePassEncoder pass = encoder.BeginComputePass();
   pass.SetPipeline(pipeline);
   for (uint32_t i = 0; i < compute_pipeline->bind_groups.size(); i++) {
     if (compute_pipeline->bind_groups[i]) {
@@ -1236,9 +1245,9 @@ Result EngineDawn::DoCompute(const ComputeCommand* command) {
   auto queue = device_->CreateQueue();
   queue.Submit(1, &command_buffer);
   // Copy result back
-  // MapResult map = MapTextureToHostBuffer(*compute_pipeline, *device_);
+  result = MapDeviceBufferToHostBuffer(*compute_pipeline, *device_);
 
-  return {};  // map.result;
+  return result;
 }
 
 Result EngineDawn::DoEntryPoint(const EntryPointCommand*) {
