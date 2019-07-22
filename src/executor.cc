@@ -60,13 +60,17 @@ Result Executor::Execute(Engine* engine,
       return r;
 
 
-    for (auto& pipeline : script->GetPipelines()) {
+    // OpenCL specific pipeline updates.
+    for (auto& pipeline: script->GetPipelines()) {
       r = pipeline->UpdateOpenCLBufferBindings();
       if (!r.IsSuccess())
         return r;
       r = pipeline->GenerateOpenCLPoDBuffers();
       if (!r.IsSuccess())
         return r;
+    }
+
+    for (auto& pipeline : script->GetPipelines()) {
       r = engine->CreatePipeline(pipeline.get());
       if (!r.IsSuccess())
         return r;

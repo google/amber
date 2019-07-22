@@ -236,10 +236,12 @@ class Pipeline {
 
   /// Adds value from SET command.
   void SetArg(ArgSetInfo&& info) { set_arg_values_.push_back(std::move(info)); }
-  const std::vector<ArgSetInfo>& SetArgValues() const { return set_arg_values_; }
+  const std::vector<ArgSetInfo>& SetArgValues() const {
+    return set_arg_values_;
+  }
 
   /// Generate the buffers necessary for OpenCL PoD arguments populated via SET
-  /// command.
+  /// command. This should be called after all other buffers are bound.
   Result GenerateOpenCLPoDBuffers();
 
  private:

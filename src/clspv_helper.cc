@@ -68,8 +68,6 @@ Result Compile(Pipeline::ShaderInfo* shader_info,
 
     if (entry.kernel_arg_data.arg_kind == clspv::ArgKind::Pod ||
         entry.kernel_arg_data.arg_kind == clspv::ArgKind::PodUBO) {
-      if (entry.kernel_arg_data.pod_offset != 0)
-        return Result("Clustered PoD arguments are not currently supported");
       descriptor_entry.pod_offset = entry.kernel_arg_data.pod_offset;
       descriptor_entry.pod_arg_size = entry.kernel_arg_data.pod_arg_size;
     }
