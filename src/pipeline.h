@@ -228,7 +228,7 @@ class Pipeline {
 
   /// Information on values set for OpenCL-C plain-old-data args.
   struct ArgSetInfo {
-    std::string name = "";
+    std::string name;
     uint32_t ordinal = 0;
     DatumType type;
     Value value;

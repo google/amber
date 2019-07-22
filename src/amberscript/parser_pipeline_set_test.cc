@@ -26,6 +26,7 @@ SHADER compute my_shader OPENCL-C
 #shader
 END
 PIPELINE compute my_pipeline
+  ATTACH my_shader
   SET ARG_NAME a AS uint32 0
 END
 )";
@@ -33,7 +34,7 @@ END
   Parser parser;
   auto r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: missing KERNEL in SET command", r.Error());
+  EXPECT_EQ("7: missing KERNEL in SET command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, OpenCLSetMissingArgName) {
@@ -42,6 +43,7 @@ SHADER compute my_shader OPENCL-C
 #shader
 END
 PIPELINE compute my_pipeline
+  ATTACH my_shader
   SET KERNEL a AS uint32 0
 END
 )";
@@ -49,7 +51,7 @@ END
   Parser parser;
   auto r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: expected ARG_NAME or ARG_NUMBER", r.Error());
+  EXPECT_EQ("7: expected ARG_NAME or ARG_NUMBER", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, OpenCLSetMissingArgIdentifier) {
@@ -58,6 +60,7 @@ SHADER compute my_shader OPENCL-C
 #shader
 END
 PIPELINE compute my_pipeline
+  ATTACH my_shader
   SET KERNEL ARG_NAME AS uint32 0
 END
 )";
@@ -65,7 +68,7 @@ END
   Parser parser;
   auto r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: missing AS in SET command", r.Error());
+  EXPECT_EQ("7: missing AS in SET command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, OpenCLSetMissingArgIdentifierNumber) {
@@ -74,6 +77,7 @@ SHADER compute my_shader OPENCL-C
 #shader
 END
 PIPELINE compute my_pipeline
+  ATTACH my_shader
   SET KERNEL ARG_NUMBER AS uint32 0
 END
 )";
@@ -81,7 +85,7 @@ END
   Parser parser;
   auto r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: expected argument number", r.Error());
+  EXPECT_EQ("7: expected argument number", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, OpenCLSetMissingAs) {
@@ -90,6 +94,7 @@ SHADER compute my_shader OPENCL-C
 #shader
 END
 PIPELINE compute my_pipeline
+  ATTACH my_shader
   SET KERNEL ARG_NAME a uint32 0
 END
 )";
@@ -97,7 +102,7 @@ END
   Parser parser;
   auto r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: missing AS in SET command", r.Error());
+  EXPECT_EQ("7: missing AS in SET command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, OpenCLSetMissingDataType) {
@@ -106,6 +111,7 @@ SHADER compute my_shader OPENCL-C
 #shader
 END
 PIPELINE compute my_pipeline
+  ATTACH my_shader
   SET KERNEL ARG_NAME a AS 0
 END
 )";
@@ -113,7 +119,7 @@ END
   Parser parser;
   auto r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: expected data type", r.Error());
+  EXPECT_EQ("7: expected data type", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, OpenCLSetMissingDataValue) {
@@ -122,7 +128,93 @@ SHADER compute my_shader OPENCL-C
 #shader
 END
 PIPELINE compute my_pipeline
+  ATTACH my_shader
   SET KERNEL ARG_NAME a AS uint32
+END
+)";
+
+  Parser parser;
+  auto r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("8: expected data value", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, OpenCLSetExtraTokens) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  SET KERNEL ARG_NAME a AS uint32 0 BLAH
+END
+)";
+
+  Parser parser;
+  auto r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("7: extra parameters after SET command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, OpenCLSetArgNameNotString) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  SET KERNEL ARG_NAME 0 AS uint32 0
+END
+)";
+
+  Parser parser;
+  auto r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("7: expected argument identifier", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, OpenCLSetArgNumberNotInteger) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  SET KERNEL ARG_NUMBER 1.0 AS uint32 0
+END
+)";
+
+  Parser parser;
+  auto r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("7: expected argument number", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, OpenCLSetDataTypeNotString) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  SET KERNEL ARG_NUMBER 0 AS 0 0
+END
+)";
+
+  Parser parser;
+  auto r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("7: expected data type", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, OpenCLSetDataValueString) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  SET KERNEL ARG_NUMBER 0 AS uint32 data
 END
 )";
 
@@ -132,84 +224,21 @@ END
   EXPECT_EQ("7: expected data value", r.Error());
 }
 
-TEST_F(AmberScriptParserTest, OpenCLSetExtraTokens) {
+TEST_F(AmberScriptParserTest, OpenCLSetWrongShaderFormat) {
   std::string in = R"(
-SHADER compute my_shader OPENCL-C
+SHADER compute my_shader SPIRV-ASM
 #shader
 END
 PIPELINE compute my_pipeline
-  SET KERNEL ARG_NAME a AS uint32 0 BLAH
+  ATTACH my_shader
+  SET KERNEL ARG_NAME arg_a AS uint32 0
 END
 )";
 
   Parser parser;
   auto r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: extra parameters after SET command", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, OpenCLSetArgNameNotString) {
-  std::string in = R"(
-SHADER compute my_shader OPENCL-C
-#shader
-END
-PIPELINE compute my_pipeline
-  SET KERNEL ARG_NAME 0 AS uint32 0
-END
-)";
-
-  Parser parser;
-  auto r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: expected argument identifier", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, OpenCLSetArgNumberNotInteger) {
-  std::string in = R"(
-SHADER compute my_shader OPENCL-C
-#shader
-END
-PIPELINE compute my_pipeline
-  SET KERNEL ARG_NUMBER 1.0 AS uint32 0
-END
-)";
-
-  Parser parser;
-  auto r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: expected argument number", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, OpenCLSetDataTypeNotString) {
-  std::string in = R"(
-SHADER compute my_shader OPENCL-C
-#shader
-END
-PIPELINE compute my_pipeline
-  SET KERNEL ARG_NUMBER 0 AS 0 0
-END
-)";
-
-  Parser parser;
-  auto r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: expected data type", r.Error());
-}
-
-TEST_F(AmberScriptParserTest, OpenCLSetDataValueString) {
-  std::string in = R"(
-SHADER compute my_shader OPENCL-C
-#shader
-END
-PIPELINE compute my_pipeline
-  SET KERNEL ARG_NUMBER 0 AS uint32 data
-END
-)";
-
-  Parser parser;
-  auto r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: expected data value", r.Error());
+  EXPECT_EQ("7: SET can only be used with OPENCL-C shaders", r.Error());
 }
 
 }  // namespace amberscript

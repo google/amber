@@ -781,6 +781,12 @@ Result Parser::ParsePipelineIndexData(Pipeline* pipeline) {
 }
 
 Result Parser::ParsePipelineSet(Pipeline* pipeline) {
+  if (pipeline->GetShaders().empty() ||
+      pipeline->GetShaders()[0].GetShader()->GetFormat() !=
+          kShaderFormatOpenCLC) {
+    return Result("SET can only be used with OPENCL-C shaders");
+  }
+
   auto token = tokenizer_->NextToken();
   if (!token->IsString() || token->AsString() != "KERNEL")
     return Result("missing KERNEL in SET command");
