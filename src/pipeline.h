@@ -234,8 +234,13 @@ class Pipeline {
     Value value;
   };
 
+  /// Adds value from SET command.
   void SetArg(ArgSetInfo&& info) { set_arg_values_.push_back(std::move(info)); }
-  const std::vector<ArgSetInfo>& SetArgsValue() const { return set_arg_values_; }
+  const std::vector<ArgSetInfo>& SetArgValues() const { return set_arg_values_; }
+
+  /// Generate the buffers necessary for OpenCL PoD arguments populated via SET
+  /// command.
+  Result GenerateOpenCLPoDBuffers();
 
  private:
   void UpdateFramebufferSizes();
@@ -257,6 +262,8 @@ class Pipeline {
   uint32_t fb_height_ = 250;
 
   std::vector<ArgSetInfo> set_arg_values_;
+  std::vector<std::unique_ptr<Buffer>> opencl_pod_buffers_;
+  std::map<std::pair<uint32_t, uint32_t>, Buffer*> opencl_pod_buffer_map_;
 };
 
 }  // namespace amber
