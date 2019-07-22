@@ -515,6 +515,8 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
           kind == Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD
               ? BufferType::kStorage
               : BufferType::kUniform);
+      // Use an 8-bit type because all the data in the descriptor map is
+      // byte-based and it simplifies the logic for sizing below.
       DatumType char_type;
       char_type.SetType(DataType::kUint8);
       buffer->SetFormat(char_type.AsFormat());
