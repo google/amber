@@ -64,7 +64,7 @@ Result Executor::Execute(Engine* engine,
       r = pipeline->UpdateOpenCLBufferBindings();
       if (!r.IsSuccess())
         return r;
-      r = pipeline->GenerateOpenCLPoDBuffers();
+      r = pipeline->GenerateOpenCLPodBuffers();
       if (!r.IsSuccess())
         return r;
     }

@@ -242,7 +242,7 @@ class Pipeline {
 
   /// Generate the buffers necessary for OpenCL PoD arguments populated via SET
   /// command. This should be called after all other buffers are bound.
-  Result GenerateOpenCLPoDBuffers();
+  Result GenerateOpenCLPodBuffers();
 
  private:
   void UpdateFramebufferSizes();
@@ -265,6 +265,7 @@ class Pipeline {
 
   std::vector<ArgSetInfo> set_arg_values_;
   std::vector<std::unique_ptr<Buffer>> opencl_pod_buffers_;
+  /// Maps (descriptor set, binding) to the buffer for that binding pair.
   std::map<std::pair<uint32_t, uint32_t>, Buffer*> opencl_pod_buffer_map_;
 };
 

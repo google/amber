@@ -480,7 +480,7 @@ TEST_F(PipelineTest, OpenCLUpdateBindingTypeMismatch) {
   EXPECT_EQ("Buffer buf2 must be an uniform binding", r.Error());
 }
 
-TEST_F(PipelineTest, OpenCLGeneratePoDBuffers) {
+TEST_F(PipelineTest, OpenCLGeneratePodBuffers) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
 
@@ -549,7 +549,7 @@ TEST_F(PipelineTest, OpenCLGeneratePoDBuffers) {
   arg_info3.value = int_value;
   p.SetArg(std::move(arg_info3));
 
-  auto r = p.GenerateOpenCLPoDBuffers();
+  auto r = p.GenerateOpenCLPodBuffers();
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_EQ(2U, p.GetBuffers().size());
 
@@ -564,7 +564,7 @@ TEST_F(PipelineTest, OpenCLGeneratePoDBuffers) {
   EXPECT_EQ(4U, b2.buffer->ValueCount());
 }
 
-TEST_F(PipelineTest, OpenCLGeneratePoDBuffersBadName) {
+TEST_F(PipelineTest, OpenCLGeneratePodBuffersBadName) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
 
@@ -597,7 +597,7 @@ TEST_F(PipelineTest, OpenCLGeneratePoDBuffersBadName) {
   arg_info1.value = int_value;
   p.SetArg(std::move(arg_info1));
 
-  auto r = p.GenerateOpenCLPoDBuffers();
+  auto r = p.GenerateOpenCLPodBuffers();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
       "could not find descriptor map entry for SET command: kernel my_main, "
@@ -605,7 +605,7 @@ TEST_F(PipelineTest, OpenCLGeneratePoDBuffersBadName) {
       r.Error());
 }
 
-TEST_F(PipelineTest, OpenCLGeneratePoDBuffersBadSize) {
+TEST_F(PipelineTest, OpenCLGeneratePodBuffersBadSize) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
 
@@ -638,7 +638,7 @@ TEST_F(PipelineTest, OpenCLGeneratePoDBuffersBadSize) {
   arg_info1.value = int_value;
   p.SetArg(std::move(arg_info1));
 
-  auto r = p.GenerateOpenCLPoDBuffers();
+  auto r = p.GenerateOpenCLPodBuffers();
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("SET command uses incorrect data size: kernel my_main, number 0",
             r.Error());

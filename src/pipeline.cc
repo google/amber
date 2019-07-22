@@ -430,10 +430,11 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
   return {};
 }
 
-Result Pipeline::GenerateOpenCLPoDBuffers() {
+Result Pipeline::GenerateOpenCLPodBuffers() {
   if (!IsCompute() || GetShaders().empty() ||
-      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC)
+      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC) {
     return {};
+  }
 
   const auto& shader_info = GetShaders()[0];
   const auto& descriptor_map = shader_info.GetDescriptorMap();
@@ -464,7 +465,7 @@ Result Pipeline::GenerateOpenCLPoDBuffers() {
       }
 
       // Found the right entry.
-      if (entry.arg_name == arg_info.name ||
+      if ((uses_name && entry.arg_name == arg_info.name) ||
           entry.arg_ordinal == arg_info.ordinal) {
         descriptor_set = entry.descriptor_set;
         binding = entry.binding;
@@ -498,12 +499,13 @@ Result Pipeline::GenerateOpenCLPoDBuffers() {
       // binding pair.
       for (const auto& buf_info : GetBuffers()) {
         if (buf_info.descriptor_set == descriptor_set &&
-            buf_info.binding == binding)
+            buf_info.binding == binding) {
           return Result("previously bound buffer " +
                         buf_info.buffer->GetName() +
                         " to PoD args at descriptor set " +
                         std::to_string(descriptor_set) + " binding " +
                         std::to_string(binding));
+        }
       }
 
       // Add a new buffer for this descriptor set and binding.

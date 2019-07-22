@@ -284,7 +284,7 @@ buffers for the pipeline populated with the specified data.
   # Set argument |name| to |data_type| with value |val|.
   SET KERNEL ARG_NAME _name_ AS {data_type} _val_
 
-  # Set argument number |number| to |data_type| with value |val|.
+  # Set argument |number| to |data_type| with value |val|.
   # Arguments use 0-based numbering.
   SET KERNEL ARG_NUMBER _number_ AS {data_type} _val_
 ```
