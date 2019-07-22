@@ -226,6 +226,17 @@ class Pipeline {
   /// Generates a default depth attachment in D32_SFLOAT_S8_UINT format.
   std::unique_ptr<Buffer> GenerateDefaultDepthAttachmentBuffer() const;
 
+  /// Information on values set for OpenCL-C plain-old-data args.
+  struct ArgSetInfo {
+    std::string name = "";
+    uint32_t ordinal = 0;
+    DatumType type;
+    Value value;
+  };
+
+  void SetArg(ArgSetInfo&& info) { set_arg_values_.push_back(std::move(info)); }
+  const std::vector<ArgSetInfo>& SetArgsValue() const { return set_arg_values_; }
+
  private:
   void UpdateFramebufferSizes();
 
@@ -244,6 +255,8 @@ class Pipeline {
 
   uint32_t fb_width_ = 250;
   uint32_t fb_height_ = 250;
+
+  std::vector<ArgSetInfo> set_arg_values_;
 };
 
 }  // namespace amber

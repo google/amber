@@ -828,8 +828,12 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   else
     value.SetIntValue(token->AsUint64());
 
-  (void)pipeline;
-  //pipeline->SetPODValue(arg_name, arg_no, arg_type, value);
+  Pipeline::ArgSetInfo info;
+  info.name = arg_name;
+  info.ordinal = arg_no;
+  info.type = arg_type;
+  info.value = value;
+  pipeline->SetArg(std::move(info));
   return ValidateEndOfStatement("SET command");
 }
 
