@@ -14,6 +14,7 @@
 
 #include "src/shader_compiler.h"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -105,7 +106,8 @@ void main() {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(binary.empty());
   EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
@@ -122,7 +124,8 @@ TEST_F(ShaderCompilerTest, CompilesSpirvAsm) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_FALSE(binary.empty());
   EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
@@ -140,7 +143,8 @@ TEST_F(ShaderCompilerTest, InvalidSpirvHex) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("Invalid shader: error: line 0: Invalid SPIR-V magic number.\n",
             r.Error());
@@ -155,7 +159,8 @@ TEST_F(ShaderCompilerTest, InvalidHex) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("Invalid shader: error: line 0: Invalid SPIR-V magic number.\n",
             r.Error());
@@ -171,7 +176,8 @@ TEST_F(ShaderCompilerTest, CompilesSpirvHex) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_FALSE(binary.empty());
   EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
@@ -188,7 +194,8 @@ TEST_F(ShaderCompilerTest, FailsOnInvalidShader) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, ShaderMap());
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
 }
 
@@ -211,7 +218,8 @@ TEST_F(ShaderCompilerTest, ReturnsCachedShader) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  std::tie(r, binary) = sc.Compile(&shader, map);
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, map);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   ASSERT_EQ(binary.size(), src_bytes.size());
@@ -219,6 +227,104 @@ TEST_F(ShaderCompilerTest, ReturnsCachedShader) {
     EXPECT_EQ(src_bytes[i], binary[i]);
   }
 }
+
+#if AMBER_ENABLE_CLSPV
+TEST_F(ShaderCompilerTest, ClspvCompile) {
+  Shader shader(kShaderTypeCompute);
+  shader.SetName("TestShader");
+  shader.SetFormat(kShaderFormatOpenCLC);
+  shader.SetData(R"(
+kernel void TestShader(global int* in, global int* out) {
+  *out = *in;
+}
+  )");
+
+  ShaderCompiler sc;
+  Result r;
+  std::vector<uint32_t> binary;
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, ShaderMap());
+  ASSERT_TRUE(r.IsSuccess());
+  EXPECT_FALSE(binary.empty());
+  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+}
+
+TEST_F(ShaderCompilerTest, ClspvDisallowCaching) {
+  Shader shader(kShaderTypeCompute);
+  std::string name = "TestShader";
+  shader.SetName(name);
+  shader.SetFormat(kShaderFormatOpenCLC);
+  shader.SetData(R"(
+kernel void TestShader(global int* in, global int* out) {
+  *out = *in;
+}
+  )");
+
+  std::vector<uint32_t> src_bytes = {1, 2, 3, 4, 5};
+
+  ShaderMap map;
+  map[name] = src_bytes;
+
+  ShaderCompiler sc;
+  Result r;
+  std::vector<uint32_t> binary;
+  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info, map);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_TRUE(binary.empty());
+}
+
+TEST_F(ShaderCompilerTest, ClspvCompileOptions) {
+  std::string data = R"(
+kernel void TestShader(global int* in, global int* out, int m, int b) {
+  *out = *in * m + b;
+}
+)";
+  Shader shader(kShaderTypeCompute);
+  shader.SetName("TestShader");
+  shader.SetFormat(kShaderFormatOpenCLC);
+  shader.SetData(data);
+
+  ShaderCompiler sc;
+  Result r;
+  std::vector<uint32_t> binary;
+  Pipeline::ShaderInfo shader_info1(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info1, ShaderMap());
+  ASSERT_TRUE(r.IsSuccess());
+  EXPECT_FALSE(binary.empty());
+  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+  auto iter = shader_info1.GetDescriptorMap().find("TestShader");
+  ASSERT_NE(iter, shader_info1.GetDescriptorMap().end());
+  uint32_t max_binding = 0;
+  bool has_pod_ubo = 0;
+  for (const auto& entry : iter->second) {
+    max_binding = std::max(max_binding, entry.binding);
+    has_pod_ubo =
+        entry.kind == Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO;
+  }
+  EXPECT_EQ(3U, max_binding);
+  EXPECT_FALSE(has_pod_ubo);
+
+  binary.clear();
+  Pipeline::ShaderInfo shader_info2(&shader, kShaderTypeCompute);
+  shader_info2.SetCompileOptions({"-cluster-pod-kernel-args", "-pod-ubo"});
+  std::tie(r, binary) = sc.Compile(&shader_info2, ShaderMap());
+  ASSERT_TRUE(r.IsSuccess());
+  EXPECT_FALSE(binary.empty());
+  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+  iter = shader_info2.GetDescriptorMap().find("TestShader");
+  ASSERT_NE(iter, shader_info2.GetDescriptorMap().end());
+  max_binding = 0;
+  has_pod_ubo = 0;
+  for (const auto& entry : iter->second) {
+    max_binding = std::max(max_binding, entry.binding);
+    has_pod_ubo =
+        entry.kind == Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO;
+  }
+  EXPECT_EQ(2U, max_binding);
+  EXPECT_TRUE(has_pod_ubo);
+}
+#endif  // AMBER_ENABLE_CLSPV
 
 struct ParseSpvEnvCase {
   std::string env_str;

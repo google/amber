@@ -19,7 +19,10 @@ set -x  # show commands
 BUILD_ROOT=$PWD
 SRC=$PWD/github/amber
 CONFIG=$1
-COMPILER=$2
+shift
+COMPILER=$1
+shift
+EXTRA_CONFIG=$@
 
 BUILD_TYPE="Debug"
 
@@ -52,7 +55,7 @@ mkdir build && cd $SRC/build
 # Invoke the build.
 BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
 echo $(date): Starting build...
-cmake -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_C_CXX_COMPILER -DAMBER_USE_LOCAL_VULKAN=1 ..
+cmake -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_C_CXX_COMPILER -DAMBER_USE_LOCAL_VULKAN=1 $EXTRA_CONFIG ..
 
 echo $(date): Build everything...
 ninja

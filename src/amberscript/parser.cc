@@ -415,6 +415,10 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelineVertexData(pipeline.get());
     } else if (tok == "INDEX_DATA") {
       r = ParsePipelineIndexData(pipeline.get());
+    } else if (tok == "SET") {
+      r = ParsePipelineSet(pipeline.get());
+    } else if (tok == "COMPILE_OPTIONS") {
+      r = ParsePipelineShaderCompileOptions(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -596,6 +600,43 @@ Result Parser::ParsePipelineShaderOptimizations(Pipeline* pipeline) {
   return ValidateEndOfStatement("SHADER_OPTIMIZATION command");
 }
 
+Result Parser::ParsePipelineShaderCompileOptions(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("missing shader name in COMPILE_OPTIONS command");
+
+  auto* shader = script_->GetShader(token->AsString());
+  if (!shader)
+    return Result("unknown shader in COMPILE_OPTIONS command");
+
+  if (shader->GetFormat() != kShaderFormatOpenCLC) {
+    return Result("COMPILE_OPTIONS currently only supports OPENCL-C shaders");
+  }
+
+  token = tokenizer_->NextToken();
+  if (!token->IsEOL())
+    return Result("extra parameters after COMPILE_OPTIONS command");
+
+  std::vector<std::string> options;
+  while (true) {
+    token = tokenizer_->NextToken();
+    if (token->IsEOL())
+      continue;
+    if (token->IsEOS())
+      return Result("COMPILE_OPTIONS missing END command");
+    if (token->AsString() == "END")
+      break;
+
+    options.push_back(token->AsString());
+  }
+
+  Result r = pipeline->SetShaderCompileOptions(shader, options);
+  if (!r.IsSuccess())
+    return r;
+
+  return ValidateEndOfStatement("COMPILE_OPTIONS command");
+}
+
 Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
@@ -644,65 +685,93 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     return Result("unknown buffer: " + token->AsString());
 
   token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "AS")
-    return Result("BUFFER command missing AS keyword");
-
-  token = tokenizer_->NextToken();
-  if (!token->IsString())
-    return Result("invalid token for BUFFER type");
-
-  if (token->AsString() == "color") {
+  if (token->IsString() && token->AsString() == "AS") {
     token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "LOCATION")
-      return Result("BIND missing LOCATION");
+    if (!token->IsString())
+      return Result("invalid token for BUFFER type");
 
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger())
-      return Result("invalid value for BIND LOCATION");
+    if (token->AsString() == "color") {
+      token = tokenizer_->NextToken();
+      if (!token->IsString() || token->AsString() != "LOCATION")
+        return Result("BIND missing LOCATION");
 
-    buffer->SetBufferType(BufferType::kColor);
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("invalid value for BIND LOCATION");
 
-    Result r = pipeline->AddColorAttachment(buffer, token->AsUint32());
-    if (!r.IsSuccess())
-      return r;
-  } else if (token->AsString() == "depth_stencil") {
-    buffer->SetBufferType(BufferType::kDepth);
-    Result r = pipeline->SetDepthBuffer(buffer);
-    if (!r.IsSuccess())
-      return r;
-  } else if (token->AsString() == "push_constant") {
-    buffer->SetBufferType(BufferType::kPushConstant);
-    Result r = pipeline->SetPushConstantBuffer(buffer);
-    if (!r.IsSuccess())
-      return r;
-  } else {
-    BufferType type = BufferType::kColor;
-    Result r = ToBufferType(token->AsString(), &type);
-    if (!r.IsSuccess())
-      return r;
+      buffer->SetBufferType(BufferType::kColor);
 
-    if (buffer->GetBufferType() == BufferType::kUnknown)
-      buffer->SetBufferType(type);
-    else if (buffer->GetBufferType() != type)
-      return Result("buffer type does not match intended usage");
+      Result r = pipeline->AddColorAttachment(buffer, token->AsUint32());
+      if (!r.IsSuccess())
+        return r;
+    } else if (token->AsString() == "depth_stencil") {
+      buffer->SetBufferType(BufferType::kDepth);
+      Result r = pipeline->SetDepthBuffer(buffer);
+      if (!r.IsSuccess())
+        return r;
+    } else if (token->AsString() == "push_constant") {
+      buffer->SetBufferType(BufferType::kPushConstant);
+      Result r = pipeline->SetPushConstantBuffer(buffer);
+      if (!r.IsSuccess())
+        return r;
+    } else {
+      BufferType type = BufferType::kColor;
+      Result r = ToBufferType(token->AsString(), &type);
+      if (!r.IsSuccess())
+        return r;
 
-    token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "DESCRIPTOR_SET")
-      return Result("missing DESCRIPTOR_SET for BIND command");
+      if (buffer->GetBufferType() == BufferType::kUnknown)
+        buffer->SetBufferType(type);
+      else if (buffer->GetBufferType() != type)
+        return Result("buffer type does not match intended usage");
+    }
+  }
 
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger())
-      return Result("invalid value for DESCRIPTOR_SET in BIND command");
-    uint32_t descriptor_set = token->AsUint32();
+  if (buffer->GetBufferType() == BufferType::kUnknown ||
+      buffer->GetBufferType() == BufferType::kStorage ||
+      buffer->GetBufferType() == BufferType::kUniform) {
+    // If AS was parsed above consume the next token.
+    if (buffer->GetBufferType() != BufferType::kUnknown)
+      token = tokenizer_->NextToken();
+    // DESCRIPTOR_SET requires a buffer type to have been specified.
+    if (buffer->GetBufferType() != BufferType::kUnknown && token->IsString() &&
+        token->AsString() == "DESCRIPTOR_SET") {
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("invalid value for DESCRIPTOR_SET in BIND command");
+      uint32_t descriptor_set = token->AsUint32();
 
-    token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "BINDING")
-      return Result("missing BINDING for BIND command");
+      token = tokenizer_->NextToken();
+      if (!token->IsString() || token->AsString() != "BINDING")
+        return Result("missing BINDING for BIND command");
 
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger())
-      return Result("invalid value for BINDING in BIND command");
-    pipeline->AddBuffer(buffer, descriptor_set, token->AsUint32());
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("invalid value for BINDING in BIND command");
+      pipeline->AddBuffer(buffer, descriptor_set, token->AsUint32());
+    } else if (token->IsString() && token->AsString() == "KERNEL") {
+      token = tokenizer_->NextToken();
+      if (!token->IsString())
+        return Result("missing kernel arg identifier");
+
+      if (token->AsString() == "ARG_NAME") {
+        token = tokenizer_->NextToken();
+        if (!token->IsString())
+          return Result("expected argument identifier");
+
+        pipeline->AddBuffer(buffer, token->AsString());
+      } else if (token->AsString() == "ARG_NUMBER") {
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger())
+          return Result("expected argument number");
+
+        pipeline->AddBuffer(buffer, token->AsUint32());
+      } else {
+        return Result("missing ARG_NAME or ARG_NUMBER keyword");
+      }
+    } else {
+      return Result("missing DESCRIPTOR_SET or KERNEL for BIND command");
+    }
   }
 
   return ValidateEndOfStatement("BIND command");
@@ -748,6 +817,69 @@ Result Parser::ParsePipelineIndexData(Pipeline* pipeline) {
     return r;
 
   return ValidateEndOfStatement("INDEX_DATA command");
+}
+
+Result Parser::ParsePipelineSet(Pipeline* pipeline) {
+  if (pipeline->GetShaders().empty() ||
+      pipeline->GetShaders()[0].GetShader()->GetFormat() !=
+          kShaderFormatOpenCLC) {
+    return Result("SET can only be used with OPENCL-C shaders");
+  }
+
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "KERNEL")
+    return Result("missing KERNEL in SET command");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("expected ARG_NAME or ARG_NUMBER");
+
+  std::string arg_name = "";
+  uint32_t arg_no = std::numeric_limits<uint32_t>::max();
+  if (token->AsString() == "ARG_NAME") {
+    token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("expected argument identifier");
+    arg_name = token->AsString();
+  } else if (token->AsString() == "ARG_NUMBER") {
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("expected argument number");
+    arg_no = token->AsUint32();
+  } else {
+    return Result("expected ARG_NAME or ARG_NUMBER");
+  }
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "AS")
+    return Result("missing AS in SET command");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("expected data type");
+
+  DatumType arg_type;
+  auto r = ToDatumType(token->AsString(), &arg_type);
+  if (!r.IsSuccess())
+    return r;
+
+  token = tokenizer_->NextToken();
+  if (!token->IsInteger() && !token->IsDouble())
+    return Result("expected data value");
+
+  Value value;
+  if (arg_type.IsFloat() || arg_type.IsDouble())
+    value.SetDoubleValue(token->AsDouble());
+  else
+    value.SetIntValue(token->AsUint64());
+
+  Pipeline::ArgSetInfo info;
+  info.name = arg_name;
+  info.ordinal = arg_no;
+  info.type = arg_type;
+  info.value = value;
+  pipeline->SetArg(std::move(info));
+  return ValidateEndOfStatement("SET command");
 }
 
 Result Parser::ParseBuffer() {

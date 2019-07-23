@@ -37,7 +37,7 @@ Result Executor::CompileShaders(const amber::Script* script,
 
       Result r;
       std::vector<uint32_t> data;
-      std::tie(r, data) = sc.Compile(shader_info.GetShader(), shader_map);
+      std::tie(r, data) = sc.Compile(&shader_info, shader_map);
       if (!r.IsSuccess())
         return r;
 
@@ -58,6 +58,16 @@ Result Executor::Execute(Engine* engine,
     Result r = CompileShaders(script, shader_map);
     if (!r.IsSuccess())
       return r;
+
+    // OpenCL specific pipeline updates.
+    for (auto& pipeline : script->GetPipelines()) {
+      r = pipeline->UpdateOpenCLBufferBindings();
+      if (!r.IsSuccess())
+        return r;
+      r = pipeline->GenerateOpenCLPodBuffers();
+      if (!r.IsSuccess())
+        return r;
+    }
 
     for (auto& pipeline : script->GetPipelines()) {
       r = engine->CreatePipeline(pipeline.get());
