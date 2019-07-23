@@ -46,7 +46,7 @@ endif()
 add_executable(amber ${AMBER_SOURCES})
 target_include_directories(amber PRIVATE "${CMAKE_BINARY_DIR}")
 target_include_directories(amber PRIVATE
-  "${PROJECT_SOURCE_DIR}/third_party/lodepng")
+  "${PROJECT_SOURCE_DIR}/third_party")
 set_target_properties(amber PROPERTIES OUTPUT_NAME "amber")
 target_link_libraries(amber libamber ${AMBER_EXTRA_LIBS})
 amber_default_compile_options(amber)
