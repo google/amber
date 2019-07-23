@@ -610,8 +610,7 @@ Result Parser::ParsePipelineShaderCompileOptions(Pipeline* pipeline) {
     return Result("unknown shader in COMPILE_OPTIONS command");
 
   if (shader->GetFormat() != kShaderFormatOpenCLC) {
-    return Result(
-        "COMPILE_OPTIONS currently only supports OPENCL-C shaders");
+    return Result("COMPILE_OPTIONS currently only supports OPENCL-C shaders");
   }
 
   token = tokenizer_->NextToken();

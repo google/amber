@@ -109,7 +109,7 @@ Result Pipeline::SetShaderOptimizations(const Shader* shader,
 }
 
 Result Pipeline::SetShaderCompileOptions(const Shader* shader,
-                                        const std::vector<std::string>& opts) {
+                                         const std::vector<std::string>& opts) {
   if (!shader)
     return Result("invalid shader specified for compile options");
 
