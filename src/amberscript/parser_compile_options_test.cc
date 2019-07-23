@@ -160,7 +160,8 @@ END
   Parser parser;
   auto r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("7: COMPILE_OPTIONS currently only supports OPENCL-C shaders", r.Error());
+  EXPECT_EQ("7: COMPILE_OPTIONS currently only supports OPENCL-C shaders",
+            r.Error());
 }
 
 }  // namespace amberscript
