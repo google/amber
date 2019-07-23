@@ -14,6 +14,7 @@
 
 #include "src/shader_compiler.h"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 

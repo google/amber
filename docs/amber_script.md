@@ -214,8 +214,8 @@ The following commands are all specified within the `PIPELINE` command.
 ```
 
 ```groovy
-  # Set the compile options used to compile the given shader. Currently, only
-  # support for OPENCL-C shaders.
+  # Set the compile options used to compile the given shader. Options are parsed
+  # the same as on the command line. Currently, only supported for OPENCL-C shaders.
   COMPILE_OPTIONS {shader_name}
     {option}+
   END
@@ -660,6 +660,36 @@ CLEAR_COLOR kGraphicsPipeline 255 0 0 255
 CLEAR kGraphicsPipeline
 
 RUN kGraphicsPipeline DRAW_ARRAY AS triangle_list START_IDX 0 COUNT 24
+```
+
+### OpenCL-C Shaders
+```groovy
+SHADER compute my_shader OPENCL-C
+kernel void line(const int* in, global int* out, int m, int b) {
+  *out = *in * m + b;
+}
+END
+
+BUFFER in_buf DATA_TYPE int32 DATA 4 END
+BUFFER out_buf DATA_TYPE int32 DATA 0 END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader ENTRY_POINT line
+  COMPILE_OPTIONS
+    -cluster-pod-kernel-args
+    -pod-ubo
+    -constant-args-ubo
+    -max-ubo-size=128
+  END
+  BIND BUFFER in_buf KERNEL ARG_NAME in
+  BIND BUFFER out_buf KERNEL ARG_NAME out
+  SET KERNEL ARG_NAME m AS int32 3
+  SET KERNEL ARG_NAME b AS int32 1
+END
+
+RUN my_pipeline 1 1 1
+
+EXPECT out_buf EQ IDX 0 EQ 13
 ```
 
 ### Image Formats

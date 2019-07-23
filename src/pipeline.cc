@@ -121,7 +121,7 @@ Result Pipeline::SetShaderCompileOptions(const Shader* shader,
     }
   }
 
-  return Result("unknown shader specified for optimizations: " +
+  return Result("unknown shader specified for compile options: " +
                 shader->GetName());
 }
 
