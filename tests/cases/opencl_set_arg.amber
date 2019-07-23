@@ -33,34 +33,23 @@ PIPELINE compute p1
   SET KERNEL ARG_NAME slope AS int32 2
 END
 
-PIPELINE compute p2
-  ATTACH my_shader ENTRY_POINT line
-  BIND BUFFER in_buf KERNEL ARG_NAME in
+DERIVE_PIPELINE p2 FROM p1
   BIND BUFFER out_buf2 KERNEL ARG_NAME out
-  SET KERNEL ARG_NAME offset AS uint32 1
-  SET KERNEL ARG_NAME slope AS int32 2
   COMPILE_OPTIONS my_shader
     -pod-ubo
   END
 END
 
-PIPELINE compute p3
-  ATTACH my_shader ENTRY_POINT line
-  BIND BUFFER in_buf KERNEL ARG_NAME in
+DERIVE_PIPELINE p3 FROM p1
   BIND BUFFER out_buf3 KERNEL ARG_NAME out
-  SET KERNEL ARG_NAME offset AS uint32 1
-  SET KERNEL ARG_NAME slope AS int32 2
   COMPILE_OPTIONS my_shader
     -cluster-pod-kernel-args
   END
 END
 
-PIPELINE compute p4
-  ATTACH my_shader ENTRY_POINT line
-  BIND BUFFER in_buf KERNEL ARG_NAME in
+DERIVE_PIPELINE p4 FROM p1
   BIND BUFFER out_buf4 KERNEL ARG_NAME out
-  SET KERNEL ARG_NAME offset AS uint32 1
-  SET KERNEL ARG_NAME slope AS int32 2
+  SET KERNEL ARG_NAME slope AS int32 3
   COMPILE_OPTIONS my_shader
     -cluster-pod-kernel-args
     -pod-ubo
@@ -75,4 +64,4 @@ RUN p4 1 1 1
 EXPECT out_buf1 IDX 0 EQ 7
 EXPECT out_buf2 IDX 0 EQ 7
 EXPECT out_buf3 IDX 0 EQ 7
-EXPECT out_buf4 IDX 0 EQ 7
+EXPECT out_buf4 IDX 0 EQ 10
