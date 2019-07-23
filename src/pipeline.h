@@ -18,6 +18,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -48,6 +49,13 @@ class Pipeline {
       return shader_optimizations_;
     }
 
+    void SetCompileOptions(const std::vector<std::string>& options) {
+      compile_options_ = options;
+    }
+    const std::vector<std::string>& GetCompileOptions() const {
+      return compile_options_;
+    }
+
     void SetShader(Shader* shader) { shader_ = shader; }
     const Shader* GetShader() const { return shader_; }
 
@@ -67,6 +75,34 @@ class Pipeline {
       specialization_[spec_id] = value;
     }
 
+    /// Descriptor information for an OpenCL-C shader.
+    struct DescriptorMapEntry {
+      std::string arg_name = "";
+
+      enum class Kind : int {
+        UNKNOWN,
+        SSBO,
+        UBO,
+        POD,
+        POD_UBO,
+      } kind;
+
+      uint32_t descriptor_set = 0;
+      uint32_t binding = 0;
+      uint32_t arg_ordinal = 0;
+      uint32_t pod_offset = 0;
+      uint32_t pod_arg_size = 0;
+    };
+
+    void AddDescriptorEntry(const std::string& kernel,
+                            DescriptorMapEntry&& entry) {
+      descriptor_map_[kernel].emplace_back(std::move(entry));
+    }
+    const std::unordered_map<std::string, std::vector<DescriptorMapEntry>>&
+    GetDescriptorMap() const {
+      return descriptor_map_;
+    }
+
    private:
     Shader* shader_ = nullptr;
     ShaderType shader_type_;
@@ -74,6 +110,9 @@ class Pipeline {
     std::string entry_point_;
     std::vector<uint32_t> data_;
     std::map<uint32_t, uint32_t> specialization_;
+    std::unordered_map<std::string, std::vector<DescriptorMapEntry>>
+        descriptor_map_;
+    std::vector<std::string> compile_options_;
   };
 
   /// Information on a buffer attached to the pipeline.
@@ -88,6 +127,8 @@ class Pipeline {
     uint32_t descriptor_set = 0;
     uint32_t binding = 0;
     uint32_t location = 0;
+    std::string arg_name = "";
+    uint32_t arg_no = 0;
   };
 
   static const char* kGeneratedColorBuffer;
@@ -132,6 +173,9 @@ class Pipeline {
   /// Sets the optimizations (|opts|) for |shader| in this pipeline.
   Result SetShaderOptimizations(const Shader* shader,
                                 const std::vector<std::string>& opts);
+  /// Sets the compile options for |shader| in this pipeline.
+  Result SetShaderCompileOptions(const Shader* shader,
+                                 const std::vector<std::string>& options);
 
   /// Returns a list of all colour attachments in this pipeline.
   const std::vector<BufferInfo>& GetColorAttachments() const {
@@ -165,8 +209,16 @@ class Pipeline {
 
   /// Adds |buf| to the pipeline at the given |descriptor_set| and |binding|.
   void AddBuffer(Buffer* buf, uint32_t descriptor_set, uint32_t binding);
+  /// Adds |buf| to the pipeline at the given |arg_name|.
+  void AddBuffer(Buffer* buf, const std::string& arg_name);
+  /// Adds |buf| to the pipeline at the given |arg_no|.
+  void AddBuffer(Buffer* buf, uint32_t arg_no);
   /// Returns information on all buffers in this pipeline.
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
+
+  /// Updates the descriptor set and binding info for the OpenCL-C kernel bound
+  /// to the pipeline. No effect for other shader formats.
+  Result UpdateOpenCLBufferBindings();
 
   /// Returns the buffer which is currently bound to this pipeline at
   /// |descriptor_set| and |binding|.
@@ -184,6 +236,24 @@ class Pipeline {
   std::unique_ptr<Buffer> GenerateDefaultColorAttachmentBuffer() const;
   /// Generates a default depth attachment in D32_SFLOAT_S8_UINT format.
   std::unique_ptr<Buffer> GenerateDefaultDepthAttachmentBuffer() const;
+
+  /// Information on values set for OpenCL-C plain-old-data args.
+  struct ArgSetInfo {
+    std::string name;
+    uint32_t ordinal = 0;
+    DatumType type;
+    Value value;
+  };
+
+  /// Adds value from SET command.
+  void SetArg(ArgSetInfo&& info) { set_arg_values_.push_back(std::move(info)); }
+  const std::vector<ArgSetInfo>& SetArgValues() const {
+    return set_arg_values_;
+  }
+
+  /// Generate the buffers necessary for OpenCL PoD arguments populated via SET
+  /// command. This should be called after all other buffers are bound.
+  Result GenerateOpenCLPodBuffers();
 
  private:
   void UpdateFramebufferSizes();
@@ -203,6 +273,11 @@ class Pipeline {
 
   uint32_t fb_width_ = 250;
   uint32_t fb_height_ = 250;
+
+  std::vector<ArgSetInfo> set_arg_values_;
+  std::vector<std::unique_ptr<Buffer>> opencl_pod_buffers_;
+  /// Maps (descriptor set, binding) to the buffer for that binding pair.
+  std::map<std::pair<uint32_t, uint32_t>, Buffer*> opencl_pod_buffer_map_;
 };
 
 }  // namespace amber

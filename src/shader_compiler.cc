@@ -51,11 +51,19 @@ ShaderCompiler::ShaderCompiler(const std::string& env) : spv_env_(env) {}
 ShaderCompiler::~ShaderCompiler() = default;
 
 std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
-    const Shader* shader,
+    Pipeline::ShaderInfo* shader_info,
     const ShaderMap& shader_map) const {
+  const auto shader = shader_info->GetShader();
   auto it = shader_map.find(shader->GetName());
-  if (it != shader_map.end())
+  if (it != shader_map.end()) {
+#if AMBER_ENABLE_CLSPV
+    if (shader->GetFormat() == kShaderFormatOpenCLC) {
+      return {Result("OPENCL-C shaders do not support pre-compiled shaders"),
+              {}};
+    }
+#endif  // AMBER_ENABLE_CLSPV
     return {{}, it->second};
+  }
 
 #if AMBER_ENABLE_SPIRV_TOOLS
   std::string spv_errors;
@@ -122,7 +130,7 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
 
 #if AMBER_ENABLE_CLSPV
   } else if (shader->GetFormat() == kShaderFormatOpenCLC) {
-    Result r = CompileOpenCLC(shader, &results);
+    Result r = CompileOpenCLC(shader_info, &results);
     if (!r.IsSuccess())
       return {r, {}};
 #endif  // AMBER_ENABLE_CLSPV
@@ -241,12 +249,12 @@ Result ShaderCompiler::CompileHlsl(const Shader*,
 #endif  // AMBER_ENABLE_DXC
 
 #if AMBER_ENABLE_CLSPV
-Result ShaderCompiler::CompileOpenCLC(const Shader* shader,
+Result ShaderCompiler::CompileOpenCLC(Pipeline::ShaderInfo* shader_info,
                                       std::vector<uint32_t>* result) const {
-  return clspvhelper::Compile(shader->GetData(), result);
+  return clspvhelper::Compile(shader_info, result);
 }
 #else
-Result ShaderCompiler::CompileOpenCLC(const Shader*,
+Result ShaderCompiler::CompileOpenCLC(Pipeline::ShaderInfo*,
                                       std::vector<uint32_t>*) const {
   return {};
 }

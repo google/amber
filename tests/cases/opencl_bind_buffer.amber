@@ -1,0 +1,60 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER compute my_shader OPENCL-C
+kernel void foo(global int* in, global int* out) {
+  unsigned int local_size_x = get_local_size(0);
+  unsigned int local_size_y = get_local_size(1);
+  unsigned int local_size_z = get_local_size(2);
+  unsigned int local_id_x = get_local_id(0);
+  unsigned int local_id_y = get_local_id(1);
+  unsigned int local_id_z = get_local_id(2);
+  unsigned int group_id_x = get_group_id(0);
+  unsigned int group_id_y = get_group_id(1);
+  unsigned int group_id_z = get_group_id(2);
+  unsigned int global_id_x = get_global_id(0);
+  unsigned int global_id_y = get_global_id(1);
+  unsigned int global_id_z = get_global_id(2);
+  unsigned int wgs_x = get_num_groups(0);
+  unsigned int wgs_y = get_num_groups(1);
+  unsigned int wgs_z = get_num_groups(2);
+
+  unsigned int in_wg_id = (local_id_z * local_size_x * local_size_y) +
+    (local_id_y * local_size_x) +
+    local_id_x;
+  unsigned int prev_ids = (local_size_x * local_size_y * local_size_z) *
+    (group_id_z * wgs_y * wgs_x + group_id_y * wgs_x + group_id_x);
+  unsigned int linear_id = in_wg_id + prev_ids;
+  out[linear_id] = in[linear_id];
+}
+END
+
+BUFFER in_buf DATA_TYPE uint32 SIZE 64 SERIES_FROM 1 INC_BY 1
+BUFFER out_buf DATA_TYPE uint32 SIZE 64 FILL 0
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader ENTRY_POINT foo \
+    SPECIALIZE 0 AS uint32 2 \
+    SPECIALIZE 1 AS uint32 2 \
+    SPECIALIZE 2 AS uint32 2
+
+  BIND BUFFER in_buf KERNEL ARG_NAME in
+  BIND BUFFER out_buf KERNEL ARG_NUMBER 1
+END
+
+RUN my_pipeline 2 2 2
+
+EXPECT out_buf EQ_BUFFER in_buf
+

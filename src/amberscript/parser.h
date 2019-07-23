@@ -58,10 +58,12 @@ class Parser : public amber::Parser {
   Result ParsePipelineBlock();
   Result ParsePipelineAttach(Pipeline*);
   Result ParsePipelineShaderOptimizations(Pipeline*);
+  Result ParsePipelineShaderCompileOptions(Pipeline*);
   Result ParsePipelineFramebufferSize(Pipeline*);
   Result ParsePipelineBind(Pipeline*);
   Result ParsePipelineVertexData(Pipeline*);
   Result ParsePipelineIndexData(Pipeline*);
+  Result ParsePipelineSet(Pipeline*);
   Result ParseRun();
   Result ParseClear();
   Result ParseClearColor();
