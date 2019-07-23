@@ -108,6 +108,23 @@ Result Pipeline::SetShaderOptimizations(const Shader* shader,
                 shader->GetName());
 }
 
+Result Pipeline::SetShaderCompileOptions(const Shader* shader,
+                                        const std::vector<std::string>& opts) {
+  if (!shader)
+    return Result("invalid shader specified for compile options");
+
+  for (auto& info : shaders_) {
+    const auto* is = info.GetShader();
+    if (is == shader) {
+      info.SetCompileOptions(opts);
+      return {};
+    }
+  }
+
+  return Result("unknown shader specified for optimizations: " +
+                shader->GetName());
+}
+
 Result Pipeline::SetShaderEntryPoint(const Shader* shader,
                                      const std::string& name) {
   if (!shader)
