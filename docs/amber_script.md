@@ -214,6 +214,14 @@ The following commands are all specified within the `PIPELINE` command.
 ```
 
 ```groovy
+  # Set the compile options used to compile the given shader. Currently, only
+  # support for OPENCL-C shaders.
+  COMPILE_OPTIONS {shader_name}
+    {option}+
+  END
+```
+
+```groovy
   # Set the size of the render buffers. |width| and |height| are integers and
   # default to 250x250.
   FRAMEBUFFER_SIZE _width_ _height_
