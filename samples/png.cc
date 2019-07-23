@@ -21,7 +21,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wweak-vtables"
-#include "third_party/lodepng/lodepng.h"
+#include "lodepng.h"
 #pragma clang diagnostic pop
 
 namespace png {
