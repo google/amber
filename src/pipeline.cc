@@ -53,6 +53,12 @@ std::unique_ptr<Pipeline> Pipeline::Clone() const {
   clone->index_buffer_ = index_buffer_;
   clone->fb_width_ = fb_width_;
   clone->fb_height_ = fb_height_;
+  clone->set_arg_values_ = set_arg_values_;
+  if (!opencl_pod_buffers_.empty()) {
+    // Generate specific buffers for the clone.
+    clone->GenerateOpenCLPodBuffers();
+  }
+
   return clone;
 }
 
@@ -105,6 +111,23 @@ Result Pipeline::SetShaderOptimizations(const Shader* shader,
   }
 
   return Result("unknown shader specified for optimizations: " +
+                shader->GetName());
+}
+
+Result Pipeline::SetShaderCompileOptions(const Shader* shader,
+                                         const std::vector<std::string>& opts) {
+  if (!shader)
+    return Result("invalid shader specified for compile options");
+
+  for (auto& info : shaders_) {
+    const auto* is = info.GetShader();
+    if (is == shader) {
+      info.SetCompileOptions(opts);
+      return {};
+    }
+  }
+
+  return Result("unknown shader specified for compile options: " +
                 shader->GetName());
 }
 

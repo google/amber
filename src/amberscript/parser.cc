@@ -417,6 +417,8 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelineIndexData(pipeline.get());
     } else if (tok == "SET") {
       r = ParsePipelineSet(pipeline.get());
+    } else if (tok == "COMPILE_OPTIONS") {
+      r = ParsePipelineShaderCompileOptions(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -596,6 +598,43 @@ Result Parser::ParsePipelineShaderOptimizations(Pipeline* pipeline) {
     return r;
 
   return ValidateEndOfStatement("SHADER_OPTIMIZATION command");
+}
+
+Result Parser::ParsePipelineShaderCompileOptions(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("missing shader name in COMPILE_OPTIONS command");
+
+  auto* shader = script_->GetShader(token->AsString());
+  if (!shader)
+    return Result("unknown shader in COMPILE_OPTIONS command");
+
+  if (shader->GetFormat() != kShaderFormatOpenCLC) {
+    return Result("COMPILE_OPTIONS currently only supports OPENCL-C shaders");
+  }
+
+  token = tokenizer_->NextToken();
+  if (!token->IsEOL())
+    return Result("extra parameters after COMPILE_OPTIONS command");
+
+  std::vector<std::string> options;
+  while (true) {
+    token = tokenizer_->NextToken();
+    if (token->IsEOL())
+      continue;
+    if (token->IsEOS())
+      return Result("COMPILE_OPTIONS missing END command");
+    if (token->AsString() == "END")
+      break;
+
+    options.push_back(token->AsString());
+  }
+
+  Result r = pipeline->SetShaderCompileOptions(shader, options);
+  if (!r.IsSuccess())
+    return r;
+
+  return ValidateEndOfStatement("COMPILE_OPTIONS command");
 }
 
 Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
