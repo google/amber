@@ -55,13 +55,15 @@ struct RenderPipelineInfo {
   float clear_depth_value = 1.0f;
   uint32_t clear_stencil_value = 0;
 
-  /// The depth and stencil target.  This resides on the GPU.
+  // Depth-stencil target.  This resides on the GPU.
   ::dawn::Texture depth_stencil_texture;
+  // Vertex buffers
   std::vector<::dawn::Buffer> vertex_buffers;
+  // Index buffer
   ::dawn::Buffer index_buffer;
-  /// storage and uniform buffers
+  // Storage and uniform buffers
   std::vector<::dawn::Buffer> buffers;
-
+  // Binding info
   std::vector<::dawn::BindGroup> bind_groups;
   std::vector<::dawn::BindGroupLayout> bind_group_layouts;
 

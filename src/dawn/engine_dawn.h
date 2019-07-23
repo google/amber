@@ -69,23 +69,23 @@ class EngineDawn : public Engine {
     return pipeline_map_[command->GetPipeline()].render_pipeline.get();
   }
 
-  // If they don't already exist, creates the framebuffer texture for use
-  // on the device, the buffer on the host that will eventually hold the
-  // resulting pixels for use in checking expectations, and bookkeeping info
-  // for that host-side buffer.
+  // Creates and attaches index, vertex, storage, uniform and depth-stencil
+  // buffers. Sets up bindings. Also creates textures and texture views if not
+  // created yet.
   Result AttachBuffersAndTextures(RenderPipelineInfo* render_pipeline);
-  Result MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
-                                const ::dawn::Device& device);
+  // Creates and submits a command to copy dawn textures back to amber color
+  // attachments
+  Result MapDeviceTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
+                                      const ::dawn::Device& device);
 
-  ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.
-
-  // Dawn color attachment texture
-  std::vector<::dawn::Texture> fb_texture_;
-  // A view into fb_texture_
-  std::vector<::dawn::TextureView> texture_view_;
+  // Borrowed from the engine config
+  ::dawn::Device* device_ = nullptr;
+  // Dawn color attachment textures
+  std::vector<::dawn::Texture> textures_;
+  // Views into Dawn color attachment textures
+  std::vector<::dawn::TextureView> texture_views_;
   // Dawn depth/stencil texture
   ::dawn::Texture depth_stencil_texture_;
-
   // Mapping from the generic engine's Pipeline object to our own Dawn-specific
   // pipelines.
   std::unordered_map<amber::Pipeline*, ::amber::dawn::Pipeline> pipeline_map_;

@@ -568,8 +568,7 @@ Result EngineDawn::Initialize(EngineConfig* config,
   return {};
 }
 
-// Creates and submits a command to copy the colour attachments back to host.
-Result EngineDawn::MapTextureToHostBuffer(
+Result EngineDawn::MapDeviceTextureToHostBuffer(
     const RenderPipelineInfo& render_pipeline,
     const ::dawn::Device& device) {
   const auto width = render_pipeline.pipeline->GetFramebufferWidth();
@@ -595,7 +594,7 @@ Result EngineDawn::MapTextureToHostBuffer(
     origin3D.y = 0;
     origin3D.z = 0;
     ::dawn::TextureCopyView device_texture_view =
-        CreateTextureCopyView(fb_texture_[i], 0, 0, origin3D);
+        CreateTextureCopyView(textures_[i], 0, 0, origin3D);
     ::dawn::Extent3D copySize = {width, height, 1};
     auto encoder = device.CreateCommandEncoder();
     encoder.CopyTextureToBuffer(&device_texture_view, &copy_buffer_view,
@@ -738,7 +737,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   if (!result.IsSuccess())
     return result;
   result = helper.CreateRenderPassDescriptor(
-      *render_pipeline, *device_, texture_view_, ::dawn::LoadOp::Clear);
+      *render_pipeline, *device_, texture_views_, ::dawn::LoadOp::Clear);
   if (!result.IsSuccess())
     return result;
 
@@ -754,7 +753,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   ::dawn::Queue queue = device_->CreateQueue();
   queue.Submit(1, &commands);
 
-  result = MapTextureToHostBuffer(*render_pipeline, *device_);
+  result = MapDeviceTextureToHostBuffer(*render_pipeline, *device_);
 
   return result;
 }
@@ -798,6 +797,7 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
 
   renderPipelineDescriptor.primitiveTopology =
       ::dawn::PrimitiveTopology::TriangleList;
+  // TODO(sarahM0): Figure out what sampleCount is, it's been used a few times
   renderPipelineDescriptor.sampleCount = 1;
 
   // Lookup shaders' entrypoints
@@ -898,8 +898,23 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
     colorStatesDescriptor[i] = colorStateDescriptor;
     colorStates[i] = &colorStatesDescriptor[i];
+    ::dawn::TextureFormat fb_format{};
+    {
+      if (i < render_pipeline.pipeline->GetColorAttachments().size()) {
+        auto* amber_format = render_pipeline.pipeline->GetColorAttachments()[i]
+                                 .buffer->GetFormat();
+        if (!amber_format)
+          return Result(
+              "AttachBuffersAndTextures: One Color attachment has no format!");
+        result = GetDawnTextureFormat(*amber_format, &fb_format);
+        if (!result.IsSuccess())
+          return result;
+      } else {
+        fb_format = ::dawn::TextureFormat::RGBA8Unorm;
+      }
+    }
+    colorStates[i]->format = fb_format;
   }
-  colorStates[0]->format = fb_format;
   renderPipelineDescriptor.colorStates = &colorStates[0];
 
   // Set defaults for the depth stencil state descriptors.
@@ -907,7 +922,6 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   stencilFace.failOp = ::dawn::StencilOperation::Keep;
   stencilFace.depthFailOp = ::dawn::StencilOperation::Keep;
   stencilFace.passOp = ::dawn::StencilOperation::Keep;
-  depthStencilState.format = fb_format;
   depthStencilState.depthWriteEnabled = false;
   depthStencilState.depthCompare = ::dawn::CompareFunction::Always;
   depthStencilState.stencilBack = stencilFace;
@@ -925,7 +939,6 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
     const ::dawn::Device& device,
     const std::vector<::dawn::TextureView>& texture_view,
     const ::dawn::LoadOp load_op) {
-
   for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
     colorAttachmentsInfo[i].loadOp = load_op;
     colorAttachmentsInfo[i].storeOp = ::dawn::StoreOp::Store;
@@ -942,7 +955,6 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
 
   renderPassDescriptor.colorAttachmentCount =
       render_pipeline.pipeline->GetColorAttachments().size();
-  // static_cast<uint32_t>(colorAttachmentInfo.size());
   uint32_t colorAttachmentIndex = 0;
   for (const ::dawn::TextureView& colorAttachment : texture_view) {
     if (colorAttachment.Get() != nullptr) {
@@ -1039,7 +1051,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
 
   DawnPipelineHelper helper;
   helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_, true);
-  helper.CreateRenderPassDescriptor(*render_pipeline, *device_, texture_view_,
+  helper.CreateRenderPassDescriptor(*render_pipeline, *device_, texture_views_,
                                     ::dawn::LoadOp::Load);
   ::dawn::RenderPipelineDescriptor* renderPipelineDescriptor =
       &helper.renderPipelineDescriptor;
@@ -1067,7 +1079,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   ::dawn::Queue queue = device_->CreateQueue();
   queue.Submit(1, &commands);
 
-  Result result = MapTextureToHostBuffer(*render_pipeline, *device_);
+  Result result = MapDeviceTextureToHostBuffer(*render_pipeline, *device_);
 
   return result;
 }
@@ -1103,7 +1115,7 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   if (!result.IsSuccess())
     return result;
   result = helper.CreateRenderPassDescriptor(
-      *render_pipeline, *device_, texture_view_, ::dawn::LoadOp::Load);
+      *render_pipeline, *device_, texture_views_, ::dawn::LoadOp::Load);
   if (!result.IsSuccess())
     return result;
 
@@ -1150,7 +1162,7 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   ::dawn::Queue queue = device_->CreateQueue();
   queue.Submit(1, &commands);
 
-  result = MapTextureToHostBuffer(*render_pipeline, *device_);
+  result = MapDeviceTextureToHostBuffer(*render_pipeline, *device_);
 
   return result;
 }  // namespace dawn
@@ -1205,7 +1217,7 @@ Result EngineDawn::AttachBuffersAndTextures(
   const uint32_t height = render_pipeline->pipeline->GetFramebufferHeight();
 
   // Create textures and texture views if we haven't already
-  if (fb_texture_.size() == 0) {
+  if (textures_.size() == 0) {
     for (uint32_t i = 0; i < kMaxColorAttachments; i++) {
       ::dawn::TextureFormat fb_format{};
       if (i < render_pipeline->pipeline->GetColorAttachments().size()) {
@@ -1220,9 +1232,9 @@ Result EngineDawn::AttachBuffersAndTextures(
       } else {
         fb_format = ::dawn::TextureFormat::RGBA8Unorm;
       }
-      fb_texture_.emplace_back(
+      textures_.emplace_back(
           MakeDawnTexture(*device_, fb_format, width, height));
-      texture_view_.emplace_back(fb_texture_.back().CreateDefaultView());
+      texture_views_.emplace_back(textures_.back().CreateDefaultView());
     }
   }
 
