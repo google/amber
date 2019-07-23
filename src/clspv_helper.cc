@@ -26,8 +26,12 @@ Result Compile(Pipeline::ShaderInfo* shader_info,
                std::vector<uint32_t>* generated_binary) {
   std::vector<clspv::version0::DescriptorMapEntry> entries;
   const auto& src_str = shader_info->GetShader()->GetData();
-  if (clspv::CompileFromSourceString(src_str, "", "", generated_binary,
-                                     &entries)) {
+  std::string options;
+  for (const auto& option : shader_info->GetCompileOptions()) {
+    options += option + " ";
+  }
+  if (clspv::CompileFromSourceString(src_str, /* sampler map */ "", options,
+                                     generated_binary, &entries)) {
     return Result("Clspv compile failed");
   }
 

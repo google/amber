@@ -49,6 +49,13 @@ class Pipeline {
       return shader_optimizations_;
     }
 
+    void SetCompileOptions(const std::vector<std::string>& options) {
+      compile_options_ = options;
+    }
+    const std::vector<std::string>& GetCompileOptions() const {
+      return compile_options_;
+    }
+
     void SetShader(Shader* shader) { shader_ = shader; }
     const Shader* GetShader() const { return shader_; }
 
@@ -105,6 +112,7 @@ class Pipeline {
     std::map<uint32_t, uint32_t> specialization_;
     std::unordered_map<std::string, std::vector<DescriptorMapEntry>>
         descriptor_map_;
+    std::vector<std::string> compile_options_;
   };
 
   /// Information on a buffer attached to the pipeline.
@@ -165,6 +173,9 @@ class Pipeline {
   /// Sets the optimizations (|opts|) for |shader| in this pipeline.
   Result SetShaderOptimizations(const Shader* shader,
                                 const std::vector<std::string>& opts);
+  /// Sets the compile options for |shader| in this pipeline.
+  Result SetShaderCompileOptions(const Shader* shader,
+                                 const std::vector<std::string>& options);
 
   /// Returns a list of all colour attachments in this pipeline.
   const std::vector<BufferInfo>& GetColorAttachments() const {

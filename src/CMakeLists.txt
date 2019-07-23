@@ -117,6 +117,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_buffer_test.cc
     amberscript/parser_clear_color_test.cc
     amberscript/parser_clear_test.cc
+    amberscript/parser_compile_options_test.cc
     amberscript/parser_copy_test.cc
     amberscript/parser_device_feature_test.cc
     amberscript/parser_expect_test.cc

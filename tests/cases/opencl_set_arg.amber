@@ -20,16 +20,59 @@ kernel void line(global int* in, global int* out, int slope, int offset) {
 END
 
 BUFFER in_buf DATA_TYPE uint32 DATA 3 END
-BUFFER out_buf DATA_TYPE uint32 DATA 0 END
+BUFFER out_buf1 DATA_TYPE uint32 DATA 0 END
+BUFFER out_buf2 DATA_TYPE uint32 DATA 0 END
+BUFFER out_buf3 DATA_TYPE uint32 DATA 0 END
+BUFFER out_buf4 DATA_TYPE uint32 DATA 0 END
 
-PIPELINE compute my_pipeline
+PIPELINE compute p1
   ATTACH my_shader ENTRY_POINT line
   BIND BUFFER in_buf KERNEL ARG_NAME in
-  BIND BUFFER out_buf KERNEL ARG_NAME out
+  BIND BUFFER out_buf1 KERNEL ARG_NAME out
   SET KERNEL ARG_NAME offset AS uint32 1
   SET KERNEL ARG_NAME slope AS int32 2
 END
 
-RUN my_pipeline 1 1 1
+PIPELINE compute p2
+  ATTACH my_shader ENTRY_POINT line
+  BIND BUFFER in_buf KERNEL ARG_NAME in
+  BIND BUFFER out_buf2 KERNEL ARG_NAME out
+  SET KERNEL ARG_NAME offset AS uint32 1
+  SET KERNEL ARG_NAME slope AS int32 2
+  COMPILE_OPTIONS my_shader
+    -pod-ubo
+  END
+END
 
-EXPECT out_buf IDX 0 EQ 7
+PIPELINE compute p3
+  ATTACH my_shader ENTRY_POINT line
+  BIND BUFFER in_buf KERNEL ARG_NAME in
+  BIND BUFFER out_buf3 KERNEL ARG_NAME out
+  SET KERNEL ARG_NAME offset AS uint32 1
+  SET KERNEL ARG_NAME slope AS int32 2
+  COMPILE_OPTIONS my_shader
+    -cluster-pod-kernel-args
+  END
+END
+
+PIPELINE compute p4
+  ATTACH my_shader ENTRY_POINT line
+  BIND BUFFER in_buf KERNEL ARG_NAME in
+  BIND BUFFER out_buf4 KERNEL ARG_NAME out
+  SET KERNEL ARG_NAME offset AS uint32 1
+  SET KERNEL ARG_NAME slope AS int32 2
+  COMPILE_OPTIONS my_shader
+    -cluster-pod-kernel-args
+    -pod-ubo
+  END
+END
+
+RUN p1 1 1 1
+RUN p2 1 1 1
+RUN p3 1 1 1
+RUN p4 1 1 1
+
+EXPECT out_buf1 IDX 0 EQ 7
+EXPECT out_buf2 IDX 0 EQ 7
+EXPECT out_buf3 IDX 0 EQ 7
+EXPECT out_buf4 IDX 0 EQ 7
