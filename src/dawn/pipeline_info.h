@@ -55,13 +55,8 @@ struct RenderPipelineInfo {
   float clear_depth_value = 1.0f;
   uint32_t clear_stencil_value = 0;
 
-  /// The framebuffer color render target.  This resides on the GPU.
-  ::dawn::Texture fb_texture;
   /// The depth and stencil target.  This resides on the GPU.
   ::dawn::Texture depth_stencil_texture;
-  /// The buffer to which we will copy the rendered pixel values, for
-  /// use on the host.
-  ::dawn::Buffer fb_buffer;
   std::vector<::dawn::Buffer> vertex_buffers;
   ::dawn::Buffer index_buffer;
   /// storage and uniform buffers

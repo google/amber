@@ -74,15 +74,15 @@ class EngineDawn : public Engine {
   // resulting pixels for use in checking expectations, and bookkeeping info
   // for that host-side buffer.
   Result AttachBuffersAndTextures(RenderPipelineInfo* render_pipeline);
+  Result MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
+                                const ::dawn::Device& device);
 
   ::dawn::Device* device_ = nullptr;  // Borrowed from the engine config.
 
-  // Host-side buffer for the framebuffer
-  ::dawn::Buffer fb_buffer_;
   // Dawn color attachment texture
-  ::dawn::Texture fb_texture_;
+  std::vector<::dawn::Texture> fb_texture_;
   // A view into fb_texture_
-  ::dawn::TextureView texture_view_;
+  std::vector<::dawn::TextureView> texture_view_;
   // Dawn depth/stencil texture
   ::dawn::Texture depth_stencil_texture_;
 
