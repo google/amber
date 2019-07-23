@@ -59,10 +59,17 @@ Result Executor::Execute(Engine* engine,
     if (!r.IsSuccess())
       return r;
 
+    // OpenCL specific pipeline updates.
     for (auto& pipeline : script->GetPipelines()) {
       r = pipeline->UpdateOpenCLBufferBindings();
       if (!r.IsSuccess())
         return r;
+      r = pipeline->GenerateOpenCLPodBuffers();
+      if (!r.IsSuccess())
+        return r;
+    }
+
+    for (auto& pipeline : script->GetPipelines()) {
       r = engine->CreatePipeline(pipeline.get());
       if (!r.IsSuccess())
         return r;

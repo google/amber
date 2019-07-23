@@ -123,6 +123,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_extension_test.cc
     amberscript/parser_framebuffer_test.cc
     amberscript/parser_pipeline_test.cc
+    amberscript/parser_pipeline_set_test.cc
     amberscript/parser_repeat_test.cc
     amberscript/parser_run_test.cc
     amberscript/parser_set_test.cc
