@@ -1150,7 +1150,7 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   }
   // TODO(sarahM0): figure out what this offset means
   pass.SetIndexBuffer(render_pipeline->index_buffer, /* buffer */
-                      0);                            /*offset*/
+                      0);                            /* offset*/
   pass.DrawIndexed(command->GetVertexCount(),        /* indexCount */
                    instance_count,                   /* instanceCount */
                    0,                                /* firstIndex */
@@ -1217,20 +1217,37 @@ Result EngineDawn::AttachBuffersAndTextures(
   const uint32_t height = render_pipeline->pipeline->GetFramebufferHeight();
 
   // Create textures and texture views if we haven't already
+  std::vector<int32_t> seen_idx(
+      render_pipeline->pipeline->GetColorAttachments().size(), -1);
+  for (auto info : render_pipeline->pipeline->GetColorAttachments()) {
+    if (info.location >=
+        render_pipeline->pipeline->GetColorAttachments().size())
+      return Result("color attachment locations must be sequential from 0");
+    if (seen_idx[info.location] != -1) {
+      return Result("duplicate attachment location: " +
+                    std::to_string(info.location));
+    }
+    seen_idx[info.location] = static_cast<int32_t>(info.location);
+  }
+
   if (textures_.size() == 0) {
     for (uint32_t i = 0; i < kMaxColorAttachments; i++) {
       ::dawn::TextureFormat fb_format{};
-      if (i < render_pipeline->pipeline->GetColorAttachments().size()) {
-        auto* amber_format = render_pipeline->pipeline->GetColorAttachments()[i]
-                                 .buffer->GetFormat();
-        if (!amber_format)
-          return Result(
-              "AttachBuffersAndTextures: One Color attachment has no format!");
-        result = GetDawnTextureFormat(*amber_format, &fb_format);
-        if (!result.IsSuccess())
-          return result;
-      } else {
-        fb_format = ::dawn::TextureFormat::RGBA8Unorm;
+      {
+        if (i < render_pipeline->pipeline->GetColorAttachments().size()) {
+          auto* amber_format =
+              render_pipeline->pipeline->GetColorAttachments()[i]
+                  .buffer->GetFormat();
+          if (!amber_format)
+            return Result(
+                "AttachBuffersAndTextures: One Color attachment has no "
+                "format!");
+          result = GetDawnTextureFormat(*amber_format, &fb_format);
+          if (!result.IsSuccess())
+            return result;
+        } else {
+          fb_format = ::dawn::TextureFormat::RGBA8Unorm;
+        }
       }
       textures_.emplace_back(
           MakeDawnTexture(*device_, fb_format, width, height));
