@@ -43,8 +43,10 @@ endif()
 
 if (${AMBER_ENABLE_SAMPLES})
   # Lodepng
-  set(LODEPNG_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/lodepng/lodepng.cpp)
-  add_library(lodepng STATIC ${LODEPNG_SOURCES})
+  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lodepng)
+    set(LODEPNG_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/lodepng/lodepng.cpp)
+    add_library(lodepng STATIC ${LODEPNG_SOURCES})
+  endif()
 endif()
 
 if (${AMBER_USE_LOCAL_VULKAN})

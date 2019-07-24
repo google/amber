@@ -25,11 +25,14 @@
 
 #include "amber/recipe.h"
 #include "samples/config_helper.h"
-#include "samples/png.h"
 #include "samples/ppm.h"
 #include "samples/timestamp.h"
 #include "src/build-versions.h"
 #include "src/make_unique.h"
+
+#if LODEPNG_EXIST
+#include "samples/png.h"
+#endif  // LODEPNG_EXIST
 
 namespace {
 
@@ -431,8 +434,13 @@ int main(int argc, const char** argv) {
       for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
         if (buffer_info.buffer_name == options.fb_name) {
           if (usePNG) {
+#if LODEPNG_EXIST
             result = png::ConvertToPNG(buffer_info.width, buffer_info.height,
                                        buffer_info.values, &out_buf);
+#else   // LODEPNG_EXIST
+            result =
+                amber::Result("lodepng does not exit and PNG is not supported");
+#endif  // LODEPNG_EXIST
           } else {
             ppm::ConvertToPPM(buffer_info.width, buffer_info.height,
                               buffer_info.values, &out_buf);
