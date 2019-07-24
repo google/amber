@@ -585,13 +585,13 @@ Result EngineDawn::MapDeviceTextureToHostBuffer(
   descriptor.usage =
       ::dawn::BufferUsageBit::CopyDst | ::dawn::BufferUsageBit::MapRead;
   ::dawn::Buffer copy_buffer = device.CreateBuffer(&descriptor);
-
   ::dawn::BufferCopyView copy_buffer_view =
       CreateBufferCopyView(copy_buffer, 0, dawn_row_pitch, 0);
   ::dawn::Origin3D origin3D;
   origin3D.x = 0;
   origin3D.y = 0;
   origin3D.z = 0;
+
   for (uint32_t i = 0;
        i < render_pipeline.pipeline->GetColorAttachments().size(); i++) {
     ::dawn::TextureCopyView device_texture_view =
@@ -608,24 +608,22 @@ Result EngineDawn::MapDeviceTextureToHostBuffer(
     if (!mapped_device_texture.result.IsSuccess())
       return mapped_device_texture.result;
 
-    if (i < render_pipeline.pipeline->GetColorAttachments().size()) {
-      auto& host_texture = render_pipeline.pipeline->GetColorAttachments()[i];
-      auto* values = host_texture.buffer->ValuePtr();
-      auto row_stride = pixelSize * width;
-      assert(row_stride * height == host_texture.buffer->GetSizeInBytes());
-      // Each Dawn row has enough data to fill the target row.
-      assert(dawn_row_pitch >= row_stride);
-      values->resize(host_texture.buffer->GetSizeInBytes());
-      // Copy the framebuffer contents back into the host-side
-      // framebuffer-buffer. In the Dawn buffer, the row stride is a multiple of
-      // kMinimumImageRowPitch bytes, so it might have padding therefore memcpy
-      // is done row by row.
-      for (uint h = 0; h < height; h++) {
-        std::memcpy(values->data() + h * row_stride,
-                    static_cast<const uint8_t*>(mapped_device_texture.data) +
-                        h * dawn_row_pitch,
-                    row_stride);
-      }
+    auto& host_texture = render_pipeline.pipeline->GetColorAttachments()[i];
+    auto* values = host_texture.buffer->ValuePtr();
+    auto row_stride = pixelSize * width;
+    assert(row_stride * height == host_texture.buffer->GetSizeInBytes());
+    // Each Dawn row has enough data to fill the target row.
+    assert(dawn_row_pitch >= row_stride);
+    values->resize(host_texture.buffer->GetSizeInBytes());
+    // Copy the framebuffer contents back into the host-side
+    // framebuffer-buffer. In the Dawn buffer, the row stride is a multiple of
+    // kMinimumImageRowPitch bytes, so it might have padding therefore memcpy
+    // is done row by row.
+    for (uint h = 0; h < height; h++) {
+      std::memcpy(values->data() + h * row_stride,
+                  static_cast<const uint8_t*>(mapped_device_texture.data) +
+                      h * dawn_row_pitch,
+                  row_stride);
     }
     // Always unmap the buffer at the end of the engine's command.
     copy_buffer.Unmap();
@@ -744,7 +742,6 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
 
   ::dawn::RenderPassDescriptor* renderPassDescriptor =
       &helper.renderPassDescriptor;
-
   ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
   ::dawn::RenderPassEncoder pass =
       encoder.BeginRenderPass(renderPassDescriptor);
@@ -1233,22 +1230,21 @@ Result EngineDawn::AttachBuffersAndTextures(
   if (textures_.size() == 0) {
     for (uint32_t i = 0; i < kMaxColorAttachments; i++) {
       ::dawn::TextureFormat fb_format{};
-      {
-        if (i < render_pipeline->pipeline->GetColorAttachments().size()) {
-          auto* amber_format =
-              render_pipeline->pipeline->GetColorAttachments()[i]
-                  .buffer->GetFormat();
-          if (!amber_format)
-            return Result(
-                "AttachBuffersAndTextures: One Color attachment has no "
-                "format!");
-          result = GetDawnTextureFormat(*amber_format, &fb_format);
-          if (!result.IsSuccess())
-            return result;
-        } else {
-          fb_format = ::dawn::TextureFormat::RGBA8Unorm;
-        }
+
+      if (i < render_pipeline->pipeline->GetColorAttachments().size()) {
+        auto* amber_format = render_pipeline->pipeline->GetColorAttachments()[i]
+                                 .buffer->GetFormat();
+        if (!amber_format)
+          return Result(
+              "AttachBuffersAndTextures: One Color attachment has no "
+              "format!");
+        result = GetDawnTextureFormat(*amber_format, &fb_format);
+        if (!result.IsSuccess())
+          return result;
+      } else {
+        fb_format = ::dawn::TextureFormat::RGBA8Unorm;
       }
+
       textures_.emplace_back(
           MakeDawnTexture(*device_, fb_format, width, height));
       texture_views_.emplace_back(textures_.back().CreateDefaultView());
