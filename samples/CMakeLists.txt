@@ -19,12 +19,16 @@ set(AMBER_SOURCES
     config_helper.cc
     log.cc
     ppm.cc
-    png.cc
     timestamp.cc
     ${CMAKE_BINARY_DIR}/src/build-versions.h.fake
 )
 
-set(AMBER_EXTRA_LIBS "lodepng")
+set(AMBER_EXTRA_LIBS "")
+
+if (${AMBER_ENABLE_LODEPNG})
+  set(AMBER_SOURCES ${AMBER_SOURCES} png.cc)
+  list(APPEND AMBER_EXTRA_LIBS "lodepng")
+endif()
 
 if (${Vulkan_FOUND})
   set(AMBER_SOURCES ${AMBER_SOURCES} config_helper_vulkan.cc)
@@ -45,6 +49,7 @@ endif()
 
 add_executable(amber ${AMBER_SOURCES})
 target_include_directories(amber PRIVATE "${CMAKE_BINARY_DIR}")
+
 set_target_properties(amber PROPERTIES OUTPUT_NAME "amber")
 target_link_libraries(amber libamber ${AMBER_EXTRA_LIBS})
 amber_default_compile_options(amber)
