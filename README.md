@@ -196,6 +196,9 @@ out/Debug/amber tests/cases/clear.vkscript
 The sample app returns a value of 0 on success or non-zero on error. Any issues
 encountered should be displayed on the console.
 
+By default, `out/Debug/amber` supports saving the output image into '.png'
+file. You can disable this by passing `-DAMBER_SKIP_LODEPNG=true` to cmake.
+
 ## Contributing
 
 Please see the [CONTRIBUTING](CONTRIBUTING.md) and
