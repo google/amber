@@ -53,6 +53,12 @@ std::unique_ptr<Pipeline> Pipeline::Clone() const {
   clone->index_buffer_ = index_buffer_;
   clone->fb_width_ = fb_width_;
   clone->fb_height_ = fb_height_;
+  clone->set_arg_values_ = set_arg_values_;
+  if (!opencl_pod_buffers_.empty()) {
+    // Generate specific buffers for the clone.
+    clone->GenerateOpenCLPodBuffers();
+  }
+
   return clone;
 }
 
@@ -105,6 +111,23 @@ Result Pipeline::SetShaderOptimizations(const Shader* shader,
   }
 
   return Result("unknown shader specified for optimizations: " +
+                shader->GetName());
+}
+
+Result Pipeline::SetShaderCompileOptions(const Shader* shader,
+                                         const std::vector<std::string>& opts) {
+  if (!shader)
+    return Result("invalid shader specified for compile options");
+
+  for (auto& info : shaders_) {
+    const auto* is = info.GetShader();
+    if (is == shader) {
+      info.SetCompileOptions(opts);
+      return {};
+    }
+  }
+
+  return Result("unknown shader specified for compile options: " +
                 shader->GetName());
 }
 
@@ -425,6 +448,128 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
         }
       }
     }
+  }
+
+  return {};
+}
+
+Result Pipeline::GenerateOpenCLPodBuffers() {
+  if (!IsCompute() || GetShaders().empty() ||
+      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC) {
+    return {};
+  }
+
+  const auto& shader_info = GetShaders()[0];
+  const auto& descriptor_map = shader_info.GetDescriptorMap();
+  if (descriptor_map.empty())
+    return {};
+
+  const auto iter = descriptor_map.find(shader_info.GetEntryPoint());
+  if (iter == descriptor_map.end())
+    return {};
+
+  // For each SET command, do the following:
+  // 1. Find the descriptor map entry for that argument.
+  // 2. Find or create the buffer for the descriptor set and binding pair.
+  // 3. Write the data for the SET command at the right offset.
+  for (const auto& arg_info : SetArgValues()) {
+    uint32_t descriptor_set = std::numeric_limits<uint32_t>::max();
+    uint32_t binding = std::numeric_limits<uint32_t>::max();
+    uint32_t offset = 0;
+    uint32_t arg_size = 0;
+    bool uses_name = !arg_info.name.empty();
+    Pipeline::ShaderInfo::DescriptorMapEntry::Kind kind =
+        Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD;
+    for (const auto& entry : iter->second) {
+      if (entry.kind != Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD &&
+          entry.kind !=
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO) {
+        continue;
+      }
+
+      // Found the right entry.
+      if ((uses_name && entry.arg_name == arg_info.name) ||
+          entry.arg_ordinal == arg_info.ordinal) {
+        descriptor_set = entry.descriptor_set;
+        binding = entry.binding;
+        offset = entry.pod_offset;
+        arg_size = entry.pod_arg_size;
+        kind = entry.kind;
+        break;
+      }
+    }
+
+    if (descriptor_set == std::numeric_limits<uint32_t>::max() ||
+        binding == std::numeric_limits<uint32_t>::max()) {
+      std::string message =
+          "could not find descriptor map entry for SET command: kernel " +
+          shader_info.GetEntryPoint();
+      if (uses_name) {
+        message += ", name " + arg_info.name;
+      } else {
+        message += ", number " + std::to_string(arg_info.ordinal);
+      }
+      return Result(message);
+    }
+
+    auto buf_iter = opencl_pod_buffer_map_.lower_bound(
+        std::make_pair(descriptor_set, binding));
+    Buffer* buffer = nullptr;
+    if (buf_iter == opencl_pod_buffer_map_.end() ||
+        buf_iter->first.first != descriptor_set ||
+        buf_iter->first.second != binding) {
+      // Ensure no buffer was previously bound for this descriptor set and
+      // binding pair.
+      for (const auto& buf_info : GetBuffers()) {
+        if (buf_info.descriptor_set == descriptor_set &&
+            buf_info.binding == binding) {
+          return Result("previously bound buffer " +
+                        buf_info.buffer->GetName() +
+                        " to PoD args at descriptor set " +
+                        std::to_string(descriptor_set) + " binding " +
+                        std::to_string(binding));
+        }
+      }
+
+      // Add a new buffer for this descriptor set and binding.
+      opencl_pod_buffers_.push_back(MakeUnique<Buffer>());
+      buffer = opencl_pod_buffers_.back().get();
+      buffer->SetBufferType(
+          kind == Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD
+              ? BufferType::kStorage
+              : BufferType::kUniform);
+      // Use an 8-bit type because all the data in the descriptor map is
+      // byte-based and it simplifies the logic for sizing below.
+      DatumType char_type;
+      char_type.SetType(DataType::kUint8);
+      buffer->SetFormat(char_type.AsFormat());
+      buffer->SetName(GetName() + "_pod_buffer_" +
+                      std::to_string(descriptor_set) + "_" +
+                      std::to_string(binding));
+      opencl_pod_buffer_map_.insert(
+          buf_iter,
+          std::make_pair(std::make_pair(descriptor_set, binding), buffer));
+      AddBuffer(buffer, descriptor_set, binding);
+    } else {
+      buffer = buf_iter->second;
+    }
+
+    // Resize if necessary.
+    if (buffer->ValueCount() < offset + arg_size) {
+      buffer->ResizeTo(offset + arg_size);
+    }
+    // Check the data size.
+    if (arg_size != arg_info.type.SizeInBytes()) {
+      std::string message = "SET command uses incorrect data size: kernel " +
+                            shader_info.GetEntryPoint();
+      if (uses_name) {
+        message += ", name " + arg_info.name;
+      } else {
+        message += ", number " + std::to_string(arg_info.ordinal);
+      }
+      return Result(message);
+    }
+    buffer->SetDataWithOffset({arg_info.value}, offset);
   }
 
   return {};

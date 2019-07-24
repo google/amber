@@ -49,6 +49,13 @@ class Pipeline {
       return shader_optimizations_;
     }
 
+    void SetCompileOptions(const std::vector<std::string>& options) {
+      compile_options_ = options;
+    }
+    const std::vector<std::string>& GetCompileOptions() const {
+      return compile_options_;
+    }
+
     void SetShader(Shader* shader) { shader_ = shader; }
     const Shader* GetShader() const { return shader_; }
 
@@ -105,6 +112,7 @@ class Pipeline {
     std::map<uint32_t, uint32_t> specialization_;
     std::unordered_map<std::string, std::vector<DescriptorMapEntry>>
         descriptor_map_;
+    std::vector<std::string> compile_options_;
   };
 
   /// Information on a buffer attached to the pipeline.
@@ -165,6 +173,9 @@ class Pipeline {
   /// Sets the optimizations (|opts|) for |shader| in this pipeline.
   Result SetShaderOptimizations(const Shader* shader,
                                 const std::vector<std::string>& opts);
+  /// Sets the compile options for |shader| in this pipeline.
+  Result SetShaderCompileOptions(const Shader* shader,
+                                 const std::vector<std::string>& options);
 
   /// Returns a list of all colour attachments in this pipeline.
   const std::vector<BufferInfo>& GetColorAttachments() const {
@@ -226,6 +237,24 @@ class Pipeline {
   /// Generates a default depth attachment in D32_SFLOAT_S8_UINT format.
   std::unique_ptr<Buffer> GenerateDefaultDepthAttachmentBuffer() const;
 
+  /// Information on values set for OpenCL-C plain-old-data args.
+  struct ArgSetInfo {
+    std::string name;
+    uint32_t ordinal = 0;
+    DatumType type;
+    Value value;
+  };
+
+  /// Adds value from SET command.
+  void SetArg(ArgSetInfo&& info) { set_arg_values_.push_back(std::move(info)); }
+  const std::vector<ArgSetInfo>& SetArgValues() const {
+    return set_arg_values_;
+  }
+
+  /// Generate the buffers necessary for OpenCL PoD arguments populated via SET
+  /// command. This should be called after all other buffers are bound.
+  Result GenerateOpenCLPodBuffers();
+
  private:
   void UpdateFramebufferSizes();
 
@@ -244,6 +273,11 @@ class Pipeline {
 
   uint32_t fb_width_ = 250;
   uint32_t fb_height_ = 250;
+
+  std::vector<ArgSetInfo> set_arg_values_;
+  std::vector<std::unique_ptr<Buffer>> opencl_pod_buffers_;
+  /// Maps (descriptor set, binding) to the buffer for that binding pair.
+  std::map<std::pair<uint32_t, uint32_t>, Buffer*> opencl_pod_buffer_map_;
 };
 
 }  // namespace amber
