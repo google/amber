@@ -1307,6 +1307,16 @@ Result EngineDawn::AttachBuffersAndTextures(
   uint32_t max_descriptor_set = 0;
 
   // Attach storage/uniform buffers
+  ::dawn::BindGroupLayoutBinding empty_layout_info = {};
+
+  if (!render_pipeline->pipeline->GetBuffers().empty()) {
+    std::vector<uint32_t> max_binding_seen(kMaxDawnBindGroup, -1);
+    for (auto& buf_info : render_pipeline->pipeline->GetBuffers()) {
+      while (layouts_info[buf_info.descriptor_set].size() <= buf_info.binding)
+        layouts_info[buf_info.descriptor_set].push_back(empty_layout_info);
+    }
+  }
+
   for (const auto& buf_info : render_pipeline->pipeline->GetBuffers()) {
     ::dawn::BufferUsageBit bufferUsage;
     ::dawn::BindingType bindingType;
@@ -1351,7 +1361,7 @@ Result EngineDawn::AttachBuffersAndTextures(
     layout_info.binding = buf_info.binding;
     layout_info.visibility = kAllStages;
     layout_info.type = bindingType;
-    layouts_info[buf_info.descriptor_set].push_back(layout_info);
+    layouts_info[buf_info.descriptor_set][buf_info.binding] = layout_info;
 
     BindingInitializationHelper tempBinding = BindingInitializationHelper(
         buf_info.binding, render_pipeline->buffers.back(), 0,
@@ -1359,8 +1369,6 @@ Result EngineDawn::AttachBuffersAndTextures(
     bindingInitalizerHelper[buf_info.descriptor_set].push_back(tempBinding);
   }
 
-  // TODO(sarahM0): fix issue: Add support for doBuffer with sparse descriptor
-  // sets #573
   if (render_pipeline->used_descriptor_set.size() != 0 &&
       render_pipeline->used_descriptor_set.size() != max_descriptor_set + 1) {
     return Result(
@@ -1371,6 +1379,15 @@ Result EngineDawn::AttachBuffersAndTextures(
     if (layouts_info[i].size() > 0 && bindingInitalizerHelper[i].size() > 0) {
       ::dawn::BindGroupLayout bindGroupLayout =
           MakeBindGroupLayout(*device_, layouts_info[i]);
+      render_pipeline->bind_group_layouts.push_back(bindGroupLayout);
+
+      ::dawn::BindGroup bindGroup =
+          MakeBindGroup(*device_, render_pipeline->bind_group_layouts[i],
+                        bindingInitalizerHelper[i]);
+      render_pipeline->bind_groups.push_back(bindGroup);
+    } else if (i < max_descriptor_set) {
+      ::dawn::BindGroupLayout bindGroupLayout =
+          MakeBindGroupLayout(*device_, {});
       render_pipeline->bind_group_layouts.push_back(bindGroupLayout);
 
       ::dawn::BindGroup bindGroup =
