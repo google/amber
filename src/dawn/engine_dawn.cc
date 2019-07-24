@@ -578,21 +578,22 @@ Result EngineDawn::MapDeviceTextureToHostBuffer(
                              .buffer->GetTexelStride();
   const auto dawn_row_pitch = Align(width * pixelSize, kMinimumImageRowPitch);
   const auto size = height * dawn_row_pitch;
-  for (uint32_t i = 0; i < kMaxColorAttachments; i++) {
-    // Create a temporary buffer that holds the color attachment content and can
-    // be mapped
-    ::dawn::BufferDescriptor descriptor;
-    descriptor.size = size;
-    descriptor.usage =
-        ::dawn::BufferUsageBit::CopyDst | ::dawn::BufferUsageBit::MapRead;
-    ::dawn::Buffer copy_buffer = device.CreateBuffer(&descriptor);
+  // Create a temporary buffer to hold the color attachment content and can
+  // be mapped
+  ::dawn::BufferDescriptor descriptor;
+  descriptor.size = size;
+  descriptor.usage =
+      ::dawn::BufferUsageBit::CopyDst | ::dawn::BufferUsageBit::MapRead;
+  ::dawn::Buffer copy_buffer = device.CreateBuffer(&descriptor);
 
-    ::dawn::BufferCopyView copy_buffer_view =
-        CreateBufferCopyView(copy_buffer, 0, dawn_row_pitch, 0);
-    ::dawn::Origin3D origin3D;
-    origin3D.x = 0;
-    origin3D.y = 0;
-    origin3D.z = 0;
+  ::dawn::BufferCopyView copy_buffer_view =
+      CreateBufferCopyView(copy_buffer, 0, dawn_row_pitch, 0);
+  ::dawn::Origin3D origin3D;
+  origin3D.x = 0;
+  origin3D.y = 0;
+  origin3D.z = 0;
+  for (uint32_t i = 0;
+       i < render_pipeline.pipeline->GetColorAttachments().size(); i++) {
     ::dawn::TextureCopyView device_texture_view =
         CreateTextureCopyView(textures_[i], 0, 0, origin3D);
     ::dawn::Extent3D copySize = {width, height, 1};
@@ -625,9 +626,9 @@ Result EngineDawn::MapDeviceTextureToHostBuffer(
                         h * dawn_row_pitch,
                     row_stride);
       }
-      // Always unmap the buffer at the end of the engine's command.
-      copy_buffer.Unmap();
     }
+    // Always unmap the buffer at the end of the engine's command.
+    copy_buffer.Unmap();
   }
   return {};
 }
@@ -797,7 +798,6 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
 
   renderPipelineDescriptor.primitiveTopology =
       ::dawn::PrimitiveTopology::TriangleList;
-  // TODO(sarahM0): Figure out what sampleCount is, it's been used a few times
   renderPipelineDescriptor.sampleCount = 1;
 
   // Lookup shaders' entrypoints
