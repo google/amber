@@ -30,9 +30,9 @@
 #include "src/build-versions.h"
 #include "src/make_unique.h"
 
-#if LODEPNG_EXIST
+#if AMBER_ENABLE_LODEPNG
 #include "samples/png.h"
-#endif  // LODEPNG_EXIST
+#endif  // AMBER_ENABLE_LODEPNG
 
 namespace {
 
@@ -434,13 +434,12 @@ int main(int argc, const char** argv) {
       for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
         if (buffer_info.buffer_name == options.fb_name) {
           if (usePNG) {
-#if LODEPNG_EXIST
+#if AMBER_ENABLE_LODEPNG
             result = png::ConvertToPNG(buffer_info.width, buffer_info.height,
                                        buffer_info.values, &out_buf);
-#else   // LODEPNG_EXIST
-            result =
-                amber::Result("lodepng does not exit and PNG is not supported");
-#endif  // LODEPNG_EXIST
+#else   // AMBER_ENABLE_LODEPNG
+            result = amber::Result("PNG support not enabled");
+#endif  // AMBER_ENABLE_LODEPNG
           } else {
             ppm::ConvertToPPM(buffer_info.width, buffer_info.height,
                               buffer_info.values, &out_buf);

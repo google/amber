@@ -41,12 +41,10 @@ if (${AMBER_ENABLE_SHADERC})
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/shaderc)
 endif()
 
-if (${AMBER_ENABLE_SAMPLES})
+if (${AMBER_ENABLE_SAMPLES} AND ${AMBER_ENABLE_LODEPNG})
   # Lodepng
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lodepng)
-    set(LODEPNG_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/lodepng/lodepng.cpp)
-    add_library(lodepng STATIC ${LODEPNG_SOURCES})
-  endif()
+  set(LODEPNG_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/lodepng/lodepng.cpp)
+  add_library(lodepng STATIC ${LODEPNG_SOURCES})
 endif()
 
 if (${AMBER_USE_LOCAL_VULKAN})

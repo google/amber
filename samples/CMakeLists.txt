@@ -25,7 +25,7 @@ set(AMBER_SOURCES
 
 set(AMBER_EXTRA_LIBS "")
 
-if (EXISTS ${PROJECT_SOURCE_DIR}/third_party/lodepng)
+if (${AMBER_ENABLE_LODEPNG})
   set(AMBER_SOURCES ${AMBER_SOURCES} png.cc)
   list(APPEND AMBER_EXTRA_LIBS "lodepng")
 endif()
@@ -49,10 +49,6 @@ endif()
 
 add_executable(amber ${AMBER_SOURCES})
 target_include_directories(amber PRIVATE "${CMAKE_BINARY_DIR}")
-
-if (EXISTS ${PROJECT_SOURCE_DIR}/third_party/lodepng)
-  target_compile_definitions(amber PRIVATE LODEPNG_EXIST=1)
-endif()
 
 set_target_properties(amber PROPERTIES OUTPUT_NAME "amber")
 target_link_libraries(amber libamber ${AMBER_EXTRA_LIBS})

@@ -41,6 +41,8 @@ option(AMBER_SKIP_SHADERC
   "Skip building Shaderc into the library" ${AMBER_SKIP_SHADERC})
 option(AMBER_SKIP_SAMPLES
   "Skip building sample application" ${AMBER_SKIP_SAMPLES})
+option(AMBER_SKIP_LODEPNG
+  "Skip building lodepng into the library" ${AMBER_SKIP_LODEPNG})
 option(AMBER_USE_DXC "Enable DXC integration" ${AMBER_USE_DXC})
 option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
 option(AMBER_USE_CLSPV "Build with Clspv support" OFF)
@@ -80,6 +82,12 @@ else()
   set(AMBER_ENABLE_SAMPLES TRUE)
 endif()
 
+if (${AMBER_SKIP_LODEPNG})
+  set(AMBER_ENABLE_LODEPNG FALSE)
+else()
+  set(AMBER_ENABLE_LODEPNG TRUE)
+endif()
+
 if (${AMBER_ENABLE_SWIFTSHADER})
   # Swiftshader requires the loader to be built.
   set(AMBER_USE_LOCAL_VULKAN TRUE)
@@ -106,6 +114,7 @@ message(STATUS "Amber enable SPIRV-Tools: ${AMBER_ENABLE_SPIRV_TOOLS}")
 message(STATUS "Amber enable Shaderc: ${AMBER_ENABLE_SHADERC}")
 message(STATUS "Amber enable tests: ${AMBER_ENABLE_TESTS}")
 message(STATUS "Amber enable samples: ${AMBER_ENABLE_SAMPLES}")
+message(STATUS "Amber enable lodepng: ${AMBER_ENABLE_LODEPNG}")
 message(STATUS "Amber enable SwiftShader: ${AMBER_ENABLE_SWIFTSHADER}")
 message(STATUS "Amber enable DXC: ${AMBER_ENABLE_DXC}")
 message(STATUS "Amber enable Clspv: ${AMBER_ENABLE_CLSPV}")
@@ -130,6 +139,7 @@ add_definitions(-DAMBER_ENABLE_SPIRV_TOOLS=$<BOOL:${AMBER_ENABLE_SPIRV_TOOLS}>)
 add_definitions(-DAMBER_ENABLE_SHADERC=$<BOOL:${AMBER_ENABLE_SHADERC}>)
 add_definitions(-DAMBER_ENABLE_DXC=$<BOOL:${AMBER_ENABLE_DXC}>)
 add_definitions(-DAMBER_ENABLE_CLSPV=$<BOOL:${AMBER_ENABLE_CLSPV}>)
+add_definitions(-DAMBER_ENABLE_LODEPNG=$<BOOL:${AMBER_ENABLE_LODEPNG}>)
 
 set(CMAKE_DEBUG_POSTFIX "")
 
