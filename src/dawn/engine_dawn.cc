@@ -351,7 +351,7 @@ Result MapDeviceBufferToHostBuffer(const ComputePipelineInfo& compute_pipeline,
     auto& device_buffer = compute_pipeline.buffers[i];
     auto& host_buffer = compute_pipeline.pipeline->GetBuffers()[i];
 
-    // Create a copy of device buffer to it in a map read operation.
+    // Create a copy of device buffer to use it in a map read operation.
     // It's not possible to simply set this bit on the existing buffers since:
     // Device error: Only CopyDst is allowed with MapRead
     ::dawn::BufferDescriptor descriptor;
@@ -373,8 +373,6 @@ Result MapDeviceBufferToHostBuffer(const ComputePipelineInfo& compute_pipeline,
     MapResult mapped_device_buffer = MapBuffer(device, copy_device_buffer);
     auto* values = host_buffer.buffer->ValuePtr();
     values->resize(host_buffer.buffer->GetSizeInBytes());
-    // TODO(sarahM0): At the moment all compute tests pass. Investigate
-    // if ever alignment is an issue and if it's necessary to copy line by line
     std::memcpy(values->data(),
                 static_cast<const uint8_t*>(mapped_device_buffer.data),
                 copy_size);
@@ -1518,9 +1516,8 @@ Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
     }
 
     if (buf_info.descriptor_set > kMaxDawnBindGroup - 1) {
-      return Result(
-          "AttachBuffers: Dawn has maximum of 4 bindGroups "
-          "(descriptor sets)");
+      return Result("AttachBuffers: Dawn has a maximum of " +
+                    std::to_string(kMaxDawnBindGroup) + "(descriptor sets)");
     }
 
     compute_pipeline->buffers.emplace_back(

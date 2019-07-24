@@ -150,6 +150,11 @@ class Buffer {
   /// initial count. This requires the format to have been set.
   void ResizeTo(uint32_t element_count);
 
+  /// Resizes the buffer to hold |element_count| elements. This requires the
+  /// format to have been set. This is separate from ResizeTo(). The given
+  /// argument here is |size_in_bytes| bytes vs |element_count| elements
+  void ResizeToBytes(uint32_t size_in_bytes);
+
   /// Write |data| into the buffer |offset| bytes from the start. Write
   /// |size_in_bytes| of data.
   Result SetDataWithOffset(const std::vector<Value>& data, uint32_t offset);
