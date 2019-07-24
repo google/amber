@@ -223,7 +223,8 @@ void Buffer::ResizeTo(uint32_t element_count) {
   bytes_.resize(element_count * format_->SizeInBytes());
 }
 
-void Buffer::ResizeToBytes(uint32_t size_in_bytes) {
+void Buffer::SetSizeInBytes(uint32_t size_in_bytes) {
+  assert(size_in_bytes % format_->SizeInBytes() == 0);
   element_count_ = size_in_bytes / format_->SizeInBytes();
   bytes_.resize(size_in_bytes);
 }

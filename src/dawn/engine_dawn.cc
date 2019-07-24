@@ -1517,7 +1517,7 @@ Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
 
     if (buf_info.descriptor_set > kMaxDawnBindGroup - 1) {
       return Result("AttachBuffers: Dawn has a maximum of " +
-                    std::to_string(kMaxDawnBindGroup) + "(descriptor sets)");
+                    std::to_string(kMaxDawnBindGroup) + " (descriptor sets)");
     }
 
     compute_pipeline->buffers.emplace_back(
