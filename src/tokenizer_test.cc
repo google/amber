@@ -92,7 +92,7 @@ void TestNaN(const std::string &nan_str) {
   EXPECT_TRUE(next->IsEOS());
 }
 
-} // anonymous.
+}  // namespace
 
 TEST_F(TokenizerTest, ProcessNaN) {
   TestNaN("nan");
