@@ -14,6 +14,7 @@
 
 #include "src/tokenizer.h"
 
+#include <cmath>
 #include <limits>
 
 #include "gtest/gtest.h"
@@ -75,6 +76,33 @@ TEST_F(TokenizerTest, ProcessDouble) {
   next = t.NextToken();
   ASSERT_TRUE(next != nullptr);
   EXPECT_TRUE(next->IsEOS());
+}
+
+namespace {
+
+void TestNaN(const std::string& nan_str) {
+  Tokenizer t(nan_str);
+  auto next = t.NextToken();
+  ASSERT_TRUE(next != nullptr);
+  EXPECT_TRUE(next->IsDouble());
+  EXPECT_TRUE(std::isnan(next->AsDouble()));
+
+  next = t.NextToken();
+  ASSERT_TRUE(next != nullptr);
+  EXPECT_TRUE(next->IsEOS());
+}
+
+}  // namespace
+
+TEST_F(TokenizerTest, ProcessNaN) {
+  TestNaN("nan");
+  TestNaN("naN");
+  TestNaN("nAn");
+  TestNaN("nAN");
+  TestNaN("Nan");
+  TestNaN("NaN");
+  TestNaN("NAn");
+  TestNaN("NAN");
 }
 
 TEST_F(TokenizerTest, ProcessNegativeDouble) {
