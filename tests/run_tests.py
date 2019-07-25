@@ -87,10 +87,8 @@ SUPPRESSIONS_DAWN = [
   # Dawn DoCommands require a pipeline
   "probe_no_compute_with_multiple_ssbo_commands.vkscript",
   "probe_no_compute_with_ssbo.vkscript",
-  # Sparse descriptor sets are not supported in Dawn backend (issue #573)
-  "multiple_ssbo_update_with_graphics_pipeline.vkscript",
+  # Max number of descriptor sets is 4 in Dawn
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
-  "multiple_ubo_update_with_graphics_pipeline.vkscript",
   # DoEntryPoint is not supported in Dawn backend, yet
   "compute_ssbo_with_entrypoint_command.vkscript",
   "entry_point.amber",
@@ -104,11 +102,13 @@ SUPPRESSIONS_DAWN = [
   # Currently not working, an issue is created
   "draw_rect_multiple_color_attachment.amber",
   # Currently not working, under investigation
+  "multiple_ubo_update_with_graphics_pipeline.vkscript",
   "draw_triangle_list_with_depth.vkscript",
   "non_default_entry_point.amber",
   "clear_with_depth.amber",
   "opencl_bind_buffer.amber",
   "opencl_c_copy.amber",
+  "opencl_set_arg.amber",
   "shader_specialization.amber",
 
 ]
