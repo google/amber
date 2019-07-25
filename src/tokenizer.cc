@@ -100,14 +100,12 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
   current_position_ = end_pos;
 
   // Check for "NaN" explicitly.
-  bool is_nan = (tok_str.size() == 3 &&
-                 std::tolower(tok_str[0]) == 'n' &&
-                 std::tolower(tok_str[1]) == 'a' &&
-                 std::tolower(tok_str[2]) == 'n');
+  bool is_nan =
+      (tok_str.size() == 3 && std::tolower(tok_str[0]) == 'n' &&
+       std::tolower(tok_str[1]) == 'a' && std::tolower(tok_str[2]) == 'n');
 
   // Starts with an alpha is a string.
-  if (!is_nan &&
-      !std::isdigit(tok_str[0]) &&
+  if (!is_nan && !std::isdigit(tok_str[0]) &&
       !(tok_str[0] == '-' && tok_str.size() >= 2 && std::isdigit(tok_str[1])) &&
       !(tok_str[0] == '.' && tok_str.size() >= 2 && std::isdigit(tok_str[1]))) {
     // If we've got a continuation, skip over the end of line and get the next
