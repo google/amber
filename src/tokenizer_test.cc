@@ -14,8 +14,8 @@
 
 #include "src/tokenizer.h"
 
-#include <limits>
 #include <cmath>
+#include <limits>
 
 #include "gtest/gtest.h"
 
@@ -80,7 +80,7 @@ TEST_F(TokenizerTest, ProcessDouble) {
 
 namespace {
 
-void TestNaN(const std::string &nan_str) {
+void TestNaN(const std::string& nan_str) {
   Tokenizer t(nan_str);
   auto next = t.NextToken();
   ASSERT_TRUE(next != nullptr);
