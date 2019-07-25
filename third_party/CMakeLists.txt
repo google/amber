@@ -41,7 +41,7 @@ if (${AMBER_ENABLE_SHADERC})
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/shaderc)
 endif()
 
-if (${AMBER_ENABLE_SAMPLES})
+if (${AMBER_ENABLE_SAMPLES} AND ${AMBER_ENABLE_LODEPNG})
   # Lodepng
   set(LODEPNG_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/lodepng/lodepng.cpp)
   add_library(lodepng STATIC ${LODEPNG_SOURCES})

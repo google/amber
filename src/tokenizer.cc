@@ -99,10 +99,15 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
       data_.substr(current_position_, end_pos - current_position_);
   current_position_ = end_pos;
 
+  // Check for "NaN" explicitly.
+  bool is_nan =
+      (tok_str.size() == 3 && std::tolower(tok_str[0]) == 'n' &&
+       std::tolower(tok_str[1]) == 'a' && std::tolower(tok_str[2]) == 'n');
+
   // Starts with an alpha is a string.
-  if (!std::isdigit(tok_str[0]) &&
-      !(tok_str[0] == '-' && std::isdigit(tok_str[1])) &&
-      !(tok_str[0] == '.' && std::isdigit(tok_str[1]))) {
+  if (!is_nan && !std::isdigit(tok_str[0]) &&
+      !(tok_str[0] == '-' && tok_str.size() >= 2 && std::isdigit(tok_str[1])) &&
+      !(tok_str[0] == '.' && tok_str.size() >= 2 && std::isdigit(tok_str[1]))) {
     // If we've got a continuation, skip over the end of line and get the next
     // token.
     if (tok_str == "\\") {
@@ -126,17 +131,21 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
   }
 
   // Handle hex strings
-  if (tok_str.size() > 2 && tok_str[0] == '0' && tok_str[1] == 'x') {
+  if (!is_nan && tok_str.size() > 2 && tok_str[0] == '0' && tok_str[1] == 'x') {
     auto tok = MakeUnique<Token>(TokenType::kHex);
     tok->SetStringValue(tok_str);
     return tok;
   }
 
   bool is_double = false;
-  for (const char ch : tok_str) {
-    if (ch == '.') {
-      is_double = true;
-      break;
+  if (is_nan) {
+    is_double = true;
+  } else {
+    for (const char ch : tok_str) {
+      if (ch == '.') {
+        is_double = true;
+        break;
+      }
     }
   }
 

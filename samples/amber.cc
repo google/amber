@@ -25,11 +25,14 @@
 
 #include "amber/recipe.h"
 #include "samples/config_helper.h"
-#include "samples/png.h"
 #include "samples/ppm.h"
 #include "samples/timestamp.h"
 #include "src/build-versions.h"
 #include "src/make_unique.h"
+
+#if AMBER_ENABLE_LODEPNG
+#include "samples/png.h"
+#endif  // AMBER_ENABLE_LODEPNG
 
 namespace {
 
@@ -431,8 +434,12 @@ int main(int argc, const char** argv) {
       for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
         if (buffer_info.buffer_name == options.fb_name) {
           if (usePNG) {
+#if AMBER_ENABLE_LODEPNG
             result = png::ConvertToPNG(buffer_info.width, buffer_info.height,
                                        buffer_info.values, &out_buf);
+#else   // AMBER_ENABLE_LODEPNG
+            result = amber::Result("PNG support not enabled");
+#endif  // AMBER_ENABLE_LODEPNG
           } else {
             ppm::ConvertToPPM(buffer_info.width, buffer_info.height,
                               buffer_info.values, &out_buf);
