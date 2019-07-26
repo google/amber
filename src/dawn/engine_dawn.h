@@ -74,15 +74,21 @@ class EngineDawn : public Engine {
       const ::amber::PipelineCommand* command) {
     return pipeline_map_[command->GetPipeline()].compute_pipeline.get();
   }
-
   // Creates and attaches index, vertex, storage, uniform and depth-stencil
   // buffers. Sets up bindings. Also creates textures and texture views if not
-  // created yet.
+  // created yet. Used in the Graphics pipeline creation.
   Result AttachBuffersAndTextures(RenderPipelineInfo* render_pipeline);
+  // Creates and attaches index, vertex, storage, uniform and depth-stencil
+  // buffers.Used in the Compute pipeline creation.
+  Result AttachBuffers(ComputePipelineInfo* compute_pipeline);
   // Creates and submits a command to copy dawn textures back to amber color
-  // attachments
+  // attachments.
   Result MapDeviceTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
                                       const ::dawn::Device& device);
+  // Creates and submits a command to copy dawn buffers back to amber buffers
+  Result EngineDawn::MapDeviceBufferToHostBuffer(
+      const ComputePipelineInfo& compute_pipeline,
+      const ::dawn::Device& device);
 
   // Borrowed from the engine config
   ::dawn::Device* device_ = nullptr;
@@ -90,7 +96,6 @@ class EngineDawn : public Engine {
   std::vector<::dawn::Texture> textures_;
   // Views into Dawn color attachment textures
   std::vector<::dawn::TextureView> texture_views_;
-
   // Dawn depth/stencil texture
   ::dawn::Texture depth_stencil_texture_;
   // Mapping from the generic engine's Pipeline object to our own Dawn-specific

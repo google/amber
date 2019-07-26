@@ -292,67 +292,72 @@ MapResult MapBuffer(const ::dawn::Device& device, const ::dawn::Buffer& buf) {
   return textureCopyView;
 }
 
-// Creates and submits a command to copy the colour attachments back to the
-// host.
-// TODO(sarahM0): Handle more than one colour attachment
-MapResult MapTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
-                                 const ::dawn::Device& device) {
+Result EngineDawn::MapDeviceTextureToHostBuffer(
+    const RenderPipelineInfo& render_pipeline,
+    const ::dawn::Device& device) {
   const auto width = render_pipeline.pipeline->GetFramebufferWidth();
   const auto height = render_pipeline.pipeline->GetFramebufferHeight();
+
   const auto pixelSize = render_pipeline.pipeline->GetColorAttachments()[0]
                              .buffer->GetTexelStride();
   const auto dawn_row_pitch = Align(width * pixelSize, kMinimumImageRowPitch);
-  {
-    ::dawn::Origin3D origin3D;
-    origin3D.x = 0;
-    origin3D.y = 0;
-    origin3D.z = 0;
-    ::dawn::TextureCopyView textureCopyView =
-        CreateTextureCopyView(render_pipeline.fb_texture, 0, 0, origin3D);
+  const auto size = height * dawn_row_pitch;
+  // Create a temporary buffer to hold the color attachment content and can
+  // be mapped
+  ::dawn::BufferDescriptor descriptor;
+  descriptor.size = size;
+  descriptor.usage =
+      ::dawn::BufferUsageBit::CopyDst | ::dawn::BufferUsageBit::MapRead;
+  ::dawn::Buffer copy_buffer = device.CreateBuffer(&descriptor);
+  ::dawn::BufferCopyView copy_buffer_view =
+      CreateBufferCopyView(copy_buffer, 0, dawn_row_pitch, 0);
+  ::dawn::Origin3D origin3D;
+  origin3D.x = 0;
+  origin3D.y = 0;
+  origin3D.z = 0;
 
-    ::dawn::BufferCopyView bufferCopyView =
-        CreateBufferCopyView(render_pipeline.fb_buffer, 0, dawn_row_pitch, 0);
-
+  for (uint32_t i = 0;
+       i < render_pipeline.pipeline->GetColorAttachments().size(); i++) {
+    ::dawn::TextureCopyView device_texture_view =
+        CreateTextureCopyView(textures_[i], 0, 0, origin3D);
     ::dawn::Extent3D copySize = {width, height, 1};
-
     auto encoder = device.CreateCommandEncoder();
-    encoder.CopyTextureToBuffer(&textureCopyView, &bufferCopyView, &copySize);
-
+    encoder.CopyTextureToBuffer(&device_texture_view, &copy_buffer_view,
+                                &copySize);
     auto commands = encoder.Finish();
     auto queue = device.CreateQueue();
     queue.Submit(1, &commands);
-  }
 
-  MapResult map = MapBuffer(device, render_pipeline.fb_buffer);
-  const std::vector<amber::Pipeline::BufferInfo>& out_color_attachment =
-      render_pipeline.pipeline->GetColorAttachments();
+    MapResult mapped_device_texture = MapBuffer(device, copy_buffer);
+    if (!mapped_device_texture.result.IsSuccess())
+      return mapped_device_texture.result;
 
-  for (size_t i = 0; i < out_color_attachment.size(); ++i) {
-    auto& info = out_color_attachment[i];
-    auto* values = info.buffer->ValuePtr();
+    auto& host_texture = render_pipeline.pipeline->GetColorAttachments()[i];
+    auto* values = host_texture.buffer->ValuePtr();
     auto row_stride = pixelSize * width;
-    assert(row_stride * height == info.buffer->GetSizeInBytes());
+    assert(row_stride * height == host_texture.buffer->GetSizeInBytes());
     // Each Dawn row has enough data to fill the target row.
     assert(dawn_row_pitch >= row_stride);
-    values->resize(info.buffer->GetSizeInBytes());
+    values->resize(host_texture.buffer->GetSizeInBytes());
     // Copy the framebuffer contents back into the host-side
     // framebuffer-buffer. In the Dawn buffer, the row stride is a multiple of
     // kMinimumImageRowPitch bytes, so it might have padding therefore memcpy
     // is done row by row.
     for (uint h = 0; h < height; h++) {
       std::memcpy(values->data() + h * row_stride,
-                  static_cast<const uint8_t*>(map.data) + h * dawn_row_pitch,
+                  static_cast<const uint8_t*>(mapped_device_texture.data) +
+                      h * dawn_row_pitch,
                   row_stride);
     }
+    // Always unmap the buffer at the end of the engine's command.
+    copy_buffer.Unmap();
   }
-  // Always unmap the buffer at the end of the engine's command.
-  render_pipeline.fb_buffer.Unmap();
-  return map;
+  return {};
 }
 
-// Maps device buffers back to the host buffers
-Result MapDeviceBufferToHostBuffer(const ComputePipelineInfo& compute_pipeline,
-                                   const ::dawn::Device& device) {
+Result EngineDawn::MapDeviceBufferToHostBuffer(
+    const ComputePipelineInfo& compute_pipeline,
+    const ::dawn::Device& device) {
   for (uint32_t i = 0; i < compute_pipeline.pipeline->GetBuffers().size();
        i++) {
     auto& device_buffer = compute_pipeline.buffers[i];
@@ -390,7 +395,6 @@ Result MapDeviceBufferToHostBuffer(const ComputePipelineInfo& compute_pipeline,
   }
   return {};
 }
-
 
 // Creates a dawn buffer of |size| bytes with TransferDst and the given usage
 // copied from Dawn utils source code
@@ -665,69 +669,6 @@ Result EngineDawn::Initialize(EngineConfig* config,
 
   device_ = dawn_config->device;
 
-  return {};
-}
-
-Result EngineDawn::MapDeviceTextureToHostBuffer(
-    const RenderPipelineInfo& render_pipeline,
-    const ::dawn::Device& device) {
-  const auto width = render_pipeline.pipeline->GetFramebufferWidth();
-  const auto height = render_pipeline.pipeline->GetFramebufferHeight();
-
-  const auto pixelSize = render_pipeline.pipeline->GetColorAttachments()[0]
-                             .buffer->GetTexelStride();
-  const auto dawn_row_pitch = Align(width * pixelSize, kMinimumImageRowPitch);
-  const auto size = height * dawn_row_pitch;
-  // Create a temporary buffer to hold the color attachment content and can
-  // be mapped
-  ::dawn::BufferDescriptor descriptor;
-  descriptor.size = size;
-  descriptor.usage =
-      ::dawn::BufferUsageBit::CopyDst | ::dawn::BufferUsageBit::MapRead;
-  ::dawn::Buffer copy_buffer = device.CreateBuffer(&descriptor);
-  ::dawn::BufferCopyView copy_buffer_view =
-      CreateBufferCopyView(copy_buffer, 0, dawn_row_pitch, 0);
-  ::dawn::Origin3D origin3D;
-  origin3D.x = 0;
-  origin3D.y = 0;
-  origin3D.z = 0;
-
-  for (uint32_t i = 0;
-       i < render_pipeline.pipeline->GetColorAttachments().size(); i++) {
-    ::dawn::TextureCopyView device_texture_view =
-        CreateTextureCopyView(textures_[i], 0, 0, origin3D);
-    ::dawn::Extent3D copySize = {width, height, 1};
-    auto encoder = device.CreateCommandEncoder();
-    encoder.CopyTextureToBuffer(&device_texture_view, &copy_buffer_view,
-                                &copySize);
-    auto commands = encoder.Finish();
-    auto queue = device.CreateQueue();
-    queue.Submit(1, &commands);
-
-    MapResult mapped_device_texture = MapBuffer(device, copy_buffer);
-    if (!mapped_device_texture.result.IsSuccess())
-      return mapped_device_texture.result;
-
-    auto& host_texture = render_pipeline.pipeline->GetColorAttachments()[i];
-    auto* values = host_texture.buffer->ValuePtr();
-    auto row_stride = pixelSize * width;
-    assert(row_stride * height == host_texture.buffer->GetSizeInBytes());
-    // Each Dawn row has enough data to fill the target row.
-    assert(dawn_row_pitch >= row_stride);
-    values->resize(host_texture.buffer->GetSizeInBytes());
-    // Copy the framebuffer contents back into the host-side
-    // framebuffer-buffer. In the Dawn buffer, the row stride is a multiple of
-    // kMinimumImageRowPitch bytes, so it might have padding therefore memcpy
-    // is done row by row.
-    for (uint h = 0; h < height; h++) {
-      std::memcpy(values->data() + h * row_stride,
-                  static_cast<const uint8_t*>(mapped_device_texture.data) +
-                      h * dawn_row_pitch,
-                  row_stride);
-    }
-    // Always unmap the buffer at the end of the engine's command.
-    copy_buffer.Unmap();
-  }
   return {};
 }
 
@@ -1267,7 +1208,7 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   result = MapDeviceTextureToHostBuffer(*render_pipeline, *device_);
 
   return result;
-}  // namespace dawn
+}
 
 Result EngineDawn::DoCompute(const ComputeCommand* command) {
   Result result;
