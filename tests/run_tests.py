@@ -99,8 +99,6 @@ SUPPRESSIONS_DAWN = [
   "draw_triangle_list_in_r32g32b32a32_sfloat_color_frame.vkscript",
   "draw_triangle_list_in_r8g8b8a8_snorm_color_frame.vkscript",
   "draw_triangle_list_in_r8g8b8a8_srgb_color_frame.vkscript",
-  # Currently not working, an issue is created
-  "draw_rect_multiple_color_attachment.amber",
   # Currently not working, under investigation
   "multiple_ubo_update_with_graphics_pipeline.vkscript",
   "draw_triangle_list_with_depth.vkscript",

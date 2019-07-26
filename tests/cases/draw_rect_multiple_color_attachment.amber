@@ -19,7 +19,7 @@ SHADER fragment frag_shader GLSL
 layout(location = 0) out vec4 color_out;
 layout(location = 1) out vec4 color_out1;
 void main() {
-  color_out = vec4(0.0, 0.5, 0.0, 0.8);
+  color_out = vec4(0.0, 0.499, 0.0, 0.8);
   color_out1 = vec4(1.0, 1.0, 1.0, 1.0);
 }
 END
@@ -36,5 +36,5 @@ PIPELINE graphics my_pipeline
 END
 
 RUN my_pipeline DRAW_RECT POS 0 0 SIZE 800 600
-EXPECT framebuffer IDX 0 0 SIZE 800 600 EQ_RGBA 0 128 0 204
+EXPECT framebuffer IDX 0 0 SIZE 800 600 EQ_RGBA 0 127 0 204
 EXPECT framebuffer1 IDX 0 0 SIZE 800 600 EQ_RGBA 255 255 255 255
