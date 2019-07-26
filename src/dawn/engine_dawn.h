@@ -86,7 +86,7 @@ class EngineDawn : public Engine {
   Result MapDeviceTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
                                       const ::dawn::Device& device);
   // Creates and submits a command to copy dawn buffers back to amber buffers
-  Result EngineDawn::MapDeviceBufferToHostBuffer(
+  Result MapDeviceBufferToHostBuffer(
       const ComputePipelineInfo& compute_pipeline,
       const ::dawn::Device& device);
 

@@ -621,21 +621,7 @@ Result CommandParser::ProcessSSBO() {
     if (!r.IsSuccess())
       return r;
 
-    // Multiply by the input needed because the value count will use the needed
-    // input as the multiplier
-    uint32_t value_count =
-        ((cmd->GetOffset() / buf->GetFormat()->SizeInBytes()) *
-         buf->GetFormat()->InputNeededPerElement()) +
-        static_cast<uint32_t>(values.size());
-    uint32_t element_count = value_count;
-    if (buf->GetFormat()->GetPackSize() == 0) {
-      // This divides by the needed input values, not the values per element.
-      // The assumption being the values coming in are read from the input,
-      // where components are specified. The needed values maybe less then the
-      // values per element.
-      element_count = value_count / buf->GetFormat()->InputNeededPerElement();
-    }
-    buf->SetMaxSizeInBytes(element_count * buf->GetFormat()->SizeInBytes());
+    buf->RecalculateMaxSizeInBytes(values, cmd->GetOffset());
 
     cmd->SetValues(std::move(values));
 
@@ -789,18 +775,7 @@ Result CommandParser::ProcessUniform() {
   if (!r.IsSuccess())
     return r;
 
-  uint32_t value_count = ((cmd->GetOffset() / buf->GetFormat()->SizeInBytes()) *
-                          buf->GetFormat()->InputNeededPerElement()) +
-                         static_cast<uint32_t>(values.size());
-  uint32_t element_count = value_count;
-  if (buf->GetFormat()->GetPackSize() == 0) {
-    // This divides by the needed input values, not the values per element.
-    // The assumption being the values coming in are read from the input,
-    // where components are specified. The needed values maybe less then the
-    // values per element.
-    element_count = value_count / buf->GetFormat()->InputNeededPerElement();
-  }
-  buf->SetMaxSizeInBytes(element_count * buf->GetFormat()->SizeInBytes());
+  buf->RecalculateMaxSizeInBytes(values, cmd->GetOffset());
 
   if (cmd->IsPushConstant())
     buf->SetData(values);
