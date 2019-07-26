@@ -1293,7 +1293,7 @@ Result EngineDawn::DoBuffer(const BufferCommand* command) {
   if (amber_buffer) {
     amber_buffer->SetDataWithOffset(command->GetValues(), command->GetOffset());
 
-    dawn_buffer->SetSubData(0, amber_buffer->GetSizeInBytes(),
+    dawn_buffer->SetSubData(0, amber_buffer->GetMaxSizeInBytes(),
                             amber_buffer->ValuePtr()->data());
   }
 
@@ -1441,7 +1441,7 @@ Result EngineDawn::AttachBuffersAndTextures(
 
     render_pipeline->buffers.emplace_back(
         CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
-                             buf_info.buffer->GetSizeInBytes(),
+                             buf_info.buffer->GetMaxSizeInBytes(),
                              bufferUsage | ::dawn::BufferUsageBit::CopySrc |
                                  ::dawn::BufferUsageBit::CopyDst));
 
@@ -1459,7 +1459,7 @@ Result EngineDawn::AttachBuffersAndTextures(
 
     BindingInitializationHelper tempBinding = BindingInitializationHelper(
         buf_info.binding, render_pipeline->buffers.back(), 0,
-        buf_info.buffer->GetSizeInBytes());
+        buf_info.buffer->GetMaxSizeInBytes());
     bindingInitalizerHelper[buf_info.descriptor_set].push_back(tempBinding);
   }
 
@@ -1541,7 +1541,7 @@ Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
 
     compute_pipeline->buffers.emplace_back(
         CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
-                             buf_info.buffer->GetSizeInBytes(),
+                             buf_info.buffer->GetMaxSizeInBytes(),
                              bufferUsage | ::dawn::BufferUsageBit::CopySrc |
                                  ::dawn::BufferUsageBit::CopyDst));
 
@@ -1559,7 +1559,7 @@ Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
 
     BindingInitializationHelper tempBinding = BindingInitializationHelper(
         buf_info.binding, compute_pipeline->buffers.back(), 0,
-        buf_info.buffer->GetSizeInBytes());
+        buf_info.buffer->GetMaxSizeInBytes());
     bindingInitalizerHelper[buf_info.descriptor_set].push_back(tempBinding);
   }
 

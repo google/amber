@@ -229,6 +229,17 @@ void Buffer::SetSizeInBytes(uint32_t size_in_bytes) {
   bytes_.resize(size_in_bytes);
 }
 
+void Buffer::SetMaxSizeInBytes(uint32_t max_size_in_bytes) {
+  max_size_in_bytes_ = max_size_in_bytes;
+}
+
+uint32_t Buffer::GetMaxSizeInBytes() const {
+  if (max_size_in_bytes_ != 0)
+    return max_size_in_bytes_;
+  else
+    return GetSizeInBytes();
+}
+
 Result Buffer::SetDataFromBuffer(const Buffer* src, uint32_t offset) {
   if (bytes_.size() < offset + src->bytes_.size())
     bytes_.resize(offset + src->bytes_.size());

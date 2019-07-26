@@ -157,6 +157,15 @@ class Buffer {
   /// |element_count| elements
   void SetSizeInBytes(uint32_t size_in_bytes);
 
+  /// max_size_in_bytes_ is the total size in bytes needed to hold the buffer
+  /// over all ssbo size and ssbo subdata size calls.
+  /// Sets the max_size_in_bytes_ to |max_size_in_bytes| bytes
+  void SetMaxSizeInBytes(uint32_t max_size_in_bytes);
+  /// Returns max_size_in_bytes_ if it is not zero. Otherwise it means this
+  /// buffer is an amber buffer which has a fix size and returns
+  /// GetSizeInBytes()
+  uint32_t GetMaxSizeInBytes() const;
+
   /// Write |data| into the buffer |offset| bytes from the start. Write
   /// |size_in_bytes| of data.
   Result SetDataWithOffset(const std::vector<Value>& data, uint32_t offset);
@@ -188,6 +197,7 @@ class Buffer {
 
   BufferType buffer_type_ = BufferType::kUnknown;
   std::string name_;
+  uint32_t max_size_in_bytes_ = 0;
   uint32_t element_count_ = 0;
   uint32_t width_ = 0;
   uint32_t height_ = 0;

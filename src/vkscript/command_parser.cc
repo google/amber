@@ -627,15 +627,15 @@ Result CommandParser::ProcessSSBO() {
         ((cmd->GetOffset() / buf->GetFormat()->SizeInBytes()) *
          buf->GetFormat()->InputNeededPerElement()) +
         static_cast<uint32_t>(values.size());
-    // The buffer should only be resized to become bigger. This means that if a
-    // command was run to set the buffer size we'll honour that size until a
-    // request happens to make the buffer bigger.
-    if (value_count > buf->ValueCount())
-      buf->SetValueCount(value_count);
-
-    // Even if the value count doesn't change, the buffer is still resized
-    // because this maybe the first time data is set into the buffer.
-    buf->SetSizeInBytes(buf->GetSizeInBytes());
+    uint32_t element_count = value_count;
+    if (buf->GetFormat()->GetPackSize() == 0) {
+      // This divides by the needed input values, not the values per element.
+      // The assumption being the values coming in are read from the input,
+      // where components are specified. The needed values maybe less then the
+      // values per element.
+      element_count = value_count / buf->GetFormat()->InputNeededPerElement();
+    }
+    buf->SetMaxSizeInBytes(element_count * buf->GetFormat()->SizeInBytes());
 
     cmd->SetValues(std::move(values));
 
@@ -789,20 +789,18 @@ Result CommandParser::ProcessUniform() {
   if (!r.IsSuccess())
     return r;
 
-  // Multiply by the input needed because the value count will use the needed
-  // input as the multiplier
   uint32_t value_count = ((cmd->GetOffset() / buf->GetFormat()->SizeInBytes()) *
                           buf->GetFormat()->InputNeededPerElement()) +
                          static_cast<uint32_t>(values.size());
-  // The buffer should only be resized to become bigger. This means that if a
-  // command was run to set the buffer size we'll honour that size until a
-  // request happens to make the buffer bigger.
-  if (value_count > buf->ValueCount())
-    buf->SetValueCount(value_count);
-
-  // Even if the value count doesn't change, the buffer is still resized
-  // because this maybe the first time data is set into the buffer.
-  buf->SetSizeInBytes(buf->GetSizeInBytes());
+  uint32_t element_count = value_count;
+  if (buf->GetFormat()->GetPackSize() == 0) {
+    // This divides by the needed input values, not the values per element.
+    // The assumption being the values coming in are read from the input,
+    // where components are specified. The needed values maybe less then the
+    // values per element.
+    element_count = value_count / buf->GetFormat()->InputNeededPerElement();
+  }
+  buf->SetMaxSizeInBytes(element_count * buf->GetFormat()->SizeInBytes());
 
   if (cmd->IsPushConstant())
     buf->SetData(values);
