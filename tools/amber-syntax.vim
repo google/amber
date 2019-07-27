@@ -38,7 +38,7 @@ syn keyword amberBlockCmd VERTEX_DATA INDEX_DATA INDEXED IMAGE_ATTACHMENT
 syn keyword amberBlockCmd DEPTH_STENCIL_ATTACHMENT DEVICE_FEATURE TOLERANCE
 syn keyword amberBlockCmd REPEAT COPY DERIVE_PIPELINE FROM
 
-syn keyword amberComparator EQ NE LT LE GT GE EQ_RGB EQ_RGBA EQ_BUFFER
+syn keyword amberComparator EQ NE LT LE GT GE EQ_RGB EQ_RGBA EQ_BUFFER RMSE_BUFFER
 
 syn keyword amberKeyword compute vertex geometry fragment graphics
 syn keyword amberKeyword tessellation_evaulation tessellation_control multi

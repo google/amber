@@ -122,7 +122,12 @@ Result Executor::ExecuteCommand(Engine* engine, Command* cmd) {
     auto compare = cmd->AsCompareBuffer();
     auto buffer_1 = compare->GetBuffer1();
     auto buffer_2 = compare->GetBuffer2();
-    return buffer_1->IsEqual(buffer_2);
+    switch (compare->GetComparator()) {
+      case CompareBufferCommand::Comparator::kRmse:
+        return buffer_1->CompareRMSE(buffer_2, compare->GetTolerance());
+      case CompareBufferCommand::Comparator::kEq:
+        return buffer_1->IsEqual(buffer_2);
+    }
   }
   if (cmd->IsCopy()) {
     auto copy = cmd->AsCopy();

@@ -1359,6 +1359,8 @@ Result Parser::ParseExpect() {
     return Result("missing buffer name between EXPECT and IDX");
   if (token->AsString() == "EQ_BUFFER")
     return Result("missing buffer name between EXPECT and EQ_BUFFER");
+  if (token->AsString() == "RMSE_BUFFER")
+    return Result("missing buffer name between EXPECT and RMSE_BUFFER");
 
   size_t line = tokenizer_->GetCurrentLine();
   auto* buffer = script_->GetBuffer(token->AsString());
@@ -1371,44 +1373,64 @@ Result Parser::ParseExpect() {
   if (!token->IsString())
     return Result("Invalid comparator in EXPECT command");
 
-  if (token->AsString() == "EQ_BUFFER") {
+  if (token->AsString() == "EQ_BUFFER" || token->AsString() == "RMSE_BUFFER") {
+    auto type = token->AsString();
+
     token = tokenizer_->NextToken();
     if (!token->IsString())
-      return Result("invalid buffer name in EXPECT EQ_BUFFER command");
+      return Result("invalid buffer name in EXPECT " + type + " command");
 
     auto* buffer_2 = script_->GetBuffer(token->AsString());
     if (!buffer_2) {
-      return Result("unknown buffer name for EXPECT EQ_BUFFER command: " +
+      return Result("unknown buffer name for EXPECT " + type + " command: " +
                     token->AsString());
     }
 
     if (!buffer->GetFormat()->Equal(buffer_2->GetFormat())) {
       return Result(
-          "EXPECT EQ_BUFFER command cannot compare buffers of differing "
+          "EXPECT " + type + " command cannot compare buffers of differing "
           "format");
     }
     if (buffer->ElementCount() != buffer_2->ElementCount()) {
       return Result(
-          "EXPECT EQ_BUFFER command cannot compare buffers of different "
+          "EXPECT " + type + " command cannot compare buffers of different "
           "size: " +
           std::to_string(buffer->ElementCount()) + " vs " +
           std::to_string(buffer_2->ElementCount()));
     }
     if (buffer->GetWidth() != buffer_2->GetWidth()) {
       return Result(
-          "EXPECT EQ_BUFFER command cannot compare buffers of different width");
+          "EXPECT " + type + " command cannot compare buffers of different width");
     }
     if (buffer->GetHeight() != buffer_2->GetHeight()) {
       return Result(
-          "EXPECT EQ_BUFFER command cannot compare buffers of different "
+          "EXPECT " + type + " command cannot compare buffers of different "
           "height");
     }
 
     auto cmd = MakeUnique<CompareBufferCommand>(buffer, buffer_2);
+    if (type == "RMSE_BUFFER") {
+      cmd->SetComparator(CompareBufferCommand::Comparator::kRmse);
+
+      token = tokenizer_->NextToken();
+      if (!token->IsString() && token->AsString() == "TOLERANCE")
+        return Result("Missing TOLERANCE for EXPECT RMSE_BUFFER");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger() && !token->IsDouble())
+        return Result("Invalid TOLERANCE for EXPECT RMSE_BUFFER");
+
+      Result r = token->ConvertToDouble();
+      if (!r.IsSuccess())
+        return r;
+
+      cmd->SetTolerance(token->AsFloat());
+    }
+
     command_list_.push_back(std::move(cmd));
 
     // Early return
-    return ValidateEndOfStatement("EXPECT EQ_BUFFER command");
+    return ValidateEndOfStatement("EXPECT " + type + " command");
   }
 
   if (token->AsString() != "IDX")

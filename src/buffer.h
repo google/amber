@@ -174,10 +174,18 @@ class Buffer {
   /// Succeeds only if both buffer contents are equal
   Result IsEqual(Buffer* buffer) const;
 
+  /// Compare the RMSE of this buffer against |buffer|. The RMSE must be
+  /// less than |tolerance|.
+  Result CompareRMSE(Buffer* buffer, float tolerance) const;
+
  private:
   uint32_t WriteValueFromComponent(const Value& value,
                                    const Format::Component& comp,
                                    uint8_t* ptr);
+
+  // Calculates the difference between the value stored in this buffer and
+  // those stored in |buffer| and returns all the values.
+  std::vector<float> CalculateDiffs(const Buffer* buffer) const;
 
   BufferType buffer_type_ = BufferType::kUnknown;
   std::string name_;
