@@ -538,9 +538,9 @@ BUFFER kImgBuffer FORMAT R8G8B8A8_UINT
 PIPELINE graphics kRedPipeline
   ATTACH kVertexShader ENTRY_POINT main
   SHADER_OPTIMIZATION kVertexShader
-    eliminate-dead-branches
-    merge-return
-    eliminate-dead-code-aggressive
+    --eliminate-dead-branches
+    --merge-return
+    --eliminate-dead-code-aggressive
   END
   ATTACH kFragmentShader ENTRY_POINT red
 
