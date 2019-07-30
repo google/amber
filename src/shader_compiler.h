@@ -34,9 +34,13 @@ class ShaderCompiler {
   ~ShaderCompiler();
 
   /// Returns a result code and a compilation of the given shader.
-  /// If the |shader| has a corresponding entry in the |shader_map|, then the
-  /// compilation result is copied from that entry. Otherwise a compiler is
-  /// invoked to produce the compilation result.
+  /// If the shader in |shader_info| has a corresponding entry in the
+  /// |shader_map|, then the compilation result is copied from that entry.
+  /// Otherwise a compiler is invoked to produce the compilation result.
+  ///
+  /// If |shader_info| specifies shader optimizations to run and there is no
+  /// entry in |shader_map| for that shader, then the SPIRV-Tools optimizer will
+  /// be invoked to produce the shader binary.
   std::pair<Result, std::vector<uint32_t>> Compile(
       Pipeline::ShaderInfo* shader_info,
       const ShaderMap& shader_map) const;
