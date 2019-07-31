@@ -1067,7 +1067,8 @@ EXPECT buf_1 RMSE_BUFFER buf_2)";
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
-      "4: EXPECT RMSE_BUFFER command cannot compare buffers of differing format",
+      "4: EXPECT RMSE_BUFFER command cannot compare buffers of differing "
+      "format",
       r.Error());
 }
 

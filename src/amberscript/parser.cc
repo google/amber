@@ -1400,7 +1400,8 @@ Result Parser::ParseExpect() {
     }
     if (buffer->GetWidth() != buffer_2->GetWidth()) {
       return Result(
-          "EXPECT " + type + " command cannot compare buffers of different width");
+          "EXPECT " + type + " command cannot compare buffers of different "
+          "width");
     }
     if (buffer->GetHeight() != buffer_2->GetHeight()) {
       return Result(

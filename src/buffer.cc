@@ -79,14 +79,17 @@ float CalculateDiff(
   if (comp.IsUint64())
     return Sub<uint64_t>(buf1, buf2);
   // TOOD(dsinclair): Handle float16 ...
-  if (comp.IsFloat16())
+  if (comp.IsFloat16()) {
+    assert(false && "Float16 suppport not implemented");
     return 0.f;
+  }
   if (comp.IsFloat())
     return Sub<float>(buf1, buf2);
   if (comp.IsDouble())
     return Sub<double>(buf1, buf2);
 
   assert(false && "NOTREACHED");
+  return 0.f;
 }
 
 }  // namespace
