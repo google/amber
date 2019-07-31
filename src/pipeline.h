@@ -42,6 +42,10 @@ class Pipeline {
 
     ShaderInfo& operator=(const ShaderInfo&) = default;
 
+    // Set the optimization options for this shader. Optimizations are
+    // specified like command-line arguments to spirv-opt (see its --help).
+    // Parsing is done by spvtools::Optimizer::RegisterPassesFromFlags (see
+    // SPIRV-Tools include/spirv-tools/optimizer.hpp).
     void SetShaderOptimizations(const std::vector<std::string>& opts) {
       shader_optimizations_ = opts;
     }
