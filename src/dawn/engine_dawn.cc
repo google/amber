@@ -1249,12 +1249,12 @@ Result EngineDawn::DoCompute(const ComputeCommand* command) {
 }
 
 Result EngineDawn::DoEntryPoint(const EntryPointCommand*) {
-  return Result("Dawn:DoEntryPoint not implemented");
+  return Result("Dawn: Entry point must be \"main\" in Dawn");
 }
 
 Result EngineDawn::DoPatchParameterVertices(
     const PatchParameterVerticesCommand*) {
-  return Result("Dawn:DoPatch not implemented");
+  return Result("Dawn: PatchParameterVertices is not supported in Dawn");
 }
 
 Result EngineDawn::DoBuffer(const BufferCommand* command) {
