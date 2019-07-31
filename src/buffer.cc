@@ -115,6 +115,26 @@ Result Buffer::SetData(const std::vector<Value>& data) {
   return SetDataWithOffset(data, 0);
 }
 
+Result Buffer::RecalculateMaxSizeInBytes(const std::vector<Value>& data,
+                                         uint32_t offset) {
+  // Multiply by the input needed because the value count will use the needed
+  // input as the multiplier
+  uint32_t value_count =
+      ((offset / format_->SizeInBytes()) * format_->InputNeededPerElement()) +
+      static_cast<uint32_t>(data.size());
+  uint32_t element_count = value_count;
+  if (format_->GetPackSize() == 0) {
+    // This divides by the needed input values, not the values per element.
+    // The assumption being the values coming in are read from the input,
+    // where components are specified. The needed values maybe less then the
+    // values per element.
+    element_count = value_count / format_->InputNeededPerElement();
+  }
+  if (GetMaxSizeInBytes() < element_count * format_->SizeInBytes())
+    SetMaxSizeInBytes(element_count * format_->SizeInBytes());
+  return {};
+}
+
 Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
                                  uint32_t offset) {
   // Multiply by the input needed because the value count will use the needed
@@ -221,6 +241,23 @@ uint32_t Buffer::WriteValueFromComponent(const Value& value,
 void Buffer::ResizeTo(uint32_t element_count) {
   element_count_ = element_count;
   bytes_.resize(element_count * format_->SizeInBytes());
+}
+
+void Buffer::SetSizeInBytes(uint32_t size_in_bytes) {
+  assert(size_in_bytes % format_->SizeInBytes() == 0);
+  element_count_ = size_in_bytes / format_->SizeInBytes();
+  bytes_.resize(size_in_bytes);
+}
+
+void Buffer::SetMaxSizeInBytes(uint32_t max_size_in_bytes) {
+  max_size_in_bytes_ = max_size_in_bytes;
+}
+
+uint32_t Buffer::GetMaxSizeInBytes() const {
+  if (max_size_in_bytes_ != 0)
+    return max_size_in_bytes_;
+  else
+    return GetSizeInBytes();
 }
 
 Result Buffer::SetDataFromBuffer(const Buffer* src, uint32_t offset) {

@@ -55,37 +55,9 @@ SUPPRESSIONS = {
  }
 
 SUPPRESSIONS_DAWN = [
-  # Dawn does not support push constants, tessellation, geometry shader
+  # Dawn does not support push constants
   "graphics_push_constants.amber",
   "graphics_push_constants.vkscript",
-  "draw_triangle_list_using_geom_shader.vkscript",
-  "draw_triangle_list_using_tessellation.vkscript",
-  # Dawn requires a fragmentStage now and in the medium term
-  "position_to_ssbo.amber",
-  # Draw rect command is not supported in a pipeline with more than one vertex
-  # buffer attached
-  "draw_array_after_draw_rect.vkscript",
-  "draw_rect_after_draw_array.vkscript",
-  "draw_rect_and_draw_array_mixed.vkscript",
-  # DoCompute is not implemented in Dawn backend
-  "compute_accumulated_ubo_definition.amber",
-  "compute_accumulated_ubo_definition.vkscript",
-  "compute_mat2x2.amber",
-  "compute_mat2x2.vkscript",
-  "compute_mat2x2float.vkscript",
-  "compute_mat2x3.vkscript",
-  "compute_mat2x3float.vkscript",
-  "compute_mat3x2.vkscript",
-  "compute_mat3x2float.vkscript",
-  "compute_mat3x3.vkscript",
-  "compute_mat3x3float.vkscript",
-  "compute_mat3x4.vkscript",
-  "compute_mat3x4float.vkscript",
-  "compute_mat4x3.vkscript",
-  "compute_mat4x3float.vkscript",
-  "compute_nothing.vkscript",
-  "compute_nothing_with_ssbo.vkscript",
-  "compute_probe_mat3.vkscript",
   "compute_push_const_mat2x2.vkscript",
   "compute_push_const_mat2x2float.vkscript",
   "compute_push_const_mat2x3.vkscript",
@@ -100,24 +72,25 @@ SUPPRESSIONS_DAWN = [
   "compute_push_const_mat4x3float.vkscript",
   "compute_push_constant_and_ssbo.amber",
   "compute_push_constant_and_ssbo.vkscript",
-  "compute_ssbo.vkscript",
-  "compute_ssbo_with_entrypoint_command.vkscript",
-  "compute_ssbo_with_tolerance.amber",
-  "compute_ssbo_with_tolerance.vkscript",
-  "compute_ssbo_without_probe.vkscript",
-  "compute_ubo_and_ssbo.vkscript",
-  "repeat.amber",
-  "scratch_ssbo.vkscript",
-  "shader_specialization.amber",
-  "ssbo_subdata_size.vkscript",
+  # Dawn does not support tessellation or geometry shader
+  "draw_triangle_list_using_geom_shader.vkscript",
+  "draw_triangle_list_using_tessellation.vkscript",
+  # Dawn does not support sparse descriptor_set
+  "compute_nothing_with_ssbo.vkscript",
+  # Dawn requires a fragmentStage now and in the medium term
+  "position_to_ssbo.amber",
+  # DrawRect command is not supported in a pipeline with more than one vertex
+  # buffer attached
+  "draw_array_after_draw_rect.vkscript",
+  "draw_rect_after_draw_array.vkscript",
+  "draw_rect_and_draw_array_mixed.vkscript",
   # Dawn DoCommands require a pipeline
   "probe_no_compute_with_multiple_ssbo_commands.vkscript",
   "probe_no_compute_with_ssbo.vkscript",
-  # Sparse descriptor sets are not supported in Dawn backend (issue #573)
-  "multiple_ssbo_update_with_graphics_pipeline.vkscript",
+  # Max number of descriptor sets is 4 in Dawn
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
-  "multiple_ubo_update_with_graphics_pipeline.vkscript",
-  # DoEntryPoint is not supported in Dawn backend
+  # DoEntryPoint is not supported in Dawn backend, yet
+  "compute_ssbo_with_entrypoint_command.vkscript",
   "entry_point.amber",
   # framebuffer format is not supported according to table "Mandatory format
   # support" in Vulkan spec: VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT = 0
@@ -127,9 +100,15 @@ SUPPRESSIONS_DAWN = [
   "draw_triangle_list_in_r8g8b8a8_snorm_color_frame.vkscript",
   "draw_triangle_list_in_r8g8b8a8_srgb_color_frame.vkscript",
   # Currently not working, under investigation
+  "multiple_ubo_update_with_graphics_pipeline.vkscript",
   "draw_triangle_list_with_depth.vkscript",
   "non_default_entry_point.amber",
-  "clear_with_depth.amber"
+  "clear_with_depth.amber",
+  "opencl_bind_buffer.amber",
+  "opencl_c_copy.amber",
+  "opencl_set_arg.amber",
+  "shader_specialization.amber",
+
 ]
 
 class TestCase:

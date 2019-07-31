@@ -82,6 +82,17 @@ struct ComputePipelineInfo {
 
   ::amber::Pipeline* pipeline = nullptr;
   ::dawn::ShaderModule compute_shader;
+
+  // storage and uniform buffers
+  std::vector<::dawn::Buffer> buffers;
+
+  std::vector<::dawn::BindGroup> bind_groups;
+  std::vector<::dawn::BindGroupLayout> bind_group_layouts;
+
+  // Mapping from the <descriptor_set, binding> to dawn buffer index in buffers
+  std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, hash_pair>
+      buffer_map;
+  std::set<int> used_descriptor_set;
 };
 
 /// Holds either a render or compute pipeline.
