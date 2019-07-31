@@ -75,8 +75,6 @@ SUPPRESSIONS_DAWN = [
   # Dawn does not support tessellation or geometry shader
   "draw_triangle_list_using_geom_shader.vkscript",
   "draw_triangle_list_using_tessellation.vkscript",
-  # Dawn does not support sparse descriptor_set
-  "compute_nothing_with_ssbo.vkscript",
   # Dawn requires a fragmentStage now and in the medium term
   "position_to_ssbo.amber",
   # DrawRect command is not supported in a pipeline with more than one vertex
@@ -89,9 +87,11 @@ SUPPRESSIONS_DAWN = [
   "probe_no_compute_with_ssbo.vkscript",
   # Max number of descriptor sets is 4 in Dawn
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
-  # DoEntryPoint is not supported in Dawn backend, yet
+
+  # Dawn does not support doEntryPoint
   "compute_ssbo_with_entrypoint_command.vkscript",
   "entry_point.amber",
+  "non_default_entry_point.amber",
   # framebuffer format is not supported according to table "Mandatory format
   # support" in Vulkan spec: VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT = 0
   "draw_triangle_list_in_r16g16b16a16_snorm_color_frame.vkscript",
@@ -99,6 +99,9 @@ SUPPRESSIONS_DAWN = [
   "draw_triangle_list_in_r32g32b32a32_sfloat_color_frame.vkscript",
   "draw_triangle_list_in_r8g8b8a8_snorm_color_frame.vkscript",
   "draw_triangle_list_in_r8g8b8a8_srgb_color_frame.vkscript",
+  # Dawn does not support vertexPipelineStoresAndAtomics
+  "multiple_ubo_update_with_graphics_pipeline.vkscript",
+  "multiple_ssbo_update_with_graphics_pipeline.vkscript",
   # Currently not working, under investigation
   "multiple_ubo_update_with_graphics_pipeline.vkscript",
   "draw_triangle_list_with_depth.vkscript",
@@ -108,7 +111,6 @@ SUPPRESSIONS_DAWN = [
   "opencl_c_copy.amber",
   "opencl_set_arg.amber",
   "shader_specialization.amber",
-
 ]
 
 class TestCase:
