@@ -40,7 +40,7 @@ END
 # We would need a second pipeline or a depth test on the pipeline to observe the effects of the
 # depth-stencil clear.
 
-CLEAR_COLOR my_pipeline 10 20 30 40
+CLEAR_COLOR my_pipeline 255 0 0 255
 CLEAR my_pipeline
-EXPECT img_buf_0 IDX 0 0 SIZE 256 256 EQ_RGBA 10 20 30 40
-EXPECT img_buf_1 IDX 0 0 SIZE 256 256 EQ_RGBA 10 20 30 40
+EXPECT img_buf_0 IDX 0 0 SIZE 256 256 EQ_RGBA 255 0 0 255
+EXPECT img_buf_1 IDX 0 0 SIZE 256 256 EQ_RGBA 255 0 0 255

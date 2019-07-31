@@ -80,8 +80,6 @@ clear depth 127
 depthTestEnable true
 depthWriteEnable true
 depthCompareOp VK_COMPARE_OP_LESS
-srcAlphaBlendFactor VK_BLEND_FACTOR_ONE
-srcColorBlendFactor VK_BLEND_FACTOR_ONE
 
 # Note that the rectangle drawn by the last command fully contains
 # the one drawn by the former command. However, the rectangle drawn
