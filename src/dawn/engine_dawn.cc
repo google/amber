@@ -135,6 +135,9 @@ struct DawnPipelineHelper {
   std::string fragmentEntryPoint;
   std::array<::dawn::RenderPassColorAttachmentDescriptor, kMaxColorAttachments>
       colorAttachmentsInfo;
+  ::dawn::TextureDescriptor depthStencilDescriptor;
+  ::dawn::Texture depthStencilTexture;
+  ::dawn::TextureView depthStencilView;
 };
 
 // Creates a device-side texture, and returns it through |result_ptr|.
@@ -501,26 +504,6 @@ struct BindingInitializationHelper {
   return device.CreatePipelineLayout(&descriptor);
 }
 
-// Creates a default depth stencil view.
-// Copied from Dawn utils source code.
-::dawn::TextureView CreateDefaultDepthStencilView(
-    const ::dawn::Device& device,
-    const RenderPipelineInfo& render_pipeline,
-    const ::dawn::TextureFormat depth_stencil_format) {
-  ::dawn::TextureDescriptor descriptor;
-  descriptor.dimension = ::dawn::TextureDimension::e2D;
-  descriptor.size.width = render_pipeline.pipeline->GetFramebufferWidth();
-  descriptor.size.height = render_pipeline.pipeline->GetFramebufferHeight();
-  descriptor.size.depth = 1;
-  descriptor.arrayLayerCount = 1;
-  descriptor.sampleCount = 1;
-  descriptor.format = depth_stencil_format;
-  descriptor.mipLevelCount = 1;
-  descriptor.usage = ::dawn::TextureUsageBit::OutputAttachment;
-  auto depthStencilTexture = device.CreateTexture(&descriptor);
-  return depthStencilTexture.CreateDefaultView();
-}
-
 // Converts an Amber format to a Dawn texture format, and sends the result out
 // through |dawn_format_ptr|.  If the conversion fails, return an error
 // result.
@@ -554,7 +537,7 @@ Result GetDawnTextureFormat(const ::amber::Format& amber_format,
       dawn_format = ::dawn::TextureFormat::BGRA8Unorm;
       break;
     case FormatType::kD32_SFLOAT_S8_UINT:
-      dawn_format = ::dawn::TextureFormat::Depth32Float;
+      dawn_format = ::dawn::TextureFormat::Depth24PlusStencil8;
       break;
     default:
       return Result(
@@ -1081,6 +1064,7 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     alpha_blend.srcFactor = ::dawn::BlendFactor::One;
     alpha_blend.dstFactor = ::dawn::BlendFactor::Zero;
     colorStateDescriptor.writeMask = ::dawn::ColorWriteMask::All;
+    colorStateDescriptor.format = fb_format;
     colorStateDescriptor.alphaBlend = alpha_blend;
     colorStateDescriptor.colorBlend = alpha_blend;
   } else {
@@ -1089,21 +1073,22 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
 
     alpha_blend.operation =
         GetDawnBlendOperation(pipeline_data->GetColorBlendOp());
-    alpha_blend.srcFactor = ::dawn::BlendFactor::One;
-    // GetDawnBlendFactor(pipeline_data->GetSrcAlphaBlendFactor()); // kZero
+    alpha_blend.srcFactor =
+        GetDawnBlendFactor(pipeline_data->GetSrcAlphaBlendFactor());
     alpha_blend.dstFactor =
         GetDawnBlendFactor(pipeline_data->GetDstAlphaBlendFactor());
 
     color_blend.operation =
         GetDawnBlendOperation(pipeline_data->GetAlphaBlendOp());
-    color_blend.srcFactor = ::dawn::BlendFactor::One;
-    // GetDawnBlendFactor(pipeline_data->GetSrcColorBlendFactor()); //kZero
+    color_blend.srcFactor =
+        GetDawnBlendFactor(pipeline_data->GetSrcColorBlendFactor());
     color_blend.dstFactor =
         GetDawnBlendFactor(pipeline_data->GetDstAlphaBlendFactor());
 
     colorStateDescriptor.writeMask =
         GetDawnColorWriteMask(pipeline_data->GetColorWriteMask());
 
+    colorStateDescriptor.format = fb_format;
     colorStateDescriptor.alphaBlend = alpha_blend;
     colorStateDescriptor.colorBlend = color_blend;
   }
@@ -1125,7 +1110,6 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
         fb_format = ::dawn::TextureFormat::RGBA8Unorm;
       }
     }
-    colorStateDescriptor.format = fb_format;
     colorStatesDescriptor[i] = colorStateDescriptor;
     colorStates[i] = &colorStatesDescriptor[i];
     colorStates[i]->format = fb_format;
@@ -1147,8 +1131,8 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     depthStencilState.format = depth_stencil_format;
     renderPipelineDescriptor.depthStencilState = &depthStencilState;
   } else {
-    stencil_front.compare = ::dawn::CompareFunction::Always;
-    GetDawnCompareOp(pipeline_data->GetFrontCompareOp());
+    stencil_front.compare =
+        GetDawnCompareOp(pipeline_data->GetFrontCompareOp());
     stencil_front.failOp = GetDawnStencilOp(pipeline_data->GetFrontFailOp());
     stencil_front.depthFailOp =
         GetDawnStencilOp(pipeline_data->GetFrontDepthFailOp());
@@ -1158,14 +1142,15 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     stencil_back.failOp = GetDawnStencilOp(pipeline_data->GetBackFailOp());
     stencil_back.depthFailOp =
         GetDawnStencilOp(pipeline_data->GetBackDepthFailOp());
-    stencil_back.passOp = GetDawnStencilOp(pipeline_data->GetFrontPassOp());
+    stencil_back.passOp = GetDawnStencilOp(pipeline_data->GetBackPassOp());
 
     depthStencilState.depthWriteEnabled = pipeline_data->GetEnableDepthWrite();
-    depthStencilState.depthCompare = ::dawn::CompareFunction::Always;
-    // GetDawnCompareOp(pipeline_data->GetDepthCompareOp()); // kLess
+    depthStencilState.depthCompare =
+        GetDawnCompareOp(pipeline_data->GetDepthCompareOp());
     depthStencilState.stencilFront = stencil_front;
     depthStencilState.stencilBack = stencil_back;
-    // WebGPU doesn't support separate front and back stencil mask
+    // WebGPU doesn't support separate front and back stencil mask, they has to
+    // be the same
     depthStencilState.stencilReadMask =
         (pipeline_data->GetFrontCompareMask() ==
          pipeline_data->GetBackCompareMask())
@@ -1228,8 +1213,21 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
     depth_stencil_format = ::dawn::TextureFormat::Depth24PlusStencil8;
   }
 
-  ::dawn::TextureView depthStencilView = CreateDefaultDepthStencilView(
-      device, render_pipeline, depth_stencil_format);
+  depthStencilDescriptor.dimension = ::dawn::TextureDimension::e2D;
+  depthStencilDescriptor.size.width =
+      render_pipeline.pipeline->GetFramebufferWidth();
+  depthStencilDescriptor.size.height =
+      render_pipeline.pipeline->GetFramebufferHeight();
+  depthStencilDescriptor.size.depth = 1;
+  depthStencilDescriptor.arrayLayerCount = 1;
+  depthStencilDescriptor.sampleCount = 1;
+  depthStencilDescriptor.format = depth_stencil_format;
+  depthStencilDescriptor.mipLevelCount = 1;
+  depthStencilDescriptor.usage = ::dawn::TextureUsageBit::OutputAttachment |
+                                 ::dawn::TextureUsageBit::CopySrc;
+  depthStencilTexture = device.CreateTexture(&depthStencilDescriptor);
+  depthStencilView = depthStencilTexture.CreateDefaultView();
+
   if (depthStencilView.Get() != nullptr) {
     depthStencilAttachmentInfo.attachment = depthStencilView;
     renderPassDescriptor.depthStencilAttachment = &depthStencilAttachmentInfo;

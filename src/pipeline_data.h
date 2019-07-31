@@ -174,11 +174,11 @@ class PipelineData {
   PolygonMode polygon_mode_ = PolygonMode::kFill;
   CullMode cull_mode_ = CullMode::kNone;
   FrontFace front_face_ = FrontFace::kCounterClockwise;
-  CompareOp depth_compare_op_ = CompareOp::kLess;
+  CompareOp depth_compare_op_ = CompareOp::kAlways;
   LogicOp logic_op_ = LogicOp::kClear;
-  BlendFactor src_color_blend_factor_ = BlendFactor::kZero;
+  BlendFactor src_color_blend_factor_ = BlendFactor::kOne;
   BlendFactor dst_color_blend_factor_ = BlendFactor::kZero;
-  BlendFactor src_alpha_blend_factor_ = BlendFactor::kZero;
+  BlendFactor src_alpha_blend_factor_ = BlendFactor::kOne;
   BlendFactor dst_alpha_blend_factor_ = BlendFactor::kZero;
   BlendOp color_blend_op_ = BlendOp::kAdd;
   BlendOp alpha_blend_op_ = BlendOp::kAdd;
