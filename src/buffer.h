@@ -150,7 +150,7 @@ class Buffer {
   /// initial count. This requires the format to have been set.
   void ResizeTo(uint32_t element_count);
 
-  /// Resizes the buffer to hold |size_in_bytes| over format_->SizeInBytes()
+  /// Resizes the buffer to hold |size_in_bytes|/format_->SizeInBytes()
   /// number of elements while resizing the buffer to |size_in_bytes| bytes.
   /// This requires the format to have been set. This is separate from
   /// ResizeTo() since the given argument here is |size_in_bytes| bytes vs

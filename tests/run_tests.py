@@ -103,10 +103,7 @@ SUPPRESSIONS_DAWN = [
   "multiple_ubo_update_with_graphics_pipeline.vkscript",
   "multiple_ssbo_update_with_graphics_pipeline.vkscript",
   # Currently not working, under investigation
-  "multiple_ubo_update_with_graphics_pipeline.vkscript",
   "draw_triangle_list_with_depth.vkscript",
-  "non_default_entry_point.amber",
-  "clear_with_depth.amber",
   "opencl_bind_buffer.amber",
   "opencl_c_copy.amber",
   "opencl_set_arg.amber",

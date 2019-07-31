@@ -1296,7 +1296,6 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
 
   auto vertex_buffer = CreateBufferFromData(
       *device_, vertexData, sizeof(vertexData), ::dawn::BufferUsageBit::Vertex);
-  // auto* pipeline_data = command->GetPipelineData();
   DawnPipelineHelper helper;
   helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_, true,
                                         command->GetPipelineData());
