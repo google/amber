@@ -13,7 +13,7 @@ vars = {
   'clspv_revision': '64a51387967ea2a26e4a52a22ad8640148194edc',
   'cpplint_revision': '9f41862c0efa7681e2147910d39629c73a2b2702',
   'dxc_revision': 'ec912b2ec95feb50925704dd631ef7abee1a5f09',
-  'glslang_revision': 'eea340047eca2119516d79ad059ce33632ea366e',
+  'glslang_revision': '8aa9a7bb8f74869ab9cfd2c9bd51cef1741004e7',
   'googletest_revision': '947aeab281f1b160d2db5045064be73c984f1ae6',
   'lodepng_revision': 'ba9fc1f084f03b5fbf8c9a5df9448173f27544b1',
   'shaderc_revision': '747518d43f4b463cf0d6720fdf9968c55b2921fe',
