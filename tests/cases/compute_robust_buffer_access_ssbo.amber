@@ -1,0 +1,81 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER compute buffer_overrun GLSL
+#version 430
+
+// Only one invocation per workgroup.
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) buffer BlockUint {
+  uint data[];
+} ssbo_uint;
+
+layout(set = 0, binding = 1) buffer BlockInt {
+  int data[];
+} ssbo_int;
+
+void main() {
+  uint upper_bound = ssbo_uint.data[0];
+  uint ui;
+  for (ui = 0; ui < upper_bound; ++ui) {
+    ssbo_uint.data[ui]++;
+  }
+
+  int int_lower = ssbo_int.data[0];
+  int int_upper = ssbo_int.data[1];
+  int i;
+  for (i = int_lower; i < int_upper; ++i) {
+    ssbo_int.data[i]++;
+  }
+}
+END
+
+BUFFER buf_uint DATA_TYPE uint32 DATA
+10000 0 0 0
+END
+
+BUFFER buf_int DATA_TYPE int32 DATA
+-5 10 0 0 0
+END
+
+PIPELINE compute pipeline
+  ATTACH buffer_overrun
+  SHADER_OPTIMIZATION buffer_overrun
+    --graphics-robust-access
+  END
+
+  BIND BUFFER buf_uint AS storage DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER buf_int AS storage DESCRIPTOR_SET 0 BINDING 1
+END
+
+# Only one workgroup.  Having only one invocation execute ensures
+# there are no race conditions.
+RUN pipeline 1 1 1
+
+# In the unsigned int index case:
+#   The first 4 entries are incremented, as expected.
+#   Beyond that, the remaining indices are clamped to the upper
+#   bound of the length of the array, minus 1.
+EXPECT buf_uint IDX 0 EQ 10001 1 1 9997
+
+# In the signed int index case:
+#
+#   Index 0 is incremented 6 times, for i values -5, -4, -3, -2, -1, 0
+#   since negative indices are clamped to 0.
+#     So initial value -5 + 6 --> 1
+#   Indices 1, 2, 3 are incremented once each.
+#   Index 4 is incremented 6 times, for i values 4, 5, 6, 7, 8, 9
+EXPECT buf_int IDX 0 EQ 1 11 1 1 6
