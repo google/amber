@@ -30,8 +30,7 @@ namespace amber {
 class ShaderCompiler {
  public:
   ShaderCompiler();
-  explicit ShaderCompiler(const std::string& env,
-                          bool disable_spirv_validation);
+  ShaderCompiler(const std::string& env, bool disable_spirv_validation);
   ~ShaderCompiler();
 
   /// Returns a result code and a compilation of the given shader.

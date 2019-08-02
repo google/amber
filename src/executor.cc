@@ -82,9 +82,10 @@ Result Executor::Execute(Engine* engine,
 
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
-    if (options->delegate && options->delegate->LogExecuteCalls())
+    if (options->delegate && options->delegate->LogExecuteCalls()) {
       options->delegate->Log(std::to_string(cmd->GetLine()) + ": " +
                              cmd->ToString());
+    }
 
     Result r = ExecuteCommand(engine, cmd.get());
     if (!r.IsSuccess())
