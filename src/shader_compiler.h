@@ -43,7 +43,8 @@ class ShaderCompiler {
   /// be invoked to produce the shader binary.
   std::pair<Result, std::vector<uint32_t>> Compile(
       Pipeline::ShaderInfo* shader_info,
-      const ShaderMap& shader_map) const;
+      const ShaderMap& shader_map,
+      bool disable_spirv_validation = false) const;
 
  private:
   Result ParseHex(const std::string& data, std::vector<uint32_t>* result) const;

@@ -39,10 +39,13 @@ class Executor {
                  const Script* script,
                  Delegate* delegate,
                  const ShaderMap& map,
-                 ExecutionType executionType);
+                 ExecutionType executionType,
+                 bool disable_spirv_validation = false);
 
  private:
-  Result CompileShaders(const Script* script, const ShaderMap& shader_map);
+  Result CompileShaders(const Script* script,
+                        const ShaderMap& shader_map,
+                        bool disable_spirv_validation);
   Result ExecuteCommand(Engine* engine, Command* cmd);
 
   Verifier verifier_;

@@ -30,14 +30,16 @@ Executor::Executor() = default;
 Executor::~Executor() = default;
 
 Result Executor::CompileShaders(const amber::Script* script,
-                                const ShaderMap& shader_map) {
+                                const ShaderMap& shader_map,
+                                bool disable_spirv_validation) {
   for (auto& pipeline : script->GetPipelines()) {
     for (auto& shader_info : pipeline->GetShaders()) {
       ShaderCompiler sc(script->GetSpvTargetEnv());
 
       Result r;
       std::vector<uint32_t> data;
-      std::tie(r, data) = sc.Compile(&shader_info, shader_map);
+      std::tie(r, data) =
+          sc.Compile(&shader_info, shader_map, disable_spirv_validation);
       if (!r.IsSuccess())
         return r;
 
@@ -51,11 +53,12 @@ Result Executor::Execute(Engine* engine,
                          const amber::Script* script,
                          Delegate* delegate,
                          const ShaderMap& shader_map,
-                         ExecutionType executionType) {
+                         ExecutionType executionType,
+                         bool disable_spirv_validation) {
   engine->SetEngineData(script->GetEngineData());
 
   if (!script->GetPipelines().empty()) {
-    Result r = CompileShaders(script, shader_map);
+    Result r = CompileShaders(script, shader_map, disable_spirv_validation);
     if (!r.IsSuccess())
       return r;
 

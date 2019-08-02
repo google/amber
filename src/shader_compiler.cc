@@ -53,7 +53,8 @@ ShaderCompiler::~ShaderCompiler() = default;
 
 std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
     Pipeline::ShaderInfo* shader_info,
-    const ShaderMap& shader_map) const {
+    const ShaderMap& shader_map,
+    bool disable_spirv_validation) const {
   const auto shader = shader_info->GetShader();
   auto it = shader_map.find(shader->GetName());
   if (it != shader_map.end()) {
@@ -142,10 +143,13 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
     return {Result("Invalid shader format"), results};
   }
 
+  (void)disable_spirv_validation;
 #if AMBER_ENABLE_SPIRV_TOOLS
-  spvtools::ValidatorOptions options;
-  if (!tools.Validate(results.data(), results.size(), options))
-    return {Result("Invalid shader: " + spv_errors), {}};
+  if (!disable_spirv_validation) {
+    spvtools::ValidatorOptions options;
+    if (!tools.Validate(results.data(), results.size(), options))
+      return {Result("Invalid shader: " + spv_errors), {}};
+  }
 
   // Optimize the shader if any optimizations were specified.
   if (!shader_info->GetShaderOptimizations().empty()) {

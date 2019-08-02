@@ -68,7 +68,8 @@ Options::Options()
     : engine(amber::EngineType::kEngineTypeVulkan),
       config(nullptr),
       pipeline_create_only(false),
-      delegate(nullptr) {}
+      delegate(nullptr),
+      disable_spirv_validation(false) {}
 
 Options::~Options() = default;
 
@@ -171,7 +172,8 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   Result executor_result = executor.Execute(
       engine.get(), script, opts->delegate, shader_data,
       opts->pipeline_create_only ? ExecutionType::kPipelineCreateOnly
-                                 : ExecutionType::kExecute);
+                                 : ExecutionType::kExecute,
+      opts->disable_spirv_validation);
   // Hold the executor result until the extractions are complete. This will let
   // us dump any buffers requested even on failure.
 

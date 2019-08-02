@@ -105,6 +105,9 @@ struct Options {
   bool pipeline_create_only;
   /// Delegate implementation
   Delegate* delegate;
+  /// If true, disables SPIR-V validation. If false, SPIR-V shaders will be
+  /// validated using the Validator component (spirv-val) from SPIRV-Tools.
+  bool disable_spirv_validation;
 };
 
 /// Main interface to the Amber environment.
