@@ -45,7 +45,7 @@
 
 namespace amber {
 
-ShaderCompiler::ShaderCompiler() : disable_spirv_validation_(false) {}
+ShaderCompiler::ShaderCompiler() = default;
 
 ShaderCompiler::ShaderCompiler(const std::string& env,
                                bool disable_spirv_validation)

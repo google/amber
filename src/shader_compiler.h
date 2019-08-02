@@ -53,7 +53,7 @@ class ShaderCompiler {
                         std::vector<uint32_t>* result) const;
 
   std::string spv_env_;
-  bool disable_spirv_validation_;
+  bool disable_spirv_validation_ = false;
 };
 
 // Parses the SPIR-V environment string, and returns the corresponding
