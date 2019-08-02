@@ -356,7 +356,9 @@ int main(int argc, const char** argv) {
   amber::Options amber_options;
   amber_options.engine = options.engine;
   amber_options.spv_env = options.spv_env;
-  amber_options.pipeline_create_only = options.pipeline_create_only;
+  amber_options.execution_type = options.pipeline_create_only
+                                     ? amber::ExecutionType::kPipelineCreateOnly
+                                     : amber::ExecutionType::kExecute;
   amber_options.delegate = &delegate;
   amber_options.disable_spirv_validation = options.disable_spirv_validation;
 

@@ -31,15 +31,15 @@ Executor::~Executor() = default;
 
 Result Executor::CompileShaders(const amber::Script* script,
                                 const ShaderMap& shader_map,
-                                bool disable_spirv_validation) {
+                                Options* options) {
   for (auto& pipeline : script->GetPipelines()) {
     for (auto& shader_info : pipeline->GetShaders()) {
-      ShaderCompiler sc(script->GetSpvTargetEnv());
+      ShaderCompiler sc(script->GetSpvTargetEnv(),
+                        options->disable_spirv_validation);
 
       Result r;
       std::vector<uint32_t> data;
-      std::tie(r, data) =
-          sc.Compile(&shader_info, shader_map, disable_spirv_validation);
+      std::tie(r, data) = sc.Compile(&shader_info, shader_map);
       if (!r.IsSuccess())
         return r;
 
@@ -51,14 +51,12 @@ Result Executor::CompileShaders(const amber::Script* script,
 
 Result Executor::Execute(Engine* engine,
                          const amber::Script* script,
-                         Delegate* delegate,
                          const ShaderMap& shader_map,
-                         ExecutionType executionType,
-                         bool disable_spirv_validation) {
+                         Options* options) {
   engine->SetEngineData(script->GetEngineData());
 
   if (!script->GetPipelines().empty()) {
-    Result r = CompileShaders(script, shader_map, disable_spirv_validation);
+    Result r = CompileShaders(script, shader_map, options);
     if (!r.IsSuccess())
       return r;
 
@@ -79,13 +77,14 @@ Result Executor::Execute(Engine* engine,
     }
   }
 
-  if (executionType == ExecutionType::kPipelineCreateOnly)
+  if (options->execution_type == ExecutionType::kPipelineCreateOnly)
     return {};
 
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
-    if (delegate && delegate->LogExecuteCalls())
-      delegate->Log(std::to_string(cmd->GetLine()) + ": " + cmd->ToString());
+    if (options->delegate && options->delegate->LogExecuteCalls())
+      options->delegate->Log(std::to_string(cmd->GetLine()) + ": " +
+                             cmd->ToString());
 
     Result r = ExecuteCommand(engine, cmd.get());
     if (!r.IsSuccess())

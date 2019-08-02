@@ -30,7 +30,8 @@ namespace amber {
 class ShaderCompiler {
  public:
   ShaderCompiler();
-  explicit ShaderCompiler(const std::string& env);
+  explicit ShaderCompiler(const std::string& env,
+                          bool disable_spirv_validation);
   ~ShaderCompiler();
 
   /// Returns a result code and a compilation of the given shader.
@@ -43,8 +44,7 @@ class ShaderCompiler {
   /// be invoked to produce the shader binary.
   std::pair<Result, std::vector<uint32_t>> Compile(
       Pipeline::ShaderInfo* shader_info,
-      const ShaderMap& shader_map,
-      bool disable_spirv_validation = false) const;
+      const ShaderMap& shader_map) const;
 
  private:
   Result ParseHex(const std::string& data, std::vector<uint32_t>* result) const;
@@ -54,6 +54,7 @@ class ShaderCompiler {
                         std::vector<uint32_t>* result) const;
 
   std::string spv_env_;
+  bool disable_spirv_validation_;
 };
 
 // Parses the SPIR-V environment string, and returns the corresponding

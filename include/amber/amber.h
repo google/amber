@@ -38,6 +38,13 @@ enum EngineType {
   kEngineTypeDawn,
 };
 
+enum class ExecutionType {
+  /// Execute as normal.
+  kExecute = 0,
+  /// Only create the pipelines and then exit.
+  kPipelineCreateOnly
+};
+
 /// Override point of engines to add their own configuration.
 struct EngineConfig {
   virtual ~EngineConfig();
@@ -101,13 +108,14 @@ struct Options {
   std::string spv_env;
   /// Lists the buffers to extract at the end of the execution
   std::vector<BufferInfo> extractions;
-  /// Terminate after creating the pipelines.
-  bool pipeline_create_only;
-  /// Delegate implementation
-  Delegate* delegate;
+  /// The type of execution. For example, execute as normal or just create the
+  /// piplines and exit.
+  ExecutionType execution_type;
   /// If true, disables SPIR-V validation. If false, SPIR-V shaders will be
   /// validated using the Validator component (spirv-val) from SPIRV-Tools.
   bool disable_spirv_validation;
+  /// Delegate implementation
+  Delegate* delegate;
 };
 
 /// Main interface to the Amber environment.
