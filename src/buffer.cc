@@ -61,8 +61,8 @@ double Sub(const uint8_t* buf1, const uint8_t* buf2) {
 }
 
 double CalculateDiff(const Format::Component& comp,
-                    const uint8_t* buf1,
-                    const uint8_t* buf2) {
+                     const uint8_t* buf1,
+                     const uint8_t* buf2) {
   if (comp.IsInt8())
     return Sub<int8_t>(buf1, buf2);
   if (comp.IsInt16())
