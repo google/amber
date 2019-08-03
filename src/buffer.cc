@@ -15,6 +15,7 @@
 #include "src/buffer.h"
 
 #include <cassert>
+#include <cmath>
 #include <cstring>
 
 namespace amber {
@@ -51,6 +52,45 @@ uint16_t FloatToHexFloat16(const float value) {
 template <typename T>
 T* ValuesAs(uint8_t* values) {
   return reinterpret_cast<T*>(values);
+}
+
+template <typename T>
+double Sub(const uint8_t* buf1, const uint8_t* buf2) {
+  return static_cast<double>(*reinterpret_cast<const T*>(buf1) -
+                             *reinterpret_cast<const T*>(buf2));
+}
+
+double CalculateDiff(const Format::Component& comp,
+                     const uint8_t* buf1,
+                     const uint8_t* buf2) {
+  if (comp.IsInt8())
+    return Sub<int8_t>(buf1, buf2);
+  if (comp.IsInt16())
+    return Sub<int16_t>(buf1, buf2);
+  if (comp.IsInt32())
+    return Sub<int32_t>(buf1, buf2);
+  if (comp.IsInt64())
+    return Sub<int64_t>(buf1, buf2);
+  if (comp.IsUint8())
+    return Sub<uint8_t>(buf1, buf2);
+  if (comp.IsUint16())
+    return Sub<uint16_t>(buf1, buf2);
+  if (comp.IsUint32())
+    return Sub<uint32_t>(buf1, buf2);
+  if (comp.IsUint64())
+    return Sub<uint64_t>(buf1, buf2);
+  // TOOD(dsinclair): Handle float16 ...
+  if (comp.IsFloat16()) {
+    assert(false && "Float16 suppport not implemented");
+    return 0.0;
+  }
+  if (comp.IsFloat())
+    return Sub<float>(buf1, buf2);
+  if (comp.IsDouble())
+    return Sub<double>(buf1, buf2);
+
+  assert(false && "NOTREACHED");
+  return 0.0;
 }
 
 }  // namespace
@@ -106,6 +146,58 @@ Result Buffer::IsEqual(Buffer* buffer) const {
                   std::to_string(first_different_index) + " values " +
                   std::to_string(first_different_left) +
                   " != " + std::to_string(first_different_right)};
+  }
+
+  return {};
+}
+
+std::vector<double> Buffer::CalculateDiffs(const Buffer* buffer) const {
+  std::vector<double> diffs;
+
+  auto* buf_1_ptr = GetValues<uint8_t>();
+  auto* buf_2_ptr = buffer->GetValues<uint8_t>();
+  auto comps = format_->GetComponents();
+
+  for (size_t i = 0; i < ElementCount(); ++i) {
+    for (size_t j = 0; j < format_->ColumnCount(); ++j) {
+      auto* buf_1_row_ptr = buf_1_ptr;
+      auto* buf_2_row_ptr = buf_2_ptr;
+      for (size_t k = 0; k < format_->RowCount(); ++k) {
+        diffs.push_back(CalculateDiff(comps[k], buf_1_row_ptr, buf_2_row_ptr));
+
+        buf_1_row_ptr += comps[k].SizeInBytes();
+        buf_2_row_ptr += comps[k].SizeInBytes();
+      }
+      buf_1_ptr += format_->SizeInBytesPerRow();
+      buf_2_ptr += format_->SizeInBytesPerRow();
+    }
+  }
+
+  return diffs;
+}
+
+Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
+  if (!buffer->format_->Equal(format_.get()))
+    return Result{"Buffers have a different format"};
+  if (buffer->element_count_ != element_count_)
+    return Result{"Buffers have a different size"};
+  if (buffer->width_ != width_)
+    return Result{"Buffers have a different width"};
+  if (buffer->height_ != height_)
+    return Result{"Buffers have a different height"};
+  if (buffer->ValueCount() != ValueCount())
+    return Result{"Buffers have a different number of values"};
+
+  auto diffs = CalculateDiffs(buffer);
+  double sum = 0.0;
+  for (const auto val : diffs)
+    sum += (val * val);
+
+  sum /= diffs.size();
+  double rmse = std::sqrt(sum);
+  if (rmse > static_cast<double>(tolerance)) {
+    return Result("Root Mean Square Error of " + std::to_string(rmse) +
+                  " is greater then tolerance of " + std::to_string(tolerance));
   }
 
   return {};

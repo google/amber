@@ -418,6 +418,7 @@ CLEAR {pipeline}
  * `EQ_RGB`
  * `EQ_RGBA`
  * `EQ_BUFFER`
+ * `RMSE_BUFFER`
 
 ```groovy
 # Checks that |buffer_name| at |x| has the given |value|s when compared
@@ -446,6 +447,11 @@ EXPECT {buffer_name} IDX _x_in_pixels_ _y_in_pixels_ \
 
 # Checks that |buffer_1| contents are equal to those of |buffer_2|
 EXPECT {buffer_1} EQ_BUFFER {buffer_2}
+
+# Checks that the Root Mean Square Error when comparing |buffer_1| to
+# |buffer_2| is less than or equal too |tolerance|. Note, |tolerance| is a
+# unit-less number.
+EXPECT {buffer_1} RMSE_BUFFER {buffer_2} TOLERANCE _value_
 ```
 
 ## Examples
