@@ -185,7 +185,7 @@ class Buffer {
 
   // Calculates the difference between the value stored in this buffer and
   // those stored in |buffer| and returns all the values.
-  std::vector<float> CalculateDiffs(const Buffer* buffer) const;
+  std::vector<double> CalculateDiffs(const Buffer* buffer) const;
 
   BufferType buffer_type_ = BufferType::kUnknown;
   std::string name_;

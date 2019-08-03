@@ -948,7 +948,6 @@ EXPECT orig_buf IDX 5 TOLERANCE 1 2 3 4 NE 11)";
   EXPECT_EQ("3: TOLERANCE only available with EQ probes", r.Error());
 }
 
-
 TEST_F(AmberScriptParserTest, ExpectRMSEBuffer) {
   std::string in = R"(
 BUFFER buf_1 DATA_TYPE int32 SIZE 10 FILL 11
@@ -968,7 +967,7 @@ EXPECT buf_1 RMSE_BUFFER buf_2 TOLERANCE 0.1)";
 
   auto* cmp = cmd->AsCompareBuffer();
   EXPECT_EQ(cmp->GetComparator(), CompareBufferCommand::Comparator::kRmse);
-  EXPECT_FLOAT_EQ(cmp->GetTolerance(), 0.1);
+  EXPECT_FLOAT_EQ(cmp->GetTolerance(), 0.1f);
 
   ASSERT_TRUE(cmp->GetBuffer1() != nullptr);
   EXPECT_EQ(cmp->GetBuffer1()->GetName(), "buf_1");

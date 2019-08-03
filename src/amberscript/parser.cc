@@ -1382,31 +1382,27 @@ Result Parser::ParseExpect() {
 
     auto* buffer_2 = script_->GetBuffer(token->AsString());
     if (!buffer_2) {
-      return Result("unknown buffer name for EXPECT " + type + " command: " +
-                    token->AsString());
+      return Result("unknown buffer name for EXPECT " + type +
+                    " command: " + token->AsString());
     }
 
     if (!buffer->GetFormat()->Equal(buffer_2->GetFormat())) {
-      return Result(
-          "EXPECT " + type + " command cannot compare buffers of differing "
-          "format");
+      return Result("EXPECT " + type +
+                    " command cannot compare buffers of differing format");
     }
     if (buffer->ElementCount() != buffer_2->ElementCount()) {
-      return Result(
-          "EXPECT " + type + " command cannot compare buffers of different "
-          "size: " +
-          std::to_string(buffer->ElementCount()) + " vs " +
-          std::to_string(buffer_2->ElementCount()));
+      return Result("EXPECT " + type +
+                    " command cannot compare buffers of different size: " +
+                    std::to_string(buffer->ElementCount()) + " vs " +
+                    std::to_string(buffer_2->ElementCount()));
     }
     if (buffer->GetWidth() != buffer_2->GetWidth()) {
-      return Result(
-          "EXPECT " + type + " command cannot compare buffers of different "
-          "width");
+      return Result("EXPECT " + type +
+                    " command cannot compare buffers of different width");
     }
     if (buffer->GetHeight() != buffer_2->GetHeight()) {
-      return Result(
-          "EXPECT " + type + " command cannot compare buffers of different "
-          "height");
+      return Result("EXPECT " + type +
+                    " command cannot compare buffers of different height");
     }
 
     auto cmd = MakeUnique<CompareBufferCommand>(buffer, buffer_2);

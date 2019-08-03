@@ -449,7 +449,8 @@ EXPECT {buffer_name} IDX _x_in_pixels_ _y_in_pixels_ \
 EXPECT {buffer_1} EQ_BUFFER {buffer_2}
 
 # Checks that the Root Mean Square Error when comparing |buffer_1| to
-# |buffer_2| is less than or equal too |tolerance|
+# |buffer_2| is less than or equal too |tolerance|. Note, |tolerance| is a
+# unit-less number.
 EXPECT {buffer_1} RMSE_BUFFER {buffer_2} TOLERANCE _value_
 ```
 

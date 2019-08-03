@@ -55,13 +55,14 @@ T* ValuesAs(uint8_t* values) {
 }
 
 template <typename T>
-float Sub(const uint8_t* buf1, const uint8_t* buf2) {
-  return static_cast<float>(
-    *reinterpret_cast<const T*>(buf1) - *reinterpret_cast<const T*>(buf2));
+double Sub(const uint8_t* buf1, const uint8_t* buf2) {
+  return static_cast<double>(*reinterpret_cast<const T*>(buf1) -
+                             *reinterpret_cast<const T*>(buf2));
 }
 
-float CalculateDiff(
-    const Format::Component& comp, const uint8_t* buf1, const uint8_t* buf2) {
+double CalculateDiff(const Format::Component& comp,
+                    const uint8_t* buf1,
+                    const uint8_t* buf2) {
   if (comp.IsInt8())
     return Sub<int8_t>(buf1, buf2);
   if (comp.IsInt16())
@@ -81,7 +82,7 @@ float CalculateDiff(
   // TOOD(dsinclair): Handle float16 ...
   if (comp.IsFloat16()) {
     assert(false && "Float16 suppport not implemented");
-    return 0.f;
+    return 0.0;
   }
   if (comp.IsFloat())
     return Sub<float>(buf1, buf2);
@@ -89,7 +90,7 @@ float CalculateDiff(
     return Sub<double>(buf1, buf2);
 
   assert(false && "NOTREACHED");
-  return 0.f;
+  return 0.0;
 }
 
 }  // namespace
@@ -150,8 +151,8 @@ Result Buffer::IsEqual(Buffer* buffer) const {
   return {};
 }
 
-std::vector<float> Buffer::CalculateDiffs(const Buffer* buffer) const {
-  std::vector<float> diffs;
+std::vector<double> Buffer::CalculateDiffs(const Buffer* buffer) const {
+  std::vector<double> diffs;
 
   auto* buf_1_ptr = GetValues<uint8_t>();
   auto* buf_2_ptr = buffer->GetValues<uint8_t>();
@@ -188,15 +189,15 @@ Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
     return Result{"Buffers have a different number of values"};
 
   auto diffs = CalculateDiffs(buffer);
-  float sum = 0.0;
+  double sum = 0.0;
   for (const auto val : diffs)
     sum += (val * val);
 
   sum /= diffs.size();
-  float rmse = std::sqrt(sum);
-  if (rmse > tolerance) {
+  double rmse = std::sqrt(sum);
+  if (rmse > static_cast<double>(tolerance)) {
     return Result("Root Mean Square Error of " + std::to_string(rmse) +
-      " is greater then tolerance of " + std::to_string(tolerance));
+                  " is greater then tolerance of " + std::to_string(tolerance));
   }
 
   return {};
