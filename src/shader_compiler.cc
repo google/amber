@@ -23,6 +23,7 @@
 #if AMBER_ENABLE_SPIRV_TOOLS
 #include "spirv-tools/libspirv.hpp"
 #include "spirv-tools/linker.hpp"
+#include "spirv-tools/optimizer.hpp"
 #endif  // AMBER_ENABLE_SPIRV_TOOLS
 
 #if AMBER_ENABLE_SHADERC
@@ -46,7 +47,9 @@ namespace amber {
 
 ShaderCompiler::ShaderCompiler() = default;
 
-ShaderCompiler::ShaderCompiler(const std::string& env) : spv_env_(env) {}
+ShaderCompiler::ShaderCompiler(const std::string& env,
+                               bool disable_spirv_validation)
+    : spv_env_(env), disable_spirv_validation_(disable_spirv_validation) {}
 
 ShaderCompiler::~ShaderCompiler() = default;
 
@@ -74,10 +77,9 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
       return {Result("Unable to parse SPIR-V target environment"), {}};
   }
 
-  spvtools::SpirvTools tools(target_env);
-  tools.SetMessageConsumer([&spv_errors](spv_message_level_t level, const char*,
-                                         const spv_position_t& position,
-                                         const char* message) {
+  auto msg_consumer = [&spv_errors](spv_message_level_t level, const char*,
+                                    const spv_position_t& position,
+                                    const char* message) {
     switch (level) {
       case SPV_MSG_FATAL:
       case SPV_MSG_INTERNAL_ERROR:
@@ -96,7 +98,10 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
       case SPV_MSG_DEBUG:
         break;
     }
-  });
+  };
+
+  spvtools::SpirvTools tools(target_env);
+  tools.SetMessageConsumer(msg_consumer);
 #endif  // AMBER_ENABLE_SPIRV_TOOLS
 
   std::vector<uint32_t> results;
@@ -140,9 +145,23 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
   }
 
 #if AMBER_ENABLE_SPIRV_TOOLS
-  spvtools::ValidatorOptions options;
-  if (!tools.Validate(results.data(), results.size(), options))
-    return {Result("Invalid shader: " + spv_errors), {}};
+  if (!disable_spirv_validation_) {
+    spvtools::ValidatorOptions options;
+    if (!tools.Validate(results.data(), results.size(), options))
+      return {Result("Invalid shader: " + spv_errors), {}};
+  }
+
+  // Optimize the shader if any optimizations were specified.
+  if (!shader_info->GetShaderOptimizations().empty()) {
+    spvtools::Optimizer optimizer(target_env);
+    optimizer.SetMessageConsumer(msg_consumer);
+    if (!optimizer.RegisterPassesFromFlags(
+            shader_info->GetShaderOptimizations())) {
+      return {Result("Invalid optimizations: " + spv_errors), {}};
+    }
+    if (!optimizer.Run(results.data(), results.size(), &results))
+      return {Result("Optimizations failed: " + spv_errors), {}};
+  }
 #endif  // AMBER_ENABLE_SPIRV_TOOLS
 
   return {{}, results};

@@ -165,6 +165,60 @@ TEST_F(ShaderCompilerTest, InvalidHex) {
   EXPECT_EQ("Invalid shader: error: line 0: Invalid SPIR-V magic number.\n",
             r.Error());
 }
+
+TEST_F(ShaderCompilerTest, OptimizeShader) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpExtension "SPV_KHR_storage_buffer_storage_class"
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+OpDecorate %block Block
+OpMemberDecorate %block 0 Offset 0
+OpDecorate %in DescriptorSet 0
+OpDecorate %in Binding 0
+OpDecorate %out DescriptorSet 0
+OpDecorate %out Binding 1
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%block = OpTypeStruct %int
+%ptr_ssbo_block = OpTypePointer StorageBuffer %block
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%in = OpVariable %ptr_ssbo_block StorageBuffer
+%out = OpVariable %ptr_ssbo_block StorageBuffer
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%in_gep = OpAccessChain %ptr_ssbo_int %in %int_0
+%ld = OpLoad %int %in_gep
+%dead = OpIAdd %int %ld %int_0
+%out_gep = OpAccessChain %ptr_ssbo_int %out %int_0
+OpStore %out_gep %ld
+OpReturn
+OpFunctionEnd
+)";
+
+  Shader shader(kShaderTypeCompute);
+  shader.SetName("TestShader");
+  shader.SetFormat(kShaderFormatSpirvAsm);
+  shader.SetData(spirv);
+
+  Pipeline::ShaderInfo unoptimized(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo optimized(&shader, kShaderTypeCompute);
+  optimized.SetShaderOptimizations({"--eliminate-dead-code-aggressive"});
+
+  ShaderCompiler sc;
+  Result r;
+  std::vector<uint32_t> unopt_binary;
+  std::tie(r, unopt_binary) = sc.Compile(&unoptimized, ShaderMap());
+  ASSERT_TRUE(r.IsSuccess());
+
+  std::vector<uint32_t> opt_binary;
+  std::tie(r, opt_binary) = sc.Compile(&optimized, ShaderMap());
+  ASSERT_TRUE(r.IsSuccess());
+  EXPECT_NE(opt_binary.size(), unopt_binary.size());
+}
 #endif  // AMBER_ENABLE_SPIRV_TOOLS
 
 TEST_F(ShaderCompilerTest, CompilesSpirvHex) {

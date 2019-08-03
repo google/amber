@@ -23,8 +23,6 @@
 
 namespace amber {
 
-enum class ExecutionType { kExecute = 0, kPipelineCreateOnly };
-
 /// The executor is responsible for running the given script against an engine.
 class Executor {
  public:
@@ -37,12 +35,13 @@ class Executor {
   /// used as the shader binary.
   Result Execute(Engine* engine,
                  const Script* script,
-                 Delegate* delegate,
                  const ShaderMap& map,
-                 ExecutionType executionType);
+                 Options* options);
 
  private:
-  Result CompileShaders(const Script* script, const ShaderMap& shader_map);
+  Result CompileShaders(const Script* script,
+                        const ShaderMap& shader_map,
+                        Options* options);
   Result ExecuteCommand(Engine* engine, Command* cmd);
 
   Verifier verifier_;
