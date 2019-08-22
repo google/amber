@@ -45,6 +45,9 @@ class Format {
     FormatMode mode;
     uint8_t num_bits;
 
+    /// Returns the number of bytes used to store this component.
+    size_t SizeInBytes() const { return num_bits / 8; }
+
     /// Is this component represented by an 8 bit signed integer. (This includes
     /// int, scaled, rgb and norm values).
     bool IsInt8() const {

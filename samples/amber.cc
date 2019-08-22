@@ -56,6 +56,7 @@ struct Options {
   bool log_graphics_calls = false;
   bool log_graphics_calls_time = false;
   bool log_execute_calls = false;
+  bool disable_spirv_validation = false;
   amber::EngineType engine = amber::kEngineTypeVulkan;
   std::string spv_env;
 };
@@ -86,6 +87,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   --log-graphics-calls      -- Log graphics API calls (only for Vulkan so far).
   --log-graphics-calls-time -- Log timing of graphics API calls timing (Vulkan only).
   --log-execute-calls       -- Log each execute call before run.
+  --disable-spirv-val       -- Disable SPIR-V validation.
   -h                        -- This help text.
 )";
 
@@ -193,6 +195,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->log_graphics_calls_time = true;
     } else if (arg == "--log-execute-calls") {
       opts->log_execute_calls = true;
+    } else if (arg == "--disable-spirv-val") {
+      opts->disable_spirv_validation = true;
     } else if (arg.size() > 0 && arg[0] == '-') {
       std::cerr << "Unrecognized option " << arg << std::endl;
       return false;
@@ -352,8 +356,11 @@ int main(int argc, const char** argv) {
   amber::Options amber_options;
   amber_options.engine = options.engine;
   amber_options.spv_env = options.spv_env;
-  amber_options.pipeline_create_only = options.pipeline_create_only;
+  amber_options.execution_type = options.pipeline_create_only
+                                     ? amber::ExecutionType::kPipelineCreateOnly
+                                     : amber::ExecutionType::kExecute;
   amber_options.delegate = &delegate;
+  amber_options.disable_spirv_validation = options.disable_spirv_validation;
 
   std::set<std::string> required_features;
   std::set<std::string> required_device_extensions;

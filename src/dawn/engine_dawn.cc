@@ -1463,26 +1463,25 @@ Result EngineDawn::DoPatchParameterVertices(
 Result EngineDawn::DoBuffer(const BufferCommand* command) {
   Result result;
 
-  ::dawn::Buffer* dawn_buffer;
+  ::dawn::Buffer* dawn_buffer = nullptr;
+
+  const auto descriptor_set = command->GetDescriptorSet();
+  const auto binding = command->GetBinding();
 
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
   if (render_pipeline) {
-    if (render_pipeline->buffer_map.find(
-            {command->GetDescriptorSet(), command->GetBinding()}) !=
-        render_pipeline->buffer_map.end()) {
-      auto dawn_buffer_index = render_pipeline->buffer_map[{
-          command->GetDescriptorSet(), command->GetBinding()}];
+    auto where = render_pipeline->buffer_map.find({descriptor_set, binding});
+    if (where != render_pipeline->buffer_map.end()) {
+      const auto dawn_buffer_index = where->second;
       dawn_buffer = &render_pipeline->buffers[dawn_buffer_index];
     }
   }
 
   ComputePipelineInfo* compute_pipeline = GetComputePipeline(command);
   if (compute_pipeline) {
-    if (compute_pipeline->buffer_map.find(
-            {command->GetDescriptorSet(), command->GetBinding()}) !=
-        compute_pipeline->buffer_map.end()) {
-      auto dawn_buffer_index = compute_pipeline->buffer_map[{
-          command->GetDescriptorSet(), command->GetBinding()}];
+    auto where = compute_pipeline->buffer_map.find({descriptor_set, binding});
+    if (where != compute_pipeline->buffer_map.end()) {
+      const auto dawn_buffer_index = where->second;
       dawn_buffer = &compute_pipeline->buffers[dawn_buffer_index];
     }
   }
@@ -1491,6 +1490,11 @@ Result EngineDawn::DoBuffer(const BufferCommand* command) {
     return Result("DoBuffer: invoked on invalid or missing pipeline");
   if (!command->IsSSBO() && !command->IsUniform())
     return Result("DoBuffer: only supports SSBO and uniform buffer type");
+  if (!dawn_buffer) {
+    return Result("DoBuffer: no Dawn buffer at descriptor set " +
+                  std::to_string(descriptor_set) + " and binding " +
+                  std::to_string(binding));
+  }
 
   Buffer* amber_buffer = command->GetBuffer();
   if (amber_buffer) {

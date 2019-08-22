@@ -212,17 +212,27 @@ class DrawArraysCommand : public PipelineCommand {
 /// A command to compare two buffers.
 class CompareBufferCommand : public Command {
  public:
+  enum class Comparator { kEq, kRmse };
+
   CompareBufferCommand(Buffer* buffer_1, Buffer* buffer_2);
   ~CompareBufferCommand() override;
 
   Buffer* GetBuffer1() const { return buffer_1_; }
   Buffer* GetBuffer2() const { return buffer_2_; }
 
+  void SetComparator(Comparator type) { comparator_ = type; }
+  Comparator GetComparator() const { return comparator_; }
+
+  void SetTolerance(float tolerance) { tolerance_ = tolerance; }
+  float GetTolerance() const { return tolerance_; }
+
   std::string ToString() const override { return "CompareBufferCommand"; }
 
  private:
   Buffer* buffer_1_;
   Buffer* buffer_2_;
+  float tolerance_ = 0.0;
+  Comparator comparator_ = Comparator::kEq;
 };
 
 /// Command to execute a compute command.

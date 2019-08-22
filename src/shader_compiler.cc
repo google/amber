@@ -47,7 +47,9 @@ namespace amber {
 
 ShaderCompiler::ShaderCompiler() = default;
 
-ShaderCompiler::ShaderCompiler(const std::string& env) : spv_env_(env) {}
+ShaderCompiler::ShaderCompiler(const std::string& env,
+                               bool disable_spirv_validation)
+    : spv_env_(env), disable_spirv_validation_(disable_spirv_validation) {}
 
 ShaderCompiler::~ShaderCompiler() = default;
 
@@ -143,9 +145,11 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
   }
 
 #if AMBER_ENABLE_SPIRV_TOOLS
-  spvtools::ValidatorOptions options;
-  if (!tools.Validate(results.data(), results.size(), options))
-    return {Result("Invalid shader: " + spv_errors), {}};
+  if (!disable_spirv_validation_) {
+    spvtools::ValidatorOptions options;
+    if (!tools.Validate(results.data(), results.size(), options))
+      return {Result("Invalid shader: " + spv_errors), {}};
+  }
 
   // Optimize the shader if any optimizations were specified.
   if (!shader_info->GetShaderOptimizations().empty()) {
