@@ -75,7 +75,8 @@ SUPPRESSIONS_DAWN = [
   # Dawn does not support tessellation or geometry shader
   "draw_triangle_list_using_geom_shader.vkscript",
   "draw_triangle_list_using_tessellation.vkscript",
-  # Dawn requires a fragmentStage now and in the medium term
+  # Dawn requires a fragmentStage now and in the medium term.
+  # temp dawn limitation issue #556
   "position_to_ssbo.amber",
   # DrawRect command is not supported in a pipeline with more than one vertex
   # buffer attached
@@ -88,10 +89,16 @@ SUPPRESSIONS_DAWN = [
   # Max number of descriptor sets is 4 in Dawn
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
 
-  # Dawn does not support doEntryPoint
+  # Dawn entry point has to be main so it does not support doEntryPoint or
+  # opencl (using "main" as entry point in invalid),
+  # temp dawn limitation, issue #607
   "compute_ssbo_with_entrypoint_command.vkscript",
   "entry_point.amber",
   "non_default_entry_point.amber",
+  "opencl_bind_buffer.amber",
+  "opencl_c_copy.amber",
+  "opencl_set_arg.amber",
+  "shader_specialization.amber",
   # framebuffer format is not supported according to table "Mandatory format
   # support" in Vulkan spec: VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT = 0
   "draw_triangle_list_in_r16g16b16a16_snorm_color_frame.vkscript",
@@ -104,10 +111,6 @@ SUPPRESSIONS_DAWN = [
   "multiple_ssbo_update_with_graphics_pipeline.vkscript",
   # Currently not working, under investigation
   "draw_triangle_list_with_depth.vkscript",
-  "opencl_bind_buffer.amber",
-  "opencl_c_copy.amber",
-  "opencl_set_arg.amber",
-  "shader_specialization.amber",
 ]
 
 class TestCase:
