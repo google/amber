@@ -76,7 +76,7 @@ SUPPRESSIONS_DAWN = [
   "draw_triangle_list_using_geom_shader.vkscript",
   "draw_triangle_list_using_tessellation.vkscript",
   # Dawn requires a fragmentStage now and in the medium term.
-  # temp dawn limitation issue #556
+  # issue #556 (temp dawn limitation)
   "position_to_ssbo.amber",
   # DrawRect command is not supported in a pipeline with more than one vertex
   # buffer attached
@@ -88,10 +88,9 @@ SUPPRESSIONS_DAWN = [
   "probe_no_compute_with_ssbo.vkscript",
   # Max number of descriptor sets is 4 in Dawn
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
-
-  # Dawn entry point has to be main so it does not support doEntryPoint or
-  # opencl (using "main" as entry point in invalid),
-  # temp dawn limitation, issue #607
+  # Dawn entry point has to be "main" as a result it does not support
+  # doEntryPoint or opencl (in opencl using "main" as entry point is invalid).
+  # issue #607 (temp dawn limitation)
   "compute_ssbo_with_entrypoint_command.vkscript",
   "entry_point.amber",
   "non_default_entry_point.amber",
