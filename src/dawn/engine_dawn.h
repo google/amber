@@ -79,7 +79,7 @@ class EngineDawn : public Engine {
   // created yet. Used in the Graphics pipeline creation.
   Result AttachBuffersAndTextures(RenderPipelineInfo* render_pipeline);
   // Creates and attaches index, vertex, storage, uniform and depth-stencil
-  // buffers.Used in the Compute pipeline creation.
+  // buffers. Used in the Compute pipeline creation.
   Result AttachBuffers(ComputePipelineInfo* compute_pipeline);
   // Creates and submits a command to copy dawn textures back to amber color
   // attachments.

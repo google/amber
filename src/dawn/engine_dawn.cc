@@ -104,7 +104,8 @@ struct DawnPipelineHelper {
   Result CreateRenderPipelineDescriptor(
       const RenderPipelineInfo& render_pipeline,
       const ::dawn::Device& device,
-      const bool ignore_vertex_and_Index_buffers);
+      const bool ignore_vertex_and_Index_buffers,
+      const PipelineData* pipeline_data);
   Result CreateRenderPassDescriptor(
       const RenderPipelineInfo& render_pipeline,
       const ::dawn::Device& device,
@@ -114,7 +115,7 @@ struct DawnPipelineHelper {
   ::dawn::RenderPassDescriptor renderPassDescriptor;
 
   ComboVertexInputDescriptor vertexInputDescriptor;
-  ::dawn::RasterizationStateDescriptor cRasterizationState;
+  ::dawn::RasterizationStateDescriptor rasterizationState;
 
  private:
   ::dawn::PipelineStageDescriptor fragmentStage;
@@ -126,12 +127,17 @@ struct DawnPipelineHelper {
   ::dawn::DepthStencilStateDescriptor depthStencilState;
   ::dawn::ColorStateDescriptor colorStatesDescriptor[kMaxColorAttachments];
   ::dawn::ColorStateDescriptor colorStateDescriptor;
-  ::dawn::StencilStateFaceDescriptor stencilFace;
-  ::dawn::BlendDescriptor blend;
+  ::dawn::StencilStateFaceDescriptor stencil_front;
+  ::dawn::StencilStateFaceDescriptor stencil_back;
+  ::dawn::BlendDescriptor alpha_blend;
+  ::dawn::BlendDescriptor color_blend;
   std::string vertexEntryPoint;
   std::string fragmentEntryPoint;
   std::array<::dawn::RenderPassColorAttachmentDescriptor, kMaxColorAttachments>
       colorAttachmentsInfo;
+  ::dawn::TextureDescriptor depthStencilDescriptor;
+  ::dawn::Texture depthStencilTexture;
+  ::dawn::TextureView depthStencilView;
 };
 
 // Creates a device-side texture, and returns it through |result_ptr|.
@@ -498,26 +504,6 @@ struct BindingInitializationHelper {
   return device.CreatePipelineLayout(&descriptor);
 }
 
-// Creates a default depth stencil view.
-// Copied from Dawn utils source code.
-::dawn::TextureView CreateDefaultDepthStencilView(
-    const ::dawn::Device& device,
-    const RenderPipelineInfo& render_pipeline,
-    const ::dawn::TextureFormat depth_stencil_format) {
-  ::dawn::TextureDescriptor descriptor;
-  descriptor.dimension = ::dawn::TextureDimension::e2D;
-  descriptor.size.width = render_pipeline.pipeline->GetFramebufferWidth();
-  descriptor.size.height = render_pipeline.pipeline->GetFramebufferHeight();
-  descriptor.size.depth = 1;
-  descriptor.arrayLayerCount = 1;
-  descriptor.sampleCount = 1;
-  descriptor.format = depth_stencil_format;
-  descriptor.mipLevelCount = 1;
-  descriptor.usage = ::dawn::TextureUsageBit::OutputAttachment;
-  auto depthStencilTexture = device.CreateTexture(&descriptor);
-  return depthStencilTexture.CreateDefaultView();
-}
-
 // Converts an Amber format to a Dawn texture format, and sends the result out
 // through |dawn_format_ptr|.  If the conversion fails, return an error
 // result.
@@ -550,7 +536,9 @@ Result GetDawnTextureFormat(const ::amber::Format& amber_format,
     case FormatType::kB8G8R8A8_UNORM:
       dawn_format = ::dawn::TextureFormat::BGRA8Unorm;
       break;
-    // TODO(sarahM0): figure out what kD32_SFLOAT_S8_UINT converts to
+    case FormatType::kD32_SFLOAT_S8_UINT:
+      dawn_format = ::dawn::TextureFormat::Depth24PlusStencil8;
+      break;
     default:
       return Result(
           "Amber format " +
@@ -647,6 +635,137 @@ Result GetDawnTopology(const ::amber::Topology& amber_topology,
                     " is not supported in Dawn");
   }
   return {};
+}
+
+::dawn::CompareFunction GetDawnCompareOp(::amber::CompareOp op) {
+  switch (op) {
+    case CompareOp::kNever:
+      return ::dawn::CompareFunction::Never;
+    case CompareOp::kLess:
+      return ::dawn::CompareFunction::Less;
+    case CompareOp::kEqual:
+      return ::dawn::CompareFunction::Equal;
+    case CompareOp::kLessOrEqual:
+      return ::dawn::CompareFunction::LessEqual;
+    case CompareOp::kGreater:
+      return ::dawn::CompareFunction::Greater;
+    case CompareOp::kNotEqual:
+      return ::dawn::CompareFunction::NotEqual;
+    case CompareOp::kGreaterOrEqual:
+      return ::dawn::CompareFunction::GreaterEqual;
+    case CompareOp::kAlways:
+      return ::dawn::CompareFunction::Always;
+    default:
+      return ::dawn::CompareFunction::Never;
+  }
+}
+
+::dawn::StencilOperation GetDawnStencilOp(::amber::StencilOp op) {
+  switch (op) {
+    case StencilOp::kKeep:
+      return ::dawn::StencilOperation::Keep;
+    case StencilOp::kZero:
+      return ::dawn::StencilOperation::Zero;
+    case StencilOp::kReplace:
+      return ::dawn::StencilOperation::Replace;
+    case StencilOp::kIncrementAndClamp:
+      return ::dawn::StencilOperation::IncrementClamp;
+    case StencilOp::kDecrementAndClamp:
+      return ::dawn::StencilOperation::DecrementClamp;
+    case StencilOp::kInvert:
+      return ::dawn::StencilOperation::Invert;
+    case StencilOp::kIncrementAndWrap:
+      return ::dawn::StencilOperation::IncrementWrap;
+    case StencilOp::kDecrementAndWrap:
+      return ::dawn::StencilOperation::DecrementWrap;
+    default:
+      return ::dawn::StencilOperation::Keep;
+  }
+}
+
+::dawn::BlendFactor GetDawnBlendFactor(::amber::BlendFactor factor) {
+  switch (factor) {
+    case BlendFactor::kZero:
+      return ::dawn::BlendFactor::Zero;
+    case BlendFactor::kOne:
+      return ::dawn::BlendFactor::One;
+    case BlendFactor::kSrcColor:
+      return ::dawn::BlendFactor::SrcColor;
+    case BlendFactor::kOneMinusSrcColor:
+      return ::dawn::BlendFactor::OneMinusSrcColor;
+    case BlendFactor::kDstColor:
+      return ::dawn::BlendFactor::DstColor;
+    case BlendFactor::kOneMinusDstColor:
+      return ::dawn::BlendFactor::OneMinusDstColor;
+    case BlendFactor::kSrcAlpha:
+      return ::dawn::BlendFactor::SrcAlpha;
+    case BlendFactor::kOneMinusSrcAlpha:
+      return ::dawn::BlendFactor::OneMinusSrcAlpha;
+    case BlendFactor::kDstAlpha:
+      return ::dawn::BlendFactor::DstAlpha;
+    case BlendFactor::kOneMinusDstAlpha:
+      return ::dawn::BlendFactor::OneMinusDstAlpha;
+    case BlendFactor::kSrcAlphaSaturate:
+      return ::dawn::BlendFactor::SrcAlphaSaturated;
+    default:
+      assert(false && "Dawn::Unknown BlendFactor");
+      return ::dawn::BlendFactor::One;
+  }
+}
+
+::dawn::BlendOperation GetDawnBlendOperation(BlendOp op) {
+  switch (op) {
+    case BlendOp::kAdd:
+      return ::dawn::BlendOperation::Add;
+    case BlendOp::kSubtract:
+      return ::dawn::BlendOperation::Subtract;
+    case BlendOp::kReverseSubtract:
+      return ::dawn::BlendOperation::ReverseSubtract;
+    case BlendOp::kMin:
+      return ::dawn::BlendOperation::Min;
+    case BlendOp::kMax:
+      return ::dawn::BlendOperation::Max;
+    default:
+      assert(false && "Dawn::Unknown BlendOp");
+      return ::dawn::BlendOperation::Add;
+  }
+}
+
+::dawn::ColorWriteMask GetDawnColorWriteMask(uint8_t amber_color_write_mask) {
+  if (amber_color_write_mask == 0x00000000)
+    return ::dawn::ColorWriteMask::None;
+  else if (amber_color_write_mask == 0x00000001)
+    return ::dawn::ColorWriteMask::Red;
+  else if (amber_color_write_mask == 0x00000002)
+    return ::dawn::ColorWriteMask::Green;
+  else if (amber_color_write_mask == 0x00000004)
+    return ::dawn::ColorWriteMask::Blue;
+  else if (amber_color_write_mask == 0x00000008)
+    return ::dawn::ColorWriteMask::Alpha;
+  else if (amber_color_write_mask == 0x0000000F)
+    return ::dawn::ColorWriteMask::All;
+  else
+    assert(false && "Dawn::Unknown ColorWriteMask");
+  return ::dawn::ColorWriteMask::All;
+}
+
+::dawn::FrontFace GetDawnFrontFace(FrontFace amber_front_face) {
+  return amber_front_face == FrontFace::kClockwise ? ::dawn::FrontFace::CW
+                                                   : ::dawn::FrontFace::CCW;
+}
+
+::dawn::CullMode GetDawnCullMode(CullMode amber_cull_mode) {
+  switch (amber_cull_mode) {
+    case CullMode::kNone:
+      return ::dawn::CullMode::None;
+    case CullMode::kFront:
+      return ::dawn::CullMode::Front;
+    case CullMode::kBack:
+      return ::dawn::CullMode::Back;
+    default:
+      assert(false && "Dawn::Unknown CullMode");
+      return ::dawn::CullMode::None;
+  }
 }
 
 EngineDawn::EngineDawn() : Engine() {}
@@ -777,8 +896,8 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
     return Result("Clear invoked on invalid or missing render pipeline");
 
   DawnPipelineHelper helper;
-  result =
-      helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_, false);
+  result = helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_,
+                                                 false, nullptr);
   if (!result.IsSuccess())
     return result;
   result = helper.CreateRenderPassDescriptor(
@@ -810,7 +929,8 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
 Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     const RenderPipelineInfo& render_pipeline,
     const ::dawn::Device& device,
-    const bool ignore_vertex_and_Index_buffers) {
+    const bool ignore_vertex_and_Index_buffers,
+    const PipelineData* pipeline_data) {
   Result result;
 
   auto* amber_format =
@@ -918,29 +1038,62 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   renderPipelineDescriptor.fragmentStage = std::move(&fragmentStage);
 
   // Set defaults for the rasterization state descriptor.
-  {
-    cRasterizationState.frontFace = ::dawn::FrontFace::CCW;
-    cRasterizationState.cullMode = ::dawn::CullMode::None;
-
-    cRasterizationState.depthBias = 0;
-    cRasterizationState.depthBiasSlopeScale = 0.0;
-    cRasterizationState.depthBiasClamp = 0.0;
-    renderPipelineDescriptor.rasterizationState = &cRasterizationState;
+  if (pipeline_data == nullptr) {
+    rasterizationState.frontFace = ::dawn::FrontFace::CCW;
+    rasterizationState.cullMode = ::dawn::CullMode::None;
+    rasterizationState.depthBias = 0;
+    rasterizationState.depthBiasSlopeScale = 0.0;
+    rasterizationState.depthBiasClamp = 0.0;
+    renderPipelineDescriptor.rasterizationState = &rasterizationState;
+  } else {
+    rasterizationState.frontFace =
+        GetDawnFrontFace(pipeline_data->GetFrontFace());
+    rasterizationState.cullMode = GetDawnCullMode(pipeline_data->GetCullMode());
+    rasterizationState.depthBias = pipeline_data->GetEnableDepthBias();
+    rasterizationState.depthBiasSlopeScale =
+        pipeline_data->GetDepthBiasSlopeFactor();
+    rasterizationState.depthBiasClamp = pipeline_data->GetDepthBiasClamp();
+    renderPipelineDescriptor.rasterizationState = &rasterizationState;
   }
 
   // Set defaults for the color state descriptors.
-  renderPipelineDescriptor.colorStateCount =
-      render_pipeline.pipeline->GetColorAttachments().size();
-  blend.operation = ::dawn::BlendOperation::Add;
-  blend.srcFactor = ::dawn::BlendFactor::One;
-  blend.dstFactor = ::dawn::BlendFactor::Zero;
-  colorStateDescriptor.format = fb_format;
-  colorStateDescriptor.alphaBlend = blend;
-  colorStateDescriptor.colorBlend = blend;
-  colorStateDescriptor.writeMask = ::dawn::ColorWriteMask::All;
+  if (pipeline_data == nullptr) {
+    renderPipelineDescriptor.colorStateCount =
+        render_pipeline.pipeline->GetColorAttachments().size();
+    alpha_blend.operation = ::dawn::BlendOperation::Add;
+    alpha_blend.srcFactor = ::dawn::BlendFactor::One;
+    alpha_blend.dstFactor = ::dawn::BlendFactor::Zero;
+    colorStateDescriptor.writeMask = ::dawn::ColorWriteMask::All;
+    colorStateDescriptor.format = fb_format;
+    colorStateDescriptor.alphaBlend = alpha_blend;
+    colorStateDescriptor.colorBlend = alpha_blend;
+  } else {
+    renderPipelineDescriptor.colorStateCount =
+        render_pipeline.pipeline->GetColorAttachments().size();
+
+    alpha_blend.operation =
+        GetDawnBlendOperation(pipeline_data->GetColorBlendOp());
+    alpha_blend.srcFactor =
+        GetDawnBlendFactor(pipeline_data->GetSrcAlphaBlendFactor());
+    alpha_blend.dstFactor =
+        GetDawnBlendFactor(pipeline_data->GetDstAlphaBlendFactor());
+
+    color_blend.operation =
+        GetDawnBlendOperation(pipeline_data->GetAlphaBlendOp());
+    color_blend.srcFactor =
+        GetDawnBlendFactor(pipeline_data->GetSrcColorBlendFactor());
+    color_blend.dstFactor =
+        GetDawnBlendFactor(pipeline_data->GetDstAlphaBlendFactor());
+
+    colorStateDescriptor.writeMask =
+        GetDawnColorWriteMask(pipeline_data->GetColorWriteMask());
+
+    colorStateDescriptor.format = fb_format;
+    colorStateDescriptor.alphaBlend = alpha_blend;
+    colorStateDescriptor.colorBlend = color_blend;
+  }
+
   for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
-    colorStatesDescriptor[i] = colorStateDescriptor;
-    colorStates[i] = &colorStatesDescriptor[i];
     ::dawn::TextureFormat fb_format{};
     {
       if (i < render_pipeline.pipeline->GetColorAttachments().size()) {
@@ -948,7 +1101,8 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
                                  .buffer->GetFormat();
         if (!amber_format)
           return Result(
-              "AttachBuffersAndTextures: One Color attachment has no format!");
+              "AttachBuffersAndTextures: One Color attachment has no "
+              "format!");
         result = GetDawnTextureFormat(*amber_format, &fb_format);
         if (!result.IsSuccess())
           return result;
@@ -956,23 +1110,59 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
         fb_format = ::dawn::TextureFormat::RGBA8Unorm;
       }
     }
+    colorStatesDescriptor[i] = colorStateDescriptor;
+    colorStates[i] = &colorStatesDescriptor[i];
     colorStates[i]->format = fb_format;
   }
   renderPipelineDescriptor.colorStates = &colorStates[0];
 
   // Set defaults for the depth stencil state descriptors.
-  stencilFace.compare = ::dawn::CompareFunction::Always;
-  stencilFace.failOp = ::dawn::StencilOperation::Keep;
-  stencilFace.depthFailOp = ::dawn::StencilOperation::Keep;
-  stencilFace.passOp = ::dawn::StencilOperation::Keep;
-  depthStencilState.depthWriteEnabled = false;
-  depthStencilState.depthCompare = ::dawn::CompareFunction::Always;
-  depthStencilState.stencilBack = stencilFace;
-  depthStencilState.stencilFront = stencilFace;
-  depthStencilState.stencilReadMask = 0xff;
-  depthStencilState.stencilWriteMask = 0xff;
-  depthStencilState.format = depth_stencil_format;
-  renderPipelineDescriptor.depthStencilState = &depthStencilState;
+  if (pipeline_data == nullptr) {
+    stencil_front.compare = ::dawn::CompareFunction::Always;
+    stencil_front.failOp = ::dawn::StencilOperation::Keep;
+    stencil_front.depthFailOp = ::dawn::StencilOperation::Keep;
+    stencil_front.passOp = ::dawn::StencilOperation::Keep;
+    depthStencilState.depthWriteEnabled = false;
+    depthStencilState.depthCompare = ::dawn::CompareFunction::Always;
+    depthStencilState.stencilBack = stencil_front;
+    depthStencilState.stencilFront = stencil_front;
+    depthStencilState.stencilReadMask = 0xff;
+    depthStencilState.stencilWriteMask = 0xff;
+    depthStencilState.format = depth_stencil_format;
+    renderPipelineDescriptor.depthStencilState = &depthStencilState;
+  } else {
+    stencil_front.compare =
+        GetDawnCompareOp(pipeline_data->GetFrontCompareOp());
+    stencil_front.failOp = GetDawnStencilOp(pipeline_data->GetFrontFailOp());
+    stencil_front.depthFailOp =
+        GetDawnStencilOp(pipeline_data->GetFrontDepthFailOp());
+    stencil_front.passOp = GetDawnStencilOp(pipeline_data->GetFrontPassOp());
+
+    stencil_back.compare = GetDawnCompareOp(pipeline_data->GetBackCompareOp());
+    stencil_back.failOp = GetDawnStencilOp(pipeline_data->GetBackFailOp());
+    stencil_back.depthFailOp =
+        GetDawnStencilOp(pipeline_data->GetBackDepthFailOp());
+    stencil_back.passOp = GetDawnStencilOp(pipeline_data->GetBackPassOp());
+
+    depthStencilState.depthWriteEnabled = pipeline_data->GetEnableDepthWrite();
+    depthStencilState.depthCompare =
+        GetDawnCompareOp(pipeline_data->GetDepthCompareOp());
+    depthStencilState.stencilFront = stencil_front;
+    depthStencilState.stencilBack = stencil_back;
+    // WebGPU doesn't support separate front and back stencil mask, they has to
+    // be the same
+    depthStencilState.stencilReadMask =
+        (pipeline_data->GetFrontCompareMask() ==
+         pipeline_data->GetBackCompareMask())
+            ? pipeline_data->GetFrontCompareMask()
+            : 0xff;
+    depthStencilState.stencilWriteMask = (pipeline_data->GetBackWriteMask() ==
+                                          pipeline_data->GetFrontWriteMask())
+                                             ? pipeline_data->GetBackWriteMask()
+                                             : 0xff;
+    depthStencilState.format = depth_stencil_format;
+    renderPipelineDescriptor.depthStencilState = &depthStencilState;
+  }
 
   return {};
 }
@@ -1023,8 +1213,21 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
     depth_stencil_format = ::dawn::TextureFormat::Depth24PlusStencil8;
   }
 
-  ::dawn::TextureView depthStencilView = CreateDefaultDepthStencilView(
-      device, render_pipeline, depth_stencil_format);
+  depthStencilDescriptor.dimension = ::dawn::TextureDimension::e2D;
+  depthStencilDescriptor.size.width =
+      render_pipeline.pipeline->GetFramebufferWidth();
+  depthStencilDescriptor.size.height =
+      render_pipeline.pipeline->GetFramebufferHeight();
+  depthStencilDescriptor.size.depth = 1;
+  depthStencilDescriptor.arrayLayerCount = 1;
+  depthStencilDescriptor.sampleCount = 1;
+  depthStencilDescriptor.format = depth_stencil_format;
+  depthStencilDescriptor.mipLevelCount = 1;
+  depthStencilDescriptor.usage = ::dawn::TextureUsageBit::OutputAttachment |
+                                 ::dawn::TextureUsageBit::CopySrc;
+  depthStencilTexture = device.CreateTexture(&depthStencilDescriptor);
+  depthStencilView = depthStencilTexture.CreateDefaultView();
+
   if (depthStencilView.Get() != nullptr) {
     depthStencilAttachmentInfo.attachment = depthStencilView;
     renderPassDescriptor.depthStencilAttachment = &depthStencilAttachmentInfo;
@@ -1091,9 +1294,9 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
 
   auto vertex_buffer = CreateBufferFromData(
       *device_, vertexData, sizeof(vertexData), ::dawn::BufferUsageBit::Vertex);
-
   DawnPipelineHelper helper;
-  helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_, true);
+  helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_, true,
+                                        command->GetPipelineData());
   helper.CreateRenderPassDescriptor(*render_pipeline, *device_, texture_views_,
                                     ::dawn::LoadOp::Load);
   ::dawn::RenderPipelineDescriptor* renderPipelineDescriptor =
@@ -1153,8 +1356,8 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
     instance_count = 1;
 
   DawnPipelineHelper helper;
-  result =
-      helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_, false);
+  result = helper.CreateRenderPipelineDescriptor(
+      *render_pipeline, *device_, false, command->GetPipelineData());
   if (!result.IsSuccess())
     return result;
   result = helper.CreateRenderPassDescriptor(
