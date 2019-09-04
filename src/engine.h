@@ -31,7 +31,7 @@ namespace amber {
 /// EngineData stores information used during engine execution.
 struct EngineData {
   /// The timeout to use for fences, in milliseconds.
-  uint32_t fence_timeout_ms = 100;
+  uint32_t fence_timeout_ms = 1000;
 };
 
 /// Abstract class which describes a backing engine for Amber.

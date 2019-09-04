@@ -238,8 +238,6 @@ logicOp)";
 
   const auto& extensions = ToStub(engine.get())->GetDeviceExtensions();
   ASSERT_EQ(static_cast<size_t>(0U), extensions.size());
-
-  EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredExtensions) {
@@ -269,8 +267,6 @@ VK_KHR_variable_pointers)";
   ASSERT_EQ(2U, extensions.size());
   EXPECT_EQ("VK_KHR_storage_buffer_storage_class", extensions[0]);
   EXPECT_EQ("VK_KHR_variable_pointers", extensions[1]);
-
-  EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredFrameBuffers) {
@@ -298,8 +294,6 @@ depthstencil D24_UNORM_S8_UINT)";
 
   const auto& extensions = ToStub(engine.get())->GetDeviceExtensions();
   ASSERT_EQ(static_cast<size_t>(0U), extensions.size());
-
-  EXPECT_EQ(100U, ToStub(engine.get())->GetFenceTimeoutMs());
 }
 
 TEST_F(VkScriptExecutorTest, ExecutesRequiredFenceTimeout) {
