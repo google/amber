@@ -144,13 +144,18 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
     return {Result("Invalid shader format"), results};
   }
 
-#if AMBER_ENABLE_SPIRV_TOOLS
+  // Validate the shader, but have an option to disable that.
+  // Always use the data member, to avoid an unused-variable warning
+  // when not using SPIRV-Tools support.
   if (!disable_spirv_validation_) {
+#if AMBER_ENABLE_SPIRV_TOOLS
     spvtools::ValidatorOptions options;
     if (!tools.Validate(results.data(), results.size(), options))
       return {Result("Invalid shader: " + spv_errors), {}};
+#endif  // AMBER_ENABLE_SPIRV_TOOLS
   }
 
+#if AMBER_ENABLE_SPIRV_TOOLS
   // Optimize the shader if any optimizations were specified.
   if (!shader_info->GetShaderOptimizations().empty()) {
     spvtools::Optimizer optimizer(target_env);
