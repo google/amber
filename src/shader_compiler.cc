@@ -162,6 +162,9 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
     if (!optimizer.Run(results.data(), results.size(), &results))
       return {Result("Optimizations failed: " + spv_errors), {}};
   }
+#else
+  // disable warning: private field 'disable_spirv_validation_' is not used
+  (void)disable_spirv_validation_;
 #endif  // AMBER_ENABLE_SPIRV_TOOLS
 
   return {{}, results};
