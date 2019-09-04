@@ -193,7 +193,7 @@ Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
   for (const auto val : diffs)
     sum += (val * val);
 
-  sum /= diffs.size();
+  sum /= double(diffs.size());
   double rmse = std::sqrt(sum);
   if (rmse > static_cast<double>(tolerance)) {
     return Result("Root Mean Square Error of " + std::to_string(rmse) +
