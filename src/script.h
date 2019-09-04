@@ -58,6 +58,11 @@ class Script : public RecipeImpl {
     return engine_info_.required_instance_extensions;
   }
 
+  /// Sets the fence timeout to |timeout_ms|.
+  void SetFenceTimeout(uint32_t timeout_ms) override {
+    engine_data_.fence_timeout_ms = timeout_ms;
+  }
+
   /// Adds |pipeline| to the list of known pipelines. The |pipeline| must have
   /// a unique name over all pipelines in the script.
   Result AddPipeline(std::unique_ptr<Pipeline> pipeline) {

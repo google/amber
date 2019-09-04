@@ -45,4 +45,9 @@ std::vector<std::string> Recipe::GetRequiredInstanceExtensions() const {
                : std::vector<std::string>();
 }
 
+void Recipe::SetFenceTimeout(uint32_t timeout_ms) {
+  if (impl_)
+    impl_->SetFenceTimeout(timeout_ms);
+}
+
 }  // namespace amber
