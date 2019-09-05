@@ -1030,7 +1030,7 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   // Set defaults for the vertex stage descriptor.
   vertexStage.module = render_pipeline.vertex_shader;
   vertexStage.entryPoint = vertexEntryPoint.c_str();
-  renderPipelineDescriptor.vertexStage = &vertexStage;
+  renderPipelineDescriptor.vertexStage = vertexStage;
 
   // Set defaults for the fragment stage descriptor.
   fragmentStage.module = render_pipeline.fragment_shader;
@@ -1427,7 +1427,7 @@ Result EngineDawn::DoCompute(const ComputeCommand* command) {
   ::dawn::PipelineStageDescriptor pipelineStageDescriptor;
   pipelineStageDescriptor.module = compute_pipeline->compute_shader;
   pipelineStageDescriptor.entryPoint = "main";
-  computePipelineDescriptor.computeStage = &pipelineStageDescriptor;
+  computePipelineDescriptor.computeStage = pipelineStageDescriptor;
   ::dawn::ComputePipeline pipeline =
       device_->CreateComputePipeline(&computePipelineDescriptor);
   ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
