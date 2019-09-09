@@ -194,18 +194,20 @@ function(amber_default_compile_options TARGET)
       -Wall
       -Werror
       -Wextra
-      -Wno-c++98-compat
-      -Wno-c++98-compat-pedantic
-      -Wno-format-pedantic
       -Wno-padded
       -Wno-switch-enum
       -Wno-unknown-pragmas
-      -Wno-unknown-warning-option
       -pedantic-errors
     )
 
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-      target_compile_options(${TARGET} PRIVATE -Weverything)
+      target_compile_options(${TARGET} PRIVATE
+        -Wno-c++98-compat
+        -Wno-c++98-compat-pedantic
+        -Wno-format-pedantic
+        -Wno-unknown-warning-option
+        -Weverything
+      )
     endif()
   endif()
 
