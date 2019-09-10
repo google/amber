@@ -28,7 +28,11 @@ enable_testing()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_CXX_STANDARD 11)
+if (${AMBER_USE_CLSPV})
+  set(CMAKE_CXX_STANDARD 14)
+else()
+  set(CMAKE_CXX_STANDARD 11)
+endif()
 
 include(CheckIncludeFile)
 include(GNUInstallDirs)
