@@ -47,6 +47,7 @@ struct Options {
   std::vector<amber::BufferInfo> buffer_to_dump;
   uint32_t engine_major = 1;
   uint32_t engine_minor = 0;
+  int32_t fence_timeout = -1;
   bool parse_only = false;
   bool pipeline_create_only = false;
   bool disable_validation_layer = false;
@@ -68,6 +69,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -ps                       -- Parse input files, create pipelines; Don't execute.
   -q                        -- Disable summary output.
   -d                        -- Disable validation layers.
+  -f <value>                -- Sets the fence timeout value to |value|
   -t <spirv_env>            -- The target SPIR-V environment e.g., spv1.3, vulkan1.1.
                                If a SPIR-V environment, assume the lowest version of Vulkan that
                                requires support of that version of SPIR-V.
@@ -143,6 +145,20 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
             << std::endl;
         return false;
       }
+    } else if (arg == "-f") {
+      ++i;
+      if (i >= args.size()) {
+        std::cerr << "Missing value for -f argument." << std::endl;
+        return false;
+      }
+
+      int32_t val = std::stoi(std::string(args[i]));
+      if (val < 0) {
+        std::cerr << "Fence timeout must be non-negative" << std::endl;
+        return false;
+      }
+      opts->fence_timeout = val;
+
     } else if (arg == "-t") {
       ++i;
       if (i >= args.size()) {
@@ -336,6 +352,9 @@ int main(int argc, const char** argv) {
       failures.push_back(file);
       continue;
     }
+
+    if (options.fence_timeout > -1)
+      recipe->SetFenceTimeout(static_cast<uint32_t>(options.fence_timeout));
 
     recipe_data.emplace_back();
     recipe_data.back().file = file;

@@ -160,8 +160,8 @@ Result MakeTexture(const ::dawn::Device& device,
   descriptor.format = format;
   descriptor.mipLevelCount = 1;
   descriptor.sampleCount = 1;
-  descriptor.usage = ::dawn::TextureUsageBit::CopySrc |
-                     ::dawn::TextureUsageBit::OutputAttachment;
+  descriptor.usage =
+      ::dawn::TextureUsage::CopySrc | ::dawn::TextureUsage::OutputAttachment;
   // TODO(dneto): Get a better message by using the Dawn error callback.
   *result_ptr = device.CreateTexture(&descriptor);
   if (*result_ptr)
@@ -187,8 +187,8 @@ Result MakeTexture(const ::dawn::Device& device,
   descriptor.format = format;
   descriptor.mipLevelCount = 1;
   descriptor.sampleCount = 1;
-  descriptor.usage = ::dawn::TextureUsageBit::CopySrc |
-                     ::dawn::TextureUsageBit::OutputAttachment;
+  descriptor.usage =
+      ::dawn::TextureUsage::CopySrc | ::dawn::TextureUsage::OutputAttachment;
 
   return device.CreateTexture(&descriptor);
 }
@@ -222,8 +222,8 @@ void HandleBufferMapCallback(DawnBufferMapAsyncStatus status,
     case DAWN_BUFFER_MAP_ASYNC_STATUS_FORCE32:
       map_result.result = Result("Buffer map for reading failed: unknown");
       break;
-    case DAWN_BUFFER_MAP_ASYNC_STATUS_CONTEXT_LOST:
-      map_result.result = Result("Buffer map for reading failed: context lost");
+    case DAWN_BUFFER_MAP_ASYNC_STATUS_DEVICE_LOST:
+      map_result.result = Result("Buffer map for reading failed: device lost");
       break;
   }
 }
@@ -240,7 +240,7 @@ uint32_t Align(uint32_t value, size_t alignment) {
 }  // namespace
 
 // Maps the given buffer.  Assumes the buffer has usage bit
-// ::dawn::BufferUsageBit::MapRead set.  Returns a MapResult structure, with
+// ::dawn::BufferUsage::MapRead set.  Returns a MapResult structure, with
 // the status saved in the |result| member and the host pointer to the mapped
 // data in the |data| member. Mapping a buffer can fail if the context is
 // lost, for example. In the failure case, the |data| member will be null.
@@ -313,7 +313,7 @@ Result EngineDawn::MapDeviceTextureToHostBuffer(
   ::dawn::BufferDescriptor descriptor;
   descriptor.size = size;
   descriptor.usage =
-      ::dawn::BufferUsageBit::CopyDst | ::dawn::BufferUsageBit::MapRead;
+      ::dawn::BufferUsage::CopyDst | ::dawn::BufferUsage::MapRead;
   ::dawn::Buffer copy_buffer = device.CreateBuffer(&descriptor);
   ::dawn::BufferCopyView copy_buffer_view =
       CreateBufferCopyView(copy_buffer, 0, dawn_row_pitch, 0);
@@ -375,7 +375,7 @@ Result EngineDawn::MapDeviceBufferToHostBuffer(
     ::dawn::BufferDescriptor descriptor;
     descriptor.size = host_buffer.buffer->GetSizeInBytes();
     descriptor.usage =
-        ::dawn::BufferUsageBit::CopyDst | ::dawn::BufferUsageBit::MapRead;
+        ::dawn::BufferUsage::CopyDst | ::dawn::BufferUsage::MapRead;
     const auto copy_device_buffer = device.CreateBuffer(&descriptor);
     const uint64_t source_offset = 0;
     const uint64_t destination_offset = 0;
@@ -407,10 +407,10 @@ Result EngineDawn::MapDeviceBufferToHostBuffer(
 ::dawn::Buffer CreateBufferFromData(const ::dawn::Device& device,
                                     const void* data,
                                     uint64_t size,
-                                    ::dawn::BufferUsageBit usage) {
+                                    ::dawn::BufferUsage usage) {
   ::dawn::BufferDescriptor descriptor;
   descriptor.size = size;
-  descriptor.usage = usage | ::dawn::BufferUsageBit::CopyDst;
+  descriptor.usage = usage | ::dawn::BufferUsage::CopyDst;
 
   ::dawn::Buffer buffer = device.CreateBuffer(&descriptor);
   if (data != nullptr)
@@ -478,7 +478,7 @@ struct BindingInitializationHelper {
 ::dawn::BindGroupLayout MakeBindGroupLayout(
     const ::dawn::Device& device,
     const std::vector<::dawn::BindGroupLayoutBinding>& bindingsInitializer) {
-  constexpr ::dawn::ShaderStageBit kNoStages{};
+  constexpr ::dawn::ShaderStage kNoStages{};
 
   std::vector<::dawn::BindGroupLayoutBinding> bindings;
   for (const ::dawn::BindGroupLayoutBinding& binding : bindingsInitializer) {
@@ -1030,7 +1030,7 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   // Set defaults for the vertex stage descriptor.
   vertexStage.module = render_pipeline.vertex_shader;
   vertexStage.entryPoint = vertexEntryPoint.c_str();
-  renderPipelineDescriptor.vertexStage = &vertexStage;
+  renderPipelineDescriptor.vertexStage = vertexStage;
 
   // Set defaults for the fragment stage descriptor.
   fragmentStage.module = render_pipeline.fragment_shader;
@@ -1223,10 +1223,10 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
   depthStencilDescriptor.sampleCount = 1;
   depthStencilDescriptor.format = depth_stencil_format;
   depthStencilDescriptor.mipLevelCount = 1;
-  depthStencilDescriptor.usage = ::dawn::TextureUsageBit::OutputAttachment |
-                                 ::dawn::TextureUsageBit::CopySrc;
+  depthStencilDescriptor.usage =
+      ::dawn::TextureUsage::OutputAttachment | ::dawn::TextureUsage::CopySrc;
   depthStencilTexture = device.CreateTexture(&depthStencilDescriptor);
-  depthStencilView = depthStencilTexture.CreateDefaultView();
+  depthStencilView = depthStencilTexture.CreateView();
 
   if (depthStencilView.Get() != nullptr) {
     depthStencilAttachmentInfo.attachment = depthStencilView;
@@ -1267,7 +1267,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
       0, 1, 2, 0, 2, 3,
   };
   auto index_buffer = CreateBufferFromData(
-      *device_, indexData, sizeof(indexData), ::dawn::BufferUsageBit::Index);
+      *device_, indexData, sizeof(indexData), ::dawn::BufferUsage::Index);
 
   const float vertexData[4 * 4] = {
       // Bottom left
@@ -1293,7 +1293,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   };
 
   auto vertex_buffer = CreateBufferFromData(
-      *device_, vertexData, sizeof(vertexData), ::dawn::BufferUsageBit::Vertex);
+      *device_, vertexData, sizeof(vertexData), ::dawn::BufferUsage::Vertex);
   DawnPipelineHelper helper;
   helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_, true,
                                         command->GetPipelineData());
@@ -1348,7 +1348,7 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
     }
     render_pipeline->index_buffer = CreateBufferFromData(
         *device_, indexData.data(), indexData.size() * sizeof(uint32_t),
-        ::dawn::BufferUsageBit::Index);
+        ::dawn::BufferUsage::Index);
   }
 
   uint32_t instance_count = command->GetInstanceCount();
@@ -1427,7 +1427,7 @@ Result EngineDawn::DoCompute(const ComputeCommand* command) {
   ::dawn::PipelineStageDescriptor pipelineStageDescriptor;
   pipelineStageDescriptor.module = compute_pipeline->compute_shader;
   pipelineStageDescriptor.entryPoint = "main";
-  computePipelineDescriptor.computeStage = &pipelineStageDescriptor;
+  computePipelineDescriptor.computeStage = pipelineStageDescriptor;
   ::dawn::ComputePipeline pipeline =
       device_->CreateComputePipeline(&computePipelineDescriptor);
   ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
@@ -1547,7 +1547,7 @@ Result EngineDawn::AttachBuffersAndTextures(
 
       textures_.emplace_back(
           MakeDawnTexture(*device_, fb_format, width, height));
-      texture_views_.emplace_back(textures_.back().CreateDefaultView());
+      texture_views_.emplace_back(textures_.back().CreateView());
     }
   }
 
@@ -1582,14 +1582,14 @@ Result EngineDawn::AttachBuffersAndTextures(
         *device_,
         render_pipeline->pipeline->GetIndexBuffer()->ValuePtr()->data(),
         render_pipeline->pipeline->GetIndexBuffer()->GetSizeInBytes(),
-        ::dawn::BufferUsageBit::Index);
+        ::dawn::BufferUsage::Index);
   }
 
   // Attach vertex buffers
   for (auto& vertex_info : render_pipeline->pipeline->GetVertexBuffers()) {
     render_pipeline->vertex_buffers.emplace_back(CreateBufferFromData(
         *device_, vertex_info.buffer->ValuePtr()->data(),
-        vertex_info.buffer->GetSizeInBytes(), ::dawn::BufferUsageBit::Vertex));
+        vertex_info.buffer->GetSizeInBytes(), ::dawn::BufferUsage::Vertex));
   }
 
   // Do not attach pushConstants
@@ -1598,8 +1598,8 @@ Result EngineDawn::AttachBuffersAndTextures(
         "AttachBuffersAndTextures: Dawn does not support push constants!");
   }
 
-  ::dawn::ShaderStageBit kAllStages =
-      ::dawn::ShaderStageBit::Vertex | ::dawn::ShaderStageBit::Fragment;
+  ::dawn::ShaderStage kAllStages =
+      ::dawn::ShaderStage::Vertex | ::dawn::ShaderStage::Fragment;
   std::vector<std::vector<BindingInitializationHelper>> bindingInitalizerHelper(
       kMaxDawnBindGroup);
   std::vector<std::vector<::dawn::BindGroupLayoutBinding>> layouts_info(
@@ -1618,16 +1618,16 @@ Result EngineDawn::AttachBuffersAndTextures(
   }
 
   for (const auto& buf_info : render_pipeline->pipeline->GetBuffers()) {
-    ::dawn::BufferUsageBit bufferUsage;
+    ::dawn::BufferUsage bufferUsage;
     ::dawn::BindingType bindingType;
     switch (buf_info.buffer->GetBufferType()) {
       case BufferType::kStorage: {
-        bufferUsage = ::dawn::BufferUsageBit::Storage;
+        bufferUsage = ::dawn::BufferUsage::Storage;
         bindingType = ::dawn::BindingType::StorageBuffer;
         break;
       }
       case BufferType::kUniform: {
-        bufferUsage = ::dawn::BufferUsageBit::Uniform;
+        bufferUsage = ::dawn::BufferUsage::Uniform;
         bindingType = ::dawn::BindingType::UniformBuffer;
         break;
       }
@@ -1647,8 +1647,8 @@ Result EngineDawn::AttachBuffersAndTextures(
     render_pipeline->buffers.emplace_back(
         CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
                              buf_info.buffer->GetMaxSizeInBytes(),
-                             bufferUsage | ::dawn::BufferUsageBit::CopySrc |
-                                 ::dawn::BufferUsageBit::CopyDst));
+                             bufferUsage | ::dawn::BufferUsage::CopySrc |
+                                 ::dawn::BufferUsage::CopyDst));
 
     render_pipeline->buffer_map[{buf_info.descriptor_set, buf_info.binding}] =
         render_pipeline->buffers.size() - 1;
@@ -1718,16 +1718,16 @@ Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
   }
 
   for (const auto& buf_info : compute_pipeline->pipeline->GetBuffers()) {
-    ::dawn::BufferUsageBit bufferUsage;
+    ::dawn::BufferUsage bufferUsage;
     ::dawn::BindingType bindingType;
     switch (buf_info.buffer->GetBufferType()) {
       case BufferType::kStorage: {
-        bufferUsage = ::dawn::BufferUsageBit::Storage;
+        bufferUsage = ::dawn::BufferUsage::Storage;
         bindingType = ::dawn::BindingType::StorageBuffer;
         break;
       }
       case BufferType::kUniform: {
-        bufferUsage = ::dawn::BufferUsageBit::Uniform;
+        bufferUsage = ::dawn::BufferUsage::Uniform;
         bindingType = ::dawn::BindingType::UniformBuffer;
         break;
       }
@@ -1747,8 +1747,8 @@ Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
     compute_pipeline->buffers.emplace_back(
         CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
                              buf_info.buffer->GetMaxSizeInBytes(),
-                             bufferUsage | ::dawn::BufferUsageBit::CopySrc |
-                                 ::dawn::BufferUsageBit::CopyDst));
+                             bufferUsage | ::dawn::BufferUsage::CopySrc |
+                                 ::dawn::BufferUsage::CopyDst));
 
     compute_pipeline->buffer_map[{buf_info.descriptor_set, buf_info.binding}] =
         compute_pipeline->buffers.size() - 1;
@@ -1758,7 +1758,7 @@ Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
 
     ::dawn::BindGroupLayoutBinding layout_info;
     layout_info.binding = buf_info.binding;
-    layout_info.visibility = ::dawn::ShaderStageBit::Compute;
+    layout_info.visibility = ::dawn::ShaderStage::Compute;
     layout_info.type = bindingType;
     layouts_info[buf_info.descriptor_set][buf_info.binding] = layout_info;
 

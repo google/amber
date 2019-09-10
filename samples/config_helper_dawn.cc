@@ -24,8 +24,26 @@ ConfigHelperDawn::~ConfigHelperDawn() = default;
 namespace {
 
 // Callback which prints a message from a Dawn device operation.
-void PrintDeviceError(const char* message, void*) {
-  std::cout << "Device error: " << message << std::endl;
+void PrintDeviceError(DawnErrorType errorType, const char* message, void*) {
+  switch (errorType) {
+    case DAWN_ERROR_TYPE_VALIDATION:
+      std::cout << "Validation ";
+      break;
+    case DAWN_ERROR_TYPE_OUT_OF_MEMORY:
+      std::cout << "Out of memory ";
+      break;
+    case DAWN_ERROR_TYPE_UNKNOWN:
+    case DAWN_ERROR_TYPE_FORCE32:
+      std::cout << "Unknown ";
+      break;
+    case DAWN_ERROR_TYPE_DEVICE_LOST:
+      std::cout << "Device lost ";
+      break;
+    default:
+      std::cout << "Unreachable";
+      return;
+  }
+  std::cout << "error: " << message << std::endl;
 }
 
 }  // namespace
@@ -59,7 +77,8 @@ amber::Result ConfigHelperDawn::CreateConfig(
   if (!dawn_device_)
     return amber::Result("could not find Vulkan or Metal backend for Dawn");
 
-  backendProcs.deviceSetErrorCallback(dawn_device_.Get(), PrintDeviceError, 0);
+  backendProcs.deviceSetUncapturedErrorCallback(dawn_device_.Get(),
+                                                PrintDeviceError, nullptr);
   auto* dawn_config = new amber::DawnEngineConfig;
   dawn_config->device = &dawn_device_;
   config->reset(dawn_config);
