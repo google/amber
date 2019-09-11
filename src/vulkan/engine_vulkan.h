@@ -76,6 +76,8 @@ class EngineVulkan : public Engine {
           specialization_entries;
       std::unique_ptr<std::vector<uint32_t>> specialization_data;
       std::unique_ptr<VkSpecializationInfo> specialization_info;
+      uint32_t required_subgroup_size;
+      VkPipelineShaderStageCreateFlags create_flags;
     };
     std::unordered_map<ShaderType, ShaderInfo, CastHash<ShaderType>>
         shader_info;

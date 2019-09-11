@@ -594,6 +594,8 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelineDepth(pipeline.get());
     } else if (tok == "STENCIL") {
       r = ParsePipelineStencil(pipeline.get());
+    } else if (tok == "SUBGROUP") {
+      r = ParsePipelineSubgroup(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -816,6 +818,93 @@ Result Parser::ParsePipelineShaderCompileOptions(Pipeline* pipeline) {
   return ValidateEndOfStatement("COMPILE_OPTIONS command");
 }
 
+Result Parser::ParsePipelineSubgroup(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsIdentifier())
+    return Result("missing shader name in SUBGROUP command");
+
+  auto* shader = script_->GetShader(token->AsString());
+  if (!shader)
+    return Result("unknown shader in SUBGROUP command");
+
+  while (true) {
+    token = tokenizer_->NextToken();
+    if (token->IsEOL())
+      continue;
+    if (token->IsEOS())
+      return Result("SUBGROUP missing END command");
+    if (!token->IsIdentifier())
+      return Result("SUBGROUP options must be identifiers");
+    if (token->AsString() == "END")
+      break;
+
+    if (token->AsString() == "FULLY_POPULATED") {
+      if (!script_->IsRequiredFeature(
+              "SubgroupSizeControl.computeFullSubgroups"))
+        return Result(
+            "missing DEVICE_FEATURE SubgroupSizeControl.computeFullSubgroups");
+      token = tokenizer_->NextToken();
+      if (token->IsEOL() || token->IsEOS())
+        return Result("missing value for FULLY_POPULATED command");
+      bool isOn = false;
+      if (token->AsString() == "on") {
+        isOn = true;
+      } else if (token->AsString() == "off") {
+        isOn = false;
+      } else {
+        return Result("invalid value for FULLY_POPULATED command");
+      }
+      Result r = pipeline->SetShaderRequireFullSubgroups(shader, isOn);
+      if (!r.IsSuccess())
+        return r;
+
+    } else if (token->AsString() == "VARYING_SIZE") {
+      if (!script_->IsRequiredFeature(
+              "SubgroupSizeControl.subgroupSizeControl"))
+        return Result(
+            "missing DEVICE_FEATURE SubgroupSizeControl.subgroupSizeControl");
+      token = tokenizer_->NextToken();
+      if (token->IsEOL() || token->IsEOS())
+        return Result("missing value for VARYING_SIZE command");
+      bool isOn = false;
+      if (token->AsString() == "on") {
+        isOn = true;
+      } else if (token->AsString() == "off") {
+        isOn = false;
+      } else {
+        return Result("invalid value for VARYING_SIZE command");
+      }
+      Result r = pipeline->SetShaderVaryingSubgroupSize(shader, isOn);
+      if (!r.IsSuccess())
+        return r;
+    } else if (token->AsString() == "REQUIRED_SIZE") {
+      if (!script_->IsRequiredFeature(
+              "SubgroupSizeControl.subgroupSizeControl"))
+        return Result(
+            "missing DEVICE_FEATURE SubgroupSizeControl.subgroupSizeControl");
+      token = tokenizer_->NextToken();
+      if (token->IsEOL() || token->IsEOS())
+        return Result("missing size for REQUIRED_SIZE command");
+      Result r;
+      if (token->IsInteger()) {
+        r = pipeline->SetShaderRequiredSubgroupSize(shader, token->AsUint32());
+      } else if (token->AsString() == "MIN") {
+        r = pipeline->SetShaderRequiredSubgroupSizeToMinimum(shader);
+      } else if (token->AsString() == "MAX") {
+        r = pipeline->SetShaderRequiredSubgroupSizeToMaximum(shader);
+      } else {
+        return Result("invalid size for REQUIRED_SIZE command");
+      }
+      if (!r.IsSuccess())
+        return r;
+    } else {
+      return Result("SUBGROUP invalid value for SUBGROUP " + token->AsString());
+    }
+  }
+
+  return ValidateEndOfStatement("SUBGROUP command");
+}
+
 Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
@@ -958,8 +1047,8 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         buffer_type == BufferType::kSampledImage ||
         buffer_type == BufferType::kCombinedImageSampler) {
       // If the buffer type is known, then we proccessed the AS block above
-      // and have to advance to the next token. Otherwise, we're already on the
-      // next token and don't want to advance.
+      // and have to advance to the next token. Otherwise, we're already on
+      // the next token and don't want to advance.
       if (buffer_type != BufferType::kUnknown)
         token = tokenizer_->NextToken();
 
@@ -995,10 +1084,10 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
             base_mip_level = token->AsUint32();
 
             if (base_mip_level >= buffer->GetMipLevels())
-              return Result(
-                  "base mip level (now " + token->AsString() +
-                  ") needs to be larger than the number of buffer mip maps (" +
-                  std::to_string(buffer->GetMipLevels()) + ")");
+              return Result("base mip level (now " + token->AsString() +
+                            ") needs to be larger than the number of buffer "
+                            "mip maps (" +
+                            std::to_string(buffer->GetMipLevels()) + ")");
           }
         }
 

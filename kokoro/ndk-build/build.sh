@@ -20,7 +20,7 @@ BUILD_ROOT="$PWD"
 SRC="$PWD/github/amber"
 
 # NDK Path
-export ANDROID_NDK="$BUILD_ROOT/android-ndk-r20"
+export ANDROID_NDK="$BUILD_ROOT/android-ndk-r21"
 
 # Get NINJA.
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
@@ -28,8 +28,8 @@ unzip -q ninja-linux.zip
 export PATH="$PWD:$PATH"
 
 # Get Android NDK.
-wget -q https://dl.google.com/android/repository/android-ndk-r20-linux-x86_64.zip
-unzip -q android-ndk-r20-linux-x86_64.zip
+wget -q https://dl.google.com/android/repository/android-ndk-r21-linux-x86_64.zip
+unzip -q android-ndk-r21-linux-x86_64.zip
 # ANDROID_NDK is set earlier.
 
 cd "$SRC"
