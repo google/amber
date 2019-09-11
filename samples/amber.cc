@@ -14,6 +14,7 @@
 
 #include "amber/amber.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <fstream>
@@ -41,9 +42,9 @@ const char* kGeneratedColorBuffer = "framebuffer";
 struct Options {
   std::vector<std::string> input_filenames;
 
-  std::string image_filename;
+  std::vector<std::string> image_filenames;
   std::string buffer_filename;
-  std::string fb_name = kGeneratedColorBuffer;
+  std::vector<std::string> fb_names;
   std::vector<amber::BufferInfo> buffer_to_dump;
   uint32_t engine_major = 1;
   uint32_t engine_minor = 0;
@@ -102,7 +103,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         std::cerr << "Missing value for -i argument." << std::endl;
         return false;
       }
-      opts->image_filename = args[i];
+      opts->image_filenames.push_back(args[i]);
 
     } else if (arg == "-I") {
       ++i;
@@ -110,7 +111,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         std::cerr << "Missing value for -I argument." << std::endl;
         return false;
       }
-      opts->fb_name = args[i];
+      opts->fb_names.push_back(args[i]);
 
     } else if (arg == "-b") {
       ++i;
@@ -431,9 +432,13 @@ int main(int argc, const char** argv) {
                                      options.buffer_to_dump.end());
   }
 
-  if (!options.image_filename.empty()) {
+  // Use default frame buffer name when not specified.
+  while (options.image_filenames.size() > options.fb_names.size())
+    options.fb_names.push_back(kGeneratedColorBuffer);
+
+  for (const auto& fb_name : options.fb_names) {
     amber::BufferInfo buffer_info;
-    buffer_info.buffer_name = options.fb_name;
+    buffer_info.buffer_name = fb_name;
     buffer_info.is_image_buffer = true;
     amber_options.extractions.push_back(buffer_info);
   }
@@ -451,14 +456,16 @@ int main(int argc, const char** argv) {
       // give clues as to the failure.
     }
 
-    if (!options.image_filename.empty()) {
+    auto fb_name = options.fb_names.begin();
+
+    for (const auto& image_filename : options.image_filenames) {
       std::vector<uint8_t> out_buf;
 
-      auto pos = options.image_filename.find_last_of('.');
-      bool usePNG = pos != std::string::npos &&
-                    options.image_filename.substr(pos + 1) == "png";
+      auto pos = image_filename.find_last_of('.');
+      bool usePNG =
+          pos != std::string::npos && image_filename.substr(pos + 1) == "png";
       for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
-        if (buffer_info.buffer_name == options.fb_name) {
+        if (buffer_info.buffer_name == *fb_name) {
           if (usePNG) {
 #if AMBER_ENABLE_LODEPNG
             result = png::ConvertToPNG(buffer_info.width, buffer_info.height,
@@ -471,16 +478,16 @@ int main(int argc, const char** argv) {
                               buffer_info.values, &out_buf);
             result = {};
           }
+          fb_name++;
           break;
         }
       }
       if (result.IsSuccess()) {
         std::ofstream image_file;
-        image_file.open(options.image_filename,
-                        std::ios::out | std::ios::binary);
+        image_file.open(image_filename, std::ios::out | std::ios::binary);
         if (!image_file.is_open()) {
           std::cerr << "Cannot open file for image dump: ";
-          std::cerr << options.image_filename << std::endl;
+          std::cerr << image_filename << std::endl;
           continue;
         }
         image_file << std::string(out_buf.begin(), out_buf.end());
@@ -498,7 +505,10 @@ int main(int argc, const char** argv) {
         std::cerr << options.buffer_filename << std::endl;
       } else {
         for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
-          if (buffer_info.buffer_name == options.fb_name)
+          // Skip frame buffers.
+          if (std::any_of(
+                  options.fb_names.begin(), options.fb_names.end(),
+                  [&](std::string s) { return s == buffer_info.buffer_name; }))
             continue;
 
           buffer_file << buffer_info.buffer_name << std::endl;
