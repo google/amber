@@ -48,7 +48,7 @@ echo y | sudo apt-get purge --auto-remove cmake
 # install new cmake version
 echo y | sudo apt-get install cmake
 
-echo $(date): cmake --version
+echo $(date): $(cmake --version)
 
 # Get ninja
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
