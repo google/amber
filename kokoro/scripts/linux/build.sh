@@ -43,8 +43,6 @@ then
   BUILD_TYPE="RelWithDebInfo"
 fi
 
-export PATH="$PWD:$PATH"
-
 # removing the old cmake version
 echo y | sudo apt-get purge --auto-remove cmake
 # install new cmake version
@@ -57,8 +55,11 @@ sudo make install
 echo $(date): $(cmake --version)
 
 # Get ninja
+cd $SRC
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
 unzip -q ninja-linux.zip
+
+export PATH="$PWD:$PATH"
 
 cd $SRC
 ./tools/git-sync-deps
