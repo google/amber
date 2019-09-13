@@ -432,6 +432,13 @@ int main(int argc, const char** argv) {
                                      options.buffer_to_dump.end());
   }
 
+  if (options.image_filenames.size() - options.fb_names.size() > 1) {
+    std::cerr << "Need to specify framebuffer names using -I for each output "
+                 "image specified by -i."
+              << std::endl;
+    return 1;
+  }
+
   // Use default frame buffer name when not specified.
   while (options.image_filenames.size() > options.fb_names.size())
     options.fb_names.push_back(kGeneratedColorBuffer);
@@ -456,16 +463,14 @@ int main(int argc, const char** argv) {
       // give clues as to the failure.
     }
 
-    auto fb_name = options.fb_names.begin();
-
-    for (const auto& image_filename : options.image_filenames) {
+    for (size_t i = 0; i < options.image_filenames.size(); ++i) {
       std::vector<uint8_t> out_buf;
-
+      auto image_filename = options.image_filenames[i];
       auto pos = image_filename.find_last_of('.');
       bool usePNG =
           pos != std::string::npos && image_filename.substr(pos + 1) == "png";
       for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
-        if (buffer_info.buffer_name == *fb_name) {
+        if (buffer_info.buffer_name == options.fb_names[i]) {
           if (usePNG) {
 #if AMBER_ENABLE_LODEPNG
             result = png::ConvertToPNG(buffer_info.width, buffer_info.height,
@@ -478,7 +483,6 @@ int main(int argc, const char** argv) {
                               buffer_info.values, &out_buf);
             result = {};
           }
-          fb_name++;
           break;
         }
       }
@@ -506,10 +510,13 @@ int main(int argc, const char** argv) {
       } else {
         for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
           // Skip frame buffers.
-          if (std::any_of(
-                  options.fb_names.begin(), options.fb_names.end(),
-                  [&](std::string s) { return s == buffer_info.buffer_name; }))
+          if (std::any_of(options.fb_names.begin(), options.fb_names.end(),
+                          [&](std::string s) {
+                            return s == buffer_info.buffer_name;
+                          }) ||
+              buffer_info.buffer_name == kGeneratedColorBuffer) {
             continue;
+          }
 
           buffer_file << buffer_info.buffer_name << std::endl;
           const auto& values = buffer_info.values;
