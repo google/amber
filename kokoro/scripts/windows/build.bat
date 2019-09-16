@@ -23,21 +23,23 @@ set PATH=C:\python36;%PATH%
 cd %SRC%
 python tools\git-sync-deps
 
-:: #########################################
-:: set up msvc build env
-:: #########################################
-call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-echo "Using VS 2017..."
-
-cd %SRC%
-mkdir build
-cd build
-
 choco install cmake --pre --yes --no-progress
 choco upgrade cmake --pre --yes --no-progress
 
 :: Force usage of python 3.6 and add cmake to the path.
 set PATH=C:\python36;"C:\Program Files\CMake\bin";%PATH%
+
+:: #########################################
+:: set up msvc build env
+:: #########################################
+::call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+::echo "Using VS 2017..."
+set GENERATOR="Visual Studio 15 2017 Win64"
+echo "Using VS 2017..."
+
+cd %SRC%
+mkdir build
+cd build
 
 :: Need WDK at least 1803 for Loader build
 ::wget -o wdksetup.exe https://go.microsoft.com/fwlink/?linkid=2085767
@@ -53,16 +55,16 @@ if "%KOKORO_GITHUB_COMMIT%." == "." (
   set BUILD_SHA=%KOKORO_GITHUB_COMMIT%
 )
 
-cmake -A x64 -GNinja -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe -DAMBER_USE_LOCAL_VULKAN=1 ..
+cmake -A x64 -G%GENERATOR% -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DAMBER_USE_LOCAL_VULKAN=1 ..
 if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
 
 echo "Build everything... %DATE% %TIME%"
-ninja
+cmake --build . --config %BUILD_TYPE%
 if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
 echo "Build Completed %DATE% %TIME%"
 
 :: ################################################
-:: Run the tests (We no longer run tests on VS2013)
+:: Run the tests
 :: ################################################
 echo "Running Tests... %DATE% %TIME%"
 amber_unittests
