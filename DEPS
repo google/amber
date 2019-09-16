@@ -20,7 +20,7 @@ vars = {
   'spirv_tools_revision': 'c0e9807094ef6e345ef0a4d5f17af81af063cd27',
   'swiftshader_revision': 'ef44b4402722658648ec9d10a76bd990776be1c0',
   'vulkan_headers_revision': '42ad3f90faec009b9435383ee89910846d6a91ba',
-  'vulkan_loader_revision': '15fa85d92454f7823febeb68b56038d427e2a7a4',
+  'vulkan_loader_revision': '0044fcf11923224a4f8c606b802048045bc09cdc',
 }
 
 deps = {
