@@ -37,7 +37,6 @@ cd build
 wget http://www.cmake.org/files/v3.10/cmake-3.10.2-win32-x86.zip
 unzip cmake-3.10.2-win32-x86.zip
 set PATH=%SRC%\build\cmake-3.10.2-win32-x86\bin;%PATH%
-echo $(date): $(cmake --version)
 
 :: #########################################
 :: Start building.
