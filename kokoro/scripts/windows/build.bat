@@ -33,14 +33,15 @@ cd %SRC%
 mkdir build
 cd build
 
-:: install new cmake version
-wget http://www.cmake.org/files/v3.10/cmake-3.10.2-win32-x86.zip
-unzip cmake-3.10.2-win32-x86.zip
-set PATH=%SRC%\build\cmake-3.10.2-win32-x86\bin;%PATH%
+choco install cmake --pre --yes --no-progress
+choco upgrade cmake --pre --yes --no-progress
+
+:: Force usage of python 3.6 and add cmake to the path.
+set PATH=C:\python36;"C:\Program Files\CMake\bin";%PATH%
 
 :: Need WDK at least 1803 for Loader build
-wget -o wdksetup.exe https://go.microsoft.com/fwlink/?linkid=2085767
-.\wdksetup.exe /quiet /norestart
+::wget -o wdksetup.exe https://go.microsoft.com/fwlink/?linkid=2085767
+::.\wdksetup.exe /quiet /norestart
 
 :: #########################################
 :: Start building.
