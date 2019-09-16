@@ -22,6 +22,68 @@ The [VkScript](docs/vk_script.md) syntax matches the format used by VkRunner.
 
 This is not an officially supported Google product.
 
+## Writing Amber Tests
+Working with Amber involves writing input test files. Some example files can be
+see in the [tests/cases](tests/cases) folder.
+
+The main input format is [Amberscript](docs/amber_script.md). New features are
+added to AmberScript as Amber is enhanced. This is the preferred format in which
+new script files are written.
+
+### Clear test as AmberScript
+```groovy
+SHADER vertex vtex_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+#version 430
+
+layout(location = 0) in vec4 color_in;
+layout(location = 0) out vec4 color_out;
+
+void main() {
+  color_out = color_in;
+}
+END
+
+BUFFER img_buf FORMAT B8G8R8A8_UNORM
+
+PIPELINE graphics my_pipeline
+  ATTACH vtex_shader
+  ATTACH frag_shader
+
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER img_buf AS color LOCATION 0
+END
+
+CLEAR my_pipeline
+EXPECT img_buf IDX 0 0 SIZE 256 256 EQ_RGBA 0 0 0 0
+```
+
+The [VkScript](docs/vk_script.md) format is supported for historic reasons. It
+is based off, and very closely matches, the format accepted by VkRunner. There
+are no new features being added to VkScript, it is for historical use.
+
+### Clear test as VkScript
+```
+[require]
+VK_KHR_get_physical_device_properties2
+
+[vertex shader passthrough]
+
+[fragment shader]
+#version 430
+
+layout(location = 0) in vec4 color_in;
+layout(location = 0) out vec4 color_out;
+
+void main() {
+  color_out = color_in;
+}
+
+[test]
+clear
+relative probe rect rgba (0.0, 0.0, 1.0, 1.0) (0, 0, 0, 0)
+```
+
 ## Requirements
 
  * Recommended: Configure at least one backend. See [Backends](#backends) below.
