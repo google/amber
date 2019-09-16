@@ -8,6 +8,8 @@ vars = {
   'swiftshader_git': 'https://swiftshader.googlesource.com',
   'microsoft_git': 'https://github.com/Microsoft',
 
+  'dj2_git': 'https://github.com/dj2',
+
   'clspv_llvm_revision': '97aa42f5dfcd10ca6df230caf9ca7868da5f25af',
   'clspv_revision': '8132fc9122f7709149dd82b25283e244bbe666a6',
   'cpplint_revision': '5651966e0275572a9956199418d89c9ccc7b2b1a',
@@ -20,7 +22,7 @@ vars = {
   'spirv_tools_revision': 'c0e9807094ef6e345ef0a4d5f17af81af063cd27',
   'swiftshader_revision': 'ef44b4402722658648ec9d10a76bd990776be1c0',
   'vulkan_headers_revision': '42ad3f90faec009b9435383ee89910846d6a91ba',
-  'vulkan_loader_revision': '2e14b61788de447ba56c04a4f41ec9b347304a5d',
+  'vulkan_loader_revision': 'a28ea6d6342e6cd2bbb76480addae8af12993fcd',
 }
 
 deps = {
@@ -60,6 +62,6 @@ deps = {
   'third_party/vulkan-headers': vars['khronos_git'] + '/Vulkan-Headers.git@' +
       vars['vulkan_headers_revision'],
 
-  'third_party/vulkan-loader': vars['khronos_git'] + '/Vulkan-Loader.git@' +
+  'third_party/vulkan-loader': vars['dj2_git'] + '/Vulkan-Loader.git@' +
       vars['vulkan_loader_revision'],
 }
