@@ -38,6 +38,10 @@ wget http://www.cmake.org/files/v3.10/cmake-3.10.2-win32-x86.zip
 unzip cmake-3.10.2-win32-x86.zip
 set PATH=%SRC%\build\cmake-3.10.2-win32-x86\bin;%PATH%
 
+:: Need WDK at least 1803 for Loader build
+wget https://go.microsoft.com/fwlink/?linkid=2085767
+.\wdksetup.exe /quiet /norestart
+
 :: #########################################
 :: Start building.
 :: #########################################
