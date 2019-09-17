@@ -25,8 +25,12 @@ if (NOT ${Vulkan_FOUND})
     set(VulkanHeaders_INCLUDE_DIR
       ${PROJECT_SOURCE_DIR}/third_party/vulkan-headers/include
       CACHE PATH "vk headers dir" FORCE)
+    set(VulkanHeaders_INCLUDE_DIRS ${VulkanHeaders_INCLUDE_DIR}
+      CACHE PATH "vk headers dir" FORCE)
     set(VulkanRegistry_DIR
       ${PROJECT_SOURCE_DIR}/third_party/vulkan-headers/registry
+      CACHE PATH "vk_registry_dir" FORCE)
+    set(VulkanRegistry_DIRS ${VulkanRegistry_DIR}
       CACHE PATH "vk_registry_dir" FORCE)
     include_directories(BEFORE "${VulkanHeaders_INCLUDE_DIR}")
     set(VULKAN_LIB vulkan)
