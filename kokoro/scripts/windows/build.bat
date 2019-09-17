@@ -32,9 +32,9 @@ set PATH=C:\python36;"C:\Program Files\CMake\bin";%PATH%
 :: #########################################
 :: set up msvc build env
 :: #########################################
-::call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-::echo "Using VS 2017..."
-set GENERATOR="Visual Studio 15 2017 Win64"
+call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+set GENERATOR="Ninja"
+::set GENERATOR="Visual Studio 15 2017 Win64"
 echo "Using VS 2017..."
 
 cd %SRC%
@@ -42,8 +42,8 @@ mkdir build
 cd build
 
 :: Need WDK at least 1803 for Loader build
-::wget -o wdksetup.exe https://go.microsoft.com/fwlink/?linkid=2085767
-::.\wdksetup.exe /quiet /norestart
+wget -o wdksetup.exe https://go.microsoft.com/fwlink/?linkid=2085767
+.\wdksetup.exe /quiet /norestart
 
 :: #########################################
 :: Start building.
@@ -55,7 +55,7 @@ if "%KOKORO_GITHUB_COMMIT%." == "." (
   set BUILD_SHA=%KOKORO_GITHUB_COMMIT%
 )
 
-cmake -Thost=x64 -G%GENERATOR% -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DAMBER_USE_LOCAL_VULKAN=1 ..
+cmake -G%GENERATOR% -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DAMBER_USE_LOCAL_VULKAN=1 ..
 if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
 
 echo "Build everything... %DATE% %TIME%"
