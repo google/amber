@@ -43,10 +43,10 @@ then
   BUILD_TYPE="RelWithDebInfo"
 fi
 
-# removing the old cmake version
-echo y | sudo apt-get purge --auto-remove cmake
-# install new cmake version
-echo y | sudo apt-get install cmake
+# # removing the old cmake version
+# echo y | sudo apt-get purge --auto-remove cmake
+# # install new cmake version
+# echo y | sudo apt-get install cmake
 
 echo $(date): $(cmake --version)
 
