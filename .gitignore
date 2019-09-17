@@ -12,6 +12,7 @@ third_party/spirv-tools
 third_party/spirv-headers
 third_party/swiftshader
 third_party/vulkan-headers
+third_party/vulkan-validationlayers/
 third_party/vulkan-loader
 .vs
 
