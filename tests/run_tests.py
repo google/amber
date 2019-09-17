@@ -42,15 +42,27 @@ SUPPRESSIONS = {
     "multiple_ssbo_update_with_graphics_pipeline.vkscript",
     "multiple_ubo_update_with_graphics_pipeline.vkscript",
     # DXC not currently building on bot
-    "draw_triangle_list_hlsl.amber"
+    "draw_triangle_list_hlsl.amber",
+    # CLSPV not built by default
+    "opencl_bind_buffer.amber",
+    "opencl_c_copy.amber",
+    "opencl_set_arg.amber"
   ],
   "Linux": [
     # DXC not currently building on bot
-    "draw_triangle_list_hlsl.amber"
+    "draw_triangle_list_hlsl.amber",
+    # CLSPV not built by default
+    "opencl_bind_buffer.amber",
+    "opencl_c_copy.amber",
+    "opencl_set_arg.amber"
   ],
   "Win": [
     # DXC not currently building on bot
-    "draw_triangle_list_hlsl.amber"
+    "draw_triangle_list_hlsl.amber",
+    # CLSPV not built by default
+    "opencl_bind_buffer.amber",
+    "opencl_c_copy.amber",
+    "opencl_set_arg.amber"
    ]
  }
 
