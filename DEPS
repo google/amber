@@ -20,6 +20,7 @@ vars = {
   'spirv_tools_revision': 'c0e9807094ef6e345ef0a4d5f17af81af063cd27',
   'swiftshader_revision': 'ef44b4402722658648ec9d10a76bd990776be1c0',
   'vulkan_headers_revision': 'e3f96a9ccab9397481eb81c4d9bce4ea7590dc33',
+  'vulkan_validationlayers_revision': '0e65e191c4b9044d8e42727cc82ccc04d8055b0a',
   'vulkan_loader_revision': '1bb7f68564fe565de2927071c79008bd6ede5af5',
 }
 
@@ -59,6 +60,9 @@ deps = {
 
   'third_party/vulkan-headers': vars['khronos_git'] + '/Vulkan-Headers.git@' +
       vars['vulkan_headers_revision'],
+
+  'third_party/vulkan-validationlayers': vars['khronos_git'] + '/Vulkan-ValidationLayers.git@' +
+      vars['vulkan_validationlayers_revision'],
 
   'third_party/vulkan-loader': vars['khronos_git'] + '/Vulkan-Loader.git@' +
       vars['vulkan_loader_revision'],

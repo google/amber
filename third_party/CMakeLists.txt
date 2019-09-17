@@ -62,6 +62,7 @@ if (${AMBER_USE_LOCAL_VULKAN})
   set(BUILD_WSI_XLIB_SUPPORT OFF CACHE BOOL "" FORCE)
 
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-loader)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-validationlayers)
 endif()
 
 if (${AMBER_ENABLE_SWIFTSHADER})
