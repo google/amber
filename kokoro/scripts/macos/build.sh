@@ -26,6 +26,8 @@ unzip -q ninja-mac.zip
 chmod +x ninja
 export PATH="$PWD:$PATH"
 
+echo $(date): $(cmake --version)
+
 cd $SRC
 ./tools/git-sync-deps
 
