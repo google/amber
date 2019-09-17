@@ -42,8 +42,8 @@ mkdir build
 cd build
 
 :: Need WDK at least 1803 for Loader build
-wget -o wdksetup.exe https://go.microsoft.com/fwlink/?linkid=2085767
-.\wdksetup.exe /quiet /norestart
+::wget -o wdksetup.exe https://go.microsoft.com/fwlink/?linkid=2085767
+::.\wdksetup.exe /quiet /norestart
 
 :: #########################################
 :: Start building.
