@@ -1,0 +1,39 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER vertex vtex_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+#version 430
+
+void main() {
+}
+END
+
+BUFFER img_buf_0 FORMAT B8G8R8A8_UNORM
+BUFFER img_buf_1 FORMAT B8G8R8A8_UNORM
+
+PIPELINE graphics my_pipeline
+  ATTACH vtex_shader
+  ATTACH frag_shader
+
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER img_buf_0 AS color LOCATION 0
+  BIND BUFFER img_buf_1 AS color LOCATION 1
+END
+
+CLEAR_COLOR my_pipeline 255 0 0 255
+CLEAR my_pipeline
+EXPECT img_buf_0 IDX 0 0 SIZE 256 256 EQ_RGBA 255 0 0 255
+EXPECT img_buf_1 IDX 0 0 SIZE 256 256 EQ_RGBA 255 0 0 255

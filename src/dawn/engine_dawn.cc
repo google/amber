@@ -305,7 +305,7 @@ Result EngineDawn::MapDeviceTextureToHostBuffer(
   const auto height = render_pipeline.pipeline->GetFramebufferHeight();
 
   const auto pixelSize = render_pipeline.pipeline->GetColorAttachments()[0]
-                             .buffer->GetTexelStride();
+                             .buffer->GetElementStride();
   const auto dawn_row_pitch = Align(width * pixelSize, kMinimumImageRowPitch);
   const auto size = height * dawn_row_pitch;
   // Create a temporary buffer to hold the color attachment content and can
@@ -998,7 +998,7 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
         vertexInputDescriptor.cBuffers[i].attributeCount = 1;
         vertexInputDescriptor.cBuffers[i].stride =
             render_pipeline.pipeline->GetVertexBuffers()[i]
-                .buffer->GetTexelStride();
+                .buffer->GetElementStride();
         vertexInputDescriptor.cBuffers[i].stepMode =
             ::dawn::InputStepMode::Vertex;
         vertexInputDescriptor.cBuffers[i].attributes =
