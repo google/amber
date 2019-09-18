@@ -330,7 +330,7 @@ uint32_t Buffer::WriteValueFromComponent(const Value& value,
   return 0;
 }
 
-void Buffer::ResizeTo(uint32_t element_count) {
+void Buffer::SetSizeInElements(uint32_t element_count) {
   element_count_ = element_count;
   bytes_.resize(element_count * format_->SizeInBytes());
 }
