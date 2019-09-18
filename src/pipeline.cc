@@ -569,7 +569,9 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
       }
       return Result(message);
     }
-    buffer->SetDataWithOffset({arg_info.value}, offset);
+    Result r = buffer->SetDataWithOffset({arg_info.value}, offset);
+    if (!r.IsSuccess())
+      return r;
   }
 
   return {};

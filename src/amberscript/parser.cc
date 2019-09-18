@@ -257,20 +257,20 @@ Result Parser::ToDatumType(const std::string& str, DatumType* type) {
       return Result("invalid data_type provided");
 
     if (str[3] == '2')
-      type->SetRowCount(2);
+      type->SetColumnCount(2);
     else if (str[3] == '3')
-      type->SetRowCount(3);
+      type->SetColumnCount(3);
     else if (str[3] == '4')
-      type->SetRowCount(4);
+      type->SetColumnCount(4);
     else
       return Result("invalid data_type provided");
 
     if (str[5] == '2')
-      type->SetColumnCount(2);
+      type->SetRowCount(2);
     else if (str[5] == '3')
-      type->SetColumnCount(3);
+      type->SetRowCount(3);
     else if (str[5] == '4')
-      type->SetColumnCount(4);
+      type->SetRowCount(4);
     else
       return Result("invalid data_type provided");
 
@@ -1002,7 +1002,10 @@ Result Parser::ParseBufferInitializerFill(Buffer* buffer,
     else
       values[i].SetIntValue(token->AsUint64());
   }
-  buffer->SetData(std::move(values));
+  Result r = buffer->SetData(std::move(values));
+  if (!r.IsSuccess())
+    return r;
+
   return ValidateEndOfStatement("BUFFER fill command");
 }
 
@@ -1051,7 +1054,10 @@ Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
       counter.SetIntValue(value + token->AsUint64());
     }
   }
-  buffer->SetData(std::move(values));
+  Result r = buffer->SetData(std::move(values));
+  if (!r.IsSuccess())
+    return r;
+
   return ValidateEndOfStatement("BUFFER series_from command");
 }
 
@@ -1088,7 +1094,10 @@ Result Parser::ParseBufferInitializerData(Buffer* buffer) {
   }
 
   buffer->SetValueCount(static_cast<uint32_t>(values.size()));
-  buffer->SetData(std::move(values));
+  Result r = buffer->SetData(std::move(values));
+  if (!r.IsSuccess())
+    return r;
+
   return ValidateEndOfStatement("BUFFER data command");
 }
 

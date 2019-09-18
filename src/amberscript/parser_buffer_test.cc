@@ -539,9 +539,9 @@ INSTANTIATE_TEST_SUITE_P(
                     BufferData{"vec2<int8>", FormatMode::kSInt, 8, 2, 1},
                     BufferData{"vec3<float>", FormatMode::kSFloat, 32, 3, 1},
                     BufferData{"vec4<uint32>", FormatMode::kUInt, 32, 4, 1},
-                    BufferData{"mat2x4<int32>", FormatMode::kSInt, 32, 2, 4},
+                    BufferData{"mat2x4<int32>", FormatMode::kSInt, 32, 4, 2},
                     BufferData{"mat3x3<float>", FormatMode::kSFloat, 32, 3, 3},
-                    BufferData{"mat4x2<uint16>", FormatMode::kUInt, 16, 4, 2},
+                    BufferData{"mat4x2<uint16>", FormatMode::kUInt, 16, 2, 4},
                     BufferData{"B8G8R8_UNORM", FormatMode::kUNorm, 8, 3,
                                1}));  // NOLINT(whitespace/parens)
 
