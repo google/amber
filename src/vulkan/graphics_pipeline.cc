@@ -799,7 +799,7 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
     for (size_t i = 0; i < color_buffers_.size(); ++i) {
       VkClearAttachment clear_attachment = VkClearAttachment();
       clear_attachment.aspectMask = aspect;
-      clear_attachment.colorAttachment = i;
+      clear_attachment.colorAttachment = static_cast<uint32_t>(i);
       clear_attachment.clearValue = clear_value;
 
       clears.push_back(clear_attachment);
