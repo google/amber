@@ -137,10 +137,10 @@ class Buffer {
   }
 
   /// Returns the number of bytes for one element in the buffer.
-  uint32_t GetTexelStride() { return format_->SizeInBytes(); }
+  uint32_t GetElementStride() { return format_->SizeInBytes(); }
 
   /// Returns the number of bytes for one row of elements in the buffer.
-  uint32_t GetRowStride() { return GetTexelStride() * GetWidth(); }
+  uint32_t GetRowStride() { return GetElementStride() * GetWidth(); }
 
   /// Sets the data into the buffer.
   Result SetData(const std::vector<Value>& data);

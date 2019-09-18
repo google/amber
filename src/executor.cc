@@ -100,7 +100,7 @@ Result Executor::ExecuteCommand(Engine* engine, Command* cmd) {
     assert(buffer);
 
     Format* fmt = buffer->GetFormat();
-    return verifier_.Probe(cmd->AsProbe(), fmt, buffer->GetTexelStride(),
+    return verifier_.Probe(cmd->AsProbe(), fmt, buffer->GetElementStride(),
                            buffer->GetRowStride(), buffer->GetWidth(),
                            buffer->GetHeight(), buffer->ValuePtr()->data());
   }
