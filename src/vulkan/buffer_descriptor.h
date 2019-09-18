@@ -68,7 +68,7 @@ class BufferDescriptor {
   Result MoveResourceToBufferOutput();
   void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set);
 
-  Result ResizeTo(uint32_t element_count);
+  Result SetSizeInElements(uint32_t element_count);
   Result AddToBuffer(const std::vector<Value>& values, uint32_t offset);
 
  private:

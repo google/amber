@@ -148,13 +148,13 @@ class Buffer {
   /// Resizes the buffer to hold |element_count| elements. This is separate
   /// from SetElementCount() because we may not know the format when we set the
   /// initial count. This requires the format to have been set.
-  void ResizeTo(uint32_t element_count);
+  void SetSizeInElements(uint32_t element_count);
 
   /// Resizes the buffer to hold |size_in_bytes|/format_->SizeInBytes()
   /// number of elements while resizing the buffer to |size_in_bytes| bytes.
   /// This requires the format to have been set. This is separate from
-  /// ResizeTo() since the given argument here is |size_in_bytes| bytes vs
-  /// |element_count| elements
+  /// SetSizeInElements() since the given argument here is |size_in_bytes|
+  /// bytes vs |element_count| elements
   void SetSizeInBytes(uint32_t size_in_bytes);
 
   /// Sets the max_size_in_bytes_ to |max_size_in_bytes| bytes
