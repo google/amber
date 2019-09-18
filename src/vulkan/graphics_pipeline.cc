@@ -795,10 +795,15 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   {
     RenderPassGuard render_pass_guard(this);
 
-    VkClearAttachment clear_attachment = VkClearAttachment();
-    clear_attachment.aspectMask = aspect;
-    clear_attachment.colorAttachment = 0;
-    clear_attachment.clearValue = clear_value;
+    std::vector<VkClearAttachment> clears;
+    for (size_t i = 0; i < color_buffers_.size(); ++i) {
+      VkClearAttachment clear_attachment = VkClearAttachment();
+      clear_attachment.aspectMask = aspect;
+      clear_attachment.colorAttachment = static_cast<uint32_t>(i);
+      clear_attachment.clearValue = clear_value;
+
+      clears.push_back(clear_attachment);
+    }
 
     VkClearRect clear_rect;
     clear_rect.rect = {{0, 0}, {frame_width_, frame_height_}};
@@ -806,7 +811,8 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
     clear_rect.layerCount = 1;
 
     device_->GetPtrs()->vkCmdClearAttachments(
-        command_->GetVkCommandBuffer(), 1, &clear_attachment, 1, &clear_rect);
+        command_->GetVkCommandBuffer(), static_cast<uint32_t>(clears.size()),
+        clears.data(), 1, &clear_rect);
   }
 
   frame_->TransferColorImagesToHost(command_.get());
