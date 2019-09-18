@@ -150,11 +150,11 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   is_descriptor_set_update_needed_ = false;
 }
 
-Result BufferDescriptor::ResizeTo(uint32_t element_count) {
+Result BufferDescriptor::SetSizeInElements(uint32_t element_count) {
   if (!amber_buffer_)
-    return Result("missing amber_buffer for ResizeTo call");
+    return Result("missing amber_buffer for SetSizeInElements call");
 
-  amber_buffer_->ResizeTo(element_count);
+  amber_buffer_->SetSizeInElements(element_count);
   return {};
 }
 

@@ -556,7 +556,7 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
 
     // Resize if necessary.
     if (buffer->ValueCount() < offset + arg_size) {
-      buffer->ResizeTo(offset + arg_size);
+      buffer->SetSizeInElements(offset + arg_size);
     }
     // Check the data size.
     if (arg_size != arg_info.type.SizeInBytes()) {

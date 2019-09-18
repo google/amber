@@ -298,7 +298,7 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
 
   auto* buf_desc = static_cast<BufferDescriptor*>(desc);
   if (cmd->GetValues().empty()) {
-    Result r = buf_desc->ResizeTo(cmd->GetBuffer()->ElementCount());
+    Result r = buf_desc->SetSizeInElements(cmd->GetBuffer()->ElementCount());
     if (!r.IsSuccess())
       return r;
   } else {

@@ -94,7 +94,7 @@ cmake -GNinja ..\
  $CMAKE_C_CXX_COMPILER\
  -DCMAKE_BUILD_TYPE=$BUILD_TYPE\
  -DDawn_INCLUDE_DIR=$DAWN/src/include\
- -DDawn_GEN_INCLUDE_DIR=$DAWN/out/Release/gen\
+ -DDawn_GEN_INCLUDE_DIR=$DAWN/out/Release/gen/src/include\
  -DDawn_LIBRARY_DIR=$DAWN/out/Release
 
 echo $(date): Build everything...
