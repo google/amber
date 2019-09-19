@@ -540,9 +540,10 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
               : BufferType::kUniform);
       // Use an 8-bit type because all the data in the descriptor map is
       // byte-based and it simplifies the logic for sizing below.
-      DatumType char_type;
-      char_type.SetType(DataType::kUint8);
-      buffer->SetFormat(char_type.AsFormat());
+      auto fmt = MakeUnique<Format>();
+      fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 8);
+
+      buffer->SetFormat(std::move(fmt));
       buffer->SetName(GetName() + "_pod_buffer_" +
                       std::to_string(descriptor_set) + "_" +
                       std::to_string(binding));
