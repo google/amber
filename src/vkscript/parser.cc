@@ -287,13 +287,13 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
   }
 
   if (!indices.empty()) {
-    DatumType type;
-    type.SetType(DataType::kUint32);
+    auto fmt = MakeUnique<Format>();
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 32);
 
     auto b = MakeUnique<Buffer>(BufferType::kIndex);
     auto* buf = b.get();
     b->SetName("indices");
-    b->SetFormat(type.AsFormat());
+    b->SetFormat(std::move(fmt));
     b->SetData(std::move(indices));
     Result r = script_->AddBuffer(std::move(b));
     if (!r.IsSuccess())

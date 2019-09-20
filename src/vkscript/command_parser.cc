@@ -2061,7 +2061,7 @@ Result CommandParser::ProcessProbeSSBO() {
 
   auto fmt = tp.GetType().AsFormat();
   if (buffer->FormatIsDefault() || !buffer->GetFormat())
-    buffer->SetFormat(tp.GetType().AsFormat());
+    buffer->SetFormat(MakeUnique<Format>(*fmt));
   else if (buffer->GetFormat() && !buffer->GetFormat()->Equal(fmt.get()))
     return Result("probe format does not match buffer format");
 
