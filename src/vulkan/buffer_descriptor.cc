@@ -163,8 +163,7 @@ Result BufferDescriptor::AddToBuffer(const std::vector<Value>& values,
   if (!amber_buffer_)
     return Result("missing amber_buffer for AddToBuffer call");
 
-  amber_buffer_->SetDataWithOffset(values, offset);
-  return {};
+  return amber_buffer_->SetDataWithOffset(values, offset);
 }
 
 VkDescriptorType BufferDescriptor::GetVkDescriptorType() const {

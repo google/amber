@@ -244,7 +244,11 @@ Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
   // this maybe the first time data is set into the buffer.
   bytes_.resize(GetSizeInBytes());
 
+  if (data.size() > (ElementCount() * format_->InputNeededPerElement()))
+    return Result("Mismatched number of items in buffer");
+
   uint8_t* ptr = bytes_.data() + offset;
+  const auto& components = format_->GetComponents();
   for (uint32_t i = 0; i < data.size();) {
     const auto pack_size = format_->GetPackSize();
     if (pack_size) {
@@ -262,16 +266,16 @@ Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
       continue;
     }
 
-    for (const auto& comp : format_->GetComponents()) {
-      ptr += WriteValueFromComponent(data[i], comp, ptr);
+    for (size_t k = 0; k < format_->RowCount(); ++k) {
+      ptr += WriteValueFromComponent(data[i], components[k], ptr);
       ++i;
     }
     // For formats which we've padded to the the layout, make sure we skip over
     // the space in the buffer.
-    size_t pad = format_->ValuesPerRow() - format_->GetComponents().size();
+    size_t pad = format_->ValuesPerRow() - components.size();
     for (size_t j = 0; j < pad; ++j) {
       Value v;
-      ptr += WriteValueFromComponent(v, format_->GetComponents()[0], ptr);
+      ptr += WriteValueFromComponent(v, components[0], ptr);
     }
   }
   return {};
