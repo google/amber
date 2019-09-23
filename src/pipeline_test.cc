@@ -692,7 +692,6 @@ TEST_F(PipelineTest, OpenCLClone) {
   Value int_value;
   int_value.SetIntValue(1);
 
-
   auto int_fmt = MakeUnique<Format>();
   int_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
 
