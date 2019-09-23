@@ -523,29 +523,31 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffers) {
   // Set commands.
   Value int_value;
   int_value.SetIntValue(1);
-  DatumType int_type;
-  int_type.SetType(DataType::kInt32);
-  DatumType char_type;
-  char_type.SetType(DataType::kInt8);
+
+  auto int_fmt = MakeUnique<Format>();
+  int_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
+
+  auto char_fmt = MakeUnique<Format>();
+  char_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 8);
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_a";
   arg_info1.ordinal = 99;
-  arg_info1.type = int_type;
+  arg_info1.fmt = MakeUnique<Format>(*int_fmt);
   arg_info1.value = int_value;
   p.SetArg(std::move(arg_info1));
 
   Pipeline::ArgSetInfo arg_info2;
   arg_info2.name = "arg_b";
   arg_info2.ordinal = 99;
-  arg_info2.type = char_type;
+  arg_info2.fmt = MakeUnique<Format>(*char_fmt);
   arg_info2.value = int_value;
   p.SetArg(std::move(arg_info2));
 
   Pipeline::ArgSetInfo arg_info3;
   arg_info3.name = "arg_c";
   arg_info3.ordinal = 99;
-  arg_info3.type = int_type;
+  arg_info1.fmt = MakeUnique<Format>(*int_fmt);
   arg_info3.value = int_value;
   p.SetArg(std::move(arg_info3));
 
@@ -587,13 +589,14 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffersBadName) {
   // Set commands.
   Value int_value;
   int_value.SetIntValue(1);
-  DatumType int_type;
-  int_type.SetType(DataType::kInt32);
+
+  auto int_fmt = MakeUnique<Format>();
+  int_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_z";
   arg_info1.ordinal = 99;
-  arg_info1.type = int_type;
+  arg_info1.fmt = std::move(int_fmt);
   arg_info1.value = int_value;
   p.SetArg(std::move(arg_info1));
 
@@ -628,13 +631,14 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffersBadSize) {
   // Set commands.
   Value int_value;
   int_value.SetIntValue(1);
-  DatumType short_type;
-  short_type.SetType(DataType::kInt16);
+
+  auto short_fmt = MakeUnique<Format>();
+  short_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 16);
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "";
   arg_info1.ordinal = 0;
-  arg_info1.type = short_type;
+  arg_info1.fmt = std::move(short_fmt);
   arg_info1.value = int_value;
   p.SetArg(std::move(arg_info1));
 
@@ -687,29 +691,32 @@ TEST_F(PipelineTest, OpenCLClone) {
   // Set commands.
   Value int_value;
   int_value.SetIntValue(1);
-  DatumType int_type;
-  int_type.SetType(DataType::kInt32);
-  DatumType char_type;
-  char_type.SetType(DataType::kInt8);
+
+
+  auto int_fmt = MakeUnique<Format>();
+  int_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
+
+  auto char_fmt = MakeUnique<Format>();
+  char_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 8);
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_a";
   arg_info1.ordinal = 99;
-  arg_info1.type = int_type;
+  arg_info1.fmt = MakeUnique<Format>(*int_fmt);
   arg_info1.value = int_value;
   p.SetArg(std::move(arg_info1));
 
   Pipeline::ArgSetInfo arg_info2;
   arg_info2.name = "arg_b";
   arg_info2.ordinal = 99;
-  arg_info2.type = char_type;
+  arg_info2.fmt = MakeUnique<Format>(*char_fmt);
   arg_info2.value = int_value;
   p.SetArg(std::move(arg_info2));
 
   Pipeline::ArgSetInfo arg_info3;
   arg_info3.name = "arg_c";
   arg_info3.ordinal = 99;
-  arg_info3.type = int_type;
+  arg_info3.fmt = MakeUnique<Format>(*int_fmt);
   arg_info3.value = int_value;
   p.SetArg(std::move(arg_info3));
 

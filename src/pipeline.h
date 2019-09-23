@@ -245,7 +245,7 @@ class Pipeline {
   struct ArgSetInfo {
     std::string name;
     uint32_t ordinal = 0;
-    DatumType type;
+    std::unique_ptr<Format> fmt;
     Value value;
   };
 
