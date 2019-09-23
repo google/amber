@@ -547,7 +547,7 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffers) {
   Pipeline::ArgSetInfo arg_info3;
   arg_info3.name = "arg_c";
   arg_info3.ordinal = 99;
-  arg_info1.fmt = MakeUnique<Format>(*int_fmt);
+  arg_info3.fmt = MakeUnique<Format>(*int_fmt);
   arg_info3.value = int_value;
   p.SetArg(std::move(arg_info3));
 
