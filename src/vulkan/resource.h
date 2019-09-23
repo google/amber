@@ -23,9 +23,6 @@
 #include "amber/vulkan_header.h"
 
 namespace amber {
-
-class Format;
-
 namespace vulkan {
 
 class CommandBuffer;
