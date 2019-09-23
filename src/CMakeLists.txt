@@ -18,7 +18,6 @@ set(AMBER_SOURCES
     buffer.cc
     command.cc
     command_data.cc
-    datum_type.cc
     descriptor_set_and_binding_parser.cc
     engine.cc
     executor.cc
@@ -37,6 +36,7 @@ set(AMBER_SOURCES
     value.cc
     verifier.cc
     vkscript/command_parser.cc
+    vkscript/datum_type.cc
     vkscript/datum_type_parser.cc
     vkscript/parser.cc
     vkscript/section_parser.cc
@@ -133,7 +133,6 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_test.cc
     buffer_test.cc
     command_data_test.cc
-    datum_type_test.cc
     descriptor_set_and_binding_parser_test.cc
     executor_test.cc
     format_parser_test.cc
@@ -145,6 +144,7 @@ if (${AMBER_ENABLE_TESTS})
     tokenizer_test.cc
     verifier_test.cc
     vkscript/command_parser_test.cc
+    vkscript/datum_type_test.cc
     vkscript/datum_type_parser_test.cc
     vkscript/parser_test.cc
     vkscript/section_parser_test.cc

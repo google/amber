@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_DATUM_TYPE_H_
-#define SRC_DATUM_TYPE_H_
+#ifndef SRC_VKSCRIPT_DATUM_TYPE_H_
+#define SRC_VKSCRIPT_DATUM_TYPE_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -22,6 +22,7 @@
 #include "src/format.h"
 
 namespace amber {
+namespace vkscript {
 
 enum class DataType {
   kInt8 = 0,
@@ -74,6 +75,7 @@ class DatumType {
   bool is_std140_ = true;
 };
 
+}  // namespace vkscript
 }  // namespace amber
 
-#endif  // SRC_DATUM_TYPE_H_
+#endif  // SRC_VKSCRIPT_DATUM_TYPE_H_
