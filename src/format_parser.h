@@ -23,8 +23,6 @@
 
 namespace amber {
 
-class Format;
-
 /// Parses a Vulkan image string into a format object.
 class FormatParser {
  public:

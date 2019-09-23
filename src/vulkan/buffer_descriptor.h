@@ -26,9 +26,6 @@
 #include "src/vulkan/transfer_buffer.h"
 
 namespace amber {
-
-class Format;
-
 namespace vulkan {
 
 class CommandBuffer;
