@@ -45,8 +45,6 @@ class DatumType {
   DatumType(const DatumType&);
   ~DatumType();
 
-  DatumType& operator=(const DatumType&);
-
   bool IsInt8() const { return type_ == DataType::kInt8; }
   bool IsInt16() const { return type_ == DataType::kInt16; }
   bool IsInt32() const { return type_ == DataType::kInt32; }
@@ -66,9 +64,6 @@ class DatumType {
 
   void SetRowCount(uint32_t count) { row_count_ = count; }
   uint32_t RowCount() const { return row_count_; }
-
-  uint32_t ElementSizeInBytes() const;
-  uint32_t SizeInBytes() const;
 
   std::unique_ptr<Format> AsFormat() const;
 
