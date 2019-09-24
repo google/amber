@@ -44,7 +44,6 @@ LOCAL_SRC_FILES:= \
     src/value.cc \
     src/verifier.cc \
     src/vkscript/command_parser.cc \
-    src/vkscript/datum_type.cc \
     src/vkscript/datum_type_parser.cc \
     src/vkscript/parser.cc \
     src/vkscript/section_parser.cc \

@@ -24,7 +24,6 @@
 #include "amber/result.h"
 #include "amber/value.h"
 #include "src/format.h"
-#include "src/vkscript/datum_type.h"
 
 namespace amber {
 
