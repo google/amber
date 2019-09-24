@@ -18,7 +18,7 @@
 #include <string>
 
 #include "amber/result.h"
-#include "src/datum_type.h"
+#include "src/vkscript/datum_type.h"
 
 namespace amber {
 namespace vkscript {

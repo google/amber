@@ -29,6 +29,10 @@ namespace amber {
 namespace amberscript {
 namespace {
 
+FormatComponentType FORMAT_TYPES[] = {
+    FormatComponentType::kR, FormatComponentType::kG, FormatComponentType::kB,
+    FormatComponentType::kA};
+
 bool IsComparator(const std::string& in) {
   return in == "EQ" || in == "NE" || in == "GT" || in == "LT" || in == "GE" ||
          in == "LE";
@@ -48,6 +52,118 @@ ProbeSSBOCommand::Comparator ToComparator(const std::string& in) {
 
   assert(in == "LE");
   return ProbeSSBOCommand::Comparator::kLessOrEqual;
+}
+
+std::unique_ptr<Format> ToFormat(const std::string& str) {
+  auto fmt = MakeUnique<Format>();
+  bool matrix = false;
+
+  if (str == "int8") {
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 8);
+  } else if (str == "int16") {
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 16);
+  } else if (str == "int32") {
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
+  } else if (str == "int64") {
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 64);
+  } else if (str == "uint8") {
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 8);
+  } else if (str == "uint16") {
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 16);
+  } else if (str == "uint32") {
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 32);
+  } else if (str == "uint64") {
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 64);
+  } else if (str == "float") {
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
+  } else if (str == "double") {
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 64);
+  } else if (str.length() > 7 && str.substr(0, 3) == "vec") {
+    if (str[4] != '<' || str[str.length() - 1] != '>')
+      return nullptr;
+
+    int component_count = str[3] - '0';
+    if (component_count < 2 || component_count > 4)
+      return nullptr;
+
+    auto sub_fmt = ToFormat(str.substr(5, str.length() - 6));
+    if (!sub_fmt)
+      return nullptr;
+
+    if (sub_fmt->RowCount() != 1 || sub_fmt->ColumnCount() != 1)
+      return nullptr;
+
+    const auto& comp = sub_fmt->GetComponents()[0];
+    for (int i = 0; i < component_count; ++i)
+      fmt->AddComponent(FORMAT_TYPES[i], comp.mode, comp.num_bits);
+
+  } else if (str.length() > 9 && str.substr(0, 3) == "mat") {
+    if (str[4] != 'x' || str[6] != '<' || str[str.length() - 1] != '>')
+      return nullptr;
+
+    matrix = true;
+
+    int column_count = str[3] - '0';
+    if (column_count < 2 || column_count > 4)
+      return nullptr;
+
+    int row_count = str[5] - '0';
+    if (row_count < 2 || row_count > 4)
+      return nullptr;
+
+    auto sub_fmt = ToFormat(str.substr(7, str.length() - 8));
+    if (!sub_fmt)
+      return nullptr;
+
+    if (sub_fmt->RowCount() != 1 || sub_fmt->ColumnCount() != 1)
+      return nullptr;
+
+    fmt->SetColumnCount(static_cast<uint32_t>(column_count));
+
+    const auto& comp = sub_fmt->GetComponents()[0];
+    for (int i = 0; i < row_count; ++i)
+      fmt->AddComponent(FORMAT_TYPES[i], comp.mode, comp.num_bits);
+
+  } else {
+    return nullptr;
+  }
+
+  // Convert the name back into a FormatType so we can use it in the buffer
+  // later Otherwise, we end up with a type of Unknown.
+  //
+  // There is no equivalent type for a matrix.
+  if (!matrix) {
+    std::string name = "";
+    std::string parts = "ARGB";
+    const auto& comps = fmt->GetComponents();
+    for (const auto& comp : comps) {
+      name += parts[static_cast<uint8_t>(comp.type)] +
+              std::to_string(comp.num_bits);
+    }
+    name += "_";
+    switch (comps[0].mode) {
+      case FormatMode::kUNorm:
+      case FormatMode::kUFloat:
+      case FormatMode::kUScaled:
+      case FormatMode::kSNorm:
+      case FormatMode::kSScaled:
+      case FormatMode::kSRGB:
+        return nullptr;
+      case FormatMode::kUInt:
+        name += "UINT";
+        break;
+      case FormatMode::kSInt:
+        name += "SINT";
+        break;
+      case FormatMode::kSFloat:
+        name += "SFLOAT";
+        break;
+    }
+
+    fmt->SetFormatType(FormatParser::NameToType(name));
+  }
+
+  return fmt;
 }
 
 }  // namespace
@@ -203,90 +319,6 @@ Result Parser::ToPipelineType(const std::string& str, PipelineType* type) {
     *type = PipelineType::kGraphics;
   else
     return Result("unknown pipeline type: " + str);
-  return {};
-}
-
-Result Parser::ToDatumType(const std::string& str, DatumType* type) {
-  assert(type);
-
-  if (str == "int8") {
-    type->SetType(DataType::kInt8);
-  } else if (str == "int16") {
-    type->SetType(DataType::kInt16);
-  } else if (str == "int32") {
-    type->SetType(DataType::kInt32);
-  } else if (str == "int64") {
-    type->SetType(DataType::kInt64);
-  } else if (str == "uint8") {
-    type->SetType(DataType::kUint8);
-  } else if (str == "uint16") {
-    type->SetType(DataType::kUint16);
-  } else if (str == "uint32") {
-    type->SetType(DataType::kUint32);
-  } else if (str == "uint64") {
-    type->SetType(DataType::kUint64);
-  } else if (str == "float") {
-    type->SetType(DataType::kFloat);
-  } else if (str == "double") {
-    type->SetType(DataType::kDouble);
-  } else if (str.length() > 7 && str.substr(0, 3) == "vec") {
-    if (str[4] != '<' || str[str.length() - 1] != '>')
-      return Result("invalid data_type provided");
-
-    if (str[3] == '2')
-      type->SetRowCount(2);
-    else if (str[3] == '3')
-      type->SetRowCount(3);
-    else if (str[3] == '4')
-      type->SetRowCount(4);
-    else
-      return Result("invalid data_type provided");
-
-    DatumType subtype;
-    Result r = ToDatumType(str.substr(5, str.length() - 6), &subtype);
-    if (!r.IsSuccess())
-      return r;
-
-    if (subtype.RowCount() > 1 || subtype.ColumnCount() > 1)
-      return Result("invalid data_type provided");
-
-    type->SetType(subtype.GetType());
-
-  } else if (str.length() > 9 && str.substr(0, 3) == "mat") {
-    if (str[4] != 'x' || str[6] != '<' || str[str.length() - 1] != '>')
-      return Result("invalid data_type provided");
-
-    if (str[3] == '2')
-      type->SetColumnCount(2);
-    else if (str[3] == '3')
-      type->SetColumnCount(3);
-    else if (str[3] == '4')
-      type->SetColumnCount(4);
-    else
-      return Result("invalid data_type provided");
-
-    if (str[5] == '2')
-      type->SetRowCount(2);
-    else if (str[5] == '3')
-      type->SetRowCount(3);
-    else if (str[5] == '4')
-      type->SetRowCount(4);
-    else
-      return Result("invalid data_type provided");
-
-    DatumType subtype;
-    Result r = ToDatumType(str.substr(7, str.length() - 8), &subtype);
-    if (!r.IsSuccess())
-      return r;
-
-    if (subtype.RowCount() > 1 || subtype.ColumnCount() > 1)
-      return Result("invalid data_type provided");
-
-    type->SetType(subtype.GetType());
-  } else {
-    return Result("invalid data_type provided");
-  }
-
   return {};
 }
 
@@ -532,34 +564,30 @@ Result Parser::ParseShaderSpecialization(Pipeline* pipeline) {
   if (!token->IsString())
     return Result("expected data type in SPECIALIZE subcommand");
 
-  DatumType type;
-  auto r = ToDatumType(token->AsString(), &type);
-  if (!r.IsSuccess())
-    return r;
+  auto fmt = ToFormat(token->AsString());
+  if (!fmt)
+    return Result("invalid data_type provided");
 
   token = tokenizer_->NextToken();
   uint32_t value = 0;
-  switch (type.GetType()) {
-    case DataType::kUint32:
-    case DataType::kInt32:
-      value = token->AsUint32();
-      break;
-    case DataType::kFloat: {
-      r = token->ConvertToDouble();
-      if (!r.IsSuccess())
-        return Result("value is not a floating point value");
-      union {
-        uint32_t u;
-        float f;
-      } u;
-      u.f = token->AsFloat();
-      value = u.u;
-      break;
-    }
-    default:
-      return Result(
-          "only 32-bit types are currently accepted for specialization values");
+  if (fmt->IsUint32() || fmt->IsInt32()) {
+    value = token->AsUint32();
+  } else if (fmt->IsFloat()) {
+    Result r = token->ConvertToDouble();
+    if (!r.IsSuccess())
+      return Result("value is not a floating point value");
+
+    union {
+      uint32_t u;
+      float f;
+    } u;
+    u.f = token->AsFloat();
+    value = u.u;
+  } else {
+    return Result(
+        "only 32-bit types are currently accepted for specialization values");
   }
+
   auto& shader = pipeline->GetShaders()[pipeline->GetShaders().size() - 1];
   shader.AddSpecialization(spec_id, value);
   return {};
@@ -860,17 +888,16 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   if (!token->IsString())
     return Result("expected data type");
 
-  DatumType arg_type;
-  auto r = ToDatumType(token->AsString(), &arg_type);
-  if (!r.IsSuccess())
-    return r;
+  auto fmt = ToFormat(token->AsString());
+  if (!fmt)
+    return Result("invalid data_type provided");
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger() && !token->IsDouble())
     return Result("expected data value");
 
   Value value;
-  if (arg_type.IsFloat() || arg_type.IsDouble())
+  if (fmt->IsFloat() || fmt->IsDouble())
     value.SetDoubleValue(token->AsDouble());
   else
     value.SetIntValue(token->AsUint64());
@@ -878,7 +905,7 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   Pipeline::ArgSetInfo info;
   info.name = arg_name;
   info.ordinal = arg_no;
-  info.fmt = arg_type.AsFormat();
+  info.fmt = std::move(fmt);
   info.value = value;
   pipeline->SetArg(std::move(info));
   return ValidateEndOfStatement("SET command");
@@ -940,12 +967,11 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
   if (fmt != nullptr) {
     buffer->SetFormat(std::move(fmt));
   } else {
-    DatumType type;
-    Result r = ToDatumType(token->AsString(), &type);
-    if (!r.IsSuccess())
-      return r;
+    fmt = ToFormat(token->AsString());
+    if (!fmt)
+      return Result("invalid data_type provided");
 
-    buffer->SetFormat(type.AsFormat());
+    buffer->SetFormat(std::move(fmt));
   }
 
   token = tokenizer_->NextToken();

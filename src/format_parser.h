@@ -26,6 +26,8 @@ namespace amber {
 /// Parses a Vulkan image string into a format object.
 class FormatParser {
  public:
+  static FormatType NameToType(const std::string& data);
+
   FormatParser();
   ~FormatParser();
 
@@ -34,7 +36,6 @@ class FormatParser {
  private:
   std::unique_ptr<Format> ParseGlslFormat(const std::string& fmt);
   void ProcessChunk(Format*, const std::string&);
-  FormatType NameToType(const std::string& data);
   void AddPiece(FormatComponentType type, uint8_t bits);
   void FlushPieces(Format* fmt, FormatMode mode);
 

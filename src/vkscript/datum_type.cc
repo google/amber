@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/datum_type.h"
+#include "src/vkscript/datum_type.h"
 
 #include <string>
 
 #include "src/format_parser.h"
 
 namespace amber {
+namespace vkscript {
 namespace {
 
 uint32_t ElementSizeInBytes(DataType type) {
@@ -71,4 +72,5 @@ std::unique_ptr<Format> DatumType::AsFormat() const {
   return fmt;
 }
 
+}  // namespace vkscript
 }  // namespace amber

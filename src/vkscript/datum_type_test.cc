@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/datum_type.h"
+#include "src/vkscript/datum_type.h"
 
 #include "gtest/gtest.h"
 
 namespace amber {
+namespace vkscript {
 
 using DatumTypeTest = testing::Test;
 
@@ -85,4 +86,5 @@ INSTANTIATE_TEST_SUITE_P(
         Data{DataType::kDouble, 4,
              FormatType::kR64G64B64A64_SFLOAT}));  // NOLINT(whitespace/parens)
 
+}  // namespace vkscript
 }  // namespace amber
