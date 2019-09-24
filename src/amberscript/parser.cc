@@ -118,7 +118,7 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
     if (sub_fmt->RowCount() != 1 || sub_fmt->ColumnCount() != 1)
       return nullptr;
 
-    fmt->SetColumnCount(column_count);
+    fmt->SetColumnCount(static_cast<uint32_t>(column_count));
 
     const auto& comp = sub_fmt->GetComponents()[0];
     for (int i = 0; i < row_count; ++i)
