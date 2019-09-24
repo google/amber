@@ -388,18 +388,18 @@ TEST_F(AmberScriptParserTest, BufferFormat) {
   auto& comps = fmt->GetComponents();
   ASSERT_EQ(4U, comps.size());
 
-  EXPECT_EQ(FormatComponentType::kR, comps[0].type);
-  EXPECT_EQ(FormatMode::kSInt, comps[0].mode);
-  EXPECT_EQ(32U, comps[0].num_bits);
-  EXPECT_EQ(FormatComponentType::kG, comps[1].type);
-  EXPECT_EQ(FormatMode::kSInt, comps[1].mode);
-  EXPECT_EQ(32U, comps[1].num_bits);
-  EXPECT_EQ(FormatComponentType::kB, comps[2].type);
-  EXPECT_EQ(FormatMode::kSInt, comps[2].mode);
-  EXPECT_EQ(32U, comps[2].num_bits);
-  EXPECT_EQ(FormatComponentType::kA, comps[3].type);
-  EXPECT_EQ(FormatMode::kSInt, comps[3].mode);
-  EXPECT_EQ(32U, comps[3].num_bits);
+  EXPECT_EQ(FormatComponentType::kR, comps[0]->type);
+  EXPECT_EQ(FormatMode::kSInt, comps[0]->mode);
+  EXPECT_EQ(32U, comps[0]->num_bits);
+  EXPECT_EQ(FormatComponentType::kG, comps[1]->type);
+  EXPECT_EQ(FormatMode::kSInt, comps[1]->mode);
+  EXPECT_EQ(32U, comps[1]->num_bits);
+  EXPECT_EQ(FormatComponentType::kB, comps[2]->type);
+  EXPECT_EQ(FormatMode::kSInt, comps[2]->mode);
+  EXPECT_EQ(32U, comps[2]->num_bits);
+  EXPECT_EQ(FormatComponentType::kA, comps[3]->type);
+  EXPECT_EQ(FormatMode::kSInt, comps[3]->mode);
+  EXPECT_EQ(32U, comps[3]->num_bits);
 }
 
 struct BufferParseError {
@@ -520,8 +520,8 @@ TEST_P(AmberScriptParserBufferDataTypeTest, BufferTypes) {
   auto fmt = buffer->GetFormat();
   EXPECT_EQ(test_data.row_count, fmt->RowCount());
   EXPECT_EQ(test_data.column_count, fmt->ColumnCount());
-  EXPECT_EQ(test_data.type, fmt->GetComponents()[0].mode);
-  EXPECT_EQ(test_data.num_bits, fmt->GetComponents()[0].num_bits);
+  EXPECT_EQ(test_data.type, fmt->GetComponents()[0]->mode);
+  EXPECT_EQ(test_data.num_bits, fmt->GetComponents()[0]->num_bits);
 }
 INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserTestsDataType,

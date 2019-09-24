@@ -35,19 +35,18 @@ TEST_F(FormatTest, Copy) {
   EXPECT_TRUE(copy->IsFloat());
   EXPECT_EQ(16U, copy->SizeInBytes());
   EXPECT_EQ(3U, copy->GetComponents().size());
-  EXPECT_TRUE(copy->IsStd140());
   EXPECT_EQ(FormatType::kR32G32B32_SFLOAT, copy->GetFormatType());
 
   auto& comp = copy->GetComponents();
-  EXPECT_EQ(FormatComponentType::kR, comp[0].type);
-  EXPECT_EQ(FormatMode::kSFloat, comp[0].mode);
-  EXPECT_EQ(32U, comp[0].num_bits);
-  EXPECT_EQ(FormatComponentType::kG, comp[1].type);
-  EXPECT_EQ(FormatMode::kSFloat, comp[1].mode);
-  EXPECT_EQ(32U, comp[1].num_bits);
-  EXPECT_EQ(FormatComponentType::kB, comp[2].type);
-  EXPECT_EQ(FormatMode::kSFloat, comp[2].mode);
-  EXPECT_EQ(32U, comp[2].num_bits);
+  EXPECT_EQ(FormatComponentType::kR, comp[0]->type);
+  EXPECT_EQ(FormatMode::kSFloat, comp[0]->mode);
+  EXPECT_EQ(32U, comp[0]->num_bits);
+  EXPECT_EQ(FormatComponentType::kG, comp[1]->type);
+  EXPECT_EQ(FormatMode::kSFloat, comp[1]->mode);
+  EXPECT_EQ(32U, comp[1]->num_bits);
+  EXPECT_EQ(FormatComponentType::kB, comp[2]->type);
+  EXPECT_EQ(FormatMode::kSFloat, comp[2]->mode);
+  EXPECT_EQ(32U, comp[2]->num_bits);
 }
 
 TEST_F(FormatTest, SizeInBytesVector) {
@@ -56,9 +55,7 @@ TEST_F(FormatTest, SizeInBytesVector) {
   ASSERT_TRUE(fmt != nullptr);
 
   EXPECT_EQ(3U, fmt->InputNeededPerElement());
-  EXPECT_EQ(4U, fmt->ValuesPerElement());
   EXPECT_EQ(16U, fmt->SizeInBytes());
-  EXPECT_EQ(16U, fmt->SizeInBytesPerRow());
 }
 
 TEST_F(FormatTest, SizeInBytesMatrix) {
@@ -68,10 +65,7 @@ TEST_F(FormatTest, SizeInBytesMatrix) {
   fmt->SetColumnCount(3);
 
   EXPECT_EQ(9U, fmt->InputNeededPerElement());
-  EXPECT_EQ(4U, fmt->ValuesPerRow());
-  EXPECT_EQ(12U, fmt->ValuesPerElement());
   EXPECT_EQ(48U, fmt->SizeInBytes());
-  EXPECT_EQ(16U, fmt->SizeInBytesPerRow());
 }
 
 TEST_F(FormatTest, SizeInBytesMatrixStd140) {
@@ -82,7 +76,6 @@ TEST_F(FormatTest, SizeInBytesMatrixStd140) {
   fmt->SetIsStd140();
 
   EXPECT_EQ(32U, fmt->SizeInBytes());
-  EXPECT_EQ(16U, fmt->SizeInBytesPerRow());
 }
 
 TEST_F(FormatTest, RowCount) {
@@ -98,8 +91,6 @@ struct StdData {
   const char* fmt;
   uint32_t column_count;
   bool is_std140;
-  uint32_t values_per_element;
-  uint32_t size_in_bytes_per_row;
   uint32_t size_in_bytes;
 };
 using FormatStdTest = testing::TestWithParam<StdData>;
@@ -114,39 +105,33 @@ TEST_P(FormatStdTest, Test) {
   if (test_data.is_std140)
     fmt->SetIsStd140();
 
-  EXPECT_EQ(test_data.values_per_element, fmt->ValuesPerElement())
-      << test_data.name;
   EXPECT_EQ(test_data.size_in_bytes, fmt->SizeInBytes()) << test_data.name;
-  EXPECT_EQ(test_data.size_in_bytes_per_row, fmt->SizeInBytesPerRow())
-      << test_data.name;
 }
 
 INSTANTIATE_TEST_SUITE_P(
     FormatStdTestSamples,
     FormatStdTest,
     testing::Values(
-        StdData{"mat2x2-std140", "R32G32_SFLOAT", 2, true, 8U, 16U, 32U},
-        StdData{"mat2x3-std140", "R32G32B32_SFLOAT", 2, true, 8U, 16U, 32U},
-        StdData{"mat2x4-std140", "R32G32B32A32_SFLOAT", 2, true, 8U, 16U, 32U},
-        StdData{"mat3x2-std140", "R32G32_SFLOAT", 3, true, 12U, 16U, 48U},
-        StdData{"mat3x3-std140", "R32G32B32_SFLOAT", 3, true, 12U, 16U, 48U},
-        StdData{"mat3x4-std140", "R32G32B32A32_SFLOAT", 3, true, 12U, 16U, 48U},
-        StdData{"mat4x2-std140", "R32G32_SFLOAT", 4, true, 16U, 16U, 64U},
-        StdData{"mat4x3-std140", "R32G32B32_SFLOAT", 4, true, 16U, 16U, 64U},
-        StdData{"mat4x4-std140", "R32G32B32A32_SFLOAT", 4, true, 16U, 16U, 64U},
-        StdData{"mat2x2-std430", "R32G32_SFLOAT", 2, false, 4U, 8U, 16U},
-        StdData{"mat2x3-std430", "R32G32B32_SFLOAT", 2, false, 8U, 16U, 32U},
-        StdData{"mat2x4-std430", "R32G32B32A32_SFLOAT", 2, false, 8U, 16U, 32U},
-        StdData{"mat3x2-std430", "R32G32_SFLOAT", 3, false, 6U, 8U, 24U},
-        StdData{"mat3x3-std430", "R32G32B32_SFLOAT", 3, false, 12U, 16U, 48U},
-        StdData{"mat3x4-std430", "R32G32B32A32_SFLOAT", 3, false, 12U, 16U,
-                48U},
-        StdData{"mat4x2-std430", "R32G32_SFLOAT", 4, false, 8U, 8U, 32U},
-        StdData{"mat4x3-std430", "R32G32B32_SFLOAT", 4, false, 16U, 16U, 64U},
-        StdData{"mat4x4-std430", "R32G32B32A32_SFLOAT", 4, false, 16U, 16U,
-                64U},
-        StdData{"float-std140", "R32_SFLOAT", 1, true, 1U, 4U, 4U},
-        StdData{"float-std430", "R32_SFLOAT", 1, false, 1U, 4U,
+        StdData{"mat2x2-std140", "R32G32_SFLOAT", 2, true, 32U},
+        StdData{"mat2x3-std140", "R32G32B32_SFLOAT", 2, true, 32U},
+        StdData{"mat2x4-std140", "R32G32B32A32_SFLOAT", 2, true, 32U},
+        StdData{"mat3x2-std140", "R32G32_SFLOAT", 3, true, 48U},
+        StdData{"mat3x3-std140", "R32G32B32_SFLOAT", 3, true, 48U},
+        StdData{"mat3x4-std140", "R32G32B32A32_SFLOAT", 3, true, 48U},
+        StdData{"mat4x2-std140", "R32G32_SFLOAT", 4, true, 64U},
+        StdData{"mat4x3-std140", "R32G32B32_SFLOAT", 4, true, 64U},
+        StdData{"mat4x4-std140", "R32G32B32A32_SFLOAT", 4, true, 64U},
+        StdData{"mat2x2-std430", "R32G32_SFLOAT", 2, false, 16U},
+        StdData{"mat2x3-std430", "R32G32B32_SFLOAT", 2, false, 32U},
+        StdData{"mat2x4-std430", "R32G32B32A32_SFLOAT", 2, false, 32U},
+        StdData{"mat3x2-std430", "R32G32_SFLOAT", 3, false, 24U},
+        StdData{"mat3x3-std430", "R32G32B32_SFLOAT", 3, false, 48U},
+        StdData{"mat3x4-std430", "R32G32B32A32_SFLOAT", 3, false, 48U},
+        StdData{"mat4x2-std430", "R32G32_SFLOAT", 4, false, 32U},
+        StdData{"mat4x3-std430", "R32G32B32_SFLOAT", 4, false, 64U},
+        StdData{"mat4x4-std430", "R32G32B32A32_SFLOAT", 4, false, 64U},
+        StdData{"float-std140", "R32_SFLOAT", 1, true, 4U},
+        StdData{"float-std430", "R32_SFLOAT", 1, false,
                 4U}));  // NOLINT(whitespace/parens)
 
 }  // namespace amber

@@ -22,7 +22,7 @@ namespace {
 
 bool AllCompsAreType(Format* fmt, FormatMode mode, uint8_t num_bits) {
   for (auto& comp : fmt->GetComponents()) {
-    if (comp.mode != mode || comp.num_bits != num_bits)
+    if (comp->mode != mode || comp->num_bits != num_bits)
       return false;
   }
 

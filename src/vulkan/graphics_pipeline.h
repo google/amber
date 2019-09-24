@@ -42,7 +42,7 @@ class GraphicsPipeline : public Pipeline {
   GraphicsPipeline(
       Device* device,
       const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
-      const Format& depth_stencil_format,
+      Format* depth_stencil_format,
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>&);
   ~GraphicsPipeline() override;
@@ -90,7 +90,7 @@ class GraphicsPipeline : public Pipeline {
 
   // color buffers are owned by the amber::Pipeline.
   std::vector<const amber::Pipeline::BufferInfo*> color_buffers_;
-  Format depth_stencil_format_;
+  Format* depth_stencil_format_;
   std::unique_ptr<IndexBuffer> index_buffer_;
 
   uint32_t frame_width_ = 0;

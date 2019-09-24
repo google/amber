@@ -384,19 +384,21 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
         v.SetIntValue(token->AsHex());
         value_data.push_back(v);
       } else {
-        auto& comps = header.format->GetComponents();
-        for (size_t i = 0; i < comps.size();
-             ++i, token = tokenizer.NextToken()) {
+        auto& segs = header.format->GetSegments();
+        for (const auto& seg : segs) {
+          if (seg.IsPadding())
+            continue;
+
           if (token->IsEOS() || token->IsEOL()) {
             return Result(make_error(tokenizer,
                                      "Too few cells in given vertex data row"));
           }
 
-          auto& comp = comps[i];
+          auto comp = seg.GetComponent();
 
           Value v;
-          if (comp.mode == FormatMode::kUFloat ||
-              comp.mode == FormatMode::kSFloat) {
+          if (comp->mode == FormatMode::kUFloat ||
+              comp->mode == FormatMode::kSFloat) {
             Result r = token->ConvertToDouble();
             if (!r.IsSuccess())
               return r;
@@ -410,6 +412,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
           }
 
           value_data.push_back(v);
+          token = tokenizer.NextToken();
         }
       }
     }

@@ -60,33 +60,33 @@ double Sub(const uint8_t* buf1, const uint8_t* buf2) {
                              *reinterpret_cast<const T*>(buf2));
 }
 
-double CalculateDiff(const Format::Component& comp,
+double CalculateDiff(const Format::Component* comp,
                      const uint8_t* buf1,
                      const uint8_t* buf2) {
-  if (comp.IsInt8())
+  if (comp->IsInt8())
     return Sub<int8_t>(buf1, buf2);
-  if (comp.IsInt16())
+  if (comp->IsInt16())
     return Sub<int16_t>(buf1, buf2);
-  if (comp.IsInt32())
+  if (comp->IsInt32())
     return Sub<int32_t>(buf1, buf2);
-  if (comp.IsInt64())
+  if (comp->IsInt64())
     return Sub<int64_t>(buf1, buf2);
-  if (comp.IsUint8())
+  if (comp->IsUint8())
     return Sub<uint8_t>(buf1, buf2);
-  if (comp.IsUint16())
+  if (comp->IsUint16())
     return Sub<uint16_t>(buf1, buf2);
-  if (comp.IsUint32())
+  if (comp->IsUint32())
     return Sub<uint32_t>(buf1, buf2);
-  if (comp.IsUint64())
+  if (comp->IsUint64())
     return Sub<uint64_t>(buf1, buf2);
   // TOOD(dsinclair): Handle float16 ...
-  if (comp.IsFloat16()) {
+  if (comp->IsFloat16()) {
     assert(false && "Float16 suppport not implemented");
     return 0.0;
   }
-  if (comp.IsFloat())
+  if (comp->IsFloat())
     return Sub<float>(buf1, buf2);
-  if (comp.IsDouble())
+  if (comp->IsDouble())
     return Sub<double>(buf1, buf2);
 
   assert(false && "NOTREACHED");
@@ -156,20 +156,16 @@ std::vector<double> Buffer::CalculateDiffs(const Buffer* buffer) const {
 
   auto* buf_1_ptr = GetValues<uint8_t>();
   auto* buf_2_ptr = buffer->GetValues<uint8_t>();
-  auto comps = format_->GetComponents();
+  auto& segments = format_->GetSegments();
 
   for (size_t i = 0; i < ElementCount(); ++i) {
-    for (size_t j = 0; j < format_->ColumnCount(); ++j) {
-      auto* buf_1_row_ptr = buf_1_ptr;
-      auto* buf_2_row_ptr = buf_2_ptr;
-      for (size_t k = 0; k < format_->RowCount(); ++k) {
-        diffs.push_back(CalculateDiff(comps[k], buf_1_row_ptr, buf_2_row_ptr));
+    for (const auto& seg : segments) {
+      if (!seg.IsPadding())
+        diffs.push_back(
+            CalculateDiff(seg.GetComponent(), buf_1_ptr, buf_2_ptr));
 
-        buf_1_row_ptr += comps[k].SizeInBytes();
-        buf_2_row_ptr += comps[k].SizeInBytes();
-      }
-      buf_1_ptr += format_->SizeInBytesPerRow();
-      buf_2_ptr += format_->SizeInBytesPerRow();
+      buf_1_ptr += seg.GetComponent()->SizeInBytes();
+      buf_2_ptr += seg.GetComponent()->SizeInBytes();
     }
   }
 
@@ -248,7 +244,7 @@ Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
     return Result("Mismatched number of items in buffer");
 
   uint8_t* ptr = bytes_.data() + offset;
-  const auto& components = format_->GetComponents();
+  const auto& segments = format_->GetSegments();
   for (uint32_t i = 0; i < data.size();) {
     const auto pack_size = format_->GetPackSize();
     if (pack_size) {
@@ -266,65 +262,63 @@ Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
       continue;
     }
 
-    for (size_t k = 0; k < format_->RowCount(); ++k) {
-      ptr += WriteValueFromComponent(data[i], components[k], ptr);
-      ++i;
-    }
-    // For formats which we've padded to the the layout, make sure we skip over
-    // the space in the buffer.
-    size_t pad = format_->ValuesPerRow() - components.size();
-    for (size_t j = 0; j < pad; ++j) {
+    for (const auto& seg : segments) {
       Value v;
-      ptr += WriteValueFromComponent(v, components[0], ptr);
+      if (!seg.IsPadding()) {
+        v = data[i];
+        ++i;
+      }
+
+      ptr += WriteValueFromComponent(v, seg.GetComponent(), ptr);
     }
   }
   return {};
 }
 
 uint32_t Buffer::WriteValueFromComponent(const Value& value,
-                                         const Format::Component& comp,
+                                         const Format::Component* comp,
                                          uint8_t* ptr) {
-  if (comp.IsInt8()) {
+  if (comp->IsInt8()) {
     *(ValuesAs<int8_t>(ptr)) = value.AsInt8();
     return sizeof(int8_t);
   }
-  if (comp.IsInt16()) {
+  if (comp->IsInt16()) {
     *(ValuesAs<int16_t>(ptr)) = value.AsInt16();
     return sizeof(int16_t);
   }
-  if (comp.IsInt32()) {
+  if (comp->IsInt32()) {
     *(ValuesAs<int32_t>(ptr)) = value.AsInt32();
     return sizeof(int32_t);
   }
-  if (comp.IsInt64()) {
+  if (comp->IsInt64()) {
     *(ValuesAs<int64_t>(ptr)) = value.AsInt64();
     return sizeof(int64_t);
   }
-  if (comp.IsUint8()) {
+  if (comp->IsUint8()) {
     *(ValuesAs<uint8_t>(ptr)) = value.AsUint8();
     return sizeof(uint8_t);
   }
-  if (comp.IsUint16()) {
+  if (comp->IsUint16()) {
     *(ValuesAs<uint16_t>(ptr)) = value.AsUint16();
     return sizeof(uint16_t);
   }
-  if (comp.IsUint32()) {
+  if (comp->IsUint32()) {
     *(ValuesAs<uint32_t>(ptr)) = value.AsUint32();
     return sizeof(uint32_t);
   }
-  if (comp.IsUint64()) {
+  if (comp->IsUint64()) {
     *(ValuesAs<uint64_t>(ptr)) = value.AsUint64();
     return sizeof(uint64_t);
   }
-  if (comp.IsFloat()) {
+  if (comp->IsFloat()) {
     *(ValuesAs<float>(ptr)) = value.AsFloat();
     return sizeof(float);
   }
-  if (comp.IsDouble()) {
+  if (comp->IsDouble()) {
     *(ValuesAs<double>(ptr)) = value.AsDouble();
     return sizeof(double);
   }
-  if (comp.IsFloat16()) {
+  if (comp->IsFloat16()) {
     *(ValuesAs<uint16_t>(ptr)) = FloatToHexFloat16(value.AsFloat());
     return sizeof(uint16_t);
   }

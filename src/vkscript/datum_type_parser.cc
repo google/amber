@@ -115,11 +115,11 @@ std::unique_ptr<Format> DatumTypeParser::Parse(const std::string& data) {
     std::string parts = "ARGB";
     const auto& comps = fmt->GetComponents();
     for (const auto& comp : comps) {
-      name += parts[static_cast<uint8_t>(comp.type)] +
-              std::to_string(comp.num_bits);
+      name += parts[static_cast<uint8_t>(comp->type)] +
+              std::to_string(comp->num_bits);
     }
     name += "_";
-    switch (comps[0].mode) {
+    switch (comps[0]->mode) {
       case FormatMode::kUNorm:
       case FormatMode::kUFloat:
       case FormatMode::kUScaled:
