@@ -840,11 +840,13 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
     token = tokenizer_->NextToken();
     if (!token->IsString())
       return Result("expected argument identifier");
+
     arg_name = token->AsString();
   } else if (token->AsString() == "ARG_NUMBER") {
     token = tokenizer_->NextToken();
     if (!token->IsInteger())
       return Result("expected argument number");
+
     arg_no = token->AsUint32();
   } else {
     return Result("expected ARG_NAME or ARG_NUMBER");
@@ -876,7 +878,7 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   Pipeline::ArgSetInfo info;
   info.name = arg_name;
   info.ordinal = arg_no;
-  info.type = arg_type;
+  info.fmt = arg_type.AsFormat();
   info.value = value;
   pipeline->SetArg(std::move(info));
   return ValidateEndOfStatement("SET command");

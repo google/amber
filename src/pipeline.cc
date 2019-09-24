@@ -53,7 +53,15 @@ std::unique_ptr<Pipeline> Pipeline::Clone() const {
   clone->index_buffer_ = index_buffer_;
   clone->fb_width_ = fb_width_;
   clone->fb_height_ = fb_height_;
-  clone->set_arg_values_ = set_arg_values_;
+
+  for (const auto& args : set_arg_values_) {
+    clone->set_arg_values_.push_back({});
+    clone->set_arg_values_.back().name = args.name;
+    clone->set_arg_values_.back().ordinal = args.ordinal;
+    clone->set_arg_values_.back().fmt = MakeUnique<Format>(*args.fmt);
+    clone->set_arg_values_.back().value = args.value;
+  }
+
   if (!opencl_pod_buffers_.empty()) {
     // Generate specific buffers for the clone.
     clone->GenerateOpenCLPodBuffers();
@@ -560,7 +568,7 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
       buffer->SetSizeInElements(offset + arg_size);
     }
     // Check the data size.
-    if (arg_size != arg_info.type.SizeInBytes()) {
+    if (arg_size != arg_info.fmt->SizeInBytes()) {
       std::string message = "SET command uses incorrect data size: kernel " +
                             shader_info.GetEntryPoint();
       if (uses_name) {
