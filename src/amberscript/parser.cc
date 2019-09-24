@@ -82,7 +82,7 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
     if (str[4] != '<' || str[str.length() - 1] != '>')
       return nullptr;
 
-    uint8_t component_count = str[3] - '0';
+    int component_count = str[3] - '0';
     if (component_count < 2 || component_count > 4)
       return nullptr;
 
@@ -94,7 +94,7 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
       return nullptr;
 
     const auto& comp = sub_fmt->GetComponents()[0];
-    for (uint8_t i = 0; i < component_count; ++i)
+    for (int i = 0; i < component_count; ++i)
       fmt->AddComponent(FORMAT_TYPES[i], comp.mode, comp.num_bits);
 
   } else if (str.length() > 9 && str.substr(0, 3) == "mat") {
@@ -103,11 +103,11 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
 
     matrix = true;
 
-    uint8_t column_count = str[3] - '0';
+    int column_count = str[3] - '0';
     if (column_count < 2 || column_count > 4)
       return nullptr;
 
-    uint8_t row_count = str[5] - '0';
+    int row_count = str[5] - '0';
     if (row_count < 2 || row_count > 4)
       return nullptr;
 
@@ -121,7 +121,7 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
     fmt->SetColumnCount(column_count);
 
     const auto& comp = sub_fmt->GetComponents()[0];
-    for (uint8_t i = 0; i < row_count; ++i)
+    for (int i = 0; i < row_count; ++i)
       fmt->AddComponent(FORMAT_TYPES[i], comp.mode, comp.num_bits);
 
   } else {
@@ -967,7 +967,7 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
   if (fmt != nullptr) {
     buffer->SetFormat(std::move(fmt));
   } else {
-    auto fmt = ToFormat(token->AsString());
+    fmt = ToFormat(token->AsString());
     if (!fmt)
       return Result("invalid data_type provided");
 
