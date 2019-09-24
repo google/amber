@@ -40,6 +40,73 @@ END)";
 
   auto* buffer = buffers[0].get();
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
+  EXPECT_EQ(7U, buffer->ElementCount());
+  EXPECT_EQ(7U, buffer->ValueCount());
+  EXPECT_EQ(7U * sizeof(uint32_t), buffer->GetSizeInBytes());
+
+  std::vector<uint32_t> results = {1, 2, 3, 4, 55, 99, 1234};
+  const auto* data = buffer->GetValues<uint32_t>();
+  ASSERT_EQ(results.size(), buffer->ValueCount());
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_EQ(results[i], data[i]);
+  }
+}
+
+TEST_F(AmberScriptParserTest, BufferDataStd140) {
+  std::string in = R"(
+BUFFER my_buffer DATA_TYPE uint32 STD140 DATA
+1 2 3 4
+55 99 1234
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->IsUint32());
+  EXPECT_EQ(Format::Layout::kStd140, buffer->GetFormat()->GetLayout());
+  EXPECT_EQ(7U, buffer->ElementCount());
+  EXPECT_EQ(7U, buffer->ValueCount());
+  EXPECT_EQ(7U * sizeof(uint32_t), buffer->GetSizeInBytes());
+
+  std::vector<uint32_t> results = {1, 2, 3, 4, 55, 99, 1234};
+  const auto* data = buffer->GetValues<uint32_t>();
+  ASSERT_EQ(results.size(), buffer->ValueCount());
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_EQ(results[i], data[i]);
+  }
+}
+
+TEST_F(AmberScriptParserTest, BufferDataStd430) {
+  std::string in = R"(
+BUFFER my_buffer DATA_TYPE uint32 STD430 DATA
+1 2 3 4
+55 99 1234
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->IsUint32());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(7U, buffer->ElementCount());
   EXPECT_EQ(7U, buffer->ValueCount());
   EXPECT_EQ(7U * sizeof(uint32_t), buffer->GetSizeInBytes());
@@ -68,6 +135,7 @@ TEST_F(AmberScriptParserTest, BufferDataOneLine) {
 
   auto* buffer = buffers[0].get();
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(4U, buffer->ElementCount());
   EXPECT_EQ(4U, buffer->ValueCount());
   EXPECT_EQ(4U * sizeof(uint32_t), buffer->GetSizeInBytes());
@@ -96,6 +164,7 @@ TEST_F(AmberScriptParserTest, BufferDataFloat) {
 
   auto* buffer = buffers[0].get();
   EXPECT_TRUE(buffer->GetFormat()->IsFloat());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(4U, buffer->ElementCount());
   EXPECT_EQ(4U, buffer->ValueCount());
   EXPECT_EQ(4U * sizeof(float), buffer->GetSizeInBytes());
@@ -124,6 +193,7 @@ TEST_F(AmberScriptParserTest, BufferFill) {
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsUint8());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(5U, buffer->ElementCount());
   EXPECT_EQ(5U, buffer->ValueCount());
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
@@ -152,6 +222,7 @@ TEST_F(AmberScriptParserTest, BufferFillFloat) {
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsFloat());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(5U, buffer->ElementCount());
   EXPECT_EQ(5U, buffer->ValueCount());
   EXPECT_EQ(5U * sizeof(float), buffer->GetSizeInBytes());
@@ -181,6 +252,7 @@ TEST_F(AmberScriptParserTest, BufferSeries) {
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsUint8());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(5U, buffer->ElementCount());
   EXPECT_EQ(5U, buffer->ValueCount());
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
@@ -211,6 +283,7 @@ TEST_F(AmberScriptParserTest, BufferSeriesFloat) {
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsFloat());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(5U, buffer->ElementCount());
   EXPECT_EQ(5U, buffer->ValueCount());
   EXPECT_EQ(5U * sizeof(float), buffer->GetSizeInBytes());
@@ -244,6 +317,7 @@ END)";
   auto* buffer = buffers[0].get();
   EXPECT_EQ("color_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsUint8());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(5U, buffer->ElementCount());
   EXPECT_EQ(5U, buffer->ValueCount());
   EXPECT_EQ(5U * sizeof(uint8_t), buffer->GetSizeInBytes());
@@ -260,6 +334,7 @@ END)";
   buffer = buffers[1].get();
   EXPECT_EQ("storage_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(7U, buffer->ElementCount());
   EXPECT_EQ(7U, buffer->ValueCount());
   EXPECT_EQ(7U * sizeof(uint32_t), buffer->GetSizeInBytes());
@@ -289,6 +364,7 @@ BUFFER my_index_buffer DATA_TYPE vec2<int32> SIZE 5 FILL 2)";
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_index_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsInt32());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(5U, buffer->ElementCount());
   EXPECT_EQ(10U, buffer->ValueCount());
   EXPECT_EQ(10U * sizeof(int32_t), buffer->GetSizeInBytes());
@@ -300,7 +376,7 @@ BUFFER my_index_buffer DATA_TYPE vec2<int32> SIZE 5 FILL 2)";
   }
 }
 
-TEST_F(AmberScriptParserTest, BufferDataMultiRow) {
+TEST_F(AmberScriptParserTest, BufferDataMultiRowStd430) {
   std::string in = R"(
 BUFFER my_index_buffer DATA_TYPE vec2<int32> DATA
 2 3
@@ -323,6 +399,42 @@ END
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_index_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsInt32());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
+  EXPECT_EQ(4U, buffer->ElementCount());
+  EXPECT_EQ(8U, buffer->ValueCount());
+  EXPECT_EQ(8U * sizeof(int32_t), buffer->GetSizeInBytes());
+
+  std::vector<int32_t> results0 = {2, 3, 4, 5, 6, 7, 8, 9};
+  const auto* data0 = buffer->GetValues<int32_t>();
+  for (size_t i = 0; i < results0.size(); ++i) {
+    EXPECT_EQ(results0[i], data0[i]);
+  }
+}
+
+TEST_F(AmberScriptParserTest, BufferDataMultiRowStd140) {
+  std::string in = R"(
+BUFFER my_index_buffer DATA_TYPE vec2<int32> STD140 DATA
+2 3
+4 5
+6 7
+8 9
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+
+  auto* buffer = buffers[0].get();
+  EXPECT_EQ("my_index_buffer", buffer->GetName());
+  EXPECT_TRUE(buffer->GetFormat()->IsInt32());
+  EXPECT_EQ(Format::Layout::kStd140, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(4U, buffer->ElementCount());
   EXPECT_EQ(8U, buffer->ValueCount());
   EXPECT_EQ(8U * sizeof(int32_t), buffer->GetSizeInBytes());
@@ -357,6 +469,7 @@ END
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_index_buffer", buffer->GetName());
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(4U, buffer->ElementCount());
   EXPECT_EQ(4U, buffer->ValueCount());
   EXPECT_EQ(4U * sizeof(uint32_t), buffer->GetSizeInBytes());

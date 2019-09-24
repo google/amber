@@ -136,6 +136,7 @@ class Format {
   FormatType GetFormatType() const { return type_; }
 
   void SetLayout(Layout layout);
+  Layout GetLayout() const { return layout_; }
 
   /// Set the number of bytes this format is packed into, if provided.
   void SetPackSize(uint8_t size_in_bytes) {
