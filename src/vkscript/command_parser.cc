@@ -743,7 +743,7 @@ Result CommandParser::ProcessUniform() {
 
   // uniform is always std140.
   if (is_ubo)
-    fmt->SetIsStd140();
+    fmt->SetLayout(Format::Layout::kStd140);
 
   auto* buf = cmd->GetBuffer();
   if (buf->FormatIsDefault() || !buf->GetFormat())

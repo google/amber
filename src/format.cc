@@ -22,7 +22,7 @@ Format::Format() = default;
 
 Format::Format(const Format& b) {
   type_ = b.type_;
-  is_std140_ = b.is_std140_;
+  layout_ = b.layout_;
   pack_size_in_bytes_ = b.pack_size_in_bytes_;
   column_count_ = b.column_count_;
 
@@ -37,7 +37,7 @@ Format::~Format() = default;
 
 Format& Format::operator=(const Format& b) {
   type_ = b.type_;
-  is_std140_ = b.is_std140_;
+  layout_ = b.layout_;
   pack_size_in_bytes_ = b.pack_size_in_bytes_;
   column_count_ = b.column_count_;
 
@@ -67,7 +67,7 @@ bool Format::AreAllComponents(FormatMode mode, uint32_t bits) const {
 }
 
 bool Format::Equal(const Format* b) const {
-  if (type_ != b->type_ || is_std140_ != b->is_std140_ ||
+  if (type_ != b->type_ || layout_ != b->layout_ ||
       pack_size_in_bytes_ != b->pack_size_in_bytes_ ||
       column_count_ != b->column_count_) {
     return false;
@@ -108,8 +108,8 @@ void Format::SetColumnCount(uint32_t c) {
   RebuildSegments();
 }
 
-void Format::SetIsStd140() {
-  is_std140_ = true;
+void Format::SetLayout(Layout layout) {
+  layout_ = layout;
   RebuildSegments();
 }
 
@@ -125,7 +125,7 @@ void Format::RebuildSegments() {
     // which rounds up to a vec4.
     //
     // In std140 and std430 a vector of size 3N will round up to a vector of 4N.
-    if ((is_std140_ && column_count_ > 1) || RowCount() == 3) {
+    if ((layout_ == Layout::kStd140 && column_count_ > 1) || RowCount() == 3) {
       for (size_t k = 0; k < (4 - RowCount()); ++k) {
         // TODO(dsinclair): This component will be wrong if all the components
         // aren't the same size. This will be the case when we have struct

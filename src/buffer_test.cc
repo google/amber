@@ -87,7 +87,7 @@ TEST_F(BufferTest, SizeMatrixStd140) {
   FormatParser fp;
   auto fmt = fp.Parse("R16G16_SINT");
   fmt->SetColumnCount(3);
-  fmt->SetIsStd140();
+  fmt->SetLayout(Format::Layout::kStd140);
 
   Buffer b(BufferType::kColor);
   b.SetFormat(std::move(fmt));
