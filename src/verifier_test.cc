@@ -1462,7 +1462,7 @@ TEST_F(VerifierTest, ProbeSSBOWithPadding) {
   probe_ssbo.SetValues(std::move(values));
 
   // The vec2 will get padded to 4 bytes in std430.
-  const float ssbo[8] = {1.9, 0.73, 0.0, 0.0, 9.99, 1234.560, 0.0, 0.0};
+  const float ssbo[8] = {1.9f, 0.73f, 0.0f, 0.0f, 9.99f, 1234.560f, 0.0f, 0.0f};
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
