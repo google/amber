@@ -19,6 +19,7 @@
 #include <limits>
 #include "gtest/gtest.h"
 #include "src/type_parser.h"
+#include "src/float16_helper.h"
 
 namespace amber {
 
@@ -292,6 +293,29 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceAllWhite) {
   b2.SetData(values2);
 
   EXPECT_TRUE(b1.CompareHistogramEMD(&b2, 0.0f).IsSuccess());
+}
+
+TEST_F(BufferTest, SetFloat16) {
+  std::vector<Value> values;
+  values.resize(2);
+  values[0].SetDoubleValue(2.8);
+  values[1].SetDoubleValue(1234.567);
+
+  TypeParser parser;
+  auto type = parser.Parse("R16_SFLOAT");
+
+  Format fmt(type.get());
+  Buffer b(BufferType::kColor);
+  b.SetFormat(&fmt);
+  b.SetData(std::move(values));
+
+  EXPECT_EQ(2, b.ElementCount());
+  EXPECT_EQ(2, b.ValueCount());
+  EXPECT_EQ(4, b.GetSizeInBytes());
+
+  auto v = b.GetValues<uint16_t>();
+  EXPECT_EQ(float16::FloatToHexFloat16(2.8f), v[0]);
+  EXPECT_EQ(float16::FloatToHexFloat16(1234.567f), v[1]);
 }
 
 }  // namespace amber

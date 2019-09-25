@@ -30,6 +30,7 @@ LOCAL_SRC_FILES:= \
     src/descriptor_set_and_binding_parser.cc \
     src/engine.cc \
     src/executor.cc \
+    src/float16_helper.cc \
     src/format.cc \
     src/parser.cc \
     src/pipeline.cc \
