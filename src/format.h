@@ -102,7 +102,10 @@ class Format {
   class Segment {
    public:
     explicit Segment(Component* component) : component_(component) {}
+    Segment(const Segment&) = default;
     ~Segment() = default;
+
+    Segment& operator=(const Segment&) = default;
 
     void SetIsPadding() { is_padding_ = true; }
     bool IsPadding() const { return is_padding_; }
