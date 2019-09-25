@@ -56,7 +56,7 @@ std::unique_ptr<Format> DatumTypeParser::Parse(const std::string& data) {
   } else if (data == "double") {
     fmt->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 64);
   } else {
-    size_t row_count = 4;
+    int row_count = 4;
     FormatMode mode = FormatMode::kSFloat;
     uint8_t num_bits = 32;
 
@@ -90,7 +90,7 @@ std::unique_ptr<Format> DatumTypeParser::Parse(const std::string& data) {
       if (data[0] == 'd')
         num_bits = 64;
 
-      size_t column_count = 1;
+      int column_count = 1;
       if (mat_pos + 3 < data.length())
         column_count = data[mat_pos + 3] - '0';
 
@@ -99,7 +99,7 @@ std::unique_ptr<Format> DatumTypeParser::Parse(const std::string& data) {
       else
         row_count = column_count;
 
-      fmt->SetColumnCount(column_count);
+      fmt->SetColumnCount(static_cast<uint32_t>(column_count));
     }
 
     for (size_t i = 0; i < row_count; ++i)
