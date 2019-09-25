@@ -35,10 +35,25 @@ Format::Format(const Format& b) {
 
 Format::~Format() = default;
 
+Format& Format::operator=(const Format& b) {
+  type_ = b.type_;
+  is_std140_ = b.is_std140_;
+  pack_size_in_bytes_ = b.pack_size_in_bytes_;
+  column_count_ = b.column_count_;
+
+  for (const auto& comp : b.components_) {
+    components_.push_back(
+        MakeUnique<Component>(comp->type, comp->mode, comp->num_bits));
+  }
+  RebuildSegments();
+
+  return *this;
+}
+
 uint32_t Format::SizeInBytes() const {
   uint32_t size = 0;
   for (const auto& seg : segments_)
-    size += seg.GetComponent()->SizeInBytes();
+    size += static_cast<uint32_t>(seg.GetComponent()->SizeInBytes());
 
   return size;
 }

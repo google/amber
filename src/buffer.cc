@@ -156,8 +156,7 @@ std::vector<double> Buffer::CalculateDiffs(const Buffer* buffer) const {
 
   auto* buf_1_ptr = GetValues<uint8_t>();
   auto* buf_2_ptr = buffer->GetValues<uint8_t>();
-  auto& segments = format_->GetSegments();
-
+  const auto& segments = format_->GetSegments();
   for (size_t i = 0; i < ElementCount(); ++i) {
     for (const auto& seg : segments) {
       if (!seg.IsPadding())

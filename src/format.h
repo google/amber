@@ -122,7 +122,7 @@ class Format {
   Format(const Format&);
   ~Format();
 
-  Format& operator=(const Format&) = delete;
+  Format& operator=(const Format&);
 
   /// Returns true if |b| describes the same format as this object.
   bool Equal(const Format* b) const;
