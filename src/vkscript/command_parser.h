@@ -25,7 +25,6 @@
 #include "src/pipeline.h"
 #include "src/pipeline_data.h"
 #include "src/script.h"
-#include "src/vkscript/datum_type.h"
 
 namespace amber {
 

@@ -14,226 +14,133 @@
 
 #include "src/vkscript/datum_type_parser.h"
 
+#include "src/format_parser.h"
+#include "src/make_unique.h"
+
 namespace amber {
 namespace vkscript {
+namespace {
+
+FormatComponentType FORMAT_TYPES[] = {
+    FormatComponentType::kR, FormatComponentType::kG, FormatComponentType::kB,
+    FormatComponentType::kA};
+
+}  // namespace
 
 DatumTypeParser::DatumTypeParser() = default;
 
 DatumTypeParser::~DatumTypeParser() = default;
 
-Result DatumTypeParser::Parse(const std::string& data) {
-  // TODO(dsinclair): Might want to make this nicer in the future, but this
-  // works and is easy for now.
+std::unique_ptr<Format> DatumTypeParser::Parse(const std::string& data) {
+  auto fmt = MakeUnique<Format>();
+
+  bool matrix = false;
   if (data == "int") {
-    type_.SetType(DataType::kInt32);
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
   } else if (data == "uint") {
-    type_.SetType(DataType::kUint32);
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 32);
   } else if (data == "int8_t") {
-    type_.SetType(DataType::kInt8);
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 8);
   } else if (data == "uint8_t") {
-    type_.SetType(DataType::kUint8);
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 8);
   } else if (data == "int16_t") {
-    type_.SetType(DataType::kInt16);
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 16);
   } else if (data == "uint16_t") {
-    type_.SetType(DataType::kUint16);
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 16);
   } else if (data == "int64_t") {
-    type_.SetType(DataType::kInt64);
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 64);
   } else if (data == "uint64_t") {
-    type_.SetType(DataType::kUint64);
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 64);
   } else if (data == "float") {
-    type_.SetType(DataType::kFloat);
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
   } else if (data == "double") {
-    type_.SetType(DataType::kDouble);
-  } else if (data == "vec2") {
-    type_.SetType(DataType::kFloat);
-    type_.SetRowCount(2);
-  } else if (data == "vec3") {
-    type_.SetType(DataType::kFloat);
-    type_.SetRowCount(3);
-  } else if (data == "vec4") {
-    type_.SetType(DataType::kFloat);
-    type_.SetRowCount(4);
-  } else if (data == "dvec2") {
-    type_.SetType(DataType::kDouble);
-    type_.SetRowCount(2);
-  } else if (data == "dvec3") {
-    type_.SetType(DataType::kDouble);
-    type_.SetRowCount(3);
-  } else if (data == "dvec4") {
-    type_.SetType(DataType::kDouble);
-    type_.SetRowCount(4);
-  } else if (data == "ivec2") {
-    type_.SetType(DataType::kInt32);
-    type_.SetRowCount(2);
-  } else if (data == "ivec3") {
-    type_.SetType(DataType::kInt32);
-    type_.SetRowCount(3);
-  } else if (data == "ivec4") {
-    type_.SetType(DataType::kInt32);
-    type_.SetRowCount(4);
-  } else if (data == "uvec2") {
-    type_.SetType(DataType::kUint32);
-    type_.SetRowCount(2);
-  } else if (data == "uvec3") {
-    type_.SetType(DataType::kUint32);
-    type_.SetRowCount(3);
-  } else if (data == "uvec4") {
-    type_.SetType(DataType::kUint32);
-    type_.SetRowCount(4);
-  } else if (data == "i8vec2") {
-    type_.SetType(DataType::kInt8);
-    type_.SetRowCount(2);
-  } else if (data == "i8vec3") {
-    type_.SetType(DataType::kInt8);
-    type_.SetRowCount(3);
-  } else if (data == "i8vec4") {
-    type_.SetType(DataType::kInt8);
-    type_.SetRowCount(4);
-  } else if (data == "u8vec2") {
-    type_.SetType(DataType::kUint8);
-    type_.SetRowCount(2);
-  } else if (data == "u8vec3") {
-    type_.SetType(DataType::kUint8);
-    type_.SetRowCount(3);
-  } else if (data == "u8vec4") {
-    type_.SetType(DataType::kUint8);
-    type_.SetRowCount(4);
-  } else if (data == "i16vec2") {
-    type_.SetType(DataType::kInt16);
-    type_.SetRowCount(2);
-  } else if (data == "i16vec3") {
-    type_.SetType(DataType::kInt16);
-    type_.SetRowCount(3);
-  } else if (data == "i16vec4") {
-    type_.SetType(DataType::kInt16);
-    type_.SetRowCount(4);
-  } else if (data == "u16vec2") {
-    type_.SetType(DataType::kUint16);
-    type_.SetRowCount(2);
-  } else if (data == "u16vec3") {
-    type_.SetType(DataType::kUint16);
-    type_.SetRowCount(3);
-  } else if (data == "u16vec4") {
-    type_.SetType(DataType::kUint16);
-    type_.SetRowCount(4);
-  } else if (data == "i64vec2") {
-    type_.SetType(DataType::kInt64);
-    type_.SetRowCount(2);
-  } else if (data == "i64vec3") {
-    type_.SetType(DataType::kInt64);
-    type_.SetRowCount(3);
-  } else if (data == "i64vec4") {
-    type_.SetType(DataType::kInt64);
-    type_.SetRowCount(4);
-  } else if (data == "u64vec2") {
-    type_.SetType(DataType::kUint64);
-    type_.SetRowCount(2);
-  } else if (data == "u64vec3") {
-    type_.SetType(DataType::kUint64);
-    type_.SetRowCount(3);
-  } else if (data == "u64vec4") {
-    type_.SetType(DataType::kUint64);
-    type_.SetRowCount(4);
-  } else if (data == "mat2") {
-    type_.SetType(DataType::kFloat);
-    type_.SetColumnCount(2);
-    type_.SetRowCount(2);
-  } else if (data == "mat2x2") {
-    type_.SetType(DataType::kFloat);
-    type_.SetColumnCount(2);
-    type_.SetRowCount(2);
-  } else if (data == "mat2x3") {
-    type_.SetType(DataType::kFloat);
-    type_.SetColumnCount(2);
-    type_.SetRowCount(3);
-  } else if (data == "mat2x4") {
-    type_.SetType(DataType::kFloat);
-    type_.SetColumnCount(2);
-    type_.SetRowCount(4);
-  } else if (data == "mat3") {
-    type_.SetType(DataType::kFloat);
-    type_.SetColumnCount(3);
-    type_.SetRowCount(3);
-  } else if (data == "mat3x2") {
-    type_.SetType(DataType::kFloat);
-    type_.SetColumnCount(3);
-    type_.SetRowCount(2);
-  } else if (data == "mat3x3") {
-    type_.SetType(DataType::kFloat);
-    type_.SetColumnCount(3);
-    type_.SetRowCount(3);
-  } else if (data == "mat3x4") {
-    type_.SetType(DataType::kFloat);
-    type_.SetColumnCount(3);
-    type_.SetRowCount(4);
-  } else if (data == "mat4") {
-    type_.SetType(DataType::kFloat);
-    type_.SetColumnCount(4);
-    type_.SetRowCount(4);
-  } else if (data == "mat4x2") {
-    type_.SetType(DataType::kFloat);
-    type_.SetColumnCount(4);
-    type_.SetRowCount(2);
-  } else if (data == "mat4x3") {
-    type_.SetType(DataType::kFloat);
-    type_.SetColumnCount(4);
-    type_.SetRowCount(3);
-  } else if (data == "mat4x4") {
-    type_.SetType(DataType::kFloat);
-    type_.SetColumnCount(4);
-    type_.SetRowCount(4);
-  } else if (data == "dmat2") {
-    type_.SetType(DataType::kDouble);
-    type_.SetColumnCount(2);
-    type_.SetRowCount(2);
-  } else if (data == "dmat2x2") {
-    type_.SetType(DataType::kDouble);
-    type_.SetColumnCount(2);
-    type_.SetRowCount(2);
-  } else if (data == "dmat2x3") {
-    type_.SetType(DataType::kDouble);
-    type_.SetColumnCount(2);
-    type_.SetRowCount(3);
-  } else if (data == "dmat2x4") {
-    type_.SetType(DataType::kDouble);
-    type_.SetColumnCount(2);
-    type_.SetRowCount(4);
-  } else if (data == "dmat3") {
-    type_.SetType(DataType::kDouble);
-    type_.SetColumnCount(3);
-    type_.SetRowCount(3);
-  } else if (data == "dmat3x2") {
-    type_.SetType(DataType::kDouble);
-    type_.SetColumnCount(3);
-    type_.SetRowCount(2);
-  } else if (data == "dmat3x3") {
-    type_.SetType(DataType::kDouble);
-    type_.SetColumnCount(3);
-    type_.SetRowCount(3);
-  } else if (data == "dmat3x4") {
-    type_.SetType(DataType::kDouble);
-    type_.SetColumnCount(3);
-    type_.SetRowCount(4);
-  } else if (data == "dmat4") {
-    type_.SetType(DataType::kDouble);
-    type_.SetColumnCount(4);
-    type_.SetRowCount(4);
-  } else if (data == "dmat4x2") {
-    type_.SetType(DataType::kDouble);
-    type_.SetColumnCount(4);
-    type_.SetRowCount(2);
-  } else if (data == "dmat4x3") {
-    type_.SetType(DataType::kDouble);
-    type_.SetColumnCount(4);
-    type_.SetRowCount(3);
-  } else if (data == "dmat4x4") {
-    type_.SetType(DataType::kDouble);
-    type_.SetColumnCount(4);
-    type_.SetRowCount(4);
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 64);
   } else {
-    return Result("Invalid type provided: " + data);
+    int row_count = 4;
+    FormatMode mode = FormatMode::kSFloat;
+    uint8_t num_bits = 32;
+
+    size_t vec_pos = data.find("vec");
+    if (vec_pos != std::string::npos) {
+      if (data[0] == 'i') {
+        mode = FormatMode::kSInt;
+      } else if (data[0] == 'u') {
+        mode = FormatMode::kUInt;
+      } else if (data[0] == 'd') {
+        num_bits = 64;
+      }
+
+      if (data[1] == '8')
+        num_bits = 8;
+      else if (data[1] == '1' && data[2] == '6')
+        num_bits = 16;
+      else if (data[1] == '6' && data[2] == '4')
+        num_bits = 64;
+
+      if ((vec_pos + 3) < data.length())
+        row_count = data[vec_pos + 3] - '0';
+
+    } else {
+      size_t mat_pos = data.find("mat");
+      if (mat_pos == std::string::npos)
+        return nullptr;
+
+      matrix = true;
+
+      if (data[0] == 'd')
+        num_bits = 64;
+
+      int column_count = 1;
+      if (mat_pos + 3 < data.length())
+        column_count = data[mat_pos + 3] - '0';
+
+      if (mat_pos + 5 < data.length())
+        row_count = data[mat_pos + 5] - '0';
+      else
+        row_count = column_count;
+
+      fmt->SetColumnCount(static_cast<uint32_t>(column_count));
+    }
+
+    for (int i = 0; i < row_count; ++i)
+      fmt->AddComponent(FORMAT_TYPES[i], mode, num_bits);
   }
-  return {};
+
+  // Convert the name back into a FormatType so we can use it in the buffer
+  // later Otherwise, we end up with a type of Unknown.
+  //
+  // There is no equivalent type for a matrix.
+  if (!matrix) {
+    std::string name = "";
+    std::string parts = "ARGB";
+    const auto& comps = fmt->GetComponents();
+    for (const auto& comp : comps) {
+      name += parts[static_cast<uint8_t>(comp.type)] +
+              std::to_string(comp.num_bits);
+    }
+    name += "_";
+    switch (comps[0].mode) {
+      case FormatMode::kUNorm:
+      case FormatMode::kUFloat:
+      case FormatMode::kUScaled:
+      case FormatMode::kSNorm:
+      case FormatMode::kSScaled:
+      case FormatMode::kSRGB:
+        return nullptr;
+      case FormatMode::kUInt:
+        name += "UINT";
+        break;
+      case FormatMode::kSInt:
+        name += "SINT";
+        break;
+      case FormatMode::kSFloat:
+        name += "SFLOAT";
+        break;
+    }
+
+    fmt->SetFormatType(FormatParser::NameToType(name));
+  }
+  return fmt;
 }
 
 }  // namespace vkscript
