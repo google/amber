@@ -102,7 +102,7 @@ std::unique_ptr<Format> DatumTypeParser::Parse(const std::string& data) {
       fmt->SetColumnCount(static_cast<uint32_t>(column_count));
     }
 
-    for (size_t i = 0; i < row_count; ++i)
+    for (int i = 0; i < row_count; ++i)
       fmt->AddComponent(FORMAT_TYPES[i], mode, num_bits);
   }
 
