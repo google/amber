@@ -24,7 +24,7 @@
 
 namespace amber {
 
-/// The format class describes requested image formats. (eg. R8G8B8A8_UINT).
+/// The format class describes requested  data formats. (eg. R8G8B8A8_UINT).
 ///
 /// There is a distinction between the input values needed and the values needed
 /// for a given format. The input values is the number needed to be read to fill
@@ -37,6 +37,8 @@ namespace amber {
 /// smaller then the values per element.
 class Format {
  public:
+  enum Layout { kStd140 = 0, kStd430 };
+
   /// Describes an individual component of a format.
   struct Component {
     Component(FormatComponentType t, FormatMode m, uint8_t bits)
@@ -133,7 +135,7 @@ class Format {
   void SetFormatType(FormatType type) { type_ = type; }
   FormatType GetFormatType() const { return type_; }
 
-  void SetIsStd140();
+  void SetLayout(Layout layout);
 
   /// Set the number of bytes this format is packed into, if provided.
   void SetPackSize(uint8_t size_in_bytes) {
@@ -204,7 +206,7 @@ class Format {
   void RebuildSegments();
 
   FormatType type_ = FormatType::kUnknown;
-  bool is_std140_ = false;
+  Layout layout_ = Layout::kStd430;
   uint8_t pack_size_in_bytes_ = 0;
   uint32_t column_count_ = 1;
   std::vector<std::unique_ptr<Component>> components_;

@@ -24,7 +24,7 @@ using FormatTest = testing::Test;
 
 TEST_F(FormatTest, Copy) {
   Format fmt;
-  fmt.SetIsStd140();
+  fmt.SetLayout(Format::Layout::kStd140);
   fmt.SetColumnCount(1);
   fmt.SetFormatType(FormatType::kR32G32B32_SFLOAT);
   fmt.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
@@ -73,7 +73,7 @@ TEST_F(FormatTest, SizeInBytesMatrixStd140) {
   auto fmt = fp.Parse("R32G32_SFLOAT");
   ASSERT_TRUE(fmt != nullptr);
   fmt->SetColumnCount(2);
-  fmt->SetIsStd140();
+  fmt->SetLayout(Format::Layout::kStd140);
 
   EXPECT_EQ(32U, fmt->SizeInBytes());
 }
@@ -103,7 +103,7 @@ TEST_P(FormatStdTest, Test) {
 
   fmt->SetColumnCount(test_data.column_count);
   if (test_data.is_std140)
-    fmt->SetIsStd140();
+    fmt->SetLayout(Format::Layout::kStd140);
 
   EXPECT_EQ(test_data.size_in_bytes, fmt->SizeInBytes()) << test_data.name;
 }
