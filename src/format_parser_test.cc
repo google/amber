@@ -1187,9 +1187,9 @@ TEST_F(FormatParserTest, Formats) {
     ASSERT_EQ(fmt.component_count, comps.size());
 
     for (size_t i = 0; i < fmt.component_count; ++i) {
-      EXPECT_EQ(fmt.components[i].type, comps[i].type) << fmt.name;
-      EXPECT_EQ(fmt.components[i].mode, comps[i].mode) << fmt.name;
-      EXPECT_EQ(fmt.components[i].num_bits, comps[i].num_bits) << fmt.name;
+      EXPECT_EQ(fmt.components[i].type, comps[i]->type) << fmt.name;
+      EXPECT_EQ(fmt.components[i].mode, comps[i]->mode) << fmt.name;
+      EXPECT_EQ(fmt.components[i].num_bits, comps[i]->num_bits) << fmt.name;
     }
   }
 }  // NOLINT(readability/fn_size)
@@ -1217,15 +1217,15 @@ TEST_F(FormatParserTest, GlslString) {
   auto& comps = format->GetComponents();
   ASSERT_EQ(3U, comps.size());
 
-  EXPECT_EQ(FormatComponentType::kR, comps[0].type);
-  EXPECT_EQ(FormatMode::kSFloat, comps[0].mode);
-  EXPECT_EQ(32U, comps[0].num_bits);
-  EXPECT_EQ(FormatComponentType::kG, comps[1].type);
-  EXPECT_EQ(FormatMode::kSFloat, comps[1].mode);
-  EXPECT_EQ(32U, comps[1].num_bits);
-  EXPECT_EQ(FormatComponentType::kB, comps[2].type);
-  EXPECT_EQ(FormatMode::kSFloat, comps[2].mode);
-  EXPECT_EQ(32U, comps[2].num_bits);
+  EXPECT_EQ(FormatComponentType::kR, comps[0]->type);
+  EXPECT_EQ(FormatMode::kSFloat, comps[0]->mode);
+  EXPECT_EQ(32U, comps[0]->num_bits);
+  EXPECT_EQ(FormatComponentType::kG, comps[1]->type);
+  EXPECT_EQ(FormatMode::kSFloat, comps[1]->mode);
+  EXPECT_EQ(32U, comps[1]->num_bits);
+  EXPECT_EQ(FormatComponentType::kB, comps[2]->type);
+  EXPECT_EQ(FormatMode::kSFloat, comps[2]->mode);
+  EXPECT_EQ(32U, comps[2]->num_bits);
 }
 
 TEST_F(FormatParserTest, GlslStrings) {

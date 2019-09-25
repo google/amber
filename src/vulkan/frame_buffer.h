@@ -37,7 +37,7 @@ class FrameBuffer {
       uint32_t height);
   ~FrameBuffer();
 
-  Result Initialize(VkRenderPass render_pass, const Format& depth_format);
+  Result Initialize(VkRenderPass render_pass, const Format* depth_format);
 
   void ChangeFrameToDrawLayout(CommandBuffer* command);
   void ChangeFrameToProbeLayout(CommandBuffer* command);

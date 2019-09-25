@@ -94,7 +94,7 @@ class Buffer {
   // | Value | Value | Value | Value |   ValueCount == 4
   // | | | | | | | | | | | | | | | | |  SizeInBytes == 16
   // Note, the SizeInBytes maybe be greater then the size of the values. If
-  // the format IsStd140() and there are 3 rows, the SizeInBytes will be
+  // the format is std140 and there are 3 rows, the SizeInBytes will be
   // inflated to 4 values per row, instead of 3.
 
   /// Sets the number of elements in the buffer.
@@ -198,7 +198,7 @@ class Buffer {
 
  private:
   uint32_t WriteValueFromComponent(const Value& value,
-                                   const Format::Component& comp,
+                                   const Format::Component* comp,
                                    uint8_t* ptr);
 
   // Calculates the difference between the value stored in this buffer and

@@ -381,14 +381,16 @@ class RenderPassGuard {
 GraphicsPipeline::GraphicsPipeline(
     Device* device,
     const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
-    const Format& depth_stencil_format,
+    Format* depth_stencil_format,
     uint32_t fence_timeout_ms,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : Pipeline(PipelineType::kGraphics,
                device,
                fence_timeout_ms,
-               shader_stage_info),
-      depth_stencil_format_(depth_stencil_format) {
+               shader_stage_info) {
+  if (depth_stencil_format != nullptr)
+    depth_stencil_format_ = *depth_stencil_format;
+
   for (const auto& info : color_buffers)
     color_buffers_.push_back(&info);
 }
@@ -694,7 +696,7 @@ Result GraphicsPipeline::Initialize(uint32_t width,
     return r;
 
   frame_ = MakeUnique<FrameBuffer>(device_, color_buffers_, width, height);
-  r = frame_->Initialize(render_pass_, depth_stencil_format_);
+  r = frame_->Initialize(render_pass_, &depth_stencil_format_);
   if (!r.IsSuccess())
     return r;
 

@@ -95,7 +95,7 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
 
     const auto& comp = sub_fmt->GetComponents()[0];
     for (int i = 0; i < component_count; ++i)
-      fmt->AddComponent(FORMAT_TYPES[i], comp.mode, comp.num_bits);
+      fmt->AddComponent(FORMAT_TYPES[i], comp->mode, comp->num_bits);
 
   } else if (str.length() > 9 && str.substr(0, 3) == "mat") {
     if (str[4] != 'x' || str[6] != '<' || str[str.length() - 1] != '>')
@@ -122,7 +122,7 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
 
     const auto& comp = sub_fmt->GetComponents()[0];
     for (int i = 0; i < row_count; ++i)
-      fmt->AddComponent(FORMAT_TYPES[i], comp.mode, comp.num_bits);
+      fmt->AddComponent(FORMAT_TYPES[i], comp->mode, comp->num_bits);
 
   } else {
     return nullptr;
@@ -137,11 +137,11 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
     std::string parts = "ARGB";
     const auto& comps = fmt->GetComponents();
     for (const auto& comp : comps) {
-      name += parts[static_cast<uint8_t>(comp.type)] +
-              std::to_string(comp.num_bits);
+      name += parts[static_cast<uint8_t>(comp->type)] +
+              std::to_string(comp->num_bits);
     }
     name += "_";
-    switch (comps[0].mode) {
+    switch (comps[0]->mode) {
       case FormatMode::kUNorm:
       case FormatMode::kUFloat:
       case FormatMode::kUScaled:

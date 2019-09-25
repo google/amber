@@ -154,12 +154,12 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       return Result("Vulkan color attachment format is not supported");
   }
 
-  Format depth_fmt;
+  Format* depth_fmt = nullptr;
   if (pipeline->GetDepthBuffer().buffer) {
     const auto& depth_info = pipeline->GetDepthBuffer();
 
-    depth_fmt = *depth_info.buffer->GetFormat();
-    if (!device_->IsFormatSupportedByPhysicalDevice(depth_fmt,
+    depth_fmt = depth_info.buffer->GetFormat();
+    if (!device_->IsFormatSupportedByPhysicalDevice(*depth_fmt,
                                                     depth_info.buffer)) {
       return Result("Vulkan depth attachment format is not supported");
     }

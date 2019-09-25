@@ -20,38 +20,47 @@ namespace amber {
 
 Format::Format() = default;
 
-Format::Format(const Format&) = default;
+Format::Format(const Format& b) {
+  type_ = b.type_;
+  is_std140_ = b.is_std140_;
+  pack_size_in_bytes_ = b.pack_size_in_bytes_;
+  column_count_ = b.column_count_;
+
+  for (const auto& comp : b.components_) {
+    components_.push_back(
+        MakeUnique<Component>(comp->type, comp->mode, comp->num_bits));
+  }
+  RebuildSegments();
+}
 
 Format::~Format() = default;
 
-uint32_t Format::SizeInBytesPerRow() const {
-  uint32_t bits = 0;
-  for (const auto& comp : components_)
-    bits += comp.num_bits;
+Format& Format::operator=(const Format& b) {
+  type_ = b.type_;
+  is_std140_ = b.is_std140_;
+  pack_size_in_bytes_ = b.pack_size_in_bytes_;
+  column_count_ = b.column_count_;
 
-  uint32_t inflate = 0;
-  // Std140 always has 4 elements. std430 expands 3 elements to 4.
-  if ((is_std140_ && column_count_ > 1) || components_.size() == 3)
-    inflate = 4U - static_cast<uint32_t>(components_.size());
+  for (const auto& comp : b.components_) {
+    components_.push_back(
+        MakeUnique<Component>(comp->type, comp->mode, comp->num_bits));
+  }
+  RebuildSegments();
 
-  for (uint32_t i = 0; i < inflate; ++i)
-    bits += components_[0].num_bits;
-
-  uint32_t bytes_per_element = bits / 8;
-  // Odd number of bits, inflate byte count to accommodate
-  if ((bits % 8) != 0)
-    bytes_per_element += 1;
-
-  return bytes_per_element;
+  return *this;
 }
 
 uint32_t Format::SizeInBytes() const {
-  return SizeInBytesPerRow() * column_count_;
+  uint32_t size = 0;
+  for (const auto& seg : segments_)
+    size += static_cast<uint32_t>(seg.GetComponent()->SizeInBytes());
+
+  return size;
 }
 
 bool Format::AreAllComponents(FormatMode mode, uint32_t bits) const {
   for (const auto& comp : components_) {
-    if (comp.mode != mode || comp.num_bits != bits)
+    if (comp->mode != mode || comp->num_bits != bits)
       return false;
   }
   return true;
@@ -67,13 +76,65 @@ bool Format::Equal(const Format* b) const {
     return false;
 
   for (uint32_t i = 0; i < components_.size(); ++i) {
-    if (components_[i].type != b->components_[i].type ||
-        components_[i].mode != b->components_[i].mode ||
-        components_[i].num_bits != b->components_[i].num_bits) {
+    if (components_[i]->type != b->components_[i]->type ||
+        components_[i]->mode != b->components_[i]->mode ||
+        components_[i]->num_bits != b->components_[i]->num_bits) {
       return false;
     }
   }
   return true;
+}
+
+uint32_t Format::InputNeededPerElement() const {
+  uint32_t count = 0;
+  for (const auto& seg : segments_) {
+    if (seg.IsPadding())
+      continue;
+
+    count += 1;
+  }
+  return count;
+}
+
+void Format::AddComponent(FormatComponentType type,
+                          FormatMode mode,
+                          uint8_t bits) {
+  components_.push_back(MakeUnique<Component>(type, mode, bits));
+  RebuildSegments();
+}
+
+void Format::SetColumnCount(uint32_t c) {
+  column_count_ = c;
+  RebuildSegments();
+}
+
+void Format::SetIsStd140() {
+  is_std140_ = true;
+  RebuildSegments();
+}
+
+void Format::RebuildSegments() {
+  segments_.clear();
+
+  for (size_t i = 0; i < column_count_; ++i) {
+    for (size_t k = 0; k < components_.size(); ++k) {
+      segments_.push_back(Segment{components_[k].get()});
+    }
+
+    // In std140 a matrix (column count > 1) has each row stored like an array
+    // which rounds up to a vec4.
+    //
+    // In std140 and std430 a vector of size 3N will round up to a vector of 4N.
+    if ((is_std140_ && column_count_ > 1) || RowCount() == 3) {
+      for (size_t k = 0; k < (4 - RowCount()); ++k) {
+        // TODO(dsinclair): This component will be wrong if all the components
+        // aren't the same size. This will be the case when we have struct
+        // support ....
+        segments_.push_back(Segment{components_[0].get()});
+        segments_.back().SetIsPadding();
+      }
+    }
+  }
 }
 
 }  // namespace amber
