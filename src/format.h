@@ -101,7 +101,7 @@ class Format {
 
   class Segment {
    public:
-    Segment(Component* component) : component_(component) {}
+    explicit Segment(Component* component) : component_(component) {}
     ~Segment() = default;
 
     void SetIsPadding() { is_padding_ = true; }
