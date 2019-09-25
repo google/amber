@@ -86,6 +86,73 @@ END)";
   }
 }
 
+
+TEST_F(AmberScriptParserTest, BufferDataMatrixStd430) {
+  std::string in = R"(
+BUFFER my_buffer DATA_TYPE mat2x2<float> STD430 DATA
+1 2
+3 4
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->IsFloat());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
+  EXPECT_EQ(1U, buffer->ElementCount());
+  EXPECT_EQ(4U, buffer->ValueCount());
+  EXPECT_EQ(4U * sizeof(float), buffer->GetSizeInBytes());
+
+  std::vector<float> results = {1.f, 2.f, 3.f, 4.f};
+  const auto* data = buffer->GetValues<float>();
+  ASSERT_EQ(results.size(), buffer->ValueCount());
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_FLOAT_EQ(results[i], data[i]);
+  }
+}
+
+TEST_F(AmberScriptParserTest, BufferDataMatrixStd140) {
+  std::string in = R"(
+BUFFER my_buffer DATA_TYPE mat2x2<float> STD140 DATA
+1 2
+3 4
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->IsFloat());
+  EXPECT_EQ(Format::Layout::kStd140, buffer->GetFormat()->GetLayout());
+  EXPECT_EQ(1U, buffer->ElementCount());
+  EXPECT_EQ(8U, buffer->ValueCount());
+  EXPECT_EQ(8U * sizeof(float), buffer->GetSizeInBytes());
+
+  std::vector<float> results = {1.f, 2.f, 0.f, 0.f, 3.f, 4.f, 0.f, 0.f};
+  const auto* data = buffer->GetValues<float>();
+  ASSERT_EQ(results.size(), buffer->ValueCount());
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_FLOAT_EQ(results[i], data[i]);
+  }
+}
+
 TEST_F(AmberScriptParserTest, BufferDataStd430) {
   std::string in = R"(
 BUFFER my_buffer DATA_TYPE uint32 STD430 DATA
