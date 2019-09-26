@@ -973,8 +973,18 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
 
     buffer->SetFormat(std::move(fmt));
   }
-
   token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("BUFFER missing initializer");
+
+  if (token->AsString() == "STD140") {
+    buffer->GetFormat()->SetLayout(Format::Layout::kStd140);
+    token = tokenizer_->NextToken();
+  } else if (token->AsString() == "STD430") {
+    buffer->GetFormat()->SetLayout(Format::Layout::kStd430);
+    token = tokenizer_->NextToken();
+  }
+
   if (!token->IsString())
     return Result("BUFFER missing initializer");
 
