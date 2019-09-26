@@ -216,7 +216,7 @@ class Format {
   bool IsDouble() const { return AreAllComponents(FormatMode::kSFloat, 64); }
 
   /// Generates the image format name for this format if possible. Returns
-  /// name if generated or "" otherwise.
+  /// the name if generated or "" otherwise.
   std::string GenerateName() const;
 
  private:
