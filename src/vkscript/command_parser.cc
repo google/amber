@@ -588,11 +588,10 @@ Result CommandParser::ProcessSSBO() {
                     token->ToOriginalString());
 
     DatumTypeParser tp;
-    Result r = tp.Parse(token->AsString());
-    if (!r.IsSuccess())
-      return r;
+    auto fmt = tp.Parse(token->AsString());
+    if (!fmt)
+      return Result("Invalid type provided: " + token->AsString());
 
-    auto fmt = tp.GetType().AsFormat();
     auto* buf = cmd->GetBuffer();
     if (buf->FormatIsDefault() || !buf->GetFormat())
       buf->SetFormat(std::move(fmt));
@@ -617,7 +616,7 @@ Result CommandParser::ProcessSSBO() {
     cmd->SetOffset(token->AsUint32());
 
     std::vector<Value> values;
-    r = ParseValues("ssbo", buf->GetFormat(), &values);
+    Result r = ParseValues("ssbo", buf->GetFormat(), &values);
     if (!r.IsSuccess())
       return r;
 
@@ -738,15 +737,13 @@ Result CommandParser::ProcessUniform() {
   }
 
   DatumTypeParser tp;
-  Result r = tp.Parse(token->AsString());
-  if (!r.IsSuccess())
-    return r;
-
-  auto fmt = tp.GetType().AsFormat();
+  auto fmt = tp.Parse(token->AsString());
+  if (!fmt)
+    return Result("Invalid type provided: " + token->AsString());
 
   // uniform is always std140.
   if (is_ubo)
-    fmt->SetIsStd140();
+    fmt->SetLayout(Format::Layout::kStd140);
 
   auto* buf = cmd->GetBuffer();
   if (buf->FormatIsDefault() || !buf->GetFormat())
@@ -771,7 +768,7 @@ Result CommandParser::ProcessUniform() {
   cmd->SetOffset(token->AsUint32());
 
   std::vector<Value> values;
-  r = ParseValues("uniform", buf->GetFormat(), &values);
+  Result r = ParseValues("uniform", buf->GetFormat(), &values);
   if (!r.IsSuccess())
     return r;
 
@@ -2016,9 +2013,9 @@ Result CommandParser::ProcessProbeSSBO() {
                   token->ToOriginalString());
 
   DatumTypeParser tp;
-  Result r = tp.Parse(token->AsString());
-  if (!r.IsSuccess())
-    return r;
+  auto fmt = tp.Parse(token->AsString());
+  if (!fmt)
+    return Result("Invalid type provided: " + token->AsString());
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger())
@@ -2059,9 +2056,8 @@ Result CommandParser::ProcessProbeSSBO() {
                   std::to_string(binding));
   }
 
-  auto fmt = tp.GetType().AsFormat();
   if (buffer->FormatIsDefault() || !buffer->GetFormat())
-    buffer->SetFormat(tp.GetType().AsFormat());
+    buffer->SetFormat(MakeUnique<Format>(*fmt));
   else if (buffer->GetFormat() && !buffer->GetFormat()->Equal(fmt.get()))
     return Result("probe format does not match buffer format");
 
@@ -2084,7 +2080,7 @@ Result CommandParser::ProcessProbeSSBO() {
                   token->ToOriginalString());
 
   ProbeSSBOCommand::Comparator comp = ProbeSSBOCommand::Comparator::kEqual;
-  r = ParseComparator(token->AsString(), &comp);
+  Result r = ParseComparator(token->AsString(), &comp);
   if (!r.IsSuccess())
     return r;
 

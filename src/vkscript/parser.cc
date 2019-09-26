@@ -287,13 +287,13 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
   }
 
   if (!indices.empty()) {
-    DatumType type;
-    type.SetType(DataType::kUint32);
+    auto fmt = MakeUnique<Format>();
+    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 32);
 
     auto b = MakeUnique<Buffer>(BufferType::kIndex);
     auto* buf = b.get();
     b->SetName("indices");
-    b->SetFormat(type.AsFormat());
+    b->SetFormat(std::move(fmt));
     b->SetData(std::move(indices));
     Result r = script_->AddBuffer(std::move(b));
     if (!r.IsSuccess())
@@ -384,19 +384,21 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
         v.SetIntValue(token->AsHex());
         value_data.push_back(v);
       } else {
-        auto& comps = header.format->GetComponents();
-        for (size_t i = 0; i < comps.size();
-             ++i, token = tokenizer.NextToken()) {
+        auto& segs = header.format->GetSegments();
+        for (const auto& seg : segs) {
+          if (seg.IsPadding())
+            continue;
+
           if (token->IsEOS() || token->IsEOL()) {
             return Result(make_error(tokenizer,
                                      "Too few cells in given vertex data row"));
           }
 
-          auto& comp = comps[i];
+          auto comp = seg.GetComponent();
 
           Value v;
-          if (comp.mode == FormatMode::kUFloat ||
-              comp.mode == FormatMode::kSFloat) {
+          if (comp->mode == FormatMode::kUFloat ||
+              comp->mode == FormatMode::kSFloat) {
             Result r = token->ConvertToDouble();
             if (!r.IsSuccess())
               return r;
@@ -410,6 +412,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
           }
 
           value_data.push_back(v);
+          token = tokenizer.NextToken();
         }
       }
     }

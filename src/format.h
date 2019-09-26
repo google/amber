@@ -20,10 +20,11 @@
 #include <vector>
 
 #include "src/format_data.h"
+#include "src/make_unique.h"
 
 namespace amber {
 
-/// The format class describes requested image formats. (eg. R8G8B8A8_UINT).
+/// The format class describes requested  data formats. (eg. R8G8B8A8_UINT).
 ///
 /// There is a distinction between the input values needed and the values needed
 /// for a given format. The input values is the number needed to be read to fill
@@ -36,6 +37,8 @@ namespace amber {
 /// smaller then the values per element.
 class Format {
  public:
+  enum Layout { kStd140 = 0, kStd430 };
+
   /// Describes an individual component of a format.
   struct Component {
     Component(FormatComponentType t, FormatMode m, uint8_t bits)
@@ -98,12 +101,30 @@ class Format {
     }
   };
 
+  class Segment {
+   public:
+    explicit Segment(Component* component) : component_(component) {}
+    Segment(const Segment&) = default;
+    ~Segment() = default;
+
+    Segment& operator=(const Segment&) = default;
+
+    void SetIsPadding() { is_padding_ = true; }
+    bool IsPadding() const { return is_padding_; }
+
+    Component* GetComponent() const { return component_; }
+
+   private:
+    Component* component_;
+    bool is_padding_ = false;
+  };
+
   /// Creates a format of unknown type.
   Format();
   Format(const Format&);
   ~Format();
 
-  Format& operator=(const Format&) = default;
+  Format& operator=(const Format&);
 
   /// Returns true if |b| describes the same format as this object.
   bool Equal(const Format* b) const;
@@ -114,8 +135,7 @@ class Format {
   void SetFormatType(FormatType type) { type_ = type; }
   FormatType GetFormatType() const { return type_; }
 
-  void SetIsStd140() { is_std140_ = true; }
-  bool IsStd140() const { return is_std140_; }
+  void SetLayout(Layout layout);
 
   /// Set the number of bytes this format is packed into, if provided.
   void SetPackSize(uint8_t size_in_bytes) {
@@ -124,15 +144,16 @@ class Format {
   /// Retrieves the number of bytes this format is packed into.
   uint8_t GetPackSize() const { return pack_size_in_bytes_; }
 
-  void AddComponent(FormatComponentType type, FormatMode mode, uint8_t bits) {
-    components_.emplace_back(type, mode, bits);
+  void AddComponent(FormatComponentType type, FormatMode mode, uint8_t bits);
+  const std::vector<std::unique_ptr<Component>>& GetComponents() const {
+    return components_;
   }
-  const std::vector<Component>& GetComponents() const { return components_; }
+
+  /// The segment is the individual pieces of the components including padding.
+  const std::vector<Segment>& GetSegments() const { return segments_; }
 
   /// Returns the number of bytes this format requires.
   uint32_t SizeInBytes() const;
-  /// Returns the number of bytes per single row this format requires.
-  uint32_t SizeInBytesPerRow() const;
 
   bool IsFormatKnown() const { return type_ != FormatType::kUnknown; }
   bool HasStencilComponent() const {
@@ -145,23 +166,19 @@ class Format {
   /// Returns the number of input values required for an item of this format.
   /// This differs from ValuesPerElement because it doesn't take padding into
   /// account.
-  uint32_t InputNeededPerElement() const { return RowCount() * column_count_; }
+  uint32_t InputNeededPerElement() const;
 
-  /// Returns the number of values for a given row.
-  uint32_t ValuesPerRow() const {
-    if ((is_std140_ && column_count_ > 1) || RowCount() == 3)
-      return 4;
-    return RowCount();
+  /// Returns the number of values for a given row, including padding.
+  uint32_t ValuesPerElement() const {
+    return static_cast<uint32_t>(segments_.size());
   }
 
-  /// Returns the number of values for each instance of this format.
-  uint32_t ValuesPerElement() const { return ValuesPerRow() * column_count_; }
-
+  /// Returns the number of values for a given row, excluding padding.
   uint32_t RowCount() const {
     return static_cast<uint32_t>(components_.size());
   }
   uint32_t ColumnCount() const { return column_count_; }
-  void SetColumnCount(uint32_t c) { column_count_ = c; }
+  void SetColumnCount(uint32_t c);
 
   /// Returns true if all components of this format are an 8 bit signed int.
   bool IsInt8() const { return AreAllComponents(FormatMode::kSInt, 8); }
@@ -186,12 +203,14 @@ class Format {
 
  private:
   bool AreAllComponents(FormatMode mode, uint32_t bits) const;
+  void RebuildSegments();
 
   FormatType type_ = FormatType::kUnknown;
-  bool is_std140_ = false;
+  Layout layout_ = Layout::kStd430;
   uint8_t pack_size_in_bytes_ = 0;
   uint32_t column_count_ = 1;
-  std::vector<Component> components_;
+  std::vector<std::unique_ptr<Component>> components_;
+  std::vector<Segment> segments_;
 };
 
 }  // namespace amber

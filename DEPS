@@ -3,35 +3,32 @@ use_relative_paths = True
 vars = {
   'google_git':  'https://github.com/google',
   'khronos_git': 'https://github.com/KhronosGroup',
-  'llvm_git': 'https://github.com/llvm-mirror',
+  'llvm_git': 'https://github.com/llvm',
   'lvandeve_git':  'https://github.com/lvandeve',
   'swiftshader_git': 'https://swiftshader.googlesource.com',
   'microsoft_git': 'https://github.com/Microsoft',
 
-  'clspv_clang_revision': '834a93f953ac6789f39dbeb86d8144f847807353',
-  'clspv_llvm_revision': 'e35805b8192297a81e795573614274b904785a7d',
-  'clspv_revision': '64a51387967ea2a26e4a52a22ad8640148194edc',
-  'cpplint_revision': '9f41862c0efa7681e2147910d39629c73a2b2702',
+  'clspv_llvm_revision': '97aa42f5dfcd10ca6df230caf9ca7868da5f25af',
+  'clspv_revision': '8132fc9122f7709149dd82b25283e244bbe666a6',
+  'cpplint_revision': '5651966e0275572a9956199418d89c9ccc7b2b1a',
   'dxc_revision': 'ec912b2ec95feb50925704dd631ef7abee1a5f09',
-  'glslang_revision': '8aa9a7bb8f74869ab9cfd2c9bd51cef1741004e7',
-  'googletest_revision': '947aeab281f1b160d2db5045064be73c984f1ae6',
+  'glslang_revision': 'fe0b2bd694bb07004a2db859c5714c321c26b751',
+  'googletest_revision': '33a0d4f6d76a0ed6061e612848532cba82d42870',
   'lodepng_revision': 'ba9fc1f084f03b5fbf8c9a5df9448173f27544b1',
-  'shaderc_revision': '747518d43f4b463cf0d6720fdf9968c55b2921fe',
-  'spirv_headers_revision': 'e4322e3be589e1ddd44afb20ea842a977c1319b8',
-  'spirv_tools_revision': '31590104ec860ff364c0c768df7f55c7887aaa69',
+  'shaderc_revision': '5903ef1f95a0acdbbd3ae645af1a6d6b30320f10',
+  'spirv_headers_revision': '38cafab379e5d16137cb97a485b9385191039b92',
+  'spirv_tools_revision': 'c0e9807094ef6e345ef0a4d5f17af81af063cd27',
   'swiftshader_revision': 'ef44b4402722658648ec9d10a76bd990776be1c0',
-  'vulkan_headers_revision': '8e2c4cd554b644592a6d904f2c8000ebbd4aa77f',
-  'vulkan_loader_revision': '15fa85d92454f7823febeb68b56038d427e2a7a4',
+  'vulkan_headers_revision': 'e3f96a9ccab9397481eb81c4d9bce4ea7590dc33',
+  'vulkan_validationlayers_revision': '0e65e191c4b9044d8e42727cc82ccc04d8055b0a',
+  'vulkan_loader_revision': '1bb7f68564fe565de2927071c79008bd6ede5af5',
 }
 
 deps = {
   'third_party/clspv': vars['google_git'] + '/clspv.git@' +
       vars['clspv_revision'],
 
-  'third_party/clspv-clang': vars['llvm_git'] + '/clang.git@' +
-      vars['clspv_clang_revision'],
-
-  'third_party/clspv-llvm': vars['llvm_git'] + '/llvm.git@' +
+  'third_party/clspv-llvm': vars['llvm_git'] + '/llvm-project.git@' +
       vars['clspv_llvm_revision'],
 
   'third_party/cpplint': vars['google_git'] + '/styleguide.git@' +
@@ -63,6 +60,9 @@ deps = {
 
   'third_party/vulkan-headers': vars['khronos_git'] + '/Vulkan-Headers.git@' +
       vars['vulkan_headers_revision'],
+
+  'third_party/vulkan-validationlayers': vars['khronos_git'] + '/Vulkan-ValidationLayers.git@' +
+      vars['vulkan_validationlayers_revision'],
 
   'third_party/vulkan-loader': vars['khronos_git'] + '/Vulkan-Loader.git@' +
       vars['vulkan_loader_revision'],

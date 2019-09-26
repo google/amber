@@ -117,7 +117,7 @@ either image buffers or, what the target API would refer to as a buffer.
  * `float`
  * `double`
  * vec[2,3,4]{type}
- * mat[2,3,4]x[2,3,4]{type}
+ * mat[2,3,4]x[2,3,4]{type}  (mat<columns>x<rows>)
  * Any of the `Image Formats` listed below.
 
 Sized arrays and structures are not currently representable.
