@@ -86,7 +86,6 @@ END)";
   }
 }
 
-
 TEST_F(AmberScriptParserTest, BufferDataMatrixStd430) {
   std::string in = R"(
 BUFFER my_buffer DATA_TYPE mat2x2<float> STD430 DATA
