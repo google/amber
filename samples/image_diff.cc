@@ -34,7 +34,7 @@ struct Options {
 const char kUsage[] = R"(Usage: image_diff [options] image1 image2
 
  options:
-  --rmsa                    -- Compare using RMSE algorithm.
+  --rmse                    -- Compare using RMSE algorithm.
   --tolerance               -- Tolerance for RMSE comparison.
   -h                        -- This help text.
 )";
@@ -44,7 +44,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
     const std::string& arg = args[i];
     if (arg == "-h" || arg == "--help") {
       opts->show_help = true;
-    } else if (arg == "--rmsa") {
+    } else if (arg == "--rmse") {
       opts->compare_algorithm = CompareAlgorithm::kRMSE;
     } else if (arg == "-t" || arg == "--tolerance") {
       ++i;
