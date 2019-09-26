@@ -17,7 +17,7 @@
 #include <utility>
 
 #include "gtest/gtest.h"
-#include "src/format_parser.h"
+#include "src/type_parser.h"
 
 namespace amber {
 
@@ -31,11 +31,12 @@ TEST_F(BufferTest, EmptyByDefault) {
 }
 
 TEST_F(BufferTest, Size) {
-  FormatParser fp;
-  auto fmt = fp.Parse("R16_SINT");
+  TypeParser parser;
+  auto type = parser.Parse("R16_SINT");
+  Format fmt(type.get());
 
   Buffer b(BufferType::kColor);
-  b.SetFormat(fmt.get());
+  b.SetFormat(&fmt);
   b.SetElementCount(10);
   EXPECT_EQ(10, b.ElementCount());
   EXPECT_EQ(10, b.ValueCount());
@@ -46,11 +47,12 @@ TEST_F(BufferTest, SizeFromData) {
   std::vector<Value> values;
   values.resize(5);
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R32_SFLOAT");
+  TypeParser parser;
+  auto type = parser.Parse("R32_SFLOAT");
+  Format fmt(type.get());
 
   Buffer b(BufferType::kColor);
-  b.SetFormat(fmt.get());
+  b.SetFormat(&fmt);
   b.SetData(std::move(values));
 
   EXPECT_EQ(5, b.ElementCount());
@@ -62,11 +64,12 @@ TEST_F(BufferTest, SizeFromDataDoesNotOverrideSize) {
   std::vector<Value> values;
   values.resize(5);
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R32_SFLOAT");
+  TypeParser parser;
+  auto type = parser.Parse("R32_SFLOAT");
+  Format fmt(type.get());
 
   Buffer b(BufferType::kColor);
-  b.SetFormat(fmt.get());
+  b.SetFormat(&fmt);
   b.SetElementCount(20);
   b.SetData(std::move(values));
 
@@ -76,12 +79,13 @@ TEST_F(BufferTest, SizeFromDataDoesNotOverrideSize) {
 }
 
 TEST_F(BufferTest, SizeMatrixStd430) {
-  FormatParser fp;
-  auto fmt = fp.Parse("R16G16_SINT");
-  fmt->SetColumnCount(3);
+  TypeParser parser;
+  auto type = parser.Parse("R16G16_SINT");
+  type->SetColumnCount(3);
+  Format fmt(type.get());
 
   Buffer b(BufferType::kColor);
-  b.SetFormat(fmt.get());
+  b.SetFormat(&fmt);
   b.SetElementCount(10);
 
   EXPECT_EQ(10, b.ElementCount());
@@ -90,13 +94,14 @@ TEST_F(BufferTest, SizeMatrixStd430) {
 }
 
 TEST_F(BufferTest, SizeMatrixStd140) {
-  FormatParser fp;
-  auto fmt = fp.Parse("R16G16_SINT");
-  fmt->SetColumnCount(3);
-  fmt->SetLayout(Format::Layout::kStd140);
+  TypeParser parser;
+  auto type = parser.Parse("R16G16_SINT");
+  type->SetColumnCount(3);
+  Format fmt(type.get());
+  fmt.SetLayout(Format::Layout::kStd140);
 
   Buffer b(BufferType::kColor);
-  b.SetFormat(fmt.get());
+  b.SetFormat(&fmt);
   b.SetElementCount(10);
 
   EXPECT_EQ(10, b.ElementCount());
@@ -105,12 +110,13 @@ TEST_F(BufferTest, SizeMatrixStd140) {
 }
 
 TEST_F(BufferTest, SizeMatrixPaddedStd430) {
-  FormatParser fp;
-  auto fmt = fp.Parse("R32G32B32_SINT");
-  fmt->SetColumnCount(3);
+  TypeParser parser;
+  auto type = parser.Parse("R32G32B32_SINT");
+  type->SetColumnCount(3);
+  Format fmt(type.get());
 
   Buffer b(BufferType::kColor);
-  b.SetFormat(fmt.get());
+  b.SetFormat(&fmt);
   b.SetValueCount(9);
 
   EXPECT_EQ(1U, b.ElementCount());

@@ -18,6 +18,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -271,6 +272,7 @@ class Pipeline {
   std::vector<BufferInfo> color_attachments_;
   std::vector<BufferInfo> vertex_buffers_;
   std::vector<BufferInfo> buffers_;
+  std::vector<std::unique_ptr<type::Type>> types_;
   std::vector<std::unique_ptr<Format>> formats_;
   BufferInfo depth_buffer_;
   BufferInfo push_constant_buffer_;

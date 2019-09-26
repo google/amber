@@ -108,7 +108,7 @@ class Buffer {
       element_count_ = 0;
       return;
     }
-    if (format_->GetPackSize() > 0) {
+    if (format_->IsPacked()) {
       element_count_ = count;
     } else {
       // This divides by the needed input values, not the values per element.
@@ -123,7 +123,7 @@ class Buffer {
     if (!format_)
       return 0;
     // Packed formats are single values.
-    if (format_->GetPackSize() > 0)
+    if (format_->IsPacked())
       return element_count_;
     return element_count_ * format_->ValuesPerElement();
   }
@@ -198,7 +198,8 @@ class Buffer {
 
  private:
   uint32_t WriteValueFromComponent(const Value& value,
-                                   const Format::Component* comp,
+                                   FormatMode mode,
+                                   uint32_t num_bits,
                                    uint8_t* ptr);
 
   // Calculates the difference between the value stored in this buffer and

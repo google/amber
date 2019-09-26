@@ -60,33 +60,35 @@ double Sub(const uint8_t* buf1, const uint8_t* buf2) {
                              *reinterpret_cast<const T*>(buf2));
 }
 
-double CalculateDiff(const Format::Component* comp,
+double CalculateDiff(const Format::Segment* seg,
                      const uint8_t* buf1,
                      const uint8_t* buf2) {
-  if (comp->IsInt8())
+  FormatMode mode = seg->GetFormatMode();
+  uint32_t num_bits = seg->GetNumBits();
+  if (type::Type::IsInt8(mode, num_bits))
     return Sub<int8_t>(buf1, buf2);
-  if (comp->IsInt16())
+  if (type::Type::IsInt16(mode, num_bits))
     return Sub<int16_t>(buf1, buf2);
-  if (comp->IsInt32())
+  if (type::Type::IsInt32(mode, num_bits))
     return Sub<int32_t>(buf1, buf2);
-  if (comp->IsInt64())
+  if (type::Type::IsInt64(mode, num_bits))
     return Sub<int64_t>(buf1, buf2);
-  if (comp->IsUint8())
+  if (type::Type::IsUint8(mode, num_bits))
     return Sub<uint8_t>(buf1, buf2);
-  if (comp->IsUint16())
+  if (type::Type::IsUint16(mode, num_bits))
     return Sub<uint16_t>(buf1, buf2);
-  if (comp->IsUint32())
+  if (type::Type::IsUint32(mode, num_bits))
     return Sub<uint32_t>(buf1, buf2);
-  if (comp->IsUint64())
+  if (type::Type::IsUint64(mode, num_bits))
     return Sub<uint64_t>(buf1, buf2);
   // TOOD(dsinclair): Handle float16 ...
-  if (comp->IsFloat16()) {
+  if (type::Type::IsFloat16(mode, num_bits)) {
     assert(false && "Float16 suppport not implemented");
     return 0.0;
   }
-  if (comp->IsFloat())
+  if (type::Type::IsFloat32(mode, num_bits))
     return Sub<float>(buf1, buf2);
-  if (comp->IsDouble())
+  if (type::Type::IsFloat64(mode, num_bits))
     return Sub<double>(buf1, buf2);
 
   assert(false && "NOTREACHED");
@@ -159,12 +161,16 @@ std::vector<double> Buffer::CalculateDiffs(const Buffer* buffer) const {
   const auto& segments = format_->GetSegments();
   for (size_t i = 0; i < ElementCount(); ++i) {
     for (const auto& seg : segments) {
-      if (!seg.IsPadding())
-        diffs.push_back(
-            CalculateDiff(seg.GetComponent(), buf_1_ptr, buf_2_ptr));
+      if (seg.IsPadding()) {
+        buf_1_ptr += seg.PaddingBytes();
+        buf_2_ptr += seg.PaddingBytes();
+        continue;
+      }
 
-      buf_1_ptr += seg.GetComponent()->SizeInBytes();
-      buf_2_ptr += seg.GetComponent()->SizeInBytes();
+      diffs.push_back(CalculateDiff(&seg, buf_1_ptr, buf_2_ptr));
+
+      buf_1_ptr += seg.SizeInBytes();
+      buf_2_ptr += seg.SizeInBytes();
     }
   }
 
@@ -210,7 +216,7 @@ Result Buffer::RecalculateMaxSizeInBytes(const std::vector<Value>& data,
       ((offset / format_->SizeInBytes()) * format_->InputNeededPerElement()) +
       static_cast<uint32_t>(data.size());
   uint32_t element_count = value_count;
-  if (format_->GetPackSize() == 0) {
+  if (!format_->IsPacked()) {
     // This divides by the needed input values, not the values per element.
     // The assumption being the values coming in are read from the input,
     // where components are specified. The needed values maybe less then the
@@ -229,6 +235,7 @@ Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
   uint32_t value_count =
       ((offset / format_->SizeInBytes()) * format_->InputNeededPerElement()) +
       static_cast<uint32_t>(data.size());
+
   // The buffer should only be resized to become bigger. This means that if a
   // command was run to set the buffer size we'll honour that size until a
   // request happens to make the buffer bigger.
@@ -245,81 +252,67 @@ Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
   uint8_t* ptr = bytes_.data() + offset;
   const auto& segments = format_->GetSegments();
   for (uint32_t i = 0; i < data.size();) {
-    const auto pack_size = format_->GetPackSize();
-    if (pack_size) {
-      if (pack_size == 8) {
-        *(ValuesAs<uint8_t>(ptr)) = data[i].AsUint8();
-        ptr += sizeof(uint8_t);
-      } else if (pack_size == 16) {
-        *(ValuesAs<uint16_t>(ptr)) = data[i].AsUint16();
-        ptr += sizeof(uint16_t);
-      } else if (pack_size == 32) {
-        *(ValuesAs<uint32_t>(ptr)) = data[i].AsUint32();
-        ptr += sizeof(uint32_t);
-      }
-      ++i;
-      continue;
-    }
-
     for (const auto& seg : segments) {
-      Value v;
-      if (!seg.IsPadding()) {
-        v = data[i];
-        ++i;
+      if (seg.IsPadding()) {
+        ptr += seg.PaddingBytes();
+        continue;
       }
 
-      ptr += WriteValueFromComponent(v, seg.GetComponent(), ptr);
+      Value v = data[i++];
+      ptr += WriteValueFromComponent(v, seg.GetFormatMode(), seg.GetNumBits(),
+                                     ptr);
     }
   }
   return {};
 }
 
 uint32_t Buffer::WriteValueFromComponent(const Value& value,
-                                         const Format::Component* comp,
+                                         FormatMode mode,
+                                         uint32_t num_bits,
                                          uint8_t* ptr) {
-  if (comp->IsInt8()) {
+  if (type::Type::IsInt8(mode, num_bits)) {
     *(ValuesAs<int8_t>(ptr)) = value.AsInt8();
     return sizeof(int8_t);
   }
-  if (comp->IsInt16()) {
+  if (type::Type::IsInt16(mode, num_bits)) {
     *(ValuesAs<int16_t>(ptr)) = value.AsInt16();
     return sizeof(int16_t);
   }
-  if (comp->IsInt32()) {
+  if (type::Type::IsInt32(mode, num_bits)) {
     *(ValuesAs<int32_t>(ptr)) = value.AsInt32();
     return sizeof(int32_t);
   }
-  if (comp->IsInt64()) {
+  if (type::Type::IsInt64(mode, num_bits)) {
     *(ValuesAs<int64_t>(ptr)) = value.AsInt64();
     return sizeof(int64_t);
   }
-  if (comp->IsUint8()) {
+  if (type::Type::IsUint8(mode, num_bits)) {
     *(ValuesAs<uint8_t>(ptr)) = value.AsUint8();
     return sizeof(uint8_t);
   }
-  if (comp->IsUint16()) {
+  if (type::Type::IsUint16(mode, num_bits)) {
     *(ValuesAs<uint16_t>(ptr)) = value.AsUint16();
     return sizeof(uint16_t);
   }
-  if (comp->IsUint32()) {
+  if (type::Type::IsUint32(mode, num_bits)) {
     *(ValuesAs<uint32_t>(ptr)) = value.AsUint32();
     return sizeof(uint32_t);
   }
-  if (comp->IsUint64()) {
+  if (type::Type::IsUint64(mode, num_bits)) {
     *(ValuesAs<uint64_t>(ptr)) = value.AsUint64();
     return sizeof(uint64_t);
   }
-  if (comp->IsFloat()) {
+  if (type::Type::IsFloat16(mode, num_bits)) {
+    *(ValuesAs<uint16_t>(ptr)) = FloatToHexFloat16(value.AsFloat());
+    return sizeof(uint16_t);
+  }
+  if (type::Type::IsFloat32(mode, num_bits)) {
     *(ValuesAs<float>(ptr)) = value.AsFloat();
     return sizeof(float);
   }
-  if (comp->IsDouble()) {
+  if (type::Type::IsFloat64(mode, num_bits)) {
     *(ValuesAs<double>(ptr)) = value.AsDouble();
     return sizeof(double);
-  }
-  if (comp->IsFloat16()) {
-    *(ValuesAs<uint16_t>(ptr)) = FloatToHexFloat16(value.AsFloat());
-    return sizeof(uint16_t);
   }
 
   // The float 10 and float 11 sizes are only used in PACKED formats.

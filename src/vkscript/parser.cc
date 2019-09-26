@@ -21,9 +21,9 @@
 #include <utility>
 #include <vector>
 
-#include "src/format_parser.h"
 #include "src/make_unique.h"
 #include "src/shader.h"
+#include "src/type_parser.h"
 #include "src/vkscript/command_parser.h"
 
 namespace amber {
@@ -169,26 +169,29 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       if (!token->IsString())
         return Result(make_error(tokenizer, "Missing framebuffer format"));
 
-      FormatParser fmt_parser;
-      auto fmt = fmt_parser.Parse(token->AsString());
-      if (fmt == nullptr) {
+      TypeParser type_parser;
+      auto type = type_parser.Parse(token->AsString());
+      if (type == nullptr) {
         return Result(
             make_error(tokenizer, "Failed to parse framebuffer format: " +
                                       token->ToOriginalString()));
       }
+
+      auto fmt = MakeUnique<Format>(type.get());
       script_->GetPipeline(kDefaultPipelineName)
           ->GetColorAttachments()[0]
           .buffer->SetFormat(fmt.get());
       script_->RegisterFormat(std::move(fmt));
+      script_->RegisterType(std::move(type));
 
     } else if (str == "depthstencil") {
       token = tokenizer.NextToken();
       if (!token->IsString())
         return Result(make_error(tokenizer, "Missing depthStencil format"));
 
-      FormatParser fmt_parser;
-      auto fmt = fmt_parser.Parse(token->AsString());
-      if (fmt == nullptr) {
+      TypeParser type_parser;
+      auto type = type_parser.Parse(token->AsString());
+      if (type == nullptr) {
         return Result(
             make_error(tokenizer, "Failed to parse depthstencil format: " +
                                       token->ToOriginalString()));
@@ -198,10 +201,12 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       if (pipeline->GetDepthBuffer().buffer != nullptr)
         return Result("Only one depthstencil command allowed");
 
+      auto fmt = MakeUnique<Format>(type.get());
       // Generate and add a depth buffer
       auto depth_buf = pipeline->GenerateDefaultDepthAttachmentBuffer();
       depth_buf->SetFormat(fmt.get());
       script_->RegisterFormat(std::move(fmt));
+      script_->RegisterType(std::move(type));
 
       Result r = pipeline->SetDepthBuffer(depth_buf.get());
       if (!r.IsSuccess())
@@ -290,14 +295,16 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
   }
 
   if (!indices.empty()) {
-    FormatParser fp;
-    auto fmt = fp.Parse("R32_UINT");
+    TypeParser parser;
+    auto type = parser.Parse("R32_UINT");
+    auto fmt = MakeUnique<Format>(type.get());
     auto b = MakeUnique<Buffer>(BufferType::kIndex);
     auto* buf = b.get();
     b->SetName("indices");
     b->SetFormat(fmt.get());
     b->SetData(std::move(indices));
     script_->RegisterFormat(std::move(fmt));
+    script_->RegisterType(std::move(type));
 
     Result r = script_->AddBuffer(std::move(b));
     if (!r.IsSuccess())
@@ -325,7 +332,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
   // Process the header line.
   struct Header {
     uint8_t location;
-    std::unique_ptr<Format> format;
+    Format* format;
   };
   std::vector<Header> headers;
   while (!token->IsEOL() && !token->IsEOS()) {
@@ -351,15 +358,18 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
       return Result(make_error(tokenizer, "Vertex data format too short: " +
                                               token->ToOriginalString()));
 
-    FormatParser parser;
-    auto fmt = parser.Parse(fmt_name.substr(1, fmt_name.length()));
-    if (!fmt) {
+    TypeParser parser;
+    auto type = parser.Parse(fmt_name.substr(1, fmt_name.length()));
+    if (!type) {
       return Result(
           make_error(tokenizer, "Invalid format in vertex data header: " +
                                     fmt_name.substr(1, fmt_name.length())));
     }
 
-    headers.push_back({loc, std::move(fmt)});
+    auto fmt = MakeUnique<Format>(type.get());
+    headers.push_back({loc, fmt.get()});
+    script_->RegisterFormat(std::move(fmt));
+    script_->RegisterType(std::move(type));
 
     token = tokenizer.NextToken();
   }
@@ -377,7 +387,8 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
       const auto& header = headers[j];
       auto& value_data = values[j];
 
-      if (header.format->GetPackSize() > 0) {
+      auto* type = header.format->GetType();
+      if (type->IsList() && type->AsList()->IsPacked()) {
         if (!token->IsHex()) {
           return Result(
               make_error(tokenizer, "Invalid packed value in Vertex Data: " +
@@ -398,11 +409,9 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
                                      "Too few cells in given vertex data row"));
           }
 
-          auto comp = seg.GetComponent();
-
           Value v;
-          if (comp->mode == FormatMode::kUFloat ||
-              comp->mode == FormatMode::kSFloat) {
+          if (seg.GetFormatMode() == FormatMode::kUFloat ||
+              seg.GetFormatMode() == FormatMode::kSFloat) {
             Result r = token->ConvertToDouble();
             if (!r.IsSuccess())
               return r;
@@ -427,10 +436,12 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
     auto buffer = MakeUnique<Buffer>(BufferType::kVertex);
     auto* buf = buffer.get();
     buffer->SetName("Vertices" + std::to_string(i));
-    buffer->SetFormat(headers[i].format.get());
-    buffer->SetData(std::move(values[i]));
+    buffer->SetFormat(headers[i].format);
+    Result r = buffer->SetData(std::move(values[i]));
+    if (!r.IsSuccess())
+      return r;
+
     script_->AddBuffer(std::move(buffer));
-    script_->RegisterFormat(std::move(headers[i].format));
 
     pipeline->AddVertexBuffer(buf, headers[i].location);
   }

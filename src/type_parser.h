@@ -12,43 +12,47 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_FORMAT_PARSER_H_
-#define SRC_FORMAT_PARSER_H_
+#ifndef SRC_TYPE_PARSER_H_
+#define SRC_TYPE_PARSER_H_
 
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "src/format.h"
+#include "src/type.h"
 
 namespace amber {
 
-/// Parses a Vulkan image string into a format object.
-class FormatParser {
+/// Parses a Vulkan image string into a type object.
+class TypeParser {
  public:
-  static FormatType NameToType(const std::string& data);
+  static FormatType NameToFormatType(const std::string& data);
 
-  FormatParser();
-  ~FormatParser();
+  TypeParser();
+  ~TypeParser();
 
-  std::unique_ptr<Format> Parse(const std::string& fmt);
+  std::unique_ptr<type::Type> Parse(const std::string& fmt);
 
  private:
-  std::unique_ptr<Format> ParseGlslFormat(const std::string& fmt);
-  void ProcessChunk(Format*, const std::string&);
-  void AddPiece(FormatComponentType type, uint8_t bits);
-  void FlushPieces(Format* fmt, FormatMode mode);
+  std::unique_ptr<type::Type> ParseGlslFormat(const std::string& fmt);
+  void ProcessChunk(const std::string&);
+  void AddPiece(FormatComponentType type, FormatMode mode, uint8_t bits);
+  void FlushPieces(type::Type* type, FormatMode mode);
 
   struct Pieces {
-    Pieces(FormatComponentType t, uint8_t bits) : type(t), num_bits(bits) {}
+    Pieces(FormatComponentType t, FormatMode m, uint8_t bits)
+        : type(t), mode(m), num_bits(bits) {}
 
     FormatComponentType type;
+    FormatMode mode;
     uint8_t num_bits;
   };
 
+  FormatMode mode_ = FormatMode::kSInt;
+  uint32_t pack_size_ = 0;
   std::vector<Pieces> pieces_;
 };
 
 }  // namespace amber
 
-#endif  // SRC_FORMAT_PARSER_H_
+#endif  // SRC_TYPE_PARSER_H_

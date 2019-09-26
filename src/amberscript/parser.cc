@@ -20,18 +20,14 @@
 #include <utility>
 #include <vector>
 
-#include "src/format_parser.h"
 #include "src/make_unique.h"
 #include "src/shader_data.h"
 #include "src/tokenizer.h"
+#include "src/type_parser.h"
 
 namespace amber {
 namespace amberscript {
 namespace {
-
-FormatComponentType FORMAT_TYPES[] = {
-    FormatComponentType::kR, FormatComponentType::kG, FormatComponentType::kB,
-    FormatComponentType::kA};
 
 bool IsComparator(const std::string& in) {
   return in == "EQ" || in == "NE" || in == "GT" || in == "LT" || in == "GE" ||
@@ -54,57 +50,53 @@ ProbeSSBOCommand::Comparator ToComparator(const std::string& in) {
   return ProbeSSBOCommand::Comparator::kLessOrEqual;
 }
 
-std::unique_ptr<Format> ToFormat(const std::string& str) {
-  std::unique_ptr<Format> fmt;
-  bool matrix = false;
+std::unique_ptr<type::Type> ToType(const std::string& str) {
+  TypeParser parser;
+  if (str == "int8")
+    return parser.Parse("R8_SINT");
+  if (str == "int16")
+    return parser.Parse("R16_SINT");
+  if (str == "int32")
+    return parser.Parse("R32_SINT");
+  if (str == "int64")
+    return parser.Parse("R64_SINT");
+  if (str == "uint8")
+    return parser.Parse("R8_UINT");
+  if (str == "uint16")
+    return parser.Parse("R16_UINT");
+  if (str == "uint32")
+    return parser.Parse("R32_UINT");
+  if (str == "uint64")
+    return parser.Parse("R64_UINT");
+  if (str == "float")
+    return parser.Parse("R32_SFLOAT");
+  if (str == "double")
+    return parser.Parse("R64_SFLOAT");
 
-  FormatParser fp;
-  if (str == "int8") {
-    fmt = fp.Parse("R8_SINT");
-  } else if (str == "int16") {
-    fmt = fp.Parse("R16_SINT");
-  } else if (str == "int32") {
-    fmt = fp.Parse("R32_SINT");
-  } else if (str == "int64") {
-    fmt = fp.Parse("R64_SINT");
-  } else if (str == "uint8") {
-    fmt = fp.Parse("R8_UINT");
-  } else if (str == "uint16") {
-    fmt = fp.Parse("R16_UINT");
-  } else if (str == "uint32") {
-    fmt = fp.Parse("R32_UINT");
-  } else if (str == "uint64") {
-    fmt = fp.Parse("R64_UINT");
-  } else if (str == "float") {
-    fmt = fp.Parse("R32_SFLOAT");
-  } else if (str == "double") {
-    fmt = fp.Parse("R64_SFLOAT");
-  } else if (str.length() > 7 && str.substr(0, 3) == "vec") {
+  if (str.length() > 7 && str.substr(0, 3) == "vec") {
     if (str[4] != '<' || str[str.length() - 1] != '>')
       return nullptr;
 
-    int component_count = str[3] - '0';
-    if (component_count < 2 || component_count > 4)
+    int row_count = str[3] - '0';
+    if (row_count < 2 || row_count > 4)
       return nullptr;
 
-    auto sub_fmt = ToFormat(str.substr(5, str.length() - 6));
-    if (!sub_fmt)
+    auto type = ToType(str.substr(5, str.length() - 6));
+    if (!type)
       return nullptr;
 
-    if (sub_fmt->RowCount() != 1 || sub_fmt->ColumnCount() != 1)
+    if (!type->IsNumber() || type->IsArray() || type->IsVec() ||
+        type->IsMatrix()) {
       return nullptr;
+    }
 
-    fmt = MakeUnique<Format>();
-    const auto* comp = sub_fmt->GetOnlyComponent();
-    // TODO(dsinclair): Make sure this isn't a struct.
-    for (int i = 0; i < component_count; ++i)
-      fmt->AddComponent(FORMAT_TYPES[i], comp->mode, comp->num_bits);
+    type->SetRowCount(static_cast<uint32_t>(row_count));
+    return type;
+  }
 
-  } else if (str.length() > 9 && str.substr(0, 3) == "mat") {
+  if (str.length() > 9 && str.substr(0, 3) == "mat") {
     if (str[4] != 'x' || str[6] != '<' || str[str.length() - 1] != '>')
       return nullptr;
-
-    matrix = true;
 
     int column_count = str[3] - '0';
     if (column_count < 2 || column_count > 4)
@@ -114,38 +106,19 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
     if (row_count < 2 || row_count > 4)
       return nullptr;
 
-    auto sub_fmt = ToFormat(str.substr(7, str.length() - 8));
-    if (!sub_fmt)
+    auto type = ToType(str.substr(7, str.length() - 8));
+    if (!type)
       return nullptr;
-
-    if (sub_fmt->RowCount() != 1 || sub_fmt->ColumnCount() != 1)
+    if (!type->IsNumber() || type->IsArray() || type->IsVec() ||
+        type->IsMatrix()) {
       return nullptr;
+    }
 
-    fmt = MakeUnique<Format>();
-    fmt->SetColumnCount(static_cast<uint32_t>(column_count));
-
-    const auto* comp = sub_fmt->GetOnlyComponent();
-    // TODO(dsinclair): Make sure this isn't a struct.
-    for (int i = 0; i < row_count; ++i)
-      fmt->AddComponent(FORMAT_TYPES[i], comp->mode, comp->num_bits);
-
-  } else {
-    return nullptr;
+    type->SetRowCount(static_cast<uint32_t>(row_count));
+    type->SetColumnCount(static_cast<uint32_t>(column_count));
+    return type;
   }
-
-  // Convert the name back into a FormatType so we can use it in the buffer
-  // later Otherwise, we end up with a type of Unknown.
-  //
-  // There is no equivalent type for a matrix.
-  if (!matrix) {
-    std::string name = fmt->GenerateName();
-    if (name == "")
-      return nullptr;
-
-    fmt->SetFormatType(FormatParser::NameToType(name));
-  }
-
-  return fmt;
+  return nullptr;
 }
 
 }  // namespace
@@ -206,10 +179,10 @@ Result Parser::Parse(const std::string& data) {
     if (pipeline->GetColorAttachments().empty()) {
       auto* buf = script_->GetBuffer(Pipeline::kGeneratedColorBuffer);
       if (!buf) {
-        auto new_buf = pipeline->GenerateDefaultColorAttachmentBuffer();
-        buf = new_buf.get();
+        auto color_buf = pipeline->GenerateDefaultColorAttachmentBuffer();
+        buf = color_buf.get();
 
-        Result r = script_->AddBuffer(std::move(new_buf));
+        Result r = script_->AddBuffer(std::move(color_buf));
         if (!r.IsSuccess())
           return r;
       }
@@ -546,15 +519,20 @@ Result Parser::ParseShaderSpecialization(Pipeline* pipeline) {
   if (!token->IsString())
     return Result("expected data type in SPECIALIZE subcommand");
 
-  auto fmt = ToFormat(token->AsString());
-  if (!fmt)
+  auto type = ToType(token->AsString());
+  if (!type)
     return Result("invalid data_type provided");
+  if (!type->IsNumber())
+    return Result("only numeric types are accepted for specialization values");
+
+  auto num = type->AsNumber();
 
   token = tokenizer_->NextToken();
   uint32_t value = 0;
-  if (fmt->IsUint32() || fmt->IsInt32()) {
+  if (type::Type::IsUint32(num->GetFormatMode(), num->NumBits()) ||
+      type::Type::IsInt32(num->GetFormatMode(), num->NumBits())) {
     value = token->AsUint32();
-  } else if (fmt->IsFloat()) {
+  } else if (type::Type::IsFloat32(num->GetFormatMode(), num->NumBits())) {
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
       return Result("value is not a floating point value");
@@ -870,16 +848,17 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   if (!token->IsString())
     return Result("expected data type");
 
-  auto fmt = ToFormat(token->AsString());
-  if (!fmt)
+  auto type = ToType(token->AsString());
+  if (!type)
     return Result("invalid data_type provided");
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger() && !token->IsDouble())
     return Result("expected data value");
 
+  auto fmt = MakeUnique<Format>(type.get());
   Value value;
-  if (fmt->IsFloat() || fmt->IsDouble())
+  if (fmt->IsFloat32() || fmt->IsFloat64())
     value.SetDoubleValue(token->AsDouble());
   else
     value.SetIntValue(token->AsUint64());
@@ -891,6 +870,7 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   info.value = value;
   pipeline->SetArg(std::move(info));
   script_->RegisterFormat(std::move(fmt));
+  script_->RegisterType(std::move(type));
 
   return ValidateEndOfStatement("SET command");
 }
@@ -923,13 +903,15 @@ Result Parser::ParseBuffer() {
 
     buffer = MakeUnique<Buffer>();
 
-    FormatParser fmt_parser;
-    auto fmt = fmt_parser.Parse(token->AsString());
-    if (fmt == nullptr)
+    TypeParser type_parser;
+    auto type = type_parser.Parse(token->AsString());
+    if (type == nullptr)
       return Result("invalid BUFFER FORMAT");
 
+    auto fmt = MakeUnique<Format>(type.get());
     buffer->SetFormat(fmt.get());
     script_->RegisterFormat(std::move(fmt));
+    script_->RegisterType(std::move(type));
   } else {
     return Result("unknown BUFFER command provided: " + cmd);
   }
@@ -947,18 +929,22 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
   if (!token->IsString())
     return Result("BUFFER invalid data type");
 
-  FormatParser fp;
-  auto fmt = fp.Parse(token->AsString());
-  if (fmt != nullptr) {
+  TypeParser parser;
+  auto type = parser.Parse(token->AsString());
+  std::unique_ptr<Format> fmt;
+  if (type != nullptr) {
+    fmt = MakeUnique<Format>(type.get());
     buffer->SetFormat(fmt.get());
   } else {
-    fmt = ToFormat(token->AsString());
-    if (!fmt)
+    type = ToType(token->AsString());
+    if (!type)
       return Result("invalid data_type provided");
 
+    fmt = MakeUnique<Format>(type.get());
     buffer->SetFormat(fmt.get());
   }
   script_->RegisterFormat(std::move(fmt));
+  script_->RegisterType(std::move(type));
 
   token = tokenizer_->NextToken();
   if (!token->IsString())
@@ -1014,7 +1000,7 @@ Result Parser::ParseBufferInitializerFill(Buffer* buffer,
     return Result("invalid BUFFER fill value");
 
   auto fmt = buffer->GetFormat();
-  bool is_double_data = fmt->IsFloat() || fmt->IsDouble();
+  bool is_double_data = fmt->IsFloat32() || fmt->IsFloat64();
 
   // Inflate the size because our items are multi-dimensional.
   size_in_items = size_in_items * fmt->InputNeededPerElement();
@@ -1042,17 +1028,21 @@ Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
   if (!token->IsInteger() && !token->IsDouble())
     return Result("invalid BUFFER series_from value");
 
-  auto fmt = buffer->GetFormat();
-  if (fmt->RowCount() > 1 || fmt->ColumnCount() > 1)
+  auto type = buffer->GetFormat()->GetType();
+  if (type->IsMatrix() || type->IsVec())
     return Result("BUFFER series_from must not be multi-row/column types");
 
-  bool is_double_data = fmt->IsFloat() || fmt->IsDouble();
-
   Value counter;
-  if (is_double_data)
+
+  auto n = type->AsNumber();
+  FormatMode mode = n->GetFormatMode();
+  uint32_t num_bits = n->NumBits();
+  if (type::Type::IsFloat32(mode, num_bits) ||
+      type::Type::IsFloat64(mode, num_bits)) {
     counter.SetDoubleValue(token->AsDouble());
-  else
+  } else {
     counter.SetIntValue(token->AsUint64());
+  }
 
   token = tokenizer_->NextToken();
   if (!token->IsString())
@@ -1069,7 +1059,8 @@ Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
   std::vector<Value> values;
   values.resize(size_in_items);
   for (size_t i = 0; i < size_in_items; ++i) {
-    if (is_double_data) {
+    if (type::Type::IsFloat32(mode, num_bits) ||
+        type::Type::IsFloat64(mode, num_bits)) {
       double value = counter.AsDouble();
       values[i].SetDoubleValue(value);
       counter.SetDoubleValue(value + token->AsDouble());
@@ -1088,7 +1079,7 @@ Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
 
 Result Parser::ParseBufferInitializerData(Buffer* buffer) {
   auto fmt = buffer->GetFormat();
-  bool is_double_type = fmt->IsFloat() || fmt->IsDouble();
+  bool is_double_type = fmt->IsFloat32() || fmt->IsFloat64();
 
   std::vector<Value> values;
   for (auto token = tokenizer_->NextToken();; token = tokenizer_->NextToken()) {
@@ -1358,7 +1349,7 @@ Result Parser::ParseValues(const std::string& name,
   while (!token->IsEOL() && !token->IsEOS()) {
     Value v;
 
-    if (fmt->IsFloat() || fmt->IsDouble()) {
+    if (fmt->IsFloat32() || fmt->IsFloat64()) {
       if (!token->IsInteger() && !token->IsDouble()) {
         return Result(std::string("Invalid value provided to ") + name +
                       " command: " + token->ToOriginalString());

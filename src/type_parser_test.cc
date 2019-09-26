@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/format_parser.h"
+#include "src/type_parser.h"
 
 #include "gtest/gtest.h"
+#include "src/format.h"
 
 namespace amber {
 
-using FormatParserTest = testing::Test;
+using TypeParserTest = testing::Test;
 
-TEST_F(FormatParserTest, Formats) {
+TEST_F(TypeParserTest, Formats) {
   struct {
     const char* name;
     FormatType type;
@@ -1175,71 +1176,77 @@ TEST_F(FormatParserTest, Formats) {
        }},
   };
 
-  for (const auto& fmt : formats) {
-    FormatParser parser;
-    auto format = parser.Parse(fmt.name);
+  for (const auto& data : formats) {
+    TypeParser parser;
+    auto type = parser.Parse(data.name);
 
-    ASSERT_TRUE(format != nullptr) << fmt.name;
-    EXPECT_EQ(fmt.type, format->GetFormatType()) << fmt.name;
-    EXPECT_EQ(fmt.pack_size, format->GetPackSize()) << fmt.name;
+    ASSERT_TRUE(type != nullptr) << data.name;
 
-    auto& segs = format->GetSegments();
-    ASSERT_TRUE(fmt.component_count <= segs.size()) << fmt.name;
+    Format fmt(type.get());
+    EXPECT_EQ(data.type, fmt.GetFormatType()) << data.name;
+    if (data.pack_size > 0) {
+      ASSERT_TRUE(fmt.GetType()->IsList());
+      ASSERT_TRUE(fmt.GetType()->AsList()->IsPacked());
+      EXPECT_EQ(data.pack_size, fmt.GetType()->AsList()->PackSizeInBits());
 
-    for (size_t i = 0; i < fmt.component_count; ++i) {
-      EXPECT_EQ(fmt.components[i].type, segs[i].GetComponent()->type)
-          << fmt.name;
-      EXPECT_EQ(fmt.components[i].mode, segs[i].GetComponent()->mode)
-          << fmt.name;
-      EXPECT_EQ(fmt.components[i].num_bits, segs[i].GetComponent()->num_bits)
-          << fmt.name;
-    }
+      const auto& members = fmt.GetType()->AsList()->Members();
+      for (size_t i = 0; i < data.component_count; ++i) {
+        EXPECT_EQ(data.components[i].type, members[i].name) << data.name;
+        EXPECT_EQ(data.components[i].mode, members[i].mode) << data.name;
+        EXPECT_EQ(data.components[i].num_bits, members[i].num_bits)
+            << data.name;
+      }
+    } else {
+      auto& segs = fmt.GetSegments();
+      ASSERT_TRUE(data.component_count <= segs.size()) << data.name;
 
-    if (fmt.component_count < segs.size()) {
-      // Only one padding added
-      EXPECT_EQ(1, segs.size() - fmt.component_count);
-      EXPECT_TRUE(segs.back().IsPadding());
+      for (size_t i = 0; i < data.component_count; ++i) {
+        EXPECT_EQ(data.components[i].mode, segs[i].GetFormatMode());
+        EXPECT_EQ(data.components[i].num_bits, segs[i].GetNumBits())
+            << data.name;
+      }
+
+      if (data.component_count < segs.size()) {
+        // Only one padding added
+        EXPECT_EQ(1, segs.size() - data.component_count);
+        EXPECT_TRUE(segs.back().IsPadding());
+      }
     }
   }
 }  // NOLINT(readability/fn_size)
 
-TEST_F(FormatParserTest, InvalidFormat) {
-  FormatParser parser;
-  auto format = parser.Parse("BLAH_BLAH_BLAH");
-  EXPECT_TRUE(format == nullptr);
+TEST_F(TypeParserTest, InvalidFormat) {
+  TypeParser parser;
+  auto type = parser.Parse("BLAH_BLAH_BLAH");
+  EXPECT_TRUE(type == nullptr);
 }
 
-TEST_F(FormatParserTest, EmptyFormat) {
-  FormatParser parser;
-  auto format = parser.Parse("");
-  EXPECT_TRUE(format == nullptr);
+TEST_F(TypeParserTest, EmptyFormat) {
+  TypeParser parser;
+  auto type = parser.Parse("");
+  EXPECT_TRUE(type == nullptr);
 }
 
-TEST_F(FormatParserTest, GlslString) {
-  FormatParser parser;
-  auto format = parser.Parse("float/vec3");
-  ASSERT_TRUE(format != nullptr);
+TEST_F(TypeParserTest, GlslString) {
+  TypeParser parser;
+  auto type = parser.Parse("float/vec3");
+  ASSERT_TRUE(type != nullptr);
 
-  EXPECT_EQ(FormatType::kR32G32B32_SFLOAT, format->GetFormatType());
-  EXPECT_EQ(static_cast<size_t>(0U), format->GetPackSize());
+  Format fmt(type.get());
+  EXPECT_EQ(FormatType::kR32G32B32_SFLOAT, fmt.GetFormatType());
 
-  auto& segs = format->GetSegments();
+  auto& segs = fmt.GetSegments();
   ASSERT_EQ(4U, segs.size());
 
-  EXPECT_EQ(FormatComponentType::kR, segs[0].GetComponent()->type);
-  EXPECT_EQ(FormatMode::kSFloat, segs[0].GetComponent()->mode);
-  EXPECT_EQ(32U, segs[0].GetComponent()->num_bits);
-  EXPECT_EQ(FormatComponentType::kG, segs[1].GetComponent()->type);
-  EXPECT_EQ(FormatMode::kSFloat, segs[1].GetComponent()->mode);
-  EXPECT_EQ(32U, segs[1].GetComponent()->num_bits);
-  EXPECT_EQ(FormatComponentType::kB, segs[2].GetComponent()->type);
-  EXPECT_EQ(FormatMode::kSFloat, segs[2].GetComponent()->mode);
-  EXPECT_EQ(32U, segs[2].GetComponent()->num_bits);
+  for (size_t i = 0; i < 3; ++i) {
+    EXPECT_TRUE(
+        type::Type::IsFloat32(segs[i].GetFormatMode(), segs[i].GetNumBits()));
+  }
 
   EXPECT_TRUE(segs[3].IsPadding());
 }
 
-TEST_F(FormatParserTest, GlslStrings) {
+TEST_F(TypeParserTest, GlslStrings) {
   struct {
     const char* name;
     FormatType type;
@@ -1260,15 +1267,16 @@ TEST_F(FormatParserTest, GlslStrings) {
   };
 
   for (const auto& str : strs) {
-    FormatParser parser;
-    auto format = parser.Parse(str.name);
-    ASSERT_FALSE(format == nullptr);
+    TypeParser parser;
+    auto type = parser.Parse(str.name);
+    ASSERT_FALSE(type == nullptr);
 
-    EXPECT_EQ(str.type, format->GetFormatType()) << str.name;
+    Format fmt(type.get());
+    EXPECT_EQ(str.type, fmt.GetFormatType()) << str.name;
   }
 }
 
-TEST_F(FormatParserTest, GlslStringInvalid) {
+TEST_F(TypeParserTest, GlslStringInvalid) {
   struct {
     const char* name;
   } strs[] = {
@@ -1279,9 +1287,9 @@ TEST_F(FormatParserTest, GlslStringInvalid) {
   };
 
   for (const auto& str : strs) {
-    FormatParser parser;
-    auto format = parser.Parse(str.name);
-    EXPECT_TRUE(format == nullptr);
+    TypeParser parser;
+    auto fmt = parser.Parse(str.name);
+    EXPECT_TRUE(fmt == nullptr);
   }
 }
 
