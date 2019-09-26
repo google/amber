@@ -111,32 +111,9 @@ std::unique_ptr<Format> DatumTypeParser::Parse(const std::string& data) {
   //
   // There is no equivalent type for a matrix.
   if (!matrix) {
-    std::string name = "";
-    std::string parts = "ARGB";
-    const auto& comps = fmt->GetComponents();
-    for (const auto& comp : comps) {
-      name += parts[static_cast<uint8_t>(comp->type)] +
-              std::to_string(comp->num_bits);
-    }
-    name += "_";
-    switch (comps[0]->mode) {
-      case FormatMode::kUNorm:
-      case FormatMode::kUFloat:
-      case FormatMode::kUScaled:
-      case FormatMode::kSNorm:
-      case FormatMode::kSScaled:
-      case FormatMode::kSRGB:
-        return nullptr;
-      case FormatMode::kUInt:
-        name += "UINT";
-        break;
-      case FormatMode::kSInt:
-        name += "SINT";
-        break;
-      case FormatMode::kSFloat:
-        name += "SFLOAT";
-        break;
-    }
+    std::string name = fmt->GenerateName();
+    if (name == "")
+      return nullptr;
 
     fmt->SetFormatType(FormatParser::NameToType(name));
   }

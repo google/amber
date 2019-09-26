@@ -34,19 +34,20 @@ TEST_F(FormatTest, Copy) {
   auto copy = MakeUnique<Format>(fmt);
   EXPECT_TRUE(copy->IsFloat());
   EXPECT_EQ(16U, copy->SizeInBytes());
-  EXPECT_EQ(3U, copy->GetComponents().size());
+  EXPECT_EQ(4U, copy->GetSegments().size());
   EXPECT_EQ(FormatType::kR32G32B32_SFLOAT, copy->GetFormatType());
 
-  auto& comp = copy->GetComponents();
-  EXPECT_EQ(FormatComponentType::kR, comp[0]->type);
-  EXPECT_EQ(FormatMode::kSFloat, comp[0]->mode);
-  EXPECT_EQ(32U, comp[0]->num_bits);
-  EXPECT_EQ(FormatComponentType::kG, comp[1]->type);
-  EXPECT_EQ(FormatMode::kSFloat, comp[1]->mode);
-  EXPECT_EQ(32U, comp[1]->num_bits);
-  EXPECT_EQ(FormatComponentType::kB, comp[2]->type);
-  EXPECT_EQ(FormatMode::kSFloat, comp[2]->mode);
-  EXPECT_EQ(32U, comp[2]->num_bits);
+  auto& segs = copy->GetSegments();
+  EXPECT_EQ(FormatComponentType::kR, segs[0].GetComponent()->type);
+  EXPECT_EQ(FormatMode::kSFloat, segs[0].GetComponent()->mode);
+  EXPECT_EQ(32U, segs[0].GetComponent()->num_bits);
+  EXPECT_EQ(FormatComponentType::kG, segs[1].GetComponent()->type);
+  EXPECT_EQ(FormatMode::kSFloat, segs[1].GetComponent()->mode);
+  EXPECT_EQ(32U, segs[1].GetComponent()->num_bits);
+  EXPECT_EQ(FormatComponentType::kB, segs[2].GetComponent()->type);
+  EXPECT_EQ(FormatMode::kSFloat, segs[2].GetComponent()->mode);
+  EXPECT_EQ(32U, segs[2].GetComponent()->num_bits);
+  EXPECT_TRUE(segs[3].IsPadding());
 }
 
 TEST_F(FormatTest, SizeInBytesVector) {

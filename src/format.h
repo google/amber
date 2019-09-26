@@ -15,8 +15,10 @@
 #ifndef SRC_FORMAT_H_
 #define SRC_FORMAT_H_
 
+#include <cassert>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "src/format_data.h"
@@ -146,8 +148,12 @@ class Format {
   uint8_t GetPackSize() const { return pack_size_in_bytes_; }
 
   void AddComponent(FormatComponentType type, FormatMode mode, uint8_t bits);
-  const std::vector<std::unique_ptr<Component>>& GetComponents() const {
-    return components_;
+
+  /// Returns a pointer to the only component in this format. Only valid if
+  /// there is only a single component, asserts otherwise.
+  Component* GetOnlyComponent() const {
+    assert(components_.size() == 1);
+    return components_[0].get();
   }
 
   /// The segment is the individual pieces of the components including padding.
@@ -162,6 +168,13 @@ class Format {
            type_ == FormatType::kD16_UNORM_S8_UINT ||
            type_ == FormatType::kD32_SFLOAT_S8_UINT ||
            type_ == FormatType::kS8_UINT;
+  }
+
+  /// Returns true if the format components are scaled
+  bool IsScaled() const {
+    FormatMode mode = components_.back()->mode;
+    return mode == FormatMode::kUNorm || mode == FormatMode::kSNorm ||
+           mode == FormatMode::kSRGB;
   }
 
   /// Returns the number of input values required for an item of this format.
@@ -201,6 +214,10 @@ class Format {
   bool IsFloat() const { return AreAllComponents(FormatMode::kSFloat, 32); }
   /// Returns true if all components of this format are a 64 bit float.
   bool IsDouble() const { return AreAllComponents(FormatMode::kSFloat, 64); }
+
+  /// Generates the image format name for this format if possible. Returns
+  /// name if generated or "" otherwise.
+  std::string GenerateName() const;
 
  private:
   bool AreAllComponents(FormatMode mode, uint32_t bits) const;

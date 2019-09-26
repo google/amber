@@ -257,16 +257,16 @@ void SetupToleranceForTexels(const ProbeCommand* command,
 }
 
 // Convert data of |texel| into double values based on the
-// information given in |framebuffer_format|.
+// information given in |fmt|.
 std::vector<double> GetActualValuesFromTexel(const uint8_t* texel,
-                                             const Format* framebuffer_format) {
-  assert(framebuffer_format && !framebuffer_format->GetSegments().empty());
+                                             const Format* fmt) {
+  assert(fmt && !fmt->GetSegments().empty());
 
-  std::vector<double> actual_values(framebuffer_format->GetSegments().size());
+  std::vector<double> actual_values(fmt->GetSegments().size());
   uint8_t bit_offset = 0;
 
-  for (size_t i = 0; i < framebuffer_format->GetSegments().size(); ++i) {
-    const auto& seg = framebuffer_format->GetSegments()[i];
+  for (size_t i = 0; i < fmt->GetSegments().size(); ++i) {
+    const auto& seg = fmt->GetSegments()[i];
     auto component = seg.GetComponent();
 
     if (seg.IsPadding()) {
@@ -360,15 +360,14 @@ std::vector<double> GetActualValuesFromTexel(const uint8_t* texel,
   return actual_values;
 }
 
-// If component mode of |framebuffer_format| is FormatMode::kUNorm or
+// If component mode of |fmt| is FormatMode::kUNorm or
 // ::kSNorm or ::kSRGB, scale the corresponding value in |texel|.
 // Note that we do not scale values with FormatMode::kUInt, ::kSInt,
 // ::kUFloat, ::kSFloat.
-void ScaleTexelValuesIfNeeded(std::vector<double>* texel,
-                              const Format* framebuffer_format) {
-  assert(framebuffer_format->GetSegments().size() == texel->size());
-  for (size_t i = 0; i < framebuffer_format->GetSegments().size(); ++i) {
-    const auto& seg = framebuffer_format->GetSegments()[i];
+void ScaleTexelValuesIfNeeded(std::vector<double>* texel, const Format* fmt) {
+  assert(fmt->GetSegments().size() == texel->size());
+  for (size_t i = 0; i < fmt->GetSegments().size(); ++i) {
+    const auto& seg = fmt->GetSegments()[i];
     if (seg.IsPadding())
       continue;
 
@@ -410,12 +409,12 @@ void ScaleTexelValuesIfNeeded(std::vector<double>* texel,
 /// |is_tolerance_percent| is true, we assume that the corresponding
 /// |tolerance| is relative i.e., percentage allowed error.
 bool IsTexelEqualToExpected(const std::vector<double>& texel,
-                            const Format* framebuffer_format,
+                            const Format* fmt,
                             const ProbeCommand* command,
                             const double* tolerance,
                             const bool* is_tolerance_percent) {
-  for (size_t i = 0; i < framebuffer_format->GetSegments().size(); ++i) {
-    const auto& seg = framebuffer_format->GetSegments()[i];
+  for (size_t i = 0; i < fmt->GetSegments().size(); ++i) {
+    const auto& seg = fmt->GetSegments()[i];
     if (seg.IsPadding())
       continue;
 
@@ -463,10 +462,10 @@ bool IsTexelEqualToExpected(const std::vector<double>& texel,
 }
 
 std::vector<double> GetTexelInRGBA(const std::vector<double>& texel,
-                                   const Format* framebuffer_format) {
+                                   const Format* fmt) {
   std::vector<double> texel_in_rgba(texel.size());
-  for (size_t i = 0; i < framebuffer_format->GetSegments().size(); ++i) {
-    const auto& seg = framebuffer_format->GetSegments()[i];
+  for (size_t i = 0; i < fmt->GetSegments().size(); ++i) {
+    const auto& seg = fmt->GetSegments()[i];
     if (seg.IsPadding())
       continue;
 
@@ -498,7 +497,7 @@ Verifier::Verifier() = default;
 Verifier::~Verifier() = default;
 
 Result Verifier::Probe(const ProbeCommand* command,
-                       const Format* framebuffer_format,
+                       const Format* fmt,
                        uint32_t texel_stride,
                        uint32_t row_stride,
                        uint32_t frame_width,
@@ -506,7 +505,7 @@ Result Verifier::Probe(const ProbeCommand* command,
                        const void* buf) {
   if (!command)
     return Result("Verifier::Probe given ProbeCommand is nullptr");
-  if (!framebuffer_format)
+  if (!fmt)
     return Result("Verifier::Probe given texel's Format is nullptr");
   if (!buf)
     return Result("Verifier::Probe given buffer to probe is nullptr");
@@ -566,13 +565,13 @@ Result Verifier::Probe(const ProbeCommand* command,
     const uint8_t* p = ptr + row_stride * (j + y) + texel_stride * x;
     for (uint32_t i = 0; i < width; ++i) {
       auto actual_texel_values =
-          GetActualValuesFromTexel(p + texel_stride * i, framebuffer_format);
-      ScaleTexelValuesIfNeeded(&actual_texel_values, framebuffer_format);
-      if (!IsTexelEqualToExpected(actual_texel_values, framebuffer_format,
-                                  command, tolerance, is_tolerance_percent)) {
+          GetActualValuesFromTexel(p + texel_stride * i, fmt);
+      ScaleTexelValuesIfNeeded(&actual_texel_values, fmt);
+      if (!IsTexelEqualToExpected(actual_texel_values, fmt, command, tolerance,
+                                  is_tolerance_percent)) {
         if (!count_of_invalid_pixels) {
           actual_texel_values_on_failure =
-              GetTexelInRGBA(actual_texel_values, framebuffer_format);
+              GetTexelInRGBA(actual_texel_values, fmt);
           first_invalid_i = i;
           first_invalid_j = j;
         }
@@ -582,13 +581,7 @@ Result Verifier::Probe(const ProbeCommand* command,
   }
 
   if (count_of_invalid_pixels) {
-    const auto& component = framebuffer_format->GetComponents().back();
-    float scale_factor_for_error_report = 1.0f;
-    if (component->mode == FormatMode::kUNorm ||
-        component->mode == FormatMode::kSNorm ||
-        component->mode == FormatMode::kSRGB) {
-      scale_factor_for_error_report = 255.0f;
-    }
+    float scale_factor_for_error_report = fmt->IsScaled() ? 255.f : 1.f;
 
     return Result(
         "Line " + std::to_string(command->GetLine()) +

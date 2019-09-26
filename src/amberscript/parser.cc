@@ -93,7 +93,8 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
     if (sub_fmt->RowCount() != 1 || sub_fmt->ColumnCount() != 1)
       return nullptr;
 
-    const auto& comp = sub_fmt->GetComponents()[0];
+    const auto* comp = sub_fmt->GetOnlyComponent();
+    // TODO(dsinclair): Make sure this isn't a struct.
     for (int i = 0; i < component_count; ++i)
       fmt->AddComponent(FORMAT_TYPES[i], comp->mode, comp->num_bits);
 
@@ -120,7 +121,8 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
 
     fmt->SetColumnCount(static_cast<uint32_t>(column_count));
 
-    const auto& comp = sub_fmt->GetComponents()[0];
+    const auto* comp = sub_fmt->GetOnlyComponent();
+    // TODO(dsinclair): Make sure this isn't a struct.
     for (int i = 0; i < row_count; ++i)
       fmt->AddComponent(FORMAT_TYPES[i], comp->mode, comp->num_bits);
 
@@ -133,32 +135,9 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
   //
   // There is no equivalent type for a matrix.
   if (!matrix) {
-    std::string name = "";
-    std::string parts = "ARGB";
-    const auto& comps = fmt->GetComponents();
-    for (const auto& comp : comps) {
-      name += parts[static_cast<uint8_t>(comp->type)] +
-              std::to_string(comp->num_bits);
-    }
-    name += "_";
-    switch (comps[0]->mode) {
-      case FormatMode::kUNorm:
-      case FormatMode::kUFloat:
-      case FormatMode::kUScaled:
-      case FormatMode::kSNorm:
-      case FormatMode::kSScaled:
-      case FormatMode::kSRGB:
-        return nullptr;
-      case FormatMode::kUInt:
-        name += "UINT";
-        break;
-      case FormatMode::kSInt:
-        name += "SINT";
-        break;
-      case FormatMode::kSFloat:
-        name += "SFLOAT";
-        break;
-    }
+    std::string name = fmt->GenerateName();
+    if (name == "")
+      return nullptr;
 
     fmt->SetFormatType(FormatParser::NameToType(name));
   }
