@@ -383,21 +383,23 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   EXPECT_EQ(FormatType::kR32G32_SFLOAT,
             buffers[1]->GetFormat()->GetFormatType());
 
-  auto& comps1 = buffers[1]->GetFormat()->GetComponents();
-  ASSERT_EQ(2U, comps1.size());
-  EXPECT_EQ(FormatMode::kSFloat, comps1[0]->mode);
-  EXPECT_EQ(FormatMode::kSFloat, comps1[1]->mode);
+  auto& segs1 = buffers[1]->GetFormat()->GetSegments();
+  ASSERT_EQ(2U, segs1.size());
+  EXPECT_EQ(FormatMode::kSFloat, segs1[0].GetComponent()->mode);
+  EXPECT_EQ(FormatMode::kSFloat, segs1[1].GetComponent()->mode);
   EXPECT_EQ(static_cast<uint32_t>(0), buffers[1]->ElementCount());
 
   ASSERT_EQ(BufferType::kVertex, buffers[2]->GetBufferType());
   EXPECT_EQ(1U, pipeline_buffers[1].location);
   EXPECT_EQ(FormatType::kR32G32B32_SINT,
             buffers[2]->GetFormat()->GetFormatType());
-  auto& comps2 = buffers[2]->GetFormat()->GetComponents();
-  ASSERT_EQ(3U, comps2.size());
-  EXPECT_EQ(FormatMode::kSInt, comps2[0]->mode);
-  EXPECT_EQ(FormatMode::kSInt, comps2[1]->mode);
-  EXPECT_EQ(FormatMode::kSInt, comps2[2]->mode);
+
+  auto& segs2 = buffers[2]->GetFormat()->GetSegments();
+  ASSERT_EQ(4, segs2.size());
+  EXPECT_EQ(FormatMode::kSInt, segs2[0].GetComponent()->mode);
+  EXPECT_EQ(FormatMode::kSInt, segs2[1].GetComponent()->mode);
+  EXPECT_EQ(FormatMode::kSInt, segs2[2].GetComponent()->mode);
+  EXPECT_TRUE(segs2[3].IsPadding());
   EXPECT_EQ(static_cast<uint32_t>(0), buffers[2]->ElementCount());
 }
 

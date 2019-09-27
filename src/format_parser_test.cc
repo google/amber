@@ -1183,13 +1183,22 @@ TEST_F(FormatParserTest, Formats) {
     EXPECT_EQ(fmt.type, format->GetFormatType()) << fmt.name;
     EXPECT_EQ(fmt.pack_size, format->GetPackSize()) << fmt.name;
 
-    auto& comps = format->GetComponents();
-    ASSERT_EQ(fmt.component_count, comps.size());
+    auto& segs = format->GetSegments();
+    ASSERT_TRUE(fmt.component_count <= segs.size()) << fmt.name;
 
     for (size_t i = 0; i < fmt.component_count; ++i) {
-      EXPECT_EQ(fmt.components[i].type, comps[i]->type) << fmt.name;
-      EXPECT_EQ(fmt.components[i].mode, comps[i]->mode) << fmt.name;
-      EXPECT_EQ(fmt.components[i].num_bits, comps[i]->num_bits) << fmt.name;
+      EXPECT_EQ(fmt.components[i].type, segs[i].GetComponent()->type)
+          << fmt.name;
+      EXPECT_EQ(fmt.components[i].mode, segs[i].GetComponent()->mode)
+          << fmt.name;
+      EXPECT_EQ(fmt.components[i].num_bits, segs[i].GetComponent()->num_bits)
+          << fmt.name;
+    }
+
+    if (fmt.component_count < segs.size()) {
+      // Only one padding added
+      EXPECT_EQ(1, segs.size() - fmt.component_count);
+      EXPECT_TRUE(segs.back().IsPadding());
     }
   }
 }  // NOLINT(readability/fn_size)
@@ -1214,18 +1223,20 @@ TEST_F(FormatParserTest, GlslString) {
   EXPECT_EQ(FormatType::kR32G32B32_SFLOAT, format->GetFormatType());
   EXPECT_EQ(static_cast<size_t>(0U), format->GetPackSize());
 
-  auto& comps = format->GetComponents();
-  ASSERT_EQ(3U, comps.size());
+  auto& segs = format->GetSegments();
+  ASSERT_EQ(4U, segs.size());
 
-  EXPECT_EQ(FormatComponentType::kR, comps[0]->type);
-  EXPECT_EQ(FormatMode::kSFloat, comps[0]->mode);
-  EXPECT_EQ(32U, comps[0]->num_bits);
-  EXPECT_EQ(FormatComponentType::kG, comps[1]->type);
-  EXPECT_EQ(FormatMode::kSFloat, comps[1]->mode);
-  EXPECT_EQ(32U, comps[1]->num_bits);
-  EXPECT_EQ(FormatComponentType::kB, comps[2]->type);
-  EXPECT_EQ(FormatMode::kSFloat, comps[2]->mode);
-  EXPECT_EQ(32U, comps[2]->num_bits);
+  EXPECT_EQ(FormatComponentType::kR, segs[0].GetComponent()->type);
+  EXPECT_EQ(FormatMode::kSFloat, segs[0].GetComponent()->mode);
+  EXPECT_EQ(32U, segs[0].GetComponent()->num_bits);
+  EXPECT_EQ(FormatComponentType::kG, segs[1].GetComponent()->type);
+  EXPECT_EQ(FormatMode::kSFloat, segs[1].GetComponent()->mode);
+  EXPECT_EQ(32U, segs[1].GetComponent()->num_bits);
+  EXPECT_EQ(FormatComponentType::kB, segs[2].GetComponent()->type);
+  EXPECT_EQ(FormatMode::kSFloat, segs[2].GetComponent()->mode);
+  EXPECT_EQ(32U, segs[2].GetComponent()->num_bits);
+
+  EXPECT_TRUE(segs[3].IsPadding());
 }
 
 TEST_F(FormatParserTest, GlslStrings) {

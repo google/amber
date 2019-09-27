@@ -21,9 +21,13 @@ namespace vkscript {
 namespace {
 
 bool AllCompsAreType(Format* fmt, FormatMode mode, uint8_t num_bits) {
-  for (auto& comp : fmt->GetComponents()) {
-    if (comp->mode != mode || comp->num_bits != num_bits)
+  for (auto& seg : fmt->GetSegments()) {
+    if (seg.IsPadding())
+      continue;
+    if (seg.GetComponent()->mode != mode ||
+        seg.GetComponent()->num_bits != num_bits) {
       return false;
+    }
   }
 
   return true;

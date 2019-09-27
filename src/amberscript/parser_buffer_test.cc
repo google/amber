@@ -564,21 +564,21 @@ TEST_F(AmberScriptParserTest, BufferFormat) {
   EXPECT_EQ("my_buf", buffer->GetName());
 
   auto fmt = buffer->GetFormat();
-  auto& comps = fmt->GetComponents();
-  ASSERT_EQ(4U, comps.size());
+  auto& segs = fmt->GetSegments();
+  ASSERT_EQ(4U, segs.size());
 
-  EXPECT_EQ(FormatComponentType::kR, comps[0]->type);
-  EXPECT_EQ(FormatMode::kSInt, comps[0]->mode);
-  EXPECT_EQ(32U, comps[0]->num_bits);
-  EXPECT_EQ(FormatComponentType::kG, comps[1]->type);
-  EXPECT_EQ(FormatMode::kSInt, comps[1]->mode);
-  EXPECT_EQ(32U, comps[1]->num_bits);
-  EXPECT_EQ(FormatComponentType::kB, comps[2]->type);
-  EXPECT_EQ(FormatMode::kSInt, comps[2]->mode);
-  EXPECT_EQ(32U, comps[2]->num_bits);
-  EXPECT_EQ(FormatComponentType::kA, comps[3]->type);
-  EXPECT_EQ(FormatMode::kSInt, comps[3]->mode);
-  EXPECT_EQ(32U, comps[3]->num_bits);
+  EXPECT_EQ(FormatComponentType::kR, segs[0].GetComponent()->type);
+  EXPECT_EQ(FormatMode::kSInt, segs[0].GetComponent()->mode);
+  EXPECT_EQ(32U, segs[0].GetComponent()->num_bits);
+  EXPECT_EQ(FormatComponentType::kG, segs[1].GetComponent()->type);
+  EXPECT_EQ(FormatMode::kSInt, segs[1].GetComponent()->mode);
+  EXPECT_EQ(32U, segs[1].GetComponent()->num_bits);
+  EXPECT_EQ(FormatComponentType::kB, segs[2].GetComponent()->type);
+  EXPECT_EQ(FormatMode::kSInt, segs[2].GetComponent()->mode);
+  EXPECT_EQ(32U, segs[2].GetComponent()->num_bits);
+  EXPECT_EQ(FormatComponentType::kA, segs[3].GetComponent()->type);
+  EXPECT_EQ(FormatMode::kSInt, segs[3].GetComponent()->mode);
+  EXPECT_EQ(32U, segs[3].GetComponent()->num_bits);
 }
 
 struct BufferParseError {
@@ -699,8 +699,10 @@ TEST_P(AmberScriptParserBufferDataTypeTest, BufferTypes) {
   auto fmt = buffer->GetFormat();
   EXPECT_EQ(test_data.row_count, fmt->RowCount());
   EXPECT_EQ(test_data.column_count, fmt->ColumnCount());
-  EXPECT_EQ(test_data.type, fmt->GetComponents()[0]->mode);
-  EXPECT_EQ(test_data.num_bits, fmt->GetComponents()[0]->num_bits);
+
+  auto comp = fmt->GetSegments()[0].GetComponent();
+  EXPECT_EQ(test_data.type, comp->mode);
+  EXPECT_EQ(test_data.num_bits, comp->num_bits);
 }
 INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserTestsDataType,
