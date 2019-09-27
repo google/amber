@@ -72,4 +72,5 @@ set(IMAGE_DIFF_SOURCES
 add_executable(image_diff ${IMAGE_DIFF_SOURCES})
 target_include_directories(image_diff PRIVATE "${CMAKE_BINARY_DIR}")
 target_link_libraries(image_diff libamber "lodepng")
+amber_default_compile_options(image_diff)
 set_target_properties(image_diff PROPERTIES OUTPUT_NAME "image_diff")

@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <vector>
+
 #include "src/buffer.h"
 #include "src/format_parser.h"
 #include "third_party/lodepng/lodepng.h"
@@ -31,12 +32,12 @@ struct Options {
   CompareAlgorithm compare_algorithm = CompareAlgorithm::kRMSE;
 };
 
-const char kUsage[] = R"(Usage: image_diff [options] image1 image2
+const char kUsage[] = R"(Usage: image_diff [options] image1.png image2.png
 
  options:
-  --rmse                    -- Compare using RMSE algorithm.
-  --tolerance               -- Tolerance for RMSE comparison.
-  -h                        -- This help text.
+  --rmse                    -- Compare using RMSE algorithm (default).
+  -t | --tolerance <float>  -- Tolerance value for RMSE comparison.
+  -h | --help               -- This help text.
 )";
 
 bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
@@ -44,12 +45,14 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
     const std::string& arg = args[i];
     if (arg == "-h" || arg == "--help") {
       opts->show_help = true;
+      return true;
     } else if (arg == "--rmse") {
       opts->compare_algorithm = CompareAlgorithm::kRMSE;
     } else if (arg == "-t" || arg == "--tolerance") {
       ++i;
       if (i >= args.size()) {
-        std::cerr << "Missing value for --tolerance argument." << std::endl;
+        std::cerr << "Missing value for " << args[i - 1] << " argument."
+                  << std::endl;
         return false;
       }
       opts->tolerance = std::stof(std::string(args[i]));
@@ -65,14 +68,18 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
   return true;
 }
 
-amber::Result LoadPngToBuffer(const std::string filename,
-                              amber::Buffer& buffer) {
+amber::Result LoadPngToBuffer(const std::string& filename,
+                              amber::Buffer* buffer) {
   std::vector<unsigned char> image;
-  unsigned width, height;
-  unsigned error = lodepng::decode(image, width, height, filename.c_str());
+  uint32_t width;
+  uint32_t height;
+  uint32_t error = lodepng::decode(image, width, height, filename.c_str());
 
-  if (error)
-    return amber::Result(lodepng_error_text(error));
+  if (error) {
+    std::string result = "PNG decode error: ";
+    result += lodepng_error_text(error);
+    return amber::Result(result);
+  }
 
   std::vector<amber::Value> values;
   values.resize(image.size());
@@ -80,7 +87,7 @@ amber::Result LoadPngToBuffer(const std::string filename,
     values[i].SetIntValue(image[i]);
   }
 
-  buffer.SetData(values);
+  buffer->SetData(values);
 
   return {};
 }
@@ -92,7 +99,6 @@ int main(int argc, const char** argv) {
   Options options;
 
   if (!ParseArgs(args, &options)) {
-    std::cerr << "Failed to parse arguments." << std::endl;
     return 1;
   }
 
@@ -111,7 +117,8 @@ int main(int argc, const char** argv) {
   for (int i = 0; i < 2; ++i) {
     amber::FormatParser fp;
     buffers[i].SetFormat(fp.Parse("R8G8B8A8_UNORM"));
-    amber::Result res = LoadPngToBuffer(options.input_filenames[i], buffers[i]);
+    amber::Result res =
+        LoadPngToBuffer(options.input_filenames[i], &buffers[i]);
     if (!res.IsSuccess()) {
       std::cerr << "Error loading " << options.input_filenames[i] << ": "
                 << res.Error() << std::endl;
@@ -119,18 +126,14 @@ int main(int argc, const char** argv) {
     }
   }
 
-  // RMSE
-  if (options.compare_algorithm == CompareAlgorithm::kRMSE) {
-    amber::Result res = buffers[0].CompareRMSE(&buffers[1], options.tolerance);
+  amber::Result res;
+  if (options.compare_algorithm == CompareAlgorithm::kRMSE)
+    res = buffers[0].CompareRMSE(&buffers[1], options.tolerance);
 
-    if (res.IsSuccess()) {
-      std::cout << "RMSE result similar." << std::endl;
-      return 0;
-    } else {
-      std::cout << "RMSE result not similar: " << res.Error() << std::endl;
-      return 1;
-    }
-  }
+  if (res.IsSuccess())
+    std::cout << "Images similar" << std::endl;
+  else
+    std::cout << "Images differ: " << res.Error() << std::endl;
 
-  return 1;
+  return !res.IsSuccess();
 }
