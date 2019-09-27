@@ -170,8 +170,8 @@ class Format {
            type_ == FormatType::kS8_UINT;
   }
 
-  /// Returns true if the format components are scaled
-  bool IsScaled() const {
+  /// Returns true if the format components are normalized.
+  bool IsNormalized() const {
     FormatMode mode = components_.back()->mode;
     return mode == FormatMode::kUNorm || mode == FormatMode::kSNorm ||
            mode == FormatMode::kSRGB;

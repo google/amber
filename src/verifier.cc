@@ -581,7 +581,7 @@ Result Verifier::Probe(const ProbeCommand* command,
   }
 
   if (count_of_invalid_pixels) {
-    float scale_factor_for_error_report = fmt->IsScaled() ? 255.f : 1.f;
+    float scale_factor_for_error_report = fmt->IsNormalized() ? 255.f : 1.f;
 
     return Result(
         "Line " + std::to_string(command->GetLine()) +
