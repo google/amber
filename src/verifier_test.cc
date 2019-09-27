@@ -713,7 +713,7 @@ TEST_F(VerifierTest, ProbeSSBOUint8Single) {
   Verifier verifier;
   Result r =
       verifier.ProbeSSBO(&probe_ssbo, 1, static_cast<const void*>(&ssbo));
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint8Multiple) {
@@ -737,7 +737,7 @@ TEST_F(VerifierTest, ProbeSSBOUint8Multiple) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 3, ssbo);
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint8Many) {
@@ -765,7 +765,7 @@ TEST_F(VerifierTest, ProbeSSBOUint8Many) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 200, ssbo.data());
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint32Single) {
@@ -788,7 +788,7 @@ TEST_F(VerifierTest, ProbeSSBOUint32Single) {
   Verifier verifier;
   Result r =
       verifier.ProbeSSBO(&probe_ssbo, 1, static_cast<const void*>(&ssbo));
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint32Multiple) {
@@ -813,7 +813,7 @@ TEST_F(VerifierTest, ProbeSSBOUint32Multiple) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOUint32Many) {
@@ -841,7 +841,7 @@ TEST_F(VerifierTest, ProbeSSBOUint32Many) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 200, ssbo.data());
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOFloatSingle) {
@@ -864,7 +864,7 @@ TEST_F(VerifierTest, ProbeSSBOFloatSingle) {
   Verifier verifier;
   Result r =
       verifier.ProbeSSBO(&probe_ssbo, 1, static_cast<const void*>(&ssbo));
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOFloatMultiple) {
@@ -889,7 +889,7 @@ TEST_F(VerifierTest, ProbeSSBOFloatMultiple) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOFloatMany) {
@@ -917,7 +917,7 @@ TEST_F(VerifierTest, ProbeSSBOFloatMany) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 200, ssbo.data());
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBODoubleSingle) {
@@ -940,7 +940,7 @@ TEST_F(VerifierTest, ProbeSSBODoubleSingle) {
   Verifier verifier;
   Result r =
       verifier.ProbeSSBO(&probe_ssbo, 1, static_cast<const void*>(&ssbo));
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBODoubleMultiple) {
@@ -965,7 +965,7 @@ TEST_F(VerifierTest, ProbeSSBODoubleMultiple) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBODoubleMany) {
@@ -993,7 +993,7 @@ TEST_F(VerifierTest, ProbeSSBODoubleMany) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 200, ssbo.data());
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOEqualFail) {
@@ -1054,7 +1054,7 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteTolerance) {
   const double ssbo_less[4] = {2.801, 0.631, 9.901, 1234.461};
 
   r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo_less);
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteToleranceFail) {
@@ -1114,12 +1114,12 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeTolerance) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo_more);
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 
   const double ssbo_less[4] = {2.8972, 0.72928, 9.991, 1233.32545};
 
   r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo_less);
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeToleranceFail) {
@@ -1175,7 +1175,7 @@ TEST_F(VerifierTest, ProbeSSBONotEqual) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBONotEqualFail) {
@@ -1227,7 +1227,7 @@ TEST_F(VerifierTest, ProbeSSBOLess) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOLessFail) {
@@ -1279,7 +1279,7 @@ TEST_F(VerifierTest, ProbeSSBOLessOrEqual) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOLessOrEqualFail) {
@@ -1331,7 +1331,7 @@ TEST_F(VerifierTest, ProbeSSBOGreater) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOGreaterFail) {
@@ -1383,7 +1383,7 @@ TEST_F(VerifierTest, ProbeSSBOGreaterOrEqual) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(double) * 4, ssbo);
-  EXPECT_TRUE(r.IsSuccess());
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 TEST_F(VerifierTest, ProbeSSBOGreaterOrEqualFail) {
@@ -1439,6 +1439,34 @@ TEST_F(VerifierTest, CheckRGBAOrderForFailure) {
       "0.000000, 76.500000\n  Actual RGBA: 75.000000, 14.000000, 255.000000, "
       "8.000000\nProbe failed in 1 pixels",
       r.Error());
+}
+
+TEST_F(VerifierTest, ProbeSSBOWithPadding) {
+  Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
+
+  FormatParser fp;
+  probe_ssbo.SetFormat(fp.Parse("float/vec2"));
+  ASSERT_TRUE(probe_ssbo.GetFormat() != nullptr);
+
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLessOrEqual);
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.9);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(1234.56);
+  probe_ssbo.SetValues(std::move(values));
+
+  // The vec2 will get padded to 4 bytes in std430.
+  const float ssbo[8] = {1.9f, 0.73f, 0.0f, 0.0f, 9.99f, 1234.560f, 0.0f, 0.0f};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
 }  // namespace amber

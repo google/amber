@@ -155,6 +155,7 @@ void FormatParser::ProcessChunk(Format* fmt, const std::string& data) {
   }
 }
 
+// static
 FormatType FormatParser::NameToType(const std::string& data) {
   if (data == "A1R5G5B5_UNORM_PACK16")
     return FormatType::kA1R5G5B5_UNORM_PACK16;

@@ -23,7 +23,6 @@
 
 #include "amber/result.h"
 #include "amber/value.h"
-#include "src/datum_type.h"
 #include "src/format.h"
 
 namespace amber {
@@ -95,7 +94,7 @@ class Buffer {
   // | Value | Value | Value | Value |   ValueCount == 4
   // | | | | | | | | | | | | | | | | |  SizeInBytes == 16
   // Note, the SizeInBytes maybe be greater then the size of the values. If
-  // the format IsStd140() and there are 3 rows, the SizeInBytes will be
+  // the format is std140 and there are 3 rows, the SizeInBytes will be
   // inflated to 4 values per row, instead of 3.
 
   /// Sets the number of elements in the buffer.
@@ -137,10 +136,10 @@ class Buffer {
   }
 
   /// Returns the number of bytes for one element in the buffer.
-  uint32_t GetTexelStride() { return format_->SizeInBytes(); }
+  uint32_t GetElementStride() { return format_->SizeInBytes(); }
 
   /// Returns the number of bytes for one row of elements in the buffer.
-  uint32_t GetRowStride() { return GetTexelStride() * GetWidth(); }
+  uint32_t GetRowStride() { return GetElementStride() * GetWidth(); }
 
   /// Sets the data into the buffer.
   Result SetData(const std::vector<Value>& data);
@@ -148,13 +147,13 @@ class Buffer {
   /// Resizes the buffer to hold |element_count| elements. This is separate
   /// from SetElementCount() because we may not know the format when we set the
   /// initial count. This requires the format to have been set.
-  void ResizeTo(uint32_t element_count);
+  void SetSizeInElements(uint32_t element_count);
 
   /// Resizes the buffer to hold |size_in_bytes|/format_->SizeInBytes()
   /// number of elements while resizing the buffer to |size_in_bytes| bytes.
   /// This requires the format to have been set. This is separate from
-  /// ResizeTo() since the given argument here is |size_in_bytes| bytes vs
-  /// |element_count| elements
+  /// SetSizeInElements() since the given argument here is |size_in_bytes|
+  /// bytes vs |element_count| elements
   void SetSizeInBytes(uint32_t size_in_bytes);
 
   /// Sets the max_size_in_bytes_ to |max_size_in_bytes| bytes
@@ -199,7 +198,7 @@ class Buffer {
 
  private:
   uint32_t WriteValueFromComponent(const Value& value,
-                                   const Format::Component& comp,
+                                   const Format::Component* comp,
                                    uint8_t* ptr);
 
   // Calculates the difference between the value stored in this buffer and

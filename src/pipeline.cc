@@ -53,7 +53,15 @@ std::unique_ptr<Pipeline> Pipeline::Clone() const {
   clone->index_buffer_ = index_buffer_;
   clone->fb_width_ = fb_width_;
   clone->fb_height_ = fb_height_;
-  clone->set_arg_values_ = set_arg_values_;
+
+  for (const auto& args : set_arg_values_) {
+    clone->set_arg_values_.push_back({});
+    clone->set_arg_values_.back().name = args.name;
+    clone->set_arg_values_.back().ordinal = args.ordinal;
+    clone->set_arg_values_.back().fmt = MakeUnique<Format>(*args.fmt);
+    clone->set_arg_values_.back().value = args.value;
+  }
+
   if (!opencl_pod_buffers_.empty()) {
     // Generate specific buffers for the clone.
     clone->GenerateOpenCLPodBuffers();
@@ -540,9 +548,10 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
               : BufferType::kUniform);
       // Use an 8-bit type because all the data in the descriptor map is
       // byte-based and it simplifies the logic for sizing below.
-      DatumType char_type;
-      char_type.SetType(DataType::kUint8);
-      buffer->SetFormat(char_type.AsFormat());
+      auto fmt = MakeUnique<Format>();
+      fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 8);
+
+      buffer->SetFormat(std::move(fmt));
       buffer->SetName(GetName() + "_pod_buffer_" +
                       std::to_string(descriptor_set) + "_" +
                       std::to_string(binding));
@@ -556,10 +565,10 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
 
     // Resize if necessary.
     if (buffer->ValueCount() < offset + arg_size) {
-      buffer->ResizeTo(offset + arg_size);
+      buffer->SetSizeInElements(offset + arg_size);
     }
     // Check the data size.
-    if (arg_size != arg_info.type.SizeInBytes()) {
+    if (arg_size != arg_info.fmt->SizeInBytes()) {
       std::string message = "SET command uses incorrect data size: kernel " +
                             shader_info.GetEntryPoint();
       if (uses_name) {
@@ -569,7 +578,9 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
       }
       return Result(message);
     }
-    buffer->SetDataWithOffset({arg_info.value}, offset);
+    Result r = buffer->SetDataWithOffset({arg_info.value}, offset);
+    if (!r.IsSuccess())
+      return r;
   }
 
   return {};

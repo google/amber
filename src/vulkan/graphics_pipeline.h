@@ -42,7 +42,7 @@ class GraphicsPipeline : public Pipeline {
   GraphicsPipeline(
       Device* device,
       const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
-      const Format& depth_stencil_format,
+      Format* depth_stencil_format,
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>&);
   ~GraphicsPipeline() override;

@@ -385,8 +385,8 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
 
   auto& comps1 = buffers[1]->GetFormat()->GetComponents();
   ASSERT_EQ(2U, comps1.size());
-  EXPECT_EQ(FormatMode::kSFloat, comps1[0].mode);
-  EXPECT_EQ(FormatMode::kSFloat, comps1[1].mode);
+  EXPECT_EQ(FormatMode::kSFloat, comps1[0]->mode);
+  EXPECT_EQ(FormatMode::kSFloat, comps1[1]->mode);
   EXPECT_EQ(static_cast<uint32_t>(0), buffers[1]->ElementCount());
 
   ASSERT_EQ(BufferType::kVertex, buffers[2]->GetBufferType());
@@ -395,9 +395,9 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
             buffers[2]->GetFormat()->GetFormatType());
   auto& comps2 = buffers[2]->GetFormat()->GetComponents();
   ASSERT_EQ(3U, comps2.size());
-  EXPECT_EQ(FormatMode::kSInt, comps2[0].mode);
-  EXPECT_EQ(FormatMode::kSInt, comps2[1].mode);
-  EXPECT_EQ(FormatMode::kSInt, comps2[2].mode);
+  EXPECT_EQ(FormatMode::kSInt, comps2[0]->mode);
+  EXPECT_EQ(FormatMode::kSInt, comps2[1]->mode);
+  EXPECT_EQ(FormatMode::kSInt, comps2[2]->mode);
   EXPECT_EQ(static_cast<uint32_t>(0), buffers[2]->ElementCount());
 }
 

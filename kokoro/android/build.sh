@@ -26,6 +26,18 @@ ANDROID_ABI="armeabi-v7a with NEON"
 
 TOOLCHAIN_PATH=$ANDROID_NDK/build/cmake/android.toolchain.cmake
 
+# removing the old version
+echo y | sudo apt-get purge --auto-remove cmake
+
+# Installing the 3.10.2 version
+wget http://www.cmake.org/files/v3.10/cmake-3.10.2.tar.gz
+tar -xvzf cmake-3.10.2.tar.gz
+cd cmake-3.10.2/
+./configure
+make
+sudo make install
+echo $(date): $(cmake --version)
+
 # Get NINJA.
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
 unzip -q ninja-linux.zip

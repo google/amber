@@ -69,7 +69,7 @@ TEST_F(BufferTest, SizeFromDataDoesNotOverrideSize) {
   EXPECT_EQ(20 * sizeof(float), b.GetSizeInBytes());
 }
 
-TEST_F(BufferTest, SizeMatrix) {
+TEST_F(BufferTest, SizeMatrixStd430) {
   FormatParser fp;
   auto fmt = fp.Parse("R16G16_SINT");
   fmt->SetColumnCount(3);
@@ -83,7 +83,22 @@ TEST_F(BufferTest, SizeMatrix) {
   EXPECT_EQ(60 * sizeof(int16_t), b.GetSizeInBytes());
 }
 
-TEST_F(BufferTest, SizeMatrixPadded) {
+TEST_F(BufferTest, SizeMatrixStd140) {
+  FormatParser fp;
+  auto fmt = fp.Parse("R16G16_SINT");
+  fmt->SetColumnCount(3);
+  fmt->SetLayout(Format::Layout::kStd140);
+
+  Buffer b(BufferType::kColor);
+  b.SetFormat(std::move(fmt));
+  b.SetElementCount(10);
+
+  EXPECT_EQ(10, b.ElementCount());
+  EXPECT_EQ(120, b.ValueCount());
+  EXPECT_EQ(120 * sizeof(int16_t), b.GetSizeInBytes());
+}
+
+TEST_F(BufferTest, SizeMatrixPaddedStd430) {
   FormatParser fp;
   auto fmt = fp.Parse("R32G32B32_SINT");
   fmt->SetColumnCount(3);
