@@ -125,12 +125,14 @@ Sized arrays and structures are not currently representable.
 ```groovy
 # Filling the buffer with a given set of data. The values must be
 # of |type| data. The data can be provided as the type or as a hex value.
-BUFFER {name} DATA_TYPE {type} DATA
+# Buffers are STD430 by default.
+BUFFER {name} DATA_TYPE {type} {STD140 | STD430} DATA
 _value_+
 END
 
 # Defines a buffer which is filled with data as specified by the `initializer`.
-BUFFER {name} DATA_TYPE {type} SIZE _size_in_items_ {initializer}
+BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
+    {initializer}
 
 # Creates a buffer which will store the given `FORMAT` of data. These
 # buffers are used as image and depth buffers in the `PIPELINE` commands.
