@@ -55,29 +55,30 @@ ProbeSSBOCommand::Comparator ToComparator(const std::string& in) {
 }
 
 std::unique_ptr<Format> ToFormat(const std::string& str) {
-  auto fmt = MakeUnique<Format>();
+  std::unique_ptr<Format> fmt;
   bool matrix = false;
 
+  FormatParser fp;
   if (str == "int8") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 8);
+    fmt = fp.Parse("R8_SINT");
   } else if (str == "int16") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 16);
+    fmt = fp.Parse("R16_SINT");
   } else if (str == "int32") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
+    fmt = fp.Parse("R32_SINT");
   } else if (str == "int64") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 64);
+    fmt = fp.Parse("R64_SINT");
   } else if (str == "uint8") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 8);
+    fmt = fp.Parse("R8_UINT");
   } else if (str == "uint16") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 16);
+    fmt = fp.Parse("R16_UINT");
   } else if (str == "uint32") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 32);
+    fmt = fp.Parse("R32_UINT");
   } else if (str == "uint64") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 64);
+    fmt = fp.Parse("R64_UINT");
   } else if (str == "float") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
+    fmt = fp.Parse("R32_SFLOAT");
   } else if (str == "double") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 64);
+    fmt = fp.Parse("R64_SFLOAT");
   } else if (str.length() > 7 && str.substr(0, 3) == "vec") {
     if (str[4] != '<' || str[str.length() - 1] != '>')
       return nullptr;
@@ -93,6 +94,7 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
     if (sub_fmt->RowCount() != 1 || sub_fmt->ColumnCount() != 1)
       return nullptr;
 
+    fmt = MakeUnique<Format>();
     const auto* comp = sub_fmt->GetOnlyComponent();
     // TODO(dsinclair): Make sure this isn't a struct.
     for (int i = 0; i < component_count; ++i)
@@ -119,6 +121,7 @@ std::unique_ptr<Format> ToFormat(const std::string& str) {
     if (sub_fmt->RowCount() != 1 || sub_fmt->ColumnCount() != 1)
       return nullptr;
 
+    fmt = MakeUnique<Format>();
     fmt->SetColumnCount(static_cast<uint32_t>(column_count));
 
     const auto* comp = sub_fmt->GetOnlyComponent();

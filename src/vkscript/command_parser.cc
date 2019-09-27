@@ -22,6 +22,7 @@
 #include <utility>
 
 #include "src/command_data.h"
+#include "src/format_parser.h"
 #include "src/make_unique.h"
 #include "src/tokenizer.h"
 #include "src/vkscript/datum_type_parser.h"
@@ -638,9 +639,8 @@ Result CommandParser::ProcessSSBO() {
 
     // Set a default format into the buffer if needed.
     if (!buf->GetFormat()) {
-      auto fmt = MakeUnique<Format>();
-      fmt->SetFormatType(FormatType::kR8_SINT);
-      fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 8);
+      FormatParser fp;
+      auto fmt = fp.Parse("R8_SINT");
       buf->SetFormat(std::move(fmt));
       // This has to come after the SetFormat() call because SetFormat() resets
       // the value back to false.
