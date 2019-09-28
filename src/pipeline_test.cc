@@ -532,21 +532,21 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffers) {
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_a";
   arg_info1.ordinal = 99;
-  arg_info1.fmt = MakeUnique<Format>(*int_fmt);
+  arg_info1.fmt = int_fmt.get();
   arg_info1.value = int_value;
   p.SetArg(std::move(arg_info1));
 
   Pipeline::ArgSetInfo arg_info2;
   arg_info2.name = "arg_b";
   arg_info2.ordinal = 99;
-  arg_info2.fmt = MakeUnique<Format>(*char_fmt);
+  arg_info2.fmt = char_fmt.get();
   arg_info2.value = int_value;
   p.SetArg(std::move(arg_info2));
 
   Pipeline::ArgSetInfo arg_info3;
   arg_info3.name = "arg_c";
   arg_info3.ordinal = 99;
-  arg_info3.fmt = MakeUnique<Format>(*int_fmt);
+  arg_info3.fmt = int_fmt.get();
   arg_info3.value = int_value;
   p.SetArg(std::move(arg_info3));
 
@@ -595,7 +595,7 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffersBadName) {
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_z";
   arg_info1.ordinal = 99;
-  arg_info1.fmt = std::move(int_fmt);
+  arg_info1.fmt = int_fmt.get();
   arg_info1.value = int_value;
   p.SetArg(std::move(arg_info1));
 
@@ -637,7 +637,7 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffersBadSize) {
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "";
   arg_info1.ordinal = 0;
-  arg_info1.fmt = std::move(short_fmt);
+  arg_info1.fmt = short_fmt.get();
   arg_info1.value = int_value;
   p.SetArg(std::move(arg_info1));
 
@@ -698,21 +698,21 @@ TEST_F(PipelineTest, OpenCLClone) {
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_a";
   arg_info1.ordinal = 99;
-  arg_info1.fmt = MakeUnique<Format>(*int_fmt);
+  arg_info1.fmt = int_fmt.get();
   arg_info1.value = int_value;
   p.SetArg(std::move(arg_info1));
 
   Pipeline::ArgSetInfo arg_info2;
   arg_info2.name = "arg_b";
   arg_info2.ordinal = 99;
-  arg_info2.fmt = MakeUnique<Format>(*char_fmt);
+  arg_info2.fmt = char_fmt.get();
   arg_info2.value = int_value;
   p.SetArg(std::move(arg_info2));
 
   Pipeline::ArgSetInfo arg_info3;
   arg_info3.name = "arg_c";
   arg_info3.ordinal = 99;
-  arg_info3.fmt = MakeUnique<Format>(*int_fmt);
+  arg_info3.fmt = int_fmt.get();
   arg_info3.value = int_value;
   p.SetArg(std::move(arg_info3));
 

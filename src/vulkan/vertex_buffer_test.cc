@@ -56,10 +56,10 @@ class VertexBufferTest : public testing::Test {
   ~VertexBufferTest() = default;
 
   Result SetIntData(uint8_t location,
-                    std::unique_ptr<Format> format,
+                    Format* format,
                     std::vector<Value> values) {
     auto buffer = MakeUnique<Buffer>();
-    buffer->SetFormat(std::move(format));
+    buffer->SetFormat(format);
     buffer->SetData(std::move(values));
 
     vertex_buffer_->SetData(location, buffer.get());
@@ -67,10 +67,10 @@ class VertexBufferTest : public testing::Test {
   }
 
   Result SetDoubleData(uint8_t location,
-                       std::unique_ptr<Format> format,
+                       Format* format,
                        std::vector<Value> values) {
     auto buffer = MakeUnique<Buffer>();
-    buffer->SetFormat(std::move(format));
+    buffer->SetFormat(format);
     buffer->SetData(std::move(values));
 
     vertex_buffer_->SetData(location, buffer.get());
@@ -100,7 +100,7 @@ TEST_F(VertexBufferTest, R8G8B8A8_UINT) {
   FormatParser fp;
   auto fmt = fp.Parse("R8G8B8A8_UINT");
 
-  Result r = SetIntData(0, std::move(fmt), values);
+  Result r = SetIntData(0, fmt.get(), values);
   const uint8_t* ptr = static_cast<const uint8_t*>(GetVkBufferPtr());
   EXPECT_EQ(55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -118,7 +118,7 @@ TEST_F(VertexBufferTest, R16G16B16A16_UINT) {
   FormatParser fp;
   auto fmt = fp.Parse("R16G16B16A16_UINT");
 
-  Result r = SetIntData(0, std::move(fmt), values);
+  Result r = SetIntData(0, fmt.get(), values);
   const uint16_t* ptr = static_cast<const uint16_t*>(GetVkBufferPtr());
   EXPECT_EQ(55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -136,7 +136,7 @@ TEST_F(VertexBufferTest, R32G32B32A32_UINT) {
   FormatParser fp;
   auto fmt = fp.Parse("R32G32B32A32_UINT");
 
-  Result r = SetIntData(0, std::move(fmt), values);
+  Result r = SetIntData(0, fmt.get(), values);
   const uint32_t* ptr = static_cast<const uint32_t*>(GetVkBufferPtr());
   EXPECT_EQ(55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -154,7 +154,7 @@ TEST_F(VertexBufferTest, R64G64B64A64_UINT) {
   FormatParser fp;
   auto fmt = fp.Parse("R64G64B64A64_UINT");
 
-  Result r = SetIntData(0, std::move(fmt), values);
+  Result r = SetIntData(0, fmt.get(), values);
   const uint64_t* ptr = static_cast<const uint64_t*>(GetVkBufferPtr());
   EXPECT_EQ(55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -172,7 +172,7 @@ TEST_F(VertexBufferTest, R8G8B8A8_SNORM) {
   FormatParser fp;
   auto fmt = fp.Parse("R8G8B8A8_SNORM");
 
-  Result r = SetIntData(0, std::move(fmt), values);
+  Result r = SetIntData(0, fmt.get(), values);
   const int8_t* ptr = static_cast<const int8_t*>(GetVkBufferPtr());
   EXPECT_EQ(-55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -190,7 +190,7 @@ TEST_F(VertexBufferTest, R16G16B16A16_SNORM) {
   FormatParser fp;
   auto fmt = fp.Parse("R16G16B16A16_SNORM");
 
-  Result r = SetIntData(0, std::move(fmt), values);
+  Result r = SetIntData(0, fmt.get(), values);
   const int16_t* ptr = static_cast<const int16_t*>(GetVkBufferPtr());
   EXPECT_EQ(-55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -208,7 +208,7 @@ TEST_F(VertexBufferTest, R32G32B32A32_SINT) {
   FormatParser fp;
   auto fmt = fp.Parse("R32G32B32A32_SINT");
 
-  Result r = SetIntData(0, std::move(fmt), values);
+  Result r = SetIntData(0, fmt.get(), values);
   const int32_t* ptr = static_cast<const int32_t*>(GetVkBufferPtr());
   EXPECT_EQ(-55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -226,7 +226,7 @@ TEST_F(VertexBufferTest, R64G64B64A64_SINT) {
   FormatParser fp;
   auto fmt = fp.Parse("R64G64B64A64_SINT");
 
-  Result r = SetIntData(0, std::move(fmt), values);
+  Result r = SetIntData(0, fmt.get(), values);
   const int64_t* ptr = static_cast<const int64_t*>(GetVkBufferPtr());
   EXPECT_EQ(-55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -243,7 +243,7 @@ TEST_F(VertexBufferTest, R32G32B32_SFLOAT) {
   FormatParser fp;
   auto fmt = fp.Parse("R32G32B32_SFLOAT");
 
-  Result r = SetDoubleData(0, std::move(fmt), values);
+  Result r = SetDoubleData(0, fmt.get(), values);
   const float* ptr = static_cast<const float*>(GetVkBufferPtr());
   EXPECT_FLOAT_EQ(-6.0f, ptr[0]);
   EXPECT_FLOAT_EQ(14.0f, ptr[1]);
@@ -259,7 +259,7 @@ TEST_F(VertexBufferTest, R64G64B64_SFLOAT) {
   FormatParser fp;
   auto fmt = fp.Parse("R64G64B64_SFLOAT");
 
-  Result r = SetDoubleData(0, std::move(fmt), values);
+  Result r = SetDoubleData(0, fmt.get(), values);
   const double* ptr = static_cast<const double*>(GetVkBufferPtr());
   EXPECT_DOUBLE_EQ(-6.0, ptr[0]);
   EXPECT_DOUBLE_EQ(14.0, ptr[1]);

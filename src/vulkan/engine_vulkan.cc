@@ -411,7 +411,7 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   FormatParser fp;
   auto fmt = fp.Parse("R32G32_SFLOAT");
   auto buf = MakeUnique<Buffer>();
-  buf->SetFormat(std::move(fmt));
+  buf->SetFormat(fmt.get());
   buf->SetData(std::move(values));
 
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());

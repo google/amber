@@ -32,8 +32,10 @@ TEST_F(BufferTest, EmptyByDefault) {
 
 TEST_F(BufferTest, Size) {
   FormatParser fp;
+  auto fmt = fp.Parse("R16_SINT");
+
   Buffer b(BufferType::kColor);
-  b.SetFormat(fp.Parse("R16_SINT"));
+  b.SetFormat(fmt.get());
   b.SetElementCount(10);
   EXPECT_EQ(10, b.ElementCount());
   EXPECT_EQ(10, b.ValueCount());
@@ -45,8 +47,10 @@ TEST_F(BufferTest, SizeFromData) {
   values.resize(5);
 
   FormatParser fp;
+  auto fmt = fp.Parse("R32_SFLOAT");
+
   Buffer b(BufferType::kColor);
-  b.SetFormat(fp.Parse("R32_SFLOAT"));
+  b.SetFormat(fmt.get());
   b.SetData(std::move(values));
 
   EXPECT_EQ(5, b.ElementCount());
@@ -59,8 +63,10 @@ TEST_F(BufferTest, SizeFromDataDoesNotOverrideSize) {
   values.resize(5);
 
   FormatParser fp;
+  auto fmt = fp.Parse("R32_SFLOAT");
+
   Buffer b(BufferType::kColor);
-  b.SetFormat(fp.Parse("R32_SFLOAT"));
+  b.SetFormat(fmt.get());
   b.SetElementCount(20);
   b.SetData(std::move(values));
 
@@ -75,7 +81,7 @@ TEST_F(BufferTest, SizeMatrixStd430) {
   fmt->SetColumnCount(3);
 
   Buffer b(BufferType::kColor);
-  b.SetFormat(std::move(fmt));
+  b.SetFormat(fmt.get());
   b.SetElementCount(10);
 
   EXPECT_EQ(10, b.ElementCount());
@@ -90,7 +96,7 @@ TEST_F(BufferTest, SizeMatrixStd140) {
   fmt->SetLayout(Format::Layout::kStd140);
 
   Buffer b(BufferType::kColor);
-  b.SetFormat(std::move(fmt));
+  b.SetFormat(fmt.get());
   b.SetElementCount(10);
 
   EXPECT_EQ(10, b.ElementCount());
@@ -104,7 +110,7 @@ TEST_F(BufferTest, SizeMatrixPaddedStd430) {
   fmt->SetColumnCount(3);
 
   Buffer b(BufferType::kColor);
-  b.SetFormat(std::move(fmt));
+  b.SetFormat(fmt.get());
   b.SetValueCount(9);
 
   EXPECT_EQ(1U, b.ElementCount());

@@ -651,7 +651,8 @@ TEST_F(VerifierTest, ProbeSSBOUint8Single) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R8_UINT"));
+  auto fmt = fp.Parse("R8_UINT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -674,7 +675,9 @@ TEST_F(VerifierTest, ProbeSSBOUint8Multiple) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R8_UINT"));
+  auto fmt = fp.Parse("R8_UINT");
+
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -698,7 +701,9 @@ TEST_F(VerifierTest, ProbeSSBOUint8Many) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R8_UINT"));
+  auto fmt = fp.Parse("R8_UINT");
+
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -726,7 +731,8 @@ TEST_F(VerifierTest, ProbeSSBOUint32Single) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R32_UINT"));
+  auto fmt = fp.Parse("R32_UINT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -749,7 +755,8 @@ TEST_F(VerifierTest, ProbeSSBOUint32Multiple) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R32_UINT"));
+  auto fmt = fp.Parse("R32_UINT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -774,7 +781,8 @@ TEST_F(VerifierTest, ProbeSSBOUint32Many) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R32_UINT"));
+  auto fmt = fp.Parse("R32_UINT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -802,7 +810,8 @@ TEST_F(VerifierTest, ProbeSSBOFloatSingle) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R32_SFLOAT"));
+  auto fmt = fp.Parse("R32_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -825,7 +834,8 @@ TEST_F(VerifierTest, ProbeSSBOFloatMultiple) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R32_SFLOAT"));
+  auto fmt = fp.Parse("R32_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -850,7 +860,8 @@ TEST_F(VerifierTest, ProbeSSBOFloatMany) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R32_SFLOAT"));
+  auto fmt = fp.Parse("R32_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -878,7 +889,8 @@ TEST_F(VerifierTest, ProbeSSBODoubleSingle) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -901,7 +913,8 @@ TEST_F(VerifierTest, ProbeSSBODoubleMultiple) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -926,7 +939,8 @@ TEST_F(VerifierTest, ProbeSSBODoubleMany) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -954,7 +968,8 @@ TEST_F(VerifierTest, ProbeSSBOEqualFail) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -981,7 +996,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteTolerance) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
 
   std::vector<Probe::Tolerance> tolerances;
@@ -1015,7 +1031,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteToleranceFail) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
 
   std::vector<Probe::Tolerance> tolerances;
@@ -1046,7 +1063,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeTolerance) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
 
   std::vector<Probe::Tolerance> tolerances;
@@ -1080,7 +1098,8 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeToleranceFail) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
 
   std::vector<Probe::Tolerance> tolerances;
@@ -1111,7 +1130,8 @@ TEST_F(VerifierTest, ProbeSSBONotEqual) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kNotEqual);
 
   std::vector<Value> values;
@@ -1136,7 +1156,8 @@ TEST_F(VerifierTest, ProbeSSBONotEqualFail) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kNotEqual);
 
   std::vector<Value> values;
@@ -1163,7 +1184,8 @@ TEST_F(VerifierTest, ProbeSSBOLess) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLess);
 
   std::vector<Value> values;
@@ -1188,7 +1210,8 @@ TEST_F(VerifierTest, ProbeSSBOLessFail) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLess);
 
   std::vector<Value> values;
@@ -1215,7 +1238,8 @@ TEST_F(VerifierTest, ProbeSSBOLessOrEqual) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLessOrEqual);
 
   std::vector<Value> values;
@@ -1240,7 +1264,8 @@ TEST_F(VerifierTest, ProbeSSBOLessOrEqualFail) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLessOrEqual);
 
   std::vector<Value> values;
@@ -1267,7 +1292,8 @@ TEST_F(VerifierTest, ProbeSSBOGreater) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kGreater);
 
   std::vector<Value> values;
@@ -1292,7 +1318,8 @@ TEST_F(VerifierTest, ProbeSSBOGreaterFail) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kGreater);
 
   std::vector<Value> values;
@@ -1319,7 +1346,8 @@ TEST_F(VerifierTest, ProbeSSBOGreaterOrEqual) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kGreaterOrEqual);
 
   std::vector<Value> values;
@@ -1344,7 +1372,8 @@ TEST_F(VerifierTest, ProbeSSBOGreaterOrEqualFail) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("R64_SFLOAT"));
+  auto fmt = fp.Parse("R64_SFLOAT");
+  probe_ssbo.SetFormat(fmt.get());
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kGreaterOrEqual);
 
   std::vector<Value> values;
@@ -1399,7 +1428,8 @@ TEST_F(VerifierTest, ProbeSSBOWithPadding) {
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
   FormatParser fp;
-  probe_ssbo.SetFormat(fp.Parse("float/vec2"));
+  auto fmt = fp.Parse("float/vec2");
+  probe_ssbo.SetFormat(fmt.get());
   ASSERT_TRUE(probe_ssbo.GetFormat() != nullptr);
 
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLessOrEqual);

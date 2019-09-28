@@ -594,10 +594,12 @@ Result CommandParser::ProcessSSBO() {
       return Result("Invalid type provided: " + token->AsString());
 
     auto* buf = cmd->GetBuffer();
-    if (buf->FormatIsDefault() || !buf->GetFormat())
-      buf->SetFormat(std::move(fmt));
-    else if (!buf->GetFormat()->Equal(fmt.get()))
+    if (buf->FormatIsDefault() || !buf->GetFormat()) {
+      buf->SetFormat(fmt.get());
+      script_->RegisterFormat(std::move(fmt));
+    } else if (!buf->GetFormat()->Equal(fmt.get())) {
       return Result("probe ssbo format does not match buffer format");
+    }
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger()) {
@@ -641,7 +643,8 @@ Result CommandParser::ProcessSSBO() {
     if (!buf->GetFormat()) {
       FormatParser fp;
       auto fmt = fp.Parse("R8_SINT");
-      buf->SetFormat(std::move(fmt));
+      buf->SetFormat(fmt.get());
+      script_->RegisterFormat(std::move(fmt));
       // This has to come after the SetFormat() call because SetFormat() resets
       // the value back to false.
       buf->SetFormatIsDefault(true);
@@ -746,10 +749,12 @@ Result CommandParser::ProcessUniform() {
     fmt->SetLayout(Format::Layout::kStd140);
 
   auto* buf = cmd->GetBuffer();
-  if (buf->FormatIsDefault() || !buf->GetFormat())
-    buf->SetFormat(std::move(fmt));
-  else if (!buf->GetFormat()->Equal(fmt.get()))
+  if (buf->FormatIsDefault() || !buf->GetFormat()) {
+    buf->SetFormat(fmt.get());
+    script_->RegisterFormat(std::move(fmt));
+  } else if (!buf->GetFormat()->Equal(fmt.get())) {
     return Result("probe ssbo format does not match buffer format");
+  }
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger()) {
@@ -2056,17 +2061,20 @@ Result CommandParser::ProcessProbeSSBO() {
                   std::to_string(binding));
   }
 
-  if (buffer->FormatIsDefault() || !buffer->GetFormat())
-    buffer->SetFormat(MakeUnique<Format>(*fmt));
-  else if (buffer->GetFormat() && !buffer->GetFormat()->Equal(fmt.get()))
+  if (buffer->FormatIsDefault() || !buffer->GetFormat()) {
+    buffer->SetFormat(fmt.get());
+  } else if (buffer->GetFormat() && !buffer->GetFormat()->Equal(fmt.get())) {
     return Result("probe format does not match buffer format");
+  }
 
   auto cmd = MakeUnique<ProbeSSBOCommand>(buffer);
   cmd->SetLine(cur_line);
   cmd->SetTolerances(current_tolerances_);
-  cmd->SetFormat(std::move(fmt));
+  cmd->SetFormat(fmt.get());
   cmd->SetDescriptorSet(set);
   cmd->SetBinding(binding);
+
+  script_->RegisterFormat(std::move(fmt));
 
   if (!token->IsInteger())
     return Result("Invalid offset for probe ssbo command: " +
