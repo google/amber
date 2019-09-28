@@ -303,11 +303,10 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt8) {
   auto fmt = fp.Parse("R8G8B8A8_SINT");
 
   Verifier verifier;
-  Result r =
-      verifier.Probe(&probe, fmt.get(),
-                     4 * static_cast<uint32_t>(sizeof(int8_t)),
-                     4 * static_cast<uint32_t>(sizeof(int8_t)), 1, 1,
-                     static_cast<const void*>(&frame_buffer));
+  Result r = verifier.Probe(&probe, fmt.get(),
+                            4 * static_cast<uint32_t>(sizeof(int8_t)),
+                            4 * static_cast<uint32_t>(sizeof(int8_t)), 1, 1,
+                            static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -408,11 +407,10 @@ TEST_F(VerifierTest, ProbeFrameBufferFloat32) {
   auto fmt = fp.Parse("R32G32B32A32_SFLOAT");
 
   Verifier verifier;
-  Result r =
-      verifier.Probe(&probe, fmt.get(),
-                     4 * static_cast<uint32_t>(sizeof(float)),
-                     4 * static_cast<uint32_t>(sizeof(float)), 1, 1,
-                     static_cast<const void*>(&frame_buffer));
+  Result r = verifier.Probe(&probe, fmt.get(),
+                            4 * static_cast<uint32_t>(sizeof(float)),
+                            4 * static_cast<uint32_t>(sizeof(float)), 1, 1,
+                            static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -435,11 +433,10 @@ TEST_F(VerifierTest, ProbeFrameBufferFloat64) {
   auto fmt = fp.Parse("R64G64B64A64_SFLOAT");
 
   Verifier verifier;
-  Result r =
-      verifier.Probe(&probe, fmt.get(),
-                     4 * static_cast<uint32_t>(sizeof(double)),
-                     4 * static_cast<uint32_t>(sizeof(double)), 1, 1,
-                     static_cast<const void*>(&frame_buffer));
+  Result r = verifier.Probe(&probe, fmt.get(),
+                            4 * static_cast<uint32_t>(sizeof(double)),
+                            4 * static_cast<uint32_t>(sizeof(double)), 1, 1,
+                            static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
