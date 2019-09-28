@@ -19,6 +19,7 @@
 #include <utility>
 
 #include "amber/amber_vulkan.h"
+#include "src/format_parser.h"
 #include "src/make_unique.h"
 #include "src/vulkan/compute_pipeline.h"
 #include "src/vulkan/graphics_pipeline.h"
@@ -407,13 +408,10 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   // Since draw rect command contains its vertex information and it
   // does not include a format of vertex buffer, we can choose any
   // one that is suitable. We use VK_FORMAT_R32G32_SFLOAT for it.
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR32G32_SFLOAT);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
-
+  FormatParser fp;
+  auto fmt = fp.Parse("R32G32_SFLOAT");
   auto buf = MakeUnique<Buffer>();
-  buf->SetFormat(std::move(format));
+  buf->SetFormat(std::move(fmt));
   buf->SetData(std::move(values));
 
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());

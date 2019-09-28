@@ -23,15 +23,12 @@ namespace amber {
 using FormatTest = testing::Test;
 
 TEST_F(FormatTest, Copy) {
-  Format fmt;
-  fmt.SetLayout(Format::Layout::kStd140);
-  fmt.SetColumnCount(1);
-  fmt.SetFormatType(FormatType::kR32G32B32_SFLOAT);
-  fmt.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
-  fmt.AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
-  fmt.AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 32);
+  FormatParser fp;
+  auto fmt = fp.Parse("R32G32B32_SFLOAT");
+  fmt->SetLayout(Format::Layout::kStd140);
+  fmt->SetColumnCount(1);
 
-  auto copy = MakeUnique<Format>(fmt);
+  auto copy = MakeUnique<Format>(*fmt.get());
   EXPECT_TRUE(copy->IsFloat());
   EXPECT_EQ(16U, copy->SizeInBytes());
   EXPECT_EQ(4U, copy->GetSegments().size());

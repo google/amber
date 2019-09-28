@@ -15,6 +15,7 @@
 #include "src/pipeline.h"
 
 #include "gtest/gtest.h"
+#include "src/format_parser.h"
 #include "src/make_unique.h"
 
 namespace amber {
@@ -524,11 +525,9 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffers) {
   Value int_value;
   int_value.SetIntValue(1);
 
-  auto int_fmt = MakeUnique<Format>();
-  int_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
-
-  auto char_fmt = MakeUnique<Format>();
-  char_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 8);
+  FormatParser fp;
+  auto int_fmt = fp.Parse("R32_SINT");
+  auto char_fmt = fp.Parse("R8_SINT");
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_a";
@@ -590,8 +589,8 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffersBadName) {
   Value int_value;
   int_value.SetIntValue(1);
 
-  auto int_fmt = MakeUnique<Format>();
-  int_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
+  FormatParser fp;
+  auto int_fmt = fp.Parse("R32_SINT");
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_z";
@@ -632,8 +631,8 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffersBadSize) {
   Value int_value;
   int_value.SetIntValue(1);
 
-  auto short_fmt = MakeUnique<Format>();
-  short_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 16);
+  FormatParser fp;
+  auto short_fmt = fp.Parse("R16_SINT");
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "";
@@ -692,11 +691,9 @@ TEST_F(PipelineTest, OpenCLClone) {
   Value int_value;
   int_value.SetIntValue(1);
 
-  auto int_fmt = MakeUnique<Format>();
-  int_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
-
-  auto char_fmt = MakeUnique<Format>();
-  char_fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 8);
+  FormatParser fp;
+  auto int_fmt = fp.Parse("R32_SINT");
+  auto char_fmt = fp.Parse("R8_SINT");
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_a";

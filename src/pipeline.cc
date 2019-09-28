@@ -546,11 +546,11 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
           kind == Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD
               ? BufferType::kStorage
               : BufferType::kUniform);
+
       // Use an 8-bit type because all the data in the descriptor map is
       // byte-based and it simplifies the logic for sizing below.
-      auto fmt = MakeUnique<Format>();
-      fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 8);
-
+      FormatParser fp;
+      auto fmt = fp.Parse("R8_UINT");
       buffer->SetFormat(std::move(fmt));
       buffer->SetName(GetName() + "_pod_buffer_" +
                       std::to_string(descriptor_set) + "_" +

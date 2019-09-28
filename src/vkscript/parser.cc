@@ -287,9 +287,8 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
   }
 
   if (!indices.empty()) {
-    auto fmt = MakeUnique<Format>();
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 32);
-
+    FormatParser fp;
+    auto fmt = fp.Parse("R32_UINT");
     auto b = MakeUnique<Buffer>(BufferType::kIndex);
     auto* buf = b.get();
     b->SetName("indices");
