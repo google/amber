@@ -192,7 +192,7 @@ Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
   double rmse = std::sqrt(sum);
   if (rmse > static_cast<double>(tolerance)) {
     return Result("Root Mean Square Error of " + std::to_string(rmse) +
-                  " is greater then tolerance of " + std::to_string(tolerance));
+                  " is greater than tolerance of " + std::to_string(tolerance));
   }
 
   return {};
