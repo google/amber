@@ -1,0 +1,73 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+#version 430
+
+struct s {
+  float space4;
+  float space5;
+  int d;
+  float space6;
+  int e;
+};
+
+layout(location = 0) out vec4 color_out;
+layout(std430, binding = 0) readonly buffer Data {
+  float space1;
+  float space2;
+  float a;
+  float space3;
+  int b;
+  s c;
+} data;
+
+void main() {
+  color_out = vec4(float(data.a)/255, float(data.b)/255,
+                   float(data.c.d)/255, float(data.c.e)/255);
+}
+END
+
+STRUCT s
+  int32 d OFFSET 8
+  int32 e OFFSET 16
+END
+
+STRUCT my_data
+  float a OFFSET 8
+  int32 b OFFSET 16
+  s c
+END
+
+BUFFER data DATA_TYPE my_data STD430 DATA
+  1  # a
+ 64  # b
+128  # c.d
+220  # c.e
+END
+
+BUFFER framebuffer FORMAT B8G8R8A8_UNORM
+
+PIPELINE graphics my_pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+
+  BIND BUFFER framebuffer AS color LOCATION 0
+  BIND BUFFER data AS storage DESCRIPTOR_SET 0 BINDING 0
+END
+
+RUN my_pipeline DRAW_RECT POS 0 0 SIZE 250 250
+EXPECT framebuffer IDX 0 0 SIZE 250 250 EQ_RGBA 1 64 128 220

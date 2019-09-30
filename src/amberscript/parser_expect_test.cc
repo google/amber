@@ -659,6 +659,44 @@ EXPECT orig_buf IDX 5 EQ 11)";
   EXPECT_EQ(11U, probe->GetValues()[0].AsInt32());
 }
 
+TEST_F(AmberScriptParserTest, ExpectEQStruct) {
+  std::string in = R"(
+STRUCT data
+  float a
+  int32 b
+END
+
+BUFFER orig_buf DATA_TYPE data DATA 2.3 44 4.4 99 END
+EXPECT orig_buf IDX 0 EQ 2.3 44
+EXPECT orig_buf IDX 8 EQ 2.3 44)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(2U, commands.size());
+
+  auto* cmd = commands[0].get();
+  ASSERT_TRUE(cmd->IsProbeSSBO());
+
+  auto* probe = cmd->AsProbeSSBO();
+  EXPECT_EQ(ProbeSSBOCommand::Comparator::kEqual, probe->GetComparator());
+  ASSERT_EQ(2U, probe->GetValues().size());
+  EXPECT_EQ(2.3f, probe->GetValues()[0].AsFloat());
+  EXPECT_EQ(44, probe->GetValues()[1].AsInt32());
+
+  cmd = commands[1].get();
+  ASSERT_TRUE(cmd->IsProbeSSBO());
+
+  probe = cmd->AsProbeSSBO();
+  EXPECT_EQ(ProbeSSBOCommand::Comparator::kEqual, probe->GetComparator());
+  ASSERT_EQ(2U, probe->GetValues().size());
+  EXPECT_EQ(2.3f, probe->GetValues()[0].AsFloat());
+  EXPECT_EQ(44, probe->GetValues()[1].AsInt32());
+}
+
 TEST_F(AmberScriptParserTest, ExpectEqMissingValue) {
   std::string in = R"(
 BUFFER orig_buf DATA_TYPE int32 SIZE 100 FILL 11

@@ -733,7 +733,10 @@ TEST_P(AmberScriptParserBufferDataTypeInvalidTest, BufferTypes) {
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << test_data.name;
-  EXPECT_EQ("1: invalid data_type provided", r.Error()) << test_data.name;
+  EXPECT_EQ(
+      std::string("1: invalid data type '") + test_data.name + "' provided",
+      r.Error())
+      << test_data.name;
 }
 INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserBufferDataTypeInvalidTestSamples,
@@ -762,5 +765,142 @@ INSTANTIATE_TEST_SUITE_P(
                     NameData{"mat2x2"},
                     NameData{"mat2x2<>"}));  // NOLINT(whitespace/parens)
 
+TEST_F(AmberScriptParserTest, BufferWithStructStd140) {
+  std::string in = R"(
+STRUCT s
+  uint32 d
+  uint32 e
+END
+
+STRUCT my_data
+  float a
+  uint32 b
+  s c
+END
+
+BUFFER my_buffer DATA_TYPE my_data STD140 DATA
+  1  # a
+ 64  # b
+128  # c.d
+220  # c.e
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->GetType()->IsStruct());
+  EXPECT_EQ(Format::Layout::kStd140, buffer->GetFormat()->GetLayout());
+
+  EXPECT_EQ(1U, buffer->ElementCount());
+  EXPECT_EQ(32U, buffer->GetSizeInBytes());
+
+  const auto* data = buffer->GetValues<uint8_t>();
+  EXPECT_FLOAT_EQ(1.f, *reinterpret_cast<const float*>(data + 0));
+  EXPECT_EQ(64,
+            *reinterpret_cast<const uint32_t*>(data + 4 /* sizeof(float) */));
+  EXPECT_EQ(128,
+            *reinterpret_cast<const uint32_t*>(data + 16 /* 8 round -> 16 */));
+  EXPECT_EQ(220, *reinterpret_cast<const uint32_t*>(
+                     data + 20 /* 8 round -> 16 + 4 */));
+}
+
+TEST_F(AmberScriptParserTest, BufferWithStructStd430) {
+  std::string in = R"(
+STRUCT s
+  uint32 d
+  uint32 e
+END
+
+STRUCT my_data
+  float a
+  uint32 b
+  s c
+END
+
+BUFFER my_buffer DATA_TYPE my_data STD430 DATA
+  1  # a
+ 64  # b
+128  # c.d
+220  # c.e
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->GetType()->IsStruct());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
+
+  EXPECT_EQ(1U, buffer->ElementCount());
+  EXPECT_EQ(16U, buffer->GetSizeInBytes());
+
+  const auto* data = buffer->GetValues<uint8_t>();
+  EXPECT_FLOAT_EQ(1.f, *reinterpret_cast<const float*>(data + 0));
+  EXPECT_EQ(64, *reinterpret_cast<const uint32_t*>(data + 4));
+  EXPECT_EQ(128, *reinterpret_cast<const uint32_t*>(data + 8));
+  EXPECT_EQ(220, *reinterpret_cast<const uint32_t*>(data + 12));
+}
+
+TEST_F(AmberScriptParserTest, BufferWithStructAndPaddingStd430) {
+  std::string in = R"(
+STRUCT s
+  uint32 d OFFSET 8
+  uint32 e OFFSET 16
+END
+
+STRUCT my_data
+  float a OFFSET 8
+  uint32 b OFFSET 16
+  s c;
+END
+
+BUFFER my_buffer DATA_TYPE my_data STD430 DATA
+  1  # a
+ 64  # b
+128  # c.d
+220  # c.e
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->GetType()->IsStruct());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
+
+  EXPECT_EQ(1U, buffer->ElementCount());
+  EXPECT_EQ(40U, buffer->GetSizeInBytes());
+
+  const auto* data = buffer->GetValues<uint8_t>();
+  EXPECT_FLOAT_EQ(1.f, *reinterpret_cast<const float*>(data + 8));
+  EXPECT_EQ(64, *reinterpret_cast<const uint32_t*>(data + 16));
+  EXPECT_EQ(128, *reinterpret_cast<const uint32_t*>(data + 28));
+  EXPECT_EQ(220, *reinterpret_cast<const uint32_t*>(data + 36));
+}
 }  // namespace amberscript
 }  // namespace amber

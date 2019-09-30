@@ -14,6 +14,8 @@
 
 #include "src/script.h"
 
+#include "src/type_parser.h"
+
 namespace amber {
 
 Script::Script() = default;
@@ -87,6 +89,20 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name == "variableMultisampleRate" || name == "inheritedQueries" ||
          name == "VariablePointerFeatures.variablePointers" ||
          name == "VariablePointerFeatures.variablePointersStorageBuffer";
+}
+
+type::Type* Script::ParseType(const std::string& str) {
+  auto type = GetType(str);
+  if (type)
+    return type;
+
+  TypeParser parser;
+  auto new_type = parser.Parse(str);
+  if (new_type != nullptr) {
+    type = new_type.get();
+    RegisterType(std::move(new_type));
+  }
+  return type;
 }
 
 }  // namespace amber

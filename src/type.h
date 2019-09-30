@@ -17,6 +17,7 @@
 
 #include <cassert>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "src/format_data.h"
@@ -229,6 +230,7 @@ class List : public Type {
 class Struct : public Type {
  public:
   struct Member {
+    std::string name;
     Type* type;
     int32_t offset_in_bytes = -1;
     int32_t array_stride_in_bytes = -1;

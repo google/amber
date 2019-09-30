@@ -163,6 +163,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParseSet();
     } else if (tok == "SHADER") {
       r = ParseShaderBlock();
+    } else if (tok == "STRUCT") {
+      r = ParseStruct();
     } else {
       r = Result("unknown token: " + tok);
     }
@@ -521,7 +523,7 @@ Result Parser::ParseShaderSpecialization(Pipeline* pipeline) {
 
   auto type = ToType(token->AsString());
   if (!type)
-    return Result("invalid data_type provided");
+    return Result("invalid data type '" + token->AsString() + "' provided");
   if (!type->IsNumber())
     return Result("only numeric types are accepted for specialization values");
 
@@ -850,7 +852,7 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
 
   auto type = ToType(token->AsString());
   if (!type)
-    return Result("invalid data_type provided");
+    return Result("invalid data type '" + token->AsString() + "' provided");
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger() && !token->IsDouble())
@@ -873,6 +875,120 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   script_->RegisterType(std::move(type));
 
   return ValidateEndOfStatement("SET command");
+}
+
+Result Parser::ParseStruct() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("invalid STRUCT name provided");
+
+  auto struct_name = token->AsString();
+  if (struct_name == "STRIDE")
+    return Result("missing STRUCT name");
+
+  auto s = MakeUnique<type::Struct>();
+  auto type = s.get();
+
+  Result r = script_->AddType(struct_name, std::move(s));
+  if (!r.IsSuccess())
+    return r;
+
+  token = tokenizer_->NextToken();
+  if (token->IsString()) {
+    if (token->AsString() != "STRIDE")
+      return Result("invalid token in STRUCT definition");
+
+    token = tokenizer_->NextToken();
+    if (token->IsEOL() || token->IsEOS())
+      return Result("missing value for STRIDE");
+    if (!token->IsInteger())
+      return Result("invalid value for STRIDE");
+
+    type->SetStrideInBytes(token->AsUint32());
+    token = tokenizer_->NextToken();
+  }
+  if (!token->IsEOL()) {
+    return Result("extra token " + token->ToOriginalString() +
+                  " after STRUCT header");
+  }
+
+  std::map<std::string, bool> seen;
+  for (;;) {
+    token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("invalid type for STRUCT member");
+    if (token->AsString() == "END")
+      break;
+
+    if (token->AsString() == struct_name)
+      return Result("recursive types are not allowed");
+
+    type::Type* member_type = script_->GetType(token->AsString());
+    if (!member_type) {
+      auto t = ToType(token->AsString());
+      if (!t) {
+        return Result("unknown type '" + token->AsString() +
+                      "' for STRUCT member");
+      }
+
+      member_type = t.get();
+      script_->RegisterType(std::move(t));
+    }
+
+    token = tokenizer_->NextToken();
+    if (token->IsEOL())
+      return Result("missing name for STRUCT member");
+    if (!token->IsString())
+      return Result("invalid name for STRUCT member");
+
+    auto member_name = token->AsString();
+    if (seen.find(member_name) != seen.end())
+      return Result("duplicate name for STRUCT member");
+
+    seen[member_name] = true;
+
+    auto m = type->AddMember(member_type);
+    m->name = member_name;
+
+    token = tokenizer_->NextToken();
+    while (token->IsString()) {
+      if (token->AsString() == "OFFSET") {
+        token = tokenizer_->NextToken();
+        if (token->IsEOL())
+          return Result("missing value for STRUCT member OFFSET");
+        if (!token->IsInteger())
+          return Result("invalid value for STRUCT member OFFSET");
+
+        m->offset_in_bytes = token->AsInt32();
+      } else if (token->AsString() == "ARRAY_STRIDE") {
+        token = tokenizer_->NextToken();
+        if (token->IsEOL())
+          return Result("missing value for STRUCT member ARRAY_STRIDE");
+        if (!token->IsInteger())
+          return Result("invalid value for STRUCT member ARRAY_STRIDE");
+
+        m->array_stride_in_bytes = token->AsInt32();
+      } else if (token->AsString() == "MATRIX_STRIDE") {
+        token = tokenizer_->NextToken();
+        if (token->IsEOL())
+          return Result("missing value for STRUCT member MATRIX_STRIDE");
+        if (!token->IsInteger())
+          return Result("invalid value for STRUCT member MATRIX_STRIDE");
+
+        m->matrix_stride_in_bytes = token->AsInt32();
+      } else {
+        return Result("unknown param '" + token->AsString() +
+                      "' for STRUCT member");
+      }
+
+      token = tokenizer_->NextToken();
+    }
+
+    if (!token->IsEOL())
+      return Result("extra param for STRUCT member");
+  }
+
+  return {};
 }
 
 Result Parser::ParseBuffer() {
@@ -903,15 +1019,13 @@ Result Parser::ParseBuffer() {
 
     buffer = MakeUnique<Buffer>();
 
-    TypeParser type_parser;
-    auto type = type_parser.Parse(token->AsString());
-    if (type == nullptr)
+    auto type = script_->ParseType(token->AsString());
+    if (!type)
       return Result("invalid BUFFER FORMAT");
 
-    auto fmt = MakeUnique<Format>(type.get());
+    auto fmt = MakeUnique<Format>(type);
     buffer->SetFormat(fmt.get());
     script_->RegisterFormat(std::move(fmt));
-    script_->RegisterType(std::move(type));
   } else {
     return Result("unknown BUFFER command provided: " + cmd);
   }
@@ -929,22 +1043,22 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
   if (!token->IsString())
     return Result("BUFFER invalid data type");
 
-  TypeParser parser;
-  auto type = parser.Parse(token->AsString());
+  auto type = script_->ParseType(token->AsString());
   std::unique_ptr<Format> fmt;
   if (type != nullptr) {
-    fmt = MakeUnique<Format>(type.get());
+    fmt = MakeUnique<Format>(type);
     buffer->SetFormat(fmt.get());
   } else {
-    type = ToType(token->AsString());
-    if (!type)
-      return Result("invalid data_type provided");
+    auto new_type = ToType(token->AsString());
+    if (!new_type)
+      return Result("invalid data type '" + token->AsString() + "' provided");
 
-    fmt = MakeUnique<Format>(type.get());
+    fmt = MakeUnique<Format>(new_type.get());
     buffer->SetFormat(fmt.get());
+    type = new_type.get();
+    script_->RegisterType(std::move(new_type));
   }
   script_->RegisterFormat(std::move(fmt));
-  script_->RegisterType(std::move(type));
 
   token = tokenizer_->NextToken();
   if (!token->IsString())
@@ -1079,7 +1193,9 @@ Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
 
 Result Parser::ParseBufferInitializerData(Buffer* buffer) {
   auto fmt = buffer->GetFormat();
-  bool is_double_type = fmt->IsFloat32() || fmt->IsFloat64();
+  const auto& segs = fmt->GetSegments();
+  size_t seg_idx = 0;
+  uint32_t value_count = 0;
 
   std::vector<Value> values;
   for (auto token = tokenizer_->NextToken();; token = tokenizer_->NextToken()) {
@@ -1091,25 +1207,45 @@ Result Parser::ParseBufferInitializerData(Buffer* buffer) {
       break;
     if (!token->IsInteger() && !token->IsDouble() && !token->IsHex())
       return Result("invalid BUFFER data value: " + token->ToOriginalString());
-    if (!is_double_type && token->IsDouble())
-      return Result("invalid BUFFER data value: " + token->ToOriginalString());
+
+    while (segs[seg_idx].IsPadding()) {
+      ++seg_idx;
+      if (seg_idx >= segs.size())
+        seg_idx = 0;
+    }
 
     Value v;
-    if (is_double_type) {
+    if (type::Type::IsFloat(segs[seg_idx].GetFormatMode())) {
       token->ConvertToDouble();
 
       double val = token->IsHex() ? static_cast<double>(token->AsHex())
                                   : token->AsDouble();
       v.SetDoubleValue(val);
+      ++value_count;
     } else {
+      if (token->IsDouble()) {
+        return Result("invalid BUFFER data value: " +
+                      token->ToOriginalString());
+      }
+
       uint64_t val = token->IsHex() ? token->AsHex() : token->AsUint64();
       v.SetIntValue(val);
+      ++value_count;
     }
+    ++seg_idx;
+    if (seg_idx >= segs.size())
+      seg_idx = 0;
 
     values.emplace_back(v);
   }
+  // Write final padding bytes
+  while (segs[seg_idx].IsPadding()) {
+    ++seg_idx;
+    if (seg_idx >= segs.size())
+      break;
+  }
 
-  buffer->SetValueCount(static_cast<uint32_t>(values.size()));
+  buffer->SetValueCount(value_count);
   Result r = buffer->SetData(std::move(values));
   if (!r.IsSuccess())
     return r;
@@ -1346,10 +1482,18 @@ Result Parser::ParseValues(const std::string& name,
   assert(values);
 
   auto token = tokenizer_->NextToken();
+  const auto& segs = fmt->GetSegments();
+  size_t seg_idx = 0;
   while (!token->IsEOL() && !token->IsEOS()) {
     Value v;
 
-    if (fmt->IsFloat32() || fmt->IsFloat64()) {
+    while (segs[seg_idx].IsPadding()) {
+      ++seg_idx;
+      if (seg_idx >= segs.size())
+        seg_idx = 0;
+    }
+
+    if (type::Type::IsFloat(segs[seg_idx].GetFormatMode())) {
       if (!token->IsInteger() && !token->IsDouble()) {
         return Result(std::string("Invalid value provided to ") + name +
                       " command: " + token->ToOriginalString());
@@ -1368,6 +1512,9 @@ Result Parser::ParseValues(const std::string& name,
 
       v.SetIntValue(token->AsUint64());
     }
+    ++seg_idx;
+    if (seg_idx >= segs.size())
+      seg_idx = 0;
 
     values->push_back(v);
     token = tokenizer_->NextToken();

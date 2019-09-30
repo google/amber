@@ -306,4 +306,36 @@ TEST_F(ScriptTest,
             s.GetRequiredInstanceExtensions()[0]);
 }
 
+TEST_F(ScriptTest, AddType) {
+  Script s;
+  Result r = s.AddType("my_type", type::Number::Float(32));
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+}
+
+TEST_F(ScriptTest, AddDuplicateType) {
+  Script s;
+  Result r = s.AddType("my_type", type::Number::Uint(8));
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  r = s.AddType("my_type", type::Number::Uint(8));
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("duplicate type name provided", r.Error());
+}
+
+TEST_F(ScriptTest, GetType) {
+  auto type = type::Number::Uint(8);
+  auto* ptr = type.get();
+
+  Script s;
+  Result r = s.AddType("my_type", std::move(type));
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  EXPECT_TRUE(ptr->Equal(s.GetType("my_type")));
+}
+
+TEST_F(ScriptTest, GetMissingType) {
+  Script s;
+  EXPECT_TRUE(s.GetPipeline("my_type") == nullptr);
+}
+
 }  // namespace amber
