@@ -17,7 +17,10 @@
 
 #include "src/buffer.h"
 #include "src/format_parser.h"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
 #include "third_party/lodepng/lodepng.h"
+#pragma clang diagnostic pop
 
 namespace {
 
@@ -114,7 +117,7 @@ int main(int argc, const char** argv) {
 
   amber::Buffer buffers[2];
 
-  for (int i = 0; i < 2; ++i) {
+  for (size_t i = 0; i < 2; ++i) {
     amber::FormatParser fp;
     buffers[i].SetFormat(fp.Parse("R8G8B8A8_UNORM"));
     amber::Result res =
