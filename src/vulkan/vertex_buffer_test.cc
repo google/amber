@@ -19,6 +19,7 @@
 #include "amber/value.h"
 #include "gtest/gtest.h"
 #include "src/format.h"
+#include "src/format_parser.h"
 #include "src/make_unique.h"
 #include "src/vulkan/transfer_buffer.h"
 
@@ -96,14 +97,10 @@ TEST_F(VertexBufferTest, R8G8B8A8_UINT) {
   values[2].SetIntValue(27);
   values[3].SetIntValue(255);
 
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR8G8B8A8_UINT);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 8);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kUInt, 8);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kUInt, 8);
-  format->AddComponent(FormatComponentType::kA, FormatMode::kUInt, 8);
+  FormatParser fp;
+  auto fmt = fp.Parse("R8G8B8A8_UINT");
 
-  Result r = SetIntData(0, std::move(format), values);
+  Result r = SetIntData(0, std::move(fmt), values);
   const uint8_t* ptr = static_cast<const uint8_t*>(GetVkBufferPtr());
   EXPECT_EQ(55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -118,14 +115,10 @@ TEST_F(VertexBufferTest, R16G16B16A16_UINT) {
   values[2].SetIntValue(27);
   values[3].SetIntValue(255);
 
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR16G16B16A16_UINT);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 16);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kUInt, 16);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kUInt, 16);
-  format->AddComponent(FormatComponentType::kA, FormatMode::kUInt, 16);
+  FormatParser fp;
+  auto fmt = fp.Parse("R16G16B16A16_UINT");
 
-  Result r = SetIntData(0, std::move(format), values);
+  Result r = SetIntData(0, std::move(fmt), values);
   const uint16_t* ptr = static_cast<const uint16_t*>(GetVkBufferPtr());
   EXPECT_EQ(55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -140,14 +133,10 @@ TEST_F(VertexBufferTest, R32G32B32A32_UINT) {
   values[2].SetIntValue(27);
   values[3].SetIntValue(255);
 
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR32G32B32A32_UINT);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 32);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kUInt, 32);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kUInt, 32);
-  format->AddComponent(FormatComponentType::kA, FormatMode::kUInt, 32);
+  FormatParser fp;
+  auto fmt = fp.Parse("R32G32B32A32_UINT");
 
-  Result r = SetIntData(0, std::move(format), values);
+  Result r = SetIntData(0, std::move(fmt), values);
   const uint32_t* ptr = static_cast<const uint32_t*>(GetVkBufferPtr());
   EXPECT_EQ(55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -162,14 +151,10 @@ TEST_F(VertexBufferTest, R64G64B64A64_UINT) {
   values[2].SetIntValue(27);
   values[3].SetIntValue(255);
 
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR64G64B64A64_UINT);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 64);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kUInt, 64);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kUInt, 64);
-  format->AddComponent(FormatComponentType::kA, FormatMode::kUInt, 64);
+  FormatParser fp;
+  auto fmt = fp.Parse("R64G64B64A64_UINT");
 
-  Result r = SetIntData(0, std::move(format), values);
+  Result r = SetIntData(0, std::move(fmt), values);
   const uint64_t* ptr = static_cast<const uint64_t*>(GetVkBufferPtr());
   EXPECT_EQ(55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -184,14 +169,10 @@ TEST_F(VertexBufferTest, R8G8B8A8_SNORM) {
   values[2].SetIntValue(static_cast<uint64_t>(-128));
   values[3].SetIntValue(127);
 
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR8G8B8A8_SNORM);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kSNorm, 8);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kSNorm, 8);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kSNorm, 8);
-  format->AddComponent(FormatComponentType::kA, FormatMode::kSNorm, 8);
+  FormatParser fp;
+  auto fmt = fp.Parse("R8G8B8A8_SNORM");
 
-  Result r = SetIntData(0, std::move(format), values);
+  Result r = SetIntData(0, std::move(fmt), values);
   const int8_t* ptr = static_cast<const int8_t*>(GetVkBufferPtr());
   EXPECT_EQ(-55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -206,14 +187,10 @@ TEST_F(VertexBufferTest, R16G16B16A16_SNORM) {
   values[2].SetIntValue(static_cast<uint64_t>(-27));
   values[3].SetIntValue(255);
 
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR16G16B16A16_SNORM);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kSNorm, 16);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kSNorm, 16);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kSNorm, 16);
-  format->AddComponent(FormatComponentType::kA, FormatMode::kSNorm, 16);
+  FormatParser fp;
+  auto fmt = fp.Parse("R16G16B16A16_SNORM");
 
-  Result r = SetIntData(0, std::move(format), values);
+  Result r = SetIntData(0, std::move(fmt), values);
   const int16_t* ptr = static_cast<const int16_t*>(GetVkBufferPtr());
   EXPECT_EQ(-55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -228,14 +205,10 @@ TEST_F(VertexBufferTest, R32G32B32A32_SINT) {
   values[2].SetIntValue(static_cast<uint64_t>(-27));
   values[3].SetIntValue(255);
 
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR32G32B32A32_SINT);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kSInt, 32);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kSInt, 32);
-  format->AddComponent(FormatComponentType::kA, FormatMode::kSInt, 32);
+  FormatParser fp;
+  auto fmt = fp.Parse("R32G32B32A32_SINT");
 
-  Result r = SetIntData(0, std::move(format), values);
+  Result r = SetIntData(0, std::move(fmt), values);
   const int32_t* ptr = static_cast<const int32_t*>(GetVkBufferPtr());
   EXPECT_EQ(-55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -250,14 +223,10 @@ TEST_F(VertexBufferTest, R64G64B64A64_SINT) {
   values[2].SetIntValue(static_cast<uint64_t>(-27));
   values[3].SetIntValue(255);
 
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR64G64B64_SINT);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 64);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kSInt, 64);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kSInt, 64);
-  format->AddComponent(FormatComponentType::kA, FormatMode::kSInt, 64);
+  FormatParser fp;
+  auto fmt = fp.Parse("R64G64B64A64_SINT");
 
-  Result r = SetIntData(0, std::move(format), values);
+  Result r = SetIntData(0, std::move(fmt), values);
   const int64_t* ptr = static_cast<const int64_t*>(GetVkBufferPtr());
   EXPECT_EQ(-55, ptr[0]);
   EXPECT_EQ(3, ptr[1]);
@@ -271,13 +240,10 @@ TEST_F(VertexBufferTest, R32G32B32_SFLOAT) {
   values[1].SetDoubleValue(14.0);
   values[2].SetDoubleValue(0.1171875);
 
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR32G32B32_SFLOAT);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 32);
+  FormatParser fp;
+  auto fmt = fp.Parse("R32G32B32_SFLOAT");
 
-  Result r = SetDoubleData(0, std::move(format), values);
+  Result r = SetDoubleData(0, std::move(fmt), values);
   const float* ptr = static_cast<const float*>(GetVkBufferPtr());
   EXPECT_FLOAT_EQ(-6.0f, ptr[0]);
   EXPECT_FLOAT_EQ(14.0f, ptr[1]);
@@ -290,13 +256,10 @@ TEST_F(VertexBufferTest, R64G64B64_SFLOAT) {
   values[1].SetDoubleValue(14.0);
   values[2].SetDoubleValue(0.1171875);
 
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR64G64B64_SFLOAT);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 64);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 64);
-  format->AddComponent(FormatComponentType::kB, FormatMode::kSFloat, 64);
+  FormatParser fp;
+  auto fmt = fp.Parse("R64G64B64_SFLOAT");
 
-  Result r = SetDoubleData(0, std::move(format), values);
+  Result r = SetDoubleData(0, std::move(fmt), values);
   const double* ptr = static_cast<const double*>(GetVkBufferPtr());
   EXPECT_DOUBLE_EQ(-6.0, ptr[0]);
   EXPECT_DOUBLE_EQ(14.0, ptr[1]);

@@ -137,4 +137,33 @@ void Format::RebuildSegments() {
   }
 }
 
+std::string Format::GenerateName() const {
+  std::string name = "";
+  std::string parts = "ARGB";
+  for (const auto& comp : components_) {
+    name += parts[static_cast<uint8_t>(comp->type)] +
+            std::to_string(comp->num_bits);
+  }
+  name += "_";
+  switch (components_[0]->mode) {
+    case FormatMode::kUNorm:
+    case FormatMode::kUFloat:
+    case FormatMode::kUScaled:
+    case FormatMode::kSNorm:
+    case FormatMode::kSScaled:
+    case FormatMode::kSRGB:
+      return "";
+    case FormatMode::kUInt:
+      name += "UINT";
+      break;
+    case FormatMode::kSInt:
+      name += "SINT";
+      break;
+    case FormatMode::kSFloat:
+      name += "SFLOAT";
+      break;
+  }
+  return name;
+}
+
 }  // namespace amber

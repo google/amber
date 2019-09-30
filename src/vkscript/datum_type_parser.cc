@@ -32,30 +32,32 @@ DatumTypeParser::DatumTypeParser() = default;
 DatumTypeParser::~DatumTypeParser() = default;
 
 std::unique_ptr<Format> DatumTypeParser::Parse(const std::string& data) {
-  auto fmt = MakeUnique<Format>();
+  std::unique_ptr<Format> fmt;
 
+  FormatParser fp;
   bool matrix = false;
   if (data == "int") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 32);
+    fmt = fp.Parse("R32_SINT");
   } else if (data == "uint") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 32);
+    fmt = fp.Parse("R32_UINT");
   } else if (data == "int8_t") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 8);
+    fmt = fp.Parse("R8_SINT");
   } else if (data == "uint8_t") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 8);
+    fmt = fp.Parse("R8_UINT");
   } else if (data == "int16_t") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 16);
+    fmt = fp.Parse("R16_SINT");
   } else if (data == "uint16_t") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 16);
+    fmt = fp.Parse("R16_UINT");
   } else if (data == "int64_t") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 64);
+    fmt = fp.Parse("R64_SINT");
   } else if (data == "uint64_t") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kUInt, 64);
+    fmt = fp.Parse("R64_UINT");
   } else if (data == "float") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
+    fmt = fp.Parse("R32_SFLOAT");
   } else if (data == "double") {
-    fmt->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 64);
+    fmt = fp.Parse("R64_SFLOAT");
   } else {
+    fmt = MakeUnique<Format>();
     int row_count = 4;
     FormatMode mode = FormatMode::kSFloat;
     uint8_t num_bits = 32;
@@ -105,38 +107,17 @@ std::unique_ptr<Format> DatumTypeParser::Parse(const std::string& data) {
     for (int i = 0; i < row_count; ++i)
       fmt->AddComponent(FORMAT_TYPES[i], mode, num_bits);
   }
+  if (!fmt)
+    return nullptr;
 
   // Convert the name back into a FormatType so we can use it in the buffer
   // later Otherwise, we end up with a type of Unknown.
   //
   // There is no equivalent type for a matrix.
   if (!matrix) {
-    std::string name = "";
-    std::string parts = "ARGB";
-    const auto& comps = fmt->GetComponents();
-    for (const auto& comp : comps) {
-      name += parts[static_cast<uint8_t>(comp->type)] +
-              std::to_string(comp->num_bits);
-    }
-    name += "_";
-    switch (comps[0]->mode) {
-      case FormatMode::kUNorm:
-      case FormatMode::kUFloat:
-      case FormatMode::kUScaled:
-      case FormatMode::kSNorm:
-      case FormatMode::kSScaled:
-      case FormatMode::kSRGB:
-        return nullptr;
-      case FormatMode::kUInt:
-        name += "UINT";
-        break;
-      case FormatMode::kSInt:
-        name += "SINT";
-        break;
-      case FormatMode::kSFloat:
-        name += "SFLOAT";
-        break;
-    }
+    std::string name = fmt->GenerateName();
+    if (name == "")
+      return nullptr;
 
     fmt->SetFormatType(FormatParser::NameToType(name));
   }
