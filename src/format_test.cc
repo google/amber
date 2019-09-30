@@ -22,31 +22,6 @@ namespace amber {
 
 using FormatTest = testing::Test;
 
-TEST_F(FormatTest, Copy) {
-  FormatParser fp;
-  auto fmt = fp.Parse("R32G32B32_SFLOAT");
-  fmt->SetLayout(Format::Layout::kStd140);
-  fmt->SetColumnCount(1);
-
-  auto copy = MakeUnique<Format>(*fmt.get());
-  EXPECT_TRUE(copy->IsFloat());
-  EXPECT_EQ(16U, copy->SizeInBytes());
-  EXPECT_EQ(4U, copy->GetSegments().size());
-  EXPECT_EQ(FormatType::kR32G32B32_SFLOAT, copy->GetFormatType());
-
-  auto& segs = copy->GetSegments();
-  EXPECT_EQ(FormatComponentType::kR, segs[0].GetComponent()->type);
-  EXPECT_EQ(FormatMode::kSFloat, segs[0].GetComponent()->mode);
-  EXPECT_EQ(32U, segs[0].GetComponent()->num_bits);
-  EXPECT_EQ(FormatComponentType::kG, segs[1].GetComponent()->type);
-  EXPECT_EQ(FormatMode::kSFloat, segs[1].GetComponent()->mode);
-  EXPECT_EQ(32U, segs[1].GetComponent()->num_bits);
-  EXPECT_EQ(FormatComponentType::kB, segs[2].GetComponent()->type);
-  EXPECT_EQ(FormatMode::kSFloat, segs[2].GetComponent()->mode);
-  EXPECT_EQ(32U, segs[2].GetComponent()->num_bits);
-  EXPECT_TRUE(segs[3].IsPadding());
-}
-
 TEST_F(FormatTest, SizeInBytesVector) {
   FormatParser fp;
   auto fmt = fp.Parse("R32G32B32_SFLOAT");

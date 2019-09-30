@@ -887,9 +887,11 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   Pipeline::ArgSetInfo info;
   info.name = arg_name;
   info.ordinal = arg_no;
-  info.fmt = std::move(fmt);
+  info.fmt = fmt.get();
   info.value = value;
   pipeline->SetArg(std::move(info));
+  script_->RegisterFormat(std::move(fmt));
+
   return ValidateEndOfStatement("SET command");
 }
 
@@ -926,7 +928,8 @@ Result Parser::ParseBuffer() {
     if (fmt == nullptr)
       return Result("invalid BUFFER FORMAT");
 
-    buffer->SetFormat(std::move(fmt));
+    buffer->SetFormat(fmt.get());
+    script_->RegisterFormat(std::move(fmt));
   } else {
     return Result("unknown BUFFER command provided: " + cmd);
   }
@@ -947,14 +950,16 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
   FormatParser fp;
   auto fmt = fp.Parse(token->AsString());
   if (fmt != nullptr) {
-    buffer->SetFormat(std::move(fmt));
+    buffer->SetFormat(fmt.get());
   } else {
     fmt = ToFormat(token->AsString());
     if (!fmt)
       return Result("invalid data_type provided");
 
-    buffer->SetFormat(std::move(fmt));
+    buffer->SetFormat(fmt.get());
   }
+  script_->RegisterFormat(std::move(fmt));
+
   token = tokenizer_->NextToken();
   if (!token->IsString())
     return Result("BUFFER missing initializer");
@@ -1596,7 +1601,7 @@ Result Parser::ParseExpect() {
   }
 
   probe->SetComparator(cmp);
-  probe->SetFormat(MakeUnique<Format>(*buffer->GetFormat()));
+  probe->SetFormat(buffer->GetFormat());
   probe->SetOffset(static_cast<uint32_t>(x));
 
   std::vector<Value> values;

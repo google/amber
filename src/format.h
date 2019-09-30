@@ -123,10 +123,7 @@ class Format {
 
   /// Creates a format of unknown type.
   Format();
-  Format(const Format&);
   ~Format();
-
-  Format& operator=(const Format&);
 
   /// Returns true if |b| describes the same format as this object.
   bool Equal(const Format* b) const;

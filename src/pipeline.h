@@ -237,15 +237,15 @@ class Pipeline {
   Result Validate() const;
 
   /// Generates a default color attachment in B8G8R8A8_UNORM.
-  std::unique_ptr<Buffer> GenerateDefaultColorAttachmentBuffer() const;
+  std::unique_ptr<Buffer> GenerateDefaultColorAttachmentBuffer();
   /// Generates a default depth attachment in D32_SFLOAT_S8_UINT format.
-  std::unique_ptr<Buffer> GenerateDefaultDepthAttachmentBuffer() const;
+  std::unique_ptr<Buffer> GenerateDefaultDepthAttachmentBuffer();
 
   /// Information on values set for OpenCL-C plain-old-data args.
   struct ArgSetInfo {
     std::string name;
     uint32_t ordinal = 0;
-    std::unique_ptr<Format> fmt;
+    Format* fmt = nullptr;
     Value value;
   };
 
@@ -271,6 +271,7 @@ class Pipeline {
   std::vector<BufferInfo> color_attachments_;
   std::vector<BufferInfo> vertex_buffers_;
   std::vector<BufferInfo> buffers_;
+  std::vector<std::unique_ptr<Format>> formats_;
   BufferInfo depth_buffer_;
   BufferInfo push_constant_buffer_;
   Buffer* index_buffer_ = nullptr;

@@ -387,10 +387,8 @@ GraphicsPipeline::GraphicsPipeline(
     : Pipeline(PipelineType::kGraphics,
                device,
                fence_timeout_ms,
-               shader_stage_info) {
-  if (depth_stencil_format != nullptr)
-    depth_stencil_format_ = *depth_stencil_format;
-
+               shader_stage_info),
+      depth_stencil_format_(depth_stencil_format) {
   for (const auto& info : color_buffers)
     color_buffers_.push_back(&info);
 }
@@ -428,9 +426,10 @@ Result GraphicsPipeline::CreateRenderPass() {
   subpass_desc.colorAttachmentCount = static_cast<uint32_t>(color_refer.size());
   subpass_desc.pColorAttachments = color_refer.data();
 
-  if (depth_stencil_format_.IsFormatKnown()) {
+  if (depth_stencil_format_ && depth_stencil_format_->IsFormatKnown()) {
     attachment_desc.push_back(kDefaultAttachmentDesc);
-    attachment_desc.back().format = device_->GetVkFormat(depth_stencil_format_);
+    attachment_desc.back().format =
+        device_->GetVkFormat(*depth_stencil_format_);
     attachment_desc.back().initialLayout =
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     attachment_desc.back().finalLayout =
@@ -651,7 +650,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   }
 
   VkPipelineDepthStencilStateCreateInfo depthstencil_info;
-  if (depth_stencil_format_.IsFormatKnown()) {
+  if (depth_stencil_format_ && depth_stencil_format_->IsFormatKnown()) {
     depthstencil_info = GetVkPipelineDepthStencilInfo(pipeline_data);
     pipeline_info.pDepthStencilState = &depthstencil_info;
   }
@@ -696,7 +695,7 @@ Result GraphicsPipeline::Initialize(uint32_t width,
     return r;
 
   frame_ = MakeUnique<FrameBuffer>(device_, color_buffers_, width, height);
-  r = frame_->Initialize(render_pass_, &depth_stencil_format_);
+  r = frame_->Initialize(render_pass_, depth_stencil_format_);
   if (!r.IsSuccess())
     return r;
 
@@ -742,7 +741,7 @@ Result GraphicsPipeline::SetClearColor(float r, float g, float b, float a) {
 }
 
 Result GraphicsPipeline::SetClearStencil(uint32_t stencil) {
-  if (!depth_stencil_format_.IsFormatKnown()) {
+  if (!depth_stencil_format_ || !depth_stencil_format_->IsFormatKnown()) {
     return Result(
         "Vulkan::ClearStencilCommand No DepthStencil Buffer for FrameBuffer "
         "Exists");
@@ -753,7 +752,7 @@ Result GraphicsPipeline::SetClearStencil(uint32_t stencil) {
 }
 
 Result GraphicsPipeline::SetClearDepth(float depth) {
-  if (!depth_stencil_format_.IsFormatKnown()) {
+  if (!depth_stencil_format_ || !depth_stencil_format_->IsFormatKnown()) {
     return Result(
         "Vulkan::ClearStencilCommand No DepthStencil Buffer for FrameBuffer "
         "Exists");
@@ -772,16 +771,17 @@ Result GraphicsPipeline::Clear() {
   if (!r.IsSuccess())
     return r;
 
-  if (!depth_stencil_format_.IsFormatKnown())
+  if (!depth_stencil_format_ || !depth_stencil_format_->IsFormatKnown())
     return {};
 
   VkClearValue depth_clear;
   depth_clear.depthStencil = {clear_depth_, clear_stencil_};
 
   return ClearBuffer(
-      depth_clear, depth_stencil_format_.HasStencilComponent()
-                       ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-                       : VK_IMAGE_ASPECT_DEPTH_BIT);
+      depth_clear,
+      depth_stencil_format_ && depth_stencil_format_->HasStencilComponent()
+          ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+          : VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
 Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,

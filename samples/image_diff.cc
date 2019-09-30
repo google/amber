@@ -115,11 +115,11 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
+  amber::FormatParser fp;
+  auto fmt = fp.Parse("R8G8B8A8_UNORM");
   amber::Buffer buffers[2];
-
   for (size_t i = 0; i < 2; ++i) {
-    amber::FormatParser fp;
-    buffers[i].SetFormat(fp.Parse("R8G8B8A8_UNORM"));
+    buffers[i].SetFormat(fmt.get());
     amber::Result res =
         LoadPngToBuffer(options.input_filenames[i], &buffers[i]);
     if (!res.IsSuccess()) {

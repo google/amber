@@ -113,7 +113,7 @@ Result Buffer::CopyTo(Buffer* buffer) const {
 }
 
 Result Buffer::IsEqual(Buffer* buffer) const {
-  if (!buffer->format_->Equal(format_.get()))
+  if (!buffer->format_->Equal(format_))
     return Result{"Buffers have a different format"};
   if (buffer->element_count_ != element_count_)
     return Result{"Buffers have a different size"};
@@ -172,7 +172,7 @@ std::vector<double> Buffer::CalculateDiffs(const Buffer* buffer) const {
 }
 
 Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
-  if (!buffer->format_->Equal(format_.get()))
+  if (!buffer->format_->Equal(format_))
     return Result{"Buffers have a different format"};
   if (buffer->element_count_ != element_count_)
     return Result{"Buffers have a different size"};
