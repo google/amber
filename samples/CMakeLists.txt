@@ -65,3 +65,12 @@ add_custom_command(
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Update build-versions.h in the build directory"
 )
+
+set(IMAGE_DIFF_SOURCES
+    image_diff.cc
+)
+add_executable(image_diff ${IMAGE_DIFF_SOURCES})
+target_include_directories(image_diff PRIVATE "${CMAKE_BINARY_DIR}")
+target_link_libraries(image_diff libamber "lodepng")
+amber_default_compile_options(image_diff)
+set_target_properties(image_diff PROPERTIES OUTPUT_NAME "image_diff")
