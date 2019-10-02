@@ -77,8 +77,8 @@ std::unique_ptr<type::Type> ToType(const std::string& str) {
     if (str[4] != '<' || str[str.length() - 1] != '>')
       return nullptr;
 
-    int row_count = str[3] - '0';
-    if (row_count < 2 || row_count > 4)
+    int component_count = str[3] - '0';
+    if (component_count < 2 || component_count > 4)
       return nullptr;
 
     auto type = ToType(str.substr(5, str.length() - 6));
@@ -90,7 +90,7 @@ std::unique_ptr<type::Type> ToType(const std::string& str) {
       return nullptr;
     }
 
-    type->SetRowCount(static_cast<uint32_t>(row_count));
+    type->SetRowCount(static_cast<uint32_t>(component_count));
     return type;
   }
 

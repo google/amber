@@ -123,8 +123,9 @@ uint32_t Format::AddSegmentForType(type::Type* type) {
     auto s = type->AsStruct();
     uint32_t cur_offset = 0;
     for (const auto& member : s->Members()) {
-      if (member.HasOffset() &&
-          static_cast<uint32_t>(member.offset_in_bytes) > cur_offset) {
+      if (member.HasOffset()) {
+        assert(static_cast<uint32_t>(member.offset_in_bytes) >= cur_offset);
+
         AddPaddedSegment(static_cast<uint32_t>(member.offset_in_bytes) -
                          cur_offset);
         cur_offset = static_cast<uint32_t>(member.offset_in_bytes);
