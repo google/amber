@@ -31,6 +31,12 @@ class TypeParser {
   TypeParser();
   ~TypeParser();
 
+  /// Parses the |fmt| string and returns the associated type, nullptr if the
+  /// conversion is not possible.
+  ///
+  /// The format string can come in two different forms, it can be a vulkan
+  /// style format string (e.g. R32G32B32A32_SFLOAT) or it can be in the type
+  /// format (gl_type/glsl_type) specified by VkScript (e.g. byte/vec4).
   std::unique_ptr<type::Type> Parse(const std::string& fmt);
 
  private:

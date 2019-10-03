@@ -96,7 +96,7 @@ void Format::SetLayout(Layout layout) {
 
 void Format::RebuildSegments() {
   segments_.clear();
-  AddSegmentForType(type_);
+  AddSegmentsForType(type_);
 }
 
 void Format::AddPaddedSegment(uint32_t size) {
@@ -111,7 +111,7 @@ bool Format::NeedsPadding(type::Type* t) const {
   return false;
 }
 
-uint32_t Format::AddSegmentForType(type::Type* type) {
+uint32_t Format::AddSegmentsForType(type::Type* type) {
   if (type->IsList() && type->AsList()->IsPacked()) {
     auto l = type->AsList();
     segments_.push_back(Segment(FormatComponentType::kR, FormatMode::kUInt,
@@ -134,9 +134,9 @@ uint32_t Format::AddSegmentForType(type::Type* type) {
       uint32_t seg_size = 0;
       if (member.type->IsSizedArray()) {
         for (size_t i = 0; i < member.type->ArraySize(); ++i)
-          seg_size += AddSegmentForType(member.type);
+          seg_size += AddSegmentsForType(member.type);
       } else {
-        seg_size = AddSegmentForType(member.type);
+        seg_size = AddSegmentsForType(member.type);
       }
 
       if (member.HasArrayStride()) {

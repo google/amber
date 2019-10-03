@@ -204,7 +204,7 @@ class Format {
 
  private:
   void RebuildSegments();
-  uint32_t AddSegmentForType(type::Type* type);
+  uint32_t AddSegmentsForType(type::Type* type);
   bool NeedsPadding(type::Type* t) const;
   void AddPaddedSegment(uint32_t size);
 
