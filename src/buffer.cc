@@ -239,6 +239,15 @@ Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
   // this maybe the first time data is set into the buffer.
   bytes_.resize(GetSizeInBytes());
 
+  // Set the new memory to zero to be on the safe side.
+  uint32_t new_space =
+      (static_cast<uint32_t>(data.size()) / format_->InputNeededPerElement()) *
+      format_->SizeInBytes();
+  assert(new_space + offset <= GetSizeInBytes());
+
+  if (new_space > 0)
+    memset(bytes_.data() + offset, 0, new_space);
+
   if (data.size() > (ElementCount() * format_->InputNeededPerElement()))
     return Result("Mismatched number of items in buffer");
 
