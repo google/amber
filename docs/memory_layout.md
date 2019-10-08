@@ -169,7 +169,7 @@ struct {
 
 The STD140 pads 8 bytes at the end to become a multiple of 16 bytes.
 
-| STD | Array Element Stride | Bytes |
+| STD | Array Stride | Bytes |
 |-----|:--------------------:|-------|
 | 140 | 16 | <kbd>{w [bbbb]}<br/>{x [bbbb]}<br/> [----][----]</kbd> |
 | 430 |  8 | <kbd>{w [bbbb]}<br/>{x [bbbb]}</kbd> |
@@ -187,7 +187,7 @@ struct {
 
 The STD140 pads 8 bytes at the end to become a multiple of 16 bytes.
 
-| STD | Array Element Stride | Bytes |
+| STD | Array Stride | Bytes |
 |-----|:--------------------:|-------|
 | 140 | 32 | <kbd>{x {a [bbbb]}<br/> &nbsp;&nbsp; {b [bbbb]}<br/> &nbsp;&nbsp; [----][----]<br/>{y [bbbb][----][----][----]}</kbd> |
 | 430 | 12 | <kbd>{x {a [bbbb]}<br/> &nbsp;&nbsp; {b [bbbb]}<br/>{y [bbbb]}</kbd> |
@@ -203,10 +203,11 @@ struct {
 }
 ```
 
-For both cases, the `vec2` is the largest item, so giving a base alignment of
-8 bytes. The STD140 cases pads 8 bytes at the end to become a multiple of 16.
+For both cases, the `vec2` is the member with the largest base alignment
+requirement, so giving a base alignment of 8 bytes. The STD140 cases pads 8
+bytes at the end (in the array element case) to become a multiple of 16.
 
-| STD | Array Element Stride  | Bytes |
+| STD | Array Stride  | Bytes |
 |-----|:---------------------:|-------|
 | 140 | 32 | <kbd>{w [bbbb][----]}<br/>{x [bbbb][bbbb]}<br/>{y [bbbb][----]}<br/> [----][----]</kbd> |
 | 430 | 24 | <kbd>{w [bbbb][----]}<br/>{x [bbbb][bbbb]}<br/>{y [bbbb][----]}</kbd> |
@@ -227,7 +228,7 @@ the `w` pads to 16 bytes. the `float y` is packed into the `vec3` as there is
 space (effectively making it a vec4).
 
 
-| STD | Array Element Stride | Bytes |
+| STD | Array Stride | Bytes |
 |-----|:--------------------:|-------|
 | 140 | 32 | <kbd>{w [bbbb][----][----][----]}<br/>{x [bbbb][bbbb][bbbb]}<br/>{y [bbbb]}</kbd> |
 | 430 | 32 | <kbd>{w [bbbb][----][----][----]}<br/>{x [bbbb][bbbb][bbbb]}<br/>{y [bbbb]}</kbd> |
@@ -248,7 +249,7 @@ an array of vec2's The vec2's have a size of 8 bytes this size rounds up to a ve
 
 In STD430, the round up doesn't happen, so the base alignment is 8 bytes.
 
-| STD | Array Element Stride  | Bytes |
+| STD | Array Stride  | Bytes |
 |-----|:---------------------:|-------|
 | 140 | 64 | <kbd>{w [bbbb][----][----][----]}<br/>{x [bbbb][bbbb][----][----]<br/> &nbsp;&nbsp; [bbbb][bbbb][----][----]}<br/>{y [bbbb][----][----][----]}</kbd> |
 | 430 | 48 | <kbd>{w [bbbb][----]}<br/>{x [bbbb][bbbb][bbbb][bbbb]}<br/>{y [bbbb][----]}</kbd> |
@@ -271,7 +272,7 @@ struct {
 The base alignment of the largest item is 4 bytes. In STD140, this rounds up to
 16 bytes.
 
-| STD | Array Element Stride | Bytes |
+| STD | Array Stride | Bytes |
 |-----|:--------------------:|-------|
 | 140 | 48 | <kbd>{w [bbbb][----][----][----]}<br/>{x a{[bbbb]}<br/> &nbsp;&nbsp; b{[bbbb]}<br/> &nbsp;&nbsp; c{[bbbb]}<br /> &nbsp;&nbsp; &nbsp;&nbsp;[----]<br/>{y [bbbb][----][----][----]}</kbd> |
 | 430 | 20 | <kbd>{w [bbbb]}<br/>{x a{[bbbb]}<br/> &nbsp;&nbsp; b{[bbbb]}<br/> &nbsp;&nbsp; c{[bbbb]}<br/>{y [bbbb]}</kbd> |
@@ -293,7 +294,7 @@ struct {
 The `int a` and `int b` end up packing together so 16 bytes of padding are added (instead of 24 bytes).
 The `float c[3]` has an array stride of 16 bytes in STD140 and 4 bytes in STD430.
 
-| STD | Array Element Stride | Bytes |
+| STD | Array Stride | Bytes |
 |-----|:--------------------:|-------|
 | 140 | 96 | <kbd>{w [bbbb][----][----][----]}<br/>{x {a [bbbb]}<br/> &nbsp;&nbsp; {b [bbbb]}<br/> &nbsp;&nbsp; &nbsp;&nbsp; [----][----]<br/> &nbsp;&nbsp; {c [bbbb][----][----][----]<br/> &nbsp;&nbsp; &nbsp;&nbsp; [bbbb][----][----][----]<br/> &nbsp;&nbsp; &nbsp;&nbsp; [bbbb][----][----][----]}}<br/>{y [bbbb][----][----][----]}</kbd> |
 | 430 | 28 | <kbd>{w [bbbb]}<br/>{x a{[bbbb]}<br/> &nbsp;&nbsp; {b [bbbb]}<br/> &nbsp;&nbsp; {c [bbbb][bbbb][bbbb] }}<br/>{y [bbbb]}</kbd> |
