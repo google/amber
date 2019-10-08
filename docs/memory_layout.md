@@ -37,8 +37,11 @@ are a bit more explicit, so are used here for clarity.
 | vec3\<float> | <kbd>[bbbb][bbbb][bbbb][----]</kbd> |
 | vec4\<float> | <kbd>[bbbb][bbbb][bbbb][bbbb]</kbd> |
 | vec2\<int8>  | <kbd>[bb]</kbd> |
-| vec3\<int8>  | <kbd>[bbb-][----][----][----]</kbd> |
+| vec3\<int8>  | <kbd>[bbb-]</kbd> |
 | vec4\<int8>  | <kbd>[bbbb]</kbd> |
+| vec2\<int16> | <kbd>[bbbb]</kbd> |
+| vec3\<int16> | <kbd>[bbbb][bb--]</kbd> |
+| vec4\<int16> | <kbd>[bbbb][bbbb]</kbd> |
 | vec2\<int32> | <kbd>[bbbb][bbbb]</kbd> |
 | vec3\<int32> | <kbd>[bbbb][bbbb][bbbb][----]</kbd> |
 | vec4\<int32> | <kbd>[bbbb][bbbb][bbbb][bbbb]</kbd> |
@@ -175,6 +178,7 @@ The STD140 pads 8 bytes at the end to become a multiple of 16 bytes.
 | 430 |  8 | <kbd>{w [bbbb]}<br/>{x [bbbb]}</kbd> |
 
 <hr>
+
 ```
 struct {
   struct {
@@ -239,6 +243,26 @@ space (effectively making it a vec4).
 ```
 struct {
   int32 w;
+  vec3<float> x;
+  vec2<float> y;
+}
+```
+
+The `vec3` expands to a `vec4`. This gives a base alignment of 16 bytes. So
+the `w` pads to 16 bytes.
+
+
+| STD | Array Stride | Bytes |
+|-----|:--------------------:|-------|
+| 140 | 48 | <kbd>{w [bbbb][----][----][----]}<br/>{x [bbbb][bbbb][bbbb][----]}<br/>{y [bbbb][bbbb]}<br/>[----][----]</kbd> |
+| 430 | 48 | <kbd>{w [bbbb][----][----][----]}<br/>{x [bbbb][bbbb][bbbb][----]}<br/>{y [bbbb][bbbb]}<br/>[----][----]</kbd> |
+
+<hr>
+
+
+```
+struct {
+  int32 w;
   mat2x2<float> x;
   float y;
 }
@@ -252,7 +276,7 @@ In STD430, the round up doesn't happen, so the base alignment is 8 bytes.
 | STD | Array Stride  | Bytes |
 |-----|:---------------------:|-------|
 | 140 | 64 | <kbd>{w [bbbb][----][----][----]}<br/>{x [bbbb][bbbb][----][----]<br/> &nbsp;&nbsp; [bbbb][bbbb][----][----]}<br/>{y [bbbb][----][----][----]}</kbd> |
-| 430 | 48 | <kbd>{w [bbbb][----]}<br/>{x [bbbb][bbbb][bbbb][bbbb]}<br/>{y [bbbb][----]}</kbd> |
+| 430 | 32 | <kbd>{w [bbbb][----]}<br/>{x [bbbb][bbbb][bbbb][bbbb]}<br/>{y [bbbb][----]}</kbd> |
 
 <hr>
 
