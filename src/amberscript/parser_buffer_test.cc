@@ -141,12 +141,11 @@ END)";
   EXPECT_TRUE(buffer->GetFormat()->IsFloat32());
   EXPECT_EQ(Format::Layout::kStd140, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(1U, buffer->ElementCount());
-  EXPECT_EQ(8U, buffer->ValueCount());
+  EXPECT_EQ(4U, buffer->ValueCount());
   EXPECT_EQ(8U * sizeof(float), buffer->GetSizeInBytes());
 
   std::vector<float> results = {1.f, 2.f, 0.f, 0.f, 3.f, 4.f, 0.f, 0.f};
   const auto* data = buffer->GetValues<float>();
-  ASSERT_EQ(results.size(), buffer->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FLOAT_EQ(results[i], data[i]);
   }

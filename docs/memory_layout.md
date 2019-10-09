@@ -294,7 +294,7 @@ struct {
 ```
 
 The base alignment of the largest item is 4 bytes. In STD140, this rounds up to
-16 bytes.
+16 bytes because of the substructure.
 
 | STD | Array Stride | Bytes |
 |-----|:--------------------:|-------|
@@ -305,10 +305,10 @@ The base alignment of the largest item is 4 bytes. In STD140, this rounds up to
 
 ```
 struct {
-  int w;
+  int32 w;
   struct {
-    int a;
-    int b;
+    int32 a;
+    int32 b;
     float c[3];
   } x;
   float y;

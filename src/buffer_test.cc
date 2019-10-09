@@ -105,7 +105,7 @@ TEST_F(BufferTest, SizeMatrixStd140) {
   b.SetElementCount(10);
 
   EXPECT_EQ(10, b.ElementCount());
-  EXPECT_EQ(120, b.ValueCount());
+  EXPECT_EQ(10 * 2 * 3, b.ValueCount());
   EXPECT_EQ(120 * sizeof(int16_t), b.GetSizeInBytes());
 }
 
@@ -120,7 +120,7 @@ TEST_F(BufferTest, SizeMatrixPaddedStd430) {
   b.SetValueCount(9);
 
   EXPECT_EQ(1U, b.ElementCount());
-  EXPECT_EQ(12U, b.ValueCount());
+  EXPECT_EQ(9U, b.ValueCount());
   EXPECT_EQ(12U * sizeof(int32_t), b.GetSizeInBytes());
 }
 

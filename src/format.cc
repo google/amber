@@ -14,6 +14,7 @@
 
 #include "src/format.h"
 
+#include <algorithm>
 #include <utility>
 
 #include "src/make_unique.h"
@@ -45,6 +46,12 @@ std::string FormatModeToName(FormatMode mode) {
   }
 
   return "";
+}
+
+uint32_t CalculatePad(uint32_t val) {
+  if ((val % 16) == 0)
+    return 0;
+  return 16 - (val % 16);
 }
 
 }  // namespace
@@ -100,7 +107,36 @@ void Format::RebuildSegments() {
 }
 
 void Format::AddPaddedSegment(uint32_t size) {
-  segments_.push_back(Segment{size});
+  // If the last item was already padding we just extend by the |size| bytes
+  if (!segments_.empty() && segments_.back().IsPadding()) {
+    segments_[segments_.size() - 1] =
+        Segment{size + segments_.back().SizeInBytes()};
+  } else {
+    segments_.push_back(Segment{size});
+  }
+}
+
+void Format::AddPaddedSegmentPackable(uint32_t size) {
+  AddPaddedSegment(size);
+  segments_.back().SetPackable(true);
+}
+
+bool Format::AddSegment(const Segment& seg) {
+  if (!segments_.empty()) {
+    auto last = segments_.back();
+
+    if (last.IsPackable() && last.IsPadding() &&
+        last.SizeInBytes() >= seg.SizeInBytes()) {
+      segments_.back() = seg;
+      auto pad = last.SizeInBytes() - seg.SizeInBytes();
+      if (pad > 0)
+        AddPaddedSegmentPackable(pad);
+
+      return false;
+    }
+  }
+  segments_.push_back(seg);
+  return true;
 }
 
 bool Format::NeedsPadding(type::Type* t) const {
@@ -111,16 +147,113 @@ bool Format::NeedsPadding(type::Type* t) const {
   return false;
 }
 
+uint32_t Format::CalcVecBaseAlignmentInBytes(type::Number* n) const {
+  // vec3 rounds up to a Vec4, so 4 * N
+  if (n->IsVec3())
+    return 4 * n->SizeInBytes();
+
+  // vec2 and vec4 are 2 * N and 4 * N respectively
+  return n->RowCount() * n->SizeInBytes();
+}
+
+uint32_t Format::CalcArrayBaseAlignmentInBytes(type::Type* t) const {
+  uint32_t align = 0;
+  if (t->IsStruct()) {
+    align = CalcStructBaseAlignmentInBytes(t->AsStruct());
+  } else if (t->IsMatrix()) {
+    align = CalcMatrixBaseAlignmentInBytes(t->AsNumber());
+  } else if (t->IsVec()) {
+    align = CalcVecBaseAlignmentInBytes(t->AsNumber());
+  } else if (t->IsList()) {
+    align = CalcListBaseAlignmentInBytes(t->AsList());
+  } else if (t->IsNumber()) {
+    align = t->SizeInBytes();
+  }
+
+  // In std140 array elements round up to multiple of vec4.
+  if (layout_ == Layout::kStd140)
+    align += CalculatePad(align);
+
+  return align;
+}
+
+uint32_t Format::CalcStructBaseAlignmentInBytes(type::Struct* s) const {
+  uint32_t base_alignment = 0;
+  for (const auto& member : s->Members()) {
+    base_alignment =
+        std::max(base_alignment, CalcTypeBaseAlignmentInBytes(member.type));
+  }
+
+  return base_alignment;
+}
+
+uint32_t Format::CalcMatrixBaseAlignmentInBytes(type::Number* m) const {
+  // TODO(dsinclair): Deal with row major when needed. Currently this assumes
+  // the matrix is column major.
+
+  uint32_t align = 0;
+  if (m->RowCount() == 3)
+    align = 4 * m->SizeInBytes();
+  else
+    align = m->RowCount() * m->SizeInBytes();
+
+  // STD140 rounds up to 16 byte alignment
+  if (layout_ == Layout::kStd140)
+    align += CalculatePad(align);
+
+  return align;
+}
+
+uint32_t Format::CalcListBaseAlignmentInBytes(type::List* l) const {
+  return l->SizeInBytes();
+}
+
+uint32_t Format::CalcTypeBaseAlignmentInBytes(type::Type* t) const {
+  if (t->IsArray())
+    return CalcArrayBaseAlignmentInBytes(t);
+  if (t->IsVec())
+    return CalcVecBaseAlignmentInBytes(t->AsNumber());
+  if (t->IsMatrix())
+    return CalcMatrixBaseAlignmentInBytes(t->AsNumber());
+  if (t->IsNumber())
+    return t->SizeInBytes();
+  if (t->IsList())
+    return CalcListBaseAlignmentInBytes(t->AsList());
+  if (t->IsStruct()) {
+    // Pad struct to 16 bytes in STD140
+    uint32_t base = CalcStructBaseAlignmentInBytes(t->AsStruct());
+    if (layout_ == Layout::kStd140)
+      base += CalculatePad(base);
+    return base;
+  }
+
+  assert(false && "Not reached");
+}
+
 uint32_t Format::AddSegmentsForType(type::Type* type) {
   if (type->IsList() && type->AsList()->IsPacked()) {
     auto l = type->AsList();
-    segments_.push_back(Segment(FormatComponentType::kR, FormatMode::kUInt,
-                                l->PackSizeInBits()));
-    return l->SizeInBytes();
+    if (AddSegment(Segment(FormatComponentType::kR, FormatMode::kUInt,
+                           l->PackSizeInBits()))) {
+      return l->SizeInBytes();
+    }
+    return 0;
   }
+
+  // Remove packable from previous packing for types which can't pack back.
+  if (type->IsStruct() || type->IsVec() || type->IsMatrix() ||
+      type->IsArray()) {
+    if (!segments_.empty() && segments_.back().IsPadding())
+      segments_.back().SetPackable(false);
+  }
+
+  // TODO(dsinclair): How to handle matrix stride .... Stride comes from parent
+  // member ....
 
   if (type->IsStruct()) {
     auto s = type->AsStruct();
+    auto base_alignment_in_bytes = CalcStructBaseAlignmentInBytes(s);
+
     uint32_t cur_offset = 0;
     for (const auto& member : s->Members()) {
       if (member.HasOffset()) {
@@ -133,23 +266,32 @@ uint32_t Format::AddSegmentsForType(type::Type* type) {
 
       uint32_t seg_size = 0;
       if (member.type->IsSizedArray()) {
-        for (size_t i = 0; i < member.type->ArraySize(); ++i)
-          seg_size += AddSegmentsForType(member.type);
+        for (size_t i = 0; i < member.type->ArraySize(); ++i) {
+          auto ary_seg_size = AddSegmentsForType(member.type);
+          // Don't allow array members to pack together
+          if (!segments_.empty() && segments_.back().IsPadding())
+            segments_.back().SetPackable(false);
+
+          if (member.HasArrayStride()) {
+            uint32_t array_stride =
+                static_cast<uint32_t>(member.array_stride_in_bytes);
+            assert(ary_seg_size <= array_stride &&
+                   "Array element larger than stride");
+
+            seg_size += array_stride;
+          } else {
+            seg_size += ary_seg_size;
+          }
+        }
       } else {
         seg_size = AddSegmentsForType(member.type);
       }
 
-      if (member.HasArrayStride()) {
-        uint32_t array_stride =
-            static_cast<uint32_t>(member.array_stride_in_bytes);
-        assert(seg_size <= array_stride && "Array has more size then stride");
-        seg_size = array_stride;
-      } else if (member.HasMatrixStride()) {
-        uint32_t matrix_stride =
-            static_cast<uint32_t>(member.matrix_stride_in_bytes);
-        assert(seg_size <= matrix_stride && "Matrix has more size then stride");
-        seg_size = matrix_stride;
+      if (seg_size > 0 && seg_size < base_alignment_in_bytes) {
+        AddPaddedSegmentPackable(base_alignment_in_bytes - seg_size);
+        seg_size += base_alignment_in_bytes - seg_size;
       }
+
       cur_offset += seg_size;
     }
     if (s->HasStride()) {
@@ -157,6 +299,13 @@ uint32_t Format::AddSegmentsForType(type::Type* type) {
              "Struct has more members then fit within stride");
       AddPaddedSegment(s->StrideInBytes() - cur_offset);
       cur_offset = s->StrideInBytes();
+    } else if (layout_ == Layout::kStd140) {
+      // Round struct up to 16 byte alignment in STD140.
+      auto pad = CalculatePad(cur_offset);
+      if (pad > 0) {
+        AddPaddedSegment(pad);
+        cur_offset += pad;
+      }
     }
     return cur_offset;
   }
@@ -167,8 +316,8 @@ uint32_t Format::AddSegmentsForType(type::Type* type) {
     auto l = type->AsList();
     for (uint32_t i = 0; i < type->ColumnCount(); ++i) {
       for (const auto& m : l->Members()) {
-        segments_.push_back(Segment{m.name, m.mode, m.num_bits});
-        size += m.SizeInBytes();
+        if (AddSegment(Segment{m.name, m.mode, m.num_bits}))
+          size += m.SizeInBytes();
       }
 
       if (NeedsPadding(type)) {
@@ -186,9 +335,10 @@ uint32_t Format::AddSegmentsForType(type::Type* type) {
   uint32_t size = 0;
   for (uint32_t i = 0; i < type->ColumnCount(); ++i) {
     for (uint32_t k = 0; k < type->RowCount(); ++k) {
-      segments_.push_back(Segment{static_cast<FormatComponentType>(i),
-                                  n->GetFormatMode(), n->NumBits()});
-      size += type->SizeInBytes();
+      if (AddSegment(Segment{static_cast<FormatComponentType>(i),
+                             n->GetFormatMode(), n->NumBits()})) {
+        size += type->SizeInBytes();
+      }
     }
 
     // In std140 a matrix (column count > 1) has each row stored like an array
@@ -197,10 +347,14 @@ uint32_t Format::AddSegmentsForType(type::Type* type) {
     // In std140 and std430 a vector of size 3N will round up to a vector of 4N.
     if (NeedsPadding(type)) {
       for (size_t k = 0; k < (4 - type->RowCount()); ++k) {
-        AddPaddedSegment(type->SizeInBytes());
+        AddPaddedSegmentPackable(type->SizeInBytes());
         size += type->SizeInBytes();
       }
     }
+
+    // Make sure matrix rows don't accidentally pack together.
+    if (type->IsMatrix() && segments_.back().IsPadding())
+      segments_.back().SetPackable(false);
   }
   return size;
 }

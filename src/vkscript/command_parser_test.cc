@@ -3355,7 +3355,6 @@ TEST_F(CommandParserTest, Uniform) {
   const auto* buf = cmd->GetBuffer();
   const auto* values = buf->GetValues<float>();
   std::vector<float> results = {2.1f, 3.2f, 4.3f, 0.f};
-  ASSERT_EQ(results.size(), buf->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FLOAT_EQ(results[i], values[i]);
   }
@@ -3400,7 +3399,6 @@ TEST_F(CommandParserTest, UniformWithContinuation) {
   const auto* buf = cmd->GetBuffer();
   const auto* values = buf->GetValues<float>();
   std::vector<float> results = {2.1f, 3.2f, 4.3f, 0.f, 5.4f, 6.7f, 8.9f, 0.f};
-  ASSERT_EQ(results.size(), buf->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FLOAT_EQ(results[i], values[i]);
   }

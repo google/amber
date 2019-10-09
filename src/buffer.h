@@ -125,7 +125,7 @@ class Buffer {
     // Packed formats are single values.
     if (format_->IsPacked())
       return element_count_;
-    return element_count_ * format_->ValuesPerElement();
+    return element_count_ * format_->InputNeededPerElement();
   }
 
   /// Returns the number of bytes needed for the data in the buffer.

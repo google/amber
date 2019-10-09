@@ -57,8 +57,16 @@ class Format {
 
     uint32_t SizeInBytes() const { return num_bits_ / 8; }
 
+    // The packable flag can be set on padding segments. This means, the next
+    // byte, if it's the same type as this packing, can be inserted before
+    // this packing segment as long as it fits within the pack size, removing
+    // that much pack space.
+    bool IsPackable() const { return is_packable_; }
+    void SetPackable(bool packable) { is_packable_ = packable; }
+
    private:
     bool is_padding_ = false;
+    bool is_packable_ = false;
     FormatComponentType name_ = FormatComponentType::kR;
     FormatMode mode_ = FormatMode::kSInt;
     uint32_t num_bits_ = 0;
@@ -134,11 +142,6 @@ class Format {
   /// account.
   uint32_t InputNeededPerElement() const;
 
-  /// Returns the number of values for a given row, including padding.
-  uint32_t ValuesPerElement() const {
-    return static_cast<uint32_t>(segments_.size());
-  }
-
   /// Returns true if all components of this format are an 8 bit signed int.
   bool IsInt8() const {
     return type_->IsNumber() &&
@@ -206,7 +209,17 @@ class Format {
   void RebuildSegments();
   uint32_t AddSegmentsForType(type::Type* type);
   bool NeedsPadding(type::Type* t) const;
+  // Returns true if a segment was added, false if we packed the requested
+  // segment into previously allocated space.
+  bool AddSegment(const Segment& seg);
   void AddPaddedSegment(uint32_t size);
+  void AddPaddedSegmentPackable(uint32_t size);
+  uint32_t CalcTypeBaseAlignmentInBytes(type::Type* s) const;
+  uint32_t CalcStructBaseAlignmentInBytes(type::Struct* s) const;
+  uint32_t CalcVecBaseAlignmentInBytes(type::Number* n) const;
+  uint32_t CalcArrayBaseAlignmentInBytes(type::Type* t) const;
+  uint32_t CalcMatrixBaseAlignmentInBytes(type::Number* m) const;
+  uint32_t CalcListBaseAlignmentInBytes(type::List* l) const;
 
   /// Generates the image format name for this format if possible. Returns
   /// the name if generated or "" otherwise.
