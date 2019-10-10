@@ -228,6 +228,7 @@ uint32_t Format::CalcTypeBaseAlignmentInBytes(type::Type* t) const {
   }
 
   assert(false && "Not reached");
+  return 0;
 }
 
 uint32_t Format::AddSegmentsForType(type::Type* type) {
