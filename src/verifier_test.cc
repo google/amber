@@ -22,9 +22,9 @@
 #include "amber/value.h"
 #include "gtest/gtest.h"
 #include "src/command.h"
-#include "src/format_parser.h"
 #include "src/make_unique.h"
 #include "src/pipeline.h"
+#include "src/type_parser.h"
 
 namespace amber {
 namespace {
@@ -38,12 +38,15 @@ class VerifierTest : public testing::Test {
     if (color_frame_format_)
       return color_frame_format_.get();
 
-    FormatParser fp;
-    color_frame_format_ = fp.Parse("B8G8R8A8_UNORM");
+    TypeParser parser;
+    color_frame_type_ = parser.Parse("B8G8R8A8_UNORM");
+
+    color_frame_format_ = MakeUnique<Format>(color_frame_type_.get());
     return color_frame_format_.get();
   }
 
  private:
+  std::unique_ptr<type::Type> color_frame_type_;
   std::unique_ptr<Format> color_frame_format_;
 };
 
@@ -142,8 +145,8 @@ TEST_F(VerifierTest, ProbeFrameBufferRelativeSmallExpectFail) {
   Result r = verifier.Probe(&probe, GetColorFormat(), 4, 1000, 250, 250,
                             static_cast<const void*>(frame_buffer));
   EXPECT_EQ(
-      "Line 1: Probe failed at: 225, 225\n  Expected RGBA: 25.500000, "
-      "0.000000, 0.000000, 0.000000\n  Actual RGBA: 0.000000, 0.000000, "
+      "Line 1: Probe failed at: 225, 225\n  Expected: 25.500000, "
+      "0.000000, 0.000000, 0.000000\n    Actual: 0.000000, 0.000000, "
       "0.000000, 0.000000\nProbe failed in 625 pixels",
       r.Error());
 }
@@ -195,14 +198,15 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt8) {
 
   uint8_t frame_buffer[4] = {255, 14, 75, 8};
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R8G8B8A8_UINT");
+  TypeParser parser;
+  auto type = parser.Parse("R8G8B8A8_UINT");
+  Format fmt(type.get());
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, fmt.get(),
-                            4 * static_cast<uint32_t>(sizeof(uint8_t)),
-                            4 * static_cast<uint32_t>(sizeof(uint8_t)), 1, 1,
-                            static_cast<const void*>(&frame_buffer));
+  Result r =
+      verifier.Probe(&probe, &fmt, 4 * static_cast<uint32_t>(sizeof(uint8_t)),
+                     4 * static_cast<uint32_t>(sizeof(uint8_t)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -221,14 +225,15 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt16) {
 
   uint16_t frame_buffer[4] = {65535, 14, 1875, 8};
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R16G16B16A16_UINT");
+  TypeParser parser;
+  auto type = parser.Parse("R16G16B16A16_UINT");
+  Format fmt(type.get());
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, fmt.get(),
-                            4 * static_cast<uint32_t>(sizeof(uint16_t)),
-                            4 * static_cast<uint32_t>(sizeof(uint16_t)), 1, 1,
-                            static_cast<const void*>(&frame_buffer));
+  Result r =
+      verifier.Probe(&probe, &fmt, 4 * static_cast<uint32_t>(sizeof(uint16_t)),
+                     4 * static_cast<uint32_t>(sizeof(uint16_t)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -247,14 +252,15 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt32) {
 
   uint32_t frame_buffer[4] = {6, 14, 1171875, 8};
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R32G32B32A32_UINT");
+  TypeParser parser;
+  auto type = parser.Parse("R32G32B32A32_UINT");
+  Format fmt(type.get());
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, fmt.get(),
-                            4 * static_cast<uint32_t>(sizeof(uint32_t)),
-                            4 * static_cast<uint32_t>(sizeof(uint32_t)), 1, 1,
-                            static_cast<const void*>(&frame_buffer));
+  Result r =
+      verifier.Probe(&probe, &fmt, 4 * static_cast<uint32_t>(sizeof(uint32_t)),
+                     4 * static_cast<uint32_t>(sizeof(uint32_t)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -273,14 +279,15 @@ TEST_F(VerifierTest, ProbeFrameBufferUInt64) {
 
   uint64_t frame_buffer[4] = {6, 14, 1171875, 8};
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64G64B64A64_UINT");
+  TypeParser parser;
+  auto type = parser.Parse("R64G64B64A64_UINT");
+  Format fmt(type.get());
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, fmt.get(),
-                            4 * static_cast<uint32_t>(sizeof(uint64_t)),
-                            4 * static_cast<uint32_t>(sizeof(uint64_t)), 1, 1,
-                            static_cast<const void*>(&frame_buffer));
+  Result r =
+      verifier.Probe(&probe, &fmt, 4 * static_cast<uint32_t>(sizeof(uint64_t)),
+                     4 * static_cast<uint32_t>(sizeof(uint64_t)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -299,14 +306,15 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt8) {
 
   int8_t frame_buffer[4] = {-6, 14, 75, 8};
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R8G8B8A8_SINT");
+  TypeParser parser;
+  auto type = parser.Parse("R8G8B8A8_SINT");
+  Format fmt(type.get());
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, fmt.get(),
-                            4 * static_cast<uint32_t>(sizeof(int8_t)),
-                            4 * static_cast<uint32_t>(sizeof(int8_t)), 1, 1,
-                            static_cast<const void*>(&frame_buffer));
+  Result r =
+      verifier.Probe(&probe, &fmt, 4 * static_cast<uint32_t>(sizeof(int8_t)),
+                     4 * static_cast<uint32_t>(sizeof(int8_t)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -325,14 +333,15 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt16) {
 
   int16_t frame_buffer[4] = {-6, 14, 1875, 8};
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R16G16B16A16_SINT");
+  TypeParser parser;
+  auto type = parser.Parse("R16G16B16A16_SINT");
+  Format fmt(type.get());
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, fmt.get(),
-                            4 * static_cast<uint32_t>(sizeof(int16_t)),
-                            4 * static_cast<uint32_t>(sizeof(int16_t)), 1, 1,
-                            static_cast<const void*>(&frame_buffer));
+  Result r =
+      verifier.Probe(&probe, &fmt, 4 * static_cast<uint32_t>(sizeof(int16_t)),
+                     4 * static_cast<uint32_t>(sizeof(int16_t)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -351,14 +360,15 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt32) {
 
   int32_t frame_buffer[4] = {-6, 14, 1171875, 8};
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R32G32B32A32_SINT");
+  TypeParser parser;
+  auto type = parser.Parse("R32G32B32A32_SINT");
+  Format fmt(type.get());
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, fmt.get(),
-                            4 * static_cast<uint32_t>(sizeof(int32_t)),
-                            4 * static_cast<uint32_t>(sizeof(int32_t)), 1, 1,
-                            static_cast<const void*>(&frame_buffer));
+  Result r =
+      verifier.Probe(&probe, &fmt, 4 * static_cast<uint32_t>(sizeof(int32_t)),
+                     4 * static_cast<uint32_t>(sizeof(int32_t)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -377,14 +387,15 @@ TEST_F(VerifierTest, ProbeFrameBufferSInt64) {
 
   int64_t frame_buffer[4] = {-6, 14, 1171875, 8};
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64G64B64A64_SINT");
+  TypeParser parser;
+  auto type = parser.Parse("R64G64B64A64_SINT");
+  Format fmt(type.get());
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, fmt.get(),
-                            4 * static_cast<uint32_t>(sizeof(int64_t)),
-                            4 * static_cast<uint32_t>(sizeof(int64_t)), 1, 1,
-                            static_cast<const void*>(&frame_buffer));
+  Result r =
+      verifier.Probe(&probe, &fmt, 4 * static_cast<uint32_t>(sizeof(int64_t)),
+                     4 * static_cast<uint32_t>(sizeof(int64_t)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -403,14 +414,15 @@ TEST_F(VerifierTest, ProbeFrameBufferFloat32) {
 
   float frame_buffer[4] = {-6.0f, 14.0f, 0.1171875f, 0.8f};
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R32G32B32A32_SFLOAT");
+  TypeParser parser;
+  auto type = parser.Parse("R32G32B32A32_SFLOAT");
+  Format fmt(type.get());
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, fmt.get(),
-                            4 * static_cast<uint32_t>(sizeof(float)),
-                            4 * static_cast<uint32_t>(sizeof(float)), 1, 1,
-                            static_cast<const void*>(&frame_buffer));
+  Result r =
+      verifier.Probe(&probe, &fmt, 4 * static_cast<uint32_t>(sizeof(float)),
+                     4 * static_cast<uint32_t>(sizeof(float)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -429,14 +441,15 @@ TEST_F(VerifierTest, ProbeFrameBufferFloat64) {
 
   double frame_buffer[4] = {-6.0, 14.0, 0.1171875, 0.8};
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64G64B64A64_SFLOAT");
+  TypeParser parser;
+  auto type = parser.Parse("R64G64B64A64_SFLOAT");
+  Format fmt(type.get());
 
   Verifier verifier;
-  Result r = verifier.Probe(&probe, fmt.get(),
-                            4 * static_cast<uint32_t>(sizeof(double)),
-                            4 * static_cast<uint32_t>(sizeof(double)), 1, 1,
-                            static_cast<const void*>(&frame_buffer));
+  Result r =
+      verifier.Probe(&probe, &fmt, 4 * static_cast<uint32_t>(sizeof(double)),
+                     4 * static_cast<uint32_t>(sizeof(double)), 1, 1,
+                     static_cast<const void*>(&frame_buffer));
   EXPECT_TRUE(r.IsSuccess());
 }
 
@@ -469,11 +482,12 @@ TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
   frame_buffer |= 380ULL << (16ULL + 11ULL);
   probe.SetB(0.1171875f);
 
-  Format format;
-  format.SetFormatType(FormatType::kUnknown);
-  format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 16);
-  format.AddComponent(FormatComponentType::kG, FormatMode::kUFloat, 11);
-  format.AddComponent(FormatComponentType::kB, FormatMode::kUFloat, 10);
+  auto list = MakeUnique<type::List>();
+  list->AddMember(FormatComponentType::kR, FormatMode::kSFloat, 16);
+  list->AddMember(FormatComponentType::kG, FormatMode::kSFloat, 11);
+  list->AddMember(FormatComponentType::kB, FormatMode::kSFloat, 10);
+
+  Format format(list.get());
 
   Verifier verifier;
   Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
@@ -510,11 +524,12 @@ TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
   frame_buffer |= 380ULL << (16ULL + 11ULL);
   probe.SetB(0.1171875f);
 
-  Format format;
-  format.SetFormatType(FormatType::kUnknown);
-  format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 11);
-  format.AddComponent(FormatComponentType::kG, FormatMode::kUFloat, 16);
-  format.AddComponent(FormatComponentType::kB, FormatMode::kUFloat, 10);
+  auto list = MakeUnique<type::List>();
+  list->AddMember(FormatComponentType::kR, FormatMode::kSFloat, 11);
+  list->AddMember(FormatComponentType::kG, FormatMode::kSFloat, 16);
+  list->AddMember(FormatComponentType::kB, FormatMode::kSFloat, 10);
+
+  Format format(list.get());
 
   Verifier verifier;
   Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
@@ -551,11 +566,12 @@ TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
   frame_buffer |= 50688ULL << (10ULL + 11ULL);
   probe.SetB(-6.0f);
 
-  Format format;
-  format.SetFormatType(FormatType::kUnknown);
-  format.AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 10);
-  format.AddComponent(FormatComponentType::kG, FormatMode::kUFloat, 11);
-  format.AddComponent(FormatComponentType::kB, FormatMode::kUFloat, 16);
+  auto list = MakeUnique<type::List>();
+  list->AddMember(FormatComponentType::kR, FormatMode::kSFloat, 10);
+  list->AddMember(FormatComponentType::kG, FormatMode::kSFloat, 11);
+  list->AddMember(FormatComponentType::kB, FormatMode::kSFloat, 16);
+
+  Format format(list.get());
 
   Verifier verifier;
   Result r = verifier.Probe(&probe, &format, 6, 6, 1, 1,
@@ -650,9 +666,11 @@ TEST_F(VerifierTest, ProbeSSBOUint8Single) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R8_UINT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R8_UINT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -674,10 +692,11 @@ TEST_F(VerifierTest, ProbeSSBOUint8Multiple) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R8_UINT");
+  TypeParser parser;
+  auto type = parser.Parse("R8_UINT");
+  Format fmt(type.get());
 
-  probe_ssbo.SetFormat(fmt.get());
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -700,10 +719,11 @@ TEST_F(VerifierTest, ProbeSSBOUint8Many) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R8_UINT");
+  TypeParser parser;
+  auto type = parser.Parse("R8_UINT");
+  Format fmt(type.get());
 
-  probe_ssbo.SetFormat(fmt.get());
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -730,9 +750,11 @@ TEST_F(VerifierTest, ProbeSSBOUint32Single) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R32_UINT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R32_UINT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -754,9 +776,11 @@ TEST_F(VerifierTest, ProbeSSBOUint32Multiple) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R32_UINT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R32_UINT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -780,9 +804,11 @@ TEST_F(VerifierTest, ProbeSSBOUint32Many) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R32_UINT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R32_UINT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -809,9 +835,11 @@ TEST_F(VerifierTest, ProbeSSBOFloatSingle) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R32_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R32_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -833,9 +861,11 @@ TEST_F(VerifierTest, ProbeSSBOFloatMultiple) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R32_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R32_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -859,9 +889,11 @@ TEST_F(VerifierTest, ProbeSSBOFloatMany) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R32_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R32_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -888,9 +920,11 @@ TEST_F(VerifierTest, ProbeSSBODoubleSingle) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -912,9 +946,11 @@ TEST_F(VerifierTest, ProbeSSBODoubleMultiple) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -938,9 +974,11 @@ TEST_F(VerifierTest, ProbeSSBODoubleMany) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -967,9 +1005,11 @@ TEST_F(VerifierTest, ProbeSSBOEqualFail) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
 
   std::vector<Value> values;
@@ -995,9 +1035,11 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteTolerance) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
 
   std::vector<Probe::Tolerance> tolerances;
@@ -1030,9 +1072,11 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithAbsoluteToleranceFail) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
 
   std::vector<Probe::Tolerance> tolerances;
@@ -1062,9 +1106,11 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeTolerance) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
 
   std::vector<Probe::Tolerance> tolerances;
@@ -1097,9 +1143,11 @@ TEST_F(VerifierTest, ProbeSSBOFuzzyEqualWithRelativeToleranceFail) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
 
   std::vector<Probe::Tolerance> tolerances;
@@ -1129,9 +1177,11 @@ TEST_F(VerifierTest, ProbeSSBONotEqual) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kNotEqual);
 
   std::vector<Value> values;
@@ -1155,9 +1205,11 @@ TEST_F(VerifierTest, ProbeSSBONotEqualFail) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kNotEqual);
 
   std::vector<Value> values;
@@ -1183,9 +1235,11 @@ TEST_F(VerifierTest, ProbeSSBOLess) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLess);
 
   std::vector<Value> values;
@@ -1209,9 +1263,11 @@ TEST_F(VerifierTest, ProbeSSBOLessFail) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLess);
 
   std::vector<Value> values;
@@ -1237,9 +1293,11 @@ TEST_F(VerifierTest, ProbeSSBOLessOrEqual) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLessOrEqual);
 
   std::vector<Value> values;
@@ -1263,9 +1321,11 @@ TEST_F(VerifierTest, ProbeSSBOLessOrEqualFail) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLessOrEqual);
 
   std::vector<Value> values;
@@ -1291,9 +1351,11 @@ TEST_F(VerifierTest, ProbeSSBOGreater) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kGreater);
 
   std::vector<Value> values;
@@ -1317,9 +1379,11 @@ TEST_F(VerifierTest, ProbeSSBOGreaterFail) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kGreater);
 
   std::vector<Value> values;
@@ -1345,9 +1409,11 @@ TEST_F(VerifierTest, ProbeSSBOGreaterOrEqual) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kGreaterOrEqual);
 
   std::vector<Value> values;
@@ -1371,9 +1437,11 @@ TEST_F(VerifierTest, ProbeSSBOGreaterOrEqualFail) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("R64_SFLOAT");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("R64_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kGreaterOrEqual);
 
   std::vector<Value> values;
@@ -1415,8 +1483,8 @@ TEST_F(VerifierTest, CheckRGBAOrderForFailure) {
                             static_cast<const void*>(&frame_buffer));
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ(
-      "Line 1: Probe failed at: 0, 0\n  Expected RGBA: 153.000000, 102.000000, "
-      "0.000000, 76.500000\n  Actual RGBA: 75.000000, 14.000000, 255.000000, "
+      "Line 1: Probe failed at: 0, 0\n  Expected: 153.000000, 102.000000, "
+      "0.000000, 76.500000\n    Actual: 75.000000, 14.000000, 255.000000, "
       "8.000000\nProbe failed in 1 pixels",
       r.Error());
 }
@@ -1427,9 +1495,11 @@ TEST_F(VerifierTest, ProbeSSBOWithPadding) {
 
   ProbeSSBOCommand probe_ssbo(color_buf.get());
 
-  FormatParser fp;
-  auto fmt = fp.Parse("float/vec2");
-  probe_ssbo.SetFormat(fmt.get());
+  TypeParser parser;
+  auto type = parser.Parse("float/vec2");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
   ASSERT_TRUE(probe_ssbo.GetFormat() != nullptr);
 
   probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kLessOrEqual);

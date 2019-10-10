@@ -18,8 +18,8 @@
 #include <limits>
 #include <set>
 
-#include "src/format_parser.h"
 #include "src/make_unique.h"
+#include "src/type_parser.h"
 
 namespace amber {
 namespace {
@@ -311,26 +311,30 @@ Result Pipeline::SetPushConstantBuffer(Buffer* buf) {
 }
 
 std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() {
-  FormatParser fp;
-  auto fmt = fp.Parse(kDefaultColorBufferFormat);
+  TypeParser parser;
+  auto type = parser.Parse(kDefaultColorBufferFormat);
+  auto fmt = MakeUnique<Format>(type.get());
 
   std::unique_ptr<Buffer> buf = MakeUnique<Buffer>(BufferType::kColor);
   buf->SetName(kGeneratedColorBuffer);
   buf->SetFormat(fmt.get());
 
   formats_.push_back(std::move(fmt));
+  types_.push_back(std::move(type));
   return buf;
 }
 
 std::unique_ptr<Buffer> Pipeline::GenerateDefaultDepthAttachmentBuffer() {
-  FormatParser fp;
-  auto fmt = fp.Parse(kDefaultDepthBufferFormat);
+  TypeParser parser;
+  auto type = parser.Parse(kDefaultDepthBufferFormat);
+  auto fmt = MakeUnique<Format>(type.get());
 
   std::unique_ptr<Buffer> buf = MakeUnique<Buffer>(BufferType::kDepth);
   buf->SetName(kGeneratedDepthBuffer);
   buf->SetFormat(fmt.get());
 
   formats_.push_back(std::move(fmt));
+  types_.push_back(std::move(type));
   return buf;
 }
 
@@ -548,10 +552,12 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
 
       // Use an 8-bit type because all the data in the descriptor map is
       // byte-based and it simplifies the logic for sizing below.
-      FormatParser fp;
-      auto fmt = fp.Parse("R8_UINT");
+      TypeParser parser;
+      auto type = parser.Parse("R8_UINT");
+      auto fmt = MakeUnique<Format>(type.get());
       buffer->SetFormat(fmt.get());
       formats_.push_back(std::move(fmt));
+      types_.push_back(std::move(type));
 
       buffer->SetName(GetName() + "_pod_buffer_" +
                       std::to_string(descriptor_set) + "_" +

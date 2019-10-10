@@ -19,7 +19,7 @@
 #include <string>
 
 #include "amber/result.h"
-#include "src/format.h"
+#include "src/type.h"
 
 namespace amber {
 namespace vkscript {
@@ -30,7 +30,7 @@ class DatumTypeParser {
   DatumTypeParser();
   ~DatumTypeParser();
 
-  std::unique_ptr<Format> Parse(const std::string& data);
+  std::unique_ptr<type::Type> Parse(const std::string& data);
 };
 
 }  // namespace vkscript

@@ -385,8 +385,8 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
 
   auto& segs1 = buffers[1]->GetFormat()->GetSegments();
   ASSERT_EQ(2U, segs1.size());
-  EXPECT_EQ(FormatMode::kSFloat, segs1[0].GetComponent()->mode);
-  EXPECT_EQ(FormatMode::kSFloat, segs1[1].GetComponent()->mode);
+  EXPECT_EQ(FormatMode::kSFloat, segs1[0].GetFormatMode());
+  EXPECT_EQ(FormatMode::kSFloat, segs1[1].GetFormatMode());
   EXPECT_EQ(static_cast<uint32_t>(0), buffers[1]->ElementCount());
 
   ASSERT_EQ(BufferType::kVertex, buffers[2]->GetBufferType());
@@ -396,9 +396,9 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
 
   auto& segs2 = buffers[2]->GetFormat()->GetSegments();
   ASSERT_EQ(4, segs2.size());
-  EXPECT_EQ(FormatMode::kSInt, segs2[0].GetComponent()->mode);
-  EXPECT_EQ(FormatMode::kSInt, segs2[1].GetComponent()->mode);
-  EXPECT_EQ(FormatMode::kSInt, segs2[2].GetComponent()->mode);
+  EXPECT_EQ(FormatMode::kSInt, segs2[0].GetFormatMode());
+  EXPECT_EQ(FormatMode::kSInt, segs2[1].GetFormatMode());
+  EXPECT_EQ(FormatMode::kSInt, segs2[2].GetFormatMode());
   EXPECT_TRUE(segs2[3].IsPadding());
   EXPECT_EQ(static_cast<uint32_t>(0), buffers[2]->ElementCount());
 }
@@ -457,7 +457,6 @@ TEST_F(VkScriptParserTest, VertexDataRows) {
 
   std::vector<float> seg_0 = {-1.f, -1.f, 0.25f, 0, 0.25f, -1.f, 0.25f, 0};
   const auto* values_0 = buffers[1]->GetValues<float>();
-  ASSERT_EQ(seg_0.size(), buffers[1]->ValueCount());
   for (size_t i = 0; i < seg_0.size(); ++i) {
     EXPECT_FLOAT_EQ(seg_0[i], values_0[i]);
   }
@@ -466,7 +465,6 @@ TEST_F(VkScriptParserTest, VertexDataRows) {
 
   std::vector<uint8_t> seg_1 = {255, 128, 1, 0, 255, 128, 255, 0};
   const auto* values_1 = buffers[2]->GetValues<uint8_t>();
-  ASSERT_EQ(seg_1.size(), buffers[2]->ValueCount());
   for (size_t i = 0; i < seg_1.size(); ++i) {
     EXPECT_EQ(seg_1[i], values_1[i]);
   }
