@@ -15,6 +15,7 @@
 #include "src/vkscript/datum_type_parser.h"
 
 #include "gtest/gtest.h"
+#include "src/format.h"
 
 namespace amber {
 namespace vkscript {
@@ -24,10 +25,10 @@ bool AllCompsAreType(Format* fmt, FormatMode mode, uint8_t num_bits) {
   for (auto& seg : fmt->GetSegments()) {
     if (seg.IsPadding())
       continue;
-    if (seg.GetComponent()->mode != mode ||
-        seg.GetComponent()->num_bits != num_bits) {
+    if (seg.GetNumBits() != num_bits)
       return false;
-    }
+    if (seg.GetFormatMode() != mode)
+      return false;
   }
 
   return true;
@@ -39,14 +40,14 @@ using DatumTypeParserTest = testing::Test;
 
 TEST_F(DatumTypeParserTest, EmptyType) {
   DatumTypeParser tp;
-  auto fmt = tp.Parse("");
-  ASSERT_TRUE(fmt == nullptr);
+  auto type = tp.Parse("");
+  ASSERT_TRUE(type == nullptr);
 }
 
 TEST_F(DatumTypeParserTest, InvalidType) {
   DatumTypeParser tp;
-  auto fmt = tp.Parse("INVALID");
-  ASSERT_TRUE(fmt == nullptr);
+  auto type = tp.Parse("INVALID");
+  ASSERT_TRUE(type == nullptr);
 }
 
 struct DatumTypeData {
@@ -63,12 +64,13 @@ TEST_P(DatumTypeDataTest, Parser) {
   const auto& test_data = GetParam();
 
   DatumTypeParser tp;
-  auto fmt = tp.Parse(test_data.name);
+  auto type = tp.Parse(test_data.name);
 
-  ASSERT_TRUE(fmt != nullptr);
-  EXPECT_TRUE(AllCompsAreType(fmt.get(), test_data.type, test_data.num_bits));
-  EXPECT_EQ(test_data.column_count, fmt->ColumnCount());
-  EXPECT_EQ(test_data.row_count, fmt->RowCount());
+  ASSERT_TRUE(type != nullptr);
+  Format fmt(type.get());
+  EXPECT_TRUE(AllCompsAreType(&fmt, test_data.type, test_data.num_bits));
+  EXPECT_EQ(test_data.column_count, type->ColumnCount());
+  EXPECT_EQ(test_data.row_count, type->RowCount());
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -155,10 +157,12 @@ TEST_P(DatumTypeTestFormat, ToFormat) {
   auto test_data = GetParam();
 
   DatumTypeParser tp;
-  auto fmt = tp.Parse(test_data.name);
+  auto type = tp.Parse(test_data.name);
 
-  ASSERT_TRUE(fmt != nullptr);
-  ASSERT_EQ(test_data.format_type, fmt->GetFormatType());
+  ASSERT_TRUE(type != nullptr) << test_data.name;
+
+  Format fmt(type.get());
+  ASSERT_EQ(test_data.format_type, fmt.GetFormatType()) << test_data.name;
 }
 
 INSTANTIATE_TEST_SUITE_P(

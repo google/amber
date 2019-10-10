@@ -22,7 +22,6 @@ set(AMBER_SOURCES
     engine.cc
     executor.cc
     format.cc
-    format_parser.cc
     parser.cc
     pipeline.cc
     pipeline_data.cc
@@ -33,6 +32,8 @@ set(AMBER_SOURCES
     shader.cc
     shader_compiler.cc
     tokenizer.cc
+    type.cc
+    type_parser.cc
     value.cc
     verifier.cc
     vkscript/command_parser.cc
@@ -134,13 +135,14 @@ if (${AMBER_ENABLE_TESTS})
     command_data_test.cc
     descriptor_set_and_binding_parser_test.cc
     executor_test.cc
-    format_parser_test.cc
     format_test.cc
     pipeline_test.cc
     result_test.cc
     script_test.cc
     shader_compiler_test.cc
     tokenizer_test.cc
+    type_parser_test.cc
+    type_test.cc
     verifier_test.cc
     vkscript/command_parser_test.cc
     vkscript/datum_type_parser_test.cc

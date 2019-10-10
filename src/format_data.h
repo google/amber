@@ -16,10 +16,10 @@
 #define SRC_FORMAT_DATA_H_
 
 enum class FormatComponentType {
-  kA = 0,
-  kR,
+  kR = 0,
   kG,
   kB,
+  kA,
   kX,
   kD,
   kS,

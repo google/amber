@@ -171,9 +171,16 @@ class Script : public RecipeImpl {
   /// Retrieves the SPIR-V target environment.
   const std::string& GetSpvTargetEnv() const { return spv_env_; }
 
+  /// Assign ownership of the format to the script.
   Format* RegisterFormat(std::unique_ptr<Format> fmt) {
     formats_.push_back(std::move(fmt));
     return formats_.back().get();
+  }
+
+  /// Assigns ownership of the type to the script.
+  type::Type* RegisterType(std::unique_ptr<type::Type> type) {
+    types_.push_back(std::move(type));
+    return types_.back().get();
   }
 
  private:
@@ -192,6 +199,7 @@ class Script : public RecipeImpl {
   std::vector<std::unique_ptr<Command>> commands_;
   std::vector<std::unique_ptr<Buffer>> buffers_;
   std::vector<std::unique_ptr<Pipeline>> pipelines_;
+  std::vector<std::unique_ptr<type::Type>> types_;
   std::vector<std::unique_ptr<Format>> formats_;
 };
 

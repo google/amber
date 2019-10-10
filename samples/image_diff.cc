@@ -16,7 +16,9 @@
 #include <vector>
 
 #include "src/buffer.h"
-#include "src/format_parser.h"
+#include "src/format.h"
+#include "src/type_parser.h"
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wweak-vtables"
 #include "third_party/lodepng/lodepng.h"
@@ -115,11 +117,13 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  amber::FormatParser fp;
-  auto fmt = fp.Parse("R8G8B8A8_UNORM");
+  amber::TypeParser parser;
+  auto type = parser.Parse("R8G8B8A8_UNORM");
+  amber::Format fmt(type.get());
+
   amber::Buffer buffers[2];
   for (size_t i = 0; i < 2; ++i) {
-    buffers[i].SetFormat(fmt.get());
+    buffers[i].SetFormat(&fmt);
     amber::Result res =
         LoadPngToBuffer(options.input_filenames[i], &buffers[i]);
     if (!res.IsSuccess()) {
