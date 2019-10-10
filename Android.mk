@@ -31,7 +31,6 @@ LOCAL_SRC_FILES:= \
     src/engine.cc \
     src/executor.cc \
     src/format.cc \
-    src/format_parser.cc \
     src/parser.cc \
     src/pipeline.cc \
     src/pipeline_data.cc \
@@ -41,6 +40,8 @@ LOCAL_SRC_FILES:= \
     src/shader.cc \
     src/shader_compiler.cc \
     src/tokenizer.cc \
+    src/type.cc \
+    src/type_parser.cc \
     src/value.cc \
     src/verifier.cc \
     src/vkscript/command_parser.cc \

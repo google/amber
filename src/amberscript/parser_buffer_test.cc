@@ -105,7 +105,7 @@ END)";
   EXPECT_EQ("my_buffer", buffers[0]->GetName());
 
   auto* buffer = buffers[0].get();
-  EXPECT_TRUE(buffer->GetFormat()->IsFloat());
+  EXPECT_TRUE(buffer->GetFormat()->IsFloat32());
   EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(1U, buffer->ElementCount());
   EXPECT_EQ(4U, buffer->ValueCount());
@@ -138,15 +138,14 @@ END)";
   EXPECT_EQ("my_buffer", buffers[0]->GetName());
 
   auto* buffer = buffers[0].get();
-  EXPECT_TRUE(buffer->GetFormat()->IsFloat());
+  EXPECT_TRUE(buffer->GetFormat()->IsFloat32());
   EXPECT_EQ(Format::Layout::kStd140, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(1U, buffer->ElementCount());
-  EXPECT_EQ(8U, buffer->ValueCount());
+  EXPECT_EQ(4U, buffer->ValueCount());
   EXPECT_EQ(8U * sizeof(float), buffer->GetSizeInBytes());
 
   std::vector<float> results = {1.f, 2.f, 0.f, 0.f, 3.f, 4.f, 0.f, 0.f};
   const auto* data = buffer->GetValues<float>();
-  ASSERT_EQ(results.size(), buffer->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FLOAT_EQ(results[i], data[i]);
   }
@@ -229,7 +228,7 @@ TEST_F(AmberScriptParserTest, BufferDataFloat) {
   EXPECT_EQ("my_buffer", buffers[0]->GetName());
 
   auto* buffer = buffers[0].get();
-  EXPECT_TRUE(buffer->GetFormat()->IsFloat());
+  EXPECT_TRUE(buffer->GetFormat()->IsFloat32());
   EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(4U, buffer->ElementCount());
   EXPECT_EQ(4U, buffer->ValueCount());
@@ -287,7 +286,7 @@ TEST_F(AmberScriptParserTest, BufferFillFloat) {
 
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
-  EXPECT_TRUE(buffer->GetFormat()->IsFloat());
+  EXPECT_TRUE(buffer->GetFormat()->IsFloat32());
   EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(5U, buffer->ElementCount());
   EXPECT_EQ(5U, buffer->ValueCount());
@@ -348,7 +347,7 @@ TEST_F(AmberScriptParserTest, BufferSeriesFloat) {
 
   auto* buffer = buffers[0].get();
   EXPECT_EQ("my_buffer", buffer->GetName());
-  EXPECT_TRUE(buffer->GetFormat()->IsFloat());
+  EXPECT_TRUE(buffer->GetFormat()->IsFloat32());
   EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
   EXPECT_EQ(5U, buffer->ElementCount());
   EXPECT_EQ(5U, buffer->ValueCount());
@@ -564,21 +563,15 @@ TEST_F(AmberScriptParserTest, BufferFormat) {
   EXPECT_EQ("my_buf", buffer->GetName());
 
   auto fmt = buffer->GetFormat();
+  EXPECT_EQ(FormatType::kR32G32B32A32_SINT, fmt->GetFormatType());
   auto& segs = fmt->GetSegments();
   ASSERT_EQ(4U, segs.size());
 
-  EXPECT_EQ(FormatComponentType::kR, segs[0].GetComponent()->type);
-  EXPECT_EQ(FormatMode::kSInt, segs[0].GetComponent()->mode);
-  EXPECT_EQ(32U, segs[0].GetComponent()->num_bits);
-  EXPECT_EQ(FormatComponentType::kG, segs[1].GetComponent()->type);
-  EXPECT_EQ(FormatMode::kSInt, segs[1].GetComponent()->mode);
-  EXPECT_EQ(32U, segs[1].GetComponent()->num_bits);
-  EXPECT_EQ(FormatComponentType::kB, segs[2].GetComponent()->type);
-  EXPECT_EQ(FormatMode::kSInt, segs[2].GetComponent()->mode);
-  EXPECT_EQ(32U, segs[2].GetComponent()->num_bits);
-  EXPECT_EQ(FormatComponentType::kA, segs[3].GetComponent()->type);
-  EXPECT_EQ(FormatMode::kSInt, segs[3].GetComponent()->mode);
-  EXPECT_EQ(32U, segs[3].GetComponent()->num_bits);
+  for (size_t i = 0; i < 4; ++i) {
+    EXPECT_EQ(segs[i].GetNumBits(), 32);
+    EXPECT_EQ(segs[i].GetFormatMode(), FormatMode::kSInt);
+    EXPECT_EQ(segs[i].GetName(), static_cast<FormatComponentType>(i));
+  }
 }
 
 struct BufferParseError {
@@ -697,12 +690,11 @@ TEST_P(AmberScriptParserBufferDataTypeTest, BufferTypes) {
 
   auto* buffer = buffers[0].get();
   auto fmt = buffer->GetFormat();
-  EXPECT_EQ(test_data.row_count, fmt->RowCount());
-  EXPECT_EQ(test_data.column_count, fmt->ColumnCount());
+  EXPECT_EQ(test_data.row_count, fmt->GetType()->RowCount());
+  EXPECT_EQ(test_data.column_count, fmt->GetType()->ColumnCount());
 
-  auto comp = fmt->GetSegments()[0].GetComponent();
-  EXPECT_EQ(test_data.type, comp->mode);
-  EXPECT_EQ(test_data.num_bits, comp->num_bits);
+  EXPECT_EQ(test_data.type, fmt->GetSegments()[0].GetFormatMode());
+  EXPECT_EQ(test_data.num_bits, fmt->GetSegments()[0].GetNumBits());
 }
 INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserTestsDataType,
@@ -715,16 +707,16 @@ INSTANTIATE_TEST_SUITE_P(
                     BufferData{"uint16", FormatMode::kUInt, 16, 1, 1},
                     BufferData{"uint32", FormatMode::kUInt, 32, 1, 1},
                     BufferData{"uint64", FormatMode::kUInt, 64, 1, 1},
-                    BufferData{"float", FormatMode::kSFloat, 32, 1, 1},
-                    BufferData{"double", FormatMode::kSFloat, 64, 1, 1},
                     BufferData{"vec2<int8>", FormatMode::kSInt, 8, 2, 1},
-                    BufferData{"vec3<float>", FormatMode::kSFloat, 32, 3, 1},
                     BufferData{"vec4<uint32>", FormatMode::kUInt, 32, 4, 1},
                     BufferData{"mat2x4<int32>", FormatMode::kSInt, 32, 4, 2},
-                    BufferData{"mat3x3<float>", FormatMode::kSFloat, 32, 3, 3},
                     BufferData{"mat4x2<uint16>", FormatMode::kUInt, 16, 2, 4},
-                    BufferData{"B8G8R8_UNORM", FormatMode::kUNorm, 8, 3,
-                               1}));  // NOLINT(whitespace/parens)
+                    BufferData{"B8G8R8_UNORM", FormatMode::kUNorm, 8, 3, 1},
+                    BufferData{"float", FormatMode::kSFloat, 32, 1, 1},
+                    BufferData{"double", FormatMode::kSFloat, 64, 1, 1},
+                    BufferData{"vec3<float>", FormatMode::kSFloat, 32, 3, 1},
+                    BufferData{"mat3x3<float>", FormatMode::kSFloat, 32, 3,
+                               3}));  // NOLINT(whitespace/parens)
 
 struct NameData {
   const char* name;
