@@ -192,9 +192,20 @@ class Buffer {
   /// Succeeds only if both buffer contents are equal
   Result IsEqual(Buffer* buffer) const;
 
+  /// Returns a histogram
+  std::vector<double> GetHistogramForChannel(uint32_t channel,
+                                             uint32_t num_bins) const;
+
+  /// Checks if buffers are compatible for comparison
+  Result CheckCompability(Buffer* buffer) const;
+
   /// Compare the RMSE of this buffer against |buffer|. The RMSE must be
   /// less than |tolerance|.
   Result CompareRMSE(Buffer* buffer, float tolerance) const;
+
+  /// Compare the histogram EMD of this buffer against |buffer|. The EMD must be
+  /// less than |tolerance|.
+  Result CompareHistogramEMD(Buffer* buffer, float tolerance) const;
 
  private:
   uint32_t WriteValueFromComponent(const Value& value,

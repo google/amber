@@ -81,7 +81,7 @@ double CalculateDiff(const Format::Segment* seg,
     return Sub<uint32_t>(buf1, buf2);
   if (type::Type::IsUint64(mode, num_bits))
     return Sub<uint64_t>(buf1, buf2);
-  // TOOD(dsinclair): Handle float16 ...
+  // TODO(dsinclair): Handle float16 ...
   if (type::Type::IsFloat16(mode, num_bits)) {
     assert(false && "Float16 suppport not implemented");
     return 0.0;
@@ -115,16 +115,9 @@ Result Buffer::CopyTo(Buffer* buffer) const {
 }
 
 Result Buffer::IsEqual(Buffer* buffer) const {
-  if (!buffer->format_->Equal(format_))
-    return Result{"Buffers have a different format"};
-  if (buffer->element_count_ != element_count_)
-    return Result{"Buffers have a different size"};
-  if (buffer->width_ != width_)
-    return Result{"Buffers have a different width"};
-  if (buffer->height_ != height_)
-    return Result{"Buffers have a different height"};
-  if (buffer->bytes_.size() != bytes_.size())
-    return Result{"Buffers have a different number of values"};
+  auto result = CheckCompability(buffer);
+  if (!result.IsSuccess())
+    return result;
 
   uint32_t num_different = 0;
   uint32_t first_different_index = 0;
@@ -177,7 +170,7 @@ std::vector<double> Buffer::CalculateDiffs(const Buffer* buffer) const {
   return diffs;
 }
 
-Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
+Result Buffer::CheckCompability(Buffer* buffer) const {
   if (!buffer->format_->Equal(format_))
     return Result{"Buffers have a different format"};
   if (buffer->element_count_ != element_count_)
@@ -189,6 +182,14 @@ Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
   if (buffer->ValueCount() != ValueCount())
     return Result{"Buffers have a different number of values"};
 
+  return Result{};
+}
+
+Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
+  auto result = CheckCompability(buffer);
+  if (!result.IsSuccess())
+    return result;
+
   auto diffs = CalculateDiffs(buffer);
   double sum = 0.0;
   for (const auto val : diffs)
@@ -198,6 +199,82 @@ Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
   double rmse = std::sqrt(sum);
   if (rmse > static_cast<double>(tolerance)) {
     return Result("Root Mean Square Error of " + std::to_string(rmse) +
+                  " is greater than tolerance of " + std::to_string(tolerance));
+  }
+
+  return {};
+}
+
+std::vector<double> Buffer::GetHistogramForChannel(uint32_t channel,
+                                                   uint32_t num_bins) const {
+  std::vector<double> bins(num_bins, 0.0);
+  auto* buf_ptr = GetValues<uint8_t>();
+  const auto& segments = format_->GetSegments();
+  const auto comp = segments[channel].GetComponent();
+  auto num_channels = format_->ValuesPerElement();
+  buf_ptr += channel * comp->SizeInBytes();
+  for (size_t i = 0; i < ElementCount(); ++i) {
+    const auto bin = *reinterpret_cast<const uint8_t*>(buf_ptr);
+    bins[bin]++;
+    // Assumes unpacked format where all channels have the same bit size
+    buf_ptr += comp->SizeInBytes() * num_channels;
+  }
+
+  return bins;
+}
+
+Result Buffer::CompareHistogramEMD(Buffer* buffer, float tolerance) const {
+  auto result = CheckCompability(buffer);
+  if (!result.IsSuccess())
+    return result;
+
+  const int num_bins = 256;
+  auto num_channels = format_->ValuesPerElement();
+
+  for (auto segment : format_->GetSegments()) {
+    if (!segment.GetComponent()->IsUint8() || num_channels != 4)
+      return Result(
+          "EMD comparison only supports 8bit unorm format with four channels.");
+  }
+
+  std::vector<std::vector<double>> histograms[2];
+  for (uint32_t c = 0; c < num_channels; ++c) {
+    histograms[0].push_back(GetHistogramForChannel(c, num_bins));
+    histograms[1].push_back(buffer->GetHistogramForChannel(c, num_bins));
+  }
+
+  // Normalize histograms
+  for (uint32_t i = 0; i < 2; ++i)
+    for (uint32_t c = 0; c < num_channels; ++c) {
+      double total = 0;
+      for (auto value : histograms[i][c])
+        total += value;
+      for (auto& value : histograms[i][c])
+        value /= total;
+    }
+
+  double max_emd = 0;
+
+  for (uint32_t c = 0; c < num_channels; ++c) {
+    std::vector<double> diffs(histograms[0][c].size());
+    for (size_t i = 0; i < histograms[0][c].size(); ++i)
+      diffs[i] = histograms[0][c][i] - histograms[1][c][i];
+    // Accumulate diffs
+    for (size_t i = 1; i < histograms[0][c].size(); ++i)
+      diffs[i] += diffs[i - 1];
+    // Take absolute value and calculate total
+    double diff_total = 0;
+    for (auto diff : diffs)
+      diff_total += fabs(diff);
+    // Normalize diff
+    diff_total /= num_bins;
+
+    if (diff_total > max_emd)
+      max_emd = diff_total;
+  }
+
+  if (max_emd > static_cast<double>(tolerance)) {
+    return Result("Histogram EMD value of " + std::to_string(max_emd) +
                   " is greater than tolerance of " + std::to_string(tolerance));
   }
 
