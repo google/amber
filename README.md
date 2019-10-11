@@ -292,6 +292,7 @@ SwiftShader if installed it can be used by by exporting the `VK_ICD_FILENAMES`
 environment variable and using it directly. If SwiftShader is not installed it
 can be built with Amber by setting `AMBER_ENABLE_SWIFTSHADER` during the
 configure step of CMake.
+framework
 
 
 ```
