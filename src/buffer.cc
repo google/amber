@@ -182,7 +182,7 @@ Result Buffer::CheckCompability(Buffer* buffer) const {
   if (buffer->ValueCount() != ValueCount())
     return Result{"Buffers have a different number of values"};
 
-  return Result{};
+  return {};
 }
 
 Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
@@ -205,19 +205,28 @@ Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
   return {};
 }
 
-std::vector<double> Buffer::GetHistogramForChannel(uint32_t channel,
-                                                   uint32_t num_bins) const {
-  std::vector<double> bins(num_bins, 0.0);
+std::vector<int64_t> Buffer::GetHistogramForChannel(uint32_t channel,
+                                                    uint32_t num_bins) const {
+  assert(num_bins == 256);
+  std::vector<int64_t> bins(num_bins, 0.0);
   auto* buf_ptr = GetValues<uint8_t>();
-  const auto& segments = format_->GetSegments();
-  const auto comp = segments[channel].GetComponent();
-  auto num_channels = format_->ValuesPerElement();
-  buf_ptr += channel * comp->SizeInBytes();
+  auto num_channels = format_->InputNeededPerElement();
+  uint32_t channel_id = 0;
+
   for (size_t i = 0; i < ElementCount(); ++i) {
-    const auto bin = *reinterpret_cast<const uint8_t*>(buf_ptr);
-    bins[bin]++;
-    // Assumes unpacked format where all channels have the same bit size
-    buf_ptr += comp->SizeInBytes() * num_channels;
+    for (const auto& seg : format_->GetSegments()) {
+      if (seg.IsPadding()) {
+        buf_ptr += seg.PaddingBytes();
+        continue;
+      }
+      if (channel_id == channel) {
+        assert(type::Type::IsUint8(seg.GetFormatMode(), seg.GetNumBits()));
+        const auto bin = *reinterpret_cast<const uint8_t*>(buf_ptr);
+        bins[bin]++;
+      }
+      buf_ptr += seg.SizeInBytes();
+      channel_id = (channel_id + 1) % num_channels;
+    }
   }
 
   return bins;
@@ -229,48 +238,42 @@ Result Buffer::CompareHistogramEMD(Buffer* buffer, float tolerance) const {
     return result;
 
   const int num_bins = 256;
-  auto num_channels = format_->ValuesPerElement();
-
+  auto num_channels = format_->InputNeededPerElement();
   for (auto segment : format_->GetSegments()) {
-    if (!segment.GetComponent()->IsUint8() || num_channels != 4)
+    if (!type::Type::IsUint8(segment.GetFormatMode(), segment.GetNumBits()) ||
+        num_channels != 4)
       return Result(
           "EMD comparison only supports 8bit unorm format with four channels.");
   }
 
-  std::vector<std::vector<double>> histograms[2];
+  std::vector<std::vector<int64_t>> histogram1, histogram2;
   for (uint32_t c = 0; c < num_channels; ++c) {
-    histograms[0].push_back(GetHistogramForChannel(c, num_bins));
-    histograms[1].push_back(buffer->GetHistogramForChannel(c, num_bins));
+    histogram1.push_back(GetHistogramForChannel(c, num_bins));
+    histogram2.push_back(buffer->GetHistogramForChannel(c, num_bins));
   }
 
-  // Normalize histograms
-  for (uint32_t i = 0; i < 2; ++i)
-    for (uint32_t c = 0; c < num_channels; ++c) {
-      double total = 0;
-      for (auto value : histograms[i][c])
-        total += value;
-      for (auto& value : histograms[i][c])
-        value /= total;
-    }
-
+  // Earth movers's distance: Calculate the minimal cost of moving "earth" to
+  // transform the first histogram into the second, where each bin of the
+  // histogram can be thought of as a column of units of earth. The cost is the
+  // amount of earth moved times the distance carried (the distance is the
+  // number of adjacent bins over which the earth is carried). Calculate this
+  // using the cumulative difference of the bins, which works as long as both
+  // histograms have the same amount of earth. Sum the absolute values of the
+  // cumulative difference to get the final cost of how much (and how far) the
+  // earth was moved.
   double max_emd = 0;
 
   for (uint32_t c = 0; c < num_channels; ++c) {
-    std::vector<double> diffs(histograms[0][c].size());
-    for (size_t i = 0; i < histograms[0][c].size(); ++i)
-      diffs[i] = histograms[0][c][i] - histograms[1][c][i];
-    // Accumulate diffs
-    for (size_t i = 1; i < histograms[0][c].size(); ++i)
-      diffs[i] += diffs[i - 1];
-    // Take absolute value and calculate total
-    double diff_total = 0;
-    for (auto diff : diffs)
-      diff_total += fabs(diff);
-    // Normalize diff
-    diff_total /= num_bins;
+    uint64_t diff_total = 0;
+    int64_t diff_accum = 0;
 
-    if (diff_total > max_emd)
-      max_emd = diff_total;
+    for (size_t i = 0; i < histogram1[c].size(); ++i) {
+      diff_accum += histogram1[c][i] - histogram2[c][i];
+      diff_total += std::abs(diff_accum);
+    }
+    // Normalize to range 0..1
+    double emd = static_cast<double>(diff_total) / (num_bins * element_count_);
+    max_emd = std::max(max_emd, emd);
   }
 
   if (max_emd > static_cast<double>(tolerance)) {
