@@ -118,9 +118,9 @@ struct DawnPipelineHelper {
   ::dawn::RasterizationStateDescriptor rasterizationState;
 
  private:
-  ::dawn::PipelineStageDescriptor fragmentStage;
-  ::dawn::PipelineStageDescriptor vertexStage;
-  ::dawn::RenderPassColorAttachmentDescriptor*
+  ::dawn::ProgrammableStageDescriptor fragmentStage;
+  ::dawn::ProgrammableStageDescriptor vertexStage;
+  ::dawn::RenderPassColorAttachmentDescriptor
       colorAttachmentsInfoPtr[kMaxColorAttachments];
   ::dawn::RenderPassDepthStencilAttachmentDescriptor depthStencilAttachmentInfo;
   std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments> colorStates;
@@ -1114,7 +1114,7 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     colorStates[i] = &colorStatesDescriptor[i];
     colorStates[i]->format = fb_format;
   }
-  renderPipelineDescriptor.colorStates = &colorStates[0];
+  renderPipelineDescriptor.colorStates = colorStates[0];
 
   // Set defaults for the depth stencil state descriptors.
   if (pipeline_data == nullptr) {
@@ -1176,7 +1176,6 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
     colorAttachmentsInfo[i].loadOp = load_op;
     colorAttachmentsInfo[i].storeOp = ::dawn::StoreOp::Store;
     colorAttachmentsInfo[i].clearColor = render_pipeline.clear_color_value;
-    colorAttachmentsInfoPtr[i] = nullptr;
   }
 
   depthStencilAttachmentInfo.clearDepth = render_pipeline.clear_depth_value;
@@ -1193,7 +1192,7 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
     if (colorAttachment.Get() != nullptr) {
       colorAttachmentsInfo[colorAttachmentIndex].attachment = colorAttachment;
       colorAttachmentsInfoPtr[colorAttachmentIndex] =
-          &colorAttachmentsInfo[colorAttachmentIndex];
+          colorAttachmentsInfo[colorAttachmentIndex];
     }
     ++colorAttachmentIndex;
   }
@@ -1306,7 +1305,6 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
 
   const ::dawn::RenderPipeline pipeline =
       device_->CreateRenderPipeline(renderPipelineDescriptor);
-  static const uint64_t vertexBufferOffsets[1] = {0};
   ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
   ::dawn::RenderPassEncoder pass =
       encoder.BeginRenderPass(renderPassDescriptor);
@@ -1316,7 +1314,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
       pass.SetBindGroup(i, render_pipeline->bind_groups[i], 0, nullptr);
     }
   }
-  pass.SetVertexBuffers(0, 1, &vertex_buffer, vertexBufferOffsets);
+  pass.SetVertexBuffer(0, vertex_buffer, 0);
   pass.SetIndexBuffer(index_buffer, 0);
   pass.DrawIndexed(6, 1, 0, 0, 0);
   pass.EndPass();
@@ -1375,7 +1373,6 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   if (!result.IsSuccess())
     return result;
 
-  static const uint64_t vertexBufferOffsets[1] = {0};
   const ::dawn::RenderPipeline pipeline =
       device_->CreateRenderPipeline(renderPipelineDescriptor);
   ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
@@ -1389,10 +1386,9 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   }
   // TODO(sarahM0): figure out what are startSlot, count and offsets
   for (uint32_t i = 0; i < render_pipeline->vertex_buffers.size(); i++) {
-    pass.SetVertexBuffers(i,                                   /* startSlot */
-                          1,                                   /* count */
-                          &render_pipeline->vertex_buffers[i], /* buffer */
-                          vertexBufferOffsets);                /* offsets */
+    pass.SetVertexBuffer(i,                                  /* slot */
+                         render_pipeline->vertex_buffers[i], /* buffer */
+                         0);                                 /* offsets */
   }
   // TODO(sarahM0): figure out what this offset means
   pass.SetIndexBuffer(render_pipeline->index_buffer, /* buffer */
@@ -1424,7 +1420,7 @@ Result EngineDawn::DoCompute(const ComputeCommand* command) {
   computePipelineDescriptor.layout = MakeBasicPipelineLayout(
       device_->Get(), compute_pipeline->bind_group_layouts);
 
-  ::dawn::PipelineStageDescriptor pipelineStageDescriptor;
+  ::dawn::ProgrammableStageDescriptor pipelineStageDescriptor;
   pipelineStageDescriptor.module = compute_pipeline->compute_shader;
   pipelineStageDescriptor.entryPoint = "main";
   computePipelineDescriptor.computeStage = pipelineStageDescriptor;
