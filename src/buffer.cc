@@ -270,6 +270,8 @@ Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
       Value v = data[i++];
       ptr += WriteValueFromComponent(v, seg.GetFormatMode(), seg.GetNumBits(),
                                      ptr);
+      if (i >= data.size())
+        break;
     }
   }
   return {};

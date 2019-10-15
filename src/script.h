@@ -183,6 +183,24 @@ class Script : public RecipeImpl {
     return types_.back().get();
   }
 
+  /// Adds |type| to the list of known types. The |type| must have
+  /// a unique name over all types in the script.
+  Result AddType(const std::string& name, std::unique_ptr<type::Type> type) {
+    if (name_to_type_.count(name) > 0)
+      return Result("duplicate type name provided");
+
+    name_to_type_[name] = std::move(type);
+    return {};
+  }
+
+  /// Retrieves the type with |name|, |nullptr| if not found.
+  type::Type* GetType(const std::string& name) const {
+    auto it = name_to_type_.find(name);
+    return it == name_to_type_.end() ? nullptr : it->second.get();
+  }
+
+  type::Type* ParseType(const std::string& str);
+
  private:
   struct {
     std::vector<std::string> required_features;
@@ -195,6 +213,7 @@ class Script : public RecipeImpl {
   std::map<std::string, Shader*> name_to_shader_;
   std::map<std::string, Buffer*> name_to_buffer_;
   std::map<std::string, Pipeline*> name_to_pipeline_;
+  std::map<std::string, std::unique_ptr<type::Type>> name_to_type_;
   std::vector<std::unique_ptr<Shader>> shaders_;
   std::vector<std::unique_ptr<Command>> commands_;
   std::vector<std::unique_ptr<Buffer>> buffers_;
