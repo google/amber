@@ -241,12 +241,14 @@ Result Buffer::CompareHistogramEMD(Buffer* buffer, float tolerance) const {
   auto num_channels = format_->InputNeededPerElement();
   for (auto segment : format_->GetSegments()) {
     if (!type::Type::IsUint8(segment.GetFormatMode(), segment.GetNumBits()) ||
-        num_channels != 4)
+        num_channels != 4) {
       return Result(
           "EMD comparison only supports 8bit unorm format with four channels.");
+    }
   }
 
-  std::vector<std::vector<int64_t>> histogram1, histogram2;
+  std::vector<std::vector<int64_t>> histogram1;
+  std::vector<std::vector<int64_t>> histogram2;
   for (uint32_t c = 0; c < num_channels; ++c) {
     histogram1.push_back(GetHistogramForChannel(c, num_bins));
     histogram2.push_back(buffer->GetHistogramForChannel(c, num_bins));
@@ -264,15 +266,19 @@ Result Buffer::CompareHistogramEMD(Buffer* buffer, float tolerance) const {
   double max_emd = 0;
 
   for (uint32_t c = 0; c < num_channels; ++c) {
-    uint64_t diff_total = 0;
-    int64_t diff_accum = 0;
+    double diff_total = 0;
+    double diff_accum = 0;
 
-    for (size_t i = 0; i < histogram1[c].size(); ++i) {
-      diff_accum += histogram1[c][i] - histogram2[c][i];
-      diff_total += std::abs(diff_accum);
+    for (size_t i = 0; i < num_bins; ++i) {
+      double hist_normalized_1 =
+          static_cast<double>(histogram1[c][i]) / element_count_;
+      double hist_normalized_2 =
+          static_cast<double>(histogram2[c][i]) / buffer->element_count_;
+      diff_accum += hist_normalized_1 - hist_normalized_2;
+      diff_total += fabs(diff_accum);
     }
     // Normalize to range 0..1
-    double emd = static_cast<double>(diff_total) / (num_bins * element_count_);
+    double emd = diff_total / num_bins;
     max_emd = std::max(max_emd, emd);
   }
 

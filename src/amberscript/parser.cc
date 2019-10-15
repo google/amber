@@ -1386,9 +1386,10 @@ Result Parser::ParseExpect() {
     return Result("missing buffer name between EXPECT and EQ_BUFFER");
   if (token->AsString() == "RMSE_BUFFER")
     return Result("missing buffer name between EXPECT and RMSE_BUFFER");
-  if (token->AsString() == "EQ_HISTOGRAM_EMD_BUFFER")
+  if (token->AsString() == "EQ_HISTOGRAM_EMD_BUFFER") {
     return Result(
         "missing buffer name between EXPECT and EQ_HISTOGRAM_EMD_BUFFER");
+  }
 
   size_t line = tokenizer_->GetCurrentLine();
   auto* buffer = script_->GetBuffer(token->AsString());
@@ -1402,7 +1403,7 @@ Result Parser::ParseExpect() {
     return Result("invalid comparator in EXPECT command");
 
   if (token->AsString() == "EQ_BUFFER" || token->AsString() == "RMSE_BUFFER" ||
-      token->AsString() == "EMD_BUFFER") {
+      token->AsString() == "EQ_HISTOGRAM_EMD_BUFFER") {
     auto type = token->AsString();
 
     token = tokenizer_->NextToken();
@@ -1451,16 +1452,16 @@ Result Parser::ParseExpect() {
         return r;
 
       cmd->SetTolerance(token->AsFloat());
-    } else if (type == "EMD_BUFFER") {
-      cmd->SetComparator(CompareBufferCommand::Comparator::kEmd);
+    } else if (type == "EQ_HISTOGRAM_EMD_BUFFER") {
+      cmd->SetComparator(CompareBufferCommand::Comparator::kHistogramEmd);
 
       token = tokenizer_->NextToken();
       if (!token->IsString() && token->AsString() == "TOLERANCE")
-        return Result("missing TOLERANCE for EXPECT EMD_BUFFER");
+        return Result("missing TOLERANCE for EXPECT EQ_HISTOGRAM_EMD_BUFFER");
 
       token = tokenizer_->NextToken();
       if (!token->IsInteger() && !token->IsDouble())
-        return Result("invalid TOLERANCE for EXPECT EMD_BUFFER");
+        return Result("invalid TOLERANCE for EXPECT EQ_HISTOGRAM_EMD_BUFFER");
 
       Result r = token->ConvertToDouble();
       if (!r.IsSuccess())
