@@ -902,5 +902,64 @@ END)";
   EXPECT_EQ(128, *reinterpret_cast<const uint32_t*>(data + 28));
   EXPECT_EQ(220, *reinterpret_cast<const uint32_t*>(data + 36));
 }
+
+TEST_F(AmberScriptParserTest, BufferWithStructPartialInitialization) {
+  std::string in = R"(
+STRUCT my_data
+  uint32 a
+  float b
+  uint32 c
+  uint32 d
+END
+
+BUFFER my_buffer DATA_TYPE my_data STD430 DATA
+  1  # a
+ 64  # b
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: Mismatched number of items in buffer", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BufferWithStruct_vec_Std140) {
+  std::string in = R"(
+
+STRUCT my_data
+  float a
+  vec3<float> b
+END
+
+BUFFER my_buffer DATA_TYPE my_data STD140 DATA
+  1  # a
+ 64 128 220  # b
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->GetType()->IsStruct());
+  EXPECT_EQ(Format::Layout::kStd140, buffer->GetFormat()->GetLayout());
+
+  EXPECT_EQ(1U, buffer->ElementCount());
+  EXPECT_EQ(32U, buffer->GetSizeInBytes());
+
+  const auto* data = buffer->GetValues<uint8_t>();
+  EXPECT_FLOAT_EQ(1.f, *reinterpret_cast<const float*>(data + 0));
+  EXPECT_FLOAT_EQ(64, *reinterpret_cast<const float*>(data + 16));
+  EXPECT_FLOAT_EQ(128, *reinterpret_cast<const float*>(data + 20));
+  EXPECT_FLOAT_EQ(220, *reinterpret_cast<const float*>(data + 24));
+}
+
 }  // namespace amberscript
 }  // namespace amber

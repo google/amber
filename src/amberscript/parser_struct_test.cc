@@ -341,10 +341,10 @@ END)";
   EXPECT_EQ("3: invalid value for STRUCT member OFFSET", r.Error());
 }
 
-TEST_F(AmberScriptParserTest, StructMemberWithArrayStride) {
+TEST_F(AmberScriptParserTest, DISABLED_StructMemberWithArrayStride) {
   std::string in = R"(
 STRUCT my_struct
-  uint8 first ARRAY_STRIDE 20
+  uint8 first[2] ARRAY_STRIDE 20
 END)";
 
   Parser parser;
@@ -391,10 +391,22 @@ END)";
   EXPECT_EQ("3: invalid value for STRUCT member ARRAY_STRIDE", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, StrictInvalidTypeWithArrayStride) {
+  std::string in = R"(
+STRUCT s
+  uint32 a ARRAY_STRIDE 10
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("3: ARRAY_STRIDE only valid on array members", r.Error());
+}
+
 TEST_F(AmberScriptParserTest, StructMemberWithMatrixStride) {
   std::string in = R"(
 STRUCT my_struct
-  uint8 first MATRIX_STRIDE 20
+  mat2x2<float> first MATRIX_STRIDE 20
 END)";
 
   Parser parser;
@@ -420,7 +432,7 @@ END)";
 TEST_F(AmberScriptParserTest, StructMemberMatrixStrideMissingValue) {
   std::string in = R"(
 STRUCT my_struct
-  uint8 first MATRIX_STRIDE
+  mat2x2<float> first MATRIX_STRIDE
 END)";
 
   Parser parser;
@@ -432,13 +444,25 @@ END)";
 TEST_F(AmberScriptParserTest, StructMemberMatrixStrideInvalidValue) {
   std::string in = R"(
 STRUCT my_struct
-  uint8 first MATRIX_STRIDE abcd
+  mat2x2<float> first MATRIX_STRIDE abcd
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
   EXPECT_FALSE(r.IsSuccess());
   EXPECT_EQ("3: invalid value for STRUCT member MATRIX_STRIDE", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, StructInvalidTypeWithMatrixStride) {
+  std::string in = R"(
+STRUCT s
+  uint32 a MATRIX_STRIDE 10
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("3: MATRIX_STRIDE only valid on matrix members", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, StructMemberExtraParam) {

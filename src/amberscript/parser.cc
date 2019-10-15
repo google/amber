@@ -16,6 +16,7 @@
 
 #include <cassert>
 #include <limits>
+#include <map>
 #include <string>
 #include <utility>
 #include <vector>
@@ -966,6 +967,8 @@ Result Parser::ParseStruct() {
           return Result("missing value for STRUCT member ARRAY_STRIDE");
         if (!token->IsInteger())
           return Result("invalid value for STRUCT member ARRAY_STRIDE");
+        if (!member_type->IsArray())
+          return Result("ARRAY_STRIDE only valid on array members");
 
         m->array_stride_in_bytes = token->AsInt32();
       } else if (token->AsString() == "MATRIX_STRIDE") {
@@ -974,6 +977,8 @@ Result Parser::ParseStruct() {
           return Result("missing value for STRUCT member MATRIX_STRIDE");
         if (!token->IsInteger())
           return Result("invalid value for STRUCT member MATRIX_STRIDE");
+        if (!member_type->IsMatrix())
+          return Result("MATRIX_STRIDE only valid on matrix members");
 
         m->matrix_stride_in_bytes = token->AsInt32();
       } else {
