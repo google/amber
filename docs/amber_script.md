@@ -285,7 +285,7 @@ attachment content, depth/stencil content, uniform buffers, etc.
   INDEX_DATA {buffer_name}
 ```
 
-##### OpenCL Plain-Old-Data Arguments
+#### OpenCL Plain-Old-Data Arguments
 OpenCL kernels can have plain-old-data (pod or pod_ubo in the desriptor map)
 arguments set their data via this command. Amber will generate the appropriate
 buffers for the pipeline populated with the specified data.
@@ -299,7 +299,7 @@ buffers for the pipeline populated with the specified data.
   SET KERNEL ARG_NUMBER _number_ AS {data_type} _val_
 ```
 
-##### Topologies
+#### Topologies
  * `point_list`
  * `line_list`
  * `line_list_with_adjacency`
@@ -399,11 +399,11 @@ The commands which can be used inside a `REPEAT` block are:
 ### Commands
 
 ```groovy
-# Sets the clear color to use for |pipeline| which must be a `graphics`
+# Sets the clear color to use for |pipeline| which must be a graphics
 # pipeline. The colors are integers from 0 - 255.
 CLEAR_COLOR {pipeline} _r (0 - 255)_ _g (0 - 255)_ _b (0 - 255)_ _a (0 - 255)_
 
-# Instructs the |pipeline| which must be a `graphics` pipeline to execute the
+# Instructs the |pipeline| which must be a graphics pipeline to execute the
 # clear command.
 CLEAR {pipeline}
 ```
@@ -459,6 +459,7 @@ EXPECT {buffer_1} RMSE_BUFFER {buffer_2} TOLERANCE _value_
 ## Examples
 
 ### Compute Shader
+
 ```groovy
 #!amber
 # Simple amber compute shader.
@@ -496,6 +497,7 @@ EXPECT kComputeBuffer IDX 263168 EQ 128 128
 ```
 
 ### Entry Points
+
 ```groovy
 #!amber
 
@@ -572,6 +574,7 @@ EXPECT kImgBuffer IDX 128 128 SIZE 128 128 EQ_RGB 0 255 0
 ```
 
 ### Buffers
+
 ```groovy
 #!amber
 
@@ -671,6 +674,7 @@ RUN kGraphicsPipeline DRAW_ARRAY AS triangle_list START_IDX 0 COUNT 24
 ```
 
 ### OpenCL-C Shaders
+
 ```groovy
 SHADER compute my_shader OPENCL-C
 kernel void line(const int* in, global int* out, int m, int b) {

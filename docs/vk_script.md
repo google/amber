@@ -54,6 +54,7 @@ test will continue.
 
 
 #### Require Examples
+
 ```
 [require]
 independentBlend
@@ -78,6 +79,7 @@ The shaders accepted are:
  * `vertex`
 
 #### Shader examples
+
 ```
 [fragment shader]
 #version 430
@@ -107,6 +109,7 @@ the types listed in the *GL Types* section below. The `glsl_type` is one listed
 in the *GLSL Types* section below.
 
 #### Vertex Data example
+
 ```
 [vertex data]
 0/R32G32B32_SFLOAT  1/R8G8B8_UNORM
@@ -122,6 +125,7 @@ provided to the `draw arrays` command. The indices themselves are a list of
 integer indexes to use.
 
 #### Indices Example
+
 ```
 [indices]
 # comment line
@@ -334,6 +338,7 @@ The pipeline commands with their accepted data are:
  * `colorWriteMask <VkColorComponent bitmask>`
 
 #### Test Example
+
 ```
 [test]
 clear color 1 0.4 0.5 0.2
@@ -491,8 +496,8 @@ relative probe rect rgba (0.0, 0.0, 1.0, 1.0) (1.0, 0.4, 0.5, 0.2)
   * `sparseResidencyAliased`
   * `variableMultisampleRate`
   * `inheritedQueries`
-``
-### `Image Formats`
+
+### Image Formats
   * `A1R5G5B5_UNORM_PACK16`
   * `A2B10G10R10_SINT_PACK32`
   * `A2B10G10R10_SNORM_PACK32`
