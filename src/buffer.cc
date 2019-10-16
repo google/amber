@@ -17,6 +17,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <algorithm>
 
 namespace amber {
 namespace {

@@ -172,7 +172,7 @@ EXPECT my_fb 0 0 SIZE 250 250 EQ_RGB 0 128 255)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("15: Invalid comparator in EXPECT command", r.Error());
+  EXPECT_EQ("15: invalid comparator in EXPECT command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectMissingIDXValues) {
