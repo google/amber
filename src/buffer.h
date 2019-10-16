@@ -193,8 +193,8 @@ class Buffer {
   Result IsEqual(Buffer* buffer) const;
 
   /// Returns a histogram
-  std::vector<int64_t> GetHistogramForChannel(uint32_t channel,
-                                              uint32_t num_bins) const;
+  std::vector<uint64_t> GetHistogramForChannel(uint32_t channel,
+                                               uint32_t num_bins) const;
 
   /// Checks if buffers are compatible for comparison
   Result CheckCompability(Buffer* buffer) const;

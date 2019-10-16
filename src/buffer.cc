@@ -206,10 +206,10 @@ Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
   return {};
 }
 
-std::vector<int64_t> Buffer::GetHistogramForChannel(uint32_t channel,
-                                                    uint32_t num_bins) const {
+std::vector<uint64_t> Buffer::GetHistogramForChannel(uint32_t channel,
+                                                     uint32_t num_bins) const {
   assert(num_bins == 256);
-  std::vector<int64_t> bins(num_bins, 0);
+  std::vector<uint64_t> bins(num_bins, 0);
   auto* buf_ptr = GetValues<uint8_t>();
   auto num_channels = format_->InputNeededPerElement();
   uint32_t channel_id = 0;
@@ -248,8 +248,8 @@ Result Buffer::CompareHistogramEMD(Buffer* buffer, float tolerance) const {
     }
   }
 
-  std::vector<std::vector<int64_t>> histogram1;
-  std::vector<std::vector<int64_t>> histogram2;
+  std::vector<std::vector<uint64_t>> histogram1;
+  std::vector<std::vector<uint64_t>> histogram2;
   for (uint32_t c = 0; c < num_channels; ++c) {
     histogram1.push_back(GetHistogramForChannel(c, num_bins));
     histogram2.push_back(buffer->GetHistogramForChannel(c, num_bins));
