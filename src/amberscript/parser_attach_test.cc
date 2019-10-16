@@ -425,7 +425,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: invalid data_type provided", r.Error());
+  EXPECT_EQ("6: invalid data type 'uint' provided", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PipelineSpecializationBadDataType) {
