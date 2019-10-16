@@ -209,7 +209,7 @@ Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
 std::vector<int64_t> Buffer::GetHistogramForChannel(uint32_t channel,
                                                     uint32_t num_bins) const {
   assert(num_bins == 256);
-  std::vector<int64_t> bins(num_bins, 0.0);
+  std::vector<int64_t> bins(num_bins, 0);
   auto* buf_ptr = GetValues<uint8_t>();
   auto num_channels = format_->InputNeededPerElement();
   uint32_t channel_id = 0;
