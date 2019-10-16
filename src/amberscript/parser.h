@@ -47,6 +47,7 @@ class Parser : public amber::Parser {
   Result ToPipelineType(const std::string& str, PipelineType* type);
   Result ValidateEndOfStatement(const std::string& name);
 
+  Result ParseStruct();
   Result ParseBuffer();
   Result ParseBufferInitializer(Buffer*);
   Result ParseBufferInitializerSize(Buffer*);

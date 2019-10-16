@@ -97,6 +97,9 @@ uint32_t Format::InputNeededPerElement() const {
 }
 
 void Format::SetLayout(Layout layout) {
+  if (layout == layout_)
+    return;
+
   layout_ = layout;
   RebuildSegments();
 }
