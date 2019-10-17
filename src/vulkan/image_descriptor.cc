@@ -44,7 +44,7 @@ void ImageDescriptor::RecordCopyDataToResourceIfNeeded(CommandBuffer* command) {
 Result ImageDescriptor::CreateResourceIfNeeded() {
   if (transfer_image_) {
     return Result(
-        "Vulkan: BufferDescriptor::CreateResourceIfNeeded() must be called "
+        "Vulkan: ImageDescriptor::CreateResourceIfNeeded() must be called "
         "only when |transfer_image| is empty");
   }
 
