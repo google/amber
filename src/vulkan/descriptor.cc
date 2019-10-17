@@ -13,10 +13,10 @@
 // limitations under the License.
 
 #include "src/vulkan/descriptor.h"
-#include "src/vulkan/command_buffer.h"
-#include "src/vulkan/device.h"
 #include <cassert>
 #include <cstring>
+#include "src/vulkan/command_buffer.h"
+#include "src/vulkan/device.h"
 
 namespace amber {
 namespace vulkan {
@@ -67,7 +67,7 @@ void Descriptor::RecordCopyDataToResourceIfNeeded(CommandBuffer* command) {
 Result Descriptor::RecordCopyDataToHost(CommandBuffer* command) {
   if (!GetResource()) {
     return Result(
-        "Vulkan: Descriptor::RecordCopyDataToHost() no transfer buffer");
+        "Vulkan: Descriptor::RecordCopyDataToHost() no transfer resource");
   }
 
   GetResource()->CopyToHost(command);
@@ -78,7 +78,7 @@ Result Descriptor::MoveResourceToBufferOutput() {
   if (!GetResource()) {
     return Result(
         "Vulkan: Descriptor::MoveResourceToBufferOutput() no transfer"
-        " buffer");
+        " resource");
   }
 
   // Only need to copy the buffer back if we have an attached amber buffer to
