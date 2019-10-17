@@ -232,6 +232,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     auto type = BufferCommand::BufferType::kSSBO;
     if (buf_info.buffer->GetBufferType() == BufferType::kUniform) {
       type = BufferCommand::BufferType::kUniform;
+    } else if (buf_info.buffer->GetBufferType() == BufferType::kTexture) {
+      type = BufferCommand::BufferType::kTexture;
     } else if (buf_info.buffer->GetBufferType() != BufferType::kStorage) {
       return Result("Vulkan: CreatePipeline - unknown buffer type: " +
                     std::to_string(static_cast<uint32_t>(

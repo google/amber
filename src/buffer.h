@@ -46,7 +46,9 @@ enum class BufferType : int8_t {
   /// A push constant buffer.
   kPushConstant,
   /// A vertex buffer.
-  kVertex
+  kVertex,
+  /// A texture buffer.
+  kTexture,
 };
 
 /// A buffer stores data. The buffer maybe provided from the input script, or

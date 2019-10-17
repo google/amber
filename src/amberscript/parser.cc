@@ -654,6 +654,8 @@ Result Parser::ToBufferType(const std::string& name, BufferType* type) {
     *type = BufferType::kUniform;
   else if (name == "storage")
     *type = BufferType::kStorage;
+  else if (name == "texture")
+    *type = BufferType::kTexture;
   else
     return Result("unknown buffer_type: " + name);
 
@@ -705,6 +707,8 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
       Result r = pipeline->SetPushConstantBuffer(buffer);
       if (!r.IsSuccess())
         return r;
+    } else if (token->AsString() == "texture") {
+      buffer->SetBufferType(BufferType::kTexture);
     } else {
       BufferType type = BufferType::kColor;
       Result r = ToBufferType(token->AsString(), &type);
@@ -720,7 +724,8 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
 
   if (buffer->GetBufferType() == BufferType::kUnknown ||
       buffer->GetBufferType() == BufferType::kStorage ||
-      buffer->GetBufferType() == BufferType::kUniform) {
+      buffer->GetBufferType() == BufferType::kUniform ||
+      buffer->GetBufferType() == BufferType::kTexture) {
     // If AS was parsed above consume the next token.
     if (buffer->GetBufferType() != BufferType::kUnknown)
       token = tokenizer_->NextToken();
