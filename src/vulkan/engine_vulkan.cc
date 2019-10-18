@@ -230,10 +230,10 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   for (const auto& buf_info : pipeline->GetBuffers()) {
     auto type = BufferCommand::BufferType::kSSBO;
-    if (buf_info.buffer->GetBufferType() == BufferType::kUniform) {
+    if (buf_info.buffer->GetBufferType() == BufferType::kStorageImage) {
+      type = BufferCommand::BufferType::kStorageImage;
+    } else if (buf_info.buffer->GetBufferType() == BufferType::kUniform) {
       type = BufferCommand::BufferType::kUniform;
-    } else if (buf_info.buffer->GetBufferType() == BufferType::kTexture) {
-      type = BufferCommand::BufferType::kTexture;
     } else if (buf_info.buffer->GetBufferType() != BufferType::kStorage) {
       return Result("Vulkan: CreatePipeline - unknown buffer type: " +
                     std::to_string(static_cast<uint32_t>(

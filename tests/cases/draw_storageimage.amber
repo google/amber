@@ -55,14 +55,14 @@ END
 PIPELINE graphics pipeline2
   ATTACH vert_shader
   ATTACH frag_shader_tex
-  BIND BUFFER texture AS texture DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER texture AS storage_image DESCRIPTOR_SET 0 BINDING 0
   FRAMEBUFFER_SIZE 256 256
   BIND BUFFER framebuffer AS color LOCATION 0
 END
 
 PIPELINE compute pipeline3
   ATTACH compute_shader
-  BIND BUFFER texture AS texture DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER texture AS storage_image DESCRIPTOR_SET 0 BINDING 0
   FRAMEBUFFER_SIZE 256 256
 END
 

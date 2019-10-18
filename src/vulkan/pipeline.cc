@@ -245,7 +245,7 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
     return Result("Pipeline::AddDescriptor BufferCommand is nullptr");
   if (cmd->IsPushConstant())
     return AddPushConstantBuffer(cmd->GetBuffer(), cmd->GetOffset());
-  if (!cmd->IsSSBO() && !cmd->IsUniform() && !cmd->IsTexture())
+  if (!cmd->IsSSBO() && !cmd->IsUniform() && !cmd->IsStorageImage())
     return Result("Pipeline::AddDescriptor not supported buffer type");
 
   const uint32_t desc_set = cmd->GetDescriptorSet();
@@ -275,7 +275,7 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
   }
 
   if (desc == nullptr) {
-    if (cmd->IsTexture()) {
+    if (cmd->IsStorageImage()) {
       auto image_desc = MakeUnique<ImageDescriptor>(
           cmd->GetBuffer(), DescriptorType::kStorageImage, device_,
           cmd->GetDescriptorSet(), cmd->GetBinding());

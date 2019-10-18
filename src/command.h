@@ -416,14 +416,16 @@ class ProbeSSBOCommand : public Probe {
 /// Command to set the size of a buffer, or update a buffers contents.
 class BufferCommand : public PipelineCommand {
  public:
-  enum class BufferType { kSSBO, kUniform, kPushConstant, kTexture };
+  enum class BufferType { kSSBO, kUniform, kPushConstant, kStorageImage };
 
   explicit BufferCommand(BufferType type, Pipeline* pipeline);
   ~BufferCommand() override;
 
   bool IsSSBO() const { return buffer_type_ == BufferType::kSSBO; }
   bool IsUniform() const { return buffer_type_ == BufferType::kUniform; }
-  bool IsTexture() const { return buffer_type_ == BufferType::kTexture; }
+  bool IsStorageImage() const {
+    return buffer_type_ == BufferType::kStorageImage;
+  }
   bool IsPushConstant() const {
     return buffer_type_ == BufferType::kPushConstant;
   }
