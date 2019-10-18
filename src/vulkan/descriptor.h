@@ -46,7 +46,7 @@ class Descriptor {
              Device* device,
              uint32_t desc_set,
              uint32_t binding);
-  ~Descriptor();
+  virtual ~Descriptor();
 
   uint32_t GetDescriptorSet() const { return descriptor_set_; }
   uint32_t GetBinding() const { return binding_; }

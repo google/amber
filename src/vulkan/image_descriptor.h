@@ -31,13 +31,13 @@ class ImageDescriptor : public Descriptor {
                   Device* device,
                   uint32_t desc_set,
                   uint32_t binding);
-  ~ImageDescriptor();
+  ~ImageDescriptor() override;
 
   void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
-  void RecordCopyDataToResourceIfNeeded(CommandBuffer* command);
+  void RecordCopyDataToResourceIfNeeded(CommandBuffer* command) override;
   Result CreateResourceIfNeeded() override;
-  Result RecordCopyDataToHost(CommandBuffer* command);
-  Result MoveResourceToBufferOutput();
+  Result RecordCopyDataToHost(CommandBuffer* command) override;
+  Result MoveResourceToBufferOutput() override;
 
  protected:
   Resource* GetResource() override { return transfer_image_.get(); }

@@ -41,11 +41,11 @@ class BufferDescriptor : public Descriptor {
                    Device* device,
                    uint32_t desc_set,
                    uint32_t binding);
-  ~BufferDescriptor();
+  ~BufferDescriptor() override;
 
   void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
   Result CreateResourceIfNeeded() override;
-  Result MoveResourceToBufferOutput();
+  Result MoveResourceToBufferOutput() override;
 
   Result SetSizeInElements(uint32_t element_count);
   Result AddToBuffer(const std::vector<Value>& values, uint32_t offset);
