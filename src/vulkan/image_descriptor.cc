@@ -101,7 +101,7 @@ void ImageDescriptor::UpdateDescriptorSetIfNeeded(
     layout = VK_IMAGE_LAYOUT_GENERAL;
 
   VkDescriptorImageInfo image_info = {
-      nullptr,  // TODO: Add sampler here later if used
+      nullptr,  // TODO(asuonpaa): Add sampler here later if used
       transfer_image_->GetVkImageView(), layout};
 
   VkWriteDescriptorSet write = VkWriteDescriptorSet();
