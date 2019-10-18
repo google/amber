@@ -13,11 +13,12 @@
 // limitations under the License.
 
 #include "src/vulkan/buffer_descriptor.h"
+
+#include <vector>
+
 #include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
-
-#include <vector>
 
 namespace amber {
 namespace vulkan {

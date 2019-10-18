@@ -13,11 +13,12 @@
 // limitations under the License.
 
 #include "src/vulkan/transfer_image.h"
-#include "src/vulkan/command_buffer.h"
-#include "src/vulkan/device.h"
 
 #include <cstring>
 #include <limits>
+
+#include "src/vulkan/command_buffer.h"
+#include "src/vulkan/device.h"
 
 namespace amber {
 namespace vulkan {
