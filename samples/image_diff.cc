@@ -71,8 +71,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         return false;
       }
       opts->tolerance = std::stof(std::string(args[i]));
-      if (opts->tolerance < 0) {
-        std::cerr << "Tolerance must be non-negative." << std::endl;
+      if (opts->tolerance < 0 || opts->tolerance > 255) {
+        std::cerr << "Tolerance must be in the range 0..255." << std::endl;
         return false;
       }
     } else if (arg == "--histogram_emd") {
