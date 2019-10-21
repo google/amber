@@ -53,7 +53,7 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
 
   transfer_image_ = MakeUnique<TransferImage>(
       device_, *amber_buffer_->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
-      amber_buffer_->GetWidth(), amber_buffer_->GetHeight(), 1);
+      amber_buffer_->GetWidth(), amber_buffer_->GetHeight(), 1u);
   VkImageUsageFlags usage =
       VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
