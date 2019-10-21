@@ -36,12 +36,24 @@ struct Options {
 };
 
 const char kUsage[] = R"(Usage: image_diff [options] image1.png image2.png
+options:
 
- options:
-  --rmse                    -- Compare using RMSE algorithm (default).
-  --histogram_emd           -- Compare using histogram EMD algorithm.
-  -t | --tolerance <float>  -- Tolerance value for comparison.
-  -h | --help               -- This help text.
+  --rmse TOLERANCE
+               Compare using the Root Mean Square Error (RMSE) algorithm with
+               a floating point TOLERANCE value in the range 0..255, where 0
+               indicates identical images and 255 indicates images where every
+               color channel has the maximum difference.
+
+  --histogram_emd TOLERANCE
+               Compare the per-channel color histograms of the images using a
+               variant of the Earth Mover's Distance (EMD) algorithm with a
+               floating point TOLERANCE value in the range 0.0..1.0, where 0.0
+               indicates identical histograms and 1.0 indicates completely
+               different histograms for at least one of the color channels.
+               E.g. an image with red=255 for every pixel vs. an image with
+               red=0 for every pixel.
+
+  -h | --help  This help text.
 )";
 
 bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
@@ -52,18 +64,28 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       return true;
     } else if (arg == "--rmse") {
       opts->compare_algorithm = CompareAlgorithm::kRMSE;
-    } else if (arg == "--histogram_emd") {
-      opts->compare_algorithm = CompareAlgorithm::kHISTOGRAM_EMD;
-    } else if (arg == "-t" || arg == "--tolerance") {
       ++i;
       if (i >= args.size()) {
-        std::cerr << "Missing value for " << args[i - 1] << " argument."
+        std::cerr << "Missing tolerance value for RMSE comparison."
                   << std::endl;
         return false;
       }
       opts->tolerance = std::stof(std::string(args[i]));
       if (opts->tolerance < 0) {
         std::cerr << "Tolerance must be non-negative." << std::endl;
+        return false;
+      }
+    } else if (arg == "--histogram_emd") {
+      opts->compare_algorithm = CompareAlgorithm::kHISTOGRAM_EMD;
+      ++i;
+      if (i >= args.size()) {
+        std::cerr << "Missing tolerance value for histogram EMD comparison."
+                  << std::endl;
+        return false;
+      }
+      opts->tolerance = std::stof(std::string(args[i]));
+      if (opts->tolerance < 0 || opts->tolerance > 1) {
+        std::cerr << "Tolerance must be in the range 0..1." << std::endl;
         return false;
       }
     } else if (!arg.empty()) {
