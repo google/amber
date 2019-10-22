@@ -18,8 +18,8 @@ set BUILD_ROOT=%cd%
 set SRC=%cd%\github\amber
 set BUILD_TYPE=%1
 
-choco install cmake --pre --yes --no-progress --version 3.15.4
-choco upgrade cmake --pre --yes --no-progress --version 3.15.4
+choco install cmake --yes --no-progress
+choco upgrade cmake --yes --no-progress
 
 :: Force usage of python 3.6 and add cmake to the path.
 set PATH=C:\python36;"C:\Program Files\CMake\bin";%PATH%
