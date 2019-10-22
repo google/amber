@@ -304,17 +304,14 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
         "and binding");
   }
 
-  if (desc->IsStorageBuffer() || desc->IsUniformBuffer()) {
-    auto* buf_desc = static_cast<BufferDescriptor*>(desc);
-    if (cmd->GetValues().empty()) {
-      Result r = buf_desc->SetSizeInElements(cmd->GetBuffer()->ElementCount());
-      if (!r.IsSuccess())
-        return r;
-    } else {
-      Result r = buf_desc->AddToBuffer(cmd->GetValues(), cmd->GetOffset());
-      if (!r.IsSuccess())
-        return r;
-    }
+  if (cmd->GetValues().empty()) {
+    Result r = desc->SetSizeInElements(cmd->GetBuffer()->ElementCount());
+    if (!r.IsSuccess())
+      return r;
+  } else {
+    Result r = desc->AddToBuffer(cmd->GetValues(), cmd->GetOffset());
+    if (!r.IsSuccess())
+      return r;
   }
 
   return {};

@@ -89,21 +89,5 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   is_descriptor_set_update_needed_ = false;
 }
 
-Result BufferDescriptor::SetSizeInElements(uint32_t element_count) {
-  if (!amber_buffer_)
-    return Result("missing amber_buffer for SetSizeInElements call");
-
-  amber_buffer_->SetSizeInElements(element_count);
-  return {};
-}
-
-Result BufferDescriptor::AddToBuffer(const std::vector<Value>& values,
-                                     uint32_t offset) {
-  if (!amber_buffer_)
-    return Result("missing amber_buffer for AddToBuffer call");
-
-  return amber_buffer_->SetDataWithOffset(values, offset);
-}
-
 }  // namespace vulkan
 }  // namespace amber

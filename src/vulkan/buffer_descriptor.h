@@ -47,9 +47,6 @@ class BufferDescriptor : public Descriptor {
   Result CreateResourceIfNeeded() override;
   Result MoveResourceToBufferOutput() override;
 
-  Result SetSizeInElements(uint32_t element_count);
-  Result AddToBuffer(const std::vector<Value>& values, uint32_t offset);
-
  protected:
   Resource* GetResource() override { return transfer_buffer_.get(); }
 

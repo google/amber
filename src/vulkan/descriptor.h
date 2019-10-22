@@ -59,6 +59,8 @@ class Descriptor {
   virtual void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) = 0;
   virtual Resource* GetResource() = 0;
 
+  Result SetSizeInElements(uint32_t element_count);
+  Result AddToBuffer(const std::vector<Value>& values, uint32_t offset);
   bool IsStorageBuffer() const {
     return type_ == DescriptorType::kStorageBuffer;
   }
