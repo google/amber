@@ -1340,7 +1340,16 @@ END)";
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_TRUE(r.IsSuccess());
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(1U, bufs.size());
+  EXPECT_EQ(BufferType::kStorageImage, bufs[0].buffer->GetBufferType());
 }
 
 TEST_F(AmberScriptParserTest, BindBufferStorageImageGraphics) {
@@ -1362,7 +1371,16 @@ END)";
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_TRUE(r.IsSuccess());
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(1U, bufs.size());
+  EXPECT_EQ(BufferType::kStorageImage, bufs[0].buffer->GetBufferType());
 }
 
 TEST_F(AmberScriptParserTest, BindBufferStorageImageMissingDescriptorSetValue) {
