@@ -25,7 +25,7 @@
 namespace amber {
 namespace {
 
-const uint8_t kBitsPerByte = 8;
+const uint32_t kBitsPerByte = 8;
 const double kEpsilon = 0.000001;
 const double kDefaultTexelTolerance = 0.002;
 
@@ -33,21 +33,20 @@ const double kDefaultTexelTolerance = 0.002;
 // [0, bits) of |dst|.
 void CopyBitsOfMemoryToBuffer(uint8_t* dst,
                               const uint8_t* src,
-                              uint8_t src_bit_offset,
+                              uint32_t src_bit_offset,
                               uint32_t bits) {
-  while (src_bit_offset > static_cast<uint8_t>(7)) {
+  while (src_bit_offset > 7) {
     ++src;
-    src_bit_offset = static_cast<uint8_t>(src_bit_offset - kBitsPerByte);
+    src_bit_offset = src_bit_offset - kBitsPerByte;
   }
 
   // Number of bytes greater than or equal to |(src_bit_offset + bits) / 8|.
-  const uint8_t size_in_bytes =
-      static_cast<uint8_t>((src_bit_offset + bits + 7) / kBitsPerByte);
-  assert(size_in_bytes <= static_cast<uint8_t>(kBitsPerByte));
+  const uint32_t size_in_bytes = (src_bit_offset + bits + 7) / kBitsPerByte;
+  assert(size_in_bytes <= kBitsPerByte);
 
   uint64_t data = 0;
   uint8_t* ptr = reinterpret_cast<uint8_t*>(&data);
-  for (uint8_t i = 0; i < size_in_bytes; ++i) {
+  for (uint32_t i = 0; i < size_in_bytes; ++i) {
     ptr[i] = src[i];
   }
 
@@ -263,7 +262,7 @@ std::vector<double> GetActualValuesFromTexel(const uint8_t* texel,
   assert(fmt && !fmt->GetSegments().empty());
 
   std::vector<double> actual_values(fmt->GetSegments().size());
-  uint8_t bit_offset = 0;
+  uint32_t bit_offset = 0;
 
   for (size_t i = 0; i < fmt->GetSegments().size(); ++i) {
     const auto& seg = fmt->GetSegments()[i];
