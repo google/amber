@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <stdio.h>
+
 #include <iostream>
 #include <vector>
 
 #include "src/buffer.h"
 #include "src/format.h"
 #include "src/type_parser.h"
-
-#include <stdio.h>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wweak-vtables"
