@@ -19,6 +19,8 @@
 #include "src/format.h"
 #include "src/type_parser.h"
 
+#include <stdio.h>
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wweak-vtables"
 #include "third_party/lodepng/lodepng.h"
@@ -57,12 +59,14 @@ options:
 )";
 
 bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
+  int num_algorithms = 0;
   for (size_t i = 1; i < args.size(); ++i) {
     const std::string& arg = args[i];
     if (arg == "-h" || arg == "--help") {
       opts->show_help = true;
       return true;
     } else if (arg == "--rmse") {
+      num_algorithms++;
       opts->compare_algorithm = CompareAlgorithm::kRMSE;
       ++i;
       if (i >= args.size()) {
@@ -70,12 +74,17 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
                   << std::endl;
         return false;
       }
-      opts->tolerance = std::stof(std::string(args[i]));
+      if (!sscanf(args[i].c_str(), "%f", &opts->tolerance)) {
+        std::cerr << "Invalid tolerance value " << args[i] << std::endl;
+        return false;
+      }
       if (opts->tolerance < 0 || opts->tolerance > 255) {
         std::cerr << "Tolerance must be in the range 0..255." << std::endl;
         return false;
       }
+
     } else if (arg == "--histogram_emd") {
+      num_algorithms++;
       opts->compare_algorithm = CompareAlgorithm::kHISTOGRAM_EMD;
       ++i;
       if (i >= args.size()) {
@@ -83,7 +92,10 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
                   << std::endl;
         return false;
       }
-      opts->tolerance = std::stof(std::string(args[i]));
+      if (!sscanf(args[i].c_str(), "%f", &opts->tolerance)) {
+        std::cerr << "Invalid tolerance value " << args[i] << std::endl;
+        return false;
+      }
       if (opts->tolerance < 0 || opts->tolerance > 1) {
         std::cerr << "Tolerance must be in the range 0..1." << std::endl;
         return false;
@@ -91,6 +103,13 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
     } else if (!arg.empty()) {
       opts->input_filenames.push_back(arg);
     }
+  }
+  if (num_algorithms == 0) {
+    std::cerr << "No comparison algorithm specified." << std::endl;
+    return false;
+  } else if (num_algorithms > 1) {
+    std::cerr << "Only one comparison algorithm can be specified." << std::endl;
+    return false;
   }
 
   return true;
