@@ -38,7 +38,10 @@ struct Options {
 };
 
 const char kUsage[] = R"(Usage: image_diff [options] image1.png image2.png
-options:
+
+Exactly one algorithm (and its parameters) must be specified.
+
+Algorithms:
 
   --rmse TOLERANCE
                Compare using the Root Mean Square Error (RMSE) algorithm with
@@ -54,6 +57,8 @@ options:
                different histograms for at least one of the color channels.
                E.g. an image with red=255 for every pixel vs. an image with
                red=0 for every pixel.
+
+Other options:
 
   -h | --help  This help text.
 )";
