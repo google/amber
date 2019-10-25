@@ -50,16 +50,14 @@ amber::Result ConvertToPNG(uint32_t width,
                            uint32_t height,
                            const std::vector<amber::Value>& values,
                            std::vector<uint8_t>* buffer) {
-  if (values.size() != (width * height)) {
-    return amber::Result("Values size (" + std::to_string(values.size()) +
-                         ") != " + "width * height (" +
-                         std::to_string(width * height) + ")");
-  }
+  assert(values.size() == (width * height) &&
+         "Buffer values != width * height");
+  assert(!values.empty() && "Buffer empty");
 
   std::vector<uint8_t> data;
 
   // Prepare data as lodepng expects it
-  for (amber::Value value : values) {
+  for (const amber::Value& value : values) {
     const uint32_t pixel = value.AsUint32();
     data.push_back(byte2(pixel));  // R
     data.push_back(byte1(pixel));  // G

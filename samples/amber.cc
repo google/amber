@@ -471,6 +471,22 @@ int main(int argc, const char** argv) {
           pos != std::string::npos && image_filename.substr(pos + 1) == "png";
       for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
         if (buffer_info.buffer_name == options.fb_names[i]) {
+          if (buffer_info.values.size() !=
+              (buffer_info.width * buffer_info.height)) {
+            result = amber::Result(
+                "Framebuffer (" + buffer_info.buffer_name + ") size (" +
+                std::to_string(buffer_info.values.size()) +
+                ") != " + "width * height (" +
+                std::to_string(buffer_info.width * buffer_info.height) + ")");
+            break;
+          }
+
+          if (buffer_info.values.empty()) {
+            result = amber::Result("Framebuffer (" + buffer_info.buffer_name +
+                                   ") empty or non-existent.");
+            break;
+          }
+
           if (usePNG) {
 #if AMBER_ENABLE_LODEPNG
             result = png::ConvertToPNG(buffer_info.width, buffer_info.height,
