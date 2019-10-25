@@ -42,7 +42,7 @@ amber::Result ConvertToPPM(uint32_t width,
                            uint32_t height,
                            const std::vector<amber::Value>& values,
                            std::vector<uint8_t>* buffer) {
-  assert(values.size() != (width * height) &&
+  assert(values.size() == (width * height) &&
          "Buffer values != width * height");
   assert(!values.empty() && "Buffer empty");
 
