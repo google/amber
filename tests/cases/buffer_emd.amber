@@ -1,0 +1,70 @@
+#!amber
+#
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER vertex vtex_shader GLSL
+#version 430
+
+layout(location = 0) in vec4 position;
+layout(location = 0) out vec4 frag_color;
+
+layout(set = 0, binding = 0) readonly buffer block1 {
+  vec4 in_color;
+};
+
+void main() {
+  gl_Position = position;
+  frag_color = vec4(0.25, 0.5, 0.75, 1.0);
+}
+END
+
+SHADER fragment frag_shader GLSL
+#version 430
+
+layout(location = 0) in vec4 frag_color;
+layout(location = 0) out vec4 final_color;
+
+void main() {
+  final_color = frag_color;
+}
+END
+
+BUFFER frame1 FORMAT B8G8R8A8_UNORM
+BUFFER frame2 FORMAT B8G8R8A8_UNORM
+
+PIPELINE graphics pipeline1
+  ATTACH vtex_shader
+  ATTACH frag_shader
+
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER frame1 AS color LOCATION 0
+END
+
+PIPELINE graphics pipeline2
+  ATTACH vtex_shader
+  ATTACH frag_shader
+
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER frame2 AS color LOCATION 0
+END
+
+CLEAR pipeline1
+CLEAR pipeline2
+# Draw a rect to different parts of the frame buffers.
+# Histograms will still match.
+RUN pipeline1 DRAW_RECT POS   0   0 SIZE 128 128
+RUN pipeline2 DRAW_RECT POS   128 128 SIZE 128 128
+
+EXPECT frame1 EQ_HISTOGRAM_EMD_BUFFER frame2 TOLERANCE 0.1

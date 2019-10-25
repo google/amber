@@ -212,7 +212,7 @@ class DrawArraysCommand : public PipelineCommand {
 /// A command to compare two buffers.
 class CompareBufferCommand : public Command {
  public:
-  enum class Comparator { kEq, kRmse };
+  enum class Comparator { kEq, kRmse, kHistogramEmd };
 
   CompareBufferCommand(Buffer* buffer_1, Buffer* buffer_2);
   ~CompareBufferCommand() override;

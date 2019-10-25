@@ -421,6 +421,7 @@ CLEAR {pipeline}
  * `EQ_RGBA`
  * `EQ_BUFFER`
  * `RMSE_BUFFER`
+ * `EQ_HISTOGRAM_EMD_BUFFER`
 
 ```groovy
 # Checks that |buffer_name| at |x| has the given |value|s when compared
@@ -451,9 +452,14 @@ EXPECT {buffer_name} IDX _x_in_pixels_ _y_in_pixels_ \
 EXPECT {buffer_1} EQ_BUFFER {buffer_2}
 
 # Checks that the Root Mean Square Error when comparing |buffer_1| to
-# |buffer_2| is less than or equal too |tolerance|. Note, |tolerance| is a
+# |buffer_2| is less than or equal to |tolerance|. Note, |tolerance| is a
 # unit-less number.
 EXPECT {buffer_1} RMSE_BUFFER {buffer_2} TOLERANCE _value_
+
+# Checks that the Earth Mover's Distance when comparing histograms of
+# |buffer_1| to |buffer_2| is less than or equal to |tolerance|.
+# Note, |tolerance| is a unit-less number.
+EXPECT {buffer_1} EQ_HISTOGRAM_EMD_BUFFER {buffer_2} TOLERANCE _value_
 ```
 
 ## Examples

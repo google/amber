@@ -446,7 +446,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
     return {};
   }
   if (!token->IsString())
-    return Result("Invalid token after ATTACH");
+    return Result("invalid token after ATTACH");
 
   bool set_shader_type = false;
   ShaderType shader_type = shader->GetType();
@@ -469,7 +469,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
     type = token->AsString();
   }
   if (set_shader_type && type != "ENTRY_POINT")
-    return Result("Unknown ATTACH parameter: " + type);
+    return Result("unknown ATTACH parameter: " + type);
 
   if (shader->GetType() == ShaderType::kShaderTypeMulti && !set_shader_type)
     return Result("ATTACH missing TYPE for multi shader");
@@ -501,7 +501,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
       if (token->IsEOL() || token->IsEOS())
         return {};
       if (token->IsString())
-        return Result("Unknown ATTACH parameter: " + token->AsString());
+        return Result("unknown ATTACH parameter: " + token->AsString());
       return Result("extra parameters after ATTACH command");
     }
   }
@@ -1538,6 +1538,10 @@ Result Parser::ParseExpect() {
     return Result("missing buffer name between EXPECT and EQ_BUFFER");
   if (token->AsString() == "RMSE_BUFFER")
     return Result("missing buffer name between EXPECT and RMSE_BUFFER");
+  if (token->AsString() == "EQ_HISTOGRAM_EMD_BUFFER") {
+    return Result(
+        "missing buffer name between EXPECT and EQ_HISTOGRAM_EMD_BUFFER");
+  }
 
   size_t line = tokenizer_->GetCurrentLine();
   auto* buffer = script_->GetBuffer(token->AsString());
@@ -1548,9 +1552,10 @@ Result Parser::ParseExpect() {
   token = tokenizer_->NextToken();
 
   if (!token->IsString())
-    return Result("Invalid comparator in EXPECT command");
+    return Result("invalid comparator in EXPECT command");
 
-  if (token->AsString() == "EQ_BUFFER" || token->AsString() == "RMSE_BUFFER") {
+  if (token->AsString() == "EQ_BUFFER" || token->AsString() == "RMSE_BUFFER" ||
+      token->AsString() == "EQ_HISTOGRAM_EMD_BUFFER") {
     auto type = token->AsString();
 
     token = tokenizer_->NextToken();
@@ -1588,11 +1593,27 @@ Result Parser::ParseExpect() {
 
       token = tokenizer_->NextToken();
       if (!token->IsString() && token->AsString() == "TOLERANCE")
-        return Result("Missing TOLERANCE for EXPECT RMSE_BUFFER");
+        return Result("missing TOLERANCE for EXPECT RMSE_BUFFER");
 
       token = tokenizer_->NextToken();
       if (!token->IsInteger() && !token->IsDouble())
-        return Result("Invalid TOLERANCE for EXPECT RMSE_BUFFER");
+        return Result("invalid TOLERANCE for EXPECT RMSE_BUFFER");
+
+      Result r = token->ConvertToDouble();
+      if (!r.IsSuccess())
+        return r;
+
+      cmd->SetTolerance(token->AsFloat());
+    } else if (type == "EQ_HISTOGRAM_EMD_BUFFER") {
+      cmd->SetComparator(CompareBufferCommand::Comparator::kHistogramEmd);
+
+      token = tokenizer_->NextToken();
+      if (!token->IsString() && token->AsString() == "TOLERANCE")
+        return Result("missing TOLERANCE for EXPECT EQ_HISTOGRAM_EMD_BUFFER");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger() && !token->IsDouble())
+        return Result("invalid TOLERANCE for EXPECT EQ_HISTOGRAM_EMD_BUFFER");
 
       Result r = token->ConvertToDouble();
       if (!r.IsSuccess())

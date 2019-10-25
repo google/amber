@@ -42,11 +42,9 @@ amber::Result ConvertToPPM(uint32_t width,
                            uint32_t height,
                            const std::vector<amber::Value>& values,
                            std::vector<uint8_t>* buffer) {
-  if (values.size() != (width * height)) {
-    return amber::Result("Values size (" + std::to_string(values.size()) +
-                         ") != " + "width * height (" +
-                         std::to_string(width * height) + ")");
-  }
+  assert(values.size() == (width * height) &&
+         "Buffer values != width * height");
+  assert(!values.empty() && "Buffer empty");
 
   // Write PPM header
   std::string image = "P6\n";
