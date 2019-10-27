@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdio.h>
-
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 #include "src/buffer.h"
@@ -79,7 +78,9 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
                   << std::endl;
         return false;
       }
-      if (!sscanf(args[i].c_str(), "%f", &opts->tolerance)) {
+      std::stringstream sstream(args[i]);
+      sstream >> opts->tolerance;
+      if (sstream.fail()) {
         std::cerr << "Invalid tolerance value " << args[i] << std::endl;
         return false;
       }
@@ -97,7 +98,9 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
                   << std::endl;
         return false;
       }
-      if (!sscanf(args[i].c_str(), "%f", &opts->tolerance)) {
+      std::stringstream sstream(args[i]);
+      sstream >> opts->tolerance;
+      if (sstream.fail()) {
         std::cerr << "Invalid tolerance value " << args[i] << std::endl;
         return false;
       }
