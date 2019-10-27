@@ -26,9 +26,7 @@
 
 namespace {
 
-enum class CompareAlgorithm {
-  kRMSE = 0,
-};
+enum class CompareAlgorithm { kRMSE = 0, kHISTOGRAM_EMD = 1 };
 
 struct Options {
   std::vector<std::string> input_filenames;
@@ -41,7 +39,8 @@ const char kUsage[] = R"(Usage: image_diff [options] image1.png image2.png
 
  options:
   --rmse                    -- Compare using RMSE algorithm (default).
-  -t | --tolerance <float>  -- Tolerance value for RMSE comparison.
+  --histogram_emd           -- Compare using histogram EMD algorithm.
+  -t | --tolerance <float>  -- Tolerance value for comparison.
   -h | --help               -- This help text.
 )";
 
@@ -53,6 +52,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       return true;
     } else if (arg == "--rmse") {
       opts->compare_algorithm = CompareAlgorithm::kRMSE;
+    } else if (arg == "--histogram_emd") {
+      opts->compare_algorithm = CompareAlgorithm::kHISTOGRAM_EMD;
     } else if (arg == "-t" || arg == "--tolerance") {
       ++i;
       if (i >= args.size()) {
@@ -136,6 +137,8 @@ int main(int argc, const char** argv) {
   amber::Result res;
   if (options.compare_algorithm == CompareAlgorithm::kRMSE)
     res = buffers[0].CompareRMSE(&buffers[1], options.tolerance);
+  else if (options.compare_algorithm == CompareAlgorithm::kHISTOGRAM_EMD)
+    res = buffers[0].CompareHistogramEMD(&buffers[1], options.tolerance);
 
   if (res.IsSuccess())
     std::cout << "Images similar" << std::endl;
