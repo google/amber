@@ -14,6 +14,7 @@
 
 #include "src/vulkan/transfer_image.h"
 
+#include <cstring>
 #include <limits>
 
 #include "src/vulkan/command_buffer.h"

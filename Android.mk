@@ -52,10 +52,12 @@ LOCAL_SRC_FILES:= \
     src/vulkan/command_buffer.cc \
     src/vulkan/command_pool.cc \
     src/vulkan/compute_pipeline.cc \
+    src/vulkan/descriptor.cc \
     src/vulkan/device.cc \
     src/vulkan/engine_vulkan.cc \
     src/vulkan/frame_buffer.cc \
     src/vulkan/graphics_pipeline.cc \
+    src/vulkan/image_descriptor.cc \
     src/vulkan/index_buffer.cc \
     src/vulkan/pipeline.cc \
     src/vulkan/push_constant.cc \

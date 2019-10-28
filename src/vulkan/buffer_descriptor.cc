@@ -14,13 +14,8 @@
 
 #include "src/vulkan/buffer_descriptor.h"
 
-#include <algorithm>
-#include <cassert>
-#include <cstring>
-#include <utility>
 #include <vector>
 
-#include "src/engine.h"
 #include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
@@ -33,11 +28,7 @@ BufferDescriptor::BufferDescriptor(Buffer* buffer,
                                    Device* device,
                                    uint32_t desc_set,
                                    uint32_t binding)
-    : device_(device),
-      amber_buffer_(buffer),
-      type_(type),
-      descriptor_set_(desc_set),
-      binding_(binding) {}
+    : Descriptor(buffer, type, device, desc_set, binding) {}
 
 BufferDescriptor::~BufferDescriptor() = default;
 
@@ -67,62 +58,11 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
   return {};
 }
 
-void BufferDescriptor::RecordCopyDataToResourceIfNeeded(
-    CommandBuffer* command) {
-  if (!transfer_buffer_)
-    return;
-
-  if (amber_buffer_ && !amber_buffer_->ValuePtr()->empty()) {
-    transfer_buffer_->UpdateMemoryWithRawData(*amber_buffer_->ValuePtr());
-    amber_buffer_->ValuePtr()->clear();
-  }
-
-  transfer_buffer_->CopyToDevice(command);
-}
-
-Result BufferDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
-  if (!transfer_buffer_) {
-    return Result(
-        "Vulkan: BufferDescriptor::RecordCopyDataToHost() no transfer buffer");
-  }
-
-  transfer_buffer_->CopyToHost(command);
-  return {};
-}
-
 Result BufferDescriptor::MoveResourceToBufferOutput() {
-  if (!transfer_buffer_) {
-    return Result(
-        "Vulkan: BufferDescriptor::MoveResourceToBufferOutput() no transfer"
-        " buffer");
-  }
-
-  // Only need to copy the buffer back if we have an attached amber buffer to
-  // write too.
-  if (amber_buffer_) {
-    void* resource_memory_ptr = transfer_buffer_->HostAccessibleMemoryPtr();
-    if (!resource_memory_ptr) {
-      return Result(
-          "Vulkan: BufferDescriptor::MoveResourceToBufferOutput() "
-          "no host accessible memory pointer");
-    }
-
-    if (!amber_buffer_->ValuePtr()->empty()) {
-      return Result(
-          "Vulkan: BufferDescriptor::MoveResourceToBufferOutput() "
-          "output buffer is not empty");
-    }
-
-    auto size_in_bytes = transfer_buffer_->GetSizeInBytes();
-    amber_buffer_->SetElementCount(size_in_bytes /
-                                   amber_buffer_->GetFormat()->SizeInBytes());
-    amber_buffer_->ValuePtr()->resize(size_in_bytes);
-    std::memcpy(amber_buffer_->ValuePtr()->data(), resource_memory_ptr,
-                size_in_bytes);
-  }
-
+  Result r = Descriptor::MoveResourceToBufferOutput();
   transfer_buffer_ = nullptr;
-  return {};
+
+  return r;
 }
 
 void BufferDescriptor::UpdateDescriptorSetIfNeeded(
@@ -141,34 +81,12 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   write.dstBinding = binding_;
   write.dstArrayElement = 0;
   write.descriptorCount = 1;
-  write.descriptorType = IsStorageBuffer() ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
-                                           : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  write.descriptorType = GetVkDescriptorType();
   write.pBufferInfo = &buffer_info;
 
   device_->GetPtrs()->vkUpdateDescriptorSets(device_->GetVkDevice(), 1, &write,
                                              0, nullptr);
   is_descriptor_set_update_needed_ = false;
-}
-
-Result BufferDescriptor::SetSizeInElements(uint32_t element_count) {
-  if (!amber_buffer_)
-    return Result("missing amber_buffer for SetSizeInElements call");
-
-  amber_buffer_->SetSizeInElements(element_count);
-  return {};
-}
-
-Result BufferDescriptor::AddToBuffer(const std::vector<Value>& values,
-                                     uint32_t offset) {
-  if (!amber_buffer_)
-    return Result("missing amber_buffer for AddToBuffer call");
-
-  return amber_buffer_->SetDataWithOffset(values, offset);
-}
-
-VkDescriptorType BufferDescriptor::GetVkDescriptorType() const {
-  return IsStorageBuffer() ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
-                           : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 }
 
 }  // namespace vulkan
