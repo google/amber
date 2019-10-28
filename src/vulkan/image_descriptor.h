@@ -1,4 +1,4 @@
-// Copyright 2018 The Amber Authors.
+// Copyright 2019 The Amber Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,49 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VULKAN_BUFFER_DESCRIPTOR_H_
-#define SRC_VULKAN_BUFFER_DESCRIPTOR_H_
+#ifndef SRC_VULKAN_IMAGE_DESCRIPTOR_H_
+#define SRC_VULKAN_IMAGE_DESCRIPTOR_H_
 
 #include <memory>
 #include <vector>
 
-#include "amber/result.h"
-#include "amber/value.h"
-#include "amber/vulkan_header.h"
-#include "src/buffer.h"
-#include "src/engine.h"
 #include "src/vulkan/descriptor.h"
-#include "src/vulkan/transfer_buffer.h"
+#include "src/vulkan/transfer_image.h"
 
 namespace amber {
 namespace vulkan {
 
-class CommandBuffer;
-class Device;
-
-/// Stores descriptor set and binding information for storage and uniform
-/// buffers.
-class BufferDescriptor : public Descriptor {
+class ImageDescriptor : public Descriptor {
  public:
-  BufferDescriptor(Buffer* buffer,
-                   DescriptorType type,
-                   Device* device,
-                   uint32_t desc_set,
-                   uint32_t binding);
-  ~BufferDescriptor() override;
+  ImageDescriptor(Buffer* buffer,
+                  DescriptorType type,
+                  Device* device,
+                  uint32_t desc_set,
+                  uint32_t binding);
+  ~ImageDescriptor() override;
 
   void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
+  void RecordCopyDataToResourceIfNeeded(CommandBuffer* command) override;
   Result CreateResourceIfNeeded() override;
+  Result RecordCopyDataToHost(CommandBuffer* command) override;
   Result MoveResourceToBufferOutput() override;
 
  protected:
-  Resource* GetResource() override { return transfer_buffer_.get(); }
+  Resource* GetResource() override { return transfer_image_.get(); }
 
  private:
-  std::unique_ptr<TransferBuffer> transfer_buffer_;
+  std::unique_ptr<TransferImage> transfer_image_;
 };
 
 }  // namespace vulkan
 }  // namespace amber
 
-#endif  // SRC_VULKAN_BUFFER_DESCRIPTOR_H_
+#endif  // SRC_VULKAN_IMAGE_DESCRIPTOR_H_
