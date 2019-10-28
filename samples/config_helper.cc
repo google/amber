@@ -40,6 +40,7 @@ amber::Result ConfigHelper::CreateConfig(
     amber::EngineType engine,
     uint32_t engine_major,
     uint32_t engine_minor,
+    int32_t selected_device,
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_instance_extensions,
     const std::vector<std::string>& required_device_extensions,
@@ -67,7 +68,7 @@ amber::Result ConfigHelper::CreateConfig(
     return amber::Result("Unable to create config helper");
 
   return impl_->CreateConfig(
-      engine_major, engine_minor, required_features,
+      engine_major, engine_minor, selected_device, required_features,
       required_instance_extensions, required_device_extensions,
       disable_validation_layer, show_version_info, config);
 }
