@@ -400,7 +400,7 @@ The commands which can be used inside a `REPEAT` block are:
 
 ```groovy
 # Sets the clear color to use for |pipeline| which must be a graphics
-# pipeline. The colors are integers from 0 - 255.
+# pipeline. The colors are integers from 0 - 255.  Defaults to (0, 0, 0, 0)
 CLEAR_COLOR {pipeline} _r (0 - 255)_ _g (0 - 255)_ _b (0 - 255)_ _a (0 - 255)_
 
 # Instructs the |pipeline| which must be a graphics pipeline to execute the
