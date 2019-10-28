@@ -1325,5 +1325,139 @@ END)";
   EXPECT_EQ("9: expected argument number", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, BindBufferStorageImageCompute) {
+  std::string in = R"(
+SHADER compute compute_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+
+PIPELINE compute pipeline
+  ATTACH compute_shader
+  BIND BUFFER texture AS storage_image DESCRIPTOR_SET 0 BINDING 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(1U, bufs.size());
+  EXPECT_EQ(BufferType::kStorageImage, bufs[0].buffer->GetBufferType());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferStorageImageGraphics) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+BUFFER framebuffer FORMAT R8G8B8A8_UNORM
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND BUFFER texture AS storage_image DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER framebuffer AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(1U, bufs.size());
+  EXPECT_EQ(BufferType::kStorageImage, bufs[0].buffer->GetBufferType());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferStorageImageMissingDescriptorSetValue) {
+  std::string in = R"(
+SHADER compute compute_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+
+PIPELINE compute pipeline
+  ATTACH compute_shader
+  BIND BUFFER texture AS storage_image DESCRIPTOR_SET BINDING 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("10: invalid value for DESCRIPTOR_SET in BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferStorageImageMissingDescriptorSet) {
+  std::string in = R"(
+SHADER compute compute_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+
+PIPELINE compute pipeline
+  ATTACH compute_shader
+  BIND BUFFER texture AS storage_image BINDING 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("10: missing DESCRIPTOR_SET or KERNEL for BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferStorageImageMissingBindingValue) {
+  std::string in = R"(
+SHADER compute compute_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+
+PIPELINE compute pipeline
+  ATTACH compute_shader
+  BIND BUFFER texture AS storage_image DESCRIPTOR_SET 0 BINDING
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("11: invalid value for BINDING in BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferStorageImageMissingBinding) {
+  std::string in = R"(
+SHADER compute compute_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+
+PIPELINE compute pipeline
+  ATTACH compute_shader
+  BIND BUFFER texture AS storage_image DESCRIPTOR_SET 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("11: missing BINDING for BIND command", r.Error());
+}
+
 }  // namespace amberscript
 }  // namespace amber

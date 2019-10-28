@@ -18,9 +18,11 @@ set(VULKAN_ENGINE_SOURCES
     command_pool.cc
     compute_pipeline.cc
     device.cc
+    descriptor.cc
     engine_vulkan.cc
     frame_buffer.cc
     graphics_pipeline.cc
+    image_descriptor.cc
     index_buffer.cc
     pipeline.cc
     push_constant.cc
