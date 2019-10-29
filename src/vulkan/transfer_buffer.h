@@ -44,8 +44,6 @@ class TransferBuffer : public Resource {
   /// device to the host.
   void CopyToHost(CommandBuffer* command_buffer) override;
 
-  void UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data);
-
  private:
   VkBuffer buffer_ = VK_NULL_HANDLE;
   VkDeviceMemory memory_ = VK_NULL_HANDLE;

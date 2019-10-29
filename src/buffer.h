@@ -37,8 +37,8 @@ enum class BufferType : int8_t {
   kDepth,
   /// An index buffer.
   kIndex,
-  /// A sampled buffer.
-  kSampled,
+  /// A sampled image.
+  kSampledImage,
   /// A storage buffer.
   kStorage,
   /// A uniform buffer.
@@ -46,7 +46,9 @@ enum class BufferType : int8_t {
   /// A push constant buffer.
   kPushConstant,
   /// A vertex buffer.
-  kVertex
+  kVertex,
+  /// A storage image
+  kStorageImage
 };
 
 /// A buffer stores data. The buffer maybe provided from the input script, or

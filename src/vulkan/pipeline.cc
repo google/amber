@@ -25,6 +25,7 @@
 #include "src/vulkan/compute_pipeline.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/graphics_pipeline.h"
+#include "src/vulkan/image_descriptor.h"
 
 namespace amber {
 namespace vulkan {
@@ -89,7 +90,7 @@ Result Pipeline::CreateDescriptorSetLayouts() {
     // If there are no descriptors for this descriptor set we only
     // need to create its layout and there will be no bindings.
     std::vector<VkDescriptorSetLayoutBinding> bindings;
-    for (auto& desc : info.buffer_descriptors) {
+    for (auto& desc : info.descriptors) {
       bindings.emplace_back();
       bindings.back().binding = desc->GetBinding();
       bindings.back().descriptorType = desc->GetVkDescriptorType();
@@ -115,7 +116,7 @@ Result Pipeline::CreateDescriptorPools() {
       continue;
 
     std::vector<VkDescriptorPoolSize> pool_sizes;
-    for (auto& desc : info.buffer_descriptors) {
+    for (auto& desc : info.descriptors) {
       VkDescriptorType type = desc->GetVkDescriptorType();
       auto it = find_if(pool_sizes.begin(), pool_sizes.end(),
                         [&type](const VkDescriptorPoolSize& size) {
@@ -223,7 +224,7 @@ Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
 
 void Pipeline::UpdateDescriptorSetsIfNeeded() {
   for (auto& info : descriptor_set_info_) {
-    for (auto& desc : info.buffer_descriptors)
+    for (auto& desc : info.descriptors)
       desc->UpdateDescriptorSetIfNeeded(info.vk_desc_set);
   }
 }
@@ -244,7 +245,7 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
     return Result("Pipeline::AddDescriptor BufferCommand is nullptr");
   if (cmd->IsPushConstant())
     return AddPushConstantBuffer(cmd->GetBuffer(), cmd->GetOffset());
-  if (!cmd->IsSSBO() && !cmd->IsUniform())
+  if (!cmd->IsSSBO() && !cmd->IsUniform() && !cmd->IsStorageImage())
     return Result("Pipeline::AddDescriptor not supported buffer type");
 
   const uint32_t desc_set = cmd->GetDescriptorSet();
@@ -266,20 +267,27 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
   }
   descriptor_set_info_[desc_set].empty = false;
 
-  auto& descriptors = descriptor_set_info_[desc_set].buffer_descriptors;
-  BufferDescriptor* desc = nullptr;
+  auto& descriptors = descriptor_set_info_[desc_set].descriptors;
+  Descriptor* desc = nullptr;
   for (auto& descriptor : descriptors) {
     if (descriptor->GetBinding() == cmd->GetBinding())
       desc = descriptor.get();
   }
 
   if (desc == nullptr) {
-    auto desc_type = cmd->IsSSBO() ? DescriptorType::kStorageBuffer
-                                   : DescriptorType::kUniformBuffer;
-    auto buffer_desc = MakeUnique<BufferDescriptor>(
-        cmd->GetBuffer(), desc_type, device_, cmd->GetDescriptorSet(),
-        cmd->GetBinding());
-    descriptors.push_back(std::move(buffer_desc));
+    if (cmd->IsStorageImage()) {
+      auto image_desc = MakeUnique<ImageDescriptor>(
+          cmd->GetBuffer(), DescriptorType::kStorageImage, device_,
+          cmd->GetDescriptorSet(), cmd->GetBinding());
+      descriptors.push_back(std::move(image_desc));
+    } else {
+      auto desc_type = cmd->IsSSBO() ? DescriptorType::kStorageBuffer
+                                     : DescriptorType::kUniformBuffer;
+      auto buffer_desc = MakeUnique<BufferDescriptor>(
+          cmd->GetBuffer(), desc_type, device_, cmd->GetDescriptorSet(),
+          cmd->GetBinding());
+      descriptors.push_back(std::move(buffer_desc));
+    }
 
     desc = descriptors.back().get();
   }
@@ -296,13 +304,12 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
         "and binding");
   }
 
-  auto* buf_desc = static_cast<BufferDescriptor*>(desc);
   if (cmd->GetValues().empty()) {
-    Result r = buf_desc->SetSizeInElements(cmd->GetBuffer()->ElementCount());
+    Result r = desc->SetSizeInElements(cmd->GetBuffer()->ElementCount());
     if (!r.IsSuccess())
       return r;
   } else {
-    Result r = buf_desc->AddToBuffer(cmd->GetValues(), cmd->GetOffset());
+    Result r = desc->AddToBuffer(cmd->GetValues(), cmd->GetOffset());
     if (!r.IsSuccess())
       return r;
   }
@@ -317,7 +324,7 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
       return guard.GetResult();
 
     for (auto& info : descriptor_set_info_) {
-      for (auto& desc : info.buffer_descriptors) {
+      for (auto& desc : info.descriptors) {
         Result r = desc->CreateResourceIfNeeded();
         if (!r.IsSuccess())
           return r;
@@ -340,7 +347,7 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     return guard.GetResult();
 
   for (auto& info : descriptor_set_info_) {
-    for (auto& desc : info.buffer_descriptors)
+    for (auto& desc : info.descriptors)
       desc->RecordCopyDataToResourceIfNeeded(command_.get());
   }
   return guard.Submit(GetFenceTimeout());
@@ -367,7 +374,7 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
       return guard.GetResult();
 
     for (auto& desc_set : descriptor_set_info_) {
-      for (auto& desc : desc_set.buffer_descriptors)
+      for (auto& desc : desc_set.descriptors)
         desc->RecordCopyDataToHost(command_.get());
     }
 
@@ -377,7 +384,7 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
   }
 
   for (auto& desc_set : descriptor_set_info_) {
-    for (auto& desc : desc_set.buffer_descriptors) {
+    for (auto& desc : desc_set.descriptors) {
       Result r = desc->MoveResourceToBufferOutput();
       if (!r.IsSuccess())
         return r;
