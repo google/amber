@@ -16,6 +16,7 @@
 
 #include <utility>
 
+#include <limits>
 #include "gtest/gtest.h"
 #include "src/type_parser.h"
 
@@ -124,11 +125,16 @@ TEST_F(BufferTest, SizeMatrixPaddedStd430) {
   EXPECT_EQ(12U * sizeof(int32_t), b.GetSizeInBytes());
 }
 
+// Creates 10 RGBA pixel values, with the blue channels ranging from 0 to 255,
+// and gets the histogram. Checks that the bin for each blue channel value
+// contains 1, as expected.
 TEST_F(BufferTest, GetHistogramForChannelGradient) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_UINT");
   Format fmt(type.get());
 
+  // Creates 10 RBGA pixel values with the blue channels ranging from 0 to 255.
+  // Every value gets multiplied by 25 to create a gradient
   std::vector<Value> values(40);
   for (uint64_t i = 0; i < values.size(); i += 4)
     values[i + 2].SetIntValue(i / 4 * 25);
@@ -142,6 +148,8 @@ TEST_F(BufferTest, GetHistogramForChannelGradient) {
     EXPECT_EQ(1, bins[i / 4 * 25]);
 }
 
+// Creates 10 RGBA pixel values, with all channels being 0, and gets the
+// histogram.
 TEST_F(BufferTest, GetHistogramForChannelAllBlack) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_UINT");
@@ -162,6 +170,8 @@ TEST_F(BufferTest, GetHistogramForChannelAllBlack) {
   }
 }
 
+// Creates 10 RGBA pixel values, with all channels being the maximum value of 8
+// bit uint, and gets the histogram.
 TEST_F(BufferTest, GetHistogramForChannelAllWhite) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_UINT");
@@ -182,11 +192,15 @@ TEST_F(BufferTest, GetHistogramForChannelAllWhite) {
   }
 }
 
+// Creates two sets of equal pixel values, except for one pixel that has +50 in
+// its red channel. Compares the histograms to see if they are equal with a low
+// threshold, which we expect to fail.
 TEST_F(BufferTest, CompareHistogramEMDToleranceFalse) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_UINT");
   Format fmt(type.get());
 
+  // Every value gets multiplied by 25 to create a gradient
   std::vector<Value> values1(40);
   for (uint64_t i = 0; i < values1.size(); i += 4)
     values1[i].SetIntValue(i / 4 * 25);
@@ -205,11 +219,15 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceFalse) {
   EXPECT_FALSE(b1.CompareHistogramEMD(&b2, 0.001f).IsSuccess());
 }
 
+// Creates two sets of equal pixel values, except for one pixel that has +50 in
+// its red channel. Compares the histograms to see if they are equal with a high
+// threshold, which we expect to success.
 TEST_F(BufferTest, CompareHistogramEMDToleranceTrue) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_UINT");
   Format fmt(type.get());
 
+  // Every value gets multiplied by 25 to create a gradient
   std::vector<Value> values1(40);
   for (uint64_t i = 0; i < values1.size(); i += 4)
     values1[i].SetIntValue(i / 4 * 25);
@@ -228,6 +246,8 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceTrue) {
   EXPECT_TRUE(b1.CompareHistogramEMD(&b2, 0.02f).IsSuccess());
 }
 
+// Creates two identical sets of RGBA pixel values and checks that the
+// histograms are equal.
 TEST_F(BufferTest, CompareHistogramEMDToleranceAllBlack) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_UINT");
@@ -250,6 +270,8 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceAllBlack) {
   EXPECT_TRUE(b1.CompareHistogramEMD(&b2, 0.0f).IsSuccess());
 }
 
+// Creates two identical sets of RGBA pixel values and checks that the
+// histograms are equal.
 TEST_F(BufferTest, CompareHistogramEMDToleranceAllWhite) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_UINT");
