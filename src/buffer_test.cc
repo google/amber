@@ -126,8 +126,7 @@ TEST_F(BufferTest, SizeMatrixPaddedStd430) {
 }
 
 // Creates 10 RGBA pixel values, with the blue channels ranging from 0 to 255,
-// and gets the histogram. Checks that the bin for each blue channel value
-// contains 1, as expected.
+// and checks that the bin for each blue channel value contains 1, as expected.
 TEST_F(BufferTest, GetHistogramForChannelGradient) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_UINT");
@@ -148,8 +147,8 @@ TEST_F(BufferTest, GetHistogramForChannelGradient) {
     EXPECT_EQ(1, bins[i / 4 * 25]);
 }
 
-// Creates 10 RGBA pixel values, with all channels being 0, and gets the
-// histogram.
+// Creates 10 RGBA pixel values, with all channels being 0, and checks that all
+// channels have a count of 10 (all pixels) in the 0 bin.
 TEST_F(BufferTest, GetHistogramForChannelAllBlack) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_UINT");
@@ -171,7 +170,8 @@ TEST_F(BufferTest, GetHistogramForChannelAllBlack) {
 }
 
 // Creates 10 RGBA pixel values, with all channels being the maximum value of 8
-// bit uint, and gets the histogram.
+// bit uint, and checks that all channels have a count of 10 (all pixels) in the
+// 255 (max uint8_t) bin.
 TEST_F(BufferTest, GetHistogramForChannelAllWhite) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_UINT");
@@ -221,7 +221,7 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceFalse) {
 
 // Creates two sets of equal pixel values, except for one pixel that has +50 in
 // its red channel. Compares the histograms to see if they are equal with a high
-// threshold, which we expect to success.
+// threshold, which we expect to succeed.
 TEST_F(BufferTest, CompareHistogramEMDToleranceTrue) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_UINT");
