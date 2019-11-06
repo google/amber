@@ -15,7 +15,6 @@
 #ifndef SRC_SAMPLER_H_
 #define SRC_SAMPLER_H_
 
-// TODO Review headers
 #include <cstdint>
 #include <memory>
 #include <string>
