@@ -140,7 +140,7 @@ class Pipeline {
   /// Information on a sampler attached to the pipeline.
   struct SamplerInfo {
     SamplerInfo() = default;
-    explicit SamplerInfo(Sampler* sampler) : sampler(sampler) {}
+    explicit SamplerInfo(Sampler* samp) : sampler(samp) {}
 
     Sampler* sampler = nullptr;
     uint32_t descriptor_set = 0;
