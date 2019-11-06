@@ -79,7 +79,7 @@ class Pipeline {
 
   Result GetDescriptorSlot(uint32_t desc_set,
                            uint32_t binding,
-                           Descriptor*& desc);
+                           Descriptor** desc);
   void UpdateDescriptorSetsIfNeeded();
 
   Result SendDescriptorDataToDeviceIfNeeded();

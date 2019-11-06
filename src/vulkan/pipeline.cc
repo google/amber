@@ -243,8 +243,8 @@ Result Pipeline::AddPushConstantBuffer(const Buffer* buf, uint32_t offset) {
 
 Result Pipeline::GetDescriptorSlot(uint32_t desc_set,
                                    uint32_t binding,
-                                   Descriptor*& desc) {
-  desc = nullptr;
+                                   Descriptor** desc) {
+  *desc = nullptr;
 
   if (desc_set >= descriptor_set_info_.size()) {
     for (size_t i = descriptor_set_info_.size();
@@ -267,7 +267,7 @@ Result Pipeline::GetDescriptorSlot(uint32_t desc_set,
   auto& descriptors = descriptor_set_info_[desc_set].descriptors;
   for (auto& descriptor : descriptors) {
     if (descriptor->GetBinding() == binding)
-      desc = descriptor.get();
+      *desc = descriptor.get();
   }
 
   return {};
@@ -284,7 +284,7 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
 
   Descriptor* desc;
   Result r =
-      GetDescriptorSlot(cmd->GetDescriptorSet(), cmd->GetBinding(), desc);
+      GetDescriptorSlot(cmd->GetDescriptorSet(), cmd->GetBinding(), &desc);
   if (!r.IsSuccess())
     return r;
 
@@ -344,7 +344,7 @@ Result Pipeline::AddDescriptor(const SamplerCommand* cmd) {
 
   Descriptor* desc;
   Result r =
-      GetDescriptorSlot(cmd->GetDescriptorSet(), cmd->GetBinding(), desc);
+      GetDescriptorSlot(cmd->GetDescriptorSet(), cmd->GetBinding(), &desc);
   if (!r.IsSuccess())
     return r;
 

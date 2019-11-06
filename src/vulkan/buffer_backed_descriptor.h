@@ -38,13 +38,10 @@ class BufferBackedDescriptor : public Descriptor {
                          uint32_t binding);
   virtual ~BufferBackedDescriptor();
 
-  virtual Result CreateResourceIfNeeded() override { return {}; };
-  virtual void RecordCopyDataToResourceIfNeeded(
-      CommandBuffer* command) override;
-  virtual Result RecordCopyDataToHost(CommandBuffer* command) override;
-  virtual Result MoveResourceToBufferOutput() override;
-  virtual void UpdateDescriptorSetIfNeeded(
-      VkDescriptorSet descriptor_set) override = 0;
+  Result CreateResourceIfNeeded() override { return {}; };
+  void RecordCopyDataToResourceIfNeeded(CommandBuffer* command) override;
+  Result RecordCopyDataToHost(CommandBuffer* command) override;
+  Result MoveResourceToBufferOutput() override;
   virtual Resource* GetResource() { return nullptr; }
 
   Result SetSizeInElements(uint32_t element_count) override;

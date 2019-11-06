@@ -49,14 +49,12 @@ class Descriptor {
   virtual ~Descriptor();
 
   virtual void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) = 0;
-  virtual Result CreateResourceIfNeeded() { return {}; };
-  virtual void RecordCopyDataToResourceIfNeeded(CommandBuffer*){};
-  virtual Result RecordCopyDataToHost(CommandBuffer*) { return {}; };
-  virtual Result MoveResourceToBufferOutput() { return {}; };
-  virtual Result SetSizeInElements(uint32_t) { return {}; };
-  virtual Result AddToBuffer(const std::vector<Value>&, uint32_t) {
-    return {};
-  };
+  virtual Result CreateResourceIfNeeded() { return {}; }
+  virtual void RecordCopyDataToResourceIfNeeded(CommandBuffer*) {}
+  virtual Result RecordCopyDataToHost(CommandBuffer*) { return {}; }
+  virtual Result MoveResourceToBufferOutput() { return {}; }
+  virtual Result SetSizeInElements(uint32_t) { return {}; }
+  virtual Result AddToBuffer(const std::vector<Value>&, uint32_t) { return {}; }
   uint32_t GetDescriptorSet() const { return descriptor_set_; }
   uint32_t GetBinding() const { return binding_; }
   VkDescriptorType GetVkDescriptorType() const;
