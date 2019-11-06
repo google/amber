@@ -36,9 +36,9 @@ class BufferBackedDescriptor : public Descriptor {
                          Device* device,
                          uint32_t desc_set,
                          uint32_t binding);
-  virtual ~BufferBackedDescriptor();
+  virtual ~BufferBackedDescriptor() override;
 
-  Result CreateResourceIfNeeded() override { return {}; };
+  Result CreateResourceIfNeeded() override { return {}; }
   void RecordCopyDataToResourceIfNeeded(CommandBuffer* command) override;
   Result RecordCopyDataToHost(CommandBuffer* command) override;
   Result MoveResourceToBufferOutput() override;
