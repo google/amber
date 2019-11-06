@@ -24,6 +24,7 @@
 
 #include "amber/result.h"
 #include "src/buffer.h"
+#include "src/sampler.h"
 #include "src/shader.h"
 
 namespace amber {
@@ -133,6 +134,17 @@ class Pipeline {
     uint32_t location = 0;
     std::string arg_name = "";
     uint32_t arg_no = 0;
+    BufferType type = BufferType::kUnknown;
+  };
+
+  /// Information on a sampler attached to the pipeline.
+  struct SamplerInfo {
+    SamplerInfo() = default;
+    explicit SamplerInfo(Sampler* sampler) : sampler(sampler) {}
+
+    Sampler* sampler = nullptr;
+    uint32_t descriptor_set = 0;
+    uint32_t binding = 0;
   };
 
   static const char* kGeneratedColorBuffer;
@@ -220,6 +232,12 @@ class Pipeline {
   /// Returns information on all buffers in this pipeline.
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
 
+  /// Adds |sampler| to the pipeline at the given |descriptor_set| and
+  /// |binding|.
+  void AddSampler(Sampler* sampler, uint32_t descriptor_set, uint32_t binding);
+  /// Returns information on all samplers in this pipeline.
+  const std::vector<SamplerInfo>& GetSamplers() const { return samplers_; }
+
   /// Updates the descriptor set and binding info for the OpenCL-C kernel bound
   /// to the pipeline. No effect for other shader formats.
   Result UpdateOpenCLBufferBindings();
@@ -272,6 +290,7 @@ class Pipeline {
   std::vector<BufferInfo> vertex_buffers_;
   std::vector<BufferInfo> buffers_;
   std::vector<std::unique_ptr<type::Type>> types_;
+  std::vector<SamplerInfo> samplers_;
   std::vector<std::unique_ptr<Format>> formats_;
   BufferInfo depth_buffer_;
   BufferInfo push_constant_buffer_;

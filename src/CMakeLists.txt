@@ -27,10 +27,11 @@ set(AMBER_SOURCES
     pipeline_data.cc
     recipe.cc
     result.cc
-    sleep.cc
+    sampler.cc
     script.cc
     shader.cc
     shader_compiler.cc
+    sleep.cc
     tokenizer.cc
     type.cc
     type_parser.cc

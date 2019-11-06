@@ -24,7 +24,7 @@ ImageDescriptor::ImageDescriptor(Buffer* buffer,
                                  Device* device,
                                  uint32_t desc_set,
                                  uint32_t binding)
-    : Descriptor(buffer, type, device, desc_set, binding) {}
+    : BufferBackedDescriptor(buffer, type, device, desc_set, binding) {}
 
 ImageDescriptor::~ImageDescriptor() = default;
 
@@ -32,12 +32,18 @@ void ImageDescriptor::RecordCopyDataToResourceIfNeeded(CommandBuffer* command) {
   transfer_image_->ImageBarrier(command, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                 VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-  Descriptor::RecordCopyDataToResourceIfNeeded(command);
+  BufferBackedDescriptor::RecordCopyDataToResourceIfNeeded(command);
 
   if (type_ == DescriptorType::kStorageImage) {
     // Change to general layout as it's required for storage images.
     transfer_image_->ImageBarrier(command, VK_IMAGE_LAYOUT_GENERAL,
                                   VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+  } else {
+    // Use the earliest shader stage as we don't know which stage the image is
+    // used in.
+    transfer_image_->ImageBarrier(command,
+                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                  VK_PIPELINE_STAGE_VERTEX_SHADER_BIT);
   }
 }
 
@@ -78,13 +84,13 @@ Result ImageDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
   transfer_image_->ImageBarrier(command, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                 VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-  Descriptor::RecordCopyDataToHost(command);
+  BufferBackedDescriptor::RecordCopyDataToHost(command);
 
   return {};
 }
 
 Result ImageDescriptor::MoveResourceToBufferOutput() {
-  Result r = Descriptor::MoveResourceToBufferOutput();
+  Result r = BufferBackedDescriptor::MoveResourceToBufferOutput();
   transfer_image_ = nullptr;
 
   return r;
@@ -101,7 +107,7 @@ void ImageDescriptor::UpdateDescriptorSetIfNeeded(
     layout = VK_IMAGE_LAYOUT_GENERAL;
 
   VkDescriptorImageInfo image_info = {
-      nullptr,  // TODO(asuonpaa): Add sampler here later if used
+      VK_NULL_HANDLE,  // TODO(asuonpaa): Add sampler here later if used
       transfer_image_->GetVkImageView(), layout};
 
   VkWriteDescriptorSet write = VkWriteDescriptorSet();

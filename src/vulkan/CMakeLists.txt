@@ -14,6 +14,7 @@
 
 set(VULKAN_ENGINE_SOURCES
     buffer_descriptor.cc
+    buffer_backed_descriptor.cc
     command_buffer.cc
     command_pool.cc
     compute_pipeline.cc
@@ -27,6 +28,7 @@ set(VULKAN_ENGINE_SOURCES
     pipeline.cc
     push_constant.cc
     resource.cc
+    sampler_descriptor.cc
     transfer_buffer.cc
     transfer_image.cc
     vertex_buffer.cc

@@ -120,10 +120,20 @@ ProbeSSBOCommand::ProbeSSBOCommand(Buffer* buffer)
 
 ProbeSSBOCommand::~ProbeSSBOCommand() = default;
 
+BindableResourceCommand::BindableResourceCommand(Type type, Pipeline* pipeline)
+    : PipelineCommand(type, pipeline) {}
+
+BindableResourceCommand::~BindableResourceCommand() = default;
+
 BufferCommand::BufferCommand(BufferType type, Pipeline* pipeline)
-    : PipelineCommand(Type::kBuffer, pipeline), buffer_type_(type) {}
+    : BindableResourceCommand(Type::kBuffer, pipeline), buffer_type_(type) {}
 
 BufferCommand::~BufferCommand() = default;
+
+SamplerCommand::SamplerCommand(Pipeline* pipeline)
+    : BindableResourceCommand(Type::kSampler, pipeline) {}
+
+SamplerCommand::~SamplerCommand() = default;
 
 CopyCommand::CopyCommand(Buffer* buffer_from, Buffer* buffer_to)
     : Command(Type::kCopy), buffer_from_(buffer_from), buffer_to_(buffer_to) {}

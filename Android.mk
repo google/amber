@@ -36,6 +36,7 @@ LOCAL_SRC_FILES:= \
     src/pipeline_data.cc \
     src/recipe.cc \
     src/result.cc \
+    src/sampler.cc \
     src/script.cc \
     src/shader.cc \
     src/shader_compiler.cc \
@@ -49,6 +50,7 @@ LOCAL_SRC_FILES:= \
     src/vkscript/parser.cc \
     src/vkscript/section_parser.cc \
     src/vulkan/buffer_descriptor.cc \
+    src/vulkan/buffer_backed_descriptor.cc \
     src/vulkan/command_buffer.cc \
     src/vulkan/command_pool.cc \
     src/vulkan/compute_pipeline.cc \
@@ -62,6 +64,7 @@ LOCAL_SRC_FILES:= \
     src/vulkan/pipeline.cc \
     src/vulkan/push_constant.cc \
     src/vulkan/resource.cc \
+    src/vulkan/sampler_descriptor.cc \
     src/vulkan/transfer_buffer.cc \
     src/vulkan/transfer_image.cc \
     src/vulkan/vertex_buffer.cc \

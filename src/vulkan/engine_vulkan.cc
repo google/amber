@@ -230,20 +230,32 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   for (const auto& buf_info : pipeline->GetBuffers()) {
     auto type = BufferCommand::BufferType::kSSBO;
-    if (buf_info.buffer->GetBufferType() == BufferType::kStorageImage) {
+    if (buf_info.type == BufferType::kStorageImage) {
       type = BufferCommand::BufferType::kStorageImage;
-    } else if (buf_info.buffer->GetBufferType() == BufferType::kUniform) {
+    } else if (buf_info.type == BufferType::kSampledImage) {
+      type = BufferCommand::BufferType::kSampledImage;
+    } else if (buf_info.type == BufferType::kUniform) {
       type = BufferCommand::BufferType::kUniform;
-    } else if (buf_info.buffer->GetBufferType() != BufferType::kStorage) {
+    } else if (buf_info.type != BufferType::kStorage) {
       return Result("Vulkan: CreatePipeline - unknown buffer type: " +
-                    std::to_string(static_cast<uint32_t>(
-                        buf_info.buffer->GetBufferType())));
+                    std::to_string(static_cast<uint32_t>(buf_info.type)));
     }
 
     auto cmd = MakeUnique<BufferCommand>(type, pipeline);
     cmd->SetDescriptorSet(buf_info.descriptor_set);
     cmd->SetBinding(buf_info.binding);
     cmd->SetBuffer(buf_info.buffer);
+
+    r = info.vk_pipeline->AddDescriptor(cmd.get());
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  for (const auto& sampler_info : pipeline->GetSamplers()) {
+    auto cmd = MakeUnique<SamplerCommand>(pipeline);
+    cmd->SetDescriptorSet(sampler_info.descriptor_set);
+    cmd->SetBinding(sampler_info.binding);
+    cmd->SetSampler(sampler_info.sampler);
 
     r = info.vk_pipeline->AddDescriptor(cmd.get());
     if (!r.IsSuccess())

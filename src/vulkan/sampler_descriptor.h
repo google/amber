@@ -12,41 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VULKAN_IMAGE_DESCRIPTOR_H_
-#define SRC_VULKAN_IMAGE_DESCRIPTOR_H_
+#ifndef SRC_VULKAN_SAMPLER_DESCRIPTOR_H_
+#define SRC_VULKAN_SAMPLER_DESCRIPTOR_H_
 
 #include <memory>
 #include <vector>
 
-#include "src/vulkan/buffer_backed_descriptor.h"
+#include "src/vulkan/descriptor.h"
 #include "src/vulkan/transfer_image.h"
 
 namespace amber {
 namespace vulkan {
 
-class ImageDescriptor : public BufferBackedDescriptor {
+class SamplerDescriptor : public Descriptor {
  public:
-  ImageDescriptor(Buffer* buffer,
-                  DescriptorType type,
-                  Device* device,
-                  uint32_t desc_set,
-                  uint32_t binding);
-  ~ImageDescriptor() override;
+  SamplerDescriptor(Sampler* sampler,
+                    DescriptorType type,
+                    Device* device,
+                    uint32_t desc_set,
+                    uint32_t binding);
+  ~SamplerDescriptor() override;
 
   void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
-  void RecordCopyDataToResourceIfNeeded(CommandBuffer* command) override;
   Result CreateResourceIfNeeded() override;
-  Result RecordCopyDataToHost(CommandBuffer* command) override;
-  Result MoveResourceToBufferOutput() override;
-
- protected:
-  Resource* GetResource() override { return transfer_image_.get(); }
 
  private:
-  std::unique_ptr<TransferImage> transfer_image_;
+  Sampler* amber_sampler_;
+  VkSampler sampler_;
 };
 
 }  // namespace vulkan
 }  // namespace amber
 
-#endif  // SRC_VULKAN_IMAGE_DESCRIPTOR_H_
+#endif  // SRC_VULKAN_SAMPLER_DESCRIPTOR_H_

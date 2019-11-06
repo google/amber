@@ -28,7 +28,7 @@ BufferDescriptor::BufferDescriptor(Buffer* buffer,
                                    Device* device,
                                    uint32_t desc_set,
                                    uint32_t binding)
-    : Descriptor(buffer, type, device, desc_set, binding) {}
+    : BufferBackedDescriptor(buffer, type, device, desc_set, binding) {}
 
 BufferDescriptor::~BufferDescriptor() = default;
 
@@ -59,7 +59,7 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
 }
 
 Result BufferDescriptor::MoveResourceToBufferOutput() {
-  Result r = Descriptor::MoveResourceToBufferOutput();
+  Result r = BufferBackedDescriptor::MoveResourceToBufferOutput();
   transfer_buffer_ = nullptr;
 
   return r;
