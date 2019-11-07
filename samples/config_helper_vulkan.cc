@@ -699,9 +699,85 @@ amber::Result ConfigHelperVulkan::CreateDebugReportCallback() {
   return {};
 }
 
-amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
+amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
+    const VkPhysicalDevice physical_device,
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions) {
+  VkPhysicalDeviceFeatures required_vulkan_features =
+      VkPhysicalDeviceFeatures();
+
+  if (use_physical_device_features2_) {
+    VkPhysicalDeviceVariablePointerFeaturesKHR var_ptrs =
+        VkPhysicalDeviceVariablePointerFeaturesKHR();
+    var_ptrs.sType =
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
+    var_ptrs.pNext = nullptr;
+
+    VkPhysicalDeviceFeatures2KHR features2 = VkPhysicalDeviceFeatures2KHR();
+    features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+    features2.pNext = &var_ptrs;
+
+    auto vkGetPhysicalDeviceFeatures2KHR =
+        reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
+            vkGetInstanceProcAddr(vulkan_instance_,
+                                  "vkGetPhysicalDeviceFeatures2KHR"));
+    vkGetPhysicalDeviceFeatures2KHR(physical_device, &features2);
+    available_features_ = features2.features;
+
+    std::vector<std::string> required_features1;
+    for (const auto& feature : required_features) {
+      // No dot means this is a features1 feature.
+      if (feature.find_first_of('.') == std::string::npos) {
+        required_features1.push_back(feature);
+        continue;
+      }
+
+      if (feature == kVariablePointers &&
+          var_ptrs.variablePointers != VK_TRUE) {
+        continue;
+      }
+      if (feature == kVariablePointersStorageBuffer &&
+          var_ptrs.variablePointersStorageBuffer != VK_TRUE) {
+        continue;
+      }
+    }
+
+    amber::Result r =
+        NamesToVulkanFeatures(required_features1, &required_vulkan_features);
+    if (!r.IsSuccess())
+      return r;
+
+  } else {
+    amber::Result r =
+        NamesToVulkanFeatures(required_features, &required_vulkan_features);
+    if (!r.IsSuccess())
+      return r;
+
+    vkGetPhysicalDeviceFeatures(physical_device, &available_features_);
+  }
+  if (!AreAllRequiredFeaturesSupported(available_features_,
+                                       required_vulkan_features)) {
+    return amber::Result("Device does not support all required features");
+  }
+
+  available_device_extensions_ = GetAvailableDeviceExtensions(physical_device);
+  if (!AreAllExtensionsSupported(available_device_extensions_,
+                                 required_extensions)) {
+    return amber::Result("Device does not support all required extensions");
+  }
+
+  vulkan_queue_family_index_ = ChooseQueueFamilyIndex(physical_device);
+  if (vulkan_queue_family_index_ == std::numeric_limits<uint32_t>::max()) {
+    return amber::Result("Device does not support required queue flags");
+  }
+
+  return {};
+}
+
+amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
+    const std::vector<std::string>& required_features,
+    const std::vector<std::string>& required_extensions,
+    const int32_t selected_device) {
   uint32_t count = 0;
   std::vector<VkPhysicalDevice> physical_devices;
 
@@ -716,72 +792,24 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
     return amber::Result("Unable to enumerate physical devices");
   }
 
-  VkPhysicalDeviceFeatures required_vulkan_features =
-      VkPhysicalDeviceFeatures();
-  for (uint32_t i = 0; i < count; ++i) {
-    if (use_physical_device_features2_) {
-      VkPhysicalDeviceVariablePointerFeaturesKHR var_ptrs =
-          VkPhysicalDeviceVariablePointerFeaturesKHR();
-      var_ptrs.sType =
-          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
-      var_ptrs.pNext = nullptr;
-
-      VkPhysicalDeviceFeatures2KHR features2 = VkPhysicalDeviceFeatures2KHR();
-      features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
-      features2.pNext = &var_ptrs;
-
-      auto vkGetPhysicalDeviceFeatures2KHR =
-          reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
-              vkGetInstanceProcAddr(vulkan_instance_,
-                                    "vkGetPhysicalDeviceFeatures2KHR"));
-      vkGetPhysicalDeviceFeatures2KHR(physical_devices[i], &features2);
-      available_features_ = features2.features;
-
-      std::vector<std::string> required_features1;
-      for (const auto& feature : required_features) {
-        // No dot means this is a features1 feature.
-        if (feature.find_first_of('.') == std::string::npos) {
-          required_features1.push_back(feature);
-          continue;
-        }
-
-        if (feature == kVariablePointers &&
-            var_ptrs.variablePointers != VK_TRUE) {
-          continue;
-        }
-        if (feature == kVariablePointersStorageBuffer &&
-            var_ptrs.variablePointersStorageBuffer != VK_TRUE) {
-          continue;
-        }
-      }
-
-      amber::Result r =
-          NamesToVulkanFeatures(required_features1, &required_vulkan_features);
+  if (selected_device > -1) {
+    uint32_t deviceID = static_cast<uint32_t>(selected_device);
+    if (deviceID >= count) {
+      return amber::Result("Unable to find Vulkan device with ID " +
+                           std::to_string(deviceID));
+    }
+    amber::Result r = CheckVulkanPhysicalDeviceRequirements(
+        physical_devices[deviceID], required_features, required_extensions);
+    if (!r.IsSuccess())
+      return r;
+    vulkan_physical_device_ = physical_devices[deviceID];
+    return {};
+  } else {
+    for (uint32_t i = 0; i < count; ++i) {
+      amber::Result r = CheckVulkanPhysicalDeviceRequirements(
+          physical_devices[i], required_features, required_extensions);
       if (!r.IsSuccess())
-        return r;
-
-    } else {
-      amber::Result r =
-          NamesToVulkanFeatures(required_features, &required_vulkan_features);
-      if (!r.IsSuccess())
-        return r;
-
-      vkGetPhysicalDeviceFeatures(physical_devices[i], &available_features_);
-    }
-    if (!AreAllRequiredFeaturesSupported(available_features_,
-                                         required_vulkan_features)) {
-      continue;
-    }
-
-    available_device_extensions_ =
-        GetAvailableDeviceExtensions(physical_devices[i]);
-    if (!AreAllExtensionsSupported(available_device_extensions_,
-                                   required_extensions)) {
-      continue;
-    }
-
-    vulkan_queue_family_index_ = ChooseQueueFamilyIndex(physical_devices[i]);
-    if (vulkan_queue_family_index_ != std::numeric_limits<uint32_t>::max()) {
+        continue;
       vulkan_physical_device_ = physical_devices[i];
       return {};
     }
@@ -909,6 +937,7 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
 amber::Result ConfigHelperVulkan::CreateConfig(
     uint32_t engine_major,
     uint32_t engine_minor,
+    int32_t selected_device,
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_instance_extensions,
     const std::vector<std::string>& required_device_extensions,
@@ -927,7 +956,8 @@ amber::Result ConfigHelperVulkan::CreateConfig(
       return r;
   }
 
-  r = ChooseVulkanPhysicalDevice(required_features, required_device_extensions);
+  r = ChooseVulkanPhysicalDevice(required_features, required_device_extensions,
+                                 selected_device);
   if (!r.IsSuccess())
     return r;
 

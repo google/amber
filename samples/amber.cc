@@ -49,6 +49,7 @@ struct Options {
   uint32_t engine_major = 1;
   uint32_t engine_minor = 0;
   int32_t fence_timeout = -1;
+  int32_t selected_device = -1;
   bool parse_only = false;
   bool pipeline_create_only = false;
   bool disable_validation_layer = false;
@@ -70,6 +71,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -ps                       -- Parse input files, create pipelines; Don't execute.
   -q                        -- Disable summary output.
   -d                        -- Disable validation layers.
+  -D <ID>                   -- ID of device to run with (Vulkan only).
   -f <value>                -- Sets the fence timeout value to |value|
   -t <spirv_env>            -- The target SPIR-V environment e.g., spv1.3, vulkan1.1.
                                If a SPIR-V environment, assume the lowest version of Vulkan that
@@ -146,6 +148,20 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
             << std::endl;
         return false;
       }
+    } else if (arg == "-D") {
+      ++i;
+      if (i >= args.size()) {
+        std::cerr << "Missing ID for -D argument." << std::endl;
+        return false;
+      }
+
+      int32_t val = std::stoi(std::string(args[i]));
+      if (val < 0) {
+        std::cerr << "Device ID must be non-negative" << std::endl;
+        return false;
+      }
+      opts->selected_device = val;
+
     } else if (arg == "-f") {
       ++i;
       if (i >= args.size()) {
@@ -405,6 +421,7 @@ int main(int argc, const char** argv) {
 
   amber::Result r = config_helper.CreateConfig(
       amber_options.engine, options.engine_major, options.engine_minor,
+      options.selected_device,
       std::vector<std::string>(required_features.begin(),
                                required_features.end()),
       std::vector<std::string>(required_instance_extensions.begin(),
