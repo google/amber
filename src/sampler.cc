@@ -28,6 +28,7 @@ Sampler::Sampler()
       address_mode_u_(AddressMode::kRepeat),
       address_mode_v_(AddressMode::kRepeat),
       border_color_(BorderColor::kFloatTransparentBlack) {}
+
 Sampler::~Sampler() = default;
 
 }  // namespace amber

@@ -81,7 +81,10 @@ Result SamplerDescriptor::CreateResourceIfNeeded() {
   sampler_info.minFilter = amber_sampler_->GetMinFilter() == FilterType::kLinear
                                ? VK_FILTER_LINEAR
                                : VK_FILTER_NEAREST;
-  sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  sampler_info.mipmapMode =
+      amber_sampler_->GetMipmapMode() == FilterType::kLinear
+          ? VK_SAMPLER_MIPMAP_MODE_LINEAR
+          : VK_SAMPLER_MIPMAP_MODE_NEAREST;
   sampler_info.addressModeU =
       GetVkAddressMode(amber_sampler_->GetAddressModeU());
   sampler_info.addressModeV =

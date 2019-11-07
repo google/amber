@@ -63,6 +63,9 @@ class Sampler {
   void SetMinFilter(FilterType filter) { min_filter_ = filter; }
   FilterType GetMinFilter() const { return min_filter_; }
 
+  void SetMipmapMode(FilterType filter) { mipmap_mode_ = filter; }
+  FilterType GetMipmapMode() const { return mipmap_mode_; }
+
   void SetAddressModeU(AddressMode mode) { address_mode_u_ = mode; }
   AddressMode GetAddressModeU() const { return address_mode_u_; }
 
