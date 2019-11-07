@@ -326,11 +326,11 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
   }
 
   if (cmd->GetValues().empty()) {
-    Result r = desc->SetSizeInElements(cmd->GetBuffer()->ElementCount());
+    r = desc->SetSizeInElements(cmd->GetBuffer()->ElementCount());
     if (!r.IsSuccess())
       return r;
   } else {
-    Result r = desc->AddToBuffer(cmd->GetValues(), cmd->GetOffset());
+    r = desc->AddToBuffer(cmd->GetValues(), cmd->GetOffset());
     if (!r.IsSuccess())
       return r;
   }
