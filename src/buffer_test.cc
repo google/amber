@@ -16,6 +16,7 @@
 
 #include <utility>
 
+#include <limits>
 #include "gtest/gtest.h"
 #include "src/type_parser.h"
 
@@ -122,6 +123,175 @@ TEST_F(BufferTest, SizeMatrixPaddedStd430) {
   EXPECT_EQ(1U, b.ElementCount());
   EXPECT_EQ(9U, b.ValueCount());
   EXPECT_EQ(12U * sizeof(int32_t), b.GetSizeInBytes());
+}
+
+// Creates 10 RGBA pixel values, with the blue channels ranging from 0 to 255,
+// and checks that the bin for each blue channel value contains 1, as expected.
+TEST_F(BufferTest, GetHistogramForChannelGradient) {
+  TypeParser parser;
+  auto type = parser.Parse("R8G8B8A8_UINT");
+  Format fmt(type.get());
+
+  // Creates 10 RBGA pixel values with the blue channels ranging from 0 to 255.
+  // Every value gets multiplied by 25 to create a gradient
+  std::vector<Value> values(40);
+  for (uint32_t i = 0; i < values.size(); i += 4)
+    values[i + 2].SetIntValue(i / 4 * 25);
+
+  Buffer b(BufferType::kColor);
+  b.SetFormat(&fmt);
+  b.SetData(values);
+
+  std::vector<uint64_t> bins = b.GetHistogramForChannel(2, 256);
+  for (uint32_t i = 0; i < values.size(); i += 4)
+    EXPECT_EQ(1, bins[i / 4 * 25]);
+}
+
+// Creates 10 RGBA pixel values, with all channels being 0, and checks that all
+// channels have a count of 10 (all pixels) in the 0 bin.
+TEST_F(BufferTest, GetHistogramForChannelAllBlack) {
+  TypeParser parser;
+  auto type = parser.Parse("R8G8B8A8_UINT");
+  Format fmt(type.get());
+
+  std::vector<Value> values(40);
+  for (uint32_t i = 0; i < values.size(); i++)
+    values[i].SetIntValue(0);
+
+  Buffer b(BufferType::kColor);
+  b.SetFormat(&fmt);
+  b.SetData(values);
+
+  for (uint8_t i = 0; i < 4; i++) {
+    std::vector<uint64_t> bins = b.GetHistogramForChannel(i, 256);
+    for (uint32_t y = 0; y < values.size(); y++)
+      EXPECT_EQ(10, bins[0]);
+  }
+}
+
+// Creates 10 RGBA pixel values, with all channels being the maximum value of 8
+// bit uint, and checks that all channels have a count of 10 (all pixels) in the
+// 255 (max uint8_t) bin.
+TEST_F(BufferTest, GetHistogramForChannelAllWhite) {
+  TypeParser parser;
+  auto type = parser.Parse("R8G8B8A8_UINT");
+  Format fmt(type.get());
+
+  std::vector<Value> values(40);
+  for (uint32_t i = 0; i < values.size(); i++)
+    values[i].SetIntValue(std::numeric_limits<uint8_t>::max());
+
+  Buffer b(BufferType::kColor);
+  b.SetFormat(&fmt);
+  b.SetData(values);
+
+  for (uint8_t i = 0; i < 4; i++) {
+    std::vector<uint64_t> bins = b.GetHistogramForChannel(i, 256);
+    for (uint32_t y = 0; y < values.size(); y++)
+      EXPECT_EQ(10, bins[255]);
+  }
+}
+
+// Creates two sets of equal pixel values, except for one pixel that has +50 in
+// its red channel. Compares the histograms to see if they are equal with a low
+// threshold, which we expect to fail.
+TEST_F(BufferTest, CompareHistogramEMDToleranceFalse) {
+  TypeParser parser;
+  auto type = parser.Parse("R8G8B8A8_UINT");
+  Format fmt(type.get());
+
+  // Every value gets multiplied by 25 to create a gradient
+  std::vector<Value> values1(40);
+  for (uint32_t i = 0; i < values1.size(); i += 4)
+    values1[i].SetIntValue(i / 4 * 25);
+
+  std::vector<Value> values2 = values1;
+  values2[4].SetIntValue(values2[4].AsUint8() + 50);
+
+  Buffer b1(BufferType::kColor);
+  b1.SetFormat(&fmt);
+  b1.SetData(values1);
+
+  Buffer b2(BufferType::kColor);
+  b2.SetFormat(&fmt);
+  b2.SetData(values2);
+
+  EXPECT_FALSE(b1.CompareHistogramEMD(&b2, 0.001f).IsSuccess());
+}
+
+// Creates two sets of equal pixel values, except for one pixel that has +50 in
+// its red channel. Compares the histograms to see if they are equal with a high
+// threshold, which we expect to succeed.
+TEST_F(BufferTest, CompareHistogramEMDToleranceTrue) {
+  TypeParser parser;
+  auto type = parser.Parse("R8G8B8A8_UINT");
+  Format fmt(type.get());
+
+  // Every value gets multiplied by 25 to create a gradient
+  std::vector<Value> values1(40);
+  for (uint32_t i = 0; i < values1.size(); i += 4)
+    values1[i].SetIntValue(i / 4 * 25);
+
+  std::vector<Value> values2 = values1;
+  values2[4].SetIntValue(values2[4].AsUint8() + 50);
+
+  Buffer b1(BufferType::kColor);
+  b1.SetFormat(&fmt);
+  b1.SetData(values1);
+
+  Buffer b2(BufferType::kColor);
+  b2.SetFormat(&fmt);
+  b2.SetData(values2);
+
+  EXPECT_TRUE(b1.CompareHistogramEMD(&b2, 0.02f).IsSuccess());
+}
+
+// Creates two identical sets of RGBA pixel values and checks that the
+// histograms are equal.
+TEST_F(BufferTest, CompareHistogramEMDToleranceAllBlack) {
+  TypeParser parser;
+  auto type = parser.Parse("R8G8B8A8_UINT");
+  Format fmt(type.get());
+
+  std::vector<Value> values1(40);
+  for (uint32_t i = 0; i < values1.size(); i++)
+    values1[i].SetIntValue(0);
+
+  std::vector<Value> values2 = values1;
+
+  Buffer b1(BufferType::kColor);
+  b1.SetFormat(&fmt);
+  b1.SetData(values1);
+
+  Buffer b2(BufferType::kColor);
+  b2.SetFormat(&fmt);
+  b2.SetData(values2);
+
+  EXPECT_TRUE(b1.CompareHistogramEMD(&b2, 0.0f).IsSuccess());
+}
+
+// Creates two identical sets of RGBA pixel values and checks that the
+// histograms are equal.
+TEST_F(BufferTest, CompareHistogramEMDToleranceAllWhite) {
+  TypeParser parser;
+  auto type = parser.Parse("R8G8B8A8_UINT");
+  Format fmt(type.get());
+
+  std::vector<Value> values1(40);
+  for (uint32_t i = 0; i < values1.size(); i++)
+    values1[i].SetIntValue(std::numeric_limits<uint8_t>().max());
+
+  std::vector<Value> values2 = values1;
+
+  Buffer b1(BufferType::kColor);
+  b1.SetFormat(&fmt);
+  b1.SetData(values1);
+
+  Buffer b2(BufferType::kColor);
+  b2.SetFormat(&fmt);
+  b2.SetData(values2);
+
+  EXPECT_TRUE(b1.CompareHistogramEMD(&b2, 0.0f).IsSuccess());
 }
 
 }  // namespace amber
