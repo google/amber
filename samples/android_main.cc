@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <jni.h>
+
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include <jni.h>
 
 extern int main(int argc, const char** argv);
 
 extern "C" JNIEXPORT JNICALL int Java_com_google_amber_Amber_androidMain(
     JNIEnv* env,
-    jobject claz,
+    jobject,
     jstring args_jstring) {
   // Redirect std output to a file
   freopen("/sdcard/amberlog.txt", "w", stdout);
