@@ -427,7 +427,7 @@ class BindableResourceCommand : public PipelineCommand {
   void SetBinding(uint32_t num) { binding_num_ = num; }
   uint32_t GetBinding() const { return binding_num_; }
 
- protected:
+ private:
   uint32_t descriptor_set_ = 0;
   uint32_t binding_num_ = 0;
 };
@@ -480,6 +480,7 @@ class BufferCommand : public BindableResourceCommand {
   std::vector<Value> values_;
 };
 
+/// Command for setting sampler parameters and binding.
 class SamplerCommand : public BindableResourceCommand {
  public:
   explicit SamplerCommand(Pipeline* pipeline);

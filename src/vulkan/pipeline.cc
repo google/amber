@@ -273,14 +273,14 @@ Result Pipeline::GetDescriptorSlot(uint32_t desc_set,
   return {};
 }
 
-Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
+Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
   if (cmd == nullptr)
-    return Result("Pipeline::AddDescriptor BufferCommand is nullptr");
+    return Result("Pipeline::AddBufferDescriptor BufferCommand is nullptr");
   if (cmd->IsPushConstant())
     return AddPushConstantBuffer(cmd->GetBuffer(), cmd->GetOffset());
   if (!cmd->IsSSBO() && !cmd->IsUniform() && !cmd->IsStorageImage() &&
       !cmd->IsSampledImage())
-    return Result("Pipeline::AddDescriptor not supported buffer type");
+    return Result("Pipeline::AddBufferDescriptor not supported buffer type");
 
   Descriptor* desc;
   Result r =
@@ -315,13 +315,15 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
 
   if (cmd->IsSSBO() && !desc->IsStorageBuffer()) {
     return Result(
-        "Vulkan::AddDescriptor BufferCommand for SSBO uses wrong descriptor "
+        "Vulkan::AddBufferDescriptor BufferCommand for SSBO uses wrong "
+        "descriptor "
         "set and binding");
   }
 
   if (cmd->IsUniform() && !desc->IsUniformBuffer()) {
     return Result(
-        "Vulkan::AddDescriptor BufferCommand for UBO uses wrong descriptor set "
+        "Vulkan::AddBufferDescriptor BufferCommand for UBO uses wrong "
+        "descriptor set "
         "and binding");
   }
 
@@ -338,9 +340,9 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
   return {};
 }
 
-Result Pipeline::AddDescriptor(const SamplerCommand* cmd) {
+Result Pipeline::AddSamplerDescriptor(const SamplerCommand* cmd) {
   if (cmd == nullptr)
-    return Result("Pipeline::AddDescriptor SamplerCommand is nullptr");
+    return Result("Pipeline::AddSamplerDescriptor SamplerCommand is nullptr");
 
   Descriptor* desc;
   Result r =

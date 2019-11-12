@@ -24,6 +24,7 @@
 #include "src/make_unique.h"
 #include "src/sampler.h"
 #include "src/shader_data.h"
+#include "src/tokenizer.h"
 #include "src/type_parser.h"
 
 namespace amber {
@@ -125,16 +126,16 @@ std::unique_ptr<type::Type> ToType(const std::string& str) {
 AddressMode StrToAddressMode(std::string str) {
   if (str == "repeat")
     return AddressMode::kRepeat;
-  else if (str == "mirrored_repeat")
+  if (str == "mirrored_repeat")
     return AddressMode::kMirroredRepeat;
-  else if (str == "clamp_to_edge")
+  if (str == "clamp_to_edge")
     return AddressMode::kClampToEdge;
-  else if (str == "clamp_to_border")
+  if (str == "clamp_to_border")
     return AddressMode::kClampToBorder;
-  else if (str == "mirror_clamp_to_edge")
+  if (str == "mirror_clamp_to_edge")
     return AddressMode::kMirrorClampToEdge;
-  else
-    return AddressMode::kUnknown;
+
+  return AddressMode::kUnknown;
 }
 
 }  // namespace
@@ -1774,10 +1775,35 @@ Result Parser::ParseExpect() {
 
     token = tokenizer_->NextToken();
     if (token->IsString() && token->AsString() == "TOLERANCE") {
-      Result r = ParseTolerance(probe.get(), &token);
-      if (!r.IsSuccess())
-        return r;
-    } else if (!token->IsEOL() && !token->IsEOS()) {
+      std::vector<Probe::Tolerance> tolerances;
+
+      token = tokenizer_->NextToken();
+      while (!token->IsEOL() && !token->IsEOS()) {
+        if (!token->IsInteger() && !token->IsDouble())
+          break;
+
+        Result r = token->ConvertToDouble();
+        if (!r.IsSuccess())
+          return r;
+
+        double value = token->AsDouble();
+        token = tokenizer_->NextToken();
+        if (token->IsString() && token->AsString() == "%") {
+          tolerances.push_back(Probe::Tolerance{true, value});
+          token = tokenizer_->NextToken();
+        } else {
+          tolerances.push_back(Probe::Tolerance{false, value});
+        }
+      }
+      if (tolerances.empty())
+        return Result("TOLERANCE specified but no tolerances provided");
+      if (tolerances.size() > 4)
+        return Result("TOLERANCE has a maximum of 4 values");
+
+      probe->SetTolerances(std::move(tolerances));
+    }
+
+    if (!token->IsEOL() && !token->IsEOS()) {
       return Result("extra parameters after EXPECT command");
     }
 
@@ -1790,9 +1816,32 @@ Result Parser::ParseExpect() {
   probe->SetLine(line);
 
   if (token->IsString() && token->AsString() == "TOLERANCE") {
-    Result r = ParseTolerance(probe.get(), &token);
-    if (!r.IsSuccess())
-      return r;
+    std::vector<Probe::Tolerance> tolerances;
+
+    token = tokenizer_->NextToken();
+    while (!token->IsEOL() && !token->IsEOS()) {
+      if (!token->IsInteger() && !token->IsDouble())
+        break;
+
+      Result r = token->ConvertToDouble();
+      if (!r.IsSuccess())
+        return r;
+
+      double value = token->AsDouble();
+      token = tokenizer_->NextToken();
+      if (token->IsString() && token->AsString() == "%") {
+        tolerances.push_back(Probe::Tolerance{true, value});
+        token = tokenizer_->NextToken();
+      } else {
+        tolerances.push_back(Probe::Tolerance{false, value});
+      }
+    }
+    if (tolerances.empty())
+      return Result("TOLERANCE specified but no tolerances provided");
+    if (tolerances.size() > 4)
+      return Result("TOLERANCE has a maximum of 4 values");
+
+    probe->SetTolerances(std::move(tolerances));
   }
 
   if (!token->IsString() || !IsComparator(token->AsString())) {
@@ -2110,9 +2159,12 @@ Result Parser::ParseSampler() {
     auto param = token->AsString();
     if (param == "MAG_FILTER") {
       token = tokenizer_->NextToken();
+
       if (!token->IsString())
         return Result("invalid token when looking for MAG_FILTER value");
+
       auto filter = token->AsString();
+
       if (filter == "linear")
         sampler->SetMagFilter(FilterType::kLinear);
       else if (filter == "nearest")
@@ -2121,9 +2173,12 @@ Result Parser::ParseSampler() {
         return Result("invalid MAG_FILTER value " + filter);
     } else if (param == "MIN_FILTER") {
       token = tokenizer_->NextToken();
+
       if (!token->IsString())
         return Result("invalid token when looking for MIN_FILTER value");
+
       auto filter = token->AsString();
+
       if (filter == "linear")
         sampler->SetMinFilter(FilterType::kLinear);
       else if (filter == "nearest")
@@ -2132,27 +2187,38 @@ Result Parser::ParseSampler() {
         return Result("invalid MIN_FILTER value " + filter);
     } else if (param == "ADDRESS_MODE_U") {
       token = tokenizer_->NextToken();
+
       if (!token->IsString())
         return Result("invalid token when looking for ADDRESS_MODE_U value");
+
       auto mode_str = token->AsString();
       auto mode = StrToAddressMode(mode_str);
+
       if (mode == AddressMode::kUnknown)
         return Result("invalid ADDRESS_MODE_U value " + mode_str);
+
       sampler->SetAddressModeU(mode);
     } else if (param == "ADDRESS_MODE_V") {
       token = tokenizer_->NextToken();
+
       if (!token->IsString())
         return Result("invalid token when looking for ADDRESS_MODE_V value");
+
       auto mode_str = token->AsString();
       auto mode = StrToAddressMode(mode_str);
+
       if (mode == AddressMode::kUnknown)
         return Result("invalid ADDRESS_MODE_V value " + mode_str);
+
       sampler->SetAddressModeV(mode);
     } else if (param == "BORDER_COLOR") {
       token = tokenizer_->NextToken();
+
       if (!token->IsString())
         return Result("invalid token when looking for BORDER_COLOR value");
+
       auto color_str = token->AsString();
+
       if (color_str == "float_transparent_black")
         sampler->SetBorderColor(BorderColor::kFloatTransparentBlack);
       else if (color_str == "int_transparent_black")
@@ -2175,37 +2241,6 @@ Result Parser::ParseSampler() {
   }
 
   return script_->AddSampler(std::move(sampler));
-}
-
-Result Parser::ParseTolerance(Probe* probe, std::unique_ptr<Token>* token) {
-  std::vector<Probe::Tolerance> tolerances;
-
-  *token = tokenizer_->NextToken();
-  while (!(*token)->IsEOL() && !(*token)->IsEOS()) {
-    if (!(*token)->IsInteger() && !(*token)->IsDouble())
-      break;
-
-    Result r = (*token)->ConvertToDouble();
-    if (!r.IsSuccess())
-      return r;
-
-    double value = (*token)->AsDouble();
-    (*token) = tokenizer_->NextToken();
-    if ((*token)->IsString() && (*token)->AsString() == "%") {
-      tolerances.push_back(Probe::Tolerance{true, value});
-      *token = tokenizer_->NextToken();
-    } else {
-      tolerances.push_back(Probe::Tolerance{false, value});
-    }
-  }
-  if (tolerances.empty())
-    return Result("TOLERANCE specified but no tolerances provided");
-  if (tolerances.size() > 4)
-    return Result("TOLERANCE has a maximum of 4 values");
-
-  probe->SetTolerances(std::move(tolerances));
-
-  return {};
 }
 
 }  // namespace amberscript

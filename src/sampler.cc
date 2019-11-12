@@ -14,21 +14,9 @@
 
 #include "src/sampler.h"
 
-#include <cassert>
-#include <cmath>
-#include <cstring>
-
 namespace amber {
-namespace {}  // namespace
 
-Sampler::Sampler()
-    : min_filter_(FilterType::kNearest),
-      mag_filter_(FilterType::kNearest),
-      mipmap_mode_(FilterType::kNearest),
-      address_mode_u_(AddressMode::kRepeat),
-      address_mode_v_(AddressMode::kRepeat),
-      border_color_(BorderColor::kFloatTransparentBlack) {}
-
+Sampler::Sampler() = default;
 Sampler::~Sampler() = default;
 
 }  // namespace amber

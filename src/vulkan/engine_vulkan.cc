@@ -246,7 +246,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     cmd->SetBinding(buf_info.binding);
     cmd->SetBuffer(buf_info.buffer);
 
-    r = info.vk_pipeline->AddDescriptor(cmd.get());
+    r = info.vk_pipeline->AddBufferDescriptor(cmd.get());
     if (!r.IsSuccess())
       return r;
   }
@@ -257,7 +257,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     cmd->SetBinding(sampler_info.binding);
     cmd->SetSampler(sampler_info.sampler);
 
-    r = info.vk_pipeline->AddDescriptor(cmd.get());
+    r = info.vk_pipeline->AddSamplerDescriptor(cmd.get());
     if (!r.IsSuccess())
       return r;
   }
@@ -497,7 +497,7 @@ Result EngineVulkan::DoBuffer(const BufferCommand* cmd) {
         "device");
   }
   auto& info = pipeline_map_[cmd->GetPipeline()];
-  return info.vk_pipeline->AddDescriptor(cmd);
+  return info.vk_pipeline->AddBufferDescriptor(cmd);
 }
 
 }  // namespace vulkan

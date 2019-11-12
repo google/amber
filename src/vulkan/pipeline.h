@@ -49,8 +49,8 @@ class Pipeline {
   GraphicsPipeline* AsGraphics();
   ComputePipeline* AsCompute();
 
-  Result AddDescriptor(const BufferCommand*);
-  Result AddDescriptor(const SamplerCommand*);
+  Result AddBufferDescriptor(const BufferCommand*);
+  Result AddSamplerDescriptor(const SamplerCommand*);
 
   /// Add |buffer| data to the push constants at |offset|.
   Result AddPushConstantBuffer(const Buffer* buf, uint32_t offset);

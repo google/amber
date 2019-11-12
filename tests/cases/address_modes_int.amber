@@ -48,9 +48,20 @@ END
 BUFFER texture FORMAT R8G8B8A8_UINT
 BUFFER framebuffer FORMAT B8G8R8A8_UNORM
 
-SAMPLER sampler_int_opaque_white ADDRESS_MODE_U clamp_to_border ADDRESS_MODE_V clamp_to_border BORDER_COLOR int_opaque_white
-SAMPLER sampler_int_opaque_black ADDRESS_MODE_U clamp_to_border ADDRESS_MODE_V clamp_to_border BORDER_COLOR int_opaque_black
-SAMPLER sampler_int_transparent_black ADDRESS_MODE_U clamp_to_border ADDRESS_MODE_V clamp_to_border BORDER_COLOR int_transparent_black
+SAMPLER sampler_int_opaque_white \
+  ADDRESS_MODE_U clamp_to_border \
+  ADDRESS_MODE_V clamp_to_border \
+  BORDER_COLOR int_opaque_white
+
+SAMPLER sampler_int_opaque_black \
+  ADDRESS_MODE_U clamp_to_border \
+  ADDRESS_MODE_V clamp_to_border \
+  BORDER_COLOR int_opaque_black
+
+SAMPLER sampler_int_transparent_black \
+  ADDRESS_MODE_U clamp_to_border \
+  ADDRESS_MODE_V clamp_to_border \
+  BORDER_COLOR int_transparent_black
 
 BUFFER position DATA_TYPE vec2<float> DATA
 -1.0 -1.0

@@ -42,7 +42,7 @@ class BufferBackedDescriptor : public Descriptor {
   void RecordCopyDataToResourceIfNeeded(CommandBuffer* command) override;
   Result RecordCopyDataToHost(CommandBuffer* command) override;
   Result MoveResourceToBufferOutput() override;
-  virtual Resource* GetResource() { return nullptr; }
+  virtual Resource* GetResource() = 0;
 
   Result SetSizeInElements(uint32_t element_count) override;
   Result AddToBuffer(const std::vector<Value>& values,

@@ -13,8 +13,9 @@
 // limitations under the License.
 
 #include "src/vulkan/buffer_backed_descriptor.h"
-#include <cassert>
+
 #include <cstring>
+
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 

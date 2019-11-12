@@ -51,7 +51,6 @@ enum class BorderColor : int8_t {
 class Sampler {
  public:
   Sampler();
-
   ~Sampler();
 
   void SetName(const std::string& name) { name_ = name; }
@@ -77,12 +76,12 @@ class Sampler {
 
  private:
   std::string name_;
-  FilterType min_filter_;
-  FilterType mag_filter_;
-  FilterType mipmap_mode_;
-  AddressMode address_mode_u_;
-  AddressMode address_mode_v_;
-  BorderColor border_color_;
+  FilterType min_filter_ = FilterType::kNearest;
+  FilterType mag_filter_ = FilterType::kNearest;
+  FilterType mipmap_mode_ = FilterType::kNearest;
+  AddressMode address_mode_u_ = AddressMode::kRepeat;
+  AddressMode address_mode_v_ = AddressMode::kRepeat;
+  BorderColor border_color_ = BorderColor::kFloatTransparentBlack;
 };
 
 }  // namespace amber

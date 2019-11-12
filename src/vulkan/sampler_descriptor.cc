@@ -17,8 +17,9 @@
 #include "src/vulkan/resource.h"
 
 namespace amber {
-
+namespace vulkan {
 namespace {
+
 VkSamplerAddressMode GetVkAddressMode(AddressMode mode) {
   switch (mode) {
     case AddressMode::kRepeat:
@@ -55,8 +56,6 @@ VkBorderColor GetVkBorderColor(BorderColor color) {
 
 }  // namespace
 
-namespace vulkan {
-
 SamplerDescriptor::SamplerDescriptor(Sampler* sampler,
                                      DescriptorType type,
                                      Device* device,
@@ -67,9 +66,10 @@ SamplerDescriptor::SamplerDescriptor(Sampler* sampler,
       sampler_(VK_NULL_HANDLE) {}
 
 SamplerDescriptor::~SamplerDescriptor() {
-  if (sampler_ != VK_NULL_HANDLE)
+  if (sampler_ != VK_NULL_HANDLE) {
     device_->GetPtrs()->vkDestroySampler(device_->GetVkDevice(), sampler_,
                                          nullptr);
+  }
 }
 
 Result SamplerDescriptor::CreateResourceIfNeeded() {
