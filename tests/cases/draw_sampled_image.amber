@@ -96,10 +96,15 @@ PIPELINE compute pipeline3
   FRAMEBUFFER_SIZE 256 256
 END
 
+# Generate a texture with a quad at the lower right corner.
 CLEAR_COLOR pipeline1 0 0 255 255
 CLEAR pipeline1
 RUN pipeline1 DRAW_RECT POS 128 128 SIZE 128 128
+
+# Add green color to a 128x128 quad.
 RUN pipeline3 8 8 1
+
+# Draw the texture using a default sampler.
 CLEAR_COLOR pipeline2 0 255 0 255
 CLEAR pipeline2
 RUN pipeline2 DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4

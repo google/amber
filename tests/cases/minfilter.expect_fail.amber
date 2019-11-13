@@ -58,10 +58,10 @@ BUFFER position DATA_TYPE vec2<float> DATA
 -1.0  1.0
 END
 BUFFER texcoords DATA_TYPE vec2<float> DATA
-  0.0   0.0
+ 0.0   0.0
 16.0   0.0
-16.0 16.0
-  0.0 16.0
+16.0  16.0
+ 0.0  16.0
 END
 
 PIPELINE graphics pipeline_red
@@ -104,11 +104,17 @@ PIPELINE graphics pipeline_nearest
   BIND BUFFER framebuffer_nearest AS color LOCATION 0
 END
 
+# Generate 2x2 pattern.
 CLEAR_COLOR pipeline_red 0 0 255 255
 CLEAR pipeline_red
 RUN pipeline_red DRAW_RECT POS 0 0 SIZE 1 1
 RUN pipeline_red DRAW_RECT POS 1 1 SIZE 1 1
+
+# Make the pattern repeat into 256x256 texture
 RUN pipeline_tex_repeat DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4
+
+# Draw the repeated texture into a quad and again repeat 16 times
+# to make it smaller. Do this with both nearest and linear filter mode.
 CLEAR_COLOR pipeline_linear 0 255 0 255
 CLEAR pipeline_linear
 RUN pipeline_linear DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4
@@ -116,4 +122,5 @@ CLEAR_COLOR pipeline_nearest 0 255 0 255
 CLEAR pipeline_nearest
 RUN pipeline_nearest DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4
 
+# Linear and nearest filtering produce different results so this should fail.
 EXPECT framebuffer_nearest EQ_BUFFER framebuffer_linear

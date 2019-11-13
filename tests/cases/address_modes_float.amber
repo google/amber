@@ -48,6 +48,7 @@ END
 BUFFER texture FORMAT R8G8B8A8_UNORM
 BUFFER framebuffer FORMAT B8G8R8A8_UNORM
 
+# Define samplers for all floating point border colors.
 SAMPLER sampler_float_opaque_white \
   ADDRESS_MODE_U clamp_to_border \
   ADDRESS_MODE_V clamp_to_border \
@@ -122,9 +123,12 @@ DERIVE_PIPELINE pipeline_float_transparent_black FROM pipeline_float_opaque_whit
   BIND SAMPLER sampler_float_transparent_black DESCRIPTOR_SET 0 BINDING 1
 END
 
+# Generate texture: a rectangle at the lower right corner.
 CLEAR_COLOR pipeline_texgen 0 0 255 255
 CLEAR pipeline_texgen
 RUN pipeline_texgen DRAW_RECT POS 128 128 SIZE 128 128
+
+# Draw the texture with coordinates going beyond 0 and 1 to trigger border color.
 RUN pipeline_float_opaque_white DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4
 RUN pipeline_float_opaque_black DRAW_ARRAY AS TRIANGLE_FAN START_IDX 4 COUNT 4
 RUN pipeline_float_transparent_black DRAW_ARRAY AS TRIANGLE_FAN START_IDX 8 COUNT 4

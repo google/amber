@@ -79,14 +79,19 @@ PIPELINE graphics pipeline2
   BIND BUFFER framebuffer AS color LOCATION 0
 END
 
+# Generate a 2x2 texture with a one pixel sized chessboard pattern.
 CLEAR_COLOR pipeline1 0 0 255 255
 CLEAR pipeline1
 RUN pipeline1 DRAW_RECT POS 0 0 SIZE 1 1
 RUN pipeline1 DRAW_RECT POS 1 1 SIZE 1 1
+
+# Draw a textured quad with nearest magnification.
 CLEAR_COLOR pipeline2 0 255 0 255
 CLEAR pipeline2
 RUN pipeline2 DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4
 
 EXPECT framebuffer IDX 1 1 SIZE 1 1 EQ_RGBA 0 255 0 255
+# With nearest magnification filter the chessboard patter should
+# remain intact. Sample inside two different colored rectangles.
 EXPECT framebuffer IDX 81 81 SIZE 1 1 EQ_RGBA 255 0 0 255
 EXPECT framebuffer IDX 129 81 SIZE 1 1 EQ_RGBA 0 0 255 255
