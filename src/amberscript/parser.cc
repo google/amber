@@ -1797,8 +1797,16 @@ Result Parser::ParseExpect() {
       }
       if (tolerances.empty())
         return Result("TOLERANCE specified but no tolerances provided");
-      if (tolerances.size() > 4)
-        return Result("TOLERANCE has a maximum of 4 values");
+
+      if (!probe->IsRGBA() && tolerances.size() > 3) {
+        return Result(
+            "TOLERANCE for an RGB comparison has a maximum of 3 values");
+      }
+
+      if (tolerances.size() > 4) {
+        return Result(
+            "TOLERANCE for an RGBA comparison has a maximum of 4 values");
+      }
 
       probe->SetTolerances(std::move(tolerances));
     }
