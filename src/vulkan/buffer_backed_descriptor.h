@@ -47,8 +47,10 @@ class BufferBackedDescriptor : public Descriptor {
   Result SetSizeInElements(uint32_t element_count) override;
   Result AddToBuffer(const std::vector<Value>& values,
                      uint32_t offset) override;
+  Buffer* getAmberBuffer() { return amber_buffer_; }
+  void setAmberBuffer(Buffer* buffer) { amber_buffer_ = buffer; }
 
- protected:
+ private:
   Buffer* amber_buffer_ = nullptr;
 };
 

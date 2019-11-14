@@ -418,7 +418,7 @@ class ProbeSSBOCommand : public Probe {
 /// Base class for BufferCommand and SamplerCommand to handle binding.
 class BindableResourceCommand : public PipelineCommand {
  public:
-  explicit BindableResourceCommand(Type type, Pipeline* pipeline);
+  BindableResourceCommand(Type type, Pipeline* pipeline);
   virtual ~BindableResourceCommand();
 
   void SetDescriptorSet(uint32_t set) { descriptor_set_ = set; }
@@ -443,7 +443,7 @@ class BufferCommand : public BindableResourceCommand {
     kSampledImage
   };
 
-  explicit BufferCommand(BufferType type, Pipeline* pipeline);
+  BufferCommand(BufferType type, Pipeline* pipeline);
   ~BufferCommand() override;
 
   bool IsSSBO() const { return buffer_type_ == BufferType::kSSBO; }

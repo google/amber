@@ -54,12 +54,14 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
         "only when |transfer_image| is empty");
   }
 
-  if (amber_buffer_ && amber_buffer_->ValuePtr()->empty())
+  auto amber_buffer = getAmberBuffer();
+
+  if (amber_buffer && amber_buffer->ValuePtr()->empty())
     return {};
 
   transfer_image_ = MakeUnique<TransferImage>(
-      device_, *amber_buffer_->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
-      amber_buffer_->GetWidth(), amber_buffer_->GetHeight(), 1u);
+      device_, *amber_buffer->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
+      amber_buffer->GetWidth(), amber_buffer->GetHeight(), 1u);
   VkImageUsageFlags usage =
       VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
