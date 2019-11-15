@@ -24,8 +24,8 @@
 #include "amber/vulkan_header.h"
 #include "src/cast_hash.h"
 #include "src/engine.h"
+#include "src/vulkan/buffer_backed_descriptor.h"
 #include "src/vulkan/command_buffer.h"
-#include "src/vulkan/descriptor.h"
 #include "src/vulkan/push_constant.h"
 
 namespace amber {
@@ -49,7 +49,8 @@ class Pipeline {
   GraphicsPipeline* AsGraphics();
   ComputePipeline* AsCompute();
 
-  Result AddDescriptor(const BufferCommand*);
+  Result AddBufferDescriptor(const BufferCommand*);
+  Result AddSamplerDescriptor(const SamplerCommand*);
 
   /// Add |buffer| data to the push constants at |offset|.
   Result AddPushConstantBuffer(const Buffer* buf, uint32_t offset);
@@ -76,6 +77,9 @@ class Pipeline {
   /// Initializes the pipeline.
   Result Initialize(CommandPool* pool);
 
+  Result GetDescriptorSlot(uint32_t desc_set,
+                           uint32_t binding,
+                           Descriptor** desc);
   void UpdateDescriptorSetsIfNeeded();
 
   Result SendDescriptorDataToDeviceIfNeeded();

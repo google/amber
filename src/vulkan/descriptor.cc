@@ -21,16 +21,14 @@
 namespace amber {
 namespace vulkan {
 
-Descriptor::Descriptor(Buffer* buffer,
-                       DescriptorType type,
+Descriptor::Descriptor(DescriptorType type,
                        Device* device,
                        uint32_t desc_set,
                        uint32_t binding)
     : device_(device),
       type_(type),
       descriptor_set_(desc_set),
-      binding_(binding),
-      amber_buffer_(buffer) {}
+      binding_(binding) {}
 
 Descriptor::~Descriptor() = default;
 
@@ -40,6 +38,8 @@ VkDescriptorType Descriptor::GetVkDescriptorType() const {
       return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     case DescriptorType::kUniformBuffer:
       return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    case DescriptorType::kSampler:
+      return VK_DESCRIPTOR_TYPE_SAMPLER;
     case DescriptorType::kStorageImage:
       return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
     case DescriptorType::kCombinedImageSampler:
@@ -48,78 +48,6 @@ VkDescriptorType Descriptor::GetVkDescriptorType() const {
       assert(type_ == DescriptorType::kSampledImage);
       return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
   }
-}
-
-void Descriptor::RecordCopyDataToResourceIfNeeded(CommandBuffer* command) {
-  if (!GetResource())
-    return;
-
-  if (amber_buffer_ && !amber_buffer_->ValuePtr()->empty()) {
-    GetResource()->UpdateMemoryWithRawData(*amber_buffer_->ValuePtr());
-    amber_buffer_->ValuePtr()->clear();
-  }
-
-  GetResource()->CopyToDevice(command);
-}
-
-Result Descriptor::RecordCopyDataToHost(CommandBuffer* command) {
-  if (!GetResource()) {
-    return Result(
-        "Vulkan: Descriptor::RecordCopyDataToHost() no transfer resource");
-  }
-
-  GetResource()->CopyToHost(command);
-  return {};
-}
-
-Result Descriptor::MoveResourceToBufferOutput() {
-  if (!GetResource()) {
-    return Result(
-        "Vulkan: Descriptor::MoveResourceToBufferOutput() no transfer"
-        " resource");
-  }
-
-  // Only need to copy the buffer back if we have an attached amber buffer to
-  // write to.
-  if (amber_buffer_) {
-    void* resource_memory_ptr = GetResource()->HostAccessibleMemoryPtr();
-    if (!resource_memory_ptr) {
-      return Result(
-          "Vulkan: Descriptor::MoveResourceToBufferOutput() "
-          "no host accessible memory pointer");
-    }
-
-    if (!amber_buffer_->ValuePtr()->empty()) {
-      return Result(
-          "Vulkan: Descriptor::MoveResourceToBufferOutput() "
-          "output buffer is not empty");
-    }
-
-    auto size_in_bytes = GetResource()->GetSizeInBytes();
-    amber_buffer_->SetElementCount(size_in_bytes /
-                                   amber_buffer_->GetFormat()->SizeInBytes());
-    amber_buffer_->ValuePtr()->resize(size_in_bytes);
-    std::memcpy(amber_buffer_->ValuePtr()->data(), resource_memory_ptr,
-                size_in_bytes);
-  }
-
-  return {};
-}
-
-Result Descriptor::SetSizeInElements(uint32_t element_count) {
-  if (!amber_buffer_)
-    return Result("missing amber_buffer for SetSizeInElements call");
-
-  amber_buffer_->SetSizeInElements(element_count);
-  return {};
-}
-
-Result Descriptor::AddToBuffer(const std::vector<Value>& values,
-                               uint32_t offset) {
-  if (!amber_buffer_)
-    return Result("missing amber_buffer for AddToBuffer call");
-
-  return amber_buffer_->SetDataWithOffset(values, offset);
 }
 
 }  // namespace vulkan

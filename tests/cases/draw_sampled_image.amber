@@ -1,0 +1,115 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER vertex vert_shader PASSTHROUGH
+
+SHADER fragment frag_shader_red GLSL
+#version 430
+layout(location = 0) out vec4 color_out;
+void main() {
+  color_out = vec4(1.0, 0.0, 0.0, 1.0);
+}
+END
+
+SHADER vertex vert_shader_tex GLSL
+#version 430
+layout(location = 0) in vec4 position;
+layout(location = 1) in vec2 texcoords_in;
+layout(location = 0) out vec2 texcoords_out;
+void main() {
+  gl_Position = position;
+  texcoords_out = texcoords_in;
+}
+END
+
+SHADER fragment frag_shader_tex GLSL
+#version 430
+layout(location = 0) in vec2 texcoords_in;
+layout(location = 0) out vec4 color_out;
+uniform layout(set=0, binding=0) texture2D tex;
+uniform layout(set=0, binding=1) sampler tex_sampler;
+void main() {
+  color_out = texture(sampler2D(tex, tex_sampler), texcoords_in);
+}
+END
+
+SHADER compute compute_shader GLSL
+#version 430
+layout(local_size_x=16,local_size_y=16) in;
+uniform layout (set=0, binding=0, rgba8) image2D texture;
+void main () {
+  ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
+  vec4 color = imageLoad(texture, uv) + vec4(0, 1.0, 0, 0);
+  imageStore(texture, uv, color);
+}
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+BUFFER framebuffer FORMAT B8G8R8A8_UNORM
+SAMPLER sampler
+BUFFER position DATA_TYPE vec2<float> DATA
+-0.75 -0.75
+ 0.75 -0.75
+ 0.75  0.75
+-0.75  0.75
+END
+BUFFER texcoords DATA_TYPE vec2<float> DATA
+0.0 0.0
+2.0 0.0
+2.0 2.0
+0.0 2.0
+END
+
+PIPELINE graphics pipeline1
+  ATTACH vert_shader
+  ATTACH frag_shader_red
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER texture AS color LOCATION 0
+END
+
+PIPELINE graphics pipeline2
+  ATTACH vert_shader_tex
+  ATTACH frag_shader_tex
+  BIND BUFFER texture AS sampled_image DESCRIPTOR_SET 0 BINDING 0
+  BIND SAMPLER sampler DESCRIPTOR_SET 0 BINDING 1
+  VERTEX_DATA position LOCATION 0
+  VERTEX_DATA texcoords LOCATION 1
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER framebuffer AS color LOCATION 0
+END
+
+PIPELINE compute pipeline3
+  ATTACH compute_shader
+  BIND BUFFER texture AS storage_image DESCRIPTOR_SET 0 BINDING 0
+  FRAMEBUFFER_SIZE 256 256
+END
+
+# Generate a texture with a quad at the lower right corner.
+CLEAR_COLOR pipeline1 0 0 255 255
+CLEAR pipeline1
+RUN pipeline1 DRAW_RECT POS 128 128 SIZE 128 128
+
+# Add green color to a 128x128 quad.
+RUN pipeline3 8 8 1
+
+# Draw the texture using a default sampler.
+CLEAR_COLOR pipeline2 0 255 0 255
+CLEAR pipeline2
+RUN pipeline2 DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4
+
+EXPECT framebuffer IDX 1 1 SIZE 1 1 EQ_RGBA 0 255 0 255
+EXPECT framebuffer IDX 33 33 SIZE 1 1 EQ_RGBA 0 255 255 255
+EXPECT framebuffer IDX 81 81 SIZE 1 1 EQ_RGBA 255 0 0 255
+EXPECT framebuffer IDX 81 33 SIZE 1 1 EQ_RGBA 0 0 255 255
