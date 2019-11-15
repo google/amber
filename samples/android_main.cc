@@ -24,22 +24,44 @@ extern "C" JNIEXPORT JNICALL int Java_com_google_amber_Amber_androidMain(
     JNIEnv* env,
     jobject,
     jstring args_jstring) {
-  // Redirect std output to a file
-  freopen("/sdcard/amberlog.txt", "w", stdout);
-  freopen("/sdcard/amberlog.txt", "a", stderr);
+  const char* args_cstr = env->GetStringUTFChars(args_jstring, NULL);
+  std::string args(args_cstr);
 
-  std::string args(env->GetStringUTFChars(args_jstring, NULL));
-
-  // Parse argument string and add -d by default
+  // Parse argument string
   std::stringstream ss(args);
   std::vector<std::string> argv_string{std::istream_iterator<std::string>{ss},
                                        std::istream_iterator<std::string>{}};
   std::vector<const char*> argv;
   argv.push_back("amber");
-  argv.push_back("-d");
 
-  for (auto s : argv_string)
-    argv.push_back(s.c_str());
+  std::string stdout_file = "/sdcard/amber_stdout.txt";
+  std::string stderr_file = "/sdcard/amber_stderr.txt";
 
-  return main(argv.size(), argv.data());
+  for (size_t i = 0; i < argv_string.size(); i++) {
+    auto s = argv_string[i];
+
+    if (s == "--stdout") {
+      i++;
+      stdout_file = argv_string[i];
+      continue;
+    }
+
+    if (s == "--stderr") {
+      i++;
+      stderr_file = argv_string[i];
+      continue;
+    }
+
+    argv.push_back(argv_string[i].c_str());
+  }
+
+  // Redirect std output to a file
+  freopen(stdout_file.c_str(), "w", stdout);
+  freopen(stderr_file.c_str(), "w", stderr);
+
+  auto ret = main(argv.size(), argv.data());
+
+  env->ReleaseStringUTFChars(args_jstring, args_cstr);
+
+  return ret;
 }
