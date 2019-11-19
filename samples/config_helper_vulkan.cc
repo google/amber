@@ -646,8 +646,8 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     required_extensions.push_back(kExtensionForValidationLayer);
   }
 
+  available_instance_extensions_ = GetAvailableInstanceExtensions();
   if (!required_extensions.empty()) {
-    available_instance_extensions_ = GetAvailableInstanceExtensions();
     if (!AreAllExtensionsSupported(available_instance_extensions_,
                                    required_extensions)) {
       return amber::Result("Missing required instance extensions");
@@ -916,22 +916,68 @@ amber::Result ConfigHelperVulkan::DoCreateDevice(VkDeviceCreateInfo* info) {
 }
 
 void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
-  VkPhysicalDeviceProperties props;
-  vkGetPhysicalDeviceProperties(vulkan_physical_device_, &props);
+  VkPhysicalDeviceProperties2KHR properties2 = {
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR,
+      nullptr,  // pNext: will point to our driver_properties struct if the
+                // "VK_KHR_get_physical_device_properties2" and
+                // "VK_KHR_driver_properties" extensions are both available.
+      {},  // properties: this is the older VkPhysicalDeviceProperties struct,
+           // wrapped by this newer struct that adds the pNext member. We use
+           // this older struct if the "VK_KHR_get_physical_device_properties2"
+           // extension is unavailable.
+  };
+
+  bool driver_properties_available = false;
+  VkPhysicalDeviceDriverPropertiesKHR driver_properties = {
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES_KHR,
+      nullptr,
+      {},
+      {},
+      {},
+      {},
+  };
+
+  if (std::find(available_instance_extensions_.begin(),
+                available_instance_extensions_.end(),
+                "VK_KHR_get_physical_device_properties2") !=
+      available_instance_extensions_.end()) {
+    if (std::find(available_device_extensions_.begin(),
+                  available_device_extensions_.end(),
+                  "VK_KHR_driver_properties") !=
+        available_device_extensions_.end()) {
+      properties2.pNext = &driver_properties;
+      driver_properties_available = true;
+    }
+    auto vkGetPhysicalDeviceProperties2KHR =
+        reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(
+            vkGetInstanceProcAddr(vulkan_instance_,
+                                  "vkGetPhysicalDeviceProperties2"));
+    vkGetPhysicalDeviceProperties2KHR(vulkan_physical_device_, &properties2);
+  } else {
+    vkGetPhysicalDeviceProperties(vulkan_physical_device_,
+                                  &properties2.properties);
+  }
+
+  const VkPhysicalDeviceProperties& props = properties2.properties;
 
   uint32_t api_version = props.apiVersion;
 
   std::cout << std::endl;
   std::cout << "Physical device properties:" << std::endl;
-  std::cout << "  apiVersion: " << static_cast<uint32_t>(api_version >> 22)
-            << "." << static_cast<uint32_t>((api_version >> 12) & 0x3ff) << "."
-            << static_cast<uint32_t>(api_version & 0xfff) << std::endl;
+  std::cout << "  apiVersion: " << static_cast<uint32_t>(api_version >> 22u)
+            << "." << static_cast<uint32_t>((api_version >> 12u) & 0x3ffu)
+            << "." << static_cast<uint32_t>(api_version & 0xfffu) << std::endl;
   std::cout << "  driverVersion: " << props.driverVersion << std::endl;
   std::cout << "  vendorID: " << props.vendorID << std::endl;
   std::cout << "  deviceID: " << props.deviceID << std::endl;
   std::cout << "  deviceType: " << deviceTypeToName(props.deviceType)
             << std::endl;
   std::cout << "  deviceName: " << props.deviceName << std::endl;
+  if (driver_properties_available) {
+    std::cout << "  driverName: " << driver_properties.driverName << std::endl;
+    std::cout << "  driverInfo: " << driver_properties.driverInfo << std::endl;
+  }
+  std::cout << "End of physical device properties." << std::endl;
 }
 
 amber::Result ConfigHelperVulkan::CreateConfig(
