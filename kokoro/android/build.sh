@@ -15,16 +15,16 @@
 set -e  # Fail on error
 set -x  # Display commands as run
 
-BUILD_ROOT=$PWD
-SRC=$PWD/github/amber
-BUILD_TYPE=Release
+BUILD_ROOT="$PWD"
+SRC="$PWD/github/amber"
+BUILD_TYPE="Release"
 
-export ANDROID_NDK=/opt/android-ndk-r15c
-ANDROID_STL=c++_static
+export ANDROID_NDK="$BUILD_ROOT/android-ndk-r20"
+ANDROID_STL="c++_static"
 ANDROID_PLATFORM="android-14"
 ANDROID_ABI="armeabi-v7a with NEON"
 
-TOOLCHAIN_PATH=$ANDROID_NDK/build/cmake/android.toolchain.cmake
+TOOLCHAIN_PATH="$ANDROID_NDK/build/cmake/android.toolchain.cmake"
 
 # removing the old version
 echo y | sudo apt-get purge --auto-remove cmake
@@ -32,34 +32,39 @@ echo y | sudo apt-get purge --auto-remove cmake
 # Installing the 3.10.2 version
 wget http://www.cmake.org/files/v3.10/cmake-3.10.2.tar.gz
 tar -xvzf cmake-3.10.2.tar.gz
-cd cmake-3.10.2/
+pushd cmake-3.10.2/
 ./configure
 make
 sudo make install
-echo $(date): $(cmake --version)
+echo "$(date): $(cmake --version)"
+popd
 
 # Get NINJA.
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
 unzip -q ninja-linux.zip
 export PATH="$PWD:$PATH"
 
-cd $SRC
+# Get Android NDK.
+wget -q https://dl.google.com/android/repository/android-ndk-r20-linux-x86_64.zip
+unzip -q android-ndk-r20-linux-x86_64.zip
+# ANDROID_NDK is set earlier.
+
+cd "$SRC"
 ./tools/git-sync-deps
 
-mkdir build && cd $SRC/build
+mkdir build && cd "$SRC/build"
 
 # Invoke the build.
-BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
-echo $(date): Starting build...
+echo "$(date): Starting build..."
 cmake -GNinja \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DANDROID_ABI=$ANDROID_ABI \
-    -DANDROID_PLATFORM=$ANDROID_PLATFORM \
-    -DANDROID_NDK=$ANDROID_NDK \
-    -DANDROID_STL=$ANDROID_STL \
-    -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_PATH \
+    "-DCMAKE_BUILD_TYPE=$BUILD_TYPE" \
+    "-DANDROID_ABI=$ANDROID_ABI" \
+    "-DANDROID_PLATFORM=$ANDROID_PLATFORM" \
+    "-DANDROID_NDK=$ANDROID_NDK" \
+    "-DANDROID_STL=$ANDROID_STL" \
+    "-DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_PATH" \
      ..
 
-echo $(date): Build everything...
+echo "$(date): Build everything..."
 ninja
-echo $(date): Build completed.
+echo "$(date): Build completed."
