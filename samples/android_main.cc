@@ -23,45 +23,34 @@ extern int main(int argc, const char** argv);
 extern "C" JNIEXPORT JNICALL int Java_com_google_amber_Amber_androidMain(
     JNIEnv* env,
     jobject,
-    jstring args_jstring) {
-  const char* args_cstr = env->GetStringUTFChars(args_jstring, NULL);
-  std::string args(args_cstr);
+    jobjectArray args,
+    jstring stdoutFile,
+    jstring stderrFile) {
+  const char* stdout_file_cstr = env->GetStringUTFChars(stdoutFile, NULL);
+  const char* stderr_file_cstr = env->GetStringUTFChars(stderrFile, NULL);
 
-  // Parse argument string
-  std::stringstream ss(args);
-  std::vector<std::string> argv_string{std::istream_iterator<std::string>{ss},
-                                       std::istream_iterator<std::string>{}};
+  // Redirect std output to a file
+  freopen(stdout_file_cstr, "w", stdout);
+  freopen(stderr_file_cstr, "w", stderr);
+
+  env->ReleaseStringUTFChars(stdoutFile, stdout_file_cstr);
+  env->ReleaseStringUTFChars(stderrFile, stderr_file_cstr);
+
+  int arg_count = env->GetArrayLength(args);
+
+  std::vector<std::string> argv_string;
+  for (int i = 0; i < arg_count; i++) {
+    jstring js = static_cast<jstring>(env->GetObjectArrayElement(args, i));
+    const char* arg_cstr = env->GetStringUTFChars(js, NULL);
+    argv_string.push_back(arg_cstr);
+    env->ReleaseStringUTFChars(js, arg_cstr);
+  }
+
   std::vector<const char*> argv;
   argv.push_back("amber");
 
-  std::string stdout_file = "/sdcard/amber_stdout.txt";
-  std::string stderr_file = "/sdcard/amber_stderr.txt";
-
-  for (size_t i = 0; i < argv_string.size(); i++) {
-    auto s = argv_string[i];
-
-    if (s == "--stdout") {
-      i++;
-      stdout_file = argv_string[i];
-      continue;
-    }
-
-    if (s == "--stderr") {
-      i++;
-      stderr_file = argv_string[i];
-      continue;
-    }
-
+  for (size_t i = 0; i < argv_string.size(); i++)
     argv.push_back(argv_string[i].c_str());
-  }
 
-  // Redirect std output to a file
-  freopen(stdout_file.c_str(), "w", stdout);
-  freopen(stderr_file.c_str(), "w", stderr);
-
-  auto ret = main(argv.size(), argv.data());
-
-  env->ReleaseStringUTFChars(args_jstring, args_cstr);
-
-  return ret;
+  return main(argv.size(), argv.data());
 }
