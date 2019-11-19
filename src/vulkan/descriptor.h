@@ -36,31 +36,29 @@ enum class DescriptorType : uint8_t {
   kUniformBuffer,
   kStorageImage,
   kSampledImage,
-  kCombinedImageSampler
+  kCombinedImageSampler,
+  kSampler
 };
 
 class Descriptor {
  public:
-  Descriptor(Buffer* buffer,
-             DescriptorType type,
+  Descriptor(DescriptorType type,
              Device* device,
              uint32_t desc_set,
              uint32_t binding);
   virtual ~Descriptor();
 
+  virtual void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) = 0;
+  virtual Result CreateResourceIfNeeded() = 0;
+  virtual void RecordCopyDataToResourceIfNeeded(CommandBuffer*) {}
+  virtual Result RecordCopyDataToHost(CommandBuffer*) { return {}; }
+  virtual Result MoveResourceToBufferOutput() { return {}; }
+  virtual Result SetSizeInElements(uint32_t) { return {}; }
+  virtual Result AddToBuffer(const std::vector<Value>&, uint32_t) { return {}; }
   uint32_t GetDescriptorSet() const { return descriptor_set_; }
   uint32_t GetBinding() const { return binding_; }
   VkDescriptorType GetVkDescriptorType() const;
 
-  virtual Result CreateResourceIfNeeded() = 0;
-  virtual void RecordCopyDataToResourceIfNeeded(CommandBuffer* command);
-  virtual Result RecordCopyDataToHost(CommandBuffer* command);
-  virtual Result MoveResourceToBufferOutput();
-  virtual void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) = 0;
-  virtual Resource* GetResource() = 0;
-
-  Result SetSizeInElements(uint32_t element_count);
-  Result AddToBuffer(const std::vector<Value>& values, uint32_t offset);
   bool IsStorageBuffer() const {
     return type_ == DescriptorType::kStorageBuffer;
   }
@@ -69,12 +67,11 @@ class Descriptor {
   }
 
  protected:
-  bool is_descriptor_set_update_needed_ = false;
   Device* device_ = nullptr;
   DescriptorType type_ = DescriptorType::kStorageBuffer;
   uint32_t descriptor_set_ = 0;
   uint32_t binding_ = 0;
-  Buffer* amber_buffer_ = nullptr;
+  bool is_descriptor_set_update_needed_ = false;
 };
 
 }  // namespace vulkan

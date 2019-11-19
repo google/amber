@@ -28,7 +28,7 @@ BufferDescriptor::BufferDescriptor(Buffer* buffer,
                                    Device* device,
                                    uint32_t desc_set,
                                    uint32_t binding)
-    : Descriptor(buffer, type, device, desc_set, binding) {}
+    : BufferBackedDescriptor(buffer, type, device, desc_set, binding) {}
 
 BufferDescriptor::~BufferDescriptor() = default;
 
@@ -39,12 +39,14 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
         "only when |transfer_buffer| is empty");
   }
 
-  if (amber_buffer_ && amber_buffer_->ValuePtr()->empty())
+  auto amber_buffer = getAmberBuffer();
+
+  if (amber_buffer && amber_buffer->ValuePtr()->empty())
     return {};
 
   uint32_t size_in_bytes =
-      amber_buffer_ ? static_cast<uint32_t>(amber_buffer_->ValuePtr()->size())
-                    : 0;
+      amber_buffer ? static_cast<uint32_t>(amber_buffer->ValuePtr()->size())
+                   : 0;
   transfer_buffer_ = MakeUnique<TransferBuffer>(device_, size_in_bytes);
 
   Result r = transfer_buffer_->Initialize(
@@ -59,7 +61,7 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
 }
 
 Result BufferDescriptor::MoveResourceToBufferOutput() {
-  Result r = Descriptor::MoveResourceToBufferOutput();
+  Result r = BufferBackedDescriptor::MoveResourceToBufferOutput();
   transfer_buffer_ = nullptr;
 
   return r;

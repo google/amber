@@ -26,6 +26,7 @@
 #include "src/vulkan/device.h"
 #include "src/vulkan/graphics_pipeline.h"
 #include "src/vulkan/image_descriptor.h"
+#include "src/vulkan/sampler_descriptor.h"
 
 namespace amber {
 namespace vulkan {
@@ -240,15 +241,11 @@ Result Pipeline::AddPushConstantBuffer(const Buffer* buf, uint32_t offset) {
   return push_constant_->AddBuffer(buf, offset);
 }
 
-Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
-  if (cmd == nullptr)
-    return Result("Pipeline::AddDescriptor BufferCommand is nullptr");
-  if (cmd->IsPushConstant())
-    return AddPushConstantBuffer(cmd->GetBuffer(), cmd->GetOffset());
-  if (!cmd->IsSSBO() && !cmd->IsUniform() && !cmd->IsStorageImage())
-    return Result("Pipeline::AddDescriptor not supported buffer type");
+Result Pipeline::GetDescriptorSlot(uint32_t desc_set,
+                                   uint32_t binding,
+                                   Descriptor** desc) {
+  *desc = nullptr;
 
-  const uint32_t desc_set = cmd->GetDescriptorSet();
   if (desc_set >= descriptor_set_info_.size()) {
     for (size_t i = descriptor_set_info_.size();
          i <= static_cast<size_t>(desc_set); ++i) {
@@ -268,16 +265,40 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
   descriptor_set_info_[desc_set].empty = false;
 
   auto& descriptors = descriptor_set_info_[desc_set].descriptors;
-  Descriptor* desc = nullptr;
   for (auto& descriptor : descriptors) {
-    if (descriptor->GetBinding() == cmd->GetBinding())
-      desc = descriptor.get();
+    if (descriptor->GetBinding() == binding)
+      *desc = descriptor.get();
   }
+
+  return {};
+}
+
+Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
+  if (cmd == nullptr)
+    return Result("Pipeline::AddBufferDescriptor BufferCommand is nullptr");
+  if (cmd->IsPushConstant())
+    return AddPushConstantBuffer(cmd->GetBuffer(), cmd->GetOffset());
+  if (!cmd->IsSSBO() && !cmd->IsUniform() && !cmd->IsStorageImage() &&
+      !cmd->IsSampledImage())
+    return Result("Pipeline::AddBufferDescriptor not supported buffer type");
+
+  Descriptor* desc;
+  Result r =
+      GetDescriptorSlot(cmd->GetDescriptorSet(), cmd->GetBinding(), &desc);
+  if (!r.IsSuccess())
+    return r;
+
+  auto& descriptors = descriptor_set_info_[cmd->GetDescriptorSet()].descriptors;
 
   if (desc == nullptr) {
     if (cmd->IsStorageImage()) {
       auto image_desc = MakeUnique<ImageDescriptor>(
           cmd->GetBuffer(), DescriptorType::kStorageImage, device_,
+          cmd->GetDescriptorSet(), cmd->GetBinding());
+      descriptors.push_back(std::move(image_desc));
+    } else if (cmd->IsSampledImage()) {
+      auto image_desc = MakeUnique<ImageDescriptor>(
+          cmd->GetBuffer(), DescriptorType::kSampledImage, device_,
           cmd->GetDescriptorSet(), cmd->GetBinding());
       descriptors.push_back(std::move(image_desc));
     } else {
@@ -294,24 +315,50 @@ Result Pipeline::AddDescriptor(const BufferCommand* cmd) {
 
   if (cmd->IsSSBO() && !desc->IsStorageBuffer()) {
     return Result(
-        "Vulkan::AddDescriptor BufferCommand for SSBO uses wrong descriptor "
+        "Vulkan::AddBufferDescriptor BufferCommand for SSBO uses wrong "
+        "descriptor "
         "set and binding");
   }
 
   if (cmd->IsUniform() && !desc->IsUniformBuffer()) {
     return Result(
-        "Vulkan::AddDescriptor BufferCommand for UBO uses wrong descriptor set "
+        "Vulkan::AddBufferDescriptor BufferCommand for UBO uses wrong "
+        "descriptor set "
         "and binding");
   }
 
   if (cmd->GetValues().empty()) {
-    Result r = desc->SetSizeInElements(cmd->GetBuffer()->ElementCount());
+    r = desc->SetSizeInElements(cmd->GetBuffer()->ElementCount());
     if (!r.IsSuccess())
       return r;
   } else {
-    Result r = desc->AddToBuffer(cmd->GetValues(), cmd->GetOffset());
+    r = desc->AddToBuffer(cmd->GetValues(), cmd->GetOffset());
     if (!r.IsSuccess())
       return r;
+  }
+
+  return {};
+}
+
+Result Pipeline::AddSamplerDescriptor(const SamplerCommand* cmd) {
+  if (cmd == nullptr)
+    return Result("Pipeline::AddSamplerDescriptor SamplerCommand is nullptr");
+
+  Descriptor* desc;
+  Result r =
+      GetDescriptorSlot(cmd->GetDescriptorSet(), cmd->GetBinding(), &desc);
+  if (!r.IsSuccess())
+    return r;
+
+  auto& descriptors = descriptor_set_info_[cmd->GetDescriptorSet()].descriptors;
+
+  if (desc == nullptr) {
+    auto sampler_desc = MakeUnique<SamplerDescriptor>(
+        cmd->GetSampler(), DescriptorType::kSampler, device_,
+        cmd->GetDescriptorSet(), cmd->GetBinding());
+    descriptors.push_back(std::move(sampler_desc));
+
+    desc = descriptors.back().get();
   }
 
   return {};
