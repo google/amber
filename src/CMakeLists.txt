@@ -27,10 +27,11 @@ set(AMBER_SOURCES
     pipeline_data.cc
     recipe.cc
     result.cc
-    sleep.cc
+    sampler.cc
     script.cc
     shader.cc
     shader_compiler.cc
+    sleep.cc
     tokenizer.cc
     type.cc
     type_parser.cc
@@ -127,6 +128,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_pipeline_set_test.cc
     amberscript/parser_repeat_test.cc
     amberscript/parser_run_test.cc
+    amberscript/parser_sampler_test.cc
     amberscript/parser_set_test.cc
     amberscript/parser_shader_opt_test.cc
     amberscript/parser_shader_test.cc

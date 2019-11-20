@@ -237,8 +237,8 @@ The following commands are all specified within the `PIPELINE` command.
 
 TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
-A `pipeline` can have buffers bound. This includes buffers to contain image
-attachment content, depth/stencil content, uniform buffers, etc.
+A `pipeline` can have buffers or samplers bound. This includes buffers to
+contain image attachment content, depth/stencil content, uniform buffers, etc.
 
 ```groovy
   # Attach |buffer_name| as an output color attachment at location |idx|.
@@ -255,12 +255,20 @@ attachment content, depth/stencil content, uniform buffers, etc.
 
   # Attach |buffer_name| as the push_constant buffer. There can be only one
   # push constant buffer attached to a pipeline.
-  BIND BUFFER <buffer_name> AS push_constant
+  BIND BUFFER {buffer_name} AS push_constant
 
   # Bind the buffer of the given |buffer_type| at the given descriptor set
   # and binding. The buffer will use a start index of 0.
   BIND BUFFER {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
        BINDING _id_
+
+  # Attach |buffer_name| as a storage image. The provided buffer must
+  # be a `FORMAT` buffer.
+  BIND BUFFER {buffer_name} AS storage_image
+
+  # Attach |buffer_name| as a sampled image. The provided buffer must
+  # be a `FORMAT` buffer.
+  BIND BUFFER {buffer_name} AS sampled_image
 
   # Bind the sampler at the given descriptor set and binding.
   BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_

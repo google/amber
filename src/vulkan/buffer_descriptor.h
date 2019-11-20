@@ -23,7 +23,7 @@
 #include "amber/vulkan_header.h"
 #include "src/buffer.h"
 #include "src/engine.h"
-#include "src/vulkan/descriptor.h"
+#include "src/vulkan/buffer_backed_descriptor.h"
 #include "src/vulkan/transfer_buffer.h"
 
 namespace amber {
@@ -34,7 +34,7 @@ class Device;
 
 /// Stores descriptor set and binding information for storage and uniform
 /// buffers.
-class BufferDescriptor : public Descriptor {
+class BufferDescriptor : public BufferBackedDescriptor {
  public:
   BufferDescriptor(Buffer* buffer,
                    DescriptorType type,

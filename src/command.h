@@ -26,6 +26,7 @@
 #include "src/buffer.h"
 #include "src/command_data.h"
 #include "src/pipeline_data.h"
+#include "src/sampler.h"
 
 namespace amber {
 
@@ -65,7 +66,8 @@ class Command {
     kProbe,
     kProbeSSBO,
     kBuffer,
-    kRepeat
+    kRepeat,
+    kSampler
   };
 
   virtual ~Command();
@@ -413,12 +415,35 @@ class ProbeSSBOCommand : public Probe {
   std::vector<Value> values_;
 };
 
-/// Command to set the size of a buffer, or update a buffers contents.
-class BufferCommand : public PipelineCommand {
+/// Base class for BufferCommand and SamplerCommand to handle binding.
+class BindableResourceCommand : public PipelineCommand {
  public:
-  enum class BufferType { kSSBO, kUniform, kPushConstant, kStorageImage };
+  BindableResourceCommand(Type type, Pipeline* pipeline);
+  virtual ~BindableResourceCommand();
 
-  explicit BufferCommand(BufferType type, Pipeline* pipeline);
+  void SetDescriptorSet(uint32_t set) { descriptor_set_ = set; }
+  uint32_t GetDescriptorSet() const { return descriptor_set_; }
+
+  void SetBinding(uint32_t num) { binding_num_ = num; }
+  uint32_t GetBinding() const { return binding_num_; }
+
+ private:
+  uint32_t descriptor_set_ = 0;
+  uint32_t binding_num_ = 0;
+};
+
+/// Command to set the size of a buffer, or update a buffers contents.
+class BufferCommand : public BindableResourceCommand {
+ public:
+  enum class BufferType {
+    kSSBO,
+    kUniform,
+    kPushConstant,
+    kStorageImage,
+    kSampledImage
+  };
+
+  BufferCommand(BufferType type, Pipeline* pipeline);
   ~BufferCommand() override;
 
   bool IsSSBO() const { return buffer_type_ == BufferType::kSSBO; }
@@ -426,18 +451,15 @@ class BufferCommand : public PipelineCommand {
   bool IsStorageImage() const {
     return buffer_type_ == BufferType::kStorageImage;
   }
+  bool IsSampledImage() const {
+    return buffer_type_ == BufferType::kSampledImage;
+  }
   bool IsPushConstant() const {
     return buffer_type_ == BufferType::kPushConstant;
   }
 
   void SetIsSubdata() { is_subdata_ = true; }
   bool IsSubdata() const { return is_subdata_; }
-
-  void SetDescriptorSet(uint32_t set) { descriptor_set_ = set; }
-  uint32_t GetDescriptorSet() const { return descriptor_set_; }
-
-  void SetBinding(uint32_t num) { binding_num_ = num; }
-  uint32_t GetBinding() const { return binding_num_; }
 
   void SetOffset(uint32_t offset) { offset_ = offset; }
   uint32_t GetOffset() const { return offset_; }
@@ -454,10 +476,23 @@ class BufferCommand : public PipelineCommand {
   Buffer* buffer_ = nullptr;
   BufferType buffer_type_;
   bool is_subdata_ = false;
-  uint32_t descriptor_set_ = 0;
-  uint32_t binding_num_ = 0;
   uint32_t offset_ = 0;
   std::vector<Value> values_;
+};
+
+/// Command for setting sampler parameters and binding.
+class SamplerCommand : public BindableResourceCommand {
+ public:
+  explicit SamplerCommand(Pipeline* pipeline);
+  ~SamplerCommand() override;
+
+  void SetSampler(Sampler* sampler) { sampler_ = sampler; }
+  Sampler* GetSampler() const { return sampler_; }
+
+  std::string ToString() const override { return "SamplerCommand"; }
+
+ private:
+  Sampler* sampler_ = nullptr;
 };
 
 /// Command to clear the colour attachments.

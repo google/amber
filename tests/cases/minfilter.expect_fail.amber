@@ -1,0 +1,126 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER vertex vert_shader PASSTHROUGH
+
+SHADER fragment frag_shader_red GLSL
+#version 430
+layout(location = 0) out vec4 color_out;
+void main() {
+  color_out = vec4(1.0, 0.0, 0.0, 1.0);
+}
+END
+
+SHADER vertex vert_shader_tex GLSL
+#version 430
+layout(location = 0) in vec4 position;
+layout(location = 1) in vec2 texcoords_in;
+layout(location = 0) out vec2 texcoords_out;
+void main() {
+  gl_Position = position;
+  texcoords_out = texcoords_in;
+}
+END
+
+SHADER fragment frag_shader_tex GLSL
+#version 430
+layout(location = 0) in vec2 texcoords_in;
+layout(location = 0) out vec4 color_out;
+uniform layout(set=0, binding=0) texture2D tex;
+uniform layout(set=0, binding=1) sampler tex_sampler;
+void main() {
+  color_out = texture(sampler2D(tex, tex_sampler), texcoords_in);
+}
+END
+
+BUFFER texture_small FORMAT B8G8R8A8_UNORM
+BUFFER texture FORMAT B8G8R8A8_UNORM
+BUFFER framebuffer_linear FORMAT B8G8R8A8_UNORM
+BUFFER framebuffer_nearest FORMAT B8G8R8A8_UNORM
+SAMPLER sampler_linear MIN_FILTER linear MAG_FILTER nearest
+SAMPLER sampler_nearest MIN_FILTER nearest MAG_FILTER nearest
+BUFFER position DATA_TYPE vec2<float> DATA
+-1.0 -1.0
+ 1.0 -1.0
+ 1.0  1.0
+-1.0  1.0
+END
+BUFFER texcoords DATA_TYPE vec2<float> DATA
+ 0.0   0.0
+16.0   0.0
+16.0  16.0
+ 0.0  16.0
+END
+
+PIPELINE graphics pipeline_red
+  ATTACH vert_shader
+  ATTACH frag_shader_red
+  FRAMEBUFFER_SIZE 2 2
+  BIND BUFFER texture_small AS color LOCATION 0
+END
+
+PIPELINE graphics pipeline_tex_repeat
+  ATTACH vert_shader_tex
+  ATTACH frag_shader_tex
+  BIND BUFFER texture_small AS sampled_image DESCRIPTOR_SET 0 BINDING 0
+  BIND SAMPLER sampler_nearest DESCRIPTOR_SET 0 BINDING 1
+  VERTEX_DATA position LOCATION 0
+  VERTEX_DATA texcoords LOCATION 1
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER texture AS color LOCATION 0
+END
+
+PIPELINE graphics pipeline_linear
+  ATTACH vert_shader_tex
+  ATTACH frag_shader_tex
+  BIND BUFFER texture AS sampled_image DESCRIPTOR_SET 0 BINDING 0
+  BIND SAMPLER sampler_linear DESCRIPTOR_SET 0 BINDING 1
+  VERTEX_DATA position LOCATION 0
+  VERTEX_DATA texcoords LOCATION 1
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER framebuffer_linear AS color LOCATION 0
+END
+
+PIPELINE graphics pipeline_nearest
+  ATTACH vert_shader_tex
+  ATTACH frag_shader_tex
+  BIND BUFFER texture AS sampled_image DESCRIPTOR_SET 0 BINDING 0
+  BIND SAMPLER sampler_nearest DESCRIPTOR_SET 0 BINDING 1
+  VERTEX_DATA position LOCATION 0
+  VERTEX_DATA texcoords LOCATION 1
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER framebuffer_nearest AS color LOCATION 0
+END
+
+# Generate 2x2 pattern.
+CLEAR_COLOR pipeline_red 0 0 255 255
+CLEAR pipeline_red
+RUN pipeline_red DRAW_RECT POS 0 0 SIZE 1 1
+RUN pipeline_red DRAW_RECT POS 1 1 SIZE 1 1
+
+# Make the pattern repeat into 256x256 texture
+RUN pipeline_tex_repeat DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4
+
+# Draw the repeated texture into a quad and again repeat 16 times
+# to make it smaller. Do this with both nearest and linear filter mode.
+CLEAR_COLOR pipeline_linear 0 255 0 255
+CLEAR pipeline_linear
+RUN pipeline_linear DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4
+CLEAR_COLOR pipeline_nearest 0 255 0 255
+CLEAR pipeline_nearest
+RUN pipeline_nearest DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4
+
+# Linear and nearest filtering produce different results so this should fail.
+EXPECT framebuffer_nearest EQ_BUFFER framebuffer_linear

@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "src/make_unique.h"
+#include "src/sampler.h"
 #include "src/shader_data.h"
 #include "src/tokenizer.h"
 #include "src/type_parser.h"
@@ -122,6 +123,21 @@ std::unique_ptr<type::Type> ToType(const std::string& str) {
   return nullptr;
 }
 
+AddressMode StrToAddressMode(std::string str) {
+  if (str == "repeat")
+    return AddressMode::kRepeat;
+  if (str == "mirrored_repeat")
+    return AddressMode::kMirroredRepeat;
+  if (str == "clamp_to_edge")
+    return AddressMode::kClampToEdge;
+  if (str == "clamp_to_border")
+    return AddressMode::kClampToBorder;
+  if (str == "mirror_clamp_to_edge")
+    return AddressMode::kMirrorClampToEdge;
+
+  return AddressMode::kUnknown;
+}
+
 }  // namespace
 
 Parser::Parser() : amber::Parser() {}
@@ -166,6 +182,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParseShaderBlock();
     } else if (tok == "STRUCT") {
       r = ParseStruct();
+    } else if (tok == "SAMPLER") {
+      r = ParseSampler();
     } else {
       r = Result("unknown token: " + tok);
     }
@@ -656,6 +674,8 @@ Result Parser::ToBufferType(const std::string& name, BufferType* type) {
     *type = BufferType::kStorage;
   else if (name == "storage_image")
     *type = BufferType::kStorageImage;
+  else if (name == "sampled_image")
+    *type = BufferType::kSampledImage;
   else
     return Result("unknown buffer_type: " + name);
 
@@ -664,110 +684,146 @@ Result Parser::ToBufferType(const std::string& name, BufferType* type) {
 
 Result Parser::ParsePipelineBind(Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
+
   if (!token->IsString())
-    return Result("missing BUFFER in BIND command");
-  if (token->AsString() != "BUFFER")
-    return Result("missing BUFFER in BIND command");
+    return Result("missing BUFFER or SAMPLER in BIND command");
 
-  token = tokenizer_->NextToken();
-  if (!token->IsString())
-    return Result("missing buffer name in BIND command");
+  auto object_type = token->AsString();
 
-  auto* buffer = script_->GetBuffer(token->AsString());
-  if (!buffer)
-    return Result("unknown buffer: " + token->AsString());
-
-  token = tokenizer_->NextToken();
-  if (token->IsString() && token->AsString() == "AS") {
+  if (object_type == "BUFFER") {
     token = tokenizer_->NextToken();
     if (!token->IsString())
-      return Result("invalid token for BUFFER type");
+      return Result("missing buffer name in BIND command");
 
-    if (token->AsString() == "color") {
-      token = tokenizer_->NextToken();
-      if (!token->IsString() || token->AsString() != "LOCATION")
-        return Result("BIND missing LOCATION");
+    auto* buffer = script_->GetBuffer(token->AsString());
+    if (!buffer)
+      return Result("unknown buffer: " + token->AsString());
 
-      token = tokenizer_->NextToken();
-      if (!token->IsInteger())
-        return Result("invalid value for BIND LOCATION");
-
-      buffer->SetBufferType(BufferType::kColor);
-
-      Result r = pipeline->AddColorAttachment(buffer, token->AsUint32());
-      if (!r.IsSuccess())
-        return r;
-    } else if (token->AsString() == "depth_stencil") {
-      buffer->SetBufferType(BufferType::kDepth);
-      Result r = pipeline->SetDepthBuffer(buffer);
-      if (!r.IsSuccess())
-        return r;
-    } else if (token->AsString() == "push_constant") {
-      buffer->SetBufferType(BufferType::kPushConstant);
-      Result r = pipeline->SetPushConstantBuffer(buffer);
-      if (!r.IsSuccess())
-        return r;
-    } else if (token->AsString() == "storage_image") {
-      buffer->SetBufferType(BufferType::kStorageImage);
-    } else {
-      BufferType type = BufferType::kColor;
-      Result r = ToBufferType(token->AsString(), &type);
-      if (!r.IsSuccess())
-        return r;
-
-      if (buffer->GetBufferType() == BufferType::kUnknown)
-        buffer->SetBufferType(type);
-      else if (buffer->GetBufferType() != type)
-        return Result("buffer type does not match intended usage");
-    }
-  }
-
-  if (buffer->GetBufferType() == BufferType::kUnknown ||
-      buffer->GetBufferType() == BufferType::kStorage ||
-      buffer->GetBufferType() == BufferType::kUniform ||
-      buffer->GetBufferType() == BufferType::kStorageImage) {
-    // If AS was parsed above consume the next token.
-    if (buffer->GetBufferType() != BufferType::kUnknown)
-      token = tokenizer_->NextToken();
-    // DESCRIPTOR_SET requires a buffer type to have been specified.
-    if (buffer->GetBufferType() != BufferType::kUnknown && token->IsString() &&
-        token->AsString() == "DESCRIPTOR_SET") {
-      token = tokenizer_->NextToken();
-      if (!token->IsInteger())
-        return Result("invalid value for DESCRIPTOR_SET in BIND command");
-      uint32_t descriptor_set = token->AsUint32();
-
-      token = tokenizer_->NextToken();
-      if (!token->IsString() || token->AsString() != "BINDING")
-        return Result("missing BINDING for BIND command");
-
-      token = tokenizer_->NextToken();
-      if (!token->IsInteger())
-        return Result("invalid value for BINDING in BIND command");
-      pipeline->AddBuffer(buffer, descriptor_set, token->AsUint32());
-    } else if (token->IsString() && token->AsString() == "KERNEL") {
+    token = tokenizer_->NextToken();
+    if (token->IsString() && token->AsString() == "AS") {
       token = tokenizer_->NextToken();
       if (!token->IsString())
-        return Result("missing kernel arg identifier");
+        return Result("invalid token for BUFFER type");
 
-      if (token->AsString() == "ARG_NAME") {
+      if (token->AsString() == "color") {
         token = tokenizer_->NextToken();
-        if (!token->IsString())
-          return Result("expected argument identifier");
+        if (!token->IsString() || token->AsString() != "LOCATION")
+          return Result("BIND missing LOCATION");
 
-        pipeline->AddBuffer(buffer, token->AsString());
-      } else if (token->AsString() == "ARG_NUMBER") {
         token = tokenizer_->NextToken();
         if (!token->IsInteger())
-          return Result("expected argument number");
+          return Result("invalid value for BIND LOCATION");
 
-        pipeline->AddBuffer(buffer, token->AsUint32());
+        buffer->SetBufferType(BufferType::kColor);
+
+        Result r = pipeline->AddColorAttachment(buffer, token->AsUint32());
+        if (!r.IsSuccess())
+          return r;
+      } else if (token->AsString() == "depth_stencil") {
+        buffer->SetBufferType(BufferType::kDepth);
+        Result r = pipeline->SetDepthBuffer(buffer);
+        if (!r.IsSuccess())
+          return r;
+      } else if (token->AsString() == "push_constant") {
+        buffer->SetBufferType(BufferType::kPushConstant);
+        Result r = pipeline->SetPushConstantBuffer(buffer);
+        if (!r.IsSuccess())
+          return r;
+      } else if (token->AsString() == "storage_image") {
+        buffer->SetBufferType(BufferType::kStorageImage);
+      } else if (token->AsString() == "sampled_image") {
+        buffer->SetBufferType(BufferType::kSampledImage);
       } else {
-        return Result("missing ARG_NAME or ARG_NUMBER keyword");
+        BufferType type = BufferType::kColor;
+        Result r = ToBufferType(token->AsString(), &type);
+        if (!r.IsSuccess())
+          return r;
+
+        if (buffer->GetBufferType() == BufferType::kUnknown)
+          buffer->SetBufferType(type);
+        else if (buffer->GetBufferType() != type)
+          return Result("buffer type does not match intended usage");
       }
-    } else {
-      return Result("missing DESCRIPTOR_SET or KERNEL for BIND command");
     }
+
+    if (buffer->GetBufferType() == BufferType::kUnknown ||
+        buffer->GetBufferType() == BufferType::kStorage ||
+        buffer->GetBufferType() == BufferType::kUniform ||
+        buffer->GetBufferType() == BufferType::kStorageImage ||
+        buffer->GetBufferType() == BufferType::kSampledImage) {
+      // If AS was parsed above consume the next token.
+      if (buffer->GetBufferType() != BufferType::kUnknown)
+        token = tokenizer_->NextToken();
+      // DESCRIPTOR_SET requires a buffer type to have been specified.
+      if (buffer->GetBufferType() != BufferType::kUnknown &&
+          token->IsString() && token->AsString() == "DESCRIPTOR_SET") {
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger())
+          return Result("invalid value for DESCRIPTOR_SET in BIND command");
+        uint32_t descriptor_set = token->AsUint32();
+
+        token = tokenizer_->NextToken();
+        if (!token->IsString() || token->AsString() != "BINDING")
+          return Result("missing BINDING for BIND command");
+
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger())
+          return Result("invalid value for BINDING in BIND command");
+        pipeline->AddBuffer(buffer, descriptor_set, token->AsUint32());
+      } else if (token->IsString() && token->AsString() == "KERNEL") {
+        token = tokenizer_->NextToken();
+        if (!token->IsString())
+          return Result("missing kernel arg identifier");
+
+        if (token->AsString() == "ARG_NAME") {
+          token = tokenizer_->NextToken();
+          if (!token->IsString())
+            return Result("expected argument identifier");
+
+          pipeline->AddBuffer(buffer, token->AsString());
+        } else if (token->AsString() == "ARG_NUMBER") {
+          token = tokenizer_->NextToken();
+          if (!token->IsInteger())
+            return Result("expected argument number");
+
+          pipeline->AddBuffer(buffer, token->AsUint32());
+        } else {
+          return Result("missing ARG_NAME or ARG_NUMBER keyword");
+        }
+      } else {
+        return Result("missing DESCRIPTOR_SET or KERNEL for BIND command");
+      }
+    }
+  } else if (object_type == "SAMPLER") {
+    token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("missing sampler name in BIND command");
+
+    auto* sampler = script_->GetSampler(token->AsString());
+    if (!sampler)
+      return Result("unknown sampler: " + token->AsString());
+
+    token = tokenizer_->NextToken();
+
+    if (!token->IsString() || token->AsString() != "DESCRIPTOR_SET")
+      return Result("missing DESCRIPTOR_SET for BIND command");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("invalid value for DESCRIPTOR_SET in BIND command");
+    uint32_t descriptor_set = token->AsUint32();
+
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "BINDING")
+      return Result("missing BINDING for BIND command");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("invalid value for BINDING in BIND command");
+    pipeline->AddSampler(sampler, descriptor_set, token->AsUint32());
+
+  } else {
+    return Result("missing BUFFER or SAMPLER in BIND command");
   }
 
   return ValidateEndOfStatement("BIND command");
@@ -1717,8 +1773,51 @@ Result Parser::ParseExpect() {
       probe->SetA(token->AsFloat() / 255.f);
     }
 
+    token = tokenizer_->NextToken();
+    if (token->IsString() && token->AsString() == "TOLERANCE") {
+      std::vector<Probe::Tolerance> tolerances;
+
+      token = tokenizer_->NextToken();
+      while (!token->IsEOL() && !token->IsEOS()) {
+        if (!token->IsInteger() && !token->IsDouble())
+          break;
+
+        Result r = token->ConvertToDouble();
+        if (!r.IsSuccess())
+          return r;
+
+        double value = token->AsDouble();
+        token = tokenizer_->NextToken();
+        if (token->IsString() && token->AsString() == "%") {
+          tolerances.push_back(Probe::Tolerance{true, value});
+          token = tokenizer_->NextToken();
+        } else {
+          tolerances.push_back(Probe::Tolerance{false, value});
+        }
+      }
+      if (tolerances.empty())
+        return Result("TOLERANCE specified but no tolerances provided");
+
+      if (!probe->IsRGBA() && tolerances.size() > 3) {
+        return Result(
+            "TOLERANCE for an RGB comparison has a maximum of 3 values");
+      }
+
+      if (tolerances.size() > 4) {
+        return Result(
+            "TOLERANCE for an RGBA comparison has a maximum of 4 values");
+      }
+
+      probe->SetTolerances(std::move(tolerances));
+    }
+
+    if (!token->IsEOL() && !token->IsEOS()) {
+      return Result("extra parameters after EXPECT command");
+    }
+
     command_list_.push_back(std::move(probe));
-    return ValidateEndOfStatement("EXPECT command");
+
+    return {};
   }
 
   auto probe = MakeUnique<ProbeSSBOCommand>(buffer);
@@ -2050,6 +2149,106 @@ Result Parser::ParseSet() {
   script_->GetEngineData().fence_timeout_ms = token->AsUint32();
 
   return ValidateEndOfStatement("SET command");
+}
+
+Result Parser::ParseSampler() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("invalid token when looking for sampler name");
+
+  auto sampler = MakeUnique<Sampler>();
+  sampler->SetName(token->AsString());
+
+  token = tokenizer_->NextToken();
+  while (!token->IsEOS() && !token->IsEOL()) {
+    if (!token->IsString())
+      return Result("invalid token when looking for sampler parameters");
+
+    auto param = token->AsString();
+    if (param == "MAG_FILTER") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsString())
+        return Result("invalid token when looking for MAG_FILTER value");
+
+      auto filter = token->AsString();
+
+      if (filter == "linear")
+        sampler->SetMagFilter(FilterType::kLinear);
+      else if (filter == "nearest")
+        sampler->SetMagFilter(FilterType::kNearest);
+      else
+        return Result("invalid MAG_FILTER value " + filter);
+    } else if (param == "MIN_FILTER") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsString())
+        return Result("invalid token when looking for MIN_FILTER value");
+
+      auto filter = token->AsString();
+
+      if (filter == "linear")
+        sampler->SetMinFilter(FilterType::kLinear);
+      else if (filter == "nearest")
+        sampler->SetMinFilter(FilterType::kNearest);
+      else
+        return Result("invalid MIN_FILTER value " + filter);
+    } else if (param == "ADDRESS_MODE_U") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsString())
+        return Result("invalid token when looking for ADDRESS_MODE_U value");
+
+      auto mode_str = token->AsString();
+      auto mode = StrToAddressMode(mode_str);
+
+      if (mode == AddressMode::kUnknown)
+        return Result("invalid ADDRESS_MODE_U value " + mode_str);
+
+      sampler->SetAddressModeU(mode);
+    } else if (param == "ADDRESS_MODE_V") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsString())
+        return Result("invalid token when looking for ADDRESS_MODE_V value");
+
+      auto mode_str = token->AsString();
+      auto mode = StrToAddressMode(mode_str);
+
+      if (mode == AddressMode::kUnknown)
+        return Result("invalid ADDRESS_MODE_V value " + mode_str);
+
+      sampler->SetAddressModeV(mode);
+    } else if (param == "BORDER_COLOR") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsString())
+        return Result("invalid token when looking for BORDER_COLOR value");
+
+      auto color_str = token->AsString();
+
+      if (color_str == "float_transparent_black")
+        sampler->SetBorderColor(BorderColor::kFloatTransparentBlack);
+      else if (color_str == "int_transparent_black")
+        sampler->SetBorderColor(BorderColor::kIntTransparentBlack);
+      else if (color_str == "float_opaque_black")
+        sampler->SetBorderColor(BorderColor::kFloatOpaqueBlack);
+      else if (color_str == "int_opaque_black")
+        sampler->SetBorderColor(BorderColor::kIntOpaqueBlack);
+      else if (color_str == "float_opaque_white")
+        sampler->SetBorderColor(BorderColor::kFloatOpaqueWhite);
+      else if (color_str == "int_opaque_white")
+        sampler->SetBorderColor(BorderColor::kIntOpaqueWhite);
+      else
+        return Result("invalid BORDER_COLOR value " + color_str);
+    } else {
+      return Result("unexpected sampler parameter " + param);
+    }
+
+    token = tokenizer_->NextToken();
+  }
+
+  return script_->AddSampler(std::move(sampler));
 }
 
 }  // namespace amberscript

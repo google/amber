@@ -363,6 +363,7 @@ void Pipeline::AddBuffer(Buffer* buf,
   auto& info = buffers_.back();
   info.descriptor_set = descriptor_set;
   info.binding = binding;
+  info.type = buf->GetBufferType();
 }
 
 void Pipeline::AddBuffer(Buffer* buf, const std::string& arg_name) {
@@ -398,6 +399,24 @@ void Pipeline::AddBuffer(Buffer* buf, uint32_t arg_no) {
   info.arg_no = arg_no;
   info.descriptor_set = std::numeric_limits<uint32_t>::max();
   info.binding = std::numeric_limits<uint32_t>::max();
+}
+
+void Pipeline::AddSampler(Sampler* sampler,
+                          uint32_t descriptor_set,
+                          uint32_t binding) {
+  // If this sampler binding already exists, overwrite with the new sampler.
+  for (auto& info : samplers_) {
+    if (info.descriptor_set == descriptor_set && info.binding == binding) {
+      info.sampler = sampler;
+      return;
+    }
+  }
+
+  samplers_.push_back(SamplerInfo{sampler});
+
+  auto& info = samplers_.back();
+  info.descriptor_set = descriptor_set;
+  info.binding = binding;
 }
 
 Result Pipeline::UpdateOpenCLBufferBindings() {
