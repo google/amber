@@ -36,10 +36,12 @@ extern "C" JNIEXPORT JNICALL int Java_com_google_amber_Amber_androidMain(
   env->ReleaseStringUTFChars(stdoutFile, stdout_file_cstr);
   env->ReleaseStringUTFChars(stderrFile, stderr_file_cstr);
 
-  int arg_count = env->GetArrayLength(args);
+  jsize arg_count = env->GetArrayLength(args);
 
   std::vector<std::string> argv_string;
-  for (int i = 0; i < arg_count; i++) {
+  argv_string.push_back("amber");
+
+  for (jsize i = 0; i < arg_count; i++) {
     jstring js = static_cast<jstring>(env->GetObjectArrayElement(args, i));
     const char* arg_cstr = env->GetStringUTFChars(js, NULL);
     argv_string.push_back(arg_cstr);
@@ -47,7 +49,6 @@ extern "C" JNIEXPORT JNICALL int Java_com_google_amber_Amber_androidMain(
   }
 
   std::vector<const char*> argv;
-  argv.push_back("amber");
 
   for (const std::string& arg : argv_string)
     argv.push_back(arg.c_str());
