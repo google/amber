@@ -676,6 +676,8 @@ Result Parser::ToBufferType(const std::string& name, BufferType* type) {
     *type = BufferType::kStorageImage;
   else if (name == "sampled_image")
     *type = BufferType::kSampledImage;
+  else if (name == "combined_image_sampler")
+    *type = BufferType::kCombinedImageSampler;
   else
     return Result("unknown buffer_type: " + name);
 
@@ -733,6 +735,22 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         buffer->SetBufferType(BufferType::kStorageImage);
       } else if (token->AsString() == "sampled_image") {
         buffer->SetBufferType(BufferType::kSampledImage);
+      } else if (token->AsString() == "combined_image_sampler") {
+        buffer->SetBufferType(BufferType::kCombinedImageSampler);
+
+        token = tokenizer_->NextToken();
+        if (!token->IsString() || token->AsString() != "SAMPLER")
+          return Result("expecting SAMPLER for combined image sampler");
+
+        token = tokenizer_->NextToken();
+        if (!token->IsString())
+          return Result("missing sampler name in BIND command");
+
+        auto* sampler = script_->GetSampler(token->AsString());
+        if (!sampler)
+          return Result("unknown sampler: " + token->AsString());
+
+        buffer->SetSampler(sampler);
       } else {
         BufferType type = BufferType::kColor;
         Result r = ToBufferType(token->AsString(), &type);
@@ -750,7 +768,8 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         buffer->GetBufferType() == BufferType::kStorage ||
         buffer->GetBufferType() == BufferType::kUniform ||
         buffer->GetBufferType() == BufferType::kStorageImage ||
-        buffer->GetBufferType() == BufferType::kSampledImage) {
+        buffer->GetBufferType() == BufferType::kSampledImage ||
+        buffer->GetBufferType() == BufferType::kCombinedImageSampler) {
       // If AS was parsed above consume the next token.
       if (buffer->GetBufferType() != BufferType::kUnknown)
         token = tokenizer_->NextToken();

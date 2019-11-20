@@ -270,6 +270,11 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # be a `FORMAT` buffer.
   BIND BUFFER {buffer_name} AS sampled_image
 
+  # Attach |buffer_name| as a combined image image sampler. The provided
+  # buffer must be a `FORMAT` buffer. A sampler |sampler_name| must also
+  # be specified.
+  BIND BUFFER {buffer_name} AS combined_image_sampler SAMPLER {sampler_name}
+
   # Bind the sampler at the given descriptor set and binding.
   BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
 

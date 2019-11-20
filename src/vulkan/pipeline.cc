@@ -279,7 +279,7 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
   if (cmd->IsPushConstant())
     return AddPushConstantBuffer(cmd->GetBuffer(), cmd->GetOffset());
   if (!cmd->IsSSBO() && !cmd->IsUniform() && !cmd->IsStorageImage() &&
-      !cmd->IsSampledImage())
+      !cmd->IsSampledImage() && !cmd->IsCombinedImageSampler())
     return Result("Pipeline::AddBufferDescriptor not supported buffer type");
 
   Descriptor* desc;
@@ -300,6 +300,12 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
       auto image_desc = MakeUnique<ImageDescriptor>(
           cmd->GetBuffer(), DescriptorType::kSampledImage, device_,
           cmd->GetDescriptorSet(), cmd->GetBinding());
+      descriptors.push_back(std::move(image_desc));
+    } else if (cmd->IsCombinedImageSampler()) {
+      auto image_desc = MakeUnique<ImageDescriptor>(
+          cmd->GetBuffer(), DescriptorType::kCombinedImageSampler, device_,
+          cmd->GetDescriptorSet(), cmd->GetBinding(),
+          cmd->GetBuffer()->GetSampler());
       descriptors.push_back(std::move(image_desc));
     } else {
       auto desc_type = cmd->IsSSBO() ? DescriptorType::kStorageBuffer

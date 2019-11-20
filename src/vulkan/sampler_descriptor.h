@@ -21,6 +21,8 @@
 namespace amber {
 namespace vulkan {
 
+VkSamplerCreateInfo GetSamplerCreateInfo(Sampler* sampler);
+
 class SamplerDescriptor : public Descriptor {
  public:
   SamplerDescriptor(Sampler* sampler,

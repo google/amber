@@ -30,7 +30,8 @@ class ImageDescriptor : public BufferBackedDescriptor {
                   DescriptorType type,
                   Device* device,
                   uint32_t desc_set,
-                  uint32_t binding);
+                  uint32_t binding,
+                  Sampler* sampler = nullptr);
   ~ImageDescriptor() override;
 
   void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
@@ -44,6 +45,8 @@ class ImageDescriptor : public BufferBackedDescriptor {
 
  private:
   std::unique_ptr<TransferImage> transfer_image_;
+  Sampler* amber_sampler_;
+  VkSampler sampler_ = VK_NULL_HANDLE;
 };
 
 }  // namespace vulkan

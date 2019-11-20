@@ -56,6 +56,27 @@ VkBorderColor GetVkBorderColor(BorderColor color) {
 
 }  // namespace
 
+VkSamplerCreateInfo GetSamplerCreateInfo(Sampler* sampler) {
+  VkSamplerCreateInfo sampler_info = VkSamplerCreateInfo();
+  sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+  sampler_info.magFilter = sampler->GetMagFilter() == FilterType::kLinear
+                               ? VK_FILTER_LINEAR
+                               : VK_FILTER_NEAREST;
+  sampler_info.minFilter = sampler->GetMinFilter() == FilterType::kLinear
+                               ? VK_FILTER_LINEAR
+                               : VK_FILTER_NEAREST;
+  sampler_info.mipmapMode = sampler->GetMipmapMode() == FilterType::kLinear
+                                ? VK_SAMPLER_MIPMAP_MODE_LINEAR
+                                : VK_SAMPLER_MIPMAP_MODE_NEAREST;
+  sampler_info.addressModeU = GetVkAddressMode(sampler->GetAddressModeU());
+  sampler_info.addressModeV = GetVkAddressMode(sampler->GetAddressModeV());
+  sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_info.borderColor = GetVkBorderColor(sampler->GetBorderColor());
+  sampler_info.maxLod = 1.0f;
+
+  return sampler_info;
+}
+
 SamplerDescriptor::SamplerDescriptor(Sampler* sampler,
                                      DescriptorType type,
                                      Device* device,
@@ -73,25 +94,7 @@ SamplerDescriptor::~SamplerDescriptor() {
 }
 
 Result SamplerDescriptor::CreateResourceIfNeeded() {
-  VkSamplerCreateInfo sampler_info = VkSamplerCreateInfo();
-  sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-  sampler_info.magFilter = amber_sampler_->GetMagFilter() == FilterType::kLinear
-                               ? VK_FILTER_LINEAR
-                               : VK_FILTER_NEAREST;
-  sampler_info.minFilter = amber_sampler_->GetMinFilter() == FilterType::kLinear
-                               ? VK_FILTER_LINEAR
-                               : VK_FILTER_NEAREST;
-  sampler_info.mipmapMode =
-      amber_sampler_->GetMipmapMode() == FilterType::kLinear
-          ? VK_SAMPLER_MIPMAP_MODE_LINEAR
-          : VK_SAMPLER_MIPMAP_MODE_NEAREST;
-  sampler_info.addressModeU =
-      GetVkAddressMode(amber_sampler_->GetAddressModeU());
-  sampler_info.addressModeV =
-      GetVkAddressMode(amber_sampler_->GetAddressModeV());
-  sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  sampler_info.borderColor = GetVkBorderColor(amber_sampler_->GetBorderColor());
-  sampler_info.maxLod = 1.0f;
+  VkSamplerCreateInfo sampler_info = GetSamplerCreateInfo(amber_sampler_);
 
   if (device_->GetPtrs()->vkCreateSampler(device_->GetVkDevice(), &sampler_info,
                                           nullptr, &sampler_) != VK_SUCCESS) {
