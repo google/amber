@@ -28,6 +28,7 @@ set(VULKAN_ENGINE_SOURCES
     pipeline.cc
     push_constant.cc
     resource.cc
+    sampler.cc
     sampler_descriptor.cc
     transfer_buffer.cc
     transfer_image.cc

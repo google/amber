@@ -262,17 +262,14 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   BIND BUFFER {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
        BINDING _id_
 
-  # Attach |buffer_name| as a storage image. The provided buffer must
-  # be a `FORMAT` buffer.
+  # Attach |buffer_name| as a storage image.
   BIND BUFFER {buffer_name} AS storage_image
 
-  # Attach |buffer_name| as a sampled image. The provided buffer must
-  # be a `FORMAT` buffer.
+  # Attach |buffer_name| as a sampled image.
   BIND BUFFER {buffer_name} AS sampled_image
 
-  # Attach |buffer_name| as a combined image image sampler. The provided
-  # buffer must be a `FORMAT` buffer. A sampler |sampler_name| must also
-  # be specified.
+  # Attach |buffer_name| as a combined image sampler. A sampler |sampler_name|
+  # must also be specified.
   BIND BUFFER {buffer_name} AS combined_image_sampler SAMPLER {sampler_name}
 
   # Bind the sampler at the given descriptor set and binding.

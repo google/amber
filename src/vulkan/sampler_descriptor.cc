@@ -18,96 +18,30 @@
 
 namespace amber {
 namespace vulkan {
-namespace {
 
-VkSamplerAddressMode GetVkAddressMode(AddressMode mode) {
-  switch (mode) {
-    case AddressMode::kRepeat:
-      return VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    case AddressMode::kMirroredRepeat:
-      return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
-    case AddressMode::kClampToEdge:
-      return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    case AddressMode::kClampToBorder:
-      return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-    default:
-      assert(mode == AddressMode::kMirrorClampToEdge);
-      return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
-  }
-}
-
-VkBorderColor GetVkBorderColor(BorderColor color) {
-  switch (color) {
-    case BorderColor::kFloatTransparentBlack:
-      return VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
-    case BorderColor::kIntTransparentBlack:
-      return VK_BORDER_COLOR_INT_TRANSPARENT_BLACK;
-    case BorderColor::kFloatOpaqueBlack:
-      return VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
-    case BorderColor::kIntOpaqueBlack:
-      return VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    case BorderColor::kFloatOpaqueWhite:
-      return VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-    default:
-      assert(color == BorderColor::kIntOpaqueWhite);
-      return VK_BORDER_COLOR_INT_OPAQUE_WHITE;
-  }
-}
-
-}  // namespace
-
-VkSamplerCreateInfo GetSamplerCreateInfo(Sampler* sampler) {
-  VkSamplerCreateInfo sampler_info = VkSamplerCreateInfo();
-  sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-  sampler_info.magFilter = sampler->GetMagFilter() == FilterType::kLinear
-                               ? VK_FILTER_LINEAR
-                               : VK_FILTER_NEAREST;
-  sampler_info.minFilter = sampler->GetMinFilter() == FilterType::kLinear
-                               ? VK_FILTER_LINEAR
-                               : VK_FILTER_NEAREST;
-  sampler_info.mipmapMode = sampler->GetMipmapMode() == FilterType::kLinear
-                                ? VK_SAMPLER_MIPMAP_MODE_LINEAR
-                                : VK_SAMPLER_MIPMAP_MODE_NEAREST;
-  sampler_info.addressModeU = GetVkAddressMode(sampler->GetAddressModeU());
-  sampler_info.addressModeV = GetVkAddressMode(sampler->GetAddressModeV());
-  sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  sampler_info.borderColor = GetVkBorderColor(sampler->GetBorderColor());
-  sampler_info.maxLod = 1.0f;
-
-  return sampler_info;
-}
-
-SamplerDescriptor::SamplerDescriptor(Sampler* sampler,
+SamplerDescriptor::SamplerDescriptor(amber::Sampler* sampler,
                                      DescriptorType type,
                                      Device* device,
                                      uint32_t desc_set,
                                      uint32_t binding)
     : Descriptor(type, device, desc_set, binding),
       amber_sampler_(sampler),
-      sampler_(VK_NULL_HANDLE) {}
+      vulkan_sampler_(device) {}
 
-SamplerDescriptor::~SamplerDescriptor() {
-  if (sampler_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroySampler(device_->GetVkDevice(), sampler_,
-                                         nullptr);
-  }
-}
+SamplerDescriptor::~SamplerDescriptor() = default;
 
 Result SamplerDescriptor::CreateResourceIfNeeded() {
-  VkSamplerCreateInfo sampler_info = GetSamplerCreateInfo(amber_sampler_);
-
-  if (device_->GetPtrs()->vkCreateSampler(device_->GetVkDevice(), &sampler_info,
-                                          nullptr, &sampler_) != VK_SUCCESS) {
-    return Result("Vulkan::Calling vkCreateSampler Fail");
-  }
+  Result r = vulkan_sampler_.CreateSampler(amber_sampler_);
+  if (!r.IsSuccess())
+    return r;
 
   return {};
 }
 
 void SamplerDescriptor::UpdateDescriptorSetIfNeeded(
     VkDescriptorSet descriptor_set) {
-  VkDescriptorImageInfo image_info = {sampler_, VK_NULL_HANDLE,
-                                      VK_IMAGE_LAYOUT_GENERAL};
+  VkDescriptorImageInfo image_info = {vulkan_sampler_.GetVkSampler(),
+                                      VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL};
 
   VkWriteDescriptorSet write = VkWriteDescriptorSet();
   write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

@@ -12,31 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_VULKAN_SAMPLER_DESCRIPTOR_H_
-#define SRC_VULKAN_SAMPLER_DESCRIPTOR_H_
+#ifndef SRC_VULKAN_SAMPLER_H_
+#define SRC_VULKAN_SAMPLER_H_
 
-#include "src/vulkan/descriptor.h"
-#include "src/vulkan/sampler.h"
-#include "src/vulkan/transfer_image.h"
+#include "src/sampler.h"
+#include "src/vulkan/device.h"
 
 namespace amber {
 namespace vulkan {
 
-class SamplerDescriptor : public Descriptor {
+class Sampler {
  public:
-  SamplerDescriptor(amber::Sampler* sampler,
-                    DescriptorType type,
-                    Device* device,
-                    uint32_t desc_set,
-                    uint32_t binding);
-  ~SamplerDescriptor() override;
+  Sampler(Device* device);
+  ~Sampler();
 
-  void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
-  Result CreateResourceIfNeeded() override;
+  Result CreateSampler(amber::Sampler* sampler);
+  VkSampler GetVkSampler() { return sampler_; }
 
  private:
-  amber::Sampler* amber_sampler_;
-  amber::vulkan::Sampler vulkan_sampler_;
+  VkSampler sampler_ = VK_NULL_HANDLE;
+  Device* device_;
 };
 
 }  // namespace vulkan

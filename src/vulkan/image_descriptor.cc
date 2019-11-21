@@ -15,7 +15,6 @@
 #include "src/vulkan/image_descriptor.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/resource.h"
-#include "src/vulkan/sampler_descriptor.h"
 
 namespace amber {
 namespace vulkan {
@@ -24,17 +23,11 @@ ImageDescriptor::ImageDescriptor(Buffer* buffer,
                                  DescriptorType type,
                                  Device* device,
                                  uint32_t desc_set,
-                                 uint32_t binding,
-                                 Sampler* sampler)
+                                 uint32_t binding)
     : BufferBackedDescriptor(buffer, type, device, desc_set, binding),
-      amber_sampler_(sampler) {}
+      vulkan_sampler_(device) {}
 
-ImageDescriptor::~ImageDescriptor() {
-  if (sampler_ != VK_NULL_HANDLE) {
-    device_->GetPtrs()->vkDestroySampler(device_->GetVkDevice(), sampler_,
-                                         nullptr);
-  }
-}
+ImageDescriptor::~ImageDescriptor() = default;
 
 void ImageDescriptor::RecordCopyDataToResourceIfNeeded(CommandBuffer* command) {
   transfer_image_->ImageBarrier(command, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -87,13 +80,9 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
     return r;
 
   if (amber_sampler_) {
-    VkSamplerCreateInfo sampler_info = GetSamplerCreateInfo(amber_sampler_);
-
-    if (device_->GetPtrs()->vkCreateSampler(device_->GetVkDevice(),
-                                            &sampler_info, nullptr,
-                                            &sampler_) != VK_SUCCESS) {
-      return Result("Vulkan::Calling vkCreateSampler Fail");
-    }
+    r = vulkan_sampler_.CreateSampler(amber_sampler_);
+    if (!r.IsSuccess())
+      return r;
   }
 
   is_descriptor_set_update_needed_ = true;
@@ -126,8 +115,9 @@ void ImageDescriptor::UpdateDescriptorSetIfNeeded(
   if (type_ == DescriptorType::kStorageImage)
     layout = VK_IMAGE_LAYOUT_GENERAL;
 
-  VkDescriptorImageInfo image_info = {
-      sampler_, transfer_image_->GetVkImageView(), layout};
+  VkDescriptorImageInfo image_info = {vulkan_sampler_.GetVkSampler(),
+                                      transfer_image_->GetVkImageView(),
+                                      layout};
 
   VkWriteDescriptorSet write = VkWriteDescriptorSet();
   write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
