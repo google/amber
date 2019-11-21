@@ -10,60 +10,62 @@ vars = {
 
   'clspv_llvm_revision': '97aa42f5dfcd10ca6df230caf9ca7868da5f25af',
   'clspv_revision': '8132fc9122f7709149dd82b25283e244bbe666a6',
-  'cpplint_revision': '5651966e0275572a9956199418d89c9ccc7b2b1a',
-  'dxc_revision': 'ec912b2ec95feb50925704dd631ef7abee1a5f09',
-  'glslang_revision': 'fe0b2bd694bb07004a2db859c5714c321c26b751',
-  'googletest_revision': '33a0d4f6d76a0ed6061e612848532cba82d42870',
-  'lodepng_revision': 'ba9fc1f084f03b5fbf8c9a5df9448173f27544b1',
-  'shaderc_revision': '5903ef1f95a0acdbbd3ae645af1a6d6b30320f10',
-  'spirv_headers_revision': 'b252a50953ac4375cb1864e94f4b0234db9d215d',
-  'spirv_tools_revision': '9d7428b052dbc73b45bcb7c3c7919bbbadd6f287',
-  'swiftshader_revision': 'ef44b4402722658648ec9d10a76bd990776be1c0',
-  'vulkan_headers_revision': '5bc459e2921304c32568b73edaac8d6df5f98b84',
-  'vulkan_loader_revision': '6b804caab51f1d0868f41bcf1d4fef366f3ced7c',
-  'vulkan_validationlayers_revision': 'e72895bb5b17b6fb2426d10454da9cb51b86d667',
+  'clspv_llvm_revision': '6ba5cbf3ea2315acf1b7f1c39c6fec6cca5560ca',
+  'clspv_revision': 'f26dac9ae5d6fab98ca027a26e375937074770cf',
+  'cpplint_revision': '2589002f53fa8866c9f0b48b9854eb4c8dbf4fa9',
+  'dxc_revision': '005576d73d96b58dbbc0a2542d509650065ebb7f',
+  'glslang_revision': 'f4d4668529f1dad0e475295456b601353fe7cf33',
+  'googletest_revision': '200ff599496e20f4e39566feeaf2f6734ca7570f',
+  'lodepng_revision': 'dc3f19b5aeaa26ff94f48f52a1c7cb5b1ef4ed3c',
+  'shaderc_revision': '091a11f81dce59f126c4b5ef4da8f034e1d8bf8e',
+  'spirv_headers_revision': '204cd131c42b90d129073719f2766293ce35c081',
+  'spirv_tools_revision': '45dde9ad6dde133db9bd6942c46df692ca539186',
+  'swiftshader_revision': 'f2c9ce1e08ed30ed42f16df61c0ea91579941134',
+  'vulkan_headers_revision': 'ba6cbb0478684580d6f6f3465d8b2c0ea594b642',
+  'vulkan_validationlayers_revision': '53902309eda9b202649e5ce576192c73cf9aa793',
+  'vulkan_loader_revision': '79e03670c2a328bea3c1a3f80ea913f296a487e6',
 }
 
 deps = {
-  'third_party/clspv': vars['google_git'] + '/clspv.git@' +
-      vars['clspv_revision'],
+  'third_party/clspv': Var('google_git') + '/clspv.git@' +
+      Var('clspv_revision'),
 
-  'third_party/clspv-llvm': vars['llvm_git'] + '/llvm-project.git@' +
-      vars['clspv_llvm_revision'],
+  'third_party/clspv-llvm': Var('llvm_git') + '/llvm-project.git@' +
+      Var('clspv_llvm_revision'),
 
-  'third_party/cpplint': vars['google_git'] + '/styleguide.git@' +
-      vars['cpplint_revision'],
+  'third_party/cpplint': Var('google_git') + '/styleguide.git@' +
+      Var('cpplint_revision'),
 
-  'third_party/dxc': vars['microsoft_git'] + '/DirectXShaderCompiler.git@' +
-      vars['dxc_revision'],
+  'third_party/dxc': Var('microsoft_git') + '/DirectXShaderCompiler.git@' +
+      Var('dxc_revision'),
 
-  'third_party/googletest': vars['google_git'] + '/googletest.git@' +
-      vars['googletest_revision'],
+  'third_party/googletest': Var('google_git') + '/googletest.git@' +
+      Var('googletest_revision'),
 
-  'third_party/glslang': vars['khronos_git'] + '/glslang.git@' +
-      vars['glslang_revision'],
+  'third_party/glslang': Var('khronos_git') + '/glslang.git@' +
+      Var('glslang_revision'),
 
-  'third_party/lodepng': vars['lvandeve_git'] + '/lodepng.git@' +
-      vars['lodepng_revision'],
+  'third_party/lodepng': Var('lvandeve_git') + '/lodepng.git@' +
+      Var('lodepng_revision'),
 
-  'third_party/shaderc': vars['google_git'] + '/shaderc.git@' +
-      vars['shaderc_revision'],
+  'third_party/shaderc': Var('google_git') + '/shaderc.git@' +
+      Var('shaderc_revision'),
 
-  'third_party/spirv-headers': vars['khronos_git'] + '/SPIRV-Headers.git@' +
-      vars['spirv_headers_revision'],
+  'third_party/spirv-headers': Var('khronos_git') + '/SPIRV-Headers.git@' +
+      Var('spirv_headers_revision'),
 
-  'third_party/spirv-tools': vars['khronos_git'] + '/SPIRV-Tools.git@' +
-      vars['spirv_tools_revision'],
+  'third_party/spirv-tools': Var('khronos_git') + '/SPIRV-Tools.git@' +
+      Var('spirv_tools_revision'),
 
-  'third_party/swiftshader': vars['swiftshader_git'] + '/SwiftShader.git@' +
-      vars['swiftshader_revision'],
+  'third_party/swiftshader': Var('swiftshader_git') + '/SwiftShader.git@' +
+      Var('swiftshader_revision'),
 
-  'third_party/vulkan-headers': vars['khronos_git'] + '/Vulkan-Headers.git@' +
-      vars['vulkan_headers_revision'],
+  'third_party/vulkan-headers': Var('khronos_git') + '/Vulkan-Headers.git@' +
+      Var('vulkan_headers_revision'),
 
-  'third_party/vulkan-validationlayers': vars['khronos_git'] + '/Vulkan-ValidationLayers.git@' +
-      vars['vulkan_validationlayers_revision'],
+  'third_party/vulkan-validationlayers': Var('khronos_git') + '/Vulkan-ValidationLayers.git@' +
+      Var('vulkan_validationlayers_revision'),
 
-  'third_party/vulkan-loader': vars['khronos_git'] + '/Vulkan-Loader.git@' +
-      vars['vulkan_loader_revision'],
+  'third_party/vulkan-loader': Var('khronos_git') + '/Vulkan-Loader.git@' +
+      Var('vulkan_loader_revision'),
 }
