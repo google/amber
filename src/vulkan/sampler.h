@@ -37,4 +37,4 @@ class Sampler {
 }  // namespace vulkan
 }  // namespace amber
 
-#endif  // SRC_VULKAN_SAMPLER_DESCRIPTOR_H_
+#endif  // SRC_VULKAN_SAMPLER_H_
