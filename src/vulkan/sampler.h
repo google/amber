@@ -23,7 +23,7 @@ namespace vulkan {
 
 class Sampler {
  public:
-  Sampler(Device* device);
+  explicit Sampler(Device* device);
   ~Sampler();
 
   Result CreateSampler(amber::Sampler* sampler);
