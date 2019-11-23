@@ -48,6 +48,10 @@ def roll_all_deps(deps_file_path):
     # Leave CLSPV to be rolled individually.
     if directory == "third_party/clspv" or directory == "third_party/clspv-llvm":
       continue
+    # cpplint uses gh-pages as the main branch, not master which doesn't work
+    # with roll-dep
+    if directory == "third_party/cpplint":
+      continue
 
     relative_directory = os.path.join(deps_file_directory, directory)
     list_of_deps.append(relative_directory)
