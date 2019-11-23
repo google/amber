@@ -16,6 +16,7 @@
 #define SRC_VULKAN_SAMPLER_DESCRIPTOR_H_
 
 #include "src/vulkan/descriptor.h"
+#include "src/vulkan/sampler.h"
 #include "src/vulkan/transfer_image.h"
 
 namespace amber {
@@ -23,7 +24,7 @@ namespace vulkan {
 
 class SamplerDescriptor : public Descriptor {
  public:
-  SamplerDescriptor(Sampler* sampler,
+  SamplerDescriptor(amber::Sampler* sampler,
                     DescriptorType type,
                     Device* device,
                     uint32_t desc_set,
@@ -34,8 +35,8 @@ class SamplerDescriptor : public Descriptor {
   Result CreateResourceIfNeeded() override;
 
  private:
-  Sampler* amber_sampler_;
-  VkSampler sampler_;
+  amber::Sampler* amber_sampler_;
+  amber::vulkan::Sampler vulkan_sampler_;
 };
 
 }  // namespace vulkan

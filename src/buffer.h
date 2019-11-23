@@ -27,6 +27,8 @@
 
 namespace amber {
 
+class Sampler;
+
 /// Types of buffers which can be created.
 enum class BufferType : int8_t {
   /// Unknown buffer type
@@ -39,6 +41,8 @@ enum class BufferType : int8_t {
   kIndex,
   /// A sampled image.
   kSampledImage,
+  /// A combined image sampler.
+  kCombinedImageSampler,
   /// A storage buffer.
   kStorage,
   /// A uniform buffer.
@@ -74,6 +78,11 @@ class Buffer {
   }
   /// Returns the Format describing the buffer data.
   Format* GetFormat() const { return format_; }
+
+  /// Sets the sampler used with buffer of combined image sampler type.
+  void SetSampler(Sampler* sampler) { sampler_ = sampler; }
+  /// Returns the sampler of combined image sampler buffer.
+  Sampler* GetSampler() const { return sampler_; }
 
   void SetFormatIsDefault(bool val) { format_is_default_ = val; }
   bool FormatIsDefault() const { return format_is_default_; }
@@ -230,6 +239,7 @@ class Buffer {
   bool format_is_default_ = false;
   std::vector<uint8_t> bytes_;
   Format* format_ = nullptr;
+  Sampler* sampler_ = nullptr;
 };
 
 }  // namespace amber

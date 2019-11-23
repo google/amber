@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "src/vulkan/buffer_backed_descriptor.h"
+#include "src/vulkan/sampler.h"
 #include "src/vulkan/transfer_image.h"
 
 namespace amber {
@@ -38,12 +39,15 @@ class ImageDescriptor : public BufferBackedDescriptor {
   Result CreateResourceIfNeeded() override;
   Result RecordCopyDataToHost(CommandBuffer* command) override;
   Result MoveResourceToBufferOutput() override;
+  void SetAmberSampler(amber::Sampler* sampler) { amber_sampler_ = sampler; }
 
  protected:
   Resource* GetResource() override { return transfer_image_.get(); }
 
  private:
   std::unique_ptr<TransferImage> transfer_image_;
+  amber::Sampler* amber_sampler_ = nullptr;
+  amber::vulkan::Sampler vulkan_sampler_;
 };
 
 }  // namespace vulkan

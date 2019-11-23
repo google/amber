@@ -440,7 +440,8 @@ class BufferCommand : public BindableResourceCommand {
     kUniform,
     kPushConstant,
     kStorageImage,
-    kSampledImage
+    kSampledImage,
+    kCombinedImageSampler
   };
 
   BufferCommand(BufferType type, Pipeline* pipeline);
@@ -453,6 +454,9 @@ class BufferCommand : public BindableResourceCommand {
   }
   bool IsSampledImage() const {
     return buffer_type_ == BufferType::kSampledImage;
+  }
+  bool IsCombinedImageSampler() const {
+    return buffer_type_ == BufferType::kCombinedImageSampler;
   }
   bool IsPushConstant() const {
     return buffer_type_ == BufferType::kPushConstant;

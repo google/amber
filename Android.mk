@@ -64,6 +64,7 @@ LOCAL_SRC_FILES:= \
     src/vulkan/pipeline.cc \
     src/vulkan/push_constant.cc \
     src/vulkan/resource.cc \
+    src/vulkan/sampler.cc \
     src/vulkan/sampler_descriptor.cc \
     src/vulkan/transfer_buffer.cc \
     src/vulkan/transfer_image.cc \

@@ -1574,6 +1574,171 @@ END)";
   EXPECT_EQ("13: missing BINDING for BIND command", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, BindBufferCombinedImageSampler) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+BUFFER framebuffer FORMAT R8G8B8A8_UNORM
+SAMPLER sampler
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND BUFFER texture AS combined_image_sampler SAMPLER sampler DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER framebuffer AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(1U, bufs.size());
+  EXPECT_EQ(BufferType::kCombinedImageSampler, bufs[0].buffer->GetBufferType());
+}
+
+TEST_F(AmberScriptParserTest,
+       BindBufferCombinedImageSamplerMissingDescriptorSetValue) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+SAMPLER sampler
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND BUFFER texture AS combined_image_sampler SAMPLER sampler DESCRIPTOR_SET BINDING 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: invalid value for DESCRIPTOR_SET in BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest,
+       BindBufferCombinedImageSamplerMissingDescriptorSet) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+SAMPLER sampler
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND BUFFER texture AS combined_image_sampler SAMPLER sampler BINDING 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: missing DESCRIPTOR_SET or KERNEL for BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest,
+       BindBufferCombinedImageSamplerMissingBindingValue) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+SAMPLER sampler
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND BUFFER texture AS combined_image_sampler SAMPLER sampler DESCRIPTOR_SET 0 BINDING
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("14: invalid value for BINDING in BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferCombinedImageSamplerMissingBinding) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+SAMPLER sampler
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND BUFFER texture AS combined_image_sampler SAMPLER sampler DESCRIPTOR_SET 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("14: missing BINDING for BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferCombinedImageSamplerMissingSampler) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND BUFFER texture AS combined_image_sampler DESCRIPTOR_SET 0 BINDING 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: expecting SAMPLER for combined image sampler", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferCombinedImageSamplerUnknownSampler) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND BUFFER texture AS combined_image_sampler SAMPLER foo DESCRIPTOR_SET 0 BINDING 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: unknown sampler: foo", r.Error());
+}
+
 TEST_F(AmberScriptParserTest, BindSampler) {
   std::string in = R"(
 SHADER vertex vert_shader PASSTHROUGH
