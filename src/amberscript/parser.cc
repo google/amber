@@ -2311,11 +2311,11 @@ Result Parser::ParseTolerances(std::vector<Probe::Tolerance>* tolerances) {
     double value = token->AsDouble();
     token = tokenizer_->PeekNextToken();
     if (token->IsString() && token->AsString() == "%") {
-      tolerances->push_back(Probe::Tolerance{true, value});
+      tolerances.push_back(Probe::Tolerance{true, value});
       tokenizer_->NextToken();
       token = tokenizer_->PeekNextToken();
     } else {
-      tolerances->push_back(Probe::Tolerance{false, value});
+      tolerances.push_back(Probe::Tolerance{false, value});
     }
   }
 
