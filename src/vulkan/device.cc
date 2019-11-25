@@ -480,6 +480,7 @@ bool Device::IsFormatSupportedByPhysicalDevice(const Format& format,
       is_buffer_type_image = true;
       break;
     case BufferType::kSampledImage:
+    case BufferType::kCombinedImageSampler:
       flag = VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
       is_buffer_type_image = true;
       break;

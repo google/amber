@@ -24,7 +24,8 @@ ImageDescriptor::ImageDescriptor(Buffer* buffer,
                                  Device* device,
                                  uint32_t desc_set,
                                  uint32_t binding)
-    : BufferBackedDescriptor(buffer, type, device, desc_set, binding) {}
+    : BufferBackedDescriptor(buffer, type, device, desc_set, binding),
+      vulkan_sampler_(device) {}
 
 ImageDescriptor::~ImageDescriptor() = default;
 
@@ -78,6 +79,12 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
   if (!r.IsSuccess())
     return r;
 
+  if (amber_sampler_) {
+    r = vulkan_sampler_.CreateSampler(amber_sampler_);
+    if (!r.IsSuccess())
+      return r;
+  }
+
   is_descriptor_set_update_needed_ = true;
   return {};
 }
@@ -108,9 +115,9 @@ void ImageDescriptor::UpdateDescriptorSetIfNeeded(
   if (type_ == DescriptorType::kStorageImage)
     layout = VK_IMAGE_LAYOUT_GENERAL;
 
-  VkDescriptorImageInfo image_info = {
-      VK_NULL_HANDLE,  // TODO(asuonpaa): Add sampler here later if used
-      transfer_image_->GetVkImageView(), layout};
+  VkDescriptorImageInfo image_info = {vulkan_sampler_.GetVkSampler(),
+                                      transfer_image_->GetVkImageView(),
+                                      layout};
 
   VkWriteDescriptorSet write = VkWriteDescriptorSet();
   write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
