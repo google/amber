@@ -1796,7 +1796,7 @@ Result Parser::ParseExpect() {
     if (token->IsString() && token->AsString() == "TOLERANCE") {
       std::vector<Probe::Tolerance> tolerances;
 
-      Result r = ParseTolerances(tolerances);
+      Result r = ParseTolerances(&tolerances);
 
       if (!r.IsSuccess())
         return r;
@@ -1833,7 +1833,7 @@ Result Parser::ParseExpect() {
   if (token->IsString() && token->AsString() == "TOLERANCE") {
     std::vector<Probe::Tolerance> tolerances;
 
-    Result r = ParseTolerances(tolerances);
+    Result r = ParseTolerances(&tolerances);
 
     if (!r.IsSuccess())
       return r;
@@ -2246,7 +2246,7 @@ Result Parser::ParseSampler() {
   return script_->AddSampler(std::move(sampler));
 }
 
-Result Parser::ParseTolerances(std::vector<Probe::Tolerance>& tolerances) {
+Result Parser::ParseTolerances(std::vector<Probe::Tolerance>* tolerances) {
   auto token = tokenizer_->PeekNextToken();
   while (!token->IsEOL() && !token->IsEOS()) {
     if (!token->IsInteger() && !token->IsDouble())
@@ -2260,11 +2260,11 @@ Result Parser::ParseTolerances(std::vector<Probe::Tolerance>& tolerances) {
     double value = token->AsDouble();
     token = tokenizer_->PeekNextToken();
     if (token->IsString() && token->AsString() == "%") {
-      tolerances.push_back(Probe::Tolerance{true, value});
+      tolerances->push_back(Probe::Tolerance{true, value});
       tokenizer_->NextToken();
       token = tokenizer_->PeekNextToken();
     } else {
-      tolerances.push_back(Probe::Tolerance{false, value});
+      tolerances->push_back(Probe::Tolerance{false, value});
     }
   }
 
