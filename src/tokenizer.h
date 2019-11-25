@@ -103,6 +103,7 @@ class Tokenizer {
   ~Tokenizer();
 
   std::unique_ptr<Token> NextToken();
+  std::unique_ptr<Token> PeekNextToken();
   std::string ExtractToNext(const std::string& str);
 
   void SetCurrentLine(size_t line) { current_line_ = line; }

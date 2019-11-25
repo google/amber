@@ -178,6 +178,17 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
   return tok;
 }
 
+std::unique_ptr<Token> Tokenizer::PeekNextToken() {
+  // Use NextToken() and restore location pointers.
+  auto orig_position = current_position_;
+  auto orig_line = current_line_;
+  std::unique_ptr<Token> tok = NextToken();
+  current_position_ = orig_position;
+  current_line_ = orig_line;
+
+  return tok;
+}
+
 std::string Tokenizer::ExtractToNext(const std::string& str) {
   size_t pos = data_.find(str, current_position_);
   std::string ret;
