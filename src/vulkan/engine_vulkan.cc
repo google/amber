@@ -230,7 +230,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   for (const auto& buf_info : pipeline->GetBuffers()) {
     auto type = BufferCommand::BufferType::kSSBO;
-		auto buf_type = buf_info.buffer->GetBufferType();
+    auto buf_type = buf_info.buffer->GetBufferType();
     if (buf_type == BufferType::kStorageImage) {
       type = BufferCommand::BufferType::kStorageImage;
     } else if (buf_type == BufferType::kSampledImage) {
