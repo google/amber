@@ -1796,24 +1796,11 @@ Result Parser::ParseExpect() {
     if (token->IsString() && token->AsString() == "TOLERANCE") {
       std::vector<Probe::Tolerance> tolerances;
 
-      token = tokenizer_->NextToken();
-      while (!token->IsEOL() && !token->IsEOS()) {
-        if (!token->IsInteger() && !token->IsDouble())
-          break;
+      Result r = ParseTolerances(&tolerances);
 
-        Result r = token->ConvertToDouble();
-        if (!r.IsSuccess())
-          return r;
+      if (!r.IsSuccess())
+        return r;
 
-        double value = token->AsDouble();
-        token = tokenizer_->NextToken();
-        if (token->IsString() && token->AsString() == "%") {
-          tolerances.push_back(Probe::Tolerance{true, value});
-          token = tokenizer_->NextToken();
-        } else {
-          tolerances.push_back(Probe::Tolerance{false, value});
-        }
-      }
       if (tolerances.empty())
         return Result("TOLERANCE specified but no tolerances provided");
 
@@ -1828,6 +1815,7 @@ Result Parser::ParseExpect() {
       }
 
       probe->SetTolerances(std::move(tolerances));
+      token = tokenizer_->NextToken();
     }
 
     if (!token->IsEOL() && !token->IsEOS()) {
@@ -1845,30 +1833,18 @@ Result Parser::ParseExpect() {
   if (token->IsString() && token->AsString() == "TOLERANCE") {
     std::vector<Probe::Tolerance> tolerances;
 
-    token = tokenizer_->NextToken();
-    while (!token->IsEOL() && !token->IsEOS()) {
-      if (!token->IsInteger() && !token->IsDouble())
-        break;
+    Result r = ParseTolerances(&tolerances);
 
-      Result r = token->ConvertToDouble();
-      if (!r.IsSuccess())
-        return r;
+    if (!r.IsSuccess())
+      return r;
 
-      double value = token->AsDouble();
-      token = tokenizer_->NextToken();
-      if (token->IsString() && token->AsString() == "%") {
-        tolerances.push_back(Probe::Tolerance{true, value});
-        token = tokenizer_->NextToken();
-      } else {
-        tolerances.push_back(Probe::Tolerance{false, value});
-      }
-    }
     if (tolerances.empty())
       return Result("TOLERANCE specified but no tolerances provided");
     if (tolerances.size() > 4)
       return Result("TOLERANCE has a maximum of 4 values");
 
     probe->SetTolerances(std::move(tolerances));
+    token = tokenizer_->NextToken();
   }
 
   if (!token->IsString() || !IsComparator(token->AsString())) {
@@ -2268,6 +2244,31 @@ Result Parser::ParseSampler() {
   }
 
   return script_->AddSampler(std::move(sampler));
+}
+
+Result Parser::ParseTolerances(std::vector<Probe::Tolerance>* tolerances) {
+  auto token = tokenizer_->PeekNextToken();
+  while (!token->IsEOL() && !token->IsEOS()) {
+    if (!token->IsInteger() && !token->IsDouble())
+      break;
+
+    token = tokenizer_->NextToken();
+    Result r = token->ConvertToDouble();
+    if (!r.IsSuccess())
+      return r;
+
+    double value = token->AsDouble();
+    token = tokenizer_->PeekNextToken();
+    if (token->IsString() && token->AsString() == "%") {
+      tolerances->push_back(Probe::Tolerance{true, value});
+      tokenizer_->NextToken();
+      token = tokenizer_->PeekNextToken();
+    } else {
+      tolerances->push_back(Probe::Tolerance{false, value});
+    }
+  }
+
+  return {};
 }
 
 }  // namespace amberscript
