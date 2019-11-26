@@ -36,6 +36,8 @@ SUPPRESSIONS = {
     "compute_mat3x2.vkscript",
     "compute_mat3x2float.vkscript",
     "compute_mat3x2.amber",
+    # https://github.com/KhronosGroup/SPIRV-Tools/issues/3072
+    "compute_robust_buffer_access_ssbo.amber",
     # Metal vertex shaders cannot simultaneously write to a buffer and return
     # a value to the rasterizer rdar://48348476
     # https://github.com/KhronosGroup/MoltenVK/issues/527
@@ -45,10 +47,14 @@ SUPPRESSIONS = {
     "draw_triangle_list_hlsl.amber",
   ],
   "Linux": [
+    # https://github.com/KhronosGroup/SPIRV-Tools/issues/3072
+    "compute_robust_buffer_access_ssbo.amber",
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
   ],
   "Win": [
+    # https://github.com/KhronosGroup/SPIRV-Tools/issues/3072
+    "compute_robust_buffer_access_ssbo.amber",
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
    ]
