@@ -134,7 +134,10 @@ class Pipeline {
     uint32_t location = 0;
     std::string arg_name = "";
     uint32_t arg_no = 0;
-    BufferType type = BufferType::kUnknown;
+
+    // Note, don't cache buffer information here as the buffer information
+    // can change after the BufferInfo object is created (this happens in the
+    // case of OpenCL buffers which set the type late.
   };
 
   /// Information on a sampler attached to the pipeline.

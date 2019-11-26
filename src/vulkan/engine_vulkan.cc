@@ -230,17 +230,18 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   for (const auto& buf_info : pipeline->GetBuffers()) {
     auto type = BufferCommand::BufferType::kSSBO;
-    if (buf_info.type == BufferType::kStorageImage) {
+		auto buf_type = buf_info.buffer->GetBufferType();
+    if (buf_type == BufferType::kStorageImage) {
       type = BufferCommand::BufferType::kStorageImage;
-    } else if (buf_info.type == BufferType::kSampledImage) {
+    } else if (buf_type == BufferType::kSampledImage) {
       type = BufferCommand::BufferType::kSampledImage;
-    } else if (buf_info.type == BufferType::kCombinedImageSampler) {
+    } else if (buf_type == BufferType::kCombinedImageSampler) {
       type = BufferCommand::BufferType::kCombinedImageSampler;
-    } else if (buf_info.type == BufferType::kUniform) {
+    } else if (buf_type == BufferType::kUniform) {
       type = BufferCommand::BufferType::kUniform;
-    } else if (buf_info.type != BufferType::kStorage) {
+    } else if (buf_type != BufferType::kStorage) {
       return Result("Vulkan: CreatePipeline - unknown buffer type: " +
-                    std::to_string(static_cast<uint32_t>(buf_info.type)));
+                    std::to_string(static_cast<uint32_t>(buf_type)));
     }
 
     auto cmd = MakeUnique<BufferCommand>(type, pipeline);

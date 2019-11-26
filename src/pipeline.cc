@@ -363,7 +363,6 @@ void Pipeline::AddBuffer(Buffer* buf,
   auto& info = buffers_.back();
   info.descriptor_set = descriptor_set;
   info.binding = binding;
-  info.type = buf->GetBufferType();
 }
 
 void Pipeline::AddBuffer(Buffer* buf, const std::string& arg_name) {
