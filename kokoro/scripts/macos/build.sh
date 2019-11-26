@@ -38,7 +38,10 @@ CMAKE_C_CXX_COMPILER="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
 # Invoke the build.
 BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
 echo $(date): Starting build...
-cmake -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_C_CXX_COMPILER -DAMBER_USE_LOCAL_VULKAN=1 ..
+cmake -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_C_CXX_COMPILER \
+  -DAMBER_USE_LOCAL_VULKAN=1 \
+  -DAMBER_ENABLE_SWIFTSHADER=1 \
+  ..
 
 echo $(date): Build everything...
 ninja
@@ -48,6 +51,9 @@ echo $(date): Starting amber_unittests...
 ./amber_unittests
 echo $(date): amber_unittests completed.
 
-#echo $(date): Starting integration tests..
-#../../test/run_tests.py
-#echo $(date): integration tests completed.
+echo $(date): Starting integration tests..
+export LD_LIBRARY_PATH=build/third_party/vulkan-loader/loader
+export VK_LAYER_PATH=build/third_party/vulkan-validationlayers/layers
+export VK_ICD_FILENAMES=build/Darwin/vk_swiftshader_icd.json
+../../test/run_tests.py
+echo $(date): integration tests completed.
