@@ -31,6 +31,10 @@
 #include "src/build-versions.h"
 #include "src/make_unique.h"
 
+#if AMBER_ENABLE_SPIRV_TOOLS
+#include "spirv-tools/libspirv.hpp"
+#endif
+
 #if AMBER_ENABLE_LODEPNG
 #include "samples/png.h"
 #endif  // AMBER_ENABLE_LODEPNG
@@ -60,6 +64,7 @@ struct Options {
   bool log_graphics_calls_time = false;
   bool log_execute_calls = false;
   bool disable_spirv_validation = false;
+  std::string shader_filename;
   amber::EngineType engine = amber::kEngineTypeVulkan;
   std::string spv_env;
 };
@@ -86,6 +91,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -b <filename>             -- Write contents of a UBO or SSBO to <filename>.
   -B [<desc set>:]<binding> -- Descriptor set and binding of buffer to write.
                                Default is [0:]0.
+  -w <filename>             -- Write shader assembly to |filename|                               
   -e <engine>               -- Specify graphics engine: vulkan, dawn. Default is vulkan.
   -v <engine version>       -- Engine version (eg, 1.1 for Vulkan). Default 1.0.
   -V, --version             -- Output version information for Amber and libraries.
@@ -131,6 +137,13 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       }
       opts->buffer_to_dump.emplace_back();
       opts->buffer_to_dump.back().buffer_name = args[i];
+    } else if (arg == "-w") {
+      ++i;
+      if (i >= args.size()) {
+        std::cerr << "Missing value for -w argument." << std::endl;
+        return false;
+      }
+      opts->shader_filename = args[i];
     } else if (arg == "-e") {
       ++i;
       if (i >= args.size()) {
@@ -317,6 +330,53 @@ class SampleDelegate : public amber::Delegate {
   bool log_execute_calls_ = false;
 };
 
+std::string disassemble(const std::string& env,
+                        const std::vector<uint32_t>& data) {
+#if AMBER_ENABLE_SPIRV_TOOLS
+  std::string spv_errors;
+
+  spv_target_env target_env = SPV_ENV_UNIVERSAL_1_0;
+  if (!env.empty()) {
+    if (!spvParseTargetEnv(env.c_str(), &target_env))
+      return "";
+  }
+
+  auto msg_consumer = [&spv_errors](spv_message_level_t level, const char*,
+                                    const spv_position_t& position,
+                                    const char* message) {
+    switch (level) {
+      case SPV_MSG_FATAL:
+      case SPV_MSG_INTERNAL_ERROR:
+      case SPV_MSG_ERROR:
+        spv_errors += "error: line " + std::to_string(position.index) + ": " +
+                      message + "\n";
+        break;
+      case SPV_MSG_WARNING:
+        spv_errors += "warning: line " + std::to_string(position.index) + ": " +
+                      message + "\n";
+        break;
+      case SPV_MSG_INFO:
+        spv_errors += "info: line " + std::to_string(position.index) + ": " +
+                      message + "\n";
+        break;
+      case SPV_MSG_DEBUG:
+        break;
+    }
+  };
+
+  spvtools::SpirvTools tools(target_env);
+  tools.SetMessageConsumer(msg_consumer);
+
+  std::string result;
+  tools.Disassemble(data, &result,
+                    SPV_BINARY_TO_TEXT_OPTION_INDENT |
+                        SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES);
+  return result;
+#else
+  return "";
+#endif  // AMBER_ENABLE_SPIRV_TOOLS
+}
+
 }  // namespace
 
 int main(int argc, const char** argv) {
@@ -478,6 +538,29 @@ int main(int argc, const char** argv) {
       failures.push_back(file);
       // Note, we continue after failure to allow dumping the buffers which may
       // give clues as to the failure.
+    }
+
+    // Dump the shader assembly
+    if (!options.shader_filename.empty()) {
+#if AMBER_ENABLE_SPIRV_TOOLS
+      std::ofstream shader_file;
+      shader_file.open(options.shader_filename, std::ios::out);
+      if (!shader_file.is_open()) {
+        std::cerr << "Cannot open file for shader dump: ";
+        std::cerr << options.shader_filename << std::endl;
+      } else {
+        auto info = recipe->GetShaderInfo();
+        for (const auto& sh : info) {
+          shader_file << ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
+                      << std::endl;
+          shader_file << "; " << sh.shader_name << std::endl
+                      << ";" << std::endl;
+          shader_file << disassemble(options.spv_env, sh.shader_data)
+                      << std::endl;
+        }
+        shader_file.close();
+      }
+#endif  // AMBER_ENABLE_SPIRV_TOOLS
     }
 
     for (size_t i = 0; i < options.image_filenames.size(); ++i) {

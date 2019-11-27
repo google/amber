@@ -21,41 +21,46 @@
 #include "src/shader.h"
 
 namespace amber {
-namespace {
-
-class ScriptProxy : public Script {
- public:
-  ScriptProxy() = default;
-  ~ScriptProxy() override = default;
-};
-
-}  // namespace
 
 using ScriptTest = testing::Test;
 
 TEST_F(ScriptTest, GetShaderInfo) {
-  ScriptProxy sp;
+  Script s;
+
+  auto p = MakeUnique<Pipeline>(PipelineType::kGraphics);
+  p->SetName("my_pipeline");
+  auto pipeline = p.get();
+
+  Result r = s.AddPipeline(std::move(p));
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   auto shader = MakeUnique<Shader>(kShaderTypeVertex);
+  r = pipeline->AddShader(shader.get(), ShaderType::kShaderTypeVertex);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  pipeline->SetShaderOptimizations(shader.get(), {"opt1", "opt2"});
+
   shader->SetName("Shader1");
   shader->SetFormat(kShaderFormatGlsl);
   shader->SetData("This is my shader data");
-  sp.AddShader(std::move(shader));
+  s.AddShader(std::move(shader));
 
   shader = MakeUnique<Shader>(kShaderTypeFragment);
   shader->SetName("Shader2");
   shader->SetFormat(kShaderFormatSpirvAsm);
   shader->SetData("More shader data");
-  sp.AddShader(std::move(shader));
+  s.AddShader(std::move(shader));
 
-  auto info = sp.GetShaderInfo();
+  auto info = s.GetShaderInfo();
   ASSERT_EQ(2U, info.size());
 
-  EXPECT_EQ("Shader1", info[0].shader_name);
+  EXPECT_EQ("my_pipeline-Shader1", info[0].shader_name);
   EXPECT_EQ(kShaderFormatGlsl, info[0].format);
   EXPECT_EQ(kShaderTypeVertex, info[0].type);
   EXPECT_EQ("This is my shader data", info[0].shader_source);
-  EXPECT_TRUE(info[0].optimizations.empty());
+  ASSERT_EQ(2, info[0].optimizations.size());
+  EXPECT_EQ("opt1", info[0].optimizations[0]);
+  EXPECT_EQ("opt2", info[0].optimizations[1]);
 
   EXPECT_EQ("Shader2", info[1].shader_name);
   EXPECT_EQ(kShaderFormatSpirvAsm, info[1].format);
@@ -65,8 +70,8 @@ TEST_F(ScriptTest, GetShaderInfo) {
 }
 
 TEST_F(ScriptTest, GetShaderInfoNoShaders) {
-  ScriptProxy sp;
-  auto info = sp.GetShaderInfo();
+  Script s;
+  auto info = s.GetShaderInfo();
   EXPECT_TRUE(info.empty());
 }
 
