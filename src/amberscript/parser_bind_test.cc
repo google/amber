@@ -199,7 +199,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: extra parameters after BIND command", r.Error());
+  EXPECT_EQ("12: extra parameters after BIND command: EXTRA", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindColorBufferDuplicateLocation) {
@@ -435,7 +435,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: extra parameters after BIND command", r.Error());
+  EXPECT_EQ("12: extra parameters after BIND command: EXTRA", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindBufferMissingBufferName) {
@@ -734,7 +734,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: extra parameters after VERTEX_DATA command", r.Error());
+  EXPECT_EQ("12: extra parameters after VERTEX_DATA command: EXTRA", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindIndexData) {
@@ -824,7 +824,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: extra parameters after INDEX_DATA command", r.Error());
+  EXPECT_EQ("12: extra parameters after INDEX_DATA command: EXTRA", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindIndexDataMultiple) {
@@ -876,7 +876,7 @@ END
   const auto* pipeline = pipelines[0].get();
   const auto& bufs = pipeline->GetBuffers();
   ASSERT_EQ(1U, bufs.size());
-  EXPECT_EQ(BufferType::kUniform, bufs[0].buffer->GetBufferType());
+  EXPECT_EQ(BufferType::kUniform, bufs[0].type);
   EXPECT_EQ(1U, bufs[0].descriptor_set);
   EXPECT_EQ(2U, bufs[0].binding);
   EXPECT_EQ(static_cast<uint32_t>(0), bufs[0].location);
@@ -986,7 +986,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: extra parameters after BIND command", r.Error());
+  EXPECT_EQ("12: extra parameters after BIND command: EXTRA", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindingBufferInvalidBindingValue) {
@@ -1087,7 +1087,7 @@ PIPELINE graphics my_pipeline
   const auto* pipeline = pipelines[0].get();
   const auto& bufs = pipeline->GetBuffers();
   ASSERT_EQ(1U, bufs.size());
-  EXPECT_EQ(test_data.type, bufs[0].buffer->GetBufferType());
+  EXPECT_EQ(test_data.type, bufs[0].type);
 }
 INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserBufferTypeTestSamples,
@@ -1146,7 +1146,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: extra parameters after BIND command", r.Error());
+  EXPECT_EQ("12: extra parameters after BIND command: EXTRA", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindBufferOpenCLArgName) {
@@ -1349,7 +1349,7 @@ END)";
   const auto* pipeline = pipelines[0].get();
   const auto& bufs = pipeline->GetBuffers();
   ASSERT_EQ(1U, bufs.size());
-  EXPECT_EQ(BufferType::kStorageImage, bufs[0].buffer->GetBufferType());
+  EXPECT_EQ(BufferType::kStorageImage, bufs[0].type);
 }
 
 TEST_F(AmberScriptParserTest, BindBufferStorageImageGraphics) {
@@ -1380,7 +1380,7 @@ END)";
   const auto* pipeline = pipelines[0].get();
   const auto& bufs = pipeline->GetBuffers();
   ASSERT_EQ(1U, bufs.size());
-  EXPECT_EQ(BufferType::kStorageImage, bufs[0].buffer->GetBufferType());
+  EXPECT_EQ(BufferType::kStorageImage, bufs[0].type);
 }
 
 TEST_F(AmberScriptParserTest, BindBufferStorageImageMissingDescriptorSetValue) {
@@ -1487,7 +1487,7 @@ END)";
   const auto* pipeline = pipelines[0].get();
   const auto& bufs = pipeline->GetBuffers();
   ASSERT_EQ(1U, bufs.size());
-  EXPECT_EQ(BufferType::kSampledImage, bufs[0].buffer->GetBufferType());
+  EXPECT_EQ(BufferType::kSampledImage, bufs[0].type);
 }
 
 TEST_F(AmberScriptParserTest, BindBufferSampledImageMissingDescriptorSetValue) {
@@ -1603,7 +1603,7 @@ END)";
   const auto* pipeline = pipelines[0].get();
   const auto& bufs = pipeline->GetBuffers();
   ASSERT_EQ(1U, bufs.size());
-  EXPECT_EQ(BufferType::kCombinedImageSampler, bufs[0].buffer->GetBufferType());
+  EXPECT_EQ(BufferType::kCombinedImageSampler, bufs[0].type);
 }
 
 TEST_F(AmberScriptParserTest,

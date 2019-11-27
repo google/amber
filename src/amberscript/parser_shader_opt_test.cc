@@ -150,7 +150,8 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("5: extra parameters after SHADER_OPTIMIZATION command", r.Error());
+  EXPECT_EQ("5: extra parameters after SHADER_OPTIMIZATION command: EXTRA",
+            r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PipelineShaderOptimizationNonStringParam) {

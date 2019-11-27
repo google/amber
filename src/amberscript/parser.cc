@@ -302,7 +302,8 @@ Result Parser::ValidateEndOfStatement(const std::string& name) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
     return {};
-  return Result("extra parameters after " + name);
+  return Result("extra parameters after " + name + ": " +
+                token->ToOriginalString());
 }
 
 Result Parser::ParseShaderBlock() {
@@ -520,7 +521,8 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
         return {};
       if (token->IsString())
         return Result("unknown ATTACH parameter: " + token->AsString());
-      return Result("extra parameters after ATTACH command");
+      return Result("extra parameters after ATTACH command: " +
+                    token->ToOriginalString());
     }
   }
 }
@@ -585,7 +587,8 @@ Result Parser::ParsePipelineShaderOptimizations(Pipeline* pipeline) {
 
   token = tokenizer_->NextToken();
   if (!token->IsEOL())
-    return Result("extra parameters after SHADER_OPTIMIZATION command");
+    return Result("extra parameters after SHADER_OPTIMIZATION command: " +
+                  token->ToOriginalString());
 
   std::vector<std::string> optimizations;
   while (true) {
@@ -624,7 +627,8 @@ Result Parser::ParsePipelineShaderCompileOptions(Pipeline* pipeline) {
 
   token = tokenizer_->NextToken();
   if (!token->IsEOL())
-    return Result("extra parameters after COMPILE_OPTIONS command");
+    return Result("extra parameters after COMPILE_OPTIONS command: " +
+                  token->ToOriginalString());
 
   std::vector<std::string> options;
   while (true) {
@@ -668,7 +672,15 @@ Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
 
 Result Parser::ToBufferType(const std::string& name, BufferType* type) {
   assert(type);
-  if (name == "uniform")
+  if (name == "color")
+    *type = BufferType::kColor;
+  else if (name == "depth_stencil")
+    *type = BufferType::kDepth;
+  else if (name == "push_constant")
+    *type = BufferType::kPushConstant;
+  else if (name == "combined_image_sampler")
+    *type = BufferType::kCombinedImageSampler;
+  else if (name == "uniform")
     *type = BufferType::kUniform;
   else if (name == "storage")
     *type = BufferType::kStorage;
@@ -701,13 +713,18 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     if (!buffer)
       return Result("unknown buffer: " + token->AsString());
 
+    BufferType buffer_type = BufferType::kUnknown;
     token = tokenizer_->NextToken();
     if (token->IsString() && token->AsString() == "AS") {
       token = tokenizer_->NextToken();
       if (!token->IsString())
         return Result("invalid token for BUFFER type");
 
-      if (token->AsString() == "color") {
+      Result r = ToBufferType(token->AsString(), &buffer_type);
+      if (!r.IsSuccess())
+        return r;
+
+      if (buffer_type == BufferType::kColor) {
         token = tokenizer_->NextToken();
         if (!token->IsString() || token->AsString() != "LOCATION")
           return Result("BIND missing LOCATION");
@@ -716,28 +733,21 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         if (!token->IsInteger())
           return Result("invalid value for BIND LOCATION");
 
-        buffer->SetBufferType(BufferType::kColor);
-
         Result r = pipeline->AddColorAttachment(buffer, token->AsUint32());
         if (!r.IsSuccess())
           return r;
-      } else if (token->AsString() == "depth_stencil") {
-        buffer->SetBufferType(BufferType::kDepth);
+
+      } else if (buffer_type == BufferType::kDepth) {
         Result r = pipeline->SetDepthBuffer(buffer);
         if (!r.IsSuccess())
           return r;
-      } else if (token->AsString() == "push_constant") {
-        buffer->SetBufferType(BufferType::kPushConstant);
+
+      } else if (buffer_type == BufferType::kPushConstant) {
         Result r = pipeline->SetPushConstantBuffer(buffer);
         if (!r.IsSuccess())
           return r;
-      } else if (token->AsString() == "storage_image") {
-        buffer->SetBufferType(BufferType::kStorageImage);
-      } else if (token->AsString() == "sampled_image") {
-        buffer->SetBufferType(BufferType::kSampledImage);
-      } else if (token->AsString() == "combined_image_sampler") {
-        buffer->SetBufferType(BufferType::kCombinedImageSampler);
 
+      } else if (buffer_type == BufferType::kCombinedImageSampler) {
         token = tokenizer_->NextToken();
         if (!token->IsString() || token->AsString() != "SAMPLER")
           return Result("expecting SAMPLER for combined image sampler");
@@ -751,31 +761,25 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
           return Result("unknown sampler: " + token->AsString());
 
         buffer->SetSampler(sampler);
-      } else {
-        BufferType type = BufferType::kColor;
-        Result r = ToBufferType(token->AsString(), &type);
-        if (!r.IsSuccess())
-          return r;
-
-        if (buffer->GetBufferType() == BufferType::kUnknown)
-          buffer->SetBufferType(type);
-        else if (buffer->GetBufferType() != type)
-          return Result("buffer type does not match intended usage");
       }
     }
 
-    if (buffer->GetBufferType() == BufferType::kUnknown ||
-        buffer->GetBufferType() == BufferType::kStorage ||
-        buffer->GetBufferType() == BufferType::kUniform ||
-        buffer->GetBufferType() == BufferType::kStorageImage ||
-        buffer->GetBufferType() == BufferType::kSampledImage ||
-        buffer->GetBufferType() == BufferType::kCombinedImageSampler) {
-      // If AS was parsed above consume the next token.
-      if (buffer->GetBufferType() != BufferType::kUnknown)
+    // The OpenCL bindings can be typeless which allows for the kUnknown
+    // buffer type.
+    if (buffer_type == BufferType::kUnknown ||
+        buffer_type == BufferType::kStorage ||
+        buffer_type == BufferType::kUniform ||
+        buffer_type == BufferType::kStorageImage ||
+        buffer_type == BufferType::kSampledImage ||
+        buffer_type == BufferType::kCombinedImageSampler) {
+      // If the buffer type is known, then we proccessed the AS block above
+      // and have to advance to the next token. Otherwise, we're already on the
+      // next token and don't want to advance.
+      if (buffer_type != BufferType::kUnknown)
         token = tokenizer_->NextToken();
+
       // DESCRIPTOR_SET requires a buffer type to have been specified.
-      if (buffer->GetBufferType() != BufferType::kUnknown &&
-          token->IsString() && token->AsString() == "DESCRIPTOR_SET") {
+      if (token->IsString() && token->AsString() == "DESCRIPTOR_SET") {
         token = tokenizer_->NextToken();
         if (!token->IsInteger())
           return Result("invalid value for DESCRIPTOR_SET in BIND command");
@@ -788,7 +792,9 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         token = tokenizer_->NextToken();
         if (!token->IsInteger())
           return Result("invalid value for BINDING in BIND command");
-        pipeline->AddBuffer(buffer, descriptor_set, token->AsUint32());
+
+        pipeline->AddBuffer(buffer, buffer_type, descriptor_set,
+                            token->AsUint32());
       } else if (token->IsString() && token->AsString() == "KERNEL") {
         token = tokenizer_->NextToken();
         if (!token->IsString())
@@ -799,13 +805,13 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
           if (!token->IsString())
             return Result("expected argument identifier");
 
-          pipeline->AddBuffer(buffer, token->AsString());
+          pipeline->AddBuffer(buffer, buffer_type, token->AsString());
         } else if (token->AsString() == "ARG_NUMBER") {
           token = tokenizer_->NextToken();
           if (!token->IsInteger())
             return Result("expected argument number");
 
-          pipeline->AddBuffer(buffer, token->AsUint32());
+          pipeline->AddBuffer(buffer, buffer_type, token->AsUint32());
         } else {
           return Result("missing ARG_NAME or ARG_NUMBER keyword");
         }
@@ -865,7 +871,6 @@ Result Parser::ParsePipelineVertexData(Pipeline* pipeline) {
   if (!token->IsInteger())
     return Result("invalid value for VERTEX_DATA LOCATION");
 
-  buffer->SetBufferType(BufferType::kVertex);
   Result r = pipeline->AddVertexBuffer(buffer, token->AsUint32());
   if (!r.IsSuccess())
     return r;
@@ -882,7 +887,6 @@ Result Parser::ParsePipelineIndexData(Pipeline* pipeline) {
   if (!buffer)
     return Result("unknown buffer: " + token->AsString());
 
-  buffer->SetBufferType(BufferType::kIndex);
   Result r = pipeline->SetIndexBuffer(buffer);
   if (!r.IsSuccess())
     return r;
@@ -1819,7 +1823,8 @@ Result Parser::ParseExpect() {
     }
 
     if (!token->IsEOL() && !token->IsEOS()) {
-      return Result("extra parameters after EXPECT command");
+      return Result("extra parameters after EXPECT command: " +
+                    token->ToOriginalString());
     }
 
     command_list_.push_back(std::move(probe));
@@ -1919,16 +1924,11 @@ Result Parser::ParseCopy() {
   if (!buffer_to)
     return Result("COPY destination buffer was not declared");
 
-  if (buffer_to->GetBufferType() == amber::BufferType::kUnknown) {
-    // Set destination buffer to mirror origin buffer
-    buffer_to->SetBufferType(buffer_from->GetBufferType());
-    buffer_to->SetWidth(buffer_from->GetWidth());
-    buffer_to->SetHeight(buffer_from->GetHeight());
-    buffer_to->SetElementCount(buffer_from->ElementCount());
-  }
+  // Set destination buffer to mirror origin buffer
+  buffer_to->SetWidth(buffer_from->GetWidth());
+  buffer_to->SetHeight(buffer_from->GetHeight());
+  buffer_to->SetElementCount(buffer_from->ElementCount());
 
-  if (buffer_from->GetBufferType() != buffer_to->GetBufferType())
-    return Result("cannot COPY between buffers of different types");
   if (buffer_from == buffer_to)
     return Result("COPY origin and destination buffers are identical");
 

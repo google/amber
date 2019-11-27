@@ -650,14 +650,15 @@ INSTANTIATE_TEST_SUITE_P(
         BufferParseError{
             "BUFFER my_index_buffer DATA_TYPE int32 DATA INVALID\n123\nEND",
             "1: invalid BUFFER data value: INVALID"},
-        BufferParseError{"BUFFER my_index_buffer DATA_TYPE int32 SIZE 256 FILL "
-                         "5 INVALID\n123\nEND",
-                         "1: extra parameters after BUFFER fill command"},
+        BufferParseError{
+            "BUFFER my_index_buffer DATA_TYPE int32 SIZE 256 FILL "
+            "5 INVALID\n123\nEND",
+            "1: extra parameters after BUFFER fill command: INVALID"},
         BufferParseError{
             "BUFFER my_buffer DATA_TYPE int32 SIZE 256 SERIES_FROM 2 "
             "INC_BY 5 "
             "INVALID",
-            "1: extra parameters after BUFFER series_from command"},
+            "1: extra parameters after BUFFER series_from command: INVALID"},
         BufferParseError{"BUFFER my_buf DATA_TYPE int32 SIZE 5 FILL 5\nBUFFER "
                          "my_buf DATA_TYPE int16 SIZE 5 FILL 2",
                          // NOLINTNEXTLINE(whitespace/parens)

@@ -86,7 +86,7 @@ END
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("2: extra parameters after PIPELINE command", r.Error());
+  EXPECT_EQ("2: extra parameters after PIPELINE command: INVALID", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PipelineInvalidType) {
