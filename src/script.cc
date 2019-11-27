@@ -25,17 +25,29 @@ Script::~Script() = default;
 std::vector<ShaderInfo> Script::GetShaderInfo() const {
   std::vector<ShaderInfo> ret;
   for (const auto& shader : shaders_) {
-    // TODO(dsinclair): The name returned should be the
-    // `pipeline_name + shader_name` instead of just shader name when we have
-    // pipelines everywhere
+    bool in_pipeline = false;
+    // A given shader could be in multiple pipelines with different
+    // optimizations so make sure we check and report all pipelines.
+    for (const auto& pipeline : pipelines_) {
+      auto shader_info = pipeline->GetShader(shader.get());
+      if (shader_info) {
+        ret.emplace_back(ShaderInfo{
+            shader->GetFormat(), shader->GetType(),
+            pipeline->GetName() + "-" + shader->GetName(), shader->GetData(),
+            shader_info->GetShaderOptimizations(), shader_info->GetData()});
 
-    // TODO(dsinclair): The optimization passes should be retrieved from the
-    // pipeline and returned here instead of an empty array.
-    ret.emplace_back(ShaderInfo{shader->GetFormat(),
-                                shader->GetType(),
-                                shader->GetName(),
-                                shader->GetData(),
-                                {}});
+        in_pipeline = true;
+      }
+    }
+
+    if (!in_pipeline) {
+      ret.emplace_back(ShaderInfo{shader->GetFormat(),
+                                  shader->GetType(),
+                                  shader->GetName(),
+                                  shader->GetData(),
+                                  {},
+                                  {}});
+    }
   }
   return ret;
 }

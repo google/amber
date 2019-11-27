@@ -54,6 +54,8 @@ struct ShaderInfo {
   std::string shader_source;
   /// A list of SPIR-V optimization passes to execute on the shader.
   std::vector<std::string> optimizations;
+  /// The shader SPIR-V if it was compiled by Amber
+  std::vector<uint32_t> shader_data;
 };
 
 }  // namespace amber
