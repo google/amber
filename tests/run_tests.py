@@ -36,6 +36,8 @@ SUPPRESSIONS = {
     "compute_mat3x2.vkscript",
     "compute_mat3x2float.vkscript",
     "compute_mat3x2.amber",
+    # https://github.com/KhronosGroup/SPIRV-Tools/issues/3072
+    "compute_robust_buffer_access_ssbo.amber",
     # Metal vertex shaders cannot simultaneously write to a buffer and return
     # a value to the rasterizer rdar://48348476
     # https://github.com/KhronosGroup/MoltenVK/issues/527
@@ -43,28 +45,26 @@ SUPPRESSIONS = {
     "multiple_ubo_update_with_graphics_pipeline.vkscript",
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
-    # CLSPV not built by default
-    "opencl_bind_buffer.amber",
-    "opencl_c_copy.amber",
-    "opencl_set_arg.amber"
   ],
   "Linux": [
+    # https://github.com/KhronosGroup/SPIRV-Tools/issues/3072
+    "compute_robust_buffer_access_ssbo.amber",
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
-    # CLSPV not built by default
-    "opencl_bind_buffer.amber",
-    "opencl_c_copy.amber",
-    "opencl_set_arg.amber"
   ],
   "Win": [
+    # https://github.com/KhronosGroup/SPIRV-Tools/issues/3072
+    "compute_robust_buffer_access_ssbo.amber",
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
-    # CLSPV not built by default
-    "opencl_bind_buffer.amber",
-    "opencl_c_copy.amber",
-    "opencl_set_arg.amber"
    ]
  }
+
+OPENCL_CASES = [
+  "opencl_bind_buffer.amber",
+  "opencl_c_copy.amber",
+  "opencl_set_arg.amber"
+]
 
 SUPPRESSIONS_DAWN = [
   # Dawn does not support push constants
@@ -125,10 +125,11 @@ SUPPRESSIONS_DAWN = [
 ]
 
 class TestCase:
-  def __init__(self, input_path, parse_only, use_dawn):
+  def __init__(self, input_path, parse_only, use_dawn, use_opencl):
     self.input_path = input_path
     self.parse_only = parse_only
     self.use_dawn = use_dawn
+    self.use_opencl = use_opencl
 
     self.results = {}
 
@@ -138,10 +139,19 @@ class TestCase:
 
   def IsSuppressed(self):
     system = platform.system()
+
+    base = os.path.basename(self.input_path)
+    is_dawn_suppressed = base in SUPPRESSIONS_DAWN
+    if self.use_dawn and is_dawn_suppressed:
+      return True
+
+    is_opencl_test = base in OPENCL_CASES
+    if not self.use_opencl and is_opencl_test:
+      return True
+
     if system in SUPPRESSIONS.keys():
-      is_system_suppressed = os.path.basename(self.input_path) in SUPPRESSIONS[system]
-      is_dawn_suppressed = os.path.basename(self.input_path) in SUPPRESSIONS_DAWN
-      return is_system_suppressed | (self.use_dawn & is_dawn_suppressed)
+      is_system_suppressed = base in SUPPRESSIONS[system]
+      return is_system_suppressed
 
     return False
 
@@ -239,6 +249,9 @@ class TestRunner:
     parser.add_option('--use-dawn',
                       action="store_true", default=False,
                       help='Use dawn as the backend; Default is Vulkan')
+    parser.add_option('--use-opencl',
+                      action="store_true", default=False,
+                      help='Enable OpenCL tests')
 
     self.options, self.args = parser.parse_args()
 
@@ -264,7 +277,8 @@ class TestRunner:
           print "Cannot find test file '%s'" % filename
           return 1
 
-        self.test_cases.append(TestCase(input_path, self.options.parse_only, self.options.use_dawn))
+        self.test_cases.append(TestCase(input_path, self.options.parse_only,
+            self.options.use_dawn, self.options.use_opencl))
 
     else:
       for file_dir, _, filename_list in os.walk(self.options.test_dir):
@@ -273,7 +287,8 @@ class TestRunner:
             input_path = os.path.join(file_dir, input_filename)
             if os.path.isfile(input_path):
               self.test_cases.append(
-                  TestCase(input_path, self.options.parse_only, self.options.use_dawn))
+                  TestCase(input_path, self.options.parse_only,
+                      self.options.use_dawn, self.options.use_opencl))
 
     self.failures = []
     self.suppressed = []
