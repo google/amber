@@ -182,6 +182,15 @@ class Pipeline {
   /// Returns information on all bound shaders in this pipeline.
   const std::vector<ShaderInfo>& GetShaders() const { return shaders_; }
 
+  /// Returns the ShaderInfo for |shader| or nullptr.
+  const ShaderInfo* GetShader(Shader* shader) const {
+    for (const auto& info : shaders_) {
+      if (info.GetShader() == shader)
+        return &info;
+    }
+    return nullptr;
+  }
+
   /// Sets the |type| of |shader| in the pipeline.
   Result SetShaderType(const Shader* shader, ShaderType type);
   /// Sets the entry point |name| for |shader| in this pipeline.
