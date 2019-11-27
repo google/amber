@@ -330,7 +330,8 @@ class SampleDelegate : public amber::Delegate {
   bool log_execute_calls_ = false;
 };
 
-std::string disassemble(const std::string& env, const std::vector<uint32_t>& data) {
+std::string disassemble(const std::string& env,
+                        const std::vector<uint32_t>& data) {
 #if AMBER_ENABLE_SPIRV_TOOLS
   std::string spv_errors;
 
@@ -368,8 +369,8 @@ std::string disassemble(const std::string& env, const std::vector<uint32_t>& dat
 
   std::string result;
   tools.Disassemble(data, &result,
-      SPV_BINARY_TO_TEXT_OPTION_INDENT |
-      SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES);
+                    SPV_BINARY_TO_TEXT_OPTION_INDENT |
+                        SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES);
   return result;
 #else
   return "";
@@ -550,9 +551,12 @@ int main(int argc, const char** argv) {
       } else {
         auto info = recipe->GetShaderInfo();
         for (const auto& sh : info) {
-          shader_file << ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;" << std::endl;
-          shader_file << "; " << sh.shader_name << std::endl << ";" << std::endl;
-          shader_file << disassemble(options.spv_env, sh.shader_data) << std::endl;
+          shader_file << ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
+                      << std::endl;
+          shader_file << "; " << sh.shader_name << std::endl
+                      << ";" << std::endl;
+          shader_file << disassemble(options.spv_env, sh.shader_data)
+                      << std::endl;
         }
         shader_file.close();
       }
