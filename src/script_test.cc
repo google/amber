@@ -221,7 +221,7 @@ TEST_F(ScriptTest, GetPipelines) {
 }
 
 TEST_F(ScriptTest, AddBuffer) {
-  auto buffer = MakeUnique<Buffer>(BufferType::kStorage);
+  auto buffer = MakeUnique<Buffer>();
   buffer->SetName("my_buffer");
 
   Script s;
@@ -230,14 +230,14 @@ TEST_F(ScriptTest, AddBuffer) {
 }
 
 TEST_F(ScriptTest, AddDuplicateBuffer) {
-  auto buffer1 = MakeUnique<Buffer>(BufferType::kStorage);
+  auto buffer1 = MakeUnique<Buffer>();
   buffer1->SetName("my_buffer");
 
   Script s;
   Result r = s.AddBuffer(std::move(buffer1));
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto buffer2 = MakeUnique<Buffer>(BufferType::kUniform);
+  auto buffer2 = MakeUnique<Buffer>();
   buffer2->SetName("my_buffer");
 
   r = s.AddBuffer(std::move(buffer2));
@@ -246,7 +246,7 @@ TEST_F(ScriptTest, AddDuplicateBuffer) {
 }
 
 TEST_F(ScriptTest, GetBuffer) {
-  auto buffer = MakeUnique<Buffer>(BufferType::kStorage);
+  auto buffer = MakeUnique<Buffer>();
   buffer->SetName("my_buffer");
 
   const auto* ptr = buffer.get();
@@ -270,7 +270,7 @@ TEST_F(ScriptTest, GetBuffersEmpty) {
 }
 
 TEST_F(ScriptTest, GetBuffers) {
-  auto buffer1 = MakeUnique<Buffer>(BufferType::kStorage);
+  auto buffer1 = MakeUnique<Buffer>();
   buffer1->SetName("my_buffer1");
 
   const auto* ptr1 = buffer1.get();
@@ -279,7 +279,7 @@ TEST_F(ScriptTest, GetBuffers) {
   Result r = s.AddBuffer(std::move(buffer1));
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto buffer2 = MakeUnique<Buffer>(BufferType::kUniform);
+  auto buffer2 = MakeUnique<Buffer>();
   buffer2->SetName("my_buffer2");
 
   const auto* ptr2 = buffer2.get();

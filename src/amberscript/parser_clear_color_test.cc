@@ -140,7 +140,7 @@ INSTANTIATE_TEST_SUITE_P(
         ClearColorTestData{"255 255 255 INVALID",
                            "invalid A value for CLEAR_COLOR command: INVALID"},
         ClearColorTestData{"255 255 255 255 EXTRA",
-                           "extra parameters after CLEAR_COLOR command"},
+                           "extra parameters after CLEAR_COLOR command: EXTRA"},
         ClearColorTestData{"-1 255 255 255",
                            "invalid R value for CLEAR_COLOR command: -1"},
         ClearColorTestData{"5.2 255 255 255",

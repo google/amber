@@ -232,12 +232,16 @@ class Pipeline {
   /// buffer bound.
   Buffer* GetIndexBuffer() const { return index_buffer_; }
 
-  /// Adds |buf| to the pipeline at the given |descriptor_set| and |binding|.
-  void AddBuffer(Buffer* buf, uint32_t descriptor_set, uint32_t binding);
+  /// Adds |buf| of |type |to the pipeline at the given |descriptor_set|
+  /// and |binding|.
+  void AddBuffer(Buffer* buf,
+                 BufferType type,
+                 uint32_t descriptor_set,
+                 uint32_t binding);
   /// Adds |buf| to the pipeline at the given |arg_name|.
-  void AddBuffer(Buffer* buf, const std::string& arg_name);
+  void AddBuffer(Buffer* buf, BufferType type, const std::string& arg_name);
   /// Adds |buf| to the pipeline at the given |arg_no|.
-  void AddBuffer(Buffer* buf, uint32_t arg_no);
+  void AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no);
   /// Returns information on all buffers in this pipeline.
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
 

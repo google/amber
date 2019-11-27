@@ -247,6 +247,8 @@ Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
 
   auto& info = color_attachments_.back();
   info.location = location;
+  info.type = BufferType::kColor;
+
   buf->SetWidth(fb_width_);
   buf->SetHeight(fb_height_);
   buf->SetElementCount(fb_width_ * fb_height_);
@@ -267,10 +269,10 @@ Result Pipeline::GetLocationForColorAttachment(Buffer* buf,
 Result Pipeline::SetDepthBuffer(Buffer* buf) {
   if (depth_buffer_.buffer != nullptr)
     return Result("can only bind one depth buffer in a PIPELINE");
-  if (buf->GetBufferType() != BufferType::kDepth)
-    return Result("expected a depth buffer");
 
   depth_buffer_.buffer = buf;
+  depth_buffer_.type = BufferType::kDepth;
+
   buf->SetWidth(fb_width_);
   buf->SetHeight(fb_height_);
   buf->SetElementCount(fb_width_ * fb_height_);
@@ -292,21 +294,19 @@ Result Pipeline::AddVertexBuffer(Buffer* buf, uint32_t location) {
     if (vtex.buffer == buf)
       return Result("vertex buffer may only be bound to a PIPELINE once");
   }
-  if (buf->GetBufferType() != BufferType::kVertex)
-    return Result("expected a vertex buffer");
 
   vertex_buffers_.push_back(BufferInfo{buf});
   vertex_buffers_.back().location = location;
+  vertex_buffers_.back().type = BufferType::kVertex;
   return {};
 }
 
 Result Pipeline::SetPushConstantBuffer(Buffer* buf) {
   if (push_constant_buffer_.buffer != nullptr)
     return Result("can only bind one push constant buffer in a PIPELINE");
-  if (buf->GetBufferType() != BufferType::kPushConstant)
-    return Result("expected a push constant buffer");
 
   push_constant_buffer_.buffer = buf;
+  push_constant_buffer_.type = BufferType::kPushConstant;
   return {};
 }
 
@@ -315,7 +315,7 @@ std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() {
   auto type = parser.Parse(kDefaultColorBufferFormat);
   auto fmt = MakeUnique<Format>(type.get());
 
-  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>(BufferType::kColor);
+  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
   buf->SetName(kGeneratedColorBuffer);
   buf->SetFormat(fmt.get());
 
@@ -329,7 +329,7 @@ std::unique_ptr<Buffer> Pipeline::GenerateDefaultDepthAttachmentBuffer() {
   auto type = parser.Parse(kDefaultDepthBufferFormat);
   auto fmt = MakeUnique<Format>(type.get());
 
-  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>(BufferType::kDepth);
+  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
   buf->SetName(kGeneratedDepthBuffer);
   buf->SetFormat(fmt.get());
 
@@ -348,6 +348,7 @@ Buffer* Pipeline::GetBufferForBinding(uint32_t descriptor_set,
 }
 
 void Pipeline::AddBuffer(Buffer* buf,
+                         BufferType type,
                          uint32_t descriptor_set,
                          uint32_t binding) {
   // If this buffer binding already exists, overwrite with the new buffer.
@@ -363,10 +364,12 @@ void Pipeline::AddBuffer(Buffer* buf,
   auto& info = buffers_.back();
   info.descriptor_set = descriptor_set;
   info.binding = binding;
-  info.type = buf->GetBufferType();
+  info.type = type;
 }
 
-void Pipeline::AddBuffer(Buffer* buf, const std::string& arg_name) {
+void Pipeline::AddBuffer(Buffer* buf,
+                         BufferType type,
+                         const std::string& arg_name) {
   // If this buffer binding already exists, overwrite with the new buffer.
   for (auto& info : buffers_) {
     if (info.arg_name == arg_name) {
@@ -378,13 +381,14 @@ void Pipeline::AddBuffer(Buffer* buf, const std::string& arg_name) {
   buffers_.push_back(BufferInfo{buf});
 
   auto& info = buffers_.back();
+  info.type = type;
   info.arg_name = arg_name;
   info.descriptor_set = std::numeric_limits<uint32_t>::max();
   info.binding = std::numeric_limits<uint32_t>::max();
   info.arg_no = std::numeric_limits<uint32_t>::max();
 }
 
-void Pipeline::AddBuffer(Buffer* buf, uint32_t arg_no) {
+void Pipeline::AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no) {
   // If this buffer binding already exists, overwrite with the new buffer.
   for (auto& info : buffers_) {
     if (info.arg_no == arg_no) {
@@ -396,6 +400,7 @@ void Pipeline::AddBuffer(Buffer* buf, uint32_t arg_no) {
   buffers_.push_back(BufferInfo{buf});
 
   auto& info = buffers_.back();
+  info.type = type;
   info.arg_no = arg_no;
   info.descriptor_set = std::numeric_limits<uint32_t>::max();
   info.binding = std::numeric_limits<uint32_t>::max();
@@ -421,8 +426,9 @@ void Pipeline::AddSampler(Sampler* sampler,
 
 Result Pipeline::UpdateOpenCLBufferBindings() {
   if (!IsCompute() || GetShaders().empty() ||
-      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC)
+      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC) {
     return {};
+  }
 
   const auto& shader_info = GetShaders()[0];
   const auto& descriptor_map = shader_info.GetDescriptorMap();
@@ -440,29 +446,29 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
         if (entry.arg_name == info.arg_name ||
             entry.arg_ordinal == info.arg_no) {
           // Buffer storage class consistency checks.
-          if (info.buffer->GetBufferType() == BufferType::kUnknown) {
+          if (info.type == BufferType::kUnknown) {
             // Set the appropriate buffer type.
             switch (entry.kind) {
               case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::UBO:
               case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO:
-                info.buffer->SetBufferType(BufferType::kUniform);
+                info.type = BufferType::kUniform;
                 break;
               case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SSBO:
               case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD:
-                info.buffer->SetBufferType(BufferType::kStorage);
+                info.type = BufferType::kStorage;
                 break;
               default:
                 return Result("Unhandled buffer type for OPENCL-C shader");
             }
-          } else if (info.buffer->GetBufferType() == BufferType::kUniform) {
+          } else if (info.type == BufferType::kUniform) {
             if (entry.kind !=
                     Pipeline::ShaderInfo::DescriptorMapEntry::Kind::UBO &&
                 entry.kind !=
                     Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO) {
               return Result("Buffer " + info.buffer->GetName() +
-                            " must be an uniform binding");
+                            " must be a uniform binding");
             }
-          } else if (info.buffer->GetBufferType() == BufferType::kStorage) {
+          } else if (info.type == BufferType::kStorage) {
             if (entry.kind !=
                     Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SSBO &&
                 entry.kind !=
@@ -564,10 +570,10 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
       // Add a new buffer for this descriptor set and binding.
       opencl_pod_buffers_.push_back(MakeUnique<Buffer>());
       buffer = opencl_pod_buffers_.back().get();
-      buffer->SetBufferType(
+      auto buffer_type =
           kind == Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD
               ? BufferType::kStorage
-              : BufferType::kUniform);
+              : BufferType::kUniform;
 
       // Use an 8-bit type because all the data in the descriptor map is
       // byte-based and it simplifies the logic for sizing below.
@@ -584,7 +590,7 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
       opencl_pod_buffer_map_.insert(
           buf_iter,
           std::make_pair(std::make_pair(descriptor_set, binding), buffer));
-      AddBuffer(buffer, descriptor_set, binding);
+      AddBuffer(buffer, buffer_type, descriptor_set, binding);
     } else {
       buffer = buf_iter->second;
     }

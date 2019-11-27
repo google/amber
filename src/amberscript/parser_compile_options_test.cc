@@ -124,7 +124,8 @@ END
   Parser parser;
   auto r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("7: extra parameters after COMPILE_OPTIONS command", r.Error());
+  EXPECT_EQ("7: extra parameters after COMPILE_OPTIONS command: extra",
+            r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PipelineShaderCompileOptionsExtraTokenEnd) {
@@ -142,7 +143,8 @@ END
   Parser parser;
   auto r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("8: extra parameters after COMPILE_OPTIONS command", r.Error());
+  EXPECT_EQ("8: extra parameters after COMPILE_OPTIONS command: token",
+            r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PipelineShaderCompileOptionsNotOpenCL) {

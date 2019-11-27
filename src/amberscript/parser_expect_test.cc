@@ -609,7 +609,7 @@ EXPECT my_fb IDX 0 0 SIZE 250 250 EQ_RGB 0 128 255 EXTRA)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("15: extra parameters after EXPECT command", r.Error());
+  EXPECT_EQ("15: extra parameters after EXPECT command: EXTRA", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectRGBAExtraParam) {
@@ -632,7 +632,7 @@ EXPECT my_fb IDX 0 0 SIZE 250 250 EQ_RGBA 0 128 255 99 EXTRA)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("15: extra parameters after EXPECT command", r.Error());
+  EXPECT_EQ("15: extra parameters after EXPECT command: EXTRA", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectEQ) {
@@ -1069,7 +1069,7 @@ EXPECT buf IDX 80 80 SIZE 5 8 EQ_RGBA 128 0 128 255 TOLERANCE 3 FOO)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("3: extra parameters after EXPECT command", r.Error());
+  EXPECT_EQ("3: extra parameters after EXPECT command: FOO", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectEqRgbToleranceOneValue) {
@@ -1152,7 +1152,7 @@ EXPECT buf IDX 80 80 SIZE 5 8 EQ_RGB 128 0 128 TOLERANCE 3 FOO)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("3: extra parameters after EXPECT command", r.Error());
+  EXPECT_EQ("3: extra parameters after EXPECT command: FOO", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExpectRMSEBuffer) {

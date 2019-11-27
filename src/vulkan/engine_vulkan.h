@@ -78,11 +78,6 @@ class EngineVulkan : public Engine {
   Result GetVkShaderStageInfo(
       amber::Pipeline* pipeline,
       std::vector<VkPipelineShaderStageCreateInfo>* out);
-  bool IsFormatSupportedByPhysicalDevice(BufferType type,
-                                         VkPhysicalDevice physical_device,
-                                         VkFormat format);
-  bool IsDescriptorSetInBounds(VkPhysicalDevice physical_device,
-                               uint32_t descriptor_set);
 
   Result SetShader(amber::Pipeline* pipeline,
                    ShaderType type,

@@ -260,9 +260,9 @@ TEST_F(PipelineTest, ComputePipelineWithoutShader) {
 TEST_F(PipelineTest, PipelineBufferWithoutFormat) {
   Pipeline p(PipelineType::kCompute);
 
-  auto buf = MakeUnique<Buffer>(BufferType::kStorage);
+  auto buf = MakeUnique<Buffer>();
   buf->SetName("MyBuffer");
-  p.AddBuffer(buf.get(), 0, 0);
+  p.AddBuffer(buf.get(), BufferType::kStorage, 0, 0);
 
   Result r = p.Validate();
   EXPECT_FALSE(r.IsSuccess()) << r.Error();
@@ -351,21 +351,21 @@ TEST_F(PipelineTest, Clone) {
   p.AddShader(&v, kShaderTypeVertex);
   p.SetShaderEntryPoint(&v, "my_main");
 
-  auto vtex_buf = MakeUnique<Buffer>(BufferType::kVertex);
+  auto vtex_buf = MakeUnique<Buffer>();
   vtex_buf->SetName("vertex_buffer");
   p.AddVertexBuffer(vtex_buf.get(), 1);
 
-  auto idx_buf = MakeUnique<Buffer>(BufferType::kIndex);
+  auto idx_buf = MakeUnique<Buffer>();
   idx_buf->SetName("Index Buffer");
   p.SetIndexBuffer(idx_buf.get());
 
-  auto buf1 = MakeUnique<Buffer>(BufferType::kStorage);
+  auto buf1 = MakeUnique<Buffer>();
   buf1->SetName("buf1");
-  p.AddBuffer(buf1.get(), 1, 1);
+  p.AddBuffer(buf1.get(), BufferType::kStorage, 1, 1);
 
-  auto buf2 = MakeUnique<Buffer>(BufferType::kStorage);
+  auto buf2 = MakeUnique<Buffer>();
   buf2->SetName("buf2");
-  p.AddBuffer(buf2.get(), 1, 2);
+  p.AddBuffer(buf2.get(), BufferType::kStorage, 1, 2);
 
   auto clone = p.Clone();
   EXPECT_EQ("", clone->GetName());
@@ -422,13 +422,13 @@ TEST_F(PipelineTest, OpenCLUpdateBindings) {
   entry2.arg_ordinal = 1;
   p.GetShaders()[0].AddDescriptorEntry("my_main", std::move(entry2));
 
-  auto a_buf = MakeUnique<Buffer>(BufferType::kStorage);
+  auto a_buf = MakeUnique<Buffer>();
   a_buf->SetName("buf1");
-  p.AddBuffer(a_buf.get(), "arg_a");
+  p.AddBuffer(a_buf.get(), BufferType::kStorage, "arg_a");
 
-  auto b_buf = MakeUnique<Buffer>(BufferType::kStorage);
+  auto b_buf = MakeUnique<Buffer>();
   b_buf->SetName("buf2");
-  p.AddBuffer(b_buf.get(), 1);
+  p.AddBuffer(b_buf.get(), BufferType::kStorage, 1);
 
   p.UpdateOpenCLBufferBindings();
 
@@ -467,18 +467,18 @@ TEST_F(PipelineTest, OpenCLUpdateBindingTypeMismatch) {
   entry2.arg_ordinal = 1;
   p.GetShaders()[0].AddDescriptorEntry("my_main", std::move(entry2));
 
-  auto a_buf = MakeUnique<Buffer>(BufferType::kStorage);
+  auto a_buf = MakeUnique<Buffer>();
   a_buf->SetName("buf1");
-  p.AddBuffer(a_buf.get(), "arg_a");
+  p.AddBuffer(a_buf.get(), BufferType::kStorage, "arg_a");
 
-  auto b_buf = MakeUnique<Buffer>(BufferType::kUniform);
+  auto b_buf = MakeUnique<Buffer>();
   b_buf->SetName("buf2");
-  p.AddBuffer(b_buf.get(), 1);
+  p.AddBuffer(b_buf.get(), BufferType::kUniform, 1);
 
   auto r = p.UpdateOpenCLBufferBindings();
 
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("Buffer buf2 must be an uniform binding", r.Error());
+  EXPECT_EQ("Buffer buf2 must be a uniform binding", r.Error());
 }
 
 TEST_F(PipelineTest, OpenCLGeneratePodBuffers) {

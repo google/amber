@@ -100,8 +100,6 @@ double CalculateDiff(const Format::Segment* seg,
 
 Buffer::Buffer() = default;
 
-Buffer::Buffer(BufferType type) : buffer_type_(type) {}
-
 Buffer::~Buffer() = default;
 
 Result Buffer::CopyTo(Buffer* buffer) const {
