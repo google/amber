@@ -119,7 +119,7 @@ TEST_F(AmberScriptParserTest, ShaderPassThroughExtraParameters) {
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: extra parameters after SHADER PASSTHROUGH", r.Error());
+  EXPECT_EQ("1: extra parameters after SHADER PASSTHROUGH: INVALID", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, Shader) {
@@ -232,7 +232,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("2: extra parameters after SHADER command", r.Error());
+  EXPECT_EQ("2: extra parameters after SHADER command: INVALID", r.Error());
 }
 
 struct ShaderTypeData {

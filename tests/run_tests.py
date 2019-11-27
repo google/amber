@@ -216,8 +216,8 @@ class TestRunner:
         return False
 
     except Exception as e:
-      print("{}".format("".join(map(chr, bytearray(e.output)))))
       if not tc.IsExpectedFail() and not tc.IsSuppressed():
+        print("{}".format("".join(map(chr, bytearray(e.output)))))
         print(e)
       return False
 

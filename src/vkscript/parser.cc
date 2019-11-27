@@ -298,7 +298,7 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
     TypeParser parser;
     auto type = parser.Parse("R32_UINT");
     auto fmt = MakeUnique<Format>(type.get());
-    auto b = MakeUnique<Buffer>(BufferType::kIndex);
+    auto b = MakeUnique<Buffer>();
     auto* buf = b.get();
     b->SetName("indices");
     b->SetFormat(fmt.get());
@@ -433,7 +433,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
 
   auto* pipeline = script_->GetPipeline(kDefaultPipelineName);
   for (size_t i = 0; i < headers.size(); ++i) {
-    auto buffer = MakeUnique<Buffer>(BufferType::kVertex);
+    auto buffer = MakeUnique<Buffer>();
     auto* buf = buffer.get();
     buffer->SetName("Vertices" + std::to_string(i));
     buffer->SetFormat(headers[i].format);

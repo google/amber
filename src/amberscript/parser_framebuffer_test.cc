@@ -128,7 +128,8 @@ END
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
 
-  EXPECT_EQ("9: extra parameters after FRAMEBUFFER_SIZE command", r.Error());
+  EXPECT_EQ("9: extra parameters after FRAMEBUFFER_SIZE command: INVALID",
+            r.Error());
 }
 
 TEST_F(AmberScriptParserTest, FramebufferInvalidWidth) {

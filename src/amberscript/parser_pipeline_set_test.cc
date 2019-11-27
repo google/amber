@@ -153,7 +153,7 @@ END
   Parser parser;
   auto r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("7: extra parameters after SET command", r.Error());
+  EXPECT_EQ("7: extra parameters after SET command: BLAH", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, OpenCLSetArgNameNotString) {
