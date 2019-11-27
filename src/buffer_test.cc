@@ -25,7 +25,7 @@ namespace amber {
 using BufferTest = testing::Test;
 
 TEST_F(BufferTest, EmptyByDefault) {
-  Buffer b(BufferType::kColor);
+  Buffer b;
   EXPECT_EQ(static_cast<size_t>(0U), b.ElementCount());
   EXPECT_EQ(static_cast<size_t>(0U), b.ValueCount());
   EXPECT_EQ(static_cast<size_t>(0U), b.GetSizeInBytes());
@@ -36,7 +36,7 @@ TEST_F(BufferTest, Size) {
   auto type = parser.Parse("R16_SINT");
   Format fmt(type.get());
 
-  Buffer b(BufferType::kColor);
+  Buffer b;
   b.SetFormat(&fmt);
   b.SetElementCount(10);
   EXPECT_EQ(10, b.ElementCount());
@@ -52,7 +52,7 @@ TEST_F(BufferTest, SizeFromData) {
   auto type = parser.Parse("R32_SFLOAT");
   Format fmt(type.get());
 
-  Buffer b(BufferType::kColor);
+  Buffer b;
   b.SetFormat(&fmt);
   b.SetData(std::move(values));
 
@@ -69,7 +69,7 @@ TEST_F(BufferTest, SizeFromDataDoesNotOverrideSize) {
   auto type = parser.Parse("R32_SFLOAT");
   Format fmt(type.get());
 
-  Buffer b(BufferType::kColor);
+  Buffer b;
   b.SetFormat(&fmt);
   b.SetElementCount(20);
   b.SetData(std::move(values));
@@ -85,7 +85,7 @@ TEST_F(BufferTest, SizeMatrixStd430) {
   type->SetColumnCount(3);
   Format fmt(type.get());
 
-  Buffer b(BufferType::kColor);
+  Buffer b;
   b.SetFormat(&fmt);
   b.SetElementCount(10);
 
@@ -101,7 +101,7 @@ TEST_F(BufferTest, SizeMatrixStd140) {
   Format fmt(type.get());
   fmt.SetLayout(Format::Layout::kStd140);
 
-  Buffer b(BufferType::kColor);
+  Buffer b;
   b.SetFormat(&fmt);
   b.SetElementCount(10);
 
@@ -116,7 +116,7 @@ TEST_F(BufferTest, SizeMatrixPaddedStd430) {
   type->SetColumnCount(3);
   Format fmt(type.get());
 
-  Buffer b(BufferType::kColor);
+  Buffer b;
   b.SetFormat(&fmt);
   b.SetValueCount(9);
 
@@ -138,7 +138,7 @@ TEST_F(BufferTest, GetHistogramForChannelGradient) {
   for (uint32_t i = 0; i < values.size(); i += 4)
     values[i + 2].SetIntValue(i / 4 * 25);
 
-  Buffer b(BufferType::kColor);
+  Buffer b;
   b.SetFormat(&fmt);
   b.SetData(values);
 
@@ -158,7 +158,7 @@ TEST_F(BufferTest, GetHistogramForChannelAllBlack) {
   for (uint32_t i = 0; i < values.size(); i++)
     values[i].SetIntValue(0);
 
-  Buffer b(BufferType::kColor);
+  Buffer b;
   b.SetFormat(&fmt);
   b.SetData(values);
 
@@ -181,7 +181,7 @@ TEST_F(BufferTest, GetHistogramForChannelAllWhite) {
   for (uint32_t i = 0; i < values.size(); i++)
     values[i].SetIntValue(std::numeric_limits<uint8_t>::max());
 
-  Buffer b(BufferType::kColor);
+  Buffer b;
   b.SetFormat(&fmt);
   b.SetData(values);
 
@@ -208,11 +208,11 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceFalse) {
   std::vector<Value> values2 = values1;
   values2[4].SetIntValue(values2[4].AsUint8() + 50);
 
-  Buffer b1(BufferType::kColor);
+  Buffer b1;
   b1.SetFormat(&fmt);
   b1.SetData(values1);
 
-  Buffer b2(BufferType::kColor);
+  Buffer b2;
   b2.SetFormat(&fmt);
   b2.SetData(values2);
 
@@ -235,11 +235,11 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceTrue) {
   std::vector<Value> values2 = values1;
   values2[4].SetIntValue(values2[4].AsUint8() + 50);
 
-  Buffer b1(BufferType::kColor);
+  Buffer b1;
   b1.SetFormat(&fmt);
   b1.SetData(values1);
 
-  Buffer b2(BufferType::kColor);
+  Buffer b2;
   b2.SetFormat(&fmt);
   b2.SetData(values2);
 
@@ -259,11 +259,11 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceAllBlack) {
 
   std::vector<Value> values2 = values1;
 
-  Buffer b1(BufferType::kColor);
+  Buffer b1;
   b1.SetFormat(&fmt);
   b1.SetData(values1);
 
-  Buffer b2(BufferType::kColor);
+  Buffer b2;
   b2.SetFormat(&fmt);
   b2.SetData(values2);
 
@@ -283,11 +283,11 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceAllWhite) {
 
   std::vector<Value> values2 = values1;
 
-  Buffer b1(BufferType::kColor);
+  Buffer b1;
   b1.SetFormat(&fmt);
   b1.SetData(values1);
 
-  Buffer b2(BufferType::kColor);
+  Buffer b2;
   b2.SetFormat(&fmt);
   b2.SetData(values2);
 

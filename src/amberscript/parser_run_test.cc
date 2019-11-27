@@ -125,7 +125,7 @@ RUN my_pipeline 2 4 5 EXTRA)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  ASSERT_EQ("12: extra parameters after RUN command", r.Error());
+  ASSERT_EQ("12: extra parameters after RUN command: EXTRA", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, RunComputeInvalidZ) {
@@ -486,7 +486,7 @@ RUN my_pipeline DRAW_RECT POS 2 4 SIZE 10 20 EXTRA)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  ASSERT_EQ("12: extra parameters after RUN command", r.Error());
+  ASSERT_EQ("12: extra parameters after RUN command: EXTRA", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawArrays) {

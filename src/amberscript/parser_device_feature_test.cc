@@ -70,7 +70,8 @@ TEST_F(AmberScriptParserTest, DeviceFeatureExtraParams) {
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: extra parameters after DEVICE_FEATURE command", r.Error());
+  EXPECT_EQ("1: extra parameters after DEVICE_FEATURE command: EXTRA",
+            r.Error());
 }
 
 }  // namespace amberscript

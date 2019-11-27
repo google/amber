@@ -112,7 +112,7 @@ CLEAR my_pipeline EXTRA)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: extra parameters after CLEAR command", r.Error());
+  EXPECT_EQ("12: extra parameters after CLEAR command: EXTRA", r.Error());
 }
 
 }  // namespace amberscript

@@ -61,15 +61,8 @@ class Buffer {
  public:
   /// Create a buffer of unknown type.
   Buffer();
-  /// Create a buffer of |type_|.
-  explicit Buffer(BufferType type);
 
   ~Buffer();
-
-  /// Returns the BufferType of this buffer.
-  BufferType GetBufferType() const { return buffer_type_; }
-  /// Sets the BufferType for this buffer.
-  void SetBufferType(BufferType type) { buffer_type_ = type; }
 
   /// Sets the Format of the buffer to |format|.
   void SetFormat(Format* format) {
@@ -228,7 +221,6 @@ class Buffer {
   // those stored in |buffer| and returns all the values.
   std::vector<double> CalculateDiffs(const Buffer* buffer) const;
 
-  BufferType buffer_type_ = BufferType::kUnknown;
   std::string name_;
   /// max_size_in_bytes_ is the total size in bytes needed to hold the buffer
   /// over all ubo, ssbo size and ssbo subdata size calls.
