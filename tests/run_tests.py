@@ -186,8 +186,8 @@ class TestRunner:
         return False
 
     except Exception as e:
-      print e.output
       if not tc.IsExpectedFail() and not tc.IsSuppressed():
+        print e.output
         print e
       return False
 
