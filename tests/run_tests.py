@@ -58,7 +58,32 @@ SUPPRESSIONS = {
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
    ]
- }
+}
+
+SUPPRESSIONS_SWIFTSHADER = [
+  # Incorrect rendering: github.com/google/amber/issues/727
+  "draw_array_instanced.vkscript",
+  # Exceeds device limit maxComputeWorkGroupInvocations
+  "draw_sampled_image.amber",
+  # No geometry shader support
+  "draw_triangle_list_using_geom_shader.vkscript",
+  # No tessellation shader support
+  "draw_triangle_list_using_tessellation.vkscript",
+  # Vertex buffer format not supported
+  "draw_triangle_list_in_r8g8b8a8_srgb_color_frame.vkscript",
+  "draw_triangle_list_in_r32g32b32a32_sfloat_color_frame.vkscript",
+  "draw_triangle_list_in_r16g16b16a16_uint_color_frame.vkscript",
+  # Color attachment format is not supported
+  "draw_triangle_list_in_r16g16b16a16_snorm_color_frame.vkscript",
+  "draw_triangle_list_in_r8g8b8a8_snorm_color_frame.vkscript",
+  # SEGV: github.com/google/amber/issues/726
+  "matrices_uniform_draw.amber",
+  # SEGV: github.com/google/amber/issues/725
+  "multiple_ssbo_update_with_graphics_pipeline.vkscript",
+  "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline_less_than_4.vkscript",
+  # Exceeded maxBoundDescriptorSets limit of physical device
+  "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript"
+]
 
 OPENCL_CASES = [
   "opencl_bind_buffer.amber",
@@ -125,11 +150,12 @@ SUPPRESSIONS_DAWN = [
 ]
 
 class TestCase:
-  def __init__(self, input_path, parse_only, use_dawn, use_opencl):
+  def __init__(self, input_path, parse_only, use_dawn, use_opencl, use_swiftshader):
     self.input_path = input_path
     self.parse_only = parse_only
     self.use_dawn = use_dawn
     self.use_opencl = use_opencl
+    self.use_swiftshader = use_swiftshader
 
     self.results = {}
 
@@ -143,6 +169,10 @@ class TestCase:
     base = os.path.basename(self.input_path)
     is_dawn_suppressed = base in SUPPRESSIONS_DAWN
     if self.use_dawn and is_dawn_suppressed:
+      return True
+
+    is_swiftshader_suppressed = base in SUPPRESSIONS_SWIFTSHADER
+    if self.use_swiftshader and is_swiftshader_suppressed:
       return True
 
     is_opencl_test = base in OPENCL_CASES
@@ -252,6 +282,9 @@ class TestRunner:
     parser.add_option('--use-opencl',
                       action="store_true", default=False,
                       help='Enable OpenCL tests')
+    parser.add_option('--use-swiftshader',
+                      action="store_true", default=False,
+                      help='Tells test runner swiftshader is the device')
 
     self.options, self.args = parser.parse_args()
 
@@ -278,7 +311,8 @@ class TestRunner:
           return 1
 
         self.test_cases.append(TestCase(input_path, self.options.parse_only,
-            self.options.use_dawn, self.options.use_opencl))
+            self.options.use_dawn, self.options.use_opencl,
+            self.options.use_swiftshader))
 
     else:
       for file_dir, _, filename_list in os.walk(self.options.test_dir):
@@ -288,7 +322,8 @@ class TestRunner:
             if os.path.isfile(input_path):
               self.test_cases.append(
                   TestCase(input_path, self.options.parse_only,
-                      self.options.use_dawn, self.options.use_opencl))
+                      self.options.use_dawn, self.options.use_opencl,
+                      self.options.use_swiftshader))
 
     self.failures = []
     self.suppressed = []

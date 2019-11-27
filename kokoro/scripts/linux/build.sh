@@ -93,5 +93,5 @@ export LD_LIBRARY_PATH=build/third_party/vulkan-loader/loader
 export VK_LAYER_PATH=build/third_party/vulkan-validationlayers/layers
 export VK_ICD_FILENAMES=build/Linux/vk_swiftshader_icd.json
 cd $SRC
-./tests/run_tests.py --build-dir $SRC/build $OPTS
+./tests/run_tests.py --build-dir $SRC/build --use-swiftshader $OPTS
 echo $(date): integration tests completed.
