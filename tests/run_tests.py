@@ -200,7 +200,7 @@ class TestCase:
 
 class TestRunner:
   def RunTest(self, tc):
-    print "Testing %s" % tc.GetInputPath()
+    print("Testing {}".format(tc.GetInputPath()))
 
     cmd = [self.options.test_prog_path, '-q']
     if tc.IsParseOnly():
@@ -211,14 +211,14 @@ class TestRunner:
 
     try:
       err = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-      if err != "" and not tc.IsExpectedFail() and not tc.IsSuppressed():
-        sys.stdout.write(err)
+      if len(err) != 0 and not tc.IsExpectedFail() and not tc.IsSuppressed():
+        sys.stdout.write(err.decode('utf-8'))
         return False
 
     except Exception as e:
-      print e.output
+      print("{}".format("".join(map(chr, bytearray(e.output)))))
       if not tc.IsExpectedFail() and not tc.IsSuppressed():
-        print e
+        print(e)
       return False
 
     return True
@@ -241,23 +241,23 @@ class TestRunner:
     if len(self.failures) > 0:
       self.failures.sort()
 
-      print '\nSummary of Failures:'
+      print('\nSummary of Failures:')
       for failure in self.failures:
-        print failure
+        print(failure)
 
     if len(self.suppressed) > 0:
       self.suppressed.sort()
 
-      print '\nSummary of Suppressions:'
+      print('\nSummary of Suppressions:')
       for suppression in self.suppressed:
-        print suppression
+        print(suppression)
 
-    print
-    print 'Test cases executed: %d' % len(self.test_cases)
-    print '  Successes:  %d' % (len(self.test_cases) - len(self.suppressed) - len(self.failures))
-    print '  Failures:   %d' % len(self.failures)
-    print '  Suppressed: %d' % len(self.suppressed)
-    print
+    print('')
+    print('Test cases executed: {}'.format(len(self.test_cases)))
+    print('  Successes:  {}'.format((len(self.test_cases) - len(self.suppressed) - len(self.failures))))
+    print('  Failures:   {}'.format(len(self.failures)))
+    print('  Suppressed: {}'.format(len(self.suppressed)))
+    print('')
 
 
   def Run(self):
@@ -291,13 +291,13 @@ class TestRunner:
     if self.options.test_prog_path == None:
       test_prog = os.path.abspath(os.path.join(self.options.build_dir, 'amber'))
       if not os.path.isfile(test_prog):
-        print "Cannot find test program %s" % test_prog
+        print("Cannot find test program {}".format(test_prog))
         return 1
 
       self.options.test_prog_path = test_prog
 
     if not os.path.isfile(self.options.test_prog_path):
-      print "--test-prog-path must point to an executable"
+      print("--test-prog-path must point to an executable")
       return 1
 
     input_file_re = re.compile('^.+[.][amber|vkscript]')
@@ -307,7 +307,7 @@ class TestRunner:
       for filename in self.args:
         input_path = os.path.join(self.options.test_dir, filename)
         if not os.path.isfile(input_path):
-          print "Cannot find test file '%s'" % filename
+          print("Cannot find test file '{}'".format(filename))
           return 1
 
         self.test_cases.append(TestCase(input_path, self.options.parse_only,
