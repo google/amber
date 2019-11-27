@@ -69,7 +69,7 @@ echo "%DATE% %TIME%: Starting integration tests.."
 set VK_LAYER_PATH=build\third_party\vulkan-validationlayers\layers
 set VK_ICD_FILENAMES=build\Windows\vk_swiftshader_icd.json
 cd %SRC%
-python tests\run_tests.py --use-swiftshader $OPTS
+python tests\run_tests.py --build-dir=%SRC%\build --use-swiftshader
 echo "%DATE% %TIME%: integration tests completed."
 
 exit /b %ERRORLEVEL%
