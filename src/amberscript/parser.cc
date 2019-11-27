@@ -733,17 +733,17 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         if (!token->IsInteger())
           return Result("invalid value for BIND LOCATION");
 
-        Result r = pipeline->AddColorAttachment(buffer, token->AsUint32());
+        r = pipeline->AddColorAttachment(buffer, token->AsUint32());
         if (!r.IsSuccess())
           return r;
 
       } else if (buffer_type == BufferType::kDepth) {
-        Result r = pipeline->SetDepthBuffer(buffer);
+        r = pipeline->SetDepthBuffer(buffer);
         if (!r.IsSuccess())
           return r;
 
       } else if (buffer_type == BufferType::kPushConstant) {
-        Result r = pipeline->SetPushConstantBuffer(buffer);
+        r = pipeline->SetPushConstantBuffer(buffer);
         if (!r.IsSuccess())
           return r;
 
