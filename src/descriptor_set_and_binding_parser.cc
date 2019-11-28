@@ -26,7 +26,24 @@ DescriptorSetAndBindingParser::DescriptorSetAndBindingParser() = default;
 DescriptorSetAndBindingParser::~DescriptorSetAndBindingParser() = default;
 
 Result DescriptorSetAndBindingParser::Parse(const std::string& buffer_id) {
-  Tokenizer t(buffer_id);
+  size_t idx = 0;
+
+  // Pipeline name
+  if (!std::isdigit(buffer_id[idx]) && std::isalpha(buffer_id[idx]) &&
+      buffer_id[idx] != ':' && buffer_id[idx] != '-') {
+    idx++;
+    while (idx < buffer_id.size() && buffer_id[idx] != ':')
+      idx++;
+
+    pipeline_name_ = buffer_id.substr(0, idx);
+
+    // Move past the :
+    idx += 1;
+  }
+  if (idx >= buffer_id.size())
+    return Result("Invalid buffer id: " + buffer_id);
+
+  Tokenizer t(buffer_id.substr(idx));
   auto token = t.NextToken();
   if (token->IsInteger()) {
     if (token->AsInt32() < 0) {
@@ -45,8 +62,6 @@ Result DescriptorSetAndBindingParser::Parse(const std::string& buffer_id) {
     }
 
     descriptor_set_ = val;
-  } else {
-    descriptor_set_ = 0;
   }
 
   if (!token->IsString())

@@ -25,6 +25,7 @@ TEST_F(DescriptorSetAndBindingParserTest, CommaAndBinding) {
   Result r = parser.Parse(":1234");
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
+  EXPECT_FALSE(parser.HasPipelineName());
   EXPECT_EQ(0, parser.GetDescriptorSet());
   EXPECT_EQ(1234, parser.GetBinding());
 }
@@ -105,6 +106,17 @@ TEST_F(DescriptorSetAndBindingParserTest, DescSetAndNegativeBinding) {
   EXPECT_EQ(
       "Binding for a buffer must be non-negative integer, but you gave: -5678",
       r.Error());
+}
+
+TEST_F(DescriptorSetAndBindingParserTest, WithPipelineName) {
+  DescriptorSetAndBindingParser parser;
+  Result r = parser.Parse("pipeline1:123:234");
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  EXPECT_TRUE(parser.HasPipelineName());
+  EXPECT_EQ("pipeline1", parser.PipelineName());
+  EXPECT_EQ(123, parser.GetDescriptorSet());
+  EXPECT_EQ(234, parser.GetBinding());
 }
 
 }  // namespace amber
