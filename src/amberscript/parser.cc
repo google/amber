@@ -20,7 +20,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <iostream>
 
 #include "src/make_unique.h"
 #include "src/sampler.h"
@@ -1146,8 +1145,6 @@ Result Parser::ParseBuffer() {
   }
   buffer->SetName(name);
 
-  std::cout << "Buffer " << buffer->GetName() << " ele count: " << buffer->ElementCount() << "\n";
-  std::cout << "Buffer " << buffer->GetName() << " value count: " << buffer->ValueCount() << "\n";
   Result r = script_->AddBuffer(std::move(buffer));
   if (!r.IsSuccess())
     return r;
