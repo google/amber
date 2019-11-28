@@ -1014,6 +1014,7 @@ BUFFER buf DATA_TYPE vec4<float> WIDTH 1 HEIGHT 0
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
+
   EXPECT_EQ("2: expected HEIGHT to be positive", r.Error());
 }
 
@@ -1036,6 +1037,34 @@ BUFFER buf DATA_TYPE vec4<float> WIDTH 2 HEIGHT 3
   EXPECT_EQ(2, buffer->GetWidth());
   EXPECT_EQ(3, buffer->GetHeight());
   EXPECT_EQ(6, buffer->ElementCount());
+}
+
+TEST_F(AmberScriptParserTest, BufferMipLevels) {
+  std::string in = "BUFFER my_buffer FORMAT R8G8B8A8_UNORM MIP_LEVELS 3";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_EQ(3U, buffer->GetMipLevels());
+}
+
+TEST_F(AmberScriptParserTest, BufferMissingMipLevels) {
+  std::string in = "BUFFER my_buffer FORMAT R8G8B8A8_UNORM MIP_LEVELS";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+
+  EXPECT_EQ("1: invalid value for MIP_LEVELS", r.Error());
 }
 
 }  // namespace amberscript

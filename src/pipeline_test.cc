@@ -38,7 +38,7 @@ class PipelineTest : public testing::Test {
     if (!color_buffer_)
       color_buffer_ = p->GenerateDefaultColorAttachmentBuffer();
 
-    p->AddColorAttachment(color_buffer_.get(), location);
+    p->AddColorAttachment(color_buffer_.get(), location, 0);
   }
 
   void SetupDepthAttachment(Pipeline* p) {
@@ -262,7 +262,7 @@ TEST_F(PipelineTest, PipelineBufferWithoutFormat) {
 
   auto buf = MakeUnique<Buffer>();
   buf->SetName("MyBuffer");
-  p.AddBuffer(buf.get(), BufferType::kStorage, 0, 0);
+  p.AddBuffer(buf.get(), BufferType::kStorage, 0, 0, 0);
 
   Result r = p.Validate();
   EXPECT_FALSE(r.IsSuccess()) << r.Error();
@@ -361,11 +361,11 @@ TEST_F(PipelineTest, Clone) {
 
   auto buf1 = MakeUnique<Buffer>();
   buf1->SetName("buf1");
-  p.AddBuffer(buf1.get(), BufferType::kStorage, 1, 1);
+  p.AddBuffer(buf1.get(), BufferType::kStorage, 1, 1, 0);
 
   auto buf2 = MakeUnique<Buffer>();
   buf2->SetName("buf2");
-  p.AddBuffer(buf2.get(), BufferType::kStorage, 1, 2);
+  p.AddBuffer(buf2.get(), BufferType::kStorage, 1, 2, 0);
 
   auto clone = p.Clone();
   EXPECT_EQ("", clone->GetName());

@@ -169,15 +169,17 @@ Result Pipeline::SetShaderType(const Shader* shader, ShaderType type) {
 }
 
 Result Pipeline::Validate() const {
-  size_t fb_size = fb_width_ * fb_height_;
   for (const auto& attachment : color_attachments_) {
-    if (attachment.buffer->ElementCount() != fb_size) {
+    if (attachment.buffer->ElementCount() !=
+        (fb_width_ << attachment.base_mip_level) *
+            (fb_height_ << attachment.base_mip_level)) {
       return Result(
           "shared framebuffer must have same size over all PIPELINES");
     }
   }
 
-  if (depth_buffer_.buffer && depth_buffer_.buffer->ElementCount() != fb_size)
+  if (depth_buffer_.buffer &&
+      depth_buffer_.buffer->ElementCount() != fb_width_ * fb_height_)
     return Result("shared depth buffer must have same size over all PIPELINES");
 
   for (auto& buf : GetBuffers()) {
@@ -189,6 +191,7 @@ Result Pipeline::Validate() const {
 
   if (pipeline_type_ == PipelineType::kGraphics)
     return ValidateGraphics();
+
   return ValidateCompute();
 }
 
@@ -223,9 +226,11 @@ void Pipeline::UpdateFramebufferSizes() {
     return;
 
   for (auto& attachment : color_attachments_) {
-    attachment.buffer->SetWidth(fb_width_);
-    attachment.buffer->SetHeight(fb_height_);
-    attachment.buffer->SetElementCount(size);
+    auto mip0_width = fb_width_ << attachment.base_mip_level;
+    auto mip0_height = fb_height_ << attachment.base_mip_level;
+    attachment.buffer->SetWidth(mip0_width);
+    attachment.buffer->SetHeight(mip0_height);
+    attachment.buffer->SetElementCount(mip0_width * mip0_height);
   }
 
   if (depth_buffer_.buffer) {
@@ -235,7 +240,9 @@ void Pipeline::UpdateFramebufferSizes() {
   }
 }
 
-Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
+Result Pipeline::AddColorAttachment(Buffer* buf,
+                                    uint32_t location,
+                                    uint32_t base_mip_level) {
   for (const auto& attachment : color_attachments_) {
     if (attachment.location == location)
       return Result("can not bind two color buffers to the same LOCATION");
@@ -248,10 +255,13 @@ Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
   auto& info = color_attachments_.back();
   info.location = location;
   info.type = BufferType::kColor;
+  info.base_mip_level = base_mip_level;
+  auto mip0_width = fb_width_ << base_mip_level;
+  auto mip0_height = fb_height_ << base_mip_level;
+  buf->SetWidth(mip0_width);
+  buf->SetHeight(mip0_height);
+  buf->SetElementCount(mip0_width * mip0_height);
 
-  buf->SetWidth(fb_width_);
-  buf->SetHeight(fb_height_);
-  buf->SetElementCount(fb_width_ * fb_height_);
   return {};
 }
 
@@ -350,7 +360,8 @@ Buffer* Pipeline::GetBufferForBinding(uint32_t descriptor_set,
 void Pipeline::AddBuffer(Buffer* buf,
                          BufferType type,
                          uint32_t descriptor_set,
-                         uint32_t binding) {
+                         uint32_t binding,
+                         uint32_t base_mip_level) {
   // If this buffer binding already exists, overwrite with the new buffer.
   for (auto& info : buffers_) {
     if (info.descriptor_set == descriptor_set && info.binding == binding) {
@@ -365,6 +376,7 @@ void Pipeline::AddBuffer(Buffer* buf,
   info.descriptor_set = descriptor_set;
   info.binding = binding;
   info.type = type;
+  info.base_mip_level = base_mip_level;
 }
 
 void Pipeline::AddBuffer(Buffer* buf,
@@ -386,6 +398,7 @@ void Pipeline::AddBuffer(Buffer* buf,
   info.descriptor_set = std::numeric_limits<uint32_t>::max();
   info.binding = std::numeric_limits<uint32_t>::max();
   info.arg_no = std::numeric_limits<uint32_t>::max();
+  info.base_mip_level = 0;
 }
 
 void Pipeline::AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no) {
@@ -404,6 +417,7 @@ void Pipeline::AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no) {
   info.arg_no = arg_no;
   info.descriptor_set = std::numeric_limits<uint32_t>::max();
   info.binding = std::numeric_limits<uint32_t>::max();
+  info.base_mip_level = 0;
 }
 
 void Pipeline::AddSampler(Sampler* sampler,
@@ -658,7 +672,7 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
       opencl_pod_buffer_map_.insert(
           buf_iter,
           std::make_pair(std::make_pair(descriptor_set, binding), buffer));
-      AddBuffer(buffer, buffer_type, descriptor_set, binding);
+      AddBuffer(buffer, buffer_type, descriptor_set, binding, 0);
     } else {
       buffer = buf_iter->second;
     }

@@ -295,17 +295,17 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
     if (cmd->IsStorageImage()) {
       auto image_desc = MakeUnique<ImageDescriptor>(
           cmd->GetBuffer(), DescriptorType::kStorageImage, device_,
-          cmd->GetDescriptorSet(), cmd->GetBinding());
+          cmd->GetBaseMipLevel(), cmd->GetDescriptorSet(), cmd->GetBinding());
       descriptors.push_back(std::move(image_desc));
     } else if (cmd->IsSampledImage()) {
       auto image_desc = MakeUnique<ImageDescriptor>(
           cmd->GetBuffer(), DescriptorType::kSampledImage, device_,
-          cmd->GetDescriptorSet(), cmd->GetBinding());
+          cmd->GetBaseMipLevel(), cmd->GetDescriptorSet(), cmd->GetBinding());
       descriptors.push_back(std::move(image_desc));
     } else if (cmd->IsCombinedImageSampler()) {
       auto image_desc = MakeUnique<ImageDescriptor>(
           cmd->GetBuffer(), DescriptorType::kCombinedImageSampler, device_,
-          cmd->GetDescriptorSet(), cmd->GetBinding());
+          cmd->GetBaseMipLevel(), cmd->GetDescriptorSet(), cmd->GetBinding());
       image_desc->SetAmberSampler(cmd->GetBuffer()->GetSampler());
       descriptors.push_back(std::move(image_desc));
     } else {

@@ -246,6 +246,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     auto cmd = MakeUnique<BufferCommand>(type, pipeline);
     cmd->SetDescriptorSet(buf_info.descriptor_set);
     cmd->SetBinding(buf_info.binding);
+    cmd->SetBaseMipLevel(buf_info.base_mip_level);
     cmd->SetBuffer(buf_info.buffer);
 
     r = info.vk_pipeline->AddBufferDescriptor(cmd.get());

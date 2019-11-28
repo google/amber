@@ -22,9 +22,11 @@ namespace vulkan {
 ImageDescriptor::ImageDescriptor(Buffer* buffer,
                                  DescriptorType type,
                                  Device* device,
+                                 uint32_t base_mip_level,
                                  uint32_t desc_set,
                                  uint32_t binding)
     : BufferBackedDescriptor(buffer, type, device, desc_set, binding),
+      base_mip_level_(base_mip_level),
       vulkan_sampler_(device) {}
 
 ImageDescriptor::~ImageDescriptor() = default;
@@ -62,7 +64,8 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
 
   transfer_image_ = MakeUnique<TransferImage>(
       device_, *amber_buffer->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
-      amber_buffer->GetWidth(), amber_buffer->GetHeight(), 1u);
+      amber_buffer->GetWidth(), amber_buffer->GetHeight(), 1u,
+      amber_buffer->GetMipLevels(), base_mip_level_, VK_REMAINING_MIP_LEVELS);
   VkImageUsageFlags usage =
       VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 

@@ -96,7 +96,7 @@ Result Parser::GenerateDefaultPipeline(const SectionParser& section_parser) {
 
   // Generate and add a framebuffer
   auto color_buf = pipeline->GenerateDefaultColorAttachmentBuffer();
-  r = pipeline->AddColorAttachment(color_buf.get(), 0);
+  r = pipeline->AddColorAttachment(color_buf.get(), 0, 0);
   if (!r.IsSuccess())
     return r;
 

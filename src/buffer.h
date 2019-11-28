@@ -179,6 +179,13 @@ class Buffer {
   /// Writes |src| data into buffer at |offset|.
   Result SetDataFromBuffer(const Buffer* src, uint32_t offset);
 
+  /// Sets the number of mip levels for a buffer used as a color buffer
+  /// or a texture.
+  void SetMipLevels(uint32_t mip_levels) { mip_levels_ = mip_levels; }
+
+  /// Returns the number of mip levels.
+  uint32_t GetMipLevels() { return mip_levels_; }
+
   /// Returns a pointer to the internal storage of the buffer.
   std::vector<uint8_t>* ValuePtr() { return &bytes_; }
   /// Returns a pointer to the internal storage of the buffer.
@@ -228,6 +235,7 @@ class Buffer {
   uint32_t element_count_ = 0;
   uint32_t width_ = 0;
   uint32_t height_ = 0;
+  uint32_t mip_levels_ = 1;
   bool format_is_default_ = false;
   std::vector<uint8_t> bytes_;
   Format* format_ = nullptr;

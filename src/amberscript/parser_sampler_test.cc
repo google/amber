@@ -41,6 +41,8 @@ TEST_F(AmberScriptParserTest, SamplerDefaultValues) {
   EXPECT_EQ(AddressMode::kRepeat, sampler->GetAddressModeU());
   EXPECT_EQ(AddressMode::kRepeat, sampler->GetAddressModeV());
   EXPECT_EQ(BorderColor::kFloatTransparentBlack, sampler->GetBorderColor());
+  EXPECT_EQ(0.0, sampler->GetMinLOD());
+  EXPECT_EQ(1.0, sampler->GetMaxLOD());
 }
 
 TEST_F(AmberScriptParserTest, SamplerCustomValues) {
@@ -49,7 +51,9 @@ SAMPLER sampler MAG_FILTER linear \
   MIN_FILTER linear \
   ADDRESS_MODE_U clamp_to_edge \
   ADDRESS_MODE_V clamp_to_border \
-  BORDER_COLOR float_opaque_white)";
+  BORDER_COLOR float_opaque_white \
+  MIN_LOD 2.5 \
+  MAX_LOD 5.0)";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -69,6 +73,8 @@ SAMPLER sampler MAG_FILTER linear \
   EXPECT_EQ(AddressMode::kClampToEdge, sampler->GetAddressModeU());
   EXPECT_EQ(AddressMode::kClampToBorder, sampler->GetAddressModeV());
   EXPECT_EQ(BorderColor::kFloatOpaqueWhite, sampler->GetBorderColor());
+  EXPECT_EQ(2.5, sampler->GetMinLOD());
+  EXPECT_EQ(5.0, sampler->GetMaxLOD());
 }
 
 TEST_F(AmberScriptParserTest, SamplerUnexpectedParameter) {
@@ -126,6 +132,24 @@ TEST_F(AmberScriptParserTest, SamplerInvalidBorderColor) {
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("1: invalid BORDER_COLOR value foo", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, SamplerInvalidMinLod) {
+  std::string in = "SAMPLER sampler MIN_LOD foo";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("1: invalid token when looking for MIN_LOD value", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, SamplerInvalidMaxLod) {
+  std::string in = "SAMPLER sampler MAX_LOD foo";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("1: invalid token when looking for MAX_LOD value", r.Error());
 }
 
 }  // namespace amberscript

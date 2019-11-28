@@ -468,6 +468,11 @@ class BufferCommand : public BindableResourceCommand {
   void SetOffset(uint32_t offset) { offset_ = offset; }
   uint32_t GetOffset() const { return offset_; }
 
+  void SetBaseMipLevel(uint32_t base_mip_level) {
+    base_mip_level_ = base_mip_level;
+  }
+  uint32_t GetBaseMipLevel() const { return base_mip_level_; }
+
   void SetValues(std::vector<Value>&& values) { values_ = std::move(values); }
   const std::vector<Value>& GetValues() const { return values_; }
 
@@ -481,6 +486,7 @@ class BufferCommand : public BindableResourceCommand {
   BufferType buffer_type_;
   bool is_subdata_ = false;
   uint32_t offset_ = 0;
+  uint32_t base_mip_level_ = 0;
   std::vector<Value> values_;
 };
 
