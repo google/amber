@@ -1191,6 +1191,35 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
 
   if (token->AsString() == "SIZE")
     return ParseBufferInitializerSize(buffer);
+  if (token->AsString() == "WIDTH") {
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("expected an integer for WIDTH");
+    const uint32_t width = token->AsUint32();
+    if (width == 0)
+      return Result("expected WIDTH to be positive");
+    buffer->SetWidth(width);
+
+    token = tokenizer_->NextToken();
+    if (token->AsString() != "HEIGHT")
+      return Result("BUFFER HEIGHT missing");
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("expected an integer for HEIGHT");
+    const uint32_t height = token->AsUint32();
+    if (height == 0)
+      return Result("expected HEIGHT to be positive");
+    buffer->SetHeight(height);
+
+    token = tokenizer_->NextToken();
+    uint32_t size_in_items = width * height;
+    buffer->SetElementCount(size_in_items);
+    if (token->AsString() == "FILL")
+      return ParseBufferInitializerFill(buffer, size_in_items);
+    if (token->AsString() == "SERIES_FROM")
+      return ParseBufferInitializerSeries(buffer, size_in_items);
+    return {};
+  }
   if (token->AsString() == "DATA")
     return ParseBufferInitializerData(buffer);
 

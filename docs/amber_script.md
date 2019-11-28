@@ -134,6 +134,11 @@ END
 BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
     {initializer}
 
+# Defines a buffer with width and height and filled by data as specified by the
+`initializer`.
+BUFFER {name} DATA_TYPE {type} {STD140|STD430} WIDTH {w} HEIGHT {h} \
+    {initializer}
+
 # Creates a buffer which will store the given `FORMAT` of data. These
 # buffers are used as image and depth buffers in the `PIPELINE` commands.
 # The buffer will be sized based on the `RENDER_SIZE` of the `PIPELINE`.
@@ -285,6 +290,13 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # type as appropriate for the argument buffer. All uses of the buffer
   # must have a consistent |buffer_type| across all pipelines.
   BIND BUFFER {buffer_name} [AS {buffer_type}] KERNEL ARG_NUMBER _number_
+
+  # Bind OpenCL argument sampler by argument name.
+  BIND SAMPLER {sampler_name} KERNEL ARG_NAME _name_
+
+  # Bind OpenCL argument sampler by argument ordinal. Arguments use 0-based
+  # numbering.
+  BIND SAMPLER {sampler_name} KERNEL ARG_NUMBER _number_
 ```
 
 ```groovy
