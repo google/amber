@@ -14,6 +14,7 @@
 
 #include "src/descriptor_set_and_binding_parser.h"
 
+#include <cctype>
 #include <iostream>
 #include <limits>
 
