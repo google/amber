@@ -424,6 +424,41 @@ void Pipeline::AddSampler(Sampler* sampler,
   info.binding = binding;
 }
 
+void Pipeline::AddSampler(Sampler* sampler,
+                          const std::string& arg_name) {
+  for (auto& info : samplers_) {
+    if (info.arg_name == arg_name) {
+      info.sampler = sampler;
+      return;
+    }
+  }
+
+  samplers_.push_back(SamplerInfo{sampler});
+
+  auto& info = samplers_.back();
+  info.arg_name = arg_name;
+  info.descriptor_set = std::numeric_limits<uint32_t>::max();
+  info.binding = std::numeric_limits<uint32_t>::max();
+  info.arg_no = std::numeric_limits<uint32_t>::max();
+}
+
+void Pipeline::AddSampler(Sampler* sampler,
+                          uint32_t arg_no) {
+  for (auto& info : samplers_) {
+    if (info.arg_no == arg_no) {
+      info.sampler = sampler;
+      return;
+    }
+  }
+
+  samplers_.push_back(SamplerInfo{sampler});
+
+  auto& info = samplers_.back();
+  info.arg_no = arg_no;
+  info.descriptor_set = std::numeric_limits<uint32_t>::max();
+  info.binding = std::numeric_limits<uint32_t>::max();
+}
+
 Result Pipeline::UpdateOpenCLBufferBindings() {
   if (!IsCompute() || GetShaders().empty() ||
       GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC) {
@@ -438,6 +473,22 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
   const auto iter = descriptor_map.find(shader_info.GetEntryPoint());
   if (iter == descriptor_map.end())
     return {};
+
+  for (auto& info : samplers_) {
+    if (info.descriptor_set == std::numeric_limits<uint32_t>::max() &&
+        info.binding == std::numeric_limits<uint32_t>::max()) {
+      for (const auto& entry : iter->second) {
+        if (entry.arg_name == info.arg_name ||
+            entry.arg_ordinal == info.arg_no) {
+          if (entry.kind !=
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SAMPLER)
+            return Result("Sampler bound to non-sampler kernel arg");
+          info.descriptor_set = entry.descriptor_set;
+          info.binding = entry.binding;
+        }
+      }
+    }
+  }
 
   for (auto& info : buffers_) {
     if (info.descriptor_set == std::numeric_limits<uint32_t>::max() &&
@@ -456,6 +507,12 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
               case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SSBO:
               case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD:
                 info.type = BufferType::kStorage;
+                break;
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE:
+                info.type = BufferType::kSampledImage;
+                break;
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE:
+                info.type = BufferType::kStorageImage;
                 break;
               default:
                 return Result("Unhandled buffer type for OPENCL-C shader");
@@ -476,6 +533,16 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
               return Result("Buffer " + info.buffer->GetName() +
                             " must be a storage binding");
             }
+          } else if (info.type == BufferType::kSampledImage) {
+            if (entry.kind !=
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE)
+              return Result("Buffer " + info.buffer->GetName() +
+                            " must be a read-only image binding");
+          } else if (info.type == BufferType::kStorageImage) {
+            if (entry.kind !=
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE)
+              return Result("Buffer " + info.buffer->GetName() +
+                            " must be a write-only image binding");
           } else {
             return Result("Unhandled buffer type for OPENCL-C shader");
           }

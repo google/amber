@@ -16,6 +16,7 @@
 
 #include <cstring>
 #include <limits>
+#include <iostream>
 
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
@@ -61,6 +62,7 @@ Result Resource::CreateVkBuffer(VkBuffer* buffer, VkBufferUsageFlags usage) {
   buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   buffer_info.size = size_in_bytes_;
   buffer_info.usage = usage;
+  std::cout << "Creating buffer with " << size_in_bytes_ << " bytes\n";
 
   if (device_->GetPtrs()->vkCreateBuffer(device_->GetVkDevice(), &buffer_info,
                                          nullptr, buffer) != VK_SUCCESS) {
