@@ -833,9 +833,6 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
       return Result("expected a string token for BIND command");
 
     if (token->AsString() == "DESCRIPTOR_SET") {
-      if (!token->IsString() || token->AsString() != "DESCRIPTOR_SET")
-        return Result("missing DESCRIPTOR_SET for BIND command");
-
       token = tokenizer_->NextToken();
       if (!token->IsInteger())
         return Result("invalid value for DESCRIPTOR_SET in BIND command");

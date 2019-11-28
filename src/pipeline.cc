@@ -424,8 +424,7 @@ void Pipeline::AddSampler(Sampler* sampler,
   info.binding = binding;
 }
 
-void Pipeline::AddSampler(Sampler* sampler,
-                          const std::string& arg_name) {
+void Pipeline::AddSampler(Sampler* sampler, const std::string& arg_name) {
   for (auto& info : samplers_) {
     if (info.arg_name == arg_name) {
       info.sampler = sampler;
@@ -442,8 +441,7 @@ void Pipeline::AddSampler(Sampler* sampler,
   info.arg_no = std::numeric_limits<uint32_t>::max();
 }
 
-void Pipeline::AddSampler(Sampler* sampler,
-                          uint32_t arg_no) {
+void Pipeline::AddSampler(Sampler* sampler, uint32_t arg_no) {
   for (auto& info : samplers_) {
     if (info.arg_no == arg_no) {
       info.sampler = sampler;
@@ -481,8 +479,9 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
         if (entry.arg_name == info.arg_name ||
             entry.arg_ordinal == info.arg_no) {
           if (entry.kind !=
-              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SAMPLER)
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SAMPLER) {
             return Result("Sampler bound to non-sampler kernel arg");
+          }
           info.descriptor_set = entry.descriptor_set;
           info.binding = entry.binding;
         }
@@ -535,14 +534,16 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
             }
           } else if (info.type == BufferType::kSampledImage) {
             if (entry.kind !=
-                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE)
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE) {
               return Result("Buffer " + info.buffer->GetName() +
                             " must be a read-only image binding");
+            }
           } else if (info.type == BufferType::kStorageImage) {
             if (entry.kind !=
-                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE)
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE) {
               return Result("Buffer " + info.buffer->GetName() +
                             " must be a write-only image binding");
+            }
           } else {
             return Result("Unhandled buffer type for OPENCL-C shader");
           }

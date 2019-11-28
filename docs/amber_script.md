@@ -135,7 +135,7 @@ BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
     {initializer}
 
 # Defines a buffer with width and height and filled by data as specified by the
-`initializer`.
+# `initializer`.
 BUFFER {name} DATA_TYPE {type} {STD140|STD430} WIDTH {w} HEIGHT {h} \
     {initializer}
 
