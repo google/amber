@@ -404,11 +404,14 @@ kernel void TestShader(read_only image2d_t ro_image, write_only image2d_t wo_ima
   auto iter = shader_info1.GetDescriptorMap().find("TestShader");
   for (const auto& entry : iter->second) {
     if (entry.binding == 0) {
-      EXPECT_EQ(entry.kind, Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE);
+      EXPECT_EQ(entry.kind,
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE);
     } else if (entry.binding == 1) {
-      EXPECT_EQ(entry.kind, Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE);
+      EXPECT_EQ(entry.kind,
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE);
     } else if (entry.binding == 2) {
-      EXPECT_EQ(entry.kind, Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SAMPLER);
+      EXPECT_EQ(entry.kind,
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SAMPLER);
     } else {
       ASSERT_TRUE(false);
     }
