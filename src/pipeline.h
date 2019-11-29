@@ -90,6 +90,9 @@ class Pipeline {
         UBO,
         POD,
         POD_UBO,
+        RO_IMAGE,
+        WO_IMAGE,
+        SAMPLER,
       } kind;
 
       uint32_t descriptor_set = 0;
@@ -145,6 +148,8 @@ class Pipeline {
     Sampler* sampler = nullptr;
     uint32_t descriptor_set = 0;
     uint32_t binding = 0;
+    std::string arg_name = "";
+    uint32_t arg_no = 0;
   };
 
   static const char* kGeneratedColorBuffer;
@@ -248,6 +253,11 @@ class Pipeline {
   /// Adds |sampler| to the pipeline at the given |descriptor_set| and
   /// |binding|.
   void AddSampler(Sampler* sampler, uint32_t descriptor_set, uint32_t binding);
+  /// Adds |sampler| to the pipeline at the given |arg_name|.
+  void AddSampler(Sampler* sampler, const std::string& arg_name);
+  /// Adds |sampler| to the pieline at the given |arg_no|.
+  void AddSampler(Sampler* sampler, uint32_t arg_no);
+
   /// Returns information on all samplers in this pipeline.
   const std::vector<SamplerInfo>& GetSamplers() const { return samplers_; }
 

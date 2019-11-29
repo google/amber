@@ -829,24 +829,46 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
       return Result("unknown sampler: " + token->AsString());
 
     token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("expected a string token for BIND command");
 
-    if (!token->IsString() || token->AsString() != "DESCRIPTOR_SET")
-      return Result("missing DESCRIPTOR_SET for BIND command");
+    if (token->AsString() == "DESCRIPTOR_SET") {
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("invalid value for DESCRIPTOR_SET in BIND command");
+      uint32_t descriptor_set = token->AsUint32();
 
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger())
-      return Result("invalid value for DESCRIPTOR_SET in BIND command");
-    uint32_t descriptor_set = token->AsUint32();
+      token = tokenizer_->NextToken();
+      if (!token->IsString() || token->AsString() != "BINDING")
+        return Result("missing BINDING for BIND command");
 
-    token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "BINDING")
-      return Result("missing BINDING for BIND command");
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("invalid value for BINDING in BIND command");
+      pipeline->AddSampler(sampler, descriptor_set, token->AsUint32());
+    } else if (token->AsString() == "KERNEL") {
+      token = tokenizer_->NextToken();
+      if (!token->IsString())
+        return Result("missing kernel arg identifier");
 
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger())
-      return Result("invalid value for BINDING in BIND command");
-    pipeline->AddSampler(sampler, descriptor_set, token->AsUint32());
+      if (token->AsString() == "ARG_NAME") {
+        token = tokenizer_->NextToken();
+        if (!token->IsString())
+          return Result("expected argument identifier");
 
+        pipeline->AddSampler(sampler, token->AsString());
+      } else if (token->AsString() == "ARG_NUMBER") {
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger())
+          return Result("expected argument number");
+
+        pipeline->AddSampler(sampler, token->AsUint32());
+      } else {
+        return Result("missing ARG_NAME or ARG_NUMBER keyword");
+      }
+    } else {
+      return Result("missing DESCRIPTOR_SET or KERNEL for BIND command");
+    }
   } else {
     return Result("missing BUFFER or SAMPLER in BIND command");
   }
@@ -1166,6 +1188,35 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
 
   if (token->AsString() == "SIZE")
     return ParseBufferInitializerSize(buffer);
+  if (token->AsString() == "WIDTH") {
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("expected an integer for WIDTH");
+    const uint32_t width = token->AsUint32();
+    if (width == 0)
+      return Result("expected WIDTH to be positive");
+    buffer->SetWidth(width);
+
+    token = tokenizer_->NextToken();
+    if (token->AsString() != "HEIGHT")
+      return Result("BUFFER HEIGHT missing");
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("expected an integer for HEIGHT");
+    const uint32_t height = token->AsUint32();
+    if (height == 0)
+      return Result("expected HEIGHT to be positive");
+    buffer->SetHeight(height);
+
+    token = tokenizer_->NextToken();
+    uint32_t size_in_items = width * height;
+    buffer->SetElementCount(size_in_items);
+    if (token->AsString() == "FILL")
+      return ParseBufferInitializerFill(buffer, size_in_items);
+    if (token->AsString() == "SERIES_FROM")
+      return ParseBufferInitializerSeries(buffer, size_in_items);
+    return {};
+  }
   if (token->AsString() == "DATA")
     return ParseBufferInitializerData(buffer);
 

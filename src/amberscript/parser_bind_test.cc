@@ -1325,6 +1325,139 @@ END)";
   EXPECT_EQ("9: expected argument number", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLMissingKernel) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("10: expected a string token for BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLInvalidKernel) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s INVALID
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("9: missing DESCRIPTOR_SET or KERNEL for BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLMissingArgument) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s KERNEL
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("10: missing kernel arg identifier", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLMissingArgumentName) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s KERNEL ARG_NAME
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("10: expected argument identifier", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLArgumentNameNotString) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s KERNEL ARG_NAME 0
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("9: expected argument identifier", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLMissingArgumentNumber) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s KERNEL ARG_NUMBER
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("10: expected argument number", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLArgumentNumberNotInteger) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s KERNEL ARG_NUMBER a
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("9: expected argument number", r.Error());
+}
+
 TEST_F(AmberScriptParserTest, BindBufferStorageImageCompute) {
   std::string in = R"(
 SHADER compute compute_shader GLSL
@@ -1808,7 +1941,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: missing DESCRIPTOR_SET for BIND command", r.Error());
+  EXPECT_EQ("12: missing DESCRIPTOR_SET or KERNEL for BIND command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindSamplerMissingBindingValue) {
