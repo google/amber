@@ -193,7 +193,7 @@ void TransferImage::CopyToHost(CommandBuffer* command_buffer) {
   device_->GetPtrs()->vkCmdCopyImageToBuffer(
       command_buffer->GetVkCommandBuffer(), image_,
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, host_accessible_buffer_,
-      copy_regions.size(), copy_regions.data());
+      static_cast<uint32_t>(copy_regions.size()), copy_regions.data());
 
   MemoryBarrier(command_buffer);
 }
@@ -208,8 +208,8 @@ void TransferImage::CopyToDevice(CommandBuffer* command_buffer) {
 
   device_->GetPtrs()->vkCmdCopyBufferToImage(
       command_buffer->GetVkCommandBuffer(), host_accessible_buffer_, image_,
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, copy_regions.size(),
-      copy_regions.data());
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      static_cast<uint32_t>(copy_regions.size()), copy_regions.data());
 
   MemoryBarrier(command_buffer);
 }
