@@ -63,6 +63,18 @@ Result Compile(Pipeline::ShaderInfo* shader_info,
         descriptor_entry.kind =
             Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO;
         break;
+      case clspv::ArgKind::ReadOnlyImage:
+        descriptor_entry.kind =
+            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE;
+        break;
+      case clspv::ArgKind::WriteOnlyImage:
+        descriptor_entry.kind =
+            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE;
+        break;
+      case clspv::ArgKind::Sampler:
+        descriptor_entry.kind =
+            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SAMPLER;
+        break;
       case clspv::ArgKind::Local:
         // Local arguments are handled via specialization constants.
         break;

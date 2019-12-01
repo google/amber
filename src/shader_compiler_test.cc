@@ -378,6 +378,45 @@ kernel void TestShader(global int* in, global int* out, int m, int b) {
   EXPECT_EQ(2U, max_binding);
   EXPECT_TRUE(has_pod_ubo);
 }
+
+TEST_F(ShaderCompilerTest, ClspvImagesAndSamplers) {
+  std::string data = R"(
+kernel void TestShader(read_only image2d_t ro_image, write_only image2d_t wo_image, sampler_t sampler) {
+  int2 coord = (int2)(0, 0);
+  float4 texel = read_imagef(ro_image, sampler, coord);
+  write_imagef(wo_image, coord, texel);
+}
+)";
+
+  Shader shader(kShaderTypeCompute);
+  shader.SetName("TestShader");
+  shader.SetFormat(kShaderFormatOpenCLC);
+  shader.SetData(data);
+
+  ShaderCompiler sc;
+  Result r;
+  std::vector<uint32_t> binary;
+  Pipeline::ShaderInfo shader_info1(&shader, kShaderTypeCompute);
+  std::tie(r, binary) = sc.Compile(&shader_info1, ShaderMap());
+  ASSERT_TRUE(r.IsSuccess());
+  EXPECT_FALSE(binary.empty());
+  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+  auto iter = shader_info1.GetDescriptorMap().find("TestShader");
+  for (const auto& entry : iter->second) {
+    if (entry.binding == 0) {
+      EXPECT_EQ(entry.kind,
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE);
+    } else if (entry.binding == 1) {
+      EXPECT_EQ(entry.kind,
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE);
+    } else if (entry.binding == 2) {
+      EXPECT_EQ(entry.kind,
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SAMPLER);
+    } else {
+      ASSERT_TRUE(false);
+    }
+  }
+}
 #endif  // AMBER_ENABLE_CLSPV
 
 struct ParseSpvEnvCase {

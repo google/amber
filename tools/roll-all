@@ -45,9 +45,6 @@ def roll_all_deps(deps_file_path):
 
   list_of_deps = ['roll-dep', '--ignore-dirty-tree']
   for directory in sorted(deps_file['deps']):
-    # Leave CLSPV to be rolled individually.
-    if directory == "third_party/clspv" or directory == "third_party/clspv-llvm":
-      continue
     # cpplint uses gh-pages as the main branch, not master which doesn't work
     # with roll-dep
     if directory == "third_party/cpplint":
