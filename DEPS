@@ -8,10 +8,8 @@ vars = {
   'swiftshader_git': 'https://swiftshader.googlesource.com',
   'microsoft_git': 'https://github.com/Microsoft',
 
-  'clspv_llvm_revision': '97aa42f5dfcd10ca6df230caf9ca7868da5f25af',
-  'clspv_revision': '8132fc9122f7709149dd82b25283e244bbe666a6',
-  'clspv_llvm_revision': '6ba5cbf3ea2315acf1b7f1c39c6fec6cca5560ca',
-  'clspv_revision': 'f26dac9ae5d6fab98ca027a26e375937074770cf',
+  'clspv_llvm_revision': 'e74b326b1f506538f1fce11b7a70bcf7fb9b573c',
+  'clspv_revision': 'f67468c36e682178d1b441e3a65e219f034805ba',
   'cpplint_revision': '26470f9ccb354ff2f6d098f831271a1833701b28',
   'dxc_revision': '815358229dc74a43f57905cbf10fd805ab26c049',
   'glslang_revision': '38b4db48f98c4e3a9cc405de3a76547b857e1c37',

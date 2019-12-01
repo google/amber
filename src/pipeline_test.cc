@@ -481,6 +481,56 @@ TEST_F(PipelineTest, OpenCLUpdateBindingTypeMismatch) {
   EXPECT_EQ("Buffer buf2 must be a uniform binding", r.Error());
 }
 
+TEST_F(PipelineTest, OpenCLUpdateBindingImagesAndSamplers) {
+  Pipeline p(PipelineType::kCompute);
+  p.SetName("my_pipeline");
+
+  Shader cs(kShaderTypeCompute);
+  cs.SetFormat(kShaderFormatOpenCLC);
+  p.AddShader(&cs, kShaderTypeCompute);
+  p.SetShaderEntryPoint(&cs, "my_main");
+
+  Pipeline::ShaderInfo::DescriptorMapEntry entry1;
+  entry1.kind = Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE;
+  entry1.descriptor_set = 4;
+  entry1.binding = 5;
+  entry1.arg_name = "arg_a";
+  entry1.arg_ordinal = 0;
+  p.GetShaders()[0].AddDescriptorEntry("my_main", std::move(entry1));
+
+  Pipeline::ShaderInfo::DescriptorMapEntry entry2;
+  entry2.kind = Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE;
+  entry2.descriptor_set = 3;
+  entry2.binding = 1;
+  entry2.arg_name = "arg_b";
+  entry2.arg_ordinal = 1;
+  p.GetShaders()[0].AddDescriptorEntry("my_main", std::move(entry2));
+
+  Pipeline::ShaderInfo::DescriptorMapEntry entry3;
+  entry2.kind = Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SAMPLER;
+  entry2.descriptor_set = 3;
+  entry2.binding = 2;
+  entry2.arg_name = "arg_c";
+  entry2.arg_ordinal = 2;
+  p.GetShaders()[0].AddDescriptorEntry("my_main", std::move(entry2));
+
+  auto a_buf = MakeUnique<Buffer>();
+  a_buf->SetName("buf1");
+  p.AddBuffer(a_buf.get(), BufferType::kSampledImage, "arg_a");
+
+  auto b_buf = MakeUnique<Buffer>();
+  b_buf->SetName("buf2");
+  p.AddBuffer(b_buf.get(), BufferType::kStorageImage, 1);
+
+  auto s = MakeUnique<Sampler>();
+  s->SetName("samp");
+  p.AddSampler(s.get(), "arg_c");
+
+  auto r = p.UpdateOpenCLBufferBindings();
+
+  ASSERT_TRUE(r.IsSuccess());
+}
+
 TEST_F(PipelineTest, OpenCLGeneratePodBuffers) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
