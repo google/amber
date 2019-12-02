@@ -624,7 +624,8 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     uint32_t engine_major,
     uint32_t engine_minor,
     std::vector<std::string> required_extensions,
-    bool disable_validation_layer) {
+    bool disable_validation_layer,
+    bool show_version_info) {
   VkApplicationInfo app_info = VkApplicationInfo();
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.apiVersion = VK_MAKE_VERSION(engine_major, engine_minor, 0);
@@ -654,10 +655,19 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     }
   }
 
+  // If dumping driver info then add useful extensions, if available.
+  if (show_version_info &&
+      std::find(available_instance_extensions_.begin(),
+                available_instance_extensions_.end(),
+                "VK_KHR_get_physical_device_properties2") !=
+          available_instance_extensions_.end()) {
+    required_extensions.push_back("VK_KHR_get_physical_device_properties2");
+  }
+
   // Determine if VkPhysicalDeviceProperties2KHR should be used
   for (auto& ext : required_extensions) {
     if (ext == "VK_KHR_get_physical_device_properties2") {
-      use_physical_device_features2_ = true;
+      supports_get_physical_device_properties2_ = true;
     }
   }
 
@@ -706,7 +716,7 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
   VkPhysicalDeviceFeatures required_vulkan_features =
       VkPhysicalDeviceFeatures();
 
-  if (use_physical_device_features2_) {
+  if (supports_get_physical_device_properties2_) {
     VkPhysicalDeviceVariablePointerFeaturesKHR var_ptrs =
         VkPhysicalDeviceVariablePointerFeaturesKHR();
     var_ptrs.sType =
@@ -850,7 +860,7 @@ amber::Result ConfigHelperVulkan::CreateVulkanDevice(
       static_cast<uint32_t>(required_extensions_in_char.size());
   info.ppEnabledExtensionNames = required_extensions_in_char.data();
 
-  if (use_physical_device_features2_)
+  if (supports_get_physical_device_properties2_)
     return CreateDeviceWithFeatures2(required_features, &info);
   return CreateDeviceWithFeatures1(required_features, &info);
 }
@@ -927,7 +937,6 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
            // extension is unavailable.
   };
 
-  bool driver_properties_available = false;
   VkPhysicalDeviceDriverPropertiesKHR driver_properties = {
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES_KHR,
       nullptr,
@@ -937,21 +946,34 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
       {},
   };
 
-  if (std::find(available_instance_extensions_.begin(),
-                available_instance_extensions_.end(),
-                "VK_KHR_get_physical_device_properties2") !=
-      available_instance_extensions_.end()) {
-    if (std::find(available_device_extensions_.begin(),
-                  available_device_extensions_.end(),
-                  "VK_KHR_driver_properties") !=
-        available_device_extensions_.end()) {
-      properties2.pNext = &driver_properties;
-      driver_properties_available = true;
-    }
-    auto vkGetPhysicalDeviceProperties2KHR =
+  // If the vkGetPhysicalDeviceProperties2KHR function is unavailable (because
+  // the "VK_KHR_get_physical_device_properties2" extension is unavailable or
+  // because vkGetInstanceProcAddr failed) or the "VK_KHR_driver_properties"
+  // extension is unavailable, then this will stay as nullptr and we will
+  // instead call the older vkGetPhysicalDeviceProperties function.
+  PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR =
+      nullptr;
+
+  if (supports_get_physical_device_properties2_ &&
+      std::find(available_device_extensions_.begin(),
+                available_device_extensions_.end(),
+                "VK_KHR_driver_properties") !=
+          available_device_extensions_.end()) {
+    properties2.pNext = &driver_properties;
+
+    vkGetPhysicalDeviceProperties2KHR =
         reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(
             vkGetInstanceProcAddr(vulkan_instance_,
-                                  "vkGetPhysicalDeviceProperties2"));
+                                  "vkGetPhysicalDeviceProperties2KHR"));
+    if (!vkGetPhysicalDeviceProperties2KHR) {
+      std::cout << "Warning: device claimed to support "
+                   "vkGetPhysicalDeviceProperties2KHR but could not find this "
+                   "function."
+                << std::endl;
+    }
+  }
+
+  if (vkGetPhysicalDeviceProperties2KHR) {
     vkGetPhysicalDeviceProperties2KHR(vulkan_physical_device_, &properties2);
   } else {
     vkGetPhysicalDeviceProperties(vulkan_physical_device_,
@@ -973,7 +995,7 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
   std::cout << "  deviceType: " << deviceTypeToName(props.deviceType)
             << std::endl;
   std::cout << "  deviceName: " << props.deviceName << std::endl;
-  if (driver_properties_available) {
+  if (vkGetPhysicalDeviceProperties2KHR) {
     std::cout << "  driverName: " << driver_properties.driverName << std::endl;
     std::cout << "  driverInfo: " << driver_properties.driverInfo << std::endl;
   }
@@ -990,9 +1012,9 @@ amber::Result ConfigHelperVulkan::CreateConfig(
     bool disable_validation_layer,
     bool show_version_info,
     std::unique_ptr<amber::EngineConfig>* cfg_holder) {
-  amber::Result r = CreateVulkanInstance(engine_major, engine_minor,
-                                         required_instance_extensions,
-                                         disable_validation_layer);
+  amber::Result r = CreateVulkanInstance(
+      engine_major, engine_minor, required_instance_extensions,
+      disable_validation_layer, show_version_info);
   if (!r.IsSuccess())
     return r;
 
