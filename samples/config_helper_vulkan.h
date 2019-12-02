@@ -58,7 +58,8 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
       uint32_t engine_major,
       uint32_t engine_minor,
       std::vector<std::string> required_instance_extensions,
-      bool disable_validation_layer);
+      bool disable_validation_layer,
+      bool show_version_info);
 
   /// Create |vulkan_callback_| that reports validation layer errors
   /// via debugCallback() function in config_helper_vulkan.cc.
@@ -108,7 +109,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   VkQueue vulkan_queue_ = VK_NULL_HANDLE;
   VkDevice vulkan_device_ = VK_NULL_HANDLE;
 
-  bool use_physical_device_features2_ = false;
+  bool supports_get_physical_device_properties2_ = false;
   VkPhysicalDeviceFeatures available_features_;
   VkPhysicalDeviceFeatures2KHR available_features2_;
   VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_feature_;
