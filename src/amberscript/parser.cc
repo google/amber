@@ -746,8 +746,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
           base_mip_level = token->AsUint32();
         }
 
-        Result r =
-            pipeline->AddColorAttachment(buffer, location, base_mip_level);
+        r = pipeline->AddColorAttachment(buffer, location, base_mip_level);
         if (!r.IsSuccess())
           return r;
 
