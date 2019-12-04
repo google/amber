@@ -72,7 +72,8 @@ Result Sampler::CreateSampler(amber::Sampler* sampler) {
   sampler_info.addressModeV = GetVkAddressMode(sampler->GetAddressModeV());
   sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   sampler_info.borderColor = GetVkBorderColor(sampler->GetBorderColor());
-  sampler_info.maxLod = 1.0f;
+  sampler_info.minLod = sampler->GetMinLOD();
+  sampler_info.maxLod = sampler->GetMaxLOD();
 
   if (device_->GetPtrs()->vkCreateSampler(device_->GetVkDevice(), &sampler_info,
                                           nullptr, &sampler_) != VK_SUCCESS) {
