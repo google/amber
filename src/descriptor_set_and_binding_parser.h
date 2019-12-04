@@ -32,8 +32,12 @@ class DescriptorSetAndBindingParser {
   /// be a single non-negative integer or two those integers separated by
   /// ':'. For example, ":0", "1", and "2:3" are valid strings for |buffer_id|,
   /// but "", "-4", ":-5", ":", "a", and "b:c" are invalid strings for
-  /// |buffer_id|.
+  /// |buffer_id|. The |buffer_id| can be prefixed by the name of a pipeline.
   Result Parse(const std::string& buffer_id);
+
+  /// Returns true if a pipeline name was specified
+  bool HasPipelineName() const { return !pipeline_name_.empty(); }
+  std::string PipelineName() const { return pipeline_name_; }
 
   /// Return descriptor set that is the result of Parse().
   uint32_t GetDescriptorSet() const { return descriptor_set_; }
@@ -42,6 +46,7 @@ class DescriptorSetAndBindingParser {
   uint32_t GetBinding() const { return binding_; }
 
  private:
+  std::string pipeline_name_;
   uint32_t descriptor_set_ = 0;
   uint32_t binding_ = 0;
 };
