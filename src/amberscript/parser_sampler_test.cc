@@ -152,5 +152,15 @@ TEST_F(AmberScriptParserTest, SamplerInvalidMaxLod) {
   EXPECT_EQ("1: invalid token when looking for MAX_LOD value", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, SamplerMaxLodSmallerThanMinLod) {
+  std::string in = "SAMPLER sampler MIN_LOD 2.0 MAX_LOD 1.0";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("1: max LOD needs to be greater than or equal to min LOD",
+            r.Error());
+}
+
 }  // namespace amberscript
 }  // namespace amber

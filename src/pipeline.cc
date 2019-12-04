@@ -179,8 +179,9 @@ Result Pipeline::Validate() const {
   }
 
   if (depth_buffer_.buffer &&
-      depth_buffer_.buffer->ElementCount() != fb_width_ * fb_height_)
+      depth_buffer_.buffer->ElementCount() != fb_width_ * fb_height_) {
     return Result("shared depth buffer must have same size over all PIPELINES");
+  }
 
   for (auto& buf : GetBuffers()) {
     if (buf.buffer->GetFormat() == nullptr) {
@@ -210,6 +211,26 @@ Result Pipeline::ValidateGraphics() const {
 
   if (!found_vertex)
     return Result("graphics pipeline requires a vertex shader");
+
+  for (const auto& att : color_attachments_) {
+    auto width = att.buffer->GetWidth();
+    auto height = att.buffer->GetHeight();
+    for (uint32_t level = 1; level < att.buffer->GetMipLevels(); level++) {
+      width >>= 1;
+      if (width == 0)
+        return Result("color attachment with " +
+                      std::to_string(att.buffer->GetMipLevels()) +
+                      " mip levels would have zero width for level " +
+                      std::to_string(level));
+      height >>= 1;
+      if (height == 0)
+        return Result("color attachment with " +
+                      std::to_string(att.buffer->GetMipLevels()) +
+                      " mip levels would have zero height for level " +
+                      std::to_string(level));
+    }
+  }
+
   return {};
 }
 

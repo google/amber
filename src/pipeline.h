@@ -213,6 +213,7 @@ class Pipeline {
     return color_attachments_;
   }
   /// Adds |buf| as a colour attachment at |location| in the pipeline.
+  /// Uses |base_mip_level| as the mip level for output.
   Result AddColorAttachment(Buffer* buf,
                             uint32_t location,
                             uint32_t base_mip_level);

@@ -172,6 +172,51 @@ SERIES_FROM _start_ INC_BY _inc_
 COPY {buffer_from} TO {buffer_to}
 ```
 
+### Samplers
+
+Samplers are used for sampling buffers that are bound to a pipeline as
+sampled image or combined image sampler.
+
+All sampler parameters are optional. Filters will default to nearest, address
+modes to repeat, min LOD to 0, max LOD to 1, and border color to float
+transparent black.
+
+The samplers use normalized coordinates in the range of [0..1].
+
+#### Filter types
+ * `nearest`
+ * `linear`
+
+#### Address modes
+ * `repeat`
+ * `mirrored_repeat`
+ * `clamp_to_edge`
+ * `clamp_to_border`
+ * `mirrored_clamp_to_edge`
+
+#### Border colors
+ * `float_transparent_black`
+ * `int_transparent_black`
+ * `float_opaque_black`
+ * `int_opaque_black`
+ * `float_opaque_white`
+ * `int_opaque_white`
+
+```groovy
+
+# Creates a sampler |name| with |magfilter| and |minfilter| using filter type,
+# |modeu| and |modev| address mode, and |color| being one of the border
+# color options. Both |minlod| and |maxlod| are floating point values,
+# where |maxlod| >= |minlod|.
+SAMPLER {name} MAG_FILTER {magfilter} \
+    MIN_FILTER {minfilter} \
+    ADDRESS_MODE_U {modeu} \
+    ADDRESS_MODE_V {modev} \
+    BORDER_COLOR {color} \
+    MIN_LOD {minlod} \
+    MAX_LOD {maxlod}
+```
+
 ### Pipelines
 
 #### Pipeline type

@@ -744,6 +744,12 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
             return Result("invalid value for BASE_MIP_LEVEL");
 
           base_mip_level = token->AsUint32();
+
+          if (base_mip_level >= buffer->GetMipLevels())
+            return Result(
+                "base mip level (now " + token->AsString() +
+                ") needs to be larger than the number of buffer mip maps (" +
+                std::to_string(buffer->GetMipLevels()) + ")");
         }
 
         r = pipeline->AddColorAttachment(buffer, location, base_mip_level);
@@ -821,6 +827,12 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
               return Result("invalid value for BASE_MIP_LEVEL");
 
             base_mip_level = token->AsUint32();
+
+            if (base_mip_level >= buffer->GetMipLevels())
+              return Result(
+                  "base mip level (now " + token->AsString() +
+                  ") needs to be larger than the number of buffer mip maps (" +
+                  std::to_string(buffer->GetMipLevels()) + ")");
           }
         }
 
@@ -2348,6 +2360,10 @@ Result Parser::ParseSampler() {
     }
 
     token = tokenizer_->NextToken();
+  }
+
+  if (sampler->GetMaxLOD() < sampler->GetMinLOD()) {
+    return Result("max LOD needs to be greater than or equal to min LOD");
   }
 
   return script_->AddSampler(std::move(sampler));

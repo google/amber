@@ -390,7 +390,7 @@ SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
 END
-BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT MIP_LEVELS 2
 
 PIPELINE graphics my_pipeline
   ATTACH my_shader
@@ -423,7 +423,7 @@ SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
 # GLSL Shader
 END
-BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT MIP_LEVELS 2
 
 PIPELINE graphics my_pipeline
   ATTACH my_shader
@@ -437,6 +437,55 @@ END)";
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("13: invalid value for BASE_MIP_LEVEL", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorBaseMipLevelTooLarge) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT MIP_LEVELS 2
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0 BASE_MIP_LEVEL 2
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ(
+      "12: base mip level (now 2) needs to be larger than the number of buffer "
+      "mip maps (2)",
+      r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorTooManyMipLevels) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT MIP_LEVELS 20
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ(
+      "color attachment with 20 mip levels would have zero width for level 7",
+      r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindDepthBuffer) {
@@ -1983,6 +2032,35 @@ END)";
 
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("15: invalid value for BASE_MIP_LEVEL", r.Error());
+}
+
+TEST_F(AmberScriptParserTest,
+       BindBufferCombinedImageSamplerBaseMipLevelTooLarge) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM MIP_LEVELS 2
+BUFFER framebuffer FORMAT R8G8B8A8_UNORM
+SAMPLER sampler MAX_LOD 2.0
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND BUFFER texture AS combined_image_sampler SAMPLER sampler DESCRIPTOR_SET 0 BINDING 0 BASE_MIP_LEVEL 3
+  BIND BUFFER framebuffer AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ(
+      "14: base mip level (now 3) needs to be larger than the number of buffer "
+      "mip maps (2)",
+      r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindSampler) {
