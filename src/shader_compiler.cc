@@ -54,10 +54,11 @@ ShaderCompiler::ShaderCompiler(const std::string& env,
 ShaderCompiler::~ShaderCompiler() = default;
 
 std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
+    std::string pipeline_name,
     Pipeline::ShaderInfo* shader_info,
     const ShaderMap& shader_map) const {
   const auto shader = shader_info->GetShader();
-  auto it = shader_map.find(shader->GetName());
+  auto it = shader_map.find(pipeline_name + "-" + shader->GetName());
   if (it != shader_map.end()) {
 #if AMBER_ENABLE_CLSPV
     if (shader->GetFormat() == kShaderFormatOpenCLC) {
