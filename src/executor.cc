@@ -39,7 +39,8 @@ Result Executor::CompileShaders(const amber::Script* script,
 
       Result r;
       std::vector<uint32_t> data;
-      std::tie(r, data) = sc.Compile(&shader_info, shader_map);
+      std::tie(r, data) =
+          sc.Compile(pipeline->GetName(), &shader_info, shader_map);
       if (!r.IsSuccess())
         return r;
 

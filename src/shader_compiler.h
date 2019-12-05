@@ -41,7 +41,12 @@ class ShaderCompiler {
   /// If |shader_info| specifies shader optimizations to run and there is no
   /// entry in |shader_map| for that shader, then the SPIRV-Tools optimizer will
   /// be invoked to produce the shader binary.
+  ///
+  /// |pipeline_name| is prefixed to shader name to distinguish between
+  /// shaders used in multiple pipelines with different optimization
+  /// flags.
   std::pair<Result, std::vector<uint32_t>> Compile(
+      std::string pipeline_name,
       Pipeline::ShaderInfo* shader_info,
       const ShaderMap& shader_map) const;
 
