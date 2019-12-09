@@ -15,10 +15,15 @@
 package com.google.amber;
 
 import static org.junit.Assert.assertEquals;
+
 import android.content.Context;
 import android.os.Bundle;
+
 import androidx.test.platform.app.InstrumentationRegistry;
+
 import org.junit.Test;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,8 +48,11 @@ public class AmberLauncher {
       ++arg_index;
     }
 
-    String stdout_file = args.getString("stdout", "/sdcard/amber_stdout.txt");
-    String stderr_file = args.getString("stderr", "/sdcard/amber_stderr.txt");
+    File outputDir = app_context.getExternalCacheDir();
+
+    // This will typically be: /sdcard/Android/data/com.google.amber/cache/amber_std{out,err}.txt
+    String stdout_file = args.getString("stdout", new File(outputDir, "amber_stdout.txt").toString());
+    String stderr_file = args.getString("stderr", new File(outputDir, "amber_stderr.txt").toString());
 
     int res = Amber.androidMain(args_list.toArray(new String[0]), stdout_file, stderr_file);
 
