@@ -83,7 +83,7 @@ endif()
 
 if (${AMBER_ENABLE_CLSPV})
   target_include_directories(libamber PRIVATE
-    "${PROJECT_SOURCE_DIR}/third_party/clspv/include"
+    "${clspv_SOURCE_DIR}/clspv/include"
   )
 
   target_link_libraries(libamber
