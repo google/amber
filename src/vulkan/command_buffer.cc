@@ -103,7 +103,7 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
 
 void CommandBuffer::Reset() {
   device_->GetPtrs()->vkEndCommandBuffer(command_);
-  device_->GetPtrs()->vkResetCommandBuffer(command_, 0)
+  device_->GetPtrs()->vkResetCommandBuffer(command_, 0);
 }
 
 CommandBufferGuard::CommandBufferGuard(CommandBuffer* buffer)
@@ -117,7 +117,7 @@ CommandBufferGuard::CommandBufferGuard(CommandBuffer* buffer)
 CommandBufferGuard::~CommandBufferGuard() {
   if (buffer_->guarded_) {
     buffer_->Reset();
-    buffer_->guarded = false;
+    buffer_->guarded_ = false;
   }
 }
 
