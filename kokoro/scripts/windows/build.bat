@@ -49,7 +49,12 @@ if "%KOKORO_GITHUB_COMMIT%." == "." (
   set BUILD_SHA=%KOKORO_GITHUB_COMMIT%
 )
 
-cmake -GNinja -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe -DAMBER_USE_LOCAL_VULKAN=1 ..
+cmake -GNinja -DCMAKE_BUILD_TYPE=%BUILD_TYPE% \
+    -DCMAKE_C_COMPILER=cl.exe \
+    -DCMAKE_CXX_COMPILER=cl.exe \
+    -DAMBER_USE_LOCAL_VULKAN=1 \
+    -DAMBER_ENABLE_SWIFTSHADER=1 \
+    ..
 if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
 
 echo "Build everything... %DATE% %TIME%"
@@ -66,8 +71,8 @@ if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
 echo "Tests Completed %DATE% %TIME%"
 
 echo "%DATE% %TIME%: Starting integration tests.."
-set VK_LAYER_PATH=build\third_party\vulkan-validationlayers\layers
-set VK_ICD_FILENAMES=build\Windows\vk_swiftshader_icd.json
+set VK_LAYER_PATH=%SRC%\build\third_party\vulkan-validationlayers\layers
+set VK_ICD_FILENAMES=%SRC%\build\Windows\vk_swiftshader_icd.json
 cd %SRC%
 python tests\run_tests.py --test-prog-path=%SRC%\build\amber.exe --use-swiftshader
 echo "%DATE% %TIME%: integration tests completed."
