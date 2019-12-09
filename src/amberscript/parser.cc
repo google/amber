@@ -207,7 +207,7 @@ Result Parser::Parse(const std::string& data) {
         if (!r.IsSuccess())
           return r;
       }
-      Result r = pipeline->AddColorAttachment(buf, 0);
+      Result r = pipeline->AddColorAttachment(buf, 0, 0);
       if (!r.IsSuccess())
         return r;
     }
@@ -732,8 +732,27 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         token = tokenizer_->NextToken();
         if (!token->IsInteger())
           return Result("invalid value for BIND LOCATION");
+        auto location = token->AsUint32();
 
-        r = pipeline->AddColorAttachment(buffer, token->AsUint32());
+        uint32_t base_mip_level = 0;
+        token = tokenizer_->PeekNextToken();
+        if (token->IsString() && token->AsString() == "BASE_MIP_LEVEL") {
+          tokenizer_->NextToken();
+          token = tokenizer_->NextToken();
+
+          if (!token->IsInteger())
+            return Result("invalid value for BASE_MIP_LEVEL");
+
+          base_mip_level = token->AsUint32();
+
+          if (base_mip_level >= buffer->GetMipLevels())
+            return Result(
+                "base mip level (now " + token->AsString() +
+                ") needs to be larger than the number of buffer mip maps (" +
+                std::to_string(buffer->GetMipLevels()) + ")");
+        }
+
+        r = pipeline->AddColorAttachment(buffer, location, base_mip_level);
         if (!r.IsSuccess())
           return r;
 
@@ -793,8 +812,32 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         if (!token->IsInteger())
           return Result("invalid value for BINDING in BIND command");
 
-        pipeline->AddBuffer(buffer, buffer_type, descriptor_set,
-                            token->AsUint32());
+        auto binding = token->AsUint32();
+        uint32_t base_mip_level = 0;
+
+        if (buffer_type == BufferType::kStorageImage ||
+            buffer_type == BufferType::kSampledImage ||
+            buffer_type == BufferType::kCombinedImageSampler) {
+          token = tokenizer_->PeekNextToken();
+          if (token->IsString() && token->AsString() == "BASE_MIP_LEVEL") {
+            tokenizer_->NextToken();
+            token = tokenizer_->NextToken();
+
+            if (!token->IsInteger())
+              return Result("invalid value for BASE_MIP_LEVEL");
+
+            base_mip_level = token->AsUint32();
+
+            if (base_mip_level >= buffer->GetMipLevels())
+              return Result(
+                  "base mip level (now " + token->AsString() +
+                  ") needs to be larger than the number of buffer mip maps (" +
+                  std::to_string(buffer->GetMipLevels()) + ")");
+          }
+        }
+
+        pipeline->AddBuffer(buffer, buffer_type, descriptor_set, binding,
+                            base_mip_level);
       } else if (token->IsString() && token->AsString() == "KERNEL") {
         token = tokenizer_->NextToken();
         if (!token->IsString())
@@ -829,24 +872,46 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
       return Result("unknown sampler: " + token->AsString());
 
     token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("expected a string token for BIND command");
 
-    if (!token->IsString() || token->AsString() != "DESCRIPTOR_SET")
-      return Result("missing DESCRIPTOR_SET for BIND command");
+    if (token->AsString() == "DESCRIPTOR_SET") {
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("invalid value for DESCRIPTOR_SET in BIND command");
+      uint32_t descriptor_set = token->AsUint32();
 
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger())
-      return Result("invalid value for DESCRIPTOR_SET in BIND command");
-    uint32_t descriptor_set = token->AsUint32();
+      token = tokenizer_->NextToken();
+      if (!token->IsString() || token->AsString() != "BINDING")
+        return Result("missing BINDING for BIND command");
 
-    token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "BINDING")
-      return Result("missing BINDING for BIND command");
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("invalid value for BINDING in BIND command");
+      pipeline->AddSampler(sampler, descriptor_set, token->AsUint32());
+    } else if (token->AsString() == "KERNEL") {
+      token = tokenizer_->NextToken();
+      if (!token->IsString())
+        return Result("missing kernel arg identifier");
 
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger())
-      return Result("invalid value for BINDING in BIND command");
-    pipeline->AddSampler(sampler, descriptor_set, token->AsUint32());
+      if (token->AsString() == "ARG_NAME") {
+        token = tokenizer_->NextToken();
+        if (!token->IsString())
+          return Result("expected argument identifier");
 
+        pipeline->AddSampler(sampler, token->AsString());
+      } else if (token->AsString() == "ARG_NUMBER") {
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger())
+          return Result("expected argument number");
+
+        pipeline->AddSampler(sampler, token->AsUint32());
+      } else {
+        return Result("missing ARG_NAME or ARG_NUMBER keyword");
+      }
+    } else {
+      return Result("missing DESCRIPTOR_SET or KERNEL for BIND command");
+    }
   } else {
     return Result("missing BUFFER or SAMPLER in BIND command");
   }
@@ -1115,6 +1180,17 @@ Result Parser::ParseBuffer() {
     auto fmt = MakeUnique<Format>(type);
     buffer->SetFormat(fmt.get());
     script_->RegisterFormat(std::move(fmt));
+
+    token = tokenizer_->PeekNextToken();
+    if (token->IsString() && token->AsString() == "MIP_LEVELS") {
+      tokenizer_->NextToken();
+      token = tokenizer_->NextToken();
+
+      if (!token->IsInteger())
+        return Result("invalid value for MIP_LEVELS");
+
+      buffer->SetMipLevels(token->AsUint32());
+    }
   } else {
     return Result("unknown BUFFER command provided: " + cmd);
   }
@@ -1166,6 +1242,35 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
 
   if (token->AsString() == "SIZE")
     return ParseBufferInitializerSize(buffer);
+  if (token->AsString() == "WIDTH") {
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("expected an integer for WIDTH");
+    const uint32_t width = token->AsUint32();
+    if (width == 0)
+      return Result("expected WIDTH to be positive");
+    buffer->SetWidth(width);
+
+    token = tokenizer_->NextToken();
+    if (token->AsString() != "HEIGHT")
+      return Result("BUFFER HEIGHT missing");
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("expected an integer for HEIGHT");
+    const uint32_t height = token->AsUint32();
+    if (height == 0)
+      return Result("expected HEIGHT to be positive");
+    buffer->SetHeight(height);
+
+    token = tokenizer_->NextToken();
+    uint32_t size_in_items = width * height;
+    buffer->SetElementCount(size_in_items);
+    if (token->AsString() == "FILL")
+      return ParseBufferInitializerFill(buffer, size_in_items);
+    if (token->AsString() == "SERIES_FROM")
+      return ParseBufferInitializerSeries(buffer, size_in_items);
+    return {};
+  }
   if (token->AsString() == "DATA")
     return ParseBufferInitializerData(buffer);
 
@@ -2236,11 +2341,29 @@ Result Parser::ParseSampler() {
         sampler->SetBorderColor(BorderColor::kIntOpaqueWhite);
       else
         return Result("invalid BORDER_COLOR value " + color_str);
+    } else if (param == "MIN_LOD") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsDouble())
+        return Result("invalid token when looking for MIN_LOD value");
+
+      sampler->SetMinLOD(token->AsFloat());
+    } else if (param == "MAX_LOD") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsDouble())
+        return Result("invalid token when looking for MAX_LOD value");
+
+      sampler->SetMaxLOD(token->AsFloat());
     } else {
       return Result("unexpected sampler parameter " + param);
     }
 
     token = tokenizer_->NextToken();
+  }
+
+  if (sampler->GetMaxLOD() < sampler->GetMinLOD()) {
+    return Result("max LOD needs to be greater than or equal to min LOD");
   }
 
   return script_->AddSampler(std::move(sampler));

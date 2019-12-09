@@ -89,9 +89,9 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
                                or as a PPM image otherwise.
   -I <buffername>           -- Name of framebuffer to dump. Defaults to 'framebuffer'.
   -b <filename>             -- Write contents of a UBO or SSBO to <filename>.
-  -B [<desc set>:]<binding> -- Descriptor set and binding of buffer to write.
-                               Default is [0:]0.
-  -w <filename>             -- Write shader assembly to |filename|                               
+  -B [<pipeline name>:][<desc set>:]<binding> -- Identifier of buffer to write.
+                               Default is [first pipeline:][0:]0.
+  -w <filename>             -- Write shader assembly to |filename|
   -e <engine>               -- Specify graphics engine: vulkan, dawn. Default is vulkan.
   -v <engine version>       -- Engine version (eg, 1.1 for Vulkan). Default 1.0.
   -V, --version             -- Output version information for Amber and libraries.

@@ -384,6 +384,110 @@ END)";
   EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf1.buffer->GetSizeInBytes());
 }
 
+TEST_F(AmberScriptParserTest, BindColorBaseMipLevel) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT MIP_LEVELS 2
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0 BASE_MIP_LEVEL 1
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& color_buffers1 = pipeline->GetColorAttachments();
+  ASSERT_EQ(1U, color_buffers1.size());
+
+  const auto& buf1 = color_buffers1[0];
+  ASSERT_TRUE(buf1.buffer != nullptr);
+  EXPECT_EQ(1, buf1.base_mip_level);
+}
+
+TEST_F(AmberScriptParserTest, BindColorMissingBaseMipLevel) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT MIP_LEVELS 2
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0 BASE_MIP_LEVEL
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: invalid value for BASE_MIP_LEVEL", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorBaseMipLevelTooLarge) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT MIP_LEVELS 2
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0 BASE_MIP_LEVEL 2
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ(
+      "12: base mip level (now 2) needs to be larger than the number of buffer "
+      "mip maps (2)",
+      r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindColorTooManyMipLevels) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT MIP_LEVELS 20
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_fb AS color LOCATION 0
+  FRAMEBUFFER_SIZE 90 180
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ(
+      "color attachment with 20 mip levels would have zero width for level 7",
+      r.Error());
+}
+
 TEST_F(AmberScriptParserTest, BindDepthBuffer) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
@@ -1325,6 +1429,139 @@ END)";
   EXPECT_EQ("9: expected argument number", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLMissingKernel) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("10: expected a string token for BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLInvalidKernel) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s INVALID
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("9: missing DESCRIPTOR_SET or KERNEL for BIND command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLMissingArgument) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s KERNEL
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("10: missing kernel arg identifier", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLMissingArgumentName) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s KERNEL ARG_NAME
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("10: expected argument identifier", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLArgumentNameNotString) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s KERNEL ARG_NAME 0
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("9: expected argument identifier", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLMissingArgumentNumber) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s KERNEL ARG_NUMBER
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("10: expected argument number", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerOpenCLArgumentNumberNotInteger) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+SAMPLER s
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  BIND SAMPLER s KERNEL ARG_NUMBER a
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("9: expected argument number", r.Error());
+}
+
 TEST_F(AmberScriptParserTest, BindBufferStorageImageCompute) {
   std::string in = R"(
 SHADER compute compute_shader GLSL
@@ -1739,6 +1976,93 @@ END)";
   EXPECT_EQ("12: unknown sampler: foo", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, BindBufferCombinedImageSamplerBaseMipLevel) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM MIP_LEVELS 4
+BUFFER framebuffer FORMAT R8G8B8A8_UNORM
+SAMPLER sampler MAX_LOD 4.0
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND BUFFER texture AS combined_image_sampler SAMPLER sampler DESCRIPTOR_SET 0 BINDING 0 BASE_MIP_LEVEL 2
+  BIND BUFFER framebuffer AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(1U, bufs.size());
+  EXPECT_EQ(2U, bufs[0].base_mip_level);
+}
+
+TEST_F(AmberScriptParserTest,
+       BindBufferCombinedImageSamplerMissingBaseMipLevel) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM MIP_LEVELS 4
+BUFFER framebuffer FORMAT R8G8B8A8_UNORM
+SAMPLER sampler MAX_LOD 4.0
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND BUFFER texture AS combined_image_sampler SAMPLER sampler DESCRIPTOR_SET 0 BINDING 0 BASE_MIP_LEVEL
+  BIND BUFFER framebuffer AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("15: invalid value for BASE_MIP_LEVEL", r.Error());
+}
+
+TEST_F(AmberScriptParserTest,
+       BindBufferCombinedImageSamplerBaseMipLevelTooLarge) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM MIP_LEVELS 2
+BUFFER framebuffer FORMAT R8G8B8A8_UNORM
+SAMPLER sampler MAX_LOD 2.0
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND BUFFER texture AS combined_image_sampler SAMPLER sampler DESCRIPTOR_SET 0 BINDING 0 BASE_MIP_LEVEL 3
+  BIND BUFFER framebuffer AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ(
+      "14: base mip level (now 3) needs to be larger than the number of buffer "
+      "mip maps (2)",
+      r.Error());
+}
+
 TEST_F(AmberScriptParserTest, BindSampler) {
   std::string in = R"(
 SHADER vertex vert_shader PASSTHROUGH
@@ -1808,7 +2132,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: missing DESCRIPTOR_SET for BIND command", r.Error());
+  EXPECT_EQ("12: missing DESCRIPTOR_SET or KERNEL for BIND command", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindSamplerMissingBindingValue) {

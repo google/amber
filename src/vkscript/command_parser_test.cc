@@ -845,7 +845,7 @@ TEST_P(CommandParserProbeTest, ProbeRgb) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -880,7 +880,7 @@ TEST_P(CommandParserProbeTest, ProbeRgba) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -916,7 +916,7 @@ TEST_P(CommandParserProbeTest, ProbeRect) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -952,7 +952,7 @@ TEST_P(CommandParserProbeTest, ProbeNotRect) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -990,7 +990,7 @@ TEST_F(CommandParserTest, ProbeAllRGB) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1017,7 +1017,7 @@ TEST_F(CommandParserTest, ProbeAllRGBA) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1045,7 +1045,7 @@ TEST_F(CommandParserTest, ProbeCommandRectBrackets) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1077,7 +1077,7 @@ TEST_F(CommandParserTest, ProbeCommandNotRectBrackets) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1109,7 +1109,7 @@ TEST_F(CommandParserTest, ProbeCommandColorBrackets) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1141,7 +1141,7 @@ TEST_F(CommandParserTest, ProbeCommandColorOptionalCommas) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1275,7 +1275,7 @@ TEST_F(CommandParserTest, ProbeErrors) {
   for (const auto& probe : probes) {
     Pipeline pipeline(PipelineType::kGraphics);
     auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-    pipeline.AddColorAttachment(color_buf.get(), 0);
+    pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
     Script script;
     CommandParser cp(&script, &pipeline, 1, probe.str);
@@ -1301,7 +1301,7 @@ TEST_F(CommandParserTest, ProbeWithInvalidRGBA) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1315,7 +1315,7 @@ TEST_F(CommandParserTest, ProbeWithRectAndInvalidRGB) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1329,7 +1329,7 @@ TEST_F(CommandParserTest, ProbeWithRectMissingFormat) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1343,7 +1343,7 @@ TEST_F(CommandParserTest, ProbeAllMissingFormat) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1357,7 +1357,7 @@ TEST_F(CommandParserTest, ProbeAlWithInvalidRGB) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -3902,7 +3902,7 @@ probe all rgba 0.2 0.3 0.4 0.5)";
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);

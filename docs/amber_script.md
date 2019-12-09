@@ -134,10 +134,19 @@ END
 BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
     {initializer}
 
+# Defines a buffer with width and height and filled by data as specified by the
+# `initializer`.
+BUFFER {name} DATA_TYPE {type} {STD140|STD430} WIDTH {w} HEIGHT {h} \
+    {initializer}
+
 # Creates a buffer which will store the given `FORMAT` of data. These
 # buffers are used as image and depth buffers in the `PIPELINE` commands.
 # The buffer will be sized based on the `RENDER_SIZE` of the `PIPELINE`.
 BUFFER {name} FORMAT {format_string}
+
+# Creates a buffer intended to be used as a color buffer or a texture with
+# a number of mip levels.
+BUFFER {name} FORMAT {format_string} MIP_LEVELS {mip_levels}
 ```
 
 #### Buffer Initializers
@@ -161,6 +170,51 @@ SERIES_FROM _start_ INC_BY _inc_
 # Buffers used as copy destination can be used only as copy destination, and as
 # argument to an EXPECT command.
 COPY {buffer_from} TO {buffer_to}
+```
+
+### Samplers
+
+Samplers are used for sampling buffers that are bound to a pipeline as
+sampled image or combined image sampler.
+
+All sampler parameters are optional. Filters will default to nearest, address
+modes to repeat, min LOD to 0, max LOD to 1, and border color to float
+transparent black.
+
+The samplers use normalized coordinates in the range of [0..1].
+
+#### Filter types
+ * `nearest`
+ * `linear`
+
+#### Address modes
+ * `repeat`
+ * `mirrored_repeat`
+ * `clamp_to_edge`
+ * `clamp_to_border`
+ * `mirrored_clamp_to_edge`
+
+#### Border colors
+ * `float_transparent_black`
+ * `int_transparent_black`
+ * `float_opaque_black`
+ * `int_opaque_black`
+ * `float_opaque_white`
+ * `int_opaque_white`
+
+```groovy
+
+# Creates a sampler |name| with |magfilter| and |minfilter| using filter type,
+# |modeu| and |modev| address mode, and |color| being one of the border
+# color options. Both |minlod| and |maxlod| are floating point values,
+# where |maxlod| >= |minlod|.
+SAMPLER {name} MAG_FILTER {magfilter} \
+    MIN_FILTER {minfilter} \
+    ADDRESS_MODE_U {modeu} \
+    ADDRESS_MODE_V {modev} \
+    BORDER_COLOR {color} \
+    MIN_LOD {minlod} \
+    MAX_LOD {maxlod}
 ```
 
 ### Pipelines
@@ -247,6 +301,10 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # for graphics pipelines.
   BIND BUFFER {buffer_name} AS color LOCATION _idx_
 
+  # Attach |buffer_name| as an output color attachment at location |idx|,
+  # and output color buffer contents to a mip level |level|.
+  BIND BUFFER {buffer_name} AS color LOCATION _idx_ BASE_MIP_LEVEL _level_
+
   # Attach |buffer_name| as the depth/stencil buffer. The provided buffer must
   # be a `FORMAT` buffer. If no depth/stencil buffer is specified a default
   # buffer of format `D32_SFLOAT_S8_UINT` will be created for graphics
@@ -265,12 +323,23 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # Attach |buffer_name| as a storage image.
   BIND BUFFER {buffer_name} AS storage_image
 
+  # Attach |buffer_name| as a storage image using |level| as a base mip level.
+  BIND BUFFER {buffer_name} AS storage_image BASE_MIP_LEVEL _level_
+
   # Attach |buffer_name| as a sampled image.
   BIND BUFFER {buffer_name} AS sampled_image
+
+  # Attach |buffer_name| as a sampled image using |level| as a base mip level.
+  BIND BUFFER {buffer_name} AS sampled_image BASE_MIP_LEVEL _level_
 
   # Attach |buffer_name| as a combined image sampler. A sampler |sampler_name|
   # must also be specified.
   BIND BUFFER {buffer_name} AS combined_image_sampler SAMPLER {sampler_name}
+
+  # Attach |buffer_name| as a combined image sampler using |level| as a base
+  # mip level.
+  BIND BUFFER {buffer_name} AS combined_image_sampler SAMPLER {sampler_name} \
+       BASE_MIP_LEVEL _level_
 
   # Bind the sampler at the given descriptor set and binding.
   BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
@@ -285,6 +354,13 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # type as appropriate for the argument buffer. All uses of the buffer
   # must have a consistent |buffer_type| across all pipelines.
   BIND BUFFER {buffer_name} [AS {buffer_type}] KERNEL ARG_NUMBER _number_
+
+  # Bind OpenCL argument sampler by argument name.
+  BIND SAMPLER {sampler_name} KERNEL ARG_NAME _name_
+
+  # Bind OpenCL argument sampler by argument ordinal. Arguments use 0-based
+  # numbering.
+  BIND SAMPLER {sampler_name} KERNEL ARG_NUMBER _number_
 ```
 
 ```groovy

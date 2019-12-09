@@ -169,16 +169,19 @@ Result Pipeline::SetShaderType(const Shader* shader, ShaderType type) {
 }
 
 Result Pipeline::Validate() const {
-  size_t fb_size = fb_width_ * fb_height_;
   for (const auto& attachment : color_attachments_) {
-    if (attachment.buffer->ElementCount() != fb_size) {
+    if (attachment.buffer->ElementCount() !=
+        (fb_width_ << attachment.base_mip_level) *
+            (fb_height_ << attachment.base_mip_level)) {
       return Result(
           "shared framebuffer must have same size over all PIPELINES");
     }
   }
 
-  if (depth_buffer_.buffer && depth_buffer_.buffer->ElementCount() != fb_size)
+  if (depth_buffer_.buffer &&
+      depth_buffer_.buffer->ElementCount() != fb_width_ * fb_height_) {
     return Result("shared depth buffer must have same size over all PIPELINES");
+  }
 
   for (auto& buf : GetBuffers()) {
     if (buf.buffer->GetFormat() == nullptr) {
@@ -189,6 +192,7 @@ Result Pipeline::Validate() const {
 
   if (pipeline_type_ == PipelineType::kGraphics)
     return ValidateGraphics();
+
   return ValidateCompute();
 }
 
@@ -207,6 +211,26 @@ Result Pipeline::ValidateGraphics() const {
 
   if (!found_vertex)
     return Result("graphics pipeline requires a vertex shader");
+
+  for (const auto& att : color_attachments_) {
+    auto width = att.buffer->GetWidth();
+    auto height = att.buffer->GetHeight();
+    for (uint32_t level = 1; level < att.buffer->GetMipLevels(); level++) {
+      width >>= 1;
+      if (width == 0)
+        return Result("color attachment with " +
+                      std::to_string(att.buffer->GetMipLevels()) +
+                      " mip levels would have zero width for level " +
+                      std::to_string(level));
+      height >>= 1;
+      if (height == 0)
+        return Result("color attachment with " +
+                      std::to_string(att.buffer->GetMipLevels()) +
+                      " mip levels would have zero height for level " +
+                      std::to_string(level));
+    }
+  }
+
   return {};
 }
 
@@ -223,9 +247,11 @@ void Pipeline::UpdateFramebufferSizes() {
     return;
 
   for (auto& attachment : color_attachments_) {
-    attachment.buffer->SetWidth(fb_width_);
-    attachment.buffer->SetHeight(fb_height_);
-    attachment.buffer->SetElementCount(size);
+    auto mip0_width = fb_width_ << attachment.base_mip_level;
+    auto mip0_height = fb_height_ << attachment.base_mip_level;
+    attachment.buffer->SetWidth(mip0_width);
+    attachment.buffer->SetHeight(mip0_height);
+    attachment.buffer->SetElementCount(mip0_width * mip0_height);
   }
 
   if (depth_buffer_.buffer) {
@@ -235,7 +261,9 @@ void Pipeline::UpdateFramebufferSizes() {
   }
 }
 
-Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
+Result Pipeline::AddColorAttachment(Buffer* buf,
+                                    uint32_t location,
+                                    uint32_t base_mip_level) {
   for (const auto& attachment : color_attachments_) {
     if (attachment.location == location)
       return Result("can not bind two color buffers to the same LOCATION");
@@ -248,10 +276,13 @@ Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
   auto& info = color_attachments_.back();
   info.location = location;
   info.type = BufferType::kColor;
+  info.base_mip_level = base_mip_level;
+  auto mip0_width = fb_width_ << base_mip_level;
+  auto mip0_height = fb_height_ << base_mip_level;
+  buf->SetWidth(mip0_width);
+  buf->SetHeight(mip0_height);
+  buf->SetElementCount(mip0_width * mip0_height);
 
-  buf->SetWidth(fb_width_);
-  buf->SetHeight(fb_height_);
-  buf->SetElementCount(fb_width_ * fb_height_);
   return {};
 }
 
@@ -350,7 +381,8 @@ Buffer* Pipeline::GetBufferForBinding(uint32_t descriptor_set,
 void Pipeline::AddBuffer(Buffer* buf,
                          BufferType type,
                          uint32_t descriptor_set,
-                         uint32_t binding) {
+                         uint32_t binding,
+                         uint32_t base_mip_level) {
   // If this buffer binding already exists, overwrite with the new buffer.
   for (auto& info : buffers_) {
     if (info.descriptor_set == descriptor_set && info.binding == binding) {
@@ -365,6 +397,7 @@ void Pipeline::AddBuffer(Buffer* buf,
   info.descriptor_set = descriptor_set;
   info.binding = binding;
   info.type = type;
+  info.base_mip_level = base_mip_level;
 }
 
 void Pipeline::AddBuffer(Buffer* buf,
@@ -386,6 +419,7 @@ void Pipeline::AddBuffer(Buffer* buf,
   info.descriptor_set = std::numeric_limits<uint32_t>::max();
   info.binding = std::numeric_limits<uint32_t>::max();
   info.arg_no = std::numeric_limits<uint32_t>::max();
+  info.base_mip_level = 0;
 }
 
 void Pipeline::AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no) {
@@ -404,6 +438,7 @@ void Pipeline::AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no) {
   info.arg_no = arg_no;
   info.descriptor_set = std::numeric_limits<uint32_t>::max();
   info.binding = std::numeric_limits<uint32_t>::max();
+  info.base_mip_level = 0;
 }
 
 void Pipeline::AddSampler(Sampler* sampler,
@@ -424,6 +459,39 @@ void Pipeline::AddSampler(Sampler* sampler,
   info.binding = binding;
 }
 
+void Pipeline::AddSampler(Sampler* sampler, const std::string& arg_name) {
+  for (auto& info : samplers_) {
+    if (info.arg_name == arg_name) {
+      info.sampler = sampler;
+      return;
+    }
+  }
+
+  samplers_.push_back(SamplerInfo{sampler});
+
+  auto& info = samplers_.back();
+  info.arg_name = arg_name;
+  info.descriptor_set = std::numeric_limits<uint32_t>::max();
+  info.binding = std::numeric_limits<uint32_t>::max();
+  info.arg_no = std::numeric_limits<uint32_t>::max();
+}
+
+void Pipeline::AddSampler(Sampler* sampler, uint32_t arg_no) {
+  for (auto& info : samplers_) {
+    if (info.arg_no == arg_no) {
+      info.sampler = sampler;
+      return;
+    }
+  }
+
+  samplers_.push_back(SamplerInfo{sampler});
+
+  auto& info = samplers_.back();
+  info.arg_no = arg_no;
+  info.descriptor_set = std::numeric_limits<uint32_t>::max();
+  info.binding = std::numeric_limits<uint32_t>::max();
+}
+
 Result Pipeline::UpdateOpenCLBufferBindings() {
   if (!IsCompute() || GetShaders().empty() ||
       GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC) {
@@ -438,6 +506,23 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
   const auto iter = descriptor_map.find(shader_info.GetEntryPoint());
   if (iter == descriptor_map.end())
     return {};
+
+  for (auto& info : samplers_) {
+    if (info.descriptor_set == std::numeric_limits<uint32_t>::max() &&
+        info.binding == std::numeric_limits<uint32_t>::max()) {
+      for (const auto& entry : iter->second) {
+        if (entry.arg_name == info.arg_name ||
+            entry.arg_ordinal == info.arg_no) {
+          if (entry.kind !=
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SAMPLER) {
+            return Result("Sampler bound to non-sampler kernel arg");
+          }
+          info.descriptor_set = entry.descriptor_set;
+          info.binding = entry.binding;
+        }
+      }
+    }
+  }
 
   for (auto& info : buffers_) {
     if (info.descriptor_set == std::numeric_limits<uint32_t>::max() &&
@@ -457,6 +542,12 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
               case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD:
                 info.type = BufferType::kStorage;
                 break;
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE:
+                info.type = BufferType::kSampledImage;
+                break;
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE:
+                info.type = BufferType::kStorageImage;
+                break;
               default:
                 return Result("Unhandled buffer type for OPENCL-C shader");
             }
@@ -475,6 +566,18 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
                     Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD) {
               return Result("Buffer " + info.buffer->GetName() +
                             " must be a storage binding");
+            }
+          } else if (info.type == BufferType::kSampledImage) {
+            if (entry.kind !=
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE) {
+              return Result("Buffer " + info.buffer->GetName() +
+                            " must be a read-only image binding");
+            }
+          } else if (info.type == BufferType::kStorageImage) {
+            if (entry.kind !=
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE) {
+              return Result("Buffer " + info.buffer->GetName() +
+                            " must be a write-only image binding");
             }
           } else {
             return Result("Unhandled buffer type for OPENCL-C shader");
@@ -590,7 +693,7 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
       opencl_pod_buffer_map_.insert(
           buf_iter,
           std::make_pair(std::make_pair(descriptor_set, binding), buffer));
-      AddBuffer(buffer, buffer_type, descriptor_set, binding);
+      AddBuffer(buffer, buffer_type, descriptor_set, binding, 0);
     } else {
       buffer = buf_iter->second;
     }

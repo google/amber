@@ -90,6 +90,9 @@ class Pipeline {
         UBO,
         POD,
         POD_UBO,
+        RO_IMAGE,
+        WO_IMAGE,
+        SAMPLER,
       } kind;
 
       uint32_t descriptor_set = 0;
@@ -132,6 +135,7 @@ class Pipeline {
     uint32_t descriptor_set = 0;
     uint32_t binding = 0;
     uint32_t location = 0;
+    uint32_t base_mip_level = 0;
     std::string arg_name = "";
     uint32_t arg_no = 0;
     BufferType type = BufferType::kUnknown;
@@ -145,6 +149,8 @@ class Pipeline {
     Sampler* sampler = nullptr;
     uint32_t descriptor_set = 0;
     uint32_t binding = 0;
+    std::string arg_name = "";
+    uint32_t arg_no = 0;
   };
 
   static const char* kGeneratedColorBuffer;
@@ -207,7 +213,10 @@ class Pipeline {
     return color_attachments_;
   }
   /// Adds |buf| as a colour attachment at |location| in the pipeline.
-  Result AddColorAttachment(Buffer* buf, uint32_t location);
+  /// Uses |base_mip_level| as the mip level for output.
+  Result AddColorAttachment(Buffer* buf,
+                            uint32_t location,
+                            uint32_t base_mip_level);
   /// Retrieves the location that |buf| is bound to in the pipeline. The
   /// location will be written to |loc|. An error result will be return if
   /// something goes wrong.
@@ -232,12 +241,13 @@ class Pipeline {
   /// buffer bound.
   Buffer* GetIndexBuffer() const { return index_buffer_; }
 
-  /// Adds |buf| of |type |to the pipeline at the given |descriptor_set|
-  /// and |binding|.
+  /// Adds |buf| of |type| to the pipeline at the given |descriptor_set|,
+  /// |binding| and |base_mip_level|.
   void AddBuffer(Buffer* buf,
                  BufferType type,
                  uint32_t descriptor_set,
-                 uint32_t binding);
+                 uint32_t binding,
+                 uint32_t base_mip_level);
   /// Adds |buf| to the pipeline at the given |arg_name|.
   void AddBuffer(Buffer* buf, BufferType type, const std::string& arg_name);
   /// Adds |buf| to the pipeline at the given |arg_no|.
@@ -248,6 +258,11 @@ class Pipeline {
   /// Adds |sampler| to the pipeline at the given |descriptor_set| and
   /// |binding|.
   void AddSampler(Sampler* sampler, uint32_t descriptor_set, uint32_t binding);
+  /// Adds |sampler| to the pipeline at the given |arg_name|.
+  void AddSampler(Sampler* sampler, const std::string& arg_name);
+  /// Adds |sampler| to the pieline at the given |arg_no|.
+  void AddSampler(Sampler* sampler, uint32_t arg_no);
+
   /// Returns information on all samplers in this pipeline.
   const std::vector<SamplerInfo>& GetSamplers() const { return samplers_; }
 

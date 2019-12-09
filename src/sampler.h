@@ -74,6 +74,12 @@ class Sampler {
   void SetBorderColor(BorderColor color) { border_color_ = color; }
   BorderColor GetBorderColor() const { return border_color_; }
 
+  void SetMinLOD(float min_lod) { min_lod_ = min_lod; }
+  float GetMinLOD() const { return min_lod_; }
+
+  void SetMaxLOD(float max_lod) { max_lod_ = max_lod; }
+  float GetMaxLOD() const { return max_lod_; }
+
  private:
   std::string name_;
   FilterType min_filter_ = FilterType::kNearest;
@@ -82,6 +88,8 @@ class Sampler {
   AddressMode address_mode_u_ = AddressMode::kRepeat;
   AddressMode address_mode_v_ = AddressMode::kRepeat;
   BorderColor border_color_ = BorderColor::kFloatTransparentBlack;
+  float min_lod_ = 0.0f;
+  float max_lod_ = 1.0f;
 };
 
 }  // namespace amber
