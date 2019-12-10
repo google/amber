@@ -100,7 +100,8 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name == "sparseResidencyAliased" ||
          name == "variableMultisampleRate" || name == "inheritedQueries" ||
          name == "VariablePointerFeatures.variablePointers" ||
-         name == "VariablePointerFeatures.variablePointersStorageBuffer";
+         name == "VariablePointerFeatures.variablePointersStorageBuffer" ||
+         name == "Float16Int8Features.shaderFloat16";
 }
 
 type::Type* Script::ParseType(const std::string& str) {

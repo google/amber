@@ -34,8 +34,10 @@ DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer
 ```
 
 Currently each of the items in `VkPhysicalDeviceFeatures` are recognized along
-with `VariablePointerFeatures.variablePointers` and
-`VariablePointerFeatures.variablePointersStorageBuffer`.
+with:
+ * `VariablePointerFeatures.variablePointers`
+ * `VariablePointerFeatures.variablePointersStorageBuffer`
+ * `Float16Int8Features.shaderFloat16`
 
 Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
 commands.

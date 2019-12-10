@@ -32,6 +32,7 @@ namespace {
 const char kVariablePointers[] = "VariablePointerFeatures.variablePointers";
 const char kVariablePointersStorageBuffer[] =
     "VariablePointerFeatures.variablePointersStorageBuffer";
+const char kShaderFloat16[] = "Float16Int8Features.shaderFloat16";
 
 struct BaseOutStructure {
   VkStructureType sType;
@@ -383,11 +384,9 @@ Result Device::Initialize(
     return r;
 
   bool use_physical_device_features_2 = false;
-  // Determine if VkPhysicalDeviceProperties2KHR should be used
   for (auto& ext : required_extensions) {
-    if (ext == "VK_KHR_get_physical_device_properties2") {
+    if (ext == "VK_KHR_get_physical_device_properties2")
       use_physical_device_features_2 = true;
-    }
   }
 
   VkPhysicalDeviceFeatures available_vulkan_features =
@@ -396,6 +395,7 @@ Result Device::Initialize(
     available_vulkan_features = available_features2.features;
 
     VkPhysicalDeviceVariablePointerFeaturesKHR* var_ptrs = nullptr;
+    VkPhysicalDeviceShaderFloat16Int8FeaturesKHR* float16_ptrs = nullptr;
     void* ptr = available_features2.pNext;
     while (ptr != nullptr) {
       BaseOutStructure* s = static_cast<BaseOutStructure*>(ptr);
@@ -403,7 +403,10 @@ Result Device::Initialize(
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR) {
         var_ptrs =
             static_cast<VkPhysicalDeviceVariablePointerFeaturesKHR*>(ptr);
-        break;
+      } else if (s->sType ==
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES_KHR) {
+        float16_ptrs =
+            static_cast<VkPhysicalDeviceShaderFloat16Int8FeaturesKHR*>(ptr);
       }
       ptr = s->pNext;
     }
@@ -431,6 +434,16 @@ Result Device::Initialize(
           var_ptrs->variablePointersStorageBuffer != VK_TRUE) {
         return amber::Result(
             "Missing variable pointers storage buffer feature");
+      }
+
+      if (feature == kShaderFloat16) {
+        if (float16_ptrs == nullptr) {
+          return amber::Result(
+              "Shader float 16 requested but feature not returned");
+        }
+        if (float16_ptrs->shaderFloat16 != VK_TRUE) {
+          return amber::Result("Missing float16 feature");
+        }
       }
     }
 

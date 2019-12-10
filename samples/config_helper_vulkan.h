@@ -113,6 +113,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   VkPhysicalDeviceFeatures available_features_;
   VkPhysicalDeviceFeatures2KHR available_features2_;
   VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_feature_;
+  VkPhysicalDeviceShaderFloat16Int8FeaturesKHR float16_int8_feature_;
 };
 
 }  // namespace sample

@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+INSTANCE_EXTENSION VK_KHR_get_physical_device_properties2
+DEVICE_EXTENSION VK_KHR_shader_float16_int8
+DEVICE_FEATURE Float16Int8Features.shaderFloat16
+
 SHADER compute f16 GLSL
 #version 450
 #extension GL_AMD_gpu_shader_half_float : enable
@@ -38,4 +42,4 @@ END
 
 RUN pipeline 1 1 1
 
-EXPECT buf IDX 0 EQ 4.8
+EXPECT buf IDX 0 TOLERANCE 0.1 EQ 4.8
