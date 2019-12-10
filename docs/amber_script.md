@@ -136,17 +136,14 @@ BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
 
 # Defines a buffer with width and height and filled by data as specified by the
 # `initializer`.
-BUFFER {name} DATA_TYPE {type} {STD140|STD430} WIDTH {w} HEIGHT {h} \
+BUFFER {name} DATA_TYPE {type} {STD140 | STD430} WIDTH {w} HEIGHT {h} \
     {initializer}
 
 # Creates a buffer which will store the given `FORMAT` of data. These
 # buffers are used as image and depth buffers in the `PIPELINE` commands.
 # The buffer will be sized based on the `RENDER_SIZE` of the `PIPELINE`.
-BUFFER {name} FORMAT {format_string}
-
-# Creates a buffer intended to be used as a color buffer or a texture with
-# a number of mip levels.
-BUFFER {name} FORMAT {format_string} MIP_LEVELS {mip_levels}
+BUFFER {name} FORMAT {format_string} \
+    [ MIP_LEVELS _mip_levels_ (default 1) ]
 ```
 
 #### Buffer Initializers
@@ -177,10 +174,6 @@ COPY {buffer_from} TO {buffer_to}
 Samplers are used for sampling buffers that are bound to a pipeline as
 sampled image or combined image sampler.
 
-All sampler parameters are optional. Filters will default to nearest, address
-modes to repeat, min LOD to 0, max LOD to 1, and border color to float
-transparent black.
-
 The samplers use normalized coordinates in the range of [0..1].
 
 #### Filter types
@@ -204,17 +197,15 @@ The samplers use normalized coordinates in the range of [0..1].
 
 ```groovy
 
-# Creates a sampler |name| with |magfilter| and |minfilter| using filter type,
-# |modeu| and |modev| address mode, and |color| being one of the border
-# color options. Both |minlod| and |maxlod| are floating point values,
-# where |maxlod| >= |minlod|.
-SAMPLER {name} MAG_FILTER {magfilter} \
-    MIN_FILTER {minfilter} \
-    ADDRESS_MODE_U {modeu} \
-    ADDRESS_MODE_V {modev} \
-    BORDER_COLOR {color} \
-    MIN_LOD {minlod} \
-    MAX_LOD {maxlod}
+# Creates a sampler with |name|.
+SAMPLER {name} \
+    [ MAG_FILTER {filter_type} (default nearest) ] \
+    [ MIN_FILTER {filter_type} (default nearest) ] \
+    [ ADDRESS_MODE_U {address_mode} (default repeat) ] \
+    [ ADDRESS_MODE_V {address_mode} (default repeat) ] \
+    [ BORDER_COLOR {border_color} (default float_transparent_black) ] \
+    [ MIN_LOD _val_ (default 0.0) ] \
+    [ MAX_LOD _val_ (default 1.0) ]
 ```
 
 ### Pipelines
@@ -240,15 +231,11 @@ END
 
 The following commands are all specified within the `PIPELINE` command.
 ```groovy
-  # Attach the shader provided by |name_of_shader| to the pipeline and set
-  # the entry point to be |name|. The provided shader for ATTACH must _not_ be
+  # Attach the shader provided by |name_of_shader| to the pipeline with an
+  # entry point name of |name|. The provided shader for ATTACH must _not_ be
   # a 'multi' shader.
-  ATTACH {name_of_shader} ENTRY_POINT {name}
-
-  # Attach the shader provided by |name_of_shader| to the pipeline and set
-  # the entry point to be 'main'. The provided shader for ATTACH must _not_ be
-  # a 'multi' shader.
-  ATTACH {name_of_shader}
+  ATTACH {name_of_shader} \
+      [ ENTRY_POINT {name} (default "main") ]
 
   # Attach a 'multi' shader to the pipeline of |shader_type| and use the entry
   # point with |name|. The provided shader _must_ be a 'multi' shader.
@@ -257,8 +244,10 @@ The following commands are all specified within the `PIPELINE` command.
   # Attach specialized shader. Specialization can be specified multiple times.
   # Specialization values must be a 32-bit type. Shader type and entry point
   # must be specified prior to specializing the shader.
-  ATTACH {name_of_shader} SPECIALIZE 1 AS uint32 4
-  ATTACH {name_of_shader} SPECIALIZE 1 AS uint32 4 SPECIALIZE 4 AS float 1.0
+  ATTACH {name_of_shader} SPECIALIZE _id_ AS uint32 _value_
+  ATTACH {name_of_shader} \
+      SPECIALIZE _id_ AS uint32 _value_ \
+      SPECIALIZE _id_ AS float _value_
 ```
 
 ```groovy
@@ -298,12 +287,14 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # Attach |buffer_name| as an output color attachment at location |idx|.
   # The provided buffer must be a `FORMAT` buffer. If no color attachments are
   # provided a single attachment with format `B8G8R8A8_UNORM` will be created
-  # for graphics pipelines.
-  BIND BUFFER {buffer_name} AS color LOCATION _idx_
+  # for graphics pipelines. The MIP level will have a base of |level|.
+  BIND BUFFER {buffer_name} AS color LOCATION _idx_ \
+      [ BASE_MIP_LEVEL _level_ (default 0) ]
 
-  # Attach |buffer_name| as an output color attachment at location |idx|,
-  # and output color buffer contents to a mip level |level|.
-  BIND BUFFER {buffer_name} AS color LOCATION _idx_ BASE_MIP_LEVEL _level_
+  # Bind the buffer of the given |buffer_type| at the given descriptor set
+  # and binding. The buffer will use a start index of 0.
+  BIND BUFFER {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
+       BINDING _id_
 
   # Attach |buffer_name| as the depth/stencil buffer. The provided buffer must
   # be a `FORMAT` buffer. If no depth/stencil buffer is specified a default
@@ -315,31 +306,20 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # push constant buffer attached to a pipeline.
   BIND BUFFER {buffer_name} AS push_constant
 
-  # Bind the buffer of the given |buffer_type| at the given descriptor set
-  # and binding. The buffer will use a start index of 0.
-  BIND BUFFER {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
-       BINDING _id_
+  # Attach |buffer_name| as a storage image. The MIP level will have a base
+  # value of |level|.
+  BIND BUFFER {buffer_name} AS storage_image \
+      [ BASE_MIP_LEVEL _level_ (default 0) ]
 
-  # Attach |buffer_name| as a storage image.
-  BIND BUFFER {buffer_name} AS storage_image
-
-  # Attach |buffer_name| as a storage image using |level| as a base mip level.
-  BIND BUFFER {buffer_name} AS storage_image BASE_MIP_LEVEL _level_
-
-  # Attach |buffer_name| as a sampled image.
-  BIND BUFFER {buffer_name} AS sampled_image
-
-  # Attach |buffer_name| as a sampled image using |level| as a base mip level.
-  BIND BUFFER {buffer_name} AS sampled_image BASE_MIP_LEVEL _level_
+  # Attach |buffer_name| as a sampled image.  The MIP level will have a base
+  # value of |level|.
+  BIND BUFFER {buffer_name} AS sampled_image \
+      [ BASE_MIP_LEVEL _level_ (default 0) ]
 
   # Attach |buffer_name| as a combined image sampler. A sampler |sampler_name|
-  # must also be specified.
-  BIND BUFFER {buffer_name} AS combined_image_sampler SAMPLER {sampler_name}
-
-  # Attach |buffer_name| as a combined image sampler using |level| as a base
-  # mip level.
+  # must also be specified. The MIP level will have a base value of 0.
   BIND BUFFER {buffer_name} AS combined_image_sampler SAMPLER {sampler_name} \
-       BASE_MIP_LEVEL _level_
+      [ BASE_MIP_LEVEL _level_ (default) 0) ]
 
   # Bind the sampler at the given descriptor set and binding.
   BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
@@ -347,13 +327,15 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # Bind OpenCL argument buffer by name. Specifying the buffer type is optional.
   # Amber will set the type as appropriate for the argument buffer. All uses
   # of the buffer must have a consistent |buffer_type| across all pipelines.
-  BIND BUFFER {buffer_name} [AS {buffer_type}] KERNEL ARG_NAME _name_
+  BIND BUFFER {buffer_name} [ AS {buffer_type} (default computed)] \
+      KERNEL ARG_NAME _name_
 
   # Bind OpenCL argument buffer by argument ordinal. Arguments use 0-based
   # numbering. Specifying the buffer type is optional. Amber will set the
   # type as appropriate for the argument buffer. All uses of the buffer
   # must have a consistent |buffer_type| across all pipelines.
-  BIND BUFFER {buffer_name} [AS {buffer_type}] KERNEL ARG_NUMBER _number_
+  BIND BUFFER {buffer_name} [ AS {buffer_type} (default computed)] \
+      KERNEL ARG_NUMBER _number_
 
   # Bind OpenCL argument sampler by argument name.
   BIND SAMPLER {sampler_name} KERNEL ARG_NAME _name_
@@ -427,42 +409,25 @@ RUN {pipeline_name} \
 
 ```groovy
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
-# data must be attached to the pipeline. A start index of 0 will be used
-# and a count of the number of elements in the vertex buffer.
-RUN {pipeline_name} DRAW_ARRAY AS {topology}
+# data must be attached to the pipeline.
 
-# Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
-# data must be attached to the pipeline. A start index of |value| will be used
-# and a count of the number of items from |value| to the end of the vertex
-# buffer.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} START_IDX _value_
-
-# Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
-# data must be attached to the pipeline. A start index of |value| will be used
-# and a count |count_value| will be used.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} START_IDX _value_ \
-  COUNT _count_value_
+# A start index of |value| will be used and the count of |count_value| items
+# will be processed.
+RUN {pipeline_name} DRAW_ARRAY AS {topology} \
+    [ START_IDX _value_ (default 0) ] \
+    [ COUNT _count_value_ (default vertex_buffer size - start_idx) ]
 ```
 
 ```groovy
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data and  index data must be attached to the pipeline. The vertices will be
-# drawn using the given |topology|. A start index of 0 will be used and the
-# count will be determined by the size of the index data buffer.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED
-
-# Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
-# data and  index data must be attached to the pipeline. The vertices will be
-# drawn using the given |topology|. A start index of |value| will be used and
-# the count will be determined by the size of the index data buffer.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED START_IDX _value_
-
-# Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
-# data and  index data must be attached to the pipeline. The vertices will be
-# drawn using the given |topology|. A start index of |value| will be used and
-# the count of |count_value| items will be processed.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
-  START_IDX _value_ COUNT _count_value_
+# drawn using the given |topology|.
+#
+# A start index of |value| will be used and the count of |count_value| items
+# will be processed.
+RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
+    [ START_IDX _value_ (default 0) ] \
+    [ COUNT _count_value_ (default index_buffer size - start_idx) ]
 ```
 
 ### Repeating commands
