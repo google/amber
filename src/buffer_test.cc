@@ -305,7 +305,7 @@ TEST_F(BufferTest, SetFloat16) {
   auto type = parser.Parse("R16_SFLOAT");
 
   Format fmt(type.get());
-  Buffer b(BufferType::kColor);
+  Buffer b;
   b.SetFormat(&fmt);
   b.SetData(std::move(values));
 

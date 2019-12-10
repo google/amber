@@ -114,6 +114,7 @@ either image buffers or, what the target API would refer to as a buffer.
  * `uint16`
  * `uint32`
  * `uint64`
+ * `float16`
  * `float`
  * `double`
  * vec[2,3,4]{type}

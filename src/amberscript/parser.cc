@@ -70,6 +70,8 @@ std::unique_ptr<type::Type> ToType(const std::string& str) {
     return parser.Parse("R32_UINT");
   if (str == "uint64")
     return parser.Parse("R64_UINT");
+  if (str == "float16")
+    return parser.Parse("R16_SFLOAT");
   if (str == "float")
     return parser.Parse("R32_SFLOAT");
   if (str == "double")
