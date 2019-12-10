@@ -228,13 +228,13 @@ def git_sync_deps(deps_file_path, command_line_os_requests, verbose):
     else:
       raise Exception("please specify commit or tag")
 
-    if not with_clspv and 'clspv' in directory:
+    if not with_clspv and directory[12:17] is 'clspv':
       continue
 
-    if not with_dxc and 'dxc' in directory:
+    if not with_dxc and directory[12:15] is 'dxc':
       continue
 
-    if not with_swiftshader and 'swiftshader' in directory:
+    if not with_swiftshader and directory[12:23] is 'swiftshader':
       continue
 
     relative_directory = os.path.join(deps_file_directory, directory)
