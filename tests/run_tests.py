@@ -63,8 +63,10 @@ SUPPRESSIONS = {
 OPENCL_CASES = [
   "opencl_bind_buffer.amber",
   "opencl_c_copy.amber",
-  "opencl_set_arg.amber"
-]
+  "opencl_read_image.amber",
+  "opencl_set_arg.amber",
+  "opencl_write_image.amber"
+ ]
 
 SUPPRESSIONS_DAWN = [
   # Dawn does not support push constants
