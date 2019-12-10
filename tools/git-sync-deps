@@ -18,8 +18,9 @@
 Args:
   An optional list of deps_os values.
 
-  --with-clspv Checkout clspv dependencies
-  --with-dxc   Checkout dxc dependencies
+  --with-swiftshader Checkout Swiftshader dependencies
+  --with-clspv       Checkout clspv dependencies
+  --with-dxc         Checkout dxc dependencies
 
 Environment Variables:
   GIT_EXECUTABLE: path to "git" binary; if unset, will look for one of
