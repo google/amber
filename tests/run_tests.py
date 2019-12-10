@@ -83,6 +83,8 @@ SUPPRESSIONS_SWIFTSHADER = [
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline_less_than_4.vkscript",
   # Exceeded maxBoundDescriptorSets limit of physical device
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript"
+  # shaderStorageImageWriteWithoutFormat but is not enabled on the device
+  "opencl_write_image.amber"
 ]
 
 OPENCL_CASES = [
