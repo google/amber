@@ -50,6 +50,7 @@ from builtins import bytes
 
 with_clspv = False
 with_dxc = False
+with_swiftshader = False
 
 def git_executable():
   """Find the git executable.
@@ -233,6 +234,9 @@ def git_sync_deps(deps_file_path, command_line_os_requests, verbose):
     if not with_dxc and 'dxc' in directory:
       continue
 
+    if not with_swiftshader and 'swiftshader' in directory:
+      continue
+
     relative_directory = os.path.join(deps_file_directory, directory)
 
     list_of_arg_lists.append(
@@ -271,6 +275,9 @@ def main(argv):
 
   if '--with-dxc' in argv:
     with_dxc = True
+
+  if '--with-swiftshader' in argv:
+    with_swiftshader = True
 
   git_sync_deps(deps_file_path, argv, verbose)
   # subprocess.check_call(
