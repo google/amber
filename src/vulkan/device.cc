@@ -32,7 +32,7 @@ namespace {
 const char kVariablePointers[] = "VariablePointerFeatures.variablePointers";
 const char kVariablePointersStorageBuffer[] =
     "VariablePointerFeatures.variablePointersStorageBuffer";
-const char kFloat16Int8[] = "Float16Int8Features.shaderFloat16";
+const char kFloat16Int8_Float16[] = "Float16Int8Features.shaderFloat16";
 
 struct BaseOutStructure {
   VkStructureType sType;
@@ -436,7 +436,7 @@ Result Device::Initialize(
             "Missing variable pointers storage buffer feature");
       }
 
-      if (feature == kFloat16Int8) {
+      if (feature == kFloat16Int8_Float16) {
         if (float16_ptrs == nullptr) {
           return amber::Result(
               "Shader float 16 requested but feature not returned");

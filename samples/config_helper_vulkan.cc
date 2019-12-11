@@ -46,7 +46,7 @@ const size_t kNumberOfRequiredValidationLayers =
 const char kVariablePointers[] = "VariablePointerFeatures.variablePointers";
 const char kVariablePointersStorageBuffer[] =
     "VariablePointerFeatures.variablePointersStorageBuffer";
-const char kFloat16Int8[] = "Float16Int8Features.shaderFloat16";
+const char kFloat16Int8_Float16[] = "Float16Int8Features.shaderFloat16";
 
 const char kExtensionForValidationLayer[] = "VK_EXT_debug_report";
 
@@ -906,7 +906,7 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       variable_pointers_feature_.variablePointers = VK_TRUE;
     else if (feature == kVariablePointersStorageBuffer)
       variable_pointers_feature_.variablePointersStorageBuffer = VK_TRUE;
-    else if (feature == kFloat16Int8)
+    else if (feature == kFloat16Int8_Float16)
       float16_int8_feature_.shaderFloat16 = VK_TRUE;
   }
 
