@@ -19,6 +19,8 @@ set -x  # show commands
 BUILD_ROOT=$PWD
 SRC=$PWD/github/amber
 BUILD_TYPE=$1
+shift
+EXTRA_CONFIG=$@
 
 # Get ninja
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-mac.zip
@@ -28,8 +30,13 @@ export PATH="$PWD:$PATH"
 
 echo $(date): $(cmake --version)
 
+DEPS_ARGS=""
+if [[ "$EXTRA_CONFIG" =~ "ENABLE_SWIFTSHADER=TRUE" ]]; then
+  DEPS_ARGS+=" --use-swiftshader"
+fi
+
 cd $SRC
-./tools/git-sync-deps
+./tools/git-sync-deps $DEPS_ARGS
 
 mkdir build && cd $SRC/build
 
@@ -52,8 +59,7 @@ echo $(date): Starting amber_unittests...
 echo $(date): amber_unittests completed.
 
 # Tests currently fail on Debug build on the bots
-if [ $BUILD_TYPE = "RELEASE" ]
-then
+if [[ "$EXTRA_CONFIG" =~ "ENABLE_SWIFTSHADER=TRUE" ]]; then
   echo $(date): Starting integration tests..
   export LD_LIBRARY_PATH=build/third_party/vulkan-loader/loader
   export VK_LAYER_PATH=build/third_party/vulkan-validationlayers/layers

@@ -61,23 +61,21 @@ wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linu
 unzip -q ninja-linux.zip
 export PATH="$PWD:$PATH"
 
-DEPS_ARGS=
+DEPS_ARGS=""
 if [[ "$EXTRA_CONFIG" =~ "USE_CLSPV=TRUE" ]]; then
-  DEPS_ARGS="--with-clspv"
-elif [[ "$EXTRA_CONFIG" =~ "USE_DXC=TRUE" ]]; then
-  DEPS_ARGS="--use-dxc"
+  DEPS_ARGS+=" --with-clspv"
+fi
+if [[ "$EXTRA_CONFIG" =~ "USE_DXC=TRUE" ]]; then
+  DEPS_ARGS+=" --use-dxc"
+fi
+if [[ "$EXTRA_CONFIG" =~ "ENABLE_SWIFTSHADER=TRUE" ]]; then
+  DEPS_ARGS+=" --use-swiftshader"
 fi
 
 cd $SRC
 ./tools/git-sync-deps $DEPS_ARGS
 
 mkdir build && cd $SRC/build
-
-# The swiftshader build is currently failing with the clang on the bots.
-if [ $COMPILER = "gcc" ]
-then
-  EXTRA_CONFIG="${EXTRA_CONFIG} -DAMBER_ENABLE_SWIFTSHADER=1"
-fi
 
 # Invoke the build.
 BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
@@ -95,11 +93,9 @@ echo $(date): Starting amber_unittests...
 echo $(date): amber_unittests completed.
 
 # Swiftshader is only built with gcc, so only run the integration tests with gcc
-if [ $COMPILER = "gcc" ]
-then
+if [[ "$EXTRA_CONFIG" =~ "ENABLE_SWIFTSHADER=TRUE" ]]; then
   OPTS=
-  if [[ $EXTRA_CONFIG =~ "USE_CLSPV=ON" ]]
-  then
+  if [[ $EXTRA_CONFIG =~ "USE_CLSPV=ON" ]]; then
     OPTS="--use-opencl"
   fi
 
