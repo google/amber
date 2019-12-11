@@ -61,8 +61,15 @@ wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linu
 unzip -q ninja-linux.zip
 export PATH="$PWD:$PATH"
 
+DEPS_ARGS=
+if [[ "$EXTRA_CONFIG" =~ "USE_CLSPV=TRUE" ]]; then
+  DEPS_ARGS="--with-clspv"
+elif [[ "$EXTRA_CONFIG" =~ "USE_DXC=TRUE" ]]; then
+  DEPS_ARGS="--use-dxc"
+fi
+
 cd $SRC
-./tools/git-sync-deps
+./tools/git-sync-deps $DEPS_ARGS
 
 mkdir build && cd $SRC/build
 
