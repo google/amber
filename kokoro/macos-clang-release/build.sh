@@ -17,4 +17,4 @@ set -e  # fail on error
 set -x  # display commands
 
 SCRIPT_DIR=`dirname "$BASH_SOURCE"`
-source $SCRIPT_DIR/../scripts/macos/build.sh RELEASE clang
+source $SCRIPT_DIR/../scripts/macos/build.sh RELEASE clang -DAMBER_ENABLE_SWIFTSHADER=TRUE

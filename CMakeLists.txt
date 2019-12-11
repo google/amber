@@ -104,11 +104,14 @@ else()
 endif()
 
 if (${AMBER_USE_CLSPV})
-  enable_language(ASM)
   set(AMBER_ENABLE_CLSPV TRUE)
   set(AMBER_ENABLE_SPIRV_TOOLS TRUE)
 else()
   set(AMBER_ENABLE_CLSPV FALSE)
+endif()
+
+if (${AMBER_USE_CLSPV} OR ${AMBER_ENABLE_SWIFTSHADER})
+  enable_language(ASM)
 endif()
 
 message(STATUS "Using python3")
