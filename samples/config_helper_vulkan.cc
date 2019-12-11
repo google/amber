@@ -667,9 +667,10 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
 
   // Determine if VkPhysicalDeviceProperties2KHR should be used
   for (auto& ext : required_extensions) {
-    if (ext == "VK_KHR_get_physical_device_properties2") {
+    if (ext == "VK_KHR_get_physical_device_properties2")
       supports_get_physical_device_properties2_ = true;
-    }
+    if (ext == "VK_KHR_shader_float16_int8")
+      supports_shader_float16_int8_ = true;
   }
 
   std::vector<const char*> required_extensions_in_char;
@@ -889,7 +890,11 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
 
   variable_pointers_feature_.sType =
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
-  variable_pointers_feature_.pNext = &float16_int8_feature_;
+
+  if (supports_shader_float16_int8_)
+    variable_pointers_feature_.pNext = &float16_int8_feature_;
+  else
+    variable_pointers_feature_.pNext = nullptr;
 
   available_features2_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
   available_features2_.pNext = &variable_pointers_feature_;

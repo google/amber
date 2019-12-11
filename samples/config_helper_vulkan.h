@@ -110,6 +110,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   VkDevice vulkan_device_ = VK_NULL_HANDLE;
 
   bool supports_get_physical_device_properties2_ = false;
+  bool supports_shader_float16_int8_ = false;
   VkPhysicalDeviceFeatures available_features_;
   VkPhysicalDeviceFeatures2KHR available_features2_;
   VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_feature_;
