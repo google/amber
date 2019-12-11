@@ -18,6 +18,10 @@
 Args:
   An optional list of deps_os values.
 
+  --with-swiftshader Checkout Swiftshader dependencies
+  --with-clspv       Checkout clspv dependencies
+  --with-dxc         Checkout dxc dependencies
+
 Environment Variables:
   GIT_EXECUTABLE: path to "git" binary; if unset, will look for one of
   ['git', 'git.exe', 'git.bat'] in your default path.
@@ -37,7 +41,6 @@ Git Config:
       git config --unset sync-deps.disable
 """
 
-
 import os
 import re
 import subprocess
@@ -45,6 +48,9 @@ import sys
 import threading
 from builtins import bytes
 
+with_clspv = False
+with_dxc = False
+with_swiftshader = False
 
 def git_executable():
   """Find the git executable.
@@ -222,6 +228,18 @@ def git_sync_deps(deps_file_path, command_line_os_requests, verbose):
     else:
       raise Exception("please specify commit or tag")
 
+    if not with_clspv and directory is 'third_party/clspv':
+      continue
+
+    if not with_clspv and directory is 'third_party/clspv-llvm':
+      continue
+
+    if not with_dxc and directory is 'third_party/dxc':
+      continue
+
+    if not with_swiftshader and directory is 'third_party/swiftshader':
+      continue
+
     relative_directory = os.path.join(deps_file_directory, directory)
 
     list_of_arg_lists.append(
@@ -254,6 +272,15 @@ def main(argv):
   if '--help' in argv or '-h' in argv:
     usage(deps_file_path)
     return 1
+
+  if '--with-clspv' in argv:
+    with_clspv = True
+
+  if '--with-dxc' in argv:
+    with_dxc = True
+
+  if '--with-swiftshader' in argv:
+    with_swiftshader = True
 
   git_sync_deps(deps_file_path, argv, verbose)
   # subprocess.check_call(
