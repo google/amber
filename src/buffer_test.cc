@@ -18,8 +18,8 @@
 
 #include <limits>
 #include "gtest/gtest.h"
-#include "src/type_parser.h"
 #include "src/float16_helper.h"
+#include "src/type_parser.h"
 
 namespace amber {
 

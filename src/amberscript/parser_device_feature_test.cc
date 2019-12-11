@@ -36,8 +36,7 @@ DEVICE_FEATURE Float16Int8Features.shaderFloat16)";
   EXPECT_EQ("vertexPipelineStoresAndAtomics", features[0]);
   EXPECT_EQ("VariablePointerFeatures.variablePointersStorageBuffer",
             features[1]);
-  EXPECT_EQ("Float16Int8Features.shaderFloat16",
-            features[2]);
+  EXPECT_EQ("Float16Int8Features.shaderFloat16", features[2]);
 }
 
 TEST_F(AmberScriptParserTest, DeviceFeatureMissingFeature) {

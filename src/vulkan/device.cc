@@ -32,7 +32,7 @@ namespace {
 const char kVariablePointers[] = "VariablePointerFeatures.variablePointers";
 const char kVariablePointersStorageBuffer[] =
     "VariablePointerFeatures.variablePointersStorageBuffer";
-const char kShaderFloat16[] = "Float16Int8Features.shaderFloat16";
+const char kFloat16Int8[] = "Float16Int8Features.shaderFloat16";
 
 struct BaseOutStructure {
   VkStructureType sType;
@@ -395,7 +395,7 @@ Result Device::Initialize(
     available_vulkan_features = available_features2.features;
 
     VkPhysicalDeviceVariablePointerFeaturesKHR* var_ptrs = nullptr;
-    VkPhysicalDeviceShaderFloat16Int8FeaturesKHR* float16_ptrs = nullptr;
+    VkPhysicalDeviceFloat16Int8FeaturesKHR* float16_ptrs = nullptr;
     void* ptr = available_features2.pNext;
     while (ptr != nullptr) {
       BaseOutStructure* s = static_cast<BaseOutStructure*>(ptr);
@@ -404,9 +404,9 @@ Result Device::Initialize(
         var_ptrs =
             static_cast<VkPhysicalDeviceVariablePointerFeaturesKHR*>(ptr);
       } else if (s->sType ==
-          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES_KHR) {
+                 VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR) {
         float16_ptrs =
-            static_cast<VkPhysicalDeviceShaderFloat16Int8FeaturesKHR*>(ptr);
+            static_cast<VkPhysicalDeviceFloat16Int8FeaturesKHR*>(ptr);
       }
       ptr = s->pNext;
     }
@@ -436,7 +436,7 @@ Result Device::Initialize(
             "Missing variable pointers storage buffer feature");
       }
 
-      if (feature == kShaderFloat16) {
+      if (feature == kFloat16Int8) {
         if (float16_ptrs == nullptr) {
           return amber::Result(
               "Shader float 16 requested but feature not returned");
