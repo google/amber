@@ -61,11 +61,15 @@ wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linu
 unzip -q ninja-linux.zip
 export PATH="$PWD:$PATH"
 
-DEPS_ARGS=
+DEPS_ARGS=""
 if [[ "$EXTRA_CONFIG" =~ "USE_CLSPV=TRUE" ]]; then
-  DEPS_ARGS="--with-clspv"
-elif [[ "$EXTRA_CONFIG" =~ "USE_DXC=TRUE" ]]; then
-  DEPS_ARGS="--use-dxc"
+  DEPS_ARGS+=" --with-clspv"
+fi
+if [[ "$EXTRA_CONFIG" =~ "USE_DXC=TRUE" ]]; then
+  DEPS_ARGS+=" --use-dxc"
+fi
+if [[ "$EXTRA_CONFIG" =~ "ENABLE_SWIFTSHADER=TRUE" ]]; then
+  DEPS_ARGS+=" --use-swiftshader"
 fi
 
 cd $SRC
@@ -76,7 +80,9 @@ mkdir build && cd $SRC/build
 # Invoke the build.
 BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
 echo $(date): Starting build...
-cmake -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_C_CXX_COMPILER -DAMBER_USE_LOCAL_VULKAN=1 $EXTRA_CONFIG ..
+cmake -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_C_CXX_COMPILER \
+  -DAMBER_USE_LOCAL_VULKAN=1 \
+  $EXTRA_CONFIG ..
 
 echo $(date): Build everything...
 ninja
@@ -86,6 +92,18 @@ echo $(date): Starting amber_unittests...
 ./amber_unittests
 echo $(date): amber_unittests completed.
 
-#echo $(date): Starting integration tests..
-#../../test/run_tests.py
-#echo $(date): integration tests completed.
+# Swiftshader is only built with gcc, so only run the integration tests with gcc
+if [[ "$EXTRA_CONFIG" =~ "ENABLE_SWIFTSHADER=TRUE" ]]; then
+  OPTS=
+  if [[ $EXTRA_CONFIG =~ "USE_CLSPV=ON" ]]; then
+    OPTS="--use-opencl"
+  fi
+
+  echo $(date): Starting integration tests..
+  export LD_LIBRARY_PATH=build/third_party/vulkan-loader/loader
+  export VK_LAYER_PATH=build/third_party/vulkan-validationlayers/layers
+  export VK_ICD_FILENAMES=build/Linux/vk_swiftshader_icd.json
+  cd $SRC
+  ./tests/run_tests.py --build-dir $SRC/build --use-swiftshader $OPTS
+  echo $(date): integration tests completed.
+fi

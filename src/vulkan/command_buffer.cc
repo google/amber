@@ -101,6 +101,11 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   return {};
 }
 
+void CommandBuffer::Reset() {
+  device_->GetPtrs()->vkEndCommandBuffer(command_);
+  device_->GetPtrs()->vkResetCommandBuffer(command_, 0);
+}
+
 CommandBufferGuard::CommandBufferGuard(CommandBuffer* buffer)
     : buffer_(buffer) {
   assert(!buffer_->guarded_);
@@ -109,7 +114,12 @@ CommandBufferGuard::CommandBufferGuard(CommandBuffer* buffer)
   result_ = buffer_->BeginRecording();
 }
 
-CommandBufferGuard::~CommandBufferGuard() = default;
+CommandBufferGuard::~CommandBufferGuard() {
+  if (buffer_->guarded_) {
+    buffer_->Reset();
+    buffer_->guarded_ = false;
+  }
+}
 
 Result CommandBufferGuard::Submit(uint32_t timeout_ms) {
   assert(buffer_->guarded_);

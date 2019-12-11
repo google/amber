@@ -49,6 +49,7 @@ class CommandBuffer {
 
   Result BeginRecording();
   Result SubmitAndReset(uint32_t timeout_ms);
+  void Reset();
 
   bool guarded_ = false;
 
