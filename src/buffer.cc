@@ -19,36 +19,10 @@
 #include <cmath>
 #include <cstring>
 
+#include "src/float16_helper.h"
+
 namespace amber {
 namespace {
-
-// Return sign value of 32 bits float.
-uint16_t FloatSign(const uint32_t hex_float) {
-  return static_cast<uint16_t>(hex_float >> 31U);
-}
-
-// Return exponent value of 32 bits float.
-uint16_t FloatExponent(const uint32_t hex_float) {
-  uint32_t exponent = ((hex_float >> 23U) & ((1U << 8U) - 1U)) - 112U;
-  const uint32_t half_exponent_mask = (1U << 5U) - 1U;
-  assert(((exponent & ~half_exponent_mask) == 0U) && "Float exponent overflow");
-  return static_cast<uint16_t>(exponent & half_exponent_mask);
-}
-
-// Return mantissa value of 32 bits float. Note that mantissa for 32
-// bits float is 23 bits and this method must return uint32_t.
-uint32_t FloatMantissa(const uint32_t hex_float) {
-  return static_cast<uint32_t>(hex_float & ((1U << 23U) - 1U));
-}
-
-// Convert 32 bits float |value| to 16 bits float based on IEEE-754.
-uint16_t FloatToHexFloat16(const float value) {
-  const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
-  return static_cast<uint16_t>(
-      static_cast<uint16_t>(FloatSign(*hex) << 15U) |
-      static_cast<uint16_t>(FloatExponent(*hex) << 10U) |
-      static_cast<uint16_t>(FloatMantissa(*hex) >> 13U));
-}
 
 template <typename T>
 T* ValuesAs(uint8_t* values) {
@@ -82,10 +56,10 @@ double CalculateDiff(const Format::Segment* seg,
     return Sub<uint32_t>(buf1, buf2);
   if (type::Type::IsUint64(mode, num_bits))
     return Sub<uint64_t>(buf1, buf2);
-  // TODO(dsinclair): Handle float16 ...
   if (type::Type::IsFloat16(mode, num_bits)) {
-    assert(false && "Float16 suppport not implemented");
-    return 0.0;
+    float val1 = float16::HexFloatToFloat(buf1, 16);
+    float val2 = float16::HexFloatToFloat(buf2, 16);
+    return static_cast<double>(val1 - val2);
   }
   if (type::Type::IsFloat32(mode, num_bits))
     return Sub<float>(buf1, buf2);
@@ -399,7 +373,7 @@ uint32_t Buffer::WriteValueFromComponent(const Value& value,
     return sizeof(uint64_t);
   }
   if (type::Type::IsFloat16(mode, num_bits)) {
-    *(ValuesAs<uint16_t>(ptr)) = FloatToHexFloat16(value.AsFloat());
+    *(ValuesAs<uint16_t>(ptr)) = float16::FloatToHexFloat16(value.AsFloat());
     return sizeof(uint16_t);
   }
   if (type::Type::IsFloat32(mode, num_bits)) {

@@ -21,6 +21,7 @@ set(AMBER_SOURCES
     descriptor_set_and_binding_parser.cc
     engine.cc
     executor.cc
+    float16_helper.cc
     format.cc
     parser.cc
     pipeline.cc
@@ -138,6 +139,7 @@ if (${AMBER_ENABLE_TESTS})
     command_data_test.cc
     descriptor_set_and_binding_parser_test.cc
     executor_test.cc
+    float16_helper_test.cc
     format_test.cc
     pipeline_test.cc
     result_test.cc

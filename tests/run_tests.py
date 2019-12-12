@@ -36,8 +36,6 @@ SUPPRESSIONS = {
     "compute_mat3x2.vkscript",
     "compute_mat3x2float.vkscript",
     "compute_mat3x2.amber",
-    # https://github.com/KhronosGroup/SPIRV-Tools/issues/3072
-    "compute_robust_buffer_access_ssbo.amber",
     # Metal vertex shaders cannot simultaneously write to a buffer and return
     # a value to the rasterizer rdar://48348476
     # https://github.com/KhronosGroup/MoltenVK/issues/527
@@ -47,14 +45,10 @@ SUPPRESSIONS = {
     "draw_triangle_list_hlsl.amber",
   ],
   "Linux": [
-    # https://github.com/KhronosGroup/SPIRV-Tools/issues/3072
-    "compute_robust_buffer_access_ssbo.amber",
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
   ],
   "Win": [
-    # https://github.com/KhronosGroup/SPIRV-Tools/issues/3072
-    "compute_robust_buffer_access_ssbo.amber",
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
    ]
@@ -76,6 +70,8 @@ SUPPRESSIONS_SWIFTSHADER = [
   # Color attachment format is not supported
   "draw_triangle_list_in_r16g16b16a16_snorm_color_frame.vkscript",
   "draw_triangle_list_in_r8g8b8a8_snorm_color_frame.vkscript",
+  # No supporting device for Float16Int8Features
+  "float16.amber",
   # SEGV: github.com/google/amber/issues/726
   "matrices_uniform_draw.amber",
   # SEGV: github.com/google/amber/issues/725

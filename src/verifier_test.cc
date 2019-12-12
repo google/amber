@@ -22,6 +22,7 @@
 #include "amber/value.h"
 #include "gtest/gtest.h"
 #include "src/command.h"
+#include "src/float16_helper.h"
 #include "src/make_unique.h"
 #include "src/pipeline.h"
 #include "src/type_parser.h"
@@ -1517,6 +1518,37 @@ TEST_F(VerifierTest, ProbeSSBOWithPadding) {
 
   Verifier verifier;
   Result r = verifier.ProbeSSBO(&probe_ssbo, 4, ssbo);
+  EXPECT_TRUE(r.IsSuccess()) << r.Error();
+}
+
+TEST_F(VerifierTest, ProbeSSBOHexFloat) {
+  Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
+
+  TypeParser parser;
+  auto type = parser.Parse("R16_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kFuzzyEqual);
+  probe_ssbo.SetTolerances({ProbeCommand::Tolerance{false, 0.1}});
+
+  std::vector<Value> values;
+  values.resize(4);
+  values[0].SetDoubleValue(2.5);
+  values[1].SetDoubleValue(0.73);
+  values[2].SetDoubleValue(10.0);
+  values[3].SetDoubleValue(123.5);
+  probe_ssbo.SetValues(std::move(values));
+
+  const uint16_t ssbo[4] = {
+      float16::FloatToHexFloat16(2.5f), float16::FloatToHexFloat16(0.73f),
+      float16::FloatToHexFloat16(10.0f), float16::FloatToHexFloat16(123.5f)};
+
+  Verifier verifier;
+  Result r = verifier.ProbeSSBO(&probe_ssbo, sizeof(uint16_t) * 4, ssbo);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 

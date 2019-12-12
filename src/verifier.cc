@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "src/command.h"
+#include "src/float16_helper.h"
 
 namespace amber {
 namespace {
@@ -57,78 +58,6 @@ void CopyBitsOfMemoryToBuffer(uint8_t* dst,
   std::memcpy(dst, &data, static_cast<size_t>((bits + 7) / kBitsPerByte));
 }
 
-// Convert float |value| whose size is 16 bits to 32 bits float
-// based on IEEE-754.
-float HexFloat16ToFloat(const uint8_t* value) {
-  uint32_t sign = (static_cast<uint32_t>(value[1]) & 0x80) << 24U;
-  uint32_t exponent = (((static_cast<uint32_t>(value[1]) & 0x7c) >> 2U) + 112U)
-                      << 23U;
-  uint32_t mantissa = ((static_cast<uint32_t>(value[1]) & 0x3) << 8U |
-                       static_cast<uint32_t>(value[0]))
-                      << 13U;
-
-  uint32_t hex = sign | exponent | mantissa;
-  float* hex_float = reinterpret_cast<float*>(&hex);
-  return *hex_float;
-}
-
-// Convert float |value| whose size is 11 bits to 32 bits float
-// based on IEEE-754.
-float HexFloat11ToFloat(const uint8_t* value) {
-  uint32_t exponent = (((static_cast<uint32_t>(value[1]) << 2U) |
-                        ((static_cast<uint32_t>(value[0]) & 0xc0) >> 6U)) +
-                       112U)
-                      << 23U;
-  uint32_t mantissa = (static_cast<uint32_t>(value[0]) & 0x3f) << 17U;
-
-  uint32_t hex = exponent | mantissa;
-  float* hex_float = reinterpret_cast<float*>(&hex);
-  return *hex_float;
-}
-
-// Convert float |value| whose size is 10 bits to 32 bits float
-// based on IEEE-754.
-float HexFloat10ToFloat(const uint8_t* value) {
-  uint32_t exponent = (((static_cast<uint32_t>(value[1]) << 3U) |
-                        ((static_cast<uint32_t>(value[0]) & 0xe0) >> 5U)) +
-                       112U)
-                      << 23U;
-  uint32_t mantissa = (static_cast<uint32_t>(value[0]) & 0x1f) << 18U;
-
-  uint32_t hex = exponent | mantissa;
-  float* hex_float = reinterpret_cast<float*>(&hex);
-  return *hex_float;
-}
-
-// Convert float |value| whose size is |bits| bits to 32 bits float
-// based on IEEE-754.
-// See https://www.khronos.org/opengl/wiki/Small_Float_Formats
-// and https://en.wikipedia.org/wiki/IEEE_754.
-//
-//    Sign Exponent Mantissa Exponent-Bias
-// 16    1        5       10            15
-// 11    0        5        6            15
-// 10    0        5        5            15
-// 32    1        8       23           127
-// 64    1       11       52          1023
-//
-// 11 and 10 bits floats are always positive.
-// 14 bits float is used only RGB9_E5 format in OpenGL but it does not exist
-// in Vulkan.
-float HexFloatToFloat(const uint8_t* value, uint8_t bits) {
-  switch (bits) {
-    case 10:
-      return HexFloat10ToFloat(value);
-    case 11:
-      return HexFloat11ToFloat(value);
-    case 16:
-      return HexFloat16ToFloat(value);
-  }
-
-  assert(false && "Invalid bits");
-  return 0;
-}
-
 // This is based on "18.3. sRGB transfer functions" of
 // https://www.khronos.org/registry/DataFormat/specs/1.2/dataformat.1.2.html
 double SRGBToLinearValue(double sRGB) {
@@ -158,65 +87,82 @@ bool IsEqualWithTolerance(const double actual,
 }
 
 template <typename T>
-Result CheckValue(const ProbeSSBOCommand* command,
-                  const uint8_t* memory,
-                  const Value& value) {
+Result CheckActualValue(const ProbeSSBOCommand* command,
+                        const T actual_value,
+                        const Value& value) {
   const auto comp = command->GetComparator();
   const auto& tolerance = command->GetTolerances();
-  const T* ptr = reinterpret_cast<const T*>(memory);
   const T val = value.IsInteger() ? static_cast<T>(value.AsUint64())
                                   : static_cast<T>(value.AsDouble());
   switch (comp) {
     case ProbeSSBOCommand::Comparator::kEqual:
       if (value.IsInteger()) {
-        if (static_cast<uint64_t>(*ptr) != static_cast<uint64_t>(val)) {
-          return Result(std::to_string(*ptr) + " == " + std::to_string(val));
+        if (static_cast<uint64_t>(actual_value) != static_cast<uint64_t>(val)) {
+          return Result(std::to_string(actual_value) +
+                        " == " + std::to_string(val));
         }
       } else {
-        if (!IsEqualWithTolerance(static_cast<const double>(*ptr),
+        if (!IsEqualWithTolerance(static_cast<const double>(actual_value),
                                   static_cast<const double>(val), kEpsilon)) {
-          return Result(std::to_string(*ptr) + " == " + std::to_string(val));
+          return Result(std::to_string(actual_value) +
+                        " == " + std::to_string(val));
         }
       }
       break;
     case ProbeSSBOCommand::Comparator::kNotEqual:
       if (value.IsInteger()) {
-        if (static_cast<uint64_t>(*ptr) == static_cast<uint64_t>(val)) {
-          return Result(std::to_string(*ptr) + " != " + std::to_string(val));
+        if (static_cast<uint64_t>(actual_value) == static_cast<uint64_t>(val)) {
+          return Result(std::to_string(actual_value) +
+                        " != " + std::to_string(val));
         }
       } else {
-        if (IsEqualWithTolerance(static_cast<const double>(*ptr),
+        if (IsEqualWithTolerance(static_cast<const double>(actual_value),
                                  static_cast<const double>(val), kEpsilon)) {
-          return Result(std::to_string(*ptr) + " != " + std::to_string(val));
+          return Result(std::to_string(actual_value) +
+                        " != " + std::to_string(val));
         }
       }
       break;
     case ProbeSSBOCommand::Comparator::kFuzzyEqual:
       if (!IsEqualWithTolerance(
-              static_cast<const double>(*ptr), static_cast<const double>(val),
+              static_cast<const double>(actual_value),
+              static_cast<const double>(val),
               command->HasTolerances() ? tolerance[0].value : kEpsilon,
               command->HasTolerances() ? tolerance[0].is_percent : true)) {
-        return Result(std::to_string(*ptr) + " ~= " + std::to_string(val));
+        return Result(std::to_string(actual_value) +
+                      " ~= " + std::to_string(val));
       }
       break;
     case ProbeSSBOCommand::Comparator::kLess:
-      if (*ptr >= val)
-        return Result(std::to_string(*ptr) + " < " + std::to_string(val));
+      if (actual_value >= val)
+        return Result(std::to_string(actual_value) + " < " +
+                      std::to_string(val));
       break;
     case ProbeSSBOCommand::Comparator::kLessOrEqual:
-      if (*ptr > val)
-        return Result(std::to_string(*ptr) + " <= " + std::to_string(val));
+      if (actual_value > val)
+        return Result(std::to_string(actual_value) +
+                      " <= " + std::to_string(val));
       break;
     case ProbeSSBOCommand::Comparator::kGreater:
-      if (*ptr <= val)
-        return Result(std::to_string(*ptr) + " > " + std::to_string(val));
+      if (actual_value <= val)
+        return Result(std::to_string(actual_value) + " > " +
+                      std::to_string(val));
       break;
     case ProbeSSBOCommand::Comparator::kGreaterOrEqual:
-      if (*ptr < val)
-        return Result(std::to_string(*ptr) + " >= " + std::to_string(val));
+      if (actual_value < val)
+        return Result(std::to_string(actual_value) +
+                      " >= " + std::to_string(val));
       break;
   }
   return {};
+}
+
+template <typename T>
+Result CheckValue(const ProbeSSBOCommand* command,
+                  const uint8_t* memory,
+                  const Value& value) {
+  const T* ptr = reinterpret_cast<const T*>(memory);
+  return CheckActualValue<T>(command, *ptr, value);
 }
 
 void SetupToleranceForTexels(const ProbeCommand* command,
@@ -314,7 +260,7 @@ std::vector<double> GetActualValuesFromTexel(const uint8_t* texel,
       actual_values[i] = *ptr;
     } else if (type::Type::IsFloat(mode) && num_bits < 32) {
       actual_values[i] = static_cast<double>(
-          HexFloatToFloat(actual, static_cast<uint8_t>(num_bits)));
+          float16::HexFloatToFloat(actual, static_cast<uint8_t>(num_bits)));
     } else {
       assert(false && "Incorrect number of bits for number.");
     }
@@ -616,28 +562,32 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
     Result r;
     FormatMode mode = segment.GetFormatMode();
     uint32_t num_bits = segment.GetNumBits();
-    if (type::Type::IsInt8(mode, num_bits))
+    if (type::Type::IsInt8(mode, num_bits)) {
       r = CheckValue<int8_t>(command, ptr, value);
-    else if (type::Type::IsUint8(mode, num_bits))
+    } else if (type::Type::IsUint8(mode, num_bits)) {
       r = CheckValue<uint8_t>(command, ptr, value);
-    else if (type::Type::IsInt16(mode, num_bits))
+    } else if (type::Type::IsInt16(mode, num_bits)) {
       r = CheckValue<int16_t>(command, ptr, value);
-    else if (type::Type::IsUint16(mode, num_bits))
+    } else if (type::Type::IsUint16(mode, num_bits)) {
       r = CheckValue<uint16_t>(command, ptr, value);
-    else if (type::Type::IsInt32(mode, num_bits))
+    } else if (type::Type::IsInt32(mode, num_bits)) {
       r = CheckValue<int32_t>(command, ptr, value);
-    else if (type::Type::IsUint32(mode, num_bits))
+    } else if (type::Type::IsUint32(mode, num_bits)) {
       r = CheckValue<uint32_t>(command, ptr, value);
-    else if (type::Type::IsInt64(mode, num_bits))
+    } else if (type::Type::IsInt64(mode, num_bits)) {
       r = CheckValue<int64_t>(command, ptr, value);
-    else if (type::Type::IsUint64(mode, num_bits))
+    } else if (type::Type::IsUint64(mode, num_bits)) {
       r = CheckValue<uint64_t>(command, ptr, value);
-    else if (type::Type::IsFloat32(mode, num_bits))
+    } else if (type::Type::IsFloat16(mode, num_bits)) {
+      r = CheckActualValue<float>(command, float16::HexFloatToFloat(ptr, 16),
+                                  value);
+    } else if (type::Type::IsFloat32(mode, num_bits)) {
       r = CheckValue<float>(command, ptr, value);
-    else if (type::Type::IsFloat64(mode, num_bits))
+    } else if (type::Type::IsFloat64(mode, num_bits)) {
       r = CheckValue<double>(command, ptr, value);
-    else
+    } else {
       return Result("Unknown datum type");
+    }
 
     if (!r.IsSuccess()) {
       return Result("Line " + std::to_string(command->GetLine()) +
