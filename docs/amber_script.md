@@ -137,16 +137,36 @@ END
 BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
     {initializer}
 
-# Defines a buffer with width and height and filled by data as specified by the
-# `initializer`.
-BUFFER {name} DATA_TYPE {type} {STD140 | STD430} WIDTH {w} HEIGHT {h} \
-    {initializer}
-
 # Creates a buffer which will store the given `FORMAT` of data. These
 # buffers are used as image and depth buffers in the `PIPELINE` commands.
 # The buffer will be sized based on the `RENDER_SIZE` of the `PIPELINE`.
 BUFFER {name} FORMAT {format_string} \
     [ MIP_LEVELS _mip_levels_ (default 1) ]
+```
+
+#### Images
+
+An AmberScript image is a specialized buffer that specifies image-specific
+attributes.
+
+##### Dimensionality
+ * `DIM_1D` -- A 1-dimensional image
+ * `DIM_2D` -- A 2-dimensional image
+ * `DIM_3D` -- A 3-dimensional image
+
+```groovy
+# Specify an image buffer with a format. HEIGHT is necessary for DIM_2D and
+DIM_3D. DEPTH is necessary for DIM_3D.
+IMAGE {name} FORMAT {format_string} [ MIP_LEVELS _mip_levels_ (default 1) ] \
+    {dimensionality} \
+    WIDTH {w} [ HEIGHT {h} [ DEPTH {d} ] ] \
+    {initializer}
+
+# Specify an image buffer with a data type. HEIGHT is necessary for DIM_2D and
+DIM_3D. DEPTH is necessary for DIM_3D.
+IMAGE {name} DATA_TYPE {type} {dimensionality} \
+    WIDTH {w} [ HEIGHT {h} [ DEPTH {d} ] ] \
+    {intializer}
 ```
 
 #### Buffer Initializers
@@ -177,8 +197,6 @@ COPY {buffer_from} TO {buffer_to}
 Samplers are used for sampling buffers that are bound to a pipeline as
 sampled image or combined image sampler.
 
-The samplers use normalized coordinates in the range of [0..1].
-
 #### Filter types
  * `nearest`
  * `linear`
@@ -206,10 +224,14 @@ SAMPLER {name} \
     [ MIN_FILTER {filter_type} (default nearest) ] \
     [ ADDRESS_MODE_U {address_mode} (default repeat) ] \
     [ ADDRESS_MODE_V {address_mode} (default repeat) ] \
+    [ ADDRESS_MODE_W {address_mode} (default repeat) ] \
     [ BORDER_COLOR {border_color} (default float_transparent_black) ] \
     [ MIN_LOD _val_ (default 0.0) ] \
-    [ MAX_LOD _val_ (default 1.0) ]
+    [ MAX_LOD _val_ (default 1.0) ] \
+    [ NORMALIZED_COORDS | UNNORMALIZED_COORDS (default NORMALIZED_COORDS) ]
 ```
+
+Note: unnormalized coordinates will override MIN\_LOD and MAX\_LOD to 0.0.
 
 ### Pipelines
 

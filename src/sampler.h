@@ -71,6 +71,9 @@ class Sampler {
   void SetAddressModeV(AddressMode mode) { address_mode_v_ = mode; }
   AddressMode GetAddressModeV() const { return address_mode_v_; }
 
+  void SetAddressModeW(AddressMode mode) { address_mode_w_ = mode; }
+  AddressMode GetAddressModeW() const { return address_mode_w_; }
+
   void SetBorderColor(BorderColor color) { border_color_ = color; }
   BorderColor GetBorderColor() const { return border_color_; }
 
@@ -80,6 +83,9 @@ class Sampler {
   void SetMaxLOD(float max_lod) { max_lod_ = max_lod; }
   float GetMaxLOD() const { return max_lod_; }
 
+  void SetNormalizedCoords(bool norm) { normalized_coords_ = norm; }
+  bool GetNormalizedCoords() const { return normalized_coords_; }
+
  private:
   std::string name_;
   FilterType min_filter_ = FilterType::kNearest;
@@ -87,9 +93,11 @@ class Sampler {
   FilterType mipmap_mode_ = FilterType::kNearest;
   AddressMode address_mode_u_ = AddressMode::kRepeat;
   AddressMode address_mode_v_ = AddressMode::kRepeat;
+  AddressMode address_mode_w_ = AddressMode::kRepeat;
   BorderColor border_color_ = BorderColor::kFloatTransparentBlack;
   float min_lod_ = 0.0f;
   float max_lod_ = 1.0f;
+  bool normalized_coords_ = true;
 };
 
 }  // namespace amber

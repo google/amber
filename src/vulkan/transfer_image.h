@@ -32,6 +32,7 @@ class TransferImage : public Resource {
   TransferImage(Device* device,
                 const Format& format,
                 VkImageAspectFlags aspect,
+                VkImageType image_type,
                 uint32_t x,
                 uint32_t y,
                 uint32_t z,
@@ -62,6 +63,8 @@ class TransferImage : public Resource {
                                         bool force_flags,
                                         uint32_t* memory_type_index);
   VkBufferImageCopy CreateBufferImageCopy(uint32_t mip_level);
+
+  VkImageViewType GetImageViewType() const;
 
   /// An extra `VkBuffer` is used to facilitate the transfer of data from the
   /// host into the `VkImage` on the device.

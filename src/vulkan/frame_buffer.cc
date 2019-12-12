@@ -63,8 +63,9 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass,
     for (auto* info : color_attachments_) {
       color_images_.push_back(MakeUnique<TransferImage>(
           device_, *info->buffer->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
-          width_ << info->base_mip_level, height_ << info->base_mip_level,
-          depth_, info->buffer->GetMipLevels(), info->base_mip_level, 1u));
+          VK_IMAGE_TYPE_2D, width_ << info->base_mip_level,
+          height_ << info->base_mip_level, depth_, info->buffer->GetMipLevels(),
+          info->base_mip_level, 1u));
 
       Result r = color_images_.back()->Initialize(
           VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
@@ -83,7 +84,7 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass,
                                             ? VK_IMAGE_ASPECT_DEPTH_BIT |
                                                   VK_IMAGE_ASPECT_STENCIL_BIT
                                             : VK_IMAGE_ASPECT_DEPTH_BIT),
-        width_, height_, depth_, 1u, 0u, 1u);
+        VK_IMAGE_TYPE_2D, width_, height_, depth_, 1u, 0u, 1u);
 
     Result r = depth_image_->Initialize(
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |

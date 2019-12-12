@@ -50,6 +50,7 @@ class Parser : public amber::Parser {
 
   Result ParseStruct();
   Result ParseBuffer();
+  Result ParseImage();
   Result ParseBufferInitializer(Buffer*);
   Result ParseBufferInitializerSize(Buffer*);
   Result ParseBufferInitializerFill(Buffer*, uint32_t);

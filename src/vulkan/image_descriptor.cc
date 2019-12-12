@@ -62,10 +62,27 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
   if (amber_buffer && amber_buffer->ValuePtr()->empty())
     return {};
 
+  // Default to 2D image.
+  VkImageType image_type = VK_IMAGE_TYPE_2D;
+  switch (amber_buffer->GetImageDimension()) {
+    case ImageDimension::k1D:
+      image_type = VK_IMAGE_TYPE_1D;
+      break;
+    case ImageDimension::k2D:
+      image_type = VK_IMAGE_TYPE_2D;
+      break;
+    case ImageDimension::k3D:
+      image_type = VK_IMAGE_TYPE_3D;
+      break;
+    default:
+      break;
+  }
+
   transfer_image_ = MakeUnique<TransferImage>(
       device_, *amber_buffer->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
-      amber_buffer->GetWidth(), amber_buffer->GetHeight(), 1u,
-      amber_buffer->GetMipLevels(), base_mip_level_, VK_REMAINING_MIP_LEVELS);
+      image_type, amber_buffer->GetWidth(), amber_buffer->GetHeight(),
+      amber_buffer->GetDepth(), amber_buffer->GetMipLevels(), base_mip_level_,
+      VK_REMAINING_MIP_LEVELS);
   VkImageUsageFlags usage =
       VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 

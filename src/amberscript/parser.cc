@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "src/image.h"
 #include "src/make_unique.h"
 #include "src/sampler.h"
 #include "src/shader_data.h"
@@ -140,6 +141,17 @@ AddressMode StrToAddressMode(std::string str) {
   return AddressMode::kUnknown;
 }
 
+ImageDimension StrToImageDimension(const std::string& str) {
+  if (str == "DIM_1D")
+    return ImageDimension::k1D;
+  if (str == "DIM_2D")
+    return ImageDimension::k2D;
+  if (str == "DIM_3D")
+    return ImageDimension::k3D;
+
+  return ImageDimension::kUnknown;
+}
+
 }  // namespace
 
 Parser::Parser() : amber::Parser() {}
@@ -172,6 +184,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParseDeviceFeature();
     } else if (tok == "DEVICE_EXTENSION") {
       r = ParseDeviceExtension();
+    } else if (tok == "IMAGE") {
+      r = ParseImage();
     } else if (tok == "INSTANCE_EXTENSION") {
       r = ParseInstanceExtension();
     } else if (tok == "PIPELINE") {
@@ -1205,6 +1219,149 @@ Result Parser::ParseBuffer() {
   return {};
 }
 
+Result Parser::ParseImage() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("invalid IMAGE name provided");
+
+  auto name = token->AsString();
+  if (name == "DATA_TYPE" || name == "FORMAT")
+    return Result("missing IMAGE name");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("invalid IMAGE command provided");
+
+  std::unique_ptr<Buffer> buffer;
+  auto& cmd = token->AsString();
+  if (cmd == "DATA_TYPE") {
+    buffer = MakeUnique<Buffer>();
+
+    auto token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("BUFFER invalid data type");
+
+    auto type = script_->ParseType(token->AsString());
+    std::unique_ptr<Format> fmt;
+    if (type != nullptr) {
+      fmt = MakeUnique<Format>(type);
+      buffer->SetFormat(fmt.get());
+    } else {
+      auto new_type = ToType(token->AsString());
+      if (!new_type)
+        return Result("invalid data type '" + token->AsString() + "' provided");
+
+      fmt = MakeUnique<Format>(new_type.get());
+      buffer->SetFormat(fmt.get());
+      type = new_type.get();
+      script_->RegisterType(std::move(new_type));
+    }
+    script_->RegisterFormat(std::move(fmt));
+  } else if (cmd == "FORMAT") {
+    token = tokenizer_->NextToken();
+    if (!token->IsString())
+      return Result("IMAGE FORMAT must be a string");
+
+    buffer = MakeUnique<Buffer>();
+
+    auto type = script_->ParseType(token->AsString());
+    if (!type)
+      return Result("invalid IMAGE FORMAT");
+
+    auto fmt = MakeUnique<Format>(type);
+    buffer->SetFormat(fmt.get());
+    script_->RegisterFormat(std::move(fmt));
+
+    token = tokenizer_->PeekNextToken();
+    if (token->IsString() && token->AsString() == "MIP_LEVELS") {
+      tokenizer_->NextToken();
+      token = tokenizer_->NextToken();
+
+      if (!token->IsInteger())
+        return Result("invalid value for MIP_LEVELS");
+
+      buffer->SetMipLevels(token->AsUint32());
+    }
+  } else {
+    return Result("unknown IMAGE command provided: " + cmd);
+  }
+  buffer->SetName(name);
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString())
+    return Result("IMAGE layout must be a string: " + token->ToOriginalString());
+
+  auto layout = StrToImageDimension(token->AsString());
+  if (layout == ImageDimension::kUnknown)
+    return Result("Unknown IMAGE layout");
+  buffer->SetImageDimension(layout);
+
+  token = tokenizer_->NextToken();
+  if (!token->IsString() || token->AsString() != "WIDTH")
+    return Result("expected IMAGE WIDTH");
+
+  // Parse image dimensions.
+  uint32_t width = 1;
+  uint32_t height = 1;
+  uint32_t depth = 1;
+  token = tokenizer_->NextToken();
+  if (!token->IsInteger() || token->AsUint32() == 0)
+    return Result("expected positive IMAGE WIDTH");
+  width = token->AsUint32();
+  buffer->SetWidth(width);
+
+  if (layout == ImageDimension::k2D || layout == ImageDimension::k3D) {
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "HEIGHT")
+      return Result("expected IMAGE HEIGHT");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger() || token->AsUint32() == 0)
+      return Result("expected positive IMAGE HEIGHT");
+    height = token->AsUint32();
+    buffer->SetHeight(height);
+  }
+
+  if (layout == ImageDimension::k3D) {
+    token = tokenizer_->NextToken();
+    if (!token->IsString() || token->AsString() != "DEPTH")
+      return Result("expected IMAGE DEPTH");
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger() || token->AsUint32() == 0)
+      return Result("expected positive IMAGE DEPTH");
+    depth = token->AsUint32();
+    buffer->SetDepth(depth);
+  }
+
+  const uint32_t size_in_items = width * height * depth;
+  buffer->SetElementCount(size_in_items);
+
+  // Parse initializers.
+  token = tokenizer_->NextToken();
+  if (token->IsString()) {
+    if (token->AsString() == "FILL") {
+      Result r = ParseBufferInitializerFill(buffer.get(), size_in_items);
+      if (!r.IsSuccess())
+        return r;
+    } else if (token->AsString() == "SERIES_FROM") {
+      Result r = ParseBufferInitializerSeries(buffer.get(), size_in_items);
+      if (!r.IsSuccess())
+        return r;
+    } else {
+      return Result("unexpected IMAGE token: " + token->AsString());
+    }
+  } else if (!token->IsEOL() && !token->IsEOS()) {
+    return Result("unexpected IMAGE token: " + token->ToOriginalString());
+  }
+
+  Result r = script_->AddBuffer(std::move(buffer));
+  if (!r.IsSuccess())
+    return r;
+
+  return {};
+}
+
 Result Parser::ParseBufferInitializer(Buffer* buffer) {
   auto token = tokenizer_->NextToken();
   if (!token->IsString())
@@ -1252,6 +1409,7 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
     if (width == 0)
       return Result("expected WIDTH to be positive");
     buffer->SetWidth(width);
+    buffer->SetImageDimension(ImageDimension::k2D);
 
     token = tokenizer_->NextToken();
     if (token->AsString() != "HEIGHT")
@@ -2321,6 +2479,19 @@ Result Parser::ParseSampler() {
         return Result("invalid ADDRESS_MODE_V value " + mode_str);
 
       sampler->SetAddressModeV(mode);
+    } else if (param == "ADDRESS_MODE_W") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsString())
+        return Result("invalid token when looking for ADDRESS_MODE_W value");
+
+      auto mode_str = token->AsString();
+      auto mode = StrToAddressMode(mode_str);
+
+      if (mode == AddressMode::kUnknown)
+        return Result("invalid ADDRESS_MODE_W value " + mode_str);
+
+      sampler->SetAddressModeW(mode);
     } else if (param == "BORDER_COLOR") {
       token = tokenizer_->NextToken();
 
@@ -2357,6 +2528,12 @@ Result Parser::ParseSampler() {
         return Result("invalid token when looking for MAX_LOD value");
 
       sampler->SetMaxLOD(token->AsFloat());
+    } else if (param == "NORMALIZED_COORDS") {
+      sampler->SetNormalizedCoords(true);
+    } else if (param == "UNNORMALIZED_COORDS") {
+      sampler->SetNormalizedCoords(false);
+      sampler->SetMinLOD(0.0f);
+      sampler->SetMaxLOD(0.0f);
     } else {
       return Result("unexpected sampler parameter " + param);
     }

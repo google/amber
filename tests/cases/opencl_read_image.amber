@@ -33,7 +33,7 @@ kernel void foo(read_only image2d_t image, sampler_t sampler, global float4* out
 }
 END
 
-BUFFER texture DATA_TYPE vec4<float> SIZE 4 FILL 0.0
+IMAGE texture DATA_TYPE vec4<float> DIM_2D WIDTH 2 HEIGHT 2 FILL 0.0
 BUFFER out_buf DATA_TYPE vec4<float> DATA
 2.0 2.0 2.0 2.0
 2.0 2.0 2.0 2.0
