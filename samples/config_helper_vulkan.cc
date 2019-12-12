@@ -669,8 +669,6 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
   for (auto& ext : required_extensions) {
     if (ext == "VK_KHR_get_physical_device_properties2")
       supports_get_physical_device_properties2_ = true;
-    if (ext == "VK_KHR_shader_float16_int8")
-      supports_shader_float16_int8_ = true;
   }
 
   std::vector<const char*> required_extensions_in_char;
@@ -776,6 +774,10 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
   if (!AreAllExtensionsSupported(available_device_extensions_,
                                  required_extensions)) {
     return amber::Result("Device does not support all required extensions");
+  }
+  for (const auto& ext : available_device_extensions_) {
+    if (ext == "VK_KHR_shader_float16_int8")
+      supports_shader_float16_int8_ = true;
   }
 
   vulkan_queue_family_index_ = ChooseQueueFamilyIndex(physical_device);
