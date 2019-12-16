@@ -1288,13 +1288,15 @@ Result Parser::ParseImage() {
   buffer->SetName(name);
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
-    return Result("IMAGE layout must be a string: " + token->ToOriginalString());
+  if (!token->IsString()) {
+    return Result("IMAGE dimensionality must be a string: " +
+                  token->ToOriginalString());
+  }
 
-  auto layout = StrToImageDimension(token->AsString());
-  if (layout == ImageDimension::kUnknown)
-    return Result("Unknown IMAGE layout");
-  buffer->SetImageDimension(layout);
+  auto dim = StrToImageDimension(token->AsString());
+  if (dim == ImageDimension::kUnknown)
+    return Result("Unknown IMAGE dimensionality");
+  buffer->SetImageDimension(dim);
 
   token = tokenizer_->NextToken();
   if (!token->IsString() || token->AsString() != "WIDTH")
@@ -1310,7 +1312,7 @@ Result Parser::ParseImage() {
   width = token->AsUint32();
   buffer->SetWidth(width);
 
-  if (layout == ImageDimension::k2D || layout == ImageDimension::k3D) {
+  if (dim == ImageDimension::k2D || dim == ImageDimension::k3D) {
     token = tokenizer_->NextToken();
     if (!token->IsString() || token->AsString() != "HEIGHT")
       return Result("expected IMAGE HEIGHT");
@@ -1322,7 +1324,7 @@ Result Parser::ParseImage() {
     buffer->SetHeight(height);
   }
 
-  if (layout == ImageDimension::k3D) {
+  if (dim == ImageDimension::k3D) {
     token = tokenizer_->NextToken();
     if (!token->IsString() || token->AsString() != "DEPTH")
       return Result("expected IMAGE DEPTH");

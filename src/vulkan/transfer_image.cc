@@ -197,7 +197,8 @@ VkBufferImageCopy TransferImage::CreateBufferImageCopy(uint32_t mip_level) {
   };
   copy_region.imageOffset = {0, 0, 0};
   copy_region.imageExtent = {image_info_.extent.width >> mip_level,
-                             image_info_.extent.height >> mip_level, 1};
+                             image_info_.extent.height >> mip_level,
+                             image_info_.extent.depth};
   return copy_region;
 }
 

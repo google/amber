@@ -37,17 +37,9 @@ void ImageDescriptor::RecordCopyDataToResourceIfNeeded(CommandBuffer* command) {
 
   BufferBackedDescriptor::RecordCopyDataToResourceIfNeeded(command);
 
-  if (type_ == DescriptorType::kStorageImage) {
-    // Change to general layout as it's required for storage images.
-    transfer_image_->ImageBarrier(command, VK_IMAGE_LAYOUT_GENERAL,
-                                  VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-  } else {
-    // Use the earliest shader stage as we don't know which stage the image is
-    // used in.
-    transfer_image_->ImageBarrier(command,
-                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                  VK_PIPELINE_STAGE_VERTEX_SHADER_BIT);
-  }
+  // Just do this as early as possible.
+  transfer_image_->ImageBarrier(command, VK_IMAGE_LAYOUT_GENERAL,
+                                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
 }
 
 Result ImageDescriptor::CreateResourceIfNeeded() {
@@ -130,10 +122,8 @@ void ImageDescriptor::UpdateDescriptorSetIfNeeded(
   if (!is_descriptor_set_update_needed_)
     return;
 
-  VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-  if (type_ == DescriptorType::kStorageImage)
-    layout = VK_IMAGE_LAYOUT_GENERAL;
+  // Always use general layout.
+  VkImageLayout layout = VK_IMAGE_LAYOUT_GENERAL;
 
   VkDescriptorImageInfo image_info = {vulkan_sampler_.GetVkSampler(),
                                       transfer_image_->GetVkImageView(),
