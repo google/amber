@@ -1239,7 +1239,7 @@ Result Parser::ParseImage() {
 
     auto token = tokenizer_->NextToken();
     if (!token->IsString())
-      return Result("BUFFER invalid data type");
+      return Result("IMAGE invalid data type");
 
     auto type = script_->ParseType(token->AsString());
     std::unique_ptr<Format> fmt;
@@ -1295,7 +1295,7 @@ Result Parser::ParseImage() {
 
   auto dim = StrToImageDimension(token->AsString());
   if (dim == ImageDimension::kUnknown)
-    return Result("Unknown IMAGE dimensionality");
+    return Result("unknown IMAGE dimensionality");
   buffer->SetImageDimension(dim);
 
   token = tokenizer_->NextToken();
