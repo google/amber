@@ -1,0 +1,76 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER compute write GLSL
+#version 450
+layout(set=0, binding=0, rgba32i) uniform iimage3D im3d;
+void main() {
+  uvec3 gid = gl_GlobalInvocationID;
+  ivec3 coord = ivec3(gid.x, gid.y, gid.z);
+  ivec4 data = ivec4(gid.x + 1, gid.y + 1, gid.z + 1, 0);
+  imageStore(im3d, coord, data);
+}
+END
+
+SHADER compute read GLSL
+#version 450
+
+layout(set=0, binding=0) uniform itexture3D im3d;
+layout(set=0, binding=1) uniform sampler s;
+layout(set=0, binding=2) buffer A { ivec4 x[]; } data;
+
+void main() {
+  uvec3 gid = gl_GlobalInvocationID;
+  ivec3 coord = ivec3(gid.x, gid.y, gid.z);
+  uint linear = 4 * gid.z + 2 * gid.y + gid.x;
+  data.x[linear] = texture(isampler3D(im3d, s), coord);
+}
+END
+
+BUFFER out_buf DATA_TYPE vec4<int32> SIZE 8 FILL 15
+IMAGE im3d DATA_TYPE vec4<int32> DIM_3D \
+  WIDTH 2 HEIGHT 2 DEPTH 2 FILL 0
+SAMPLER sampler \
+  ADDRESS_MODE_U clamp_to_edge \
+  ADDRESS_MODE_V clamp_to_edge \
+  ADDRESS_MODE_W clamp_to_edge \
+  MIN_FILTER nearest \
+  MAG_FILTER nearest \
+  MIN_LOD 0.0 \
+  MAX_LOD 0.0
+
+PIPELINE compute write_pipe
+  ATTACH write
+  BIND BUFFER im3d AS storage_image DESCRIPTOR_SET 0 BINDING 0
+END
+
+PIPELINE compute read_pipe
+  ATTACH read
+  BIND BUFFER im3d AS sampled_image DESCRIPTOR_SET 0 BINDING 0
+  BIND SAMPLER sampler DESCRIPTOR_SET 0 BINDING 1
+  BIND BUFFER out_buf AS storage DESCRIPTOR_SET 0 BINDING 2
+END
+
+RUN write_pipe 2 2 2
+RUN read_pipe 2 2 2
+
+EXPECT out_buf IDX 0   EQ 1 1 1 0
+EXPECT out_buf IDX 16  EQ 2 1 1 0
+EXPECT out_buf IDX 32  EQ 1 2 1 0
+EXPECT out_buf IDX 48  EQ 2 2 1 0
+EXPECT out_buf IDX 64  EQ 1 1 2 0
+EXPECT out_buf IDX 80  EQ 2 1 2 0
+EXPECT out_buf IDX 96  EQ 1 2 2 0
+EXPECT out_buf IDX 112 EQ 2 2 2 0
