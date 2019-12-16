@@ -1232,12 +1232,11 @@ Result Parser::ParseImage() {
   if (!token->IsString())
     return Result("invalid IMAGE command provided");
 
-  std::unique_ptr<Buffer> buffer;
+  std::unique_ptr<Buffer> buffer = MakeUnique<Buffer>();
+  buffer->SetName(name);
   auto& cmd = token->AsString();
   if (cmd == "DATA_TYPE") {
-    buffer = MakeUnique<Buffer>();
-
-    auto token = tokenizer_->NextToken();
+    token = tokenizer_->NextToken();
     if (!token->IsString())
       return Result("IMAGE invalid data type");
 
@@ -1253,7 +1252,6 @@ Result Parser::ParseImage() {
 
       fmt = MakeUnique<Format>(new_type.get());
       buffer->SetFormat(fmt.get());
-      type = new_type.get();
       script_->RegisterType(std::move(new_type));
     }
     script_->RegisterFormat(std::move(fmt));
@@ -1261,8 +1259,6 @@ Result Parser::ParseImage() {
     token = tokenizer_->NextToken();
     if (!token->IsString())
       return Result("IMAGE FORMAT must be a string");
-
-    buffer = MakeUnique<Buffer>();
 
     auto type = script_->ParseType(token->AsString());
     if (!type)
@@ -1285,7 +1281,6 @@ Result Parser::ParseImage() {
   } else {
     return Result("unknown IMAGE command provided: " + cmd);
   }
-  buffer->SetName(name);
 
   token = tokenizer_->NextToken();
   if (!token->IsString()) {

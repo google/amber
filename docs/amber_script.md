@@ -137,6 +137,12 @@ END
 BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
     {initializer}
 
+# Deprecated
+# Defines a buffer with width and height and filled by data as specified by the
+# `initializer`.
+BUFFER {name} DATA_TYPE {type} {STD140 | STD430} WIDTH {w} HEIGHT {h} \
+  {initializer}
+
 # Creates a buffer which will store the given `FORMAT` of data. These
 # buffers are used as image and depth buffers in the `PIPELINE` commands.
 # The buffer will be sized based on the `RENDER_SIZE` of the `PIPELINE`.
@@ -156,14 +162,14 @@ attributes.
 
 ```groovy
 # Specify an image buffer with a format. HEIGHT is necessary for DIM_2D and
-DIM_3D. DEPTH is necessary for DIM_3D.
+# DIM_3D. DEPTH is necessary for DIM_3D.
 IMAGE {name} FORMAT {format_string} [ MIP_LEVELS _mip_levels_ (default 1) ] \
     {dimensionality} \
     WIDTH {w} [ HEIGHT {h} [ DEPTH {d} ] ] \
     {initializer}
 
 # Specify an image buffer with a data type. HEIGHT is necessary for DIM_2D and
-DIM_3D. DEPTH is necessary for DIM_3D.
+# DIM_3D. DEPTH is necessary for DIM_3D.
 IMAGE {name} DATA_TYPE {type} {dimensionality} \
     WIDTH {w} [ HEIGHT {h} [ DEPTH {d} ] ] \
     {intializer}
