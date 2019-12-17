@@ -54,11 +54,12 @@ ShaderCompiler::ShaderCompiler(const std::string& env,
 ShaderCompiler::~ShaderCompiler() = default;
 
 std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
-    std::string pipeline_name,
+    Pipeline* pipeline,
     Pipeline::ShaderInfo* shader_info,
     const ShaderMap& shader_map) const {
   const auto shader = shader_info->GetShader();
   std::string key = shader->GetName();
+  const std::string pipeline_name = pipeline->GetName();
   if (pipeline_name != "") {
     key = pipeline_name + "-" + key;
   }
@@ -140,7 +141,7 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
 
 #if AMBER_ENABLE_CLSPV
   } else if (shader->GetFormat() == kShaderFormatOpenCLC) {
-    Result r = CompileOpenCLC(shader_info, &results);
+    Result r = CompileOpenCLC(shader_info, pipeline, &results);
     if (!r.IsSuccess())
       return {r, {}};
 #endif  // AMBER_ENABLE_CLSPV
@@ -279,11 +280,13 @@ Result ShaderCompiler::CompileHlsl(const Shader*,
 
 #if AMBER_ENABLE_CLSPV
 Result ShaderCompiler::CompileOpenCLC(Pipeline::ShaderInfo* shader_info,
+                                      Pipeline* pipeline,
                                       std::vector<uint32_t>* result) const {
-  return clspvhelper::Compile(shader_info, result);
+  return clspvhelper::Compile(shader_info, pipeline, result);
 }
 #else
 Result ShaderCompiler::CompileOpenCLC(Pipeline::ShaderInfo*,
+                                      Pipeline*,
                                       std::vector<uint32_t>*) const {
   return {};
 }

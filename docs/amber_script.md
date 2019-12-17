@@ -239,6 +239,16 @@ SAMPLER {name} \
 
 Note: unnormalized coordinates will override MIN\_LOD and MAX\_LOD to 0.0.
 
+#### OpenCL Literal Samplers
+
+Literal constant samplers defined in the OpenCL program are automatically
+generated and bound to the pipeline in Amber.
+
+Note: currently the border color is always transparent black.
+
+Note: the addressing mode is used for all coordinates currently. Arrayed images
+should use `clamp_to_edge` for the array index.
+
 ### Pipelines
 
 #### Pipeline type

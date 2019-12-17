@@ -457,6 +457,7 @@ void Pipeline::AddSampler(Sampler* sampler,
   auto& info = samplers_.back();
   info.descriptor_set = descriptor_set;
   info.binding = binding;
+  info.mask = std::numeric_limits<uint32_t>::max();
 }
 
 void Pipeline::AddSampler(Sampler* sampler, const std::string& arg_name) {
@@ -474,6 +475,7 @@ void Pipeline::AddSampler(Sampler* sampler, const std::string& arg_name) {
   info.descriptor_set = std::numeric_limits<uint32_t>::max();
   info.binding = std::numeric_limits<uint32_t>::max();
   info.arg_no = std::numeric_limits<uint32_t>::max();
+  info.mask = std::numeric_limits<uint32_t>::max();
 }
 
 void Pipeline::AddSampler(Sampler* sampler, uint32_t arg_no) {
@@ -490,6 +492,20 @@ void Pipeline::AddSampler(Sampler* sampler, uint32_t arg_no) {
   info.arg_no = arg_no;
   info.descriptor_set = std::numeric_limits<uint32_t>::max();
   info.binding = std::numeric_limits<uint32_t>::max();
+  info.mask = std::numeric_limits<uint32_t>::max();
+}
+
+void Pipeline::AddSampler(uint32_t mask,
+                          uint32_t descriptor_set,
+                          uint32_t binding) {
+  samplers_.push_back(SamplerInfo{nullptr});
+
+  auto& info = samplers_.back();
+  info.arg_name = "";
+  info.arg_no = std::numeric_limits<uint32_t>::max();
+  info.mask = mask;
+  info.descriptor_set = descriptor_set;
+  info.binding = binding;
 }
 
 Result Pipeline::UpdateOpenCLBufferBindings() {
@@ -718,6 +734,68 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
     Result r = buffer->SetDataWithOffset({arg_info.value}, offset);
     if (!r.IsSuccess())
       return r;
+  }
+
+  return {};
+}
+
+Result Pipeline::GenerateOpenCLLiteralSamplers() {
+  for (auto& info : samplers_) {
+    if (info.sampler || info.mask == std::numeric_limits<uint32_t>::max())
+      continue;
+
+    auto literal_sampler = MakeUnique<Sampler>();
+    literal_sampler->SetName("literal." + std::to_string(info.descriptor_set) +
+                             "." + std::to_string(info.binding));
+
+    // The values for addressing modes, filtering modes and coordinate
+    // normalization are all defined in the OpenCL header.
+    //
+    // LSB is coordinates mask.
+    literal_sampler->SetNormalizedCoords(info.mask & 0x1);
+
+    // Next 3 bits are addressing mode.
+    uint32_t addressing_bits = info.mask & 0xe;
+    AddressMode addressing_mode = AddressMode::kUnknown;
+    if (addressing_bits == 0 || addressing_bits == 2) {
+      // CLK_ADDRESS_NONE
+      // CLK_ADDERSS_CLAMP_TO_EDGE
+      addressing_mode = AddressMode::kClampToEdge;
+    } else if (addressing_bits == 4) {
+      // CLK_ADDRESS_CLAMP
+      addressing_mode = AddressMode::kClampToBorder;
+    } else if (addressing_bits == 6) {
+      // CLK_ADDRESS_REPEAT
+      addressing_mode = AddressMode::kRepeat;
+    } else if (addressing_bits == 8) {
+      // CLK_ADDRESS_MIRRORED_REPEAT
+      addressing_mode = AddressMode::kMirroredRepeat;
+    }
+    literal_sampler->SetAddressModeU(addressing_mode);
+    literal_sampler->SetAddressModeV(addressing_mode);
+    // TODO(alan-baker): If this is used with an arrayed image then W should use
+    // kClampToEdge always, but this information is not currently available.
+    literal_sampler->SetAddressModeW(addressing_mode);
+
+    // Next bit is filtering mode.
+    FilterType filtering_mode = FilterType::kUnknown;
+    if (info.mask & 0x10) {
+      filtering_mode = FilterType::kNearest;
+    } else if (info.mask & 0x20) {
+      filtering_mode = FilterType::kLinear;
+    }
+    literal_sampler->SetMagFilter(filtering_mode);
+    literal_sampler->SetMinFilter(filtering_mode);
+
+    // TODO(alan-baker): OpenCL wants the border color to be based on image
+    // channel orders which aren't accessible.
+
+    // clspv never generates multiple MIPMAP levels.
+    literal_sampler->SetMinLOD(0.0f);
+    literal_sampler->SetMaxLOD(0.0f);
+
+    opencl_literal_samplers_.push_back(std::move(literal_sampler));
+    info.sampler = opencl_literal_samplers_.back().get();
   }
 
   return {};

@@ -42,11 +42,12 @@ class ShaderCompiler {
   /// entry in |shader_map| for that shader, then the SPIRV-Tools optimizer will
   /// be invoked to produce the shader binary.
   ///
-  /// |pipeline_name| is prefixed to shader name to distinguish between
-  /// shaders used in multiple pipelines with different optimization
-  /// flags.
+  /// |pipeline| is the pipeline containing |shader_info|. The name is used to
+  /// prefix shaders used in multiple pipelines with different optimization
+  /// flags. The pipeline is used in OPENCL-C compiles to create the literal
+  /// sampler bindings.
   std::pair<Result, std::vector<uint32_t>> Compile(
-      std::string pipeline_name,
+      Pipeline* pipeline,
       Pipeline::ShaderInfo* shader_info,
       const ShaderMap& shader_map) const;
 
@@ -55,6 +56,7 @@ class ShaderCompiler {
   Result CompileGlsl(const Shader* shader, std::vector<uint32_t>* result) const;
   Result CompileHlsl(const Shader* shader, std::vector<uint32_t>* result) const;
   Result CompileOpenCLC(Pipeline::ShaderInfo* shader,
+                        Pipeline* pipeline,
                         std::vector<uint32_t>* result) const;
 
   std::string spv_env_;

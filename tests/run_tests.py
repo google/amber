@@ -90,6 +90,7 @@ OPENCL_CASES = [
   "opencl_c_copy.amber",
   "opencl_read_and_write_image3d_rgba32i.amber",
   "opencl_read_image.amber",
+  "opencl_read_image_literal_sampler.amber",
   "opencl_set_arg.amber",
   "opencl_write_image.amber",
  ]

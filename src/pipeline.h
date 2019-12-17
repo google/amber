@@ -151,6 +151,7 @@ class Pipeline {
     uint32_t binding = 0;
     std::string arg_name = "";
     uint32_t arg_no = 0;
+    uint32_t mask = 0;
   };
 
   static const char* kGeneratedColorBuffer;
@@ -262,6 +263,10 @@ class Pipeline {
   void AddSampler(Sampler* sampler, const std::string& arg_name);
   /// Adds |sampler| to the pieline at the given |arg_no|.
   void AddSampler(Sampler* sampler, uint32_t arg_no);
+  /// Adds an entry for an OpenCL literal sampler.
+  void AddSampler(uint32_t sampler_mask,
+                  uint32_t descriptor_set,
+                  uint32_t binding);
 
   /// Returns information on all samplers in this pipeline.
   const std::vector<SamplerInfo>& GetSamplers() const { return samplers_; }
@@ -305,6 +310,10 @@ class Pipeline {
   /// command. This should be called after all other buffers are bound.
   Result GenerateOpenCLPodBuffers();
 
+  /// Generate the samplers necessary for OpenCL literal samplers from the
+  /// descriptor map. This should be called after all other samplers are bound.
+  Result GenerateOpenCLLiteralSamplers();
+
  private:
   void UpdateFramebufferSizes();
 
@@ -331,6 +340,7 @@ class Pipeline {
   std::vector<std::unique_ptr<Buffer>> opencl_pod_buffers_;
   /// Maps (descriptor set, binding) to the buffer for that binding pair.
   std::map<std::pair<uint32_t, uint32_t>, Buffer*> opencl_pod_buffer_map_;
+  std::vector<std::unique_ptr<Sampler>> opencl_literal_samplers_;
 };
 
 }  // namespace amber

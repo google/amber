@@ -789,4 +789,36 @@ TEST_F(PipelineTest, OpenCLClone) {
   EXPECT_EQ(4U, b2.buffer->ValueCount());
 }
 
+TEST_F(PipelineTest, OpenCLGenerateLiteralSamplers) {
+  Pipeline p(PipelineType::kCompute);
+  p.SetName("my_pipeline");
+
+  p.AddSampler(16, 0, 0);
+  p.AddSampler(41, 0, 1);
+
+  auto r = p.GenerateOpenCLLiteralSamplers();
+  ASSERT_TRUE(r.IsSuccess());
+  for (auto& info : p.GetSamplers()) {
+    if (info.mask == 16) {
+      EXPECT_NE(nullptr, info.sampler);
+      EXPECT_EQ(FilterType::kNearest, info.sampler->GetMagFilter());
+      EXPECT_EQ(FilterType::kNearest, info.sampler->GetMinFilter());
+      EXPECT_EQ(AddressMode::kClampToEdge, info.sampler->GetAddressModeU());
+      EXPECT_EQ(AddressMode::kClampToEdge, info.sampler->GetAddressModeV());
+      EXPECT_EQ(AddressMode::kClampToEdge, info.sampler->GetAddressModeW());
+      EXPECT_EQ(0.0f, info.sampler->GetMinLOD());
+      EXPECT_EQ(0.0f, info.sampler->GetMaxLOD());
+    } else {
+      EXPECT_NE(nullptr, info.sampler);
+      EXPECT_EQ(FilterType::kLinear, info.sampler->GetMagFilter());
+      EXPECT_EQ(FilterType::kLinear, info.sampler->GetMinFilter());
+      EXPECT_EQ(AddressMode::kMirroredRepeat, info.sampler->GetAddressModeU());
+      EXPECT_EQ(AddressMode::kMirroredRepeat, info.sampler->GetAddressModeV());
+      EXPECT_EQ(AddressMode::kMirroredRepeat, info.sampler->GetAddressModeW());
+      EXPECT_EQ(0.0f, info.sampler->GetMinLOD());
+      EXPECT_EQ(0.0f, info.sampler->GetMaxLOD());
+    }
+  }
+}
+
 }  // namespace amber
