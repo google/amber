@@ -27,6 +27,20 @@ namespace {
 const char* kDefaultColorBufferFormat = "B8G8R8A8_UNORM";
 const char* kDefaultDepthBufferFormat = "D32_SFLOAT_S8_UINT";
 
+// OpenCL coordinates mode is bit 0
+const uint32_t kOpenCLNormalizedCoordsBit = 1;
+// OpenCL address mode bits are bits 1,2,3.
+const uint32_t kOpenCLAddressModeBits = 0xe;
+// OpenCL address mode bit values.
+const uint32_t kOpenCLAddressModeNone = 0;
+const uint32_t kOpenCLAddressModeClampToEdge = 2;
+const uint32_t kOpenCLAddressModeClamp = 4;
+const uint32_t kOpenCLAddressModeRepeat = 6;
+const uint32_t kOpenCLAddressModeMirroredRepeat = 8;
+// OpenCL filter mode bits.
+const uint32_t kOpenCLFilterModeNearestBit = 0x10;
+const uint32_t kOpenCLFilterModeLinearBit = 0x20;
+
 }  // namespace
 
 const char* Pipeline::kGeneratedColorBuffer = "framebuffer";
@@ -750,24 +764,24 @@ Result Pipeline::GenerateOpenCLLiteralSamplers() {
 
     // The values for addressing modes, filtering modes and coordinate
     // normalization are all defined in the OpenCL header.
-    //
-    // LSB is coordinates mask.
-    literal_sampler->SetNormalizedCoords(info.mask & 0x1);
 
-    // Next 3 bits are addressing mode.
-    uint32_t addressing_bits = info.mask & 0xe;
+    literal_sampler->SetNormalizedCoords(info.mask &
+                                         kOpenCLNormalizedCoordsBit);
+
+    uint32_t addressing_bits = info.mask & kOpenCLAddressModeBits;
     AddressMode addressing_mode = AddressMode::kUnknown;
-    if (addressing_bits == 0 || addressing_bits == 2) {
+    if (addressing_bits == kOpenCLAddressModeNone ||
+        addressing_bits == kOpenCLAddressModeClampToEdge) {
       // CLK_ADDRESS_NONE
       // CLK_ADDERSS_CLAMP_TO_EDGE
       addressing_mode = AddressMode::kClampToEdge;
-    } else if (addressing_bits == 4) {
+    } else if (addressing_bits == kOpenCLAddressModeClamp) {
       // CLK_ADDRESS_CLAMP
       addressing_mode = AddressMode::kClampToBorder;
-    } else if (addressing_bits == 6) {
+    } else if (addressing_bits == kOpenCLAddressModeRepeat) {
       // CLK_ADDRESS_REPEAT
       addressing_mode = AddressMode::kRepeat;
-    } else if (addressing_bits == 8) {
+    } else if (addressing_bits == kOpenCLAddressModeMirroredRepeat) {
       // CLK_ADDRESS_MIRRORED_REPEAT
       addressing_mode = AddressMode::kMirroredRepeat;
     }
@@ -779,9 +793,9 @@ Result Pipeline::GenerateOpenCLLiteralSamplers() {
 
     // Next bit is filtering mode.
     FilterType filtering_mode = FilterType::kUnknown;
-    if (info.mask & 0x10) {
+    if (info.mask & kOpenCLFilterModeNearestBit) {
       filtering_mode = FilterType::kNearest;
-    } else if (info.mask & 0x20) {
+    } else if (info.mask & kOpenCLFilterModeLinearBit) {
       filtering_mode = FilterType::kLinear;
     }
     literal_sampler->SetMagFilter(filtering_mode);
