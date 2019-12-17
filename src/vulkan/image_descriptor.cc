@@ -37,17 +37,9 @@ void ImageDescriptor::RecordCopyDataToResourceIfNeeded(CommandBuffer* command) {
 
   BufferBackedDescriptor::RecordCopyDataToResourceIfNeeded(command);
 
-  if (type_ == DescriptorType::kStorageImage) {
-    // Change to general layout as it's required for storage images.
-    transfer_image_->ImageBarrier(command, VK_IMAGE_LAYOUT_GENERAL,
-                                  VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-  } else {
-    // Use the earliest shader stage as we don't know which stage the image is
-    // used in.
-    transfer_image_->ImageBarrier(command,
-                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                  VK_PIPELINE_STAGE_VERTEX_SHADER_BIT);
-  }
+  // Just do this as early as possible.
+  transfer_image_->ImageBarrier(command, VK_IMAGE_LAYOUT_GENERAL,
+                                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
 }
 
 Result ImageDescriptor::CreateResourceIfNeeded() {
@@ -62,10 +54,27 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
   if (amber_buffer && amber_buffer->ValuePtr()->empty())
     return {};
 
+  // Default to 2D image.
+  VkImageType image_type = VK_IMAGE_TYPE_2D;
+  switch (amber_buffer->GetImageDimension()) {
+    case ImageDimension::k1D:
+      image_type = VK_IMAGE_TYPE_1D;
+      break;
+    case ImageDimension::k2D:
+      image_type = VK_IMAGE_TYPE_2D;
+      break;
+    case ImageDimension::k3D:
+      image_type = VK_IMAGE_TYPE_3D;
+      break;
+    default:
+      break;
+  }
+
   transfer_image_ = MakeUnique<TransferImage>(
       device_, *amber_buffer->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
-      amber_buffer->GetWidth(), amber_buffer->GetHeight(), 1u,
-      amber_buffer->GetMipLevels(), base_mip_level_, VK_REMAINING_MIP_LEVELS);
+      image_type, amber_buffer->GetWidth(), amber_buffer->GetHeight(),
+      amber_buffer->GetDepth(), amber_buffer->GetMipLevels(), base_mip_level_,
+      VK_REMAINING_MIP_LEVELS);
   VkImageUsageFlags usage =
       VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
@@ -113,10 +122,8 @@ void ImageDescriptor::UpdateDescriptorSetIfNeeded(
   if (!is_descriptor_set_update_needed_)
     return;
 
-  VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-  if (type_ == DescriptorType::kStorageImage)
-    layout = VK_IMAGE_LAYOUT_GENERAL;
+  // Always use general layout.
+  VkImageLayout layout = VK_IMAGE_LAYOUT_GENERAL;
 
   VkDescriptorImageInfo image_info = {vulkan_sampler_.GetVkSampler(),
                                       transfer_image_->GetVkImageView(),

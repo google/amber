@@ -70,10 +70,12 @@ Result Sampler::CreateSampler(amber::Sampler* sampler) {
                                 : VK_SAMPLER_MIPMAP_MODE_NEAREST;
   sampler_info.addressModeU = GetVkAddressMode(sampler->GetAddressModeU());
   sampler_info.addressModeV = GetVkAddressMode(sampler->GetAddressModeV());
-  sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_info.addressModeW = GetVkAddressMode(sampler->GetAddressModeW());
   sampler_info.borderColor = GetVkBorderColor(sampler->GetBorderColor());
   sampler_info.minLod = sampler->GetMinLOD();
   sampler_info.maxLod = sampler->GetMaxLOD();
+  sampler_info.unnormalizedCoordinates =
+      (sampler->GetNormalizedCoords() ? VK_FALSE : VK_TRUE);
 
   if (device_->GetPtrs()->vkCreateSampler(device_->GetVkDevice(), &sampler_info,
                                           nullptr, &sampler_) != VK_SUCCESS) {

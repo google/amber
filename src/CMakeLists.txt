@@ -125,6 +125,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_expect_test.cc
     amberscript/parser_extension_test.cc
     amberscript/parser_framebuffer_test.cc
+    amberscript/parser_image_test.cc
     amberscript/parser_pipeline_test.cc
     amberscript/parser_pipeline_set_test.cc
     amberscript/parser_repeat_test.cc

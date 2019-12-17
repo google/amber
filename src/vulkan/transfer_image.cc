@@ -48,6 +48,7 @@ const VkImageCreateInfo kDefaultImageInfo = {
 TransferImage::TransferImage(Device* device,
                              const Format& format,
                              VkImageAspectFlags aspect,
+                             VkImageType image_type,
                              uint32_t x,
                              uint32_t y,
                              uint32_t z,
@@ -61,6 +62,7 @@ TransferImage::TransferImage(Device* device,
       base_mip_level_(base_mip_level),
       used_mip_levels_(used_mip_levels) {
   image_info_.format = device_->GetVkFormat(format);
+  image_info_.imageType = image_type;
   image_info_.extent = {x, y, z};
   image_info_.mipLevels = mip_levels;
 }
@@ -133,12 +135,29 @@ Result TransferImage::Initialize(VkImageUsageFlags usage) {
   return MapMemory(host_accessible_memory_);
 }
 
+VkImageViewType TransferImage::GetImageViewType() const {
+  // TODO(alan-baker): handle other view types.
+  // 1D-array, 2D-array, Cube, Cube-array.
+  switch (image_info_.imageType) {
+    case VK_IMAGE_TYPE_1D:
+      return VK_IMAGE_VIEW_TYPE_1D;
+    case VK_IMAGE_TYPE_2D:
+      return VK_IMAGE_VIEW_TYPE_2D;
+    case VK_IMAGE_TYPE_3D:
+      return VK_IMAGE_VIEW_TYPE_3D;
+    default:
+      break;
+  }
+
+  // Default to 2D image view.
+  return VK_IMAGE_VIEW_TYPE_2D;
+}
+
 Result TransferImage::CreateVkImageView() {
   VkImageViewCreateInfo image_view_info = VkImageViewCreateInfo();
   image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   image_view_info.image = image_;
-  // TODO(jaebaek): Set .viewType correctly
-  image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  image_view_info.viewType = GetImageViewType();
   image_view_info.format = image_info_.format;
   image_view_info.components = {
       VK_COMPONENT_SWIZZLE_R,
@@ -178,7 +197,8 @@ VkBufferImageCopy TransferImage::CreateBufferImageCopy(uint32_t mip_level) {
   };
   copy_region.imageOffset = {0, 0, 0};
   copy_region.imageExtent = {image_info_.extent.width >> mip_level,
-                             image_info_.extent.height >> mip_level, 1};
+                             image_info_.extent.height >> mip_level,
+                             image_info_.extent.depth};
   return copy_region;
 }
 

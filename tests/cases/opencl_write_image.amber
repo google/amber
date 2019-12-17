@@ -23,7 +23,7 @@ kernel void foo(write_only image2d_t image, global float4* data) {
 }
 END
 
-BUFFER texture DATA_TYPE vec4<float> WIDTH 2 HEIGHT 2 FILL 0.0
+IMAGE texture DATA_TYPE vec4<float> DIM_2D WIDTH 2 HEIGHT 2 FILL 0.0
 BUFFER data DATA_TYPE vec4<float> DATA
 1.0 2.0 3.0 4.0
 2.0 3.0 4.0 1.0
