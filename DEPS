@@ -8,7 +8,7 @@ vars = {
   'swiftshader_git': 'https://swiftshader.googlesource.com',
   'microsoft_git': 'https://github.com/Microsoft',
 
-  'clspv_llvm_revision': '4becf68c6f17fe143539ceac954b21175914e1c1',
+  'clspv_llvm_revision': '5e5e99c041e48a69615eefd123dac23d9d0c7f73',
   'clspv_revision': 'ae7cff6ee4b5e3048e8cd3d01e499d67cae18d5d',
   'cpplint_revision': '26470f9ccb354ff2f6d098f831271a1833701b28',
   'dxc_revision': '2749458081b6211fde8fc6de5294f1460798b49b',
@@ -18,7 +18,7 @@ vars = {
   'shaderc_revision': '4399459c192085e44270b3dea25c0d3224ad77df',
   'spirv_headers_revision': '204cd131c42b90d129073719f2766293ce35c081',
   'spirv_tools_revision': '38d7fbaad0a376c777fa5ee95338c2c90e02d416',
-  'swiftshader_revision': '24c49ddde89ca50ad656e672973575a528c8ba48',
+  'swiftshader_revision': 'ff3d55c60356103457f626a2f39cbda160e84709',
   'vulkan_headers_revision': '0e57fc1cfa56a203efe43e4dfb9b3c9e9b105593',
   'vulkan_validationlayers_revision': '2b19f3916726243552178be6f8d38454bbb1db63',
   'vulkan_loader_revision': '2069798558ec7eb9b489ffc69fd1d27eebb0c84e',
