@@ -8,20 +8,20 @@ vars = {
   'swiftshader_git': 'https://swiftshader.googlesource.com',
   'microsoft_git': 'https://github.com/Microsoft',
 
-  'clspv_llvm_revision': '252c4dce618926311bcb4715eae6955f1bc71f13',
-  'clspv_revision': '242e3b6cbea0628c94453d24802bae55864a9b64',
+  'clspv_llvm_revision': 'c24cf97960827fa4993c399dc3f0be5a5376d9e7',
+  'clspv_revision': '4092cc5b82eeae2326d3e69697337a705137f718',
   'cpplint_revision': '26470f9ccb354ff2f6d098f831271a1833701b28',
   'dxc_revision': '80ec7c6bc7e3c40da52110dd2eb9b85192153775',
-  'glslang_revision': 'd203754bc1160cbb14e80de238042a2b9b439917',
+  'glslang_revision': '3ed344dd784ecbbc5855e613786f3a1238823e56',
   'googletest_revision': 'd854bd6acc47f7f6e168007d58b5f509e4981b36',
   'lodepng_revision': '2febfe0d105822575328759dd950c8a24b0ad6b3',
-  'shaderc_revision': '99ca03e1ac3a78c7d0e1ca7b3a1f6d973e0c1fc7',
+  'shaderc_revision': 'f53792645f0696b8954cfdb3c213f96799dd89b2',
   'spirv_headers_revision': '204cd131c42b90d129073719f2766293ce35c081',
-  'spirv_tools_revision': 'f8d7df760c81604ddc4ae3dac7f19333336f64c3',
+  'spirv_tools_revision': '323a81fc5e30e43a04e5e22af4cba98ca2a161e6',
   'swiftshader_revision': '4fd7fccd6db5ebb7a1f9cc7853afc2b6fea16b97',
   'vulkan_headers_revision': '881bbb347a08d1b5aa77f61a52a30b506de9f2bf',
-  'vulkan_validationlayers_revision': 'e91181dfeb79db57687121a06369f7af599934d5',
-  'vulkan_loader_revision': 'a0099c50284635fd7242541b6d335d01a90dcc26',
+  'vulkan_validationlayers_revision': 'ab883b9d257e234c1952f45d38fe3e25a5c87eb1',
+  'vulkan_loader_revision': '20f2d901c085c546e5c732084546e92d3d99cdee',
 }
 
 deps = {
