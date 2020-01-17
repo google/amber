@@ -28,11 +28,6 @@ enable_testing()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-if (${AMBER_USE_CLSPV})
-  set(CMAKE_CXX_STANDARD 14)
-else()
-  set(CMAKE_CXX_STANDARD 11)
-endif()
 
 include(CheckIncludeFile)
 include(GNUInstallDirs)
@@ -52,6 +47,12 @@ option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
 option(AMBER_USE_CLSPV "Build with Clspv support" OFF)
 option(AMBER_ENABLE_SWIFTSHADER
   "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
+
+if (${AMBER_USE_CLSPV} OR ${AMBER_ENABLE_SWIFTSHADER})
+  set(CMAKE_CXX_STANDARD 14)
+else()
+  set(CMAKE_CXX_STANDARD 11)
+endif()
 
 if(WIN32)
   # On Windows, CMake by default compiles with the shared CRT.
