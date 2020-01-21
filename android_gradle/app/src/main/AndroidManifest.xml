@@ -6,6 +6,9 @@
         android:allowBackup="true"
         android:label="Amber"
         android:supportsRtl="true">
+        <meta-data
+            android:name="com.android.graphics.developerdriver.enable"
+            android:value="true" />
     </application>
 
 </manifest>
