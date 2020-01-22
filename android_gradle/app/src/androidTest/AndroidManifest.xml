@@ -2,7 +2,7 @@
           package="com.google.amber.test">
     <application>
         <meta-data
-            android:name:"com.android.graphics.developerdriver.enable"
-            android:value:"true" />
+            android:name="com.android.graphics.developerdriver.enable"
+            android:value="true" />
     </application>
 </manifest>
