@@ -27,6 +27,7 @@ enum class TokenType : uint8_t {
   kEOS = 0,
   kEOL,
   kIdentifier,
+  kString,
   kInteger,
   kDouble,
   kHex,
@@ -42,6 +43,7 @@ class Token {
   bool IsInteger() const { return type_ == TokenType::kInteger; }
   bool IsDouble() const { return type_ == TokenType::kDouble; }
   bool IsIdentifier() const { return type_ == TokenType::kIdentifier; }
+  bool IsString() const { return type_ == TokenType::kString; }
   bool IsEOS() const { return type_ == TokenType::kEOS; }
   bool IsEOL() const { return type_ == TokenType::kEOL; }
 

@@ -74,6 +74,86 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
     return MakeUnique<Token>(TokenType::kEOL);
   }
 
+  if (data_[current_position_] == '"') {
+    current_position_++;  // Skip opening quote
+    std::string tok_str;
+    bool escape = false;
+    for (; current_position_ < data_.length(); current_position_++) {
+      auto c = data_[current_position_];
+      switch (c) {
+        case '\\':
+          if (!escape) {
+            escape = true;
+            continue;
+          }
+          break;
+        case '"':
+          if (!escape) {
+            current_position_++;  // Skip closing quote
+            auto tok = MakeUnique<Token>(TokenType::kString);
+            tok->SetStringValue(tok_str);
+            return tok;
+          }
+          break;
+        case 'a':
+          if (escape) {
+            tok_str += '\a';
+            escape = false;
+            continue;
+          }
+          break;
+        case 'b':
+          if (escape) {
+            tok_str += '\b';
+            escape = false;
+            continue;
+          }
+          break;
+        case 't':
+          if (escape) {
+            tok_str += '\t';
+            escape = false;
+            continue;
+          }
+          break;
+        case 'n':
+          if (escape) {
+            tok_str += '\n';
+            escape = false;
+            continue;
+          }
+          break;
+        case 'v':
+          if (escape) {
+            tok_str += '\v';
+            escape = false;
+            continue;
+          }
+          break;
+        case 'f':
+          if (escape) {
+            tok_str += '\f';
+            escape = false;
+            continue;
+          }
+          break;
+        case 'r':
+          if (escape) {
+            tok_str += '\r';
+            escape = false;
+            continue;
+          }
+          break;
+      }
+      escape = false;
+      tok_str += c;
+    }
+
+    auto tok = MakeUnique<Token>(TokenType::kString);
+    tok->SetStringValue(tok_str);
+    return tok;
+  }
+
   // If the current position is a , ( or ) then handle it specially as we don't
   // want to consume any other characters.
   if (data_[current_position_] == ',' || data_[current_position_] == '(' ||
