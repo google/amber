@@ -169,8 +169,8 @@ Result Parser::Parse(const std::string& data) {
        token = tokenizer_->NextToken()) {
     if (token->IsEOL())
       continue;
-    if (!token->IsString())
-      return Result(make_error("expected string"));
+    if (!token->IsIdentifier())
+      return Result(make_error("expected identifier"));
 
     Result r;
     std::string tok = token->AsString();
@@ -324,7 +324,7 @@ Result Parser::ValidateEndOfStatement(const std::string& name) {
 
 Result Parser::ParseShaderBlock() {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid token when looking for shader type");
 
   ShaderType type = kShaderTypeVertex;
@@ -335,13 +335,13 @@ Result Parser::ParseShaderBlock() {
   auto shader = MakeUnique<Shader>(type);
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid token when looking for shader name");
 
   shader->SetName(token->AsString());
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid token when looking for shader format");
 
   std::string fmt = token->AsString();
@@ -379,7 +379,7 @@ Result Parser::ParseShaderBlock() {
   shader->SetData(data);
 
   token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "END")
+  if (!token->IsIdentifier() || token->AsString() != "END")
     return Result("SHADER missing END command");
 
   r = script_->AddShader(std::move(shader));
@@ -391,7 +391,7 @@ Result Parser::ParseShaderBlock() {
 
 Result Parser::ParsePipelineBlock() {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid token when looking for pipeline type");
 
   PipelineType type = PipelineType::kCompute;
@@ -402,7 +402,7 @@ Result Parser::ParsePipelineBlock() {
   auto pipeline = MakeUnique<Pipeline>(type);
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid token when looking for pipeline name");
 
   pipeline->SetName(token->AsString());
@@ -421,8 +421,8 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
        token = tokenizer_->NextToken()) {
     if (token->IsEOL())
       continue;
-    if (!token->IsString())
-      return Result("expected string");
+    if (!token->IsIdentifier())
+      return Result("expected identifier");
 
     Result r;
     std::string tok = token->AsString();
@@ -451,7 +451,7 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       return r;
   }
 
-  if (!token->IsString() || token->AsString() != "END")
+  if (!token->IsIdentifier() || token->AsString() != "END")
     return Result(cmd_name + " missing END command");
 
   Result r = script_->AddPipeline(std::move(pipeline));
@@ -463,7 +463,7 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
 
 Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid token in ATTACH command");
 
   auto* shader = script_->GetShader(token->AsString());
@@ -480,7 +480,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
       return r;
     return {};
   }
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid token after ATTACH");
 
   bool set_shader_type = false;
@@ -488,7 +488,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
   auto type = token->AsString();
   if (type == "TYPE") {
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("invalid type in ATTACH");
 
     Result r = ToShaderType(token->AsString(), &shader_type);
@@ -498,7 +498,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
     set_shader_type = true;
 
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("ATTACH TYPE requires an ENTRY_POINT");
 
     type = token->AsString();
@@ -515,7 +515,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
 
   if (type == "ENTRY_POINT") {
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("missing shader name in ATTACH ENTRY_POINT command");
 
     r = pipeline->SetShaderEntryPoint(shader, token->AsString());
@@ -526,7 +526,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
   }
 
   while (true) {
-    if (token->IsString() && token->AsString() == "SPECIALIZE") {
+    if (token->IsIdentifier() && token->AsString() == "SPECIALIZE") {
       r = ParseShaderSpecialization(pipeline);
       if (!r.IsSuccess())
         return r;
@@ -535,7 +535,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
     } else {
       if (token->IsEOL() || token->IsEOS())
         return {};
-      if (token->IsString())
+      if (token->IsIdentifier())
         return Result("unknown ATTACH parameter: " + token->AsString());
       return Result("extra parameters after ATTACH command: " +
                     token->ToOriginalString());
@@ -551,11 +551,11 @@ Result Parser::ParseShaderSpecialization(Pipeline* pipeline) {
   auto spec_id = token->AsUint32();
 
   token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "AS")
+  if (!token->IsIdentifier() || token->AsString() != "AS")
     return Result("expected AS as next token");
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("expected data type in SPECIALIZE subcommand");
 
   auto type = ToType(token->AsString());
@@ -594,7 +594,7 @@ Result Parser::ParseShaderSpecialization(Pipeline* pipeline) {
 
 Result Parser::ParsePipelineShaderOptimizations(Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("missing shader name in SHADER_OPTIMIZATION command");
 
   auto* shader = script_->GetShader(token->AsString());
@@ -613,8 +613,8 @@ Result Parser::ParsePipelineShaderOptimizations(Pipeline* pipeline) {
       continue;
     if (token->IsEOS())
       return Result("SHADER_OPTIMIZATION missing END command");
-    if (!token->IsString())
-      return Result("SHADER_OPTIMIZATION options must be strings");
+    if (!token->IsIdentifier())
+      return Result("SHADER_OPTIMIZATION options must be identifiers");
     if (token->AsString() == "END")
       break;
 
@@ -630,7 +630,7 @@ Result Parser::ParsePipelineShaderOptimizations(Pipeline* pipeline) {
 
 Result Parser::ParsePipelineShaderCompileOptions(Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("missing shader name in COMPILE_OPTIONS command");
 
   auto* shader = script_->GetShader(token->AsString());
@@ -715,14 +715,14 @@ Result Parser::ToBufferType(const std::string& name, BufferType* type) {
 Result Parser::ParsePipelineBind(Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
 
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("missing BUFFER or SAMPLER in BIND command");
 
   auto object_type = token->AsString();
 
   if (object_type == "BUFFER") {
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("missing buffer name in BIND command");
 
     auto* buffer = script_->GetBuffer(token->AsString());
@@ -731,9 +731,9 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
 
     BufferType buffer_type = BufferType::kUnknown;
     token = tokenizer_->NextToken();
-    if (token->IsString() && token->AsString() == "AS") {
+    if (token->IsIdentifier() && token->AsString() == "AS") {
       token = tokenizer_->NextToken();
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result("invalid token for BUFFER type");
 
       Result r = ToBufferType(token->AsString(), &buffer_type);
@@ -742,7 +742,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
 
       if (buffer_type == BufferType::kColor) {
         token = tokenizer_->NextToken();
-        if (!token->IsString() || token->AsString() != "LOCATION")
+        if (!token->IsIdentifier() || token->AsString() != "LOCATION")
           return Result("BIND missing LOCATION");
 
         token = tokenizer_->NextToken();
@@ -752,7 +752,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
 
         uint32_t base_mip_level = 0;
         token = tokenizer_->PeekNextToken();
-        if (token->IsString() && token->AsString() == "BASE_MIP_LEVEL") {
+        if (token->IsIdentifier() && token->AsString() == "BASE_MIP_LEVEL") {
           tokenizer_->NextToken();
           token = tokenizer_->NextToken();
 
@@ -784,11 +784,11 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
 
       } else if (buffer_type == BufferType::kCombinedImageSampler) {
         token = tokenizer_->NextToken();
-        if (!token->IsString() || token->AsString() != "SAMPLER")
+        if (!token->IsIdentifier() || token->AsString() != "SAMPLER")
           return Result("expecting SAMPLER for combined image sampler");
 
         token = tokenizer_->NextToken();
-        if (!token->IsString())
+        if (!token->IsIdentifier())
           return Result("missing sampler name in BIND command");
 
         auto* sampler = script_->GetSampler(token->AsString());
@@ -814,14 +814,14 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         token = tokenizer_->NextToken();
 
       // DESCRIPTOR_SET requires a buffer type to have been specified.
-      if (token->IsString() && token->AsString() == "DESCRIPTOR_SET") {
+      if (token->IsIdentifier() && token->AsString() == "DESCRIPTOR_SET") {
         token = tokenizer_->NextToken();
         if (!token->IsInteger())
           return Result("invalid value for DESCRIPTOR_SET in BIND command");
         uint32_t descriptor_set = token->AsUint32();
 
         token = tokenizer_->NextToken();
-        if (!token->IsString() || token->AsString() != "BINDING")
+        if (!token->IsIdentifier() || token->AsString() != "BINDING")
           return Result("missing BINDING for BIND command");
 
         token = tokenizer_->NextToken();
@@ -835,7 +835,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
             buffer_type == BufferType::kSampledImage ||
             buffer_type == BufferType::kCombinedImageSampler) {
           token = tokenizer_->PeekNextToken();
-          if (token->IsString() && token->AsString() == "BASE_MIP_LEVEL") {
+          if (token->IsIdentifier() && token->AsString() == "BASE_MIP_LEVEL") {
             tokenizer_->NextToken();
             token = tokenizer_->NextToken();
 
@@ -854,14 +854,14 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
 
         pipeline->AddBuffer(buffer, buffer_type, descriptor_set, binding,
                             base_mip_level);
-      } else if (token->IsString() && token->AsString() == "KERNEL") {
+      } else if (token->IsIdentifier() && token->AsString() == "KERNEL") {
         token = tokenizer_->NextToken();
-        if (!token->IsString())
+        if (!token->IsIdentifier())
           return Result("missing kernel arg identifier");
 
         if (token->AsString() == "ARG_NAME") {
           token = tokenizer_->NextToken();
-          if (!token->IsString())
+          if (!token->IsIdentifier())
             return Result("expected argument identifier");
 
           pipeline->AddBuffer(buffer, buffer_type, token->AsString());
@@ -880,7 +880,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     }
   } else if (object_type == "SAMPLER") {
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("missing sampler name in BIND command");
 
     auto* sampler = script_->GetSampler(token->AsString());
@@ -888,7 +888,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
       return Result("unknown sampler: " + token->AsString());
 
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("expected a string token for BIND command");
 
     if (token->AsString() == "DESCRIPTOR_SET") {
@@ -898,7 +898,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
       uint32_t descriptor_set = token->AsUint32();
 
       token = tokenizer_->NextToken();
-      if (!token->IsString() || token->AsString() != "BINDING")
+      if (!token->IsIdentifier() || token->AsString() != "BINDING")
         return Result("missing BINDING for BIND command");
 
       token = tokenizer_->NextToken();
@@ -907,12 +907,12 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
       pipeline->AddSampler(sampler, descriptor_set, token->AsUint32());
     } else if (token->AsString() == "KERNEL") {
       token = tokenizer_->NextToken();
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result("missing kernel arg identifier");
 
       if (token->AsString() == "ARG_NAME") {
         token = tokenizer_->NextToken();
-        if (!token->IsString())
+        if (!token->IsIdentifier())
           return Result("expected argument identifier");
 
         pipeline->AddSampler(sampler, token->AsString());
@@ -937,7 +937,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
 
 Result Parser::ParsePipelineVertexData(Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("missing buffer name in VERTEX_DATA command");
 
   auto* buffer = script_->GetBuffer(token->AsString());
@@ -945,7 +945,7 @@ Result Parser::ParsePipelineVertexData(Pipeline* pipeline) {
     return Result("unknown buffer: " + token->AsString());
 
   token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "LOCATION")
+  if (!token->IsIdentifier() || token->AsString() != "LOCATION")
     return Result("VERTEX_DATA missing LOCATION");
 
   token = tokenizer_->NextToken();
@@ -961,7 +961,7 @@ Result Parser::ParsePipelineVertexData(Pipeline* pipeline) {
 
 Result Parser::ParsePipelineIndexData(Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("missing buffer name in INDEX_DATA command");
 
   auto* buffer = script_->GetBuffer(token->AsString());
@@ -983,18 +983,18 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   }
 
   auto token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "KERNEL")
+  if (!token->IsIdentifier() || token->AsString() != "KERNEL")
     return Result("missing KERNEL in SET command");
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("expected ARG_NAME or ARG_NUMBER");
 
   std::string arg_name = "";
   uint32_t arg_no = std::numeric_limits<uint32_t>::max();
   if (token->AsString() == "ARG_NAME") {
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("expected argument identifier");
 
     arg_name = token->AsString();
@@ -1009,11 +1009,11 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   }
 
   token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "AS")
+  if (!token->IsIdentifier() || token->AsString() != "AS")
     return Result("missing AS in SET command");
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("expected data type");
 
   auto type = ToType(token->AsString());
@@ -1045,7 +1045,7 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
 
 Result Parser::ParseStruct() {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid STRUCT name provided");
 
   auto struct_name = token->AsString();
@@ -1060,7 +1060,7 @@ Result Parser::ParseStruct() {
     return r;
 
   token = tokenizer_->NextToken();
-  if (token->IsString()) {
+  if (token->IsIdentifier()) {
     if (token->AsString() != "STRIDE")
       return Result("invalid token in STRUCT definition");
 
@@ -1081,7 +1081,7 @@ Result Parser::ParseStruct() {
   std::map<std::string, bool> seen;
   for (;;) {
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("invalid type for STRUCT member");
     if (token->AsString() == "END")
       break;
@@ -1104,7 +1104,7 @@ Result Parser::ParseStruct() {
     token = tokenizer_->NextToken();
     if (token->IsEOL())
       return Result("missing name for STRUCT member");
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("invalid name for STRUCT member");
 
     auto member_name = token->AsString();
@@ -1117,7 +1117,7 @@ Result Parser::ParseStruct() {
     m->name = member_name;
 
     token = tokenizer_->NextToken();
-    while (token->IsString()) {
+    while (token->IsIdentifier()) {
       if (token->AsString() == "OFFSET") {
         token = tokenizer_->NextToken();
         if (token->IsEOL())
@@ -1163,7 +1163,7 @@ Result Parser::ParseStruct() {
 
 Result Parser::ParseBuffer() {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid BUFFER name provided");
 
   auto name = token->AsString();
@@ -1171,7 +1171,7 @@ Result Parser::ParseBuffer() {
     return Result("missing BUFFER name");
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid BUFFER command provided");
 
   std::unique_ptr<Buffer> buffer;
@@ -1184,8 +1184,8 @@ Result Parser::ParseBuffer() {
       return r;
   } else if (cmd == "FORMAT") {
     token = tokenizer_->NextToken();
-    if (!token->IsString())
-      return Result("BUFFER FORMAT must be a string");
+    if (!token->IsIdentifier())
+      return Result("BUFFER FORMAT must be an identifier");
 
     buffer = MakeUnique<Buffer>();
 
@@ -1198,7 +1198,7 @@ Result Parser::ParseBuffer() {
     script_->RegisterFormat(std::move(fmt));
 
     token = tokenizer_->PeekNextToken();
-    if (token->IsString() && token->AsString() == "MIP_LEVELS") {
+    if (token->IsIdentifier() && token->AsString() == "MIP_LEVELS") {
       tokenizer_->NextToken();
       token = tokenizer_->NextToken();
 
@@ -1221,7 +1221,7 @@ Result Parser::ParseBuffer() {
 
 Result Parser::ParseImage() {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid IMAGE name provided");
 
   auto name = token->AsString();
@@ -1229,7 +1229,7 @@ Result Parser::ParseImage() {
     return Result("missing IMAGE name");
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid IMAGE command provided");
 
   std::unique_ptr<Buffer> buffer = MakeUnique<Buffer>();
@@ -1237,7 +1237,7 @@ Result Parser::ParseImage() {
   auto& cmd = token->AsString();
   if (cmd == "DATA_TYPE") {
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("IMAGE invalid data type");
 
     auto type = script_->ParseType(token->AsString());
@@ -1257,8 +1257,8 @@ Result Parser::ParseImage() {
     script_->RegisterFormat(std::move(fmt));
   } else if (cmd == "FORMAT") {
     token = tokenizer_->NextToken();
-    if (!token->IsString())
-      return Result("IMAGE FORMAT must be a string");
+    if (!token->IsIdentifier())
+      return Result("IMAGE FORMAT must be an identifier");
 
     auto type = script_->ParseType(token->AsString());
     if (!type)
@@ -1269,7 +1269,7 @@ Result Parser::ParseImage() {
     script_->RegisterFormat(std::move(fmt));
 
     token = tokenizer_->PeekNextToken();
-    if (token->IsString() && token->AsString() == "MIP_LEVELS") {
+    if (token->IsIdentifier() && token->AsString() == "MIP_LEVELS") {
       tokenizer_->NextToken();
       token = tokenizer_->NextToken();
 
@@ -1283,8 +1283,8 @@ Result Parser::ParseImage() {
   }
 
   token = tokenizer_->NextToken();
-  if (!token->IsString()) {
-    return Result("IMAGE dimensionality must be a string: " +
+  if (!token->IsIdentifier()) {
+    return Result("IMAGE dimensionality must be an identifier: " +
                   token->ToOriginalString());
   }
 
@@ -1294,7 +1294,7 @@ Result Parser::ParseImage() {
   buffer->SetImageDimension(dim);
 
   token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "WIDTH")
+  if (!token->IsIdentifier() || token->AsString() != "WIDTH")
     return Result("expected IMAGE WIDTH");
 
   // Parse image dimensions.
@@ -1309,7 +1309,7 @@ Result Parser::ParseImage() {
 
   if (dim == ImageDimension::k2D || dim == ImageDimension::k3D) {
     token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "HEIGHT")
+    if (!token->IsIdentifier() || token->AsString() != "HEIGHT")
       return Result("expected IMAGE HEIGHT");
 
     token = tokenizer_->NextToken();
@@ -1321,7 +1321,7 @@ Result Parser::ParseImage() {
 
   if (dim == ImageDimension::k3D) {
     token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "DEPTH")
+    if (!token->IsIdentifier() || token->AsString() != "DEPTH")
       return Result("expected IMAGE DEPTH");
 
     token = tokenizer_->NextToken();
@@ -1336,7 +1336,7 @@ Result Parser::ParseImage() {
 
   // Parse initializers.
   token = tokenizer_->NextToken();
-  if (token->IsString()) {
+  if (token->IsIdentifier()) {
     if (token->AsString() == "FILL") {
       Result r = ParseBufferInitializerFill(buffer.get(), size_in_items);
       if (!r.IsSuccess())
@@ -1361,7 +1361,7 @@ Result Parser::ParseImage() {
 
 Result Parser::ParseBufferInitializer(Buffer* buffer) {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("BUFFER invalid data type");
 
   auto type = script_->ParseType(token->AsString());
@@ -1382,7 +1382,7 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
   script_->RegisterFormat(std::move(fmt));
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("BUFFER missing initializer");
 
   if (token->AsString() == "STD140") {
@@ -1393,7 +1393,7 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
     token = tokenizer_->NextToken();
   }
 
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("BUFFER missing initializer");
 
   if (token->AsString() == "SIZE")
@@ -1445,7 +1445,7 @@ Result Parser::ParseBufferInitializerSize(Buffer* buffer) {
   buffer->SetElementCount(size_in_items);
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("BUFFER invalid initializer");
 
   if (token->AsString() == "FILL")
@@ -1510,7 +1510,7 @@ Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
   }
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("missing BUFFER series_from inc_by");
   if (token->AsString() != "INC_BY")
     return Result("BUFFER series_from invalid command");
@@ -1554,7 +1554,7 @@ Result Parser::ParseBufferInitializerData(Buffer* buffer) {
       continue;
     if (token->IsEOS())
       return Result("missing BUFFER END command");
-    if (token->IsString() && token->AsString() == "END")
+    if (token->IsIdentifier() && token->AsString() == "END")
       break;
     if (!token->IsInteger() && !token->IsDouble() && !token->IsHex())
       return Result("invalid BUFFER data value: " + token->ToOriginalString());
@@ -1606,7 +1606,7 @@ Result Parser::ParseBufferInitializerData(Buffer* buffer) {
 
 Result Parser::ParseRun() {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("missing pipeline name for RUN command");
 
   size_t line = tokenizer_->GetCurrentLine();
@@ -1644,7 +1644,7 @@ Result Parser::ParseRun() {
     command_list_.push_back(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
   }
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid token in RUN command: " + token->ToOriginalString());
 
   if (token->AsString() == "DRAW_RECT") {
@@ -1661,7 +1661,7 @@ Result Parser::ParseRun() {
     if (token->IsEOS() || token->IsEOL())
       return Result("RUN DRAW_RECT command requires parameters");
 
-    if (!token->IsString() || token->AsString() != "POS") {
+    if (!token->IsIdentifier() || token->AsString() != "POS") {
       return Result("invalid token in RUN command: " +
                     token->ToOriginalString() + "; expected POS");
     }
@@ -1689,7 +1689,7 @@ Result Parser::ParseRun() {
     cmd->SetY(token->AsFloat());
 
     token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "SIZE") {
+    if (!token->IsIdentifier() || token->AsString() != "SIZE") {
       return Result("invalid token in RUN command: " +
                     token->ToOriginalString() + "; expected SIZE");
     }
@@ -1724,11 +1724,11 @@ Result Parser::ParseRun() {
       return Result("RUN DRAW_ARRAY requires attached vertex buffer");
 
     token = tokenizer_->NextToken();
-    if (!token->IsString() || token->AsString() != "AS")
+    if (!token->IsIdentifier() || token->AsString() != "AS")
       return Result("missing AS for RUN command");
 
     token = tokenizer_->NextToken();
-    if (!token->IsString()) {
+    if (!token->IsIdentifier()) {
       return Result("invalid topology for RUN command: " +
                     token->ToOriginalString());
     }
@@ -1739,7 +1739,7 @@ Result Parser::ParseRun() {
 
     token = tokenizer_->NextToken();
     bool indexed = false;
-    if (token->IsString() && token->AsString() == "INDEXED") {
+    if (token->IsIdentifier() && token->AsString() == "INDEXED") {
       if (!pipeline->GetIndexBuffer())
         return Result("RUN DRAW_ARRAYS INDEXED requires attached index buffer");
 
@@ -1750,7 +1750,7 @@ Result Parser::ParseRun() {
     uint32_t start_idx = 0;
     uint32_t count = 0;
     if (!token->IsEOS() && !token->IsEOL()) {
-      if (!token->IsString() || token->AsString() != "START_IDX")
+      if (!token->IsIdentifier() || token->AsString() != "START_IDX")
         return Result("missing START_IDX for RUN command");
 
       token = tokenizer_->NextToken();
@@ -1765,7 +1765,7 @@ Result Parser::ParseRun() {
       token = tokenizer_->NextToken();
 
       if (!token->IsEOS() && !token->IsEOL()) {
-        if (!token->IsString() || token->AsString() != "COUNT")
+        if (!token->IsIdentifier() || token->AsString() != "COUNT")
           return Result("missing COUNT for RUN command");
 
         token = tokenizer_->NextToken();
@@ -1809,7 +1809,7 @@ Result Parser::ParseRun() {
 
 Result Parser::ParseClear() {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("missing pipeline name for CLEAR command");
 
   size_t line = tokenizer_->GetCurrentLine();
@@ -1875,7 +1875,7 @@ Result Parser::ParseValues(const std::string& name,
 
 Result Parser::ParseExpect() {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid buffer name in EXPECT command");
 
   if (token->AsString() == "IDX")
@@ -1897,7 +1897,7 @@ Result Parser::ParseExpect() {
 
   token = tokenizer_->NextToken();
 
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid comparator in EXPECT command");
 
   if (token->AsString() == "EQ_BUFFER" || token->AsString() == "RMSE_BUFFER" ||
@@ -1905,7 +1905,7 @@ Result Parser::ParseExpect() {
     auto type = token->AsString();
 
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("invalid buffer name in EXPECT " + type + " command");
 
     auto* buffer_2 = script_->GetBuffer(token->AsString());
@@ -1938,7 +1938,7 @@ Result Parser::ParseExpect() {
       cmd->SetComparator(CompareBufferCommand::Comparator::kRmse);
 
       token = tokenizer_->NextToken();
-      if (!token->IsString() && token->AsString() == "TOLERANCE")
+      if (!token->IsIdentifier() && token->AsString() == "TOLERANCE")
         return Result("missing TOLERANCE for EXPECT RMSE_BUFFER");
 
       token = tokenizer_->NextToken();
@@ -1954,7 +1954,7 @@ Result Parser::ParseExpect() {
       cmd->SetComparator(CompareBufferCommand::Comparator::kHistogramEmd);
 
       token = tokenizer_->NextToken();
-      if (!token->IsString() && token->AsString() == "TOLERANCE")
+      if (!token->IsIdentifier() && token->AsString() == "TOLERANCE")
         return Result("missing TOLERANCE for EXPECT EQ_HISTOGRAM_EMD_BUFFER");
 
       token = tokenizer_->NextToken();
@@ -1997,7 +1997,7 @@ Result Parser::ParseExpect() {
     token = tokenizer_->NextToken();
   }
 
-  if (token->IsString() && token->AsString() == "SIZE") {
+  if (token->IsIdentifier() && token->AsString() == "SIZE") {
     if (!has_y_val)
       return Result("invalid Y value in EXPECT command");
 
@@ -2020,7 +2020,7 @@ Result Parser::ParseExpect() {
     probe->SetHeight(token->AsFloat());
 
     token = tokenizer_->NextToken();
-    if (!token->IsString()) {
+    if (!token->IsIdentifier()) {
       return Result("invalid token in EXPECT command:" +
                     token->ToOriginalString());
     }
@@ -2059,7 +2059,7 @@ Result Parser::ParseExpect() {
     }
 
     token = tokenizer_->NextToken();
-    if (token->IsString() && token->AsString() == "TOLERANCE") {
+    if (token->IsIdentifier() && token->AsString() == "TOLERANCE") {
       std::vector<Probe::Tolerance> tolerances;
 
       Result r = ParseTolerances(&tolerances);
@@ -2097,7 +2097,7 @@ Result Parser::ParseExpect() {
   auto probe = MakeUnique<ProbeSSBOCommand>(buffer);
   probe->SetLine(line);
 
-  if (token->IsString() && token->AsString() == "TOLERANCE") {
+  if (token->IsIdentifier() && token->AsString() == "TOLERANCE") {
     std::vector<Probe::Tolerance> tolerances;
 
     Result r = ParseTolerances(&tolerances);
@@ -2114,7 +2114,7 @@ Result Parser::ParseExpect() {
     token = tokenizer_->NextToken();
   }
 
-  if (!token->IsString() || !IsComparator(token->AsString())) {
+  if (!token->IsIdentifier() || !IsComparator(token->AsString())) {
     return Result("unexpected token in EXPECT command: " +
                   token->ToOriginalString());
   }
@@ -2152,7 +2152,7 @@ Result Parser::ParseCopy() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
     return Result("missing buffer name after COPY");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid buffer name after COPY");
 
   size_t line = tokenizer_->GetCurrentLine();
@@ -2168,7 +2168,7 @@ Result Parser::ParseCopy() {
   token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
     return Result("missing 'TO' after COPY and buffer name");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("expected 'TO' after COPY and buffer name");
 
   name = token->AsString();
@@ -2178,7 +2178,7 @@ Result Parser::ParseCopy() {
   token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
     return Result("missing buffer name after TO");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid buffer name after TO");
 
   name = token->AsString();
@@ -2203,7 +2203,7 @@ Result Parser::ParseCopy() {
 
 Result Parser::ParseClearColor() {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("missing pipeline name for CLEAR_COLOR command");
 
   size_t line = tokenizer_->GetCurrentLine();
@@ -2268,7 +2268,7 @@ Result Parser::ParseDeviceFeature() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
     return Result("missing feature name for DEVICE_FEATURE command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid feature name for DEVICE_FEATURE command");
   if (!script_->IsKnownFeature(token->AsString()))
     return Result("unknown feature name for DEVICE_FEATURE command");
@@ -2298,8 +2298,8 @@ Result Parser::ParseRepeat() {
        token = tokenizer_->NextToken()) {
     if (token->IsEOL())
       continue;
-    if (!token->IsString())
-      return Result("expected string");
+    if (!token->IsIdentifier())
+      return Result("expected identifier");
 
     std::string tok = token->AsString();
     if (tok == "END")
@@ -2311,7 +2311,7 @@ Result Parser::ParseRepeat() {
     if (!r.IsSuccess())
       return r;
   }
-  if (!token->IsString() || token->AsString() != "END")
+  if (!token->IsIdentifier() || token->AsString() != "END")
     return Result("missing END for REPEAT command");
 
   auto cmd = MakeUnique<RepeatCommand>(count);
@@ -2325,7 +2325,7 @@ Result Parser::ParseRepeat() {
 
 Result Parser::ParseDerivePipelineBlock() {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() == "FROM")
+  if (!token->IsIdentifier() || token->AsString() == "FROM")
     return Result("missing pipeline name for DERIVE_PIPELINE command");
 
   std::string name = token->AsString();
@@ -2333,11 +2333,11 @@ Result Parser::ParseDerivePipelineBlock() {
     return Result("duplicate pipeline name for DERIVE_PIPELINE command");
 
   token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "FROM")
+  if (!token->IsIdentifier() || token->AsString() != "FROM")
     return Result("missing FROM in DERIVE_PIPELINE command");
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("missing parent pipeline name in DERIVE_PIPELINE command");
 
   Pipeline* parent = script_->GetPipeline(token->AsString());
@@ -2358,7 +2358,7 @@ Result Parser::ParseDeviceExtension() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
     return Result("DEVICE_EXTENSION missing name");
-  if (!token->IsString()) {
+  if (!token->IsIdentifier()) {
     return Result("DEVICE_EXTENSION invalid name: " +
                   token->ToOriginalString());
   }
@@ -2372,7 +2372,7 @@ Result Parser::ParseInstanceExtension() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
     return Result("INSTANCE_EXTENSION missing name");
-  if (!token->IsString()) {
+  if (!token->IsIdentifier()) {
     return Result("INSTANCE_EXTENSION invalid name: " +
                   token->ToOriginalString());
   }
@@ -2384,14 +2384,14 @@ Result Parser::ParseInstanceExtension() {
 
 Result Parser::ParseSet() {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "ENGINE_DATA")
+  if (!token->IsIdentifier() || token->AsString() != "ENGINE_DATA")
     return Result("SET missing ENGINE_DATA");
 
   token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
     return Result("SET missing variable to be set");
 
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("SET invalid variable to set: " + token->ToOriginalString());
 
   if (token->AsString() != "fence_timeout_ms")
@@ -2410,7 +2410,7 @@ Result Parser::ParseSet() {
 
 Result Parser::ParseSampler() {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("invalid token when looking for sampler name");
 
   auto sampler = MakeUnique<Sampler>();
@@ -2418,14 +2418,14 @@ Result Parser::ParseSampler() {
 
   token = tokenizer_->NextToken();
   while (!token->IsEOS() && !token->IsEOL()) {
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("invalid token when looking for sampler parameters");
 
     auto param = token->AsString();
     if (param == "MAG_FILTER") {
       token = tokenizer_->NextToken();
 
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result("invalid token when looking for MAG_FILTER value");
 
       auto filter = token->AsString();
@@ -2439,7 +2439,7 @@ Result Parser::ParseSampler() {
     } else if (param == "MIN_FILTER") {
       token = tokenizer_->NextToken();
 
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result("invalid token when looking for MIN_FILTER value");
 
       auto filter = token->AsString();
@@ -2453,7 +2453,7 @@ Result Parser::ParseSampler() {
     } else if (param == "ADDRESS_MODE_U") {
       token = tokenizer_->NextToken();
 
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result("invalid token when looking for ADDRESS_MODE_U value");
 
       auto mode_str = token->AsString();
@@ -2466,7 +2466,7 @@ Result Parser::ParseSampler() {
     } else if (param == "ADDRESS_MODE_V") {
       token = tokenizer_->NextToken();
 
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result("invalid token when looking for ADDRESS_MODE_V value");
 
       auto mode_str = token->AsString();
@@ -2479,7 +2479,7 @@ Result Parser::ParseSampler() {
     } else if (param == "ADDRESS_MODE_W") {
       token = tokenizer_->NextToken();
 
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result("invalid token when looking for ADDRESS_MODE_W value");
 
       auto mode_str = token->AsString();
@@ -2492,7 +2492,7 @@ Result Parser::ParseSampler() {
     } else if (param == "BORDER_COLOR") {
       token = tokenizer_->NextToken();
 
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result("invalid token when looking for BORDER_COLOR value");
 
       auto color_str = token->AsString();
@@ -2558,7 +2558,7 @@ Result Parser::ParseTolerances(std::vector<Probe::Tolerance>* tolerances) {
 
     double value = token->AsDouble();
     token = tokenizer_->PeekNextToken();
-    if (token->IsString() && token->AsString() == "%") {
+    if (token->IsIdentifier() && token->AsString() == "%") {
       tolerances->push_back(Probe::Tolerance{true, value});
       tokenizer_->NextToken();
       token = tokenizer_->PeekNextToken();

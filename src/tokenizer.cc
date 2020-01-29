@@ -31,7 +31,7 @@ Result Token::ConvertToDouble() {
   if (IsDouble())
     return {};
 
-  if (IsString() || IsEOL() || IsEOS())
+  if (IsIdentifier() || IsEOL() || IsEOS())
     return Result("Invalid conversion to double");
 
   if (IsInteger()) {
@@ -78,7 +78,7 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
   // want to consume any other characters.
   if (data_[current_position_] == ',' || data_[current_position_] == '(' ||
       data_[current_position_] == ')') {
-    auto tok = MakeUnique<Token>(TokenType::kString);
+    auto tok = MakeUnique<Token>(TokenType::kIdentifier);
     std::string str(1, data_[current_position_]);
     tok->SetStringValue(str);
     ++current_position_;
@@ -125,7 +125,7 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
       }
     }
 
-    auto tok = MakeUnique<Token>(TokenType::kString);
+    auto tok = MakeUnique<Token>(TokenType::kIdentifier);
     tok->SetStringValue(tok_str);
     return tok;
   }

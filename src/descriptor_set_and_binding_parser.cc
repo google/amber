@@ -65,7 +65,7 @@ Result DescriptorSetAndBindingParser::Parse(const std::string& buffer_id) {
     descriptor_set_ = val;
   }
 
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Invalid buffer id: " + buffer_id);
 
   auto& str = token->AsString();

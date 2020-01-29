@@ -594,11 +594,11 @@ INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserBufferParseErrorTest,
     testing::Values(
         BufferParseError{"BUFFER my_buf FORMAT 123",
-                         "1: BUFFER FORMAT must be a string"},
+                         "1: BUFFER FORMAT must be an identifier"},
         BufferParseError{"BUFFER my_buf FORMAT A23A32",
                          "1: invalid BUFFER FORMAT"},
         BufferParseError{"BUFFER my_buf FORMAT",
-                         "1: BUFFER FORMAT must be a string"},
+                         "1: BUFFER FORMAT must be an identifier"},
         BufferParseError{"BUFFER my_buffer FORMAT R32G32B32A32_SFLOAT EXTRA",
                          "1: unknown token: EXTRA"},
         BufferParseError{"BUFFER 1234 DATA_TYPE uint8 SIZE 5 FILL 5",
