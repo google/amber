@@ -47,6 +47,8 @@ option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
 option(AMBER_USE_CLSPV "Build with Clspv support" OFF)
 option(AMBER_ENABLE_SWIFTSHADER
   "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
+option(AMBER_ENABLE_VK_DEBUGGING
+  "Build with cppdap debugging support" ${AMBER_ENABLE_VK_DEBUGGING})
 
 if (${AMBER_USE_CLSPV} OR ${AMBER_ENABLE_SWIFTSHADER})
   set(CMAKE_CXX_STANDARD 14)
@@ -148,6 +150,7 @@ add_definitions(-DAMBER_ENABLE_SHADERC=$<BOOL:${AMBER_ENABLE_SHADERC}>)
 add_definitions(-DAMBER_ENABLE_DXC=$<BOOL:${AMBER_ENABLE_DXC}>)
 add_definitions(-DAMBER_ENABLE_CLSPV=$<BOOL:${AMBER_ENABLE_CLSPV}>)
 add_definitions(-DAMBER_ENABLE_LODEPNG=$<BOOL:${AMBER_ENABLE_LODEPNG}>)
+add_definitions(-DAMBER_ENABLE_VK_DEBUGGING=$<BOOL:${AMBER_ENABLE_VK_DEBUGGING}>)
 
 set(CMAKE_DEBUG_POSTFIX "")
 

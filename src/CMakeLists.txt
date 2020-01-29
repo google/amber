@@ -102,6 +102,10 @@ if (${AMBER_ENABLE_SHADERC})
   target_link_libraries(libamber shaderc SPIRV)
 endif()
 
+if (${AMBER_ENABLE_VK_DEBUGGING})
+  target_link_libraries(libamber cppdap)
+endif()
+
 if (NOT MSVC AND NOT ANDROID)
   target_link_libraries(libamber pthread)
 endif()
