@@ -155,7 +155,7 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
        token = tokenizer.NextToken()) {
     if (token->IsEOL())
       continue;
-    if (!token->IsString()) {
+    if (!token->IsIdentifier()) {
       return Result(make_error(
           tokenizer,
           "Invalid token in requirements block: " + token->ToOriginalString()));
@@ -166,7 +166,7 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       script_->AddRequiredFeature(str);
     } else if (str == Pipeline::kGeneratedColorBuffer) {
       token = tokenizer.NextToken();
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result(make_error(tokenizer, "Missing framebuffer format"));
 
       TypeParser type_parser;
@@ -186,7 +186,7 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
 
     } else if (str == "depthstencil") {
       token = tokenizer.NextToken();
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result(make_error(tokenizer, "Missing depthStencil format"));
 
       TypeParser type_parser;
@@ -347,7 +347,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
     uint8_t loc = token->AsUint8();
 
     token = tokenizer.NextToken();
-    if (!token->IsString()) {
+    if (!token->IsIdentifier()) {
       return Result(
           make_error(tokenizer, "Unable to process vertex data header: " +
                                     token->ToOriginalString()));

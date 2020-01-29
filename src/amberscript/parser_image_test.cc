@@ -127,7 +127,7 @@ IMAGE image DATA_TYPE uint32 4
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("2: IMAGE dimensionality must be a string: 4", r.Error());
+  EXPECT_EQ("2: IMAGE dimensionality must be an identifier: 4", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ImageWidthMissing) {
