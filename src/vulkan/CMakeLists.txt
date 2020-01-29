@@ -53,6 +53,10 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
   target_compile_options(libamberenginevulkan PRIVATE -Wno-zero-as-null-pointer-constant)
 endif()
 
+if (${AMBER_ENABLE_VK_DEBUGGING})
+  target_link_libraries(libamberenginevulkan cppdap)
+endif()
+
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/src/vk-wrappers.inc.fake
     COMMAND
