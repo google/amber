@@ -14,16 +14,44 @@
 
 #include "amber/result.h"
 
+#include <sstream>
+
 namespace amber {
 
-Result::Result() : succeeded_(true) {}
+Result::Result(const std::string& err) {
+  errors_.emplace_back(err);
+}
 
-Result::Result(const std::string& err) : succeeded_(false), error_(err) {}
+Result& Result::operator+=(const Result& res) {
+  errors_.insert(std::end(errors_), std::begin(res.errors_),
+                 std::end(res.errors_));
+  return *this;
+}
 
-Result::Result(const Result&) = default;
+Result& Result::operator+=(const std::string& err) {
+  errors_.emplace_back(err);
+  return *this;
+}
 
-Result::~Result() = default;
-
-Result& Result::operator=(const Result&) = default;
+std::string Result::Error() const {
+  static const char* kNoErrorMsg = "<no error message given>";
+  switch (errors_.size()) {
+    case 0:
+      return "";
+    case 1:
+      return errors_[0].size() > 0 ? errors_[0] : kNoErrorMsg;
+    default: {
+      std::stringstream ss;
+      ss << errors_.size() << " errors:";
+      for (size_t i = 0; i < errors_.size(); i++) {
+        auto& err = errors_[i];
+        ss << "\n";
+        ss << " (" << (i + 1) << ") ";
+        ss << (err.size() > 0 ? err : kNoErrorMsg);
+      }
+      return ss.str();
+    }
+  }
+}
 
 }  // namespace amber

@@ -24,23 +24,30 @@ namespace amber {
 class Result {
  public:
   /// Creates a result which succeeded.
-  Result();
+  Result() = default;
+
   /// Creates a result which failed and will return |err|.
   explicit Result(const std::string& err);
-  Result(const Result&);
-  ~Result();
+  inline Result(const Result&) = default;
+  inline Result(Result&&) = default;
 
-  Result& operator=(const Result&);
+  inline Result& operator=(const Result&) = default;
+  inline Result& operator=(Result&&) = default;
+
+  /// Adds the errors from |res| to this Result.
+  Result& operator+=(const Result& res);
+
+  /// Adds the error |err| to this Result.
+  Result& operator+=(const std::string& err);
 
   /// Returns true if the result is a success.
-  bool IsSuccess() const { return succeeded_; }
+  bool IsSuccess() const { return errors_.size() == 0; }
 
   /// Returns the error string if |IsSuccess| is false.
-  const std::string& Error() const { return error_; }
+  std::string Error() const;
 
  private:
-  bool succeeded_;
-  std::string error_;
+  std::vector<std::string> errors_;
 };
 
 }  // namespace amber
