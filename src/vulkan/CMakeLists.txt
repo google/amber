@@ -21,6 +21,7 @@ set(VULKAN_ENGINE_SOURCES
     device.cc
     descriptor.cc
     engine_vulkan.cc
+    engine_vulkan_debugger.cc
     frame_buffer.cc
     graphics_pipeline.cc
     image_descriptor.cc
