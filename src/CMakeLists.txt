@@ -18,6 +18,7 @@ set(AMBER_SOURCES
     buffer.cc
     command.cc
     command_data.cc
+    debug.cc
     descriptor_set_and_binding_parser.cc
     engine.cc
     executor.cc
