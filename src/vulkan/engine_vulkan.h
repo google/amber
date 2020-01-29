@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "amber/vulkan_header.h"
@@ -37,6 +38,8 @@ namespace vulkan {
 /// Engine implementation based on Vulkan.
 class EngineVulkan : public Engine {
  public:
+  class VkDebugger;
+
   EngineVulkan();
   ~EngineVulkan() override;
 
@@ -59,6 +62,8 @@ class EngineVulkan : public Engine {
   Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) override;
   Result DoBuffer(const BufferCommand* cmd) override;
+
+  std::pair<Debugger*, Result> GetDebugger() override;
 
  private:
   struct PipelineInfo {
@@ -87,6 +92,8 @@ class EngineVulkan : public Engine {
   std::unique_ptr<CommandPool> pool_;
 
   std::map<amber::Pipeline*, PipelineInfo> pipeline_map_;
+
+  std::unique_ptr<Debugger> debugger_;
 };
 
 }  // namespace vulkan

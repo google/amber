@@ -159,6 +159,11 @@ class EngineStub : public Engine {
     return {};
   }
 
+  std::pair<Debugger*, Result> GetDebugger() override {
+    return {nullptr,
+            Result("EngineStub does not currently support a debugger")};
+  }
+
  private:
   bool fail_clear_command_ = false;
   bool fail_clear_color_command_ = false;

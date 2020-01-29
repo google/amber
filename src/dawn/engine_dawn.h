@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "dawn/dawncpp.h"
@@ -60,6 +61,10 @@ class EngineDawn : public Engine {
   Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) override;
   Result DoBuffer(const BufferCommand* cmd) override;
+
+  std::pair<Debugger*, Result> GetDebugger() override {
+    return {nullptr, Result("Dawn does not currently support a debugger")};
+  }
 
  private:
   // Returns the Dawn-specific render pipeline for the given command,

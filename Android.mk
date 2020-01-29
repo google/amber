@@ -59,6 +59,7 @@ LOCAL_SRC_FILES:= \
     src/vulkan/descriptor.cc \
     src/vulkan/device.cc \
     src/vulkan/engine_vulkan.cc \
+    src/vulkan/engine_vulkan_debugger.cc \
     src/vulkan/frame_buffer.cc \
     src/vulkan/graphics_pipeline.cc \
     src/vulkan/image_descriptor.cc \
