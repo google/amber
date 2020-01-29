@@ -242,7 +242,7 @@ Result Parser::Parse(const std::string& data) {
 
 bool Parser::IsRepeatable(const std::string& name) const {
   return name == "CLEAR" || name == "CLEAR_COLOR" || name == "COPY" ||
-         name == "EXPECT" || name == "RUN";
+         name == "EXPECT" || name == "RUN" || name == "DEBUG";
 }
 
 // The given |name| must be one of the repeatable commands or this method
@@ -258,6 +258,8 @@ Result Parser::ParseRepeatableCommand(const std::string& name) {
     return ParseExpect();
   if (name == "RUN")
     return ParseRun();
+  if (name == "DEBUG")
+    return ParseDebug();
 
   return Result("invalid repeatable command: " + name);
 }
@@ -1805,6 +1807,142 @@ Result Parser::ParseRun() {
   }
 
   return Result("invalid token in RUN command: " + token->AsString());
+}
+
+Result Parser::ParseDebug() {
+  // DEBUG extends a RUN with debugger test cases
+  auto res = ParseRun();
+  if (!res.IsSuccess()) {
+    return res;
+  }
+
+  auto dbg = MakeUnique<debug::Script>();
+  for (auto token = tokenizer_->NextToken();; token = tokenizer_->NextToken()) {
+    if (token->IsEOL())
+      continue;
+    if (token->IsEOS())
+      return Result("missing DEBUG END command");
+    if (token->IsIdentifier() && token->AsString() == "END")
+      break;
+
+    if (token->AsString() == "THREAD") {
+      res = ParseDebugThread(dbg.get());
+      if (!res.IsSuccess()) {
+        return res;
+      }
+    } else {
+      return Result("invalid token in DEBUG command: " + token->AsString());
+    }
+  }
+
+  command_list_.back()->SetDebugScript(std::move(dbg));
+
+  return Result();
+}
+
+Result Parser::ParseDebugThread(debug::Events* dbg) {
+  Result result;
+  auto parseThread = [&](debug::Thread* thread) {
+    result = ParseDebugThreadBody(thread);
+  };
+
+  auto token = tokenizer_->NextToken();
+  if (token->AsString() == "GLOBAL_INVOCATION_ID") {
+    uint32_t invocation[3] = {};
+    for (int i = 0; i < 3; i++) {
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("expected invocation index");
+      invocation[i] = token->AsUint32();
+    }
+    dbg->BreakOnComputeGlobalInvocation(invocation[0], invocation[1],
+                                        invocation[2], parseThread);
+  } else if (token->AsString() == "VERTEX_INDEX") {
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("expected vertex index");
+    auto vertex_index = token->AsUint32();
+    dbg->BreakOnVertexIndex(vertex_index, parseThread);
+  } else {
+    return Result("expected GLOBAL_INVOCATION_ID or VERTEX_INDEX");
+  }
+
+  return result;
+}
+
+Result Parser::ParseDebugThreadBody(debug::Thread* thread) {
+  for (auto token = tokenizer_->NextToken();; token = tokenizer_->NextToken()) {
+    if (token->IsEOL()) {
+      continue;
+    }
+    if (token->IsEOS()) {
+      return Result("missing THREAD END command");
+    }
+    if (token->IsIdentifier() && token->AsString() == "END") {
+      break;
+    }
+
+    if (token->AsString() == "EXPECT") {
+      token = tokenizer_->NextToken();
+      if (token->AsString() == "LOCATION") {
+        debug::Location location;
+        token = tokenizer_->NextToken();
+        if (!token->IsString()) {
+          return Result("expected file name string");
+        }
+        location.file = token->AsString();
+
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger()) {
+          return Result("expected line number");
+        }
+        location.line = token->AsUint32();
+
+        std::string line_source;
+        token = tokenizer_->NextToken();
+        if (token->IsString()) {
+          line_source = token->AsString();
+        }
+
+        thread->ExpectLocation(location, line_source);
+
+      } else if (token->AsString() == "LOCAL") {
+        auto name = tokenizer_->NextToken();
+        if (!name->IsString()) {
+          return Result("expected variable name");
+        }
+
+        if (tokenizer_->NextToken()->AsString() != "EQ") {
+          return Result("expected EQ");
+        }
+
+        auto value = tokenizer_->NextToken();
+        if (value->IsHex() || value->IsInteger()) {
+          thread->ExpectLocal(name->AsString(), value->AsInt64());
+        } else if (value->IsDouble()) {
+          thread->ExpectLocal(name->AsString(), value->AsDouble());
+        } else if (value->IsString()) {
+          thread->ExpectLocal(name->AsString(), value->AsString());
+        } else {
+          return Result("expected variable value");
+        }
+
+      } else {
+        return Result("expected LOCATION or LOCAL");
+      }
+    } else if (token->AsString() == "STEP_IN") {
+      thread->StepIn();
+    } else if (token->AsString() == "STEP_OUT") {
+      thread->StepOut();
+    } else if (token->AsString() == "STEP_OVER") {
+      thread->StepOver();
+    } else if (token->AsString() == "CONTINUE") {
+      thread->Continue();
+    } else {
+      return Result("invalid token in THREAD block: " + token->AsString());
+    }
+  }
+  return Result();
 }
 
 Result Parser::ParseClear() {

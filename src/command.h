@@ -25,6 +25,7 @@
 #include "amber/value.h"
 #include "src/buffer.h"
 #include "src/command_data.h"
+#include "src/debug.h"
 #include "src/pipeline_data.h"
 #include "src/sampler.h"
 
@@ -115,11 +116,20 @@ class Command {
   /// Returns the input file line this command was declared on.
   size_t GetLine() const { return line_; }
 
+  /// Sets the debug script to run for this command.
+  void SetDebugScript(std::unique_ptr<debug::Script>&& debug) {
+    debug_ = std::move(debug);
+  }
+
+  /// Returns the optional debug script associated with this command.
+  debug::Script* GetDebugScript() { return debug_.get(); }
+
  protected:
   explicit Command(Type type);
 
   Type command_type_;
   size_t line_ = 1;
+  std::unique_ptr<debug::Script> debug_;
 };
 
 /// Base class for commands which contain a pipeline.
