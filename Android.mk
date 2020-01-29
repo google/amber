@@ -27,6 +27,7 @@ LOCAL_SRC_FILES:= \
     src/buffer.cc \
     src/command.cc \
     src/command_data.cc \
+    src/debug.cc \
     src/descriptor_set_and_binding_parser.cc \
     src/engine.cc \
     src/executor.cc \
