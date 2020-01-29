@@ -298,6 +298,56 @@ TEST_F(TokenizerTest, StringStartingWithNum) {
   EXPECT_EQ("/ABC", next->AsString());
 }
 
+TEST_F(TokenizerTest, StringQuotedSingleLine) {
+  Tokenizer t("\"Hello world\"");
+  auto next = t.NextToken();
+  ASSERT_TRUE(next != nullptr);
+  EXPECT_TRUE(next->IsString());
+  EXPECT_EQ("Hello world", next->AsString());
+
+  next = t.NextToken();
+  ASSERT_TRUE(next != nullptr);
+  EXPECT_TRUE(next->IsEOS());
+}
+
+TEST_F(TokenizerTest, StringQuotedMultiLine) {
+  Tokenizer t("\"Hello\n\nworld\"");
+  auto next = t.NextToken();
+  ASSERT_TRUE(next != nullptr);
+  EXPECT_TRUE(next->IsString());
+  EXPECT_EQ("Hello\n\nworld", next->AsString());
+
+  next = t.NextToken();
+  ASSERT_TRUE(next != nullptr);
+  EXPECT_TRUE(next->IsEOS());
+}
+
+TEST_F(TokenizerTest, StringQuotedUnterminated) {
+  Tokenizer t("\"Hello\n\nworld");
+  auto next = t.NextToken();
+  ASSERT_TRUE(next != nullptr);
+  EXPECT_TRUE(next->IsString());
+  EXPECT_EQ("Hello\n\nworld", next->AsString());
+
+  next = t.NextToken();
+  ASSERT_TRUE(next != nullptr);
+  EXPECT_TRUE(next->IsEOS());
+}
+
+TEST_F(TokenizerTest, StringQuotedEscapeSequences) {
+  Tokenizer t(R"("_\"\\_a\aa_b\bb_t\tt_n\nn_v\vv_f\ff_r\rr_")");
+  auto next = t.NextToken();
+  ASSERT_TRUE(next != nullptr);
+  EXPECT_TRUE(next->IsString());
+
+  std::string expect = "_\"\\_a\aa_b\bb_t\tt_n\nn_v\vv_f\ff_r\rr_";
+  EXPECT_EQ(expect, next->AsString());
+
+  next = t.NextToken();
+  ASSERT_TRUE(next != nullptr);
+  EXPECT_TRUE(next->IsEOS());
+}
+
 TEST_F(TokenizerTest, BracketsAndCommas) {
   Tokenizer t("(1.0, 2, abc)");
   auto next = t.NextToken();
