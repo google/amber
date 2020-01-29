@@ -54,6 +54,12 @@ SUPPRESSIONS = {
    ]
 }
 
+SUPPRESSIONS_DEBUGGER = [
+  # Debugger functionality is not ready for testing (yet)
+  "debugger_hlsl_line_stepping.amber",
+  "debugger_spirv_line_stepping.amber",
+]
+
 SUPPRESSIONS_SWIFTSHADER = [
   # Incorrect rendering: github.com/google/amber/issues/727
   "draw_array_instanced.vkscript",
@@ -181,6 +187,9 @@ class TestCase:
 
     is_opencl_test = base in OPENCL_CASES
     if not self.use_opencl and is_opencl_test:
+      return True
+
+    if base in SUPPRESSIONS_DEBUGGER:
       return True
 
     if system in SUPPRESSIONS.keys():
