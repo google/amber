@@ -1816,7 +1816,7 @@ Result Parser::ParseDebug() {
     return res;
   }
 
-  auto dbg = MakeUnique<debug::Script>();
+  auto dbg = debug::Script::Create();
   for (auto token = tokenizer_->NextToken();; token = tokenizer_->NextToken()) {
     if (token->IsEOL())
       continue;
@@ -1841,11 +1841,6 @@ Result Parser::ParseDebug() {
 }
 
 Result Parser::ParseDebugThread(debug::Events* dbg) {
-  Result result;
-  auto parseThread = [&](debug::Thread* thread) {
-    result = ParseDebugThreadBody(thread);
-  };
-
   auto token = tokenizer_->NextToken();
   if (token->AsString() == "GLOBAL_INVOCATION_ID") {
     uint32_t invocation[3] = {};
@@ -1855,19 +1850,33 @@ Result Parser::ParseDebugThread(debug::Events* dbg) {
         return Result("expected invocation index");
       invocation[i] = token->AsUint32();
     }
+
+    auto thread = debug::ThreadScript::Create();
+    auto result = ParseDebugThreadBody(thread.get());
+    if (!result.IsSuccess()) {
+      return result;
+    }
+
     dbg->BreakOnComputeGlobalInvocation(invocation[0], invocation[1],
-                                        invocation[2], parseThread);
+                                        invocation[2], thread);
   } else if (token->AsString() == "VERTEX_INDEX") {
     token = tokenizer_->NextToken();
     if (!token->IsInteger())
       return Result("expected vertex index");
     auto vertex_index = token->AsUint32();
-    dbg->BreakOnVertexIndex(vertex_index, parseThread);
+
+    auto thread = debug::ThreadScript::Create();
+    auto result = ParseDebugThreadBody(thread.get());
+    if (!result.IsSuccess()) {
+      return result;
+    }
+
+    dbg->BreakOnVertexIndex(vertex_index, thread);
   } else {
     return Result("expected GLOBAL_INVOCATION_ID or VERTEX_INDEX");
   }
 
-  return result;
+  return Result();
 }
 
 Result Parser::ParseDebugThreadBody(debug::Thread* thread) {

@@ -14,8 +14,10 @@
 
 #include "src/debug.h"
 
+#include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "src/make_unique.h"
 
@@ -24,15 +26,44 @@ namespace debug {
 
 namespace {
 
-// ThreadScript is an implementation of amber::debug::Thread that records all
-// calls made on it, which can be later replayed using ThreadScript::Run().
-class ThreadScript : public Thread {
+class ScriptImpl : public Script {
  public:
-  void Run(Thread* thread) {
+  void Run(Events* e) const override {
+    for (auto f : sequence_) {
+      f(e);
+    }
+  }
+
+  void BreakOnComputeGlobalInvocation(
+      uint32_t x,
+      uint32_t y,
+      uint32_t z,
+      const std::shared_ptr<const ThreadScript>& thread) override {
+    sequence_.emplace_back([=](Events* events) {
+      events->BreakOnComputeGlobalInvocation(x, y, z, thread);
+    });
+  }
+
+  void BreakOnVertexIndex(
+      uint32_t index,
+      const std::shared_ptr<const ThreadScript>& thread) override {
+    sequence_.emplace_back(
+        [=](Events* events) { events->BreakOnVertexIndex(index, thread); });
+  }
+
+ private:
+  using Event = std::function<void(Events*)>;
+  std::vector<Event> sequence_;
+};
+
+class ThreadScriptImpl : public ThreadScript {
+ public:
+  void Run(Thread* thread) const override {
     for (auto f : sequence_) {
       f(thread);
     }
   }
+
   // Thread compliance
   void StepOver() override {
     sequence_.emplace_back([](Thread* t) { t->StepOver(); });
@@ -77,38 +108,15 @@ class ThreadScript : public Thread {
 
 Thread::~Thread() = default;
 Events::~Events() = default;
+ThreadScript::~ThreadScript() = default;
+Script::~Script() = default;
 
-void Script::Run(Events* e) {
-  for (auto f : sequence_) {
-    f(e);
-  }
+std::shared_ptr<ThreadScript> ThreadScript::Create() {
+  return std::make_shared<ThreadScriptImpl>();
 }
 
-void Script::BreakOnComputeGlobalInvocation(uint32_t x,
-                                            uint32_t y,
-                                            uint32_t z,
-                                            const OnThread& callback) {
-  auto script = std::make_shared<ThreadScript>();
-  callback(script.get());  // Record
-
-  sequence_.emplace_back([=](Events* events) {
-    events->BreakOnComputeGlobalInvocation(x, y, z, [=](Thread* thread) {
-      script->Run(thread);  // Replay
-    });
-  });
-}
-
-void Script::BreakOnVertexIndex(uint32_t index, const OnThread& callback) {
-  // std::make_shared is used here instead of MakeUnique as std::function is
-  // copyable, and cannot capture move-only values.
-  auto script = std::make_shared<ThreadScript>();
-  callback(script.get());  // Record
-
-  sequence_.emplace_back([=](Events* events) {
-    events->BreakOnVertexIndex(index, [=](Thread* thread) {
-      script->Run(thread);  // Replay
-    });
-  });
+std::unique_ptr<Script> Script::Create() {
+  return MakeUnique<ScriptImpl>();
 }
 
 }  // namespace debug
