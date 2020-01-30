@@ -18,14 +18,17 @@
 #include <stdint.h>
 
 #include <functional>
+#include <memory>
 #include <string>
-#include <vector>
 
 #include "amber/result.h"
 
 /// amber::debug holds the types used for testing a graphics debugger.
 namespace amber {
 namespace debug {
+
+// Forward declaration.
+class ThreadScript;
 
 /// Location holds a file path and a 1-based line number.
 struct Location {
@@ -75,48 +78,54 @@ class Thread {
 /// Events is the interface used to control the debugger.
 class Events {
  public:
-  using OnThread = std::function<void(Thread*)>;
-
   virtual ~Events();
 
   /// BreakOnComputeGlobalInvocation instructs the debugger to set a breakpoint
   /// at the start of the compute shader program for the invocation with the
-  /// global invocation identifier [|x|, |y|, |z|]. The |amber::debug::Thread|*
-  /// parameter to the |OnThread| callback is used to control and verify the
-  /// debugger behavior for the given thread.
-  virtual void BreakOnComputeGlobalInvocation(uint32_t x,
-                                              uint32_t y,
-                                              uint32_t z,
-                                              const OnThread&) = 0;
+  /// global invocation identifier [|x|, |y|, |z|], and run the |ThreadScript|
+  /// once the breakpoint is hit.
+  virtual void BreakOnComputeGlobalInvocation(
+      uint32_t x,
+      uint32_t y,
+      uint32_t z,
+      const std::shared_ptr<const ThreadScript>&) = 0;
 
   /// BreakOnVertexIndex instructs the debugger to set a breakpoint at the start
   /// of the vertex shader program for the invocation with the vertex index
-  /// [index]. The |amber::debug::Thread|* parameter to the |OnThread| callback
-  /// is used to control and verify the debugger behavior for the given thread.
-  virtual void BreakOnVertexIndex(uint32_t index, const OnThread&) = 0;
+  /// [index], and run the |ThreadScript| once the breakpoint is hit.
+  virtual void BreakOnVertexIndex(
+      uint32_t index,
+      const std::shared_ptr<const ThreadScript>&) = 0;
 };
 
-/// Script is an implementation of the |amber::debug::Events| interface, and is
+/// ThreadScript is a specialization of the |amber::debug::Thread| interface,
+/// and is used to record all the calls made on it, which can be later replayed
+/// with |ThreadScript::Run|.
+class ThreadScript : public Thread {
+ public:
+  ~ThreadScript();
+
+  /// Run replays all the calls made to the |ThreadScript| on the given |Thread|
+  /// parameter.
+  virtual void Run(Thread*) const = 0;
+
+  // Create constructs and returns a new ThreadScript.
+  static std::shared_ptr<ThreadScript> Create();
+};
+
+/// Script is an specialization of the |amber::debug::Events| interface, and is
 /// used to record all the calls made on it, which can be later replayed with
 /// |Script::Run|.
 class Script : public Events {
  public:
+  ~Script();
+
   /// Run replays all the calls made to the |Script| on the given |Events|
-  /// parameter, including calls made to any |amber::debug::Thread|s passed to
-  /// |OnThread| callbacks.
-  void Run(Events*);
+  /// parameter.
+  virtual void Run(Events*) const = 0;
 
-  // Events compliance
-  void BreakOnComputeGlobalInvocation(uint32_t x,
-                                      uint32_t y,
-                                      uint32_t z,
-                                      const OnThread&) override;
-
-  void BreakOnVertexIndex(uint32_t index, const OnThread&) override;
-
- private:
-  using Event = std::function<void(Events*)>;
-  std::vector<Event> sequence_;
+  // Create constructs and returns a new Script.
+  static std::unique_ptr<Script> Create();
 };
 
 }  // namespace debug

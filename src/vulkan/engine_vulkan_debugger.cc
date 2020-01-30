@@ -495,15 +495,15 @@ class Thread : public debug::Thread {
   Thread(std::shared_ptr<dap::Session> session,
          int threadId,
          int lane,
-         const debug::Events::OnThread& callback)
+         std::shared_ptr<const debug::ThreadScript> script)
       : threadId_(threadId),
         lane_(lane),
         client_(session, [this](const std::string& err) { OnError(err); }) {
     // The thread script runs concurrently with other debugger thread scripts.
     // Run on a separate amber thread.
-    thread_ = std::thread([this, callback] {
-      callback(this);  // Begin running the thread script.
-      done_.Signal();  // Signal when done.
+    thread_ = std::thread([this, script] {
+      script->Run(this);  // Begin running the thread script.
+      done_.Signal();     // Signal when done.
     });
   }
 
@@ -773,17 +773,19 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
       uint32_t x,
       uint32_t y,
       uint32_t z,
-      const debug::Events::OnThread& callback) override {
+      const std::shared_ptr<const debug::ThreadScript>& script) override {
     std::unique_lock<std::mutex> lock(threads_mutex_);
-    pendingThreads_.emplace(GlobalInvocationId{x, y, z}, callback);
+    pendingThreads_.emplace(GlobalInvocationId{x, y, z}, script);
   };
 
-  void BreakOnVertexIndex(uint32_t index, const OnThread& callback) override {
+  void BreakOnVertexIndex(
+      uint32_t index,
+      const std::shared_ptr<const debug::ThreadScript>& script) override {
     InvocationKey::Data data;
     data.vertexId = index;
     auto key = InvocationKey{InvocationKey::Type::kVertexIndex, data};
     std::unique_lock<std::mutex> lock(threads_mutex_);
-    pendingThreads_.emplace(key, callback);
+    pendingThreads_.emplace(key, script);
   }
 
  private:
@@ -799,7 +801,7 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
     std::unique_lock<std::mutex> lock(threads_mutex_);
     for (auto it = pendingThreads_.begin(); it != pendingThreads_.end(); it++) {
       auto& key = it->first;
-      auto& callback = it->second;
+      auto& script = it->second;
       switch (key.type) {
         case InvocationKey::Type::kGlobalInvocationId: {
           auto invocation_id = key.data.globalInvocationId;
@@ -807,8 +809,7 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
           if (FindGlobalInvocationId(threadId, invocation_id, &lane)) {
             DEBUGGER_LOG("Breakpoint hit: GetGlobalInvocationId: [%d, %d, %d]",
                          invocation_id.x, invocation_id.y, invocation_id.z);
-            auto thread =
-                MakeUnique<Thread>(session_, threadId, lane, callback);
+            auto thread = MakeUnique<Thread>(session_, threadId, lane, script);
             runningThreads_.emplace_back(std::move(thread));
             pendingThreads_.erase(it);
             return;
@@ -820,8 +821,7 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
           int lane;
           if (FindVertexIndex(threadId, vertex_id, &lane)) {
             DEBUGGER_LOG("Breakpoint hit: VertexId: %d", vertex_id);
-            auto thread =
-                MakeUnique<Thread>(session_, threadId, lane, callback);
+            auto thread = MakeUnique<Thread>(session_, threadId, lane, script);
             runningThreads_.emplace_back(std::move(thread));
             pendingThreads_.erase(it);
             return;
@@ -934,9 +934,10 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
     error_ += error;
   }
 
-  using PendingThreadsMap = std::unordered_map<InvocationKey,
-                                               debug::Script::OnThread,
-                                               InvocationKey::Hash>;
+  using PendingThreadsMap =
+      std::unordered_map<InvocationKey,
+                         std::shared_ptr<const debug::ThreadScript>,
+                         InvocationKey::Hash>;
   using ThreadVector = std::vector<std::unique_ptr<Thread>>;
   std::shared_ptr<dap::Session> session_;
   std::mutex threads_mutex_;
