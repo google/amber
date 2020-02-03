@@ -523,38 +523,30 @@ class Thread : public debug::Thread {
   // debug::Thread compliance
   void StepOver() override {
     DEBUGGER_LOG("StepOver()");
-    if (error_.IsSuccess()) {
-      dap::NextRequest request;
-      request.threadId = threadId_;
-      client_.Send(request);
-    }
+    dap::NextRequest request;
+    request.threadId = threadId_;
+    client_.Send(request);
   }
 
   void StepIn() override {
     DEBUGGER_LOG("StepIn()");
-    if (error_.IsSuccess()) {
-      dap::StepInRequest request;
-      request.threadId = threadId_;
-      client_.Send(request);
-    }
+    dap::StepInRequest request;
+    request.threadId = threadId_;
+    client_.Send(request);
   }
 
   void StepOut() override {
     DEBUGGER_LOG("StepOut()");
-    if (error_.IsSuccess()) {
-      dap::StepOutRequest request;
-      request.threadId = threadId_;
-      client_.Send(request);
-    }
+    dap::StepOutRequest request;
+    request.threadId = threadId_;
+    client_.Send(request);
   }
 
   void Continue() override {
     DEBUGGER_LOG("Continue()");
-    if (error_.IsSuccess()) {
-      dap::ContinueRequest request;
-      request.threadId = threadId_;
-      client_.Send(request);
-    }
+    dap::ContinueRequest request;
+    request.threadId = threadId_;
+    client_.Send(request);
   }
 
   void ExpectLocation(const debug::Location& location,
@@ -577,8 +569,14 @@ class Thread : public debug::Thread {
       OnError("Expected file to be '" + location.file + "' but file was " +
               got_location.file);
     } else if (got_location.line != location.line) {
-      OnError("Expected line number to be " + std::to_string(location.line) +
-              " but line number was " + std::to_string(got_location.line));
+      std::stringstream ss;
+      ss << "Expected line " << std::to_string(location.line);
+      if (line != "") {
+        ss << " `" << line << "`";
+      }
+      ss << " but line was " << std::to_string(got_location.line) << " `"
+         << got_source_line << "`";
+      OnError(ss.str());
     } else if (line != "" && got_source_line != line) {
       OnError("Expected source line to be:\n  " + line + "\nbut line was:\n  " +
               got_source_line);
