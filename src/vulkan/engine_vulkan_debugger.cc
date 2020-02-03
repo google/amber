@@ -489,8 +489,6 @@ bool InvocationKey::operator==(const InvocationKey& other) const {
 
 // Thread controls and verifies a single debugger thread of execution.
 class Thread : public debug::Thread {
-  using Result = Result;
-
  public:
   Thread(std::shared_ptr<dap::Session> session,
          int threadId,
