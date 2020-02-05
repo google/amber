@@ -508,11 +508,13 @@ TEST_P(ParseSpvEnvTest, Samples) {
 const uint32_t vulkan = 0;
 const uint32_t vulkan_1_0 = ((uint32_t(1) << 22));
 const uint32_t vulkan_1_1 = ((uint32_t(1) << 22) | (1 << 12));
+const uint32_t vulkan_1_2 = ((uint32_t(1) << 22) | (2 << 12));
 const uint32_t spv_1_0 = uint32_t(0x10000);
 const uint32_t spv_1_1 = uint32_t(0x10100);
 const uint32_t spv_1_2 = uint32_t(0x10200);
 const uint32_t spv_1_3 = uint32_t(0x10300);
 const uint32_t spv_1_4 = uint32_t(0x10400);
+const uint32_t spv_1_5 = uint32_t(0x10500);
 
 INSTANTIATE_TEST_SUITE_P(ParseSpvEnvFailures,
                          ParseSpvEnvTest,
@@ -522,7 +524,7 @@ INSTANTIATE_TEST_SUITE_P(ParseSpvEnvFailures,
                              {"spv99.9", false, 0u, 0u, 0u},
                              {"spv1.0.1", false, 0u, 0u, 0u},
                              {"spv1.0.1", false, 0u, 0u, 0u},
-                             {"spv1.5", false, 0u, 0u, 0u},
+                             {"spv1.9", false, 0u, 0u, 0u},
                              {"vulkan99", false, 0u, 0u, 0u},
                              {"vulkan99.9", false, 0u, 0u, 0u},
                          }));
@@ -535,11 +537,13 @@ INSTANTIATE_TEST_SUITE_P(ParseSpvEnvSuccesses,
                              {"spv1.1", true, vulkan, vulkan_1_1, spv_1_1},
                              {"spv1.2", true, vulkan, vulkan_1_1, spv_1_2},
                              {"spv1.3", true, vulkan, vulkan_1_1, spv_1_3},
-                             {"spv1.4", true, vulkan, vulkan_1_1, spv_1_4},
+                             {"spv1.4", true, vulkan, vulkan_1_2, spv_1_4},
+                             {"spv1.5", true, vulkan, vulkan_1_2, spv_1_5},
                              {"vulkan1.0", true, vulkan, vulkan_1_0, spv_1_0},
                              {"vulkan1.1", true, vulkan, vulkan_1_1, spv_1_3},
                              {"vulkan1.1spv1.4", true, vulkan, vulkan_1_1,
                               spv_1_4},
+                             {"vulkan1.2", true, vulkan, vulkan_1_2, spv_1_5},
                          }));
 
 }  // namespace amber
