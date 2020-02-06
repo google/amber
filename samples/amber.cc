@@ -78,7 +78,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -d                        -- Disable validation layers.
   -D <ID>                   -- ID of device to run with (Vulkan only).
   -f <value>                -- Sets the fence timeout value to |value|
-  -t <spirv_env>            -- The target SPIR-V environment e.g., spv1.3, vulkan1.1.
+  -t <spirv_env>            -- The target SPIR-V environment e.g., spv1.3, vulkan1.1, vulkan1.2.
                                If a SPIR-V environment, assume the lowest version of Vulkan that
                                requires support of that version of SPIR-V.
                                If a Vulkan environment, use the highest version of SPIR-V required
