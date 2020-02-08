@@ -89,65 +89,11 @@ END
 # there are no race conditions.
 DEBUG pipeline 1 1 1
     THREAD GLOBAL_INVOCATION_ID 2 0 0
-        EXPECT LOCATION "ComputeShader0.spvasm"  1 "OpCapability Shader"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm"  2 "OpMemoryModel Logical GLSL450"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm"  3 "OpEntryPoint GLCompute %1 \"main\" %2"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm"  4 "OpExecutionMode %1 LocalSize 4 1 1"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm"  5 "OpDecorate %3 ArrayStride 4"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm"  6 "OpMemberDecorate %4 0 Offset 0"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm"  7 "OpDecorate %4 BufferBlock"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm"  8 "OpDecorate %5 DescriptorSet 0"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm"  9 "OpDecorate %5 Binding 1"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 10 "OpDecorate %2 BuiltIn GlobalInvocationId"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 11 "OpDecorate %6 DescriptorSet 0"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 12 "OpDecorate %6 Binding 0"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 13 "%7 = OpTypeVoid"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 14 "%8 = OpTypeFunction %7"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 15 "%9 = OpTypeInt 32 1"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 16 "%10 = OpTypeInt 32 0"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 17 "%3 = OpTypeRuntimeArray %9"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 18 "%4 = OpTypeStruct %3"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 19 "%11 = OpTypePointer Uniform %4"
-        STEP_IN
         EXPECT LOCATION "ComputeShader0.spvasm" 20 "%5 = OpVariable %11 Uniform"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 21 "%12 = OpConstant %9 0"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 22 "%13 = OpConstant %10 0"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 23 "%14 = OpTypeVector %10 3"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 24 "%15 = OpTypePointer Input %14"
         STEP_IN
         EXPECT LOCATION "ComputeShader0.spvasm" 25 "%2 = OpVariable %15 Input"
         STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 26 "%16 = OpTypePointer Input %10"
-        STEP_IN
         EXPECT LOCATION "ComputeShader0.spvasm" 27 "%6 = OpVariable %11 Uniform"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 28 "%17 = OpTypePointer Uniform %9"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 29 "%1 = OpFunction %7 None %8"
-        STEP_IN
-        EXPECT LOCATION "ComputeShader0.spvasm" 30 "%18 = OpLabel"
         STEP_IN
         EXPECT LOCATION "ComputeShader0.spvasm" 31 "%19 = OpAccessChain %16 %2 %13"
         STEP_IN
