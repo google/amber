@@ -92,6 +92,31 @@ std::vector<std::string> Split(const std::string& str, const std::string& sep) {
   return out;
 }
 
+// GlobalInvocationId holds a three-element unsigned integer index, used to
+// identifiy a single compute invocation.
+struct GlobalInvocationId {
+  size_t hash() const { return x << 20 | y << 10 | z; }
+  bool operator==(const GlobalInvocationId& other) const {
+    return x == other.x && y == other.y && z == other.z;
+  }
+
+  uint32_t x;
+  uint32_t y;
+  uint32_t z;
+};
+
+// WindowSpacePosition holds a two-element unsigned integer index, used to
+// identifiy a single fragment invocation.
+struct WindowSpacePosition {
+  size_t hash() const { return x << 10 | y; }
+  bool operator==(const WindowSpacePosition& other) const {
+    return x == other.x && y == other.y;
+  }
+
+  uint32_t x;
+  uint32_t y;
+};
+
 // Forward declaration.
 struct Variable;
 
@@ -141,21 +166,18 @@ struct Variable {
     return true;
   }
 
-  template <typename T>
-  bool Get(std::tuple<T, T, T>* out) const {
+  bool Get(GlobalInvocationId* out) const {
     auto x = children.Find("x");
     auto y = children.Find("y");
     auto z = children.Find("z");
-    if (x != nullptr && y != nullptr && z != nullptr) {
-      T elX;
-      T elY;
-      T elZ;
-      if (x->Get(&elX) && y->Get(&elY) && z->Get(&elZ)) {
-        *out = std::tuple<T, T, T>{elX, elY, elZ};
-        return true;
-      }
-    }
-    return false;
+    return (x != nullptr && y != nullptr && z != nullptr && x->Get(&out->x) &&
+            y->Get(&out->y) && z->Get(&out->z));
+  }
+
+  bool Get(WindowSpacePosition* out) const {
+    auto x = children.Find("x");
+    auto y = children.Find("y");
+    return (x != nullptr && y != nullptr && x->Get(&out->x) && y->Get(&out->y));
   }
 };
 
@@ -398,19 +420,6 @@ class Client {
   SourceCache sourceCache_;
 };
 
-// GlobalInvocationId holds a three-element unsigned integer index, used to
-// identifiy a single compute invocation.
-struct GlobalInvocationId {
-  size_t hash() const { return x << 20 | y << 10 | z; }
-  bool operator==(const GlobalInvocationId& other) const {
-    return x == other.x && y == other.y && z == other.z;
-  }
-
-  uint32_t x;
-  uint32_t y;
-  uint32_t z;
-};
-
 // InvocationKey is a tagged-union structure that identifies a single shader
 // invocation.
 struct InvocationKey {
@@ -420,13 +429,15 @@ struct InvocationKey {
     size_t operator()(const InvocationKey& key) const;
   };
 
-  enum class Type { kGlobalInvocationId, kVertexIndex };
+  enum class Type { kGlobalInvocationId, kVertexIndex, kWindowSpacePosition };
   union Data {
-    GlobalInvocationId globalInvocationId;
-    uint32_t vertexId;
+    GlobalInvocationId global_invocation_id;
+    uint32_t vertex_id;
+    WindowSpacePosition window_space_position;
   };
 
-  explicit InvocationKey(const GlobalInvocationId& id);
+  explicit InvocationKey(const GlobalInvocationId&);
+  explicit InvocationKey(const WindowSpacePosition&);
   InvocationKey(Type, const Data&);
 
   bool operator==(const InvocationKey& other) const;
@@ -442,10 +453,13 @@ size_t InvocationKey::Hash::operator()(const InvocationKey& key) const {
   size_t hash = 31 * static_cast<size_t>(key.type);
   switch (key.type) {
     case Type::kGlobalInvocationId:
-      hash += key.data.globalInvocationId.hash();
+      hash += key.data.global_invocation_id.hash();
       break;
     case Type::kVertexIndex:
-      hash += key.data.vertexId;
+      hash += key.data.vertex_id;
+      break;
+    case Type::kWindowSpacePosition:
+      hash += key.data.window_space_position.hash();
       break;
   }
   return hash;
@@ -453,7 +467,12 @@ size_t InvocationKey::Hash::operator()(const InvocationKey& key) const {
 
 InvocationKey::InvocationKey(const GlobalInvocationId& id)
     : type(Type::kGlobalInvocationId) {
-  data.globalInvocationId = id;
+  data.global_invocation_id = id;
+}
+
+InvocationKey::InvocationKey(const WindowSpacePosition& pos)
+    : type(Type::kWindowSpacePosition) {
+  data.window_space_position = pos;
 }
 
 InvocationKey::InvocationKey(Type type, const Data& data)
@@ -462,13 +481,17 @@ InvocationKey::InvocationKey(Type type, const Data& data)
 std::string InvocationKey::String() const {
   std::stringstream ss;
   switch (type) {
-    case Type::kGlobalInvocationId: {
-      auto& id = data.globalInvocationId;
-      ss << "GlobalInvocation(" << id.x << ", " << id.y << ", " << id.z << ")";
+    case Type::kGlobalInvocationId:
+      ss << "GlobalInvocation(" << data.global_invocation_id.x << ", "
+         << data.global_invocation_id.y << ", " << data.global_invocation_id.z
+         << ")";
       break;
-    }
     case Type::kVertexIndex:
-      ss << "VertexIndex(" << data.vertexId << ")";
+      ss << "VertexIndex(" << data.vertex_id << ")";
+      break;
+    case Type::kWindowSpacePosition:
+      ss << "WindowSpacePosition(" << data.window_space_position.x << ", "
+         << data.window_space_position.y << ")";
       break;
   }
   return ss.str();
@@ -480,9 +503,11 @@ bool InvocationKey::operator==(const InvocationKey& other) const {
   }
   switch (type) {
     case Type::kGlobalInvocationId:
-      return data.globalInvocationId == other.data.globalInvocationId;
+      return data.global_invocation_id == other.data.global_invocation_id;
     case Type::kVertexIndex:
-      return data.vertexId == other.data.vertexId;
+      return data.vertex_id == other.data.vertex_id;
+    case Type::kWindowSpacePosition:
+      return data.window_space_position == other.data.window_space_position;
   }
   return false;
 }
@@ -667,7 +692,9 @@ class Thread : public debug::Thread {
 class EngineVulkan::VkDebugger : public Engine::Debugger {
   static constexpr const char* kComputeShaderFunctionName = "ComputeShader";
   static constexpr const char* kVertexShaderFunctionName = "VertexShader";
+  static constexpr const char* kFragmentShaderFunctionName = "FragmentShader";
   static constexpr const char* kGlobalInvocationId = "globalInvocationId";
+  static constexpr const char* kWindowSpacePosition = "windowSpacePosition";
   static constexpr const char* kVertexIndex = "vertexIndex";
 
  public:
@@ -721,6 +748,8 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
       fbp.name = kComputeShaderFunctionName;
       fbp_req.breakpoints.emplace_back(fbp);
       fbp.name = kVertexShaderFunctionName;
+      fbp_req.breakpoints.emplace_back(fbp);
+      fbp.name = kFragmentShaderFunctionName;
       fbp_req.breakpoints.emplace_back(fbp);
       auto fbp_res = session_->send(fbp_req).get();
       if (fbp_res.error) {
@@ -778,10 +807,18 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
       uint32_t index,
       const std::shared_ptr<const debug::ThreadScript>& script) override {
     InvocationKey::Data data;
-    data.vertexId = index;
+    data.vertex_id = index;
     auto key = InvocationKey{InvocationKey::Type::kVertexIndex, data};
     std::unique_lock<std::mutex> lock(threads_mutex_);
     pendingThreads_.emplace(key, script);
+  }
+
+  void BreakOnFragmentWindowSpacePosition(
+      uint32_t x,
+      uint32_t y,
+      const std::shared_ptr<const debug::ThreadScript>& script) override {
+    std::unique_lock<std::mutex> lock(threads_mutex_);
+    pendingThreads_.emplace(WindowSpacePosition{x, y}, script);
   }
 
  private:
@@ -790,8 +827,8 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
   // thread needs testing, and if so, creates a new ::Thread.
   // If there's no pendingThread_ entry for the given thread, it is resumed to
   // allow the shader to continue executing.
-  void OnBreakpointHit(dap::integer threadId) {
-    DEBUGGER_LOG("Breakpoint hit: thread %d", (int)threadId);
+  void OnBreakpointHit(dap::integer thread_id) {
+    DEBUGGER_LOG("Breakpoint hit: thread %d", (int)thread_id);
     Client client(session_, [this](const std::string& err) { OnError(err); });
 
     std::unique_lock<std::mutex> lock(threads_mutex_);
@@ -800,12 +837,12 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
       auto& script = it->second;
       switch (key.type) {
         case InvocationKey::Type::kGlobalInvocationId: {
-          auto invocation_id = key.data.globalInvocationId;
+          auto invocation_id = key.data.global_invocation_id;
           int lane;
-          if (FindGlobalInvocationId(threadId, invocation_id, &lane)) {
+          if (FindGlobalInvocationId(thread_id, invocation_id, &lane)) {
             DEBUGGER_LOG("Breakpoint hit: GetGlobalInvocationId: [%d, %d, %d]",
                          invocation_id.x, invocation_id.y, invocation_id.z);
-            auto thread = MakeUnique<Thread>(session_, threadId, lane, script);
+            auto thread = MakeUnique<Thread>(session_, thread_id, lane, script);
             runningThreads_.emplace_back(std::move(thread));
             pendingThreads_.erase(it);
             return;
@@ -813,11 +850,24 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
           break;
         }
         case InvocationKey::Type::kVertexIndex: {
-          auto vertex_id = key.data.vertexId;
+          auto vertex_id = key.data.vertex_id;
           int lane;
-          if (FindVertexIndex(threadId, vertex_id, &lane)) {
+          if (FindVertexIndex(thread_id, vertex_id, &lane)) {
             DEBUGGER_LOG("Breakpoint hit: VertexId: %d", vertex_id);
-            auto thread = MakeUnique<Thread>(session_, threadId, lane, script);
+            auto thread = MakeUnique<Thread>(session_, thread_id, lane, script);
+            runningThreads_.emplace_back(std::move(thread));
+            pendingThreads_.erase(it);
+            return;
+          }
+          break;
+        }
+        case InvocationKey::Type::kWindowSpacePosition: {
+          auto position = key.data.window_space_position;
+          int lane;
+          if (FindWindowSpacePosition(thread_id, position, &lane)) {
+            DEBUGGER_LOG("Breakpoint hit: VertexId: [%d, %d]", position.x,
+                         position.y);
+            auto thread = MakeUnique<Thread>(session_, thread_id, lane, script);
             runningThreads_.emplace_back(std::move(thread));
             pendingThreads_.erase(it);
             return;
@@ -829,100 +879,82 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
 
     // No pending tests for this thread. Let it carry on...
     dap::ContinueRequest request;
-    request.threadId = threadId;
+    request.threadId = thread_id;
     client.Send(request);
+  }
+
+  // FindLocal looks for the shader's local variable with the given name and
+  // value in the stack frames' locals, returning true if found, and assigns the
+  // index of the SIMD lane it was found in to |lane|.
+  template <typename T>
+  bool FindLocal(dap::integer thread_id,
+                 const char* name,
+                 const T& value,
+                 int* lane) {
+    Client client(session_, [this](const std::string& err) { OnError(err); });
+
+    dap::StackFrame frame;
+    if (!client.TopStackFrame(thread_id, &frame)) {
+      return false;
+    }
+
+    dap::ScopesRequest scopeReq;
+    dap::ScopesResponse scopeRes;
+    scopeReq.frameId = frame.id;
+    if (!client.Send(scopeReq, &scopeRes)) {
+      return false;
+    }
+
+    Variables locals;
+    if (!client.GetLocals(frame, &locals)) {
+      return false;
+    }
+
+    for (int i = 0;; i++) {
+      auto lane_var = client.GetLane(locals, i);
+      if (!lane_var) {
+        break;
+      }
+      if (auto var = lane_var->Find(name)) {
+        T got;
+        if (var->Get(&got)) {
+          if (got == value) {
+            *lane = i;
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   // FindGlobalInvocationId looks for the compute shader's global invocation id
   // in the stack frames' locals, returning true if found, and assigns the index
   // of the SIMD lane it was found in to |lane|.
   // TODO(bclayton): This value should probably be in the globals, not locals!
-  bool FindGlobalInvocationId(dap::integer threadId,
+  bool FindGlobalInvocationId(dap::integer thread_id,
                               const GlobalInvocationId& id,
                               int* lane) {
-    Client client(session_, [this](const std::string& err) { OnError(err); });
-
-    dap::StackFrame frame;
-    if (!client.TopStackFrame(threadId, &frame)) {
-      return false;
-    }
-
-    dap::ScopesRequest scopeReq;
-    dap::ScopesResponse scopeRes;
-    scopeReq.frameId = frame.id;
-    if (!client.Send(scopeReq, &scopeRes)) {
-      return false;
-    }
-
-    Variables locals;
-    if (!client.GetLocals(frame, &locals)) {
-      return false;
-    }
-
-    for (int i = 0;; i++) {
-      auto lane_var = client.GetLane(locals, i);
-      if (!lane_var) {
-        break;
-      }
-      if (auto var = lane_var->Find(kGlobalInvocationId)) {
-        std::tuple<uint32_t, uint32_t, uint32_t> got;
-        if (var->Get(&got)) {
-          uint32_t x;
-          uint32_t y;
-          uint32_t z;
-          std::tie(x, y, z) = got;
-          if (x == id.x && y == id.y && z == id.z) {
-            *lane = i;
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
+    return FindLocal(thread_id, kGlobalInvocationId, id, lane);
   }
 
   // FindVertexIndex looks for the requested vertex shader's vertex index in the
   // stack frames' locals, returning true if found, and assigns the index of the
   // SIMD lane it was found in to |lane|.
   // TODO(bclayton): This value should probably be in the globals, not locals!
-  bool FindVertexIndex(dap::integer threadId, uint32_t index, int* lane) {
-    Client client(session_, [this](const std::string& err) { OnError(err); });
+  bool FindVertexIndex(dap::integer thread_id, uint32_t index, int* lane) {
+    return FindLocal(thread_id, kVertexIndex, index, lane);
+  }
 
-    dap::StackFrame frame;
-    if (!client.TopStackFrame(threadId, &frame)) {
-      return false;
-    }
-
-    dap::ScopesRequest scopeReq;
-    dap::ScopesResponse scopeRes;
-    scopeReq.frameId = frame.id;
-    if (!client.Send(scopeReq, &scopeRes)) {
-      return false;
-    }
-
-    Variables locals;
-    if (!client.GetLocals(frame, &locals)) {
-      return false;
-    }
-
-    for (int i = 0;; i++) {
-      auto lane_var = client.GetLane(locals, i);
-      if (!lane_var) {
-        break;
-      }
-      if (auto var = lane_var->Find(kVertexIndex)) {
-        uint32_t got;
-        if (var->Get(&got)) {
-          if (got == index) {
-            *lane = i;
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
+  // FindWindowSpacePosition looks for the fragment shader's window space
+  // position in the stack frames' locals, returning true if found, and assigns
+  // the index of the SIMD lane it was found in to |lane|.
+  // TODO(bclayton): This value should probably be in the globals, not locals!
+  bool FindWindowSpacePosition(dap::integer thread_id,
+                               const WindowSpacePosition& pos,
+                               int* lane) {
+    return FindLocal(thread_id, kWindowSpacePosition, pos, lane);
   }
 
   void OnError(const std::string& error) {
