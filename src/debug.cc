@@ -51,6 +51,15 @@ class ScriptImpl : public Script {
         [=](Events* events) { events->BreakOnVertexIndex(index, thread); });
   }
 
+  void BreakOnFragmentWindowSpacePosition(
+      uint32_t x,
+      uint32_t y,
+      const std::shared_ptr<const ThreadScript>& thread) override {
+    sequence_.emplace_back([=](Events* events) {
+      events->BreakOnFragmentWindowSpacePosition(x, y, thread);
+    });
+  }
+
  private:
   using Event = std::function<void(Events*)>;
   std::vector<Event> sequence_;

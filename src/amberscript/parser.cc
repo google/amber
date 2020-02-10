@@ -1872,6 +1872,24 @@ Result Parser::ParseDebugThread(debug::Events* dbg) {
     }
 
     dbg->BreakOnVertexIndex(vertex_index, thread);
+  } else if (token->AsString() == "FRAGMENT_WINDOW_SPACE_POSITION") {
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("expected x unsigned integer coordinate");
+    auto x = token->AsUint32();
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("expected y unsigned integer coordinate");
+    auto y = token->AsUint32();
+
+    auto thread = debug::ThreadScript::Create();
+    auto result = ParseDebugThreadBody(thread.get());
+    if (!result.IsSuccess()) {
+      return result;
+    }
+
+    dbg->BreakOnFragmentWindowSpacePosition(x, y, thread);
   } else {
     return Result("expected GLOBAL_INVOCATION_ID or VERTEX_INDEX");
   }

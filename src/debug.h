@@ -92,9 +92,18 @@ class Events {
 
   /// BreakOnVertexIndex instructs the debugger to set a breakpoint at the start
   /// of the vertex shader program for the invocation with the vertex index
-  /// [index], and run the |ThreadScript| once the breakpoint is hit.
+  /// |index|, and run the |ThreadScript| once the breakpoint is hit.
   virtual void BreakOnVertexIndex(
       uint32_t index,
+      const std::shared_ptr<const ThreadScript>&) = 0;
+
+  /// BreakOnFragmentWindowSpacePosition instructs the debugger to set a
+  /// breakpoint at the start of the fragment shader program for the invocation
+  /// with the window space coordinate [x, y], and run the |ThreadScript| once
+  /// the breakpoint is hit.
+  virtual void BreakOnFragmentWindowSpacePosition(
+      uint32_t x,
+      uint32_t y,
       const std::shared_ptr<const ThreadScript>&) = 0;
 };
 

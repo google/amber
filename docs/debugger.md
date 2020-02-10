@@ -51,8 +51,6 @@ Within this `RUN` block, you may declare any number of `THREAD` command blocks t
 
   Defines a sequence of debugger commands to run when the shader invocation for the fragment with the given window space position is executed.
 
-  TODO(bclayton): This has not yet been implemented.
-
 Each of the `THREAD` commands begins a block that must be terminated with an `END`.
 
 Within each `THREAD` command block, you may use any of the following commands to control execution of the shader, and to verify the debugger's behaviour:
