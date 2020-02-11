@@ -96,6 +96,10 @@ class ThreadScriptImpl : public ThreadScript {
         [=](Thread* t) { t->ExpectLocation(location, line); });
   }
 
+  void ExpectCallstack(const std::vector<StackFrame>& callstack) override {
+    sequence_.emplace_back([=](Thread* t) { t->ExpectCallstack(callstack); });
+  }
+
   void ExpectLocal(const std::string& name, int64_t value) override {
     sequence_.emplace_back([=](Thread* t) { t->ExpectLocal(name, value); });
   }

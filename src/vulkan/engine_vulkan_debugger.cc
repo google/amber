@@ -218,9 +218,20 @@ class Client {
 
   // TopStackFrame retrieves the frame at the top of the thread's call stack.
   // Returns true on success, false on error.
-  bool TopStackFrame(dap::integer threadId, dap::StackFrame* frame) {
+  bool TopStackFrame(dap::integer thread_id, dap::StackFrame* frame) {
+    std::vector<dap::StackFrame> stack;
+    if (!Callstack(thread_id, &stack)) {
+      return false;
+    }
+    *frame = stack.front();
+    return true;
+  }
+
+  // Callstack retrieves the thread's full call stack.
+  // Returns true on success, false on error.
+  bool Callstack(dap::integer thread_id, std::vector<dap::StackFrame>* stack) {
     dap::StackTraceRequest request;
-    request.threadId = threadId;
+    request.threadId = thread_id;
     auto response = session_->send(request).get();
     if (response.error) {
       onerror_(response.error.message);
@@ -230,7 +241,7 @@ class Client {
       onerror_("Stack frame is empty");
       return false;
     }
-    *frame = response.response.stackFrames.front();
+    *stack = response.response.stackFrames;
     return true;
   }
 
@@ -519,7 +530,7 @@ class Thread : public debug::Thread {
          int threadId,
          int lane,
          std::shared_ptr<const debug::ThreadScript> script)
-      : threadId_(threadId),
+      : thread_id_(threadId),
         lane_(lane),
         client_(session, [this](const std::string& err) { OnError(err); }) {
     // The thread script runs concurrently with other debugger thread scripts.
@@ -549,28 +560,28 @@ class Thread : public debug::Thread {
   void StepOver() override {
     DEBUGGER_LOG("StepOver()");
     dap::NextRequest request;
-    request.threadId = threadId_;
+    request.threadId = thread_id_;
     client_.Send(request);
   }
 
   void StepIn() override {
     DEBUGGER_LOG("StepIn()");
     dap::StepInRequest request;
-    request.threadId = threadId_;
+    request.threadId = thread_id_;
     client_.Send(request);
   }
 
   void StepOut() override {
     DEBUGGER_LOG("StepOut()");
     dap::StepOutRequest request;
-    request.threadId = threadId_;
+    request.threadId = thread_id_;
     client_.Send(request);
   }
 
   void Continue() override {
     DEBUGGER_LOG("Continue()");
     dap::ContinueRequest request;
-    request.threadId = threadId_;
+    request.threadId = thread_id_;
     client_.Send(request);
   }
 
@@ -580,7 +591,7 @@ class Thread : public debug::Thread {
                  location.line);
 
     dap::StackFrame frame;
-    if (!client_.TopStackFrame(threadId_, &frame)) {
+    if (!client_.TopStackFrame(thread_id_, &frame)) {
       return;
     }
 
@@ -608,6 +619,53 @@ class Thread : public debug::Thread {
     }
   }
 
+  void ExpectCallstack(
+      const std::vector<debug::StackFrame>& callstack) override {
+    DEBUGGER_LOG("ExpectCallstack()");
+
+    std::vector<dap::StackFrame> got_stack;
+    if (!client_.Callstack(thread_id_, &got_stack)) {
+      return;
+    }
+
+    std::stringstream ss;
+
+    size_t count = std::min(callstack.size(), got_stack.size());
+    for (size_t i = 0; i < count; i++) {
+      auto const& got_frame = got_stack[i];
+      auto const& want_frame = callstack[i];
+      bool ok = got_frame.name == want_frame.name;
+      if (ok && want_frame.location.file != "") {
+        ok = got_frame.source.has_value() &&
+             got_frame.source->name.value("") == want_frame.location.file;
+      }
+      if (ok && want_frame.location.line != 0) {
+        ok = got_frame.line == static_cast<int>(want_frame.location.line);
+      }
+      if (!ok) {
+        ss << "Unexpected stackframe at frame " << i
+           << "\nGot:      " << FrameString(got_frame)
+           << "\nExpected: " << FrameString(want_frame) << "\n";
+      }
+    }
+
+    if (got_stack.size() > callstack.size()) {
+      ss << "Callstack has an additional "
+         << (got_stack.size() - callstack.size()) << " unexpected frames\n";
+    } else if (callstack.size() > got_stack.size()) {
+      ss << "Callstack is missing " << (callstack.size() - got_stack.size())
+         << " frames\n";
+    }
+
+    if (ss.str().size() > 0) {
+      ss << "Full callstack:\n";
+      for (auto& frame : got_stack) {
+        ss << "  " << FrameString(frame) << "\n";
+      }
+      OnError(ss.str());
+    }
+  }
+
   void ExpectLocal(const std::string& name, int64_t value) override {
     DEBUGGER_LOG("ExpectLocal('%s', %d)", name.c_str(), (int)value);
     ExpectLocalT(name, value);
@@ -626,7 +684,7 @@ class Thread : public debug::Thread {
   template <typename T>
   void ExpectLocalT(const std::string& name, const T& expect) {
     dap::StackFrame frame;
-    if (!client_.TopStackFrame(threadId_, &frame)) {
+    if (!client_.TopStackFrame(thread_id_, &frame)) {
       return;
     }
 
@@ -677,7 +735,28 @@ class Thread : public debug::Thread {
     error_ += err;
   }
 
-  const dap::integer threadId_;
+  std::string FrameString(const dap::StackFrame& frame) {
+    std::stringstream ss;
+    ss << frame.name;
+    if (frame.source.has_value() && frame.source->name.has_value()) {
+      ss << " " << frame.source->name.value() << ":" << frame.line;
+    }
+    return ss.str();
+  }
+
+  std::string FrameString(const debug::StackFrame& frame) {
+    std::stringstream ss;
+    ss << frame.name;
+    if (frame.location.file != "") {
+      ss << " " << frame.location.file;
+      if (frame.location.line != 0) {
+        ss << ":" << frame.location.line;
+      }
+    }
+    return ss.str();
+  }
+
+  const dap::integer thread_id_;
   const int lane_;
   Client client_;
   std::thread thread_;

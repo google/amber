@@ -1932,7 +1932,6 @@ Result Parser::ParseDebugThreadBody(debug::Thread* thread) {
         }
 
         thread->ExpectLocation(location, line_source);
-
       } else if (token->AsString() == "LOCAL") {
         auto name = tokenizer_->NextToken();
         if (!name->IsString()) {
@@ -1953,7 +1952,37 @@ Result Parser::ParseDebugThreadBody(debug::Thread* thread) {
         } else {
           return Result("expected variable value");
         }
+      } else if (token->AsString() == "CALLSTACK") {
+        std::vector<debug::StackFrame> stack;
+        for (auto tok = tokenizer_->NextToken(); tok->AsString() != "END";
+             tok = tokenizer_->NextToken()) {
+          if (tok->IsEOL()) {
+            continue;
+          }
+          debug::StackFrame frame;
+          if (!tok->IsString()) {
+            return Result("expected stack frame name");
+          }
+          frame.name = tok->AsString();
 
+          tok = tokenizer_->NextToken();
+          if (tok->IsString()) {
+            frame.location.file = tok->AsString();
+            tok = tokenizer_->NextToken();
+            if (tok->IsInteger()) {
+              frame.location.line = tok->AsUint32();
+            } else if (!tok->IsEOL()) {
+              return Result(
+                  "expected end of line or stack frame location number");
+            }
+          } else if (!tok->IsEOL()) {
+            return Result(
+                "expected end of line or stack frame location file name");
+          }
+
+          stack.emplace_back(frame);
+        }
+        thread->ExpectCallstack(stack);
       } else {
         return Result("expected LOCATION or LOCAL");
       }

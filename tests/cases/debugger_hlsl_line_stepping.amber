@@ -328,6 +328,10 @@ CLEAR pipeline
 
 DEBUG pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 6
     THREAD VERTEX_INDEX 2
+        EXPECT CALLSTACK
+            "main" "simple_vs.hlsl" 9
+            "VertexShader"
+        END
         EXPECT LOCATION "simple_vs.hlsl" 9 "  VS_OUTPUT vout;"
         EXPECT LOCAL "pos.x" EQ -1.007874
         EXPECT LOCAL "pos.y" EQ 1.000000
