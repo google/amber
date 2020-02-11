@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "amber/result.h"
 
@@ -32,8 +33,14 @@ class ThreadScript;
 
 /// Location holds a file path and a 1-based line number.
 struct Location {
-  std::string file;
-  uint32_t line;
+  std::string file;   // empty represents unspecified.
+  uint32_t line = 0;  // 0 represents unspecified.
+};
+
+// StackFrame holds name and location of a stack frame.
+struct StackFrame {
+  std::string name;
+  Location location;
 };
 
 /// Thread is the interface used to control a single debugger thread of
@@ -65,6 +72,12 @@ class Thread {
   /// non-empty, then the line's textual source will also be verified.
   virtual void ExpectLocation(const Location& location,
                               const std::string& line) = 0;
+
+  /// ExpectCallstack verifies that the debugger is currently suspended for the
+  /// given thread of execution with the specified callstack.
+  /// callstack is ordered with the 0th element representing the most nested
+  /// call.
+  virtual void ExpectCallstack(const std::vector<StackFrame>& callstack) = 0;
 
   /// ExpectLocal verifies that the local variable with the given name has the
   /// expected value. |name| may contain `.` delimiters to index structure or

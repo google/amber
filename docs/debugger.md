@@ -70,7 +70,18 @@ Within each `THREAD` command block, you may use any of the following commands to
 * `EXPECT LOCATION` \<file name\> \<line number\> [\<line source\>]
 
   Verifies that the debugger is currently paused at the given line location.
-  The [\<line source\>] is an additional, optional check that verifies the line of the file reported by the debuggeer is as expected.
+  The [\<line source\>] is an additional, optional check that verifies the line of the file reported by the debugger is as expected.
+
+* `EXPECT CALLSTACK`
+
+  Verifies that the debugger is currently paused with the given complete stack frame.
+  Each frame must be declared on a separate line, starting with the most nested call, and has the form:
+
+    \<function name\> [\<file name\> [\<line number\>]]
+
+  The [\<file name\>] and [\<line number\>] fields are additional, optionals checks that verify the file and line numbers reported by the debugger for the frame are as expected.
+
+  The list of stack frames is terminated with `END`.
 
 * `EXPECT LOCAL` \<name\> `EQ` [\<value\>]
 
