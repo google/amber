@@ -76,8 +76,6 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (device_->GetPtrs()->vkEndCommandBuffer(command_) != VK_SUCCESS)
     return Result("Vulkan::Calling vkEndCommandBuffer Fail");
 
-  guarded_ = false;
-
   if (device_->GetPtrs()->vkResetFences(device_->GetVkDevice(), 1, &fence_) !=
       VK_SUCCESS) {
     return Result("Vulkan::Calling vkResetFences Fail");
@@ -103,15 +101,17 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS)
     return Result("Vulkan::Calling vkResetCommandBuffer Fail");
 
+  guarded_ = false;
+
   return {};
 }
 
 void CommandBuffer::Reset() {
   if (guarded_) {
     device_->GetPtrs()->vkEndCommandBuffer(command_);
+    device_->GetPtrs()->vkResetCommandBuffer(command_, 0);
     guarded_ = false;
   }
-  device_->GetPtrs()->vkResetCommandBuffer(command_, 0);
 }
 
 CommandBufferGuard::CommandBufferGuard(CommandBuffer* buffer)
