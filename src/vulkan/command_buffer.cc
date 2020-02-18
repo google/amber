@@ -103,7 +103,6 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS)
     return Result("Vulkan::Calling vkResetCommandBuffer Fail");
 
-
   return {};
 }
 
