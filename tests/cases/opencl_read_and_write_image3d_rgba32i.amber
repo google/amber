@@ -1,0 +1,74 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER compute write OPENCL-C
+#pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
+kernel void write_foo(write_only image3d_t im) {
+  int4 dim = get_image_dim(im);
+  int gid_x = get_global_id(0);
+  int gid_y = get_global_id(1);
+  int gid_z = get_global_id(2);
+  int4 coord = (int4)(gid_x, gid_y, gid_z, 0);
+  int4 data = (int4)(gid_x + 1, gid_y + 1, gid_z + 1, 0);
+  write_imagei(im, coord, data);
+}
+END
+
+SHADER compute read OPENCL-C
+kernel void read_foo(read_only image3d_t im, sampler_t sampler, global int4* out) {
+  int gid_x = get_global_id(0);
+  int gid_y = get_global_id(1);
+  int gid_z = get_global_id(2);
+  float4 coord = (float4)(gid_x, gid_y, gid_z, 0);
+  int linear = 4 * gid_z + 2 * gid_y + gid_x;
+  out[linear] = read_imagei(im, sampler, coord);
+}
+END
+
+BUFFER out_buf DATA_TYPE vec4<int32> SIZE 8 FILL 15
+IMAGE im3d DATA_TYPE vec4<int32> DIM_3D \
+  WIDTH 2 HEIGHT 2 DEPTH 2 FILL 0
+SAMPLER sampler \
+  ADDRESS_MODE_U clamp_to_edge \
+  ADDRESS_MODE_V clamp_to_edge \
+  ADDRESS_MODE_W clamp_to_edge \
+  MIN_FILTER nearest \
+  MAG_FILTER nearest \
+  MIN_LOD 0.0 \
+  MAX_LOD 0.0
+
+PIPELINE compute write_pipe
+  ATTACH write ENTRY_POINT write_foo
+  BIND BUFFER im3d KERNEL ARG_NAME im
+END
+
+PIPELINE compute read_pipe
+  ATTACH read ENTRY_POINT read_foo
+  BIND BUFFER im3d KERNEL ARG_NAME im
+  BIND SAMPLER sampler KERNEL ARG_NAME sampler
+  BIND BUFFER out_buf KERNEL ARG_NAME out
+END
+
+RUN write_pipe 2 2 2
+RUN read_pipe 2 2 2
+
+EXPECT out_buf IDX 0   EQ 1 1 1 0
+EXPECT out_buf IDX 16  EQ 2 1 1 0
+EXPECT out_buf IDX 32  EQ 1 2 1 0
+EXPECT out_buf IDX 48  EQ 2 2 1 0
+EXPECT out_buf IDX 64  EQ 1 1 2 0
+EXPECT out_buf IDX 80  EQ 2 1 2 0
+EXPECT out_buf IDX 96  EQ 1 2 2 0
+EXPECT out_buf IDX 112 EQ 2 2 2 0

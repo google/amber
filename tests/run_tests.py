@@ -42,17 +42,64 @@ SUPPRESSIONS = {
     "multiple_ssbo_update_with_graphics_pipeline.vkscript",
     "multiple_ubo_update_with_graphics_pipeline.vkscript",
     # DXC not currently building on bot
-    "draw_triangle_list_hlsl.amber"
+    "draw_triangle_list_hlsl.amber",
   ],
   "Linux": [
     # DXC not currently building on bot
-    "draw_triangle_list_hlsl.amber"
+    "draw_triangle_list_hlsl.amber",
   ],
   "Win": [
     # DXC not currently building on bot
-    "draw_triangle_list_hlsl.amber"
+    "draw_triangle_list_hlsl.amber",
    ]
- }
+}
+
+SUPPRESSIONS_DEBUGGER = [
+  # Debugger functionality is not ready for testing (yet)
+  "debugger_hlsl_line_stepping.amber",
+  "debugger_spirv_line_stepping.amber",
+]
+
+SUPPRESSIONS_SWIFTSHADER = [
+  # Incorrect rendering: github.com/google/amber/issues/727
+  "draw_array_instanced.vkscript",
+  # Exceeds device limit maxComputeWorkGroupInvocations
+  "draw_sampled_image.amber",
+  # No geometry shader support
+  "draw_triangle_list_using_geom_shader.vkscript",
+  # No tessellation shader support
+  "draw_triangle_list_using_tessellation.vkscript",
+  # Vertex buffer format not supported
+  "draw_triangle_list_in_r8g8b8a8_srgb_color_frame.vkscript",
+  "draw_triangle_list_in_r32g32b32a32_sfloat_color_frame.vkscript",
+  "draw_triangle_list_in_r16g16b16a16_uint_color_frame.vkscript",
+  # Color attachment format is not supported
+  "draw_triangle_list_in_r16g16b16a16_snorm_color_frame.vkscript",
+  "draw_triangle_list_in_r8g8b8a8_snorm_color_frame.vkscript",
+  # No supporting device for Float16Int8Features
+  "float16.amber",
+  # SEGV: github.com/google/amber/issues/726
+  "matrices_uniform_draw.amber",
+  # SEGV: github.com/google/amber/issues/725
+  "multiple_ssbo_update_with_graphics_pipeline.vkscript",
+  "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline_less_than_4.vkscript",
+  # Exceeded maxBoundDescriptorSets limit of physical device
+  "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
+  # shaderStorageImageWriteWithoutFormat but is not enabled on the device
+  "opencl_read_and_write_image3d_rgba32i.amber",
+  "opencl_write_image.amber",
+  "glsl_read_and_write_image3d_rgba32i.amber",
+]
+
+OPENCL_CASES = [
+  "opencl_bind_buffer.amber",
+  "opencl_c_copy.amber",
+  "opencl_read_and_write_image3d_rgba32i.amber",
+  "opencl_read_image.amber",
+  "opencl_read_image_literal_sampler.amber",
+  "opencl_set_arg.amber",
+  "opencl_write_image.amber",
+ ]
 
 SUPPRESSIONS_DAWN = [
   # Dawn does not support push constants
@@ -113,10 +160,12 @@ SUPPRESSIONS_DAWN = [
 ]
 
 class TestCase:
-  def __init__(self, input_path, parse_only, use_dawn):
+  def __init__(self, input_path, parse_only, use_dawn, use_opencl, use_swiftshader):
     self.input_path = input_path
     self.parse_only = parse_only
     self.use_dawn = use_dawn
+    self.use_opencl = use_opencl
+    self.use_swiftshader = use_swiftshader
 
     self.results = {}
 
@@ -126,10 +175,26 @@ class TestCase:
 
   def IsSuppressed(self):
     system = platform.system()
+
+    base = os.path.basename(self.input_path)
+    is_dawn_suppressed = base in SUPPRESSIONS_DAWN
+    if self.use_dawn and is_dawn_suppressed:
+      return True
+
+    is_swiftshader_suppressed = base in SUPPRESSIONS_SWIFTSHADER
+    if self.use_swiftshader and is_swiftshader_suppressed:
+      return True
+
+    is_opencl_test = base in OPENCL_CASES
+    if not self.use_opencl and is_opencl_test:
+      return True
+
+    if base in SUPPRESSIONS_DEBUGGER:
+      return True
+
     if system in SUPPRESSIONS.keys():
-      is_system_suppressed = os.path.basename(self.input_path) in SUPPRESSIONS[system]
-      is_dawn_suppressed = os.path.basename(self.input_path) in SUPPRESSIONS_DAWN
-      return is_system_suppressed | (self.use_dawn & is_dawn_suppressed)
+      is_system_suppressed = base in SUPPRESSIONS[system]
+      return is_system_suppressed
 
     return False
 
@@ -148,7 +213,7 @@ class TestCase:
 
 class TestRunner:
   def RunTest(self, tc):
-    print "Testing %s" % tc.GetInputPath()
+    print("Testing {}".format(tc.GetInputPath()))
 
     cmd = [self.options.test_prog_path, '-q']
     if tc.IsParseOnly():
@@ -159,14 +224,14 @@ class TestRunner:
 
     try:
       err = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-      if err != "" and not tc.IsExpectedFail() and not tc.IsSuppressed():
-        sys.stdout.write(err)
+      if len(err) != 0 and not tc.IsExpectedFail() and not tc.IsSuppressed():
+        sys.stdout.write(err.decode('utf-8'))
         return False
 
     except Exception as e:
-      print e.output
       if not tc.IsExpectedFail() and not tc.IsSuppressed():
-        print e
+        print("{}".format("".join(map(chr, bytearray(e.output)))))
+        print(e)
       return False
 
     return True
@@ -189,23 +254,23 @@ class TestRunner:
     if len(self.failures) > 0:
       self.failures.sort()
 
-      print '\nSummary of Failures:'
+      print('\nSummary of Failures:')
       for failure in self.failures:
-        print failure
+        print(failure)
 
     if len(self.suppressed) > 0:
       self.suppressed.sort()
 
-      print '\nSummary of Suppressions:'
+      print('\nSummary of Suppressions:')
       for suppression in self.suppressed:
-        print suppression
+        print(suppression)
 
-    print
-    print 'Test cases executed: %d' % len(self.test_cases)
-    print '  Successes:  %d' % (len(self.test_cases) - len(self.suppressed) - len(self.failures))
-    print '  Failures:   %d' % len(self.failures)
-    print '  Suppressed: %d' % len(self.suppressed)
-    print
+    print('')
+    print('Test cases executed: {}'.format(len(self.test_cases)))
+    print('  Successes:  {}'.format((len(self.test_cases) - len(self.suppressed) - len(self.failures))))
+    print('  Failures:   {}'.format(len(self.failures)))
+    print('  Suppressed: {}'.format(len(self.suppressed)))
+    print('')
 
 
   def Run(self):
@@ -227,19 +292,25 @@ class TestRunner:
     parser.add_option('--use-dawn',
                       action="store_true", default=False,
                       help='Use dawn as the backend; Default is Vulkan')
+    parser.add_option('--use-opencl',
+                      action="store_true", default=False,
+                      help='Enable OpenCL tests')
+    parser.add_option('--use-swiftshader',
+                      action="store_true", default=False,
+                      help='Tells test runner swiftshader is the device')
 
     self.options, self.args = parser.parse_args()
 
     if self.options.test_prog_path == None:
       test_prog = os.path.abspath(os.path.join(self.options.build_dir, 'amber'))
       if not os.path.isfile(test_prog):
-        print "Cannot find test program %s" % test_prog
+        print("Cannot find test program {}".format(test_prog))
         return 1
 
       self.options.test_prog_path = test_prog
 
     if not os.path.isfile(self.options.test_prog_path):
-      print "--test-prog-path must point to an executable"
+      print("--test-prog-path must point to an executable")
       return 1
 
     input_file_re = re.compile('^.+[.][amber|vkscript]')
@@ -249,10 +320,12 @@ class TestRunner:
       for filename in self.args:
         input_path = os.path.join(self.options.test_dir, filename)
         if not os.path.isfile(input_path):
-          print "Cannot find test file '%s'" % filename
+          print("Cannot find test file '{}'".format(filename))
           return 1
 
-        self.test_cases.append(TestCase(input_path, self.options.parse_only, self.options.use_dawn))
+        self.test_cases.append(TestCase(input_path, self.options.parse_only,
+            self.options.use_dawn, self.options.use_opencl,
+            self.options.use_swiftshader))
 
     else:
       for file_dir, _, filename_list in os.walk(self.options.test_dir):
@@ -261,7 +334,9 @@ class TestRunner:
             input_path = os.path.join(file_dir, input_filename)
             if os.path.isfile(input_path):
               self.test_cases.append(
-                  TestCase(input_path, self.options.parse_only, self.options.use_dawn))
+                  TestCase(input_path, self.options.parse_only,
+                      self.options.use_dawn, self.options.use_opencl,
+                      self.options.use_swiftshader))
 
     self.failures = []
     self.suppressed = []

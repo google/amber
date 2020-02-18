@@ -14,7 +14,9 @@
 
 #include "src/vulkan/transfer_image.h"
 
+#include <cstring>
 #include <limits>
+#include <vector>
 
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
@@ -46,14 +48,23 @@ const VkImageCreateInfo kDefaultImageInfo = {
 TransferImage::TransferImage(Device* device,
                              const Format& format,
                              VkImageAspectFlags aspect,
+                             VkImageType image_type,
                              uint32_t x,
                              uint32_t y,
-                             uint32_t z)
+                             uint32_t z,
+                             uint32_t mip_levels,
+                             uint32_t base_mip_level,
+                             uint32_t used_mip_levels)
     : Resource(device, x * y * z * format.SizeInBytes()),
       image_info_(kDefaultImageInfo),
-      aspect_(aspect) {
+      aspect_(aspect),
+      mip_levels_(mip_levels),
+      base_mip_level_(base_mip_level),
+      used_mip_levels_(used_mip_levels) {
   image_info_.format = device_->GetVkFormat(format);
+  image_info_.imageType = image_type;
   image_info_.extent = {x, y, z};
+  image_info_.mipLevels = mip_levels;
 }
 
 TransferImage::~TransferImage() {
@@ -124,12 +135,29 @@ Result TransferImage::Initialize(VkImageUsageFlags usage) {
   return MapMemory(host_accessible_memory_);
 }
 
+VkImageViewType TransferImage::GetImageViewType() const {
+  // TODO(alan-baker): handle other view types.
+  // 1D-array, 2D-array, Cube, Cube-array.
+  switch (image_info_.imageType) {
+    case VK_IMAGE_TYPE_1D:
+      return VK_IMAGE_VIEW_TYPE_1D;
+    case VK_IMAGE_TYPE_2D:
+      return VK_IMAGE_VIEW_TYPE_2D;
+    case VK_IMAGE_TYPE_3D:
+      return VK_IMAGE_VIEW_TYPE_3D;
+    default:
+      break;
+  }
+
+  // Default to 2D image view.
+  return VK_IMAGE_VIEW_TYPE_2D;
+}
+
 Result TransferImage::CreateVkImageView() {
   VkImageViewCreateInfo image_view_info = VkImageViewCreateInfo();
   image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   image_view_info.image = image_;
-  // TODO(jaebaek): Set .viewType correctly
-  image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  image_view_info.viewType = GetImageViewType();
   image_view_info.format = image_info_.format;
   image_view_info.components = {
       VK_COMPONENT_SWIZZLE_R,
@@ -138,11 +166,11 @@ Result TransferImage::CreateVkImageView() {
       VK_COMPONENT_SWIZZLE_A,
   };
   image_view_info.subresourceRange = {
-      aspect_, /* aspectMask */
-      0,       /* baseMipLevel */
-      1,       /* levelCount */
-      0,       /* baseArrayLayer */
-      1,       /* layerCount */
+      aspect_,          /* aspectMask */
+      base_mip_level_,  /* baseMipLevel */
+      used_mip_levels_, /* levelCount */
+      0,                /* baseArrayLayer */
+      1,                /* layerCount */
   };
 
   if (device_->GetPtrs()->vkCreateImageView(device_->GetVkDevice(),
@@ -154,7 +182,7 @@ Result TransferImage::CreateVkImageView() {
   return {};
 }
 
-VkBufferImageCopy TransferImage::CreateBufferImageCopy() {
+VkBufferImageCopy TransferImage::CreateBufferImageCopy(uint32_t mip_level) {
   VkBufferImageCopy copy_region = VkBufferImageCopy();
   copy_region.bufferOffset = 0;
   // Row length of 0 results in tight packing of rows, so the row stride
@@ -162,34 +190,46 @@ VkBufferImageCopy TransferImage::CreateBufferImageCopy() {
   copy_region.bufferRowLength = 0;
   copy_region.bufferImageHeight = 0;
   copy_region.imageSubresource = {
-      aspect_, /* aspectMask */
-      0,       /* mipLevel */
-      0,       /* baseArrayLayer */
-      1,       /* layerCount */
+      aspect_,   /* aspectMask */
+      mip_level, /* mipLevel */
+      0,         /* baseArrayLayer */
+      1,         /* layerCount */
   };
   copy_region.imageOffset = {0, 0, 0};
-  copy_region.imageExtent = {image_info_.extent.width,
-                             image_info_.extent.height, 1};
+  copy_region.imageExtent = {image_info_.extent.width >> mip_level,
+                             image_info_.extent.height >> mip_level,
+                             image_info_.extent.depth};
   return copy_region;
 }
 
 void TransferImage::CopyToHost(CommandBuffer* command_buffer) {
-  auto copy_region = CreateBufferImageCopy();
+  std::vector<VkBufferImageCopy> copy_regions;
+  uint32_t last_mip_level = used_mip_levels_ == VK_REMAINING_MIP_LEVELS
+                                ? mip_levels_
+                                : base_mip_level_ + used_mip_levels_;
+  for (uint32_t i = base_mip_level_; i < last_mip_level; i++)
+    copy_regions.push_back(CreateBufferImageCopy(i));
 
   device_->GetPtrs()->vkCmdCopyImageToBuffer(
       command_buffer->GetVkCommandBuffer(), image_,
-      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, host_accessible_buffer_, 1,
-      &copy_region);
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, host_accessible_buffer_,
+      static_cast<uint32_t>(copy_regions.size()), copy_regions.data());
 
   MemoryBarrier(command_buffer);
 }
 
 void TransferImage::CopyToDevice(CommandBuffer* command_buffer) {
-  auto copy_region = CreateBufferImageCopy();
+  std::vector<VkBufferImageCopy> copy_regions;
+  uint32_t last_mip_level = used_mip_levels_ == VK_REMAINING_MIP_LEVELS
+                                ? mip_levels_
+                                : base_mip_level_ + used_mip_levels_;
+  for (uint32_t i = base_mip_level_; i < last_mip_level; i++)
+    copy_regions.push_back(CreateBufferImageCopy(i));
 
   device_->GetPtrs()->vkCmdCopyBufferToImage(
       command_buffer->GetVkCommandBuffer(), host_accessible_buffer_, image_,
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      static_cast<uint32_t>(copy_regions.size()), copy_regions.data());
 
   MemoryBarrier(command_buffer);
 }
@@ -208,11 +248,11 @@ void TransferImage::ImageBarrier(CommandBuffer* command_buffer,
   barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.image = image_;
   barrier.subresourceRange = {
-      aspect_, /* aspectMask */
-      0,       /* baseMipLevel */
-      1,       /* levelCount */
-      0,       /* baseArrayLayer */
-      1,       /* layerCount */
+      aspect_,                 /* aspectMask */
+      0,                       /* baseMipLevel */
+      VK_REMAINING_MIP_LEVELS, /* levelCount */
+      0,                       /* baseArrayLayer */
+      1,                       /* layerCount */
   };
 
   switch (layout_) {

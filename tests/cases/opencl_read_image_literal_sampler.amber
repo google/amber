@@ -1,0 +1,69 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER vertex vs PASSTHROUGH
+
+SHADER fragment fs GLSL
+#version 430
+layout(location = 0) out vec4 color_out;
+void main() {
+  color_out = vec4(1.0, 0.0, 0.0, 1.0);
+}
+END
+
+SHADER compute read_imagef OPENCL-C
+const sampler_t sampler = CLK_ADDRESS_CLAMP_TO_EDGE | CLK_NORMALIZED_COORDS_FALSE | CLK_FILTER_NEAREST;
+kernel void foo(read_only image2d_t image, global float4* out) {
+  int gid_x = get_global_id(0);
+  int gid_y = get_global_id(1);
+  int linear = 2 * gid_y + gid_x;
+  float2 coord = (float2)(gid_x, gid_y);
+  out[linear] = read_imagef(image, sampler, coord);
+}
+END
+
+IMAGE texture DATA_TYPE vec4<float> DIM_2D WIDTH 2 HEIGHT 2 FILL 0.0
+BUFFER out_buf DATA_TYPE vec4<float> DATA
+2.0 2.0 2.0 2.0
+2.0 2.0 2.0 2.0
+2.0 2.0 2.0 2.0
+2.0 2.0 2.0 2.0
+END
+SAMPLER sampler
+
+PIPELINE compute read_pipe
+  ATTACH read_imagef ENTRY_POINT foo
+  BIND BUFFER out_buf KERNEL ARG_NAME out
+  BIND BUFFER texture KERNEL ARG_NAME image
+END
+
+PIPELINE graphics fill_red
+  ATTACH vs
+  ATTACH fs
+  FRAMEBUFFER_SIZE 2 2
+  BIND BUFFER texture AS color LOCATION 0
+END
+
+CLEAR_COLOR fill_red 0 0 3 3
+CLEAR fill_red
+RUN fill_red DRAW_RECT POS 0 0 SIZE 2 2
+
+RUN read_pipe 2 2 1
+
+EXPECT out_buf IDX 0  EQ 1.0 0.0 0.0 1.0
+EXPECT out_buf IDX 16 EQ 1.0 0.0 0.0 1.0
+EXPECT out_buf IDX 32 EQ 1.0 0.0 0.0 1.0
+EXPECT out_buf IDX 48 EQ 1.0 0.0 0.0 1.0
+

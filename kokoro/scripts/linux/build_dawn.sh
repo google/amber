@@ -39,6 +39,18 @@ then
   BUILD_TYPE="RelWithDebInfo"
 fi
 
+# removing the old version
+echo y | sudo apt-get purge --auto-remove cmake
+
+# Installing the 3.10.2 version
+wget http://www.cmake.org/files/v3.10/cmake-3.10.2.tar.gz
+tar -xvzf cmake-3.10.2.tar.gz
+cd cmake-3.10.2/
+./configure
+make
+sudo make install
+echo $(date): $(cmake --version)
+
 # Get ninja
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
 unzip -q ninja-linux.zip
@@ -82,7 +94,7 @@ cmake -GNinja ..\
  $CMAKE_C_CXX_COMPILER\
  -DCMAKE_BUILD_TYPE=$BUILD_TYPE\
  -DDawn_INCLUDE_DIR=$DAWN/src/include\
- -DDawn_GEN_INCLUDE_DIR=$DAWN/out/Release/gen\
+ -DDawn_GEN_INCLUDE_DIR=$DAWN/out/Release/gen/src/include\
  -DDawn_LIBRARY_DIR=$DAWN/out/Release
 
 echo $(date): Build everything...

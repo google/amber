@@ -14,6 +14,8 @@
 
 #include "src/script.h"
 
+#include "src/type_parser.h"
+
 namespace amber {
 
 Script::Script() = default;
@@ -23,17 +25,29 @@ Script::~Script() = default;
 std::vector<ShaderInfo> Script::GetShaderInfo() const {
   std::vector<ShaderInfo> ret;
   for (const auto& shader : shaders_) {
-    // TODO(dsinclair): The name returned should be the
-    // `pipeline_name + shader_name` instead of just shader name when we have
-    // pipelines everywhere
+    bool in_pipeline = false;
+    // A given shader could be in multiple pipelines with different
+    // optimizations so make sure we check and report all pipelines.
+    for (const auto& pipeline : pipelines_) {
+      auto shader_info = pipeline->GetShader(shader.get());
+      if (shader_info) {
+        ret.emplace_back(ShaderInfo{
+            shader->GetFormat(), shader->GetType(),
+            pipeline->GetName() + "-" + shader->GetName(), shader->GetData(),
+            shader_info->GetShaderOptimizations(), shader_info->GetData()});
 
-    // TODO(dsinclair): The optimization passes should be retrieved from the
-    // pipeline and returned here instead of an empty array.
-    ret.emplace_back(ShaderInfo{shader->GetFormat(),
-                                shader->GetType(),
-                                shader->GetName(),
-                                shader->GetData(),
-                                {}});
+        in_pipeline = true;
+      }
+    }
+
+    if (!in_pipeline) {
+      ret.emplace_back(ShaderInfo{shader->GetFormat(),
+                                  shader->GetType(),
+                                  shader->GetName(),
+                                  shader->GetData(),
+                                  {},
+                                  {}});
+    }
   }
   return ret;
 }
@@ -86,7 +100,22 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name == "sparseResidencyAliased" ||
          name == "variableMultisampleRate" || name == "inheritedQueries" ||
          name == "VariablePointerFeatures.variablePointers" ||
-         name == "VariablePointerFeatures.variablePointersStorageBuffer";
+         name == "VariablePointerFeatures.variablePointersStorageBuffer" ||
+         name == "Float16Int8Features.shaderFloat16";
+}
+
+type::Type* Script::ParseType(const std::string& str) {
+  auto type = GetType(str);
+  if (type)
+    return type;
+
+  TypeParser parser;
+  auto new_type = parser.Parse(str);
+  if (new_type != nullptr) {
+    type = new_type.get();
+    RegisterType(std::move(new_type));
+  }
+  return type;
 }
 
 }  // namespace amber

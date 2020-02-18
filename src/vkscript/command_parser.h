@@ -22,7 +22,6 @@
 
 #include "amber/result.h"
 #include "src/command.h"
-#include "src/datum_type.h"
 #include "src/pipeline.h"
 #include "src/pipeline_data.h"
 #include "src/script.h"

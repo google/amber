@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.google.amber">
+
+    <application
+        android:allowBackup="true"
+        android:label="Amber"
+        android:supportsRtl="true">
+        <meta-data
+            android:name="com.android.graphics.developerdriver.enable"
+            android:value="true" />
+    </application>
+
+</manifest>

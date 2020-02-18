@@ -159,6 +159,11 @@ class EngineStub : public Engine {
     return {};
   }
 
+  std::pair<Debugger*, Result> GetDebugger() override {
+    return {nullptr,
+            Result("EngineStub does not currently support a debugger")};
+  }
+
  private:
   bool fail_clear_command_ = false;
   bool fail_clear_color_command_ = false;
@@ -199,10 +204,10 @@ class VkScriptExecutorTest : public testing::Test {
       const std::vector<std::string>& features,
       const std::vector<std::string>& instance_extensions,
       const std::vector<std::string>& device_extensions) {
-    auto engine = MakeUnique<EngineStub>();
+    std::unique_ptr<Engine> engine = MakeUnique<EngineStub>();
     engine->Initialize(nullptr, nullptr, features, instance_extensions,
                        device_extensions);
-    return std::move(engine);
+    return engine;
   }
   EngineStub* ToStub(Engine* engine) {
     return static_cast<EngineStub*>(engine);

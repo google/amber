@@ -21,9 +21,9 @@
 #include <utility>
 #include <vector>
 
-#include "src/format_parser.h"
 #include "src/make_unique.h"
 #include "src/shader.h"
+#include "src/type_parser.h"
 #include "src/vkscript/command_parser.h"
 
 namespace amber {
@@ -96,7 +96,7 @@ Result Parser::GenerateDefaultPipeline(const SectionParser& section_parser) {
 
   // Generate and add a framebuffer
   auto color_buf = pipeline->GenerateDefaultColorAttachmentBuffer();
-  r = pipeline->AddColorAttachment(color_buf.get(), 0);
+  r = pipeline->AddColorAttachment(color_buf.get(), 0, 0);
   if (!r.IsSuccess())
     return r;
 
@@ -155,7 +155,7 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
        token = tokenizer.NextToken()) {
     if (token->IsEOL())
       continue;
-    if (!token->IsString()) {
+    if (!token->IsIdentifier()) {
       return Result(make_error(
           tokenizer,
           "Invalid token in requirements block: " + token->ToOriginalString()));
@@ -166,28 +166,32 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       script_->AddRequiredFeature(str);
     } else if (str == Pipeline::kGeneratedColorBuffer) {
       token = tokenizer.NextToken();
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result(make_error(tokenizer, "Missing framebuffer format"));
 
-      FormatParser fmt_parser;
-      auto fmt = fmt_parser.Parse(token->AsString());
-      if (fmt == nullptr) {
+      TypeParser type_parser;
+      auto type = type_parser.Parse(token->AsString());
+      if (type == nullptr) {
         return Result(
             make_error(tokenizer, "Failed to parse framebuffer format: " +
                                       token->ToOriginalString()));
       }
+
+      auto fmt = MakeUnique<Format>(type.get());
       script_->GetPipeline(kDefaultPipelineName)
           ->GetColorAttachments()[0]
-          .buffer->SetFormat(std::move(fmt));
+          .buffer->SetFormat(fmt.get());
+      script_->RegisterFormat(std::move(fmt));
+      script_->RegisterType(std::move(type));
 
     } else if (str == "depthstencil") {
       token = tokenizer.NextToken();
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result(make_error(tokenizer, "Missing depthStencil format"));
 
-      FormatParser fmt_parser;
-      auto fmt = fmt_parser.Parse(token->AsString());
-      if (fmt == nullptr) {
+      TypeParser type_parser;
+      auto type = type_parser.Parse(token->AsString());
+      if (type == nullptr) {
         return Result(
             make_error(tokenizer, "Failed to parse depthstencil format: " +
                                       token->ToOriginalString()));
@@ -197,9 +201,13 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       if (pipeline->GetDepthBuffer().buffer != nullptr)
         return Result("Only one depthstencil command allowed");
 
+      auto fmt = MakeUnique<Format>(type.get());
       // Generate and add a depth buffer
       auto depth_buf = pipeline->GenerateDefaultDepthAttachmentBuffer();
-      depth_buf->SetFormat(std::move(fmt));
+      depth_buf->SetFormat(fmt.get());
+      script_->RegisterFormat(std::move(fmt));
+      script_->RegisterType(std::move(type));
+
       Result r = pipeline->SetDepthBuffer(depth_buf.get());
       if (!r.IsSuccess())
         return r;
@@ -287,14 +295,17 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
   }
 
   if (!indices.empty()) {
-    DatumType type;
-    type.SetType(DataType::kUint32);
-
-    auto b = MakeUnique<Buffer>(BufferType::kIndex);
+    TypeParser parser;
+    auto type = parser.Parse("R32_UINT");
+    auto fmt = MakeUnique<Format>(type.get());
+    auto b = MakeUnique<Buffer>();
     auto* buf = b.get();
     b->SetName("indices");
-    b->SetFormat(type.AsFormat());
+    b->SetFormat(fmt.get());
     b->SetData(std::move(indices));
+    script_->RegisterFormat(std::move(fmt));
+    script_->RegisterType(std::move(type));
+
     Result r = script_->AddBuffer(std::move(b));
     if (!r.IsSuccess())
       return r;
@@ -321,7 +332,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
   // Process the header line.
   struct Header {
     uint8_t location;
-    std::unique_ptr<Format> format;
+    Format* format;
   };
   std::vector<Header> headers;
   while (!token->IsEOL() && !token->IsEOS()) {
@@ -336,7 +347,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
     uint8_t loc = token->AsUint8();
 
     token = tokenizer.NextToken();
-    if (!token->IsString()) {
+    if (!token->IsIdentifier()) {
       return Result(
           make_error(tokenizer, "Unable to process vertex data header: " +
                                     token->ToOriginalString()));
@@ -347,15 +358,18 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
       return Result(make_error(tokenizer, "Vertex data format too short: " +
                                               token->ToOriginalString()));
 
-    FormatParser parser;
-    auto fmt = parser.Parse(fmt_name.substr(1, fmt_name.length()));
-    if (!fmt) {
+    TypeParser parser;
+    auto type = parser.Parse(fmt_name.substr(1, fmt_name.length()));
+    if (!type) {
       return Result(
           make_error(tokenizer, "Invalid format in vertex data header: " +
                                     fmt_name.substr(1, fmt_name.length())));
     }
 
-    headers.push_back({loc, std::move(fmt)});
+    auto fmt = MakeUnique<Format>(type.get());
+    headers.push_back({loc, fmt.get()});
+    script_->RegisterFormat(std::move(fmt));
+    script_->RegisterType(std::move(type));
 
     token = tokenizer.NextToken();
   }
@@ -373,7 +387,8 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
       const auto& header = headers[j];
       auto& value_data = values[j];
 
-      if (header.format->GetPackSize() > 0) {
+      auto* type = header.format->GetType();
+      if (type->IsList() && type->AsList()->IsPacked()) {
         if (!token->IsHex()) {
           return Result(
               make_error(tokenizer, "Invalid packed value in Vertex Data: " +
@@ -384,19 +399,19 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
         v.SetIntValue(token->AsHex());
         value_data.push_back(v);
       } else {
-        auto& comps = header.format->GetComponents();
-        for (size_t i = 0; i < comps.size();
-             ++i, token = tokenizer.NextToken()) {
+        auto& segs = header.format->GetSegments();
+        for (const auto& seg : segs) {
+          if (seg.IsPadding())
+            continue;
+
           if (token->IsEOS() || token->IsEOL()) {
             return Result(make_error(tokenizer,
                                      "Too few cells in given vertex data row"));
           }
 
-          auto& comp = comps[i];
-
           Value v;
-          if (comp.mode == FormatMode::kUFloat ||
-              comp.mode == FormatMode::kSFloat) {
+          if (seg.GetFormatMode() == FormatMode::kUFloat ||
+              seg.GetFormatMode() == FormatMode::kSFloat) {
             Result r = token->ConvertToDouble();
             if (!r.IsSuccess())
               return r;
@@ -410,6 +425,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
           }
 
           value_data.push_back(v);
+          token = tokenizer.NextToken();
         }
       }
     }
@@ -417,11 +433,14 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
 
   auto* pipeline = script_->GetPipeline(kDefaultPipelineName);
   for (size_t i = 0; i < headers.size(); ++i) {
-    auto buffer = MakeUnique<Buffer>(BufferType::kVertex);
+    auto buffer = MakeUnique<Buffer>();
     auto* buf = buffer.get();
     buffer->SetName("Vertices" + std::to_string(i));
-    buffer->SetFormat(std::move(headers[i].format));
-    buffer->SetData(std::move(values[i]));
+    buffer->SetFormat(headers[i].format);
+    Result r = buffer->SetData(std::move(values[i]));
+    if (!r.IsSuccess())
+      return r;
+
     script_->AddBuffer(std::move(buffer));
 
     pipeline->AddVertexBuffer(buf, headers[i].location);

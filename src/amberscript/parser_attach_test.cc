@@ -67,7 +67,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("4: Unknown ATTACH parameter: INVALID", r.Error());
+  EXPECT_EQ("4: unknown ATTACH parameter: INVALID", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, AttachMissingValue) {
@@ -215,7 +215,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: Unknown ATTACH parameter: INVALID", r.Error());
+  EXPECT_EQ("6: unknown ATTACH parameter: INVALID", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PiplineMultiShaderAttach) {
@@ -425,7 +425,7 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("6: invalid data_type provided", r.Error());
+  EXPECT_EQ("6: invalid data type 'uint' provided", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, PipelineSpecializationBadDataType) {

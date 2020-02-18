@@ -51,4 +51,6 @@ Engine::Engine() = default;
 
 Engine::~Engine() = default;
 
+Engine::Debugger::~Debugger() = default;
+
 }  // namespace amber

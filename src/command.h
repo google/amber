@@ -25,7 +25,9 @@
 #include "amber/value.h"
 #include "src/buffer.h"
 #include "src/command_data.h"
+#include "src/debug.h"
 #include "src/pipeline_data.h"
+#include "src/sampler.h"
 
 namespace amber {
 
@@ -65,7 +67,8 @@ class Command {
     kProbe,
     kProbeSSBO,
     kBuffer,
-    kRepeat
+    kRepeat,
+    kSampler
   };
 
   virtual ~Command();
@@ -113,11 +116,20 @@ class Command {
   /// Returns the input file line this command was declared on.
   size_t GetLine() const { return line_; }
 
+  /// Sets the debug script to run for this command.
+  void SetDebugScript(std::unique_ptr<debug::Script>&& debug) {
+    debug_ = std::move(debug);
+  }
+
+  /// Returns the optional debug script associated with this command.
+  debug::Script* GetDebugScript() { return debug_.get(); }
+
  protected:
   explicit Command(Type type);
 
   Type command_type_;
   size_t line_ = 1;
+  std::unique_ptr<debug::Script> debug_;
 };
 
 /// Base class for commands which contain a pipeline.
@@ -212,7 +224,7 @@ class DrawArraysCommand : public PipelineCommand {
 /// A command to compare two buffers.
 class CompareBufferCommand : public Command {
  public:
-  enum class Comparator { kEq, kRmse };
+  enum class Comparator { kEq, kRmse, kHistogramEmd };
 
   CompareBufferCommand(Buffer* buffer_1, Buffer* buffer_2);
   ~CompareBufferCommand() override;
@@ -396,8 +408,8 @@ class ProbeSSBOCommand : public Probe {
   void SetOffset(uint32_t offset) { offset_ = offset; }
   uint32_t GetOffset() const { return offset_; }
 
-  void SetFormat(std::unique_ptr<Format> fmt) { format_ = std::move(fmt); }
-  Format* GetFormat() const { return format_.get(); }
+  void SetFormat(Format* fmt) { format_ = fmt; }
+  Format* GetFormat() const { return format_; }
 
   void SetValues(std::vector<Value>&& values) { values_ = std::move(values); }
   const std::vector<Value>& GetValues() const { return values_; }
@@ -409,30 +421,15 @@ class ProbeSSBOCommand : public Probe {
   uint32_t descriptor_set_id_ = 0;
   uint32_t binding_num_ = 0;
   uint32_t offset_ = 0;
-  std::unique_ptr<Format> format_;
+  Format* format_;
   std::vector<Value> values_;
 };
 
-/// Command to set the size of a buffer, or update a buffers contents.
-class BufferCommand : public PipelineCommand {
+/// Base class for BufferCommand and SamplerCommand to handle binding.
+class BindableResourceCommand : public PipelineCommand {
  public:
-  enum class BufferType {
-    kSSBO,
-    kUniform,
-    kPushConstant,
-  };
-
-  explicit BufferCommand(BufferType type, Pipeline* pipeline);
-  ~BufferCommand() override;
-
-  bool IsSSBO() const { return buffer_type_ == BufferType::kSSBO; }
-  bool IsUniform() const { return buffer_type_ == BufferType::kUniform; }
-  bool IsPushConstant() const {
-    return buffer_type_ == BufferType::kPushConstant;
-  }
-
-  void SetIsSubdata() { is_subdata_ = true; }
-  bool IsSubdata() const { return is_subdata_; }
+  BindableResourceCommand(Type type, Pipeline* pipeline);
+  virtual ~BindableResourceCommand();
 
   void SetDescriptorSet(uint32_t set) { descriptor_set_ = set; }
   uint32_t GetDescriptorSet() const { return descriptor_set_; }
@@ -440,8 +437,51 @@ class BufferCommand : public PipelineCommand {
   void SetBinding(uint32_t num) { binding_num_ = num; }
   uint32_t GetBinding() const { return binding_num_; }
 
+ private:
+  uint32_t descriptor_set_ = 0;
+  uint32_t binding_num_ = 0;
+};
+
+/// Command to set the size of a buffer, or update a buffers contents.
+class BufferCommand : public BindableResourceCommand {
+ public:
+  enum class BufferType {
+    kSSBO,
+    kUniform,
+    kPushConstant,
+    kStorageImage,
+    kSampledImage,
+    kCombinedImageSampler
+  };
+
+  BufferCommand(BufferType type, Pipeline* pipeline);
+  ~BufferCommand() override;
+
+  bool IsSSBO() const { return buffer_type_ == BufferType::kSSBO; }
+  bool IsUniform() const { return buffer_type_ == BufferType::kUniform; }
+  bool IsStorageImage() const {
+    return buffer_type_ == BufferType::kStorageImage;
+  }
+  bool IsSampledImage() const {
+    return buffer_type_ == BufferType::kSampledImage;
+  }
+  bool IsCombinedImageSampler() const {
+    return buffer_type_ == BufferType::kCombinedImageSampler;
+  }
+  bool IsPushConstant() const {
+    return buffer_type_ == BufferType::kPushConstant;
+  }
+
+  void SetIsSubdata() { is_subdata_ = true; }
+  bool IsSubdata() const { return is_subdata_; }
+
   void SetOffset(uint32_t offset) { offset_ = offset; }
   uint32_t GetOffset() const { return offset_; }
+
+  void SetBaseMipLevel(uint32_t base_mip_level) {
+    base_mip_level_ = base_mip_level;
+  }
+  uint32_t GetBaseMipLevel() const { return base_mip_level_; }
 
   void SetValues(std::vector<Value>&& values) { values_ = std::move(values); }
   const std::vector<Value>& GetValues() const { return values_; }
@@ -455,10 +495,24 @@ class BufferCommand : public PipelineCommand {
   Buffer* buffer_ = nullptr;
   BufferType buffer_type_;
   bool is_subdata_ = false;
-  uint32_t descriptor_set_ = 0;
-  uint32_t binding_num_ = 0;
   uint32_t offset_ = 0;
+  uint32_t base_mip_level_ = 0;
   std::vector<Value> values_;
+};
+
+/// Command for setting sampler parameters and binding.
+class SamplerCommand : public BindableResourceCommand {
+ public:
+  explicit SamplerCommand(Pipeline* pipeline);
+  ~SamplerCommand() override;
+
+  void SetSampler(Sampler* sampler) { sampler_ = sampler; }
+  Sampler* GetSampler() const { return sampler_; }
+
+  std::string ToString() const override { return "SamplerCommand"; }
+
+ private:
+  Sampler* sampler_ = nullptr;
 };
 
 /// Command to clear the colour attachments.

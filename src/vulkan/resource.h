@@ -23,9 +23,6 @@
 #include "amber/vulkan_header.h"
 
 namespace amber {
-
-class Format;
-
 namespace vulkan {
 
 class CommandBuffer;
@@ -47,6 +44,7 @@ class Resource {
   void* HostAccessibleMemoryPtr() const { return memory_ptr_; }
 
   uint32_t GetSizeInBytes() const { return size_in_bytes_; }
+  void UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data);
 
  protected:
   Resource(Device* device, uint32_t size);

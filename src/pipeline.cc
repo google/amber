@@ -18,14 +18,28 @@
 #include <limits>
 #include <set>
 
-#include "src/format_parser.h"
 #include "src/make_unique.h"
+#include "src/type_parser.h"
 
 namespace amber {
 namespace {
 
 const char* kDefaultColorBufferFormat = "B8G8R8A8_UNORM";
 const char* kDefaultDepthBufferFormat = "D32_SFLOAT_S8_UINT";
+
+// OpenCL coordinates mode is bit 0
+const uint32_t kOpenCLNormalizedCoordsBit = 1;
+// OpenCL address mode bits are bits 1,2,3.
+const uint32_t kOpenCLAddressModeBits = 0xe;
+// OpenCL address mode bit values.
+const uint32_t kOpenCLAddressModeNone = 0;
+const uint32_t kOpenCLAddressModeClampToEdge = 2;
+const uint32_t kOpenCLAddressModeClamp = 4;
+const uint32_t kOpenCLAddressModeRepeat = 6;
+const uint32_t kOpenCLAddressModeMirroredRepeat = 8;
+// OpenCL filter mode bits.
+const uint32_t kOpenCLFilterModeNearestBit = 0x10;
+const uint32_t kOpenCLFilterModeLinearBit = 0x20;
 
 }  // namespace
 
@@ -54,6 +68,7 @@ std::unique_ptr<Pipeline> Pipeline::Clone() const {
   clone->fb_width_ = fb_width_;
   clone->fb_height_ = fb_height_;
   clone->set_arg_values_ = set_arg_values_;
+
   if (!opencl_pod_buffers_.empty()) {
     // Generate specific buffers for the clone.
     clone->GenerateOpenCLPodBuffers();
@@ -168,16 +183,19 @@ Result Pipeline::SetShaderType(const Shader* shader, ShaderType type) {
 }
 
 Result Pipeline::Validate() const {
-  size_t fb_size = fb_width_ * fb_height_;
   for (const auto& attachment : color_attachments_) {
-    if (attachment.buffer->ElementCount() != fb_size) {
+    if (attachment.buffer->ElementCount() !=
+        (fb_width_ << attachment.base_mip_level) *
+            (fb_height_ << attachment.base_mip_level)) {
       return Result(
           "shared framebuffer must have same size over all PIPELINES");
     }
   }
 
-  if (depth_buffer_.buffer && depth_buffer_.buffer->ElementCount() != fb_size)
+  if (depth_buffer_.buffer &&
+      depth_buffer_.buffer->ElementCount() != fb_width_ * fb_height_) {
     return Result("shared depth buffer must have same size over all PIPELINES");
+  }
 
   for (auto& buf : GetBuffers()) {
     if (buf.buffer->GetFormat() == nullptr) {
@@ -188,6 +206,7 @@ Result Pipeline::Validate() const {
 
   if (pipeline_type_ == PipelineType::kGraphics)
     return ValidateGraphics();
+
   return ValidateCompute();
 }
 
@@ -206,6 +225,26 @@ Result Pipeline::ValidateGraphics() const {
 
   if (!found_vertex)
     return Result("graphics pipeline requires a vertex shader");
+
+  for (const auto& att : color_attachments_) {
+    auto width = att.buffer->GetWidth();
+    auto height = att.buffer->GetHeight();
+    for (uint32_t level = 1; level < att.buffer->GetMipLevels(); level++) {
+      width >>= 1;
+      if (width == 0)
+        return Result("color attachment with " +
+                      std::to_string(att.buffer->GetMipLevels()) +
+                      " mip levels would have zero width for level " +
+                      std::to_string(level));
+      height >>= 1;
+      if (height == 0)
+        return Result("color attachment with " +
+                      std::to_string(att.buffer->GetMipLevels()) +
+                      " mip levels would have zero height for level " +
+                      std::to_string(level));
+    }
+  }
+
   return {};
 }
 
@@ -222,9 +261,11 @@ void Pipeline::UpdateFramebufferSizes() {
     return;
 
   for (auto& attachment : color_attachments_) {
-    attachment.buffer->SetWidth(fb_width_);
-    attachment.buffer->SetHeight(fb_height_);
-    attachment.buffer->SetElementCount(size);
+    auto mip0_width = fb_width_ << attachment.base_mip_level;
+    auto mip0_height = fb_height_ << attachment.base_mip_level;
+    attachment.buffer->SetWidth(mip0_width);
+    attachment.buffer->SetHeight(mip0_height);
+    attachment.buffer->SetElementCount(mip0_width * mip0_height);
   }
 
   if (depth_buffer_.buffer) {
@@ -234,7 +275,9 @@ void Pipeline::UpdateFramebufferSizes() {
   }
 }
 
-Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
+Result Pipeline::AddColorAttachment(Buffer* buf,
+                                    uint32_t location,
+                                    uint32_t base_mip_level) {
   for (const auto& attachment : color_attachments_) {
     if (attachment.location == location)
       return Result("can not bind two color buffers to the same LOCATION");
@@ -246,9 +289,14 @@ Result Pipeline::AddColorAttachment(Buffer* buf, uint32_t location) {
 
   auto& info = color_attachments_.back();
   info.location = location;
-  buf->SetWidth(fb_width_);
-  buf->SetHeight(fb_height_);
-  buf->SetElementCount(fb_width_ * fb_height_);
+  info.type = BufferType::kColor;
+  info.base_mip_level = base_mip_level;
+  auto mip0_width = fb_width_ << base_mip_level;
+  auto mip0_height = fb_height_ << base_mip_level;
+  buf->SetWidth(mip0_width);
+  buf->SetHeight(mip0_height);
+  buf->SetElementCount(mip0_width * mip0_height);
+
   return {};
 }
 
@@ -266,10 +314,10 @@ Result Pipeline::GetLocationForColorAttachment(Buffer* buf,
 Result Pipeline::SetDepthBuffer(Buffer* buf) {
   if (depth_buffer_.buffer != nullptr)
     return Result("can only bind one depth buffer in a PIPELINE");
-  if (buf->GetBufferType() != BufferType::kDepth)
-    return Result("expected a depth buffer");
 
   depth_buffer_.buffer = buf;
+  depth_buffer_.type = BufferType::kDepth;
+
   buf->SetWidth(fb_width_);
   buf->SetHeight(fb_height_);
   buf->SetElementCount(fb_width_ * fb_height_);
@@ -291,39 +339,47 @@ Result Pipeline::AddVertexBuffer(Buffer* buf, uint32_t location) {
     if (vtex.buffer == buf)
       return Result("vertex buffer may only be bound to a PIPELINE once");
   }
-  if (buf->GetBufferType() != BufferType::kVertex)
-    return Result("expected a vertex buffer");
 
   vertex_buffers_.push_back(BufferInfo{buf});
   vertex_buffers_.back().location = location;
+  vertex_buffers_.back().type = BufferType::kVertex;
   return {};
 }
 
 Result Pipeline::SetPushConstantBuffer(Buffer* buf) {
   if (push_constant_buffer_.buffer != nullptr)
     return Result("can only bind one push constant buffer in a PIPELINE");
-  if (buf->GetBufferType() != BufferType::kPushConstant)
-    return Result("expected a push constant buffer");
 
   push_constant_buffer_.buffer = buf;
+  push_constant_buffer_.type = BufferType::kPushConstant;
   return {};
 }
 
-std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() const {
-  FormatParser fp;
+std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() {
+  TypeParser parser;
+  auto type = parser.Parse(kDefaultColorBufferFormat);
+  auto fmt = MakeUnique<Format>(type.get());
 
-  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>(BufferType::kColor);
+  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
   buf->SetName(kGeneratedColorBuffer);
-  buf->SetFormat(fp.Parse(kDefaultColorBufferFormat));
+  buf->SetFormat(fmt.get());
+
+  formats_.push_back(std::move(fmt));
+  types_.push_back(std::move(type));
   return buf;
 }
 
-std::unique_ptr<Buffer> Pipeline::GenerateDefaultDepthAttachmentBuffer() const {
-  FormatParser fp;
+std::unique_ptr<Buffer> Pipeline::GenerateDefaultDepthAttachmentBuffer() {
+  TypeParser parser;
+  auto type = parser.Parse(kDefaultDepthBufferFormat);
+  auto fmt = MakeUnique<Format>(type.get());
 
-  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>(BufferType::kDepth);
+  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
   buf->SetName(kGeneratedDepthBuffer);
-  buf->SetFormat(fp.Parse(kDefaultDepthBufferFormat));
+  buf->SetFormat(fmt.get());
+
+  formats_.push_back(std::move(fmt));
+  types_.push_back(std::move(type));
   return buf;
 }
 
@@ -337,8 +393,10 @@ Buffer* Pipeline::GetBufferForBinding(uint32_t descriptor_set,
 }
 
 void Pipeline::AddBuffer(Buffer* buf,
+                         BufferType type,
                          uint32_t descriptor_set,
-                         uint32_t binding) {
+                         uint32_t binding,
+                         uint32_t base_mip_level) {
   // If this buffer binding already exists, overwrite with the new buffer.
   for (auto& info : buffers_) {
     if (info.descriptor_set == descriptor_set && info.binding == binding) {
@@ -352,9 +410,13 @@ void Pipeline::AddBuffer(Buffer* buf,
   auto& info = buffers_.back();
   info.descriptor_set = descriptor_set;
   info.binding = binding;
+  info.type = type;
+  info.base_mip_level = base_mip_level;
 }
 
-void Pipeline::AddBuffer(Buffer* buf, const std::string& arg_name) {
+void Pipeline::AddBuffer(Buffer* buf,
+                         BufferType type,
+                         const std::string& arg_name) {
   // If this buffer binding already exists, overwrite with the new buffer.
   for (auto& info : buffers_) {
     if (info.arg_name == arg_name) {
@@ -366,13 +428,15 @@ void Pipeline::AddBuffer(Buffer* buf, const std::string& arg_name) {
   buffers_.push_back(BufferInfo{buf});
 
   auto& info = buffers_.back();
+  info.type = type;
   info.arg_name = arg_name;
   info.descriptor_set = std::numeric_limits<uint32_t>::max();
   info.binding = std::numeric_limits<uint32_t>::max();
   info.arg_no = std::numeric_limits<uint32_t>::max();
+  info.base_mip_level = 0;
 }
 
-void Pipeline::AddBuffer(Buffer* buf, uint32_t arg_no) {
+void Pipeline::AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no) {
   // If this buffer binding already exists, overwrite with the new buffer.
   for (auto& info : buffers_) {
     if (info.arg_no == arg_no) {
@@ -384,15 +448,85 @@ void Pipeline::AddBuffer(Buffer* buf, uint32_t arg_no) {
   buffers_.push_back(BufferInfo{buf});
 
   auto& info = buffers_.back();
+  info.type = type;
   info.arg_no = arg_no;
   info.descriptor_set = std::numeric_limits<uint32_t>::max();
   info.binding = std::numeric_limits<uint32_t>::max();
+  info.base_mip_level = 0;
+}
+
+void Pipeline::AddSampler(Sampler* sampler,
+                          uint32_t descriptor_set,
+                          uint32_t binding) {
+  // If this sampler binding already exists, overwrite with the new sampler.
+  for (auto& info : samplers_) {
+    if (info.descriptor_set == descriptor_set && info.binding == binding) {
+      info.sampler = sampler;
+      return;
+    }
+  }
+
+  samplers_.push_back(SamplerInfo{sampler});
+
+  auto& info = samplers_.back();
+  info.descriptor_set = descriptor_set;
+  info.binding = binding;
+  info.mask = std::numeric_limits<uint32_t>::max();
+}
+
+void Pipeline::AddSampler(Sampler* sampler, const std::string& arg_name) {
+  for (auto& info : samplers_) {
+    if (info.arg_name == arg_name) {
+      info.sampler = sampler;
+      return;
+    }
+  }
+
+  samplers_.push_back(SamplerInfo{sampler});
+
+  auto& info = samplers_.back();
+  info.arg_name = arg_name;
+  info.descriptor_set = std::numeric_limits<uint32_t>::max();
+  info.binding = std::numeric_limits<uint32_t>::max();
+  info.arg_no = std::numeric_limits<uint32_t>::max();
+  info.mask = std::numeric_limits<uint32_t>::max();
+}
+
+void Pipeline::AddSampler(Sampler* sampler, uint32_t arg_no) {
+  for (auto& info : samplers_) {
+    if (info.arg_no == arg_no) {
+      info.sampler = sampler;
+      return;
+    }
+  }
+
+  samplers_.push_back(SamplerInfo{sampler});
+
+  auto& info = samplers_.back();
+  info.arg_no = arg_no;
+  info.descriptor_set = std::numeric_limits<uint32_t>::max();
+  info.binding = std::numeric_limits<uint32_t>::max();
+  info.mask = std::numeric_limits<uint32_t>::max();
+}
+
+void Pipeline::AddSampler(uint32_t mask,
+                          uint32_t descriptor_set,
+                          uint32_t binding) {
+  samplers_.push_back(SamplerInfo{nullptr});
+
+  auto& info = samplers_.back();
+  info.arg_name = "";
+  info.arg_no = std::numeric_limits<uint32_t>::max();
+  info.mask = mask;
+  info.descriptor_set = descriptor_set;
+  info.binding = binding;
 }
 
 Result Pipeline::UpdateOpenCLBufferBindings() {
   if (!IsCompute() || GetShaders().empty() ||
-      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC)
+      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC) {
     return {};
+  }
 
   const auto& shader_info = GetShaders()[0];
   const auto& descriptor_map = shader_info.GetDescriptorMap();
@@ -403,6 +537,23 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
   if (iter == descriptor_map.end())
     return {};
 
+  for (auto& info : samplers_) {
+    if (info.descriptor_set == std::numeric_limits<uint32_t>::max() &&
+        info.binding == std::numeric_limits<uint32_t>::max()) {
+      for (const auto& entry : iter->second) {
+        if (entry.arg_name == info.arg_name ||
+            entry.arg_ordinal == info.arg_no) {
+          if (entry.kind !=
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SAMPLER) {
+            return Result("Sampler bound to non-sampler kernel arg");
+          }
+          info.descriptor_set = entry.descriptor_set;
+          info.binding = entry.binding;
+        }
+      }
+    }
+  }
+
   for (auto& info : buffers_) {
     if (info.descriptor_set == std::numeric_limits<uint32_t>::max() &&
         info.binding == std::numeric_limits<uint32_t>::max()) {
@@ -410,35 +561,53 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
         if (entry.arg_name == info.arg_name ||
             entry.arg_ordinal == info.arg_no) {
           // Buffer storage class consistency checks.
-          if (info.buffer->GetBufferType() == BufferType::kUnknown) {
+          if (info.type == BufferType::kUnknown) {
             // Set the appropriate buffer type.
             switch (entry.kind) {
               case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::UBO:
               case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO:
-                info.buffer->SetBufferType(BufferType::kUniform);
+                info.type = BufferType::kUniform;
                 break;
               case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SSBO:
               case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD:
-                info.buffer->SetBufferType(BufferType::kStorage);
+                info.type = BufferType::kStorage;
+                break;
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE:
+                info.type = BufferType::kSampledImage;
+                break;
+              case Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE:
+                info.type = BufferType::kStorageImage;
                 break;
               default:
                 return Result("Unhandled buffer type for OPENCL-C shader");
             }
-          } else if (info.buffer->GetBufferType() == BufferType::kUniform) {
+          } else if (info.type == BufferType::kUniform) {
             if (entry.kind !=
                     Pipeline::ShaderInfo::DescriptorMapEntry::Kind::UBO &&
                 entry.kind !=
                     Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO) {
               return Result("Buffer " + info.buffer->GetName() +
-                            " must be an uniform binding");
+                            " must be a uniform binding");
             }
-          } else if (info.buffer->GetBufferType() == BufferType::kStorage) {
+          } else if (info.type == BufferType::kStorage) {
             if (entry.kind !=
                     Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SSBO &&
                 entry.kind !=
                     Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD) {
               return Result("Buffer " + info.buffer->GetName() +
                             " must be a storage binding");
+            }
+          } else if (info.type == BufferType::kSampledImage) {
+            if (entry.kind !=
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE) {
+              return Result("Buffer " + info.buffer->GetName() +
+                            " must be a read-only image binding");
+            }
+          } else if (info.type == BufferType::kStorageImage) {
+            if (entry.kind !=
+                Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE) {
+              return Result("Buffer " + info.buffer->GetName() +
+                            " must be a write-only image binding");
             }
           } else {
             return Result("Unhandled buffer type for OPENCL-C shader");
@@ -534,32 +703,38 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
       // Add a new buffer for this descriptor set and binding.
       opencl_pod_buffers_.push_back(MakeUnique<Buffer>());
       buffer = opencl_pod_buffers_.back().get();
-      buffer->SetBufferType(
+      auto buffer_type =
           kind == Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD
               ? BufferType::kStorage
-              : BufferType::kUniform);
+              : BufferType::kUniform;
+
       // Use an 8-bit type because all the data in the descriptor map is
       // byte-based and it simplifies the logic for sizing below.
-      DatumType char_type;
-      char_type.SetType(DataType::kUint8);
-      buffer->SetFormat(char_type.AsFormat());
+      TypeParser parser;
+      auto type = parser.Parse("R8_UINT");
+      auto fmt = MakeUnique<Format>(type.get());
+      buffer->SetFormat(fmt.get());
+      formats_.push_back(std::move(fmt));
+      types_.push_back(std::move(type));
+
       buffer->SetName(GetName() + "_pod_buffer_" +
                       std::to_string(descriptor_set) + "_" +
                       std::to_string(binding));
       opencl_pod_buffer_map_.insert(
           buf_iter,
           std::make_pair(std::make_pair(descriptor_set, binding), buffer));
-      AddBuffer(buffer, descriptor_set, binding);
+      AddBuffer(buffer, buffer_type, descriptor_set, binding, 0);
     } else {
       buffer = buf_iter->second;
     }
 
     // Resize if necessary.
     if (buffer->ValueCount() < offset + arg_size) {
-      buffer->ResizeTo(offset + arg_size);
+      buffer->SetSizeInElements(offset + arg_size);
     }
+
     // Check the data size.
-    if (arg_size != arg_info.type.SizeInBytes()) {
+    if (arg_size != arg_info.fmt->SizeInBytes()) {
       std::string message = "SET command uses incorrect data size: kernel " +
                             shader_info.GetEntryPoint();
       if (uses_name) {
@@ -569,7 +744,72 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
       }
       return Result(message);
     }
-    buffer->SetDataWithOffset({arg_info.value}, offset);
+
+    Result r = buffer->SetDataWithOffset({arg_info.value}, offset);
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  return {};
+}
+
+Result Pipeline::GenerateOpenCLLiteralSamplers() {
+  for (auto& info : samplers_) {
+    if (info.sampler || info.mask == std::numeric_limits<uint32_t>::max())
+      continue;
+
+    auto literal_sampler = MakeUnique<Sampler>();
+    literal_sampler->SetName("literal." + std::to_string(info.descriptor_set) +
+                             "." + std::to_string(info.binding));
+
+    // The values for addressing modes, filtering modes and coordinate
+    // normalization are all defined in the OpenCL header.
+
+    literal_sampler->SetNormalizedCoords(info.mask &
+                                         kOpenCLNormalizedCoordsBit);
+
+    uint32_t addressing_bits = info.mask & kOpenCLAddressModeBits;
+    AddressMode addressing_mode = AddressMode::kUnknown;
+    if (addressing_bits == kOpenCLAddressModeNone ||
+        addressing_bits == kOpenCLAddressModeClampToEdge) {
+      // CLK_ADDRESS_NONE
+      // CLK_ADDERSS_CLAMP_TO_EDGE
+      addressing_mode = AddressMode::kClampToEdge;
+    } else if (addressing_bits == kOpenCLAddressModeClamp) {
+      // CLK_ADDRESS_CLAMP
+      addressing_mode = AddressMode::kClampToBorder;
+    } else if (addressing_bits == kOpenCLAddressModeRepeat) {
+      // CLK_ADDRESS_REPEAT
+      addressing_mode = AddressMode::kRepeat;
+    } else if (addressing_bits == kOpenCLAddressModeMirroredRepeat) {
+      // CLK_ADDRESS_MIRRORED_REPEAT
+      addressing_mode = AddressMode::kMirroredRepeat;
+    }
+    literal_sampler->SetAddressModeU(addressing_mode);
+    literal_sampler->SetAddressModeV(addressing_mode);
+    // TODO(alan-baker): If this is used with an arrayed image then W should use
+    // kClampToEdge always, but this information is not currently available.
+    literal_sampler->SetAddressModeW(addressing_mode);
+
+    // Next bit is filtering mode.
+    FilterType filtering_mode = FilterType::kUnknown;
+    if (info.mask & kOpenCLFilterModeNearestBit) {
+      filtering_mode = FilterType::kNearest;
+    } else if (info.mask & kOpenCLFilterModeLinearBit) {
+      filtering_mode = FilterType::kLinear;
+    }
+    literal_sampler->SetMagFilter(filtering_mode);
+    literal_sampler->SetMinFilter(filtering_mode);
+
+    // TODO(alan-baker): OpenCL wants the border color to be based on image
+    // channel orders which aren't accessible.
+
+    // clspv never generates multiple MIPMAP levels.
+    literal_sampler->SetMinLOD(0.0f);
+    literal_sampler->SetMaxLOD(0.0f);
+
+    opencl_literal_samplers_.push_back(std::move(literal_sampler));
+    info.sampler = opencl_literal_samplers_.back().get();
   }
 
   return {};

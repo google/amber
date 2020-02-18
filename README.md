@@ -22,6 +22,70 @@ The [VkScript](docs/vk_script.md) syntax matches the format used by VkRunner.
 
 This is not an officially supported Google product.
 
+## Writing Amber Tests
+Working with Amber involves writing input test files. Some example files can be
+see in the [tests/cases](tests/cases) folder.
+
+The main input format is [Amberscript](docs/amber_script.md). New features are
+added to AmberScript as Amber is enhanced. This is the preferred format in which
+new script files are written.
+
+### Clear test as AmberScript
+
+```groovy
+SHADER vertex vtex_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+#version 430
+
+layout(location = 0) in vec4 color_in;
+layout(location = 0) out vec4 color_out;
+
+void main() {
+  color_out = color_in;
+}
+END
+
+BUFFER img_buf FORMAT B8G8R8A8_UNORM
+
+PIPELINE graphics my_pipeline
+  ATTACH vtex_shader
+  ATTACH frag_shader
+
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER img_buf AS color LOCATION 0
+END
+
+CLEAR my_pipeline
+EXPECT img_buf IDX 0 0 SIZE 256 256 EQ_RGBA 0 0 0 0
+```
+
+The [VkScript](docs/vk_script.md) format is supported for historic reasons. It
+is based off, and very closely matches, the format accepted by VkRunner. There
+are no new features being added to VkScript, it is for historical use.
+
+### Clear test as VkScript
+
+```
+[require]
+VK_KHR_get_physical_device_properties2
+
+[vertex shader passthrough]
+
+[fragment shader]
+#version 430
+
+layout(location = 0) in vec4 color_in;
+layout(location = 0) out vec4 color_out;
+
+void main() {
+  color_out = color_in;
+}
+
+[test]
+clear
+relative probe rect rgba (0.0, 0.0, 1.0, 1.0) (0, 0, 0, 0)
+```
+
 ## Requirements
 
  * Recommended: Configure at least one backend. See [Backends](#backends) below.
@@ -108,14 +172,21 @@ cd /data/local/tmp
 
 ### Optional Components
 
-Amber, by default, enables testing, SPIRV-Tools and Shaderc. Each of these can
-be disabled by using the appropriate flags to CMake. Note, disabling SPIRV-Tools
-will disable Shaderc automatically.
+The components which build up Amber can be enabled or disabled as needed. Any
+option with `_SKIP_` in the name is on by default, any with `_USE_` is off by
+default.
 
 The available flags which can be defined are:
- * AMBER_SKIP_TESTS
- * AMBER_SKIP_SPIRV_TOOLS
- * AMBER_SKIP_SHADERC
+ * AMBER_SKIP_TESTS -- Skip building Amber unit tests
+ * AMBER_SKIP_SAMPLES -- Skip building the Amber sample applications
+ * AMBER_SKIP_SPIRV_TOOLS -- Disable the SPIRV-Tools integration
+ * AMBER_SKIP_SHADERC -- Disable the ShaderC integration
+ * AMBER_SKIP_LODEPNG -- Disable the LodePNG integration
+ * AMBER_USE_DXC -- Enables DXC as a shader compiler
+ * AMBER_USE_LOCAL_VULKAN -- Does not try to find the Vulkan SDK, builds needed
+                             components locally
+ * AMBER_USE_CLSPV -- Enables CLSPV as a shader compiler
+ * AMBER_USE_SWIFTSHADER -- Builds Swiftshader so it can be used as a Vulkan ICD
 
 ```
 cmake -DAMBER_SKIP_TESTS=True -DAMBER_SKIP_SPIRV_TOOLS=True -GNinja ../..
@@ -144,14 +215,16 @@ Currently the Vulkan and Dawn graphics APIs are supported.
 
 A Vulkan implementation is found by CMake in the following priority order:
 
- * First: If an enclosing CMake project includes the
+ * If `AMBER_USE_LOCAL_VULKAN` is enable the headers, loader and layers will be
+   built locally and not found on the system.
+ * If an enclosing CMake project includes the
    [Vulkan-Headers][Vulkan-Headers]
    CMake project, then headers will be picked up from there.
 
    In this case the CMake variable `Vulkan_LIBRARIES` can name the
    Vulkan library, or a default of `vulkan` will be used.
 
- * Second: If you have CMake 3.7 or later, then the Vulkan implementation will
+ * If you have CMake 3.7 or later, then the Vulkan implementation will
    be found from a Vulkan SDK as published by LunarG.
 
    Environment variables:
@@ -182,7 +255,7 @@ CMake variables when configuring Amber:
   * `Dawn_LIBRARY_DIR`: The directory containing the `dawn_native` library (in
     the build output tree).
 
-## Amber Sample
+## Amber Samples
 
 The build will generate an `out/Debug/amber` executable which can be used to
 run amber scripts. The script can be used as
@@ -190,7 +263,7 @@ run amber scripts. The script can be used as
 in the [VkScript](docs/vk_script.md) format.
 
 ```
-out/Debug/amber tests/cases/clear.vkscript
+out/Debug/amber tests/cases/clear.amber
 ```
 
 The sample app returns a value of 0 on success or non-zero on error. Any issues
@@ -198,6 +271,9 @@ encountered should be displayed on the console.
 
 By default, `out/Debug/amber` supports saving the output image into '.png'
 file. You can disable this by passing `-DAMBER_SKIP_LODEPNG=true` to cmake.
+
+The `image_diff` program will also be created. This allows comparing two images
+using the Amber buffer comparison methods.
 
 ## Contributing
 
@@ -212,6 +288,12 @@ Please see the [CONTRIBUTING](CONTRIBUTING.md) and
 
 ### Using SwiftShader as a backend
 
+SwiftShader if installed it can be used by by exporting the `VK_ICD_FILENAMES`
+environment variable and using it directly. If SwiftShader is not installed it
+can be built with Amber by setting `AMBER_ENABLE_SWIFTSHADER` during the
+configure step of CMake.
+
+
 ```
 mkdir out/sw
 cd out/sw
@@ -219,5 +301,5 @@ cmake -GNinja -DAMBER_ENABLE_SWIFTSHADER=TRUE ../..
 ninja
 export VK_ICD_FILENAMES=$PWD/Linux/vk_swiftshader_icd.json
 ./amber -d -V    # Should see SwiftShader listed as device
-./amber -d ../../tests/cases/clear.vkscript
+./amber -d ../../tests/cases/clear.amber
 ```

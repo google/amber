@@ -12,20 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/format_parser.h"
+#include "src/type_parser.h"
 
 #include <cassert>
 #include <cstdlib>
+#include <string>
 
 #include "src/make_unique.h"
 
 namespace amber {
 
-FormatParser::FormatParser() = default;
+TypeParser::TypeParser() = default;
 
-FormatParser::~FormatParser() = default;
+TypeParser::~TypeParser() = default;
 
-std::unique_ptr<Format> FormatParser::Parse(const std::string& data) {
+std::unique_ptr<type::Type> TypeParser::Parse(const std::string& data) {
   if (data.empty())
     return nullptr;
 
@@ -33,50 +34,60 @@ std::unique_ptr<Format> FormatParser::Parse(const std::string& data) {
   if (data.find('/', 0) != std::string::npos)
     return ParseGlslFormat(data);
 
-  FormatType type = NameToType(data);
-  if (type == FormatType::kUnknown)
-    return nullptr;
+  // Walk the string backwards. This means we'll know if it's pack and we'll
+  // know the mode before we get to a given named component.
+  size_t cur_pos = std::string::npos;
+  for (;;) {
+    size_t next_pos = data.rfind('_', cur_pos);
+    if (next_pos == std::string::npos) {
+      if (cur_pos != std::string::npos)
+        ProcessChunk(data.substr(0, cur_pos + 1));
+      break;
+    }
 
-  auto fmt = MakeUnique<Format>();
-  fmt->SetFormatType(type);
-
-  size_t cur_pos = 0;
-  while (cur_pos < data.length()) {
-    size_t next_pos = data.find('_', cur_pos);
-    if (next_pos == std::string::npos)
-      next_pos = data.length();
-
-    ProcessChunk(fmt.get(), data.substr(cur_pos, next_pos - cur_pos).c_str());
-    cur_pos = next_pos + 1;
+    ProcessChunk(data.substr(next_pos + 1, cur_pos - next_pos));
+    cur_pos = next_pos - 1;
   }
 
-  assert(pieces_.empty());
+  if (pieces_.empty())
+    return nullptr;
 
-  return fmt;
-}
+  std::unique_ptr<type::Type> type = nullptr;
+  if (pack_size_ == 0 && pieces_.size() == 1 &&
+      pieces_[0].type == FormatComponentType::kR) {
+    type = MakeUnique<type::Number>(pieces_[0].mode, pieces_[0].num_bits);
+  } else {
+    type = MakeUnique<type::List>();
+    type->SetRowCount(static_cast<uint32_t>(pieces_.size()));
+    type->AsList()->SetPackSizeInBits(pack_size_);
 
-void FormatParser::AddPiece(FormatComponentType type, uint8_t bits) {
-  pieces_.emplace_back(type, bits);
-}
+    for (const auto& piece : pieces_)
+      type->AsList()->AddMember(piece.type, piece.mode, piece.num_bits);
+  }
 
-void FormatParser::FlushPieces(Format* fmt, FormatMode mode) {
-  for (const auto& piece : pieces_)
-    fmt->AddComponent(piece.type, mode, piece.num_bits);
-
+  pack_size_ = 0;
+  mode_ = FormatMode::kSInt;
   pieces_.clear();
+
+  return type;
 }
 
-// TODO(dsinclair): Remove asserts return something ...?
-void FormatParser::ProcessChunk(Format* fmt, const std::string& data) {
+void TypeParser::AddPiece(FormatComponentType type,
+                          FormatMode mode,
+                          uint8_t bits) {
+  pieces_.insert(pieces_.begin(), Pieces{type, mode, bits});
+}
+
+void TypeParser::ProcessChunk(const std::string& data) {
   assert(data.size() > 0);
 
   if (data[0] == 'P') {
     if (data == "PACK8")
-      fmt->SetPackSize(8);
+      pack_size_ = 8;
     else if (data == "PACK16")
-      fmt->SetPackSize(16);
+      pack_size_ = 16;
     else if (data == "PACK32")
-      fmt->SetPackSize(32);
+      pack_size_ = 32;
     else
       assert(false);
 
@@ -85,13 +96,13 @@ void FormatParser::ProcessChunk(Format* fmt, const std::string& data) {
 
   if (data[0] == 'U') {
     if (data == "UINT")
-      FlushPieces(fmt, FormatMode::kUInt);
+      mode_ = FormatMode::kUInt;
     else if (data == "UNORM")
-      FlushPieces(fmt, FormatMode::kUNorm);
+      mode_ = FormatMode::kUNorm;
     else if (data == "UFLOAT")
-      FlushPieces(fmt, FormatMode::kUFloat);
+      mode_ = FormatMode::kUFloat;
     else if (data == "USCALED")
-      FlushPieces(fmt, FormatMode::kUScaled);
+      mode_ = FormatMode::kUScaled;
     else
       assert(false);
 
@@ -100,62 +111,66 @@ void FormatParser::ProcessChunk(Format* fmt, const std::string& data) {
 
   if (data[0] == 'S') {
     if (data == "SINT")
-      FlushPieces(fmt, FormatMode::kSInt);
+      mode_ = FormatMode::kSInt;
     else if (data == "SNORM")
-      FlushPieces(fmt, FormatMode::kSNorm);
+      mode_ = FormatMode::kSNorm;
     else if (data == "SSCALED")
-      FlushPieces(fmt, FormatMode::kSScaled);
+      mode_ = FormatMode::kSScaled;
     else if (data == "SFLOAT")
-      FlushPieces(fmt, FormatMode::kSFloat);
+      mode_ = FormatMode::kSFloat;
     else if (data == "SRGB")
-      FlushPieces(fmt, FormatMode::kSRGB);
+      mode_ = FormatMode::kSRGB;
     else if (data == "S8")
-      AddPiece(FormatComponentType::kS, 8);
+      AddPiece(FormatComponentType::kS, mode_, 8);
     else
       assert(false);
 
     return;
   }
 
-  size_t cur_pos = 0;
-  while (cur_pos < data.size()) {
+  int32_t cur_pos = static_cast<int32_t>(data.size()) - 1;
+  for (;;) {
     FormatComponentType type = FormatComponentType::kA;
-    switch (data[cur_pos++]) {
-      case 'X':
+    while (cur_pos >= 0) {
+      if (data[static_cast<size_t>(cur_pos)] == 'X') {
         type = FormatComponentType::kX;
         break;
-      case 'D':
+      } else if (data[static_cast<size_t>(cur_pos)] == 'D') {
         type = FormatComponentType::kD;
         break;
-      case 'R':
+      } else if (data[static_cast<size_t>(cur_pos)] == 'R') {
         type = FormatComponentType::kR;
         break;
-      case 'G':
+      } else if (data[static_cast<size_t>(cur_pos)] == 'G') {
         type = FormatComponentType::kG;
         break;
-      case 'B':
+      } else if (data[static_cast<size_t>(cur_pos)] == 'B') {
         type = FormatComponentType::kB;
         break;
-      case 'A':
+      } else if (data[static_cast<size_t>(cur_pos)] == 'A') {
         type = FormatComponentType::kA;
         break;
-      default:
-        assert(false);
+      }
+      --cur_pos;
     }
-
-    assert(cur_pos < data.size());
+    assert(cur_pos >= 0);
 
     char* next_str;
-    const char* str = data.c_str() + cur_pos;
+    const char* str = data.c_str() + cur_pos + 1;
 
     uint64_t val = static_cast<uint64_t>(std::strtol(str, &next_str, 10));
-    AddPiece(type, static_cast<uint8_t>(val));
+    if (val > 0)
+      AddPiece(type, mode_, static_cast<uint8_t>(val));
 
-    cur_pos += static_cast<size_t>(next_str - str);
+    if (cur_pos == 0)
+      break;
+
+    --cur_pos;
   }
 }
 
-FormatType FormatParser::NameToType(const std::string& data) {
+// static
+FormatType TypeParser::NameToFormatType(const std::string& data) {
   if (data == "A1R5G5B5_UNORM_PACK16")
     return FormatType::kA1R5G5B5_UNORM_PACK16;
   if (data == "A2B10G10R10_SINT_PACK32")
@@ -418,7 +433,8 @@ FormatType FormatParser::NameToType(const std::string& data) {
   return FormatType::kUnknown;
 }
 
-std::unique_ptr<Format> FormatParser::ParseGlslFormat(const std::string& fmt) {
+std::unique_ptr<type::Type> TypeParser::ParseGlslFormat(
+    const std::string& fmt) {
   size_t pos = fmt.find('/');
   std::string gl_type = fmt.substr(0, pos);
   std::string glsl_type = fmt.substr(pos + 1);

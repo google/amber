@@ -1,36 +1,26 @@
 #!/usr/bin/env python
-# Copyright 2014 Google Inc.
+# Copyright 2019 Google LLC
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#    * Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above
-# copyright notice, this list of conditions and the following disclaimer
-# in the documentation and/or other materials provided with the
-# distribution.
-#    * Neither the name of Google Inc. nor the names of its
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 """Parse a DEPS file and git checkout all of the dependencies.
 
 Args:
   An optional list of deps_os values.
+
+  --with-swiftshader Checkout Swiftshader dependencies
+  --with-clspv       Checkout clspv dependencies
+  --with-dxc         Checkout dxc dependencies
 
 Environment Variables:
   GIT_EXECUTABLE: path to "git" binary; if unset, will look for one of
@@ -51,13 +41,16 @@ Git Config:
       git config --unset sync-deps.disable
 """
 
-
-from builtins import bytes
 import os
+import re
 import subprocess
 import sys
 import threading
+from builtins import bytes
 
+with_clspv = False
+with_dxc = False
+with_swiftshader = False
 
 def git_executable():
   """Find the git executable.
@@ -150,6 +143,9 @@ def git_checkout_to_directory(git, repo, checkoutable, directory, verbose):
 
   Raises an exception if any calls to git fail.
   """
+  if verbose:
+    status(directory, checkoutable)
+
   if not os.path.isdir(directory):
     subprocess.check_call(
       [git, 'clone', '--quiet', repo, directory])
@@ -171,8 +167,6 @@ def git_checkout_to_directory(git, repo, checkoutable, directory, verbose):
     if 0 == subprocess.call([git, 'checkout', '--quiet', checkoutable],
                             cwd=directory, stderr=devnull):
       # if this succeeds, skip slow `git fetch`.
-      if verbose:
-        status(directory, checkoutable)  # Success.
       return
 
   # If the repo has changed, always force use of the correct repo.
@@ -184,13 +178,15 @@ def git_checkout_to_directory(git, repo, checkoutable, directory, verbose):
 
   subprocess.check_call([git, 'checkout', '--quiet', checkoutable], cwd=directory)
 
-  if verbose:
-    status(directory, checkoutable)  # Success.
-
 
 def parse_file_to_dict(path):
   dictionary = {}
-  exec(compile(open(path).read(), path, 'exec'), dictionary)
+  contents = open(path).read()
+  # Need to convert Var() to vars[], so that the DEPS is actually Python. Var()
+  # comes from Autoroller using gclient which has a slightly different DEPS
+  # format.
+  contents = re.sub(r"Var\((.*?)\)", r"vars[\1]", contents)
+  exec(contents, dictionary)
   return dictionary
 
 
@@ -232,6 +228,18 @@ def git_sync_deps(deps_file_path, command_line_os_requests, verbose):
     else:
       raise Exception("please specify commit or tag")
 
+    if not with_clspv and directory is 'third_party/clspv':
+      continue
+
+    if not with_clspv and directory is 'third_party/clspv-llvm':
+      continue
+
+    if not with_dxc and directory is 'third_party/dxc':
+      continue
+
+    if not with_swiftshader and directory is 'third_party/swiftshader':
+      continue
+
     relative_directory = os.path.join(deps_file_directory, directory)
 
     list_of_arg_lists.append(
@@ -264,6 +272,15 @@ def main(argv):
   if '--help' in argv or '-h' in argv:
     usage(deps_file_path)
     return 1
+
+  if '--with-clspv' in argv:
+    with_clspv = True
+
+  if '--with-dxc' in argv:
+    with_dxc = True
+
+  if '--with-swiftshader' in argv:
+    with_swiftshader = True
 
   git_sync_deps(deps_file_path, argv, verbose)
   # subprocess.check_call(

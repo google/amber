@@ -27,6 +27,7 @@ namespace clspvhelper {
 // Passes the OpenCL C source code to Clspv.
 // Returns the generated SPIR-V binary via |generated_binary| argument.
 Result Compile(Pipeline::ShaderInfo* shader_info,
+               Pipeline* pipeline,
                std::vector<uint32_t>* generated_binary);
 
 }  // namespace clspvhelper

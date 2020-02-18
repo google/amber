@@ -15,15 +15,18 @@
 #ifndef SRC_FORMAT_H_
 #define SRC_FORMAT_H_
 
+#include <cassert>
 #include <cstdint>
-#include <memory>
+#include <string>
 #include <vector>
 
 #include "src/format_data.h"
+#include "src/make_unique.h"
+#include "src/type.h"
 
 namespace amber {
 
-/// The format class describes requested image formats. (eg. R8G8B8A8_UINT).
+/// The format class describes requested  data formats. (eg. R8G8B8A8_UINT).
 ///
 /// There is a distinction between the input values needed and the values needed
 /// for a given format. The input values is the number needed to be read to fill
@@ -36,74 +39,47 @@ namespace amber {
 /// smaller then the values per element.
 class Format {
  public:
-  /// Describes an individual component of a format.
-  struct Component {
-    Component(FormatComponentType t, FormatMode m, uint8_t bits)
-        : type(t), mode(m), num_bits(bits) {}
+  enum Layout { kStd140 = 0, kStd430 };
 
-    FormatComponentType type;
-    FormatMode mode;
-    uint8_t num_bits;
+  class Segment {
+   public:
+    explicit Segment(uint32_t num_bytes)
+        : is_padding_(true), num_bits_(num_bytes * 8) {}
+    Segment(FormatComponentType name, FormatMode mode, uint32_t num_bits)
+        : name_(name), mode_(mode), num_bits_(num_bits) {}
 
-    /// Returns the number of bytes used to store this component.
-    size_t SizeInBytes() const { return num_bits / 8; }
+    bool IsPadding() const { return is_padding_; }
+    uint32_t PaddingBytes() const { return num_bits_ / 8; }
 
-    /// Is this component represented by an 8 bit signed integer. (This includes
-    /// int, scaled, rgb and norm values).
-    bool IsInt8() const {
-      return (mode == FormatMode::kSInt || mode == FormatMode::kSNorm ||
-              mode == FormatMode::kSScaled || mode == FormatMode::kSRGB) &&
-             num_bits == 8;
-    }
-    /// Is this component represented by a 16 bit signed integer. (This includes
-    /// int and norm values)
-    bool IsInt16() const {
-      return (mode == FormatMode::kSInt || mode == FormatMode::kSNorm) &&
-             num_bits == 16;
-    }
-    /// Is this component represented by a 32 bit signed integer.
-    bool IsInt32() const { return mode == FormatMode::kSInt && num_bits == 32; }
-    /// Is this component represented by a 64 bit signed integer.
-    bool IsInt64() const { return mode == FormatMode::kSInt && num_bits == 64; }
-    /// Is this component represented by an 8 bit unsigned integer. (This
-    /// includes uint, unorm and uscaled values).
-    bool IsUint8() const {
-      return (mode == FormatMode::kUInt || mode == FormatMode::kUNorm ||
-              mode == FormatMode::kUScaled) &&
-             num_bits == 8;
-    }
-    /// Is this component represented by a 16 bit unsigned integer.
-    bool IsUint16() const {
-      return mode == FormatMode::kUInt && num_bits == 16;
-    }
-    /// Is this component represented by a 32 bit unsigned integer.
-    bool IsUint32() const {
-      return mode == FormatMode::kUInt && num_bits == 32;
-    }
-    /// Is this component represented by a 64 bit unsigned integer.
-    bool IsUint64() const {
-      return mode == FormatMode::kUInt && num_bits == 64;
-    }
-    /// Is this component represented by a 16 bit floating point value.
-    bool IsFloat16() const {
-      return mode == FormatMode::kSFloat && num_bits == 16;
-    }
-    /// Is this component represented by a 32 bit floating point value
-    bool IsFloat() const {
-      return mode == FormatMode::kSFloat && num_bits == 32;
-    }
-    /// Is this component represented by a 64 bit floating point value
-    bool IsDouble() const {
-      return mode == FormatMode::kSFloat && num_bits == 64;
-    }
+    FormatComponentType GetName() const { return name_; }
+    FormatMode GetFormatMode() const { return mode_; }
+    uint32_t GetNumBits() const { return num_bits_; }
+
+    uint32_t SizeInBytes() const { return num_bits_ / 8; }
+
+    // The packable flag can be set on padding segments. This means, the next
+    // byte, if it's the same type as this packing, can be inserted before
+    // this packing segment as long as it fits within the pack size, removing
+    // that much pack space.
+    bool IsPackable() const { return is_packable_; }
+    void SetPackable(bool packable) { is_packable_ = packable; }
+
+   private:
+    bool is_padding_ = false;
+    bool is_packable_ = false;
+    FormatComponentType name_ = FormatComponentType::kR;
+    FormatMode mode_ = FormatMode::kSInt;
+    uint32_t num_bits_ = 0;
   };
 
   /// Creates a format of unknown type.
-  Format();
-  Format(const Format&);
+  explicit Format(type::Type* type);
   ~Format();
 
-  Format& operator=(const Format&) = default;
+  static bool IsNormalized(FormatMode mode) {
+    return mode == FormatMode::kUNorm || mode == FormatMode::kSNorm ||
+           mode == FormatMode::kSRGB;
+  }
 
   /// Returns true if |b| describes the same format as this object.
   bool Equal(const Format* b) const;
@@ -111,87 +87,149 @@ class Format {
   /// Sets the type of the format. For image types this maps closely to the
   /// list of Vulkan formats. For data types, this maybe Unknown if the data
   /// type can not be represented by the image format (e.g. matrix types)
-  void SetFormatType(FormatType type) { type_ = type; }
-  FormatType GetFormatType() const { return type_; }
+  void SetFormatType(FormatType type) { format_type_ = type; }
+  FormatType GetFormatType() const { return format_type_; }
 
-  void SetIsStd140() { is_std140_ = true; }
-  bool IsStd140() const { return is_std140_; }
+  void SetLayout(Layout layout);
+  Layout GetLayout() const { return layout_; }
 
-  /// Set the number of bytes this format is packed into, if provided.
-  void SetPackSize(uint8_t size_in_bytes) {
-    pack_size_in_bytes_ = size_in_bytes;
+  type::Type* GetType() const { return type_; }
+
+  /// Returns a pointer to the only type in this format. Only valid if
+  /// there is only an int or float type, nullptr otherwise.
+  type::Type* GetOnlyType() const {
+    if (type_->IsNumber())
+      return type_;
+    return nullptr;
   }
-  /// Retrieves the number of bytes this format is packed into.
-  uint8_t GetPackSize() const { return pack_size_in_bytes_; }
 
-  void AddComponent(FormatComponentType type, FormatMode mode, uint8_t bits) {
-    components_.emplace_back(type, mode, bits);
+  bool IsPacked() const {
+    return type_->IsList() && type_->AsList()->IsPacked();
   }
-  const std::vector<Component>& GetComponents() const { return components_; }
+
+  /// The segment is the individual pieces of the components including padding.
+  const std::vector<Segment>& GetSegments() const { return segments_; }
 
   /// Returns the number of bytes this format requires.
   uint32_t SizeInBytes() const;
-  /// Returns the number of bytes per single row this format requires.
-  uint32_t SizeInBytesPerRow() const;
 
-  bool IsFormatKnown() const { return type_ != FormatType::kUnknown; }
+  bool IsFormatKnown() const { return format_type_ != FormatType::kUnknown; }
   bool HasStencilComponent() const {
-    return type_ == FormatType::kD24_UNORM_S8_UINT ||
-           type_ == FormatType::kD16_UNORM_S8_UINT ||
-           type_ == FormatType::kD32_SFLOAT_S8_UINT ||
-           type_ == FormatType::kS8_UINT;
+    return format_type_ == FormatType::kD24_UNORM_S8_UINT ||
+           format_type_ == FormatType::kD16_UNORM_S8_UINT ||
+           format_type_ == FormatType::kD32_SFLOAT_S8_UINT ||
+           format_type_ == FormatType::kS8_UINT;
+  }
+
+  /// Returns true if the format components are normalized.
+  bool IsNormalized() const {
+    if (type_->IsNumber() && IsNormalized(type_->AsNumber()->GetFormatMode()))
+      return true;
+
+    if (type_->IsList()) {
+      for (auto& member : type_->AsList()->Members()) {
+        if (!IsNormalized(member.mode)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   /// Returns the number of input values required for an item of this format.
   /// This differs from ValuesPerElement because it doesn't take padding into
   /// account.
-  uint32_t InputNeededPerElement() const { return RowCount() * column_count_; }
-
-  /// Returns the number of values for a given row.
-  uint32_t ValuesPerRow() const {
-    if ((is_std140_ && column_count_ > 1) || RowCount() == 3)
-      return 4;
-    return RowCount();
-  }
-
-  /// Returns the number of values for each instance of this format.
-  uint32_t ValuesPerElement() const { return ValuesPerRow() * column_count_; }
-
-  uint32_t RowCount() const {
-    return static_cast<uint32_t>(components_.size());
-  }
-  uint32_t ColumnCount() const { return column_count_; }
-  void SetColumnCount(uint32_t c) { column_count_ = c; }
+  uint32_t InputNeededPerElement() const;
 
   /// Returns true if all components of this format are an 8 bit signed int.
-  bool IsInt8() const { return AreAllComponents(FormatMode::kSInt, 8); }
+  bool IsInt8() const {
+    return type_->IsNumber() &&
+           type::Type::IsInt8(type_->AsNumber()->GetFormatMode(),
+                              type_->AsNumber()->NumBits());
+  }
   /// Returns true if all components of this format are a 16 bit signed int.
-  bool IsInt16() const { return AreAllComponents(FormatMode::kSInt, 16); }
+  bool IsInt16() const {
+    return type_->IsNumber() &&
+           type::Type::IsInt16(type_->AsNumber()->GetFormatMode(),
+                               type_->AsNumber()->NumBits());
+  }
   /// Returns true if all components of this format are a 32 bit signed int.
-  bool IsInt32() const { return AreAllComponents(FormatMode::kSInt, 32); }
+  bool IsInt32() const {
+    return type_->IsNumber() &&
+           type::Type::IsInt32(type_->AsNumber()->GetFormatMode(),
+                               type_->AsNumber()->NumBits());
+  }
   /// Returns true if all components of this format are a 64 bit signed int.
-  bool IsInt64() const { return AreAllComponents(FormatMode::kSInt, 64); }
+  bool IsInt64() const {
+    return type_->IsNumber() &&
+           type::Type::IsInt64(type_->AsNumber()->GetFormatMode(),
+                               type_->AsNumber()->NumBits());
+  }
   /// Returns true if all components of this format are a 8 bit unsigned int.
-  bool IsUint8() const { return AreAllComponents(FormatMode::kUInt, 8); }
+  bool IsUint8() const {
+    return type_->IsNumber() &&
+           type::Type::IsUint8(type_->AsNumber()->GetFormatMode(),
+                               type_->AsNumber()->NumBits());
+  }
   /// Returns true if all components of this format are a 16 bit unsigned int.
-  bool IsUint16() const { return AreAllComponents(FormatMode::kUInt, 16); }
+  bool IsUint16() const {
+    return type_->IsNumber() &&
+           type::Type::IsUint16(type_->AsNumber()->GetFormatMode(),
+                                type_->AsNumber()->NumBits());
+  }
   /// Returns true if all components of this format are a 32 bit unsigned int.
-  bool IsUint32() const { return AreAllComponents(FormatMode::kUInt, 32); }
+  bool IsUint32() const {
+    return type_->IsNumber() &&
+           type::Type::IsUint32(type_->AsNumber()->GetFormatMode(),
+                                type_->AsNumber()->NumBits());
+  }
   /// Returns true if all components of this format are a 64 bit unsigned int.
-  bool IsUint64() const { return AreAllComponents(FormatMode::kUInt, 64); }
+  bool IsUint64() const {
+    return type_->IsNumber() &&
+           type::Type::IsUint64(type_->AsNumber()->GetFormatMode(),
+                                type_->AsNumber()->NumBits());
+  }
   /// Returns true if all components of this format are a 32 bit float.
-  bool IsFloat() const { return AreAllComponents(FormatMode::kSFloat, 32); }
+  bool IsFloat32() const {
+    return type_->IsNumber() &&
+           type::Type::IsFloat32(type_->AsNumber()->GetFormatMode(),
+                                 type_->AsNumber()->NumBits());
+  }
   /// Returns true if all components of this format are a 64 bit float.
-  bool IsDouble() const { return AreAllComponents(FormatMode::kSFloat, 64); }
+  bool IsFloat64() const {
+    return type_->IsNumber() &&
+           type::Type::IsFloat64(type_->AsNumber()->GetFormatMode(),
+                                 type_->AsNumber()->NumBits());
+  }
+
+  std::string GenerateNameForTesting() const { return GenerateName(); }
 
  private:
-  bool AreAllComponents(FormatMode mode, uint32_t bits) const;
+  void RebuildSegments();
+  uint32_t AddSegmentsForType(type::Type* type);
+  bool NeedsPadding(type::Type* t) const;
+  // Returns true if a segment was added, false if we packed the requested
+  // segment into previously allocated space.
+  bool AddSegment(const Segment& seg);
+  void AddPaddedSegment(uint32_t size);
+  void AddPaddedSegmentPackable(uint32_t size);
+  uint32_t CalcTypeBaseAlignmentInBytes(type::Type* s) const;
+  uint32_t CalcStructBaseAlignmentInBytes(type::Struct* s) const;
+  uint32_t CalcVecBaseAlignmentInBytes(type::Number* n) const;
+  uint32_t CalcArrayBaseAlignmentInBytes(type::Type* t) const;
+  uint32_t CalcMatrixBaseAlignmentInBytes(type::Number* m) const;
+  uint32_t CalcListBaseAlignmentInBytes(type::List* l) const;
 
-  FormatType type_ = FormatType::kUnknown;
-  bool is_std140_ = false;
-  uint8_t pack_size_in_bytes_ = 0;
-  uint32_t column_count_ = 1;
-  std::vector<Component> components_;
+  /// Generates the image format name for this format if possible. Returns
+  /// the name if generated or "" otherwise.
+  std::string GenerateName() const;
+
+  FormatType format_type_ = FormatType::kUnknown;
+  Layout layout_ = Layout::kStd430;
+  type::Type* type_;
+  std::vector<FormatComponentType> type_names_;
+  std::vector<Segment> segments_;
 };
 
 }  // namespace amber

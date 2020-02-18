@@ -29,9 +29,15 @@ BUILD_TYPE="Debug"
 CMAKE_C_CXX_COMPILER=""
 if [ $COMPILER = "clang" ]
 then
-  sudo ln -s /usr/bin/clang-3.8 /usr/bin/clang
-  sudo ln -s /usr/bin/clang++-3.8 /usr/bin/clang++
-  CMAKE_C_CXX_COMPILER="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
+  CMAKE_C_CXX_COMPILER="-DCMAKE_C_COMPILER=/usr/bin/clang-5.0 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-5.0"
+else
+  # Specify we want to build with GCC 7 (which supports C++14)
+  sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+  sudo apt-get update
+  sudo apt-get install -y gcc-7 g++-7
+  sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 100 --slave /usr/bin/g++ g++ /usr/bin/g++-7
+  sudo update-alternatives --set gcc "/usr/bin/gcc-7"
+  CMAKE_C_CXX_COMPILER="-DCMAKE_C_COMPILER=/usr/bin/gcc-7 -DCMAKE_CXX_COMPILER=/usr/bin/g++-7"
 fi
 
 # Possible configurations are:
@@ -42,20 +48,46 @@ then
   BUILD_TYPE="RelWithDebInfo"
 fi
 
+# removing the old version
+echo y | sudo apt-get purge --auto-remove cmake
+
+# Installing the 3.10.2 version
+wget http://www.cmake.org/files/v3.10/cmake-3.10.2.tar.gz
+tar -xvzf cmake-3.10.2.tar.gz
+cd cmake-3.10.2/
+./configure
+make
+sudo make install
+
+echo $(date): $(cmake --version)
+
 # Get ninja
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
 unzip -q ninja-linux.zip
 export PATH="$PWD:$PATH"
 
+DEPS_ARGS=""
+if [[ "$EXTRA_CONFIG" =~ "USE_CLSPV=TRUE" ]]; then
+  DEPS_ARGS+=" --with-clspv"
+fi
+if [[ "$EXTRA_CONFIG" =~ "USE_DXC=TRUE" ]]; then
+  DEPS_ARGS+=" --use-dxc"
+fi
+if [[ "$EXTRA_CONFIG" =~ "ENABLE_SWIFTSHADER=TRUE" ]]; then
+  DEPS_ARGS+=" --use-swiftshader"
+fi
+
 cd $SRC
-./tools/git-sync-deps
+./tools/git-sync-deps $DEPS_ARGS
 
 mkdir build && cd $SRC/build
 
 # Invoke the build.
 BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
 echo $(date): Starting build...
-cmake -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_C_CXX_COMPILER -DAMBER_USE_LOCAL_VULKAN=1 $EXTRA_CONFIG ..
+cmake -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_C_CXX_COMPILER \
+  -DAMBER_USE_LOCAL_VULKAN=1 \
+  $EXTRA_CONFIG ..
 
 echo $(date): Build everything...
 ninja
@@ -65,6 +97,18 @@ echo $(date): Starting amber_unittests...
 ./amber_unittests
 echo $(date): amber_unittests completed.
 
-#echo $(date): Starting integration tests..
-#../../test/run_tests.py
-#echo $(date): integration tests completed.
+# Swiftshader is only built with gcc, so only run the integration tests with gcc
+if [[ "$EXTRA_CONFIG" =~ "ENABLE_SWIFTSHADER=TRUE" ]]; then
+  OPTS=
+  if [[ $EXTRA_CONFIG =~ "USE_CLSPV=ON" ]]; then
+    OPTS="--use-opencl"
+  fi
+
+  echo $(date): Starting integration tests..
+  export LD_LIBRARY_PATH=build/third_party/vulkan-loader/loader
+  export VK_LAYER_PATH=build/third_party/vulkan-validationlayers/layers
+  export VK_ICD_FILENAMES=build/Linux/vk_swiftshader_icd.json
+  cd $SRC
+  ./tests/run_tests.py --build-dir $SRC/build --use-swiftshader $OPTS
+  echo $(date): integration tests completed.
+fi

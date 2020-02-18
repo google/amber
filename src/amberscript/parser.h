@@ -27,6 +27,7 @@
 namespace amber {
 
 class Tokenizer;
+class Token;
 
 namespace amberscript {
 
@@ -44,11 +45,12 @@ class Parser : public amber::Parser {
   Result ToShaderType(const std::string& str, ShaderType* type);
   Result ToBufferType(const std::string& str, BufferType* type);
   Result ToShaderFormat(const std::string& str, ShaderFormat* fmt);
-  Result ToDatumType(const std::string& str, DatumType* type);
   Result ToPipelineType(const std::string& str, PipelineType* type);
   Result ValidateEndOfStatement(const std::string& name);
 
+  Result ParseStruct();
   Result ParseBuffer();
+  Result ParseImage();
   Result ParseBufferInitializer(Buffer*);
   Result ParseBufferInitializerSize(Buffer*);
   Result ParseBufferInitializerFill(Buffer*, uint32_t);
@@ -65,6 +67,9 @@ class Parser : public amber::Parser {
   Result ParsePipelineIndexData(Pipeline*);
   Result ParsePipelineSet(Pipeline*);
   Result ParseRun();
+  Result ParseDebug();
+  Result ParseDebugThread(debug::Events*);
+  Result ParseDebugThreadBody(debug::Thread* thread);
   Result ParseClear();
   Result ParseClearColor();
   Result ParseExpect();
@@ -80,6 +85,8 @@ class Parser : public amber::Parser {
   Result ParsePipelineBody(const std::string& cmd_name,
                            std::unique_ptr<Pipeline> pipeline);
   Result ParseShaderSpecialization(Pipeline* pipeline);
+  Result ParseSampler();
+  Result ParseTolerances(std::vector<Probe::Tolerance>* tolerances);
 
   /// Parses a set of values out of the token stream. |name| is the name of the
   /// current command we're parsing for error purposes. The |type| is the type

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 if (POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)
 endif()
@@ -28,7 +28,6 @@ enable_testing()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_CXX_STANDARD 11)
 
 include(CheckIncludeFile)
 include(GNUInstallDirs)
@@ -48,6 +47,14 @@ option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
 option(AMBER_USE_CLSPV "Build with Clspv support" OFF)
 option(AMBER_ENABLE_SWIFTSHADER
   "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
+option(AMBER_ENABLE_VK_DEBUGGING
+  "Build with cppdap debugging support" ${AMBER_ENABLE_VK_DEBUGGING})
+
+if (${AMBER_USE_CLSPV} OR ${AMBER_ENABLE_SWIFTSHADER})
+  set(CMAKE_CXX_STANDARD 14)
+else()
+  set(CMAKE_CXX_STANDARD 11)
+endif()
 
 if(WIN32)
   # On Windows, CMake by default compiles with the shared CRT.
@@ -100,11 +107,14 @@ else()
 endif()
 
 if (${AMBER_USE_CLSPV})
-  enable_language(ASM)
   set(AMBER_ENABLE_CLSPV TRUE)
   set(AMBER_ENABLE_SPIRV_TOOLS TRUE)
 else()
   set(AMBER_ENABLE_CLSPV FALSE)
+endif()
+
+if (${AMBER_USE_CLSPV} OR ${AMBER_ENABLE_SWIFTSHADER})
+  enable_language(ASM)
 endif()
 
 message(STATUS "Using python3")
@@ -140,6 +150,7 @@ add_definitions(-DAMBER_ENABLE_SHADERC=$<BOOL:${AMBER_ENABLE_SHADERC}>)
 add_definitions(-DAMBER_ENABLE_DXC=$<BOOL:${AMBER_ENABLE_DXC}>)
 add_definitions(-DAMBER_ENABLE_CLSPV=$<BOOL:${AMBER_ENABLE_CLSPV}>)
 add_definitions(-DAMBER_ENABLE_LODEPNG=$<BOOL:${AMBER_ENABLE_LODEPNG}>)
+add_definitions(-DAMBER_ENABLE_VK_DEBUGGING=$<BOOL:${AMBER_ENABLE_VK_DEBUGGING}>)
 
 set(CMAKE_DEBUG_POSTFIX "")
 

@@ -14,9 +14,9 @@
 
 #include "src/vulkan/resource.h"
 
+#include <cstring>
 #include <limits>
 
-#include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
@@ -98,7 +98,6 @@ uint32_t Resource::ChooseMemory(uint32_t memory_type_bits,
 
   return first_non_zero;
 }
-
 Result Resource::AllocateAndBindMemoryToVkBuffer(VkBuffer buffer,
                                                  VkDeviceMemory* memory,
                                                  VkMemoryPropertyFlags flags,
@@ -165,6 +164,12 @@ Result Resource::MapMemory(VkDeviceMemory memory) {
 
 void Resource::UnMapMemory(VkDeviceMemory memory) {
   device_->GetPtrs()->vkUnmapMemory(device_->GetVkDevice(), memory);
+}
+
+void Resource::UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data) {
+  size_t effective_size =
+      raw_data.size() > GetSizeInBytes() ? GetSizeInBytes() : raw_data.size();
+  std::memcpy(HostAccessibleMemoryPtr(), raw_data.data(), effective_size);
 }
 
 void Resource::MemoryBarrier(CommandBuffer* command_buffer) {

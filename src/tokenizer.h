@@ -26,6 +26,7 @@ namespace amber {
 enum class TokenType : uint8_t {
   kEOS = 0,
   kEOL,
+  kIdentifier,
   kString,
   kInteger,
   kDouble,
@@ -41,18 +42,19 @@ class Token {
   bool IsHex() const { return type_ == TokenType::kHex; }
   bool IsInteger() const { return type_ == TokenType::kInteger; }
   bool IsDouble() const { return type_ == TokenType::kDouble; }
+  bool IsIdentifier() const { return type_ == TokenType::kIdentifier; }
   bool IsString() const { return type_ == TokenType::kString; }
   bool IsEOS() const { return type_ == TokenType::kEOS; }
   bool IsEOL() const { return type_ == TokenType::kEOL; }
 
   bool IsComma() const {
-    return type_ == TokenType::kString && string_value_ == ",";
+    return type_ == TokenType::kIdentifier && string_value_ == ",";
   }
   bool IsOpenBracket() const {
-    return type_ == TokenType::kString && string_value_ == "(";
+    return type_ == TokenType::kIdentifier && string_value_ == "(";
   }
   bool IsCloseBracket() const {
-    return type_ == TokenType::kString && string_value_ == ")";
+    return type_ == TokenType::kIdentifier && string_value_ == ")";
   }
 
   void SetNegative() { is_negative_ = true; }
@@ -103,6 +105,7 @@ class Tokenizer {
   ~Tokenizer();
 
   std::unique_ptr<Token> NextToken();
+  std::unique_ptr<Token> PeekNextToken();
   std::string ExtractToNext(const std::string& str);
 
   void SetCurrentLine(size_t line) { current_line_ = line; }

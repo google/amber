@@ -24,6 +24,7 @@
 
 #include "amber/result.h"
 #include "src/buffer.h"
+#include "src/sampler.h"
 #include "src/shader.h"
 
 namespace amber {
@@ -89,6 +90,9 @@ class Pipeline {
         UBO,
         POD,
         POD_UBO,
+        RO_IMAGE,
+        WO_IMAGE,
+        SAMPLER,
       } kind;
 
       uint32_t descriptor_set = 0;
@@ -131,8 +135,23 @@ class Pipeline {
     uint32_t descriptor_set = 0;
     uint32_t binding = 0;
     uint32_t location = 0;
+    uint32_t base_mip_level = 0;
     std::string arg_name = "";
     uint32_t arg_no = 0;
+    BufferType type = BufferType::kUnknown;
+  };
+
+  /// Information on a sampler attached to the pipeline.
+  struct SamplerInfo {
+    SamplerInfo() = default;
+    explicit SamplerInfo(Sampler* samp) : sampler(samp) {}
+
+    Sampler* sampler = nullptr;
+    uint32_t descriptor_set = 0;
+    uint32_t binding = 0;
+    std::string arg_name = "";
+    uint32_t arg_no = 0;
+    uint32_t mask = 0;
   };
 
   static const char* kGeneratedColorBuffer;
@@ -170,6 +189,15 @@ class Pipeline {
   /// Returns information on all bound shaders in this pipeline.
   const std::vector<ShaderInfo>& GetShaders() const { return shaders_; }
 
+  /// Returns the ShaderInfo for |shader| or nullptr.
+  const ShaderInfo* GetShader(Shader* shader) const {
+    for (const auto& info : shaders_) {
+      if (info.GetShader() == shader)
+        return &info;
+    }
+    return nullptr;
+  }
+
   /// Sets the |type| of |shader| in the pipeline.
   Result SetShaderType(const Shader* shader, ShaderType type);
   /// Sets the entry point |name| for |shader| in this pipeline.
@@ -186,7 +214,10 @@ class Pipeline {
     return color_attachments_;
   }
   /// Adds |buf| as a colour attachment at |location| in the pipeline.
-  Result AddColorAttachment(Buffer* buf, uint32_t location);
+  /// Uses |base_mip_level| as the mip level for output.
+  Result AddColorAttachment(Buffer* buf,
+                            uint32_t location,
+                            uint32_t base_mip_level);
   /// Retrieves the location that |buf| is bound to in the pipeline. The
   /// location will be written to |loc|. An error result will be return if
   /// something goes wrong.
@@ -211,14 +242,34 @@ class Pipeline {
   /// buffer bound.
   Buffer* GetIndexBuffer() const { return index_buffer_; }
 
-  /// Adds |buf| to the pipeline at the given |descriptor_set| and |binding|.
-  void AddBuffer(Buffer* buf, uint32_t descriptor_set, uint32_t binding);
+  /// Adds |buf| of |type| to the pipeline at the given |descriptor_set|,
+  /// |binding| and |base_mip_level|.
+  void AddBuffer(Buffer* buf,
+                 BufferType type,
+                 uint32_t descriptor_set,
+                 uint32_t binding,
+                 uint32_t base_mip_level);
   /// Adds |buf| to the pipeline at the given |arg_name|.
-  void AddBuffer(Buffer* buf, const std::string& arg_name);
+  void AddBuffer(Buffer* buf, BufferType type, const std::string& arg_name);
   /// Adds |buf| to the pipeline at the given |arg_no|.
-  void AddBuffer(Buffer* buf, uint32_t arg_no);
+  void AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no);
   /// Returns information on all buffers in this pipeline.
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
+
+  /// Adds |sampler| to the pipeline at the given |descriptor_set| and
+  /// |binding|.
+  void AddSampler(Sampler* sampler, uint32_t descriptor_set, uint32_t binding);
+  /// Adds |sampler| to the pipeline at the given |arg_name|.
+  void AddSampler(Sampler* sampler, const std::string& arg_name);
+  /// Adds |sampler| to the pieline at the given |arg_no|.
+  void AddSampler(Sampler* sampler, uint32_t arg_no);
+  /// Adds an entry for an OpenCL literal sampler.
+  void AddSampler(uint32_t sampler_mask,
+                  uint32_t descriptor_set,
+                  uint32_t binding);
+
+  /// Returns information on all samplers in this pipeline.
+  const std::vector<SamplerInfo>& GetSamplers() const { return samplers_; }
 
   /// Updates the descriptor set and binding info for the OpenCL-C kernel bound
   /// to the pipeline. No effect for other shader formats.
@@ -237,15 +288,15 @@ class Pipeline {
   Result Validate() const;
 
   /// Generates a default color attachment in B8G8R8A8_UNORM.
-  std::unique_ptr<Buffer> GenerateDefaultColorAttachmentBuffer() const;
+  std::unique_ptr<Buffer> GenerateDefaultColorAttachmentBuffer();
   /// Generates a default depth attachment in D32_SFLOAT_S8_UINT format.
-  std::unique_ptr<Buffer> GenerateDefaultDepthAttachmentBuffer() const;
+  std::unique_ptr<Buffer> GenerateDefaultDepthAttachmentBuffer();
 
   /// Information on values set for OpenCL-C plain-old-data args.
   struct ArgSetInfo {
     std::string name;
     uint32_t ordinal = 0;
-    DatumType type;
+    Format* fmt = nullptr;
     Value value;
   };
 
@@ -259,6 +310,10 @@ class Pipeline {
   /// command. This should be called after all other buffers are bound.
   Result GenerateOpenCLPodBuffers();
 
+  /// Generate the samplers necessary for OpenCL literal samplers from the
+  /// descriptor map. This should be called after all other samplers are bound.
+  Result GenerateOpenCLLiteralSamplers();
+
  private:
   void UpdateFramebufferSizes();
 
@@ -271,6 +326,9 @@ class Pipeline {
   std::vector<BufferInfo> color_attachments_;
   std::vector<BufferInfo> vertex_buffers_;
   std::vector<BufferInfo> buffers_;
+  std::vector<std::unique_ptr<type::Type>> types_;
+  std::vector<SamplerInfo> samplers_;
+  std::vector<std::unique_ptr<Format>> formats_;
   BufferInfo depth_buffer_;
   BufferInfo push_constant_buffer_;
   Buffer* index_buffer_ = nullptr;
@@ -282,6 +340,7 @@ class Pipeline {
   std::vector<std::unique_ptr<Buffer>> opencl_pod_buffers_;
   /// Maps (descriptor set, binding) to the buffer for that binding pair.
   std::map<std::pair<uint32_t, uint32_t>, Buffer*> opencl_pod_buffer_map_;
+  std::vector<std::unique_ptr<Sampler>> opencl_literal_samplers_;
 };
 
 }  // namespace amber

@@ -20,6 +20,7 @@
 
 #include "amber/amber_vulkan.h"
 #include "src/make_unique.h"
+#include "src/type_parser.h"
 #include "src/vulkan/compute_pipeline.h"
 #include "src/vulkan/graphics_pipeline.h"
 
@@ -150,17 +151,17 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   for (const auto& colour_info : pipeline->GetColorAttachments()) {
     auto fmt = colour_info.buffer->GetFormat();
-    if (!device_->IsFormatSupportedByPhysicalDevice(*fmt, colour_info.buffer))
+    if (!device_->IsFormatSupportedByPhysicalDevice(*fmt, colour_info.type))
       return Result("Vulkan color attachment format is not supported");
   }
 
-  Format depth_fmt;
+  Format* depth_fmt = nullptr;
   if (pipeline->GetDepthBuffer().buffer) {
     const auto& depth_info = pipeline->GetDepthBuffer();
 
-    depth_fmt = *depth_info.buffer->GetFormat();
-    if (!device_->IsFormatSupportedByPhysicalDevice(depth_fmt,
-                                                    depth_info.buffer)) {
+    depth_fmt = depth_info.buffer->GetFormat();
+    if (!device_->IsFormatSupportedByPhysicalDevice(*depth_fmt,
+                                                    depth_info.type)) {
       return Result("Vulkan depth attachment format is not supported");
     }
   }
@@ -206,7 +207,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   for (const auto& vtex_info : pipeline->GetVertexBuffers()) {
     auto fmt = vtex_info.buffer->GetFormat();
-    if (!device_->IsFormatSupportedByPhysicalDevice(*fmt, vtex_info.buffer))
+    if (!device_->IsFormatSupportedByPhysicalDevice(*fmt, vtex_info.type))
       return Result("Vulkan vertex buffer format is not supported");
     if (!info.vertex_buffer)
       info.vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
@@ -229,20 +230,37 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   for (const auto& buf_info : pipeline->GetBuffers()) {
     auto type = BufferCommand::BufferType::kSSBO;
-    if (buf_info.buffer->GetBufferType() == BufferType::kUniform) {
+    if (buf_info.type == BufferType::kStorageImage) {
+      type = BufferCommand::BufferType::kStorageImage;
+    } else if (buf_info.type == BufferType::kSampledImage) {
+      type = BufferCommand::BufferType::kSampledImage;
+    } else if (buf_info.type == BufferType::kCombinedImageSampler) {
+      type = BufferCommand::BufferType::kCombinedImageSampler;
+    } else if (buf_info.type == BufferType::kUniform) {
       type = BufferCommand::BufferType::kUniform;
-    } else if (buf_info.buffer->GetBufferType() != BufferType::kStorage) {
+    } else if (buf_info.type != BufferType::kStorage) {
       return Result("Vulkan: CreatePipeline - unknown buffer type: " +
-                    std::to_string(static_cast<uint32_t>(
-                        buf_info.buffer->GetBufferType())));
+                    std::to_string(static_cast<uint32_t>(buf_info.type)));
     }
 
     auto cmd = MakeUnique<BufferCommand>(type, pipeline);
     cmd->SetDescriptorSet(buf_info.descriptor_set);
     cmd->SetBinding(buf_info.binding);
+    cmd->SetBaseMipLevel(buf_info.base_mip_level);
     cmd->SetBuffer(buf_info.buffer);
 
-    r = info.vk_pipeline->AddDescriptor(cmd.get());
+    r = info.vk_pipeline->AddBufferDescriptor(cmd.get());
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  for (const auto& sampler_info : pipeline->GetSamplers()) {
+    auto cmd = MakeUnique<SamplerCommand>(pipeline);
+    cmd->SetDescriptorSet(sampler_info.descriptor_set);
+    cmd->SetBinding(sampler_info.binding);
+    cmd->SetSampler(sampler_info.sampler);
+
+    r = info.vk_pipeline->AddSamplerDescriptor(cmd.get());
     if (!r.IsSuccess())
       return r;
   }
@@ -407,13 +425,12 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   // Since draw rect command contains its vertex information and it
   // does not include a format of vertex buffer, we can choose any
   // one that is suitable. We use VK_FORMAT_R32G32_SFLOAT for it.
-  auto format = MakeUnique<Format>();
-  format->SetFormatType(FormatType::kR32G32_SFLOAT);
-  format->AddComponent(FormatComponentType::kR, FormatMode::kSFloat, 32);
-  format->AddComponent(FormatComponentType::kG, FormatMode::kSFloat, 32);
+  TypeParser parser;
+  auto type = parser.Parse("R32G32_SFLOAT");
+  Format fmt(type.get());
 
   auto buf = MakeUnique<Buffer>();
-  buf->SetFormat(std::move(format));
+  buf->SetFormat(&fmt);
   buf->SetData(std::move(values));
 
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
@@ -483,7 +500,7 @@ Result EngineVulkan::DoBuffer(const BufferCommand* cmd) {
         "device");
   }
   auto& info = pipeline_map_[cmd->GetPipeline()];
-  return info.vk_pipeline->AddDescriptor(cmd);
+  return info.vk_pipeline->AddBufferDescriptor(cmd);
 }
 
 }  // namespace vulkan

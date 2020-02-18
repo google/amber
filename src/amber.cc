@@ -43,7 +43,7 @@ Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) {
   if (!cpu_memory)
     return Result("GetFrameBuffer missing memory pointer");
 
-  const auto texel_stride = buffer->GetTexelStride();
+  const auto texel_stride = buffer->GetElementStride();
   const auto row_stride = buffer->GetRowStride();
 
   for (uint32_t y = 0; y < buffer->GetHeight(); ++y) {
@@ -180,38 +180,37 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
     return {};
   }
 
-  // TODO(dsinclair): Figure out how extractions work with multiple pipelines.
-  auto* pipeline = script->GetPipelines()[0].get();
-
-  // The dump process holds onto the results and terminates the loop if any dump
-  // fails. This will allow us to validate |extractor_result| first as if the
-  // extractor fails before running the pipeline that will trigger the dumps
-  // to almost always fail.
+  // Try to perform each extraction, copying the buffer data into |buffer_info|.
+  // We do not overwrite |executor_result| if extraction fails.
   for (BufferInfo& buffer_info : opts->extractions) {
     if (buffer_info.is_image_buffer) {
       auto* buffer = script->GetBuffer(buffer_info.buffer_name);
       if (!buffer)
-        break;
+        continue;
 
       buffer_info.width = buffer->GetWidth();
       buffer_info.height = buffer->GetHeight();
-      r = GetFrameBuffer(buffer, &(buffer_info.values));
-      if (!r.IsSuccess())
-        break;
-
+      GetFrameBuffer(buffer, &(buffer_info.values));
       continue;
     }
 
-    DescriptorSetAndBindingParser desc_set_and_binding_parser;
-    r = desc_set_and_binding_parser.Parse(buffer_info.buffer_name);
+    DescriptorSetAndBindingParser p;
+    r = p.Parse(buffer_info.buffer_name);
     if (!r.IsSuccess())
-      break;
+      continue;
 
-    const auto* buffer = pipeline->GetBufferForBinding(
-        desc_set_and_binding_parser.GetDescriptorSet(),
-        desc_set_and_binding_parser.GetBinding());
+    // Extract the named pipeline from the request, otherwise use the
+    // first pipeline which was parsed.
+    Pipeline* pipeline = nullptr;
+    if (p.HasPipelineName())
+      pipeline = script->GetPipeline(p.PipelineName());
+    else
+      pipeline = script->GetPipelines()[0].get();
+
+    const auto* buffer =
+        pipeline->GetBufferForBinding(p.GetDescriptorSet(), p.GetBinding());
     if (!buffer)
-      break;
+      continue;
 
     const uint8_t* ptr = buffer->ValuePtr()->data();
     auto& values = buffer_info.values;

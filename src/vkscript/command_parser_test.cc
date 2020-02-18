@@ -845,7 +845,7 @@ TEST_P(CommandParserProbeTest, ProbeRgb) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -880,7 +880,7 @@ TEST_P(CommandParserProbeTest, ProbeRgba) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -916,7 +916,7 @@ TEST_P(CommandParserProbeTest, ProbeRect) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -952,7 +952,7 @@ TEST_P(CommandParserProbeTest, ProbeNotRect) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -990,7 +990,7 @@ TEST_F(CommandParserTest, ProbeAllRGB) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1017,7 +1017,7 @@ TEST_F(CommandParserTest, ProbeAllRGBA) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1045,7 +1045,7 @@ TEST_F(CommandParserTest, ProbeCommandRectBrackets) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1077,7 +1077,7 @@ TEST_F(CommandParserTest, ProbeCommandNotRectBrackets) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1109,7 +1109,7 @@ TEST_F(CommandParserTest, ProbeCommandColorBrackets) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1141,7 +1141,7 @@ TEST_F(CommandParserTest, ProbeCommandColorOptionalCommas) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1275,7 +1275,7 @@ TEST_F(CommandParserTest, ProbeErrors) {
   for (const auto& probe : probes) {
     Pipeline pipeline(PipelineType::kGraphics);
     auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-    pipeline.AddColorAttachment(color_buf.get(), 0);
+    pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
     Script script;
     CommandParser cp(&script, &pipeline, 1, probe.str);
@@ -1301,7 +1301,7 @@ TEST_F(CommandParserTest, ProbeWithInvalidRGBA) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1315,7 +1315,7 @@ TEST_F(CommandParserTest, ProbeWithRectAndInvalidRGB) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1329,7 +1329,7 @@ TEST_F(CommandParserTest, ProbeWithRectMissingFormat) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1343,7 +1343,7 @@ TEST_F(CommandParserTest, ProbeAllMissingFormat) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -1357,7 +1357,7 @@ TEST_F(CommandParserTest, ProbeAlWithInvalidRGB) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -3074,6 +3074,7 @@ TEST_F(CommandParserTest, SSBOSubdataWithFloat) {
 
   Pipeline pipeline(PipelineType::kGraphics);
   Script script;
+
   CommandParser cp(&script, &pipeline, 1, data);
   Result r = cp.Parse();
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -3090,9 +3091,12 @@ TEST_F(CommandParserTest, SSBOSubdataWithFloat) {
   ASSERT_TRUE(cmd->IsSubdata());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
-  EXPECT_TRUE(fmt->IsFloat());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsFloat32(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.3f, 4.2f, 1.2f};
@@ -3134,9 +3138,12 @@ TEST_F(CommandParserTest, SSBOSubdataWithDescriptorSet) {
   EXPECT_EQ(16U, cmd->GetOffset());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
-  EXPECT_TRUE(fmt->IsFloat());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsFloat32(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.3f, 4.2f, 1.2f};
@@ -3167,9 +3174,12 @@ TEST_F(CommandParserTest, SSBOSubdataWithInts) {
   EXPECT_EQ(8U, cmd->GetOffset());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
-  EXPECT_TRUE(fmt->IsInt16());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsInt16(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<int16_t> results = {2, 4, 1};
@@ -3200,9 +3210,12 @@ TEST_F(CommandParserTest, SSBOSubdataWithMultipleVectors) {
   EXPECT_EQ(8U, cmd->GetOffset());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
-  EXPECT_TRUE(fmt->IsInt16());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsInt16(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<int16_t> results = {2, 4, 1, 3, 6, 8};
@@ -3332,14 +3345,16 @@ TEST_F(CommandParserTest, Uniform) {
   EXPECT_EQ(32U, cmd->GetOffset());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
-  EXPECT_TRUE(fmt->IsFloat());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsFloat32(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto* buf = cmd->GetBuffer();
   const auto* values = buf->GetValues<float>();
   std::vector<float> results = {2.1f, 3.2f, 4.3f, 0.f};
-  ASSERT_EQ(results.size(), buf->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FLOAT_EQ(results[i], values[i]);
   }
@@ -3374,14 +3389,16 @@ TEST_F(CommandParserTest, UniformWithContinuation) {
   EXPECT_EQ(16U, cmd->GetOffset());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
-  EXPECT_TRUE(fmt->IsFloat());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsFloat32(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto* buf = cmd->GetBuffer();
   const auto* values = buf->GetValues<float>();
   std::vector<float> results = {2.1f, 3.2f, 4.3f, 0.f, 5.4f, 6.7f, 8.9f, 0.f};
-  ASSERT_EQ(results.size(), buf->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FLOAT_EQ(results[i], values[i]);
   }
@@ -3452,9 +3469,12 @@ TEST_F(CommandParserTest, UniformUBO) {
   EXPECT_EQ(static_cast<uint32_t>(0), cmd->GetOffset());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
-  EXPECT_TRUE(fmt->IsFloat());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsFloat32(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.1f, 3.2f, 4.3f};
@@ -3507,9 +3527,12 @@ TEST_F(CommandParserTest, UniformUBOWithDescriptorSet) {
   EXPECT_EQ(16U, cmd->GetOffset());
 
   auto* fmt = cmd->GetBuffer()->GetFormat();
-  EXPECT_TRUE(fmt->IsFloat());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsFloat32(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.1f, 3.2f, 4.3f};
@@ -3879,7 +3902,7 @@ probe all rgba 0.2 0.3 0.4 0.5)";
 
   Pipeline pipeline(PipelineType::kGraphics);
   auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
-  pipeline.AddColorAttachment(color_buf.get(), 0);
+  pipeline.AddColorAttachment(color_buf.get(), 0, 0);
 
   Script script;
   CommandParser cp(&script, &pipeline, 1, data);
@@ -3925,9 +3948,12 @@ probe ssbo vec3 3:6 2 >= 2.3 4.2 1.2)";
             cmd->GetComparator());
 
   auto* fmt = cmd->GetFormat();
-  EXPECT_TRUE(fmt->IsFloat());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsFloat32(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.3f, 4.2f, 1.2f};
@@ -3960,9 +3986,12 @@ probe ssbo vec3 6 2 >= 2.3 4.2 1.2)";
             cmd->GetComparator());
 
   auto* fmt = cmd->GetFormat();
-  EXPECT_TRUE(fmt->IsFloat());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsFloat32(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.3f, 4.2f, 1.2f};
@@ -3995,9 +4024,12 @@ probe ssbo vec3 6 2 >= 2.3 4.2 1.2)";
             cmd->GetComparator());
 
   auto* fmt = cmd->GetFormat();
-  EXPECT_TRUE(fmt->IsFloat());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsFloat32(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<float> results = {2.3f, 4.2f, 1.2f};
@@ -4029,9 +4061,12 @@ probe ssbo i16vec3 6 2 <= 2 4 1)";
   EXPECT_EQ(ProbeSSBOCommand::Comparator::kLessOrEqual, cmd->GetComparator());
 
   auto* fmt = cmd->GetFormat();
-  EXPECT_TRUE(fmt->IsInt16());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsInt16(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<int16_t> results = {2, 4, 1};
@@ -4063,9 +4098,12 @@ probe ssbo i16vec3 6 2 == 2 4 1 3 6 8)";
   EXPECT_EQ(ProbeSSBOCommand::Comparator::kEqual, cmd->GetComparator());
 
   auto* fmt = cmd->GetFormat();
-  EXPECT_TRUE(fmt->IsInt16());
-  EXPECT_EQ(1U, fmt->ColumnCount());
-  EXPECT_EQ(3U, fmt->RowCount());
+  ASSERT_TRUE(fmt->GetType()->IsNumber());
+
+  auto n = fmt->GetType()->AsNumber();
+  EXPECT_TRUE(type::Type::IsInt16(n->GetFormatMode(), n->NumBits()));
+  EXPECT_EQ(1U, fmt->GetType()->ColumnCount());
+  EXPECT_EQ(3U, fmt->GetType()->RowCount());
 
   const auto& values = cmd->GetValues();
   std::vector<int16_t> results = {2, 4, 1, 3, 6, 8};

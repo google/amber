@@ -27,7 +27,9 @@
 #include "src/buffer.h"
 #include "src/command.h"
 #include "src/engine.h"
+#include "src/format.h"
 #include "src/pipeline.h"
+#include "src/sampler.h"
 #include "src/shader.h"
 
 namespace amber {
@@ -129,6 +131,28 @@ class Script : public RecipeImpl {
     return buffers_;
   }
 
+  /// Adds |sampler| to the list of known sampler. The |sampler| must have a
+  /// unique name over all samplers in the script.
+  Result AddSampler(std::unique_ptr<Sampler> sampler) {
+    if (name_to_sampler_.count(sampler->GetName()) > 0)
+      return Result("duplicate sampler name provided");
+
+    samplers_.push_back(std::move(sampler));
+    name_to_sampler_[samplers_.back()->GetName()] = samplers_.back().get();
+    return {};
+  }
+
+  /// Retrieves the sampler with |name|, |nullptr| if not found.
+  Sampler* GetSampler(const std::string& name) const {
+    auto it = name_to_sampler_.find(name);
+    return it == name_to_sampler_.end() ? nullptr : it->second;
+  }
+
+  /// Retrieves a list of all samplers.
+  const std::vector<std::unique_ptr<Sampler>>& GetSamplers() const {
+    return samplers_;
+  }
+
   /// Adds |feature| to the list of features that must be supported by the
   /// engine.
   void AddRequiredFeature(const std::string& feature) {
@@ -170,6 +194,36 @@ class Script : public RecipeImpl {
   /// Retrieves the SPIR-V target environment.
   const std::string& GetSpvTargetEnv() const { return spv_env_; }
 
+  /// Assign ownership of the format to the script.
+  Format* RegisterFormat(std::unique_ptr<Format> fmt) {
+    formats_.push_back(std::move(fmt));
+    return formats_.back().get();
+  }
+
+  /// Assigns ownership of the type to the script.
+  type::Type* RegisterType(std::unique_ptr<type::Type> type) {
+    types_.push_back(std::move(type));
+    return types_.back().get();
+  }
+
+  /// Adds |type| to the list of known types. The |type| must have
+  /// a unique name over all types in the script.
+  Result AddType(const std::string& name, std::unique_ptr<type::Type> type) {
+    if (name_to_type_.count(name) > 0)
+      return Result("duplicate type name provided");
+
+    name_to_type_[name] = std::move(type);
+    return {};
+  }
+
+  /// Retrieves the type with |name|, |nullptr| if not found.
+  type::Type* GetType(const std::string& name) const {
+    auto it = name_to_type_.find(name);
+    return it == name_to_type_.end() ? nullptr : it->second.get();
+  }
+
+  type::Type* ParseType(const std::string& str);
+
  private:
   struct {
     std::vector<std::string> required_features;
@@ -181,11 +235,16 @@ class Script : public RecipeImpl {
   std::string spv_env_;
   std::map<std::string, Shader*> name_to_shader_;
   std::map<std::string, Buffer*> name_to_buffer_;
+  std::map<std::string, Sampler*> name_to_sampler_;
   std::map<std::string, Pipeline*> name_to_pipeline_;
+  std::map<std::string, std::unique_ptr<type::Type>> name_to_type_;
   std::vector<std::unique_ptr<Shader>> shaders_;
   std::vector<std::unique_ptr<Command>> commands_;
   std::vector<std::unique_ptr<Buffer>> buffers_;
+  std::vector<std::unique_ptr<Sampler>> samplers_;
   std::vector<std::unique_ptr<Pipeline>> pipelines_;
+  std::vector<std::unique_ptr<type::Type>> types_;
+  std::vector<std::unique_ptr<Format>> formats_;
 };
 
 }  // namespace amber

@@ -23,6 +23,7 @@ namespace amber {
 namespace clspvhelper {
 
 Result Compile(Pipeline::ShaderInfo* shader_info,
+               Pipeline* pipeline,
                std::vector<uint32_t>* generated_binary) {
   std::vector<clspv::version0::DescriptorMapEntry> entries;
   const auto& src_str = shader_info->GetShader()->GetData();
@@ -36,51 +37,69 @@ Result Compile(Pipeline::ShaderInfo* shader_info,
   }
 
   for (auto& entry : entries) {
-    if (entry.kind != clspv::version0::DescriptorMapEntry::KernelArg) {
-      return Result(
-          "Only kernel argument descriptor entries are currently supported");
+    if (entry.kind == clspv::version0::DescriptorMapEntry::Constant) {
+      return Result("Constant descriptor entries are not currently supported");
     }
 
-    Pipeline::ShaderInfo::DescriptorMapEntry descriptor_entry;
-    descriptor_entry.descriptor_set = entry.descriptor_set;
-    descriptor_entry.binding = entry.binding;
-    descriptor_entry.pod_offset = 0;
-    descriptor_entry.pod_arg_size = 0;
-    switch (entry.kernel_arg_data.arg_kind) {
-      case clspv::ArgKind::Buffer:
-        descriptor_entry.kind =
-            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SSBO;
-        break;
-      case clspv::ArgKind::BufferUBO:
-        descriptor_entry.kind =
-            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::UBO;
-        break;
-      case clspv::ArgKind::Pod:
-        descriptor_entry.kind =
-            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD;
-        break;
-      case clspv::ArgKind::PodUBO:
-        descriptor_entry.kind =
-            Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO;
-        break;
-      case clspv::ArgKind::Local:
-        // Local arguments are handled via specialization constants.
-        break;
-      default:
-        return Result("Unsupported kernel argument descriptor entry");
+    if (entry.kind == clspv::version0::DescriptorMapEntry::KernelArg) {
+      Pipeline::ShaderInfo::DescriptorMapEntry descriptor_entry;
+      descriptor_entry.descriptor_set = entry.descriptor_set;
+      descriptor_entry.binding = entry.binding;
+      descriptor_entry.pod_offset = 0;
+      descriptor_entry.pod_arg_size = 0;
+      switch (entry.kernel_arg_data.arg_kind) {
+        case clspv::ArgKind::Buffer:
+          descriptor_entry.kind =
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SSBO;
+          break;
+        case clspv::ArgKind::BufferUBO:
+          descriptor_entry.kind =
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::UBO;
+          break;
+        case clspv::ArgKind::Pod:
+          descriptor_entry.kind =
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD;
+          break;
+        case clspv::ArgKind::PodUBO:
+          descriptor_entry.kind =
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO;
+          break;
+        case clspv::ArgKind::ReadOnlyImage:
+          descriptor_entry.kind =
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE;
+          break;
+        case clspv::ArgKind::WriteOnlyImage:
+          descriptor_entry.kind =
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::WO_IMAGE;
+          break;
+        case clspv::ArgKind::Sampler:
+          descriptor_entry.kind =
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::SAMPLER;
+          break;
+        case clspv::ArgKind::Local:
+          // Local arguments are handled via specialization constants.
+          break;
+        default:
+          return Result("Unsupported kernel argument descriptor entry");
+      }
+
+      if (entry.kernel_arg_data.arg_kind == clspv::ArgKind::Pod ||
+          entry.kernel_arg_data.arg_kind == clspv::ArgKind::PodUBO) {
+        descriptor_entry.pod_offset = entry.kernel_arg_data.pod_offset;
+        descriptor_entry.pod_arg_size = entry.kernel_arg_data.pod_arg_size;
+      }
+
+      descriptor_entry.arg_name = entry.kernel_arg_data.arg_name;
+      descriptor_entry.arg_ordinal = entry.kernel_arg_data.arg_ordinal;
+
+      shader_info->AddDescriptorEntry(entry.kernel_arg_data.kernel_name,
+                                      std::move(descriptor_entry));
+    } else {
+      assert(entry.kind == clspv::version0::DescriptorMapEntry::Sampler);
+      // Create a new sampler info.
+      pipeline->AddSampler(entry.sampler_data.mask, entry.descriptor_set,
+                           entry.binding);
     }
-
-    if (entry.kernel_arg_data.arg_kind == clspv::ArgKind::Pod ||
-        entry.kernel_arg_data.arg_kind == clspv::ArgKind::PodUBO) {
-      descriptor_entry.pod_offset = entry.kernel_arg_data.pod_offset;
-      descriptor_entry.pod_arg_size = entry.kernel_arg_data.pod_arg_size;
-    }
-
-    descriptor_entry.arg_name = entry.kernel_arg_data.arg_name;
-    descriptor_entry.arg_ordinal = entry.kernel_arg_data.arg_ordinal;
-
-    shader_info->AddDescriptorEntry(entry.kernel_arg_data.kernel_name,
-                                    std::move(descriptor_entry));
   }
 
   return Result();

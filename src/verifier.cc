@@ -21,11 +21,12 @@
 #include <vector>
 
 #include "src/command.h"
+#include "src/float16_helper.h"
 
 namespace amber {
 namespace {
 
-const uint8_t kBitsPerByte = 8;
+const uint32_t kBitsPerByte = 8;
 const double kEpsilon = 0.000001;
 const double kDefaultTexelTolerance = 0.002;
 
@@ -33,21 +34,20 @@ const double kDefaultTexelTolerance = 0.002;
 // [0, bits) of |dst|.
 void CopyBitsOfMemoryToBuffer(uint8_t* dst,
                               const uint8_t* src,
-                              uint8_t src_bit_offset,
-                              uint8_t bits) {
-  while (src_bit_offset > static_cast<uint8_t>(7)) {
+                              uint32_t src_bit_offset,
+                              uint32_t bits) {
+  while (src_bit_offset > 7) {
     ++src;
-    src_bit_offset = static_cast<uint8_t>(src_bit_offset - kBitsPerByte);
+    src_bit_offset = src_bit_offset - kBitsPerByte;
   }
 
   // Number of bytes greater than or equal to |(src_bit_offset + bits) / 8|.
-  const uint8_t size_in_bytes =
-      static_cast<uint8_t>((src_bit_offset + bits + 7) / kBitsPerByte);
-  assert(size_in_bytes <= static_cast<uint8_t>(kBitsPerByte));
+  const uint32_t size_in_bytes = (src_bit_offset + bits + 7) / kBitsPerByte;
+  assert(size_in_bytes <= kBitsPerByte);
 
   uint64_t data = 0;
   uint8_t* ptr = reinterpret_cast<uint8_t*>(&data);
-  for (uint8_t i = 0; i < size_in_bytes; ++i) {
+  for (uint32_t i = 0; i < size_in_bytes; ++i) {
     ptr[i] = src[i];
   }
 
@@ -56,78 +56,6 @@ void CopyBitsOfMemoryToBuffer(uint8_t* dst,
     data &= (1ULL << bits) - 1ULL;
 
   std::memcpy(dst, &data, static_cast<size_t>((bits + 7) / kBitsPerByte));
-}
-
-// Convert float |value| whose size is 16 bits to 32 bits float
-// based on IEEE-754.
-float HexFloat16ToFloat(const uint8_t* value) {
-  uint32_t sign = (static_cast<uint32_t>(value[1]) & 0x80) << 24U;
-  uint32_t exponent = (((static_cast<uint32_t>(value[1]) & 0x7c) >> 2U) + 112U)
-                      << 23U;
-  uint32_t mantissa = ((static_cast<uint32_t>(value[1]) & 0x3) << 8U |
-                       static_cast<uint32_t>(value[0]))
-                      << 13U;
-
-  uint32_t hex = sign | exponent | mantissa;
-  float* hex_float = reinterpret_cast<float*>(&hex);
-  return *hex_float;
-}
-
-// Convert float |value| whose size is 11 bits to 32 bits float
-// based on IEEE-754.
-float HexFloat11ToFloat(const uint8_t* value) {
-  uint32_t exponent = (((static_cast<uint32_t>(value[1]) << 2U) |
-                        ((static_cast<uint32_t>(value[0]) & 0xc0) >> 6U)) +
-                       112U)
-                      << 23U;
-  uint32_t mantissa = (static_cast<uint32_t>(value[0]) & 0x3f) << 17U;
-
-  uint32_t hex = exponent | mantissa;
-  float* hex_float = reinterpret_cast<float*>(&hex);
-  return *hex_float;
-}
-
-// Convert float |value| whose size is 10 bits to 32 bits float
-// based on IEEE-754.
-float HexFloat10ToFloat(const uint8_t* value) {
-  uint32_t exponent = (((static_cast<uint32_t>(value[1]) << 3U) |
-                        ((static_cast<uint32_t>(value[0]) & 0xe0) >> 5U)) +
-                       112U)
-                      << 23U;
-  uint32_t mantissa = (static_cast<uint32_t>(value[0]) & 0x1f) << 18U;
-
-  uint32_t hex = exponent | mantissa;
-  float* hex_float = reinterpret_cast<float*>(&hex);
-  return *hex_float;
-}
-
-// Convert float |value| whose size is |bits| bits to 32 bits float
-// based on IEEE-754.
-// See https://www.khronos.org/opengl/wiki/Small_Float_Formats
-// and https://en.wikipedia.org/wiki/IEEE_754.
-//
-//    Sign Exponent Mantissa Exponent-Bias
-// 16    1        5       10            15
-// 11    0        5        6            15
-// 10    0        5        5            15
-// 32    1        8       23           127
-// 64    1       11       52          1023
-//
-// 11 and 10 bits floats are always positive.
-// 14 bits float is used only RGB9_E5 format in OpenGL but it does not exist
-// in Vulkan.
-float HexFloatToFloat(const uint8_t* value, uint8_t bits) {
-  switch (bits) {
-    case 10:
-      return HexFloat10ToFloat(value);
-    case 11:
-      return HexFloat11ToFloat(value);
-    case 16:
-      return HexFloat16ToFloat(value);
-  }
-
-  assert(false && "Invalid bits");
-  return 0;
 }
 
 // This is based on "18.3. sRGB transfer functions" of
@@ -159,99 +87,82 @@ bool IsEqualWithTolerance(const double actual,
 }
 
 template <typename T>
-Result CheckValue(const ProbeSSBOCommand* command,
-                  const uint8_t* memory,
-                  const std::vector<Value>& values) {
+Result CheckActualValue(const ProbeSSBOCommand* command,
+                        const T actual_value,
+                        const Value& value) {
   const auto comp = command->GetComparator();
   const auto& tolerance = command->GetTolerances();
-  const T* ptr = reinterpret_cast<const T*>(memory);
-  for (size_t i = 0; i < values.size(); ++i) {
-    const T val = values[i].IsInteger() ? static_cast<T>(values[i].AsUint64())
-                                        : static_cast<T>(values[i].AsDouble());
-    switch (comp) {
-      case ProbeSSBOCommand::Comparator::kEqual:
-        if (values[i].IsInteger()) {
-          if (static_cast<uint64_t>(*ptr) != static_cast<uint64_t>(val)) {
-            return Result("Line " + std::to_string(command->GetLine()) +
-                          ": Verifier failed: " + std::to_string(*ptr) +
-                          " == " + std::to_string(val) + ", at index " +
-                          std::to_string(i));
-          }
-        } else {
-          if (!IsEqualWithTolerance(static_cast<const double>(*ptr),
-                                    static_cast<const double>(val), kEpsilon)) {
-            return Result("Line " + std::to_string(command->GetLine()) +
-                          ": Verifier failed: " + std::to_string(*ptr) +
-                          " == " + std::to_string(val) + ", at index " +
-                          std::to_string(i));
-          }
+  const T val = value.IsInteger() ? static_cast<T>(value.AsUint64())
+                                  : static_cast<T>(value.AsDouble());
+  switch (comp) {
+    case ProbeSSBOCommand::Comparator::kEqual:
+      if (value.IsInteger()) {
+        if (static_cast<uint64_t>(actual_value) != static_cast<uint64_t>(val)) {
+          return Result(std::to_string(actual_value) +
+                        " == " + std::to_string(val));
         }
-        break;
-      case ProbeSSBOCommand::Comparator::kNotEqual:
-        if (values[i].IsInteger()) {
-          if (static_cast<uint64_t>(*ptr) == static_cast<uint64_t>(val)) {
-            return Result("Line " + std::to_string(command->GetLine()) +
-                          ": Verifier failed: " + std::to_string(*ptr) +
-                          " != " + std::to_string(val) + ", at index " +
-                          std::to_string(i));
-          }
-        } else {
-          if (IsEqualWithTolerance(static_cast<const double>(*ptr),
-                                   static_cast<const double>(val), kEpsilon)) {
-            return Result("Line " + std::to_string(command->GetLine()) +
-                          ": Verifier failed: " + std::to_string(*ptr) +
-                          " != " + std::to_string(val) + ", at index " +
-                          std::to_string(i));
-          }
+      } else {
+        if (!IsEqualWithTolerance(static_cast<const double>(actual_value),
+                                  static_cast<const double>(val), kEpsilon)) {
+          return Result(std::to_string(actual_value) +
+                        " == " + std::to_string(val));
         }
-        break;
-      case ProbeSSBOCommand::Comparator::kFuzzyEqual:
-        if (!IsEqualWithTolerance(
-                static_cast<const double>(*ptr), static_cast<const double>(val),
-                command->HasTolerances() ? tolerance[0].value : kEpsilon,
-                command->HasTolerances() ? tolerance[0].is_percent : true)) {
-          return Result("Line " + std::to_string(command->GetLine()) +
-                        ": Verifier failed: " + std::to_string(*ptr) +
-                        " ~= " + std::to_string(val) + ", at index " +
-                        std::to_string(i));
+      }
+      break;
+    case ProbeSSBOCommand::Comparator::kNotEqual:
+      if (value.IsInteger()) {
+        if (static_cast<uint64_t>(actual_value) == static_cast<uint64_t>(val)) {
+          return Result(std::to_string(actual_value) +
+                        " != " + std::to_string(val));
         }
-        break;
-      case ProbeSSBOCommand::Comparator::kLess:
-        if (*ptr >= val) {
-          return Result("Line " + std::to_string(command->GetLine()) +
-                        ": Verifier failed: " + std::to_string(*ptr) + " < " +
-                        std::to_string(val) + ", at index " +
-                        std::to_string(i));
+      } else {
+        if (IsEqualWithTolerance(static_cast<const double>(actual_value),
+                                 static_cast<const double>(val), kEpsilon)) {
+          return Result(std::to_string(actual_value) +
+                        " != " + std::to_string(val));
         }
-        break;
-      case ProbeSSBOCommand::Comparator::kLessOrEqual:
-        if (*ptr > val) {
-          return Result("Line " + std::to_string(command->GetLine()) +
-                        ": Verifier failed: " + std::to_string(*ptr) +
-                        " <= " + std::to_string(val) + ", at index " +
-                        std::to_string(i));
-        }
-        break;
-      case ProbeSSBOCommand::Comparator::kGreater:
-        if (*ptr <= val) {
-          return Result("Line " + std::to_string(command->GetLine()) +
-                        ": Verifier failed: " + std::to_string(*ptr) + " > " +
-                        std::to_string(val) + ", at index " +
-                        std::to_string(i));
-        }
-        break;
-      case ProbeSSBOCommand::Comparator::kGreaterOrEqual:
-        if (*ptr < val) {
-          return Result("Line " + std::to_string(command->GetLine()) +
-                        ": Verifier failed: " + std::to_string(*ptr) +
-                        " >= " + std::to_string(val) + ", at index " +
-                        std::to_string(i));
-        }
-        break;
-    }
-    ++ptr;
+      }
+      break;
+    case ProbeSSBOCommand::Comparator::kFuzzyEqual:
+      if (!IsEqualWithTolerance(
+              static_cast<const double>(actual_value),
+              static_cast<const double>(val),
+              command->HasTolerances() ? tolerance[0].value : kEpsilon,
+              command->HasTolerances() ? tolerance[0].is_percent : true)) {
+        return Result(std::to_string(actual_value) +
+                      " ~= " + std::to_string(val));
+      }
+      break;
+    case ProbeSSBOCommand::Comparator::kLess:
+      if (actual_value >= val)
+        return Result(std::to_string(actual_value) + " < " +
+                      std::to_string(val));
+      break;
+    case ProbeSSBOCommand::Comparator::kLessOrEqual:
+      if (actual_value > val)
+        return Result(std::to_string(actual_value) +
+                      " <= " + std::to_string(val));
+      break;
+    case ProbeSSBOCommand::Comparator::kGreater:
+      if (actual_value <= val)
+        return Result(std::to_string(actual_value) + " > " +
+                      std::to_string(val));
+      break;
+    case ProbeSSBOCommand::Comparator::kGreaterOrEqual:
+      if (actual_value < val)
+        return Result(std::to_string(actual_value) +
+                      " >= " + std::to_string(val));
+      break;
   }
   return {};
+}
+
+template <typename T>
+Result CheckValue(const ProbeSSBOCommand* command,
+                  const uint8_t* memory,
+                  const Value& value) {
+  const T* ptr = reinterpret_cast<const T*>(memory);
+  return CheckActualValue<T>(command, *ptr, value);
 }
 
 void SetupToleranceForTexels(const ProbeCommand* command,
@@ -291,136 +202,99 @@ void SetupToleranceForTexels(const ProbeCommand* command,
 }
 
 // Convert data of |texel| into double values based on the
-// information given in |framebuffer_format|.
+// information given in |fmt|.
 std::vector<double> GetActualValuesFromTexel(const uint8_t* texel,
-                                             const Format* framebuffer_format) {
-  assert(framebuffer_format && !framebuffer_format->GetComponents().empty());
+                                             const Format* fmt) {
+  assert(fmt && !fmt->GetSegments().empty());
 
-  std::vector<double> actual_values(framebuffer_format->GetComponents().size());
-  uint8_t bit_offset = 0;
+  std::vector<double> actual_values(fmt->GetSegments().size());
+  uint32_t bit_offset = 0;
 
-  for (size_t i = 0; i < framebuffer_format->GetComponents().size(); ++i) {
-    const auto& component = framebuffer_format->GetComponents()[i];
-    uint8_t actual[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-
-    CopyBitsOfMemoryToBuffer(actual, texel, bit_offset, component.num_bits);
-    if (component.mode == FormatMode::kUFloat ||
-        component.mode == FormatMode::kSFloat) {
-      if (component.num_bits < 32) {
-        actual_values[i] =
-            static_cast<double>(HexFloatToFloat(actual, component.num_bits));
-      } else if (component.num_bits == 32) {
-        float* ptr = reinterpret_cast<float*>(actual);
-        actual_values[i] = static_cast<double>(*ptr);
-      } else if (component.num_bits == 64) {
-        double* ptr = reinterpret_cast<double*>(actual);
-        actual_values[i] = *ptr;
-      } else {
-        assert(false && "Bits of component is not for double nor float type");
-      }
-    } else {
-      if (component.mode == FormatMode::kSInt ||
-          component.mode == FormatMode::kSNorm) {
-        switch (component.num_bits) {
-          case 8: {
-            int8_t* ptr8 = nullptr;
-            ptr8 = reinterpret_cast<int8_t*>(actual);
-            actual_values[i] = static_cast<double>(*ptr8);
-            break;
-          }
-          case 16: {
-            int16_t* ptr16 = nullptr;
-            ptr16 = reinterpret_cast<int16_t*>(actual);
-            actual_values[i] = static_cast<double>(*ptr16);
-            break;
-          }
-          case 32: {
-            int32_t* ptr32 = nullptr;
-            ptr32 = reinterpret_cast<int32_t*>(actual);
-            actual_values[i] = static_cast<double>(*ptr32);
-            break;
-          }
-          case 64: {
-            int64_t* ptr64 = nullptr;
-            ptr64 = reinterpret_cast<int64_t*>(actual);
-            actual_values[i] = static_cast<double>(*ptr64);
-            break;
-          }
-          default: {
-            assert(false && "Bits of component is not for integer type");
-          }
-        }
-      } else {
-        switch (component.num_bits) {
-          case 8: {
-            actual_values[i] = static_cast<double>(*actual);
-            break;
-          }
-          case 16: {
-            uint16_t* ptr16 = nullptr;
-            ptr16 = reinterpret_cast<uint16_t*>(actual);
-            actual_values[i] = static_cast<double>(*ptr16);
-            break;
-          }
-          case 32: {
-            uint32_t* ptr32 = nullptr;
-            ptr32 = reinterpret_cast<uint32_t*>(actual);
-            actual_values[i] = static_cast<double>(*ptr32);
-            break;
-          }
-          case 64: {
-            uint64_t* ptr64 = nullptr;
-            ptr64 = reinterpret_cast<uint64_t*>(actual);
-            actual_values[i] = static_cast<double>(*ptr64);
-            break;
-          }
-          default: {
-            assert(false && "Bits of component is not for integer type");
-          }
-        }
-      }
+  for (size_t i = 0; i < fmt->GetSegments().size(); ++i) {
+    const auto& seg = fmt->GetSegments()[i];
+    if (seg.IsPadding()) {
+      bit_offset += seg.GetNumBits();
+      continue;
     }
 
-    bit_offset = static_cast<uint8_t>(bit_offset + component.num_bits);
+    uint8_t actual[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t num_bits = seg.GetNumBits();
+    CopyBitsOfMemoryToBuffer(actual, texel, bit_offset, num_bits);
+
+    FormatMode mode = seg.GetFormatMode();
+    if (type::Type::IsInt8(mode, num_bits)) {
+      int8_t* ptr8 = nullptr;
+      ptr8 = reinterpret_cast<int8_t*>(actual);
+      actual_values[i] = static_cast<double>(*ptr8);
+    } else if (type::Type::IsInt16(mode, num_bits)) {
+      int16_t* ptr16 = nullptr;
+      ptr16 = reinterpret_cast<int16_t*>(actual);
+      actual_values[i] = static_cast<double>(*ptr16);
+    } else if (type::Type::IsInt32(mode, num_bits)) {
+      int32_t* ptr32 = nullptr;
+      ptr32 = reinterpret_cast<int32_t*>(actual);
+      actual_values[i] = static_cast<double>(*ptr32);
+    } else if (type::Type::IsInt64(mode, num_bits)) {
+      int64_t* ptr64 = nullptr;
+      ptr64 = reinterpret_cast<int64_t*>(actual);
+      actual_values[i] = static_cast<double>(*ptr64);
+    } else if (type::Type::IsUint8(mode, num_bits)) {
+      actual_values[i] = static_cast<double>(*actual);
+    } else if (type::Type::IsUint16(mode, num_bits)) {
+      uint16_t* ptr16 = nullptr;
+      ptr16 = reinterpret_cast<uint16_t*>(actual);
+      actual_values[i] = static_cast<double>(*ptr16);
+    } else if (type::Type::IsUint32(mode, num_bits)) {
+      uint32_t* ptr32 = nullptr;
+      ptr32 = reinterpret_cast<uint32_t*>(actual);
+      actual_values[i] = static_cast<double>(*ptr32);
+    } else if (type::Type::IsUint64(mode, num_bits)) {
+      uint64_t* ptr64 = nullptr;
+      ptr64 = reinterpret_cast<uint64_t*>(actual);
+      actual_values[i] = static_cast<double>(*ptr64);
+    } else if (type::Type::IsFloat32(mode, num_bits)) {
+      float* ptr = reinterpret_cast<float*>(actual);
+      actual_values[i] = static_cast<double>(*ptr);
+    } else if (type::Type::IsFloat64(mode, num_bits)) {
+      double* ptr = reinterpret_cast<double*>(actual);
+      actual_values[i] = *ptr;
+    } else if (type::Type::IsFloat(mode) && num_bits < 32) {
+      actual_values[i] = static_cast<double>(
+          float16::HexFloatToFloat(actual, static_cast<uint8_t>(num_bits)));
+    } else {
+      assert(false && "Incorrect number of bits for number.");
+    }
+
+    bit_offset += num_bits;
   }
 
   return actual_values;
 }
 
-// If component mode of |framebuffer_format| is FormatMode::kUNorm or
+// If component mode of |fmt| is FormatMode::kUNorm or
 // ::kSNorm or ::kSRGB, scale the corresponding value in |texel|.
 // Note that we do not scale values with FormatMode::kUInt, ::kSInt,
 // ::kUFloat, ::kSFloat.
-void ScaleTexelValuesIfNeeded(std::vector<double>* texel,
-                              const Format* framebuffer_format) {
-  assert(framebuffer_format->GetComponents().size() == texel->size());
-  for (size_t i = 0; i < framebuffer_format->GetComponents().size(); ++i) {
-    const auto& component = framebuffer_format->GetComponents()[i];
+void ScaleTexelValuesIfNeeded(std::vector<double>* texel, const Format* fmt) {
+  assert(fmt->GetSegments().size() == texel->size());
+
+  for (size_t i = 0; i < fmt->GetSegments().size(); ++i) {
+    const auto& seg = fmt->GetSegments()[i];
+    if (seg.IsPadding())
+      continue;
 
     double scaled_value = (*texel)[i];
-    switch (component.mode) {
-      case FormatMode::kUNorm:
-        scaled_value /= static_cast<double>((1 << component.num_bits) - 1);
-        break;
-      case FormatMode::kSNorm:
-        scaled_value /=
-            static_cast<double>((1 << (component.num_bits - 1)) - 1);
-        break;
-      case FormatMode::kUInt:
-      case FormatMode::kSInt:
-      case FormatMode::kUFloat:
-      case FormatMode::kSFloat:
-        break;
-      case FormatMode::kSRGB:
-        scaled_value /= static_cast<double>((1 << component.num_bits) - 1);
-        if (component.type != FormatComponentType::kA)
-          scaled_value = SRGBToLinearValue(scaled_value);
-        break;
-      case FormatMode::kUScaled:
-      case FormatMode::kSScaled:
-        assert(false &&
-               "FormatMode::kUScaled and ::kSScaled are not implemented");
-        break;
+    if (seg.GetFormatMode() == FormatMode::kUNorm) {
+      scaled_value /= static_cast<double>((1 << seg.GetNumBits()) - 1);
+    } else if (seg.GetFormatMode() == FormatMode::kSNorm) {
+      scaled_value /= static_cast<double>((1 << (seg.GetNumBits() - 1)) - 1);
+    } else if (seg.GetFormatMode() == FormatMode::kSRGB) {
+      scaled_value /= static_cast<double>((1 << seg.GetNumBits()) - 1);
+      if (seg.GetName() != FormatComponentType::kA)
+        scaled_value = SRGBToLinearValue(scaled_value);
+    } else if (seg.GetFormatMode() == FormatMode::kSScaled ||
+               seg.GetFormatMode() == FormatMode::kUScaled) {
+      assert(false && "UScaled and SScaled are not implemented");
     }
 
     (*texel)[i] = scaled_value;
@@ -433,22 +307,24 @@ void ScaleTexelValuesIfNeeded(std::vector<double>* texel,
 /// |is_tolerance_percent| is true, we assume that the corresponding
 /// |tolerance| is relative i.e., percentage allowed error.
 bool IsTexelEqualToExpected(const std::vector<double>& texel,
-                            const Format* framebuffer_format,
+                            const Format* fmt,
                             const ProbeCommand* command,
                             const double* tolerance,
                             const bool* is_tolerance_percent) {
-  for (size_t i = 0; i < framebuffer_format->GetComponents().size(); ++i) {
-    const auto& component = framebuffer_format->GetComponents()[i];
+  for (size_t i = 0; i < fmt->GetSegments().size(); ++i) {
+    const auto& seg = fmt->GetSegments()[i];
+    if (seg.IsPadding())
+      continue;
 
     double texel_for_component = texel[i];
     double expected = 0;
     double current_tolerance = 0;
     bool is_current_tolerance_percent = false;
-    switch (component.type) {
+    switch (seg.GetName()) {
       case FormatComponentType::kA:
-        if (!command->IsRGBA()) {
+        if (!command->IsRGBA())
           continue;
-        }
+
         expected = static_cast<double>(command->GetA());
         current_tolerance = tolerance[3];
         is_current_tolerance_percent = is_tolerance_percent[3];
@@ -482,11 +358,14 @@ bool IsTexelEqualToExpected(const std::vector<double>& texel,
 }
 
 std::vector<double> GetTexelInRGBA(const std::vector<double>& texel,
-                                   const Format* framebuffer_format) {
+                                   const Format* fmt) {
   std::vector<double> texel_in_rgba(texel.size());
-  for (size_t i = 0; i < framebuffer_format->GetComponents().size(); ++i) {
-    const auto& component = framebuffer_format->GetComponents()[i];
-    switch (component.type) {
+  for (size_t i = 0; i < fmt->GetSegments().size(); ++i) {
+    const auto& seg = fmt->GetSegments()[i];
+    if (seg.IsPadding())
+      continue;
+
+    switch (seg.GetName()) {
       case FormatComponentType::kR:
         texel_in_rgba[0] = texel[i];
         break;
@@ -513,7 +392,7 @@ Verifier::Verifier() = default;
 Verifier::~Verifier() = default;
 
 Result Verifier::Probe(const ProbeCommand* command,
-                       const Format* framebuffer_format,
+                       const Format* fmt,
                        uint32_t texel_stride,
                        uint32_t row_stride,
                        uint32_t frame_width,
@@ -521,7 +400,7 @@ Result Verifier::Probe(const ProbeCommand* command,
                        const void* buf) {
   if (!command)
     return Result("Verifier::Probe given ProbeCommand is nullptr");
-  if (!framebuffer_format)
+  if (!fmt)
     return Result("Verifier::Probe given texel's Format is nullptr");
   if (!buf)
     return Result("Verifier::Probe given buffer to probe is nullptr");
@@ -576,18 +455,17 @@ Result Verifier::Probe(const ProbeCommand* command,
   uint32_t count_of_invalid_pixels = 0;
   uint32_t first_invalid_i = 0;
   uint32_t first_invalid_j = 0;
-  std::vector<double> actual_texel_values_on_failure;
+  std::vector<double> failure_values;
   for (uint32_t j = 0; j < height; ++j) {
     const uint8_t* p = ptr + row_stride * (j + y) + texel_stride * x;
     for (uint32_t i = 0; i < width; ++i) {
       auto actual_texel_values =
-          GetActualValuesFromTexel(p + texel_stride * i, framebuffer_format);
-      ScaleTexelValuesIfNeeded(&actual_texel_values, framebuffer_format);
-      if (!IsTexelEqualToExpected(actual_texel_values, framebuffer_format,
-                                  command, tolerance, is_tolerance_percent)) {
+          GetActualValuesFromTexel(p + texel_stride * i, fmt);
+      ScaleTexelValuesIfNeeded(&actual_texel_values, fmt);
+      if (!IsTexelEqualToExpected(actual_texel_values, fmt, command, tolerance,
+                                  is_tolerance_percent)) {
         if (!count_of_invalid_pixels) {
-          actual_texel_values_on_failure =
-              GetTexelInRGBA(actual_texel_values, framebuffer_format);
+          failure_values = GetTexelInRGBA(actual_texel_values, fmt);
           first_invalid_i = i;
           first_invalid_j = j;
         }
@@ -597,41 +475,34 @@ Result Verifier::Probe(const ProbeCommand* command,
   }
 
   if (count_of_invalid_pixels) {
-    const auto& component = framebuffer_format->GetComponents().back();
-    float scale_factor_for_error_report = 1.0f;
-    if (component.mode == FormatMode::kUNorm ||
-        component.mode == FormatMode::kSNorm ||
-        component.mode == FormatMode::kSRGB) {
-      scale_factor_for_error_report = 255.0f;
-    }
-
-    return Result(
+    float scale = fmt->IsNormalized() ? 255.f : 1.f;
+    std::string reason =
         "Line " + std::to_string(command->GetLine()) +
         ": Probe failed at: " + std::to_string(x + first_invalid_i) + ", " +
-        std::to_string(first_invalid_j + y) + "\n" + "  Expected RGBA: " +
-        std::to_string(command->GetR() * scale_factor_for_error_report) + ", " +
-        std::to_string(command->GetG() * scale_factor_for_error_report) + ", " +
-        std::to_string(command->GetB() * scale_factor_for_error_report) +
-        (command->IsRGBA() ? ", " +
-                                 std::to_string(command->GetA() *
-                                                scale_factor_for_error_report) +
-                                 "\n  Actual RGBA: "
-                           : "\n  Actual RGB: ") +
-        std::to_string(static_cast<float>(actual_texel_values_on_failure[0]) *
-                       scale_factor_for_error_report) +
-        ", " +
-        std::to_string(static_cast<float>(actual_texel_values_on_failure[1]) *
-                       scale_factor_for_error_report) +
-        ", " +
-        std::to_string(static_cast<float>(actual_texel_values_on_failure[2]) *
-                       scale_factor_for_error_report) +
-        (command->IsRGBA()
-             ? ", " + std::to_string(static_cast<float>(
-                                         actual_texel_values_on_failure[3]) *
-                                     scale_factor_for_error_report)
-             : "") +
-        "\n" + "Probe failed in " + std::to_string(count_of_invalid_pixels) +
-        " pixels");
+        std::to_string(first_invalid_j + y) + "\n" +
+        "  Expected: " + std::to_string(command->GetR() * scale) + ", " +
+        std::to_string(command->GetG() * scale) + ", " +
+        std::to_string(command->GetB() * scale);
+
+    if (command->IsRGBA()) {
+      reason += ", " + std::to_string(command->GetA() * scale);
+    }
+
+    reason +=
+        "\n    Actual: " +
+        std::to_string(static_cast<float>(failure_values[0]) * scale) + ", " +
+        std::to_string(static_cast<float>(failure_values[1]) * scale) + ", " +
+        std::to_string(static_cast<float>(failure_values[2]) * scale);
+
+    if (command->IsRGBA()) {
+      reason +=
+          ", " + std::to_string(static_cast<float>(failure_values[3]) * scale);
+    }
+
+    reason += "\nProbe failed in " + std::to_string(count_of_invalid_pixels) +
+              " pixels";
+
+    return Result(reason);
   }
 
   return {};
@@ -669,30 +540,65 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
                   std::to_string(fmt->SizeInBytes()) + ")");
   }
 
-  const uint8_t* ptr = static_cast<const uint8_t*>(buffer) + offset;
-  if (fmt->IsInt8())
-    return CheckValue<int8_t>(command, ptr, values);
-  if (fmt->IsUint8())
-    return CheckValue<uint8_t>(command, ptr, values);
-  if (fmt->IsInt16())
-    return CheckValue<int16_t>(command, ptr, values);
-  if (fmt->IsUint16())
-    return CheckValue<uint16_t>(command, ptr, values);
-  if (fmt->IsInt32())
-    return CheckValue<int32_t>(command, ptr, values);
-  if (fmt->IsUint32())
-    return CheckValue<uint32_t>(command, ptr, values);
-  if (fmt->IsInt64())
-    return CheckValue<int64_t>(command, ptr, values);
-  if (fmt->IsUint64())
-    return CheckValue<uint64_t>(command, ptr, values);
-  if (fmt->IsFloat())
-    return CheckValue<float>(command, ptr, values);
-  if (fmt->IsDouble())
-    return CheckValue<double>(command, ptr, values);
+  auto& segments = fmt->GetSegments();
 
-  return Result("Line " + std::to_string(command->GetLine()) +
-                ": Verifier::ProbeSSBO unknown datum type");
+  const uint8_t* ptr = static_cast<const uint8_t*>(buffer) + offset;
+  for (size_t i = 0, k = 0; i < values.size(); ++i, ++k) {
+    if (k >= segments.size())
+      k = 0;
+
+    const auto& value = values[i];
+    auto segment = segments[k];
+    // Skip over any padding bytes.
+    while (segment.IsPadding()) {
+      ptr += segment.PaddingBytes();
+      ++k;
+      if (k >= segments.size())
+        k = 0;
+
+      segment = segments[k];
+    }
+
+    Result r;
+    FormatMode mode = segment.GetFormatMode();
+    uint32_t num_bits = segment.GetNumBits();
+    if (type::Type::IsInt8(mode, num_bits)) {
+      r = CheckValue<int8_t>(command, ptr, value);
+    } else if (type::Type::IsUint8(mode, num_bits)) {
+      r = CheckValue<uint8_t>(command, ptr, value);
+    } else if (type::Type::IsInt16(mode, num_bits)) {
+      r = CheckValue<int16_t>(command, ptr, value);
+    } else if (type::Type::IsUint16(mode, num_bits)) {
+      r = CheckValue<uint16_t>(command, ptr, value);
+    } else if (type::Type::IsInt32(mode, num_bits)) {
+      r = CheckValue<int32_t>(command, ptr, value);
+    } else if (type::Type::IsUint32(mode, num_bits)) {
+      r = CheckValue<uint32_t>(command, ptr, value);
+    } else if (type::Type::IsInt64(mode, num_bits)) {
+      r = CheckValue<int64_t>(command, ptr, value);
+    } else if (type::Type::IsUint64(mode, num_bits)) {
+      r = CheckValue<uint64_t>(command, ptr, value);
+    } else if (type::Type::IsFloat16(mode, num_bits)) {
+      r = CheckActualValue<float>(command, float16::HexFloatToFloat(ptr, 16),
+                                  value);
+    } else if (type::Type::IsFloat32(mode, num_bits)) {
+      r = CheckValue<float>(command, ptr, value);
+    } else if (type::Type::IsFloat64(mode, num_bits)) {
+      r = CheckValue<double>(command, ptr, value);
+    } else {
+      return Result("Unknown datum type");
+    }
+
+    if (!r.IsSuccess()) {
+      return Result("Line " + std::to_string(command->GetLine()) +
+                    ": Verifier failed: " + r.Error() + ", at index " +
+                    std::to_string(i));
+    }
+
+    ptr += segment.SizeInBytes();
+  }
+
+  return {};
 }
 
 }  // namespace amber

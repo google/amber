@@ -381,7 +381,7 @@ class RenderPassGuard {
 GraphicsPipeline::GraphicsPipeline(
     Device* device,
     const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
-    const Format& depth_stencil_format,
+    Format* depth_stencil_format,
     uint32_t fence_timeout_ms,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : Pipeline(PipelineType::kGraphics,
@@ -426,9 +426,10 @@ Result GraphicsPipeline::CreateRenderPass() {
   subpass_desc.colorAttachmentCount = static_cast<uint32_t>(color_refer.size());
   subpass_desc.pColorAttachments = color_refer.data();
 
-  if (depth_stencil_format_.IsFormatKnown()) {
+  if (depth_stencil_format_ && depth_stencil_format_->IsFormatKnown()) {
     attachment_desc.push_back(kDefaultAttachmentDesc);
-    attachment_desc.back().format = device_->GetVkFormat(depth_stencil_format_);
+    attachment_desc.back().format =
+        device_->GetVkFormat(*depth_stencil_format_);
     attachment_desc.back().initialLayout =
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     attachment_desc.back().finalLayout =
@@ -649,7 +650,7 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
   }
 
   VkPipelineDepthStencilStateCreateInfo depthstencil_info;
-  if (depth_stencil_format_.IsFormatKnown()) {
+  if (depth_stencil_format_ && depth_stencil_format_->IsFormatKnown()) {
     depthstencil_info = GetVkPipelineDepthStencilInfo(pipeline_data);
     pipeline_info.pDepthStencilState = &depthstencil_info;
   }
@@ -740,7 +741,7 @@ Result GraphicsPipeline::SetClearColor(float r, float g, float b, float a) {
 }
 
 Result GraphicsPipeline::SetClearStencil(uint32_t stencil) {
-  if (!depth_stencil_format_.IsFormatKnown()) {
+  if (!depth_stencil_format_ || !depth_stencil_format_->IsFormatKnown()) {
     return Result(
         "Vulkan::ClearStencilCommand No DepthStencil Buffer for FrameBuffer "
         "Exists");
@@ -751,7 +752,7 @@ Result GraphicsPipeline::SetClearStencil(uint32_t stencil) {
 }
 
 Result GraphicsPipeline::SetClearDepth(float depth) {
-  if (!depth_stencil_format_.IsFormatKnown()) {
+  if (!depth_stencil_format_ || !depth_stencil_format_->IsFormatKnown()) {
     return Result(
         "Vulkan::ClearStencilCommand No DepthStencil Buffer for FrameBuffer "
         "Exists");
@@ -770,16 +771,17 @@ Result GraphicsPipeline::Clear() {
   if (!r.IsSuccess())
     return r;
 
-  if (!depth_stencil_format_.IsFormatKnown())
+  if (!depth_stencil_format_ || !depth_stencil_format_->IsFormatKnown())
     return {};
 
   VkClearValue depth_clear;
   depth_clear.depthStencil = {clear_depth_, clear_stencil_};
 
   return ClearBuffer(
-      depth_clear, depth_stencil_format_.HasStencilComponent()
-                       ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-                       : VK_IMAGE_ASPECT_DEPTH_BIT);
+      depth_clear,
+      depth_stencil_format_ && depth_stencil_format_->HasStencilComponent()
+          ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+          : VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
 Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
@@ -795,10 +797,15 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
   {
     RenderPassGuard render_pass_guard(this);
 
-    VkClearAttachment clear_attachment = VkClearAttachment();
-    clear_attachment.aspectMask = aspect;
-    clear_attachment.colorAttachment = 0;
-    clear_attachment.clearValue = clear_value;
+    std::vector<VkClearAttachment> clears;
+    for (size_t i = 0; i < color_buffers_.size(); ++i) {
+      VkClearAttachment clear_attachment = VkClearAttachment();
+      clear_attachment.aspectMask = aspect;
+      clear_attachment.colorAttachment = static_cast<uint32_t>(i);
+      clear_attachment.clearValue = clear_value;
+
+      clears.push_back(clear_attachment);
+    }
 
     VkClearRect clear_rect;
     clear_rect.rect = {{0, 0}, {frame_width_, frame_height_}};
@@ -806,7 +813,8 @@ Result GraphicsPipeline::ClearBuffer(const VkClearValue& clear_value,
     clear_rect.layerCount = 1;
 
     device_->GetPtrs()->vkCmdClearAttachments(
-        command_->GetVkCommandBuffer(), 1, &clear_attachment, 1, &clear_rect);
+        command_->GetVkCommandBuffer(), static_cast<uint32_t>(clears.size()),
+        clears.data(), 1, &clear_rect);
   }
 
   frame_->TransferColorImagesToHost(command_.get());

@@ -18,22 +18,25 @@ set(AMBER_SOURCES
     buffer.cc
     command.cc
     command_data.cc
-    datum_type.cc
+    debug.cc
     descriptor_set_and_binding_parser.cc
     engine.cc
     executor.cc
+    float16_helper.cc
     format.cc
-    format_parser.cc
     parser.cc
     pipeline.cc
     pipeline_data.cc
     recipe.cc
     result.cc
-    sleep.cc
+    sampler.cc
     script.cc
     shader.cc
     shader_compiler.cc
+    sleep.cc
     tokenizer.cc
+    type.cc
+    type_parser.cc
     value.cc
     verifier.cc
     vkscript/command_parser.cc
@@ -82,7 +85,7 @@ endif()
 
 if (${AMBER_ENABLE_CLSPV})
   target_include_directories(libamber PRIVATE
-    "${PROJECT_SOURCE_DIR}/third_party/clspv/include"
+    "${clspv_SOURCE_DIR}/clspv/include"
   )
 
   target_link_libraries(libamber
@@ -97,6 +100,10 @@ endif()
 
 if (${AMBER_ENABLE_SHADERC})
   target_link_libraries(libamber shaderc SPIRV)
+endif()
+
+if (${AMBER_ENABLE_VK_DEBUGGING})
+  target_link_libraries(libamber cppdap)
 endif()
 
 if (NOT MSVC AND NOT ANDROID)
@@ -123,26 +130,30 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_expect_test.cc
     amberscript/parser_extension_test.cc
     amberscript/parser_framebuffer_test.cc
+    amberscript/parser_image_test.cc
     amberscript/parser_pipeline_test.cc
     amberscript/parser_pipeline_set_test.cc
     amberscript/parser_repeat_test.cc
     amberscript/parser_run_test.cc
+    amberscript/parser_sampler_test.cc
     amberscript/parser_set_test.cc
     amberscript/parser_shader_opt_test.cc
     amberscript/parser_shader_test.cc
+    amberscript/parser_struct_test.cc
     amberscript/parser_test.cc
     buffer_test.cc
     command_data_test.cc
-    datum_type_test.cc
     descriptor_set_and_binding_parser_test.cc
     executor_test.cc
-    format_parser_test.cc
+    float16_helper_test.cc
     format_test.cc
     pipeline_test.cc
     result_test.cc
     script_test.cc
     shader_compiler_test.cc
     tokenizer_test.cc
+    type_parser_test.cc
+    type_test.cc
     verifier_test.cc
     vkscript/command_parser_test.cc
     vkscript/datum_type_parser_test.cc

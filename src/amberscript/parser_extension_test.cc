@@ -76,7 +76,8 @@ TEST_F(AmberScriptParserTest, ExtensionInstanceExtraParams) {
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
 
-  EXPECT_EQ("1: extra parameters after INSTANCE_EXTENSION command", r.Error());
+  EXPECT_EQ("1: extra parameters after INSTANCE_EXTENSION command: EXTRA",
+            r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ExtensionDevice) {
@@ -132,7 +133,8 @@ TEST_F(AmberScriptParserTest, ExtensionDeviceExtraParams) {
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: extra parameters after DEVICE_EXTENSION command", r.Error());
+  EXPECT_EQ("1: extra parameters after DEVICE_EXTENSION command: EXTRA",
+            r.Error());
 }
 
 }  // namespace amberscript

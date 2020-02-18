@@ -14,6 +14,7 @@
 
 #include "amber/amber.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <fstream>
@@ -30,6 +31,10 @@
 #include "src/build-versions.h"
 #include "src/make_unique.h"
 
+#if AMBER_ENABLE_SPIRV_TOOLS
+#include "spirv-tools/libspirv.hpp"
+#endif
+
 #if AMBER_ENABLE_LODEPNG
 #include "samples/png.h"
 #endif  // AMBER_ENABLE_LODEPNG
@@ -41,13 +46,14 @@ const char* kGeneratedColorBuffer = "framebuffer";
 struct Options {
   std::vector<std::string> input_filenames;
 
-  std::string image_filename;
+  std::vector<std::string> image_filenames;
   std::string buffer_filename;
-  std::string fb_name = kGeneratedColorBuffer;
+  std::vector<std::string> fb_names;
   std::vector<amber::BufferInfo> buffer_to_dump;
   uint32_t engine_major = 1;
   uint32_t engine_minor = 0;
   int32_t fence_timeout = -1;
+  int32_t selected_device = -1;
   bool parse_only = false;
   bool pipeline_create_only = false;
   bool disable_validation_layer = false;
@@ -58,6 +64,7 @@ struct Options {
   bool log_graphics_calls_time = false;
   bool log_execute_calls = false;
   bool disable_spirv_validation = false;
+  std::string shader_filename;
   amber::EngineType engine = amber::kEngineTypeVulkan;
   std::string spv_env;
 };
@@ -69,8 +76,9 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -ps                       -- Parse input files, create pipelines; Don't execute.
   -q                        -- Disable summary output.
   -d                        -- Disable validation layers.
+  -D <ID>                   -- ID of device to run with (Vulkan only).
   -f <value>                -- Sets the fence timeout value to |value|
-  -t <spirv_env>            -- The target SPIR-V environment e.g., spv1.3, vulkan1.1.
+  -t <spirv_env>            -- The target SPIR-V environment e.g., spv1.3, vulkan1.1, vulkan1.2.
                                If a SPIR-V environment, assume the lowest version of Vulkan that
                                requires support of that version of SPIR-V.
                                If a Vulkan environment, use the highest version of SPIR-V required
@@ -81,8 +89,9 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
                                or as a PPM image otherwise.
   -I <buffername>           -- Name of framebuffer to dump. Defaults to 'framebuffer'.
   -b <filename>             -- Write contents of a UBO or SSBO to <filename>.
-  -B [<desc set>:]<binding> -- Descriptor set and binding of buffer to write.
-                               Default is [0:]0.
+  -B [<pipeline name>:][<desc set>:]<binding> -- Identifier of buffer to write.
+                               Default is [first pipeline:][0:]0.
+  -w <filename>             -- Write shader assembly to |filename|
   -e <engine>               -- Specify graphics engine: vulkan, dawn. Default is vulkan.
   -v <engine version>       -- Engine version (eg, 1.1 for Vulkan). Default 1.0.
   -V, --version             -- Output version information for Amber and libraries.
@@ -102,7 +111,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         std::cerr << "Missing value for -i argument." << std::endl;
         return false;
       }
-      opts->image_filename = args[i];
+      opts->image_filenames.push_back(args[i]);
 
     } else if (arg == "-I") {
       ++i;
@@ -110,7 +119,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         std::cerr << "Missing value for -I argument." << std::endl;
         return false;
       }
-      opts->fb_name = args[i];
+      opts->fb_names.push_back(args[i]);
 
     } else if (arg == "-b") {
       ++i;
@@ -128,6 +137,13 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       }
       opts->buffer_to_dump.emplace_back();
       opts->buffer_to_dump.back().buffer_name = args[i];
+    } else if (arg == "-w") {
+      ++i;
+      if (i >= args.size()) {
+        std::cerr << "Missing value for -w argument." << std::endl;
+        return false;
+      }
+      opts->shader_filename = args[i];
     } else if (arg == "-e") {
       ++i;
       if (i >= args.size()) {
@@ -145,6 +161,20 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
             << std::endl;
         return false;
       }
+    } else if (arg == "-D") {
+      ++i;
+      if (i >= args.size()) {
+        std::cerr << "Missing ID for -D argument." << std::endl;
+        return false;
+      }
+
+      int32_t val = std::stoi(std::string(args[i]));
+      if (val < 0) {
+        std::cerr << "Device ID must be non-negative" << std::endl;
+        return false;
+      }
+      opts->selected_device = val;
+
     } else if (arg == "-f") {
       ++i;
       if (i >= args.size()) {
@@ -300,6 +330,53 @@ class SampleDelegate : public amber::Delegate {
   bool log_execute_calls_ = false;
 };
 
+std::string disassemble(const std::string& env,
+                        const std::vector<uint32_t>& data) {
+#if AMBER_ENABLE_SPIRV_TOOLS
+  std::string spv_errors;
+
+  spv_target_env target_env = SPV_ENV_UNIVERSAL_1_0;
+  if (!env.empty()) {
+    if (!spvParseTargetEnv(env.c_str(), &target_env))
+      return "";
+  }
+
+  auto msg_consumer = [&spv_errors](spv_message_level_t level, const char*,
+                                    const spv_position_t& position,
+                                    const char* message) {
+    switch (level) {
+      case SPV_MSG_FATAL:
+      case SPV_MSG_INTERNAL_ERROR:
+      case SPV_MSG_ERROR:
+        spv_errors += "error: line " + std::to_string(position.index) + ": " +
+                      message + "\n";
+        break;
+      case SPV_MSG_WARNING:
+        spv_errors += "warning: line " + std::to_string(position.index) + ": " +
+                      message + "\n";
+        break;
+      case SPV_MSG_INFO:
+        spv_errors += "info: line " + std::to_string(position.index) + ": " +
+                      message + "\n";
+        break;
+      case SPV_MSG_DEBUG:
+        break;
+    }
+  };
+
+  spvtools::SpirvTools tools(target_env);
+  tools.SetMessageConsumer(msg_consumer);
+
+  std::string result;
+  tools.Disassemble(data, &result,
+                    SPV_BINARY_TO_TEXT_OPTION_INDENT |
+                        SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES);
+  return result;
+#else
+  return "";
+#endif  // AMBER_ENABLE_SPIRV_TOOLS
+}
+
 }  // namespace
 
 int main(int argc, const char** argv) {
@@ -404,6 +481,7 @@ int main(int argc, const char** argv) {
 
   amber::Result r = config_helper.CreateConfig(
       amber_options.engine, options.engine_major, options.engine_minor,
+      options.selected_device,
       std::vector<std::string>(required_features.begin(),
                                required_features.end()),
       std::vector<std::string>(required_instance_extensions.begin(),
@@ -431,9 +509,20 @@ int main(int argc, const char** argv) {
                                      options.buffer_to_dump.end());
   }
 
-  if (!options.image_filename.empty()) {
+  if (options.image_filenames.size() - options.fb_names.size() > 1) {
+    std::cerr << "Need to specify framebuffer names using -I for each output "
+                 "image specified by -i."
+              << std::endl;
+    return 1;
+  }
+
+  // Use default frame buffer name when not specified.
+  while (options.image_filenames.size() > options.fb_names.size())
+    options.fb_names.push_back(kGeneratedColorBuffer);
+
+  for (const auto& fb_name : options.fb_names) {
     amber::BufferInfo buffer_info;
-    buffer_info.buffer_name = options.fb_name;
+    buffer_info.buffer_name = fb_name;
     buffer_info.is_image_buffer = true;
     amber_options.extractions.push_back(buffer_info);
   }
@@ -451,14 +540,53 @@ int main(int argc, const char** argv) {
       // give clues as to the failure.
     }
 
-    if (!options.image_filename.empty()) {
-      std::vector<uint8_t> out_buf;
+    // Dump the shader assembly
+    if (!options.shader_filename.empty()) {
+#if AMBER_ENABLE_SPIRV_TOOLS
+      std::ofstream shader_file;
+      shader_file.open(options.shader_filename, std::ios::out);
+      if (!shader_file.is_open()) {
+        std::cerr << "Cannot open file for shader dump: ";
+        std::cerr << options.shader_filename << std::endl;
+      } else {
+        auto info = recipe->GetShaderInfo();
+        for (const auto& sh : info) {
+          shader_file << ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
+                      << std::endl;
+          shader_file << "; " << sh.shader_name << std::endl
+                      << ";" << std::endl;
+          shader_file << disassemble(options.spv_env, sh.shader_data)
+                      << std::endl;
+        }
+        shader_file.close();
+      }
+#endif  // AMBER_ENABLE_SPIRV_TOOLS
+    }
 
-      auto pos = options.image_filename.find_last_of('.');
-      bool usePNG = pos != std::string::npos &&
-                    options.image_filename.substr(pos + 1) == "png";
+    for (size_t i = 0; i < options.image_filenames.size(); ++i) {
+      std::vector<uint8_t> out_buf;
+      auto image_filename = options.image_filenames[i];
+      auto pos = image_filename.find_last_of('.');
+      bool usePNG =
+          pos != std::string::npos && image_filename.substr(pos + 1) == "png";
       for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
-        if (buffer_info.buffer_name == options.fb_name) {
+        if (buffer_info.buffer_name == options.fb_names[i]) {
+          if (buffer_info.values.size() !=
+              (buffer_info.width * buffer_info.height)) {
+            result = amber::Result(
+                "Framebuffer (" + buffer_info.buffer_name + ") size (" +
+                std::to_string(buffer_info.values.size()) +
+                ") != " + "width * height (" +
+                std::to_string(buffer_info.width * buffer_info.height) + ")");
+            break;
+          }
+
+          if (buffer_info.values.empty()) {
+            result = amber::Result("Framebuffer (" + buffer_info.buffer_name +
+                                   ") empty or non-existent.");
+            break;
+          }
+
           if (usePNG) {
 #if AMBER_ENABLE_LODEPNG
             result = png::ConvertToPNG(buffer_info.width, buffer_info.height,
@@ -476,11 +604,10 @@ int main(int argc, const char** argv) {
       }
       if (result.IsSuccess()) {
         std::ofstream image_file;
-        image_file.open(options.image_filename,
-                        std::ios::out | std::ios::binary);
+        image_file.open(image_filename, std::ios::out | std::ios::binary);
         if (!image_file.is_open()) {
           std::cerr << "Cannot open file for image dump: ";
-          std::cerr << options.image_filename << std::endl;
+          std::cerr << image_filename << std::endl;
           continue;
         }
         image_file << std::string(out_buf.begin(), out_buf.end());
@@ -498,8 +625,14 @@ int main(int argc, const char** argv) {
         std::cerr << options.buffer_filename << std::endl;
       } else {
         for (const amber::BufferInfo& buffer_info : amber_options.extractions) {
-          if (buffer_info.buffer_name == options.fb_name)
+          // Skip frame buffers.
+          if (std::any_of(options.fb_names.begin(), options.fb_names.end(),
+                          [&](std::string s) {
+                            return s == buffer_info.buffer_name;
+                          }) ||
+              buffer_info.buffer_name == kGeneratedColorBuffer) {
             continue;
+          }
 
           buffer_file << buffer_info.buffer_name << std::endl;
           const auto& values = buffer_info.values;

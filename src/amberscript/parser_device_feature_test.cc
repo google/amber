@@ -23,7 +23,8 @@ using AmberScriptParserTest = testing::Test;
 TEST_F(AmberScriptParserTest, DeviceFeature) {
   std::string in = R"(
 DEVICE_FEATURE vertexPipelineStoresAndAtomics
-DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer)";
+DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer
+DEVICE_FEATURE Float16Int8Features.shaderFloat16)";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -31,10 +32,11 @@ DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer)";
 
   auto script = parser.GetScript();
   const auto& features = script->GetRequiredFeatures();
-  ASSERT_EQ(2U, features.size());
+  ASSERT_EQ(3U, features.size());
   EXPECT_EQ("vertexPipelineStoresAndAtomics", features[0]);
   EXPECT_EQ("VariablePointerFeatures.variablePointersStorageBuffer",
             features[1]);
+  EXPECT_EQ("Float16Int8Features.shaderFloat16", features[2]);
 }
 
 TEST_F(AmberScriptParserTest, DeviceFeatureMissingFeature) {
@@ -70,7 +72,8 @@ TEST_F(AmberScriptParserTest, DeviceFeatureExtraParams) {
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: extra parameters after DEVICE_FEATURE command", r.Error());
+  EXPECT_EQ("1: extra parameters after DEVICE_FEATURE command: EXTRA",
+            r.Error());
 }
 
 }  // namespace amberscript

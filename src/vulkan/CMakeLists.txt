@@ -14,17 +14,23 @@
 
 set(VULKAN_ENGINE_SOURCES
     buffer_descriptor.cc
+    buffer_backed_descriptor.cc
     command_buffer.cc
     command_pool.cc
     compute_pipeline.cc
     device.cc
+    descriptor.cc
     engine_vulkan.cc
+    engine_vulkan_debugger.cc
     frame_buffer.cc
     graphics_pipeline.cc
+    image_descriptor.cc
     index_buffer.cc
     pipeline.cc
     push_constant.cc
     resource.cc
+    sampler.cc
+    sampler_descriptor.cc
     transfer_buffer.cc
     transfer_image.cc
     vertex_buffer.cc
@@ -46,6 +52,10 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
   # Disable Clang's warning that will alwaays fire on that.  This is required to build
   # with XCode 10.
   target_compile_options(libamberenginevulkan PRIVATE -Wno-zero-as-null-pointer-constant)
+endif()
+
+if (${AMBER_ENABLE_VK_DEBUGGING})
+  target_link_libraries(libamberenginevulkan cppdap)
 endif()
 
 add_custom_command(

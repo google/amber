@@ -24,6 +24,7 @@
 #include "src/command_data.h"
 #include "src/make_unique.h"
 #include "src/tokenizer.h"
+#include "src/type_parser.h"
 #include "src/vkscript/datum_type_parser.h"
 
 namespace amber {
@@ -88,7 +89,7 @@ Result CommandParser::Parse() {
     if (token->IsEOL())
       continue;
 
-    if (!token->IsString()) {
+    if (!token->IsIdentifier()) {
       return Result(make_error(
           "Command not recognized. Received something other then a string: " +
           token->ToOriginalString()));
@@ -98,7 +99,7 @@ Result CommandParser::Parse() {
     Result r;
     if (cmd_name == "draw") {
       token = tokenizer_->NextToken();
-      if (!token->IsString())
+      if (!token->IsIdentifier())
         return Result(make_error("Invalid draw command in test: " +
                                  token->ToOriginalString()));
 
@@ -124,7 +125,7 @@ Result CommandParser::Parse() {
       r = ProcessTolerance();
     } else if (cmd_name == "relative") {
       token = tokenizer_->NextToken();
-      if (!token->IsString() || token->AsString() != "probe")
+      if (!token->IsIdentifier() || token->AsString() != "probe")
         return Result(make_error("relative must be used with probe: " +
                                  token->ToOriginalString()));
 
@@ -136,8 +137,8 @@ Result CommandParser::Parse() {
       std::string shader_name = cmd_name;
       if (cmd_name == "tessellation") {
         token = tokenizer_->NextToken();
-        if (!token->IsString() || (token->AsString() != "control" &&
-                                   token->AsString() != "evaluation")) {
+        if (!token->IsIdentifier() || (token->AsString() != "control" &&
+                                       token->AsString() != "evaluation")) {
           return Result(
               make_error("Tessellation entrypoint must have "
                          "<evaluation|control> in name: " +
@@ -147,7 +148,7 @@ Result CommandParser::Parse() {
       }
 
       token = tokenizer_->NextToken();
-      if (!token->IsString() || token->AsString() != "entrypoint")
+      if (!token->IsIdentifier() || token->AsString() != "entrypoint")
         return Result(make_error("Unknown command: " + shader_name));
 
       r = ProcessEntryPoint(shader_name);
@@ -261,7 +262,7 @@ Result CommandParser::ProcessDrawRect() {
   }
 
   auto token = tokenizer_->NextToken();
-  while (token->IsString()) {
+  while (token->IsIdentifier()) {
     std::string str = token->AsString();
     if (str != "ortho" && str != "patch")
       return Result("Unknown parameter to draw rect: " + str);
@@ -311,7 +312,7 @@ Result CommandParser::ProcessDrawArrays() {
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
-  while (token->IsString()) {
+  while (token->IsIdentifier()) {
     std::string str = token->AsString();
     if (str != "indexed" && str != "instanced") {
       Topology topo = NameToTopology(token->AsString());
@@ -374,7 +375,7 @@ Result CommandParser::ProcessCompute() {
   auto token = tokenizer_->NextToken();
 
   // Compute can start a compute line or an entryp oint line ...
-  if (token->IsString() && token->AsString() == "entrypoint")
+  if (token->IsIdentifier() && token->AsString() == "entrypoint")
     return ProcessEntryPoint("compute");
 
   if (!token->IsInteger())
@@ -408,7 +409,7 @@ Result CommandParser::ProcessClear() {
 
   auto token = tokenizer_->NextToken();
   std::string cmd_suffix = "";
-  if (token->IsString()) {
+  if (token->IsIdentifier()) {
     std::string str = token->AsString();
     cmd_suffix = str + " ";
     if (str == "depth") {
@@ -490,7 +491,7 @@ Result CommandParser::ParseValues(const std::string& name,
   while (!token->IsEOL() && !token->IsEOS()) {
     Value v;
 
-    if ((fmt->IsFloat() || fmt->IsDouble())) {
+    if ((fmt->IsFloat32() || fmt->IsFloat64())) {
       if (!token->IsInteger() && !token->IsDouble()) {
         return Result(std::string("Invalid value provided to ") + name +
                       " command: " + token->ToOriginalString());
@@ -519,7 +520,7 @@ Result CommandParser::ParseValues(const std::string& name,
 
   // This could overflow, but I don't really expect us to get command files
   // that big ....
-  size_t num_per_row = fmt->RowCount();
+  size_t num_per_row = fmt->GetType()->RowCount();
   if (seen == 0 || (seen % num_per_row) != 0) {
     return Result(std::string("Incorrect number of values provided to ") +
                   name + " command");
@@ -542,7 +543,7 @@ Result CommandParser::ProcessSSBO() {
   uint32_t val = token->AsUint32();
 
   token = tokenizer_->NextToken();
-  if (token->IsString() && token->AsString() != "subdata") {
+  if (token->IsIdentifier() && token->AsString() != "subdata") {
     auto& str = token->AsString();
     if (str.size() >= 2 && str[0] == ':') {
       cmd->SetDescriptorSet(val);
@@ -570,34 +571,37 @@ Result CommandParser::ProcessSSBO() {
 
     auto* buffer = pipeline_->GetBufferForBinding(set, binding);
     if (!buffer) {
-      auto b = MakeUnique<Buffer>(BufferType::kStorage);
+      auto b = MakeUnique<Buffer>();
       b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
       buffer = b.get();
       script_->AddBuffer(std::move(b));
-      pipeline_->AddBuffer(buffer, set, binding);
+      pipeline_->AddBuffer(buffer, BufferType::kStorage, set, binding, 0);
     }
     cmd->SetBuffer(buffer);
   }
 
-  if (token->IsString() && token->AsString() == "subdata") {
+  if (token->IsIdentifier() && token->AsString() == "subdata") {
     cmd->SetIsSubdata();
 
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("Invalid type for ssbo command: " +
                     token->ToOriginalString());
 
     DatumTypeParser tp;
-    Result r = tp.Parse(token->AsString());
-    if (!r.IsSuccess())
-      return r;
+    auto type = tp.Parse(token->AsString());
+    if (!type)
+      return Result("Invalid type provided: " + token->AsString());
 
-    auto fmt = tp.GetType().AsFormat();
+    auto fmt = MakeUnique<Format>(type.get());
     auto* buf = cmd->GetBuffer();
-    if (buf->FormatIsDefault() || !buf->GetFormat())
-      buf->SetFormat(std::move(fmt));
-    else if (!buf->GetFormat()->Equal(fmt.get()))
+    if (buf->FormatIsDefault() || !buf->GetFormat()) {
+      buf->SetFormat(fmt.get());
+      script_->RegisterFormat(std::move(fmt));
+      script_->RegisterType(std::move(type));
+    } else if (!buf->GetFormat()->Equal(fmt.get())) {
       return Result("probe ssbo format does not match buffer format");
+    }
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger()) {
@@ -617,7 +621,7 @@ Result CommandParser::ProcessSSBO() {
     cmd->SetOffset(token->AsUint32());
 
     std::vector<Value> values;
-    r = ParseValues("ssbo", buf->GetFormat(), &values);
+    Result r = ParseValues("ssbo", buf->GetFormat(), &values);
     if (!r.IsSuccess())
       return r;
 
@@ -639,10 +643,13 @@ Result CommandParser::ProcessSSBO() {
 
     // Set a default format into the buffer if needed.
     if (!buf->GetFormat()) {
-      auto fmt = MakeUnique<Format>();
-      fmt->SetFormatType(FormatType::kR8_SINT);
-      fmt->AddComponent(FormatComponentType::kR, FormatMode::kSInt, 8);
-      buf->SetFormat(std::move(fmt));
+      TypeParser parser;
+      auto type = parser.Parse("R8_SINT");
+      auto fmt = MakeUnique<Format>(type.get());
+      buf->SetFormat(fmt.get());
+      script_->RegisterFormat(std::move(fmt));
+      script_->RegisterType(std::move(type));
+
       // This has to come after the SetFormat() call because SetFormat() resets
       // the value back to false.
       buf->SetFormatIsDefault(true);
@@ -663,7 +670,7 @@ Result CommandParser::ProcessUniform() {
   if (token->IsEOL() || token->IsEOS())
     return Result("Missing binding and size values for uniform command: " +
                   token->ToOriginalString());
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Invalid type value for uniform command: " +
                   token->ToOriginalString());
 
@@ -683,7 +690,7 @@ Result CommandParser::ProcessUniform() {
     uint32_t val = token->AsUint32();
 
     token = tokenizer_->NextToken();
-    if (!token->IsString()) {
+    if (!token->IsIdentifier()) {
       return Result("Invalid type value for uniform ubo command: " +
                     token->ToOriginalString());
     }
@@ -701,7 +708,7 @@ Result CommandParser::ProcessUniform() {
       cmd->SetBinding(static_cast<uint32_t>(binding_val));
 
       token = tokenizer_->NextToken();
-      if (!token->IsString()) {
+      if (!token->IsIdentifier()) {
         return Result("Invalid type value for uniform ubo command: " +
                       token->ToOriginalString());
       }
@@ -715,11 +722,11 @@ Result CommandParser::ProcessUniform() {
 
     auto* buffer = pipeline_->GetBufferForBinding(set, binding);
     if (!buffer) {
-      auto b = MakeUnique<Buffer>(BufferType::kUniform);
+      auto b = MakeUnique<Buffer>();
       b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
       buffer = b.get();
       script_->AddBuffer(std::move(b));
-      pipeline_->AddBuffer(buffer, set, binding);
+      pipeline_->AddBuffer(buffer, BufferType::kUniform, set, binding, 0);
     }
     cmd->SetBuffer(buffer);
 
@@ -731,28 +738,31 @@ Result CommandParser::ProcessUniform() {
     // Push constants don't have descriptor set and binding values. So, we do
     // not want to try to lookup the buffer or we'll accidentally get whatever
     // is bound at 0:0.
-    auto b = MakeUnique<Buffer>(BufferType::kUniform);
+    auto b = MakeUnique<Buffer>();
     b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
     cmd->SetBuffer(b.get());
     script_->AddBuffer(std::move(b));
   }
 
   DatumTypeParser tp;
-  Result r = tp.Parse(token->AsString());
-  if (!r.IsSuccess())
-    return r;
+  auto type = tp.Parse(token->AsString());
+  if (!type)
+    return Result("Invalid type provided: " + token->AsString());
 
-  auto fmt = tp.GetType().AsFormat();
+  auto fmt = MakeUnique<Format>(type.get());
 
   // uniform is always std140.
   if (is_ubo)
-    fmt->SetIsStd140();
+    fmt->SetLayout(Format::Layout::kStd140);
 
   auto* buf = cmd->GetBuffer();
-  if (buf->FormatIsDefault() || !buf->GetFormat())
-    buf->SetFormat(std::move(fmt));
-  else if (!buf->GetFormat()->Equal(fmt.get()))
+  if (buf->FormatIsDefault() || !buf->GetFormat()) {
+    buf->SetFormat(fmt.get());
+    script_->RegisterFormat(std::move(fmt));
+    script_->RegisterType(std::move(type));
+  } else if (!buf->GetFormat()->Equal(fmt.get())) {
     return Result("probe ssbo format does not match buffer format");
+  }
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger()) {
@@ -771,7 +781,7 @@ Result CommandParser::ProcessUniform() {
   cmd->SetOffset(token->AsUint32());
 
   std::vector<Value> values;
-  r = ParseValues("uniform", buf->GetFormat(), &values);
+  Result r = ParseValues("uniform", buf->GetFormat(), &values);
   if (!r.IsSuccess())
     return r;
 
@@ -792,7 +802,7 @@ Result CommandParser::ProcessTolerance() {
   auto token = tokenizer_->NextToken();
   size_t found_tokens = 0;
   while (!token->IsEOL() && !token->IsEOS() && found_tokens < 4) {
-    if (token->IsString() && token->AsString() == ",") {
+    if (token->IsIdentifier() && token->AsString() == ",") {
       token = tokenizer_->NextToken();
       continue;
     }
@@ -804,7 +814,7 @@ Result CommandParser::ProcessTolerance() {
       double value = token->AsDouble();
 
       token = tokenizer_->NextToken();
-      if (token->IsString() && token->AsString() != ",") {
+      if (token->IsIdentifier() && token->AsString() != ",") {
         if (token->AsString() != "%")
           return Result("Invalid value for tolerance command: " +
                         token->ToOriginalString());
@@ -838,12 +848,12 @@ Result CommandParser::ProcessPatch() {
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "parameter")
+  if (!token->IsIdentifier() || token->AsString() != "parameter")
     return Result("Missing parameter flag to patch command: " +
                   token->ToOriginalString());
 
   token = tokenizer_->NextToken();
-  if (!token->IsString() || token->AsString() != "vertices")
+  if (!token->IsIdentifier() || token->AsString() != "vertices")
     return Result("Missing vertices flag to patch command: " +
                   token->ToOriginalString());
 
@@ -870,7 +880,7 @@ Result CommandParser::ProcessEntryPoint(const std::string& name) {
   if (token->IsEOL() || token->IsEOS())
     return Result("Missing entrypoint name");
 
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Entrypoint name must be a string: " +
                   token->ToOriginalString());
 
@@ -889,7 +899,7 @@ Result CommandParser::ProcessEntryPoint(const std::string& name) {
 
 Result CommandParser::ProcessProbe(bool relative) {
   auto token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Invalid token in probe command: " +
                   token->ToOriginalString());
 
@@ -919,7 +929,7 @@ Result CommandParser::ProcessProbe(bool relative) {
     cmd->SetProbeRect();
 
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("Invalid token in probe command: " +
                     token->ToOriginalString());
   } else if (token->AsString() == "all") {
@@ -927,7 +937,7 @@ Result CommandParser::ProcessProbe(bool relative) {
     cmd->SetProbeRect();
 
     token = tokenizer_->NextToken();
-    if (!token->IsString())
+    if (!token->IsIdentifier())
       return Result("Invalid token in probe command: " +
                     token->ToOriginalString());
   }
@@ -1059,7 +1069,7 @@ Result CommandParser::ProcessTopology() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing value for topology command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Invalid value for topology command: " +
                   token->ToOriginalString());
 
@@ -1105,7 +1115,7 @@ Result CommandParser::ProcessPolygonMode() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing value for polygonMode command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Invalid value for polygonMode command: " +
                   token->ToOriginalString());
 
@@ -1134,7 +1144,7 @@ Result CommandParser::ProcessLogicOp() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing value for logicOp command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Invalid value for logicOp command: " +
                   token->ToOriginalString());
 
@@ -1189,7 +1199,7 @@ Result CommandParser::ProcessCullMode() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing value for cullMode command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Invalid value for cullMode command: " +
                   token->ToOriginalString());
 
@@ -1229,7 +1239,7 @@ Result CommandParser::ProcessFrontFace() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing value for frontFace command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Invalid value for frontFace command: " +
                   token->ToOriginalString());
 
@@ -1257,7 +1267,7 @@ Result CommandParser::ProcessBooleanPipelineData(const std::string& name,
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing value for " + name + " command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Invalid value for " + name +
                   " command: " + token->ToOriginalString());
 
@@ -1508,7 +1518,7 @@ Result CommandParser::ParseBlendFactor(const std::string& name,
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
     return Result(std::string("Missing parameter for ") + name + " command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result(std::string("Invalid parameter for ") + name +
                   " command: " + token->ToOriginalString());
 
@@ -1681,7 +1691,7 @@ Result CommandParser::ParseBlendOp(const std::string& name, BlendOp* op) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
     return Result(std::string("Missing parameter for ") + name + " command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result(std::string("Invalid parameter for ") + name +
                   " command: " + token->ToOriginalString());
 
@@ -1721,7 +1731,7 @@ Result CommandParser::ParseCompareOp(const std::string& name, CompareOp* op) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
     return Result(std::string("Missing parameter for ") + name + " command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result(std::string("Invalid parameter for ") + name +
                   " command: " + token->ToOriginalString());
 
@@ -1797,7 +1807,7 @@ Result CommandParser::ParseStencilOp(const std::string& name, StencilOp* op) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
     return Result(std::string("Missing parameter for ") + name + " command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result(std::string("Invalid parameter for ") + name +
                   " command: " + token->ToOriginalString());
 
@@ -1955,7 +1965,7 @@ Result CommandParser::ProcessColorWriteMask() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
     return Result("Missing parameter for colorWriteMask command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Invalid parameter for colorWriteMask command: " +
                   token->ToOriginalString());
 
@@ -2011,14 +2021,14 @@ Result CommandParser::ProcessProbeSSBO() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
     return Result("Missing values for probe ssbo command");
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Invalid type for probe ssbo command: " +
                   token->ToOriginalString());
 
   DatumTypeParser tp;
-  Result r = tp.Parse(token->AsString());
-  if (!r.IsSuccess())
-    return r;
+  auto type = tp.Parse(token->AsString());
+  if (!type)
+    return Result("Invalid type provided: " + token->AsString());
 
   token = tokenizer_->NextToken();
   if (!token->IsInteger())
@@ -2030,7 +2040,7 @@ Result CommandParser::ProcessProbeSSBO() {
   uint32_t set = 0;
   uint32_t binding = 0;
   token = tokenizer_->NextToken();
-  if (token->IsString()) {
+  if (token->IsIdentifier()) {
     auto& str = token->AsString();
     if (str.size() >= 2 && str[0] == ':') {
       set = val;
@@ -2059,18 +2069,22 @@ Result CommandParser::ProcessProbeSSBO() {
                   std::to_string(binding));
   }
 
-  auto fmt = tp.GetType().AsFormat();
-  if (buffer->FormatIsDefault() || !buffer->GetFormat())
-    buffer->SetFormat(tp.GetType().AsFormat());
-  else if (buffer->GetFormat() && !buffer->GetFormat()->Equal(fmt.get()))
+  auto fmt = MakeUnique<Format>(type.get());
+  if (buffer->FormatIsDefault() || !buffer->GetFormat()) {
+    buffer->SetFormat(fmt.get());
+  } else if (buffer->GetFormat() && !buffer->GetFormat()->Equal(fmt.get())) {
     return Result("probe format does not match buffer format");
+  }
 
   auto cmd = MakeUnique<ProbeSSBOCommand>(buffer);
   cmd->SetLine(cur_line);
   cmd->SetTolerances(current_tolerances_);
-  cmd->SetFormat(std::move(fmt));
+  cmd->SetFormat(fmt.get());
   cmd->SetDescriptorSet(set);
   cmd->SetBinding(binding);
+
+  script_->RegisterFormat(std::move(fmt));
+  script_->RegisterType(std::move(type));
 
   if (!token->IsInteger())
     return Result("Invalid offset for probe ssbo command: " +
@@ -2079,12 +2093,12 @@ Result CommandParser::ProcessProbeSSBO() {
   cmd->SetOffset(token->AsUint32());
 
   token = tokenizer_->NextToken();
-  if (!token->IsString())
+  if (!token->IsIdentifier())
     return Result("Invalid comparator for probe ssbo command: " +
                   token->ToOriginalString());
 
   ProbeSSBOCommand::Comparator comp = ProbeSSBOCommand::Comparator::kEqual;
-  r = ParseComparator(token->AsString(), &comp);
+  Result r = ParseComparator(token->AsString(), &comp);
   if (!r.IsSuccess())
     return r;
 

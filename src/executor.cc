@@ -39,7 +39,7 @@ Result Executor::CompileShaders(const amber::Script* script,
 
       Result r;
       std::vector<uint32_t> data;
-      std::tie(r, data) = sc.Compile(&shader_info, shader_map);
+      std::tie(r, data) = sc.Compile(pipeline.get(), &shader_info, shader_map);
       if (!r.IsSuccess())
         return r;
 
@@ -68,6 +68,9 @@ Result Executor::Execute(Engine* engine,
       r = pipeline->GenerateOpenCLPodBuffers();
       if (!r.IsSuccess())
         return r;
+      r = pipeline->GenerateOpenCLLiteralSamplers();
+      if (!r.IsSuccess())
+        return r;
     }
 
     for (auto& pipeline : script->GetPipelines()) {
@@ -80,6 +83,8 @@ Result Executor::Execute(Engine* engine,
   if (options->execution_type == ExecutionType::kPipelineCreateOnly)
     return {};
 
+  Engine::Debugger* debugger = nullptr;
+
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
     if (options->delegate && options->delegate->LogExecuteCalls()) {
@@ -87,9 +92,31 @@ Result Executor::Execute(Engine* engine,
                              cmd->ToString());
     }
 
+    auto dbg_script = cmd->GetDebugScript();
+    if (dbg_script != nullptr) {
+      if (debugger == nullptr) {
+        // Lazilly obtain the debugger from the engine.
+        Result res;
+        std::tie(debugger, res) = engine->GetDebugger();
+        if (!res.IsSuccess()) {
+          return res;
+        }
+      }
+      // Run the debugger script on the debugger for this command.
+      // This will run concurrently with the command.
+      dbg_script->Run(debugger);
+    }
+
     Result r = ExecuteCommand(engine, cmd.get());
     if (!r.IsSuccess())
       return r;
+
+    if (debugger != nullptr) {
+      // Collect the debugger test results.
+      r = debugger->Flush();
+      if (!r.IsSuccess())
+        return r;
+    }
   }
   return {};
 }
@@ -100,7 +127,7 @@ Result Executor::ExecuteCommand(Engine* engine, Command* cmd) {
     assert(buffer);
 
     Format* fmt = buffer->GetFormat();
-    return verifier_.Probe(cmd->AsProbe(), fmt, buffer->GetTexelStride(),
+    return verifier_.Probe(cmd->AsProbe(), fmt, buffer->GetElementStride(),
                            buffer->GetRowStride(), buffer->GetWidth(),
                            buffer->GetHeight(), buffer->ValuePtr()->data());
   }
@@ -128,6 +155,8 @@ Result Executor::ExecuteCommand(Engine* engine, Command* cmd) {
     switch (compare->GetComparator()) {
       case CompareBufferCommand::Comparator::kRmse:
         return buffer_1->CompareRMSE(buffer_2, compare->GetTolerance());
+      case CompareBufferCommand::Comparator::kHistogramEmd:
+        return buffer_1->CompareHistogramEMD(buffer_2, compare->GetTolerance());
       case CompareBufferCommand::Comparator::kEq:
         return buffer_1->IsEqual(buffer_2);
     }

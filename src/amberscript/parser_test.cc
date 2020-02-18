@@ -40,7 +40,7 @@ TEST_F(AmberScriptParserTest, InvalidStartToken) {
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("3: expected string", r.Error());
+  EXPECT_EQ("3: expected identifier", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, UnknownStartToken) {

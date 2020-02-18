@@ -15,25 +15,22 @@
 #ifndef SRC_VKSCRIPT_DATUM_TYPE_PARSER_H_
 #define SRC_VKSCRIPT_DATUM_TYPE_PARSER_H_
 
+#include <memory>
 #include <string>
 
 #include "amber/result.h"
-#include "src/datum_type.h"
+#include "src/type.h"
 
 namespace amber {
 namespace vkscript {
 
-/// Parses a data description on the VkScript format into a DatumType object.
+/// Parses a data description on the VkScript format.
 class DatumTypeParser {
  public:
   DatumTypeParser();
   ~DatumTypeParser();
 
-  Result Parse(const std::string& data);
-  const DatumType& GetType() const { return type_; }
-
- private:
-  DatumType type_;
+  std::unique_ptr<type::Type> Parse(const std::string& data);
 };
 
 }  // namespace vkscript

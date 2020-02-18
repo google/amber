@@ -123,7 +123,7 @@ Result PushConstant::UpdateMemoryWithInput(const BufferInput& input) {
   }
 
   if (!buffer_->GetFormat()) {
-    buffer_->SetFormat(MakeUnique<Format>(*(input.buffer->GetFormat())));
+    buffer_->SetFormat(input.buffer->GetFormat());
   } else if (!buffer_->GetFormat()->Equal(input.buffer->GetFormat())) {
     return Result("Vulkan: push constants must all have the same format");
   }

@@ -34,8 +34,10 @@ DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer
 ```
 
 Currently each of the items in `VkPhysicalDeviceFeatures` are recognized along
-with `VariablePointerFeatures.variablePointers` and
-`VariablePointerFeatures.variablePointersStorageBuffer`.
+with:
+ * `VariablePointerFeatures.variablePointers`
+ * `VariablePointerFeatures.variablePointersStorageBuffer`
+ * `Float16Int8Features.shaderFloat16`
 
 Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
 commands.
@@ -114,10 +116,11 @@ either image buffers or, what the target API would refer to as a buffer.
  * `uint16`
  * `uint32`
  * `uint64`
+ * `float16`
  * `float`
  * `double`
  * vec[2,3,4]{type}
- * mat[2,3,4]x[2,3,4]{type}
+ * mat[2,3,4]x[2,3,4]{type}  (mat<columns>x<rows>)
  * Any of the `Image Formats` listed below.
 
 Sized arrays and structures are not currently representable.
@@ -125,17 +128,51 @@ Sized arrays and structures are not currently representable.
 ```groovy
 # Filling the buffer with a given set of data. The values must be
 # of |type| data. The data can be provided as the type or as a hex value.
-BUFFER {name} DATA_TYPE {type} DATA
+# Buffers are STD430 by default.
+BUFFER {name} DATA_TYPE {type} {STD140 | STD430} DATA
 _value_+
 END
 
 # Defines a buffer which is filled with data as specified by the `initializer`.
-BUFFER {name} DATA_TYPE {type} SIZE _size_in_items_ {initializer}
+BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
+    {initializer}
+
+# Deprecated
+# Defines a buffer with width and height and filled by data as specified by the
+# `initializer`.
+BUFFER {name} DATA_TYPE {type} {STD140 | STD430} WIDTH {w} HEIGHT {h} \
+  {initializer}
 
 # Creates a buffer which will store the given `FORMAT` of data. These
 # buffers are used as image and depth buffers in the `PIPELINE` commands.
 # The buffer will be sized based on the `RENDER_SIZE` of the `PIPELINE`.
-BUFFER {name} FORMAT {format_string}
+BUFFER {name} FORMAT {format_string} \
+    [ MIP_LEVELS _mip_levels_ (default 1) ]
+```
+
+#### Images
+
+An AmberScript image is a specialized buffer that specifies image-specific
+attributes.
+
+##### Dimensionality
+ * `DIM_1D` -- A 1-dimensional image
+ * `DIM_2D` -- A 2-dimensional image
+ * `DIM_3D` -- A 3-dimensional image
+
+```groovy
+# Specify an image buffer with a format. HEIGHT is necessary for DIM_2D and
+# DIM_3D. DEPTH is necessary for DIM_3D.
+IMAGE {name} FORMAT {format_string} [ MIP_LEVELS _mip_levels_ (default 1) ] \
+    {dimensionality} \
+    WIDTH {w} [ HEIGHT {h} [ DEPTH {d} ] ] \
+    {initializer}
+
+# Specify an image buffer with a data type. HEIGHT is necessary for DIM_2D and
+# DIM_3D. DEPTH is necessary for DIM_3D.
+IMAGE {name} DATA_TYPE {type} {dimensionality} \
+    WIDTH {w} [ HEIGHT {h} [ DEPTH {d} ] ] \
+    {intializer}
 ```
 
 #### Buffer Initializers
@@ -161,6 +198,57 @@ SERIES_FROM _start_ INC_BY _inc_
 COPY {buffer_from} TO {buffer_to}
 ```
 
+### Samplers
+
+Samplers are used for sampling buffers that are bound to a pipeline as
+sampled image or combined image sampler.
+
+#### Filter types
+ * `nearest`
+ * `linear`
+
+#### Address modes
+ * `repeat`
+ * `mirrored_repeat`
+ * `clamp_to_edge`
+ * `clamp_to_border`
+ * `mirrored_clamp_to_edge`
+
+#### Border colors
+ * `float_transparent_black`
+ * `int_transparent_black`
+ * `float_opaque_black`
+ * `int_opaque_black`
+ * `float_opaque_white`
+ * `int_opaque_white`
+
+```groovy
+
+# Creates a sampler with |name|.
+SAMPLER {name} \
+    [ MAG_FILTER {filter_type} (default nearest) ] \
+    [ MIN_FILTER {filter_type} (default nearest) ] \
+    [ ADDRESS_MODE_U {address_mode} (default repeat) ] \
+    [ ADDRESS_MODE_V {address_mode} (default repeat) ] \
+    [ ADDRESS_MODE_W {address_mode} (default repeat) ] \
+    [ BORDER_COLOR {border_color} (default float_transparent_black) ] \
+    [ MIN_LOD _val_ (default 0.0) ] \
+    [ MAX_LOD _val_ (default 1.0) ] \
+    [ NORMALIZED_COORDS | UNNORMALIZED_COORDS (default NORMALIZED_COORDS) ]
+```
+
+Note: unnormalized coordinates will override MIN\_LOD and MAX\_LOD to 0.0.
+
+#### OpenCL Literal Samplers
+
+Literal constant samplers defined in the OpenCL program are automatically
+generated and bound to the pipeline in Amber.
+
+Note: currently the border color is always transparent black.
+
+Note: the addressing mode is used for all coordinates currently. Arrayed images
+should use `clamp_to_edge` for the array index.
+
 ### Pipelines
 
 #### Pipeline type
@@ -184,15 +272,11 @@ END
 
 The following commands are all specified within the `PIPELINE` command.
 ```groovy
-  # Attach the shader provided by |name_of_shader| to the pipeline and set
-  # the entry point to be |name|. The provided shader for ATTACH must _not_ be
+  # Attach the shader provided by |name_of_shader| to the pipeline with an
+  # entry point name of |name|. The provided shader for ATTACH must _not_ be
   # a 'multi' shader.
-  ATTACH {name_of_shader} ENTRY_POINT {name}
-
-  # Attach the shader provided by |name_of_shader| to the pipeline and set
-  # the entry point to be 'main'. The provided shader for ATTACH must _not_ be
-  # a 'multi' shader.
-  ATTACH {name_of_shader}
+  ATTACH {name_of_shader} \
+      [ ENTRY_POINT {name} (default "main") ]
 
   # Attach a 'multi' shader to the pipeline of |shader_type| and use the entry
   # point with |name|. The provided shader _must_ be a 'multi' shader.
@@ -201,8 +285,10 @@ The following commands are all specified within the `PIPELINE` command.
   # Attach specialized shader. Specialization can be specified multiple times.
   # Specialization values must be a 32-bit type. Shader type and entry point
   # must be specified prior to specializing the shader.
-  ATTACH {name_of_shader} SPECIALIZE 1 AS uint32 4
-  ATTACH {name_of_shader} SPECIALIZE 1 AS uint32 4 SPECIALIZE 4 AS float 1.0
+  ATTACH {name_of_shader} SPECIALIZE _id_ AS uint32 _value_
+  ATTACH {name_of_shader} \
+      SPECIALIZE _id_ AS uint32 _value_ \
+      SPECIALIZE _id_ AS float _value_
 ```
 
 ```groovy
@@ -235,15 +321,21 @@ The following commands are all specified within the `PIPELINE` command.
 
 TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
-A `pipeline` can have buffers bound. This includes buffers to contain image
-attachment content, depth/stencil content, uniform buffers, etc.
+A `pipeline` can have buffers or samplers bound. This includes buffers to
+contain image attachment content, depth/stencil content, uniform buffers, etc.
 
 ```groovy
   # Attach |buffer_name| as an output color attachment at location |idx|.
   # The provided buffer must be a `FORMAT` buffer. If no color attachments are
   # provided a single attachment with format `B8G8R8A8_UNORM` will be created
-  # for graphics pipelines.
-  BIND BUFFER {buffer_name} AS color LOCATION _idx_
+  # for graphics pipelines. The MIP level will have a base of |level|.
+  BIND BUFFER {buffer_name} AS color LOCATION _idx_ \
+      [ BASE_MIP_LEVEL _level_ (default 0) ]
+
+  # Bind the buffer of the given |buffer_type| at the given descriptor set
+  # and binding. The buffer will use a start index of 0.
+  BIND BUFFER {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
+       BINDING _id_
 
   # Attach |buffer_name| as the depth/stencil buffer. The provided buffer must
   # be a `FORMAT` buffer. If no depth/stencil buffer is specified a default
@@ -253,12 +345,22 @@ attachment content, depth/stencil content, uniform buffers, etc.
 
   # Attach |buffer_name| as the push_constant buffer. There can be only one
   # push constant buffer attached to a pipeline.
-  BIND BUFFER <buffer_name> AS push_constant
+  BIND BUFFER {buffer_name} AS push_constant
 
-  # Bind the buffer of the given |buffer_type| at the given descriptor set
-  # and binding. The buffer will use a start index of 0.
-  BIND BUFFER {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
-       BINDING _id_
+  # Attach |buffer_name| as a storage image. The MIP level will have a base
+  # value of |level|.
+  BIND BUFFER {buffer_name} AS storage_image \
+      [ BASE_MIP_LEVEL _level_ (default 0) ]
+
+  # Attach |buffer_name| as a sampled image.  The MIP level will have a base
+  # value of |level|.
+  BIND BUFFER {buffer_name} AS sampled_image \
+      [ BASE_MIP_LEVEL _level_ (default 0) ]
+
+  # Attach |buffer_name| as a combined image sampler. A sampler |sampler_name|
+  # must also be specified. The MIP level will have a base value of 0.
+  BIND BUFFER {buffer_name} AS combined_image_sampler SAMPLER {sampler_name} \
+      [ BASE_MIP_LEVEL _level_ (default) 0) ]
 
   # Bind the sampler at the given descriptor set and binding.
   BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
@@ -266,13 +368,22 @@ attachment content, depth/stencil content, uniform buffers, etc.
   # Bind OpenCL argument buffer by name. Specifying the buffer type is optional.
   # Amber will set the type as appropriate for the argument buffer. All uses
   # of the buffer must have a consistent |buffer_type| across all pipelines.
-  BIND BUFFER {buffer_name} [AS {buffer_type}] KERNEL ARG_NAME _name_
+  BIND BUFFER {buffer_name} [ AS {buffer_type} (default computed)] \
+      KERNEL ARG_NAME _name_
 
   # Bind OpenCL argument buffer by argument ordinal. Arguments use 0-based
   # numbering. Specifying the buffer type is optional. Amber will set the
   # type as appropriate for the argument buffer. All uses of the buffer
   # must have a consistent |buffer_type| across all pipelines.
-  BIND BUFFER {buffer_name} [AS {buffer_type}] KERNEL ARG_NUMBER _number_
+  BIND BUFFER {buffer_name} [ AS {buffer_type} (default computed)] \
+      KERNEL ARG_NUMBER _number_
+
+  # Bind OpenCL argument sampler by argument name.
+  BIND SAMPLER {sampler_name} KERNEL ARG_NAME _name_
+
+  # Bind OpenCL argument sampler by argument ordinal. Arguments use 0-based
+  # numbering.
+  BIND SAMPLER {sampler_name} KERNEL ARG_NUMBER _number_
 ```
 
 ```groovy
@@ -283,7 +394,7 @@ attachment content, depth/stencil content, uniform buffers, etc.
   INDEX_DATA {buffer_name}
 ```
 
-##### OpenCL Plain-Old-Data Arguments
+#### OpenCL Plain-Old-Data Arguments
 OpenCL kernels can have plain-old-data (pod or pod_ubo in the desriptor map)
 arguments set their data via this command. Amber will generate the appropriate
 buffers for the pipeline populated with the specified data.
@@ -297,7 +408,7 @@ buffers for the pipeline populated with the specified data.
   SET KERNEL ARG_NUMBER _number_ AS {data_type} _val_
 ```
 
-##### Topologies
+#### Topologies
  * `point_list`
  * `line_list`
  * `line_list_with_adjacency`
@@ -339,42 +450,25 @@ RUN {pipeline_name} \
 
 ```groovy
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
-# data must be attached to the pipeline. A start index of 0 will be used
-# and a count of the number of elements in the vertex buffer.
-RUN {pipeline_name} DRAW_ARRAY AS {topology}
+# data must be attached to the pipeline.
 
-# Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
-# data must be attached to the pipeline. A start index of |value| will be used
-# and a count of the number of items from |value| to the end of the vertex
-# buffer.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} START_IDX _value_
-
-# Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
-# data must be attached to the pipeline. A start index of |value| will be used
-# and a count |count_value| will be used.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} START_IDX _value_ \
-  COUNT _count_value_
+# A start index of |value| will be used and the count of |count_value| items
+# will be processed.
+RUN {pipeline_name} DRAW_ARRAY AS {topology} \
+    [ START_IDX _value_ (default 0) ] \
+    [ COUNT _count_value_ (default vertex_buffer size - start_idx) ]
 ```
 
 ```groovy
 # Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
 # data and  index data must be attached to the pipeline. The vertices will be
-# drawn using the given |topology|. A start index of 0 will be used and the
-# count will be determined by the size of the index data buffer.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED
-
-# Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
-# data and  index data must be attached to the pipeline. The vertices will be
-# drawn using the given |topology|. A start index of |value| will be used and
-# the count will be determined by the size of the index data buffer.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED START_IDX _value_
-
-# Run the |pipeline_name| which must be a `graphics` pipeline. The vertex
-# data and  index data must be attached to the pipeline. The vertices will be
-# drawn using the given |topology|. A start index of |value| will be used and
-# the count of |count_value| items will be processed.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
-  START_IDX _value_ COUNT _count_value_
+# drawn using the given |topology|.
+#
+# A start index of |value| will be used and the count of |count_value| items
+# will be processed.
+RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
+    [ START_IDX _value_ (default 0) ] \
+    [ COUNT _count_value_ (default index_buffer size - start_idx) ]
 ```
 
 ### Repeating commands
@@ -397,11 +491,11 @@ The commands which can be used inside a `REPEAT` block are:
 ### Commands
 
 ```groovy
-# Sets the clear color to use for |pipeline| which must be a `graphics`
-# pipeline. The colors are integers from 0 - 255.
+# Sets the clear color to use for |pipeline| which must be a graphics
+# pipeline. The colors are integers from 0 - 255.  Defaults to (0, 0, 0, 0)
 CLEAR_COLOR {pipeline} _r (0 - 255)_ _g (0 - 255)_ _b (0 - 255)_ _a (0 - 255)_
 
-# Instructs the |pipeline| which must be a `graphics` pipeline to execute the
+# Instructs the |pipeline| which must be a graphics pipeline to execute the
 # clear command.
 CLEAR {pipeline}
 ```
@@ -419,6 +513,7 @@ CLEAR {pipeline}
  * `EQ_RGBA`
  * `EQ_BUFFER`
  * `RMSE_BUFFER`
+ * `EQ_HISTOGRAM_EMD_BUFFER`
 
 ```groovy
 # Checks that |buffer_name| at |x| has the given |value|s when compared
@@ -449,14 +544,20 @@ EXPECT {buffer_name} IDX _x_in_pixels_ _y_in_pixels_ \
 EXPECT {buffer_1} EQ_BUFFER {buffer_2}
 
 # Checks that the Root Mean Square Error when comparing |buffer_1| to
-# |buffer_2| is less than or equal too |tolerance|. Note, |tolerance| is a
+# |buffer_2| is less than or equal to |tolerance|. Note, |tolerance| is a
 # unit-less number.
 EXPECT {buffer_1} RMSE_BUFFER {buffer_2} TOLERANCE _value_
+
+# Checks that the Earth Mover's Distance when comparing histograms of
+# |buffer_1| to |buffer_2| is less than or equal to |tolerance|.
+# Note, |tolerance| is a unit-less number.
+EXPECT {buffer_1} EQ_HISTOGRAM_EMD_BUFFER {buffer_2} TOLERANCE _value_
 ```
 
 ## Examples
 
 ### Compute Shader
+
 ```groovy
 #!amber
 # Simple amber compute shader.
@@ -494,6 +595,7 @@ EXPECT kComputeBuffer IDX 263168 EQ 128 128
 ```
 
 ### Entry Points
+
 ```groovy
 #!amber
 
@@ -570,6 +672,7 @@ EXPECT kImgBuffer IDX 128 128 SIZE 128 128 EQ_RGB 0 255 0
 ```
 
 ### Buffers
+
 ```groovy
 #!amber
 
@@ -669,6 +772,7 @@ RUN kGraphicsPipeline DRAW_ARRAY AS triangle_list START_IDX 0 COUNT 24
 ```
 
 ### OpenCL-C Shaders
+
 ```groovy
 SHADER compute my_shader OPENCL-C
 kernel void line(const int* in, global int* out, int m, int b) {
