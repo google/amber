@@ -60,8 +60,6 @@ Result CommandBuffer::Initialize() {
 }
 
 Result CommandBuffer::BeginRecording() {
-  guarded_ = true;
-
   VkCommandBufferBeginInfo command_begin_info = VkCommandBufferBeginInfo();
   command_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   command_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -69,6 +67,7 @@ Result CommandBuffer::BeginRecording() {
       VK_SUCCESS) {
     return Result("Vulkan::Calling vkBeginCommandBuffer Fail");
   }
+  guarded_ = true;
 
   return {};
 }
@@ -76,6 +75,8 @@ Result CommandBuffer::BeginRecording() {
 Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (device_->GetPtrs()->vkEndCommandBuffer(command_) != VK_SUCCESS)
     return Result("Vulkan::Calling vkEndCommandBuffer Fail");
+
+  guarded_ = false;
 
   if (device_->GetPtrs()->vkResetFences(device_->GetVkDevice(), 1, &fence_) !=
       VK_SUCCESS) {
@@ -102,7 +103,6 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS)
     return Result("Vulkan::Calling vkResetCommandBuffer Fail");
 
-  guarded_ = false;
 
   return {};
 }
@@ -110,9 +110,9 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
 void CommandBuffer::Reset() {
   if (guarded_) {
     device_->GetPtrs()->vkEndCommandBuffer(command_);
-    device_->GetPtrs()->vkResetCommandBuffer(command_, 0);
     guarded_ = false;
   }
+  device_->GetPtrs()->vkResetCommandBuffer(command_, 0);
 }
 
 CommandBufferGuard::CommandBufferGuard(CommandBuffer* buffer)
