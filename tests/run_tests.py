@@ -78,8 +78,6 @@ SUPPRESSIONS_SWIFTSHADER = [
   "draw_triangle_list_in_r8g8b8a8_snorm_color_frame.vkscript",
   # No supporting device for Float16Int8Features
   "float16.amber",
-  # SEGV: github.com/google/amber/issues/726
-  "matrices_uniform_draw.amber",
   # SEGV: github.com/google/amber/issues/725
   "multiple_ssbo_update_with_graphics_pipeline.vkscript",
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline_less_than_4.vkscript",

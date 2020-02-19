@@ -120,7 +120,7 @@ class Pipeline {
   std::vector<DescriptorSetInfo> descriptor_set_info_;
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
 
-  uint32_t fence_timeout_ms_ = 100;
+  uint32_t fence_timeout_ms_ = 1000;
   bool descriptor_related_objects_already_created_ = false;
   std::unordered_map<VkShaderStageFlagBits,
                      std::string,
