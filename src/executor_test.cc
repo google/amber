@@ -108,6 +108,16 @@ class EngineStub : public Engine {
     return {};
   }
 
+  void FailDrawGridCommand() { fail_draw_grid_command_ = true; }
+  bool DidDrawGridCommand() const { return did_draw_grid_command_; }
+  Result DoDrawGrid(const DrawGridCommand*) override {
+    did_draw_grid_command_ = true;
+
+    if (fail_draw_grid_command_)
+      return Result("draw grid command failed");
+    return {};
+  }
+
   void FailDrawArraysCommand() { fail_draw_arrays_command_ = true; }
   bool DidDrawArraysCommand() const { return did_draw_arrays_command_; }
   Result DoDrawArrays(const DrawArraysCommand*) override {
@@ -170,6 +180,7 @@ class EngineStub : public Engine {
   bool fail_clear_stencil_command_ = false;
   bool fail_clear_depth_command_ = false;
   bool fail_draw_rect_command_ = false;
+  bool fail_draw_grid_command_ = false;
   bool fail_draw_arrays_command_ = false;
   bool fail_compute_command_ = false;
   bool fail_entry_point_command_ = false;
@@ -181,6 +192,7 @@ class EngineStub : public Engine {
   bool did_clear_stencil_command_ = false;
   bool did_clear_depth_command_ = false;
   bool did_draw_rect_command_ = false;
+  bool did_draw_grid_command_ = false;
   bool did_draw_arrays_command_ = false;
   bool did_compute_command_ = false;
   bool did_entry_point_command_ = false;
@@ -569,6 +581,45 @@ draw rect 2 4 10 20)";
   Result r = ex.Execute(engine.get(), script.get(), ShaderMap(), &options);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("draw rect command failed", r.Error());
+}
+
+TEST_F(VkScriptExecutorTest, DrawGridCommand) {
+  std::string input = R"(
+[test]
+draw grid 2 4 10 20 4 4)";
+
+  Parser parser;
+  parser.SkipValidationForTest();
+  ASSERT_TRUE(parser.Parse(input).IsSuccess());
+
+  auto engine = MakeEngine();
+  auto script = parser.GetScript();
+
+  Options options;
+  Executor ex;
+  Result r = ex.Execute(engine.get(), script.get(), ShaderMap(), &options);
+  ASSERT_TRUE(r.IsSuccess());
+  ASSERT_TRUE(ToStub(engine.get())->DidDrawGridCommand());
+}
+
+TEST_F(VkScriptExecutorTest, DrawGridCommandFailure) {
+  std::string input = R"(
+[test]
+draw grid 2 4 10 20 4 4)";
+
+  Parser parser;
+  parser.SkipValidationForTest();
+  ASSERT_TRUE(parser.Parse(input).IsSuccess());
+
+  auto engine = MakeEngine();
+  ToStub(engine.get())->FailDrawGridCommand();
+  auto script = parser.GetScript();
+
+  Options options;
+  Executor ex;
+  Result r = ex.Execute(engine.get(), script.get(), ShaderMap(), &options);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("draw grid command failed", r.Error());
 }
 
 TEST_F(VkScriptExecutorTest, DrawArraysCommand) {

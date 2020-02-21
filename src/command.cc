@@ -58,6 +58,10 @@ DrawRectCommand* Command::AsDrawRect() {
   return static_cast<DrawRectCommand*>(this);
 }
 
+DrawGridCommand* Command::AsDrawGrid() {
+  return static_cast<DrawGridCommand*>(this);
+}
+
 EntryPointCommand* Command::AsEntryPoint() {
   return static_cast<EntryPointCommand*>(this);
 }
@@ -91,6 +95,11 @@ DrawRectCommand::DrawRectCommand(Pipeline* pipeline, PipelineData data)
     : PipelineCommand(Type::kDrawRect, pipeline), data_(data) {}
 
 DrawRectCommand::~DrawRectCommand() = default;
+
+DrawGridCommand::DrawGridCommand(Pipeline* pipeline, PipelineData data)
+    : PipelineCommand(Type::kDrawGrid, pipeline), data_(data) {}
+
+DrawGridCommand::~DrawGridCommand() = default;
 
 DrawArraysCommand::DrawArraysCommand(Pipeline* pipeline, PipelineData data)
     : PipelineCommand(Type::kDrawArrays, pipeline), data_(data) {}

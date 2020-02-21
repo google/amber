@@ -176,6 +176,124 @@ TEST_F(CommandParserTest, DrawRectExtraParameters) {
   EXPECT_EQ("1: Extra parameter to draw rect command: EXTRA", r.Error());
 }
 
+TEST_F(CommandParserTest, DrawGrid) {
+  std::string data = "draw grid 1.2 2.3 200 400.2 4 5";
+
+  Pipeline pipeline(PipelineType::kGraphics);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
+  Result r = cp.Parse();
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto& cmds = cp.Commands();
+  ASSERT_EQ(1U, cmds.size());
+  ASSERT_TRUE(cmds[0]->IsDrawGrid());
+
+  auto* cmd = cmds[0]->AsDrawGrid();
+  EXPECT_FALSE(cmd->IsOrtho());
+  EXPECT_FALSE(cmd->IsPatch());
+  EXPECT_FLOAT_EQ(1.2f, cmd->GetX());
+  EXPECT_FLOAT_EQ(2.3f, cmd->GetY());
+  EXPECT_FLOAT_EQ(200.0f, cmd->GetWidth());
+  EXPECT_FLOAT_EQ(400.2f, cmd->GetHeight());
+  EXPECT_FLOAT_EQ(4.0f, cmd->GetColumns());
+  EXPECT_FLOAT_EQ(5.0f, cmd->GetRows());
+}
+
+TEST_F(CommandParserTest, DrawGridWithOrth) {
+  std::string data = "draw grid ortho 1.2 2.3 200 400.2 4 5";
+
+  Pipeline pipeline(PipelineType::kGraphics);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
+  Result r = cp.Parse();
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto& cmds = cp.Commands();
+  ASSERT_EQ(1U, cmds.size());
+  ASSERT_TRUE(cmds[0]->IsDrawGrid());
+
+  auto* cmd = cmds[0]->AsDrawGrid();
+  EXPECT_TRUE(cmd->IsOrtho());
+  EXPECT_FALSE(cmd->IsPatch());
+  EXPECT_FLOAT_EQ(1.2f, cmd->GetX());
+  EXPECT_FLOAT_EQ(2.3f, cmd->GetY());
+  EXPECT_FLOAT_EQ(200.0f, cmd->GetWidth());
+  EXPECT_FLOAT_EQ(400.2f, cmd->GetHeight());
+  EXPECT_FLOAT_EQ(4.0f, cmd->GetColumns());
+  EXPECT_FLOAT_EQ(5.0f, cmd->GetRows());
+}
+
+TEST_F(CommandParserTest, DrawGridWithPatch) {
+  std::string data = "draw grid patch 1.2 2.3 200 400.2 4 5";
+
+  Pipeline pipeline(PipelineType::kGraphics);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
+  Result r = cp.Parse();
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto& cmds = cp.Commands();
+  ASSERT_EQ(1U, cmds.size());
+  ASSERT_TRUE(cmds[0]->IsDrawGrid());
+
+  auto* cmd = cmds[0]->AsDrawGrid();
+  EXPECT_FALSE(cmd->IsOrtho());
+  EXPECT_TRUE(cmd->IsPatch());
+  EXPECT_FLOAT_EQ(1.2f, cmd->GetX());
+  EXPECT_FLOAT_EQ(2.3f, cmd->GetY());
+  EXPECT_FLOAT_EQ(200.0f, cmd->GetWidth());
+  EXPECT_FLOAT_EQ(400.2f, cmd->GetHeight());
+  EXPECT_FLOAT_EQ(4.0f, cmd->GetColumns());
+  EXPECT_FLOAT_EQ(5.0f, cmd->GetRows());
+}
+
+TEST_F(CommandParserTest, DrawGridWithOrthAndPatch) {
+  std::string data = "draw grid ortho patch 1.2 2.3 200 400.2 4 5";
+
+  Pipeline pipeline(PipelineType::kGraphics);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
+  Result r = cp.Parse();
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto& cmds = cp.Commands();
+  ASSERT_EQ(1U, cmds.size());
+  ASSERT_TRUE(cmds[0]->IsDrawGrid());
+
+  auto* cmd = cmds[0]->AsDrawGrid();
+  EXPECT_TRUE(cmd->IsOrtho());
+  EXPECT_TRUE(cmd->IsPatch());
+  EXPECT_FLOAT_EQ(1.2f, cmd->GetX());
+  EXPECT_FLOAT_EQ(2.3f, cmd->GetY());
+  EXPECT_FLOAT_EQ(200.0f, cmd->GetWidth());
+  EXPECT_FLOAT_EQ(400.2f, cmd->GetHeight());
+  EXPECT_FLOAT_EQ(4.0f, cmd->GetColumns());
+  EXPECT_FLOAT_EQ(5.0f, cmd->GetRows());
+}
+
+TEST_F(CommandParserTest, DrawGridTooShort) {
+  std::string data = "draw grid 1.2 2.3 400.2";
+
+  Pipeline pipeline(PipelineType::kGraphics);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
+  Result r = cp.Parse();
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("1: Invalid conversion to double", r.Error());
+}
+
+TEST_F(CommandParserTest, DrawGridExtraParameters) {
+  std::string data = "draw grid ortho patch 1.2 2.3 200 400.2 4 5 EXTRA";
+
+  Pipeline pipeline(PipelineType::kGraphics);
+  Script script;
+  CommandParser cp(&script, &pipeline, 1, data);
+  Result r = cp.Parse();
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("1: Extra parameter to draw grid command: EXTRA", r.Error());
+}
+
 TEST_F(CommandParserTest, DrawArrays) {
   std::string data = "draw arrays GL_LINES 2 4";
 

@@ -450,6 +450,85 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   return {};
 }
 
+Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
+  auto& info = pipeline_map_[command->GetPipeline()];
+  if (!info.vk_pipeline->IsGraphics())
+    return Result("Vulkan::DrawGrid for Non-Graphics Pipeline");
+
+  auto* graphics = info.vk_pipeline->AsGraphics();
+
+  float x = command->GetX();
+  float y = command->GetY();
+  float width = command->GetWidth();
+  float height = command->GetHeight();
+  const uint32_t columns = static_cast<uint32_t>(command->GetColumns());
+  const uint32_t rows = static_cast<uint32_t>(command->GetRows());
+  const uint32_t vertices = columns * rows * 3 * 2;
+
+  if (command->IsOrtho()) {
+    const float frame_width = static_cast<float>(graphics->GetWidth());
+    const float frame_height = static_cast<float>(graphics->GetHeight());
+    x = ((x / frame_width) * 2.0f) - 1.0f;
+    y = ((y / frame_height) * 2.0f) - 1.0f;
+    width = (width / frame_width) * 2.0f;
+    height = (height / frame_height) * 2.0f;
+  }
+
+  std::vector<Value> values(vertices * 2);
+
+  for (uint32_t i = 0, c = 0; i < rows; i++) {
+    for (uint32_t j = 0; j < columns; j++, c += 12) {
+      // Bottom right
+      values[c + 0].SetDoubleValue(static_cast<double>(x + (width / columns) * (j + 1)));
+      values[c + 1].SetDoubleValue(static_cast<double>(y + (height / rows) * (i + 1)));
+      // Bottom left
+      values[c + 2].SetDoubleValue(static_cast<double>(x + (width / columns) * j));
+      values[c + 3].SetDoubleValue(static_cast<double>(y + (height / rows) * (i + 1)));
+      // Top left
+      values[c + 4].SetDoubleValue(static_cast<double>(x + (width / columns) * j));
+      values[c + 5].SetDoubleValue(static_cast<double>(y + (height / rows) * i));
+      // Bottom right
+      values[c + 6].SetDoubleValue(static_cast<double>(x + (width / columns) * (j + 1)));
+      values[c + 7].SetDoubleValue(static_cast<double>(y + (height / rows) * (i + 1)));
+      // Top left
+      values[c + 8].SetDoubleValue(static_cast<double>(x + (width / columns) * j));
+      values[c + 9].SetDoubleValue(static_cast<double>(y + (height / rows) * i));
+      // Top right
+      values[c + 10].SetDoubleValue(static_cast<double>(x + (width / columns) * (j + 1)));
+      values[c + 11].SetDoubleValue(static_cast<double>(y + (height / rows) * i));
+    }
+  }
+
+
+  // |format| is not Format for frame buffer but for vertex buffer.
+  // Since draw rect command contains its vertex information and it
+  // does not include a format of vertex buffer, we can choose any
+  // one that is suitable. We use VK_FORMAT_R32G32_SFLOAT for it.
+  TypeParser parser;
+  auto type = parser.Parse("R32G32_SFLOAT");
+  Format fmt(type.get());
+
+  auto buf = MakeUnique<Buffer>();
+  buf->SetFormat(&fmt);
+  buf->SetData(std::move(values));
+
+  auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
+  vertex_buffer->SetData(0, buf.get());
+
+  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
+  draw.SetTopology(command->IsPatch() ? Topology::kPatchList
+                                      : Topology::kTriangleList);
+  draw.SetFirstVertexIndex(0);
+  draw.SetVertexCount(vertices);
+  draw.SetInstanceCount(1);
+
+  Result r = graphics->Draw(&draw, vertex_buffer.get());
+  if (!r.IsSuccess())
+    return r;
+
+  return {};
+}
+
 Result EngineVulkan::DoDrawArrays(const DrawArraysCommand* command) {
   auto& info = pipeline_map_[command->GetPipeline()];
   if (!info.vk_pipeline)

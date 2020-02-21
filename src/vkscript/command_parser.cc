@@ -106,6 +106,8 @@ Result CommandParser::Parse() {
       cmd_name = token->AsString();
       if (cmd_name == "rect")
         r = ProcessDrawRect();
+      else if (cmd_name == "grid")
+        r = ProcessDrawGrid();
       else if (cmd_name == "arrays")
         r = ProcessDrawArrays();
       else
@@ -301,6 +303,74 @@ Result CommandParser::ProcessDrawRect() {
   token = tokenizer_->NextToken();
   if (!token->IsEOS() && !token->IsEOL())
     return Result("Extra parameter to draw rect command: " +
+                  token->ToOriginalString());
+
+  commands_.push_back(std::move(cmd));
+  return {};
+}
+
+Result CommandParser::ProcessDrawGrid() {
+  auto cmd = MakeUnique<DrawGridCommand>(pipeline_, pipeline_data_);
+  cmd->SetLine(tokenizer_->GetCurrentLine());
+
+  if (pipeline_->GetVertexBuffers().size() > 1) {
+    return Result(
+        "draw grid command is not supported in a pipeline with more than one "
+        "vertex buffer attached");
+  }
+
+  auto token = tokenizer_->NextToken();
+  while (token->IsIdentifier()) {
+    std::string str = token->AsString();
+    if (str != "ortho" && str != "patch")
+      return Result("Unknown parameter to draw grid: " + str);
+
+    if (str == "ortho") {
+      cmd->EnableOrtho();
+    } else {
+      cmd->EnablePatch();
+    }
+    token = tokenizer_->NextToken();
+  }
+
+  Result r = token->ConvertToDouble();
+  if (!r.IsSuccess())
+    return r;
+  cmd->SetX(token->AsFloat());
+
+  token = tokenizer_->NextToken();
+  r = token->ConvertToDouble();
+  if (!r.IsSuccess())
+    return r;
+  cmd->SetY(token->AsFloat());
+
+  token = tokenizer_->NextToken();
+  r = token->ConvertToDouble();
+  if (!r.IsSuccess())
+    return r;
+  cmd->SetWidth(token->AsFloat());
+
+  token = tokenizer_->NextToken();
+  r = token->ConvertToDouble();
+  if (!r.IsSuccess())
+    return r;
+  cmd->SetHeight(token->AsFloat());
+
+  token = tokenizer_->NextToken();
+  r = token->ConvertToDouble();
+  if (!r.IsSuccess())
+    return r;
+  cmd->SetColumns(token->AsFloat());
+
+  token = tokenizer_->NextToken();
+  r = token->ConvertToDouble();
+  if (!r.IsSuccess())
+    return r;
+  cmd->SetRows(token->AsFloat());
+
+  token = tokenizer_->NextToken();
+  if (!token->IsEOS() && !token->IsEOL())
+    return Result("Extra parameter to draw grid command: " +
                   token->ToOriginalString());
 
   commands_.push_back(std::move(cmd));

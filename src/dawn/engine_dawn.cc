@@ -1328,6 +1328,10 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   return result;
 }
 
+Result EngineDawn::DoDrawGrid(const DrawGridCommand* command) {
+   return Result("DRAW_GRID not implemented on Dawn");
+}
+
 Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   Result result;
 

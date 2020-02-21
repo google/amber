@@ -168,6 +168,12 @@ at (x,y) of size (width,height). The buffers must be read back into the backing
 `amber::Buffer` at the end of this method.
 
 
+#### `DoDrawGrid`
+The `DoDrawGrid` instructs the engine to draw the given pipeline in the box
+at (x,y) of size (width,height) split into cells (columns, rows). The buffers 
+must be read back into the backing `amber::Buffer` at the end of this method.
+
+
 #### `DoDrawArrays`
 The `DoDrawArrays` instructs the engine to draw the given pipeline using
 the information in the attached vertex and index buffers.  The buffers must be

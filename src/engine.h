@@ -99,6 +99,9 @@ class Engine {
   /// Execute the draw rect command
   virtual Result DoDrawRect(const DrawRectCommand* cmd) = 0;
 
+  /// Execute the draw grid command
+  virtual Result DoDrawGrid(const DrawGridCommand* cmd) = 0;
+
   /// Execute the draw arrays command
   virtual Result DoDrawArrays(const DrawArraysCommand* cmd) = 0;
 

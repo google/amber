@@ -157,6 +157,14 @@ SUPPRESSIONS_DAWN = [
   "multiple_ssbo_update_with_graphics_pipeline.vkscript",
   # Currently not working, under investigation
   "draw_triangle_list_with_depth.vkscript",
+  # draw_grid not implemented for dawn yet
+  "draw_grid.amber",
+  "draw_grid_multiple_color_attachment.amber",
+  "draw_grid_multiple_pipeline.amber",
+  "draw_grids.amber",
+  "draw_grid.vkscript",
+  "draw_grid_with_buffer.amber",
+  "draw_grid_with_two_vertex_data_attached.expect_fail.amber",
 ]
 
 class TestCase:
