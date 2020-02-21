@@ -36,7 +36,7 @@ const char* const kRequiredValidationLayers[] = {
     "VK_LAYER_LUNARG_object_tracker", "VK_LAYER_LUNARG_core_validation",
     "VK_LAYER_GOOGLE_unique_objects",
 #else   // __ANDROID__
-    "VK_LAYER_LUNARG_standard_validation",
+    "VK_LAYER_KHRONOS_validation",
 #endif  // __ANDROID__
 };
 
