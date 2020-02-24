@@ -101,7 +101,11 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name == "variableMultisampleRate" || name == "inheritedQueries" ||
          name == "VariablePointerFeatures.variablePointers" ||
          name == "VariablePointerFeatures.variablePointersStorageBuffer" ||
-         name == "Float16Int8Features.shaderFloat16";
+         name == "Float16Int8Features.shaderFloat16" ||
+         name == "Float16Int8Features.shaderInt8" ||
+         name == "Storage8BitFeatures.storageBuffer8BitAccess" ||
+         name == "Storage8BitFeatures.uniformAndStorageBuffer8BitAccess" ||
+         name == "Storage8BitFeatures.storagePushConstant8";
 }
 
 type::Type* Script::ParseType(const std::string& str) {

@@ -24,7 +24,11 @@ TEST_F(AmberScriptParserTest, DeviceFeature) {
   std::string in = R"(
 DEVICE_FEATURE vertexPipelineStoresAndAtomics
 DEVICE_FEATURE VariablePointerFeatures.variablePointersStorageBuffer
-DEVICE_FEATURE Float16Int8Features.shaderFloat16)";
+DEVICE_FEATURE Float16Int8Features.shaderFloat16
+DEVICE_FEATURE Float16Int8Features.shaderInt8
+DEVICE_FEATURE Storage8BitFeatures.storageBuffer8BitAccess
+DEVICE_FEATURE Storage8BitFeatures.uniformAndStorageBuffer8BitAccess
+DEVICE_FEATURE Storage8BitFeatures.storagePushConstant8)";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -32,11 +36,16 @@ DEVICE_FEATURE Float16Int8Features.shaderFloat16)";
 
   auto script = parser.GetScript();
   const auto& features = script->GetRequiredFeatures();
-  ASSERT_EQ(3U, features.size());
+  ASSERT_EQ(7U, features.size());
   EXPECT_EQ("vertexPipelineStoresAndAtomics", features[0]);
   EXPECT_EQ("VariablePointerFeatures.variablePointersStorageBuffer",
             features[1]);
   EXPECT_EQ("Float16Int8Features.shaderFloat16", features[2]);
+  EXPECT_EQ("Float16Int8Features.shaderInt8", features[3]);
+  EXPECT_EQ("Storage8BitFeatures.storageBuffer8BitAccess", features[4]);
+  EXPECT_EQ("Storage8BitFeatures.uniformAndStorageBuffer8BitAccess",
+            features[5]);
+  EXPECT_EQ("Storage8BitFeatures.storagePushConstant8", features[6]);
 }
 
 TEST_F(AmberScriptParserTest, DeviceFeatureMissingFeature) {
