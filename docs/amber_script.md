@@ -38,6 +38,10 @@ with:
  * `VariablePointerFeatures.variablePointers`
  * `VariablePointerFeatures.variablePointersStorageBuffer`
  * `Float16Int8Features.shaderFloat16`
+ * `Float16Int8Features.shaderInt8`
+ * `Storage8BitFeatures.storageBuffer8BitAccess`
+ * `Storage8BitFeatures.uniformAndStorageBuffer8BitAccess`
+ * `Storage8BitFeatures.storagePushConstant8`
 
 Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
 commands.

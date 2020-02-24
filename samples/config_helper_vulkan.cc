@@ -47,6 +47,13 @@ const char kVariablePointers[] = "VariablePointerFeatures.variablePointers";
 const char kVariablePointersStorageBuffer[] =
     "VariablePointerFeatures.variablePointersStorageBuffer";
 const char kFloat16Int8_Float16[] = "Float16Int8Features.shaderFloat16";
+const char kFloat16Int8_Int8[] = "Float16Int8Features.shaderInt8";
+const char k8BitStorage_Storage[] =
+    "Storage8BitFeatures.storageBuffer8BitAccess";
+const char k8BitStorage_UniformAndStorage[] =
+    "Storage8BitFeatures.uniformAndStorageBuffer8BitAccess";
+const char k8BitStorage_PushConstant[] =
+    "Storage8BitFeatures.storagePushConstant8";
 
 const char kExtensionForValidationLayer[] = "VK_EXT_debug_report";
 
@@ -600,7 +607,8 @@ ConfigHelperVulkan::ConfigHelperVulkan()
     : available_features_(VkPhysicalDeviceFeatures()),
       available_features2_(VkPhysicalDeviceFeatures2KHR()),
       variable_pointers_feature_(VkPhysicalDeviceVariablePointerFeaturesKHR()),
-      float16_int8_feature_(VkPhysicalDeviceFloat16Int8FeaturesKHR()) {}
+      float16_int8_feature_(VkPhysicalDeviceFloat16Int8FeaturesKHR()),
+      int8_storage_feature_(VkPhysicalDevice8BitStorageFeaturesKHR()) {}
 
 ConfigHelperVulkan::~ConfigHelperVulkan() {
   if (vulkan_device_)
@@ -778,6 +786,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
   for (const auto& ext : available_device_extensions_) {
     if (ext == "VK_KHR_shader_float16_int8")
       supports_shader_float16_int8_ = true;
+    else if (ext == "VK_KHR_8bit_storage")
+      supports_shader_int8_storage_ = true;
   }
 
   vulkan_queue_family_index_ = ChooseQueueFamilyIndex(physical_device);
@@ -886,17 +896,29 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures1(
 amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
     const std::vector<std::string>& required_features,
     VkDeviceCreateInfo* info) {
+  variable_pointers_feature_.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
+  variable_pointers_feature_.pNext = nullptr;
+
   float16_int8_feature_.sType =
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
   float16_int8_feature_.pNext = nullptr;
 
-  variable_pointers_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
+  int8_storage_feature_.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR;
+  int8_storage_feature_.pNext = nullptr;
 
-  if (supports_shader_float16_int8_)
-    variable_pointers_feature_.pNext = &float16_int8_feature_;
-  else
-    variable_pointers_feature_.pNext = nullptr;
+  void** next_ptr = &variable_pointers_feature_.pNext;
+
+  if (supports_shader_float16_int8_) {
+    *next_ptr = &float16_int8_feature_;
+    next_ptr = &float16_int8_feature_.pNext;
+  }
+
+  if (supports_shader_int8_storage_) {
+    *next_ptr = &int8_storage_feature_;
+    next_ptr = &int8_storage_feature_.pNext;
+  }
 
   available_features2_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
   available_features2_.pNext = &variable_pointers_feature_;
@@ -915,6 +937,14 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       variable_pointers_feature_.variablePointersStorageBuffer = VK_TRUE;
     else if (feature == kFloat16Int8_Float16)
       float16_int8_feature_.shaderFloat16 = VK_TRUE;
+    else if (feature == kFloat16Int8_Int8)
+      float16_int8_feature_.shaderInt8 = VK_TRUE;
+    else if (feature == k8BitStorage_Storage)
+      int8_storage_feature_.storageBuffer8BitAccess = VK_TRUE;
+    else if (feature == k8BitStorage_UniformAndStorage)
+      int8_storage_feature_.uniformAndStorageBuffer8BitAccess = VK_TRUE;
+    else if (feature == k8BitStorage_PushConstant)
+      int8_storage_feature_.storagePushConstant8 = VK_TRUE;
   }
 
   VkPhysicalDeviceFeatures required_vulkan_features =

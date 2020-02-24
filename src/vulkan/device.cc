@@ -33,6 +33,13 @@ const char kVariablePointers[] = "VariablePointerFeatures.variablePointers";
 const char kVariablePointersStorageBuffer[] =
     "VariablePointerFeatures.variablePointersStorageBuffer";
 const char kFloat16Int8_Float16[] = "Float16Int8Features.shaderFloat16";
+const char kFloat16Int8_Int8[] = "Float16Int8Features.shaderInt8";
+const char k8BitStorage_Storage[] =
+    "Storage8BitFeatures.storageBuffer8BitAccess";
+const char k8BitStorage_UniformAndStorage[] =
+    "Storage8BitFeatures.uniformAndStorageBuffer8BitAccess";
+const char k8BitStorage_PushConstant[] =
+    "Storage8BitFeatures.storagePushConstant8";
 
 struct BaseOutStructure {
   VkStructureType sType;
@@ -396,6 +403,7 @@ Result Device::Initialize(
 
     VkPhysicalDeviceVariablePointerFeaturesKHR* var_ptrs = nullptr;
     VkPhysicalDeviceFloat16Int8FeaturesKHR* float16_ptrs = nullptr;
+    VkPhysicalDevice8BitStorageFeaturesKHR* storage8_ptrs = nullptr;
     void* ptr = available_features2.pNext;
     while (ptr != nullptr) {
       BaseOutStructure* s = static_cast<BaseOutStructure*>(ptr);
@@ -407,6 +415,10 @@ Result Device::Initialize(
                  VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR) {
         float16_ptrs =
             static_cast<VkPhysicalDeviceFloat16Int8FeaturesKHR*>(ptr);
+      } else if (s->sType ==
+                 VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR) {
+        storage8_ptrs =
+            static_cast<VkPhysicalDevice8BitStorageFeaturesKHR*>(ptr);
       }
       ptr = s->pNext;
     }
@@ -436,14 +448,40 @@ Result Device::Initialize(
             "Missing variable pointers storage buffer feature");
       }
 
-      if (feature == kFloat16Int8_Float16) {
-        if (float16_ptrs == nullptr) {
-          return amber::Result(
-              "Shader float 16 requested but feature not returned");
-        }
-        if (float16_ptrs->shaderFloat16 != VK_TRUE) {
-          return amber::Result("Missing float16 feature");
-        }
+      if ((feature == kFloat16Int8_Float16 || feature == kFloat16Int8_Int8) &&
+          float16_ptrs == nullptr) {
+        return amber::Result(
+            "Shader float16/int8 requested but feature not returned");
+      }
+
+      if (feature == kFloat16Int8_Float16 &&
+          float16_ptrs->shaderFloat16 != VK_TRUE) {
+        return amber::Result("Missing float16 feature");
+      }
+
+      if (feature == kFloat16Int8_Int8 && float16_ptrs->shaderInt8 != VK_TRUE) {
+        return amber::Result("Missing int8 feature");
+      }
+
+      if ((feature == k8BitStorage_UniformAndStorage ||
+           feature == k8BitStorage_Storage ||
+           feature == k8BitStorage_PushConstant) &&
+          storage8_ptrs == nullptr) {
+        return amber::Result(
+            "Shader 8-bit storage requested but feature not returned");
+      }
+
+      if (feature == k8BitStorage_Storage &&
+          storage8_ptrs->storageBuffer8BitAccess != VK_TRUE) {
+        return amber::Result("Missing 8-bit storage access");
+      }
+      if (feature == k8BitStorage_UniformAndStorage &&
+          storage8_ptrs->uniformAndStorageBuffer8BitAccess != VK_TRUE) {
+        return amber::Result("Missing 8-bit uniform and storage access");
+      }
+      if (feature == k8BitStorage_PushConstant &&
+          storage8_ptrs->storagePushConstant8 != VK_TRUE) {
+        return amber::Result("Missing 8-bit push constant access");
       }
     }
 
