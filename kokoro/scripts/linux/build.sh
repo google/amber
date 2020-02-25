@@ -29,7 +29,8 @@ BUILD_TYPE="Debug"
 CMAKE_C_CXX_COMPILER=""
 if [ $COMPILER = "clang" ]
 then
-  CMAKE_C_CXX_COMPILER="-DCMAKE_C_COMPILER=/usr/bin/clang-5.0 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-5.0"
+  # Using the gold linker to work around a link issue with Swiftshader
+  CMAKE_C_CXX_COMPILER="-DCMAKE_C_COMPILER=/usr/bin/clang-5.0 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-5.0 -fuse-ld=gold"
 else
   # Specify we want to build with GCC 7 (which supports C++14)
   sudo add-apt-repository ppa:ubuntu-toolchain-r/test
