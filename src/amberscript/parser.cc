@@ -1722,10 +1722,10 @@ Result Parser::ParseRun() {
     if (!pipeline->IsGraphics())
       return Result("RUN command requires graphics pipeline");
 
-    if (pipeline->GetVertexBuffers().size() > 1) {
+    if (pipeline->GetVertexBuffers().size() > 0) {
       return Result(
-          "RUN DRAW_GRID is not supported in a pipeline with more than one "
-          "vertex buffer attached");
+          "RUN DRAW_GRID is not supported in a pipeline with "
+          "vertex buffers attached");
     }
 
     token = tokenizer_->NextToken();
@@ -1741,9 +1741,8 @@ Result Parser::ParseRun() {
     if (!token->IsInteger())
       return Result("missing X position for RUN command");
 
-    auto cmd = MakeUnique<DrawGridCommand>(pipeline, PipelineData{});
+    auto cmd = MakeUnique<DrawGridCommand>(pipeline);
     cmd->SetLine(line);
-    cmd->EnableOrtho();
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())

@@ -96,8 +96,8 @@ DrawRectCommand::DrawRectCommand(Pipeline* pipeline, PipelineData data)
 
 DrawRectCommand::~DrawRectCommand() = default;
 
-DrawGridCommand::DrawGridCommand(Pipeline* pipeline, PipelineData data)
-    : PipelineCommand(Type::kDrawGrid, pipeline), data_(data) {}
+DrawGridCommand::DrawGridCommand(Pipeline* pipeline)
+    : PipelineCommand(Type::kDrawGrid, pipeline) {}
 
 DrawGridCommand::~DrawGridCommand() = default;
 

@@ -94,7 +94,6 @@ class CommandParser {
                      std::vector<Value>* values);
 
   Result ProcessDrawRect();
-  Result ProcessDrawGrid();
   Result ProcessDrawArrays();
   Result ProcessCompute();
   Result ProcessClear();

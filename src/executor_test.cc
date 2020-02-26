@@ -583,45 +583,6 @@ draw rect 2 4 10 20)";
   EXPECT_EQ("draw rect command failed", r.Error());
 }
 
-TEST_F(VkScriptExecutorTest, DrawGridCommand) {
-  std::string input = R"(
-[test]
-draw grid 2 4 10 20 4 4)";
-
-  Parser parser;
-  parser.SkipValidationForTest();
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
-
-  auto engine = MakeEngine();
-  auto script = parser.GetScript();
-
-  Options options;
-  Executor ex;
-  Result r = ex.Execute(engine.get(), script.get(), ShaderMap(), &options);
-  ASSERT_TRUE(r.IsSuccess());
-  ASSERT_TRUE(ToStub(engine.get())->DidDrawGridCommand());
-}
-
-TEST_F(VkScriptExecutorTest, DrawGridCommandFailure) {
-  std::string input = R"(
-[test]
-draw grid 2 4 10 20 4 4)";
-
-  Parser parser;
-  parser.SkipValidationForTest();
-  ASSERT_TRUE(parser.Parse(input).IsSuccess());
-
-  auto engine = MakeEngine();
-  ToStub(engine.get())->FailDrawGridCommand();
-  auto script = parser.GetScript();
-
-  Options options;
-  Executor ex;
-  Result r = ex.Execute(engine.get(), script.get(), ShaderMap(), &options);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("draw grid command failed", r.Error());
-}
-
 TEST_F(VkScriptExecutorTest, DrawArraysCommand) {
   std::string input = R"(
 [test]

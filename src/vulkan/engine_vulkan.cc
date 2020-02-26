@@ -461,44 +461,46 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   float y = command->GetY();
   float width = command->GetWidth();
   float height = command->GetHeight();
-  const uint32_t columns = static_cast<uint32_t>(command->GetColumns());
-  const uint32_t rows = static_cast<uint32_t>(command->GetRows());
-  const uint32_t vertices = columns * rows * 3 * 2;
+  const uint32_t columns = command->GetColumns();
+  const uint32_t rows = command->GetRows();
+  const uint32_t kTrianglesPerCell = 2;
+  const uint32_t kVerticesPerTriangle = 3;
+  const uint32_t vertices = columns * rows * kVerticesPerTriangle * kTrianglesPerCell;
+  const double cell_width = width / columns;
+  const double cell_height = height / rows;
 
-  if (command->IsOrtho()) {
-    const float frame_width = static_cast<float>(graphics->GetWidth());
-    const float frame_height = static_cast<float>(graphics->GetHeight());
-    x = ((x / frame_width) * 2.0f) - 1.0f;
-    y = ((y / frame_height) * 2.0f) - 1.0f;
-    width = (width / frame_width) * 2.0f;
-    height = (height / frame_height) * 2.0f;
-  }
+  // Ortho calculation
+  const float frame_width = static_cast<float>(graphics->GetWidth());
+  const float frame_height = static_cast<float>(graphics->GetHeight());
+  x = ((x / frame_width) * 2.0f) - 1.0f;
+  y = ((y / frame_height) * 2.0f) - 1.0f;
+  width = (width / frame_width) * 2.0f;
+  height = (height / frame_height) * 2.0f;
 
   std::vector<Value> values(vertices * 2);
 
   for (uint32_t i = 0, c = 0; i < rows; i++) {
     for (uint32_t j = 0; j < columns; j++, c += 12) {
       // Bottom right
-      values[c + 0].SetDoubleValue(static_cast<double>(x + (width / columns) * (j + 1)));
-      values[c + 1].SetDoubleValue(static_cast<double>(y + (height / rows) * (i + 1)));
+      values[c + 0].SetDoubleValue(static_cast<double>(x + cell_width * (j + 1)));
+      values[c + 1].SetDoubleValue(static_cast<double>(y + cell_height * (i + 1)));
       // Bottom left
-      values[c + 2].SetDoubleValue(static_cast<double>(x + (width / columns) * j));
-      values[c + 3].SetDoubleValue(static_cast<double>(y + (height / rows) * (i + 1)));
+      values[c + 2].SetDoubleValue(static_cast<double>(x + cell_width * j));
+      values[c + 3].SetDoubleValue(static_cast<double>(y + cell_height * (i + 1)));
       // Top left
-      values[c + 4].SetDoubleValue(static_cast<double>(x + (width / columns) * j));
-      values[c + 5].SetDoubleValue(static_cast<double>(y + (height / rows) * i));
+      values[c + 4].SetDoubleValue(static_cast<double>(x + cell_width * j));
+      values[c + 5].SetDoubleValue(static_cast<double>(y + cell_height * i));
       // Bottom right
-      values[c + 6].SetDoubleValue(static_cast<double>(x + (width / columns) * (j + 1)));
-      values[c + 7].SetDoubleValue(static_cast<double>(y + (height / rows) * (i + 1)));
+      values[c + 6].SetDoubleValue(static_cast<double>(x + cell_width * (j + 1)));
+      values[c + 7].SetDoubleValue(static_cast<double>(y + cell_height * (i + 1)));
       // Top left
-      values[c + 8].SetDoubleValue(static_cast<double>(x + (width / columns) * j));
-      values[c + 9].SetDoubleValue(static_cast<double>(y + (height / rows) * i));
+      values[c + 8].SetDoubleValue(static_cast<double>(x + cell_width * j));
+      values[c + 9].SetDoubleValue(static_cast<double>(y + cell_height * i));
       // Top right
-      values[c + 10].SetDoubleValue(static_cast<double>(x + (width / columns) * (j + 1)));
-      values[c + 11].SetDoubleValue(static_cast<double>(y + (height / rows) * i));
+      values[c + 10].SetDoubleValue(static_cast<double>(x + cell_width * (j + 1)));
+      values[c + 11].SetDoubleValue(static_cast<double>(y + cell_height * i));
     }
   }
-
 
   // |format| is not Format for frame buffer but for vertex buffer.
   // Since draw rect command contains its vertex information and it
@@ -515,9 +517,8 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
   vertex_buffer->SetData(0, buf.get());
 
-  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
-  draw.SetTopology(command->IsPatch() ? Topology::kPatchList
-                                      : Topology::kTriangleList);
+  DrawArraysCommand draw(command->GetPipeline(), PipelineData{});
+  draw.SetTopology(Topology::kTriangleList);
   draw.SetFirstVertexIndex(0);
   draw.SetVertexCount(vertices);
   draw.SetInstanceCount(1);

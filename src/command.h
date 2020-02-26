@@ -190,16 +190,8 @@ class DrawRectCommand : public PipelineCommand {
 /// Command to draw a grid of recrangles on screen.
 class DrawGridCommand : public PipelineCommand {
  public:
-  explicit DrawGridCommand(Pipeline* pipeline, PipelineData data);
+  explicit DrawGridCommand(Pipeline* pipeline);
   ~DrawGridCommand() override;
-
-  const PipelineData* GetPipelineData() const { return &data_; }
-
-  void EnableOrtho() { is_ortho_ = true; }
-  bool IsOrtho() const { return is_ortho_; }
-
-  void EnablePatch() { is_patch_ = true; }
-  bool IsPatch() const { return is_patch_; }
 
   void SetX(float x) { x_ = x; }
   float GetX() const { return x_; }
@@ -213,8 +205,8 @@ class DrawGridCommand : public PipelineCommand {
   void SetHeight(float h) { height_ = h; }
   float GetHeight() const { return height_; }
 
-  void SetColumns(float c) { columns_ = c; }
-  float GetColumns() const { return columns_; }
+  void SetColumns(uint32_t c) { columns_ = c; }
+  uint32_t GetColumns() const { return columns_; }
 
   void SetRows(float r) { rows_ = r; }
   float GetRows() const { return rows_; }
@@ -222,15 +214,12 @@ class DrawGridCommand : public PipelineCommand {
   std::string ToString() const override { return "DrawGridCommand"; }
 
  private:
-  PipelineData data_;
-  bool is_ortho_ = false;
-  bool is_patch_ = false;
   float x_ = 0.0;
   float y_ = 0.0;
   float width_ = 0.0;
   float height_ = 0.0;
-  float columns_ = 0.0;
-  float rows_ = 0.0;
+  uint32_t columns_ = 0;
+  uint32_t rows_ = 0;
 };
 
 /// Command to draw from a vertex and index buffer.
