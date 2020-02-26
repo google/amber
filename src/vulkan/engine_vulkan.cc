@@ -466,8 +466,6 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   const uint32_t kTrianglesPerCell = 2;
   const uint32_t kVerticesPerTriangle = 3;
   const uint32_t vertices = columns * rows * kVerticesPerTriangle * kTrianglesPerCell;
-  const double cell_width = width / columns;
-  const double cell_height = height / rows;
 
   // Ortho calculation
   const float frame_width = static_cast<float>(graphics->GetWidth());
@@ -478,6 +476,9 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   height = (height / frame_height) * 2.0f;
 
   std::vector<Value> values(vertices * 2);
+
+  const double cell_width = width / columns;
+  const double cell_height = height / rows;
 
   for (uint32_t i = 0, c = 0; i < rows; i++) {
     for (uint32_t j = 0; j < columns; j++, c += 12) {
