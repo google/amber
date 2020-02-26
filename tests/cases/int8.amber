@@ -1,0 +1,53 @@
+#!amber
+# Copyright 2020 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+INSTANCE_EXTENSION VK_KHR_get_physical_device_properties2
+DEVICE_EXTENSION VK_KHR_shader_float16_int8
+DEVICE_EXTENSION VK_KHR_storage_buffer_storage_class
+DEVICE_EXTENSION VK_KHR_8bit_storage
+DEVICE_FEATURE Float16Int8Features.shaderInt8
+DEVICE_FEATURE Storage8BitFeatures.uniformAndStorageBuffer8BitAccess
+DEVICE_FEATURE Storage8BitFeatures.storagePushConstant8
+
+SHADER compute comp_shader GLSL
+#version 450
+#extension GL_EXT_shader_explicit_arithmetic_types_int8 : require
+
+layout(set=0, binding=0) buffer Buf {
+  int8_t value;
+} data;
+
+layout(push_constant) uniform PushConstantsBlock {
+  int8_t factor;
+} pushConstants;
+
+void main() {
+  data.value = data.value * pushConstants.factor;
+}
+END
+
+BUFFER buf DATA_TYPE int8 DATA 63 END
+BUFFER pushc DATA_TYPE int8 DATA 2 END
+
+PIPELINE compute pipeline
+  ATTACH comp_shader
+
+  BIND BUFFER buf AS storage DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER pushc AS push_constant
+END
+
+RUN pipeline 1 1 1
+
+EXPECT buf IDX 0 EQ 126
