@@ -484,36 +484,30 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
 
   for (uint32_t i = 0, c = 0; i < rows; i++) {
     for (uint32_t j = 0; j < columns; j++, c += 12) {
+      // Calculate corners
+      double x0 = static_cast<double>(x + cell_width * j);
+      double y0 = static_cast<double>(y + cell_height * i);
+      double x1 = static_cast<double>(x + cell_width * (j + 1));
+      double y1 = static_cast<double>(y + cell_height * (i + 1));
+
       // Bottom right
-      values[c + 0].SetDoubleValue(static_cast<double>(x +
-                                                      cell_width * (j + 1)));
-      values[c + 1].SetDoubleValue(static_cast<double>(y +
-                                                      cell_height * (i + 1)));
+      values[c + 0].SetDoubleValue(x1);
+      values[c + 1].SetDoubleValue(y1);
       // Bottom left
-      values[c + 2].SetDoubleValue(static_cast<double>(x +
-                                                      cell_width * j));
-      values[c + 3].SetDoubleValue(static_cast<double>(y +
-                                                      cell_height * (i + 1)));
+      values[c + 2].SetDoubleValue(x0);
+      values[c + 3].SetDoubleValue(y1);
       // Top left
-      values[c + 4].SetDoubleValue(static_cast<double>(x +
-                                                      cell_width * j));
-      values[c + 5].SetDoubleValue(static_cast<double>(y +
-                                                      cell_height * i));
+      values[c + 4].SetDoubleValue(x0);
+      values[c + 5].SetDoubleValue(y0);
       // Bottom right
-      values[c + 6].SetDoubleValue(static_cast<double>(x +
-                                                      cell_width * (j + 1)));
-      values[c + 7].SetDoubleValue(static_cast<double>(y +
-                                                      cell_height * (i + 1)));
+      values[c + 6].SetDoubleValue(x1);
+      values[c + 7].SetDoubleValue(y1);
       // Top left
-      values[c + 8].SetDoubleValue(static_cast<double>(x +
-                                                      cell_width * j));
-      values[c + 9].SetDoubleValue(static_cast<double>(y +
-                                                      cell_height * i));
+      values[c + 8].SetDoubleValue(x0);
+      values[c + 9].SetDoubleValue(y0);
       // Top right
-      values[c + 10].SetDoubleValue(static_cast<double>(x +
-                                                       cell_width * (j + 1)));
-      values[c + 11].SetDoubleValue(static_cast<double>(y +
-                                                       cell_height * i));
+      values[c + 10].SetDoubleValue(x1);
+      values[c + 11].SetDoubleValue(y0);
     }
   }
 

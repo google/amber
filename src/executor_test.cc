@@ -108,8 +108,6 @@ class EngineStub : public Engine {
     return {};
   }
 
-  void FailDrawGridCommand() { fail_draw_grid_command_ = true; }
-  bool DidDrawGridCommand() const { return did_draw_grid_command_; }
   Result DoDrawGrid(const DrawGridCommand*) override {
     did_draw_grid_command_ = true;
 
