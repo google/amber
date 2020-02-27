@@ -208,7 +208,7 @@ class DrawGridCommand : public PipelineCommand {
   void SetColumns(uint32_t c) { columns_ = c; }
   uint32_t GetColumns() const { return columns_; }
 
-  void SetRows(float r) { rows_ = r; }
+  void SetRows(uint32_t r) { rows_ = r; }
   float GetRows() const { return rows_; }
 
   std::string ToString() const override { return "DrawGridCommand"; }

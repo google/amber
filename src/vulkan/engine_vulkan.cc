@@ -28,6 +28,9 @@ namespace amber {
 namespace vulkan {
 namespace {
 
+const uint32_t kTrianglesPerCell = 2;
+const uint32_t kVerticesPerTriangle = 3;
+
 Result ToVkShaderStage(ShaderType type, VkShaderStageFlagBits* ret) {
   switch (type) {
     case kShaderTypeGeometry:
@@ -463,9 +466,8 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   float height = command->GetHeight();
   const uint32_t columns = command->GetColumns();
   const uint32_t rows = command->GetRows();
-  const uint32_t kTrianglesPerCell = 2;
-  const uint32_t kVerticesPerTriangle = 3;
-  const uint32_t vertices = columns * rows * kVerticesPerTriangle * kTrianglesPerCell;
+  const uint32_t vertices = columns * rows * kVerticesPerTriangle *
+                            kTrianglesPerCell;
 
   // Ortho calculation
   const float frame_width = static_cast<float>(graphics->GetWidth());
@@ -483,23 +485,35 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   for (uint32_t i = 0, c = 0; i < rows; i++) {
     for (uint32_t j = 0; j < columns; j++, c += 12) {
       // Bottom right
-      values[c + 0].SetDoubleValue(static_cast<double>(x + cell_width * (j + 1)));
-      values[c + 1].SetDoubleValue(static_cast<double>(y + cell_height * (i + 1)));
+      values[c + 0].SetDoubleValue(static_cast<double>(x +
+                                                      cell_width * (j + 1)));
+      values[c + 1].SetDoubleValue(static_cast<double>(y +
+                                                      cell_height * (i + 1)));
       // Bottom left
-      values[c + 2].SetDoubleValue(static_cast<double>(x + cell_width * j));
-      values[c + 3].SetDoubleValue(static_cast<double>(y + cell_height * (i + 1)));
+      values[c + 2].SetDoubleValue(static_cast<double>(x +
+                                                      cell_width * j));
+      values[c + 3].SetDoubleValue(static_cast<double>(y +
+                                                      cell_height * (i + 1)));
       // Top left
-      values[c + 4].SetDoubleValue(static_cast<double>(x + cell_width * j));
-      values[c + 5].SetDoubleValue(static_cast<double>(y + cell_height * i));
+      values[c + 4].SetDoubleValue(static_cast<double>(x +
+                                                      cell_width * j));
+      values[c + 5].SetDoubleValue(static_cast<double>(y +
+                                                      cell_height * i));
       // Bottom right
-      values[c + 6].SetDoubleValue(static_cast<double>(x + cell_width * (j + 1)));
-      values[c + 7].SetDoubleValue(static_cast<double>(y + cell_height * (i + 1)));
+      values[c + 6].SetDoubleValue(static_cast<double>(x +
+                                                      cell_width * (j + 1)));
+      values[c + 7].SetDoubleValue(static_cast<double>(y +
+                                                      cell_height * (i + 1)));
       // Top left
-      values[c + 8].SetDoubleValue(static_cast<double>(x + cell_width * j));
-      values[c + 9].SetDoubleValue(static_cast<double>(y + cell_height * i));
+      values[c + 8].SetDoubleValue(static_cast<double>(x +
+                                                      cell_width * j));
+      values[c + 9].SetDoubleValue(static_cast<double>(y +
+                                                      cell_height * i));
       // Top right
-      values[c + 10].SetDoubleValue(static_cast<double>(x + cell_width * (j + 1)));
-      values[c + 11].SetDoubleValue(static_cast<double>(y + cell_height * i));
+      values[c + 10].SetDoubleValue(static_cast<double>(x +
+                                                       cell_width * (j + 1)));
+      values[c + 11].SetDoubleValue(static_cast<double>(y +
+                                                       cell_height * i));
     }
   }
 
