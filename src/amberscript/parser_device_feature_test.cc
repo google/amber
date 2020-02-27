@@ -28,7 +28,11 @@ DEVICE_FEATURE Float16Int8Features.shaderFloat16
 DEVICE_FEATURE Float16Int8Features.shaderInt8
 DEVICE_FEATURE Storage8BitFeatures.storageBuffer8BitAccess
 DEVICE_FEATURE Storage8BitFeatures.uniformAndStorageBuffer8BitAccess
-DEVICE_FEATURE Storage8BitFeatures.storagePushConstant8)";
+DEVICE_FEATURE Storage8BitFeatures.storagePushConstant8
+DEVICE_FEATURE Storage16BitFeatures.storageBuffer16BitAccess
+DEVICE_FEATURE Storage16BitFeatures.uniformAndStorageBuffer16BitAccess
+DEVICE_FEATURE Storage16BitFeatures.storagePushConstant16
+DEVICE_FEATURE Storage16BitFeatures.storageInputOutput16)";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -36,7 +40,7 @@ DEVICE_FEATURE Storage8BitFeatures.storagePushConstant8)";
 
   auto script = parser.GetScript();
   const auto& features = script->GetRequiredFeatures();
-  ASSERT_EQ(7U, features.size());
+  ASSERT_EQ(11U, features.size());
   EXPECT_EQ("vertexPipelineStoresAndAtomics", features[0]);
   EXPECT_EQ("VariablePointerFeatures.variablePointersStorageBuffer",
             features[1]);
@@ -46,6 +50,11 @@ DEVICE_FEATURE Storage8BitFeatures.storagePushConstant8)";
   EXPECT_EQ("Storage8BitFeatures.uniformAndStorageBuffer8BitAccess",
             features[5]);
   EXPECT_EQ("Storage8BitFeatures.storagePushConstant8", features[6]);
+  EXPECT_EQ("Storage16BitFeatures.storageBuffer16BitAccess", features[7]);
+  EXPECT_EQ("Storage16BitFeatures.uniformAndStorageBuffer16BitAccess",
+            features[8]);
+  EXPECT_EQ("Storage16BitFeatures.storagePushConstant16", features[9]);
+  EXPECT_EQ("Storage16BitFeatures.storageInputOutput16", features[10]);
 }
 
 TEST_F(AmberScriptParserTest, DeviceFeatureMissingFeature) {
