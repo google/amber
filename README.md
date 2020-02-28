@@ -116,7 +116,7 @@ Alternatives:
 
 ### Android
 
-* Android build needs Android SDK 28, Android NDK 16, Java 8. If you prefer
+* Android build needs Android SDK 28, Android NDK r20, Java 8. If you prefer
   other versions of Android SDK, Android NDK, Java, then you can change
   `ANDROID_PLATFORM` and `ANDROID_BUILD_TOOL_VERSION` in
   `tools/build-amber-sample.sh`.
