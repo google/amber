@@ -489,6 +489,367 @@ RUN my_pipeline DRAW_RECT POS 2 4 SIZE 10 20 EXTRA)";
   ASSERT_EQ("12: extra parameters after RUN command: EXTRA", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, RunDrawGrid) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS 2 4 SIZE 10 20 CELLS 4 5)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(1U, commands.size());
+
+  auto* cmd = commands[0].get();
+  ASSERT_TRUE(cmd->IsDrawGrid());
+  EXPECT_FLOAT_EQ(2.f, cmd->AsDrawGrid()->GetX());
+  EXPECT_FLOAT_EQ(4.f, cmd->AsDrawGrid()->GetY());
+  EXPECT_FLOAT_EQ(10.f, cmd->AsDrawGrid()->GetWidth());
+  EXPECT_FLOAT_EQ(20.f, cmd->AsDrawGrid()->GetHeight());
+  EXPECT_EQ(4, cmd->AsDrawGrid()->GetColumns());
+  EXPECT_EQ(5, cmd->AsDrawGrid()->GetRows());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridWithComputePipelineInvalid) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+void main() {
+  gl_FragColor = vec3(2, 3, 4);
+}
+END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+END
+
+RUN my_pipeline DRAW_GRID POS 2 4 SIZE 10 20 CELLS 4 4)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: RUN command requires graphics pipeline", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridWithMissingPipeline) {
+  std::string in = R"(RUN my_pipeline DRAW_GRID POS 2 4 SIZE 10 20 CELLS 4 4)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("1: unknown pipeline for RUN command: my_pipeline", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridMissingValues) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: RUN DRAW_GRID command requires parameters", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridMissingPOS) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID 2 4 SIZE 10 20 CELLS 4 4)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: invalid token in RUN command: 2; expected POS", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridPOSMissingValues) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS SIZE 10 20 CELLS 4 4)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: missing X position for RUN command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridMissingPOSY) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS 2 SIZE 10 20 CELLS 4 4)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: missing Y position for RUN command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridInvalidPOSX) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS INVALID 4 SIZE 10 20 CELLS 4 4)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: missing X position for RUN command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridInavlidPOSY) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS 2 INVALID SIZE 10 20 CELLS 4 4)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: missing Y position for RUN command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridMissingSize) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS 2 4 10 20 CELLS 4 4)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: invalid token in RUN command: 10; expected SIZE", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridMissingSizeValues) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS 2 4 SIZE CELLS 4 4)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: missing width value for RUN command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridMissingSizeHeight) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS 2 4 SIZE 10 CELLS 4 4)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: missing height value for RUN command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridMissingCells) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS 2 4 SIZE 10 20)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: invalid token in RUN command: ; expected CELLS", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridMissingCellParams) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS 2 4 SIZE 10 20 CELLS)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: missing columns value for RUN command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridMissingCellRows) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS 2 4 SIZE 10 20 CELLS 4)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: missing rows value for RUN command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridInvalidSizeWidth) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS 2 4 SIZE INVALID 20)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: missing width value for RUN command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridInvalidSizeHeight) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS 2 4 SIZE 10 INVALID)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: missing height value for RUN command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawGridExtraCommands) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+
+RUN my_pipeline DRAW_GRID POS 2 4 SIZE 10 20 CELLS 4 4 EXTRA)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  ASSERT_EQ("12: extra parameters after RUN command: EXTRA", r.Error());
+}
+
 TEST_F(AmberScriptParserTest, RunDrawArrays) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
