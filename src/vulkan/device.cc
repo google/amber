@@ -40,6 +40,14 @@ const char k8BitStorage_UniformAndStorage[] =
     "Storage8BitFeatures.uniformAndStorageBuffer8BitAccess";
 const char k8BitStorage_PushConstant[] =
     "Storage8BitFeatures.storagePushConstant8";
+const char k16BitStorage_Storage[] =
+    "Storage16BitFeatures.storageBuffer16BitAccess";
+const char k16BitStorage_UniformAndStorage[] =
+    "Storage16BitFeatures.uniformAndStorageBuffer16BitAccess";
+const char k16BitStorage_PushConstant[] =
+    "Storage16BitFeatures.storagePushConstant16";
+const char k16BitStorage_InputOutput[] =
+    "Storage16BitFeatures.storageInputOutput16";
 
 struct BaseOutStructure {
   VkStructureType sType;
@@ -404,6 +412,7 @@ Result Device::Initialize(
     VkPhysicalDeviceVariablePointerFeaturesKHR* var_ptrs = nullptr;
     VkPhysicalDeviceFloat16Int8FeaturesKHR* float16_ptrs = nullptr;
     VkPhysicalDevice8BitStorageFeaturesKHR* storage8_ptrs = nullptr;
+    VkPhysicalDevice16BitStorageFeaturesKHR* storage16_ptrs = nullptr;
     void* ptr = available_features2.pNext;
     while (ptr != nullptr) {
       BaseOutStructure* s = static_cast<BaseOutStructure*>(ptr);
@@ -419,6 +428,10 @@ Result Device::Initialize(
                  VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR) {
         storage8_ptrs =
             static_cast<VkPhysicalDevice8BitStorageFeaturesKHR*>(ptr);
+      } else if (s->sType ==
+                 VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR) {
+        storage16_ptrs =
+            static_cast<VkPhysicalDevice16BitStorageFeaturesKHR*>(ptr);
       }
       ptr = s->pNext;
     }
@@ -482,6 +495,32 @@ Result Device::Initialize(
       if (feature == k8BitStorage_PushConstant &&
           storage8_ptrs->storagePushConstant8 != VK_TRUE) {
         return amber::Result("Missing 8-bit push constant access");
+      }
+
+      if ((feature == k16BitStorage_Storage ||
+           feature == k16BitStorage_UniformAndStorage ||
+           feature == k16BitStorage_PushConstant ||
+           feature == k16BitStorage_InputOutput) &&
+          storage16_ptrs == nullptr) {
+        return amber::Result(
+            "Shader 16-bit storage requested but feature not returned");
+      }
+
+      if (feature == k16BitStorage_Storage &&
+          storage16_ptrs->storageBuffer16BitAccess != VK_TRUE) {
+        return amber::Result("Missing 16-bit storage access");
+      }
+      if (feature == k16BitStorage_UniformAndStorage &&
+          storage16_ptrs->uniformAndStorageBuffer16BitAccess != VK_TRUE) {
+        return amber::Result("Missing 16-bit uniform and storage access");
+      }
+      if (feature == k16BitStorage_PushConstant &&
+          storage16_ptrs->storagePushConstant16 != VK_TRUE) {
+        return amber::Result("Missing 16-bit push constant access");
+      }
+      if (feature == k16BitStorage_InputOutput &&
+          storage16_ptrs->storageInputOutput16 != VK_TRUE) {
+        return amber::Result("Missing 16-bit input/output access");
       }
     }
 

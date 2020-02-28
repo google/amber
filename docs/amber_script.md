@@ -42,6 +42,10 @@ with:
  * `Storage8BitFeatures.storageBuffer8BitAccess`
  * `Storage8BitFeatures.uniformAndStorageBuffer8BitAccess`
  * `Storage8BitFeatures.storagePushConstant8`
+ * `Storage16BitFeatures.storageBuffer16BitAccess`
+ * `Storage16BitFeatures.uniformAndStorageBuffer16BitAccess`
+ * `Storage16BitFeatures.storagePushConstant16`
+ * `Storage16BitFeatures.storageInputOutput16`
 
 Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
 commands.
