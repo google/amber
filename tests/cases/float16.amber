@@ -22,16 +22,19 @@ SHADER compute f16 GLSL
 #extension GL_AMD_gpu_shader_half_float : enable
 
 layout(set=0, binding=0) buffer Buf {
-  float16_t h;
+  float16_t h[3];
 } data;
 
 void main() {
-  data.h = data.h * 2.0hf;
+  int idx = int(gl_GlobalInvocationID.x);
+  data.h[idx] = data.h[idx] * 2.0hf;
 }
 END
 
 BUFFER buf DATA_TYPE float16 DATA
+-0.0
 2.4
+-2.4
 END
 
 PIPELINE compute pipeline
@@ -40,6 +43,8 @@ PIPELINE compute pipeline
   BIND BUFFER buf AS storage DESCRIPTOR_SET 0 BINDING 0
 END
 
-RUN pipeline 1 1 1
+RUN pipeline 3 1 1
 
-EXPECT buf IDX 0 TOLERANCE 0.1 EQ 4.8
+EXPECT buf IDX 0 TOLERANCE 0.1 EQ 0.0
+EXPECT buf IDX 2 TOLERANCE 0.1 EQ 4.8
+EXPECT buf IDX 4 TOLERANCE 0.1 EQ -4.8
