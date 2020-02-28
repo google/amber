@@ -1792,19 +1792,13 @@ Result Parser::ParseRun() {
     if (!token->IsInteger())
       return Result("missing columns value for RUN command");
 
-    r = token->ConvertToDouble();
-    if (!r.IsSuccess())
-      return r;
-    cmd->SetColumns(token->AsFloat());
+    cmd->SetColumns(token->AsInt32());
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger())
       return Result("missing rows value for RUN command");
 
-    r = token->ConvertToDouble();
-    if (!r.IsSuccess())
-      return r;
-    cmd->SetRows(token->AsFloat());
+    cmd->SetRows(token->AsInt32());
 
     command_list_.push_back(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
