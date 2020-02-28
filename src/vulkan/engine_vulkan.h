@@ -56,6 +56,7 @@ class EngineVulkan : public Engine {
   Result DoClearDepth(const ClearDepthCommand* cmd) override;
   Result DoClear(const ClearCommand* cmd) override;
   Result DoDrawRect(const DrawRectCommand* cmd) override;
+  Result DoDrawGrid(const DrawGridCommand* cmd) override;
   Result DoDrawArrays(const DrawArraysCommand* cmd) override;
   Result DoCompute(const ComputeCommand* cmd) override;
   Result DoEntryPoint(const EntryPointCommand* cmd) override;

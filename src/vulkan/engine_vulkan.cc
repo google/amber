@@ -28,6 +28,9 @@ namespace amber {
 namespace vulkan {
 namespace {
 
+const uint32_t kTrianglesPerCell = 2;
+const uint32_t kVerticesPerTriangle = 3;
+
 Result ToVkShaderStage(ShaderType type, VkShaderStageFlagBits* ret) {
   switch (type) {
     case kShaderTypeGeometry:
@@ -441,6 +444,92 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
                                       : Topology::kTriangleStrip);
   draw.SetFirstVertexIndex(0);
   draw.SetVertexCount(4);
+  draw.SetInstanceCount(1);
+
+  Result r = graphics->Draw(&draw, vertex_buffer.get());
+  if (!r.IsSuccess())
+    return r;
+
+  return {};
+}
+
+Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
+  auto& info = pipeline_map_[command->GetPipeline()];
+  if (!info.vk_pipeline->IsGraphics())
+    return Result("Vulkan::DrawGrid for Non-Graphics Pipeline");
+
+  auto* graphics = info.vk_pipeline->AsGraphics();
+
+  float x = command->GetX();
+  float y = command->GetY();
+  float width = command->GetWidth();
+  float height = command->GetHeight();
+  const uint32_t columns = command->GetColumns();
+  const uint32_t rows = command->GetRows();
+  const uint32_t vertices =
+      columns * rows * kVerticesPerTriangle * kTrianglesPerCell;
+
+  // Ortho calculation
+  const float frame_width = static_cast<float>(graphics->GetWidth());
+  const float frame_height = static_cast<float>(graphics->GetHeight());
+  x = ((x / frame_width) * 2.0f) - 1.0f;
+  y = ((y / frame_height) * 2.0f) - 1.0f;
+  width = (width / frame_width) * 2.0f;
+  height = (height / frame_height) * 2.0f;
+
+  std::vector<Value> values(vertices * 2);
+
+  const float cell_width = width / static_cast<float>(columns);
+  const float cell_height = height / static_cast<float>(rows);
+
+  for (uint32_t i = 0, c = 0; i < rows; i++) {
+    for (uint32_t j = 0; j < columns; j++, c += 12) {
+      // Calculate corners
+      float x0 = x + cell_width * static_cast<float>(j);
+      float y0 = y + cell_height * static_cast<float>(i);
+      float x1 = x + cell_width * static_cast<float>(j + 1);
+      float y1 = y + cell_height * static_cast<float>(i + 1);
+
+      // Bottom right
+      values[c + 0].SetDoubleValue(static_cast<double>(x1));
+      values[c + 1].SetDoubleValue(static_cast<double>(y1));
+      // Bottom left
+      values[c + 2].SetDoubleValue(static_cast<double>(x0));
+      values[c + 3].SetDoubleValue(static_cast<double>(y1));
+      // Top left
+      values[c + 4].SetDoubleValue(static_cast<double>(x0));
+      values[c + 5].SetDoubleValue(static_cast<double>(y0));
+      // Bottom right
+      values[c + 6].SetDoubleValue(static_cast<double>(x1));
+      values[c + 7].SetDoubleValue(static_cast<double>(y1));
+      // Top left
+      values[c + 8].SetDoubleValue(static_cast<double>(x0));
+      values[c + 9].SetDoubleValue(static_cast<double>(y0));
+      // Top right
+      values[c + 10].SetDoubleValue(static_cast<double>(x1));
+      values[c + 11].SetDoubleValue(static_cast<double>(y0));
+    }
+  }
+
+  // |format| is not Format for frame buffer but for vertex buffer.
+  // Since draw rect command contains its vertex information and it
+  // does not include a format of vertex buffer, we can choose any
+  // one that is suitable. We use VK_FORMAT_R32G32_SFLOAT for it.
+  TypeParser parser;
+  auto type = parser.Parse("R32G32_SFLOAT");
+  Format fmt(type.get());
+
+  auto buf = MakeUnique<Buffer>();
+  buf->SetFormat(&fmt);
+  buf->SetData(std::move(values));
+
+  auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
+  vertex_buffer->SetData(0, buf.get());
+
+  DrawArraysCommand draw(command->GetPipeline(), PipelineData{});
+  draw.SetTopology(Topology::kTriangleList);
+  draw.SetFirstVertexIndex(0);
+  draw.SetVertexCount(vertices);
   draw.SetInstanceCount(1);
 
   Result r = graphics->Draw(&draw, vertex_buffer.get());

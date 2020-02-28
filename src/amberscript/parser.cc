@@ -1718,6 +1718,92 @@ Result Parser::ParseRun() {
     return ValidateEndOfStatement("RUN command");
   }
 
+  if (token->AsString() == "DRAW_GRID") {
+    if (!pipeline->IsGraphics())
+      return Result("RUN command requires graphics pipeline");
+
+    if (pipeline->GetVertexBuffers().size() > 0) {
+      return Result(
+          "RUN DRAW_GRID is not supported in a pipeline with "
+          "vertex buffers attached");
+    }
+
+    token = tokenizer_->NextToken();
+    if (token->IsEOS() || token->IsEOL())
+      return Result("RUN DRAW_GRID command requires parameters");
+
+    if (!token->IsIdentifier() || token->AsString() != "POS") {
+      return Result("invalid token in RUN command: " +
+                    token->ToOriginalString() + "; expected POS");
+    }
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("missing X position for RUN command");
+
+    auto cmd = MakeUnique<DrawGridCommand>(pipeline);
+    cmd->SetLine(line);
+
+    Result r = token->ConvertToDouble();
+    if (!r.IsSuccess())
+      return r;
+    cmd->SetX(token->AsFloat());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("missing Y position for RUN command");
+
+    r = token->ConvertToDouble();
+    if (!r.IsSuccess())
+      return r;
+    cmd->SetY(token->AsFloat());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsIdentifier() || token->AsString() != "SIZE") {
+      return Result("invalid token in RUN command: " +
+                    token->ToOriginalString() + "; expected SIZE");
+    }
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("missing width value for RUN command");
+
+    r = token->ConvertToDouble();
+    if (!r.IsSuccess())
+      return r;
+    cmd->SetWidth(token->AsFloat());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("missing height value for RUN command");
+
+    r = token->ConvertToDouble();
+    if (!r.IsSuccess())
+      return r;
+    cmd->SetHeight(token->AsFloat());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsIdentifier() || token->AsString() != "CELLS") {
+      return Result("invalid token in RUN command: " +
+                    token->ToOriginalString() + "; expected CELLS");
+    }
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("missing columns value for RUN command");
+
+    cmd->SetColumns(token->AsUint32());
+
+    token = tokenizer_->NextToken();
+    if (!token->IsInteger())
+      return Result("missing rows value for RUN command");
+
+    cmd->SetRows(token->AsUint32());
+
+    command_list_.push_back(std::move(cmd));
+    return ValidateEndOfStatement("RUN command");
+  }
+
   if (token->AsString() == "DRAW_ARRAY") {
     if (!pipeline->IsGraphics())
       return Result("RUN command requires graphics pipeline");

@@ -21,7 +21,7 @@ contexts:
       scope: keyword.control.amber
     - match: '\b(PASSTHROUGH|PIPELINE|ATTACH|ENTRY_POINT|DESCRIPTOR_SET|INC_BY)\b'
       scope: keyword.control.amber
-    - match: '\b(BINDING|IDX|TO|RUN|DRAW_RECT|POS|DRAW_ARRAY|IN|AS|START_IDX)\b'
+    - match: '\b(BINDING|IDX|TO|RUN|DRAW_RECT|POS|DRAW_GRID|CELLS|DRAW_ARRAY|IN|AS|START_IDX)\b'
       scope: keyword.control.amber
     - match: '\b(COUNT|CLEAR_COLOR|CLEAR|EXPECT|TYPE|FRAMEBUFFER|SHADER_OPTIMIZATION)\b'
       scope: keyword.control.amber
