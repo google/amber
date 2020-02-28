@@ -466,8 +466,8 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   float height = command->GetHeight();
   const uint32_t columns = command->GetColumns();
   const uint32_t rows = command->GetRows();
-  const uint32_t vertices = columns * rows * kVerticesPerTriangle *
-                            kTrianglesPerCell;
+  const uint32_t vertices =
+      columns * rows * kVerticesPerTriangle * kTrianglesPerCell;
 
   // Ortho calculation
   const float frame_width = static_cast<float>(graphics->GetWidth());

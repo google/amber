@@ -1792,13 +1792,13 @@ Result Parser::ParseRun() {
     if (!token->IsInteger())
       return Result("missing columns value for RUN command");
 
-    cmd->SetColumns(token->AsInt32());
+    cmd->SetColumns(token->AsUint32());
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger())
       return Result("missing rows value for RUN command");
 
-    cmd->SetRows(token->AsInt32());
+    cmd->SetRows(token->AsUint32());
 
     command_list_.push_back(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
