@@ -43,7 +43,11 @@ uint16_t FloatSign(const uint32_t hex_float) {
 
 // Return exponent value of 32 bits float.
 uint16_t FloatExponent(const uint32_t hex_float) {
-  uint32_t exponent = ((hex_float >> 23U) & ((1U << 8U) - 1U)) - 112U;
+  uint32_t exponent_bits = ((hex_float >> 23U) & ((1U << 8U) - 1U));
+  // Handle zero and denormals.
+  if (exponent_bits == 0U)
+    return 0;
+  uint32_t exponent = exponent_bits - 112U;
   const uint32_t half_exponent_mask = (1U << 5U) - 1U;
   assert(((exponent & ~half_exponent_mask) == 0U) && "Float exponent overflow");
   return static_cast<uint16_t>(exponent & half_exponent_mask);
@@ -59,11 +63,16 @@ uint32_t FloatMantissa(const uint32_t hex_float) {
 // based on IEEE-754.
 float HexFloat16ToFloat(const uint8_t* value) {
   uint32_t sign = (static_cast<uint32_t>(value[1]) & 0x80) << 24U;
-  uint32_t exponent = (((static_cast<uint32_t>(value[1]) & 0x7c) >> 2U) + 112U)
-                      << 23U;
-  uint32_t mantissa = ((static_cast<uint32_t>(value[1]) & 0x3) << 8U |
-                       static_cast<uint32_t>(value[0]))
-                      << 13U;
+  uint32_t exponent_bits = (static_cast<uint32_t>(value[1]) & 0x7c) >> 2U;
+  uint32_t exponent = 0U;
+  uint32_t mantissa = 0U;
+  // Handle zero and flush denormals to zero.
+  if (exponent_bits != 0U) {
+    exponent = (exponent_bits + 112U) << 23U;
+    mantissa = ((static_cast<uint32_t>(value[1]) & 0x3) << 8U |
+                static_cast<uint32_t>(value[0]))
+               << 13U;
+  }
 
   uint32_t hex = sign | exponent | mantissa;
   float* hex_float = reinterpret_cast<float*>(&hex);
@@ -116,10 +125,13 @@ float HexFloatToFloat(const uint8_t* value, uint8_t bits) {
 
 uint16_t FloatToHexFloat16(const float value) {
   const uint32_t* hex = reinterpret_cast<const uint32_t*>(&value);
-  return static_cast<uint16_t>(
-      static_cast<uint16_t>(FloatSign(*hex) << 15U) |
-      static_cast<uint16_t>(FloatExponent(*hex) << 10U) |
-      static_cast<uint16_t>(FloatMantissa(*hex) >> 13U));
+  uint16_t sign = FloatSign(*hex);
+  uint16_t exponent = FloatExponent(*hex);
+  // Flush denormals.
+  uint32_t mantissa = ((exponent == 0) ? 0U : FloatMantissa(*hex));
+  return static_cast<uint16_t>(static_cast<uint16_t>(sign << 15U) |
+                               static_cast<uint16_t>(exponent << 10U) |
+                               static_cast<uint16_t>(mantissa >> 13U));
 }
 
 }  // namespace float16

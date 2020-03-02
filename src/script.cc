@@ -105,7 +105,11 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name == "Float16Int8Features.shaderInt8" ||
          name == "Storage8BitFeatures.storageBuffer8BitAccess" ||
          name == "Storage8BitFeatures.uniformAndStorageBuffer8BitAccess" ||
-         name == "Storage8BitFeatures.storagePushConstant8";
+         name == "Storage8BitFeatures.storagePushConstant8" ||
+         name == "Storage16BitFeatures.storageBuffer16BitAccess" ||
+         name == "Storage16BitFeatures.uniformAndStorageBuffer16BitAccess" ||
+         name == "Storage16BitFeatures.storagePushConstant16" ||
+         name == "Storage16BitFeatures.storageInputOutput16";
 }
 
 type::Type* Script::ParseType(const std::string& str) {

@@ -79,6 +79,8 @@ SUPPRESSIONS_SWIFTSHADER = [
   # No supporting device for Float16Int8Features
   "float16.amber",
   "int8.amber",
+  # No supporting device for the required 16-bit storage features
+  "storage16.amber",
   # SEGV: github.com/google/amber/issues/725
   "multiple_ssbo_update_with_graphics_pipeline.vkscript",
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline_less_than_4.vkscript",
@@ -156,6 +158,14 @@ SUPPRESSIONS_DAWN = [
   "multiple_ssbo_update_with_graphics_pipeline.vkscript",
   # Currently not working, under investigation
   "draw_triangle_list_with_depth.vkscript",
+  # draw_grid not implemented for dawn yet
+  "draw_grid.amber",
+  "draw_grid_multiple_color_attachment.amber",
+  "draw_grid_multiple_pipeline.amber",
+  "draw_grids.amber",
+  "draw_grid.vkscript",
+  "draw_grid_with_buffer.amber",
+  "draw_grid_with_two_vertex_data_attached.expect_fail.amber",
 ]
 
 class TestCase:

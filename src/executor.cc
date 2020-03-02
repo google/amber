@@ -169,6 +169,8 @@ Result Executor::ExecuteCommand(Engine* engine, Command* cmd) {
   }
   if (cmd->IsDrawRect())
     return engine->DoDrawRect(cmd->AsDrawRect());
+  if (cmd->IsDrawGrid())
+    return engine->DoDrawGrid(cmd->AsDrawGrid());
   if (cmd->IsDrawArrays())
     return engine->DoDrawArrays(cmd->AsDrawArrays());
   if (cmd->IsCompute())

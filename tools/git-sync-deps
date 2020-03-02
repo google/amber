@@ -224,7 +224,7 @@ def git_sync_deps(deps_file_path, command_line_os_requests, verbose):
   list_of_arg_lists = []
   for directory in sorted(dependencies):
     if '@' in dependencies[directory]:
-      repo, checkoutable = dependencies[directory].split('@', 1)
+      repo, checkoutable = dependencies[directory].rsplit('@', 1)
     else:
       raise Exception("please specify commit or tag")
 
