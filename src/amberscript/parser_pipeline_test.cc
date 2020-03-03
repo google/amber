@@ -240,6 +240,97 @@ END)";
             r.Error());
 }
 
+TEST_F(AmberScriptParserTest, PipelinePolygonMode) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline_default
+  ATTACH my_shader
+  ATTACH my_fragment
+  FRAMEBUFFER_SIZE 256 256
+END
+PIPELINE graphics my_pipeline_fill
+  ATTACH my_shader
+  ATTACH my_fragment
+  POLYGON_MODE fill
+  FRAMEBUFFER_SIZE 256 256
+END
+PIPELINE graphics my_pipeline_line
+  ATTACH my_shader
+  ATTACH my_fragment
+  POLYGON_MODE line
+  FRAMEBUFFER_SIZE 256 256
+END
+PIPELINE graphics my_pipeline_point
+  ATTACH my_shader
+  ATTACH my_fragment
+  POLYGON_MODE point
+  FRAMEBUFFER_SIZE 256 256
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(4U, pipelines.size());
+
+  auto mode0 = pipelines[0]->GetPolygonMode();
+  ASSERT_EQ(mode0, PolygonMode::kFill);
+  auto mode1 = pipelines[1]->GetPolygonMode();
+  ASSERT_EQ(mode1, PolygonMode::kFill);
+  auto mode2 = pipelines[2]->GetPolygonMode();
+  ASSERT_EQ(mode2, PolygonMode::kLine);
+  auto mode3 = pipelines[3]->GetPolygonMode();
+  ASSERT_EQ(mode3, PolygonMode::kPoint);
+}
+
+TEST_F(AmberScriptParserTest, PipelineMissingPolygonMode) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+  POLYGON_MODE
+  FRAMEBUFFER_SIZE 256 256
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+
+  EXPECT_EQ("11: missing mode in POLYGON_MODE command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, PipelineInvalidPolygonMode) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+  POLYGON_MODE foo
+  FRAMEBUFFER_SIZE 256 256
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+
+  EXPECT_EQ("10: invalid polygon mode: foo", r.Error());
+}
+
 TEST_F(AmberScriptParserTest, DerivePipeline) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH

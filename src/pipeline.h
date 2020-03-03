@@ -24,6 +24,7 @@
 
 #include "amber/result.h"
 #include "src/buffer.h"
+#include "src/command_data.h"
 #include "src/sampler.h"
 #include "src/shader.h"
 
@@ -284,6 +285,9 @@ class Pipeline {
     return push_constant_buffer_;
   }
 
+  Result SetPolygonMode(PolygonMode mode);
+  PolygonMode GetPolygonMode() { return polygon_mode_; }
+
   /// Validates that the pipeline has been created correctly.
   Result Validate() const;
 
@@ -332,6 +336,7 @@ class Pipeline {
   BufferInfo depth_buffer_;
   BufferInfo push_constant_buffer_;
   Buffer* index_buffer_ = nullptr;
+  PolygonMode polygon_mode_ = PolygonMode::kFill;
 
   uint32_t fb_width_ = 250;
   uint32_t fb_height_ = 250;

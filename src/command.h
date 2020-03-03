@@ -239,6 +239,8 @@ class DrawArraysCommand : public PipelineCommand {
   void SetTopology(Topology topo) { topology_ = topo; }
   Topology GetTopology() const { return topology_; }
 
+  void SetPolygonMode(PolygonMode mode) { data_.SetPolygonMode(mode); }
+
   void SetFirstVertexIndex(uint32_t idx) { first_vertex_index_ = idx; }
   uint32_t GetFirstVertexIndex() const { return first_vertex_index_; }
 
