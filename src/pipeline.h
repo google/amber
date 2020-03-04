@@ -286,7 +286,7 @@ class Pipeline {
   }
 
   Result SetPolygonMode(PolygonMode mode);
-  PolygonMode GetPolygonMode() { return polygon_mode_; }
+  PolygonMode GetPolygonMode() const { return polygon_mode_; }
 
   /// Validates that the pipeline has been created correctly.
   Result Validate() const;

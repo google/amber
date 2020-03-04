@@ -1697,6 +1697,7 @@ Result Parser::ParseRun() {
     auto cmd = MakeUnique<DrawRectCommand>(pipeline, PipelineData{});
     cmd->SetLine(line);
     cmd->EnableOrtho();
+    cmd->SetPolygonMode(pipeline->GetPolygonMode());
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -1765,6 +1766,7 @@ Result Parser::ParseRun() {
 
     auto cmd = MakeUnique<DrawGridCommand>(pipeline);
     cmd->SetLine(line);
+    cmd->SetPolygonMode(pipeline->GetPolygonMode());
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())

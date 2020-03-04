@@ -64,13 +64,27 @@ PIPELINE graphics pipeline_point
   FRAMEBUFFER_SIZE 256 256
 END
 
+PIPELINE graphics pipeline_line_grid
+  ATTACH vert_shader
+  ATTACH frag_shader
+  POLYGON_MODE line
+
+  BIND BUFFER framebuffer AS color LOCATION 0
+  FRAMEBUFFER_SIZE 256 256
+END
+
 CLEAR_COLOR pipeline_line 0 0 0 255
 CLEAR pipeline_line
 # Draw a large triangle with lines
 RUN pipeline_line DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 3
+# Draw a rect with points
+RUN pipeline_point DRAW_RECT POS 20 20 SIZE 216 216
 # Draw a small triangle with points
 RUN pipeline_point DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 3
+# Draw a line grid overlapping the small triangle
+RUN pipeline_line_grid DRAW_GRID POS 80 40 SIZE 96 96 CELLS 3 3
 
-# Make sure no solid triangle was drawn by checking the
-# common center of both triangles
-EXPECT framebuffer IDX 128 128 SIZE 10 10 EQ_RGBA 0 0 0 255
+# Make sure no solid triangle was drawn by checking the center
+# of the middle grid triangle. That location is covered by all
+# drawn primitives.
+EXPECT framebuffer IDX 134 82 SIZE 5 5 EQ_RGBA 0 0 0 255
