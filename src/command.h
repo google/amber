@@ -41,6 +41,7 @@ class ComputeCommand;
 class CopyCommand;
 class DrawArraysCommand;
 class DrawRectCommand;
+class DrawGridCommand;
 class EntryPointCommand;
 class PatchParameterVerticesCommand;
 class Pipeline;
@@ -61,6 +62,7 @@ class Command {
     kCopy,
     kDrawArrays,
     kDrawRect,
+    kDrawGrid,
     kEntryPoint,
     kPatchParameterVertices,
     kPipelineProperties,
@@ -76,6 +78,7 @@ class Command {
   Command::Type GetType() const { return command_type_; }
 
   bool IsDrawRect() const { return command_type_ == Type::kDrawRect; }
+  bool IsDrawGrid() const { return command_type_ == Type::kDrawGrid; }
   bool IsDrawArrays() const { return command_type_ == Type::kDrawArrays; }
   bool IsCompareBuffer() const { return command_type_ == Type::kCompareBuffer; }
   bool IsCompute() const { return command_type_ == Type::kCompute; }
@@ -102,6 +105,7 @@ class Command {
   CopyCommand* AsCopy();
   DrawArraysCommand* AsDrawArrays();
   DrawRectCommand* AsDrawRect();
+  DrawGridCommand* AsDrawGrid();
   EntryPointCommand* AsEntryPoint();
   PatchParameterVerticesCommand* AsPatchParameterVertices();
   ProbeCommand* AsProbe();
@@ -181,6 +185,41 @@ class DrawRectCommand : public PipelineCommand {
   float y_ = 0.0;
   float width_ = 0.0;
   float height_ = 0.0;
+};
+
+/// Command to draw a grid of recrangles on screen.
+class DrawGridCommand : public PipelineCommand {
+ public:
+  explicit DrawGridCommand(Pipeline* pipeline);
+  ~DrawGridCommand() override;
+
+  void SetX(float x) { x_ = x; }
+  float GetX() const { return x_; }
+
+  void SetY(float y) { y_ = y; }
+  float GetY() const { return y_; }
+
+  void SetWidth(float w) { width_ = w; }
+  float GetWidth() const { return width_; }
+
+  void SetHeight(float h) { height_ = h; }
+  float GetHeight() const { return height_; }
+
+  void SetColumns(uint32_t c) { columns_ = c; }
+  uint32_t GetColumns() const { return columns_; }
+
+  void SetRows(uint32_t r) { rows_ = r; }
+  uint32_t GetRows() const { return rows_; }
+
+  std::string ToString() const override { return "DrawGridCommand"; }
+
+ private:
+  float x_ = 0.0;
+  float y_ = 0.0;
+  float width_ = 0.0;
+  float height_ = 0.0;
+  uint32_t columns_ = 0;
+  uint32_t rows_ = 0;
 };
 
 /// Command to draw from a vertex and index buffer.

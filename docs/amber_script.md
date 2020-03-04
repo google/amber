@@ -42,6 +42,10 @@ with:
  * `Storage8BitFeatures.storageBuffer8BitAccess`
  * `Storage8BitFeatures.uniformAndStorageBuffer8BitAccess`
  * `Storage8BitFeatures.storagePushConstant8`
+ * `Storage16BitFeatures.storageBuffer16BitAccess`
+ * `Storage16BitFeatures.uniformAndStorageBuffer16BitAccess`
+ * `Storage16BitFeatures.storagePushConstant16`
+ * `Storage16BitFeatures.storageInputOutput16`
 
 Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
 commands.
@@ -443,13 +447,26 @@ vertex buffer minus the `START_IDX`.
 # pipeline will be run with the given number of workgroups in the |x|, |y|, |z|
 # dimensions. Each of the x, y and z values must be a uint32.
 RUN {pipeline_name} _x_ _y_ _z_
+```
 
+```groovy
 # Run the given |pipeline_name| which must be a `graphics` pipeline. The
 # rectangle at |x|, |y|, |width|x|height| will be rendered. Ignores VERTEX_DATA
 # and INDEX_DATA on the given pipeline.
 RUN {pipeline_name} \
   DRAW_RECT POS _x_in_pixels_ _y_in_pixels_ \
   SIZE _width_in_pixels_ _height_in_pixels_
+```
+
+```groovy
+# Run the given |pipeline_name| which must be a `graphics` pipeline. The
+# grid at |x|, |y|, |width|x|height|, |columns|x|rows| will be rendered. 
+# Ignores VERTEX_DATA and INDEX_DATA on the given pipeline.
+# For columns, rows of (5, 4) a total of 5*4=20 rectangles will be drawn.
+RUN {pipeline_name} \
+  DRAW_GRID POS _x_in_pixels_ _y_in_pixels_ \
+  SIZE _width_in_pixels_ _height_in_pixels_ \
+  CELLS _columns_of_cells_ _rows_of_cells_
 ```
 
 ```groovy

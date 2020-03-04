@@ -111,12 +111,14 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
 
   bool supports_get_physical_device_properties2_ = false;
   bool supports_shader_float16_int8_ = false;
-  bool supports_shader_int8_storage_ = false;
+  bool supports_shader_8bit_storage_ = false;
+  bool supports_shader_16bit_storage_ = false;
   VkPhysicalDeviceFeatures available_features_;
   VkPhysicalDeviceFeatures2KHR available_features2_;
   VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_feature_;
   VkPhysicalDeviceFloat16Int8FeaturesKHR float16_int8_feature_;
-  VkPhysicalDevice8BitStorageFeaturesKHR int8_storage_feature_;
+  VkPhysicalDevice8BitStorageFeaturesKHR storage_8bit_feature_;
+  VkPhysicalDevice16BitStorageFeaturesKHR storage_16bit_feature_;
 };
 
 }  // namespace sample
