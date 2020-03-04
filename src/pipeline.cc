@@ -182,6 +182,16 @@ Result Pipeline::SetShaderType(const Shader* shader, ShaderType type) {
                 shader->GetName());
 }
 
+Result Pipeline::SetPolygonMode(PolygonMode mode) {
+  if (mode != PolygonMode::kFill && mode != PolygonMode::kLine &&
+      mode != PolygonMode::kPoint)
+    return Result("invalid polygon mode specified for pipeline");
+
+  polygon_mode_ = mode;
+
+  return {};
+}
+
 Result Pipeline::Validate() const {
   for (const auto& attachment : color_attachments_) {
     if (attachment.buffer->ElementCount() !=

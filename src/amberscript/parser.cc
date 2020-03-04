@@ -446,6 +446,8 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelineSet(pipeline.get());
     } else if (tok == "COMPILE_OPTIONS") {
       r = ParsePipelineShaderCompileOptions(pipeline.get());
+    } else if (tok == "POLYGON_MODE") {
+      r = ParsePipelinePolygonMode(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -1043,6 +1045,25 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   script_->RegisterType(std::move(type));
 
   return ValidateEndOfStatement("SET command");
+}
+
+Result Parser::ParsePipelinePolygonMode(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsIdentifier())
+    return Result("missing mode in POLYGON_MODE command");
+
+  auto mode = token->AsString();
+
+  if (mode == "fill")
+    pipeline->SetPolygonMode(PolygonMode::kFill);
+  else if (mode == "line")
+    pipeline->SetPolygonMode(PolygonMode::kLine);
+  else if (mode == "point")
+    pipeline->SetPolygonMode(PolygonMode::kPoint);
+  else
+    return Result("invalid polygon mode: " + mode);
+
+  return ValidateEndOfStatement("POLYGON_MODE command");
 }
 
 Result Parser::ParseStruct() {
@@ -1646,6 +1667,7 @@ Result Parser::ParseRun() {
     command_list_.push_back(std::move(cmd));
     return ValidateEndOfStatement("RUN command");
   }
+
   if (!token->IsIdentifier())
     return Result("invalid token in RUN command: " + token->ToOriginalString());
 
@@ -1675,6 +1697,7 @@ Result Parser::ParseRun() {
     auto cmd = MakeUnique<DrawRectCommand>(pipeline, PipelineData{});
     cmd->SetLine(line);
     cmd->EnableOrtho();
+    cmd->SetPolygonMode(pipeline->GetPolygonMode());
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -1743,6 +1766,7 @@ Result Parser::ParseRun() {
 
     auto cmd = MakeUnique<DrawGridCommand>(pipeline);
     cmd->SetLine(line);
+    cmd->SetPolygonMode(pipeline->GetPolygonMode());
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -1884,6 +1908,7 @@ Result Parser::ParseRun() {
     cmd->SetTopology(topo);
     cmd->SetFirstVertexIndex(start_idx);
     cmd->SetVertexCount(count);
+    cmd->SetPolygonMode(pipeline->GetPolygonMode());
 
     if (indexed)
       cmd->EnableIndexed();

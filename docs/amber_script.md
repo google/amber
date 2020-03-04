@@ -316,6 +316,12 @@ The following commands are all specified within the `PIPELINE` command.
 ```
 
 ```groovy
+  # Set the polygon mode used for all drawing with the pipeline.
+  # |mode| is fill, line, or point and it defaults to fill.
+  POLYGON_MODE {mode}
+```
+
+```groovy
   # Set the size of the render buffers. |width| and |height| are integers and
   # default to 250x250.
   FRAMEBUFFER_SIZE _width_ _height_
