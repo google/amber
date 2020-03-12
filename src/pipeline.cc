@@ -15,6 +15,7 @@
 #include "src/pipeline.h"
 
 #include <algorithm>
+#include <cstring>
 #include <limits>
 #include <set>
 
@@ -837,27 +838,27 @@ Result Pipeline::GenerateOpenCLPushConstants() {
     return {};
 
   // Determine size and contents of the push constant buffer.
-  std::vector<uint8_t> bytes;
+  std::vector<uint32_t> bytes;
   for (const auto& pc : shader_info.GetPushConstants()) {
-    if (pc.offset + pc.size > bytes.size()) {
-      bytes.resize(pc.offset + pc.size);
+    assert(pc.size % sizeof(uint32_t) == 0);
+    assert(pc.offset % sizeof(uint32_t) == 0);
+    uint32_t elements = (pc.offset + pc.size) / sizeof(uint32_t);
+    if (elements > bytes.size()) {
+      bytes.resize(elements);
     }
 
+    uint32_t base = pc.offset / sizeof(uint32_t);
     switch (pc.type) {
-      case Pipeline::ShaderInfo::PushConstant::kPushConstantDimensions:
+      case Pipeline::ShaderInfo::PushConstant::PushConstantType::kDimensions:
         // All compute kernel launches are 3D.
-        assert(pc.size == 4);
-        *reinterpret_cast<uint32_t*>(bytes.data() + pc.offset) = 3;
+        bytes[base] = 3;
         break;
-      case Pipeline::ShaderInfo::PushConstant::kPushConstantGlobalOffset: {
+      case Pipeline::ShaderInfo::PushConstant::PushConstantType::kGlobalOffset:
         // Global offsets are not currently supported.
-        assert(pc.size == 12);
-        uint32_t* ptr = reinterpret_cast<uint32_t*>(bytes.data() + pc.offset);
-        ptr[0] = 0;
-        ptr[1] = 0;
-        ptr[2] = 0;
+        bytes[base] = 0;
+        bytes[base + 1] = 0;
+        bytes[base + 2] = 0;
         break;
-      }
     }
   }
 
@@ -869,8 +870,9 @@ Result Pipeline::GenerateOpenCLPushConstants() {
   std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
   buf->SetName(kGeneratedPushConstantBuffer);
   buf->SetFormat(fmt.get());
-  buf->SetSizeInBytes(bytes.size());
-  buf->ValuePtr()->assign(bytes.begin(), bytes.end());
+  buf->SetSizeInBytes(static_cast<uint32_t>(bytes.size() * sizeof(uint32_t)));
+  std::memcpy(buf->ValuePtr()->data(), bytes.data(),
+              bytes.size() * sizeof(uint32_t));
 
   Result r = SetPushConstantBuffer(buf.get());
   if (!r.IsSuccess())

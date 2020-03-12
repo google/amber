@@ -114,10 +114,11 @@ class Pipeline {
 
     /// Push constant information for an OpenCL-C shader.
     struct PushConstant {
-      enum {
-        kPushConstantDimensions,
-        kPushConstantGlobalOffset,
-      } type;
+      enum class PushConstantType {
+        kDimensions = 0,
+        kGlobalOffset,
+      };
+      PushConstantType type;
       uint32_t offset = 0;
       uint32_t size = 0;
     };

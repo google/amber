@@ -831,13 +831,14 @@ TEST_F(PipelineTest, OpenCLGeneratePushConstants) {
   p.SetShaderEntryPoint(&cs, "my_main");
 
   Pipeline::ShaderInfo::PushConstant pc1;
-  pc1.type = Pipeline::ShaderInfo::PushConstant::kPushConstantDimensions;
+  pc1.type = Pipeline::ShaderInfo::PushConstant::PushConstantType::kDimensions;
   pc1.offset = 0;
   pc1.size = 4;
   p.GetShaders()[0].AddPushConstant(std::move(pc1));
 
   Pipeline::ShaderInfo::PushConstant pc2;
-  pc2.type = Pipeline::ShaderInfo::PushConstant::kPushConstantGlobalOffset;
+  pc2.type =
+      Pipeline::ShaderInfo::PushConstant::PushConstantType::kGlobalOffset;
   pc2.offset = 16;
   pc2.size = 12;
   p.GetShaders()[0].AddPushConstant(std::move(pc2));
@@ -848,7 +849,7 @@ TEST_F(PipelineTest, OpenCLGeneratePushConstants) {
   const auto& buf = p.GetPushConstantBuffer();
   EXPECT_EQ(28U, buf.buffer->GetSizeInBytes());
 
-  uint32_t* bytes = reinterpret_cast<uint32_t*>(buf.buffer->ValuePtr()->data());
+  const uint32_t* bytes = buf.buffer->GetValues<uint32_t>();
   EXPECT_EQ(3U, bytes[0]);
   EXPECT_EQ(0U, bytes[4]);
   EXPECT_EQ(0U, bytes[5]);
