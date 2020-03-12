@@ -45,6 +45,7 @@ const uint32_t kOpenCLFilterModeLinearBit = 0x20;
 
 const char* Pipeline::kGeneratedColorBuffer = "framebuffer";
 const char* Pipeline::kGeneratedDepthBuffer = "depth_buffer";
+const char* Pipeline::kGeneratedPushConstantBuffer = "push_constant_buffer";
 
 Pipeline::ShaderInfo::ShaderInfo(Shader* shader, ShaderType type)
     : shader_(shader), shader_type_(type), entry_point_("main") {}
@@ -821,6 +822,63 @@ Result Pipeline::GenerateOpenCLLiteralSamplers() {
     opencl_literal_samplers_.push_back(std::move(literal_sampler));
     info.sampler = opencl_literal_samplers_.back().get();
   }
+
+  return {};
+}
+
+Result Pipeline::GenerateOpenCLPushConstants() {
+  if (!IsCompute() || GetShaders().empty() ||
+      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC) {
+    return {};
+  }
+
+  const auto& shader_info = GetShaders()[0];
+  if (shader_info.GetPushConstants().empty())
+    return {};
+
+  // Determine size and contents of the push constant buffer.
+  std::vector<uint8_t> bytes;
+  for (const auto& pc : shader_info.GetPushConstants()) {
+    if (pc.offset + pc.size > bytes.size()) {
+      bytes.resize(pc.offset + pc.size);
+    }
+
+    switch (pc.type) {
+      case Pipeline::ShaderInfo::PushConstant::kPushConstantDimensions:
+        // All compute kernel launches are 3D.
+        assert(pc.size == 4);
+        *reinterpret_cast<uint32_t*>(bytes.data() + pc.offset) = 3;
+        break;
+      case Pipeline::ShaderInfo::PushConstant::kPushConstantGlobalOffset: {
+        // Global offsets are not currently supported.
+        assert(pc.size == 12);
+        uint32_t* ptr = reinterpret_cast<uint32_t*>(bytes.data() + pc.offset);
+        ptr[0] = 0;
+        ptr[1] = 0;
+        ptr[2] = 0;
+        break;
+      }
+    }
+  }
+
+  TypeParser parser;
+  auto type = parser.Parse("R8_UINT");
+  auto fmt = MakeUnique<Format>(type.get());
+
+  // Create buffer containing push constant data.
+  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
+  buf->SetName(kGeneratedPushConstantBuffer);
+  buf->SetFormat(fmt.get());
+  buf->SetSizeInBytes(bytes.size());
+  buf->ValuePtr()->assign(bytes.begin(), bytes.end());
+
+  Result r = SetPushConstantBuffer(buf.get());
+  if (!r.IsSuccess())
+    return r;
+
+  formats_.push_back(std::move(fmt));
+  types_.push_back(std::move(type));
+  opencl_push_constants_ = std::move(buf);
 
   return {};
 }

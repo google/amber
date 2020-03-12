@@ -112,6 +112,23 @@ class Pipeline {
       return descriptor_map_;
     }
 
+    /// Push constant information for an OpenCL-C shader.
+    struct PushConstant {
+      enum {
+        kPushConstantDimensions,
+        kPushConstantGlobalOffset,
+      } type;
+      uint32_t offset = 0;
+      uint32_t size = 0;
+    };
+
+    void AddPushConstant(PushConstant&& pc) {
+      push_constants_.emplace_back(std::move(pc));
+    }
+    const std::vector<PushConstant>& GetPushConstants() const {
+      return push_constants_;
+    }
+
    private:
     Shader* shader_ = nullptr;
     ShaderType shader_type_;
@@ -121,6 +138,7 @@ class Pipeline {
     std::map<uint32_t, uint32_t> specialization_;
     std::unordered_map<std::string, std::vector<DescriptorMapEntry>>
         descriptor_map_;
+    std::vector<PushConstant> push_constants_;
     std::vector<std::string> compile_options_;
   };
 
@@ -157,6 +175,7 @@ class Pipeline {
 
   static const char* kGeneratedColorBuffer;
   static const char* kGeneratedDepthBuffer;
+  static const char* kGeneratedPushConstantBuffer;
 
   explicit Pipeline(PipelineType type);
   ~Pipeline();
@@ -318,6 +337,9 @@ class Pipeline {
   /// descriptor map. This should be called after all other samplers are bound.
   Result GenerateOpenCLLiteralSamplers();
 
+  /// Generate the push constant buffers necessary for OpenCL kernels.
+  Result GenerateOpenCLPushConstants();
+
  private:
   void UpdateFramebufferSizes();
 
@@ -346,6 +368,7 @@ class Pipeline {
   /// Maps (descriptor set, binding) to the buffer for that binding pair.
   std::map<std::pair<uint32_t, uint32_t>, Buffer*> opencl_pod_buffer_map_;
   std::vector<std::unique_ptr<Sampler>> opencl_literal_samplers_;
+  std::unique_ptr<Buffer> opencl_push_constants_;
 };
 
 }  // namespace amber

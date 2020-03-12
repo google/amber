@@ -821,4 +821,38 @@ TEST_F(PipelineTest, OpenCLGenerateLiteralSamplers) {
   }
 }
 
+TEST_F(PipelineTest, OpenCLGeneratePushConstants) {
+  Pipeline p(PipelineType::kCompute);
+  p.SetName("my_pipeline");
+
+  Shader cs(kShaderTypeCompute);
+  cs.SetFormat(kShaderFormatOpenCLC);
+  p.AddShader(&cs, kShaderTypeCompute);
+  p.SetShaderEntryPoint(&cs, "my_main");
+
+  Pipeline::ShaderInfo::PushConstant pc1;
+  pc1.type = Pipeline::ShaderInfo::PushConstant::kPushConstantDimensions;
+  pc1.offset = 0;
+  pc1.size = 4;
+  p.GetShaders()[0].AddPushConstant(std::move(pc1));
+
+  Pipeline::ShaderInfo::PushConstant pc2;
+  pc2.type = Pipeline::ShaderInfo::PushConstant::kPushConstantGlobalOffset;
+  pc2.offset = 16;
+  pc2.size = 12;
+  p.GetShaders()[0].AddPushConstant(std::move(pc2));
+
+  auto r = p.GenerateOpenCLPushConstants();
+  ASSERT_TRUE(r.IsSuccess());
+
+  const auto& buf = p.GetPushConstantBuffer();
+  EXPECT_EQ(28U, buf.buffer->GetSizeInBytes());
+
+  uint32_t* bytes = reinterpret_cast<uint32_t*>(buf.buffer->ValuePtr()->data());
+  EXPECT_EQ(3U, bytes[0]);
+  EXPECT_EQ(0U, bytes[4]);
+  EXPECT_EQ(0U, bytes[5]);
+  EXPECT_EQ(0U, bytes[6]);
+}
+
 }  // namespace amber
