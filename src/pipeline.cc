@@ -757,10 +757,9 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
 
     // Convert the argument value into bytes. Currently, only scalar arguments
     // are supported.
-    const auto buffer_byte_size = buffer->GetFormat()->SizeInBytes();
     const auto arg_byte_size = arg_info.fmt->SizeInBytes();
     std::vector<Value> data_bytes;
-    for (auto i = 0; i < arg_byte_size; ++i) {
+    for (uint32_t i = 0; i < arg_byte_size; ++i) {
       Value v;
       if (arg_info.value.IsFloat()) {
         if (arg_byte_size == sizeof(double)) {
