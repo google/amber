@@ -755,7 +755,35 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
       return Result(message);
     }
 
-    Result r = buffer->SetDataWithOffset({arg_info.value}, offset);
+    // Convert the argument value into bytes. Currently, only scalar arguments
+    // are supported.
+    const auto buffer_byte_size = buffer->GetFormat()->SizeInBytes();
+    const auto arg_byte_size = arg_info.fmt->SizeInBytes();
+    std::vector<Value> data_bytes;
+    for (auto i = 0; i < arg_byte_size; ++i) {
+      Value v;
+      if (arg_info.value.IsFloat()) {
+        if (arg_byte_size == sizeof(double)) {
+          union {
+            uint64_t u;
+            double d;
+          } u;
+          u.d = arg_info.value.AsDouble();
+          v.SetIntValue((u.u >> (i * 8)) & 0xff);
+        } else {
+          union {
+            uint32_t u;
+            float f;
+          } u;
+          u.f = arg_info.value.AsFloat();
+          v.SetIntValue((u.u >> (i * 8)) & 0xff);
+        }
+      } else {
+        v.SetIntValue((arg_info.value.AsUint64() >> (i * 8)) & 0xff);
+      }
+      data_bytes.push_back(v);
+    }
+    Result r = buffer->SetDataWithOffset(data_bytes, offset);
     if (!r.IsSuccess())
       return r;
   }

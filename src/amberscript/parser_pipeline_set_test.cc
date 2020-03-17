@@ -241,5 +241,22 @@ END
   EXPECT_EQ("7: SET can only be used with OPENCL-C shaders", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, OpenCLSetNonScalarDataType) {
+  std::string in = R"(
+SHADER compute my_shader OPENCL-C
+#shader
+END
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+  SET KERNEL ARG_NAME arg_a AS vec4<uint32> 0 0 0 0
+END
+)";
+
+  Parser parser;
+  auto r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("7: data type must be a scalar type", r.Error());
+}
+
 }  // namespace amberscript
 }  // namespace amber
