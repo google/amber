@@ -71,6 +71,9 @@ Result Executor::Execute(Engine* engine,
       r = pipeline->GenerateOpenCLLiteralSamplers();
       if (!r.IsSuccess())
         return r;
+      r = pipeline->GenerateOpenCLPushConstants();
+      if (!r.IsSuccess())
+        return r;
     }
 
     for (auto& pipeline : script->GetPipelines()) {
