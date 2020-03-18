@@ -1024,6 +1024,9 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   if (!type)
     return Result("invalid data type '" + token->AsString() + "' provided");
 
+  if (type->IsVec() || type->IsMatrix() || type->IsArray() || type->IsStruct())
+    return Result("data type must be a scalar type");
+
   token = tokenizer_->NextToken();
   if (!token->IsInteger() && !token->IsDouble())
     return Result("expected data value");
