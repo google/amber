@@ -423,17 +423,17 @@ buffers for the pipeline populated with the specified data.
 ```
 
 #### Topologies
- * `point_list`
- * `line_list`
- * `line_list_with_adjacency`
- * `line_strip`
- * `line_strip_with_adjacency`
- * `triangle_list`
- * `triangle_list_with_adjacency`
- * `triangle_strip`
- * `triangle_strip_with_adjacency`
- * `triangle_fan`
- * `patch_list`
+ * `POINT_LIST`
+ * `LINE_LIST`
+ * `LINE_LIST_WITH_ADJACENCY`
+ * `LINE_STRIP`
+ * `LINE_STRIP_WITH_ADJACENCY`
+ * `TRIANGLE_LIST`
+ * `TRIANGLE_LIST_WITH_ADJACENCY`
+ * `TRIANGLE_STRIP`
+ * `TRIANGLE_STRIP_WITH_ADJACENCY`
+ * `TRIANGLE_fan`
+ * `PATCH_LIST`
 
 ### Run a pipeline.
 
@@ -795,7 +795,7 @@ END  # pipeline
 CLEAR_COLOR kGraphicsPipeline 255 0 0 255
 CLEAR kGraphicsPipeline
 
-RUN kGraphicsPipeline DRAW_ARRAY AS triangle_list START_IDX 0 COUNT 24
+RUN kGraphicsPipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 24
 ```
 
 ### OpenCL-C Shaders
