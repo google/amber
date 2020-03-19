@@ -795,7 +795,7 @@ END  # pipeline
 CLEAR_COLOR kGraphicsPipeline 255 0 0 255
 CLEAR kGraphicsPipeline
 
-RUN kGraphicsPipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 8
+RUN kGraphicsPipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 24
 ```
 
 ### OpenCL-C Shaders
