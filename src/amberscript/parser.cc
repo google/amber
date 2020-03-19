@@ -1894,16 +1894,21 @@ Result Parser::ParseRun() {
         count = token->AsUint32();
       }
     }
+
+    uint32_t vertex_count =
+        indexed ? pipeline->GetIndexBuffer()->ElementCount()
+                : pipeline->GetVertexBuffers()[0].buffer->ElementCount();
+
     // If we get here then we never set count, as if count was set it must
     // be > 0.
-    if (count == 0) {
-      count =
-          pipeline->GetVertexBuffers()[0].buffer->ElementCount() - start_idx;
-    }
+    if (count == 0)
+      count = vertex_count - start_idx;
 
-    if (start_idx + count >
-        pipeline->GetVertexBuffers()[0].buffer->ElementCount()) {
-      return Result("START_IDX plus COUNT exceeds vertex buffer data size");
+    if (start_idx + count > vertex_count) {
+      if (indexed)
+        return Result("START_IDX plus COUNT exceeds index buffer data size");
+      else
+        return Result("START_IDX plus COUNT exceeds vertex buffer data size");
     }
 
     auto cmd = MakeUnique<DrawArraysCommand>(pipeline, PipelineData{});
