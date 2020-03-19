@@ -1404,6 +1404,64 @@ RUN my_pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 1 COUNT 9)";
             r.Error());
 }
 
+TEST_F(AmberScriptParserTest, RunDrawArraysIndexedStartIdxTooLarge) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER vtex_buf DATA_TYPE vec3<float> DATA
+1 2 3
+END
+BUFFER indices DATA_TYPE int32 DATA
+0 1 2 1 2 0
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+  VERTEX_DATA vtex_buf LOCATION 0
+  INDEX_DATA indices
+END
+
+RUN my_pipeline DRAW_ARRAY AS TRIANGLE_LIST INDEXED START_IDX 6 COUNT 1)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("20: START_IDX plus COUNT exceeds index buffer data size",
+            r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RunDrawArraysIndexedCountTooLarge) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER vtex_buf DATA_TYPE vec3<float> DATA
+1 2 3
+END
+BUFFER indices DATA_TYPE int32 DATA
+0 1 2 1 2 0
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+  VERTEX_DATA vtex_buf LOCATION 0
+  INDEX_DATA indices
+END
+
+RUN my_pipeline DRAW_ARRAY AS TRIANGLE_LIST INDEXED START_IDX 1 COUNT 6)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("20: START_IDX plus COUNT exceeds index buffer data size",
+            r.Error());
+}
+
 TEST_F(AmberScriptParserTest, RunDrawArraysInvalidCountValueFormat) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
