@@ -28,6 +28,7 @@
 #include "samples/config_helper.h"
 #include "samples/ppm.h"
 #include "samples/timestamp.h"
+#include "src/buffer.h"
 #include "src/build-versions.h"
 #include "src/make_unique.h"
 
@@ -68,6 +69,21 @@ struct Options {
   amber::EngineType engine = amber::kEngineTypeVulkan;
   std::string spv_env;
 };
+
+amber::Result loadBufferData(std::string file_name, amber::BufferInfo& buffer) {
+#if AMBER_ENABLE_LODEPNG
+  // Try to load as png first.
+  amber::Result r =
+      png::LoadPNG(file_name, buffer.width, buffer.height, buffer.values);
+
+  if (r.IsSuccess())
+    return r;
+#endif  // AMBER_ENABLE_LODEPNG
+
+  // TODO(asuonpaa): Try to load a binary format.
+
+  return amber::Result("Failed to load buffer data " + file_name);
+}
 
 const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
 
@@ -450,6 +466,7 @@ int main(int argc, const char** argv) {
     delegate.SetLogExecuteCalls(true);
 
   amber::Options amber_options;
+  amber_options.loadBufferDataFunc = loadBufferData;
   amber_options.engine = options.engine;
   amber_options.spv_env = options.spv_env;
   amber_options.execution_type = options.pipeline_create_only

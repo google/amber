@@ -196,6 +196,11 @@ class Buffer {
   /// Returns the number of mip levels.
   uint32_t GetMipLevels() { return mip_levels_; }
 
+  /// Sets the file name for loading data into the buffer.
+  void SetDataFile(std::string data_file) { data_file_ = data_file; }
+
+  std::string GetDataFile() { return data_file_; }
+
   /// Returns a pointer to the internal storage of the buffer.
   std::vector<uint8_t>* ValuePtr() { return &bytes_; }
   /// Returns a pointer to the internal storage of the buffer.
@@ -252,6 +257,7 @@ class Buffer {
   Format* format_ = nullptr;
   Sampler* sampler_ = nullptr;
   ImageDimension image_dim_ = ImageDimension::kUnknown;
+  std::string data_file_;
 };
 
 }  // namespace amber

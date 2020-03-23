@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>
@@ -116,6 +117,9 @@ struct Options {
   bool disable_spirv_validation;
   /// Delegate implementation
   Delegate* delegate;
+
+  std::function<amber::Result(std::string, amber::BufferInfo&)>
+      loadBufferDataFunc;
 };
 
 /// Main interface to the Amber environment.
