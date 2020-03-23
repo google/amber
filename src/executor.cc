@@ -90,17 +90,17 @@ Result Executor::Execute(Engine* engine,
 
   // Load data to buffers
   for (const auto& buf : script->GetBuffers()) {
-    if (buf->GetDataFile() != "") {
-      BufferInfo info;
-      Result r = options->loadBufferDataFunc(buf->GetDataFile(), &info);
+    if (buf->GetDataFile().empty())
+      continue;
 
-      if (!r.IsSuccess())
-        return r;
+    BufferInfo info;
+    Result r = options->delegate->LoadBufferData(buf->GetDataFile(), &info);
+    if (!r.IsSuccess())
+      return r;
 
-      buf->SetData(info.values);
-      buf->SetWidth(info.width);
-      buf->SetHeight(info.height);
-    }
+    buf->SetData(info.values);
+    buf->SetWidth(info.width);
+    buf->SetHeight(info.height);
   }
 
   // Process Commands

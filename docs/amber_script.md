@@ -158,7 +158,9 @@ BUFFER {name} FORMAT {format_string} \
     [ MIP_LEVELS _mip_levels_ (default 1) ]
 
 # Load buffer data from a PNG image with file name specified by `FILE`.
-# Format specified by `FORMAT` must match the image format.
+# The file path is relative to the current working directory where the
+# amber is executed from. Format specified by `FORMAT` must match the
+# image format.
 BUFFER {name} FORMAT {format_string} FILE {file_name.png}
 ```
 

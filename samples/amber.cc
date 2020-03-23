@@ -70,21 +70,6 @@ struct Options {
   std::string spv_env;
 };
 
-amber::Result loadBufferData(std::string file_name, amber::BufferInfo* buffer) {
-#if AMBER_ENABLE_LODEPNG
-  // Try to load as png first.
-  amber::Result r =
-      png::LoadPNG(file_name, &buffer->width, &buffer->height, &buffer->values);
-
-  if (r.IsSuccess())
-    return r;
-#endif  // AMBER_ENABLE_LODEPNG
-
-  // TODO(asuonpaa): Try to load a binary format.
-
-  return amber::Result("Failed to load buffer data " + file_name);
-}
-
 const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
 
  options:
@@ -340,6 +325,22 @@ class SampleDelegate : public amber::Delegate {
     return timestamp::SampleGetTimestampNs();
   }
 
+  amber::Result LoadBufferData(const std::string file_name,
+                               amber::BufferInfo* buffer) const override {
+#if AMBER_ENABLE_LODEPNG
+    // Try to load as png first.
+    amber::Result r = png::LoadPNG(file_name, &buffer->width, &buffer->height,
+                                   &buffer->values);
+
+    if (r.IsSuccess())
+      return r;
+#endif  // AMBER_ENABLE_LODEPNG
+
+    // TODO(asuonpaa): Try to load a binary format.
+
+    return amber::Result("Failed to load buffer data " + file_name);
+  }
+
  private:
   bool log_graphics_calls_ = false;
   bool log_graphics_calls_time_ = false;
@@ -466,7 +467,6 @@ int main(int argc, const char** argv) {
     delegate.SetLogExecuteCalls(true);
 
   amber::Options amber_options;
-  amber_options.loadBufferDataFunc = loadBufferData;
   amber_options.engine = options.engine;
   amber_options.spv_env = options.spv_env;
   amber_options.execution_type = options.pipeline_create_only

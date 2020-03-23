@@ -17,7 +17,6 @@
 
 #include <stdint.h>
 
-#include <functional>
 #include <map>
 #include <string>
 #include <vector>
@@ -86,6 +85,9 @@ class Delegate {
   virtual uint64_t GetTimestampNs() const = 0;
   /// Tells whether to log each test as it's executed
   virtual bool LogExecuteCalls() const = 0;
+  /// Loads buffer data from a file
+  virtual amber::Result LoadBufferData(const std::string file_name,
+                                       amber::BufferInfo* buffer) const = 0;
 };
 
 /// Stores configuration options for Amber.
@@ -117,9 +119,6 @@ struct Options {
   bool disable_spirv_validation;
   /// Delegate implementation
   Delegate* delegate;
-
-  std::function<amber::Result(std::string, amber::BufferInfo*)>
-      loadBufferDataFunc;
 };
 
 /// Main interface to the Amber environment.
