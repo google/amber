@@ -43,14 +43,20 @@ SUPPRESSIONS = {
     "multiple_ubo_update_with_graphics_pipeline.vkscript",
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
+    # Texture file not found from this path
+    "draw_png_texture.amber",
   ],
   "Linux": [
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
+    # Texture file not found from this path
+    "draw_png_texture.amber",
   ],
   "Win": [
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
+    # Texture file not found from this path
+    "draw_png_texture.amber",
    ]
 }
 
@@ -323,7 +329,7 @@ class TestRunner:
       print("--test-prog-path must point to an executable")
       return 1
 
-    input_file_re = re.compile('^.+[.][amber|vkscript]')
+    input_file_re = re.compile('^.+[\.]amber|vkscript')
     self.test_cases = []
 
     if self.args:
