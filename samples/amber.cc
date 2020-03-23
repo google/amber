@@ -70,11 +70,11 @@ struct Options {
   std::string spv_env;
 };
 
-amber::Result loadBufferData(std::string file_name, amber::BufferInfo& buffer) {
+amber::Result loadBufferData(std::string file_name, amber::BufferInfo* buffer) {
 #if AMBER_ENABLE_LODEPNG
   // Try to load as png first.
   amber::Result r =
-      png::LoadPNG(file_name, buffer.width, buffer.height, buffer.values);
+      png::LoadPNG(file_name, &buffer->width, &buffer->height, &buffer->values);
 
   if (r.IsSuccess())
     return r;

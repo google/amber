@@ -118,7 +118,7 @@ struct Options {
   /// Delegate implementation
   Delegate* delegate;
 
-  std::function<amber::Result(std::string, amber::BufferInfo&)>
+  std::function<amber::Result(std::string, amber::BufferInfo*)>
       loadBufferDataFunc;
 };
 

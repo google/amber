@@ -92,7 +92,7 @@ Result Executor::Execute(Engine* engine,
   for (const auto& buf : script->GetBuffers()) {
     if (buf->GetDataFile() != "") {
       BufferInfo info;
-      Result r = options->loadBufferDataFunc(buf->GetDataFile(), info);
+      Result r = options->loadBufferDataFunc(buf->GetDataFile(), &info);
 
       if (!r.IsSuccess())
         return r;
