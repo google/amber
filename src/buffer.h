@@ -199,6 +199,7 @@ class Buffer {
   /// Sets the file name for loading data into the buffer.
   void SetDataFile(std::string data_file) { data_file_ = data_file; }
 
+  /// Returns the file name used to load buffer data from.
   std::string GetDataFile() { return data_file_; }
 
   /// Returns a pointer to the internal storage of the buffer.
