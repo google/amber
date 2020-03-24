@@ -43,20 +43,14 @@ SUPPRESSIONS = {
     "multiple_ubo_update_with_graphics_pipeline.vkscript",
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
-    # Texture file not found from this path
-    "draw_png_texture.amber",
   ],
   "Linux": [
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
-    # Texture file not found from this path
-    "draw_png_texture.amber",
   ],
   "Win": [
     # DXC not currently building on bot
     "draw_triangle_list_hlsl.amber",
-    # Texture file not found from this path
-    "draw_png_texture.amber",
    ]
 }
 

@@ -28,7 +28,6 @@
 #include "samples/config_helper.h"
 #include "samples/ppm.h"
 #include "samples/timestamp.h"
-#include "src/buffer.h"
 #include "src/build-versions.h"
 #include "src/make_unique.h"
 
@@ -325,12 +324,14 @@ class SampleDelegate : public amber::Delegate {
     return timestamp::SampleGetTimestampNs();
   }
 
+  void SetScriptPath(std::string path) { path_ = path; }
+
   amber::Result LoadBufferData(const std::string file_name,
                                amber::BufferInfo* buffer) const override {
 #if AMBER_ENABLE_LODEPNG
     // Try to load as png first.
-    amber::Result r = png::LoadPNG(file_name, &buffer->width, &buffer->height,
-                                   &buffer->values);
+    amber::Result r = png::LoadPNG(path_ + file_name, &buffer->width,
+                                   &buffer->height, &buffer->values);
 
     if (r.IsSuccess())
       return r;
@@ -345,6 +346,7 @@ class SampleDelegate : public amber::Delegate {
   bool log_graphics_calls_ = false;
   bool log_graphics_calls_time_ = false;
   bool log_execute_calls_ = false;
+  std::string path_ = "";
 };
 
 std::string disassemble(const std::string& env,
@@ -547,6 +549,9 @@ int main(int argc, const char** argv) {
   for (const auto& recipe_data_elem : recipe_data) {
     const auto* recipe = recipe_data_elem.recipe.get();
     const auto& file = recipe_data_elem.file;
+
+    // Parse file path and set it for delegate to use when loading buffer data.
+    delegate.SetScriptPath(file.substr(0, file.find_last_of("/\\") + 1));
 
     amber::Amber am;
     result = am.Execute(recipe, &amber_options);
