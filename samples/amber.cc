@@ -324,10 +324,29 @@ class SampleDelegate : public amber::Delegate {
     return timestamp::SampleGetTimestampNs();
   }
 
+  void SetScriptPath(std::string path) { path_ = path; }
+
+  amber::Result LoadBufferData(const std::string file_name,
+                               amber::BufferInfo* buffer) const override {
+#if AMBER_ENABLE_LODEPNG
+    // Try to load as png first.
+    amber::Result r = png::LoadPNG(path_ + file_name, &buffer->width,
+                                   &buffer->height, &buffer->values);
+
+    if (r.IsSuccess())
+      return r;
+#endif  // AMBER_ENABLE_LODEPNG
+
+    // TODO(asuonpaa): Try to load a binary format.
+
+    return amber::Result("Failed to load buffer data " + file_name);
+  }
+
  private:
   bool log_graphics_calls_ = false;
   bool log_graphics_calls_time_ = false;
   bool log_execute_calls_ = false;
+  std::string path_ = "";
 };
 
 std::string disassemble(const std::string& env,
@@ -530,6 +549,9 @@ int main(int argc, const char** argv) {
   for (const auto& recipe_data_elem : recipe_data) {
     const auto* recipe = recipe_data_elem.recipe.get();
     const auto& file = recipe_data_elem.file;
+
+    // Parse file path and set it for delegate to use when loading buffer data.
+    delegate.SetScriptPath(file.substr(0, file.find_last_of("/\\") + 1));
 
     amber::Amber am;
     result = am.Execute(recipe, &amber_options);

@@ -1224,14 +1224,27 @@ Result Parser::ParseBuffer() {
     script_->RegisterFormat(std::move(fmt));
 
     token = tokenizer_->PeekNextToken();
-    if (token->IsIdentifier() && token->AsString() == "MIP_LEVELS") {
-      tokenizer_->NextToken();
-      token = tokenizer_->NextToken();
+    while (token->IsIdentifier()) {
+      if (token->AsString() == "MIP_LEVELS") {
+        tokenizer_->NextToken();
+        token = tokenizer_->NextToken();
 
-      if (!token->IsInteger())
-        return Result("invalid value for MIP_LEVELS");
+        if (!token->IsInteger())
+          return Result("invalid value for MIP_LEVELS");
 
-      buffer->SetMipLevels(token->AsUint32());
+        buffer->SetMipLevels(token->AsUint32());
+      } else if (token->AsString() == "FILE") {
+        tokenizer_->NextToken();
+        token = tokenizer_->NextToken();
+
+        if (!token->IsIdentifier())
+          return Result("invalid value for FILE");
+
+        buffer->SetDataFile(token->AsString());
+      } else {
+        break;
+      }
+      token = tokenizer_->PeekNextToken();
     }
   } else {
     return Result("unknown BUFFER command provided: " + cmd);

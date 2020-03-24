@@ -85,6 +85,9 @@ class Delegate {
   virtual uint64_t GetTimestampNs() const = 0;
   /// Tells whether to log each test as it's executed
   virtual bool LogExecuteCalls() const = 0;
+  /// Loads buffer data from a file
+  virtual amber::Result LoadBufferData(const std::string file_name,
+                                       amber::BufferInfo* buffer) const = 0;
 };
 
 /// Stores configuration options for Amber.

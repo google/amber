@@ -88,6 +88,21 @@ Result Executor::Execute(Engine* engine,
 
   Engine::Debugger* debugger = nullptr;
 
+  // Load data to buffers
+  for (const auto& buf : script->GetBuffers()) {
+    if (buf->GetDataFile().empty())
+      continue;
+
+    BufferInfo info;
+    Result r = options->delegate->LoadBufferData(buf->GetDataFile(), &info);
+    if (!r.IsSuccess())
+      return r;
+
+    buf->SetData(info.values);
+    buf->SetWidth(info.width);
+    buf->SetHeight(info.height);
+  }
+
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
     if (options->delegate && options->delegate->LogExecuteCalls()) {

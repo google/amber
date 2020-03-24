@@ -31,6 +31,14 @@ amber::Result ConvertToPNG(uint32_t width,
                            const std::vector<amber::Value>& values,
                            std::vector<uint8_t>* buffer);
 
+/// Loads a PNG image from |file_name|. Image dimensions of the loaded file are
+/// stored into |width| and |height|, and the image data is stored in a one
+/// byte per data element format into |values|.
+amber::Result LoadPNG(const std::string file_name,
+                      uint32_t* width,
+                      uint32_t* height,
+                      std::vector<amber::Value>* values);
+
 }  // namespace png
 
 #endif  // SAMPLES_PNG_H_

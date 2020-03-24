@@ -81,4 +81,23 @@ amber::Result ConvertToPNG(uint32_t width,
   return {};
 }
 
+amber::Result LoadPNG(const std::string file_name,
+                      uint32_t* width,
+                      uint32_t* height,
+                      std::vector<amber::Value>* values) {
+  std::vector<uint8_t> decoded_buffer;
+  if (lodepng::decode(decoded_buffer, *width, *height, file_name,
+                      LodePNGColorType::LCT_RGBA, 8) != 0) {
+    return amber::Result("lodepng::decode() returned non-zero");
+  }
+
+  for (auto d : decoded_buffer) {
+    amber::Value v;
+    v.SetIntValue(d);
+    values->push_back(v);
+  }
+
+  return {};
+}
+
 }  // namespace png

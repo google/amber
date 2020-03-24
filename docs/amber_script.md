@@ -156,6 +156,11 @@ BUFFER {name} DATA_TYPE {type} {STD140 | STD430} WIDTH {w} HEIGHT {h} \
 # The buffer will be sized based on the `RENDER_SIZE` of the `PIPELINE`.
 BUFFER {name} FORMAT {format_string} \
     [ MIP_LEVELS _mip_levels_ (default 1) ]
+
+# Load buffer data from a PNG image with file name specified by `FILE`.
+# The file path is relative to the script file being run. Format specified
+# by `FORMAT` must match the image format.
+BUFFER {name} FORMAT {format_string} FILE {file_name.png}
 ```
 
 #### Images

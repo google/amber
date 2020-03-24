@@ -1067,5 +1067,30 @@ TEST_F(AmberScriptParserTest, BufferMissingMipLevels) {
   EXPECT_EQ("1: invalid value for MIP_LEVELS", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, BufferMissingDataFile) {
+  std::string in = "BUFFER my_buffer FORMAT R8G8B8A8_UNORM FILE";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+
+  EXPECT_EQ("1: invalid value for FILE", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BufferDataFile) {
+  std::string in = "BUFFER my_buffer FORMAT R8G8B8A8_UNORM FILE foo.png";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("foo.png", buffers[0]->GetDataFile());
+}
+
 }  // namespace amberscript
 }  // namespace amber
