@@ -69,8 +69,6 @@ Result Compile(const std::string& src,
                const std::string& profile,
                const std::string& spv_env,
                std::vector<uint32_t>* generated_binary) {
-  DxcInitThreadMalloc();
-
   if (hlsl::options::initHlslOptTable()) {
     DxcCleanupThreadMalloc();
     return Result("DXC compile failure: initHlslOptTable");

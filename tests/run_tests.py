@@ -23,6 +23,8 @@ import subprocess
 import sys
 import tempfile
 
+DXC_TEST_CASE = "draw_triangle_list_hlsl.amber"
+
 SUPPRESSIONS = {
   "Darwin": [
     # No geometry shader on MoltenVK
@@ -42,15 +44,15 @@ SUPPRESSIONS = {
     "multiple_ssbo_update_with_graphics_pipeline.vkscript",
     "multiple_ubo_update_with_graphics_pipeline.vkscript",
     # DXC not currently building on bot
-    "draw_triangle_list_hlsl.amber",
+    DXC_TEST_CASE,
   ],
   "Linux": [
     # DXC not currently building on bot
-    "draw_triangle_list_hlsl.amber",
+    DXC_TEST_CASE,
   ],
   "Win": [
     # DXC not currently building on bot
-    "draw_triangle_list_hlsl.amber",
+    DXC_TEST_CASE,
    ]
 }
 
@@ -187,6 +189,9 @@ class TestCase:
     system = platform.system()
 
     base = os.path.basename(self.input_path)
+    if self.use_dxc and base == DXC_TEST_CASE:
+      return True
+
     is_dawn_suppressed = base in SUPPRESSIONS_DAWN
     if self.use_dawn and is_dawn_suppressed:
       return True
@@ -305,6 +310,9 @@ class TestRunner:
     parser.add_option('--use-opencl',
                       action="store_true", default=False,
                       help='Enable OpenCL tests')
+    parser.add_option('--use-dxc',
+                      action="store_true", default=False,
+                      help='Enable DXC tests')
     parser.add_option('--use-swiftshader',
                       action="store_true", default=False,
                       help='Tells test runner swiftshader is the device')

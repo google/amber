@@ -104,6 +104,9 @@ if [[ "$EXTRA_CONFIG" =~ "ENABLE_SWIFTSHADER=TRUE" ]]; then
   if [[ $EXTRA_CONFIG =~ "USE_CLSPV=ON" ]]; then
     OPTS="--use-opencl"
   fi
+  if [[ "$EXTRA_CONFIG" =~ "USE_DXC=TRUE" ]]; then
+    OPTS+=" --use-dxc"
+  fi
 
   echo $(date): Starting integration tests..
   export LD_LIBRARY_PATH=build/third_party/vulkan-loader/loader

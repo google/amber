@@ -77,9 +77,9 @@ if (${AMBER_ENABLE_DXC})
   target_link_libraries(libamber
     dxcompiler
     LLVMDxcSupport
-    LLVMOption
     LLVMHLSL
-    LLVMScalarOpts
+    LLVMOption
+    LLVMSupport
   )
 endif()
 
