@@ -27,12 +27,28 @@
 
 // clang-format off
 // The order here matters, so don't reformat.
-#include "dxc/Support/WinAdapter.h"
-#include "dxc/Support/WinIncludes.h"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#pragma clang diagnostic ignored "-Wextra-semi"
+#pragma clang diagnostic ignored "-Wdeprecated-dynamic-exception-spec"
+#pragma clang diagnostic ignored "-Wold-style-cast"
+#pragma clang diagnostic ignored "-Wshadow-field-in-constructor"
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wsign-conversion"
+#pragma clang diagnostic ignored "-Wshadow"
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#pragma clang diagnostic ignored "-Wundef"
+#ifndef __STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS
+#endif // __STDC_LIMIT_MACROS
+#ifndef __STDC_CONSTANT_MACROS
+#define __STDC_CONSTANT_MACROS
+#endif // __STDC_CONSTANT_MACROS
 #include "dxc/Support/Global.h"
 #include "dxc/Support/HLSLOptions.h"
-#include "dxc/Support/dxcapi.use.h"
 #include "dxc/dxcapi.h"
+#pragma clang diagnostic pop
 // clang-format on
 
 #if AMBER_PLATFORM_WINDOWS
@@ -120,18 +136,19 @@ Result Compile(const std::string& src,
   if (target_env)
     dxc_flags.push_back(target_env);
 
-  if (compiler->Compile(source,               /* source text */
-                        src_filename.c_str(), /* original file source */
-                        std::wstring(entry.begin(), entry.end())
-                            .c_str(), /* entry point name */
-                        std::wstring(profile.begin(), profile.end())
-                            .c_str(),     /* shader profile to compile */
-                        dxc_flags.data(), /* arguments */
-                        dxc_flags.size(), /* argument count */
-                        nullptr,          /* defines */
-                        0,                /* define count */
-                        include_handler,  /* handler for #include */
-                        &result /* output status */) < 0) {
+  if (compiler->Compile(
+          source,               /* source text */
+          src_filename.c_str(), /* original file source */
+          std::wstring(entry.begin(), entry.end())
+              .c_str(), /* entry point name */
+          std::wstring(profile.begin(), profile.end())
+              .c_str(),     /* shader profile to compile */
+          dxc_flags.data(), /* arguments */
+          static_cast<uint32_t>(dxc_flags.size()), /* argument count */
+          nullptr,                                 /* defines */
+          0,                                       /* define count */
+          include_handler,                         /* handler for #include */
+          &result /* output status */) < 0) {
     DxcCleanupThreadMalloc();
     return Result("DXC compile failure: Compile");
   }
@@ -158,7 +175,7 @@ Result Compile(const std::string& src,
       error_buffer->GetBufferSize());
 
   bool success = true;
-  if (SUCCEEDED(result_status)) {
+  if (static_cast<HRESULT>(result_status) >= 0) {
     IDxcBlob* compiled_blob;
     if (result->GetResult(&compiled_blob) < 0) {
       DxcCleanupThreadMalloc();

@@ -81,6 +81,14 @@ if (${AMBER_ENABLE_DXC})
     LLVMOption
     LLVMSupport
   )
+
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(libamber PRIVATE
+      -fms-extensions
+      -Wno-language-extension-token
+      -fexceptions
+    )
+  endif()
 endif()
 
 if (${AMBER_ENABLE_CLSPV})
