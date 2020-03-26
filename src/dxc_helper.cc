@@ -41,10 +41,10 @@
 #pragma clang diagnostic ignored "-Wundef"
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
-#endif // __STDC_LIMIT_MACROS
+#endif  // __STDC_LIMIT_MACROS
 #ifndef __STDC_CONSTANT_MACROS
 #define __STDC_CONSTANT_MACROS
-#endif // __STDC_CONSTANT_MACROS
+#endif  // __STDC_CONSTANT_MACROS
 #include "dxc/Support/Global.h"
 #include "dxc/Support/HLSLOptions.h"
 #include "dxc/dxcapi.h"
