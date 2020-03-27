@@ -41,17 +41,11 @@ SUPPRESSIONS = {
     # https://github.com/KhronosGroup/MoltenVK/issues/527
     "multiple_ssbo_update_with_graphics_pipeline.vkscript",
     "multiple_ubo_update_with_graphics_pipeline.vkscript",
-    # DXC not currently building on bot
-    "draw_triangle_list_hlsl.amber",
   ],
   "Linux": [
-    # DXC not currently building on bot
-    "draw_triangle_list_hlsl.amber",
   ],
   "Win": [
-    # DXC not currently building on bot
-    "draw_triangle_list_hlsl.amber",
-   ]
+  ]
 }
 
 SUPPRESSIONS_DEBUGGER = [
@@ -102,6 +96,10 @@ OPENCL_CASES = [
   "opencl_set_arg.amber",
   "opencl_write_image.amber",
  ]
+
+DXC_CASES = [
+  "draw_triangle_list_hlsl.amber",
+]
 
 SUPPRESSIONS_DAWN = [
   # Dawn does not support push constants
@@ -170,11 +168,13 @@ SUPPRESSIONS_DAWN = [
 ]
 
 class TestCase:
-  def __init__(self, input_path, parse_only, use_dawn, use_opencl, use_swiftshader):
+  def __init__(self, input_path, parse_only, use_dawn, use_opencl, use_dxc,
+               use_swiftshader):
     self.input_path = input_path
     self.parse_only = parse_only
     self.use_dawn = use_dawn
     self.use_opencl = use_opencl
+    self.use_dxc = use_dxc
     self.use_swiftshader = use_swiftshader
 
     self.results = {}
@@ -197,6 +197,10 @@ class TestCase:
 
     is_opencl_test = base in OPENCL_CASES
     if not self.use_opencl and is_opencl_test:
+      return True
+
+    is_dxc_test = base in DXC_CASES
+    if not self.use_dxc and is_dxc_test:
       return True
 
     if base in SUPPRESSIONS_DEBUGGER:
@@ -305,6 +309,9 @@ class TestRunner:
     parser.add_option('--use-opencl',
                       action="store_true", default=False,
                       help='Enable OpenCL tests')
+    parser.add_option('--use-dxc',
+                      action="store_true", default=False,
+                      help='Enable DXC tests')
     parser.add_option('--use-swiftshader',
                       action="store_true", default=False,
                       help='Tells test runner swiftshader is the device')
@@ -335,7 +342,7 @@ class TestRunner:
 
         self.test_cases.append(TestCase(input_path, self.options.parse_only,
             self.options.use_dawn, self.options.use_opencl,
-            self.options.use_swiftshader))
+            self.options.use_dxc, self.options.use_swiftshader))
 
     else:
       for file_dir, _, filename_list in os.walk(self.options.test_dir):
@@ -346,7 +353,7 @@ class TestRunner:
               self.test_cases.append(
                   TestCase(input_path, self.options.parse_only,
                       self.options.use_dawn, self.options.use_opencl,
-                      self.options.use_swiftshader))
+                      self.options.use_dxc, self.options.use_swiftshader))
 
     self.failures = []
     self.suppressed = []
