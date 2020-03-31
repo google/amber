@@ -39,6 +39,7 @@
 #pragma clang diagnostic ignored "-Wweak-vtables"
 #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #pragma clang diagnostic ignored "-Wundef"
+#pragma clang diagnostic ignored "-Wunused-function"
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
 #endif  // __STDC_LIMIT_MACROS
