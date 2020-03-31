@@ -8,6 +8,7 @@ vars = {
   'microsoft_git': 'https://github.com/Microsoft',
   'nlohmann_git': 'https://github.com/nlohmann',
   'swiftshader_git': 'https://swiftshader.googlesource.com',
+  'dj2_git': 'https://github.com/dj2',
 
   'clspv_llvm_revision': 'fb47ffc618eaf0e716eafa7e719fc67bf41cef3b',
   'clspv_revision': '04f3a95d01078d644f6ea9710061e3e0aac854d1',
@@ -24,7 +25,7 @@ vars = {
   'swiftshader_revision': '5cf1e9a31c90ccd9ec40d0c5ef1357f6e0ec1cfd',
   'vulkan_headers_revision': '0e78ffd1dcfc3e9f14a966b9660dbc59bd967c5c',
   'vulkan_loader_revision': 'ba07fa0be82cf1e3e7e8c2e0e01f5109a5847d3a',
-  'vulkan_validationlayers_revision': '2f3087802bcd79bd71c35c127713f594f0f6e1f2',
+  'vulkan_validationlayers_revision': 'd93ce1479160259b63fb7ab4f4b9b593c20d778d',
 }
 
 deps = {
@@ -70,7 +71,7 @@ deps = {
   'third_party/vulkan-headers': Var('khronos_git') + '/Vulkan-Headers.git@' +
       Var('vulkan_headers_revision'),
 
-  'third_party/vulkan-validationlayers': Var('khronos_git') + '/Vulkan-ValidationLayers.git@' +
+  'third_party/vulkan-validationlayers': Var('dj2_git') + '/Vulkan-ValidationLayers.git@' +
       Var('vulkan_validationlayers_revision'),
 
   'third_party/vulkan-loader': Var('khronos_git') + '/Vulkan-Loader.git@' +
