@@ -144,7 +144,7 @@ class PipelineCommand : public Command {
   Pipeline* GetPipeline() const { return pipeline_; }
 
  protected:
-  explicit PipelineCommand(Type type, Pipeline* pipeline);
+  PipelineCommand(Type type, Pipeline* pipeline);
 
   Pipeline* pipeline_ = nullptr;
 };
@@ -152,7 +152,7 @@ class PipelineCommand : public Command {
 /// Command to draw a rectangle on screen.
 class DrawRectCommand : public PipelineCommand {
  public:
-  explicit DrawRectCommand(Pipeline* pipeline, PipelineData data);
+  DrawRectCommand(Pipeline* pipeline, PipelineData data);
   ~DrawRectCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
@@ -231,7 +231,7 @@ class DrawGridCommand : public PipelineCommand {
 /// Command to draw from a vertex and index buffer.
 class DrawArraysCommand : public PipelineCommand {
  public:
-  explicit DrawArraysCommand(Pipeline* pipeline, PipelineData data);
+  DrawArraysCommand(Pipeline* pipeline, PipelineData data);
   ~DrawArraysCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
@@ -353,7 +353,7 @@ class Probe : public Command {
   const std::vector<Tolerance>& GetTolerances() const { return tolerances_; }
 
  protected:
-  explicit Probe(Type type, Buffer* buffer);
+  Probe(Type type, Buffer* buffer);
 
  private:
   Buffer* buffer_;
