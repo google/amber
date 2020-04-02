@@ -21,6 +21,9 @@
 #include "amber/result.h"
 
 namespace amber {
+
+class VirtualFileStore;
+
 namespace dxchelper {
 
 // Passes the HLSL source code to the DXC compiler with SPIR-V CodeGen.
@@ -29,6 +32,7 @@ Result Compile(const std::string& src_str,
                const std::string& entry_str,
                const std::string& profile_str,
                const std::string& spv_env,
+               const VirtualFileStore* virtual_files,
                std::vector<uint32_t>* generated_binary);
 
 }  // namespace dxchelper

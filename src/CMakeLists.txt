@@ -39,6 +39,7 @@ set(AMBER_SOURCES
     type_parser.cc
     value.cc
     verifier.cc
+    virtual_file_store.cc
     vkscript/command_parser.cc
     vkscript/datum_type_parser.cc
     vkscript/parser.cc
@@ -163,6 +164,7 @@ if (${AMBER_ENABLE_TESTS})
     type_parser_test.cc
     type_test.cc
     verifier_test.cc
+    virtual_file_store_test.cc
     vkscript/command_parser_test.cc
     vkscript/datum_type_parser_test.cc
     vkscript/parser_test.cc

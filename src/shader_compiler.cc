@@ -48,8 +48,15 @@ namespace amber {
 ShaderCompiler::ShaderCompiler() = default;
 
 ShaderCompiler::ShaderCompiler(const std::string& env,
-                               bool disable_spirv_validation)
-    : spv_env_(env), disable_spirv_validation_(disable_spirv_validation) {}
+                               bool disable_spirv_validation,
+                               VirtualFileStore* virtual_files)
+    : spv_env_(env),
+      disable_spirv_validation_(disable_spirv_validation),
+      virtual_files_(virtual_files) {
+  // Do not warn about virtual_files_ not being used.
+  // This is conditionally used based on preprocessor defines.
+  (void)virtual_files_;
+}
 
 ShaderCompiler::~ShaderCompiler() = default;
 
@@ -269,7 +276,7 @@ Result ShaderCompiler::CompileHlsl(const Shader* shader,
     return Result("Unknown shader type");
 
   return dxchelper::Compile(shader->GetData(), "main", target, spv_env_,
-                            result);
+                            virtual_files_, result);
 }
 #else
 Result ShaderCompiler::CompileHlsl(const Shader*,

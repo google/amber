@@ -1,0 +1,56 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+VIRTUAL_FILE "relative.hlsl"
+#error "Wrong include picked!"
+END
+
+VIRTUAL_FILE "subdir/relative.hlsl"
+// Correct include!
+struct VS_OUTPUT {
+  float4 pos : SV_POSITION;
+  float4 color : COLOR;
+};
+
+VS_OUTPUT main(float4 pos : POSITION,
+               float4 color : COLOR) {
+  VS_OUTPUT vout;
+  vout.pos = pos;
+  vout.color = color;
+  return vout;
+}
+END
+
+VIRTUAL_FILE "subdir/include.hlsl"
+#include "relative.hlsl"
+END
+
+VIRTUAL_FILE "main.hlsl"
+#include "subdir/include.hlsl"
+END
+
+SHADER vertex vtex_shader HLSL VIRTUAL_FILE main.hlsl
+
+SHADER fragment frag_shader HLSL
+float4 main(float4 color : COLOR) : SV_TARGET {
+  return color;
+}
+END
+
+PIPELINE graphics pipeline
+  ATTACH vtex_shader
+  ATTACH frag_shader
+END
