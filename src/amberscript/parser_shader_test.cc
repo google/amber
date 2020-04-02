@@ -235,6 +235,54 @@ END)";
   EXPECT_EQ("2: extra parameters after SHADER command: INVALID", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, ShaderVirtualFile) {
+  std::string in = R"(#!amber
+VIRTUAL_FILE my_shader.hlsl
+My shader source
+END
+
+SHADER vertex my_shader HLSL VIRTUAL_FILE my_shader.hlsl
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_EQ(r.Error(), "");
+
+  auto script = parser.GetScript();
+  auto shader = script->GetShader("my_shader");
+  ASSERT_TRUE(shader != nullptr);
+  auto source = shader->GetData();
+  ASSERT_EQ("My shader source\n", shader->GetData());
+}
+
+TEST_F(AmberScriptParserTest, VirtualFileDuplicatePath) {
+  std::string in = R"(#!amber
+VIRTUAL_FILE my.file
+Blah
+END
+
+VIRTUAL_FILE my.file
+Blah
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_EQ(r.Error(), "8: Virtual file 'my.file' already declared");
+}
+
+TEST_F(AmberScriptParserTest, VirtualFileEmptyPath) {
+  std::string in = R"(#!amber
+VIRTUAL_FILE ""
+Blah
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_EQ(r.Error(), "4: Virtual file path was empty");
+}
+
 struct ShaderTypeData {
   const char* name;
   ShaderType type;
@@ -315,6 +363,7 @@ TEST_P(AmberScriptParserShaderFormatTest, ShaderFormats) {
   EXPECT_EQ(test_data.format, shader->GetFormat());
   EXPECT_EQ(shader_result, shader->GetData());
 }
+
 INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserTestsShaderFormat,
     AmberScriptParserShaderFormatTest,

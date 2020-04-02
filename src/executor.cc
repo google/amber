@@ -35,7 +35,8 @@ Result Executor::CompileShaders(const amber::Script* script,
   for (auto& pipeline : script->GetPipelines()) {
     for (auto& shader_info : pipeline->GetShaders()) {
       ShaderCompiler sc(script->GetSpvTargetEnv(),
-                        options->disable_spirv_validation);
+                        options->disable_spirv_validation,
+                        script->GetVirtualFiles());
 
       Result r;
       std::vector<uint32_t> data;

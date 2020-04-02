@@ -31,6 +31,7 @@
 #include "src/pipeline.h"
 #include "src/sampler.h"
 #include "src/shader.h"
+#include "src/virtual_file_store.h"
 
 namespace amber {
 
@@ -222,6 +223,22 @@ class Script : public RecipeImpl {
     return it == name_to_type_.end() ? nullptr : it->second.get();
   }
 
+  // Returns the virtual file store.
+  VirtualFileStore* GetVirtualFiles() const { return virtual_files_.get(); }
+
+  /// Adds the virtual file with content |content| to the virtual file path
+  /// |path|. If there's already a virtual file with the given path, an error is
+  /// returned.
+  Result AddVirtualFile(const std::string& path, const std::string& content) {
+    return virtual_files_->Add(path, content);
+  }
+
+  /// Look up the virtual file by path. If the file was found, the content is
+  /// assigned to content.
+  Result GetVirtualFile(const std::string& path, std::string* content) const {
+    return virtual_files_->Get(path, content);
+  }
+
   type::Type* ParseType(const std::string& str);
 
  private:
@@ -245,6 +262,7 @@ class Script : public RecipeImpl {
   std::vector<std::unique_ptr<Pipeline>> pipelines_;
   std::vector<std::unique_ptr<type::Type>> types_;
   std::vector<std::unique_ptr<Format>> formats_;
+  std::unique_ptr<VirtualFileStore> virtual_files_;
 };
 
 }  // namespace amber

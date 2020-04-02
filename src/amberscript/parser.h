@@ -97,6 +97,8 @@ class Parser : public amber::Parser {
                      Format* fmt,
                      std::vector<Value>* values);
 
+  Result ParseVirtualFile();
+
   std::unique_ptr<Tokenizer> tokenizer_;
   std::vector<std::unique_ptr<Command>> command_list_;
 };
