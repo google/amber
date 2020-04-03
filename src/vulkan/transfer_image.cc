@@ -109,7 +109,15 @@ Result TransferImage::Initialize(VkImageUsageFlags usage) {
   if (!r.IsSuccess())
     return r;
 
-  r = CreateVkImageView();
+  if (aspect_ & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) &&
+      usage != VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+    // Combined depth/stencil image used as a descriptor. Only one aspect can be
+    // used for the image view.
+    r = CreateVkImageView(VK_IMAGE_ASPECT_DEPTH_BIT);
+  } else {
+    r = CreateVkImageView(aspect_);
+  }
+
   if (!r.IsSuccess())
     return r;
 
@@ -153,7 +161,7 @@ VkImageViewType TransferImage::GetImageViewType() const {
   return VK_IMAGE_VIEW_TYPE_2D;
 }
 
-Result TransferImage::CreateVkImageView() {
+Result TransferImage::CreateVkImageView(VkImageAspectFlags aspect) {
   VkImageViewCreateInfo image_view_info = VkImageViewCreateInfo();
   image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   image_view_info.image = image_;
@@ -166,7 +174,7 @@ Result TransferImage::CreateVkImageView() {
       VK_COMPONENT_SWIZZLE_A,
   };
   image_view_info.subresourceRange = {
-      aspect_,          /* aspectMask */
+      aspect,           /* aspectMask */
       base_mip_level_,  /* baseMipLevel */
       used_mip_levels_, /* levelCount */
       0,                /* baseArrayLayer */
@@ -182,15 +190,23 @@ Result TransferImage::CreateVkImageView() {
   return {};
 }
 
-VkBufferImageCopy TransferImage::CreateBufferImageCopy(uint32_t mip_level) {
+VkBufferImageCopy TransferImage::CreateBufferImageCopy(
+    VkImageAspectFlags aspect,
+    uint32_t mip_level) {
   VkBufferImageCopy copy_region = VkBufferImageCopy();
-  copy_region.bufferOffset = 0;
+  if (aspect == VK_IMAGE_ASPECT_STENCIL_BIT) {
+    // Store stencil data at the end of the buffer after depth data.
+    copy_region.bufferOffset =
+        GetSizeInBytes() - image_info_.extent.width * image_info_.extent.height;
+  } else {
+    copy_region.bufferOffset = 0;
+  }
   // Row length of 0 results in tight packing of rows, so the row stride
   // is the number of texels times the texel stride.
   copy_region.bufferRowLength = 0;
   copy_region.bufferImageHeight = 0;
   copy_region.imageSubresource = {
-      aspect_,   /* aspectMask */
+      aspect,    /* aspectMask */
       mip_level, /* mipLevel */
       0,         /* baseArrayLayer */
       1,         /* layerCount */
@@ -203,12 +219,17 @@ VkBufferImageCopy TransferImage::CreateBufferImageCopy(uint32_t mip_level) {
 }
 
 void TransferImage::CopyToHost(CommandBuffer* command_buffer) {
+  const VkImageAspectFlagBits aspects[] = {VK_IMAGE_ASPECT_COLOR_BIT,
+                                           VK_IMAGE_ASPECT_DEPTH_BIT,
+                                           VK_IMAGE_ASPECT_STENCIL_BIT};
   std::vector<VkBufferImageCopy> copy_regions;
   uint32_t last_mip_level = used_mip_levels_ == VK_REMAINING_MIP_LEVELS
                                 ? mip_levels_
                                 : base_mip_level_ + used_mip_levels_;
   for (uint32_t i = base_mip_level_; i < last_mip_level; i++)
-    copy_regions.push_back(CreateBufferImageCopy(i));
+    for (auto aspect : aspects)
+      if (aspect_ & aspect)
+        copy_regions.push_back(CreateBufferImageCopy(aspect, i));
 
   device_->GetPtrs()->vkCmdCopyImageToBuffer(
       command_buffer->GetVkCommandBuffer(), image_,
@@ -219,12 +240,17 @@ void TransferImage::CopyToHost(CommandBuffer* command_buffer) {
 }
 
 void TransferImage::CopyToDevice(CommandBuffer* command_buffer) {
+  const VkImageAspectFlagBits aspects[] = {VK_IMAGE_ASPECT_COLOR_BIT,
+                                           VK_IMAGE_ASPECT_DEPTH_BIT,
+                                           VK_IMAGE_ASPECT_STENCIL_BIT};
   std::vector<VkBufferImageCopy> copy_regions;
   uint32_t last_mip_level = used_mip_levels_ == VK_REMAINING_MIP_LEVELS
                                 ? mip_levels_
                                 : base_mip_level_ + used_mip_levels_;
   for (uint32_t i = base_mip_level_; i < last_mip_level; i++)
-    copy_regions.push_back(CreateBufferImageCopy(i));
+    for (auto aspect : aspects)
+      if (aspect_ & aspect)
+        copy_regions.push_back(CreateBufferImageCopy(aspect, i));
 
   device_->GetPtrs()->vkCmdCopyBufferToImage(
       command_buffer->GetVkCommandBuffer(), host_accessible_buffer_, image_,

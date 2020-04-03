@@ -135,6 +135,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_compile_options_test.cc
     amberscript/parser_copy_test.cc
     amberscript/parser_device_feature_test.cc
+    amberscript/parser_depth_test.cc
     amberscript/parser_expect_test.cc
     amberscript/parser_extension_test.cc
     amberscript/parser_framebuffer_test.cc
@@ -147,6 +148,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_set_test.cc
     amberscript/parser_shader_opt_test.cc
     amberscript/parser_shader_test.cc
+    amberscript/parser_stencil_test.cc
     amberscript/parser_struct_test.cc
     amberscript/parser_test.cc
     buffer_test.cc

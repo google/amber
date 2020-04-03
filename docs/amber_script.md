@@ -326,6 +326,57 @@ The following commands are all specified within the `PIPELINE` command.
   POLYGON_MODE {mode}
 ```
 
+#### Compare operations
+ * `never`
+ * `less`
+ * `equal`
+ * `less_or_equal`
+ * `greater`
+ * `not_equal`
+ * `greater_or_equal`
+ * `always`
+
+```groovy
+  # Set depth test settings. All enable options are specified with keywords on and off.
+  # BOUNDS and BIAS values are specified with decimal numbers. |compare_op| is selected
+  # from the list of compare operations above.
+  DEPTH
+    TEST {test_enable}
+    WRITE {write_enable}
+    COMPARE {compare_op}
+    CLAMP {clamp_enable}
+    BOUNDS min {bound_min} max {bounds_max}
+    BIAS constant {bias_constant} clamp {bias_clamp} slope {bias_slope}
+  END
+```
+
+#### Stencil operations
+ * `keep`
+ * `replace`
+ * `increment_and_clamp`
+ * `decrement_and_clamp`
+ * `invert`
+ * `increment_and_wrap`
+ * `decrement_and_wrap`
+
+```groovy
+  # Set stencil test settings. |face| can be front, back, or front_and_back.
+  # |test_enable| is either on or off and affects both faces. |fail_op|, |pass_op|,
+  # and |depth_fail_op| are selected from the stencil operations table above,
+  # and |compare_op| from the compare operations table. |compare_mask|, |write_mask|,
+  # and |reference| are 8bit unsigned integer values (range 0..255).
+  STENCIL {face}
+    TEST {test_enable}
+    FAIL {fail_op}
+    PASS {pass_op}
+    DEPTH_FAIL {depth_fail_op}
+    COMPARE {compare_op}
+    COMPARE_MASK {compare_mask}
+    WRITE_MASK {write_mask}
+    REFERENCE {reference}
+  END
+```
+
 ```groovy
   # Set the size of the render buffers. |width| and |height| are integers and
   # default to 250x250.

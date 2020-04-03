@@ -152,6 +152,26 @@ ImageDimension StrToImageDimension(const std::string& str) {
   return ImageDimension::kUnknown;
 }
 
+std::map<std::string, CompareOp> compare_ops = {
+    {"never", CompareOp::kNever},
+    {"less", CompareOp::kLess},
+    {"equal", CompareOp::kEqual},
+    {"less_or_equal", CompareOp::kLessOrEqual},
+    {"greater", CompareOp::kGreater},
+    {"not_equal", CompareOp::kNotEqual},
+    {"greater_or_equal", CompareOp::kGreaterOrEqual},
+    {"always", CompareOp::kAlways}};
+
+std::map<std::string, StencilOp> stencil_ops = {
+    {"keep", StencilOp::kKeep},
+    {"zero", StencilOp::kZero},
+    {"replace", StencilOp::kReplace},
+    {"increment_and_clamp", StencilOp::kIncrementAndClamp},
+    {"decrement_and_clamp", StencilOp::kDecrementAndClamp},
+    {"invert", StencilOp::kInvert},
+    {"increment_and_wrap", StencilOp::kIncrementAndWrap},
+    {"decrement_and_wrap", StencilOp::kDecrementAndWrap}};
+
 }  // namespace
 
 Parser::Parser() : amber::Parser() {}
@@ -241,8 +261,9 @@ Result Parser::Parse(const std::string& data) {
 }
 
 bool Parser::IsRepeatable(const std::string& name) const {
-  return name == "CLEAR" || name == "CLEAR_COLOR" || name == "COPY" ||
-         name == "EXPECT" || name == "RUN" || name == "DEBUG";
+  return name == "CLEAR" || name == "CLEAR_COLOR" || name == "CLEAR_DEPTH" ||
+         name == "CLEAR_STENCIL" || name == "COPY" || name == "EXPECT" ||
+         name == "RUN" || name == "DEBUG";
 }
 
 // The given |name| must be one of the repeatable commands or this method
@@ -250,6 +271,10 @@ bool Parser::IsRepeatable(const std::string& name) const {
 Result Parser::ParseRepeatableCommand(const std::string& name) {
   if (name == "CLEAR")
     return ParseClear();
+  if (name == "CLEAR_DEPTH")
+    return ParseClearDepth();
+  if (name == "CLEAR_STENCIL")
+    return ParseClearStencil();
   if (name == "CLEAR_COLOR")
     return ParseClearColor();
   if (name == "COPY")
@@ -448,6 +473,10 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelineShaderCompileOptions(pipeline.get());
     } else if (tok == "POLYGON_MODE") {
       r = ParsePipelinePolygonMode(pipeline.get());
+    } else if (tok == "DEPTH") {
+      r = ParsePipelineDepth(pipeline.get());
+    } else if (tok == "STENCIL") {
+      r = ParsePipelineStencil(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -695,7 +724,7 @@ Result Parser::ToBufferType(const std::string& name, BufferType* type) {
   if (name == "color")
     *type = BufferType::kColor;
   else if (name == "depth_stencil")
-    *type = BufferType::kDepth;
+    *type = BufferType::kDepthStencil;
   else if (name == "push_constant")
     *type = BufferType::kPushConstant;
   else if (name == "combined_image_sampler")
@@ -776,8 +805,8 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         if (!r.IsSuccess())
           return r;
 
-      } else if (buffer_type == BufferType::kDepth) {
-        r = pipeline->SetDepthBuffer(buffer);
+      } else if (buffer_type == BufferType::kDepthStencil) {
+        r = pipeline->SetDepthStencilBuffer(buffer);
         if (!r.IsSuccess())
           return r;
 
@@ -1058,15 +1087,272 @@ Result Parser::ParsePipelinePolygonMode(Pipeline* pipeline) {
   auto mode = token->AsString();
 
   if (mode == "fill")
-    pipeline->SetPolygonMode(PolygonMode::kFill);
+    pipeline->GetPipelineData()->SetPolygonMode(PolygonMode::kFill);
   else if (mode == "line")
-    pipeline->SetPolygonMode(PolygonMode::kLine);
+    pipeline->GetPipelineData()->SetPolygonMode(PolygonMode::kLine);
   else if (mode == "point")
-    pipeline->SetPolygonMode(PolygonMode::kPoint);
+    pipeline->GetPipelineData()->SetPolygonMode(PolygonMode::kPoint);
   else
     return Result("invalid polygon mode: " + mode);
 
   return ValidateEndOfStatement("POLYGON_MODE command");
+}
+
+Result Parser::ParsePipelineDepth(Pipeline* pipeline) {
+  while (true) {
+    auto token = tokenizer_->NextToken();
+    if (token->IsEOL())
+      continue;
+    if (token->IsEOS())
+      return Result("DEPTH missing END command");
+    if (!token->IsIdentifier())
+      return Result("DEPTH options must be identifiers");
+    if (token->AsString() == "END")
+      break;
+
+    if (token->AsString() == "TEST") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("invalid value for TEST");
+
+      if (token->AsString() == "on")
+        pipeline->GetPipelineData()->SetEnableDepthTest(true);
+      else if (token->AsString() == "off")
+        pipeline->GetPipelineData()->SetEnableDepthTest(false);
+      else
+        return Result("invalid value for TEST: " + token->AsString());
+    } else if (token->AsString() == "CLAMP") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("invalid value for CLAMP");
+
+      if (token->AsString() == "on")
+        pipeline->GetPipelineData()->SetEnableDepthClamp(true);
+      else if (token->AsString() == "off")
+        pipeline->GetPipelineData()->SetEnableDepthClamp(false);
+      else
+        return Result("invalid value for CLAMP: " + token->AsString());
+    } else if (token->AsString() == "WRITE") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("invalid value for WRITE");
+
+      if (token->AsString() == "on")
+        pipeline->GetPipelineData()->SetEnableDepthWrite(true);
+      else if (token->AsString() == "off")
+        pipeline->GetPipelineData()->SetEnableDepthWrite(false);
+      else
+        return Result("invalid value for WRITE: " + token->AsString());
+    } else if (token->AsString() == "COMPARE") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("invalid value for COMPARE");
+
+      auto it = compare_ops.find(token->AsString());
+      if (it != compare_ops.end()) {
+        pipeline->GetPipelineData()->SetDepthCompareOp(it->second);
+      } else {
+        return Result("invalid value for COMPARE: " + token->AsString());
+      }
+    } else if (token->AsString() == "BOUNDS") {
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier() || token->AsString() != "min")
+        return Result("BOUNDS expecting min");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsDouble())
+        return Result("BOUNDS invalid value for min");
+      pipeline->GetPipelineData()->SetMinDepthBounds(token->AsFloat());
+
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier() || token->AsString() != "max")
+        return Result("BOUNDS expecting max");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsDouble())
+        return Result("BOUNDS invalid value for max");
+      pipeline->GetPipelineData()->SetMaxDepthBounds(token->AsFloat());
+    } else if (token->AsString() == "BIAS") {
+      pipeline->GetPipelineData()->SetEnableDepthBias(true);
+
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier() || token->AsString() != "constant")
+        return Result("BIAS expecting constant");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsDouble())
+        return Result("BIAS invalid value for constant");
+      pipeline->GetPipelineData()->SetDepthBiasConstantFactor(token->AsFloat());
+
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier() || token->AsString() != "clamp")
+        return Result("BIAS expecting clamp");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsDouble())
+        return Result("BIAS invalid value for clamp");
+      pipeline->GetPipelineData()->SetDepthBiasClamp(token->AsFloat());
+
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier() || token->AsString() != "slope")
+        return Result("BIAS expecting slope");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsDouble())
+        return Result("BIAS invalid value for slope");
+      pipeline->GetPipelineData()->SetDepthBiasSlopeFactor(token->AsFloat());
+    } else {
+      return Result("invalid value for DEPTH: " + token->AsString());
+    }
+  }
+
+  return ValidateEndOfStatement("DEPTH command");
+}
+
+Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsIdentifier())
+    return Result("STENCIL missing face");
+
+  bool setFront = false;
+  bool setBack = false;
+
+  if (token->AsString() == "front") {
+    setFront = true;
+  } else if (token->AsString() == "back") {
+    setBack = true;
+  } else if (token->AsString() == "front_and_back") {
+    setFront = true;
+    setBack = true;
+  } else {
+    return Result("STENCIL invalid face: " + token->AsString());
+  }
+
+  while (true) {
+    token = tokenizer_->NextToken();
+    if (token->IsEOL())
+      continue;
+    if (token->IsEOS())
+      return Result("STENCIL missing END command");
+    if (!token->IsIdentifier())
+      return Result("STENCIL options must be identifiers");
+    if (token->AsString() == "END")
+      break;
+
+    if (token->AsString() == "TEST") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("STENCIL invalid value for TEST");
+
+      if (token->AsString() == "on")
+        pipeline->GetPipelineData()->SetEnableStencilTest(true);
+      else if (token->AsString() == "off")
+        pipeline->GetPipelineData()->SetEnableStencilTest(false);
+      else
+        return Result("STENCIL invalid value for TEST: " + token->AsString());
+    } else if (token->AsString() == "FAIL") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("STENCIL invalid value for FAIL");
+
+      auto it = stencil_ops.find(token->AsString());
+      if (it != stencil_ops.end()) {
+        if (setFront)
+          pipeline->GetPipelineData()->SetFrontFailOp(it->second);
+        if (setBack)
+          pipeline->GetPipelineData()->SetBackFailOp(it->second);
+      } else {
+        return Result("STENCIL invalid value for FAIL: " + token->AsString());
+      }
+    } else if (token->AsString() == "PASS") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("STENCIL invalid value for PASS");
+
+      auto it = stencil_ops.find(token->AsString());
+      if (it != stencil_ops.end()) {
+        if (setFront)
+          pipeline->GetPipelineData()->SetFrontPassOp(it->second);
+        if (setBack)
+          pipeline->GetPipelineData()->SetBackPassOp(it->second);
+      } else {
+        return Result("STENCIL invalid value for PASS: " + token->AsString());
+      }
+    } else if (token->AsString() == "DEPTH_FAIL") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("STENCIL invalid value for DEPTH_FAIL");
+
+      auto it = stencil_ops.find(token->AsString());
+      if (it != stencil_ops.end()) {
+        if (setFront)
+          pipeline->GetPipelineData()->SetFrontDepthFailOp(it->second);
+        if (setBack)
+          pipeline->GetPipelineData()->SetBackDepthFailOp(it->second);
+      } else {
+        return Result("STENCIL invalid value for DEPTH_FAIL: " +
+                      token->AsString());
+      }
+    } else if (token->AsString() == "COMPARE") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("STENCIL invalid value for COMPARE");
+
+      auto it = compare_ops.find(token->AsString());
+      if (it != compare_ops.end()) {
+        if (setFront)
+          pipeline->GetPipelineData()->SetFrontCompareOp(it->second);
+        if (setBack)
+          pipeline->GetPipelineData()->SetBackCompareOp(it->second);
+      } else {
+        return Result("STENCIL invalid value for COMPARE: " +
+                      token->AsString());
+      }
+    } else if (token->AsString() == "COMPARE_MASK") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsInteger())
+        return Result("STENCIL invalid value for COMPARE_MASK");
+
+      if (setFront)
+        pipeline->GetPipelineData()->SetFrontCompareMask(token->AsUint32());
+      if (setBack)
+        pipeline->GetPipelineData()->SetBackCompareMask(token->AsUint32());
+    } else if (token->AsString() == "WRITE_MASK") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsInteger())
+        return Result("STENCIL invalid value for WRITE_MASK");
+
+      if (setFront)
+        pipeline->GetPipelineData()->SetFrontWriteMask(token->AsUint32());
+      if (setBack)
+        pipeline->GetPipelineData()->SetBackWriteMask(token->AsUint32());
+    } else if (token->AsString() == "REFERENCE") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsInteger())
+        return Result("STENCIL invalid value for REFERENCE");
+
+      if (setFront)
+        pipeline->GetPipelineData()->SetFrontReference(token->AsUint32());
+      if (setBack)
+        pipeline->GetPipelineData()->SetBackReference(token->AsUint32());
+    } else {
+      return Result("STENCIL invalid value for STENCIL: " + token->AsString());
+    }
+  }
+
+  return ValidateEndOfStatement("STENCIL command");
 }
 
 Result Parser::ParseStruct() {
@@ -1710,10 +1996,10 @@ Result Parser::ParseRun() {
     if (!token->IsInteger())
       return Result("missing X position for RUN command");
 
-    auto cmd = MakeUnique<DrawRectCommand>(pipeline, PipelineData{});
+    auto cmd =
+        MakeUnique<DrawRectCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
     cmd->EnableOrtho();
-    cmd->SetPolygonMode(pipeline->GetPolygonMode());
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -1782,7 +2068,7 @@ Result Parser::ParseRun() {
 
     auto cmd = MakeUnique<DrawGridCommand>(pipeline);
     cmd->SetLine(line);
-    cmd->SetPolygonMode(pipeline->GetPolygonMode());
+    cmd->SetPolygonMode(pipeline->GetPipelineData()->GetPolygonMode());
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -1924,12 +2210,12 @@ Result Parser::ParseRun() {
         return Result("START_IDX plus COUNT exceeds vertex buffer data size");
     }
 
-    auto cmd = MakeUnique<DrawArraysCommand>(pipeline, PipelineData{});
+    auto cmd =
+        MakeUnique<DrawArraysCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
     cmd->SetTopology(topo);
     cmd->SetFirstVertexIndex(start_idx);
     cmd->SetVertexCount(count);
-    cmd->SetPolygonMode(pipeline->GetPolygonMode());
 
     if (indexed)
       cmd->EnableIndexed();
@@ -2588,6 +2874,70 @@ Result Parser::ParseClearColor() {
 
   command_list_.push_back(std::move(cmd));
   return ValidateEndOfStatement("CLEAR_COLOR command");
+}
+
+Result Parser::ParseClearDepth() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsIdentifier())
+    return Result("missing pipeline name for CLEAR_DEPTH command");
+
+  size_t line = tokenizer_->GetCurrentLine();
+
+  auto* pipeline = script_->GetPipeline(token->AsString());
+  if (!pipeline) {
+    return Result("unknown pipeline for CLEAR_DEPTH command: " +
+                  token->AsString());
+  }
+  if (!pipeline->IsGraphics()) {
+    return Result("CLEAR_DEPTH command requires graphics pipeline");
+  }
+
+  auto cmd = MakeUnique<ClearDepthCommand>(pipeline);
+  cmd->SetLine(line);
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing value for CLEAR_DEPTH command");
+  if (!token->IsDouble()) {
+    return Result("invalid value for CLEAR_DEPTH command: " +
+                  token->ToOriginalString());
+  }
+  cmd->SetValue(token->AsFloat());
+
+  command_list_.push_back(std::move(cmd));
+  return ValidateEndOfStatement("CLEAR_DEPTH command");
+}
+
+Result Parser::ParseClearStencil() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsIdentifier())
+    return Result("missing pipeline name for CLEAR_STENCIL command");
+
+  size_t line = tokenizer_->GetCurrentLine();
+
+  auto* pipeline = script_->GetPipeline(token->AsString());
+  if (!pipeline) {
+    return Result("unknown pipeline for CLEAR_STENCIL command: " +
+                  token->AsString());
+  }
+  if (!pipeline->IsGraphics()) {
+    return Result("CLEAR_STENCIL command requires graphics pipeline");
+  }
+
+  auto cmd = MakeUnique<ClearStencilCommand>(pipeline);
+  cmd->SetLine(line);
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing value for CLEAR_STENCIL command");
+  if (!token->IsInteger()) {
+    return Result("invalid value for CLEAR_STENCIL command: " +
+                  token->ToOriginalString());
+  }
+  cmd->SetValue(token->AsUint32());
+
+  command_list_.push_back(std::move(cmd));
+  return ValidateEndOfStatement("CLEAR_STENCIL command");
 }
 
 Result Parser::ParseDeviceFeature() {

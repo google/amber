@@ -65,11 +65,12 @@ std::unique_ptr<Pipeline> Pipeline::Clone() const {
   clone->color_attachments_ = color_attachments_;
   clone->vertex_buffers_ = vertex_buffers_;
   clone->buffers_ = buffers_;
-  clone->depth_buffer_ = depth_buffer_;
+  clone->depth_stencil_buffer_ = depth_stencil_buffer_;
   clone->index_buffer_ = index_buffer_;
   clone->fb_width_ = fb_width_;
   clone->fb_height_ = fb_height_;
   clone->set_arg_values_ = set_arg_values_;
+  clone->pipeline_data_ = pipeline_data_;
 
   if (!opencl_pod_buffers_.empty()) {
     // Generate specific buffers for the clone.
@@ -184,16 +185,6 @@ Result Pipeline::SetShaderType(const Shader* shader, ShaderType type) {
                 shader->GetName());
 }
 
-Result Pipeline::SetPolygonMode(PolygonMode mode) {
-  if (mode != PolygonMode::kFill && mode != PolygonMode::kLine &&
-      mode != PolygonMode::kPoint)
-    return Result("invalid polygon mode specified for pipeline");
-
-  polygon_mode_ = mode;
-
-  return {};
-}
-
 Result Pipeline::Validate() const {
   for (const auto& attachment : color_attachments_) {
     if (attachment.buffer->ElementCount() !=
@@ -204,8 +195,8 @@ Result Pipeline::Validate() const {
     }
   }
 
-  if (depth_buffer_.buffer &&
-      depth_buffer_.buffer->ElementCount() != fb_width_ * fb_height_) {
+  if (depth_stencil_buffer_.buffer &&
+      depth_stencil_buffer_.buffer->ElementCount() != fb_width_ * fb_height_) {
     return Result("shared depth buffer must have same size over all PIPELINES");
   }
 
@@ -280,10 +271,10 @@ void Pipeline::UpdateFramebufferSizes() {
     attachment.buffer->SetElementCount(mip0_width * mip0_height);
   }
 
-  if (depth_buffer_.buffer) {
-    depth_buffer_.buffer->SetWidth(fb_width_);
-    depth_buffer_.buffer->SetHeight(fb_height_);
-    depth_buffer_.buffer->SetElementCount(size);
+  if (depth_stencil_buffer_.buffer) {
+    depth_stencil_buffer_.buffer->SetWidth(fb_width_);
+    depth_stencil_buffer_.buffer->SetHeight(fb_height_);
+    depth_stencil_buffer_.buffer->SetElementCount(size);
   }
 }
 
@@ -323,12 +314,12 @@ Result Pipeline::GetLocationForColorAttachment(Buffer* buf,
   return Result("Unable to find requested buffer");
 }
 
-Result Pipeline::SetDepthBuffer(Buffer* buf) {
-  if (depth_buffer_.buffer != nullptr)
-    return Result("can only bind one depth buffer in a PIPELINE");
+Result Pipeline::SetDepthStencilBuffer(Buffer* buf) {
+  if (depth_stencil_buffer_.buffer != nullptr)
+    return Result("can only bind one depth/stencil buffer in a PIPELINE");
 
-  depth_buffer_.buffer = buf;
-  depth_buffer_.type = BufferType::kDepth;
+  depth_stencil_buffer_.buffer = buf;
+  depth_stencil_buffer_.type = BufferType::kDepthStencil;
 
   buf->SetWidth(fb_width_);
   buf->SetHeight(fb_height_);
@@ -381,7 +372,8 @@ std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() {
   return buf;
 }
 
-std::unique_ptr<Buffer> Pipeline::GenerateDefaultDepthAttachmentBuffer() {
+std::unique_ptr<Buffer>
+Pipeline::GenerateDefaultDepthStencilAttachmentBuffer() {
   TypeParser parser;
   auto type = parser.Parse(kDefaultDepthBufferFormat);
   auto fmt = MakeUnique<Format>(type.get());

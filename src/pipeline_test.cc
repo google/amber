@@ -31,7 +31,7 @@ class PipelineTest : public testing::Test {
  public:
   void TearDown() override {
     color_buffer_ = nullptr;
-    depth_buffer_ = nullptr;
+    depth_stencil_buffer_ = nullptr;
   }
 
   void SetupColorAttachment(Pipeline* p, uint32_t location) {
@@ -41,16 +41,16 @@ class PipelineTest : public testing::Test {
     p->AddColorAttachment(color_buffer_.get(), location, 0);
   }
 
-  void SetupDepthAttachment(Pipeline* p) {
-    if (!depth_buffer_)
-      depth_buffer_ = p->GenerateDefaultDepthAttachmentBuffer();
+  void SetupDepthStencilAttachment(Pipeline* p) {
+    if (!depth_stencil_buffer_)
+      depth_stencil_buffer_ = p->GenerateDefaultDepthStencilAttachmentBuffer();
 
-    p->SetDepthBuffer(depth_buffer_.get());
+    p->SetDepthStencilBuffer(depth_stencil_buffer_.get());
   }
 
  private:
   std::unique_ptr<Buffer> color_buffer_;
-  std::unique_ptr<Buffer> depth_buffer_;
+  std::unique_ptr<Buffer> depth_stencil_buffer_;
 };
 
 TEST_F(PipelineTest, AddShader) {
@@ -185,7 +185,7 @@ TEST_F(PipelineTest, SetOptimizationForInvalidShader) {
 
 TEST_F(PipelineTest, GraphicsPipelineRequiresColorAttachment) {
   Pipeline p(PipelineType::kGraphics);
-  SetupDepthAttachment(&p);
+  SetupDepthStencilAttachment(&p);
 
   Result r = p.Validate();
   ASSERT_FALSE(r.IsSuccess());
@@ -199,7 +199,7 @@ TEST_F(PipelineTest, GraphicsPipelineRequiresVertexAndFragmentShader) {
 
   Pipeline p(PipelineType::kGraphics);
   SetupColorAttachment(&p, 0);
-  SetupDepthAttachment(&p);
+  SetupDepthStencilAttachment(&p);
 
   Result r = p.AddShader(&v, kShaderTypeVertex);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
@@ -220,7 +220,7 @@ TEST_F(PipelineTest, GraphicsPipelineMissingVertexShader) {
 
   Pipeline p(PipelineType::kGraphics);
   SetupColorAttachment(&p, 0);
-  SetupDepthAttachment(&p);
+  SetupDepthStencilAttachment(&p);
 
   Result r = p.AddShader(&g, kShaderTypeGeometry);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
@@ -238,7 +238,7 @@ TEST_F(PipelineTest, ComputePipelineRequiresComputeShader) {
 
   Pipeline p(PipelineType::kCompute);
   SetupColorAttachment(&p, 0);
-  SetupDepthAttachment(&p);
+  SetupDepthStencilAttachment(&p);
 
   Result r = p.AddShader(&c, kShaderTypeCompute);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
@@ -250,7 +250,7 @@ TEST_F(PipelineTest, ComputePipelineRequiresComputeShader) {
 TEST_F(PipelineTest, ComputePipelineWithoutShader) {
   Pipeline p(PipelineType::kCompute);
   SetupColorAttachment(&p, 0);
-  SetupDepthAttachment(&p);
+  SetupDepthStencilAttachment(&p);
 
   Result r = p.Validate();
   EXPECT_FALSE(r.IsSuccess()) << r.Error();
@@ -343,7 +343,7 @@ TEST_F(PipelineTest, Clone) {
   p.SetFramebufferHeight(600);
 
   SetupColorAttachment(&p, 0);
-  SetupDepthAttachment(&p);
+  SetupDepthStencilAttachment(&p);
 
   Shader f(kShaderTypeFragment);
   p.AddShader(&f, kShaderTypeFragment);
