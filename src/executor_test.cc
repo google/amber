@@ -167,7 +167,7 @@ class EngineStub : public Engine {
     return {};
   }
 
-  std::pair<Debugger*, Result> GetDebugger() override {
+  std::pair<Debugger*, Result> GetDebugger(VirtualFileStore*) override {
     return {nullptr,
             Result("EngineStub does not currently support a debugger")};
   }

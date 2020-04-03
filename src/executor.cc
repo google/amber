@@ -116,7 +116,8 @@ Result Executor::Execute(Engine* engine,
       if (debugger == nullptr) {
         // Lazilly obtain the debugger from the engine.
         Result res;
-        std::tie(debugger, res) = engine->GetDebugger();
+        std::tie(debugger, res) =
+            engine->GetDebugger(script->GetVirtualFiles());
         if (!res.IsSuccess()) {
           return res;
         }

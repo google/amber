@@ -64,7 +64,7 @@ class EngineVulkan : public Engine {
       const PatchParameterVerticesCommand* cmd) override;
   Result DoBuffer(const BufferCommand* cmd) override;
 
-  std::pair<Debugger*, Result> GetDebugger() override;
+  std::pair<Debugger*, Result> GetDebugger(VirtualFileStore*) override;
 
  private:
   struct PipelineInfo {

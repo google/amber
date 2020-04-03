@@ -29,6 +29,8 @@
 
 namespace amber {
 
+class VirtualFileStore;
+
 /// EngineData stores information used during engine execution.
 struct EngineData {
   /// The timeout to use for fences, in milliseconds.
@@ -123,7 +125,7 @@ class Engine {
   /// GetDebugger returns the shader debugger from the engine.
   /// If the engine does not support a shader debugger then the Result will be a
   /// failure.
-  virtual std::pair<Debugger*, Result> GetDebugger() = 0;
+  virtual std::pair<Debugger*, Result> GetDebugger(VirtualFileStore*) = 0;
 
   /// Sets the engine data to use.
   void SetEngineData(const EngineData& data) { engine_data_ = data; }
