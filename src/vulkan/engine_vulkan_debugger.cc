@@ -24,6 +24,8 @@
 #include <thread>  // NOLINT(build/c++11)
 #include <unordered_map>
 
+#include "src/virtual_file_store.h"
+
 #include "dap/network.h"
 #include "dap/protocol.h"
 #include "dap/session.h"
@@ -46,7 +48,12 @@ namespace vulkan {
 
 namespace {
 
-static constexpr auto kThreadTimeout = std::chrono::minutes(1);
+// kThreadTimeout is the maximum time to wait for a thread to complete.
+static constexpr const auto kThreadTimeout = std::chrono::minutes(1);
+
+// kStepEventTimeout is the maximum time to wait for a thread to complete a step
+// request.
+static constexpr const auto kStepEventTimeout = std::chrono::seconds(1);
 
 // Event provides a basic wait-and-signal synchronization primitive.
 class Event {
@@ -248,7 +255,8 @@ class Client {
   // FrameLocation retrieves the current frame source location, and optional
   // source line text.
   // Returns true on success, false on error.
-  bool FrameLocation(const dap::StackFrame& frame,
+  bool FrameLocation(VirtualFileStore* virtual_files,
+                     const dap::StackFrame& frame,
                      debug::Location* location,
                      std::string* line = nullptr) {
     location->line = frame.line;
@@ -272,13 +280,18 @@ class Client {
 
     if (line != nullptr) {
       SourceLines lines;
-      if (!SourceContent(frame.source.value(), &lines)) {
+      if (!SourceContent(virtual_files, frame.source.value(), &lines)) {
         return false;
       }
       if (location->line > lines.size()) {
         onerror_("Line " + std::to_string(location->line) +
                  " is greater than the number of lines in the source file (" +
                  std::to_string(lines.size()) + ")");
+        return false;
+      }
+      if (location->line < 1) {
+        onerror_("Line number reported was " + std::to_string(location->line));
+        return false;
       }
       *line = lines[location->line - 1];
     }
@@ -288,34 +301,10 @@ class Client {
 
   // SourceContext retrieves the the SourceLines for the given source.
   // Returns true on success, false on error.
-  bool SourceContent(const dap::Source& source, SourceLines* out) {
+  bool SourceContent(VirtualFileStore* virtual_files,
+                     const dap::Source& source,
+                     SourceLines* out) {
     auto path = source.path.value("");
-    if (path != "") {
-      auto it = sourceCache_.by_path.find(path);
-      if (it != sourceCache_.by_path.end()) {
-        *out = it->second;
-        return true;
-      }
-
-      // TODO(bclayton) - We shouldn't be doing direct file IO here. We should
-      // bubble the IO request to the amber 'embedder'.
-      // See: https://github.com/google/amber/issues/777
-      std::ifstream file(path);
-      if (!file) {
-        onerror_("Could not open source file '" + path + '"');
-        return false;
-      }
-
-      SourceLines lines;
-      std::string line;
-      while (std::getline(file, line)) {
-        lines.emplace_back(line);
-      }
-
-      sourceCache_.by_path.emplace(path, lines);
-      *out = lines;
-      return true;
-    }
 
     if (source.sourceReference.has_value()) {
       auto ref = source.sourceReference.value();
@@ -335,6 +324,38 @@ class Client {
       sourceCache_.by_ref.emplace(ref, lines);
       *out = lines;
       return true;
+    }
+
+    if (path != "") {
+      auto it = sourceCache_.by_path.find(path);
+      if (it != sourceCache_.by_path.end()) {
+        *out = it->second;
+        return true;
+      }
+
+      // First search the virtual file store.
+      std::string content;
+      if (virtual_files->Get(path, &content).IsSuccess()) {
+        auto lines = Split(content, "\n");
+        sourceCache_.by_path.emplace(path, lines);
+        *out = lines;
+        return true;
+      }
+
+      // TODO(bclayton) - We shouldn't be doing direct file IO here. We should
+      // bubble the IO request to the amber 'embedder'.
+      // See: https://github.com/google/amber/issues/777
+      if (auto file = std::ifstream(path)) {
+        SourceLines lines;
+        std::string line;
+        while (std::getline(file, line)) {
+          lines.emplace_back(line);
+        }
+
+        sourceCache_.by_path.emplace(path, lines);
+        *out = lines;
+        return true;
+      }
     }
 
     onerror_("Could not get source content");
@@ -526,11 +547,13 @@ bool InvocationKey::operator==(const InvocationKey& other) const {
 // Thread controls and verifies a single debugger thread of execution.
 class Thread : public debug::Thread {
  public:
-  Thread(std::shared_ptr<dap::Session> session,
+  Thread(VirtualFileStore* virtual_files,
+         std::shared_ptr<dap::Session> session,
          int threadId,
          int lane,
          std::shared_ptr<const debug::ThreadScript> script)
-      : thread_id_(threadId),
+      : virtual_files_(virtual_files),
+        thread_id_(threadId),
         lane_(lane),
         client_(session, [this](const std::string& err) { OnError(err); }) {
     // The thread script runs concurrently with other debugger thread scripts.
@@ -556,12 +579,25 @@ class Thread : public debug::Thread {
     return error_;
   }
 
+  // OnStep is called when the debugger sends a 'stopped' event with reason
+  // 'step'.
+  void OnStep() { on_stepped_.Signal(); }
+
+  // WaitForSteppedEvent halts execution of the thread until OnStep() is
+  // called, or kStepEventTimeout is reached.
+  void WaitForStepEvent(const std::string& request) {
+    if (!on_stepped_.Wait(kStepEventTimeout)) {
+      OnError("Timeout waiting for " + request + " request to complete");
+    }
+  }
+
   // debug::Thread compliance
   void StepOver() override {
     DEBUGGER_LOG("StepOver()");
     dap::NextRequest request;
     request.threadId = thread_id_;
     client_.Send(request);
+    WaitForStepEvent("step-over");
   }
 
   void StepIn() override {
@@ -569,6 +605,7 @@ class Thread : public debug::Thread {
     dap::StepInRequest request;
     request.threadId = thread_id_;
     client_.Send(request);
+    WaitForStepEvent("step-in");
   }
 
   void StepOut() override {
@@ -576,6 +613,7 @@ class Thread : public debug::Thread {
     dap::StepOutRequest request;
     request.threadId = thread_id_;
     client_.Send(request);
+    WaitForStepEvent("step-out");
   }
 
   void Continue() override {
@@ -597,13 +635,14 @@ class Thread : public debug::Thread {
 
     debug::Location got_location;
     std::string got_source_line;
-    if (!client_.FrameLocation(frame, &got_location, &got_source_line)) {
+    if (!client_.FrameLocation(virtual_files_, frame, &got_location,
+                               &got_source_line)) {
       return;
     }
 
     if (got_location.file != location.file) {
-      OnError("Expected file to be '" + location.file + "' but file was " +
-              got_location.file);
+      OnError("Expected file to be '" + location.file + "' but file was '" +
+              got_location.file + "'");
     } else if (got_location.line != location.line) {
       std::stringstream ss;
       ss << "Expected line " << std::to_string(location.line);
@@ -614,8 +653,8 @@ class Thread : public debug::Thread {
          << got_source_line << "`";
       OnError(ss.str());
     } else if (line != "" && got_source_line != line) {
-      OnError("Expected source line to be:\n  " + line + "\nbut line was:\n  " +
-              got_source_line);
+      OnError("Expected source for line " + std::to_string(location.line) +
+              " to be: `" + line + "` but line was: `" + got_source_line + "`");
     }
   }
 
@@ -701,7 +740,7 @@ class Thread : public debug::Thread {
         var = owner->Find(part);
         if (!var) {
           if (owner == lane) {
-            OnError("Local '" + name + "' not found\nAll Locals: " +
+            OnError("Local '" + name + "' not found.\nLocals: " +
                     lane->AllNames() + ".\nLanes: " + locals.AllNames() + ".");
           } else {
             OnError("Local '" + path + "' does not contain '" + part +
@@ -756,11 +795,13 @@ class Thread : public debug::Thread {
     return ss.str();
   }
 
+  VirtualFileStore* const virtual_files_;
   const dap::integer thread_id_;
   const int lane_;
   Client client_;
   std::thread thread_;
   Event done_;
+  Event on_stepped_;
   Result error_;
 };
 
@@ -777,6 +818,9 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
   static constexpr const char* kVertexIndex = "vertexIndex";
 
  public:
+  explicit VkDebugger(VirtualFileStore* virtual_files)
+      : virtual_files_(virtual_files) {}
+
   /// Connect establishes the connection to the shader debugger. Must be
   /// called before any of the |debug::Events| methods.
   Result Connect() {
@@ -801,6 +845,8 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
         DEBUGGER_LOG("THREAD STOPPED. Reason: %s", event.reason.c_str());
         if (event.reason == "function breakpoint") {
           OnBreakpointHit(event.threadId.value(0));
+        } else if (event.reason == "step") {
+          OnStep(event.threadId.value(0));
         }
       });
 
@@ -864,10 +910,11 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
       for (auto& pending : pendingThreads_) {
         result += "Thread did not run: " + pending.first.String();
       }
-      for (auto& thread : runningThreads_) {
-        result += thread->Flush();
+      for (auto& it : runningThreads_) {
+        result += it.second->Flush();
       }
       runningThreads_.clear();
+      completedThreads_.clear();
     }
     return result;
   }
@@ -901,6 +948,25 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
   }
 
  private:
+  void StartThread(
+      dap::integer thread_id,
+      int lane,
+      const std::shared_ptr<const amber::debug::ThreadScript>& script) {
+    auto thread =
+        MakeUnique<Thread>(virtual_files_, session_, thread_id, lane, script);
+    auto it = runningThreads_.find(thread_id);
+    if (it != runningThreads_.end()) {
+      // The debugger has now started working on something else for the given
+      // thread id.
+      // Flush the Thread to ensure that all tasks have actually finished, and
+      // move the Thread to the completedThreads_ list.
+      auto completed_thread = std::move(it->second);
+      error_ += completed_thread->Flush();
+      completedThreads_.emplace_back(std::move(completed_thread));
+    }
+    runningThreads_[thread_id] = std::move(thread);
+  }
+
   // OnBreakpointHit is called when a debugger breakpoint is hit (breakpoints
   // are set at shader entry points). pendingThreads_ is checked to see if this
   // thread needs testing, and if so, creates a new ::Thread.
@@ -921,8 +987,7 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
           if (FindGlobalInvocationId(thread_id, invocation_id, &lane)) {
             DEBUGGER_LOG("Breakpoint hit: GetGlobalInvocationId: [%d, %d, %d]",
                          invocation_id.x, invocation_id.y, invocation_id.z);
-            auto thread = MakeUnique<Thread>(session_, thread_id, lane, script);
-            runningThreads_.emplace_back(std::move(thread));
+            StartThread(thread_id, lane, script);
             pendingThreads_.erase(it);
             return;
           }
@@ -933,8 +998,7 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
           int lane;
           if (FindVertexIndex(thread_id, vertex_id, &lane)) {
             DEBUGGER_LOG("Breakpoint hit: VertexId: %d", vertex_id);
-            auto thread = MakeUnique<Thread>(session_, thread_id, lane, script);
-            runningThreads_.emplace_back(std::move(thread));
+            StartThread(thread_id, lane, script);
             pendingThreads_.erase(it);
             return;
           }
@@ -946,8 +1010,7 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
           if (FindWindowSpacePosition(thread_id, position, &lane)) {
             DEBUGGER_LOG("Breakpoint hit: VertexId: [%d, %d]", position.x,
                          position.y);
-            auto thread = MakeUnique<Thread>(session_, thread_id, lane, script);
-            runningThreads_.emplace_back(std::move(thread));
+            StartThread(thread_id, lane, script);
             pendingThreads_.erase(it);
             return;
           }
@@ -960,6 +1023,21 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
     dap::ContinueRequest request;
     request.threadId = thread_id;
     client.Send(request);
+  }
+
+  // OnStep is called when a debugger finishes a step request.
+  void OnStep(dap::integer thread_id) {
+    DEBUGGER_LOG("Step event: thread %d", (int)thread_id);
+    Client client(session_, [this](const std::string& err) { OnError(err); });
+
+    std::unique_lock<std::mutex> lock(threads_mutex_);
+    auto it = runningThreads_.find(thread_id);
+    if (it == runningThreads_.end()) {
+      OnError("Step event reported for non-running thread " +
+              std::to_string(thread_id.operator int()));
+    }
+
+    it->second->OnStep();
   }
 
   // FindLocal looks for the shader's local variable with the given name and
@@ -1046,17 +1124,27 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
                          std::shared_ptr<const debug::ThreadScript>,
                          InvocationKey::Hash>;
   using ThreadVector = std::vector<std::unique_ptr<Thread>>;
+  using ThreadMap = std::unordered_map<int, std::unique_ptr<Thread>>;
+  VirtualFileStore* const virtual_files_;
   std::shared_ptr<dap::Session> session_;
   std::mutex threads_mutex_;
+
+  // The threads that are waiting to be started.
   PendingThreadsMap pendingThreads_;  // guarded by threads_mutex_
-  ThreadVector runningThreads_;       // guarded by threads_mutex_
+
+  // All threads that have been started.
+  ThreadMap runningThreads_;  // guarded by threads_mutex_
+
+  // Threads that have finished.
+  ThreadVector completedThreads_;  // guarded by threads_mutex_
   std::mutex error_mutex_;
   Result error_;  // guarded by error_mutex_
 };
 
-std::pair<Engine::Debugger*, Result> EngineVulkan::GetDebugger() {
+std::pair<Engine::Debugger*, Result> EngineVulkan::GetDebugger(
+    VirtualFileStore* virtual_files) {
   if (!debugger_) {
-    auto debugger = new VkDebugger();
+    auto debugger = new VkDebugger(virtual_files);
     debugger_.reset(debugger);
     auto res = debugger->Connect();
     if (!res.IsSuccess()) {
@@ -1074,7 +1162,8 @@ std::pair<Engine::Debugger*, Result> EngineVulkan::GetDebugger() {
 namespace amber {
 namespace vulkan {
 
-std::pair<Engine::Debugger*, Result> EngineVulkan::GetDebugger() {
+std::pair<Engine::Debugger*, Result> EngineVulkan::GetDebugger(
+    VirtualFileStore*) {
   return {nullptr,
           Result("Amber was not built with AMBER_ENABLE_VK_DEBUGGING enabled")};
 }
