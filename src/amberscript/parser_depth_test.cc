@@ -59,12 +59,12 @@ END)";
   ASSERT_TRUE(pipeline->GetPipelineData()->GetEnableDepthTest());
   ASSERT_TRUE(pipeline->GetPipelineData()->GetEnableDepthWrite());
   ASSERT_TRUE(pipeline->GetPipelineData()->GetEnableDepthClamp());
-  ASSERT_FLOAT_EQ(1.5, pipeline->GetPipelineData()->GetMinDepthBounds());
-  ASSERT_FLOAT_EQ(6.7, pipeline->GetPipelineData()->GetMaxDepthBounds());
-  ASSERT_FLOAT_EQ(2.1,
+  ASSERT_FLOAT_EQ(1.5f, pipeline->GetPipelineData()->GetMinDepthBounds());
+  ASSERT_FLOAT_EQ(6.7f, pipeline->GetPipelineData()->GetMaxDepthBounds());
+  ASSERT_FLOAT_EQ(2.1f,
                   pipeline->GetPipelineData()->GetDepthBiasConstantFactor());
-  ASSERT_FLOAT_EQ(3.5, pipeline->GetPipelineData()->GetDepthBiasClamp());
-  ASSERT_FLOAT_EQ(5.5, pipeline->GetPipelineData()->GetDepthBiasSlopeFactor());
+  ASSERT_FLOAT_EQ(3.5f, pipeline->GetPipelineData()->GetDepthBiasClamp());
+  ASSERT_FLOAT_EQ(5.5f, pipeline->GetPipelineData()->GetDepthBiasSlopeFactor());
 }
 
 TEST_F(AmberScriptParserTest, DepthTestMissingValue) {
