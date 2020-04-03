@@ -42,6 +42,7 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
