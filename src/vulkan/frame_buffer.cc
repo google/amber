@@ -80,12 +80,15 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass) {
 
   if (depth_stencil_attachment_.buffer &&
       depth_stencil_attachment_.buffer->GetFormat()->IsFormatKnown()) {
+    VkImageAspectFlags aspect = 0;
+    if (depth_stencil_attachment_.buffer->GetFormat()->HasDepthComponent())
+      aspect |= VK_IMAGE_ASPECT_DEPTH_BIT;
+    if (depth_stencil_attachment_.buffer->GetFormat()->HasStencilComponent())
+      aspect |= VK_IMAGE_ASPECT_STENCIL_BIT;
+    assert(aspect != 0);
+
     depth_stencil_image_ = MakeUnique<TransferImage>(
-        device_, *depth_stencil_attachment_.buffer->GetFormat(),
-        static_cast<VkImageAspectFlags>(
-            depth_stencil_attachment_.buffer->GetFormat()->HasStencilComponent()
-                ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-                : VK_IMAGE_ASPECT_DEPTH_BIT),
+        device_, *depth_stencil_attachment_.buffer->GetFormat(), aspect,
         VK_IMAGE_TYPE_2D, width_, height_, depth_, 1u, 0u, 1u);
 
     Result r = depth_stencil_image_->Initialize(

@@ -110,7 +110,7 @@ Result TransferImage::Initialize(VkImageUsageFlags usage) {
     return r;
 
   if (aspect_ & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) &&
-      usage != VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+      !(usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)) {
     // Combined depth/stencil image used as a descriptor. Only one aspect can be
     // used for the image view.
     r = CreateVkImageView(VK_IMAGE_ASPECT_DEPTH_BIT);
