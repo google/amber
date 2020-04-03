@@ -18,6 +18,7 @@
 #include <sstream>
 
 #include "src/platform.h"
+#include "src/virtual_file_store.h"
 
 #if AMBER_PLATFORM_WINDOWS
 #pragma warning(push)
@@ -25,8 +26,6 @@
 #pragma warning(disable : 4003)
 #endif  // AMBER_PLATFORM_WINDOWS
 
-// clang-format off
-// The order here matters, so don't reformat.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreserved-id-macro"
 #pragma clang diagnostic ignored "-Wextra-semi"
@@ -39,21 +38,25 @@
 #pragma clang diagnostic ignored "-Wweak-vtables"
 #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #pragma clang diagnostic ignored "-Wundef"
+#pragma clang diagnostic ignored "-Wunused-function"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
 #endif  // __STDC_LIMIT_MACROS
 #ifndef __STDC_CONSTANT_MACROS
 #define __STDC_CONSTANT_MACROS
 #endif  // __STDC_CONSTANT_MACROS
+
+// clang-format off
+// The order here matters, so don't reformat.
 #include "dxc/Support/Global.h"
 #include "dxc/Support/HLSLOptions.h"
 #include "dxc/dxcapi.h"
-#pragma clang diagnostic pop
+#include "dxc/Support/microcom.h"
 // clang-format on
-
-#if AMBER_PLATFORM_WINDOWS
-#pragma warning(pop)
-#endif  // AMBER_PLATFORM_WINDOWS
 
 namespace amber {
 namespace dxchelper {
@@ -78,12 +81,60 @@ void ConvertIDxcBlobToUint32(IDxcBlob* blob,
   memcpy(binaryWords->data(), binaryStr.data(), binaryStr.size());
 }
 
+class IncludeHandler : public IDxcIncludeHandler {
+ public:
+  IncludeHandler(const VirtualFileStore* file_store,
+                 IDxcLibrary* dxc_lib,
+                 IDxcIncludeHandler* fallback)
+      : file_store_(file_store), dxc_lib_(dxc_lib), fallback_(fallback) {}
+
+  HRESULT STDMETHODCALLTYPE LoadSource(LPCWSTR pFilename,
+                                       IDxcBlob** ppIncludeSource) override {
+    std::wstring wide_path(pFilename);
+    std::string path = std::string(wide_path.begin(), wide_path.end());
+
+    std::string content;
+    Result r = file_store_->Get(path, &content);
+    if (r.IsSuccess()) {
+      IDxcBlobEncoding* source;
+      auto res = dxc_lib_->CreateBlobWithEncodingOnHeapCopy(
+          content.data(), static_cast<uint32_t>(content.size()), CP_UTF8,
+          &source);
+      if (res != S_OK) {
+        DxcCleanupThreadMalloc();
+        return res;
+      }
+      *ppIncludeSource = source;
+      return S_OK;
+    }
+
+    return fallback_->LoadSource(pFilename, ppIncludeSource);
+  }
+
+  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid,
+                                           void** ppvObject) override {
+    return DoBasicQueryInterface<IDxcIncludeHandler>(this, iid, ppvObject);
+  }
+
+ private:
+  const VirtualFileStore* const file_store_;
+  IDxcLibrary* const dxc_lib_;
+  IDxcIncludeHandler* const fallback_;
+};
+
+#pragma GCC diagnostic pop
+#pragma clang diagnostic pop
+#if AMBER_PLATFORM_WINDOWS
+#pragma warning(pop)
+#endif  // AMBER_PLATFORM_WINDOWS
+
 }  // namespace
 
 Result Compile(const std::string& src,
                const std::string& entry,
                const std::string& profile,
                const std::string& spv_env,
+               const VirtualFileStore* virtual_files,
                std::vector<uint32_t>* generated_binary) {
   if (hlsl::options::initHlslOptTable()) {
     DxcCleanupThreadMalloc();
@@ -105,11 +156,14 @@ Result Compile(const std::string& src,
     return Result("DXC compile failure: CreateBlobFromFile");
   }
 
-  IDxcIncludeHandler* include_handler;
-  if (dxc_lib->CreateIncludeHandler(&include_handler) < 0) {
+  IDxcIncludeHandler* fallback_include_handler;
+  if (dxc_lib->CreateIncludeHandler(&fallback_include_handler) < 0) {
     DxcCleanupThreadMalloc();
     return Result("DXC compile failure: CreateIncludeHandler");
   }
+
+  IDxcIncludeHandler* include_handler =
+      new IncludeHandler(virtual_files, dxc_lib, fallback_include_handler);
 
   IDxcCompiler* compiler;
   if (DxcCreateInstance(CLSID_DxcCompiler, __uuidof(IDxcCompiler),

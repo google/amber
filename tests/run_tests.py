@@ -99,6 +99,7 @@ OPENCL_CASES = [
 
 DXC_CASES = [
   "draw_triangle_list_hlsl.amber",
+  "relative_includes_hlsl.amber",
 ]
 
 SUPPRESSIONS_DAWN = [

@@ -220,6 +220,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParseStruct();
     } else if (tok == "SAMPLER") {
       r = ParseSampler();
+    } else if (tok == "VIRTUAL_FILE") {
+      r = ParseVirtualFile();
     } else {
       r = Result("unknown token: " + tok);
     }
@@ -395,19 +397,42 @@ Result Parser::ParseShaderBlock() {
 
   shader->SetFormat(format);
 
-  r = ValidateEndOfStatement("SHADER command");
-  if (!r.IsSuccess())
-    return r;
+  token = tokenizer_->PeekNextToken();
+  if (token->IsIdentifier() && token->AsString() == "VIRTUAL_FILE") {
+    tokenizer_->NextToken();  // Skip VIRTUAL_FILE
 
-  std::string data = tokenizer_->ExtractToNext("END");
-  if (data.empty())
-    return Result("SHADER must not be empty");
+    token = tokenizer_->NextToken();
+    if (!token->IsIdentifier() && !token->IsString())
+      return Result("expected virtual file path after VIRTUAL_FILE");
 
-  shader->SetData(data);
+    r = ValidateEndOfStatement("SHADER command");
+    if (!r.IsSuccess())
+      return r;
 
-  token = tokenizer_->NextToken();
-  if (!token->IsIdentifier() || token->AsString() != "END")
-    return Result("SHADER missing END command");
+    auto path = token->AsString();
+
+    std::string data;
+    r = script_->GetVirtualFile(path, &data);
+    if (!r.IsSuccess()) {
+      return r;
+    }
+
+    shader->SetData(data);
+  } else {
+    r = ValidateEndOfStatement("SHADER command");
+    if (!r.IsSuccess())
+      return r;
+
+    std::string data = tokenizer_->ExtractToNext("END");
+    if (data.empty())
+      return Result("SHADER must not be empty");
+
+    shader->SetData(data);
+
+    token = tokenizer_->NextToken();
+    if (!token->IsIdentifier() || token->AsString() != "END")
+      return Result("SHADER missing END command");
+  }
 
   r = script_->AddShader(std::move(shader));
   if (!r.IsSuccess())
@@ -3244,6 +3269,26 @@ Result Parser::ParseTolerances(std::vector<Probe::Tolerance>* tolerances) {
   }
 
   return {};
+}
+
+Result Parser::ParseVirtualFile() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsIdentifier() && !token->IsString())
+    return Result("invalid virtual file path");
+
+  auto path = token->AsString();
+
+  auto r = ValidateEndOfStatement("VIRTUAL_FILE command");
+  if (!r.IsSuccess())
+    return r;
+
+  auto data = tokenizer_->ExtractToNext("END");
+
+  token = tokenizer_->NextToken();
+  if (!token->IsIdentifier() || token->AsString() != "END")
+    return Result("VIRTUAL_FILE missing END command");
+
+  return script_->AddVirtualFile(path, data);
 }
 
 }  // namespace amberscript

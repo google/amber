@@ -68,7 +68,62 @@ set of data types.
 SET ENGINE_DATA {engine data variable} {value}*
 ```
 
+### Virtual File Store
+
+Each amber script contains a virtual file system that can store files of textual
+data. This lets you bundle multiple source files into a single, hermetic amber
+script file.
+
+Virtual files are declared using the `VIRTUAL_FILE` command:
+
+```groovy
+VIRTUAL_FILE {path}
+ {file-content}
+END
+```
+
+Paths must be unique.
+
+Shaders can directly reference these virtual files for their source. \
+HLSL shaders that `#include` other `.hlsl` files will first check the virtual
+file system, before falling back to the standard file system.
+
 ### Shaders
+
+Shader programs are declared using the `SHADER` command. \
+Shaders can be declared as `PASSTHROUGH`, with inlined source or using source
+from a `VIRTUAL_FILE`.
+
+Pass-through shader:
+
+```groovy
+# Creates a passthrough vertex shader. The shader passes the vec4 at input
+# location 0 through to the `gl_Position`.
+SHADER vertex {shader_name} PASSTHROUGH
+```
+
+Shader using inlined source:
+
+```groovy
+# Creates a shader of |shader_type| with the given |shader_name|. The shader
+# will be of |shader_format|. The shader source then follows and is terminated
+# with the |END| tag.
+SHADER {shader_type} {shader_name} {shader_format}
+{shader_source}
+END
+```
+
+Shader using source from `VIRTUAL_FILE`:
+
+```groovy
+# Creates a shader of |shader_type| with the given |shader_name|. The shader
+# will be of |shader_format|. The shader will use the virtual file with |path|.
+SHADER {shader_type} {shader_name} {shader_format} VIRTUAL_FILE {path}
+```
+
+`{shader_name}` is used to identify the shader to attach to `PIPELINE`s,
+
+`{shader_type}` and `{shader_format}` are described below:
 
 #### Shader Type
  * `vertex`
@@ -92,23 +147,10 @@ types, but in that case must only provide a single shader type in the module.
 
 #### Shader Format
  * `GLSL`  (with glslang)
- * `HLSL`  (with dxc or glslang if dxc disabled)  -- future
+ * `HLSL`  (with dxc or glslang if dxc disabled)
  * `SPIRV-ASM` (with spirv-as)
  * `SPIRV-HEX` (decoded straight to SPIR-V)
  * `OPENCL-C` (with clspv)
-
-```groovy
-# Creates a passthrough vertex shader. The shader passes the vec4 at input
-# location 0 through to the `gl_Position`.
-SHADER vertex {shader_name} PASSTHROUGH
-
-# Creates a shader of |shader_type| with the given |shader_name|. The shader
-# will be of |shader_format|. The shader should then be inlined before the
-# |END| tag.
-SHADER {shader_type} {shader_name} {shader_format}
-...
-END
-```
 
 ### Buffers
 
@@ -522,7 +564,7 @@ RUN {pipeline_name} \
 
 ```groovy
 # Run the given |pipeline_name| which must be a `graphics` pipeline. The
-# grid at |x|, |y|, |width|x|height|, |columns|x|rows| will be rendered. 
+# grid at |x|, |y|, |width|x|height|, |columns|x|rows| will be rendered.
 # Ignores VERTEX_DATA and INDEX_DATA on the given pipeline.
 # For columns, rows of (5, 4) a total of 5*4=20 rectangles will be drawn.
 RUN {pipeline_name} \

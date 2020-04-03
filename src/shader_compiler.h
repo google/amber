@@ -23,6 +23,7 @@
 #include "amber/result.h"
 #include "src/pipeline.h"
 #include "src/shader.h"
+#include "src/virtual_file_store.h"
 
 namespace amber {
 
@@ -30,7 +31,9 @@ namespace amber {
 class ShaderCompiler {
  public:
   ShaderCompiler();
-  ShaderCompiler(const std::string& env, bool disable_spirv_validation);
+  ShaderCompiler(const std::string& env,
+                 bool disable_spirv_validation,
+                 VirtualFileStore* virtual_files);
   ~ShaderCompiler();
 
   /// Returns a result code and a compilation of the given shader.
@@ -61,6 +64,7 @@ class ShaderCompiler {
 
   std::string spv_env_;
   bool disable_spirv_validation_ = false;
+  VirtualFileStore* virtual_files_ = nullptr;
 };
 
 // Parses the SPIR-V environment string, and returns the corresponding
