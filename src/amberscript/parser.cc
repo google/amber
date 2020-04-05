@@ -152,25 +152,47 @@ ImageDimension StrToImageDimension(const std::string& str) {
   return ImageDimension::kUnknown;
 }
 
-std::map<std::string, CompareOp> compare_ops = {
-    {"never", CompareOp::kNever},
-    {"less", CompareOp::kLess},
-    {"equal", CompareOp::kEqual},
-    {"less_or_equal", CompareOp::kLessOrEqual},
-    {"greater", CompareOp::kGreater},
-    {"not_equal", CompareOp::kNotEqual},
-    {"greater_or_equal", CompareOp::kGreaterOrEqual},
-    {"always", CompareOp::kAlways}};
+CompareOp StrToCompareOp(const std::string& str) {
+  if (str == "never")
+    return CompareOp::kNever;
+  if (str == "less")
+    return CompareOp::kLess;
+  if (str == "equal")
+    return CompareOp::kEqual;
+  if (str == "less_or_equal")
+    return CompareOp::kLessOrEqual;
+  if (str == "greater")
+    return CompareOp::kGreater;
+  if (str == "not_equal")
+    return CompareOp::kNotEqual;
+  if (str == "greater_or_equal")
+    return CompareOp::kGreaterOrEqual;
+  if (str == "always")
+    return CompareOp::kAlways;
 
-std::map<std::string, StencilOp> stencil_ops = {
-    {"keep", StencilOp::kKeep},
-    {"zero", StencilOp::kZero},
-    {"replace", StencilOp::kReplace},
-    {"increment_and_clamp", StencilOp::kIncrementAndClamp},
-    {"decrement_and_clamp", StencilOp::kDecrementAndClamp},
-    {"invert", StencilOp::kInvert},
-    {"increment_and_wrap", StencilOp::kIncrementAndWrap},
-    {"decrement_and_wrap", StencilOp::kDecrementAndWrap}};
+  return CompareOp::kUnknown;
+}
+
+StencilOp StrToStencilOp(const std::string& str) {
+  if (str == "keep")
+    return StencilOp::kKeep;
+  if (str == "zero")
+    return StencilOp::kZero;
+  if (str == "replace")
+    return StencilOp::kReplace;
+  if (str == "increment_and_clamp")
+    return StencilOp::kIncrementAndClamp;
+  if (str == "decrement_and_clamp")
+    return StencilOp::kDecrementAndClamp;
+  if (str == "invert")
+    return StencilOp::kInvert;
+  if (str == "increment_and_wrap")
+    return StencilOp::kIncrementAndWrap;
+  if (str == "decrement_and_wrap")
+    return StencilOp::kDecrementAndWrap;
+
+  return StencilOp::kUnknown;
+}
 
 }  // namespace
 
@@ -1177,9 +1199,9 @@ Result Parser::ParsePipelineDepth(Pipeline* pipeline) {
       if (!token->IsIdentifier())
         return Result("invalid value for COMPARE");
 
-      auto it = compare_ops.find(token->AsString());
-      if (it != compare_ops.end()) {
-        pipeline->GetPipelineData()->SetDepthCompareOp(it->second);
+      CompareOp compare_op = StrToCompareOp(token->AsString());
+      if (compare_op != CompareOp::kUnknown) {
+        pipeline->GetPipelineData()->SetDepthCompareOp(compare_op);
       } else {
         return Result("invalid value for COMPARE: " + token->AsString());
       }
@@ -1286,12 +1308,12 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
       if (!token->IsIdentifier())
         return Result("STENCIL invalid value for FAIL");
 
-      auto it = stencil_ops.find(token->AsString());
-      if (it != stencil_ops.end()) {
+      StencilOp stencil_op = StrToStencilOp(token->AsString());
+      if (stencil_op != StencilOp::kUnknown) {
         if (setFront)
-          pipeline->GetPipelineData()->SetFrontFailOp(it->second);
+          pipeline->GetPipelineData()->SetFrontFailOp(stencil_op);
         if (setBack)
-          pipeline->GetPipelineData()->SetBackFailOp(it->second);
+          pipeline->GetPipelineData()->SetBackFailOp(stencil_op);
       } else {
         return Result("STENCIL invalid value for FAIL: " + token->AsString());
       }
@@ -1301,12 +1323,12 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
       if (!token->IsIdentifier())
         return Result("STENCIL invalid value for PASS");
 
-      auto it = stencil_ops.find(token->AsString());
-      if (it != stencil_ops.end()) {
+      StencilOp stencil_op = StrToStencilOp(token->AsString());
+      if (stencil_op != StencilOp::kUnknown) {
         if (setFront)
-          pipeline->GetPipelineData()->SetFrontPassOp(it->second);
+          pipeline->GetPipelineData()->SetFrontPassOp(stencil_op);
         if (setBack)
-          pipeline->GetPipelineData()->SetBackPassOp(it->second);
+          pipeline->GetPipelineData()->SetBackPassOp(stencil_op);
       } else {
         return Result("STENCIL invalid value for PASS: " + token->AsString());
       }
@@ -1316,12 +1338,12 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
       if (!token->IsIdentifier())
         return Result("STENCIL invalid value for DEPTH_FAIL");
 
-      auto it = stencil_ops.find(token->AsString());
-      if (it != stencil_ops.end()) {
+      StencilOp stencil_op = StrToStencilOp(token->AsString());
+      if (stencil_op != StencilOp::kUnknown) {
         if (setFront)
-          pipeline->GetPipelineData()->SetFrontDepthFailOp(it->second);
+          pipeline->GetPipelineData()->SetFrontDepthFailOp(stencil_op);
         if (setBack)
-          pipeline->GetPipelineData()->SetBackDepthFailOp(it->second);
+          pipeline->GetPipelineData()->SetBackDepthFailOp(stencil_op);
       } else {
         return Result("STENCIL invalid value for DEPTH_FAIL: " +
                       token->AsString());
@@ -1332,12 +1354,12 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
       if (!token->IsIdentifier())
         return Result("STENCIL invalid value for COMPARE");
 
-      auto it = compare_ops.find(token->AsString());
-      if (it != compare_ops.end()) {
+      CompareOp compare_op = StrToCompareOp(token->AsString());
+      if (compare_op != CompareOp::kUnknown) {
         if (setFront)
-          pipeline->GetPipelineData()->SetFrontCompareOp(it->second);
+          pipeline->GetPipelineData()->SetFrontCompareOp(compare_op);
         if (setBack)
-          pipeline->GetPipelineData()->SetBackCompareOp(it->second);
+          pipeline->GetPipelineData()->SetBackCompareOp(compare_op);
       } else {
         return Result("STENCIL invalid value for COMPARE: " +
                       token->AsString());

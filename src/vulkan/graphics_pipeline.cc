@@ -90,9 +90,10 @@ VkStencilOp ToVkStencilOp(StencilOp op) {
       return VK_STENCIL_OP_INCREMENT_AND_WRAP;
     case StencilOp::kDecrementAndWrap:
       return VK_STENCIL_OP_DECREMENT_AND_WRAP;
+    default:
+      assert(false && "Vulkan::Unknown StencilOp");
+      return VK_STENCIL_OP_KEEP;
   }
-  assert(false && "Vulkan::Unknown StencilOp");
-  return VK_STENCIL_OP_KEEP;
 }
 
 VkCompareOp ToVkCompareOp(CompareOp op) {
@@ -113,9 +114,10 @@ VkCompareOp ToVkCompareOp(CompareOp op) {
       return VK_COMPARE_OP_GREATER_OR_EQUAL;
     case CompareOp::kAlways:
       return VK_COMPARE_OP_ALWAYS;
+    default:
+      assert(false && "Vulkan::Unknown CompareOp");
+      return VK_COMPARE_OP_NEVER;
   }
-  assert(false && "Vulkan::Unknown CompareOp");
-  return VK_COMPARE_OP_NEVER;
 }
 
 VkPolygonMode ToVkPolygonMode(PolygonMode mode) {
