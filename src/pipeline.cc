@@ -367,6 +367,28 @@ Result Pipeline::SetPushConstantBuffer(Buffer* buf) {
   return {};
 }
 
+Result Pipeline::CreatePushConstantBuffer() {
+  if (push_constant_buffer_.buffer != nullptr)
+    return Result("can only bind one push constant buffer in a PIPELINE");
+
+  TypeParser parser;
+  auto type = parser.Parse("R8_UINT");
+  auto fmt = MakeUnique<Format>(type.get());
+
+  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
+  buf->SetName(kGeneratedPushConstantBuffer);
+  buf->SetFormat(fmt.get());
+
+  push_constant_buffer_.buffer = buf.get();
+  push_constant_buffer_.type = BufferType::kPushConstant;
+
+  formats_.push_back(std::move(fmt));
+  types_.push_back(std::move(type));
+  opencl_push_constants_ = std::move(buf);
+
+  return {};
+}
+
 std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() {
   TypeParser parser;
   auto type = parser.Parse(kDefaultColorBufferFormat);
@@ -664,7 +686,9 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
     for (const auto& entry : iter->second) {
       if (entry.kind != Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD &&
           entry.kind !=
-              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO) {
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO &&
+          entry.kind != Pipeline::ShaderInfo::DescriptorMapEntry::Kind::
+                            POD_PUSHCONSTANT) {
         continue;
       }
 
@@ -680,81 +704,91 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
       }
     }
 
-    if (descriptor_set == std::numeric_limits<uint32_t>::max() ||
-        binding == std::numeric_limits<uint32_t>::max()) {
-      std::string message =
-          "could not find descriptor map entry for SET command: kernel " +
-          shader_info.GetEntryPoint();
-      if (uses_name) {
-        message += ", name " + arg_info.name;
-      } else {
-        message += ", number " + std::to_string(arg_info.ordinal);
-      }
-      return Result(message);
-    }
-
-    auto buf_iter = opencl_pod_buffer_map_.lower_bound(
-        std::make_pair(descriptor_set, binding));
     Buffer* buffer = nullptr;
-    if (buf_iter == opencl_pod_buffer_map_.end() ||
-        buf_iter->first.first != descriptor_set ||
-        buf_iter->first.second != binding) {
-      // Ensure no buffer was previously bound for this descriptor set and
-      // binding pair.
-      for (const auto& buf_info : GetBuffers()) {
-        if (buf_info.descriptor_set == descriptor_set &&
-            buf_info.binding == binding) {
-          return Result("previously bound buffer " +
-                        buf_info.buffer->GetName() +
-                        " to PoD args at descriptor set " +
-                        std::to_string(descriptor_set) + " binding " +
-                        std::to_string(binding));
-        }
+    if (kind ==
+        Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_PUSHCONSTANT) {
+      if (GetPushConstantBuffer().buffer == nullptr) {
+        auto r = CreatePushConstantBuffer();
+        if (!r.IsSuccess())
+          return r;
       }
-
-      // Add a new buffer for this descriptor set and binding.
-      opencl_pod_buffers_.push_back(MakeUnique<Buffer>());
-      buffer = opencl_pod_buffers_.back().get();
-      auto buffer_type =
-          kind == Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD
-              ? BufferType::kStorage
-              : BufferType::kUniform;
-
-      // Use an 8-bit type because all the data in the descriptor map is
-      // byte-based and it simplifies the logic for sizing below.
-      TypeParser parser;
-      auto type = parser.Parse("R8_UINT");
-      auto fmt = MakeUnique<Format>(type.get());
-      buffer->SetFormat(fmt.get());
-      formats_.push_back(std::move(fmt));
-      types_.push_back(std::move(type));
-
-      buffer->SetName(GetName() + "_pod_buffer_" +
-                      std::to_string(descriptor_set) + "_" +
-                      std::to_string(binding));
-      opencl_pod_buffer_map_.insert(
-          buf_iter,
-          std::make_pair(std::make_pair(descriptor_set, binding), buffer));
-      AddBuffer(buffer, buffer_type, descriptor_set, binding, 0);
+      buffer = GetPushConstantBuffer().buffer;
     } else {
-      buffer = buf_iter->second;
-    }
-
-    // Resize if necessary.
-    if (buffer->ValueCount() < offset + arg_size) {
-      buffer->SetSizeInElements(offset + arg_size);
-    }
-
-    // Check the data size.
-    if (arg_size != arg_info.fmt->SizeInBytes()) {
-      std::string message = "SET command uses incorrect data size: kernel " +
-                            shader_info.GetEntryPoint();
-      if (uses_name) {
-        message += ", name " + arg_info.name;
-      } else {
-        message += ", number " + std::to_string(arg_info.ordinal);
+      if (descriptor_set == std::numeric_limits<uint32_t>::max() ||
+          binding == std::numeric_limits<uint32_t>::max()) {
+        std::string message =
+            "could not find descriptor map entry for SET command: kernel " +
+            shader_info.GetEntryPoint();
+        if (uses_name) {
+          message += ", name " + arg_info.name;
+        } else {
+          message += ", number " + std::to_string(arg_info.ordinal);
+        }
+        return Result(message);
       }
-      return Result(message);
+
+      auto buf_iter = opencl_pod_buffer_map_.lower_bound(
+          std::make_pair(descriptor_set, binding));
+      if (buf_iter == opencl_pod_buffer_map_.end() ||
+          buf_iter->first.first != descriptor_set ||
+          buf_iter->first.second != binding) {
+        // Ensure no buffer was previously bound for this descriptor set and
+        // binding pair.
+        for (const auto& buf_info : GetBuffers()) {
+          if (buf_info.descriptor_set == descriptor_set &&
+              buf_info.binding == binding) {
+            return Result("previously bound buffer " +
+                          buf_info.buffer->GetName() +
+                          " to PoD args at descriptor set " +
+                          std::to_string(descriptor_set) + " binding " +
+                          std::to_string(binding));
+          }
+        }
+
+        // Add a new buffer for this descriptor set and binding.
+        opencl_pod_buffers_.push_back(MakeUnique<Buffer>());
+        buffer = opencl_pod_buffers_.back().get();
+        auto buffer_type =
+            kind == Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD
+                ? BufferType::kStorage
+                : BufferType::kUniform;
+
+        // Use an 8-bit type because all the data in the descriptor map is
+        // byte-based and it simplifies the logic for sizing below.
+        TypeParser parser;
+        auto type = parser.Parse("R8_UINT");
+        auto fmt = MakeUnique<Format>(type.get());
+        buffer->SetFormat(fmt.get());
+        formats_.push_back(std::move(fmt));
+        types_.push_back(std::move(type));
+
+        buffer->SetName(GetName() + "_pod_buffer_" +
+                        std::to_string(descriptor_set) + "_" +
+                        std::to_string(binding));
+        opencl_pod_buffer_map_.insert(
+            buf_iter,
+            std::make_pair(std::make_pair(descriptor_set, binding), buffer));
+        AddBuffer(buffer, buffer_type, descriptor_set, binding, 0);
+      } else {
+        buffer = buf_iter->second;
+      }
+
+      // Resize if necessary.
+      if (buffer->ValueCount() < offset + arg_size) {
+        buffer->SetSizeInElements(offset + arg_size);
+      }
+
+      // Check the data size.
+      if (arg_size != arg_info.fmt->SizeInBytes()) {
+        std::string message = "SET command uses incorrect data size: kernel " +
+                              shader_info.GetEntryPoint();
+        if (uses_name) {
+          message += ", name " + arg_info.name;
+        } else {
+          message += ", number " + std::to_string(arg_info.ordinal);
+        }
+        return Result(message);
+      }
     }
 
     // Convert the argument value into bytes. Currently, only scalar arguments
@@ -864,17 +898,23 @@ Result Pipeline::GenerateOpenCLPushConstants() {
   if (shader_info.GetPushConstants().empty())
     return {};
 
+  Result r = CreatePushConstantBuffer();
+  if (!r.IsSuccess())
+    return r;
+
+  auto* buf = GetPushConstantBuffer().buffer;
+  assert(buf);
+
   // Determine size and contents of the push constant buffer.
-  std::vector<uint32_t> bytes;
   for (const auto& pc : shader_info.GetPushConstants()) {
     assert(pc.size % sizeof(uint32_t) == 0);
     assert(pc.offset % sizeof(uint32_t) == 0);
-    uint32_t elements = (pc.offset + pc.size) / sizeof(uint32_t);
-    if (elements > bytes.size()) {
-      bytes.resize(elements);
-    }
 
-    uint32_t base = pc.offset / sizeof(uint32_t);
+    if (buf->GetSizeInBytes() < pc.offset + pc.size)
+      buf->SetSizeInBytes(pc.offset + pc.size);
+
+    std::vector<uint32_t> bytes(pc.size / sizeof(uint32_t));
+    uint32_t base = 0;
     switch (pc.type) {
       case Pipeline::ShaderInfo::PushConstant::PushConstantType::kDimensions:
         // All compute kernel launches are 3D.
@@ -887,27 +927,9 @@ Result Pipeline::GenerateOpenCLPushConstants() {
         bytes[base + 2] = 0;
         break;
     }
+    memcpy(buf->ValuePtr()->data() + pc.offset, bytes.data(),
+           bytes.size() * sizeof(uint32_t));
   }
-
-  TypeParser parser;
-  auto type = parser.Parse("R8_UINT");
-  auto fmt = MakeUnique<Format>(type.get());
-
-  // Create buffer containing push constant data.
-  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
-  buf->SetName(kGeneratedPushConstantBuffer);
-  buf->SetFormat(fmt.get());
-  buf->SetSizeInBytes(static_cast<uint32_t>(bytes.size() * sizeof(uint32_t)));
-  std::memcpy(buf->ValuePtr()->data(), bytes.data(),
-              bytes.size() * sizeof(uint32_t));
-
-  Result r = SetPushConstantBuffer(buf.get());
-  if (!r.IsSuccess())
-    return r;
-
-  formats_.push_back(std::move(fmt));
-  types_.push_back(std::move(type));
-  opencl_push_constants_ = std::move(buf);
 
   return {};
 }
