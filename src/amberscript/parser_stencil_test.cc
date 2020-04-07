@@ -37,20 +37,20 @@ PIPELINE graphics my_pipeline
 
   STENCIL front
     TEST on
-    FAIL increment_and_clamp
-    PASS invert
-    DEPTH_FAIL keep
-    COMPARE equal
+    FAIL_OP increment_and_clamp
+    PASS_OP invert
+    DEPTH_FAIL_OP keep
+    COMPARE_OP equal
     COMPARE_MASK 1
     WRITE_MASK 2
     REFERENCE 3
   END
   STENCIL back
     TEST on
-    FAIL zero
-    PASS increment_and_wrap
-    DEPTH_FAIL replace
-    COMPARE greater
+    FAIL_OP zero
+    PASS_OP increment_and_wrap
+    DEPTH_FAIL_OP replace
+    COMPARE_OP greater
     COMPARE_MASK 4
     WRITE_MASK 5
     REFERENCE 6
@@ -213,14 +213,14 @@ PIPELINE graphics my_pipeline
 
   STENCIL front
     TEST on
-    FAIL
+    FAIL_OP
   END
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("18: STENCIL invalid value for FAIL", r.Error());
+  EXPECT_EQ("18: STENCIL invalid value for FAIL_OP", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, StencilFailInvalidValue) {
@@ -240,14 +240,14 @@ PIPELINE graphics my_pipeline
 
   STENCIL front
     TEST on
-    FAIL foo
+    FAIL_OP foo
   END
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("17: STENCIL invalid value for FAIL: foo", r.Error());
+  EXPECT_EQ("17: STENCIL invalid value for FAIL_OP: foo", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, StencilPassMissingValue) {
@@ -267,14 +267,14 @@ PIPELINE graphics my_pipeline
 
   STENCIL front
     TEST on
-    PASS
+    PASS_OP
   END
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("18: STENCIL invalid value for PASS", r.Error());
+  EXPECT_EQ("18: STENCIL invalid value for PASS_OP", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, StencilPassInvalidValue) {
@@ -294,14 +294,14 @@ PIPELINE graphics my_pipeline
 
   STENCIL front
     TEST on
-    PASS foo
+    PASS_OP foo
   END
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("17: STENCIL invalid value for PASS: foo", r.Error());
+  EXPECT_EQ("17: STENCIL invalid value for PASS_OP: foo", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, StencilDepthFailMissingValue) {
@@ -321,14 +321,14 @@ PIPELINE graphics my_pipeline
 
   STENCIL front
     TEST on
-    DEPTH_FAIL
+    DEPTH_FAIL_OP
   END
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("18: STENCIL invalid value for DEPTH_FAIL", r.Error());
+  EXPECT_EQ("18: STENCIL invalid value for DEPTH_FAIL_OP", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, StencilDepthFailInvalidValue) {
@@ -348,14 +348,14 @@ PIPELINE graphics my_pipeline
 
   STENCIL front
     TEST on
-    DEPTH_FAIL foo
+    DEPTH_FAIL_OP foo
   END
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("17: STENCIL invalid value for DEPTH_FAIL: foo", r.Error());
+  EXPECT_EQ("17: STENCIL invalid value for DEPTH_FAIL_OP: foo", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, StencilCompareMissingValue) {
@@ -375,14 +375,14 @@ PIPELINE graphics my_pipeline
 
   STENCIL front
     TEST on
-    COMPARE
+    COMPARE_OP
   END
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("18: STENCIL invalid value for COMPARE", r.Error());
+  EXPECT_EQ("18: STENCIL invalid value for COMPARE_OP", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, StencilCompareInvalidValue) {
@@ -402,14 +402,14 @@ PIPELINE graphics my_pipeline
 
   STENCIL front
     TEST on
-    COMPARE foo
+    COMPARE_OP foo
   END
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("17: STENCIL invalid value for COMPARE: foo", r.Error());
+  EXPECT_EQ("17: STENCIL invalid value for COMPARE_OP: foo", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, StencilCompareMaskMissingValue) {

@@ -38,7 +38,7 @@ PIPELINE graphics my_pipeline
   DEPTH
     TEST on
     WRITE on
-    COMPARE less_or_equal
+    COMPARE_OP less_or_equal
     CLAMP on
     BOUNDS min 1.5 max 6.7
     BIAS constant 2.1 clamp 3.5 slope 5.5
@@ -246,14 +246,14 @@ PIPELINE graphics my_pipeline
 
   DEPTH
     TEST on
-    COMPARE
+    COMPARE_OP
   END
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("18: invalid value for COMPARE", r.Error());
+  EXPECT_EQ("18: invalid value for COMPARE_OP", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, DepthCompareInvalidValue) {
@@ -273,14 +273,14 @@ PIPELINE graphics my_pipeline
 
   DEPTH
     TEST on
-    COMPARE foo
+    COMPARE_OP foo
   END
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("17: invalid value for COMPARE: foo", r.Error());
+  EXPECT_EQ("17: invalid value for COMPARE_OP: foo", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, DepthBoundsExpectingMin) {

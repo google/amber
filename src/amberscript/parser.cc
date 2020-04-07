@@ -1193,17 +1193,17 @@ Result Parser::ParsePipelineDepth(Pipeline* pipeline) {
         pipeline->GetPipelineData()->SetEnableDepthWrite(false);
       else
         return Result("invalid value for WRITE: " + token->AsString());
-    } else if (token->AsString() == "COMPARE") {
+    } else if (token->AsString() == "COMPARE_OP") {
       token = tokenizer_->NextToken();
 
       if (!token->IsIdentifier())
-        return Result("invalid value for COMPARE");
+        return Result("invalid value for COMPARE_OP");
 
       CompareOp compare_op = StrToCompareOp(token->AsString());
       if (compare_op != CompareOp::kUnknown) {
         pipeline->GetPipelineData()->SetDepthCompareOp(compare_op);
       } else {
-        return Result("invalid value for COMPARE: " + token->AsString());
+        return Result("invalid value for COMPARE_OP: " + token->AsString());
       }
     } else if (token->AsString() == "BOUNDS") {
       token = tokenizer_->NextToken();
@@ -1302,11 +1302,11 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
         pipeline->GetPipelineData()->SetEnableStencilTest(false);
       else
         return Result("STENCIL invalid value for TEST: " + token->AsString());
-    } else if (token->AsString() == "FAIL") {
+    } else if (token->AsString() == "FAIL_OP") {
       token = tokenizer_->NextToken();
 
       if (!token->IsIdentifier())
-        return Result("STENCIL invalid value for FAIL");
+        return Result("STENCIL invalid value for FAIL_OP");
 
       StencilOp stencil_op = StrToStencilOp(token->AsString());
       if (stencil_op != StencilOp::kUnknown) {
@@ -1315,13 +1315,14 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
         if (setBack)
           pipeline->GetPipelineData()->SetBackFailOp(stencil_op);
       } else {
-        return Result("STENCIL invalid value for FAIL: " + token->AsString());
+        return Result("STENCIL invalid value for FAIL_OP: " +
+                      token->AsString());
       }
-    } else if (token->AsString() == "PASS") {
+    } else if (token->AsString() == "PASS_OP") {
       token = tokenizer_->NextToken();
 
       if (!token->IsIdentifier())
-        return Result("STENCIL invalid value for PASS");
+        return Result("STENCIL invalid value for PASS_OP");
 
       StencilOp stencil_op = StrToStencilOp(token->AsString());
       if (stencil_op != StencilOp::kUnknown) {
@@ -1330,13 +1331,14 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
         if (setBack)
           pipeline->GetPipelineData()->SetBackPassOp(stencil_op);
       } else {
-        return Result("STENCIL invalid value for PASS: " + token->AsString());
+        return Result("STENCIL invalid value for PASS_OP: " +
+                      token->AsString());
       }
-    } else if (token->AsString() == "DEPTH_FAIL") {
+    } else if (token->AsString() == "DEPTH_FAIL_OP") {
       token = tokenizer_->NextToken();
 
       if (!token->IsIdentifier())
-        return Result("STENCIL invalid value for DEPTH_FAIL");
+        return Result("STENCIL invalid value for DEPTH_FAIL_OP");
 
       StencilOp stencil_op = StrToStencilOp(token->AsString());
       if (stencil_op != StencilOp::kUnknown) {
@@ -1345,14 +1347,14 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
         if (setBack)
           pipeline->GetPipelineData()->SetBackDepthFailOp(stencil_op);
       } else {
-        return Result("STENCIL invalid value for DEPTH_FAIL: " +
+        return Result("STENCIL invalid value for DEPTH_FAIL_OP: " +
                       token->AsString());
       }
-    } else if (token->AsString() == "COMPARE") {
+    } else if (token->AsString() == "COMPARE_OP") {
       token = tokenizer_->NextToken();
 
       if (!token->IsIdentifier())
-        return Result("STENCIL invalid value for COMPARE");
+        return Result("STENCIL invalid value for COMPARE_OP");
 
       CompareOp compare_op = StrToCompareOp(token->AsString());
       if (compare_op != CompareOp::kUnknown) {
@@ -1361,7 +1363,7 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
         if (setBack)
           pipeline->GetPipelineData()->SetBackCompareOp(compare_op);
       } else {
-        return Result("STENCIL invalid value for COMPARE: " +
+        return Result("STENCIL invalid value for COMPARE_OP: " +
                       token->AsString());
       }
     } else if (token->AsString() == "COMPARE_MASK") {

@@ -63,10 +63,10 @@ PIPELINE graphics pipeline1
 
   STENCIL front_and_back
     TEST on
-    FAIL replace
-    PASS replace
-    DEPTH_FAIL keep
-    COMPARE always
+    FAIL_OP replace
+    PASS_OP replace
+    DEPTH_FAIL_OP keep
+    COMPARE_OP always
     COMPARE_MASK 255
     WRITE_MASK 255
     REFERENCE 32
@@ -78,10 +78,10 @@ DERIVE_PIPELINE pipeline2 FROM pipeline1
 
   STENCIL front_and_back
     TEST on
-    FAIL increment_and_clamp
-    PASS invert
-    DEPTH_FAIL keep
-    COMPARE equal
+    FAIL_OP increment_and_clamp
+    PASS_OP invert
+    DEPTH_FAIL_OP keep
+    COMPARE_OP equal
     COMPARE_MASK 255
     WRITE_MASK 255
     REFERENCE 32
@@ -93,10 +93,10 @@ DERIVE_PIPELINE pipeline3 FROM pipeline1
 
   STENCIL front_and_back
     TEST on
-    FAIL keep
-    PASS keep
-    DEPTH_FAIL keep
-    COMPARE equal
+    FAIL_OP keep
+    PASS_OP keep
+    DEPTH_FAIL_OP keep
+    COMPARE_OP equal
     COMPARE_MASK 255
     WRITE_MASK 255
     REFERENCE 32
@@ -108,10 +108,10 @@ DERIVE_PIPELINE pipeline4 FROM pipeline1
 
   STENCIL front_and_back
     TEST on
-    FAIL keep
-    PASS keep
-    DEPTH_FAIL keep
-    COMPARE equal
+    FAIL_OP keep
+    PASS_OP keep
+    DEPTH_FAIL_OP keep
+    COMPARE_OP equal
     COMPARE_MASK 255
     WRITE_MASK 255
     REFERENCE 1
@@ -123,10 +123,10 @@ DERIVE_PIPELINE pipeline5 FROM pipeline1
 
   STENCIL front_and_back
     TEST on
-    FAIL keep
-    PASS keep
-    DEPTH_FAIL keep
-    COMPARE equal
+    FAIL_OP keep
+    PASS_OP keep
+    DEPTH_FAIL_OP keep
+    COMPARE_OP equal
     COMPARE_MASK 255
     WRITE_MASK 255
     REFERENCE 223
