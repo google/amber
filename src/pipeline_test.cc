@@ -869,8 +869,8 @@ TEST_F(PipelineTest, OpenCLPodPushConstants) {
   Pipeline::ShaderInfo::DescriptorMapEntry entry1;
   entry1.kind =
       Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_PUSHCONSTANT;
-  entry1.descriptor_set = -1;
-  entry1.binding = -1;
+  entry1.descriptor_set = static_cast<uint32_t>(-1);
+  entry1.binding = static_cast<uint32_t>(-1);
   entry1.arg_name = "arg_a";
   entry1.arg_ordinal = 0;
   entry1.pod_offset = 0;
@@ -880,8 +880,8 @@ TEST_F(PipelineTest, OpenCLPodPushConstants) {
   Pipeline::ShaderInfo::DescriptorMapEntry entry2;
   entry2.kind =
       Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_PUSHCONSTANT;
-  entry2.descriptor_set = -1;
-  entry2.binding = -1;
+  entry2.descriptor_set = static_cast<uint32_t>(-1);
+  entry2.binding = static_cast<uint32_t>(-1);
   entry2.arg_name = "arg_b";
   entry2.arg_ordinal = 1;
   entry2.pod_offset = 4;
@@ -891,8 +891,8 @@ TEST_F(PipelineTest, OpenCLPodPushConstants) {
   Pipeline::ShaderInfo::DescriptorMapEntry entry3;
   entry3.kind =
       Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_PUSHCONSTANT;
-  entry3.descriptor_set = -1;
-  entry3.binding = -1;
+  entry3.descriptor_set = static_cast<uint32_t>(-1);
+  entry3.binding = static_cast<uint32_t>(-1);
   entry3.arg_name = "arg_c";
   entry3.arg_ordinal = 2;
   entry3.pod_offset = 8;
