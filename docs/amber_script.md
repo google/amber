@@ -385,7 +385,7 @@ The following commands are all specified within the `PIPELINE` command.
   DEPTH
     TEST {test_enable}
     WRITE {write_enable}
-    COMPARE {compare_op}
+    COMPARE_OP {compare_op}
     CLAMP {clamp_enable}
     BOUNDS min {bound_min} max {bounds_max}
     BIAS constant {bias_constant} clamp {bias_clamp} slope {bias_slope}
@@ -409,10 +409,10 @@ The following commands are all specified within the `PIPELINE` command.
   # and |reference| are 8bit unsigned integer values (range 0..255).
   STENCIL {face}
     TEST {test_enable}
-    FAIL {fail_op}
-    PASS {pass_op}
-    DEPTH_FAIL {depth_fail_op}
-    COMPARE {compare_op}
+    FAIL_OP {fail_op}
+    PASS_OP {pass_op}
+    DEPTH_FAIL_OP {depth_fail_op}
+    COMPARE_OP {compare_op}
     COMPARE_MASK {compare_mask}
     WRITE_MASK {write_mask}
     REFERENCE {reference}
