@@ -107,7 +107,8 @@ Result Executor::Execute(Engine* engine,
       data->push_back(v.AsUint8());
     }
 
-    buf->SetElementCount(data->size() / buf->GetFormat()->SizeInBytes());
+    buf->SetElementCount(static_cast<uint32_t>(data->size()) /
+                         buf->GetFormat()->SizeInBytes());
     buf->SetWidth(info.width);
     buf->SetHeight(info.height);
   }
