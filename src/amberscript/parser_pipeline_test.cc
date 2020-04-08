@@ -279,13 +279,13 @@ END)";
   const auto& pipelines = script->GetPipelines();
   ASSERT_EQ(4U, pipelines.size());
 
-  auto mode0 = pipelines[0]->GetPolygonMode();
+  auto mode0 = pipelines[0]->GetPipelineData()->GetPolygonMode();
   ASSERT_EQ(mode0, PolygonMode::kFill);
-  auto mode1 = pipelines[1]->GetPolygonMode();
+  auto mode1 = pipelines[1]->GetPipelineData()->GetPolygonMode();
   ASSERT_EQ(mode1, PolygonMode::kFill);
-  auto mode2 = pipelines[2]->GetPolygonMode();
+  auto mode2 = pipelines[2]->GetPipelineData()->GetPolygonMode();
   ASSERT_EQ(mode2, PolygonMode::kLine);
-  auto mode3 = pipelines[3]->GetPolygonMode();
+  auto mode3 = pipelines[3]->GetPipelineData()->GetPolygonMode();
   ASSERT_EQ(mode3, PolygonMode::kPoint);
 }
 

@@ -25,6 +25,7 @@
 #include "amber/result.h"
 #include "src/buffer.h"
 #include "src/command_data.h"
+#include "src/pipeline_data.h"
 #include "src/sampler.h"
 #include "src/shader.h"
 
@@ -245,11 +246,17 @@ class Pipeline {
   /// something goes wrong.
   Result GetLocationForColorAttachment(Buffer* buf, uint32_t* loc) const;
 
-  /// Sets |buf| as the depth buffer for this pipeline.
-  Result SetDepthBuffer(Buffer* buf);
-  /// Returns information on the depth buffer bound to the pipeline. If no
-  /// depth buffer is bound the |BufferInfo::buffer| parameter will be nullptr.
-  const BufferInfo& GetDepthBuffer() const { return depth_buffer_; }
+  /// Sets |buf| as the depth/stencil buffer for this pipeline.
+  Result SetDepthStencilBuffer(Buffer* buf);
+  /// Returns information on the depth/stencil buffer bound to the pipeline. If
+  /// no depth buffer is bound the |BufferInfo::buffer| parameter will be
+  /// nullptr.
+  const BufferInfo& GetDepthStencilBuffer() const {
+    return depth_stencil_buffer_;
+  }
+
+  /// Returns pipeline data.
+  PipelineData* GetPipelineData() { return &pipeline_data_; }
 
   /// Returns information on all vertex buffers bound to the pipeline.
   const std::vector<BufferInfo>& GetVertexBuffers() const {
@@ -306,16 +313,13 @@ class Pipeline {
     return push_constant_buffer_;
   }
 
-  Result SetPolygonMode(PolygonMode mode);
-  PolygonMode GetPolygonMode() const { return polygon_mode_; }
-
   /// Validates that the pipeline has been created correctly.
   Result Validate() const;
 
   /// Generates a default color attachment in B8G8R8A8_UNORM.
   std::unique_ptr<Buffer> GenerateDefaultColorAttachmentBuffer();
-  /// Generates a default depth attachment in D32_SFLOAT_S8_UINT format.
-  std::unique_ptr<Buffer> GenerateDefaultDepthAttachmentBuffer();
+  /// Generates a default depth/stencil attachment in D32_SFLOAT_S8_UINT format.
+  std::unique_ptr<Buffer> GenerateDefaultDepthStencilAttachmentBuffer();
 
   /// Information on values set for OpenCL-C plain-old-data args.
   struct ArgSetInfo {
@@ -359,11 +363,10 @@ class Pipeline {
   std::vector<std::unique_ptr<type::Type>> types_;
   std::vector<SamplerInfo> samplers_;
   std::vector<std::unique_ptr<Format>> formats_;
-  BufferInfo depth_buffer_;
+  BufferInfo depth_stencil_buffer_;
   BufferInfo push_constant_buffer_;
   Buffer* index_buffer_ = nullptr;
-  PolygonMode polygon_mode_ = PolygonMode::kFill;
-
+  PipelineData pipeline_data_;
   uint32_t fb_width_ = 250;
   uint32_t fb_height_ = 250;
 
