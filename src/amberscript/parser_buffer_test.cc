@@ -1092,5 +1092,30 @@ TEST_F(AmberScriptParserTest, BufferDataFile) {
   EXPECT_EQ("foo.png", buffers[0]->GetDataFile());
 }
 
+TEST_F(AmberScriptParserTest, BufferSsboMissingDataFile) {
+  std::string in = "BUFFER my_buffer DATA_TYPE float SIZE 10 FILE";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+
+  EXPECT_EQ("1: invalid value for FILE", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BufferSsboDataFile) {
+  std::string in = "BUFFER my_buffer DATA_TYPE int32 SIZE 10 FILE data.bin";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("data.bin", buffers[0]->GetDataFile());
+}
+
 }  // namespace amberscript
 }  // namespace amber

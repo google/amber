@@ -1516,6 +1516,16 @@ Result Parser::ParseBufferInitializerSize(Buffer* buffer) {
     return ParseBufferInitializerFill(buffer, size_in_items);
   if (token->AsString() == "SERIES_FROM")
     return ParseBufferInitializerSeries(buffer, size_in_items);
+  if (token->AsString() == "FILE") {
+    token = tokenizer_->NextToken();
+
+    if (!token->IsIdentifier())
+      return Result("invalid value for FILE");
+
+    buffer->SetDataFile(token->AsString());
+
+    return {};
+  }
 
   return Result("invalid BUFFER initializer provided");
 }

@@ -99,7 +99,15 @@ Result Executor::Execute(Engine* engine,
     if (!r.IsSuccess())
       return r;
 
-    buf->SetData(info.values);
+    std::vector<uint8_t>* data = buf->ValuePtr();
+
+    data->clear();
+    data->reserve(info.values.size());
+    for (auto v : info.values) {
+      data->push_back(v.AsUint8());
+    }
+
+    buf->SetElementCount(data->size() / buf->GetFormat()->SizeInBytes());
     buf->SetWidth(info.width);
     buf->SetHeight(info.height);
   }

@@ -193,6 +193,11 @@ BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
 BUFFER {name} DATA_TYPE {type} {STD140 | STD430} WIDTH {w} HEIGHT {h} \
   {initializer}
 
+# Defines a buffer which is filled with binary data from a file specified
+# by `FILE`.
+BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
+    FILE {file_name}
+
 # Creates a buffer which will store the given `FORMAT` of data. These
 # buffers are used as image and depth buffers in the `PIPELINE` commands.
 # The buffer will be sized based on the `RENDER_SIZE` of the `PIPELINE`.

@@ -254,7 +254,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
   return true;
 }
 
-std::string ReadFile(const std::string& input_file) {
+std::vector<char> ReadFile(const std::string& input_file) {
   FILE* file = nullptr;
 #if defined(_MSC_VER)
   fopen_s(&file, input_file.c_str(), "rb");
@@ -287,7 +287,7 @@ std::string ReadFile(const std::string& input_file) {
     return {};
   }
 
-  return std::string(data.begin(), data.end());
+  return data;
 }
 
 class SampleDelegate : public amber::Delegate {
@@ -337,9 +337,21 @@ class SampleDelegate : public amber::Delegate {
       return r;
 #endif  // AMBER_ENABLE_LODEPNG
 
-    // TODO(asuonpaa): Try to load a binary format.
+    // Try to load a binary format.
+    auto data = ReadFile(path_ + file_name);
+    if (data.empty())
+      return amber::Result("Failed to load buffer data " + file_name);
 
-    return amber::Result("Failed to load buffer data " + file_name);
+    for (auto d : data) {
+      amber::Value v;
+      v.SetIntValue(d);
+      buffer->values.push_back(v);
+    }
+
+    buffer->width = 1;
+    buffer->height = 1;
+
+    return {};
   }
 
  private:
@@ -432,7 +444,8 @@ int main(int argc, const char** argv) {
   };
   std::vector<RecipeData> recipe_data;
   for (const auto& file : options.input_filenames) {
-    auto data = ReadFile(file);
+    auto char_data = ReadFile(file);
+    auto data = std::string(char_data.begin(), char_data.end());
     if (data.empty()) {
       std::cerr << file << " is empty." << std::endl;
       failures.push_back(file);
