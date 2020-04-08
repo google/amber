@@ -24,6 +24,7 @@ BUFFER out_buf1 DATA_TYPE uint32 DATA 0 END
 BUFFER out_buf2 DATA_TYPE uint32 DATA 0 END
 BUFFER out_buf3 DATA_TYPE uint32 DATA 0 END
 BUFFER out_buf4 DATA_TYPE uint32 DATA 0 END
+BUFFER out_buf5 DATA_TYPE uint32 DATA 0 END
 
 PIPELINE compute p1
   ATTACH my_shader ENTRY_POINT line
@@ -56,12 +57,23 @@ DERIVE_PIPELINE p4 FROM p1
   END
 END
 
+DERIVE_PIPELINE p5 FROM p1
+  BIND BUFFER out_buf5 KERNEL ARG_NAME out
+  SET KERNEL ARG_NAME slope AS int32 3
+  COMPILE_OPTIONS my_shader
+    -cluster-pod-kernel-args
+    -pod-pushconstant
+  END
+END
+
 RUN p1 1 1 1
 RUN p2 1 1 1
 RUN p3 1 1 1
 RUN p4 1 1 1
+RUN p5 1 1 1
 
 EXPECT out_buf1 IDX 0 EQ 7
 EXPECT out_buf2 IDX 0 EQ 7
 EXPECT out_buf3 IDX 0 EQ 7
 EXPECT out_buf4 IDX 0 EQ 10
+EXPECT out_buf5 IDX 0 EQ 10
