@@ -856,4 +856,90 @@ TEST_F(PipelineTest, OpenCLGeneratePushConstants) {
   EXPECT_EQ(0U, bytes[6]);
 }
 
+TEST_F(PipelineTest, OpenCLPodPushConstants) {
+  Pipeline p(PipelineType::kCompute);
+  p.SetName("my_pipeline");
+
+  Shader cs(kShaderTypeCompute);
+  cs.SetFormat(kShaderFormatOpenCLC);
+  p.AddShader(&cs, kShaderTypeCompute);
+  p.SetShaderEntryPoint(&cs, "my_main");
+
+  // Descriptor map.
+  Pipeline::ShaderInfo::DescriptorMapEntry entry1;
+  entry1.kind =
+      Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_PUSHCONSTANT;
+  entry1.descriptor_set = static_cast<uint32_t>(-1);
+  entry1.binding = static_cast<uint32_t>(-1);
+  entry1.arg_name = "arg_a";
+  entry1.arg_ordinal = 0;
+  entry1.pod_offset = 0;
+  entry1.pod_arg_size = 4;
+  p.GetShaders()[0].AddDescriptorEntry("my_main", std::move(entry1));
+
+  Pipeline::ShaderInfo::DescriptorMapEntry entry2;
+  entry2.kind =
+      Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_PUSHCONSTANT;
+  entry2.descriptor_set = static_cast<uint32_t>(-1);
+  entry2.binding = static_cast<uint32_t>(-1);
+  entry2.arg_name = "arg_b";
+  entry2.arg_ordinal = 1;
+  entry2.pod_offset = 4;
+  entry2.pod_arg_size = 1;
+  p.GetShaders()[0].AddDescriptorEntry("my_main", std::move(entry2));
+
+  Pipeline::ShaderInfo::DescriptorMapEntry entry3;
+  entry3.kind =
+      Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_PUSHCONSTANT;
+  entry3.descriptor_set = static_cast<uint32_t>(-1);
+  entry3.binding = static_cast<uint32_t>(-1);
+  entry3.arg_name = "arg_c";
+  entry3.arg_ordinal = 2;
+  entry3.pod_offset = 8;
+  entry3.pod_arg_size = 4;
+  p.GetShaders()[0].AddDescriptorEntry("my_main", std::move(entry3));
+
+  // Set commands.
+  Value int_value;
+  int_value.SetIntValue(1);
+
+  TypeParser parser;
+  auto int_type = parser.Parse("R32_SINT");
+  auto int_fmt = MakeUnique<Format>(int_type.get());
+  auto char_type = parser.Parse("R8_SINT");
+  auto char_fmt = MakeUnique<Format>(char_type.get());
+
+  Pipeline::ArgSetInfo arg_info1;
+  arg_info1.name = "arg_a";
+  arg_info1.ordinal = 99;
+  arg_info1.fmt = int_fmt.get();
+  arg_info1.value = int_value;
+  p.SetArg(std::move(arg_info1));
+
+  Pipeline::ArgSetInfo arg_info2;
+  arg_info2.name = "arg_b";
+  arg_info2.ordinal = 99;
+  arg_info2.fmt = char_fmt.get();
+  arg_info2.value = int_value;
+  p.SetArg(std::move(arg_info2));
+
+  Pipeline::ArgSetInfo arg_info3;
+  arg_info3.name = "arg_c";
+  arg_info3.ordinal = 99;
+  arg_info3.fmt = int_fmt.get();
+  arg_info3.value = int_value;
+  p.SetArg(std::move(arg_info3));
+
+  auto r = p.GenerateOpenCLPodBuffers();
+  auto* buf = p.GetPushConstantBuffer().buffer;
+  EXPECT_NE(nullptr, buf);
+  EXPECT_EQ(12U, buf->GetSizeInBytes());
+
+  const uint32_t* ints = buf->GetValues<uint32_t>();
+  const uint8_t* bytes = buf->GetValues<uint8_t>();
+  EXPECT_EQ(1U, ints[0]);
+  EXPECT_EQ(1U, bytes[4]);
+  EXPECT_EQ(1U, ints[2]);
+}
+
 }  // namespace amber

@@ -92,6 +92,7 @@ class Pipeline {
         UBO,
         POD,
         POD_UBO,
+        POD_PUSHCONSTANT,
         RO_IMAGE,
         WO_IMAGE,
         SAMPLER,
@@ -347,6 +348,8 @@ class Pipeline {
 
  private:
   void UpdateFramebufferSizes();
+
+  Result CreatePushConstantBuffer();
 
   Result ValidateGraphics() const;
   Result ValidateCompute() const;

@@ -64,6 +64,10 @@ Result Compile(Pipeline::ShaderInfo* shader_info,
           descriptor_entry.kind =
               Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO;
           break;
+        case clspv::ArgKind::PodPushConstant:
+          descriptor_entry.kind =
+              Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_PUSHCONSTANT;
+          break;
         case clspv::ArgKind::ReadOnlyImage:
           descriptor_entry.kind =
               Pipeline::ShaderInfo::DescriptorMapEntry::Kind::RO_IMAGE;
@@ -84,7 +88,8 @@ Result Compile(Pipeline::ShaderInfo* shader_info,
       }
 
       if (entry.kernel_arg_data.arg_kind == clspv::ArgKind::Pod ||
-          entry.kernel_arg_data.arg_kind == clspv::ArgKind::PodUBO) {
+          entry.kernel_arg_data.arg_kind == clspv::ArgKind::PodUBO ||
+          entry.kernel_arg_data.arg_kind == clspv::ArgKind::PodPushConstant) {
         descriptor_entry.pod_offset = entry.kernel_arg_data.pod_offset;
         descriptor_entry.pod_arg_size = entry.kernel_arg_data.pod_arg_size;
       }
@@ -112,11 +117,12 @@ Result Compile(Pipeline::ShaderInfo* shader_info,
       push_constant.offset = entry.push_constant_data.offset;
       push_constant.size = entry.push_constant_data.size;
       shader_info->AddPushConstant(std::move(push_constant));
-    } else {
-      assert(entry.kind == clspv::version0::DescriptorMapEntry::Sampler);
+    } else if (entry.kind == clspv::version0::DescriptorMapEntry::Sampler) {
       // Create a new sampler info.
       pipeline->AddSampler(entry.sampler_data.mask, entry.descriptor_set,
                            entry.binding);
+    } else if (entry.kind == clspv::version0::DescriptorMapEntry::KernelDecl) {
+      // Nothing to do for declarations.
     }
   }
 
