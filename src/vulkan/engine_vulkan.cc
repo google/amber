@@ -526,12 +526,11 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
   vertex_buffer->SetData(0, buf.get());
 
-  DrawArraysCommand draw(command->GetPipeline(), PipelineData{});
+  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
   draw.SetTopology(Topology::kTriangleList);
   draw.SetFirstVertexIndex(0);
   draw.SetVertexCount(vertices);
   draw.SetInstanceCount(1);
-  draw.SetPolygonMode(command->GetPolygonMode());
 
   Result r = graphics->Draw(&draw, vertex_buffer.get());
   if (!r.IsSuccess())

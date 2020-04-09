@@ -226,10 +226,13 @@ void TransferImage::CopyToHost(CommandBuffer* command_buffer) {
   uint32_t last_mip_level = used_mip_levels_ == VK_REMAINING_MIP_LEVELS
                                 ? mip_levels_
                                 : base_mip_level_ + used_mip_levels_;
-  for (uint32_t i = base_mip_level_; i < last_mip_level; i++)
-    for (auto aspect : aspects)
-      if (aspect_ & aspect)
+  for (uint32_t i = base_mip_level_; i < last_mip_level; i++) {
+    for (auto aspect : aspects) {
+      if (aspect_ & aspect) {
         copy_regions.push_back(CreateBufferImageCopy(aspect, i));
+      }
+    }
+  }
 
   device_->GetPtrs()->vkCmdCopyImageToBuffer(
       command_buffer->GetVkCommandBuffer(), image_,
@@ -247,10 +250,13 @@ void TransferImage::CopyToDevice(CommandBuffer* command_buffer) {
   uint32_t last_mip_level = used_mip_levels_ == VK_REMAINING_MIP_LEVELS
                                 ? mip_levels_
                                 : base_mip_level_ + used_mip_levels_;
-  for (uint32_t i = base_mip_level_; i < last_mip_level; i++)
-    for (auto aspect : aspects)
-      if (aspect_ & aspect)
+  for (uint32_t i = base_mip_level_; i < last_mip_level; i++) {
+    for (auto aspect : aspects) {
+      if (aspect_ & aspect) {
         copy_regions.push_back(CreateBufferImageCopy(aspect, i));
+      }
+    }
+  }
 
   device_->GetPtrs()->vkCmdCopyBufferToImage(
       command_buffer->GetVkCommandBuffer(), host_accessible_buffer_, image_,

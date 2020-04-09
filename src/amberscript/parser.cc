@@ -1805,9 +1805,9 @@ Result Parser::ParseRun() {
     if (!token->IsInteger())
       return Result("missing X position for RUN command");
 
-    auto cmd = MakeUnique<DrawGridCommand>(pipeline);
+    auto cmd =
+        MakeUnique<DrawGridCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
-    cmd->SetPolygonMode(pipeline->GetPipelineData()->GetPolygonMode());
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
