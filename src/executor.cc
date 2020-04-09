@@ -95,7 +95,8 @@ Result Executor::Execute(Engine* engine,
       continue;
 
     BufferInfo info;
-    Result r = options->delegate->LoadBufferData(buf->GetDataFile(), &info);
+    Result r = options->delegate->LoadBufferData(buf->GetDataFile(),
+                                                 buf->GetDataFileType(), &info);
     if (!r.IsSuccess())
       return r;
 

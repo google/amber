@@ -196,7 +196,7 @@ BUFFER {name} DATA_TYPE {type} {STD140 | STD430} WIDTH {w} HEIGHT {h} \
 # Defines a buffer which is filled with binary data from a file specified
 # by `FILE`.
 BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
-    FILE {file_name}
+    FILE BINARY {file_name}
 
 # Creates a buffer which will store the given `FORMAT` of data. These
 # buffers are used as image and depth buffers in the `PIPELINE` commands.
@@ -207,7 +207,7 @@ BUFFER {name} FORMAT {format_string} \
 # Load buffer data from a PNG image with file name specified by `FILE`.
 # The file path is relative to the script file being run. Format specified
 # by `FORMAT` must match the image format.
-BUFFER {name} FORMAT {format_string} FILE {file_name.png}
+BUFFER {name} FORMAT {format_string} FILE PNG {file_name.png}
 ```
 
 #### Images

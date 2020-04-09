@@ -31,7 +31,7 @@ void main() {
 }
 END
 
-BUFFER buf0 DATA_TYPE vec4<float> SIZE 3 FILE vec4data.bin
+BUFFER buf0 DATA_TYPE vec4<float> SIZE 3 FILE BINARY vec4data.bin
 BUFFER buf1 DATA_TYPE vec4<float> SIZE 3 FILL 0.0
 
 BUFFER ref0 DATA_TYPE vec4<float> DATA

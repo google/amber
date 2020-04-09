@@ -1077,8 +1077,18 @@ TEST_F(AmberScriptParserTest, BufferMissingDataFile) {
   EXPECT_EQ("1: invalid value for FILE", r.Error());
 }
 
-TEST_F(AmberScriptParserTest, BufferDataFile) {
-  std::string in = "BUFFER my_buffer FORMAT R8G8B8A8_UNORM FILE foo.png";
+TEST_F(AmberScriptParserTest, BufferMissingDataFilePng) {
+  std::string in = "BUFFER my_buffer FORMAT R8G8B8A8_UNORM FILE PNG";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+
+  EXPECT_EQ("1: missing file name for FILE", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BufferDataFilePng) {
+  std::string in = "BUFFER my_buffer FORMAT R8G8B8A8_UNORM FILE PNG foo.png";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -1090,20 +1100,22 @@ TEST_F(AmberScriptParserTest, BufferDataFile) {
 
   ASSERT_TRUE(buffers[0] != nullptr);
   EXPECT_EQ("foo.png", buffers[0]->GetDataFile());
+  EXPECT_EQ(BufferDataFileType::kPng, buffers[0]->GetDataFileType());
 }
 
-TEST_F(AmberScriptParserTest, BufferSsboMissingDataFile) {
-  std::string in = "BUFFER my_buffer DATA_TYPE float SIZE 10 FILE";
+TEST_F(AmberScriptParserTest, BufferMissingDataFileBinary) {
+  std::string in = "BUFFER my_buffer DATA_TYPE float SIZE 10 FILE BINARY";
 
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
 
-  EXPECT_EQ("1: invalid value for FILE", r.Error());
+  EXPECT_EQ("1: missing file name for FILE", r.Error());
 }
 
-TEST_F(AmberScriptParserTest, BufferSsboDataFile) {
-  std::string in = "BUFFER my_buffer DATA_TYPE int32 SIZE 10 FILE data.bin";
+TEST_F(AmberScriptParserTest, BufferDataFileBinary) {
+  std::string in =
+      "BUFFER my_buffer DATA_TYPE int32 SIZE 10 FILE BINARY data.bin";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -1115,6 +1127,34 @@ TEST_F(AmberScriptParserTest, BufferSsboDataFile) {
 
   ASSERT_TRUE(buffers[0] != nullptr);
   EXPECT_EQ("data.bin", buffers[0]->GetDataFile());
+  EXPECT_EQ(BufferDataFileType::kBinary, buffers[0]->GetDataFileType());
+}
+
+TEST_F(AmberScriptParserTest, BufferMissingDataFileText) {
+  std::string in = "BUFFER my_buffer DATA_TYPE float SIZE 10 FILE TEXT";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+
+  EXPECT_EQ("1: missing file name for FILE", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BufferDataFileText) {
+  std::string in =
+      "BUFFER my_buffer DATA_TYPE int32 SIZE 10 FILE TEXT data.txt";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("data.txt", buffers[0]->GetDataFile());
+  EXPECT_EQ(BufferDataFileType::kText, buffers[0]->GetDataFileType());
 }
 
 }  // namespace amberscript
