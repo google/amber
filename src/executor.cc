@@ -95,11 +95,21 @@ Result Executor::Execute(Engine* engine,
       continue;
 
     BufferInfo info;
-    Result r = options->delegate->LoadBufferData(buf->GetDataFile(), &info);
+    Result r = options->delegate->LoadBufferData(buf->GetDataFile(),
+                                                 buf->GetDataFileType(), &info);
     if (!r.IsSuccess())
       return r;
 
-    buf->SetData(info.values);
+    std::vector<uint8_t>* data = buf->ValuePtr();
+
+    data->clear();
+    data->reserve(info.values.size());
+    for (auto v : info.values) {
+      data->push_back(v.AsUint8());
+    }
+
+    buf->SetElementCount(static_cast<uint32_t>(data->size()) /
+                         buf->GetFormat()->SizeInBytes());
     buf->SetWidth(info.width);
     buf->SetHeight(info.height);
   }

@@ -1265,7 +1265,22 @@ Result Parser::ParseBuffer() {
         if (!token->IsIdentifier())
           return Result("invalid value for FILE");
 
-        buffer->SetDataFile(token->AsString());
+        BufferDataFileType file_type = BufferDataFileType::kPng;
+
+        if (token->AsString() == "TEXT") {
+          file_type = BufferDataFileType::kText;
+          token = tokenizer_->NextToken();
+        } else if (token->AsString() == "BINARY") {
+          file_type = BufferDataFileType::kBinary;
+          token = tokenizer_->NextToken();
+        } else if (token->AsString() == "PNG") {
+          token = tokenizer_->NextToken();
+        }
+
+        if (!token->IsIdentifier())
+          return Result("missing file name for FILE");
+
+        buffer->SetDataFile(token->AsString(), file_type);
       } else {
         break;
       }
@@ -1516,6 +1531,31 @@ Result Parser::ParseBufferInitializerSize(Buffer* buffer) {
     return ParseBufferInitializerFill(buffer, size_in_items);
   if (token->AsString() == "SERIES_FROM")
     return ParseBufferInitializerSeries(buffer, size_in_items);
+  if (token->AsString() == "FILE") {
+    token = tokenizer_->NextToken();
+
+    if (!token->IsIdentifier())
+      return Result("invalid value for FILE");
+
+    BufferDataFileType file_type = BufferDataFileType::kPng;
+
+    if (token->AsString() == "TEXT") {
+      file_type = BufferDataFileType::kText;
+      token = tokenizer_->NextToken();
+    } else if (token->AsString() == "BINARY") {
+      file_type = BufferDataFileType::kBinary;
+      token = tokenizer_->NextToken();
+    } else if (token->AsString() == "PNG") {
+      token = tokenizer_->NextToken();
+    }
+
+    if (!token->IsIdentifier())
+      return Result("missing file name for FILE");
+
+    buffer->SetDataFile(token->AsString(), file_type);
+
+    return {};
+  }
 
   return Result("invalid BUFFER initializer provided");
 }

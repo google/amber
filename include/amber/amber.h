@@ -50,7 +50,7 @@ struct EngineConfig {
   virtual ~EngineConfig();
 };
 
-/// Stores information for a biffer.
+/// Stores information for a buffer.
 struct BufferInfo {
   BufferInfo();
   BufferInfo(const BufferInfo&);
@@ -70,6 +70,18 @@ struct BufferInfo {
   std::vector<Value> values;
 };
 
+/// Types of source file to load buffer data from.
+enum class BufferDataFileType : int8_t {
+  /// Unknown file type
+  kUnknown = -1,
+  /// A text file
+  kText = 0,
+  /// A binary file
+  kBinary,
+  /// A PNG file
+  kPng
+};
+
 /// Delegate class for various hook functions
 class Delegate {
  public:
@@ -87,6 +99,7 @@ class Delegate {
   virtual bool LogExecuteCalls() const = 0;
   /// Loads buffer data from a file
   virtual amber::Result LoadBufferData(const std::string file_name,
+                                       BufferDataFileType file_type,
                                        amber::BufferInfo* buffer) const = 0;
 };
 
