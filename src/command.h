@@ -190,7 +190,7 @@ class DrawRectCommand : public PipelineCommand {
 /// Command to draw a grid of recrangles on screen.
 class DrawGridCommand : public PipelineCommand {
  public:
-  explicit DrawGridCommand(Pipeline* pipeline, PipelineData data);
+  DrawGridCommand(Pipeline* pipeline, PipelineData data);
   ~DrawGridCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
