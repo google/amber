@@ -1092,15 +1092,9 @@ TEST_F(AmberScriptParserTest, BufferDataFilePng) {
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+  ASSERT_FALSE(r.IsSuccess());
 
-  auto script = parser.GetScript();
-  const auto& buffers = script->GetBuffers();
-  ASSERT_EQ(1U, buffers.size());
-
-  ASSERT_TRUE(buffers[0] != nullptr);
-  EXPECT_EQ("foo.png", buffers[0]->GetDataFile());
-  EXPECT_EQ(BufferDataFileType::kPng, buffers[0]->GetDataFileType());
+  EXPECT_EQ("1: missing delegate", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BufferMissingDataFileBinary) {
@@ -1119,15 +1113,9 @@ TEST_F(AmberScriptParserTest, BufferDataFileBinary) {
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+  ASSERT_FALSE(r.IsSuccess());
 
-  auto script = parser.GetScript();
-  const auto& buffers = script->GetBuffers();
-  ASSERT_EQ(1U, buffers.size());
-
-  ASSERT_TRUE(buffers[0] != nullptr);
-  EXPECT_EQ("data.bin", buffers[0]->GetDataFile());
-  EXPECT_EQ(BufferDataFileType::kBinary, buffers[0]->GetDataFileType());
+  EXPECT_EQ("1: missing delegate", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BufferMissingDataFileText) {
@@ -1146,15 +1134,9 @@ TEST_F(AmberScriptParserTest, BufferDataFileText) {
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+  ASSERT_FALSE(r.IsSuccess());
 
-  auto script = parser.GetScript();
-  const auto& buffers = script->GetBuffers();
-  ASSERT_EQ(1U, buffers.size());
-
-  ASSERT_TRUE(buffers[0] != nullptr);
-  EXPECT_EQ("data.txt", buffers[0]->GetDataFile());
-  EXPECT_EQ(BufferDataFileType::kText, buffers[0]->GetDataFileType());
+  EXPECT_EQ("1: missing delegate", r.Error());
 }
 
 }  // namespace amberscript

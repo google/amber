@@ -53,7 +53,8 @@ Result Executor::CompileShaders(const amber::Script* script,
 Result Executor::Execute(Engine* engine,
                          const amber::Script* script,
                          const ShaderMap& shader_map,
-                         Options* options) {
+                         Options* options,
+                         Delegate* delegate) {
   engine->SetEngineData(script->GetEngineData());
 
   if (!script->GetPipelines().empty()) {
@@ -89,36 +90,10 @@ Result Executor::Execute(Engine* engine,
 
   Engine::Debugger* debugger = nullptr;
 
-  // Load data to buffers
-  for (const auto& buf : script->GetBuffers()) {
-    if (buf->GetDataFile().empty())
-      continue;
-
-    BufferInfo info;
-    Result r = options->delegate->LoadBufferData(buf->GetDataFile(),
-                                                 buf->GetDataFileType(), &info);
-    if (!r.IsSuccess())
-      return r;
-
-    std::vector<uint8_t>* data = buf->ValuePtr();
-
-    data->clear();
-    data->reserve(info.values.size());
-    for (auto v : info.values) {
-      data->push_back(v.AsUint8());
-    }
-
-    buf->SetElementCount(static_cast<uint32_t>(data->size()) /
-                         buf->GetFormat()->SizeInBytes());
-    buf->SetWidth(info.width);
-    buf->SetHeight(info.height);
-  }
-
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
-    if (options->delegate && options->delegate->LogExecuteCalls()) {
-      options->delegate->Log(std::to_string(cmd->GetLine()) + ": " +
-                             cmd->ToString());
+    if (delegate && delegate->LogExecuteCalls()) {
+      delegate->Log(std::to_string(cmd->GetLine()) + ": " + cmd->ToString());
     }
 
     auto dbg_script = cmd->GetDebugScript();

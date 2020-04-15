@@ -35,6 +35,7 @@ namespace amberscript {
 class Parser : public amber::Parser {
  public:
   Parser();
+  explicit Parser(Delegate* delegate);
   ~Parser() override;
 
   // amber::Parser
@@ -56,6 +57,7 @@ class Parser : public amber::Parser {
   Result ParseBufferInitializerFill(Buffer*, uint32_t);
   Result ParseBufferInitializerSeries(Buffer*, uint32_t);
   Result ParseBufferInitializerData(Buffer*);
+  Result ParseBufferInitializerFile(Buffer*);
   Result ParseShaderBlock();
   Result ParsePipelineBlock();
   Result ParsePipelineAttach(Pipeline*);
