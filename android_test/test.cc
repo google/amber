@@ -17,5 +17,5 @@
 #include "amber/amber.h"
 
 void android_main(struct android_app* /*state*/) {
-  amber::Amber amber;
+  amber::Amber amber(nullptr);
 }
