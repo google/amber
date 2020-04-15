@@ -175,8 +175,6 @@ class DrawRectCommand : public PipelineCommand {
   void SetHeight(float h) { height_ = h; }
   float GetHeight() const { return height_; }
 
-  void SetPolygonMode(PolygonMode mode) { data_.SetPolygonMode(mode); }
-
   std::string ToString() const override { return "DrawRectCommand"; }
 
  private:
@@ -192,8 +190,10 @@ class DrawRectCommand : public PipelineCommand {
 /// Command to draw a grid of recrangles on screen.
 class DrawGridCommand : public PipelineCommand {
  public:
-  explicit DrawGridCommand(Pipeline* pipeline);
+  DrawGridCommand(Pipeline* pipeline, PipelineData data);
   ~DrawGridCommand() override;
+
+  const PipelineData* GetPipelineData() const { return &data_; }
 
   void SetX(float x) { x_ = x; }
   float GetX() const { return x_; }
@@ -213,19 +213,16 @@ class DrawGridCommand : public PipelineCommand {
   void SetRows(uint32_t r) { rows_ = r; }
   uint32_t GetRows() const { return rows_; }
 
-  void SetPolygonMode(PolygonMode mode) { polygon_mode_ = mode; }
-  PolygonMode GetPolygonMode() const { return polygon_mode_; }
-
   std::string ToString() const override { return "DrawGridCommand"; }
 
  private:
+  PipelineData data_;
   float x_ = 0.0;
   float y_ = 0.0;
   float width_ = 0.0;
   float height_ = 0.0;
   uint32_t columns_ = 0;
   uint32_t rows_ = 0;
-  PolygonMode polygon_mode_ = PolygonMode::kFill;
 };
 
 /// Command to draw from a vertex and index buffer.
@@ -244,8 +241,6 @@ class DrawArraysCommand : public PipelineCommand {
 
   void SetTopology(Topology topo) { topology_ = topo; }
   Topology GetTopology() const { return topology_; }
-
-  void SetPolygonMode(PolygonMode mode) { data_.SetPolygonMode(mode); }
 
   void SetFirstVertexIndex(uint32_t idx) { first_vertex_index_ = idx; }
   uint32_t GetFirstVertexIndex() const { return first_vertex_index_; }

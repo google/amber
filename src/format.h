@@ -114,6 +114,14 @@ class Format {
   uint32_t SizeInBytes() const;
 
   bool IsFormatKnown() const { return format_type_ != FormatType::kUnknown; }
+  bool HasDepthComponent() const {
+    return format_type_ == FormatType::kD16_UNORM ||
+           format_type_ == FormatType::kD16_UNORM_S8_UINT ||
+           format_type_ == FormatType::kD24_UNORM_S8_UINT ||
+           format_type_ == FormatType::kD32_SFLOAT ||
+           format_type_ == FormatType::kD32_SFLOAT_S8_UINT ||
+           format_type_ == FormatType::kX8_D24_UNORM_PACK32;
+  }
   bool HasStencilComponent() const {
     return format_type_ == FormatType::kD24_UNORM_S8_UINT ||
            format_type_ == FormatType::kD16_UNORM_S8_UINT ||

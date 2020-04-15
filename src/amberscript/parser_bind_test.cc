@@ -513,7 +513,7 @@ END)";
   ASSERT_EQ(1U, pipelines.size());
 
   const auto* pipeline = pipelines[0].get();
-  const auto& buf = pipeline->GetDepthBuffer();
+  const auto& buf = pipeline->GetDepthStencilBuffer();
   ASSERT_TRUE(buf.buffer != nullptr);
   EXPECT_EQ(90 * 180, buf.buffer->ElementCount());
   EXPECT_EQ(90 * 180 * 4, buf.buffer->ValueCount());
@@ -649,7 +649,8 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("14: can only bind one depth buffer in a PIPELINE", r.Error());
+  EXPECT_EQ("14: can only bind one depth/stencil buffer in a PIPELINE",
+            r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindVertexData) {

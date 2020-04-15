@@ -56,13 +56,14 @@ class TransferImage : public Resource {
   void CopyToHost(CommandBuffer* command_buffer) override;
 
  private:
-  Result CreateVkImageView();
+  Result CreateVkImageView(VkImageAspectFlags aspect);
   Result AllocateAndBindMemoryToVkImage(VkImage image,
                                         VkDeviceMemory* memory,
                                         VkMemoryPropertyFlags flags,
                                         bool force_flags,
                                         uint32_t* memory_type_index);
-  VkBufferImageCopy CreateBufferImageCopy(uint32_t mip_level);
+  VkBufferImageCopy CreateBufferImageCopy(VkImageAspectFlags aspect,
+                                          uint32_t mip_level);
 
   VkImageViewType GetImageViewType() const;
 

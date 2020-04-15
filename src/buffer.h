@@ -38,7 +38,7 @@ enum class BufferType : int8_t {
   /// A color buffer.
   kColor = 0,
   /// A depth/stencil buffer.
-  kDepth,
+  kDepthStencil,
   /// An index buffer.
   kIndex,
   /// A sampled image.
