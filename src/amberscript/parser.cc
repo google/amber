@@ -243,8 +243,8 @@ Result Parser::Parse(const std::string& data) {
 }
 
 bool Parser::IsRepeatable(const std::string& name) const {
-  return name == "CLEAR" || name == "CLEAR_COLOR" || name == "CLEAR_DEPTH" || name == "COPY" ||
-         name == "EXPECT" || name == "RUN" || name == "DEBUG";
+  return name == "CLEAR" || name == "CLEAR_COLOR" || name == "CLEAR_DEPTH" ||
+         name == "COPY" || name == "EXPECT" || name == "RUN" || name == "DEBUG";
 }
 
 // The given |name| must be one of the repeatable commands or this method
@@ -2657,37 +2657,37 @@ Result Parser::ParseClearColor() {
   return ValidateEndOfStatement("CLEAR_COLOR command");
 }
 
-    Result Parser::ParseClearDepth() {
-        auto token = tokenizer_->NextToken();
-        if (!token->IsIdentifier())
-            return Result("missing pipeline name for CLEAR_DEPTH command");
+Result Parser::ParseClearDepth() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsIdentifier())
+    return Result("missing pipeline name for CLEAR_DEPTH command");
 
-        size_t line = tokenizer_->GetCurrentLine();
+  size_t line = tokenizer_->GetCurrentLine();
 
-        auto* pipeline = script_->GetPipeline(token->AsString());
-        if (!pipeline) {
-            return Result("unknown pipeline for CLEAR_DEPTH command: " +
-                          token->AsString());
-        }
-        if (!pipeline->IsGraphics()) {
-            return Result("CLEAR_DEPTH command requires graphics pipeline");
-        }
+  auto* pipeline = script_->GetPipeline(token->AsString());
+  if (!pipeline) {
+    return Result("unknown pipeline for CLEAR_DEPTH command: " +
+                  token->AsString());
+  }
+  if (!pipeline->IsGraphics()) {
+    return Result("CLEAR_DEPTH command requires graphics pipeline");
+  }
 
-        auto cmd = MakeUnique<ClearDepthCommand>(pipeline);
-        cmd->SetLine(line);
+  auto cmd = MakeUnique<ClearDepthCommand>(pipeline);
+  cmd->SetLine(line);
 
-        token = tokenizer_->NextToken();
-        if (token->IsEOL() || token->IsEOS())
-            return Result("missing value for CLEAR_DEPTH command");
-        if (!token->IsDouble()) {
-            return Result("invalid value for CLEAR_DEPTH command: " +
-                          token->ToOriginalString());
-        }
-        cmd->SetValue(token->AsFloat());
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing value for CLEAR_DEPTH command");
+  if (!token->IsDouble()) {
+    return Result("invalid value for CLEAR_DEPTH command: " +
+                  token->ToOriginalString());
+  }
+  cmd->SetValue(token->AsFloat());
 
-        command_list_.push_back(std::move(cmd));
-        return ValidateEndOfStatement("CLEAR_DEPTH command");
-    }
+  command_list_.push_back(std::move(cmd));
+  return ValidateEndOfStatement("CLEAR_DEPTH command");
+}
 
 Result Parser::ParseDeviceFeature() {
   auto token = tokenizer_->NextToken();
