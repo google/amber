@@ -565,7 +565,7 @@ bool Device::IsFormatSupportedByPhysicalDevice(const Format& format,
       flag = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
       is_buffer_type_image = true;
       break;
-    case BufferType::kDepth:
+    case BufferType::kDepthStencil:
       flag = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
       is_buffer_type_image = true;
       break;

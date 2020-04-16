@@ -790,7 +790,7 @@ Result Parser::ToBufferType(const std::string& name, BufferType* type) {
   if (name == "color")
     *type = BufferType::kColor;
   else if (name == "depth_stencil")
-    *type = BufferType::kDepth;
+    *type = BufferType::kDepthStencil;
   else if (name == "push_constant")
     *type = BufferType::kPushConstant;
   else if (name == "combined_image_sampler")
@@ -871,8 +871,8 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         if (!r.IsSuccess())
           return r;
 
-      } else if (buffer_type == BufferType::kDepth) {
-        r = pipeline->SetDepthBuffer(buffer);
+      } else if (buffer_type == BufferType::kDepthStencil) {
+        r = pipeline->SetDepthStencilBuffer(buffer);
         if (!r.IsSuccess())
           return r;
 
@@ -1153,11 +1153,11 @@ Result Parser::ParsePipelinePolygonMode(Pipeline* pipeline) {
   auto mode = token->AsString();
 
   if (mode == "fill")
-    pipeline->SetPolygonMode(PolygonMode::kFill);
+    pipeline->GetPipelineData()->SetPolygonMode(PolygonMode::kFill);
   else if (mode == "line")
-    pipeline->SetPolygonMode(PolygonMode::kLine);
+    pipeline->GetPipelineData()->SetPolygonMode(PolygonMode::kLine);
   else if (mode == "point")
-    pipeline->SetPolygonMode(PolygonMode::kPoint);
+    pipeline->GetPipelineData()->SetPolygonMode(PolygonMode::kPoint);
   else
     return Result("invalid polygon mode: " + mode);
 
@@ -1806,10 +1806,10 @@ Result Parser::ParseRun() {
     if (!token->IsInteger())
       return Result("missing X position for RUN command");
 
-    auto cmd = MakeUnique<DrawRectCommand>(pipeline, PipelineData{});
+    auto cmd =
+        MakeUnique<DrawRectCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
     cmd->EnableOrtho();
-    cmd->SetPolygonMode(pipeline->GetPolygonMode());
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -1876,9 +1876,9 @@ Result Parser::ParseRun() {
     if (!token->IsInteger())
       return Result("missing X position for RUN command");
 
-    auto cmd = MakeUnique<DrawGridCommand>(pipeline);
+    auto cmd =
+        MakeUnique<DrawGridCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
-    cmd->SetPolygonMode(pipeline->GetPolygonMode());
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -2020,12 +2020,12 @@ Result Parser::ParseRun() {
         return Result("START_IDX plus COUNT exceeds vertex buffer data size");
     }
 
-    auto cmd = MakeUnique<DrawArraysCommand>(pipeline, PipelineData{});
+    auto cmd =
+        MakeUnique<DrawArraysCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
     cmd->SetTopology(topo);
     cmd->SetFirstVertexIndex(start_idx);
     cmd->SetVertexCount(count);
-    cmd->SetPolygonMode(pipeline->GetPolygonMode());
 
     if (indexed)
       cmd->EnableIndexed();

@@ -70,11 +70,22 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
       break;
   }
 
+  Format* fmt = amber_buffer->GetFormat();
+  VkImageAspectFlags aspect = 0;
+  if (fmt->HasDepthComponent() && fmt->HasStencilComponent()) {
+    aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+  } else if (fmt->HasDepthComponent()) {
+    aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+  } else if (fmt->HasStencilComponent()) {
+    aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+  } else {
+    aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+  }
+
   transfer_image_ = MakeUnique<TransferImage>(
-      device_, *amber_buffer->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
-      image_type, amber_buffer->GetWidth(), amber_buffer->GetHeight(),
-      amber_buffer->GetDepth(), amber_buffer->GetMipLevels(), base_mip_level_,
-      VK_REMAINING_MIP_LEVELS);
+      device_, *fmt, aspect, image_type, amber_buffer->GetWidth(),
+      amber_buffer->GetHeight(), amber_buffer->GetDepth(),
+      amber_buffer->GetMipLevels(), base_mip_level_, VK_REMAINING_MIP_LEVELS);
   VkImageUsageFlags usage =
       VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 

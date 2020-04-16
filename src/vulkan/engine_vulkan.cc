@@ -158,13 +158,12 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       return Result("Vulkan color attachment format is not supported");
   }
 
-  Format* depth_fmt = nullptr;
-  if (pipeline->GetDepthBuffer().buffer) {
-    const auto& depth_info = pipeline->GetDepthBuffer();
+  if (pipeline->GetDepthStencilBuffer().buffer) {
+    const auto& depth_stencil_info = pipeline->GetDepthStencilBuffer();
 
-    depth_fmt = depth_info.buffer->GetFormat();
-    if (!device_->IsFormatSupportedByPhysicalDevice(*depth_fmt,
-                                                    depth_info.type)) {
+    auto fmt = depth_stencil_info.buffer->GetFormat();
+    if (!device_->IsFormatSupportedByPhysicalDevice(*fmt,
+                                                    depth_stencil_info.type)) {
       return Result("Vulkan depth attachment format is not supported");
     }
   }
@@ -184,8 +183,9 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       return r;
   } else {
     vk_pipeline = MakeUnique<GraphicsPipeline>(
-        device_.get(), pipeline->GetColorAttachments(), depth_fmt,
-        engine_data.fence_timeout_ms, stage_create_info);
+        device_.get(), pipeline->GetColorAttachments(),
+        pipeline->GetDepthStencilBuffer(), engine_data.fence_timeout_ms,
+        stage_create_info);
 
     r = vk_pipeline->AsGraphics()->Initialize(pipeline->GetFramebufferWidth(),
                                               pipeline->GetFramebufferHeight(),
@@ -526,12 +526,11 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
   vertex_buffer->SetData(0, buf.get());
 
-  DrawArraysCommand draw(command->GetPipeline(), PipelineData{});
+  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
   draw.SetTopology(Topology::kTriangleList);
   draw.SetFirstVertexIndex(0);
   draw.SetVertexCount(vertices);
   draw.SetInstanceCount(1);
-  draw.SetPolygonMode(command->GetPolygonMode());
 
   Result r = graphics->Draw(&draw, vertex_buffer.get());
   if (!r.IsSuccess())

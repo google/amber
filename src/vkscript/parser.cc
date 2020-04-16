@@ -199,17 +199,17 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       }
 
       auto* pipeline = script_->GetPipeline(kDefaultPipelineName);
-      if (pipeline->GetDepthBuffer().buffer != nullptr)
+      if (pipeline->GetDepthStencilBuffer().buffer != nullptr)
         return Result("Only one depthstencil command allowed");
 
       auto fmt = MakeUnique<Format>(type.get());
       // Generate and add a depth buffer
-      auto depth_buf = pipeline->GenerateDefaultDepthAttachmentBuffer();
+      auto depth_buf = pipeline->GenerateDefaultDepthStencilAttachmentBuffer();
       depth_buf->SetFormat(fmt.get());
       script_->RegisterFormat(std::move(fmt));
       script_->RegisterType(std::move(type));
 
-      Result r = pipeline->SetDepthBuffer(depth_buf.get());
+      Result r = pipeline->SetDepthStencilBuffer(depth_buf.get());
       if (!r.IsSuccess())
         return r;
 
