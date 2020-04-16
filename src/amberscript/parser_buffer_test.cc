@@ -20,6 +20,34 @@ namespace amberscript {
 
 using AmberScriptParserTest = testing::Test;
 
+class DummyDelegate : public amber::Delegate {
+ public:
+  DummyDelegate() = default;
+  ~DummyDelegate() override = default;
+
+  void Log(const std::string&) override {}
+  bool LogGraphicsCalls() const override { return false; }
+  void SetLogGraphicsCalls(bool) {}
+  bool LogExecuteCalls() const override { return false; }
+  void SetLogExecuteCalls(bool) {}
+  bool LogGraphicsCallsTime() const override { return false; }
+  void SetLogGraphicsCallsTime(bool) {}
+  uint64_t GetTimestampNs() const override { return 0; }
+  void SetScriptPath(std::string) {}
+
+  amber::Result LoadBufferData(const std::string,
+                               amber::BufferDataFileType,
+                               amber::BufferInfo* buffer) const override {
+    amber::Value v;
+    v.SetIntValue(0);
+    buffer->values.push_back(v);
+    buffer->width = 1;
+    buffer->height = 1;
+
+    return {};
+  }
+};
+
 TEST_F(AmberScriptParserTest, BufferData) {
   std::string in = R"(
 BUFFER my_buffer DATA_TYPE uint32 DATA
@@ -1090,11 +1118,14 @@ TEST_F(AmberScriptParserTest, BufferMissingDataFilePng) {
 TEST_F(AmberScriptParserTest, BufferDataFilePng) {
   std::string in = "BUFFER my_buffer FORMAT R8G8B8A8_UNORM FILE PNG foo.png";
 
-  Parser parser;
+  DummyDelegate delegate;
+  Parser parser(&delegate);
   Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-
-  EXPECT_EQ("1: missing delegate", r.Error());
+  ASSERT_TRUE(r.IsSuccess());
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+  ASSERT_TRUE(buffers[0] != nullptr);
 }
 
 TEST_F(AmberScriptParserTest, BufferMissingDataFileBinary) {
@@ -1111,11 +1142,14 @@ TEST_F(AmberScriptParserTest, BufferDataFileBinary) {
   std::string in =
       "BUFFER my_buffer DATA_TYPE int32 SIZE 10 FILE BINARY data.bin";
 
-  Parser parser;
+  DummyDelegate delegate;
+  Parser parser(&delegate);
   Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-
-  EXPECT_EQ("1: missing delegate", r.Error());
+  ASSERT_TRUE(r.IsSuccess());
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+  ASSERT_TRUE(buffers[0] != nullptr);
 }
 
 TEST_F(AmberScriptParserTest, BufferMissingDataFileText) {
@@ -1132,11 +1166,14 @@ TEST_F(AmberScriptParserTest, BufferDataFileText) {
   std::string in =
       "BUFFER my_buffer DATA_TYPE int32 SIZE 10 FILE TEXT data.txt";
 
-  Parser parser;
+  DummyDelegate delegate;
+  Parser parser(&delegate);
   Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-
-  EXPECT_EQ("1: missing delegate", r.Error());
+  ASSERT_TRUE(r.IsSuccess());
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+  ASSERT_TRUE(buffers[0] != nullptr);
 }
 
 }  // namespace amberscript
