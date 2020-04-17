@@ -75,6 +75,7 @@ class Parser : public amber::Parser {
   Result ParseDebugThreadBody(debug::Thread* thread);
   Result ParseClear();
   Result ParseClearColor();
+  Result ParseClearDepth();
   Result ParseExpect();
   Result ParseCopy();
   Result ParseDeviceFeature();

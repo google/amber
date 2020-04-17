@@ -568,6 +568,7 @@ END
 The commands which can be used inside a `REPEAT` block are:
   * `CLEAR`
   * `CLEAR_COLOR`
+  * `CLEAR_DEPTH`
   * `COPY`
   * `EXPECT`
   * `RUN`
@@ -578,6 +579,10 @@ The commands which can be used inside a `REPEAT` block are:
 # Sets the clear color to use for |pipeline| which must be a graphics
 # pipeline. The colors are integers from 0 - 255.  Defaults to (0, 0, 0, 0)
 CLEAR_COLOR {pipeline} _r (0 - 255)_ _g (0 - 255)_ _b (0 - 255)_ _a (0 - 255)_
+
+# Sets the depth clear value to use for |pipeline| which must be a graphics
+# pipeline. |value| must be a decimal number.
+CLEAR_DEPTH {pipeline} _value_
 
 # Instructs the |pipeline| which must be a graphics pipeline to execute the
 # clear command.
