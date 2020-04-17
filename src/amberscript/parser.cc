@@ -244,7 +244,8 @@ Result Parser::Parse(const std::string& data) {
 
 bool Parser::IsRepeatable(const std::string& name) const {
   return name == "CLEAR" || name == "CLEAR_COLOR" || name == "CLEAR_DEPTH" ||
-         name == "COPY" || name == "EXPECT" || name == "RUN" || name == "DEBUG";
+         name == "CLEAR_STENCIL" || name == "COPY" || name == "EXPECT" ||
+         name == "RUN" || name == "DEBUG";
 }
 
 // The given |name| must be one of the repeatable commands or this method
@@ -256,6 +257,8 @@ Result Parser::ParseRepeatableCommand(const std::string& name) {
     return ParseClearColor();
   if (name == "CLEAR_DEPTH")
     return ParseClearDepth();
+  if (name == "CLEAR_STENCIL")
+    return ParseClearStencil();
   if (name == "COPY")
     return ParseCopy();
   if (name == "EXPECT")
@@ -2687,6 +2690,38 @@ Result Parser::ParseClearDepth() {
 
   command_list_.push_back(std::move(cmd));
   return ValidateEndOfStatement("CLEAR_DEPTH command");
+}
+
+Result Parser::ParseClearStencil() {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsIdentifier())
+    return Result("missing pipeline name for CLEAR_STENCIL command");
+
+  size_t line = tokenizer_->GetCurrentLine();
+
+  auto* pipeline = script_->GetPipeline(token->AsString());
+  if (!pipeline) {
+    return Result("unknown pipeline for CLEAR_STENCIL command: " +
+                  token->AsString());
+  }
+  if (!pipeline->IsGraphics()) {
+    return Result("CLEAR_STENCIL command requires graphics pipeline");
+  }
+
+  auto cmd = MakeUnique<ClearStencilCommand>(pipeline);
+  cmd->SetLine(line);
+
+  token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result("missing value for CLEAR_STENCIL command");
+  if (!token->IsInteger() || token->AsInt32() < 0 || token->AsInt32() > 255) {
+    return Result("invalid value for CLEAR_STENCIL command: " +
+                  token->ToOriginalString());
+  }
+  cmd->SetValue(token->AsUint32());
+
+  command_list_.push_back(std::move(cmd));
+  return ValidateEndOfStatement("CLEAR_STENCIL command");
 }
 
 Result Parser::ParseDeviceFeature() {

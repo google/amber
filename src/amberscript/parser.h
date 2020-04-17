@@ -74,6 +74,7 @@ class Parser : public amber::Parser {
   Result ParseClear();
   Result ParseClearColor();
   Result ParseClearDepth();
+  Result ParseClearStencil();
   Result ParseExpect();
   Result ParseCopy();
   Result ParseDeviceFeature();
