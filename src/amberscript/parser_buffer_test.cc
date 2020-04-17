@@ -36,10 +36,10 @@ class DummyDelegate : public amber::Delegate {
   void SetScriptPath(std::string) {}
 
   amber::Result LoadBufferData(const std::string,
-                               amber::BufferDataFileType,
+                               amber::BufferDataFileType type,
                                amber::BufferInfo* buffer) const override {
     amber::Value v;
-    v.SetIntValue(0);
+    v.SetIntValue(static_cast<uint64_t>(type));
     buffer->values.push_back(v);
     buffer->width = 1;
     buffer->height = 1;
@@ -1126,6 +1126,8 @@ TEST_F(AmberScriptParserTest, BufferDataFilePng) {
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
   ASSERT_TRUE(buffers[0] != nullptr);
+  ASSERT_EQ(static_cast<uint8_t>(amber::BufferDataFileType::kPng),
+            buffers[0]->GetValues<uint8_t>()[0]);
 }
 
 TEST_F(AmberScriptParserTest, BufferMissingDataFileBinary) {
@@ -1150,6 +1152,8 @@ TEST_F(AmberScriptParserTest, BufferDataFileBinary) {
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
   ASSERT_TRUE(buffers[0] != nullptr);
+  ASSERT_EQ(static_cast<uint8_t>(amber::BufferDataFileType::kBinary),
+            buffers[0]->GetValues<uint8_t>()[0]);
 }
 
 TEST_F(AmberScriptParserTest, BufferMissingDataFileText) {
@@ -1174,6 +1178,8 @@ TEST_F(AmberScriptParserTest, BufferDataFileText) {
   const auto& buffers = script->GetBuffers();
   ASSERT_EQ(1U, buffers.size());
   ASSERT_TRUE(buffers[0] != nullptr);
+  ASSERT_EQ(static_cast<uint8_t>(amber::BufferDataFileType::kText),
+            buffers[0]->GetValues<uint8_t>()[0]);
 }
 
 }  // namespace amberscript
