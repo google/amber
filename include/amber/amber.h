@@ -130,14 +130,12 @@ struct Options {
   /// If true, disables SPIR-V validation. If false, SPIR-V shaders will be
   /// validated using the Validator component (spirv-val) from SPIRV-Tools.
   bool disable_spirv_validation;
-  /// Delegate implementation
-  Delegate* delegate;
 };
 
 /// Main interface to the Amber environment.
 class Amber {
  public:
-  Amber();
+  explicit Amber(Delegate* delegate);
   ~Amber();
 
   /// Parse the given |data| into the |recipe|.
@@ -161,6 +159,12 @@ class Amber {
   amber::Result ExecuteWithShaderData(const amber::Recipe* recipe,
                                       Options* opts,
                                       const ShaderMap& shader_data);
+
+  /// Returns the delegate object.
+  Delegate* GetDelegate() const { return delegate_; }
+
+ private:
+  Delegate* delegate_;
 };
 
 }  // namespace amber

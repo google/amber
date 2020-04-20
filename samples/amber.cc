@@ -336,7 +336,7 @@ class SampleDelegate : public amber::Delegate {
 #else
       return amber::Result("PNG support is not enabled in compile options.");
 #endif  // AMBER_ENABLE_LODEPNG
-    } else if (file_type == amber::BufferDataFileType::kBinary) {
+    } else {
       auto data = ReadFile(path_ + file_name);
       if (data.empty())
         return amber::Result("Failed to load buffer data " + file_name);
@@ -349,11 +349,6 @@ class SampleDelegate : public amber::Delegate {
 
       buffer->width = 1;
       buffer->height = 1;
-
-    } else {
-      assert(file_type == amber::BufferDataFileType::kText);
-
-      // TODO(asuonpaa): Read text file and pass it to parser.
     }
 
     return {};
@@ -418,6 +413,7 @@ std::string disassemble(const std::string& env,
 int main(int argc, const char** argv) {
   std::vector<std::string> args(argv, argv + argc);
   Options options;
+  SampleDelegate delegate;
 
   if (!ParseArgs(args, &options)) {
     std::cerr << "Failed to parse arguments." << std::endl;
@@ -457,7 +453,10 @@ int main(int argc, const char** argv) {
       continue;
     }
 
-    amber::Amber am;
+    // Parse file path and set it for delegate to use when loading buffer data.
+    delegate.SetScriptPath(file.substr(0, file.find_last_of("/\\") + 1));
+
+    amber::Amber am(&delegate);
     std::unique_ptr<amber::Recipe> recipe = amber::MakeUnique<amber::Recipe>();
 
     result = am.Parse(data, recipe.get());
@@ -478,7 +477,6 @@ int main(int argc, const char** argv) {
   if (options.parse_only)
     return 0;
 
-  SampleDelegate delegate;
   if (options.log_graphics_calls)
     delegate.SetLogGraphicsCalls(true);
   if (options.log_graphics_calls_time)
@@ -492,7 +490,6 @@ int main(int argc, const char** argv) {
   amber_options.execution_type = options.pipeline_create_only
                                      ? amber::ExecutionType::kPipelineCreateOnly
                                      : amber::ExecutionType::kExecute;
-  amber_options.delegate = &delegate;
   amber_options.disable_spirv_validation = options.disable_spirv_validation;
 
   std::set<std::string> required_features;
@@ -568,10 +565,7 @@ int main(int argc, const char** argv) {
     const auto* recipe = recipe_data_elem.recipe.get();
     const auto& file = recipe_data_elem.file;
 
-    // Parse file path and set it for delegate to use when loading buffer data.
-    delegate.SetScriptPath(file.substr(0, file.find_last_of("/\\") + 1));
-
-    amber::Amber am;
+    amber::Amber am(&delegate);
     result = am.Execute(recipe, &amber_options);
     if (!result.IsSuccess()) {
       std::cerr << file << ": " << result.Error() << std::endl;

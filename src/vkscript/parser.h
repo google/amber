@@ -32,6 +32,7 @@ namespace vkscript {
 class Parser : public amber::Parser {
  public:
   Parser();
+  explicit Parser(Delegate* delegate);
   ~Parser() override;
 
   // amber::Parser

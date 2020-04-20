@@ -152,9 +152,79 @@ ImageDimension StrToImageDimension(const std::string& str) {
   return ImageDimension::kUnknown;
 }
 
+Result ParseBufferData(Buffer* buffer,
+                       Tokenizer* tokenizer,
+                       bool from_data_file) {
+  auto fmt = buffer->GetFormat();
+  const auto& segs = fmt->GetSegments();
+  size_t seg_idx = 0;
+  uint32_t value_count = 0;
+
+  std::vector<Value> values;
+  for (auto token = tokenizer->NextToken();; token = tokenizer->NextToken()) {
+    if (token->IsEOL())
+      continue;
+    if (token->IsEOS()) {
+      if (from_data_file) {
+        break;
+      } else {
+        return Result("missing BUFFER END command");
+      }
+    }
+    if (token->IsIdentifier() && token->AsString() == "END")
+      break;
+    if (!token->IsInteger() && !token->IsDouble() && !token->IsHex())
+      return Result("invalid BUFFER data value: " + token->ToOriginalString());
+
+    while (segs[seg_idx].IsPadding()) {
+      ++seg_idx;
+      if (seg_idx >= segs.size())
+        seg_idx = 0;
+    }
+
+    Value v;
+    if (type::Type::IsFloat(segs[seg_idx].GetFormatMode())) {
+      token->ConvertToDouble();
+
+      double val = token->IsHex() ? static_cast<double>(token->AsHex())
+                                  : token->AsDouble();
+      v.SetDoubleValue(val);
+      ++value_count;
+    } else {
+      if (token->IsDouble()) {
+        return Result("invalid BUFFER data value: " +
+                      token->ToOriginalString());
+      }
+
+      uint64_t val = token->IsHex() ? token->AsHex() : token->AsUint64();
+      v.SetIntValue(val);
+      ++value_count;
+    }
+    ++seg_idx;
+    if (seg_idx >= segs.size())
+      seg_idx = 0;
+
+    values.emplace_back(v);
+  }
+  // Write final padding bytes
+  while (segs[seg_idx].IsPadding()) {
+    ++seg_idx;
+    if (seg_idx >= segs.size())
+      break;
+  }
+
+  buffer->SetValueCount(value_count);
+  Result r = buffer->SetData(std::move(values));
+  if (!r.IsSuccess())
+    return r;
+
+  return {};
+}
+
 }  // namespace
 
-Parser::Parser() : amber::Parser() {}
+Parser::Parser() : amber::Parser(nullptr) {}
+Parser::Parser(Delegate* delegate) : amber::Parser(delegate) {}
 
 Parser::~Parser() = default;
 
@@ -1262,27 +1332,10 @@ Result Parser::ParseBuffer() {
         buffer->SetMipLevels(token->AsUint32());
       } else if (token->AsString() == "FILE") {
         tokenizer_->NextToken();
-        token = tokenizer_->NextToken();
+        Result r = ParseBufferInitializerFile(buffer.get());
 
-        if (!token->IsIdentifier())
-          return Result("invalid value for FILE");
-
-        BufferDataFileType file_type = BufferDataFileType::kPng;
-
-        if (token->AsString() == "TEXT") {
-          file_type = BufferDataFileType::kText;
-          token = tokenizer_->NextToken();
-        } else if (token->AsString() == "BINARY") {
-          file_type = BufferDataFileType::kBinary;
-          token = tokenizer_->NextToken();
-        } else if (token->AsString() == "PNG") {
-          token = tokenizer_->NextToken();
-        }
-
-        if (!token->IsIdentifier())
-          return Result("missing file name for FILE");
-
-        buffer->SetDataFile(token->AsString(), file_type);
+        if (!r.IsSuccess())
+          return r;
       } else {
         break;
       }
@@ -1533,31 +1586,8 @@ Result Parser::ParseBufferInitializerSize(Buffer* buffer) {
     return ParseBufferInitializerFill(buffer, size_in_items);
   if (token->AsString() == "SERIES_FROM")
     return ParseBufferInitializerSeries(buffer, size_in_items);
-  if (token->AsString() == "FILE") {
-    token = tokenizer_->NextToken();
-
-    if (!token->IsIdentifier())
-      return Result("invalid value for FILE");
-
-    BufferDataFileType file_type = BufferDataFileType::kPng;
-
-    if (token->AsString() == "TEXT") {
-      file_type = BufferDataFileType::kText;
-      token = tokenizer_->NextToken();
-    } else if (token->AsString() == "BINARY") {
-      file_type = BufferDataFileType::kBinary;
-      token = tokenizer_->NextToken();
-    } else if (token->AsString() == "PNG") {
-      token = tokenizer_->NextToken();
-    }
-
-    if (!token->IsIdentifier())
-      return Result("missing file name for FILE");
-
-    buffer->SetDataFile(token->AsString(), file_type);
-
-    return {};
-  }
+  if (token->AsString() == "FILE")
+    return ParseBufferInitializerFile(buffer);
 
   return Result("invalid BUFFER initializer provided");
 }
@@ -1649,65 +1679,66 @@ Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
 }
 
 Result Parser::ParseBufferInitializerData(Buffer* buffer) {
-  auto fmt = buffer->GetFormat();
-  const auto& segs = fmt->GetSegments();
-  size_t seg_idx = 0;
-  uint32_t value_count = 0;
+  Result r = ParseBufferData(buffer, tokenizer_.get(), false);
 
-  std::vector<Value> values;
-  for (auto token = tokenizer_->NextToken();; token = tokenizer_->NextToken()) {
-    if (token->IsEOL())
-      continue;
-    if (token->IsEOS())
-      return Result("missing BUFFER END command");
-    if (token->IsIdentifier() && token->AsString() == "END")
-      break;
-    if (!token->IsInteger() && !token->IsDouble() && !token->IsHex())
-      return Result("invalid BUFFER data value: " + token->ToOriginalString());
-
-    while (segs[seg_idx].IsPadding()) {
-      ++seg_idx;
-      if (seg_idx >= segs.size())
-        seg_idx = 0;
-    }
-
-    Value v;
-    if (type::Type::IsFloat(segs[seg_idx].GetFormatMode())) {
-      token->ConvertToDouble();
-
-      double val = token->IsHex() ? static_cast<double>(token->AsHex())
-                                  : token->AsDouble();
-      v.SetDoubleValue(val);
-      ++value_count;
-    } else {
-      if (token->IsDouble()) {
-        return Result("invalid BUFFER data value: " +
-                      token->ToOriginalString());
-      }
-
-      uint64_t val = token->IsHex() ? token->AsHex() : token->AsUint64();
-      v.SetIntValue(val);
-      ++value_count;
-    }
-    ++seg_idx;
-    if (seg_idx >= segs.size())
-      seg_idx = 0;
-
-    values.emplace_back(v);
-  }
-  // Write final padding bytes
-  while (segs[seg_idx].IsPadding()) {
-    ++seg_idx;
-    if (seg_idx >= segs.size())
-      break;
-  }
-
-  buffer->SetValueCount(value_count);
-  Result r = buffer->SetData(std::move(values));
   if (!r.IsSuccess())
     return r;
 
   return ValidateEndOfStatement("BUFFER data command");
+}
+
+Result Parser::ParseBufferInitializerFile(Buffer* buffer) {
+  auto token = tokenizer_->NextToken();
+
+  if (!token->IsIdentifier())
+    return Result("invalid value for FILE");
+
+  BufferDataFileType file_type = BufferDataFileType::kPng;
+
+  if (token->AsString() == "TEXT") {
+    file_type = BufferDataFileType::kText;
+    token = tokenizer_->NextToken();
+  } else if (token->AsString() == "BINARY") {
+    file_type = BufferDataFileType::kBinary;
+    token = tokenizer_->NextToken();
+  } else if (token->AsString() == "PNG") {
+    token = tokenizer_->NextToken();
+  }
+
+  if (!token->IsIdentifier())
+    return Result("missing file name for FILE");
+
+  if (!delegate_)
+    return Result("missing delegate");
+
+  BufferInfo info;
+  Result r = delegate_->LoadBufferData(token->AsString(), file_type, &info);
+
+  if (!r.IsSuccess())
+    return r;
+
+  std::vector<uint8_t>* data = buffer->ValuePtr();
+
+  data->clear();
+  data->reserve(info.values.size());
+  for (auto v : info.values) {
+    data->push_back(v.AsUint8());
+  }
+
+  if (file_type == BufferDataFileType::kText) {
+    auto s = std::string(data->begin(), data->end());
+    Tokenizer tok(s);
+    r = ParseBufferData(buffer, &tok, true);
+    if (!r.IsSuccess())
+      return r;
+  } else {
+    buffer->SetElementCount(static_cast<uint32_t>(data->size()) /
+                            buffer->GetFormat()->SizeInBytes());
+    buffer->SetWidth(info.width);
+    buffer->SetHeight(info.height);
+  }
+
+  return {};
 }
 
 Result Parser::ParseRun() {
