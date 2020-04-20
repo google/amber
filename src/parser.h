@@ -37,9 +37,10 @@ class Parser {
   std::unique_ptr<Script> GetScript() { return std::move(script_); }
 
  protected:
-  Parser();
+  explicit Parser(Delegate* delegate);
 
   std::unique_ptr<Script> script_;
+  Delegate* delegate_ = nullptr;
 };
 
 }  // namespace amber

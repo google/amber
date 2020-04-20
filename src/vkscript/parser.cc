@@ -35,7 +35,8 @@ const char kDefaultPipelineName[] = "vk_pipeline";
 
 }  // namespace
 
-Parser::Parser() : amber::Parser() {}
+Parser::Parser() : amber::Parser(nullptr) {}
+Parser::Parser(Delegate* delegate) : amber::Parser(delegate) {}
 
 Parser::~Parser() = default;
 
