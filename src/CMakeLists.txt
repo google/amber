@@ -133,6 +133,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_buffer_test.cc
     amberscript/parser_clear_color_test.cc
     amberscript/parser_clear_depth_test.cc
+    amberscript/parser_clear_stencil_test.cc
     amberscript/parser_clear_test.cc
     amberscript/parser_compile_options_test.cc
     amberscript/parser_copy_test.cc

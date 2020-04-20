@@ -569,6 +569,7 @@ The commands which can be used inside a `REPEAT` block are:
   * `CLEAR`
   * `CLEAR_COLOR`
   * `CLEAR_DEPTH`
+  * `CLEAR_STENCIL`
   * `COPY`
   * `EXPECT`
   * `RUN`
@@ -583,6 +584,10 @@ CLEAR_COLOR {pipeline} _r (0 - 255)_ _g (0 - 255)_ _b (0 - 255)_ _a (0 - 255)_
 # Sets the depth clear value to use for |pipeline| which must be a graphics
 # pipeline. |value| must be a decimal number.
 CLEAR_DEPTH {pipeline} _value_
+
+# Sets the stencil clear value to use for |pipeline| which must be a graphics
+# pipeline. |value| must be an integer from 0 - 255.
+CLEAR_STENCIL {pipeline} _value_
 
 # Instructs the |pipeline| which must be a graphics pipeline to execute the
 # clear command.
