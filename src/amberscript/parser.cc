@@ -152,6 +152,27 @@ ImageDimension StrToImageDimension(const std::string& str) {
   return ImageDimension::kUnknown;
 }
 
+CompareOp StrToCompareOp(const std::string& str) {
+  if (str == "never")
+    return CompareOp::kNever;
+  if (str == "less")
+    return CompareOp::kLess;
+  if (str == "equal")
+    return CompareOp::kEqual;
+  if (str == "less_or_equal")
+    return CompareOp::kLessOrEqual;
+  if (str == "greater")
+    return CompareOp::kGreater;
+  if (str == "not_equal")
+    return CompareOp::kNotEqual;
+  if (str == "greater_or_equal")
+    return CompareOp::kGreaterOrEqual;
+  if (str == "always")
+    return CompareOp::kAlways;
+
+  return CompareOp::kUnknown;
+}
+
 Result ParseBufferData(Buffer* buffer,
                        Tokenizer* tokenizer,
                        bool from_data_file) {
@@ -548,6 +569,8 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelineShaderCompileOptions(pipeline.get());
     } else if (tok == "POLYGON_MODE") {
       r = ParsePipelinePolygonMode(pipeline.get());
+    } else if (tok == "DEPTH") {
+      r = ParsePipelineDepth(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -1167,6 +1190,121 @@ Result Parser::ParsePipelinePolygonMode(Pipeline* pipeline) {
     return Result("invalid polygon mode: " + mode);
 
   return ValidateEndOfStatement("POLYGON_MODE command");
+}
+
+Result Parser::ParsePipelineDepth(Pipeline* pipeline) {
+  while (true) {
+    auto token = tokenizer_->NextToken();
+    if (token->IsEOL())
+      continue;
+    if (token->IsEOS())
+      return Result("DEPTH missing END command");
+    if (!token->IsIdentifier())
+      return Result("DEPTH options must be identifiers");
+    if (token->AsString() == "END")
+      break;
+
+    if (token->AsString() == "TEST") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("invalid value for TEST");
+
+      if (token->AsString() == "on")
+        pipeline->GetPipelineData()->SetEnableDepthTest(true);
+      else if (token->AsString() == "off")
+        pipeline->GetPipelineData()->SetEnableDepthTest(false);
+      else
+        return Result("invalid value for TEST: " + token->AsString());
+    } else if (token->AsString() == "CLAMP") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("invalid value for CLAMP");
+
+      if (token->AsString() == "on")
+        pipeline->GetPipelineData()->SetEnableDepthClamp(true);
+      else if (token->AsString() == "off")
+        pipeline->GetPipelineData()->SetEnableDepthClamp(false);
+      else
+        return Result("invalid value for CLAMP: " + token->AsString());
+    } else if (token->AsString() == "WRITE") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("invalid value for WRITE");
+
+      if (token->AsString() == "on")
+        pipeline->GetPipelineData()->SetEnableDepthWrite(true);
+      else if (token->AsString() == "off")
+        pipeline->GetPipelineData()->SetEnableDepthWrite(false);
+      else
+        return Result("invalid value for WRITE: " + token->AsString());
+    } else if (token->AsString() == "COMPARE_OP") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("invalid value for COMPARE_OP");
+
+      CompareOp compare_op = StrToCompareOp(token->AsString());
+      if (compare_op != CompareOp::kUnknown) {
+        pipeline->GetPipelineData()->SetDepthCompareOp(compare_op);
+      } else {
+        return Result("invalid value for COMPARE_OP: " + token->AsString());
+      }
+    } else if (token->AsString() == "BOUNDS") {
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier() || token->AsString() != "min")
+        return Result("BOUNDS expecting min");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsDouble())
+        return Result("BOUNDS invalid value for min");
+      pipeline->GetPipelineData()->SetMinDepthBounds(token->AsFloat());
+
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier() || token->AsString() != "max")
+        return Result("BOUNDS expecting max");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsDouble())
+        return Result("BOUNDS invalid value for max");
+      pipeline->GetPipelineData()->SetMaxDepthBounds(token->AsFloat());
+    } else if (token->AsString() == "BIAS") {
+      pipeline->GetPipelineData()->SetEnableDepthBias(true);
+
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier() || token->AsString() != "constant")
+        return Result("BIAS expecting constant");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsDouble())
+        return Result("BIAS invalid value for constant");
+      pipeline->GetPipelineData()->SetDepthBiasConstantFactor(token->AsFloat());
+
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier() || token->AsString() != "clamp")
+        return Result("BIAS expecting clamp");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsDouble())
+        return Result("BIAS invalid value for clamp");
+      pipeline->GetPipelineData()->SetDepthBiasClamp(token->AsFloat());
+
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier() || token->AsString() != "slope")
+        return Result("BIAS expecting slope");
+
+      token = tokenizer_->NextToken();
+      if (!token->IsDouble())
+        return Result("BIAS invalid value for slope");
+      pipeline->GetPipelineData()->SetDepthBiasSlopeFactor(token->AsFloat());
+    } else {
+      return Result("invalid value for DEPTH: " + token->AsString());
+    }
+  }
+
+  return ValidateEndOfStatement("DEPTH command");
 }
 
 Result Parser::ParseStruct() {

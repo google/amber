@@ -378,6 +378,30 @@ The following commands are all specified within the `PIPELINE` command.
   POLYGON_MODE {mode}
 ```
 
+#### Compare operations
+ * `never`
+ * `less`
+ * `equal`
+ * `less_or_equal`
+ * `greater`
+ * `not_equal`
+ * `greater_or_equal`
+ * `always`
+
+```groovy
+  # Set depth test settings. All enable options are specified with keywords on and off.
+  # BOUNDS and BIAS values are specified with decimal numbers. |compare_op| is selected
+  # from the list of compare operations above.
+  DEPTH
+    TEST {test_enable}
+    WRITE {write_enable}
+    COMPARE_OP {compare_op}
+    CLAMP {clamp_enable}
+    BOUNDS min {bound_min} max {bounds_max}
+    BIAS constant {bias_constant} clamp {bias_clamp} slope {bias_slope}
+  END
+```
+
 ```groovy
   # Set the size of the render buffers. |width| and |height| are integers and
   # default to 250x250.
