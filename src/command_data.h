@@ -61,7 +61,8 @@ enum ColorMask {
 };
 
 enum class CompareOp : uint8_t {
-  kNever = 0,
+  kUnknown = 0,
+  kNever,
   kLess,
   kEqual,
   kLessOrEqual,
