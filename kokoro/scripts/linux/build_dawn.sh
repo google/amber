@@ -42,7 +42,6 @@ fi
 # removing the old version
 echo y | sudo apt-get purge --auto-remove cmake
 
-# Installing the 3.10.2 version
 # Update CMake
 sudo apt purge -y --auto-remove cmake
 wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | sudo apt-key add -
