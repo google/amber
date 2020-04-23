@@ -113,6 +113,8 @@ VkCompareOp ToVkCompareOp(CompareOp op) {
       return VK_COMPARE_OP_GREATER_OR_EQUAL;
     case CompareOp::kAlways:
       return VK_COMPARE_OP_ALWAYS;
+    case CompareOp::kUnknown:
+      break;
   }
   assert(false && "Vulkan::Unknown CompareOp");
   return VK_COMPARE_OP_NEVER;
