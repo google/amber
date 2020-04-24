@@ -173,6 +173,27 @@ CompareOp StrToCompareOp(const std::string& str) {
   return CompareOp::kUnknown;
 }
 
+StencilOp StrToStencilOp(const std::string& str) {
+  if (str == "keep")
+    return StencilOp::kKeep;
+  if (str == "zero")
+    return StencilOp::kZero;
+  if (str == "replace")
+    return StencilOp::kReplace;
+  if (str == "increment_and_clamp")
+    return StencilOp::kIncrementAndClamp;
+  if (str == "decrement_and_clamp")
+    return StencilOp::kDecrementAndClamp;
+  if (str == "invert")
+    return StencilOp::kInvert;
+  if (str == "increment_and_wrap")
+    return StencilOp::kIncrementAndWrap;
+  if (str == "decrement_and_wrap")
+    return StencilOp::kDecrementAndWrap;
+
+  return StencilOp::kUnknown;
+}
+
 Result ParseBufferData(Buffer* buffer,
                        Tokenizer* tokenizer,
                        bool from_data_file) {
@@ -571,6 +592,8 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelinePolygonMode(pipeline.get());
     } else if (tok == "DEPTH") {
       r = ParsePipelineDepth(pipeline.get());
+    } else if (tok == "STENCIL") {
+      r = ParsePipelineStencil(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -1305,6 +1328,150 @@ Result Parser::ParsePipelineDepth(Pipeline* pipeline) {
   }
 
   return ValidateEndOfStatement("DEPTH command");
+}
+
+Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsIdentifier())
+    return Result("STENCIL missing face");
+
+  bool setFront = false;
+  bool setBack = false;
+
+  if (token->AsString() == "front") {
+    setFront = true;
+  } else if (token->AsString() == "back") {
+    setBack = true;
+  } else if (token->AsString() == "front_and_back") {
+    setFront = true;
+    setBack = true;
+  } else {
+    return Result("STENCIL invalid face: " + token->AsString());
+  }
+
+  while (true) {
+    token = tokenizer_->NextToken();
+    if (token->IsEOL())
+      continue;
+    if (token->IsEOS())
+      return Result("STENCIL missing END command");
+    if (!token->IsIdentifier())
+      return Result("STENCIL options must be identifiers");
+    if (token->AsString() == "END")
+      break;
+
+    if (token->AsString() == "TEST") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("STENCIL invalid value for TEST");
+
+      if (token->AsString() == "on")
+        pipeline->GetPipelineData()->SetEnableStencilTest(true);
+      else if (token->AsString() == "off")
+        pipeline->GetPipelineData()->SetEnableStencilTest(false);
+      else
+        return Result("STENCIL invalid value for TEST: " + token->AsString());
+    } else if (token->AsString() == "FAIL_OP") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("STENCIL invalid value for FAIL_OP");
+
+      StencilOp stencil_op = StrToStencilOp(token->AsString());
+      if (stencil_op != StencilOp::kUnknown) {
+        if (setFront)
+          pipeline->GetPipelineData()->SetFrontFailOp(stencil_op);
+        if (setBack)
+          pipeline->GetPipelineData()->SetBackFailOp(stencil_op);
+      } else {
+        return Result("STENCIL invalid value for FAIL_OP: " +
+                      token->AsString());
+      }
+    } else if (token->AsString() == "PASS_OP") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("STENCIL invalid value for PASS_OP");
+
+      StencilOp stencil_op = StrToStencilOp(token->AsString());
+      if (stencil_op != StencilOp::kUnknown) {
+        if (setFront)
+          pipeline->GetPipelineData()->SetFrontPassOp(stencil_op);
+        if (setBack)
+          pipeline->GetPipelineData()->SetBackPassOp(stencil_op);
+      } else {
+        return Result("STENCIL invalid value for PASS_OP: " +
+                      token->AsString());
+      }
+    } else if (token->AsString() == "DEPTH_FAIL_OP") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("STENCIL invalid value for DEPTH_FAIL_OP");
+
+      StencilOp stencil_op = StrToStencilOp(token->AsString());
+      if (stencil_op != StencilOp::kUnknown) {
+        if (setFront)
+          pipeline->GetPipelineData()->SetFrontDepthFailOp(stencil_op);
+        if (setBack)
+          pipeline->GetPipelineData()->SetBackDepthFailOp(stencil_op);
+      } else {
+        return Result("STENCIL invalid value for DEPTH_FAIL_OP: " +
+                      token->AsString());
+      }
+    } else if (token->AsString() == "COMPARE_OP") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("STENCIL invalid value for COMPARE_OP");
+
+      CompareOp compare_op = StrToCompareOp(token->AsString());
+      if (compare_op != CompareOp::kUnknown) {
+        if (setFront)
+          pipeline->GetPipelineData()->SetFrontCompareOp(compare_op);
+        if (setBack)
+          pipeline->GetPipelineData()->SetBackCompareOp(compare_op);
+      } else {
+        return Result("STENCIL invalid value for COMPARE_OP: " +
+                      token->AsString());
+      }
+    } else if (token->AsString() == "COMPARE_MASK") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsInteger())
+        return Result("STENCIL invalid value for COMPARE_MASK");
+
+      if (setFront)
+        pipeline->GetPipelineData()->SetFrontCompareMask(token->AsUint32());
+      if (setBack)
+        pipeline->GetPipelineData()->SetBackCompareMask(token->AsUint32());
+    } else if (token->AsString() == "WRITE_MASK") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsInteger())
+        return Result("STENCIL invalid value for WRITE_MASK");
+
+      if (setFront)
+        pipeline->GetPipelineData()->SetFrontWriteMask(token->AsUint32());
+      if (setBack)
+        pipeline->GetPipelineData()->SetBackWriteMask(token->AsUint32());
+    } else if (token->AsString() == "REFERENCE") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsInteger())
+        return Result("STENCIL invalid value for REFERENCE");
+
+      if (setFront)
+        pipeline->GetPipelineData()->SetFrontReference(token->AsUint32());
+      if (setBack)
+        pipeline->GetPipelineData()->SetBackReference(token->AsUint32());
+    } else {
+      return Result("STENCIL invalid value for STENCIL: " + token->AsString());
+    }
+  }
+
+  return ValidateEndOfStatement("STENCIL command");
 }
 
 Result Parser::ParseStruct() {
