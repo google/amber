@@ -1379,15 +1379,14 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
         return Result("STENCIL invalid value for FAIL_OP");
 
       StencilOp stencil_op = StrToStencilOp(token->AsString());
-      if (stencil_op != StencilOp::kUnknown) {
-        if (setFront)
-          pipeline->GetPipelineData()->SetFrontFailOp(stencil_op);
-        if (setBack)
-          pipeline->GetPipelineData()->SetBackFailOp(stencil_op);
-      } else {
+      if (stencil_op == StencilOp::kUnknown) {
         return Result("STENCIL invalid value for FAIL_OP: " +
                       token->AsString());
       }
+      if (setFront)
+        pipeline->GetPipelineData()->SetFrontFailOp(stencil_op);
+      if (setBack)
+        pipeline->GetPipelineData()->SetBackFailOp(stencil_op);
     } else if (token->AsString() == "PASS_OP") {
       token = tokenizer_->NextToken();
 
@@ -1395,15 +1394,14 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
         return Result("STENCIL invalid value for PASS_OP");
 
       StencilOp stencil_op = StrToStencilOp(token->AsString());
-      if (stencil_op != StencilOp::kUnknown) {
-        if (setFront)
-          pipeline->GetPipelineData()->SetFrontPassOp(stencil_op);
-        if (setBack)
-          pipeline->GetPipelineData()->SetBackPassOp(stencil_op);
-      } else {
+      if (stencil_op == StencilOp::kUnknown) {
         return Result("STENCIL invalid value for PASS_OP: " +
                       token->AsString());
       }
+      if (setFront)
+        pipeline->GetPipelineData()->SetFrontPassOp(stencil_op);
+      if (setBack)
+        pipeline->GetPipelineData()->SetBackPassOp(stencil_op);
     } else if (token->AsString() == "DEPTH_FAIL_OP") {
       token = tokenizer_->NextToken();
 
@@ -1411,15 +1409,14 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
         return Result("STENCIL invalid value for DEPTH_FAIL_OP");
 
       StencilOp stencil_op = StrToStencilOp(token->AsString());
-      if (stencil_op != StencilOp::kUnknown) {
-        if (setFront)
-          pipeline->GetPipelineData()->SetFrontDepthFailOp(stencil_op);
-        if (setBack)
-          pipeline->GetPipelineData()->SetBackDepthFailOp(stencil_op);
-      } else {
+      if (stencil_op == StencilOp::kUnknown) {
         return Result("STENCIL invalid value for DEPTH_FAIL_OP: " +
                       token->AsString());
       }
+      if (setFront)
+        pipeline->GetPipelineData()->SetFrontDepthFailOp(stencil_op);
+      if (setBack)
+        pipeline->GetPipelineData()->SetBackDepthFailOp(stencil_op);
     } else if (token->AsString() == "COMPARE_OP") {
       token = tokenizer_->NextToken();
 
@@ -1427,15 +1424,14 @@ Result Parser::ParsePipelineStencil(Pipeline* pipeline) {
         return Result("STENCIL invalid value for COMPARE_OP");
 
       CompareOp compare_op = StrToCompareOp(token->AsString());
-      if (compare_op != CompareOp::kUnknown) {
-        if (setFront)
-          pipeline->GetPipelineData()->SetFrontCompareOp(compare_op);
-        if (setBack)
-          pipeline->GetPipelineData()->SetBackCompareOp(compare_op);
-      } else {
+      if (compare_op == CompareOp::kUnknown) {
         return Result("STENCIL invalid value for COMPARE_OP: " +
                       token->AsString());
       }
+      if (setFront)
+        pipeline->GetPipelineData()->SetFrontCompareOp(compare_op);
+      if (setBack)
+        pipeline->GetPipelineData()->SetBackCompareOp(compare_op);
     } else if (token->AsString() == "COMPARE_MASK") {
       token = tokenizer_->NextToken();
 
