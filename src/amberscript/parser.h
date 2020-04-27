@@ -70,6 +70,7 @@ class Parser : public amber::Parser {
   Result ParsePipelineSet(Pipeline*);
   Result ParsePipelinePolygonMode(Pipeline*);
   Result ParsePipelineDepth(Pipeline* pipeline);
+  Result ParsePipelineStencil(Pipeline* pipeline);
   Result ParseRun();
   Result ParseDebug();
   Result ParseDebugThread(debug::Events*);

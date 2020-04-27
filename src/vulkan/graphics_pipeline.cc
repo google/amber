@@ -90,6 +90,8 @@ VkStencilOp ToVkStencilOp(StencilOp op) {
       return VK_STENCIL_OP_INCREMENT_AND_WRAP;
     case StencilOp::kDecrementAndWrap:
       return VK_STENCIL_OP_DECREMENT_AND_WRAP;
+    case StencilOp::kUnknown:
+      break;
   }
   assert(false && "Vulkan::Unknown StencilOp");
   return VK_STENCIL_OP_KEEP;
