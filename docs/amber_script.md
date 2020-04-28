@@ -402,6 +402,33 @@ The following commands are all specified within the `PIPELINE` command.
   END
 ```
 
+#### Stencil operations
+ * `keep`
+ * `replace`
+ * `increment_and_clamp`
+ * `decrement_and_clamp`
+ * `invert`
+ * `increment_and_wrap`
+ * `decrement_and_wrap`
+
+```groovy
+  # Set stencil test settings. |face| can be front, back, or front_and_back.
+  # |test_enable| is either on or off and affects both faces. |fail_op|, |pass_op|,
+  # and |depth_fail_op| are selected from the stencil operations table above,
+  # and |compare_op| from the compare operations table. |compare_mask|, |write_mask|,
+  # and |reference| are 8bit unsigned integer values (range 0..255).
+  STENCIL {face}
+    TEST {test_enable}
+    FAIL_OP {fail_op}
+    PASS_OP {pass_op}
+    DEPTH_FAIL_OP {depth_fail_op}
+    COMPARE_OP {compare_op}
+    COMPARE_MASK {compare_mask}
+    WRITE_MASK {write_mask}
+    REFERENCE {reference}
+  END
+```
+
 ```groovy
   # Set the size of the render buffers. |width| and |height| are integers and
   # default to 250x250.

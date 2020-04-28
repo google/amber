@@ -73,7 +73,8 @@ enum class CompareOp : uint8_t {
 };
 
 enum class StencilOp : uint8_t {
-  kKeep = 0,
+  kUnknown = 0,
+  kKeep,
   kZero,
   kReplace,
   kIncrementAndClamp,
