@@ -121,6 +121,7 @@ endif()
 
 if (${Vulkan_FOUND})
   target_link_libraries(libamber libamberenginevulkan)
+  target_include_directories(libamber PRIVATE "${VulkanHeaders_INCLUDE_DIR}")
 endif()
 if (${Dawn_FOUND})
   target_link_libraries(libamber libamberenginedawn)
@@ -199,6 +200,10 @@ if (${AMBER_ENABLE_TESTS})
   target_link_libraries(amber_unittests libamber gmock_main)
   amber_default_compile_options(amber_unittests)
   add_test(NAME amber_unittests COMMAND amber_unittests)
+
+  if (${Vulkan_FOUND})
+    target_include_directories(amber_unittests PRIVATE "${VulkanHeaders_INCLUDE_DIR}")
+  endif()
 
   if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     # vulkan/vulkan.h defines VK_NULL_HANDLE as 0u and that also serves as a null pointer.
