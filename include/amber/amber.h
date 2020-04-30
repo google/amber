@@ -85,7 +85,7 @@ enum class BufferDataFileType : int8_t {
 /// Delegate class for various hook functions
 class Delegate {
  public:
-  virtual ~Delegate();
+  virtual ~Delegate() = default;
 
   /// Log the given message
   virtual void Log(const std::string& message) = 0;

@@ -80,8 +80,6 @@ BufferInfo::~BufferInfo() = default;
 
 BufferInfo& BufferInfo::operator=(const BufferInfo&) = default;
 
-Delegate::~Delegate() = default;
-
 Amber::Amber(Delegate* delegate) : delegate_(delegate) {}
 
 Amber::~Amber() = default;
