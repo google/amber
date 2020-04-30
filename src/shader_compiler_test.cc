@@ -356,6 +356,7 @@ kernel void TestShader(global int* in, global int* out, int m, int b) {
   Result r;
   std::vector<uint32_t> binary;
   Pipeline::ShaderInfo shader_info1(&shader, kShaderTypeCompute);
+  shader_info1.SetCompileOptions({"-cluster-pod-kernel-args=0"});
   Pipeline pipeline(PipelineType::kCompute);
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info1, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
@@ -371,7 +372,7 @@ kernel void TestShader(global int* in, global int* out, int m, int b) {
         entry.kind == Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_UBO;
   }
   EXPECT_EQ(3U, max_binding);
-  EXPECT_FALSE(has_pod_ubo);
+  EXPECT_TRUE(has_pod_ubo);
 
   binary.clear();
   Pipeline::ShaderInfo shader_info2(&shader, kShaderTypeCompute);

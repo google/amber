@@ -40,6 +40,9 @@ set(VULKAN_ENGINE_SOURCES
 add_library(libamberenginevulkan ${VULKAN_ENGINE_SOURCES})
 amber_default_compile_options(libamberenginevulkan)
 target_include_directories(libamberenginevulkan PRIVATE "${CMAKE_BINARY_DIR}")
+# Add the Vulkan include directory to the list of include paths.
+target_include_directories(libamberenginevulkan PRIVATE "${VulkanHeaders_INCLUDE_DIR}")
+
 set_target_properties(libamberenginevulkan PROPERTIES
     OUTPUT_NAME "amberenginevulkan"
 )
