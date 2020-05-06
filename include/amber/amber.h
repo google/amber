@@ -103,6 +103,8 @@ class Delegate {
                                        amber::BufferInfo* buffer) const = 0;
 };
 
+inline Delegate::~Delegate() = default;
+
 /// Stores configuration options for Amber.
 struct Options {
   Options();
