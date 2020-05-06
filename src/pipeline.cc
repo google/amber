@@ -49,7 +49,13 @@ const char* Pipeline::kGeneratedDepthBuffer = "depth_buffer";
 const char* Pipeline::kGeneratedPushConstantBuffer = "push_constant_buffer";
 
 Pipeline::ShaderInfo::ShaderInfo(Shader* shader, ShaderType type)
-    : shader_(shader), shader_type_(type), entry_point_("main") {}
+    : shader_(shader),
+      shader_type_(type),
+      entry_point_("main"),
+      required_subgroup_size_setting_(RequiredSubgroupSizeSetting::kNotSet),
+      required_subgroup_size_(0),
+      varying_subgroup_size_(0),
+      require_full_subgroups_(0) {}
 
 Pipeline::ShaderInfo::ShaderInfo(const ShaderInfo&) = default;
 
@@ -146,6 +152,85 @@ Result Pipeline::SetShaderCompileOptions(const Shader* shader,
   }
 
   return Result("unknown shader specified for compile options: " +
+                shader->GetName());
+}
+
+Result Pipeline::SetShaderRequiredSubgroupSize(
+    const Shader* shader,
+    const ShaderInfo::RequiredSubgroupSizeSetting setting,
+    const uint32_t size) {
+  if (!shader)
+    return Result("invalid shader specified for  required subgroup size");
+
+  for (auto& info : shaders_) {
+    const auto* is = info.GetShader();
+    if (is == shader) {
+      info.SetRequiredSubgroupSizeSetting(setting, size);
+      return {};
+    }
+  }
+
+  return Result("unknown shader specified for required subgroup size: " +
+                shader->GetName());
+}
+
+Result Pipeline::SetShaderRequiredSubgroupSize(const Shader* shader,
+                                               const uint32_t subgroupSize) {
+  const bool isPow2 =
+      subgroupSize > 0 && (subgroupSize & (subgroupSize - 1)) == 0;
+  if (subgroupSize == 0 || subgroupSize > 128 || !isPow2) {
+    return Result("invalid required subgroup size " +
+                  std::to_string(subgroupSize) + " specified for shader name " +
+                  shader->GetName());
+  }
+  const ShaderInfo::RequiredSubgroupSizeSetting setting =
+      ShaderInfo::RequiredSubgroupSizeSetting::kSetToSpecificSize;
+  return SetShaderRequiredSubgroupSize(shader, setting, subgroupSize);
+}
+
+Result Pipeline::SetShaderRequiredSubgroupSizeToMinimum(const Shader* shader) {
+  const ShaderInfo::RequiredSubgroupSizeSetting subgroupSizeSetting =
+      ShaderInfo::RequiredSubgroupSizeSetting::kSetToMinimumSize;
+  return SetShaderRequiredSubgroupSize(shader, subgroupSizeSetting, 0);
+}
+
+Result Pipeline::SetShaderRequiredSubgroupSizeToMaximum(const Shader* shader) {
+  const ShaderInfo::RequiredSubgroupSizeSetting subgroupSizeSetting =
+      ShaderInfo::RequiredSubgroupSizeSetting::kSetToMaximumSize;
+  return SetShaderRequiredSubgroupSize(shader, subgroupSizeSetting, 0);
+}
+
+Result Pipeline::SetShaderVaryingSubgroupSize(const Shader* shader,
+                                              const bool isSet) {
+  if (!shader)
+    return Result("invalid shader specified for varying subgroup size");
+
+  for (auto& info : shaders_) {
+    const auto* is = info.GetShader();
+    if (is == shader) {
+      info.SetVaryingSubgroupSize(isSet);
+      return {};
+    }
+  }
+
+  return Result("unknown shader specified for varying subgroup size: " +
+                shader->GetName());
+}
+
+Result Pipeline::SetShaderRequireFullSubgroups(const Shader* shader,
+                                               const bool isSet) {
+  if (!shader)
+    return Result("invalid shader specified for optimizations");
+
+  for (auto& info : shaders_) {
+    const auto* is = info.GetShader();
+    if (is == shader) {
+      info.SetRequireFullSubgroups(isSet);
+      return {};
+    }
+  }
+
+  return Result("unknown shader specified for optimizations: " +
                 shader->GetName());
 }
 

@@ -46,6 +46,9 @@ with:
  * `Storage16BitFeatures.uniformAndStorageBuffer16BitAccess`
  * `Storage16BitFeatures.storagePushConstant16`
  * `Storage16BitFeatures.storageInputOutput16`
+ * `SubgroupSizeControl.subgroupSizeControl`
+ * `SubgroupSizeControl.computeFullSubgroups`
+
 
 Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
 commands.
@@ -433,6 +436,23 @@ The following commands are all specified within the `PIPELINE` command.
   # Set the size of the render buffers. |width| and |height| are integers and
   # default to 250x250.
   FRAMEBUFFER_SIZE _width_ _height_
+```
+
+```groovy
+  # Set subgroup size control setting. Require that subgroups must be launched
+  # with all invocations active for given shader. Allow SubgroupSize to vary
+  # for given shader. Require a specific SubgroupSize the for given shader.
+  # |fully_populated_enable| and |varying_size_enable| can be on or off.
+  # |subgroup_size| can be set one of the values below:
+  #  - a power-of-two integer that _must_ be greater or equal to minSubgroupSize
+  #    and be less than or equal to maxSubgroupSize
+  # - MIN to set the required subgroup size to the minSubgroupSize
+  # - MAX to set the required subgroup size to the maxSubgroupSize  
+  SUBROUP {name_of_shader}
+    FULLY_POPULATED {fully_populated_enable}
+    VARYING_SIZE {varying_size_enable}
+    REQUIRED_SIZE {subgroup_size}
+  END
 ```
 
 ### Pipeline Buffers

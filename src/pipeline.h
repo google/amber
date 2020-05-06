@@ -63,6 +63,33 @@ class Pipeline {
       return compile_options_;
     }
 
+    enum class RequiredSubgroupSizeSetting : uint32_t {
+      kNotSet = 0,
+      kSetToSpecificSize,
+      kSetToMinimumSize,
+      kSetToMaximumSize
+    };
+
+    void SetRequiredSubgroupSizeSetting(RequiredSubgroupSizeSetting setting,
+                                        uint32_t size) {
+      required_subgroup_size_setting_ = setting;
+      required_subgroup_size_ = size;
+    }
+    RequiredSubgroupSizeSetting GetRequiredSubgroupSizeSetting() const {
+      return required_subgroup_size_setting_;
+    }
+    uint32_t GetRequiredSubgroupSize() const { return required_subgroup_size_; }
+
+    void SetVaryingSubgroupSize(const bool isSet) {
+      varying_subgroup_size_ = isSet;
+    }
+    bool GetVaryingSubgroupSize() const { return varying_subgroup_size_; }
+
+    void SetRequireFullSubgroups(const bool isSet) {
+      require_full_subgroups_ = isSet;
+    }
+    bool GetRequireFullSubgroups() const { return require_full_subgroups_; }
+
     void SetShader(Shader* shader) { shader_ = shader; }
     const Shader* GetShader() const { return shader_; }
 
@@ -143,6 +170,10 @@ class Pipeline {
         descriptor_map_;
     std::vector<PushConstant> push_constants_;
     std::vector<std::string> compile_options_;
+    RequiredSubgroupSizeSetting required_subgroup_size_setting_;
+    uint32_t required_subgroup_size_;
+    bool varying_subgroup_size_;
+    bool require_full_subgroups_;
   };
 
   /// Information on a buffer attached to the pipeline.
@@ -231,7 +262,20 @@ class Pipeline {
   /// Sets the compile options for |shader| in this pipeline.
   Result SetShaderCompileOptions(const Shader* shader,
                                  const std::vector<std::string>& options);
+  /// Sets required subgroup size.
+  Result SetShaderRequiredSubgroupSize(const Shader* shader,
+                                       const uint32_t subgroupSize);
+  /// Sets required subgroup size to the device minimum supported subgroup size.
+  Result SetShaderRequiredSubgroupSizeToMinimum(const Shader* shader);
 
+  /// Sets required subgroup size to the device maximum supported subgroup size.
+  Result SetShaderRequiredSubgroupSizeToMaximum(const Shader* shader);
+
+  /// Sets varying subgroup size property.
+  Result SetShaderVaryingSubgroupSize(const Shader* shader, const bool isSet);
+
+  /// Sets require full subgroups property.
+  Result SetShaderRequireFullSubgroups(const Shader* shader, const bool isSet);
   /// Returns a list of all colour attachments in this pipeline.
   const std::vector<BufferInfo>& GetColorAttachments() const {
     return color_attachments_;
@@ -348,6 +392,11 @@ class Pipeline {
 
  private:
   void UpdateFramebufferSizes();
+
+  Result SetShaderRequiredSubgroupSize(
+      const Shader* shader,
+      const ShaderInfo::RequiredSubgroupSizeSetting setting,
+      const uint32_t subgroupSize);
 
   Result CreatePushConstantBuffer();
 

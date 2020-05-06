@@ -154,6 +154,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_shader_test.cc
     amberscript/parser_stencil_test.cc
     amberscript/parser_struct_test.cc
+    amberscript/parser_subgroup_size_control_test.cc
     amberscript/parser_test.cc
     buffer_test.cc
     command_data_test.cc

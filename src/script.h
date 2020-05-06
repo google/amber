@@ -15,6 +15,7 @@
 #ifndef SRC_SCRIPT_H_
 #define SRC_SCRIPT_H_
 
+#include <algorithm>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -158,6 +159,13 @@ class Script : public RecipeImpl {
   /// engine.
   void AddRequiredFeature(const std::string& feature) {
     engine_info_.required_features.push_back(feature);
+  }
+
+  /// Checks if |feature| is in required features
+  bool IsRequiredFeature(const std::string& feature) const {
+    return std::find(engine_info_.required_features.begin(),
+                     engine_info_.required_features.end(),
+                     feature) != engine_info_.required_features.end();
   }
 
   /// Adds |ext| to the list of device extensions that must be supported.

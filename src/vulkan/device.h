@@ -43,13 +43,15 @@ class Device {
          VkQueue queue);
   ~Device();
 
-  Result Initialize(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
-                    Delegate* delegate,
-                    const std::vector<std::string>& required_features,
-                    const std::vector<std::string>& required_extensions,
-                    const VkPhysicalDeviceFeatures& available_features,
-                    const VkPhysicalDeviceFeatures2KHR& available_features2,
-                    const std::vector<std::string>& available_extensions);
+  Result Initialize(
+      PFN_vkGetInstanceProcAddr getInstanceProcAddr,
+      Delegate* delegate,
+      const std::vector<std::string>& required_features,
+      const std::vector<std::string>& required_instance_extensions,
+      const std::vector<std::string>& required_device_extensions,
+      const VkPhysicalDeviceFeatures& available_features,
+      const VkPhysicalDeviceFeatures2KHR& available_features2,
+      const std::vector<std::string>& available_extensions);
 
   /// Returns true if |format| and the |buffer|s buffer type combination is
   /// supported by the physical device.
@@ -77,6 +79,17 @@ class Device {
   /// Returns the pointers to the Vulkan API methods.
   const VulkanPtrs* GetPtrs() const { return &ptrs_; }
 
+  /// Returns true if the required subgroup size is supported for given stage
+  bool IsRequiredSubgroupSizeSupported(
+      const ShaderType type,
+      const uint32_t required_subgroup_size) const;
+  /// Returns the minimum required subgroup size or 0 if subgroup size control
+  /// is not supported.
+  uint32_t GetMinSubgroupSize() const;
+  /// Returns the maximum required subgroup size or 0 if subgroup size control
+  /// is not supported.
+  uint32_t GetMaxSubgroupSize() const;
+
  private:
   Result LoadVulkanPointers(PFN_vkGetInstanceProcAddr, Delegate* delegate);
 
@@ -84,6 +97,8 @@ class Device {
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
   VkPhysicalDeviceProperties physical_device_properties_;
   VkPhysicalDeviceMemoryProperties physical_memory_properties_;
+  VkPhysicalDeviceSubgroupSizeControlPropertiesEXT
+      subgroup_size_control_properties_;
   VkDevice device_ = VK_NULL_HANDLE;
   VkQueue queue_ = VK_NULL_HANDLE;
   uint32_t queue_family_index_ = 0;

@@ -124,9 +124,9 @@ Result EngineVulkan::Initialize(
                                vk_config->queue);
 
   Result r = device_->Initialize(
-      vk_config->vkGetInstanceProcAddr, delegate, features, device_extensions,
-      vk_config->available_features, vk_config->available_features2,
-      vk_config->available_device_extensions);
+      vk_config->vkGetInstanceProcAddr, delegate, features, instance_extensions,
+      device_extensions, vk_config->available_features,
+      vk_config->available_features2, vk_config->available_device_extensions);
   if (!r.IsSuccess())
     return r;
 
@@ -298,6 +298,42 @@ Result EngineVulkan::SetShader(amber::Pipeline* pipeline,
     if (shader_info.GetShaderType() != type)
       continue;
 
+    const auto required_subgroup_size_setting =
+        shader_info.GetRequiredSubgroupSizeSetting();
+    uint32_t required_subgroup_size_uint = 0;
+    switch (required_subgroup_size_setting) {
+      case amber::Pipeline::ShaderInfo::RequiredSubgroupSizeSetting::
+          kSetToMinimumSize:
+        required_subgroup_size_uint = device_->GetMinSubgroupSize();
+        break;
+      case amber::Pipeline::ShaderInfo::RequiredSubgroupSizeSetting::
+          kSetToMaximumSize:
+        required_subgroup_size_uint = device_->GetMaxSubgroupSize();
+        break;
+      default:
+        required_subgroup_size_uint = shader_info.GetRequiredSubgroupSize();
+        break;
+    }
+    if (required_subgroup_size_uint > 0) {
+      if (!device_->IsRequiredSubgroupSizeSupported(
+              type, required_subgroup_size_uint)) {
+        return Result(
+            "Vulkan::Setting Required subgroup size is not supported by the "
+            "device.");
+      }
+    }
+    info.shader_info[type].required_subgroup_size = required_subgroup_size_uint;
+
+    info.shader_info[type].create_flags = 0;
+    if (shader_info.GetVaryingSubgroupSize()) {
+      info.shader_info[type].create_flags |=
+          VK_PIPELINE_SHADER_STAGE_CREATE_ALLOW_VARYING_SUBGROUP_SIZE_BIT_EXT;
+    }
+    if (shader_info.GetRequireFullSubgroups()) {
+      info.shader_info[type].create_flags |=
+          VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT_EXT;
+    }
+
     const auto& shader_spec_info = shader_info.GetSpecialization();
     if (shader_spec_info.empty())
       continue;
@@ -342,6 +378,7 @@ Result EngineVulkan::GetVkShaderStageInfo(
     stage_info[stage_count] = VkPipelineShaderStageCreateInfo();
     stage_info[stage_count].sType =
         VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    stage_info[stage_count].flags = it.second.create_flags;
     stage_info[stage_count].stage = stage;
     stage_info[stage_count].module = it.second.shader;
     stage_info[stage_count].pName = nullptr;
@@ -349,6 +386,17 @@ Result EngineVulkan::GetVkShaderStageInfo(
         !it.second.specialization_entries->empty()) {
       stage_info[stage_count].pSpecializationInfo =
           it.second.specialization_info.get();
+    }
+
+    if (stage == VK_SHADER_STAGE_COMPUTE_BIT &&
+        it.second.required_subgroup_size > 0) {
+      VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT* pSubgroupSize =
+          new VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT();
+      pSubgroupSize->sType =
+          VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO_EXT;  // NOLINT(whitespace/line_length)
+      pSubgroupSize->pNext = nullptr;
+      pSubgroupSize->requiredSubgroupSize = it.second.required_subgroup_size;
+      stage_info[stage_count].pNext = pSubgroupSize;
     }
     ++stage_count;
   }

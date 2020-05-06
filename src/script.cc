@@ -110,7 +110,9 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name == "Storage16BitFeatures.storageBuffer16BitAccess" ||
          name == "Storage16BitFeatures.uniformAndStorageBuffer16BitAccess" ||
          name == "Storage16BitFeatures.storagePushConstant16" ||
-         name == "Storage16BitFeatures.storageInputOutput16";
+         name == "Storage16BitFeatures.storageInputOutput16" ||
+         name == "SubgroupSizeControl.subgroupSizeControl" ||
+         name == "SubgroupSizeControl.computeFullSubgroups";
 }
 
 type::Type* Script::ParseType(const std::string& str) {
