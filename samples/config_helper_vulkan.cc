@@ -669,8 +669,7 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     uint32_t engine_major,
     uint32_t engine_minor,
     std::vector<std::string> required_extensions,
-    bool disable_validation_layer,
-    bool show_version_info) {
+    bool disable_validation_layer) {
   VkApplicationInfo app_info = VkApplicationInfo();
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.apiVersion = VK_MAKE_VERSION(engine_major, engine_minor, 0);
@@ -700,12 +699,10 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     }
   }
 
-  // If dumping driver info then add useful extensions, if available.
-  if (show_version_info &&
-      std::find(available_instance_extensions_.begin(),
+  if (std::find(available_instance_extensions_.begin(),
                 available_instance_extensions_.end(),
                 "VK_KHR_get_physical_device_properties2") !=
-          available_instance_extensions_.end()) {
+      available_instance_extensions_.end()) {
     required_extensions.push_back("VK_KHR_get_physical_device_properties2");
   }
 
@@ -1153,9 +1150,9 @@ amber::Result ConfigHelperVulkan::CreateConfig(
     bool disable_validation_layer,
     bool show_version_info,
     std::unique_ptr<amber::EngineConfig>* cfg_holder) {
-  amber::Result r = CreateVulkanInstance(
-      engine_major, engine_minor, required_instance_extensions,
-      disable_validation_layer, show_version_info);
+  amber::Result r = CreateVulkanInstance(engine_major, engine_minor,
+                                         required_instance_extensions,
+                                         disable_validation_layer);
   if (!r.IsSuccess())
     return r;
 
