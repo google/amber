@@ -783,13 +783,11 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
         continue;
       }
 
-      if (feature == kVariablePointers &&
-          var_ptrs.variablePointers != VK_TRUE) {
-        continue;
-      }
-      if (feature == kVariablePointersStorageBuffer &&
-          var_ptrs.variablePointersStorageBuffer != VK_TRUE) {
-        continue;
+      if ((feature == kVariablePointers &&
+           var_ptrs.variablePointers == VK_FALSE) ||
+          (feature == kVariablePointersStorageBuffer &&
+           var_ptrs.variablePointersStorageBuffer == VK_FALSE)) {
+        return amber::Result("Device does not support all required features");
       }
     }
 
