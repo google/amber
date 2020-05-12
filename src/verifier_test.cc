@@ -1573,7 +1573,7 @@ TEST_F(VerifierTest, ProbeSSBOFloatNaN) {
     values.back().SetDoubleValue(13.7);
     probe_ssbo.SetValues(std::move(values));
 
-    float ssbo = std::nan("");
+    float ssbo = std::nanf("");
 
     Verifier verifier;
     Result r =
@@ -1590,7 +1590,7 @@ TEST_F(VerifierTest, ProbeSSBOFloatNaN) {
     values.back().SetDoubleValue(std::nan(""));
     probe_ssbo.SetValues(std::move(values));
 
-    float ssbo = 13.7;
+    float ssbo = 13.7f;
 
     Verifier verifier;
     Result r =
@@ -1607,7 +1607,7 @@ TEST_F(VerifierTest, ProbeSSBOFloatNaN) {
     values.back().SetDoubleValue(std::nan(""));
     probe_ssbo.SetValues(std::move(values));
 
-    float ssbo = std::nan("");
+    float ssbo = std::nanf("");
 
     Verifier verifier;
     Result r =
