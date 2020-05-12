@@ -1552,4 +1552,67 @@ TEST_F(VerifierTest, ProbeSSBOHexFloat) {
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 }
 
+TEST_F(VerifierTest, ProbeSSBOFloatNaN) {
+  Pipeline pipeline(PipelineType::kGraphics);
+  auto color_buf = pipeline.GenerateDefaultColorAttachmentBuffer();
+
+  ProbeSSBOCommand probe_ssbo(color_buf.get());
+
+  TypeParser parser;
+  auto type = parser.Parse("R32_SFLOAT");
+  Format fmt(type.get());
+
+  probe_ssbo.SetFormat(&fmt);
+  probe_ssbo.SetComparator(ProbeSSBOCommand::Comparator::kEqual);
+
+  // expected=13.7, actual=nan
+  {
+    std::vector<Value> values;
+    values.emplace_back();
+    values.back().SetDoubleValue(13.7);
+    probe_ssbo.SetValues(std::move(values));
+
+    float ssbo = std::nan("");
+
+    Verifier verifier;
+    Result r =
+        verifier.ProbeSSBO(&probe_ssbo, 1, static_cast<const void*>(&ssbo));
+    EXPECT_FALSE(r.IsSuccess()) << r.Error();
+    EXPECT_EQ("Line 1: Verifier failed: nan == 13.700000, at index 0",
+              r.Error());
+  }
+
+  // expected=nan, actual=13.7
+  {
+    std::vector<Value> values;
+    values.emplace_back();
+    values.back().SetDoubleValue(std::nan(""));
+    probe_ssbo.SetValues(std::move(values));
+
+    float ssbo = 13.7;
+
+    Verifier verifier;
+    Result r =
+        verifier.ProbeSSBO(&probe_ssbo, 1, static_cast<const void*>(&ssbo));
+    EXPECT_FALSE(r.IsSuccess()) << r.Error();
+    EXPECT_EQ("Line 1: Verifier failed: 13.700000 == nan, at index 0",
+              r.Error());
+  }
+
+  // expected=nan, actual=nan
+  {
+    std::vector<Value> values;
+    values.emplace_back();
+    values.back().SetDoubleValue(std::nan(""));
+    probe_ssbo.SetValues(std::move(values));
+
+    float ssbo = std::nan("");
+
+    Verifier verifier;
+    Result r =
+        verifier.ProbeSSBO(&probe_ssbo, 1, static_cast<const void*>(&ssbo));
+    EXPECT_TRUE(r.IsSuccess()) << r.Error();
+  }
+}
+
 }  // namespace amber

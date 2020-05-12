@@ -75,6 +75,11 @@ bool IsEqualWithTolerance(const double actual,
                           const double expected,
                           double tolerance,
                           const bool is_tolerance_percent = true) {
+  // Special case for NaN.
+  if (std::isunordered(actual, expected)) {
+    return std::isnan(actual) == std::isnan(expected);
+  }
+
   double difference = std::fabs(actual - expected);
   if (is_tolerance_percent) {
     if (difference > ((tolerance / 100.0) * std::fabs(expected))) {
