@@ -14,6 +14,7 @@
 
 #include "src/verifier.h"
 
+#include <cmath>
 #include <memory>
 #include <utility>
 #include <vector>
