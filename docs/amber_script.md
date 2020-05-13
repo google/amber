@@ -121,7 +121,7 @@ Shader using source from `VIRTUAL_FILE`:
 ```groovy
 # Creates a shader of |shader_type| with the given |shader_name|. The shader
 # will be of |shader_format|. The shader will use the virtual file with |path|.
-SHADER {shader_type} {shader_name} {shader_format} VIRTUAL_FILE {path}
+SHADER {shader_type} {shader_name} {shader_format} TARGET_ENV {target_env} VIRTUAL_FILE {path}
 ```
 
 `{shader_name}` is used to identify the shader to attach to `PIPELINE`s,
@@ -154,6 +154,10 @@ types, but in that case must only provide a single shader type in the module.
  * `SPIRV-ASM` (with spirv-as)
  * `SPIRV-HEX` (decoded straight to SPIR-V)
  * `OPENCL-C` (with clspv)
+
+Specifying `{target_env}` is optional and can be used to select a target
+SPIR-V environment. This overwrites the default environment (spv1.0) or
+one specified in command line parameters.
 
 ### Buffers
 
