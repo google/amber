@@ -17,6 +17,7 @@
 #include <cassert>
 #include <utility>
 #include <vector>
+#include <string>
 
 #include "src/engine.h"
 #include "src/make_unique.h"
