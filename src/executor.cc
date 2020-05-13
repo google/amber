@@ -15,9 +15,9 @@
 #include "src/executor.h"
 
 #include <cassert>
+#include <string>
 #include <utility>
 #include <vector>
-#include <string>
 
 #include "src/engine.h"
 #include "src/make_unique.h"
