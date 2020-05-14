@@ -474,15 +474,7 @@ Result Parser::ParseShaderBlock() {
     }
     shader->SetFormat(kShaderFormatSpirvAsm);
     shader->SetData(kPassThroughShader);
-
-    token = tokenizer_->PeekNextToken();
-    if (token->IsIdentifier() && token->AsString() == "TARGET_ENV") {
-      tokenizer_->NextToken();
-      token = tokenizer_->NextToken();
-      if (!token->IsIdentifier() && !token->IsString())
-        return Result("expected target environment after TARGET_ENV");
-      shader->SetTargetEnv(token->AsString());
-    }
+    shader->SetTargetEnv("spv1.0");
 
     r = script_->AddShader(std::move(shader));
     if (!r.IsSuccess())

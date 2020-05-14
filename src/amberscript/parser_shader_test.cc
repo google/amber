@@ -122,34 +122,6 @@ TEST_F(AmberScriptParserTest, ShaderPassThroughExtraParameters) {
   EXPECT_EQ("1: extra parameters after SHADER PASSTHROUGH: INVALID", r.Error());
 }
 
-TEST_F(AmberScriptParserTest, ShaderPassThroughTargetEnv) {
-  std::string in = "SHADER vertex my_shader PASSTHROUGH TARGET_ENV spv1.1";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_TRUE(r.IsSuccess()) << r.Error();
-
-  auto script = parser.GetScript();
-  const auto& shaders = script->GetShaders();
-  ASSERT_EQ(1U, shaders.size());
-
-  const auto* shader = shaders[0].get();
-  EXPECT_EQ("my_shader", shader->GetName());
-  EXPECT_EQ(kShaderTypeVertex, shader->GetType());
-  EXPECT_EQ(kShaderFormatSpirvAsm, shader->GetFormat());
-  EXPECT_EQ(kPassThroughShader, shader->GetData());
-  EXPECT_EQ("spv1.1", shader->GetTargetEnv());
-}
-
-TEST_F(AmberScriptParserTest, ShaderPassThroughTargetEnvMissingEnv) {
-  std::string in = "SHADER vertex my_shader PASSTHROUGH TARGET_ENV";
-
-  Parser parser;
-  Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("1: expected target environment after TARGET_ENV", r.Error());
-}
-
 TEST_F(AmberScriptParserTest, Shader) {
   std::string shader_result = R"(
 # Shader has a comment in it.
