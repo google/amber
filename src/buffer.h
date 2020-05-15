@@ -53,8 +53,12 @@ enum class BufferType : int8_t {
   kPushConstant,
   /// A vertex buffer.
   kVertex,
-  /// A storage image
-  kStorageImage
+  /// A storage image.
+  kStorageImage,
+  /// A uniform texel buffer.
+  kUniformTexelBuffer,
+  /// A storage texel buffer.
+  kStorageTexelBuffer
 };
 
 /// A buffer stores data. The buffer maybe provided from the input script, or

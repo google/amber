@@ -493,7 +493,9 @@ class BufferCommand : public BindableResourceCommand {
     kPushConstant,
     kStorageImage,
     kSampledImage,
-    kCombinedImageSampler
+    kCombinedImageSampler,
+    kUniformTexelBuffer,
+    kStorageTexelBuffer
   };
 
   BufferCommand(BufferType type, Pipeline* pipeline);
@@ -509,6 +511,12 @@ class BufferCommand : public BindableResourceCommand {
   }
   bool IsCombinedImageSampler() const {
     return buffer_type_ == BufferType::kCombinedImageSampler;
+  }
+  bool IsUniformTexelBuffer() const {
+    return buffer_type_ == BufferType::kUniformTexelBuffer;
+  }
+  bool IsStorageTexelBuffer() const {
+    return buffer_type_ == BufferType::kStorageTexelBuffer;
   }
   bool IsPushConstant() const {
     return buffer_type_ == BufferType::kPushConstant;

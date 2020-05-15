@@ -19,6 +19,7 @@
 
 #include "amber/result.h"
 #include "amber/vulkan_header.h"
+#include "src/format.h"
 #include "src/vulkan/resource.h"
 
 namespace amber {
@@ -30,10 +31,13 @@ class Device;
 /// Wrapper around a Vulkan VkBuffer object.
 class TransferBuffer : public Resource {
  public:
-  TransferBuffer(Device* device, uint32_t size_in_bytes);
+  TransferBuffer(Device* device,
+                 uint32_t size_in_bytes,
+                 Format* format = nullptr);
   ~TransferBuffer() override;
 
   Result Initialize(const VkBufferUsageFlags usage);
+  const VkBufferView* GetVkBufferView() const { return &view_; }
 
   VkBuffer GetVkBuffer() const { return buffer_; }
 
@@ -47,6 +51,8 @@ class TransferBuffer : public Resource {
  private:
   VkBuffer buffer_ = VK_NULL_HANDLE;
   VkDeviceMemory memory_ = VK_NULL_HANDLE;
+  VkBufferView view_ = VK_NULL_HANDLE;
+  VkFormat format_ = VK_FORMAT_UNDEFINED;
 };
 
 }  // namespace vulkan

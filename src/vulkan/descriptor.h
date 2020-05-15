@@ -37,6 +37,8 @@ enum class DescriptorType : uint8_t {
   kStorageImage,
   kSampledImage,
   kCombinedImageSampler,
+  kUniformTexelBuffer,
+  kStorageTexelBuffer,
   kSampler
 };
 
@@ -64,6 +66,12 @@ class Descriptor {
   }
   bool IsUniformBuffer() const {
     return type_ == DescriptorType::kUniformBuffer;
+  }
+  bool IsUniformTexelBuffer() const {
+    return type_ == DescriptorType::kUniformTexelBuffer;
+  }
+  bool IsStorageTexelBuffer() const {
+    return type_ == DescriptorType::kStorageTexelBuffer;
   }
 
  protected:

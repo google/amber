@@ -460,6 +460,8 @@ The following commands are all specified within the `PIPELINE` command.
 #### Buffer Types
  * `uniform`
  * `storage`
+ * `uniform_texel_buffer`
+ * `storage_texel_buffer`
 
 TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
@@ -492,17 +494,17 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # Attach |buffer_name| as a storage image. The MIP level will have a base
   # value of |level|.
   BIND BUFFER {buffer_name} AS storage_image \
-      [ BASE_MIP_LEVEL _level_ (default 0) ]
+      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default 0) ]
 
   # Attach |buffer_name| as a sampled image.  The MIP level will have a base
   # value of |level|.
   BIND BUFFER {buffer_name} AS sampled_image \
-      [ BASE_MIP_LEVEL _level_ (default 0) ]
+      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default 0) ]
 
   # Attach |buffer_name| as a combined image sampler. A sampler |sampler_name|
   # must also be specified. The MIP level will have a base value of 0.
   BIND BUFFER {buffer_name} AS combined_image_sampler SAMPLER {sampler_name} \
-      [ BASE_MIP_LEVEL _level_ (default) 0) ]
+      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default) 0) ]
 
   # Bind the sampler at the given descriptor set and binding.
   BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_

@@ -47,12 +47,23 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
   uint32_t size_in_bytes =
       amber_buffer ? static_cast<uint32_t>(amber_buffer->ValuePtr()->size())
                    : 0;
-  transfer_buffer_ = MakeUnique<TransferBuffer>(device_, size_in_bytes);
+  transfer_buffer_ = MakeUnique<TransferBuffer>(
+      device_, size_in_bytes,
+      amber_buffer ? amber_buffer->GetFormat() : nullptr);
+  VkBufferUsageFlags flags =
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+  if (IsUniformBuffer()) {
+    flags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+  } else if (IsStorageBuffer()) {
+    flags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+  } else if (IsUniformTexelBuffer()) {
+    flags |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+  } else {
+    assert(IsStorageTexelBuffer());
+    flags |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
+  }
 
-  Result r = transfer_buffer_->Initialize(
-      (IsStorageBuffer() ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-                         : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) |
-      VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+  Result r = transfer_buffer_->Initialize(flags);
   if (!r.IsSuccess())
     return r;
 
@@ -85,6 +96,9 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   write.descriptorCount = 1;
   write.descriptorType = GetVkDescriptorType();
   write.pBufferInfo = &buffer_info;
+
+  if (IsUniformTexelBuffer() || IsStorageTexelBuffer())
+    write.pTexelBufferView = transfer_buffer_->GetVkBufferView();
 
   device_->GetPtrs()->vkUpdateDescriptorSets(device_->GetVkDevice(), 1, &write,
                                              0, nullptr);

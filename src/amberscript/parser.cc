@@ -945,6 +945,10 @@ Result Parser::ToBufferType(const std::string& name, BufferType* type) {
     *type = BufferType::kSampledImage;
   else if (name == "combined_image_sampler")
     *type = BufferType::kCombinedImageSampler;
+  else if (name == "uniform_texel_buffer")
+    *type = BufferType::kUniformTexelBuffer;
+  else if (name == "storage_texel_buffer")
+    *type = BufferType::kStorageTexelBuffer;
   else
     return Result("unknown buffer_type: " + name);
 
@@ -1045,7 +1049,9 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         buffer_type == BufferType::kUniform ||
         buffer_type == BufferType::kStorageImage ||
         buffer_type == BufferType::kSampledImage ||
-        buffer_type == BufferType::kCombinedImageSampler) {
+        buffer_type == BufferType::kCombinedImageSampler ||
+        buffer_type == BufferType::kUniformTexelBuffer ||
+        buffer_type == BufferType::kStorageTexelBuffer) {
       // If the buffer type is known, then we proccessed the AS block above
       // and have to advance to the next token. Otherwise, we're already on
       // the next token and don't want to advance.
