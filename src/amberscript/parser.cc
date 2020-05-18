@@ -2356,37 +2356,36 @@ Result Parser::ParseRun() {
     if (topo == Topology::kUnknown)
       return Result("invalid topology for RUN command: " + token->AsString());
 
-    token = tokenizer_->NextToken();
     bool indexed = false;
-    if (token->IsIdentifier() && token->AsString() == "INDEXED") {
-      if (!pipeline->GetIndexBuffer())
-        return Result("RUN DRAW_ARRAYS INDEXED requires attached index buffer");
-
-      indexed = true;
-      token = tokenizer_->NextToken();
-    }
-
     uint32_t start_idx = 0;
     uint32_t count = 0;
-    if (!token->IsEOS() && !token->IsEOL()) {
-      if (!token->IsIdentifier() || token->AsString() != "START_IDX")
-        return Result("missing START_IDX for RUN command");
+    uint32_t start_instance = 0;
+    uint32_t instance_count = 1;
 
-      token = tokenizer_->NextToken();
-      if (!token->IsInteger()) {
-        return Result("invalid START_IDX value for RUN command: " +
-                      token->ToOriginalString());
-      }
-      if (token->AsInt32() < 0)
-        return Result("START_IDX value must be >= 0 for RUN command");
-      start_idx = token->AsUint32();
+    token = tokenizer_->PeekNextToken();
 
+    while (!token->IsEOS() && !token->IsEOL()) {
       token = tokenizer_->NextToken();
 
-      if (!token->IsEOS() && !token->IsEOL()) {
-        if (!token->IsIdentifier() || token->AsString() != "COUNT")
-          return Result("missing COUNT for RUN command");
+      if (!token->IsIdentifier())
+        return Result("expecting identifier for RUN command");
 
+      if (token->AsString() == "INDEXED") {
+        if (!pipeline->GetIndexBuffer())
+          return Result(
+              "RUN DRAW_ARRAYS INDEXED requires attached index buffer");
+
+        indexed = true;
+      } else if (token->AsString() == "START_IDX") {
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger()) {
+          return Result("invalid START_IDX value for RUN command: " +
+                        token->ToOriginalString());
+        }
+        if (token->AsInt32() < 0)
+          return Result("START_IDX value must be >= 0 for RUN command");
+        start_idx = token->AsUint32();
+      } else if (token->AsString() == "COUNT") {
         token = tokenizer_->NextToken();
         if (!token->IsInteger()) {
           return Result("invalid COUNT value for RUN command: " +
@@ -2396,7 +2395,31 @@ Result Parser::ParseRun() {
           return Result("COUNT value must be > 0 for RUN command");
 
         count = token->AsUint32();
+      } else if (token->AsString() == "INSTANCE_COUNT") {
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger()) {
+          return Result("invalid INSTANCE_COUNT value for RUN command: " +
+                        token->ToOriginalString());
+        }
+        if (token->AsInt32() <= 0)
+          return Result("INSTANCE_COUNT value must be > 0 for RUN command");
+
+        instance_count = token->AsUint32();
+      } else if (token->AsString() == "START_INSTANCE") {
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger()) {
+          return Result("invalid START_INSTANCE value for RUN command: " +
+                        token->ToOriginalString());
+        }
+        if (token->AsInt32() < 0)
+          return Result("START_INSTANCE value must be >= 0 for RUN command");
+        start_instance = token->AsUint32();
+      } else {
+        return Result("Unexpected identifier for RUN command: " +
+                      token->ToOriginalString());
       }
+
+      token = tokenizer_->PeekNextToken();
     }
 
     uint32_t vertex_count =
@@ -2421,6 +2444,8 @@ Result Parser::ParseRun() {
     cmd->SetTopology(topo);
     cmd->SetFirstVertexIndex(start_idx);
     cmd->SetVertexCount(count);
+    cmd->SetInstanceCount(instance_count);
+    cmd->SetFirstInstance(start_instance);
 
     if (indexed)
       cmd->EnableIndexed();
