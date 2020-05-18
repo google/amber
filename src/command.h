@@ -256,7 +256,6 @@ class DrawArraysCommand : public PipelineCommand {
  private:
   PipelineData data_;
   bool is_indexed_ = false;
-  bool is_instanced_ = false;
   Topology topology_ = Topology::kUnknown;
   uint32_t first_vertex_index_ = 0;
   uint32_t vertex_count_ = 0;
