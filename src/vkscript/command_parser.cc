@@ -310,6 +310,7 @@ Result CommandParser::ProcessDrawRect() {
 Result CommandParser::ProcessDrawArrays() {
   auto cmd = MakeUnique<DrawArraysCommand>(pipeline_, pipeline_data_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
+  bool instanced = false;
 
   auto token = tokenizer_->NextToken();
   while (token->IsIdentifier()) {
@@ -329,7 +330,7 @@ Result CommandParser::ProcessDrawArrays() {
     if (str == "indexed") {
       cmd->EnableIndexed();
     } else {
-      cmd->EnableInstanced();
+      instanced = true;
     }
     token = tokenizer_->NextToken();
   }
@@ -349,7 +350,7 @@ Result CommandParser::ProcessDrawArrays() {
   cmd->SetVertexCount(token->AsUint32());
 
   token = tokenizer_->NextToken();
-  if (cmd->IsInstanced()) {
+  if (instanced) {
     if (!token->IsEOL() && !token->IsEOS()) {
       if (!token->IsInteger())
         return Result("Invalid instance count for draw arrays: " +
