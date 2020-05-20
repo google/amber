@@ -614,7 +614,7 @@ RUN {pipeline_name} \
 # instance ID.
 RUN {pipeline_name} DRAW_ARRAY AS {topology} \
     [ START_IDX _value_ (default 0) ] \
-    [ COUNT _count_value_ (default vertex_buffer size - start_idx) ]
+    [ COUNT _count_value_ (default vertex_buffer size - start_idx) ] \
     [ START_INSTANCE _inst_value_ (default 0) ] \
     [ INSTANCE_COUNT _inst_count_value_ (default 1) ]
 ```
@@ -630,7 +630,7 @@ RUN {pipeline_name} DRAW_ARRAY AS {topology} \
 # instance ID.
 RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
     [ START_IDX _value_ (default 0) ] \
-    [ COUNT _count_value_ (default index_buffer size - start_idx) ]
+    [ COUNT _count_value_ (default index_buffer size - start_idx) ] \
     [ START_INSTANCE _inst_value_ (default 0) ] \
     [ INSTANCE_COUNT _inst_count_value_ (default 1) ]
 ```

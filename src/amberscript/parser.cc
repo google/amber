@@ -2371,9 +2371,10 @@ Result Parser::ParseRun() {
         return Result("expecting identifier for RUN command");
 
       if (token->AsString() == "INDEXED") {
-        if (!pipeline->GetIndexBuffer())
+        if (!pipeline->GetIndexBuffer()) {
           return Result(
               "RUN DRAW_ARRAYS INDEXED requires attached index buffer");
+        }
 
         indexed = true;
       } else if (token->AsString() == "START_IDX") {
