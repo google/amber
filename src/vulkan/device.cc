@@ -14,6 +14,7 @@
 
 #include "src/vulkan/device.h"
 
+#include <algorithm>
 #include <cstring>
 #include <iomanip>  // Vulkan wrappers: std::setw(), std::left/right
 #include <iostream>
@@ -48,6 +49,9 @@ const char k16BitStorage_PushConstant[] =
     "Storage16BitFeatures.storagePushConstant16";
 const char k16BitStorage_InputOutput[] =
     "Storage16BitFeatures.storageInputOutput16";
+
+const char kSubgroupSizeControl[] = "SubgroupSizeControl.subgroupSizeControl";
+const char kComputeFullSubgroups[] = "SubgroupSizeControl.computeFullSubgroups";
 
 struct BaseOutStructure {
   VkStructureType sType;
@@ -390,7 +394,8 @@ Result Device::Initialize(
     PFN_vkGetInstanceProcAddr getInstanceProcAddr,
     Delegate* delegate,
     const std::vector<std::string>& required_features,
-    const std::vector<std::string>& required_extensions,
+    const std::vector<std::string>& required_instance_extensions,
+    const std::vector<std::string>& required_device_extensions,
     const VkPhysicalDeviceFeatures& available_features,
     const VkPhysicalDeviceFeatures2KHR& available_features2,
     const std::vector<std::string>& available_extensions) {
@@ -399,7 +404,7 @@ Result Device::Initialize(
     return r;
 
   bool use_physical_device_features_2 = false;
-  for (auto& ext : required_extensions) {
+  for (auto& ext : required_instance_extensions) {
     if (ext == "VK_KHR_get_physical_device_properties2")
       use_physical_device_features_2 = true;
   }
@@ -413,6 +418,8 @@ Result Device::Initialize(
     VkPhysicalDeviceFloat16Int8FeaturesKHR* float16_ptrs = nullptr;
     VkPhysicalDevice8BitStorageFeaturesKHR* storage8_ptrs = nullptr;
     VkPhysicalDevice16BitStorageFeaturesKHR* storage16_ptrs = nullptr;
+    VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*
+        subgroup_size_control_features = nullptr;
     void* ptr = available_features2.pNext;
     while (ptr != nullptr) {
       BaseOutStructure* s = static_cast<BaseOutStructure*>(ptr);
@@ -432,6 +439,11 @@ Result Device::Initialize(
                  VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR) {
         storage16_ptrs =
             static_cast<VkPhysicalDevice16BitStorageFeaturesKHR*>(ptr);
+      } else if (
+          s->sType ==
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT) {  // NOLINT(whitespace/line_length)
+        subgroup_size_control_features =
+            static_cast<VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*>(ptr);
       }
       ptr = s->pNext;
     }
@@ -522,6 +534,20 @@ Result Device::Initialize(
           storage16_ptrs->storageInputOutput16 != VK_TRUE) {
         return amber::Result("Missing 16-bit input/output access");
       }
+
+      if ((feature == kSubgroupSizeControl ||
+           feature == kComputeFullSubgroups) &&
+          subgroup_size_control_features == nullptr) {
+        return amber::Result("Missing subgroup size control features");
+      }
+      if (feature == kSubgroupSizeControl &&
+          subgroup_size_control_features->subgroupSizeControl != VK_TRUE) {
+        return amber::Result("Missing subgroup size control feature");
+      }
+      if (feature == kComputeFullSubgroups &&
+          subgroup_size_control_features->computeFullSubgroups != VK_TRUE) {
+        return amber::Result("Missing compute full subgroups feature");
+      }
     }
 
   } else {
@@ -535,7 +561,8 @@ Result Device::Initialize(
         "required features");
   }
 
-  if (!AreAllExtensionsSupported(available_extensions, required_extensions)) {
+  if (!AreAllExtensionsSupported(available_extensions,
+                                 required_device_extensions)) {
     return Result(
         "Vulkan: Device::Initialize given physical device does not support "
         "required extensions");
@@ -546,6 +573,24 @@ Result Device::Initialize(
 
   ptrs_.vkGetPhysicalDeviceMemoryProperties(physical_device_,
                                             &physical_memory_properties_);
+
+  subgroup_size_control_properties_ = {};
+  const bool needs_subgroup_size_control =
+      std::find(required_features.begin(), required_features.end(),
+                kSubgroupSizeControl) != required_features.end();
+  if (needs_subgroup_size_control && use_physical_device_features_2) {
+    PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR =
+        reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(
+            getInstanceProcAddr(instance_,
+                                "vkGetPhysicalDeviceProperties2KHR"));
+
+    VkPhysicalDeviceProperties2KHR properties2 = {};
+    properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
+    properties2.pNext = &subgroup_size_control_properties_;
+    subgroup_size_control_properties_.sType =
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES_EXT;
+    vkGetPhysicalDeviceProperties2KHR(physical_device_, &properties2);
+  }
 
   return {};
 }
@@ -1008,6 +1053,55 @@ VkFormat Device::GetVkFormat(const Format& format) const {
       break;
   }
   return ret;
+}
+
+bool Device::IsRequiredSubgroupSizeSupported(
+    const ShaderType type,
+    const uint32_t required_subgroup_size) const {
+  VkShaderStageFlagBits stage = {};
+  switch (type) {
+    case kShaderTypeGeometry:
+      stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+      break;
+    case kShaderTypeFragment:
+      stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+      break;
+    case kShaderTypeVertex:
+      stage = VK_SHADER_STAGE_VERTEX_BIT;
+      break;
+    case kShaderTypeTessellationControl:
+      stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+      break;
+    case kShaderTypeTessellationEvaluation:
+      stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+      break;
+    case kShaderTypeCompute:
+      stage = VK_SHADER_STAGE_COMPUTE_BIT;
+      break;
+    default:
+      return false;
+  }
+  if ((stage & subgroup_size_control_properties_.requiredSubgroupSizeStages) ==
+      0) {
+    return false;
+  }
+  if (required_subgroup_size == 0 ||
+      required_subgroup_size <
+          subgroup_size_control_properties_.minSubgroupSize ||
+      required_subgroup_size >
+          subgroup_size_control_properties_.maxSubgroupSize) {
+    return false;
+  }
+
+  return true;
+}
+
+uint32_t Device::GetMinSubgroupSize() const {
+  return subgroup_size_control_properties_.minSubgroupSize;
+}
+
+uint32_t Device::GetMaxSubgroupSize() const {
+  return subgroup_size_control_properties_.maxSubgroupSize;
 }
 
 }  // namespace vulkan

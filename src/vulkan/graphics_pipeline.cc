@@ -887,10 +887,6 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
       if (vertex_buffer != nullptr)
         vertex_buffer->BindToCommandBuffer(command_.get());
 
-      uint32_t instance_count = command->GetInstanceCount();
-      if (instance_count == 0 && command->GetVertexCount() != 0)
-        instance_count = 1;
-
       if (command->IsIndexed()) {
         if (!index_buffer_)
           return Result("Vulkan: Draw indexed is used without given indices");
@@ -904,16 +900,17 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
         //    becomes the vertex offset and firstIndex will always be zero."
         device_->GetPtrs()->vkCmdDrawIndexed(
             command_->GetVkCommandBuffer(),
-            command->GetVertexCount(), /* indexCount */
-            instance_count,            /* instanceCount */
-            0,                         /* firstIndex */
+            command->GetVertexCount(),   /* indexCount */
+            command->GetInstanceCount(), /* instanceCount */
+            0,                           /* firstIndex */
             static_cast<int32_t>(
                 command->GetFirstVertexIndex()), /* vertexOffset */
-            0 /* firstInstance */);
+            command->GetFirstInstance());        /* firstInstance */
       } else {
-        device_->GetPtrs()->vkCmdDraw(command_->GetVkCommandBuffer(),
-                                      command->GetVertexCount(), instance_count,
-                                      command->GetFirstVertexIndex(), 0);
+        device_->GetPtrs()->vkCmdDraw(
+            command_->GetVkCommandBuffer(), command->GetVertexCount(),
+            command->GetInstanceCount(), command->GetFirstVertexIndex(),
+            command->GetFirstInstance());
       }
     }
 

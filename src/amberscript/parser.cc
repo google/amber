@@ -594,6 +594,8 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelineDepth(pipeline.get());
     } else if (tok == "STENCIL") {
       r = ParsePipelineStencil(pipeline.get());
+    } else if (tok == "SUBGROUP") {
+      r = ParsePipelineSubgroup(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -816,6 +818,93 @@ Result Parser::ParsePipelineShaderCompileOptions(Pipeline* pipeline) {
   return ValidateEndOfStatement("COMPILE_OPTIONS command");
 }
 
+Result Parser::ParsePipelineSubgroup(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsIdentifier())
+    return Result("missing shader name in SUBGROUP command");
+
+  auto* shader = script_->GetShader(token->AsString());
+  if (!shader)
+    return Result("unknown shader in SUBGROUP command");
+
+  while (true) {
+    token = tokenizer_->NextToken();
+    if (token->IsEOL())
+      continue;
+    if (token->IsEOS())
+      return Result("SUBGROUP missing END command");
+    if (!token->IsIdentifier())
+      return Result("SUBGROUP options must be identifiers");
+    if (token->AsString() == "END")
+      break;
+
+    if (token->AsString() == "FULLY_POPULATED") {
+      if (!script_->IsRequiredFeature(
+              "SubgroupSizeControl.computeFullSubgroups"))
+        return Result(
+            "missing DEVICE_FEATURE SubgroupSizeControl.computeFullSubgroups");
+      token = tokenizer_->NextToken();
+      if (token->IsEOL() || token->IsEOS())
+        return Result("missing value for FULLY_POPULATED command");
+      bool isOn = false;
+      if (token->AsString() == "on") {
+        isOn = true;
+      } else if (token->AsString() == "off") {
+        isOn = false;
+      } else {
+        return Result("invalid value for FULLY_POPULATED command");
+      }
+      Result r = pipeline->SetShaderRequireFullSubgroups(shader, isOn);
+      if (!r.IsSuccess())
+        return r;
+
+    } else if (token->AsString() == "VARYING_SIZE") {
+      if (!script_->IsRequiredFeature(
+              "SubgroupSizeControl.subgroupSizeControl"))
+        return Result(
+            "missing DEVICE_FEATURE SubgroupSizeControl.subgroupSizeControl");
+      token = tokenizer_->NextToken();
+      if (token->IsEOL() || token->IsEOS())
+        return Result("missing value for VARYING_SIZE command");
+      bool isOn = false;
+      if (token->AsString() == "on") {
+        isOn = true;
+      } else if (token->AsString() == "off") {
+        isOn = false;
+      } else {
+        return Result("invalid value for VARYING_SIZE command");
+      }
+      Result r = pipeline->SetShaderVaryingSubgroupSize(shader, isOn);
+      if (!r.IsSuccess())
+        return r;
+    } else if (token->AsString() == "REQUIRED_SIZE") {
+      if (!script_->IsRequiredFeature(
+              "SubgroupSizeControl.subgroupSizeControl"))
+        return Result(
+            "missing DEVICE_FEATURE SubgroupSizeControl.subgroupSizeControl");
+      token = tokenizer_->NextToken();
+      if (token->IsEOL() || token->IsEOS())
+        return Result("missing size for REQUIRED_SIZE command");
+      Result r;
+      if (token->IsInteger()) {
+        r = pipeline->SetShaderRequiredSubgroupSize(shader, token->AsUint32());
+      } else if (token->AsString() == "MIN") {
+        r = pipeline->SetShaderRequiredSubgroupSizeToMinimum(shader);
+      } else if (token->AsString() == "MAX") {
+        r = pipeline->SetShaderRequiredSubgroupSizeToMaximum(shader);
+      } else {
+        return Result("invalid size for REQUIRED_SIZE command");
+      }
+      if (!r.IsSuccess())
+        return r;
+    } else {
+      return Result("SUBGROUP invalid value for SUBGROUP " + token->AsString());
+    }
+  }
+
+  return ValidateEndOfStatement("SUBGROUP command");
+}
+
 Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS())
@@ -958,8 +1047,8 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         buffer_type == BufferType::kSampledImage ||
         buffer_type == BufferType::kCombinedImageSampler) {
       // If the buffer type is known, then we proccessed the AS block above
-      // and have to advance to the next token. Otherwise, we're already on the
-      // next token and don't want to advance.
+      // and have to advance to the next token. Otherwise, we're already on
+      // the next token and don't want to advance.
       if (buffer_type != BufferType::kUnknown)
         token = tokenizer_->NextToken();
 
@@ -995,10 +1084,10 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
             base_mip_level = token->AsUint32();
 
             if (base_mip_level >= buffer->GetMipLevels())
-              return Result(
-                  "base mip level (now " + token->AsString() +
-                  ") needs to be larger than the number of buffer mip maps (" +
-                  std::to_string(buffer->GetMipLevels()) + ")");
+              return Result("base mip level (now " + token->AsString() +
+                            ") needs to be larger than the number of buffer "
+                            "mip maps (" +
+                            std::to_string(buffer->GetMipLevels()) + ")");
           }
         }
 
@@ -2267,37 +2356,37 @@ Result Parser::ParseRun() {
     if (topo == Topology::kUnknown)
       return Result("invalid topology for RUN command: " + token->AsString());
 
-    token = tokenizer_->NextToken();
     bool indexed = false;
-    if (token->IsIdentifier() && token->AsString() == "INDEXED") {
-      if (!pipeline->GetIndexBuffer())
-        return Result("RUN DRAW_ARRAYS INDEXED requires attached index buffer");
-
-      indexed = true;
-      token = tokenizer_->NextToken();
-    }
-
     uint32_t start_idx = 0;
     uint32_t count = 0;
-    if (!token->IsEOS() && !token->IsEOL()) {
-      if (!token->IsIdentifier() || token->AsString() != "START_IDX")
-        return Result("missing START_IDX for RUN command");
+    uint32_t start_instance = 0;
+    uint32_t instance_count = 1;
 
-      token = tokenizer_->NextToken();
-      if (!token->IsInteger()) {
-        return Result("invalid START_IDX value for RUN command: " +
-                      token->ToOriginalString());
-      }
-      if (token->AsInt32() < 0)
-        return Result("START_IDX value must be >= 0 for RUN command");
-      start_idx = token->AsUint32();
+    token = tokenizer_->PeekNextToken();
 
+    while (!token->IsEOS() && !token->IsEOL()) {
       token = tokenizer_->NextToken();
 
-      if (!token->IsEOS() && !token->IsEOL()) {
-        if (!token->IsIdentifier() || token->AsString() != "COUNT")
-          return Result("missing COUNT for RUN command");
+      if (!token->IsIdentifier())
+        return Result("expecting identifier for RUN command");
 
+      if (token->AsString() == "INDEXED") {
+        if (!pipeline->GetIndexBuffer()) {
+          return Result(
+              "RUN DRAW_ARRAYS INDEXED requires attached index buffer");
+        }
+
+        indexed = true;
+      } else if (token->AsString() == "START_IDX") {
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger()) {
+          return Result("invalid START_IDX value for RUN command: " +
+                        token->ToOriginalString());
+        }
+        if (token->AsInt32() < 0)
+          return Result("START_IDX value must be >= 0 for RUN command");
+        start_idx = token->AsUint32();
+      } else if (token->AsString() == "COUNT") {
         token = tokenizer_->NextToken();
         if (!token->IsInteger()) {
           return Result("invalid COUNT value for RUN command: " +
@@ -2307,7 +2396,31 @@ Result Parser::ParseRun() {
           return Result("COUNT value must be > 0 for RUN command");
 
         count = token->AsUint32();
+      } else if (token->AsString() == "INSTANCE_COUNT") {
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger()) {
+          return Result("invalid INSTANCE_COUNT value for RUN command: " +
+                        token->ToOriginalString());
+        }
+        if (token->AsInt32() <= 0)
+          return Result("INSTANCE_COUNT value must be > 0 for RUN command");
+
+        instance_count = token->AsUint32();
+      } else if (token->AsString() == "START_INSTANCE") {
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger()) {
+          return Result("invalid START_INSTANCE value for RUN command: " +
+                        token->ToOriginalString());
+        }
+        if (token->AsInt32() < 0)
+          return Result("START_INSTANCE value must be >= 0 for RUN command");
+        start_instance = token->AsUint32();
+      } else {
+        return Result("Unexpected identifier for RUN command: " +
+                      token->ToOriginalString());
       }
+
+      token = tokenizer_->PeekNextToken();
     }
 
     uint32_t vertex_count =
@@ -2332,6 +2445,8 @@ Result Parser::ParseRun() {
     cmd->SetTopology(topo);
     cmd->SetFirstVertexIndex(start_idx);
     cmd->SetVertexCount(count);
+    cmd->SetInstanceCount(instance_count);
+    cmd->SetFirstInstance(start_instance);
 
     if (indexed)
       cmd->EnableIndexed();

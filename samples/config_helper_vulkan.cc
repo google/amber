@@ -22,6 +22,7 @@
 #include <iterator>
 #include <set>
 #include <sstream>
+#include <utility>
 
 #include "samples/log.h"
 
@@ -62,6 +63,9 @@ const char k16BitStorage_PushConstant[] =
     "Storage16BitFeatures.storagePushConstant16";
 const char k16BitStorage_InputOutput[] =
     "Storage16BitFeatures.storageInputOutput16";
+
+const char kSubgroupSizeControl[] = "SubgroupSizeControl.subgroupSizeControl";
+const char kComputeFullSubgroups[] = "SubgroupSizeControl.computeFullSubgroups";
 
 const char kExtensionForValidationLayer[] = "VK_EXT_debug_report";
 
@@ -609,6 +613,27 @@ std::string deviceTypeToName(VkPhysicalDeviceType type) {
   return "unknown";
 }
 
+std::string stageFlagBitsToNames(const VkShaderStageFlags bits) {
+  static const std::pair<VkShaderStageFlagBits, const char*> stages[] = {
+      std::make_pair(VK_SHADER_STAGE_VERTEX_BIT, "vert"),
+      std::make_pair(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, "tessc"),
+      std::make_pair(VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "tesse"),
+      std::make_pair(VK_SHADER_STAGE_GEOMETRY_BIT, "geom"),
+      std::make_pair(VK_SHADER_STAGE_FRAGMENT_BIT, "frag"),
+      std::make_pair(VK_SHADER_STAGE_COMPUTE_BIT, "comp")};
+  std::ostringstream result;
+  bool addSeparator = false;
+  for (const auto& stage : stages) {
+    if ((bits & stage.first) != 0) {
+      if (addSeparator)
+        result << ", ";
+      result << stage.second;
+      addSeparator = true;
+    }
+  }
+  return result.str();
+}
+
 }  // namespace
 
 ConfigHelperVulkan::ConfigHelperVulkan()
@@ -799,6 +824,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       supports_shader_8bit_storage_ = true;
     else if (ext == "VK_KHR_16bit_storage")
       supports_shader_16bit_storage_ = true;
+    else if (ext == "VK_EXT_subgroup_size_control")
+      supports_subgroup_size_control_ = true;
   }
 
   vulkan_queue_family_index_ = ChooseQueueFamilyIndex(physical_device);
@@ -923,6 +950,10 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR;
   storage_16bit_feature_.pNext = nullptr;
 
+  subgroup_size_control_feature_.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT;
+  subgroup_size_control_feature_.pNext = nullptr;
+
   void** next_ptr = &variable_pointers_feature_.pNext;
 
   if (supports_shader_float16_int8_) {
@@ -938,6 +969,11 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
   if (supports_shader_16bit_storage_) {
     *next_ptr = &storage_16bit_feature_;
     next_ptr = &storage_16bit_feature_.pNext;
+  }
+
+  if (supports_subgroup_size_control_) {
+    *next_ptr = &subgroup_size_control_feature_;
+    next_ptr = &subgroup_size_control_feature_.pNext;
   }
 
   available_features2_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
@@ -973,6 +1009,10 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       storage_16bit_feature_.storagePushConstant16 = VK_TRUE;
     else if (feature == k16BitStorage_InputOutput)
       storage_16bit_feature_.storageInputOutput16 = VK_TRUE;
+    else if (feature == kSubgroupSizeControl)
+      subgroup_size_control_feature_.subgroupSizeControl = VK_TRUE;
+    else if (feature == kComputeFullSubgroups)
+      subgroup_size_control_feature_.computeFullSubgroups = VK_TRUE;
   }
 
   VkPhysicalDeviceFeatures required_vulkan_features =
@@ -1018,6 +1058,15 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
       {},
   };
 
+  VkPhysicalDeviceSubgroupSizeControlPropertiesEXT
+      subgroup_size_control_properties = {
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES_EXT,  // NOLINT(whitespace/line_length)
+          nullptr,
+          {},
+          {},
+          {},
+          {}};
+
   // If the vkGetPhysicalDeviceProperties2KHR function is unavailable (because
   // the "VK_KHR_get_physical_device_properties2" extension is unavailable or
   // because vkGetInstanceProcAddr failed) or the "VK_KHR_driver_properties"
@@ -1042,6 +1091,9 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
                    "vkGetPhysicalDeviceProperties2KHR but could not find this "
                    "function."
                 << std::endl;
+    }
+    if (supports_subgroup_size_control_) {
+      driver_properties.pNext = &subgroup_size_control_properties;
     }
   }
 
@@ -1070,6 +1122,21 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
   if (vkGetPhysicalDeviceProperties2KHR) {
     std::cout << "  driverName: " << driver_properties.driverName << std::endl;
     std::cout << "  driverInfo: " << driver_properties.driverInfo << std::endl;
+    if (supports_subgroup_size_control_) {
+      std::cout << "  minSubgroupSize: "
+                << subgroup_size_control_properties.minSubgroupSize
+                << std::endl;
+      std::cout << "  maxSubgroupSize: "
+                << subgroup_size_control_properties.maxSubgroupSize
+                << std::endl;
+      std::cout << "  maxComputeWorkgroupSubgroups: "
+                << subgroup_size_control_properties.maxComputeWorkgroupSubgroups
+                << std::endl;
+      std::cout << "  requiredSubgroupSizeStages: "
+                << stageFlagBitsToNames(subgroup_size_control_properties
+                                            .requiredSubgroupSizeStages)
+                << std::endl;
+    }
   }
   std::cout << "End of physical device properties." << std::endl;
 }

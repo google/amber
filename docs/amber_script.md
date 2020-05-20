@@ -46,6 +46,9 @@ with:
  * `Storage16BitFeatures.uniformAndStorageBuffer16BitAccess`
  * `Storage16BitFeatures.storagePushConstant16`
  * `Storage16BitFeatures.storageInputOutput16`
+ * `SubgroupSizeControl.subgroupSizeControl`
+ * `SubgroupSizeControl.computeFullSubgroups`
+
 
 Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
 commands.
@@ -435,6 +438,23 @@ The following commands are all specified within the `PIPELINE` command.
   FRAMEBUFFER_SIZE _width_ _height_
 ```
 
+```groovy
+  # Set subgroup size control setting. Require that subgroups must be launched
+  # with all invocations active for given shader. Allow SubgroupSize to vary
+  # for given shader. Require a specific SubgroupSize the for given shader.
+  # |fully_populated_enable| and |varying_size_enable| can be on or off.
+  # |subgroup_size| can be set one of the values below:
+  #  - a power-of-two integer that _must_ be greater or equal to minSubgroupSize
+  #    and be less than or equal to maxSubgroupSize
+  # - MIN to set the required subgroup size to the minSubgroupSize
+  # - MAX to set the required subgroup size to the maxSubgroupSize  
+  SUBROUP {name_of_shader}
+    FULLY_POPULATED {fully_populated_enable}
+    VARYING_SIZE {varying_size_enable}
+    REQUIRED_SIZE {subgroup_size}
+  END
+```
+
 ### Pipeline Buffers
 
 #### Buffer Types
@@ -554,7 +574,8 @@ To run an indexed draw, attach the index data to the `PIPELINE` with an
 For the commands which take a `START_IDX` and a `COUNT` they can be left off the
 command (although, `START_IDX` is required if `COUNT` is provided). The default
 value for `START_IDX` is 0. The default value for `COUNT` is the item count of
-vertex buffer minus the `START_IDX`.
+vertex buffer minus the `START_IDX`. The same applies to `START_INSTANCE`
+(default 0) and `INSTANCE_COUNT` (default 1).
 
 ```groovy
 # Run the given |pipeline_name| which must be a `compute` pipeline. The
@@ -588,10 +609,14 @@ RUN {pipeline_name} \
 # data must be attached to the pipeline.
 
 # A start index of |value| will be used and the count of |count_value| items
-# will be processed.
+# will be processed. The draw is instanced if |inst_count_value| is greater
+# than one. In case of instanced draw |inst_value| controls the starting
+# instance ID.
 RUN {pipeline_name} DRAW_ARRAY AS {topology} \
     [ START_IDX _value_ (default 0) ] \
-    [ COUNT _count_value_ (default vertex_buffer size - start_idx) ]
+    [ COUNT _count_value_ (default vertex_buffer size - start_idx) ] \
+    [ START_INSTANCE _inst_value_ (default 0) ] \
+    [ INSTANCE_COUNT _inst_count_value_ (default 1) ]
 ```
 
 ```groovy
@@ -600,10 +625,14 @@ RUN {pipeline_name} DRAW_ARRAY AS {topology} \
 # drawn using the given |topology|.
 #
 # A start index of |value| will be used and the count of |count_value| items
-# will be processed.
+# will be processed. The draw is instanced if |inst_count_value| is greater
+# than one. In case of instanced draw |inst_value| controls the starting
+# instance ID.
 RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
     [ START_IDX _value_ (default 0) ] \
-    [ COUNT _count_value_ (default index_buffer size - start_idx) ]
+    [ COUNT _count_value_ (default index_buffer size - start_idx) ] \
+    [ START_INSTANCE _inst_value_ (default 0) ] \
+    [ INSTANCE_COUNT _inst_count_value_ (default 1) ]
 ```
 
 ### Repeating commands
