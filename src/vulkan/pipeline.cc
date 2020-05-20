@@ -279,7 +279,8 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
   if (cmd->IsPushConstant())
     return AddPushConstantBuffer(cmd->GetBuffer(), cmd->GetOffset());
   if (!cmd->IsSSBO() && !cmd->IsUniform() && !cmd->IsStorageImage() &&
-      !cmd->IsSampledImage() && !cmd->IsCombinedImageSampler()) {
+      !cmd->IsSampledImage() && !cmd->IsCombinedImageSampler() &&
+      !cmd->IsUniformTexelBuffer() && !cmd->IsStorageTexelBuffer()) {
     return Result("Pipeline::AddBufferDescriptor not supported buffer type");
   }
 
@@ -292,25 +293,33 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
   auto& descriptors = descriptor_set_info_[cmd->GetDescriptorSet()].descriptors;
 
   if (desc == nullptr) {
+    bool is_image = false;
+    DescriptorType desc_type = DescriptorType::kUniformBuffer;
+
     if (cmd->IsStorageImage()) {
-      auto image_desc = MakeUnique<ImageDescriptor>(
-          cmd->GetBuffer(), DescriptorType::kStorageImage, device_,
-          cmd->GetBaseMipLevel(), cmd->GetDescriptorSet(), cmd->GetBinding());
-      descriptors.push_back(std::move(image_desc));
+      desc_type = DescriptorType ::kStorageImage;
+      is_image = true;
     } else if (cmd->IsSampledImage()) {
-      auto image_desc = MakeUnique<ImageDescriptor>(
-          cmd->GetBuffer(), DescriptorType::kSampledImage, device_,
-          cmd->GetBaseMipLevel(), cmd->GetDescriptorSet(), cmd->GetBinding());
-      descriptors.push_back(std::move(image_desc));
+      desc_type = DescriptorType ::kSampledImage;
+      is_image = true;
     } else if (cmd->IsCombinedImageSampler()) {
+      desc_type = DescriptorType ::kCombinedImageSampler;
+      is_image = true;
+    } else if (cmd->IsUniformTexelBuffer()) {
+      desc_type = DescriptorType ::kUniformTexelBuffer;
+    } else if (cmd->IsStorageTexelBuffer()) {
+      desc_type = DescriptorType ::kStorageTexelBuffer;
+    } else if (cmd->IsSSBO()) {
+      desc_type = DescriptorType ::kStorageBuffer;
+    }
+    if (is_image) {
       auto image_desc = MakeUnique<ImageDescriptor>(
-          cmd->GetBuffer(), DescriptorType::kCombinedImageSampler, device_,
-          cmd->GetBaseMipLevel(), cmd->GetDescriptorSet(), cmd->GetBinding());
-      image_desc->SetAmberSampler(cmd->GetBuffer()->GetSampler());
+          cmd->GetBuffer(), desc_type, device_, cmd->GetBaseMipLevel(),
+          cmd->GetDescriptorSet(), cmd->GetBinding());
+      if (cmd->IsSampledImage() || cmd->IsCombinedImageSampler())
+        image_desc->SetAmberSampler(cmd->GetBuffer()->GetSampler());
       descriptors.push_back(std::move(image_desc));
     } else {
-      auto desc_type = cmd->IsSSBO() ? DescriptorType::kStorageBuffer
-                                     : DescriptorType::kUniformBuffer;
       auto buffer_desc = MakeUnique<BufferDescriptor>(
           cmd->GetBuffer(), desc_type, device_, cmd->GetDescriptorSet(),
           cmd->GetBinding());

@@ -44,6 +44,10 @@ VkDescriptorType Descriptor::GetVkDescriptorType() const {
       return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
     case DescriptorType::kCombinedImageSampler:
       return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    case DescriptorType::kUniformTexelBuffer:
+      return VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+    case DescriptorType::kStorageTexelBuffer:
+      return VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
     default:
       assert(type_ == DescriptorType::kSampledImage);
       return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
