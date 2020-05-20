@@ -28,15 +28,19 @@ TransferBuffer::TransferBuffer(Device* device,
 }
 
 TransferBuffer::~TransferBuffer() {
-  device_->GetPtrs()->vkDestroyBufferView(device_->GetVkDevice(), view_,
-                                          nullptr);
+  if (device_) {
+    device_->GetPtrs()->vkDestroyBufferView(device_->GetVkDevice(), view_,
+                                            nullptr);
 
-  if (memory_ != VK_NULL_HANDLE) {
-    UnMapMemory(memory_);
-    device_->GetPtrs()->vkFreeMemory(device_->GetVkDevice(), memory_, nullptr);
+    if (memory_ != VK_NULL_HANDLE) {
+      UnMapMemory(memory_);
+      device_->GetPtrs()->vkFreeMemory(device_->GetVkDevice(), memory_,
+                                       nullptr);
+    }
+
+    device_->GetPtrs()->vkDestroyBuffer(device_->GetVkDevice(), buffer_,
+                                        nullptr);
   }
-
-  device_->GetPtrs()->vkDestroyBuffer(device_->GetVkDevice(), buffer_, nullptr);
 }
 
 Result TransferBuffer::Initialize(const VkBufferUsageFlags usage) {
