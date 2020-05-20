@@ -191,8 +191,7 @@ TEST_F(CommandParserTest, DrawArrays) {
 
   auto* cmd = cmds[0]->AsDrawArrays();
   EXPECT_FALSE(cmd->IsIndexed());
-  EXPECT_FALSE(cmd->IsInstanced());
-  EXPECT_EQ(static_cast<uint32_t>(0U), cmd->GetInstanceCount());
+  EXPECT_EQ(static_cast<uint32_t>(1U), cmd->GetInstanceCount());
   EXPECT_EQ(Topology::kLineList, cmd->GetTopology());
   EXPECT_EQ(2U, cmd->GetFirstVertexIndex());
   EXPECT_EQ(4U, cmd->GetVertexCount());
@@ -213,8 +212,7 @@ TEST_F(CommandParserTest, DrawArraysIndexed) {
 
   auto* cmd = cmds[0]->AsDrawArrays();
   EXPECT_TRUE(cmd->IsIndexed());
-  EXPECT_FALSE(cmd->IsInstanced());
-  EXPECT_EQ(static_cast<uint32_t>(0U), cmd->GetInstanceCount());
+  EXPECT_EQ(static_cast<uint32_t>(1U), cmd->GetInstanceCount());
   EXPECT_EQ(Topology::kTriangleFan, cmd->GetTopology());
   EXPECT_EQ(2U, cmd->GetFirstVertexIndex());
   EXPECT_EQ(4U, cmd->GetVertexCount());
@@ -247,8 +245,7 @@ TEST_F(CommandParserTest, DrawArraysInstanced) {
 
   auto* cmd = cmds[0]->AsDrawArrays();
   EXPECT_FALSE(cmd->IsIndexed());
-  EXPECT_TRUE(cmd->IsInstanced());
-  EXPECT_EQ(static_cast<uint32_t>(0U), cmd->GetInstanceCount());
+  EXPECT_EQ(static_cast<uint32_t>(1U), cmd->GetInstanceCount());
   EXPECT_EQ(Topology::kLineListWithAdjacency, cmd->GetTopology());
   EXPECT_EQ(2U, cmd->GetFirstVertexIndex());
   EXPECT_EQ(9U, cmd->GetVertexCount());
@@ -283,8 +280,7 @@ TEST_F(CommandParserTest, DrawArraysIndexedAndInstanced) {
 
   auto* cmd = cmds[0]->AsDrawArrays();
   EXPECT_TRUE(cmd->IsIndexed());
-  EXPECT_TRUE(cmd->IsInstanced());
-  EXPECT_EQ(static_cast<uint32_t>(0U), cmd->GetInstanceCount());
+  EXPECT_EQ(static_cast<uint32_t>(1U), cmd->GetInstanceCount());
   EXPECT_EQ(Topology::kLineListWithAdjacency, cmd->GetTopology());
   EXPECT_EQ(3U, cmd->GetFirstVertexIndex());
   EXPECT_EQ(9U, cmd->GetVertexCount());
@@ -305,7 +301,6 @@ TEST_F(CommandParserTest, DrawArraysInstancedWithCount) {
 
   auto* cmd = cmds[0]->AsDrawArrays();
   EXPECT_FALSE(cmd->IsIndexed());
-  EXPECT_TRUE(cmd->IsInstanced());
   EXPECT_EQ(12U, cmd->GetInstanceCount());
   EXPECT_EQ(Topology::kLineListWithAdjacency, cmd->GetTopology());
   EXPECT_EQ(3U, cmd->GetFirstVertexIndex());
