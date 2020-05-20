@@ -58,9 +58,10 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
     flags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
   } else if (IsUniformTexelBuffer()) {
     flags |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
-  } else {
-    assert(IsStorageTexelBuffer());
+  } else if (IsStorageTexelBuffer()) {
     flags |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
+  } else {
+    return Result("Unexpected buffer type when deciding usage flags");
   }
 
   Result r = transfer_buffer_->Initialize(flags);

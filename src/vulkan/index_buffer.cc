@@ -37,7 +37,7 @@ Result IndexBuffer::SendIndexData(CommandBuffer* command, Buffer* buffer) {
     return Result("IndexBuffer::SendIndexData |buffer| is empty");
 
   transfer_buffer_ =
-      MakeUnique<TransferBuffer>(device_, buffer->GetSizeInBytes());
+      MakeUnique<TransferBuffer>(device_, buffer->GetSizeInBytes(), nullptr);
   Result r = transfer_buffer_->Initialize(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                           VK_BUFFER_USAGE_TRANSFER_DST_BIT);
   if (!r.IsSuccess())

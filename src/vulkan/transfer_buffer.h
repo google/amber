@@ -31,9 +31,7 @@ class Device;
 /// Wrapper around a Vulkan VkBuffer object.
 class TransferBuffer : public Resource {
  public:
-  TransferBuffer(Device* device,
-                 uint32_t size_in_bytes,
-                 Format* format = nullptr);
+  TransferBuffer(Device* device, uint32_t size_in_bytes, Format* format);
   ~TransferBuffer() override;
 
   Result Initialize(const VkBufferUsageFlags usage);
