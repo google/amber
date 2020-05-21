@@ -36,6 +36,9 @@ class Shader {
   void SetFormat(ShaderFormat fmt) { shader_format_ = fmt; }
   ShaderFormat GetFormat() const { return shader_format_; }
 
+  void SetTargetEnv(const std::string& env) { target_env_ = env; }
+  const std::string& GetTargetEnv() const { return target_env_; }
+
   /// Sets the source shader to |data|.
   void SetData(const std::string& data) { data_ = data; }
   /// Returns the source shader source.
@@ -46,6 +49,7 @@ class Shader {
   ShaderFormat shader_format_;
   std::string data_;
   std::string name_;
+  std::string target_env_;
 };
 
 }  // namespace amber

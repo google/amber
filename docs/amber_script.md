@@ -111,7 +111,7 @@ Shader using inlined source:
 # Creates a shader of |shader_type| with the given |shader_name|. The shader
 # will be of |shader_format|. The shader source then follows and is terminated
 # with the |END| tag.
-SHADER {shader_type} {shader_name} {shader_format}
+SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ]
 {shader_source}
 END
 ```
@@ -121,7 +121,7 @@ Shader using source from `VIRTUAL_FILE`:
 ```groovy
 # Creates a shader of |shader_type| with the given |shader_name|. The shader
 # will be of |shader_format|. The shader will use the virtual file with |path|.
-SHADER {shader_type} {shader_name} {shader_format} VIRTUAL_FILE {path}
+SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ] VIRTUAL_FILE {path}
 ```
 
 `{shader_name}` is used to identify the shader to attach to `PIPELINE`s,
@@ -151,9 +151,43 @@ types, but in that case must only provide a single shader type in the module.
 #### Shader Format
  * `GLSL`  (with glslang)
  * `HLSL`  (with dxc or glslang if dxc disabled)
- * `SPIRV-ASM` (with spirv-as)
+ * `SPIRV-ASM` (with spirv-as; specifying `TARGET_ENV` is _highly recommended_
+    in this case, as explained below)
  * `SPIRV-HEX` (decoded straight to SPIR-V)
  * `OPENCL-C` (with clspv)
+
+### Target environment
+
+Specifying `TARGET_ENV` is optional and can be used to select a target
+SPIR-V environment. For example:
+
+ * `spv1.0`
+ * `spv1.5`
+ * `vulkan1.0`
+ * `vulkan1.2`
+
+Check the help text of the corresponding tool (e.g. spirv-as, glslangValidator)
+for the full list. The `SPIRV-HEX` shader format is not affected by the target
+environment.
+
+The specified target environment for the shader overrides the default (`spv1.0`)
+or the one specified on the command line.
+
+Specifying the target environment when using the `SPIRV-ASM` shader format
+is _highly recommended_, otherwise the SPIR-V version of the final SPIR-V binary
+shader passed to the graphics device might not be what you expect.
+Typically, SPIR-V assembly text will contain a comment near the beginning similar
+to `; Version: 1.0` but this is _ignored_ by the spirv-as assembler.
+Thus, you should specify the equivalent target environment (e.g. `spv1.0`)
+in the `SHADER` command.
+
+Specifying the target environment for other shader formats depends on whether
+you want to vary the final SPIR-V shader binary based on the target environment
+specified on the command line. For example, you could write one AmberScript file
+that contains a GLSL shader without specifying a target environment.
+You could then run the AmberScript file several times with different
+target environments specified on the command line
+(`spv1.0`, `spv1.1`, `spv1.2`, etc.) to test the different SPIR-V shader variants.
 
 ### Buffers
 

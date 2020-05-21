@@ -15,6 +15,7 @@
 #include "src/executor.h"
 
 #include <cassert>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -34,8 +35,11 @@ Result Executor::CompileShaders(const amber::Script* script,
                                 Options* options) {
   for (auto& pipeline : script->GetPipelines()) {
     for (auto& shader_info : pipeline->GetShaders()) {
-      ShaderCompiler sc(script->GetSpvTargetEnv(),
-                        options->disable_spirv_validation,
+      std::string target_env = shader_info.GetShader()->GetTargetEnv();
+      if (target_env.empty())
+        target_env = script->GetSpvTargetEnv();
+
+      ShaderCompiler sc(target_env, options->disable_spirv_validation,
                         script->GetVirtualFiles());
 
       Result r;
