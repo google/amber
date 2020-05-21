@@ -270,6 +270,20 @@ END)";
   EXPECT_EQ("3: expected target environment after TARGET_ENV", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, ShaderTargetEnvInvalidEnv) {
+  std::string in = R"(#!amber
+SHADER geometry shader_name GLSL TARGET_ENV 12345
+void main() {
+  gl_FragColor = vec3(2, 3, 4);
+}
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: expected target environment after TARGET_ENV", r.Error());
+}
+
 TEST_F(AmberScriptParserTest, ShaderVirtualFile) {
   std::string in = R"(#!amber
 VIRTUAL_FILE my_shader.hlsl
