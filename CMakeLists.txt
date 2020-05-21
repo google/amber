@@ -49,6 +49,8 @@ option(AMBER_ENABLE_SWIFTSHADER
   "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
 option(AMBER_ENABLE_VK_DEBUGGING
   "Build with cppdap debugging support" ${AMBER_ENABLE_VK_DEBUGGING})
+option(AMBER_ENABLE_RTTI
+  "Build with runtime type information" OFF)
 
 if (${AMBER_USE_CLSPV} OR ${AMBER_ENABLE_SWIFTSHADER})
   set(CMAKE_CXX_STANDARD 14)
@@ -128,6 +130,7 @@ message(STATUS "Amber enable lodepng: ${AMBER_ENABLE_LODEPNG}")
 message(STATUS "Amber enable SwiftShader: ${AMBER_ENABLE_SWIFTSHADER}")
 message(STATUS "Amber enable DXC: ${AMBER_ENABLE_DXC}")
 message(STATUS "Amber enable Clspv: ${AMBER_ENABLE_CLSPV}")
+message(STATUS "Amber enable RTTI: ${AMBER_ENABLE_RTTI}")
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}")
@@ -151,6 +154,7 @@ add_definitions(-DAMBER_ENABLE_DXC=$<BOOL:${AMBER_ENABLE_DXC}>)
 add_definitions(-DAMBER_ENABLE_CLSPV=$<BOOL:${AMBER_ENABLE_CLSPV}>)
 add_definitions(-DAMBER_ENABLE_LODEPNG=$<BOOL:${AMBER_ENABLE_LODEPNG}>)
 add_definitions(-DAMBER_ENABLE_VK_DEBUGGING=$<BOOL:${AMBER_ENABLE_VK_DEBUGGING}>)
+add_definitions(-DAMBER_ENABLE_RTTI=$<BOOL:${AMBER_ENABLE_RTTI}>)
 
 set(CMAKE_DEBUG_POSTFIX "")
 
@@ -200,7 +204,6 @@ function(amber_default_compile_options TARGET)
     target_compile_options(${TARGET} PRIVATE
       -std=c++11
       -fno-exceptions
-      -fno-rtti
       -fvisibility=hidden
       -Wall
       -Werror
@@ -210,6 +213,10 @@ function(amber_default_compile_options TARGET)
       -Wno-unknown-pragmas
       -pedantic-errors
     )
+
+    if(NOT ${AMBER_ENABLE_RTTI})
+      target_compile_options(${TARGET} PRIVATE -fno-rtti)
+    endif()
 
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
       target_compile_options(${TARGET} PRIVATE

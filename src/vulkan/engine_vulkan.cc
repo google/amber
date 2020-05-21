@@ -239,6 +239,10 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       type = BufferCommand::BufferType::kSampledImage;
     } else if (buf_info.type == BufferType::kCombinedImageSampler) {
       type = BufferCommand::BufferType::kCombinedImageSampler;
+    } else if (buf_info.type == BufferType::kUniformTexelBuffer) {
+      type = BufferCommand::BufferType::kUniformTexelBuffer;
+    } else if (buf_info.type == BufferType::kStorageTexelBuffer) {
+      type = BufferCommand::BufferType::kStorageTexelBuffer;
     } else if (buf_info.type == BufferType::kUniform) {
       type = BufferCommand::BufferType::kUniform;
     } else if (buf_info.type != BufferType::kStorage) {

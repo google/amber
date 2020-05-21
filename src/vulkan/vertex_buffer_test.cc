@@ -30,7 +30,7 @@ namespace {
 class BufferForTest : public TransferBuffer {
  public:
   BufferForTest(Device* device, uint32_t size_in_bytes)
-      : TransferBuffer(device, size_in_bytes) {
+      : TransferBuffer(device, size_in_bytes, nullptr) {
     memory_.resize(4096);
     SetMemoryPtr(memory_.data());
   }

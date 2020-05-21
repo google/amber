@@ -494,6 +494,8 @@ The following commands are all specified within the `PIPELINE` command.
 #### Buffer Types
  * `uniform`
  * `storage`
+ * `uniform_texel_buffer`
+ * `storage_texel_buffer`
 
 TODO(dsinclair): Sync the BufferTypes with the list of Vulkan Descriptor types.
 
@@ -526,17 +528,17 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # Attach |buffer_name| as a storage image. The MIP level will have a base
   # value of |level|.
   BIND BUFFER {buffer_name} AS storage_image \
-      [ BASE_MIP_LEVEL _level_ (default 0) ]
+      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default 0) ]
 
   # Attach |buffer_name| as a sampled image.  The MIP level will have a base
   # value of |level|.
   BIND BUFFER {buffer_name} AS sampled_image \
-      [ BASE_MIP_LEVEL _level_ (default 0) ]
+      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default 0) ]
 
   # Attach |buffer_name| as a combined image sampler. A sampler |sampler_name|
   # must also be specified. The MIP level will have a base value of 0.
   BIND BUFFER {buffer_name} AS combined_image_sampler SAMPLER {sampler_name} \
-      [ BASE_MIP_LEVEL _level_ (default) 0) ]
+      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default) 0) ]
 
   # Bind the sampler at the given descriptor set and binding.
   BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
@@ -608,7 +610,8 @@ To run an indexed draw, attach the index data to the `PIPELINE` with an
 For the commands which take a `START_IDX` and a `COUNT` they can be left off the
 command (although, `START_IDX` is required if `COUNT` is provided). The default
 value for `START_IDX` is 0. The default value for `COUNT` is the item count of
-vertex buffer minus the `START_IDX`.
+vertex buffer minus the `START_IDX`. The same applies to `START_INSTANCE`
+(default 0) and `INSTANCE_COUNT` (default 1).
 
 ```groovy
 # Run the given |pipeline_name| which must be a `compute` pipeline. The
@@ -642,10 +645,14 @@ RUN {pipeline_name} \
 # data must be attached to the pipeline.
 
 # A start index of |value| will be used and the count of |count_value| items
-# will be processed.
+# will be processed. The draw is instanced if |inst_count_value| is greater
+# than one. In case of instanced draw |inst_value| controls the starting
+# instance ID.
 RUN {pipeline_name} DRAW_ARRAY AS {topology} \
     [ START_IDX _value_ (default 0) ] \
-    [ COUNT _count_value_ (default vertex_buffer size - start_idx) ]
+    [ COUNT _count_value_ (default vertex_buffer size - start_idx) ] \
+    [ START_INSTANCE _inst_value_ (default 0) ] \
+    [ INSTANCE_COUNT _inst_count_value_ (default 1) ]
 ```
 
 ```groovy
@@ -654,10 +661,14 @@ RUN {pipeline_name} DRAW_ARRAY AS {topology} \
 # drawn using the given |topology|.
 #
 # A start index of |value| will be used and the count of |count_value| items
-# will be processed.
+# will be processed. The draw is instanced if |inst_count_value| is greater
+# than one. In case of instanced draw |inst_value| controls the starting
+# instance ID.
 RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
     [ START_IDX _value_ (default 0) ] \
-    [ COUNT _count_value_ (default index_buffer size - start_idx) ]
+    [ COUNT _count_value_ (default index_buffer size - start_idx) ] \
+    [ START_INSTANCE _inst_value_ (default 0) ] \
+    [ INSTANCE_COUNT _inst_count_value_ (default 1) ]
 ```
 
 ### Repeating commands

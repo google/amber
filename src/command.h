@@ -236,9 +236,6 @@ class DrawArraysCommand : public PipelineCommand {
   void EnableIndexed() { is_indexed_ = true; }
   bool IsIndexed() const { return is_indexed_; }
 
-  void EnableInstanced() { is_instanced_ = true; }
-  bool IsInstanced() const { return is_instanced_; }
-
   void SetTopology(Topology topo) { topology_ = topo; }
   Topology GetTopology() const { return topology_; }
 
@@ -248,6 +245,9 @@ class DrawArraysCommand : public PipelineCommand {
   void SetVertexCount(uint32_t count) { vertex_count_ = count; }
   uint32_t GetVertexCount() const { return vertex_count_; }
 
+  void SetFirstInstance(uint32_t idx) { first_instance_ = idx; }
+  uint32_t GetFirstInstance() const { return first_instance_; }
+
   void SetInstanceCount(uint32_t count) { instance_count_ = count; }
   uint32_t GetInstanceCount() const { return instance_count_; }
 
@@ -256,11 +256,11 @@ class DrawArraysCommand : public PipelineCommand {
  private:
   PipelineData data_;
   bool is_indexed_ = false;
-  bool is_instanced_ = false;
   Topology topology_ = Topology::kUnknown;
   uint32_t first_vertex_index_ = 0;
   uint32_t vertex_count_ = 0;
-  uint32_t instance_count_ = 0;
+  uint32_t first_instance_ = 0;
+  uint32_t instance_count_ = 1;
 };
 
 /// A command to compare two buffers.
@@ -493,7 +493,9 @@ class BufferCommand : public BindableResourceCommand {
     kPushConstant,
     kStorageImage,
     kSampledImage,
-    kCombinedImageSampler
+    kCombinedImageSampler,
+    kUniformTexelBuffer,
+    kStorageTexelBuffer
   };
 
   BufferCommand(BufferType type, Pipeline* pipeline);
@@ -509,6 +511,12 @@ class BufferCommand : public BindableResourceCommand {
   }
   bool IsCombinedImageSampler() const {
     return buffer_type_ == BufferType::kCombinedImageSampler;
+  }
+  bool IsUniformTexelBuffer() const {
+    return buffer_type_ == BufferType::kUniformTexelBuffer;
+  }
+  bool IsStorageTexelBuffer() const {
+    return buffer_type_ == BufferType::kStorageTexelBuffer;
   }
   bool IsPushConstant() const {
     return buffer_type_ == BufferType::kPushConstant;

@@ -79,7 +79,7 @@ Result VertexBuffer::SendVertexData(CommandBuffer* command) {
   uint32_t bytes = Get4BytesAlignedStride() * n_vertices;
 
   if (!transfer_buffer_) {
-    transfer_buffer_ = MakeUnique<TransferBuffer>(device_, bytes);
+    transfer_buffer_ = MakeUnique<TransferBuffer>(device_, bytes, nullptr);
     Result r = transfer_buffer_->Initialize(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
                                             VK_BUFFER_USAGE_TRANSFER_DST_BIT);
     if (!r.IsSuccess())
