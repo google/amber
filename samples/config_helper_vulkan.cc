@@ -758,11 +758,17 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       VkPhysicalDeviceFeatures();
 
   if (supports_get_physical_device_properties2_) {
+    VkPhysicalDeviceSubgroupSizeControlFeaturesEXT size_control =
+        VkPhysicalDeviceSubgroupSizeControlFeaturesEXT();
+    size_control.sType =
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT;
+    size_control.pNext = nullptr;
+
     VkPhysicalDeviceVariablePointerFeaturesKHR var_ptrs =
         VkPhysicalDeviceVariablePointerFeaturesKHR();
     var_ptrs.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
-    var_ptrs.pNext = nullptr;
+    var_ptrs.pNext = &size_control;
 
     VkPhysicalDeviceFeatures2KHR features2 = VkPhysicalDeviceFeatures2KHR();
     features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
@@ -786,7 +792,11 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       if ((feature == kVariablePointers &&
            var_ptrs.variablePointers == VK_FALSE) ||
           (feature == kVariablePointersStorageBuffer &&
-           var_ptrs.variablePointersStorageBuffer == VK_FALSE)) {
+           var_ptrs.variablePointersStorageBuffer == VK_FALSE) ||
+          (feature == kSubgroupSizeControl &&
+           size_control.subgroupSizeControl == VK_FALSE) ||
+          (feature == kComputeFullSubgroups &&
+           size_control.computeFullSubgroups == VK_FALSE)) {
         return amber::Result("Device does not support all required features");
       }
     }
