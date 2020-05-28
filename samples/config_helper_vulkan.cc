@@ -642,7 +642,9 @@ ConfigHelperVulkan::ConfigHelperVulkan()
       variable_pointers_feature_(VkPhysicalDeviceVariablePointerFeaturesKHR()),
       float16_int8_feature_(VkPhysicalDeviceFloat16Int8FeaturesKHR()),
       storage_8bit_feature_(VkPhysicalDevice8BitStorageFeaturesKHR()),
-      storage_16bit_feature_(VkPhysicalDevice16BitStorageFeaturesKHR()) {}
+      storage_16bit_feature_(VkPhysicalDevice16BitStorageFeaturesKHR()),
+      subgroup_size_control_feature_(
+          VkPhysicalDeviceSubgroupSizeControlFeaturesEXT()) {}
 
 ConfigHelperVulkan::~ConfigHelperVulkan() {
   if (vulkan_device_)
