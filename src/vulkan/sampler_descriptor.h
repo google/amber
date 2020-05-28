@@ -15,6 +15,8 @@
 #ifndef SRC_VULKAN_SAMPLER_DESCRIPTOR_H_
 #define SRC_VULKAN_SAMPLER_DESCRIPTOR_H_
 
+#include <vector>
+
 #include "src/vulkan/descriptor.h"
 #include "src/vulkan/sampler.h"
 #include "src/vulkan/transfer_image.h"
@@ -33,10 +35,16 @@ class SamplerDescriptor : public Descriptor {
 
   void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
   Result CreateResourceIfNeeded() override;
+  void AddAmberSampler(amber::Sampler* sampler) {
+    amber_samplers_.push_back(sampler);
+  }
+  uint32_t GetDescriptorCount() override {
+    return amber_samplers_.size();
+  }
 
  private:
-  amber::Sampler* amber_sampler_;
-  amber::vulkan::Sampler vulkan_sampler_;
+  std::vector<amber::Sampler*> amber_samplers_;
+  std::vector<amber::vulkan::Sampler> vulkan_samplers_;
 };
 
 }  // namespace vulkan

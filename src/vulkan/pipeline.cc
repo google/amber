@@ -95,7 +95,7 @@ Result Pipeline::CreateDescriptorSetLayouts() {
       bindings.emplace_back();
       bindings.back().binding = desc->GetBinding();
       bindings.back().descriptorType = desc->GetVkDescriptorType();
-      bindings.back().descriptorCount = 1;
+      bindings.back().descriptorCount = desc->GetDescriptorCount();
       bindings.back().stageFlags = VK_SHADER_STAGE_ALL;
     }
     desc_info.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -124,13 +124,13 @@ Result Pipeline::CreateDescriptorPools() {
                           return size.type == type;
                         });
       if (it != pool_sizes.end()) {
-        it->descriptorCount += 1;
+        it->descriptorCount += desc->GetDescriptorCount();
         continue;
       }
 
       pool_sizes.emplace_back();
       pool_sizes.back().type = type;
-      pool_sizes.back().descriptorCount = 1;
+      pool_sizes.back().descriptorCount = desc->GetDescriptorCount();
     }
 
     VkDescriptorPoolCreateInfo pool_info = VkDescriptorPoolCreateInfo();
@@ -292,26 +292,27 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
 
   auto& descriptors = descriptor_set_info_[cmd->GetDescriptorSet()].descriptors;
 
-  if (desc == nullptr) {
-    bool is_image = false;
-    DescriptorType desc_type = DescriptorType::kUniformBuffer;
+  bool is_image = false;
+  DescriptorType desc_type = DescriptorType::kUniformBuffer;
 
-    if (cmd->IsStorageImage()) {
-      desc_type = DescriptorType ::kStorageImage;
-      is_image = true;
-    } else if (cmd->IsSampledImage()) {
-      desc_type = DescriptorType ::kSampledImage;
-      is_image = true;
-    } else if (cmd->IsCombinedImageSampler()) {
-      desc_type = DescriptorType ::kCombinedImageSampler;
-      is_image = true;
-    } else if (cmd->IsUniformTexelBuffer()) {
-      desc_type = DescriptorType ::kUniformTexelBuffer;
-    } else if (cmd->IsStorageTexelBuffer()) {
-      desc_type = DescriptorType ::kStorageTexelBuffer;
-    } else if (cmd->IsSSBO()) {
-      desc_type = DescriptorType ::kStorageBuffer;
-    }
+  if (cmd->IsStorageImage()) {
+    desc_type = DescriptorType ::kStorageImage;
+    is_image = true;
+  } else if (cmd->IsSampledImage()) {
+    desc_type = DescriptorType ::kSampledImage;
+    is_image = true;
+  } else if (cmd->IsCombinedImageSampler()) {
+    desc_type = DescriptorType ::kCombinedImageSampler;
+    is_image = true;
+  } else if (cmd->IsUniformTexelBuffer()) {
+    desc_type = DescriptorType ::kUniformTexelBuffer;
+  } else if (cmd->IsStorageTexelBuffer()) {
+    desc_type = DescriptorType ::kStorageTexelBuffer;
+  } else if (cmd->IsSSBO()) {
+    desc_type = DescriptorType ::kStorageBuffer;
+  }
+
+  if (desc == nullptr) {
     if (is_image) {
       auto image_desc = MakeUnique<ImageDescriptor>(
           cmd->GetBuffer(), desc_type, device_, cmd->GetBaseMipLevel(),
@@ -325,8 +326,15 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
           cmd->GetBinding());
       descriptors.push_back(std::move(buffer_desc));
     }
-
     desc = descriptors.back().get();
+  } else {
+    if (desc->GetDescriptorType() != desc_type) {
+      return Result(
+          "Descriptors bound to the same binding needs to have matching "
+          "descriptor types");
+    }
+    reinterpret_cast<BufferBackedDescriptor*>(desc)->AddAmberBuffer(
+        cmd->GetBuffer());
   }
 
   if (cmd->IsSSBO() && !desc->IsStorageBuffer()) {
@@ -373,8 +381,14 @@ Result Pipeline::AddSamplerDescriptor(const SamplerCommand* cmd) {
         cmd->GetSampler(), DescriptorType::kSampler, device_,
         cmd->GetDescriptorSet(), cmd->GetBinding());
     descriptors.push_back(std::move(sampler_desc));
-
-    desc = descriptors.back().get();
+  } else {
+    if (desc->GetDescriptorType() != DescriptorType::kSampler) {
+      return Result(
+          "Descriptors bound to the same binding needs to have matching "
+          "descriptor types");
+    }
+    reinterpret_cast<SamplerDescriptor*>(desc)->AddAmberSampler(
+        cmd->GetSampler());
   }
 
   return {};

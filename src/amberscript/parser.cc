@@ -969,18 +969,41 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
 
   if (!token->IsIdentifier())
-    return Result("missing BUFFER or SAMPLER in BIND command");
+    return Result(
+        "missing BUFFER, BUFFER_ARRAY, SAMPLER, or SAMPLER_ARRAY in BIND "
+        "command");
 
   auto object_type = token->AsString();
 
-  if (object_type == "BUFFER") {
+  if (object_type == "BUFFER" || object_type == "BUFFER_ARRAY") {
+    bool bufferArray = object_type == "BUFFER_ARRAY";
     token = tokenizer_->NextToken();
     if (!token->IsIdentifier())
       return Result("missing buffer name in BIND command");
 
+    std::vector<Buffer*> buffers;
     auto* buffer = script_->GetBuffer(token->AsString());
     if (!buffer)
       return Result("unknown buffer: " + token->AsString());
+    buffers.push_back(buffer);
+
+    if (bufferArray) {
+      // Check for additional buffer names
+      token = tokenizer_->PeekNextToken();
+      while (token->IsIdentifier() && token->AsString() != "AS" &&
+             token->AsString() != "KERNEL" &&
+             token->AsString() != "DESCRIPTOR_SET") {
+        tokenizer_->NextToken();
+        buffer = script_->GetBuffer(token->AsString());
+        if (!buffer)
+          return Result("unknown buffer: " + token->AsString());
+        buffers.push_back(buffer);
+        token = tokenizer_->PeekNextToken();
+      }
+
+      if (buffers.size() < 2)
+        return Result("expecting multiple buffer names for BUFFER_ARRAY");
+    }
 
     BufferType buffer_type = BufferType::kUnknown;
     token = tokenizer_->NextToken();
@@ -1048,7 +1071,8 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         if (!sampler)
           return Result("unknown sampler: " + token->AsString());
 
-        buffer->SetSampler(sampler);
+        for (auto& buf : buffers)
+          buf->SetSampler(sampler);
       }
     }
 
@@ -1107,8 +1131,10 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
           }
         }
 
-        pipeline->AddBuffer(buffer, buffer_type, descriptor_set, binding,
-                            base_mip_level);
+        for (size_t i = 0; i < buffers.size(); i++) {
+          pipeline->AddBuffer(buffers[i], buffer_type, descriptor_set, binding,
+                              base_mip_level, i == 0);
+        }
       } else if (token->IsIdentifier() && token->AsString() == "KERNEL") {
         token = tokenizer_->NextToken();
         if (!token->IsIdentifier())
@@ -1133,14 +1159,34 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         return Result("missing DESCRIPTOR_SET or KERNEL for BIND command");
       }
     }
-  } else if (object_type == "SAMPLER") {
+  } else if (object_type == "SAMPLER" || object_type == "SAMPLER_ARRAY") {
+    bool samplerArray = object_type == "SAMPLER_ARRAY";
     token = tokenizer_->NextToken();
     if (!token->IsIdentifier())
       return Result("missing sampler name in BIND command");
 
+    std::vector<Sampler*> samplers;
     auto* sampler = script_->GetSampler(token->AsString());
     if (!sampler)
       return Result("unknown sampler: " + token->AsString());
+    samplers.push_back(sampler);
+
+    if (samplerArray) {
+      // Check for additional sampler names
+      token = tokenizer_->PeekNextToken();
+      while (token->IsIdentifier() && token->AsString() != "KERNEL" &&
+             token->AsString() != "DESCRIPTOR_SET") {
+        tokenizer_->NextToken();
+        sampler = script_->GetSampler(token->AsString());
+        if (!sampler)
+          return Result("unknown sampler: " + token->AsString());
+        samplers.push_back(sampler);
+        token = tokenizer_->PeekNextToken();
+      }
+
+      if (samplers.size() < 2)
+        return Result("expecting multiple sampler names for SAMPLER_ARRAY");
+    }
 
     token = tokenizer_->NextToken();
     if (!token->IsIdentifier())
@@ -1159,7 +1205,11 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
       token = tokenizer_->NextToken();
       if (!token->IsInteger())
         return Result("invalid value for BINDING in BIND command");
-      pipeline->AddSampler(sampler, descriptor_set, token->AsUint32());
+
+      for (size_t i = 0; i < samplers.size(); i++) {
+        pipeline->AddSampler(samplers[i], descriptor_set, token->AsUint32(),
+                             i == 0);
+      }
     } else if (token->AsString() == "KERNEL") {
       token = tokenizer_->NextToken();
       if (!token->IsIdentifier())

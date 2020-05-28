@@ -2450,5 +2450,121 @@ END)";
   EXPECT_EQ("13: missing BINDING for BIND command", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, BindBufferArray) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf1 FORMAT R32G32B32A32_SFLOAT
+BUFFER my_buf2 FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER_ARRAY my_buf1 my_buf2 AS uniform DESCRIPTOR_SET 1 BINDING 2
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(2U, bufs.size());
+  for (int i = 0; i < 2; i++) {
+    EXPECT_EQ(BufferType::kUniform, bufs[i].type);
+    EXPECT_EQ(1U, bufs[i].descriptor_set);
+    EXPECT_EQ(2U, bufs[i].binding);
+    EXPECT_EQ(static_cast<uint32_t>(0), bufs[i].location);
+    EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+              bufs[i].buffer->GetFormat()->GetFormatType());
+  }
+}
+
+TEST_F(AmberScriptParserTest, BindBufferArrayOnlyOneBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER_ARRAY my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: expecting multiple buffer names for BUFFER_ARRAY", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerArray) {
+  std::string in = R"(
+SHADER vertex vert_shader PASSTHROUGH
+SHADER fragment frag_shader GLSL
+# GLSL Shader
+END
+
+SAMPLER sampler1
+SAMPLER sampler2
+BUFFER framebuffer FORMAT R8G8B8A8_UNORM
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  BIND SAMPLER_ARRAY sampler1 sampler2 DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER framebuffer AS color LOCATION 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& samplers = pipeline->GetSamplers();
+  ASSERT_EQ(2U, samplers.size());
+}
+
+TEST_F(AmberScriptParserTest, BindSamplerArrayOnlyOneSampler) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+SAMPLER sampler
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND SAMPLER_ARRAY sampler DESCRIPTOR_SET 1 BINDING 2
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: expecting multiple sampler names for SAMPLER_ARRAY",
+            r.Error());
+}
+
 }  // namespace amberscript
 }  // namespace amber

@@ -1,5 +1,5 @@
 #!amber
-# Copyright 2019 The Amber Authors.
+# Copyright 2020 The Amber Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
 
 SHADER vertex vert_shader PASSTHROUGH
 
-SHADER fragment frag_shader_red GLSL
+SHADER fragment frag_shader_texgen GLSL
 #version 430
-layout(location = 0) out vec4 color_out;
+layout(location = 0) out vec4 color_out0;
+layout(location = 1) out vec4 color_out1;
 void main() {
-  color_out = vec4(1.0, 0.0, 0.0, 1.0);
+  color_out0 = vec4(1.0, 0.0, 0.0, 1.0);
+  color_out1 = vec4(0.0, 1.0, 0.0, 1.0);
 }
 END
 
@@ -38,14 +40,17 @@ SHADER fragment frag_shader_tex GLSL
 #version 430
 layout(location = 0) in vec2 texcoords_in;
 layout(location = 0) out vec4 color_out;
-uniform layout(set=0, binding=0) sampler2D tex_sampler;
+uniform layout(set=0, binding=0) texture2D tex[2];
+uniform layout(set=0, binding=1) sampler tex_sampler;
 void main() {
-  color_out = texture(tex_sampler, texcoords_in);
+  color_out = texture(sampler2D(tex[0], tex_sampler), texcoords_in);
+  color_out += texture(sampler2D(tex[1], tex_sampler), texcoords_in);
 }
 END
 
-BUFFER texture FORMAT R8G8B8A8_UNORM
-BUFFER framebuffer FORMAT B8G8R8A8_UNORM
+IMAGE texture0 FORMAT R8G8B8A8_UNORM DIM_2D WIDTH 256 HEIGHT 256
+IMAGE texture1 FORMAT R8G8B8A8_UNORM DIM_2D WIDTH 256 HEIGHT 256
+IMAGE framebuffer FORMAT B8G8R8A8_UNORM DIM_2D WIDTH 256 HEIGHT 256
 SAMPLER sampler
 BUFFER position DATA_TYPE vec2<float> DATA
 -0.75 -0.75
@@ -60,27 +65,27 @@ BUFFER texcoords DATA_TYPE vec2<float> DATA
 0.0 2.0
 END
 
-PIPELINE graphics texgen
+PIPELINE graphics pipeline_texgen
   ATTACH vert_shader
-  ATTACH frag_shader_red
-  FRAMEBUFFER_SIZE 256 256
-  BIND BUFFER texture AS color LOCATION 0
+  ATTACH frag_shader_texgen
+  BIND BUFFER texture0 AS color LOCATION 0
+  BIND BUFFER texture1 AS color LOCATION 1
 END
 
 PIPELINE graphics pipeline
   ATTACH vert_shader_tex
   ATTACH frag_shader_tex
-  BIND BUFFER texture AS combined_image_sampler SAMPLER sampler DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER_ARRAY texture0 texture1 AS sampled_image DESCRIPTOR_SET 0 BINDING 0
+  BIND SAMPLER sampler DESCRIPTOR_SET 0 BINDING 1
   VERTEX_DATA position LOCATION 0
   VERTEX_DATA texcoords LOCATION 1
-  FRAMEBUFFER_SIZE 256 256
   BIND BUFFER framebuffer AS color LOCATION 0
 END
 
 # Generate a texture with a quad at the lower right corner.
-CLEAR_COLOR texgen 0 0 255 255
-CLEAR texgen
-RUN texgen DRAW_RECT POS 128 128 SIZE 128 128
+CLEAR_COLOR pipeline_texgen 0 0 255 255
+CLEAR pipeline_texgen
+RUN pipeline_texgen DRAW_RECT POS 128 128 SIZE 128 128
 
 # Draw the texture using a default sampler.
 CLEAR_COLOR pipeline 0 255 0 255
@@ -88,5 +93,5 @@ CLEAR pipeline
 RUN pipeline DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4
 
 EXPECT framebuffer IDX 1 1 SIZE 1 1 EQ_RGBA 0 255 0 255
-EXPECT framebuffer IDX 81 81 SIZE 1 1 EQ_RGBA 255 0 0 255
+EXPECT framebuffer IDX 81 81 SIZE 1 1 EQ_RGBA 255 255 0 255
 EXPECT framebuffer IDX 81 33 SIZE 1 1 EQ_RGBA 0 0 255 255

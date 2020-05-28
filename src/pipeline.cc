@@ -507,13 +507,17 @@ void Pipeline::AddBuffer(Buffer* buf,
                          BufferType type,
                          uint32_t descriptor_set,
                          uint32_t binding,
-                         uint32_t base_mip_level) {
-  // If this buffer binding already exists, overwrite with the new buffer.
-  for (auto& info : buffers_) {
-    if (info.descriptor_set == descriptor_set && info.binding == binding) {
-      info.buffer = buf;
-      return;
-    }
+                         uint32_t base_mip_level,
+                         bool overwrite) {
+  if (overwrite) {
+    // Clear all the previous bindings to the same slot.
+    buffers_.erase(
+        std::remove_if(buffers_.begin(), buffers_.end(),
+                       [descriptor_set, binding](BufferInfo& info) -> bool {
+                         return (info.descriptor_set == descriptor_set &&
+                                 info.binding == binding);
+                       }),
+        buffers_.end());
   }
 
   buffers_.push_back(BufferInfo{buf});
@@ -568,13 +572,17 @@ void Pipeline::AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no) {
 
 void Pipeline::AddSampler(Sampler* sampler,
                           uint32_t descriptor_set,
-                          uint32_t binding) {
-  // If this sampler binding already exists, overwrite with the new sampler.
-  for (auto& info : samplers_) {
-    if (info.descriptor_set == descriptor_set && info.binding == binding) {
-      info.sampler = sampler;
-      return;
-    }
+                          uint32_t binding,
+                          bool overwrite) {
+  if (overwrite) {
+    // Clear all the previous bindings to the same slot.
+    samplers_.erase(
+        std::remove_if(samplers_.begin(), samplers_.end(),
+                       [descriptor_set, binding](SamplerInfo& info) -> bool {
+                         return (info.descriptor_set == descriptor_set &&
+                                 info.binding == binding);
+                       }),
+        samplers_.end());
   }
 
   samplers_.push_back(SamplerInfo{sampler});
@@ -845,7 +853,7 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
         opencl_pod_buffer_map_.insert(
             buf_iter,
             std::make_pair(std::make_pair(descriptor_set, binding), buffer));
-        AddBuffer(buffer, buffer_type, descriptor_set, binding, 0);
+        AddBuffer(buffer, buffer_type, descriptor_set, binding, 0, true);
       } else {
         buffer = buf_iter->second;
       }

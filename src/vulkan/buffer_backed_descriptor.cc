@@ -27,63 +27,72 @@ BufferBackedDescriptor::BufferBackedDescriptor(Buffer* buffer,
                                                Device* device,
                                                uint32_t desc_set,
                                                uint32_t binding)
-    : Descriptor(type, device, desc_set, binding), amber_buffer_(buffer) {}
+    : Descriptor(type, device, desc_set, binding) {
+  AddAmberBuffer(buffer);
+}
 
 BufferBackedDescriptor::~BufferBackedDescriptor() = default;
 
 void BufferBackedDescriptor::RecordCopyDataToResourceIfNeeded(
     CommandBuffer* command) {
-  if (!GetResource())
-    return;
+  auto resources = GetResources();
+  auto buffers = GetAmberBuffers();
+  assert(resources.size() == buffers.size());
 
-  if (amber_buffer_ && !amber_buffer_->ValuePtr()->empty()) {
-    GetResource()->UpdateMemoryWithRawData(*amber_buffer_->ValuePtr());
-    amber_buffer_->ValuePtr()->clear();
+  for (size_t i = 0; i < resources.size(); i++) {
+    if (!buffers[i]->ValuePtr()->empty()) {
+      resources[i]->UpdateMemoryWithRawData(*buffers[i]->ValuePtr());
+      buffers[i]->ValuePtr()->clear();
+    }
+
+    resources[i]->CopyToDevice(command);
   }
-
-  GetResource()->CopyToDevice(command);
 }
 
 Result BufferBackedDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
-  if (!GetResource()) {
+  if (GetResources().empty()) {
     return Result(
         "Vulkan: BufferBackedDescriptor::RecordCopyDataToHost() no transfer "
-        "resource");
+        "resources");
   }
 
-  GetResource()->CopyToHost(command);
+  for (const auto& r : GetResources())
+    r->CopyToHost(command);
+
   return {};
 }
 
 Result BufferBackedDescriptor::MoveResourceToBufferOutput() {
-  if (!GetResource()) {
+  auto resources = GetResources();
+  auto buffers = GetAmberBuffers();
+  assert(resources.size() == buffers.size());
+
+  if (resources.empty()) {
     return Result(
         "Vulkan: BufferBackedDescriptor::MoveResourceToBufferOutput() no "
         "transfer"
         " resource");
   }
 
-  // Only need to copy the buffer back if we have an attached amber buffer to
-  // write to.
-  if (amber_buffer_) {
-    void* resource_memory_ptr = GetResource()->HostAccessibleMemoryPtr();
+  for (size_t i = 0; i < resources.size(); i++) {
+    void* resource_memory_ptr = resources[i]->HostAccessibleMemoryPtr();
     if (!resource_memory_ptr) {
       return Result(
           "Vulkan: BufferBackedDescriptor::MoveResourceToBufferOutput() "
           "no host accessible memory pointer");
     }
 
-    if (!amber_buffer_->ValuePtr()->empty()) {
+    if (!buffers[i]->ValuePtr()->empty()) {
       return Result(
           "Vulkan: BufferBackedDescriptor::MoveResourceToBufferOutput() "
           "output buffer is not empty");
     }
 
-    auto size_in_bytes = GetResource()->GetSizeInBytes();
-    amber_buffer_->SetElementCount(size_in_bytes /
-                                   amber_buffer_->GetFormat()->SizeInBytes());
-    amber_buffer_->ValuePtr()->resize(size_in_bytes);
-    std::memcpy(amber_buffer_->ValuePtr()->data(), resource_memory_ptr,
+    auto size_in_bytes = resources[i]->GetSizeInBytes();
+    buffers[i]->SetElementCount(size_in_bytes /
+                                buffers[i]->GetFormat()->SizeInBytes());
+    buffers[i]->ValuePtr()->resize(size_in_bytes);
+    std::memcpy(buffers[i]->ValuePtr()->data(), resource_memory_ptr,
                 size_in_bytes);
   }
 
@@ -91,19 +100,19 @@ Result BufferBackedDescriptor::MoveResourceToBufferOutput() {
 }
 
 Result BufferBackedDescriptor::SetSizeInElements(uint32_t element_count) {
-  if (!amber_buffer_)
+  if (GetAmberBuffers().empty())
     return Result("missing amber_buffer for SetSizeInElements call");
 
-  amber_buffer_->SetSizeInElements(element_count);
+  GetAmberBuffers().back()->SetSizeInElements(element_count);
   return {};
 }
 
 Result BufferBackedDescriptor::AddToBuffer(const std::vector<Value>& values,
                                            uint32_t offset) {
-  if (!amber_buffer_)
+  if (GetAmberBuffers().empty())
     return Result("missing amber_buffer for AddToBuffer call");
 
-  return amber_buffer_->SetDataWithOffset(values, offset);
+  return GetAmberBuffers().back()->SetDataWithOffset(values, offset);
 }
 
 }  // namespace vulkan

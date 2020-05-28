@@ -510,11 +510,6 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   BIND BUFFER {buffer_name} AS color LOCATION _idx_ \
       [ BASE_MIP_LEVEL _level_ (default 0) ]
 
-  # Bind the buffer of the given |buffer_type| at the given descriptor set
-  # and binding. The buffer will use a start index of 0.
-  BIND BUFFER {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
-       BINDING _id_
-
   # Attach |buffer_name| as the depth/stencil buffer. The provided buffer must
   # be a `FORMAT` buffer. If no depth/stencil buffer is specified a default
   # buffer of format `D32_SFLOAT_S8_UINT` will be created for graphics
@@ -524,24 +519,6 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # Attach |buffer_name| as the push_constant buffer. There can be only one
   # push constant buffer attached to a pipeline.
   BIND BUFFER {buffer_name} AS push_constant
-
-  # Attach |buffer_name| as a storage image. The MIP level will have a base
-  # value of |level|.
-  BIND BUFFER {buffer_name} AS storage_image \
-      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default 0) ]
-
-  # Attach |buffer_name| as a sampled image.  The MIP level will have a base
-  # value of |level|.
-  BIND BUFFER {buffer_name} AS sampled_image \
-      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default 0) ]
-
-  # Attach |buffer_name| as a combined image sampler. A sampler |sampler_name|
-  # must also be specified. The MIP level will have a base value of 0.
-  BIND BUFFER {buffer_name} AS combined_image_sampler SAMPLER {sampler_name} \
-      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default) 0) ]
-
-  # Bind the sampler at the given descriptor set and binding.
-  BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
 
   # Bind OpenCL argument buffer by name. Specifying the buffer type is optional.
   # Amber will set the type as appropriate for the argument buffer. All uses
@@ -562,6 +539,36 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # Bind OpenCL argument sampler by argument ordinal. Arguments use 0-based
   # numbering.
   BIND SAMPLER {sampler_name} KERNEL ARG_NUMBER _number_
+```
+
+All BIND BUFFER and BIND SAMPLER commands below define a descriptor set and binding ID.
+These commands can be replaced with BIND BUFFER_ARRAY and BIND SAMPLER_ARRAY commands.
+In these cases multiple buffer or sampler names need to be provided, separated by spaces.
+This creates a descriptor array of buffers or samplers bound to the same descriptor set
+and binding ID.
+```groovy
+  # Bind the buffer of the given |buffer_type| at the given descriptor set
+  # and binding. The buffer will use a start index of 0.
+  BIND BUFFER {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
+       BINDING _id_
+
+  # Attach |buffer_name| as a storage image. The MIP level will have a base
+  # value of |level|.
+  BIND BUFFER {buffer_name} AS storage_image \
+      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default 0) ]
+
+  # Attach |buffer_name| as a sampled image.  The MIP level will have a base
+  # value of |level|.
+  BIND BUFFER {buffer_name} AS sampled_image \
+      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default 0) ]
+
+  # Attach |buffer_name| as a combined image sampler. A sampler |sampler_name|
+  # must also be specified. The MIP level will have a base value of 0.
+  BIND BUFFER {buffer_name} AS combined_image_sampler SAMPLER {sampler_name} \
+      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default) 0) ]
+
+  # Bind the sampler at the given descriptor set and binding.
+  BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
 ```
 
 ```groovy
