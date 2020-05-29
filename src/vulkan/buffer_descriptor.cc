@@ -105,7 +105,7 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   write.dstSet = descriptor_set;
   write.dstBinding = binding_;
   write.dstArrayElement = 0;
-  write.descriptorCount = buffer_infos.size();
+  write.descriptorCount = static_cast<uint32_t>(buffer_infos.size());
   write.descriptorType = GetVkDescriptorType();
   write.pBufferInfo = buffer_infos.data();
   write.pTexelBufferView = buffer_views.data();

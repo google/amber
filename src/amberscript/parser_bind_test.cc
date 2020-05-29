@@ -2478,7 +2478,7 @@ END
   const auto* pipeline = pipelines[0].get();
   const auto& bufs = pipeline->GetBuffers();
   ASSERT_EQ(2U, bufs.size());
-  for (int i = 0; i < 2; i++) {
+  for (size_t i = 0; i < 2; i++) {
     EXPECT_EQ(BufferType::kUniform, bufs[i].type);
     EXPECT_EQ(1U, bufs[i].descriptor_set);
     EXPECT_EQ(2U, bufs[i].binding);

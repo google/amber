@@ -57,7 +57,7 @@ void SamplerDescriptor::UpdateDescriptorSetIfNeeded(
   write.dstSet = descriptor_set;
   write.dstBinding = binding_;
   write.dstArrayElement = 0;
-  write.descriptorCount = image_infos.size();
+  write.descriptorCount = static_cast<uint32_t>(image_infos.size());
   write.descriptorType = GetVkDescriptorType();
   write.pImageInfo = image_infos.data();
 
