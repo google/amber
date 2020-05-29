@@ -15,6 +15,7 @@
 #ifndef SRC_VULKAN_SAMPLER_DESCRIPTOR_H_
 #define SRC_VULKAN_SAMPLER_DESCRIPTOR_H_
 
+#include <memory>
 #include <vector>
 
 #include "src/vulkan/descriptor.h"
