@@ -44,7 +44,7 @@ class SamplerDescriptor : public Descriptor {
 
  private:
   std::vector<amber::Sampler*> amber_samplers_;
-  std::vector<amber::vulkan::Sampler> vulkan_samplers_;
+  std::vector<std::unique_ptr<amber::vulkan::Sampler>> vulkan_samplers_;
 };
 
 }  // namespace vulkan

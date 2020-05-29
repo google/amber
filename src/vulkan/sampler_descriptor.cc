@@ -33,8 +33,8 @@ SamplerDescriptor::~SamplerDescriptor() = default;
 Result SamplerDescriptor::CreateResourceIfNeeded() {
   vulkan_samplers_.reserve(amber_samplers_.size());
   for (const auto& sampler : amber_samplers_) {
-    vulkan_samplers_.emplace_back(device_);
-    Result r = vulkan_samplers_.back().CreateSampler(sampler);
+    vulkan_samplers_.emplace_back(MakeUnique<Sampler>(device_));
+    Result r = vulkan_samplers_.back()->CreateSampler(sampler);
     if (!r.IsSuccess())
       return r;
   }
@@ -47,7 +47,7 @@ void SamplerDescriptor::UpdateDescriptorSetIfNeeded(
   std::vector<VkDescriptorImageInfo> image_infos;
 
   for (auto& sampler : vulkan_samplers_) {
-    VkDescriptorImageInfo image_info = {sampler.GetVkSampler(), VK_NULL_HANDLE,
+    VkDescriptorImageInfo image_info = {sampler->GetVkSampler(), VK_NULL_HANDLE,
                                         VK_IMAGE_LAYOUT_GENERAL};
     image_infos.push_back(image_info);
   }
