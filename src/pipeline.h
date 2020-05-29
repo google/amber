@@ -316,29 +316,24 @@ class Pipeline {
   Buffer* GetIndexBuffer() const { return index_buffer_; }
 
   /// Adds |buf| of |type| to the pipeline at the given |descriptor_set|,
-  /// |binding| and |base_mip_level|. |overwrite| decides if an existing
-  /// binding will be overwritten or an array of buffers are bound to the
-  /// same binding.
+  /// |binding| and |base_mip_level|.
   void AddBuffer(Buffer* buf,
                  BufferType type,
                  uint32_t descriptor_set,
                  uint32_t binding,
-                 uint32_t base_mip_level,
-                 bool overwrite);
+                 uint32_t base_mip_level);
   /// Adds |buf| to the pipeline at the given |arg_name|.
   void AddBuffer(Buffer* buf, BufferType type, const std::string& arg_name);
   /// Adds |buf| to the pipeline at the given |arg_no|.
   void AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no);
   /// Returns information on all buffers in this pipeline.
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
+  /// Clears all buffer bindings for given |descriptor_set| and |binding|.
+  void ClearBuffers(uint32_t descriptor_set, uint32_t binding);
 
   /// Adds |sampler| to the pipeline at the given |descriptor_set| and
-  /// |binding|. |overwrite| decides if an existing binding will be
-  /// overwritten or an array of samplers are bound to the same binding.
-  void AddSampler(Sampler* sampler,
-                  uint32_t descriptor_set,
-                  uint32_t binding,
-                  bool overwrite);
+  /// |binding|.
+  void AddSampler(Sampler* sampler, uint32_t descriptor_set, uint32_t binding);
   /// Adds |sampler| to the pipeline at the given |arg_name|.
   void AddSampler(Sampler* sampler, const std::string& arg_name);
   /// Adds |sampler| to the pieline at the given |arg_no|.
@@ -347,6 +342,8 @@ class Pipeline {
   void AddSampler(uint32_t sampler_mask,
                   uint32_t descriptor_set,
                   uint32_t binding);
+  /// Clears all sampler bindings for given |descriptor_set| and |binding|.
+  void ClearSamplers(uint32_t descriptor_set, uint32_t binding);
 
   /// Returns information on all samplers in this pipeline.
   const std::vector<SamplerInfo>& GetSamplers() const { return samplers_; }

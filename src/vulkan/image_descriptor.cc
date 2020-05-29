@@ -31,19 +31,24 @@ ImageDescriptor::ImageDescriptor(Buffer* buffer,
 
 ImageDescriptor::~ImageDescriptor() = default;
 
-void ImageDescriptor::RecordCopyDataToResourceIfNeeded(CommandBuffer* command) {
+Result ImageDescriptor::RecordCopyDataToResourceIfNeeded(
+    CommandBuffer* command) {
   for (auto& image : transfer_images_) {
-    image.ImageBarrier(command, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                       VK_PIPELINE_STAGE_TRANSFER_BIT);
+    image->ImageBarrier(command, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                        VK_PIPELINE_STAGE_TRANSFER_BIT);
   }
 
-  BufferBackedDescriptor::RecordCopyDataToResourceIfNeeded(command);
+  Result r = BufferBackedDescriptor::RecordCopyDataToResourceIfNeeded(command);
+  if (!r.IsSuccess())
+    return r;
 
   // Just do this as early as possible.
   for (auto& image : transfer_images_) {
-    image.ImageBarrier(command, VK_IMAGE_LAYOUT_GENERAL,
-                       VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+    image->ImageBarrier(command, VK_IMAGE_LAYOUT_GENERAL,
+                        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
   }
+
+  return {};
 }
 
 Result ImageDescriptor::CreateResourceIfNeeded() {
@@ -87,10 +92,11 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
       aspect = VK_IMAGE_ASPECT_COLOR_BIT;
     }
 
-    transfer_images_.emplace_back(
+    transfer_images_.emplace_back(MakeUnique<TransferImage>(
         device_, *fmt, aspect, image_type, amber_buffer->GetWidth(),
         amber_buffer->GetHeight(), amber_buffer->GetDepth(),
-        amber_buffer->GetMipLevels(), base_mip_level_, VK_REMAINING_MIP_LEVELS);
+        amber_buffer->GetMipLevels(), base_mip_level_,
+        VK_REMAINING_MIP_LEVELS));
     VkImageUsageFlags usage =
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
@@ -102,7 +108,7 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
       usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
     }
 
-    Result r = transfer_images_.back().Initialize(usage);
+    Result r = transfer_images_.back()->Initialize(usage);
 
     if (!r.IsSuccess())
       return r;
@@ -120,8 +126,8 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
 
 Result ImageDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
   for (auto& image : transfer_images_) {
-    image.ImageBarrier(command, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                       VK_PIPELINE_STAGE_TRANSFER_BIT);
+    image->ImageBarrier(command, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                        VK_PIPELINE_STAGE_TRANSFER_BIT);
   }
 
   BufferBackedDescriptor::RecordCopyDataToHost(command);
@@ -148,7 +154,7 @@ void ImageDescriptor::UpdateDescriptorSetIfNeeded(
 
   for (const auto& image : transfer_images_) {
     VkDescriptorImageInfo image_info = {vulkan_sampler_.GetVkSampler(),
-                                        image.GetVkImageView(), layout};
+                                        image->GetVkImageView(), layout};
     image_infos.push_back(image_info);
   }
 
@@ -170,7 +176,7 @@ void ImageDescriptor::UpdateDescriptorSetIfNeeded(
 std::vector<Resource*> ImageDescriptor::GetResources() {
   std::vector<Resource*> ret;
   for (auto& i : transfer_images_) {
-    ret.push_back(&i);
+    ret.push_back(i.get());
   }
   return ret;
 }

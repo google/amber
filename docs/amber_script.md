@@ -549,26 +549,26 @@ and binding ID.
 ```groovy
   # Bind the buffer of the given |buffer_type| at the given descriptor set
   # and binding. The buffer will use a start index of 0.
-  BIND BUFFER {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
+  BIND {BUFFER | BUFFER_ARRAY} {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
        BINDING _id_
 
   # Attach |buffer_name| as a storage image. The MIP level will have a base
   # value of |level|.
-  BIND BUFFER {buffer_name} AS storage_image \
+  BIND {BUFFER | BUFFER_ARRAY} {buffer_name} AS storage_image \
       DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default 0) ]
 
   # Attach |buffer_name| as a sampled image.  The MIP level will have a base
   # value of |level|.
-  BIND BUFFER {buffer_name} AS sampled_image \
+  BIND {BUFFER | BUFFER_ARRAY} {buffer_name} AS sampled_image \
       DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default 0) ]
 
   # Attach |buffer_name| as a combined image sampler. A sampler |sampler_name|
   # must also be specified. The MIP level will have a base value of 0.
-  BIND BUFFER {buffer_name} AS combined_image_sampler SAMPLER {sampler_name} \
+  BIND {BUFFER | BUFFER_ARRAY} {buffer_name} AS combined_image_sampler SAMPLER {sampler_name} \
       DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default) 0) ]
 
   # Bind the sampler at the given descriptor set and binding.
-  BIND SAMPLER {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
+  BIND {SAMPLER | SAMPLER_ARRAY} {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
 ```
 
 ```groovy

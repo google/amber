@@ -48,8 +48,8 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
     uint32_t size_in_bytes =
         amber_buffer ? static_cast<uint32_t>(amber_buffer->ValuePtr()->size())
                      : 0;
-    transfer_buffers_.emplace_back(device_, size_in_bytes,
-                                   amber_buffer->GetFormat());
+    transfer_buffers_.emplace_back(MakeUnique<TransferBuffer>(
+        device_, size_in_bytes, amber_buffer->GetFormat()));
     VkBufferUsageFlags flags =
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     if (IsUniformBuffer()) {
@@ -64,7 +64,7 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
       return Result("Unexpected buffer type when deciding usage flags");
     }
 
-    Result r = transfer_buffers_.back().Initialize(flags);
+    Result r = transfer_buffers_.back()->Initialize(flags);
     if (!r.IsSuccess())
       return r;
   }
@@ -90,13 +90,13 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
 
   for (const auto& buffer : transfer_buffers_) {
     VkDescriptorBufferInfo buffer_info;
-    buffer_info.buffer = buffer.GetVkBuffer();
+    buffer_info.buffer = buffer->GetVkBuffer();
     buffer_info.offset = 0;
     buffer_info.range = VK_WHOLE_SIZE;
     buffer_infos.push_back(buffer_info);
 
     if (IsUniformTexelBuffer() || IsStorageTexelBuffer()) {
-      buffer_views.push_back(*buffer.GetVkBufferView());
+      buffer_views.push_back(*buffer->GetVkBufferView());
     }
   }
 
@@ -118,7 +118,7 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
 std::vector<Resource*> BufferDescriptor::GetResources() {
   std::vector<Resource*> ret;
   for (auto& b : transfer_buffers_) {
-    ret.push_back(&b);
+    ret.push_back(b.get());
   }
   return ret;
 }

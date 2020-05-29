@@ -351,16 +351,6 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
         "and binding");
   }
 
-  if (cmd->GetValues().empty()) {
-    r = desc->SetSizeInElements(cmd->GetBuffer()->ElementCount());
-    if (!r.IsSuccess())
-      return r;
-  } else {
-    r = desc->AddToBuffer(cmd->GetValues(), cmd->GetOffset());
-    if (!r.IsSuccess())
-      return r;
-  }
-
   return {};
 }
 
@@ -424,8 +414,11 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     return guard.GetResult();
 
   for (auto& info : descriptor_set_info_) {
-    for (auto& desc : info.descriptors)
-      desc->RecordCopyDataToResourceIfNeeded(command_.get());
+    for (auto& desc : info.descriptors) {
+      Result r = desc->RecordCopyDataToResourceIfNeeded(command_.get());
+      if (!r.IsSuccess())
+        return r;
+    }
   }
   return guard.Submit(GetFenceTimeout());
 }

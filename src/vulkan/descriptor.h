@@ -52,7 +52,7 @@ class Descriptor {
 
   virtual void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) = 0;
   virtual Result CreateResourceIfNeeded() = 0;
-  virtual void RecordCopyDataToResourceIfNeeded(CommandBuffer*) {}
+  virtual Result RecordCopyDataToResourceIfNeeded(CommandBuffer*) { return {}; }
   virtual Result RecordCopyDataToHost(CommandBuffer*) { return {}; }
   virtual Result MoveResourceToBufferOutput() { return {}; }
   virtual Result SetSizeInElements(uint32_t) { return {}; }

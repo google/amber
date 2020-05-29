@@ -39,7 +39,7 @@ class SamplerDescriptor : public Descriptor {
     amber_samplers_.push_back(sampler);
   }
   uint32_t GetDescriptorCount() override {
-    return amber_samplers_.size();
+    return static_cast<uint32_t>(amber_samplers_.size());
   }
 
  private:
