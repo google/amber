@@ -9,8 +9,8 @@ vars = {
   'nlohmann_git': 'https://github.com/nlohmann',
   'swiftshader_git': 'https://swiftshader.googlesource.com',
 
-  'clspv_llvm_revision': '9244be7b0514c41e0fa8a2880595fa663cc2f85f',
-  'clspv_revision': '616ffa2804e18513f608e83c8d3cf778353ba562',
+  'clspv_llvm_revision': 'b836ae24a9f4202a73a227bc3dac9b1a40979a7d',
+  'clspv_revision': '227e97857852d9bd7247ecaa9ff382210864a8a2',
   'cppdap_revision': 'cc93ba9747201007c8ff90e7d924152485462fbc',
   'cpplint_revision': '26470f9ccb354ff2f6d098f831271a1833701b28',
   'dxc_revision': 'b7626e97eebaff425239a7ac32d3e9698259758d',
