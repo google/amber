@@ -672,7 +672,11 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     bool disable_validation_layer) {
   VkApplicationInfo app_info = VkApplicationInfo();
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wold-style-cast"
   app_info.apiVersion = VK_MAKE_VERSION(engine_major, engine_minor, 0);
+#pragma clang diagnostic pop
 
   VkInstanceCreateInfo instance_info = VkInstanceCreateInfo();
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
