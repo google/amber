@@ -328,6 +328,8 @@ class Pipeline {
   void AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no);
   /// Returns information on all buffers in this pipeline.
   const std::vector<BufferInfo>& GetBuffers() const { return buffers_; }
+  /// Clears all buffer bindings for given |descriptor_set| and |binding|.
+  void ClearBuffers(uint32_t descriptor_set, uint32_t binding);
 
   /// Adds |sampler| to the pipeline at the given |descriptor_set| and
   /// |binding|.
@@ -340,6 +342,8 @@ class Pipeline {
   void AddSampler(uint32_t sampler_mask,
                   uint32_t descriptor_set,
                   uint32_t binding);
+  /// Clears all sampler bindings for given |descriptor_set| and |binding|.
+  void ClearSamplers(uint32_t descriptor_set, uint32_t binding);
 
   /// Returns information on all samplers in this pipeline.
   const std::vector<SamplerInfo>& GetSamplers() const { return samplers_; }

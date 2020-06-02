@@ -24,33 +24,42 @@ SamplerDescriptor::SamplerDescriptor(amber::Sampler* sampler,
                                      Device* device,
                                      uint32_t desc_set,
                                      uint32_t binding)
-    : Descriptor(type, device, desc_set, binding),
-      amber_sampler_(sampler),
-      vulkan_sampler_(device) {}
+    : Descriptor(type, device, desc_set, binding) {
+  AddAmberSampler(sampler);
+}
 
 SamplerDescriptor::~SamplerDescriptor() = default;
 
 Result SamplerDescriptor::CreateResourceIfNeeded() {
-  Result r = vulkan_sampler_.CreateSampler(amber_sampler_);
-  if (!r.IsSuccess())
-    return r;
+  vulkan_samplers_.reserve(amber_samplers_.size());
+  for (const auto& sampler : amber_samplers_) {
+    vulkan_samplers_.emplace_back(MakeUnique<Sampler>(device_));
+    Result r = vulkan_samplers_.back()->CreateSampler(sampler);
+    if (!r.IsSuccess())
+      return r;
+  }
 
   return {};
 }
 
 void SamplerDescriptor::UpdateDescriptorSetIfNeeded(
     VkDescriptorSet descriptor_set) {
-  VkDescriptorImageInfo image_info = {vulkan_sampler_.GetVkSampler(),
-                                      VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL};
+  std::vector<VkDescriptorImageInfo> image_infos;
+
+  for (auto& sampler : vulkan_samplers_) {
+    VkDescriptorImageInfo image_info = {sampler->GetVkSampler(), VK_NULL_HANDLE,
+                                        VK_IMAGE_LAYOUT_GENERAL};
+    image_infos.push_back(image_info);
+  }
 
   VkWriteDescriptorSet write = VkWriteDescriptorSet();
   write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   write.dstSet = descriptor_set;
   write.dstBinding = binding_;
   write.dstArrayElement = 0;
-  write.descriptorCount = 1;
+  write.descriptorCount = static_cast<uint32_t>(image_infos.size());
   write.descriptorType = GetVkDescriptorType();
-  write.pImageInfo = &image_info;
+  write.pImageInfo = image_infos.data();
 
   device_->GetPtrs()->vkUpdateDescriptorSets(device_->GetVkDevice(), 1, &write,
                                              0, nullptr);

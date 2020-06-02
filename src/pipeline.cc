@@ -508,14 +508,6 @@ void Pipeline::AddBuffer(Buffer* buf,
                          uint32_t descriptor_set,
                          uint32_t binding,
                          uint32_t base_mip_level) {
-  // If this buffer binding already exists, overwrite with the new buffer.
-  for (auto& info : buffers_) {
-    if (info.descriptor_set == descriptor_set && info.binding == binding) {
-      info.buffer = buf;
-      return;
-    }
-  }
-
   buffers_.push_back(BufferInfo{buf});
 
   auto& info = buffers_.back();
@@ -566,17 +558,19 @@ void Pipeline::AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no) {
   info.base_mip_level = 0;
 }
 
+void Pipeline::ClearBuffers(uint32_t descriptor_set, uint32_t binding) {
+  buffers_.erase(
+      std::remove_if(buffers_.begin(), buffers_.end(),
+                     [descriptor_set, binding](BufferInfo& info) -> bool {
+                       return (info.descriptor_set == descriptor_set &&
+                               info.binding == binding);
+                     }),
+      buffers_.end());
+}
+
 void Pipeline::AddSampler(Sampler* sampler,
                           uint32_t descriptor_set,
                           uint32_t binding) {
-  // If this sampler binding already exists, overwrite with the new sampler.
-  for (auto& info : samplers_) {
-    if (info.descriptor_set == descriptor_set && info.binding == binding) {
-      info.sampler = sampler;
-      return;
-    }
-  }
-
   samplers_.push_back(SamplerInfo{sampler});
 
   auto& info = samplers_.back();
@@ -631,6 +625,16 @@ void Pipeline::AddSampler(uint32_t mask,
   info.mask = mask;
   info.descriptor_set = descriptor_set;
   info.binding = binding;
+}
+
+void Pipeline::ClearSamplers(uint32_t descriptor_set, uint32_t binding) {
+  samplers_.erase(
+      std::remove_if(samplers_.begin(), samplers_.end(),
+                     [descriptor_set, binding](SamplerInfo& info) -> bool {
+                       return (info.descriptor_set == descriptor_set &&
+                               info.binding == binding);
+                     }),
+      samplers_.end());
 }
 
 Result Pipeline::UpdateOpenCLBufferBindings() {

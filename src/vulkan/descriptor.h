@@ -52,14 +52,16 @@ class Descriptor {
 
   virtual void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) = 0;
   virtual Result CreateResourceIfNeeded() = 0;
-  virtual void RecordCopyDataToResourceIfNeeded(CommandBuffer*) {}
+  virtual Result RecordCopyDataToResourceIfNeeded(CommandBuffer*) { return {}; }
   virtual Result RecordCopyDataToHost(CommandBuffer*) { return {}; }
   virtual Result MoveResourceToBufferOutput() { return {}; }
   virtual Result SetSizeInElements(uint32_t) { return {}; }
   virtual Result AddToBuffer(const std::vector<Value>&, uint32_t) { return {}; }
+  virtual uint32_t GetDescriptorCount() { return 1; }
   uint32_t GetDescriptorSet() const { return descriptor_set_; }
   uint32_t GetBinding() const { return binding_; }
   VkDescriptorType GetVkDescriptorType() const;
+  DescriptorType GetDescriptorType() const { return type_; }
 
   bool IsStorageBuffer() const {
     return type_ == DescriptorType::kStorageBuffer;

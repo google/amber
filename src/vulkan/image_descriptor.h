@@ -36,18 +36,18 @@ class ImageDescriptor : public BufferBackedDescriptor {
   ~ImageDescriptor() override;
 
   void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
-  void RecordCopyDataToResourceIfNeeded(CommandBuffer* command) override;
+  Result RecordCopyDataToResourceIfNeeded(CommandBuffer* command) override;
   Result CreateResourceIfNeeded() override;
   Result RecordCopyDataToHost(CommandBuffer* command) override;
   Result MoveResourceToBufferOutput() override;
   void SetAmberSampler(amber::Sampler* sampler) { amber_sampler_ = sampler; }
 
  protected:
-  Resource* GetResource() override { return transfer_image_.get(); }
+  std::vector<Resource*> GetResources() override;
 
  private:
   uint32_t base_mip_level_ = 0;
-  std::unique_ptr<TransferImage> transfer_image_;
+  std::vector<std::unique_ptr<TransferImage>> transfer_images_;
   amber::Sampler* amber_sampler_ = nullptr;
   amber::vulkan::Sampler vulkan_sampler_;
 };

@@ -256,6 +256,12 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     cmd->SetBaseMipLevel(buf_info.base_mip_level);
     cmd->SetBuffer(buf_info.buffer);
 
+    if (cmd->GetValues().empty()) {
+      cmd->GetBuffer()->SetSizeInElements(cmd->GetBuffer()->ElementCount());
+    } else {
+      cmd->GetBuffer()->SetDataWithOffset(cmd->GetValues(), cmd->GetOffset());
+    }
+
     r = info.vk_pipeline->AddBufferDescriptor(cmd.get());
     if (!r.IsSuccess())
       return r;
@@ -641,6 +647,11 @@ Result EngineVulkan::DoBuffer(const BufferCommand* cmd) {
         "device");
   }
   auto& info = pipeline_map_[cmd->GetPipeline()];
+  if (cmd->GetValues().empty()) {
+    cmd->GetBuffer()->SetSizeInElements(cmd->GetBuffer()->ElementCount());
+  } else {
+    cmd->GetBuffer()->SetDataWithOffset(cmd->GetValues(), cmd->GetOffset());
+  }
   return info.vk_pipeline->AddBufferDescriptor(cmd);
 }
 

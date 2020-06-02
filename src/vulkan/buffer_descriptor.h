@@ -48,10 +48,10 @@ class BufferDescriptor : public BufferBackedDescriptor {
   Result MoveResourceToBufferOutput() override;
 
  protected:
-  Resource* GetResource() override { return transfer_buffer_.get(); }
+  std::vector<Resource*> GetResources() override;
 
  private:
-  std::unique_ptr<TransferBuffer> transfer_buffer_;
+  std::vector<std::unique_ptr<TransferBuffer>> transfer_buffers_;
 };
 
 }  // namespace vulkan

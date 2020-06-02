@@ -576,6 +576,7 @@ Result CommandParser::ProcessSSBO() {
       b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
       buffer = b.get();
       script_->AddBuffer(std::move(b));
+      pipeline_->ClearBuffers(set, binding);
       pipeline_->AddBuffer(buffer, BufferType::kStorage, set, binding, 0);
     }
     cmd->SetBuffer(buffer);
@@ -727,6 +728,7 @@ Result CommandParser::ProcessUniform() {
       b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
       buffer = b.get();
       script_->AddBuffer(std::move(b));
+      pipeline_->ClearBuffers(set, binding);
       pipeline_->AddBuffer(buffer, BufferType::kUniform, set, binding, 0);
     }
     cmd->SetBuffer(buffer);
