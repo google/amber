@@ -642,7 +642,9 @@ ConfigHelperVulkan::ConfigHelperVulkan()
       variable_pointers_feature_(VkPhysicalDeviceVariablePointerFeaturesKHR()),
       float16_int8_feature_(VkPhysicalDeviceFloat16Int8FeaturesKHR()),
       storage_8bit_feature_(VkPhysicalDevice8BitStorageFeaturesKHR()),
-      storage_16bit_feature_(VkPhysicalDevice16BitStorageFeaturesKHR()) {}
+      storage_16bit_feature_(VkPhysicalDevice16BitStorageFeaturesKHR()),
+      subgroup_size_control_feature_(
+          VkPhysicalDeviceSubgroupSizeControlFeaturesEXT()) {}
 
 ConfigHelperVulkan::~ConfigHelperVulkan() {
   if (vulkan_device_)
@@ -667,8 +669,7 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     uint32_t engine_major,
     uint32_t engine_minor,
     std::vector<std::string> required_extensions,
-    bool disable_validation_layer,
-    bool show_version_info) {
+    bool disable_validation_layer) {
   VkApplicationInfo app_info = VkApplicationInfo();
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 
@@ -702,12 +703,10 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     }
   }
 
-  // If dumping driver info then add useful extensions, if available.
-  if (show_version_info &&
-      std::find(available_instance_extensions_.begin(),
+  if (std::find(available_instance_extensions_.begin(),
                 available_instance_extensions_.end(),
                 "VK_KHR_get_physical_device_properties2") !=
-          available_instance_extensions_.end()) {
+      available_instance_extensions_.end()) {
     required_extensions.push_back("VK_KHR_get_physical_device_properties2");
   }
 
@@ -763,11 +762,17 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       VkPhysicalDeviceFeatures();
 
   if (supports_get_physical_device_properties2_) {
+    VkPhysicalDeviceSubgroupSizeControlFeaturesEXT size_control =
+        VkPhysicalDeviceSubgroupSizeControlFeaturesEXT();
+    size_control.sType =
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT;
+    size_control.pNext = nullptr;
+
     VkPhysicalDeviceVariablePointerFeaturesKHR var_ptrs =
         VkPhysicalDeviceVariablePointerFeaturesKHR();
     var_ptrs.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
-    var_ptrs.pNext = nullptr;
+    var_ptrs.pNext = &size_control;
 
     VkPhysicalDeviceFeatures2KHR features2 = VkPhysicalDeviceFeatures2KHR();
     features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
@@ -788,13 +793,15 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
         continue;
       }
 
-      if (feature == kVariablePointers &&
-          var_ptrs.variablePointers != VK_TRUE) {
-        continue;
-      }
-      if (feature == kVariablePointersStorageBuffer &&
-          var_ptrs.variablePointersStorageBuffer != VK_TRUE) {
-        continue;
+      if ((feature == kVariablePointers &&
+           var_ptrs.variablePointers == VK_FALSE) ||
+          (feature == kVariablePointersStorageBuffer &&
+           var_ptrs.variablePointersStorageBuffer == VK_FALSE) ||
+          (feature == kSubgroupSizeControl &&
+           size_control.subgroupSizeControl == VK_FALSE) ||
+          (feature == kComputeFullSubgroups &&
+           size_control.computeFullSubgroups == VK_FALSE)) {
+        return amber::Result("Device does not support all required features");
       }
     }
 
@@ -1155,9 +1162,9 @@ amber::Result ConfigHelperVulkan::CreateConfig(
     bool disable_validation_layer,
     bool show_version_info,
     std::unique_ptr<amber::EngineConfig>* cfg_holder) {
-  amber::Result r = CreateVulkanInstance(
-      engine_major, engine_minor, required_instance_extensions,
-      disable_validation_layer, show_version_info);
+  amber::Result r = CreateVulkanInstance(engine_major, engine_minor,
+                                         required_instance_extensions,
+                                         disable_validation_layer);
   if (!r.IsSuccess())
     return r;
 
