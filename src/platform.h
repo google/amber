@@ -22,6 +22,9 @@ namespace amber {
 #elif defined(__linux__)
 #define AMBER_PLATFORM_LINUX 1
 #define AMBER_PLATFORM_POSIX 1
+#elif defined(__FreeBSD__)
+#define AMBER_PLATFORM_FREEBSD 1
+#define AMBER_PLATFORM_POSIX 1
 #elif defined(__APPLE__)
 #define AMBER_PLATFORM_APPLE 1
 #define AMBER_PLATFORM_POSIX 1
@@ -37,6 +40,10 @@ namespace amber {
 
 #if !defined(AMBER_PLATFORM_LINUX)
 #define AMBER_PLATFORM_LINUX 0
+#endif
+
+#if !defined(AMBER_PLATFORM_FREEBSD)
+#define AMBER_PLATFORM_FREEBSD 0
 #endif
 
 #if !defined(AMBER_PLATFORM_APPLE)

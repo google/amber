@@ -19,7 +19,7 @@
 #if defined(_WIN32) || defined(_WIN64)
 #define SAMPLE_PLATFORM_WINDOWS 1
 #define SAMPLE_PLATFORM_POSIX 0
-#elif defined(__linux__) || defined(__APPLE__)
+#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 #define SAMPLE_PLATFORM_POSIX 1
 #define SAMPLE_PLATFORM_WINDOWS 0
 #endif
