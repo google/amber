@@ -30,63 +30,62 @@ VertexBuffer::~VertexBuffer() = default;
 
 void VertexBuffer::SetData(uint8_t location, Buffer* buffer) {
   auto format = buffer->GetFormat();
-
+  const uint32_t binding = static_cast<uint32_t>(vertex_attr_desc_.size());
   vertex_attr_desc_.emplace_back();
-  // TODO(jaebaek): Support multiple binding
-  vertex_attr_desc_.back().binding = 0;
+  vertex_attr_desc_.back().binding = binding;
   vertex_attr_desc_.back().location = location;
-  vertex_attr_desc_.back().offset = stride_in_bytes_;
+  vertex_attr_desc_.back().offset = 0u;
   vertex_attr_desc_.back().format = device_->GetVkFormat(*format);
 
-  stride_in_bytes_ += format->SizeInBytes();
+  vertex_binding_desc_.emplace_back();
+  vertex_binding_desc_.back().binding = binding;
+  vertex_binding_desc_.back().stride = format->SizeInBytes();
+  // TODO(asuonpaa): Set this later when supported by Amber script
+  vertex_binding_desc_.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
   data_.push_back(buffer);
 }
 
-Result VertexBuffer::FillVertexBufferWithData(CommandBuffer* command) {
-  // Send vertex data from host to device.
-  uint8_t* ptr_in_stride_begin =
-      static_cast<uint8_t*>(transfer_buffer_->HostAccessibleMemoryPtr());
-  for (uint32_t i = 0; i < GetVertexCount(); ++i) {
-    uint8_t* ptr = ptr_in_stride_begin;
-    for (uint32_t j = 0; j < data_.size(); ++j) {
-      size_t bytes = data_[j]->GetFormat()->SizeInBytes();
-      std::memcpy(ptr, data_[j]->GetValues<uint8_t>() + (i * bytes), bytes);
-      ptr += bytes;
-    }
-    ptr_in_stride_begin += Get4BytesAlignedStride();
-  }
-
-  transfer_buffer_->CopyToDevice(command);
-  return {};
-}
-
 void VertexBuffer::BindToCommandBuffer(CommandBuffer* command) {
-  const VkDeviceSize offset = 0;
-  const VkBuffer buffer = transfer_buffer_->GetVkBuffer();
-  // TODO(jaebaek): Support multiple binding
-  device_->GetPtrs()->vkCmdBindVertexBuffers(command->GetVkCommandBuffer(), 0,
-                                             1, &buffer, &offset);
+  std::vector<VkBuffer> buffers;
+  std::vector<VkDeviceSize> offsets;
+
+  for (const auto& buf : transfer_buffers_) {
+    buffers.push_back(buf->GetVkBuffer());
+    offsets.push_back(0);
+  }
+  device_->GetPtrs()->vkCmdBindVertexBuffers(
+      command->GetVkCommandBuffer(), 0,
+      static_cast<uint32_t>(transfer_buffers_.size()), buffers.data(),
+      offsets.data());
 }
 
 Result VertexBuffer::SendVertexData(CommandBuffer* command) {
   if (!is_vertex_data_pending_)
     return Result("Vulkan::Vertices data was already sent");
 
-  const uint32_t n_vertices = GetVertexCount();
-  if (n_vertices == 0)
-    return Result("Vulkan::Data for VertexBuffer is empty");
+  // Non-empty transfer_buffers_ means we are in a unit test.
+  if (transfer_buffers_.empty()) {
+    for (const auto& buf : data_) {
+      uint32_t bytes = buf->GetSizeInBytes();
 
-  uint32_t bytes = Get4BytesAlignedStride() * n_vertices;
+      transfer_buffers_.push_back(
+          MakeUnique<TransferBuffer>(device_, bytes, nullptr));
+      Result r = transfer_buffers_.back()->Initialize(
+          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-  if (!transfer_buffer_) {
-    transfer_buffer_ = MakeUnique<TransferBuffer>(device_, bytes, nullptr);
-    Result r = transfer_buffer_->Initialize(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-                                            VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-    if (!r.IsSuccess())
-      return r;
+      std::memcpy(transfer_buffers_.back()->HostAccessibleMemoryPtr(),
+                  buf->GetValues<void>(), bytes);
+      transfer_buffers_.back()->CopyToDevice(command);
+
+      if (!r.IsSuccess())
+        return r;
+    }
+  } else {
+    // Only used in vertex buffer unit tests.
+    std::memcpy(transfer_buffers_.back()->HostAccessibleMemoryPtr(),
+                data_[0]->GetValues<void>(), data_[0]->GetSizeInBytes());
   }
-
-  FillVertexBufferWithData(command);
 
   is_vertex_data_pending_ = false;
   return {};

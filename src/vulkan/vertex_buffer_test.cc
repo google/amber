@@ -55,20 +55,7 @@ class VertexBufferTest : public testing::Test {
 
   ~VertexBufferTest() = default;
 
-  Result SetIntData(uint8_t location,
-                    Format* format,
-                    std::vector<Value> values) {
-    auto buffer = MakeUnique<Buffer>();
-    buffer->SetFormat(format);
-    buffer->SetData(std::move(values));
-
-    vertex_buffer_->SetData(location, buffer.get());
-    return vertex_buffer_->SendVertexData(nullptr);
-  }
-
-  Result SetDoubleData(uint8_t location,
-                       Format* format,
-                       std::vector<Value> values) {
+  Result SetData(uint8_t location, Format* format, std::vector<Value> values) {
     auto buffer = MakeUnique<Buffer>();
     buffer->SetFormat(format);
     buffer->SetData(std::move(values));
@@ -87,7 +74,7 @@ class VertexBufferTest : public testing::Test {
 }  // namespace
 
 void VertexBuffer::SetBufferForTest(std::unique_ptr<TransferBuffer> buffer) {
-  transfer_buffer_ = std::move(buffer);
+  transfer_buffers_.push_back(std::move(buffer));
 }
 
 TEST_F(VertexBufferTest, R8G8B8A8_UINT) {
@@ -100,7 +87,7 @@ TEST_F(VertexBufferTest, R8G8B8A8_UINT) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_UINT");
   Format fmt(type.get());
-  Result r = SetIntData(0, &fmt, values);
+  Result r = SetData(0, &fmt, values);
 
   const uint8_t* ptr = static_cast<const uint8_t*>(GetVkBufferPtr());
   EXPECT_EQ(55, ptr[0]);
@@ -119,7 +106,7 @@ TEST_F(VertexBufferTest, R16G16B16A16_UINT) {
   TypeParser parser;
   auto type = parser.Parse("R16G16B16A16_UINT");
   Format fmt(type.get());
-  Result r = SetIntData(0, &fmt, values);
+  Result r = SetData(0, &fmt, values);
 
   const uint16_t* ptr = static_cast<const uint16_t*>(GetVkBufferPtr());
   EXPECT_EQ(55, ptr[0]);
@@ -138,7 +125,7 @@ TEST_F(VertexBufferTest, R32G32B32A32_UINT) {
   TypeParser parser;
   auto type = parser.Parse("R32G32B32A32_UINT");
   Format fmt(type.get());
-  Result r = SetIntData(0, &fmt, values);
+  Result r = SetData(0, &fmt, values);
 
   const uint32_t* ptr = static_cast<const uint32_t*>(GetVkBufferPtr());
   EXPECT_EQ(55, ptr[0]);
@@ -157,7 +144,7 @@ TEST_F(VertexBufferTest, R64G64B64A64_UINT) {
   TypeParser parser;
   auto type = parser.Parse("R64G64B64A64_UINT");
   Format fmt(type.get());
-  Result r = SetIntData(0, &fmt, values);
+  Result r = SetData(0, &fmt, values);
 
   const uint64_t* ptr = static_cast<const uint64_t*>(GetVkBufferPtr());
   EXPECT_EQ(55, ptr[0]);
@@ -176,7 +163,7 @@ TEST_F(VertexBufferTest, R8G8B8A8_SNORM) {
   TypeParser parser;
   auto type = parser.Parse("R8G8B8A8_SNORM");
   Format fmt(type.get());
-  Result r = SetIntData(0, &fmt, values);
+  Result r = SetData(0, &fmt, values);
   const int8_t* ptr = static_cast<const int8_t*>(GetVkBufferPtr());
 
   EXPECT_EQ(-55, ptr[0]);
@@ -195,7 +182,7 @@ TEST_F(VertexBufferTest, R16G16B16A16_SNORM) {
   TypeParser parser;
   auto type = parser.Parse("R16G16B16A16_SNORM");
   Format fmt(type.get());
-  Result r = SetIntData(0, &fmt, values);
+  Result r = SetData(0, &fmt, values);
 
   const int16_t* ptr = static_cast<const int16_t*>(GetVkBufferPtr());
   EXPECT_EQ(-55, ptr[0]);
@@ -214,7 +201,7 @@ TEST_F(VertexBufferTest, R32G32B32A32_SINT) {
   TypeParser parser;
   auto type = parser.Parse("R32G32B32A32_SINT");
   Format fmt(type.get());
-  Result r = SetIntData(0, &fmt, values);
+  Result r = SetData(0, &fmt, values);
 
   const int32_t* ptr = static_cast<const int32_t*>(GetVkBufferPtr());
   EXPECT_EQ(-55, ptr[0]);
@@ -233,7 +220,7 @@ TEST_F(VertexBufferTest, R64G64B64A64_SINT) {
   TypeParser parser;
   auto type = parser.Parse("R64G64B64A64_SINT");
   Format fmt(type.get());
-  Result r = SetIntData(0, &fmt, values);
+  Result r = SetData(0, &fmt, values);
 
   const int64_t* ptr = static_cast<const int64_t*>(GetVkBufferPtr());
   EXPECT_EQ(-55, ptr[0]);
@@ -251,7 +238,7 @@ TEST_F(VertexBufferTest, R32G32B32_SFLOAT) {
   TypeParser parser;
   auto type = parser.Parse("R32G32B32_SFLOAT");
   Format fmt(type.get());
-  Result r = SetDoubleData(0, &fmt, values);
+  Result r = SetData(0, &fmt, values);
 
   const float* ptr = static_cast<const float*>(GetVkBufferPtr());
   EXPECT_FLOAT_EQ(-6.0f, ptr[0]);
@@ -268,7 +255,7 @@ TEST_F(VertexBufferTest, R64G64B64_SFLOAT) {
   TypeParser parser;
   auto type = parser.Parse("R64G64B64_SFLOAT");
   Format fmt(type.get());
-  Result r = SetDoubleData(0, &fmt, values);
+  Result r = SetData(0, &fmt, values);
 
   const double* ptr = static_cast<const double*>(GetVkBufferPtr());
   EXPECT_DOUBLE_EQ(-6.0, ptr[0]);

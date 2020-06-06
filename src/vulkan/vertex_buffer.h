@@ -46,20 +46,9 @@ class VertexBuffer {
       const {
     return vertex_attr_desc_;
   }
-
-  VkVertexInputBindingDescription GetVkVertexInputBinding() const {
-    VkVertexInputBindingDescription vertex_binding_desc =
-        VkVertexInputBindingDescription();
-    vertex_binding_desc.binding = 0;
-    vertex_binding_desc.stride = Get4BytesAlignedStride();
-    vertex_binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-    return vertex_binding_desc;
-  }
-
-  uint32_t GetVertexCount() const {
-    if (data_.empty())
-      return 0;
-    return data_[0]->ElementCount();
+  const std::vector<VkVertexInputBindingDescription>& GetVkVertexInputBinding()
+      const {
+    return vertex_binding_desc_;
   }
 
   void BindToCommandBuffer(CommandBuffer* command);
@@ -67,20 +56,14 @@ class VertexBuffer {
   void SetBufferForTest(std::unique_ptr<TransferBuffer> buffer);
 
  private:
-  Result FillVertexBufferWithData(CommandBuffer* command);
-
-  uint32_t Get4BytesAlignedStride() const {
-    return ((stride_in_bytes_ + 3) / 4) * 4;
-  }
-
   Device* device_ = nullptr;
 
   bool is_vertex_data_pending_ = true;
 
-  std::unique_ptr<TransferBuffer> transfer_buffer_;
-  uint32_t stride_in_bytes_ = 0;
+  std::vector<std::unique_ptr<TransferBuffer>> transfer_buffers_;
 
   std::vector<Buffer*> data_;
+  std::vector<VkVertexInputBindingDescription> vertex_binding_desc_;
   std::vector<VkVertexInputAttributeDescription> vertex_attr_desc_;
 };
 
