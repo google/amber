@@ -40,7 +40,7 @@ class VertexBuffer {
   Result SendVertexData(CommandBuffer* command);
   bool VertexDataSent() const { return !is_vertex_data_pending_; }
 
-  void SetData(uint8_t location, Buffer* buffer);
+  void SetData(uint8_t location, Buffer* buffer, InputRate rate);
 
   const std::vector<VkVertexInputAttributeDescription>& GetVkVertexInputAttr()
       const {

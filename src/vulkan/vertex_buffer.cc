@@ -24,11 +24,18 @@
 namespace amber {
 namespace vulkan {
 
+VkVertexInputRate GetVkInputRate(InputRate rate) {
+  if (rate == InputRate::kVertex)
+    return VK_VERTEX_INPUT_RATE_VERTEX;
+  else
+    return VK_VERTEX_INPUT_RATE_INSTANCE;
+}
+
 VertexBuffer::VertexBuffer(Device* device) : device_(device) {}
 
 VertexBuffer::~VertexBuffer() = default;
 
-void VertexBuffer::SetData(uint8_t location, Buffer* buffer) {
+void VertexBuffer::SetData(uint8_t location, Buffer* buffer, InputRate rate) {
   auto format = buffer->GetFormat();
   const uint32_t binding = static_cast<uint32_t>(vertex_attr_desc_.size());
   vertex_attr_desc_.emplace_back();
@@ -40,8 +47,7 @@ void VertexBuffer::SetData(uint8_t location, Buffer* buffer) {
   vertex_binding_desc_.emplace_back();
   vertex_binding_desc_.back().binding = binding;
   vertex_binding_desc_.back().stride = format->SizeInBytes();
-  // TODO(asuonpaa): Set this later when supported by Amber script
-  vertex_binding_desc_.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+  vertex_binding_desc_.back().inputRate = GetVkInputRate(rate);
 
   data_.push_back(buffer);
 }

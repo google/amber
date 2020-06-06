@@ -353,7 +353,7 @@ TEST_F(PipelineTest, Clone) {
 
   auto vtex_buf = MakeUnique<Buffer>();
   vtex_buf->SetName("vertex_buffer");
-  p.AddVertexBuffer(vtex_buf.get(), 1);
+  p.AddVertexBuffer(vtex_buf.get(), 1, InputRate::kVertex);
 
   auto idx_buf = MakeUnique<Buffer>();
   idx_buf->SetName("Index Buffer");

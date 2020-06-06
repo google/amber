@@ -420,7 +420,9 @@ Result Pipeline::SetIndexBuffer(Buffer* buf) {
   return {};
 }
 
-Result Pipeline::AddVertexBuffer(Buffer* buf, uint32_t location) {
+Result Pipeline::AddVertexBuffer(Buffer* buf,
+                                 uint32_t location,
+                                 InputRate rate) {
   for (const auto& vtex : vertex_buffers_) {
     if (vtex.location == location)
       return Result("can not bind two vertex buffers to the same LOCATION");
@@ -431,6 +433,7 @@ Result Pipeline::AddVertexBuffer(Buffer* buf, uint32_t location) {
   vertex_buffers_.push_back(BufferInfo{buf});
   vertex_buffers_.back().location = location;
   vertex_buffers_.back().type = BufferType::kVertex;
+  vertex_buffers_.back().input_rate = rate;
   return {};
 }
 

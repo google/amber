@@ -60,7 +60,7 @@ class VertexBufferTest : public testing::Test {
     buffer->SetFormat(format);
     buffer->SetData(std::move(values));
 
-    vertex_buffer_->SetData(location, buffer.get());
+    vertex_buffer_->SetData(location, buffer.get(), InputRate::kVertex);
     return vertex_buffer_->SendVertexData(nullptr);
   }
 
