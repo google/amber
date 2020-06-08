@@ -23,6 +23,7 @@
 
 namespace amber {
 namespace vulkan {
+namespace {
 
 VkVertexInputRate GetVkInputRate(InputRate rate) {
   if (rate == InputRate::kVertex)
@@ -30,6 +31,8 @@ VkVertexInputRate GetVkInputRate(InputRate rate) {
   else
     return VK_VERTEX_INPUT_RATE_INSTANCE;
 }
+
+}  // namespace
 
 VertexBuffer::VertexBuffer(Device* device) : device_(device) {}
 
