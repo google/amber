@@ -53,8 +53,6 @@ class VertexBuffer {
 
   void BindToCommandBuffer(CommandBuffer* command);
 
-  void SetBufferForTest(std::unique_ptr<TransferBuffer> buffer);
-
  private:
   Device* device_ = nullptr;
 

@@ -26,10 +26,8 @@ namespace vulkan {
 namespace {
 
 VkVertexInputRate GetVkInputRate(InputRate rate) {
-  if (rate == InputRate::kVertex)
-    return VK_VERTEX_INPUT_RATE_VERTEX;
-  else
-    return VK_VERTEX_INPUT_RATE_INSTANCE;
+  return rate == InputRate::kVertex ? VK_VERTEX_INPUT_RATE_VERTEX
+                                    : VK_VERTEX_INPUT_RATE_INSTANCE;
 }
 
 }  // namespace
@@ -73,27 +71,20 @@ Result VertexBuffer::SendVertexData(CommandBuffer* command) {
   if (!is_vertex_data_pending_)
     return Result("Vulkan::Vertices data was already sent");
 
-  // Non-empty transfer_buffers_ means we are in a unit test.
-  if (transfer_buffers_.empty()) {
-    for (const auto& buf : data_) {
-      uint32_t bytes = buf->GetSizeInBytes();
+  for (const auto& buf : data_) {
+    uint32_t bytes = buf->GetSizeInBytes();
 
-      transfer_buffers_.push_back(
-          MakeUnique<TransferBuffer>(device_, bytes, nullptr));
-      Result r = transfer_buffers_.back()->Initialize(
-          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+    transfer_buffers_.push_back(
+        MakeUnique<TransferBuffer>(device_, bytes, nullptr));
+    Result r = transfer_buffers_.back()->Initialize(
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-      std::memcpy(transfer_buffers_.back()->HostAccessibleMemoryPtr(),
-                  buf->GetValues<void>(), bytes);
-      transfer_buffers_.back()->CopyToDevice(command);
-
-      if (!r.IsSuccess())
-        return r;
-    }
-  } else {
-    // Only used in vertex buffer unit tests.
     std::memcpy(transfer_buffers_.back()->HostAccessibleMemoryPtr(),
-                data_[0]->GetValues<void>(), data_[0]->GetSizeInBytes());
+                buf->GetValues<void>(), bytes);
+    transfer_buffers_.back()->CopyToDevice(command);
+
+    if (!r.IsSuccess())
+      return r;
   }
 
   is_vertex_data_pending_ = false;
