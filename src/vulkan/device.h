@@ -41,7 +41,7 @@ class Device {
          uint32_t queue_family_index,
          VkDevice device,
          VkQueue queue);
-  ~Device();
+  virtual ~Device();
 
   Result Initialize(
       PFN_vkGetInstanceProcAddr getInstanceProcAddr,
