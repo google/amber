@@ -272,7 +272,7 @@ void TransferImage::CopyToHost(CommandBuffer* command_buffer) {
 
 void TransferImage::CopyToDevice(CommandBuffer* command_buffer) {
   // Copy operations don't support multisample images.
-  if (samples_ == 1)
+  if (samples_ > 1)
     return;
 
   const VkImageAspectFlagBits aspects[] = {VK_IMAGE_ASPECT_COLOR_BIT,
