@@ -50,7 +50,7 @@ class DummyDevice : public Device {
     dummyPtrs_.vkFreeMemory = vkFreeMemory;
     dummyPtrs_.vkDestroyBuffer = vkDestroyBuffer;
   }
-  ~DummyDevice() {}
+  ~DummyDevice() override {}
 
   const VulkanPtrs* GetPtrs() const override { return &dummyPtrs_; }
 
