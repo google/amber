@@ -1,0 +1,61 @@
+#!amber
+# Copyright 2020 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+DEVICE_FEATURE shaderStorageImageMultisample
+
+SHADER compute compute_shader GLSL
+#version 430
+
+layout(local_size_x = 16, local_size_y = 16) in;
+uniform layout(set=0, binding=0, rgba8) image2DMS texture;
+uniform layout(set=0, binding=1, rgba8) image2D sample0;
+uniform layout(set=0, binding=2, rgba8) image2D sample1;
+uniform layout(set=0, binding=3, rgba8) image2D sample2;
+uniform layout(set=0, binding=4, rgba8) image2D sample3;
+void main()
+{
+    ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
+    imageStore(texture, uv, 0, vec4(1, 0, 0, 1));
+    imageStore(texture, uv, 1, vec4(0, 1, 0, 1));
+    imageStore(texture, uv, 2, vec4(0, 0, 1, 1));
+    imageStore(texture, uv, 3, vec4(1, 1, 0, 1));
+    imageStore(sample0, uv, imageLoad(texture, uv, 3));
+    imageStore(sample1, uv, imageLoad(texture, uv, 2));
+    imageStore(sample2, uv, imageLoad(texture, uv, 1));
+    imageStore(sample3, uv, imageLoad(texture, uv, 0));
+}
+END
+
+IMAGE texture FORMAT R8G8B8A8_UNORM DIM_2D WIDTH 256 HEIGHT 256 SAMPLES 4
+IMAGE sample0 FORMAT R8G8B8A8_UNORM DIM_2D WIDTH 256 HEIGHT 256
+IMAGE sample1 FORMAT R8G8B8A8_UNORM DIM_2D WIDTH 256 HEIGHT 256
+IMAGE sample2 FORMAT R8G8B8A8_UNORM DIM_2D WIDTH 256 HEIGHT 256
+IMAGE sample3 FORMAT R8G8B8A8_UNORM DIM_2D WIDTH 256 HEIGHT 256
+
+PIPELINE compute pipeline
+  ATTACH compute_shader
+  BIND BUFFER texture AS storage_image DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER sample0 AS storage_image DESCRIPTOR_SET 0 BINDING 1
+  BIND BUFFER sample1 AS storage_image DESCRIPTOR_SET 0 BINDING 2
+  BIND BUFFER sample2 AS storage_image DESCRIPTOR_SET 0 BINDING 3
+  BIND BUFFER sample3 AS storage_image DESCRIPTOR_SET 0 BINDING 4
+END
+
+RUN pipeline 16 16 1
+
+EXPECT sample0 IDX 0 0 SIZE 256 256 EQ_RGBA 255 255   0 255
+EXPECT sample1 IDX 0 0 SIZE 256 256 EQ_RGBA   0   0 255 255
+EXPECT sample2 IDX 0 0 SIZE 256 256 EQ_RGBA   0 255   0 255
+EXPECT sample3 IDX 0 0 SIZE 256 256 EQ_RGBA 255   0   0 255

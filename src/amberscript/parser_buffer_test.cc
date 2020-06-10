@@ -602,6 +602,23 @@ TEST_F(AmberScriptParserTest, BufferFormat) {
   }
 }
 
+TEST_F(AmberScriptParserTest, BufferSamples) {
+  std::string in = "BUFFER my_buf FORMAT R8G8B8A8_UNORM SAMPLES 2";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  auto* buffer = buffers[0].get();
+  EXPECT_EQ("my_buf", buffer->GetName());
+  EXPECT_EQ(2u, buffer->GetSamples());
+}
+
 struct BufferParseError {
   const char* in;
   const char* err;
@@ -690,7 +707,11 @@ INSTANTIATE_TEST_SUITE_P(
         BufferParseError{"BUFFER my_buf DATA_TYPE int32 SIZE 5 FILL 5\nBUFFER "
                          "my_buf DATA_TYPE int16 SIZE 5 FILL 2",
                          // NOLINTNEXTLINE(whitespace/parens)
-                         "2: duplicate buffer name provided"}));
+                         "2: duplicate buffer name provided"},
+        BufferParseError{"BUFFER my_buf FORMAT R8G8B8A8_UNORM SAMPLES 9",
+                         "1: invalid sample count: 9"},
+        BufferParseError{"BUFFER my_buf FORMAT R8G8B8A8_UNORM SAMPLES foo",
+                         "1: expected integer value for SAMPLES"}));
 
 struct BufferData {
   const char* name;

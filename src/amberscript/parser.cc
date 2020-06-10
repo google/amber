@@ -14,6 +14,7 @@
 
 #include "src/amberscript/parser.h"
 
+#include <algorithm>
 #include <cassert>
 #include <limits>
 #include <map>
@@ -139,17 +140,6 @@ AddressMode StrToAddressMode(std::string str) {
     return AddressMode::kMirrorClampToEdge;
 
   return AddressMode::kUnknown;
-}
-
-ImageDimension StrToImageDimension(const std::string& str) {
-  if (str == "DIM_1D")
-    return ImageDimension::k1D;
-  if (str == "DIM_2D")
-    return ImageDimension::k2D;
-  if (str == "DIM_3D")
-    return ImageDimension::k3D;
-
-  return ImageDimension::kUnknown;
 }
 
 CompareOp StrToCompareOp(const std::string& str) {
@@ -1796,6 +1786,17 @@ Result Parser::ParseBuffer() {
 
         if (!r.IsSuccess())
           return r;
+      } else if (token->AsString() == "SAMPLES") {
+        tokenizer_->NextToken();
+        token = tokenizer_->NextToken();
+        if (!token->IsInteger())
+          return Result("expected integer value for SAMPLES");
+        uint32_t samples = token->AsUint32();
+        uint32_t valid_samples[] = {1, 2, 4, 8, 16, 32, 64};
+        if (std::find(std::begin(valid_samples), std::end(valid_samples),
+                      samples) == std::end(valid_samples))
+          return Result("invalid sample count: " + token->ToOriginalString());
+        buffer->SetSamples(samples);
       } else {
         break;
       }
@@ -1822,110 +1823,111 @@ Result Parser::ParseImage() {
   if (name == "DATA_TYPE" || name == "FORMAT")
     return Result("missing IMAGE name");
 
-  token = tokenizer_->NextToken();
-  if (!token->IsIdentifier())
-    return Result("invalid IMAGE command provided");
-
   std::unique_ptr<Buffer> buffer = MakeUnique<Buffer>();
   buffer->SetName(name);
-  auto& cmd = token->AsString();
-  if (cmd == "DATA_TYPE") {
-    token = tokenizer_->NextToken();
-    if (!token->IsIdentifier())
-      return Result("IMAGE invalid data type");
+  bool width_set = false;
+  bool height_set = false;
+  bool depth_set = false;
 
-    auto type = script_->ParseType(token->AsString());
-    std::unique_ptr<Format> fmt;
-    if (type != nullptr) {
-      fmt = MakeUnique<Format>(type);
+  token = tokenizer_->PeekNextToken();
+  while (token->IsIdentifier()) {
+    if (token->AsString() == "FILL" || token->AsString() == "SERIES_FROM")
+      break;
+
+    tokenizer_->NextToken();
+
+    if (token->AsString() == "DATA_TYPE") {
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier())
+        return Result("IMAGE invalid data type");
+
+      auto type = script_->ParseType(token->AsString());
+      std::unique_ptr<Format> fmt;
+      if (type != nullptr) {
+        fmt = MakeUnique<Format>(type);
+        buffer->SetFormat(fmt.get());
+      } else {
+        auto new_type = ToType(token->AsString());
+        if (!new_type)
+          return Result("invalid data type '" + token->AsString() +
+                        "' provided");
+
+        fmt = MakeUnique<Format>(new_type.get());
+        buffer->SetFormat(fmt.get());
+        script_->RegisterType(std::move(new_type));
+      }
+      script_->RegisterFormat(std::move(fmt));
+    } else if (token->AsString() == "FORMAT") {
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier())
+        return Result("IMAGE FORMAT must be an identifier");
+
+      auto type = script_->ParseType(token->AsString());
+      if (!type)
+        return Result("invalid IMAGE FORMAT");
+
+      auto fmt = MakeUnique<Format>(type);
       buffer->SetFormat(fmt.get());
-    } else {
-      auto new_type = ToType(token->AsString());
-      if (!new_type)
-        return Result("invalid data type '" + token->AsString() + "' provided");
-
-      fmt = MakeUnique<Format>(new_type.get());
-      buffer->SetFormat(fmt.get());
-      script_->RegisterType(std::move(new_type));
-    }
-    script_->RegisterFormat(std::move(fmt));
-  } else if (cmd == "FORMAT") {
-    token = tokenizer_->NextToken();
-    if (!token->IsIdentifier())
-      return Result("IMAGE FORMAT must be an identifier");
-
-    auto type = script_->ParseType(token->AsString());
-    if (!type)
-      return Result("invalid IMAGE FORMAT");
-
-    auto fmt = MakeUnique<Format>(type);
-    buffer->SetFormat(fmt.get());
-    script_->RegisterFormat(std::move(fmt));
-
-    token = tokenizer_->PeekNextToken();
-    if (token->IsIdentifier() && token->AsString() == "MIP_LEVELS") {
-      tokenizer_->NextToken();
+      script_->RegisterFormat(std::move(fmt));
+    } else if (token->AsString() == "MIP_LEVELS") {
       token = tokenizer_->NextToken();
 
       if (!token->IsInteger())
         return Result("invalid value for MIP_LEVELS");
 
       buffer->SetMipLevels(token->AsUint32());
+    } else if (token->AsString() == "DIM_1D") {
+      buffer->SetImageDimension(ImageDimension::k1D);
+    } else if (token->AsString() == "DIM_2D") {
+      buffer->SetImageDimension(ImageDimension::k2D);
+    } else if (token->AsString() == "DIM_3D") {
+      buffer->SetImageDimension(ImageDimension::k3D);
+    } else if (token->AsString() == "WIDTH") {
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger() || token->AsUint32() == 0)
+        return Result("expected positive IMAGE WIDTH");
+      buffer->SetWidth(token->AsUint32());
+      width_set = true;
+    } else if (token->AsString() == "HEIGHT") {
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger() || token->AsUint32() == 0)
+        return Result("expected positive IMAGE HEIGHT");
+      buffer->SetHeight(token->AsUint32());
+      height_set = true;
+    } else if (token->AsString() == "DEPTH") {
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger() || token->AsUint32() == 0)
+        return Result("expected positive IMAGE DEPTH");
+      buffer->SetDepth(token->AsUint32());
+      depth_set = true;
+    } else if (token->AsString() == "SAMPLES") {
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("expected integer value for SAMPLES");
+      uint32_t samples = token->AsUint32();
+      uint32_t valid_samples[] = {1, 2, 4, 8, 16, 32, 64};
+      if (std::find(std::begin(valid_samples), std::end(valid_samples),
+                    samples) == std::end(valid_samples))
+        return Result("invalid sample count: " + token->ToOriginalString());
+      buffer->SetSamples(samples);
+    } else {
+      return Result("unknown IMAGE command provided: " +
+                    token->ToOriginalString());
     }
-  } else {
-    return Result("unknown IMAGE command provided: " + cmd);
+    token = tokenizer_->PeekNextToken();
   }
 
-  token = tokenizer_->NextToken();
-  if (!token->IsIdentifier()) {
-    return Result("IMAGE dimensionality must be an identifier: " +
-                  token->ToOriginalString());
-  }
-
-  auto dim = StrToImageDimension(token->AsString());
-  if (dim == ImageDimension::kUnknown)
-    return Result("unknown IMAGE dimensionality");
-  buffer->SetImageDimension(dim);
-
-  token = tokenizer_->NextToken();
-  if (!token->IsIdentifier() || token->AsString() != "WIDTH")
+  if (buffer->GetImageDimension() == ImageDimension::k3D && !depth_set)
+    return Result("expected IMAGE DEPTH");
+  if ((buffer->GetImageDimension() == ImageDimension::k3D ||
+       buffer->GetImageDimension() == ImageDimension::k2D) &&
+      !height_set)
+    return Result("expected IMAGE HEIGHT");
+  if (!width_set)
     return Result("expected IMAGE WIDTH");
 
-  // Parse image dimensions.
-  uint32_t width = 1;
-  uint32_t height = 1;
-  uint32_t depth = 1;
-  token = tokenizer_->NextToken();
-  if (!token->IsInteger() || token->AsUint32() == 0)
-    return Result("expected positive IMAGE WIDTH");
-  width = token->AsUint32();
-  buffer->SetWidth(width);
-
-  if (dim == ImageDimension::k2D || dim == ImageDimension::k3D) {
-    token = tokenizer_->NextToken();
-    if (!token->IsIdentifier() || token->AsString() != "HEIGHT")
-      return Result("expected IMAGE HEIGHT");
-
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger() || token->AsUint32() == 0)
-      return Result("expected positive IMAGE HEIGHT");
-    height = token->AsUint32();
-    buffer->SetHeight(height);
-  }
-
-  if (dim == ImageDimension::k3D) {
-    token = tokenizer_->NextToken();
-    if (!token->IsIdentifier() || token->AsString() != "DEPTH")
-      return Result("expected IMAGE DEPTH");
-
-    token = tokenizer_->NextToken();
-    if (!token->IsInteger() || token->AsUint32() == 0)
-      return Result("expected positive IMAGE DEPTH");
-    depth = token->AsUint32();
-    buffer->SetDepth(depth);
-  }
-
-  const uint32_t size_in_items = width * height * depth;
+  const uint32_t size_in_items =
+      buffer->GetWidth() * buffer->GetHeight() * buffer->GetDepth();
   buffer->SetElementCount(size_in_items);
 
   // Parse initializers.

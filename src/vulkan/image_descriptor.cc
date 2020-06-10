@@ -95,8 +95,8 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
     transfer_images_.emplace_back(MakeUnique<TransferImage>(
         device_, *fmt, aspect, image_type, amber_buffer->GetWidth(),
         amber_buffer->GetHeight(), amber_buffer->GetDepth(),
-        amber_buffer->GetMipLevels(), base_mip_level_,
-        VK_REMAINING_MIP_LEVELS));
+        amber_buffer->GetMipLevels(), base_mip_level_, VK_REMAINING_MIP_LEVELS,
+        amber_buffer->GetSamples()));
     VkImageUsageFlags usage =
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 

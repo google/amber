@@ -116,7 +116,7 @@ IMAGE image DATA_TYPE uint32 DIM_WRONG
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("2: unknown IMAGE dimensionality", r.Error());
+  EXPECT_EQ("2: unknown IMAGE command provided: DIM_WRONG", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ImageDimensionalityInvalid2) {
@@ -127,7 +127,7 @@ IMAGE image DATA_TYPE uint32 4
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("2: IMAGE dimensionality must be an identifier: 4", r.Error());
+  EXPECT_EQ("2: expected IMAGE WIDTH", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, ImageWidthMissing) {
@@ -242,6 +242,47 @@ IMAGE image DATA_TYPE uint32 DIM_2D WIDTH 3 HEIGHT 4
   EXPECT_EQ(4, buffer->GetHeight());
   EXPECT_EQ(1, buffer->GetDepth());
   EXPECT_EQ(12, buffer->ElementCount());
+}
+
+TEST_F(AmberScriptParserTest, Image2DMultiSample) {
+  std::string in = R"(
+IMAGE image DATA_TYPE uint32 DIM_2D WIDTH 3 HEIGHT 4 SAMPLES 4
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("image", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_EQ(4, buffer->GetSamples());
+}
+
+TEST_F(AmberScriptParserTest, Image2DInvalidSampleValue) {
+  std::string in = R"(
+IMAGE image DATA_TYPE uint32 DIM_2D WIDTH 3 HEIGHT 4 SAMPLES foo
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: expected integer value for SAMPLES", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, Image2DInvalidSampleCount) {
+  std::string in = R"(
+IMAGE image DATA_TYPE uint32 DIM_2D WIDTH 3 HEIGHT 4 SAMPLES 5
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("2: invalid sample count: 5", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, Image3D) {

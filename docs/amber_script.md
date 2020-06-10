@@ -243,8 +243,12 @@ BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
 # Creates a buffer which will store the given `FORMAT` of data. These
 # buffers are used as image and depth buffers in the `PIPELINE` commands.
 # The buffer will be sized based on the `RENDER_SIZE` of the `PIPELINE`.
+# For multisampled images use value greater than one for `SAMPLES`. Allowed
+# sample counts are 1, 2, 4, 8, 16, 32, and 64. Note that Amber doesn't
+# preserve multisampled images across pipelines.
 BUFFER {name} FORMAT {format_string} \
-    [ MIP_LEVELS _mip_levels_ (default 1) ]
+    [ MIP_LEVELS _mip_levels_ (default 1) ] \
+    [ SAMPLES _samples_ (default 1) ]
 
 # Load buffer data from a PNG image with file name specified by `FILE`.
 # The file path is relative to the script file being run. Format specified
@@ -266,7 +270,7 @@ attributes.
 # Specify an image buffer with a format. HEIGHT is necessary for DIM_2D and
 # DIM_3D. DEPTH is necessary for DIM_3D.
 IMAGE {name} FORMAT {format_string} [ MIP_LEVELS _mip_levels_ (default 1) ] \
-    {dimensionality} \
+    [ SAMPLES _samples_ (default 1) ] {dimensionality} \
     WIDTH {w} [ HEIGHT {h} [ DEPTH {d} ] ] \
     {initializer}
 

@@ -38,7 +38,8 @@ class TransferImage : public Resource {
                 uint32_t z,
                 uint32_t mip_levels,
                 uint32_t base_mip_level,
-                uint32_t used_mip_levels);
+                uint32_t used_mip_levels,
+                uint32_t samples);
   ~TransferImage() override;
 
   Result Initialize(VkImageUsageFlags usage);
@@ -85,6 +86,7 @@ class TransferImage : public Resource {
   uint32_t mip_levels_;
   uint32_t base_mip_level_;
   uint32_t used_mip_levels_;
+  uint32_t samples_;
 };
 
 }  // namespace vulkan
