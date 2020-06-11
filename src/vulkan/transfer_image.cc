@@ -43,6 +43,27 @@ const VkImageCreateInfo kDefaultImageInfo = {
     VK_IMAGE_LAYOUT_UNDEFINED,           /* initialLayout */
 };
 
+VkSampleCountFlagBits GetVkSampleCount(uint32_t samples) {
+  switch (samples) {
+    case 1u:
+      return VK_SAMPLE_COUNT_1_BIT;
+    case 2u:
+      return VK_SAMPLE_COUNT_2_BIT;
+    case 4u:
+      return VK_SAMPLE_COUNT_4_BIT;
+    case 8u:
+      return VK_SAMPLE_COUNT_8_BIT;
+    case 16u:
+      return VK_SAMPLE_COUNT_16_BIT;
+    case 32u:
+      return VK_SAMPLE_COUNT_32_BIT;
+    case 64u:
+      return VK_SAMPLE_COUNT_64_BIT;
+  }
+
+  return VK_SAMPLE_COUNT_FLAG_BITS_MAX_ENUM;
+}
+
 }  // namespace
 
 TransferImage::TransferImage(Device* device,
@@ -54,17 +75,20 @@ TransferImage::TransferImage(Device* device,
                              uint32_t z,
                              uint32_t mip_levels,
                              uint32_t base_mip_level,
-                             uint32_t used_mip_levels)
+                             uint32_t used_mip_levels,
+                             uint32_t samples)
     : Resource(device, x * y * z * format.SizeInBytes()),
       image_info_(kDefaultImageInfo),
       aspect_(aspect),
       mip_levels_(mip_levels),
       base_mip_level_(base_mip_level),
-      used_mip_levels_(used_mip_levels) {
+      used_mip_levels_(used_mip_levels),
+      samples_(samples) {
   image_info_.format = device_->GetVkFormat(format);
   image_info_.imageType = image_type;
   image_info_.extent = {x, y, z};
   image_info_.mipLevels = mip_levels;
+  image_info_.samples = GetVkSampleCount(samples);
 }
 
 TransferImage::~TransferImage() {
@@ -93,7 +117,7 @@ TransferImage::~TransferImage() {
 
 Result TransferImage::Initialize(VkImageUsageFlags usage) {
   if (image_ != VK_NULL_HANDLE)
-    return Result("Vulkan::TransferImage was already initalized");
+    return Result("Vulkan::TransferImage was already initialized");
 
   image_info_.usage = usage;
 
@@ -222,6 +246,10 @@ void TransferImage::CopyToHost(CommandBuffer* command_buffer) {
   const VkImageAspectFlagBits aspects[] = {VK_IMAGE_ASPECT_COLOR_BIT,
                                            VK_IMAGE_ASPECT_DEPTH_BIT,
                                            VK_IMAGE_ASPECT_STENCIL_BIT};
+  // Copy operations don't support multisample images.
+  if (samples_ > 1)
+    return;
+
   std::vector<VkBufferImageCopy> copy_regions;
   uint32_t last_mip_level = used_mip_levels_ == VK_REMAINING_MIP_LEVELS
                                 ? mip_levels_
@@ -243,6 +271,10 @@ void TransferImage::CopyToHost(CommandBuffer* command_buffer) {
 }
 
 void TransferImage::CopyToDevice(CommandBuffer* command_buffer) {
+  // Copy operations don't support multisample images.
+  if (samples_ > 1)
+    return;
+
   const VkImageAspectFlagBits aspects[] = {VK_IMAGE_ASPECT_COLOR_BIT,
                                            VK_IMAGE_ASPECT_DEPTH_BIT,
                                            VK_IMAGE_ASPECT_STENCIL_BIT};

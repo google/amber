@@ -173,7 +173,7 @@ void Resource::UpdateMemoryWithRawData(const std::vector<uint8_t>& raw_data) {
 }
 
 void Resource::MemoryBarrier(CommandBuffer* command_buffer) {
-  // TODO(jaebaek): Current memory barrier is natively implemented.
+  // TODO(jaebaek): Current memory barrier is naively implemented.
   // Update it with the following access flags:
   // (r = read, w = write)
   //

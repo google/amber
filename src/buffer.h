@@ -206,6 +206,12 @@ class Buffer {
   /// Returns the number of mip levels.
   uint32_t GetMipLevels() const { return mip_levels_; }
 
+  /// Sets the number of samples.
+  void SetSamples(uint32_t samples) { samples_ = samples; }
+
+  /// Returns the number of samples.
+  uint32_t GetSamples() const { return samples_; }
+
   /// Returns a pointer to the internal storage of the buffer.
   std::vector<uint8_t>* ValuePtr() { return &bytes_; }
   /// Returns a pointer to the internal storage of the buffer.
@@ -257,6 +263,7 @@ class Buffer {
   uint32_t height_ = 1;
   uint32_t depth_ = 1;
   uint32_t mip_levels_ = 1;
+  uint32_t samples_ = 1;
   bool format_is_default_ = false;
   std::vector<uint8_t> bytes_;
   Format* format_ = nullptr;

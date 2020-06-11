@@ -84,6 +84,8 @@ SUPPRESSIONS_SWIFTSHADER = [
   "opencl_read_and_write_image3d_rgba32i.amber",
   "opencl_write_image.amber",
   "glsl_read_and_write_image3d_rgba32i.amber",
+  # shaderStorageImageMultisample feature not supported
+  "draw_storageimage_multisample.amber",
 ]
 
 OPENCL_CASES = [
