@@ -270,7 +270,8 @@ attributes.
 # Specify an image buffer with a format. HEIGHT is necessary for DIM_2D and
 # DIM_3D. DEPTH is necessary for DIM_3D.
 IMAGE {name} FORMAT {format_string} [ MIP_LEVELS _mip_levels_ (default 1) ] \
-    [ SAMPLES _samples_ (default 1) ] {dimensionality} \
+    [ SAMPLES _samples_ (default 1) ] \
+    {dimensionality} \
     WIDTH {w} [ HEIGHT {h} [ DEPTH {d} ] ] \
     {initializer}
 

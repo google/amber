@@ -253,6 +253,13 @@ Result ParseBufferData(Buffer* buffer,
   return {};
 }
 
+constexpr uint32_t valid_samples[] = {1, 2, 4, 8, 16, 32, 64};
+
+bool IsValidSampleCount(uint32_t samples) {
+  return (std::find(std::begin(valid_samples), std::end(valid_samples),
+                    samples) != std::end(valid_samples));
+}
+
 }  // namespace
 
 Parser::Parser() : amber::Parser(nullptr) {}
@@ -1791,11 +1798,11 @@ Result Parser::ParseBuffer() {
         token = tokenizer_->NextToken();
         if (!token->IsInteger())
           return Result("expected integer value for SAMPLES");
-        uint32_t samples = token->AsUint32();
-        uint32_t valid_samples[] = {1, 2, 4, 8, 16, 32, 64};
-        if (std::find(std::begin(valid_samples), std::end(valid_samples),
-                      samples) == std::end(valid_samples))
+
+        const uint32_t samples = token->AsUint32();
+        if (!IsValidSampleCount(samples))
           return Result("invalid sample count: " + token->ToOriginalString());
+
         buffer->SetSamples(samples);
       } else {
         break;
@@ -1848,9 +1855,10 @@ Result Parser::ParseImage() {
         buffer->SetFormat(fmt.get());
       } else {
         auto new_type = ToType(token->AsString());
-        if (!new_type)
+        if (!new_type) {
           return Result("invalid data type '" + token->AsString() +
                         "' provided");
+        }
 
         fmt = MakeUnique<Format>(new_type.get());
         buffer->SetFormat(fmt.get());
@@ -1886,29 +1894,32 @@ Result Parser::ParseImage() {
       token = tokenizer_->NextToken();
       if (!token->IsInteger() || token->AsUint32() == 0)
         return Result("expected positive IMAGE WIDTH");
+
       buffer->SetWidth(token->AsUint32());
       width_set = true;
     } else if (token->AsString() == "HEIGHT") {
       token = tokenizer_->NextToken();
       if (!token->IsInteger() || token->AsUint32() == 0)
         return Result("expected positive IMAGE HEIGHT");
+
       buffer->SetHeight(token->AsUint32());
       height_set = true;
     } else if (token->AsString() == "DEPTH") {
       token = tokenizer_->NextToken();
       if (!token->IsInteger() || token->AsUint32() == 0)
         return Result("expected positive IMAGE DEPTH");
+
       buffer->SetDepth(token->AsUint32());
       depth_set = true;
     } else if (token->AsString() == "SAMPLES") {
       token = tokenizer_->NextToken();
       if (!token->IsInteger())
         return Result("expected integer value for SAMPLES");
-      uint32_t samples = token->AsUint32();
-      uint32_t valid_samples[] = {1, 2, 4, 8, 16, 32, 64};
-      if (std::find(std::begin(valid_samples), std::end(valid_samples),
-                    samples) == std::end(valid_samples))
+
+      const uint32_t samples = token->AsUint32();
+      if (!IsValidSampleCount(samples))
         return Result("invalid sample count: " + token->ToOriginalString());
+
       buffer->SetSamples(samples);
     } else {
       return Result("unknown IMAGE command provided: " +
@@ -1919,10 +1930,12 @@ Result Parser::ParseImage() {
 
   if (buffer->GetImageDimension() == ImageDimension::k3D && !depth_set)
     return Result("expected IMAGE DEPTH");
+
   if ((buffer->GetImageDimension() == ImageDimension::k3D ||
        buffer->GetImageDimension() == ImageDimension::k2D) &&
-      !height_set)
+      !height_set) {
     return Result("expected IMAGE HEIGHT");
+  }
   if (!width_set)
     return Result("expected IMAGE WIDTH");
 
