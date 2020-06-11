@@ -546,31 +546,25 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
         "null");
   }
 
+  std::vector<VkVertexInputBindingDescription> vertex_bindings;
+  std::vector<VkVertexInputAttributeDescription> vertex_attribs;
+  if (vertex_buffer != nullptr) {
+    vertex_bindings = vertex_buffer->GetVkVertexInputBinding();
+    vertex_attribs = vertex_buffer->GetVkVertexInputAttr();
+  }
+
   VkPipelineVertexInputStateCreateInfo vertex_input_info =
       VkPipelineVertexInputStateCreateInfo();
   vertex_input_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertex_input_info.vertexBindingDescriptionCount = 1;
-
-  VkVertexInputBindingDescription vertex_binding_desc =
-      VkVertexInputBindingDescription();
-  if (vertex_buffer != nullptr) {
-    vertex_binding_desc = vertex_buffer->GetVkVertexInputBinding();
-    const auto& vertex_attr_desc = vertex_buffer->GetVkVertexInputAttr();
-
-    vertex_input_info.pVertexBindingDescriptions = &vertex_binding_desc;
-    vertex_input_info.vertexAttributeDescriptionCount =
-        static_cast<uint32_t>(vertex_attr_desc.size());
-    vertex_input_info.pVertexAttributeDescriptions = vertex_attr_desc.data();
-  } else {
-    vertex_binding_desc.binding = 0;
-    vertex_binding_desc.stride = 0;
-    vertex_binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    vertex_input_info.pVertexBindingDescriptions = &vertex_binding_desc;
-    vertex_input_info.vertexAttributeDescriptionCount = 0;
-    vertex_input_info.pVertexAttributeDescriptions = nullptr;
-  }
+  vertex_input_info.vertexBindingDescriptionCount =
+      static_cast<uint32_t>(vertex_bindings.size());
+  vertex_input_info.pVertexBindingDescriptions =
+      vertex_bindings.empty() ? nullptr : vertex_bindings.data();
+  vertex_input_info.vertexAttributeDescriptionCount =
+      static_cast<uint32_t>(vertex_attribs.size());
+  vertex_input_info.pVertexAttributeDescriptions =
+      vertex_attribs.empty() ? nullptr : vertex_attribs.data();
 
   VkPipelineInputAssemblyStateCreateInfo input_assembly_info =
       VkPipelineInputAssemblyStateCreateInfo();

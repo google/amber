@@ -685,10 +685,12 @@ END)";
   const auto& info1 = vertex_buffers[0];
   ASSERT_TRUE(info1.buffer != nullptr);
   EXPECT_EQ(0, info1.location);
+  EXPECT_EQ(InputRate::kVertex, info1.input_rate);
 
   const auto& info2 = vertex_buffers[1];
   ASSERT_TRUE(info2.buffer != nullptr);
   EXPECT_EQ(1, info2.location);
+  EXPECT_EQ(InputRate::kVertex, info2.input_rate);
 }
 
 TEST_F(AmberScriptParserTest, BindVertexDataDuplicateLocation) {
@@ -840,6 +842,88 @@ END)";
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("12: extra parameters after VERTEX_DATA command: EXTRA", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataInputRate) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+BUFFER my_buf2 DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 RATE vertex
+  VERTEX_DATA my_buf2 LOCATION 1 RATE instance
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& vertex_buffers = pipeline->GetVertexBuffers();
+  ASSERT_EQ(2, vertex_buffers.size());
+
+  const auto& info1 = vertex_buffers[0];
+  ASSERT_TRUE(info1.buffer != nullptr);
+  EXPECT_EQ(0, info1.location);
+  EXPECT_EQ(InputRate::kVertex, info1.input_rate);
+
+  const auto& info2 = vertex_buffers[1];
+  ASSERT_TRUE(info2.buffer != nullptr);
+  EXPECT_EQ(1, info2.location);
+  EXPECT_EQ(InputRate::kInstance, info2.input_rate);
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataInputRateMissingValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 RATE
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: missing input rate value for RATE", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataInputRateInvalidValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 RATE foo
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: expecting 'vertex' or 'instance' for RATE value", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindIndexData) {
