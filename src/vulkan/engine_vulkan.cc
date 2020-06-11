@@ -216,7 +216,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       info.vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
 
     info.vertex_buffer->SetData(static_cast<uint8_t>(vtex_info.location),
-                                vtex_info.buffer);
+                                vtex_info.buffer, vtex_info.input_rate);
   }
 
   if (pipeline->GetIndexBuffer()) {
@@ -495,7 +495,7 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   buf->SetData(std::move(values));
 
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
-  vertex_buffer->SetData(0, buf.get());
+  vertex_buffer->SetData(0, buf.get(), InputRate::kVertex);
 
   DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
   draw.SetTopology(command->IsPatch() ? Topology::kPatchList
@@ -582,7 +582,7 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   buf->SetData(std::move(values));
 
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
-  vertex_buffer->SetData(0, buf.get());
+  vertex_buffer->SetData(0, buf.get(), InputRate::kVertex);
 
   DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
   draw.SetTopology(Topology::kTriangleList);

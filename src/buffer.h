@@ -61,6 +61,11 @@ enum class BufferType : int8_t {
   kStorageTexelBuffer
 };
 
+enum class InputRate : int8_t {
+  kVertex = 0,
+  kInstance,
+};
+
 /// A buffer stores data. The buffer maybe provided from the input script, or
 /// maybe created as needed. A buffer must have a unique name.
 class Buffer {

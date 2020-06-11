@@ -192,6 +192,7 @@ class Pipeline {
     std::string arg_name = "";
     uint32_t arg_no = 0;
     BufferType type = BufferType::kUnknown;
+    InputRate input_rate = InputRate::kVertex;
   };
 
   /// Information on a sampler attached to the pipeline.
@@ -306,8 +307,9 @@ class Pipeline {
   const std::vector<BufferInfo>& GetVertexBuffers() const {
     return vertex_buffers_;
   }
-  /// Adds |buf| as a vertex buffer at |location| in the pipeline.
-  Result AddVertexBuffer(Buffer* buf, uint32_t location);
+  /// Adds |buf| as a vertex buffer at |location| in the pipeline using |rate|
+  /// as the input rate.
+  Result AddVertexBuffer(Buffer* buf, uint32_t location, InputRate rate);
 
   /// Binds |buf| as the index buffer for this pipeline.
   Result SetIndexBuffer(Buffer* buf);

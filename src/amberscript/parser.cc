@@ -1257,8 +1257,23 @@ Result Parser::ParsePipelineVertexData(Pipeline* pipeline) {
   token = tokenizer_->NextToken();
   if (!token->IsInteger())
     return Result("invalid value for VERTEX_DATA LOCATION");
+  const uint32_t location = token->AsUint32();
 
-  Result r = pipeline->AddVertexBuffer(buffer, token->AsUint32());
+  InputRate rate = InputRate::kVertex;
+  token = tokenizer_->PeekNextToken();
+  if (token->IsIdentifier() && token->AsString() == "RATE") {
+    tokenizer_->NextToken();
+    token = tokenizer_->NextToken();
+    if (!token->IsIdentifier())
+      return Result("missing input rate value for RATE");
+    if (token->AsString() == "instance") {
+      rate = InputRate::kInstance;
+    } else if (token->AsString() != "vertex") {
+      return Result("expecting 'vertex' or 'instance' for RATE value");
+    }
+  }
+
+  Result r = pipeline->AddVertexBuffer(buffer, location, rate);
   if (!r.IsSuccess())
     return r;
 

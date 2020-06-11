@@ -565,15 +565,16 @@ and binding ID.
   # Attach |buffer_name| as a combined image sampler. A sampler |sampler_name|
   # must also be specified. The MIP level will have a base value of 0.
   BIND {BUFFER | BUFFER_ARRAY} {buffer_name} AS combined_image_sampler SAMPLER {sampler_name} \
-      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default) 0) ]
+      DESCRIPTOR_SET _id_ BINDING _id_ [ BASE_MIP_LEVEL _level_ (default 0) ]
 
   # Bind the sampler at the given descriptor set and binding.
   BIND {SAMPLER | SAMPLER_ARRAY} {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
 ```
 
 ```groovy
-  # Set |buffer_name| as the vertex data at location |val|.
-  VERTEX_DATA {buffer_name} LOCATION _val_
+  # Set |buffer_name| as the vertex data at location |val|. `RATE` defines the
+  # input rate for vertex attribute reading.
+  VERTEX_DATA {buffer_name} LOCATION _val_ [ RATE { vertex | instance } (default vertex) ]
 
   # Set |buffer_name| as the index data to use for `INDEXED` draw commands.
   INDEX_DATA {buffer_name}

@@ -41,7 +41,7 @@ class Device {
          uint32_t queue_family_index,
          VkDevice device,
          VkQueue queue);
-  ~Device();
+  virtual ~Device();
 
   Result Initialize(
       PFN_vkGetInstanceProcAddr getInstanceProcAddr,
@@ -69,15 +69,15 @@ class Device {
   bool IsDescriptorSetInBounds(uint32_t descriptor_set) const;
 
   /// Returns true if the memory at |memory_type_index| has |flags| set.
-  bool HasMemoryFlags(uint32_t memory_type_index,
-                      const VkMemoryPropertyFlags flags) const;
+  virtual bool HasMemoryFlags(uint32_t memory_type_index,
+                              const VkMemoryPropertyFlags flags) const;
   /// Returns true if the memory at |memory_type_index| is host accessible.
   bool IsMemoryHostAccessible(uint32_t memory_type_index) const;
   /// Returns true if the memory at |memory_type_index| is host corherent.
   bool IsMemoryHostCoherent(uint32_t memory_type_index) const;
 
   /// Returns the pointers to the Vulkan API methods.
-  const VulkanPtrs* GetPtrs() const { return &ptrs_; }
+  virtual const VulkanPtrs* GetPtrs() const { return &ptrs_; }
 
   /// Returns true if the required subgroup size is supported for given stage
   bool IsRequiredSubgroupSizeSupported(

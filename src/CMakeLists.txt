@@ -203,7 +203,7 @@ if (${AMBER_ENABLE_TESTS})
   add_test(NAME amber_unittests COMMAND amber_unittests)
 
   if (${Vulkan_FOUND})
-    target_include_directories(amber_unittests PRIVATE "${VulkanHeaders_INCLUDE_DIR}")
+    target_include_directories(amber_unittests PRIVATE "${VulkanHeaders_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}")
   endif()
 
   if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
