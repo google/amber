@@ -255,6 +255,24 @@ CMake variables when configuring Amber:
   * `Dawn_LIBRARY_DIR`: The directory containing the `dawn_native` library (in
     the build output tree).
 
+### Using SwiftShader as a backend
+
+SwiftShader, if available, can be used by by exporting the `VK_ICD_FILENAMES`
+environment variable and using it directly. If SwiftShader is not installed it
+can be built with Amber by setting `AMBER_ENABLE_SWIFTSHADER` during the
+configure step of CMake.
+
+
+```
+mkdir out/sw
+cd out/sw
+cmake -GNinja -DAMBER_ENABLE_SWIFTSHADER=TRUE ../..
+ninja
+export VK_ICD_FILENAMES=$PWD/Linux/vk_swiftshader_icd.json
+./amber -d -V    # Should see SwiftShader listed as device
+./amber -d ../../tests/cases/clear.amber
+```
+
 ## Amber Samples
 
 The build will generate an `out/Debug/amber` executable which can be used to
@@ -281,25 +299,9 @@ Please see the [CONTRIBUTING](CONTRIBUTING.md) and
 [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) files on how to contribute to Amber.
 
 
+## References
 [Dawn]: https://dawn.googlesource.com/dawn/
 [Talvos]: https://talvos.github.io/
 [Vulkan-Headers]: https://github.com/KhronosGroup/Vulkan-Headers
 [VkRunner]: https://github.com/igalia/vkrunner
 
-### Using SwiftShader as a backend
-
-SwiftShader if installed it can be used by by exporting the `VK_ICD_FILENAMES`
-environment variable and using it directly. If SwiftShader is not installed it
-can be built with Amber by setting `AMBER_ENABLE_SWIFTSHADER` during the
-configure step of CMake.
-
-
-```
-mkdir out/sw
-cd out/sw
-cmake -GNinja -DAMBER_ENABLE_SWIFTSHADER=TRUE ../..
-ninja
-export VK_ICD_FILENAMES=$PWD/Linux/vk_swiftshader_icd.json
-./amber -d -V    # Should see SwiftShader listed as device
-./amber -d ../../tests/cases/clear.amber
-```
