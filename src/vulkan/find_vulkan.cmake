@@ -107,6 +107,10 @@ if (NOT ${Vulkan_FOUND})
       message(STATUS "Amber: Using Vulkan from Vulkan SDK at $ENV{VULKAN_SDK}")
       # Use the imported library target set up by find_package.
       set(VULKAN_LIB Vulkan::Vulkan)
+      set(VulkanHeaders_INCLUDE_DIR "${Vulkan_INCLUDE_DIR}"
+          CACHE PATH "vk headers dir" FORCE)
+      set(VulkanHeaders_INCLUDE_DIRS "${Vulkan_INCLUDE_DIRS}"
+          CACHE PATH "vk headers dir" FORCE)
     endif()
   endif()
 endif()
