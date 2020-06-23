@@ -489,7 +489,9 @@ class BufferCommand : public BindableResourceCommand {
  public:
   enum class BufferType {
     kSSBO,
+    kSSBODynamic,
     kUniform,
+    kUniformDynamic,
     kPushConstant,
     kStorageImage,
     kSampledImage,
@@ -502,7 +504,13 @@ class BufferCommand : public BindableResourceCommand {
   ~BufferCommand() override;
 
   bool IsSSBO() const { return buffer_type_ == BufferType::kSSBO; }
+  bool IsSSBODynamic() const {
+    return buffer_type_ == BufferType::kSSBODynamic;
+  }
   bool IsUniform() const { return buffer_type_ == BufferType::kUniform; }
+  bool IsUniformDynamic() const {
+    return buffer_type_ == BufferType::kUniformDynamic;
+  }
   bool IsStorageImage() const {
     return buffer_type_ == BufferType::kStorageImage;
   }
@@ -533,6 +541,11 @@ class BufferCommand : public BindableResourceCommand {
   }
   uint32_t GetBaseMipLevel() const { return base_mip_level_; }
 
+  void SetDynamicOffset(uint32_t dynamic_offset) {
+    dynamic_offset_ = dynamic_offset;
+  }
+  uint32_t GetDynamicOffset() const { return dynamic_offset_; }
+
   void SetValues(std::vector<Value>&& values) { values_ = std::move(values); }
   const std::vector<Value>& GetValues() const { return values_; }
 
@@ -547,6 +560,7 @@ class BufferCommand : public BindableResourceCommand {
   bool is_subdata_ = false;
   uint32_t offset_ = 0;
   uint32_t base_mip_level_ = 0;
+  uint32_t dynamic_offset_ = 0;
   std::vector<Value> values_;
 };
 

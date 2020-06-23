@@ -280,7 +280,8 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
     return AddPushConstantBuffer(cmd->GetBuffer(), cmd->GetOffset());
   if (!cmd->IsSSBO() && !cmd->IsUniform() && !cmd->IsStorageImage() &&
       !cmd->IsSampledImage() && !cmd->IsCombinedImageSampler() &&
-      !cmd->IsUniformTexelBuffer() && !cmd->IsStorageTexelBuffer()) {
+      !cmd->IsUniformTexelBuffer() && !cmd->IsStorageTexelBuffer() &&
+      !cmd->IsUniformDynamic() && !cmd->IsSSBODynamic()) {
     return Result("Pipeline::AddBufferDescriptor not supported buffer type");
   }
 
@@ -296,20 +297,24 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
   DescriptorType desc_type = DescriptorType::kUniformBuffer;
 
   if (cmd->IsStorageImage()) {
-    desc_type = DescriptorType ::kStorageImage;
+    desc_type = DescriptorType::kStorageImage;
     is_image = true;
   } else if (cmd->IsSampledImage()) {
-    desc_type = DescriptorType ::kSampledImage;
+    desc_type = DescriptorType::kSampledImage;
     is_image = true;
   } else if (cmd->IsCombinedImageSampler()) {
-    desc_type = DescriptorType ::kCombinedImageSampler;
+    desc_type = DescriptorType::kCombinedImageSampler;
     is_image = true;
   } else if (cmd->IsUniformTexelBuffer()) {
-    desc_type = DescriptorType ::kUniformTexelBuffer;
+    desc_type = DescriptorType::kUniformTexelBuffer;
   } else if (cmd->IsStorageTexelBuffer()) {
-    desc_type = DescriptorType ::kStorageTexelBuffer;
+    desc_type = DescriptorType::kStorageTexelBuffer;
   } else if (cmd->IsSSBO()) {
-    desc_type = DescriptorType ::kStorageBuffer;
+    desc_type = DescriptorType::kStorageBuffer;
+  } else if (cmd->IsUniformDynamic()) {
+    desc_type = DescriptorType::kUniformBufferDynamic;
+  } else if (cmd->IsSSBODynamic()) {
+    desc_type = DescriptorType::kStorageBufferDynamic;
   }
 
   if (desc == nullptr) {
@@ -336,6 +341,10 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
     reinterpret_cast<BufferBackedDescriptor*>(desc)->AddAmberBuffer(
         cmd->GetBuffer());
   }
+
+  if (cmd->IsUniformDynamic() || cmd->IsSSBODynamic())
+    reinterpret_cast<BufferDescriptor*>(desc)->AddDynamicOffset(
+        cmd->GetDynamicOffset());
 
   if (cmd->IsSSBO() && !desc->IsStorageBuffer()) {
     return Result(
@@ -428,12 +437,20 @@ void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
     if (descriptor_set_info_[i].empty)
       continue;
 
+    std::vector<uint32_t> dynamic_offsets;
+
+    for (const auto& desc : descriptor_set_info_[i].descriptors) {
+      for (auto offset : desc->GetDynamicOffsets())
+        dynamic_offsets.push_back(offset);
+    }
+
     device_->GetPtrs()->vkCmdBindDescriptorSets(
         command_->GetVkCommandBuffer(),
         IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
                      : VK_PIPELINE_BIND_POINT_COMPUTE,
         pipeline_layout, static_cast<uint32_t>(i), 1,
-        &descriptor_set_info_[i].vk_desc_set, 0, nullptr);
+        &descriptor_set_info_[i].vk_desc_set,
+        static_cast<uint32_t>(dynamic_offsets.size()), dynamic_offsets.data());
   }
 }
 

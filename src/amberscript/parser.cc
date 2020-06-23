@@ -944,8 +944,12 @@ Result Parser::ToBufferType(const std::string& name, BufferType* type) {
     *type = BufferType::kCombinedImageSampler;
   else if (name == "uniform")
     *type = BufferType::kUniform;
+  else if (name == "uniform_dynamic")
+    *type = BufferType::kUniformDynamic;
   else if (name == "storage")
     *type = BufferType::kStorage;
+  else if (name == "storage_dynamic")
+    *type = BufferType::kStorageDynamic;
   else if (name == "storage_image")
     *type = BufferType::kStorageImage;
   else if (name == "sampled_image")
@@ -1078,6 +1082,8 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
     if (buffer_type == BufferType::kUnknown ||
         buffer_type == BufferType::kStorage ||
         buffer_type == BufferType::kUniform ||
+        buffer_type == BufferType::kStorageDynamic ||
+        buffer_type == BufferType::kUniformDynamic ||
         buffer_type == BufferType::kStorageImage ||
         buffer_type == BufferType::kSampledImage ||
         buffer_type == BufferType::kCombinedImageSampler ||
@@ -1128,10 +1134,32 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
           }
         }
 
+        std::vector<uint32_t> dynamic_offsets(buffers.size(), 0);
+        if (buffer_type == BufferType::kUniformDynamic ||
+            buffer_type == BufferType::kStorageDynamic) {
+          token = tokenizer_->NextToken();
+          if (!token->IsIdentifier() || token->AsString() != "OFFSET")
+            return Result("expecting an OFFSET for dynamic buffer type");
+
+          for (size_t i = 0; i < buffers.size(); i++) {
+            token = tokenizer_->NextToken();
+
+            if (!token->IsInteger()) {
+              if (i > 0)
+                return Result(
+                    "expecting an OFFSET value for each buffer in the array");
+              else
+                return Result("expecting an integer value for OFFSET");
+            }
+
+            dynamic_offsets[i] = token->AsUint32();
+          }
+        }
+
         pipeline->ClearBuffers(descriptor_set, binding);
-        for (const auto& b : buffers) {
-          pipeline->AddBuffer(b, buffer_type, descriptor_set, binding,
-                              base_mip_level);
+        for (size_t i = 0; i < buffers.size(); i++) {
+          pipeline->AddBuffer(buffers[i], buffer_type, descriptor_set, binding,
+                              base_mip_level, dynamic_offsets[i]);
         }
       } else if (token->IsIdentifier() && token->AsString() == "KERNEL") {
         token = tokenizer_->NextToken();

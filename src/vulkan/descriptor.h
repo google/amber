@@ -33,7 +33,9 @@ class Device;
 
 enum class DescriptorType : uint8_t {
   kStorageBuffer = 0,
+  kStorageBufferDynamic,
   kUniformBuffer,
+  kUniformBufferDynamic,
   kStorageImage,
   kSampledImage,
   kCombinedImageSampler,
@@ -58,6 +60,7 @@ class Descriptor {
   virtual Result SetSizeInElements(uint32_t) { return {}; }
   virtual Result AddToBuffer(const std::vector<Value>&, uint32_t) { return {}; }
   virtual uint32_t GetDescriptorCount() { return 1; }
+  virtual std::vector<uint32_t> GetDynamicOffsets() { return {}; }
   uint32_t GetDescriptorSet() const { return descriptor_set_; }
   uint32_t GetBinding() const { return binding_; }
   VkDescriptorType GetVkDescriptorType() const;
@@ -66,8 +69,14 @@ class Descriptor {
   bool IsStorageBuffer() const {
     return type_ == DescriptorType::kStorageBuffer;
   }
+  bool IsStorageBufferDynamic() const {
+    return type_ == DescriptorType::kStorageBufferDynamic;
+  }
   bool IsUniformBuffer() const {
     return type_ == DescriptorType::kUniformBuffer;
+  }
+  bool IsUniformBufferDynamic() const {
+    return type_ == DescriptorType::kUniformBufferDynamic;
   }
   bool IsUniformTexelBuffer() const {
     return type_ == DescriptorType::kUniformTexelBuffer;

@@ -46,12 +46,17 @@ class BufferDescriptor : public BufferBackedDescriptor {
   void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) override;
   Result CreateResourceIfNeeded() override;
   Result MoveResourceToBufferOutput() override;
+  std::vector<uint32_t> GetDynamicOffsets() override {
+    return dynamic_offsets_;
+  }
+  void AddDynamicOffset(uint32_t offset) { dynamic_offsets_.push_back(offset); }
 
  protected:
   std::vector<Resource*> GetResources() override;
 
  private:
   std::vector<std::unique_ptr<TransferBuffer>> transfer_buffers_;
+  std::vector<uint32_t> dynamic_offsets_;
 };
 
 }  // namespace vulkan

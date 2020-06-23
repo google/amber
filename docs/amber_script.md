@@ -499,6 +499,8 @@ The following commands are all specified within the `PIPELINE` command.
 #### Buffer Types
  * `uniform`
  * `storage`
+ * `uniform_dynamic`
+ * `storage_dynamic`
  * `uniform_texel_buffer`
  * `storage_texel_buffer`
 
@@ -550,7 +552,8 @@ All BIND BUFFER and BIND SAMPLER commands below define a descriptor set and bind
 These commands can be replaced with BIND BUFFER_ARRAY and BIND SAMPLER_ARRAY commands.
 In these cases multiple buffer or sampler names need to be provided, separated by spaces.
 This creates a descriptor array of buffers or samplers bound to the same descriptor set
-and binding ID.
+and binding ID. An array of offsets should be provided for OFFSET command when using
+dynamic buffers with BUFFER_ARRAY.
 ```groovy
   # Bind the buffer of the given |buffer_type| at the given descriptor set
   # and binding. The buffer will use a start index of 0.
@@ -574,6 +577,11 @@ and binding ID.
 
   # Bind the sampler at the given descriptor set and binding.
   BIND {SAMPLER | SAMPLER_ARRAY} {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
+
+  # Bind |buffer_name| as dynamic uniform/storage buffer at the given descriptor set
+  # and binding. The buffer will use a start index of |offset|.
+  BIND {BUFFER | BUFFER_ARRAY} {buffer_name} AS {uniform_dynamic | storage_dynamic} \
+       DESCRIPTOR_SET _id_ BINDING _id_ OFFSET _offset_
 ```
 
 ```groovy
