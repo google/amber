@@ -25,6 +25,8 @@ namespace amber {
 #elif defined(__APPLE__)
 #define AMBER_PLATFORM_APPLE 1
 #define AMBER_PLATFORM_POSIX 1
+#elif defined(__Fuchsia__)
+#define AMBER_PLATFORM_POSIX 1
 #else
 #error "Unknown platform."
 #endif
