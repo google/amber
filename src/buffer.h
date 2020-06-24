@@ -47,8 +47,12 @@ enum class BufferType : int8_t {
   kCombinedImageSampler,
   /// A storage buffer.
   kStorage,
+  /// A dynamic storage buffer.
+  kStorageDynamic,
   /// A uniform buffer.
   kUniform,
+  /// A dynamic uniform buffer.
+  kUniformDynamic,
   /// A push constant buffer.
   kPushConstant,
   /// A vertex buffer.

@@ -189,6 +189,7 @@ class Pipeline {
     uint32_t binding = 0;
     uint32_t location = 0;
     uint32_t base_mip_level = 0;
+    uint32_t dynamic_offset = 0;
     std::string arg_name = "";
     uint32_t arg_no = 0;
     BufferType type = BufferType::kUnknown;
@@ -318,12 +319,13 @@ class Pipeline {
   Buffer* GetIndexBuffer() const { return index_buffer_; }
 
   /// Adds |buf| of |type| to the pipeline at the given |descriptor_set|,
-  /// |binding| and |base_mip_level|.
+  /// |binding|, |base_mip_level|, and |dynamic_offset|.
   void AddBuffer(Buffer* buf,
                  BufferType type,
                  uint32_t descriptor_set,
                  uint32_t binding,
-                 uint32_t base_mip_level);
+                 uint32_t base_mip_level,
+                 uint32_t dynamic_offset);
   /// Adds |buf| to the pipeline at the given |arg_name|.
   void AddBuffer(Buffer* buf, BufferType type, const std::string& arg_name);
   /// Adds |buf| to the pipeline at the given |arg_no|.

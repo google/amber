@@ -52,9 +52,9 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
         device_, size_in_bytes, amber_buffer->GetFormat()));
     VkBufferUsageFlags flags =
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    if (IsUniformBuffer()) {
+    if (IsUniformBuffer() || IsUniformBufferDynamic()) {
       flags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    } else if (IsStorageBuffer()) {
+    } else if (IsStorageBuffer() || IsStorageBufferDynamic()) {
       flags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
     } else if (IsUniformTexelBuffer()) {
       flags |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;

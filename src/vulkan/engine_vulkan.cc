@@ -245,6 +245,10 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       type = BufferCommand::BufferType::kStorageTexelBuffer;
     } else if (buf_info.type == BufferType::kUniform) {
       type = BufferCommand::BufferType::kUniform;
+    } else if (buf_info.type == BufferType::kUniformDynamic) {
+      type = BufferCommand::BufferType::kUniformDynamic;
+    } else if (buf_info.type == BufferType::kStorageDynamic) {
+      type = BufferCommand::BufferType::kSSBODynamic;
     } else if (buf_info.type != BufferType::kStorage) {
       return Result("Vulkan: CreatePipeline - unknown buffer type: " +
                     std::to_string(static_cast<uint32_t>(buf_info.type)));
@@ -254,6 +258,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     cmd->SetDescriptorSet(buf_info.descriptor_set);
     cmd->SetBinding(buf_info.binding);
     cmd->SetBaseMipLevel(buf_info.base_mip_level);
+    cmd->SetDynamicOffset(buf_info.dynamic_offset);
     cmd->SetBuffer(buf_info.buffer);
 
     if (cmd->GetValues().empty()) {

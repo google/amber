@@ -48,6 +48,7 @@ class BufferBackedDescriptor : public Descriptor {
   }
   const std::vector<Buffer*>& GetAmberBuffers() const { return amber_buffers_; }
   void AddAmberBuffer(Buffer* buffer) { amber_buffers_.push_back(buffer); }
+  BufferBackedDescriptor* AsBufferBackedDescriptor() override { return this; }
 
  private:
   std::vector<Buffer*> amber_buffers_;

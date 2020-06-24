@@ -2650,5 +2650,281 @@ END
             r.Error());
 }
 
+TEST_F(AmberScriptParserTest, BindUniformBufferDynamic) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform_dynamic DESCRIPTOR_SET 1 BINDING 2 OFFSET 8
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(1U, bufs.size());
+  EXPECT_EQ(BufferType::kUniformDynamic, bufs[0].type);
+  EXPECT_EQ(1U, bufs[0].descriptor_set);
+  EXPECT_EQ(2U, bufs[0].binding);
+  EXPECT_EQ(8u, bufs[0].dynamic_offset);
+  EXPECT_EQ(static_cast<uint32_t>(0), bufs[0].location);
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+            bufs[0].buffer->GetFormat()->GetFormatType());
+}
+
+TEST_F(AmberScriptParserTest, BindUniformBufferArrayDynamic) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER buf0 FORMAT R32G32B32A32_SFLOAT
+BUFFER buf1 FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER_ARRAY buf0 buf1 AS uniform_dynamic DESCRIPTOR_SET 1 BINDING 2 OFFSET 8 16
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(2U, bufs.size());
+  EXPECT_EQ(BufferType::kUniformDynamic, bufs[0].type);
+  EXPECT_EQ(1U, bufs[0].descriptor_set);
+  EXPECT_EQ(2U, bufs[0].binding);
+  EXPECT_EQ(8u, bufs[0].dynamic_offset);
+  EXPECT_EQ(static_cast<uint32_t>(0), bufs[0].location);
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+            bufs[0].buffer->GetFormat()->GetFormatType());
+  EXPECT_EQ(1U, bufs[1].descriptor_set);
+  EXPECT_EQ(2U, bufs[1].binding);
+  EXPECT_EQ(16u, bufs[1].dynamic_offset);
+  EXPECT_EQ(static_cast<uint32_t>(0), bufs[1].location);
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+            bufs[1].buffer->GetFormat()->GetFormatType());
+}
+
+TEST_F(AmberScriptParserTest, BindUniformBufferDynamicMissingOffset) {
+  std::string in = R"(
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+PIPELINE graphics my_pipeline
+  BIND BUFFER my_buf AS uniform_dynamic DESCRIPTOR_SET 1 BINDING 2
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("5: expecting an OFFSET for dynamic buffer type", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindUniformBufferDynamicEmptyOffset) {
+  std::string in = R"(
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+PIPELINE graphics my_pipeline
+  BIND BUFFER my_buf AS uniform_dynamic DESCRIPTOR_SET 1 BINDING 2 OFFSET
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("5: expecting an integer value for OFFSET", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindUniformBufferDynamicInvalidOffset) {
+  std::string in = R"(
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+PIPELINE graphics my_pipeline
+  BIND BUFFER my_buf AS uniform_dynamic DESCRIPTOR_SET 1 BINDING 2 OFFSET foo
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("4: expecting an integer value for OFFSET", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindUniformBufferArrayDynamicNotEnoughOffsets) {
+  std::string in = R"(
+BUFFER buf0 FORMAT R32G32B32A32_SFLOAT
+BUFFER buf1 FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  BIND BUFFER_ARRAY buf0 buf1 AS uniform_dynamic DESCRIPTOR_SET 1 BINDING 2 OFFSET 8
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("7: expecting an OFFSET value for each buffer in the array",
+            r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindStorageBufferDynamic) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS storage_dynamic DESCRIPTOR_SET 1 BINDING 2 OFFSET 8
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(1U, bufs.size());
+  EXPECT_EQ(BufferType::kStorageDynamic, bufs[0].type);
+  EXPECT_EQ(1U, bufs[0].descriptor_set);
+  EXPECT_EQ(2U, bufs[0].binding);
+  EXPECT_EQ(8u, bufs[0].dynamic_offset);
+  EXPECT_EQ(static_cast<uint32_t>(0), bufs[0].location);
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+            bufs[0].buffer->GetFormat()->GetFormatType());
+}
+
+TEST_F(AmberScriptParserTest, BindStorageBufferArrayDynamic) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER buf0 FORMAT R32G32B32A32_SFLOAT
+BUFFER buf1 FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER_ARRAY buf0 buf1 AS storage_dynamic DESCRIPTOR_SET 1 BINDING 2 OFFSET 8 16
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(2U, bufs.size());
+  EXPECT_EQ(BufferType::kStorageDynamic, bufs[0].type);
+  EXPECT_EQ(1U, bufs[0].descriptor_set);
+  EXPECT_EQ(2U, bufs[0].binding);
+  EXPECT_EQ(8u, bufs[0].dynamic_offset);
+  EXPECT_EQ(static_cast<uint32_t>(0), bufs[0].location);
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+            bufs[0].buffer->GetFormat()->GetFormatType());
+  EXPECT_EQ(1U, bufs[1].descriptor_set);
+  EXPECT_EQ(2U, bufs[1].binding);
+  EXPECT_EQ(16u, bufs[1].dynamic_offset);
+  EXPECT_EQ(static_cast<uint32_t>(0), bufs[1].location);
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+            bufs[1].buffer->GetFormat()->GetFormatType());
+}
+
+TEST_F(AmberScriptParserTest, BindStorageBufferDynamicMissingOffset) {
+  std::string in = R"(
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+PIPELINE graphics my_pipeline
+  BIND BUFFER my_buf AS storage_dynamic DESCRIPTOR_SET 1 BINDING 2
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("5: expecting an OFFSET for dynamic buffer type", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindStorageBufferDynamicEmptyOffset) {
+  std::string in = R"(
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+PIPELINE graphics my_pipeline
+  BIND BUFFER my_buf AS storage_dynamic DESCRIPTOR_SET 1 BINDING 2 OFFSET
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("5: expecting an integer value for OFFSET", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindStorageBufferDynamicInvalidOffset) {
+  std::string in = R"(
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+PIPELINE graphics my_pipeline
+  BIND BUFFER my_buf AS storage_dynamic DESCRIPTOR_SET 1 BINDING 2 OFFSET foo
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("4: expecting an integer value for OFFSET", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindStorageBufferArrayDynamicNotEnoughOffsets) {
+  std::string in = R"(
+BUFFER buf0 FORMAT R32G32B32A32_SFLOAT
+BUFFER buf1 FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  BIND BUFFER_ARRAY buf0 buf1 AS storage_dynamic DESCRIPTOR_SET 1 BINDING 2 OFFSET 8
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("7: expecting an OFFSET value for each buffer in the array",
+            r.Error());
+}
+
 }  // namespace amberscript
 }  // namespace amber

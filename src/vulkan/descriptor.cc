@@ -13,8 +13,10 @@
 // limitations under the License.
 
 #include "src/vulkan/descriptor.h"
+
 #include <cassert>
 #include <cstring>
+
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
@@ -36,8 +38,12 @@ VkDescriptorType Descriptor::GetVkDescriptorType() const {
   switch (type_) {
     case DescriptorType::kStorageBuffer:
       return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    case DescriptorType::kStorageBufferDynamic:
+      return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
     case DescriptorType::kUniformBuffer:
       return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    case DescriptorType::kUniformBufferDynamic:
+      return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     case DescriptorType::kSampler:
       return VK_DESCRIPTOR_TYPE_SAMPLER;
     case DescriptorType::kStorageImage:

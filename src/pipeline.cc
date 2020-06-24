@@ -510,7 +510,8 @@ void Pipeline::AddBuffer(Buffer* buf,
                          BufferType type,
                          uint32_t descriptor_set,
                          uint32_t binding,
-                         uint32_t base_mip_level) {
+                         uint32_t base_mip_level,
+                         uint32_t dynamic_offset) {
   buffers_.push_back(BufferInfo{buf});
 
   auto& info = buffers_.back();
@@ -518,6 +519,7 @@ void Pipeline::AddBuffer(Buffer* buf,
   info.binding = binding;
   info.type = type;
   info.base_mip_level = base_mip_level;
+  info.dynamic_offset = dynamic_offset;
 }
 
 void Pipeline::AddBuffer(Buffer* buf,
@@ -540,6 +542,7 @@ void Pipeline::AddBuffer(Buffer* buf,
   info.binding = std::numeric_limits<uint32_t>::max();
   info.arg_no = std::numeric_limits<uint32_t>::max();
   info.base_mip_level = 0;
+  info.dynamic_offset = 0;
 }
 
 void Pipeline::AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no) {
@@ -559,6 +562,7 @@ void Pipeline::AddBuffer(Buffer* buf, BufferType type, uint32_t arg_no) {
   info.descriptor_set = std::numeric_limits<uint32_t>::max();
   info.binding = std::numeric_limits<uint32_t>::max();
   info.base_mip_level = 0;
+  info.dynamic_offset = 0;
 }
 
 void Pipeline::ClearBuffers(uint32_t descriptor_set, uint32_t binding) {
@@ -852,7 +856,7 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
         opencl_pod_buffer_map_.insert(
             buf_iter,
             std::make_pair(std::make_pair(descriptor_set, binding), buffer));
-        AddBuffer(buffer, buffer_type, descriptor_set, binding, 0);
+        AddBuffer(buffer, buffer_type, descriptor_set, binding, 0, 0);
       } else {
         buffer = buf_iter->second;
       }
