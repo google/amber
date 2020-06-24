@@ -338,13 +338,11 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
           "Descriptors bound to the same binding needs to have matching "
           "descriptor types");
     }
-    reinterpret_cast<BufferBackedDescriptor*>(desc)->AddAmberBuffer(
-        cmd->GetBuffer());
+    desc->AsBufferBackedDescriptor()->AddAmberBuffer(cmd->GetBuffer());
   }
 
   if (cmd->IsUniformDynamic() || cmd->IsSSBODynamic())
-    reinterpret_cast<BufferDescriptor*>(desc)->AddDynamicOffset(
-        cmd->GetDynamicOffset());
+    desc->AsBufferDescriptor()->AddDynamicOffset(cmd->GetDynamicOffset());
 
   if (cmd->IsSSBO() && !desc->IsStorageBuffer()) {
     return Result(
@@ -386,8 +384,7 @@ Result Pipeline::AddSamplerDescriptor(const SamplerCommand* cmd) {
           "Descriptors bound to the same binding needs to have matching "
           "descriptor types");
     }
-    reinterpret_cast<SamplerDescriptor*>(desc)->AddAmberSampler(
-        cmd->GetSampler());
+    desc->AsSamplerDescriptor()->AddAmberSampler(cmd->GetSampler());
   }
 
   return {};

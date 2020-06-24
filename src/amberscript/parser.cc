@@ -1145,11 +1145,12 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
             token = tokenizer_->NextToken();
 
             if (!token->IsInteger()) {
-              if (i > 0)
+              if (i > 0) {
                 return Result(
                     "expecting an OFFSET value for each buffer in the array");
-              else
+              } else {
                 return Result("expecting an integer value for OFFSET");
+              }
             }
 
             dynamic_offsets[i] = token->AsUint32();

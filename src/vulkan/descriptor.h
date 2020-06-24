@@ -30,6 +30,9 @@ namespace vulkan {
 
 class CommandBuffer;
 class Device;
+class BufferDescriptor;
+class BufferBackedDescriptor;
+class SamplerDescriptor;
 
 enum class DescriptorType : uint8_t {
   kStorageBuffer = 0,
@@ -61,6 +64,9 @@ class Descriptor {
   virtual Result AddToBuffer(const std::vector<Value>&, uint32_t) { return {}; }
   virtual uint32_t GetDescriptorCount() { return 1; }
   virtual std::vector<uint32_t> GetDynamicOffsets() { return {}; }
+  virtual BufferDescriptor* AsBufferDescriptor() { return nullptr; }
+  virtual BufferBackedDescriptor* AsBufferBackedDescriptor() { return nullptr; }
+  virtual SamplerDescriptor* AsSamplerDescriptor() { return nullptr; }
   uint32_t GetDescriptorSet() const { return descriptor_set_; }
   uint32_t GetBinding() const { return binding_; }
   VkDescriptorType GetVkDescriptorType() const;

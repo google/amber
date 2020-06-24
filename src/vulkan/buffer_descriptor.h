@@ -50,6 +50,7 @@ class BufferDescriptor : public BufferBackedDescriptor {
     return dynamic_offsets_;
   }
   void AddDynamicOffset(uint32_t offset) { dynamic_offsets_.push_back(offset); }
+  BufferDescriptor* AsBufferDescriptor() override { return this; }
 
  protected:
   std::vector<Resource*> GetResources() override;

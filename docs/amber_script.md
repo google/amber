@@ -552,8 +552,8 @@ All BIND BUFFER and BIND SAMPLER commands below define a descriptor set and bind
 These commands can be replaced with BIND BUFFER_ARRAY and BIND SAMPLER_ARRAY commands.
 In these cases multiple buffer or sampler names need to be provided, separated by spaces.
 This creates a descriptor array of buffers or samplers bound to the same descriptor set
-and binding ID. An array of offsets should be provided for OFFSET command when using
-dynamic buffers with BUFFER_ARRAY.
+and binding ID. An array of offsets should be provided via `OFFSET offset1 offset2 ...`
+when using dynamic buffers with BUFFER_ARRAY.
 ```groovy
   # Bind the buffer of the given |buffer_type| at the given descriptor set
   # and binding. The buffer will use a start index of 0.

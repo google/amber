@@ -42,6 +42,7 @@ class SamplerDescriptor : public Descriptor {
   uint32_t GetDescriptorCount() override {
     return static_cast<uint32_t>(amber_samplers_.size());
   }
+  SamplerDescriptor* AsSamplerDescriptor() override { return this; }
 
  private:
   std::vector<amber::Sampler*> amber_samplers_;
