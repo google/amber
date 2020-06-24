@@ -61,8 +61,8 @@ void main()
 }
 END
 
-# Vulkan spec table 48 lists minimum requirement for
-# minStorageBufferOffsetAlignment of 256 bytes.
+# The Vulkan spec lists the maximum value of minStorageBufferOffsetAlignment
+# (i.e. the maximum possible alignment requirement) as 256 bytes.
 # Meaningful data is placed at this offset.
 BUFFER buf DATA_TYPE vec4<float> DATA
 1.0 0.0 0.0 1.0
@@ -106,7 +106,7 @@ PIPELINE graphics pipeline0
   ATTACH vtex_shader_uniform
   ATTACH frag_shader
 
-  # Using a multiple of minimum required offset alignment based on Vulkan spec.
+  # Using the maximum possible required offset alignment of 256 bytes to support all implementations.
   BIND BUFFER buf AS uniform_dynamic DESCRIPTOR_SET 0 BINDING 0 OFFSET 256
   BIND BUFFER framebuffer AS color LOCATION 0
 
@@ -117,7 +117,7 @@ PIPELINE graphics pipeline1
   ATTACH vtex_shader_storage
   ATTACH frag_shader
 
-  # Using a multiple of minimum required offset alignment based on Vulkan spec.
+  # Using the maximum possible required offset alignment of 256 bytes to support all implementations.
   BIND BUFFER buf AS storage_dynamic DESCRIPTOR_SET 0 BINDING 1 OFFSET 512
   BIND BUFFER framebuffer AS color LOCATION 0
 

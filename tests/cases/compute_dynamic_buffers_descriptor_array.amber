@@ -28,8 +28,8 @@ void main()
 }
 END
 
-# Vulkan spec table 48 lists minimum requirement for
-# minStorageBufferOffsetAlignment of 256 bytes.
+# The Vulkan spec lists the maximum value of minStorageBufferOffsetAlignment
+# (i.e. the maximum possible alignment requirement) as 256 bytes.
 # Allocate enough space to hold one vec4 (each 16 bytes)
 # after the alignment (256 / 16 + 1).
 BUFFER buf0 DATA_TYPE vec4<float> SIZE 17 FILL 0.0
@@ -38,7 +38,7 @@ BUFFER buf1 DATA_TYPE vec4<float> SIZE 17 FILL 0.0
 PIPELINE compute pipeline
   ATTACH compute_shader
 
-  # Using the minimum requirement of 256 byte offset alignment to support all implementations.
+  # Using the maximum possible required offset alignment of 256 bytes to support all implementations.
   BIND BUFFER_ARRAY buf0 buf1 AS storage_dynamic DESCRIPTOR_SET 0 BINDING 0 OFFSET 0 256
 END
 
