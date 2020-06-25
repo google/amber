@@ -88,8 +88,7 @@ class EngineVulkan : public Engine {
       std::vector<VkPipelineShaderStageCreateInfo>* out);
 
   Result SetShader(amber::Pipeline* pipeline,
-                   ShaderType type,
-                   const std::vector<uint32_t>& data);
+                   const amber::Pipeline::ShaderInfo& shader);
 
   std::unique_ptr<Device> device_;
   std::unique_ptr<CommandPool> pool_;
@@ -97,6 +96,7 @@ class EngineVulkan : public Engine {
   std::map<amber::Pipeline*, PipelineInfo> pipeline_map_;
 
   std::unique_ptr<Debugger> debugger_;
+  std::map<std::string, VkShaderModule> shaders_;
 };
 
 }  // namespace vulkan

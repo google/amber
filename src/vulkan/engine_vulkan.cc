@@ -79,17 +79,11 @@ bool AreAllExtensionsSupported(
 EngineVulkan::EngineVulkan() : Engine() {}
 
 EngineVulkan::~EngineVulkan() {
-  for (auto it = pipeline_map_.begin(); it != pipeline_map_.end(); ++it) {
-    auto& info = it->second;
-
-    for (auto mod_it = info.shader_info.begin();
-         mod_it != info.shader_info.end(); ++mod_it) {
-      auto vk_device = device_->GetVkDevice();
-      if (vk_device != VK_NULL_HANDLE &&
-          mod_it->second.shader != VK_NULL_HANDLE) {
-        device_->GetPtrs()->vkDestroyShaderModule(
-            vk_device, mod_it->second.shader, nullptr);
-      }
+  auto vk_device = device_->GetVkDevice();
+  if (vk_device != VK_NULL_HANDLE) {
+    for (auto shader : shaders_) {
+      device_->GetPtrs()->vkDestroyShaderModule(vk_device, shader.second,
+                                                nullptr);
     }
   }
 }
@@ -146,8 +140,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   auto& info = pipeline_map_[pipeline];
 
   for (const auto& shader_info : pipeline->GetShaders()) {
-    Result r =
-        SetShader(pipeline, shader_info.GetShaderType(), shader_info.GetData());
+    Result r = SetShader(pipeline, shader_info);
     if (!r.IsSuccess())
       return r;
   }
@@ -287,27 +280,35 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 }
 
 Result EngineVulkan::SetShader(amber::Pipeline* pipeline,
-                               ShaderType type,
-                               const std::vector<uint32_t>& data) {
+                               const amber::Pipeline::ShaderInfo& shader) {
+  const auto type = shader.GetShaderType();
+  const auto& data = shader.GetData();
+  const auto shader_name = shader.GetShader()->GetName();
   auto& info = pipeline_map_[pipeline];
 
   auto it = info.shader_info.find(type);
   if (it != info.shader_info.end())
     return Result("Vulkan::Setting Duplicated Shader Types Fail");
 
-  VkShaderModuleCreateInfo create_info = VkShaderModuleCreateInfo();
-  create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  create_info.codeSize = data.size() * sizeof(uint32_t);
-  create_info.pCode = data.data();
+  VkShaderModule shader_module;
+  if (shaders_.find(shader_name) != shaders_.end()) {
+    shader_module = shaders_[shader_name];
+  } else {
+    VkShaderModuleCreateInfo create_info = VkShaderModuleCreateInfo();
+    create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    create_info.codeSize = data.size() * sizeof(uint32_t);
+    create_info.pCode = data.data();
 
-  VkShaderModule shader;
-  if (device_->GetPtrs()->vkCreateShaderModule(device_->GetVkDevice(),
-                                               &create_info, nullptr,
-                                               &shader) != VK_SUCCESS) {
-    return Result("Vulkan::Calling vkCreateShaderModule Fail");
+    if (device_->GetPtrs()->vkCreateShaderModule(
+            device_->GetVkDevice(), &create_info, nullptr, &shader_module) !=
+        VK_SUCCESS) {
+      return Result("Vulkan::Calling vkCreateShaderModule Fail");
+    }
+
+    shaders_[shader_name] = shader_module;
   }
 
-  info.shader_info[type].shader = shader;
+  info.shader_info[type].shader = shader_module;
 
   for (auto& shader_info : pipeline->GetShaders()) {
     if (shader_info.GetShaderType() != type)
