@@ -940,8 +940,6 @@ Result Parser::ToBufferType(const std::string& name, BufferType* type) {
     *type = BufferType::kDepthStencil;
   else if (name == "push_constant")
     *type = BufferType::kPushConstant;
-  else if (name == "combined_image_sampler")
-    *type = BufferType::kCombinedImageSampler;
   else if (name == "uniform")
     *type = BufferType::kUniform;
   else if (name == "uniform_dynamic")
