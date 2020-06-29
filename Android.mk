@@ -20,7 +20,8 @@ LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti \
     -Wno-unknown-pragmas \
     -DAMBER_ENABLE_SPIRV_TOOLS=1 \
     -DAMBER_ENABLE_SHADERC=1 \
-    -DAMBER_ENGINE_VULKAN=1
+    -DAMBER_ENGINE_VULKAN=1 \
+    -DAMBER_USE_LOCAL_VULKAN=1
 LOCAL_SRC_FILES:= \
     src/amber.cc \
     src/amberscript/parser.cc \

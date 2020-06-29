@@ -425,36 +425,47 @@ Result Device::Initialize(
   void* ptr = available_features2.pNext;
   while (ptr != nullptr) {
     BaseOutStructure* s = static_cast<BaseOutStructure*>(ptr);
-    if (s->sType ==
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR) {
-      var_ptrs = static_cast<VkPhysicalDeviceVariablePointerFeaturesKHR*>(ptr);
-    } else if (s->sType ==
-               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR) {
-      float16_ptrs = static_cast<VkPhysicalDeviceFloat16Int8FeaturesKHR*>(ptr);
-    } else if (s->sType ==
-               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR) {
-      storage8_ptrs = static_cast<VkPhysicalDevice8BitStorageFeaturesKHR*>(ptr);
-    } else if (s->sType ==
-               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR) {
-      storage16_ptrs =
-          static_cast<VkPhysicalDevice16BitStorageFeaturesKHR*>(ptr);
-    } else if (
-        s->sType ==
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT) {  // NOLINT(whitespace/line_length)
-      subgroup_size_control_features =
-          static_cast<VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*>(ptr);
-    } else if (s->sType ==
-               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES) {
-      vulkan11_ptrs = static_cast<VkPhysicalDeviceVulkan11Features*>(ptr);
-    } else if (s->sType ==
-               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES) {
-      vulkan12_ptrs = static_cast<VkPhysicalDeviceVulkan12Features*>(ptr);
+    switch (s->sType) {
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR:
+        var_ptrs =
+            static_cast<VkPhysicalDeviceVariablePointerFeaturesKHR*>(ptr);
+        break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR:
+        float16_ptrs =
+            static_cast<VkPhysicalDeviceFloat16Int8FeaturesKHR*>(ptr);
+        break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR:
+        storage8_ptrs =
+            static_cast<VkPhysicalDevice8BitStorageFeaturesKHR*>(ptr);
+        break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR:
+        storage16_ptrs =
+            static_cast<VkPhysicalDevice16BitStorageFeaturesKHR*>(ptr);
+        break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT:
+        subgroup_size_control_features =
+            static_cast<VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*>(ptr);
+        break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES:
+        vulkan11_ptrs = static_cast<VkPhysicalDeviceVulkan11Features*>(ptr);
+        break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES:
+        vulkan12_ptrs = static_cast<VkPhysicalDeviceVulkan12Features*>(ptr);
+        break;
+      default:
+        break;
     }
     ptr = s->pNext;
   }
 
   // Compare the available additional (non-core) features against the
   // requirements.
+  //
+  // Vulkan 1.2 added support for defining non-core physical device features
+  // using VkPhysicalDeviceVulkan11Features and VkPhysicalDeviceVulkan12Features
+  // structures. If |vulkan11_ptrs| and/or |vulkan12_ptrs| are null, we must
+  // check for features using the old approach (by checking across various
+  // feature structs); otherwise, we can check features via the new structs.
   for (const auto& feature : required_features) {
     // First check the feature structures are provided for the required
     // features.
