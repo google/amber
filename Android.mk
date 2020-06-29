@@ -20,8 +20,7 @@ LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti \
     -Wno-unknown-pragmas \
     -DAMBER_ENABLE_SPIRV_TOOLS=1 \
     -DAMBER_ENABLE_SHADERC=1 \
-    -DAMBER_ENGINE_VULKAN=1 \
-    -DAMBER_USE_LOCAL_VULKAN=1
+    -DAMBER_ENGINE_VULKAN=1
 LOCAL_SRC_FILES:= \
     src/amber.cc \
     src/amberscript/parser.cc \
@@ -76,7 +75,7 @@ LOCAL_SRC_FILES:= \
     src/vulkan/vertex_buffer.cc \
     src/vulkan_engine_config.cc
 LOCAL_STATIC_LIBRARIES:=glslang SPIRV-Tools shaderc
-LOCAL_C_INCLUDES:=$(LOCAL_PATH)/include
+LOCAL_C_INCLUDES:=$(LOCAL_PATH)/include $(LOCAL_PATH)/third_party/vulkan-headers/include
 LOCAL_EXPORT_C_INCLUDES:=$(LOCAL_PATH)/include
 include $(BUILD_STATIC_LIBRARY)
 
