@@ -394,7 +394,6 @@ Result Device::Initialize(
     PFN_vkGetInstanceProcAddr getInstanceProcAddr,
     Delegate* delegate,
     const std::vector<std::string>& required_features,
-    const std::vector<std::string>& required_instance_extensions,
     const std::vector<std::string>& required_device_extensions,
     const VkPhysicalDeviceFeatures& available_features,
     const VkPhysicalDeviceFeatures2KHR& available_features2,
@@ -403,66 +402,125 @@ Result Device::Initialize(
   if (!r.IsSuccess())
     return r;
 
-  bool use_physical_device_features_2 = false;
-  for (auto& ext : required_instance_extensions) {
-    if (ext == "VK_KHR_get_physical_device_properties2")
-      use_physical_device_features_2 = true;
+  // Check for the core features. We don't know if available_features or
+  // available_features2 is provided, so check both.
+  if (!AreAllRequiredFeaturesSupported(available_features, required_features) &&
+      !AreAllRequiredFeaturesSupported(available_features2.features,
+                                       required_features)) {
+    return Result(
+        "Vulkan: Device::Initialize given physical device does not support "
+        "required features");
   }
 
-  VkPhysicalDeviceFeatures available_vulkan_features =
-      VkPhysicalDeviceFeatures();
-  if (use_physical_device_features_2) {
-    available_vulkan_features = available_features2.features;
+  // Search for additional features in case they are found in pNext field of
+  // available_features2.
+  VkPhysicalDeviceVariablePointerFeaturesKHR* var_ptrs = nullptr;
+  VkPhysicalDeviceFloat16Int8FeaturesKHR* float16_ptrs = nullptr;
+  VkPhysicalDevice8BitStorageFeaturesKHR* storage8_ptrs = nullptr;
+  VkPhysicalDevice16BitStorageFeaturesKHR* storage16_ptrs = nullptr;
+  VkPhysicalDeviceVulkan11Features* vulkan11_ptrs = nullptr;
+  VkPhysicalDeviceVulkan12Features* vulkan12_ptrs = nullptr;
+  VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*
+      subgroup_size_control_features = nullptr;
+  void* ptr = available_features2.pNext;
+  while (ptr != nullptr) {
+    BaseOutStructure* s = static_cast<BaseOutStructure*>(ptr);
+    if (s->sType ==
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR) {
+      var_ptrs = static_cast<VkPhysicalDeviceVariablePointerFeaturesKHR*>(ptr);
+    } else if (s->sType ==
+               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR) {
+      float16_ptrs = static_cast<VkPhysicalDeviceFloat16Int8FeaturesKHR*>(ptr);
+    } else if (s->sType ==
+               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR) {
+      storage8_ptrs = static_cast<VkPhysicalDevice8BitStorageFeaturesKHR*>(ptr);
+    } else if (s->sType ==
+               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR) {
+      storage16_ptrs =
+          static_cast<VkPhysicalDevice16BitStorageFeaturesKHR*>(ptr);
+    } else if (
+        s->sType ==
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT) {  // NOLINT(whitespace/line_length)
+      subgroup_size_control_features =
+          static_cast<VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*>(ptr);
+    } else if (s->sType ==
+               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES) {
+      vulkan11_ptrs = static_cast<VkPhysicalDeviceVulkan11Features*>(ptr);
+    } else if (s->sType ==
+               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES) {
+      vulkan12_ptrs = static_cast<VkPhysicalDeviceVulkan12Features*>(ptr);
+    }
+    ptr = s->pNext;
+  }
 
-    VkPhysicalDeviceVariablePointerFeaturesKHR* var_ptrs = nullptr;
-    VkPhysicalDeviceFloat16Int8FeaturesKHR* float16_ptrs = nullptr;
-    VkPhysicalDevice8BitStorageFeaturesKHR* storage8_ptrs = nullptr;
-    VkPhysicalDevice16BitStorageFeaturesKHR* storage16_ptrs = nullptr;
-    VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*
-        subgroup_size_control_features = nullptr;
-    void* ptr = available_features2.pNext;
-    while (ptr != nullptr) {
-      BaseOutStructure* s = static_cast<BaseOutStructure*>(ptr);
-      if (s->sType ==
-          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR) {
-        var_ptrs =
-            static_cast<VkPhysicalDeviceVariablePointerFeaturesKHR*>(ptr);
-      } else if (s->sType ==
-                 VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR) {
-        float16_ptrs =
-            static_cast<VkPhysicalDeviceFloat16Int8FeaturesKHR*>(ptr);
-      } else if (s->sType ==
-                 VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR) {
-        storage8_ptrs =
-            static_cast<VkPhysicalDevice8BitStorageFeaturesKHR*>(ptr);
-      } else if (s->sType ==
-                 VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR) {
-        storage16_ptrs =
-            static_cast<VkPhysicalDevice16BitStorageFeaturesKHR*>(ptr);
-      } else if (
-          s->sType ==
-          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT) {  // NOLINT(whitespace/line_length)
-        subgroup_size_control_features =
-            static_cast<VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*>(ptr);
-      }
-      ptr = s->pNext;
+  // Compare the available additional (non-core) features against the
+  // requirements.
+  for (const auto& feature : required_features) {
+    // First check the feature structures are provided for the required
+    // features.
+    if ((feature == kVariablePointers ||
+         feature == kVariablePointersStorageBuffer) &&
+        var_ptrs == nullptr && vulkan11_ptrs == nullptr) {
+      return amber::Result(
+          "Variable pointers requested but feature not returned");
+    }
+    if ((feature == k16BitStorage_Storage ||
+         feature == k16BitStorage_UniformAndStorage ||
+         feature == k16BitStorage_PushConstant ||
+         feature == k16BitStorage_InputOutput) &&
+        storage16_ptrs == nullptr && vulkan11_ptrs == nullptr) {
+      return amber::Result(
+          "Shader 16-bit storage requested but feature not returned");
+    }
+    if ((feature == kFloat16Int8_Float16 || feature == kFloat16Int8_Int8) &&
+        float16_ptrs == nullptr && vulkan12_ptrs == nullptr) {
+      return amber::Result(
+          "Shader float16/int8 requested but feature not returned");
+    }
+    if ((feature == k8BitStorage_UniformAndStorage ||
+         feature == k8BitStorage_Storage ||
+         feature == k8BitStorage_PushConstant) &&
+        storage8_ptrs == nullptr && vulkan12_ptrs == nullptr) {
+      return amber::Result(
+          "Shader 8-bit storage requested but feature not returned");
+    }
+    if ((feature == kSubgroupSizeControl || feature == kComputeFullSubgroups) &&
+        subgroup_size_control_features == nullptr) {
+      return amber::Result("Missing subgroup size control features");
     }
 
-    std::vector<std::string> required_features1;
-    for (const auto& feature : required_features) {
-      // No dot means this is a features1 feature.
-      if (feature.find_first_of('.') == std::string::npos) {
-        required_features1.push_back(feature);
-        continue;
-      }
+    // Next check the fields of the feature structures.
 
-      if ((feature == kVariablePointers ||
-           feature == kVariablePointersStorageBuffer) &&
-          var_ptrs == nullptr) {
+    // If Vulkan 1.1 structure exists the features are set there.
+    if (vulkan11_ptrs) {
+      if (feature == kVariablePointers &&
+          vulkan11_ptrs->variablePointers != VK_TRUE) {
+        return amber::Result("Missing variable pointers feature");
+      }
+      if (feature == kVariablePointersStorageBuffer &&
+          vulkan11_ptrs->variablePointersStorageBuffer != VK_TRUE) {
         return amber::Result(
-            "Variable pointers requested but feature not returned");
+            "Missing variable pointers storage buffer feature");
       }
-
+      if (feature == k16BitStorage_Storage &&
+          vulkan11_ptrs->storageBuffer16BitAccess != VK_TRUE) {
+        return amber::Result("Missing 16-bit storage access");
+      }
+      if (feature == k16BitStorage_UniformAndStorage &&
+          vulkan11_ptrs->uniformAndStorageBuffer16BitAccess != VK_TRUE) {
+        return amber::Result("Missing 16-bit uniform and storage access");
+      }
+      if (feature == k16BitStorage_PushConstant &&
+          vulkan11_ptrs->storagePushConstant16 != VK_TRUE) {
+        return amber::Result("Missing 16-bit push constant access");
+      }
+      if (feature == k16BitStorage_InputOutput &&
+          vulkan11_ptrs->storageInputOutput16 != VK_TRUE) {
+        return amber::Result("Missing 16-bit input/output access");
+      }
+    } else {
+      // Vulkan 1.1 structure was not found. Use separate structures per each
+      // feature.
       if (feature == kVariablePointers &&
           var_ptrs->variablePointers != VK_TRUE) {
         return amber::Result("Missing variable pointers feature");
@@ -472,52 +530,6 @@ Result Device::Initialize(
         return amber::Result(
             "Missing variable pointers storage buffer feature");
       }
-
-      if ((feature == kFloat16Int8_Float16 || feature == kFloat16Int8_Int8) &&
-          float16_ptrs == nullptr) {
-        return amber::Result(
-            "Shader float16/int8 requested but feature not returned");
-      }
-
-      if (feature == kFloat16Int8_Float16 &&
-          float16_ptrs->shaderFloat16 != VK_TRUE) {
-        return amber::Result("Missing float16 feature");
-      }
-
-      if (feature == kFloat16Int8_Int8 && float16_ptrs->shaderInt8 != VK_TRUE) {
-        return amber::Result("Missing int8 feature");
-      }
-
-      if ((feature == k8BitStorage_UniformAndStorage ||
-           feature == k8BitStorage_Storage ||
-           feature == k8BitStorage_PushConstant) &&
-          storage8_ptrs == nullptr) {
-        return amber::Result(
-            "Shader 8-bit storage requested but feature not returned");
-      }
-
-      if (feature == k8BitStorage_Storage &&
-          storage8_ptrs->storageBuffer8BitAccess != VK_TRUE) {
-        return amber::Result("Missing 8-bit storage access");
-      }
-      if (feature == k8BitStorage_UniformAndStorage &&
-          storage8_ptrs->uniformAndStorageBuffer8BitAccess != VK_TRUE) {
-        return amber::Result("Missing 8-bit uniform and storage access");
-      }
-      if (feature == k8BitStorage_PushConstant &&
-          storage8_ptrs->storagePushConstant8 != VK_TRUE) {
-        return amber::Result("Missing 8-bit push constant access");
-      }
-
-      if ((feature == k16BitStorage_Storage ||
-           feature == k16BitStorage_UniformAndStorage ||
-           feature == k16BitStorage_PushConstant ||
-           feature == k16BitStorage_InputOutput) &&
-          storage16_ptrs == nullptr) {
-        return amber::Result(
-            "Shader 16-bit storage requested but feature not returned");
-      }
-
       if (feature == k16BitStorage_Storage &&
           storage16_ptrs->storageBuffer16BitAccess != VK_TRUE) {
         return amber::Result("Missing 16-bit storage access");
@@ -534,31 +546,62 @@ Result Device::Initialize(
           storage16_ptrs->storageInputOutput16 != VK_TRUE) {
         return amber::Result("Missing 16-bit input/output access");
       }
+    }
 
-      if ((feature == kSubgroupSizeControl ||
-           feature == kComputeFullSubgroups) &&
-          subgroup_size_control_features == nullptr) {
-        return amber::Result("Missing subgroup size control features");
+    // If Vulkan 1.2 structure exists the features are set there.
+    if (vulkan12_ptrs) {
+      if (feature == kFloat16Int8_Float16 &&
+          vulkan12_ptrs->shaderFloat16 != VK_TRUE) {
+        return amber::Result("Missing float16 feature");
       }
-      if (feature == kSubgroupSizeControl &&
-          subgroup_size_control_features->subgroupSizeControl != VK_TRUE) {
-        return amber::Result("Missing subgroup size control feature");
+      if (feature == kFloat16Int8_Int8 &&
+          vulkan12_ptrs->shaderInt8 != VK_TRUE) {
+        return amber::Result("Missing int8 feature");
       }
-      if (feature == kComputeFullSubgroups &&
-          subgroup_size_control_features->computeFullSubgroups != VK_TRUE) {
-        return amber::Result("Missing compute full subgroups feature");
+      if (feature == k8BitStorage_Storage &&
+          vulkan12_ptrs->storageBuffer8BitAccess != VK_TRUE) {
+        return amber::Result("Missing 8-bit storage access");
+      }
+      if (feature == k8BitStorage_UniformAndStorage &&
+          vulkan12_ptrs->uniformAndStorageBuffer8BitAccess != VK_TRUE) {
+        return amber::Result("Missing 8-bit uniform and storage access");
+      }
+      if (feature == k8BitStorage_PushConstant &&
+          vulkan12_ptrs->storagePushConstant8 != VK_TRUE) {
+        return amber::Result("Missing 8-bit push constant access");
+      }
+    } else {
+      // Vulkan 1.2 structure was not found. Use separate structures per each
+      // feature.
+      if (feature == kFloat16Int8_Float16 &&
+          float16_ptrs->shaderFloat16 != VK_TRUE) {
+        return amber::Result("Missing float16 feature");
+      }
+      if (feature == kFloat16Int8_Int8 && float16_ptrs->shaderInt8 != VK_TRUE) {
+        return amber::Result("Missing int8 feature");
+      }
+      if (feature == k8BitStorage_Storage &&
+          storage8_ptrs->storageBuffer8BitAccess != VK_TRUE) {
+        return amber::Result("Missing 8-bit storage access");
+      }
+      if (feature == k8BitStorage_UniformAndStorage &&
+          storage8_ptrs->uniformAndStorageBuffer8BitAccess != VK_TRUE) {
+        return amber::Result("Missing 8-bit uniform and storage access");
+      }
+      if (feature == k8BitStorage_PushConstant &&
+          storage8_ptrs->storagePushConstant8 != VK_TRUE) {
+        return amber::Result("Missing 8-bit push constant access");
       }
     }
 
-  } else {
-    available_vulkan_features = available_features;
-  }
-
-  if (!AreAllRequiredFeaturesSupported(available_vulkan_features,
-                                       required_features)) {
-    return Result(
-        "Vulkan: Device::Initialize given physical device does not support "
-        "required features");
+    if (feature == kSubgroupSizeControl &&
+        subgroup_size_control_features->subgroupSizeControl != VK_TRUE) {
+      return amber::Result("Missing subgroup size control feature");
+    }
+    if (feature == kComputeFullSubgroups &&
+        subgroup_size_control_features->computeFullSubgroups != VK_TRUE) {
+      return amber::Result("Missing compute full subgroups feature");
+    }
   }
 
   if (!AreAllExtensionsSupported(available_extensions,
@@ -578,7 +621,7 @@ Result Device::Initialize(
   const bool needs_subgroup_size_control =
       std::find(required_features.begin(), required_features.end(),
                 kSubgroupSizeControl) != required_features.end();
-  if (needs_subgroup_size_control && use_physical_device_features_2) {
+  if (needs_subgroup_size_control) {
     PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR =
         reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(
             getInstanceProcAddr(instance_,
