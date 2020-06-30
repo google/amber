@@ -75,7 +75,7 @@ LOCAL_SRC_FILES:= \
     src/vulkan/vertex_buffer.cc \
     src/vulkan_engine_config.cc
 LOCAL_STATIC_LIBRARIES:=glslang SPIRV-Tools shaderc
-LOCAL_C_INCLUDES:=$(LOCAL_PATH)/include
+LOCAL_C_INCLUDES:=$(LOCAL_PATH)/include $(LOCAL_PATH)/third_party/vulkan-headers/include
 LOCAL_EXPORT_C_INCLUDES:=$(LOCAL_PATH)/include
 include $(BUILD_STATIC_LIBRARY)
 
