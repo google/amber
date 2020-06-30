@@ -394,6 +394,7 @@ Result Device::Initialize(
     PFN_vkGetInstanceProcAddr getInstanceProcAddr,
     Delegate* delegate,
     const std::vector<std::string>& required_features,
+    const std::vector<std::string>& required_instance_extensions,
     const std::vector<std::string>& required_device_extensions,
     const VkPhysicalDeviceFeatures& available_features,
     const VkPhysicalDeviceFeatures2KHR& available_features2,
@@ -628,11 +629,24 @@ Result Device::Initialize(
   ptrs_.vkGetPhysicalDeviceMemoryProperties(physical_device_,
                                             &physical_memory_properties_);
 
+  bool use_physical_device_features_2 = false;
+  for (auto& ext : required_instance_extensions) {
+    if (ext == "VK_KHR_get_physical_device_properties2")
+      use_physical_device_features_2 = true;
+  }
+
   subgroup_size_control_properties_ = {};
   const bool needs_subgroup_size_control =
       std::find(required_features.begin(), required_features.end(),
                 kSubgroupSizeControl) != required_features.end();
+
   if (needs_subgroup_size_control) {
+    if (!use_physical_device_features_2) {
+      return Result(
+          "Vulkan: Device::Initialize subgroup size control feature also "
+          "requires VK_KHR_get_physical_device_properties2");
+    }
+
     PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR =
         reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(
             getInstanceProcAddr(instance_,
