@@ -58,12 +58,6 @@ static constexpr const auto kStepEventTimeout = std::chrono::seconds(1);
 // Event provides a basic wait-and-signal synchronization primitive.
 class Event {
  public:
-  // Wait blocks until the event is fired.
-  void Wait() {
-    std::unique_lock<std::mutex> lock(mutex_);
-    cv_.wait(lock, [&] { return signalled_; });
-  }
-
   // Wait blocks until the event is fired, or the timeout is reached.
   // If the Event was signalled, then Wait returns true, otherwise false.
   template <typename Rep, typename Period>
@@ -143,11 +137,6 @@ struct Variable {
 
   // Get parses the Variable value for the requested type, assigning the result
   // to |out|. Returns true on success, otherwise false.
-  bool Get(int* out) const {
-    *out = std::atoi(value.c_str());
-    return true;  // TODO(bclayton): Verify the value parsed correctly.
-  }
-
   bool Get(uint32_t* out) const {
     *out = static_cast<uint32_t>(std::atoi(value.c_str()));
     return true;  // TODO(bclayton): Verify the value parsed correctly.
@@ -155,11 +144,6 @@ struct Variable {
 
   bool Get(int64_t* out) const {
     *out = static_cast<int64_t>(std::atoi(value.c_str()));
-    return true;  // TODO(bclayton): Verify the value parsed correctly.
-  }
-
-  bool Get(float* out) const {
-    *out = std::atof(value.c_str());
     return true;  // TODO(bclayton): Verify the value parsed correctly.
   }
 
@@ -259,7 +243,7 @@ class Client {
                      const dap::StackFrame& frame,
                      debug::Location* location,
                      std::string* line = nullptr) {
-    location->line = frame.line;
+    location->line = static_cast<uint32_t>(frame.line);
 
     if (!frame.source.has_value()) {
       onerror_("Stack frame with name '" + frame.name + "' has no source");
@@ -507,8 +491,8 @@ InvocationKey::InvocationKey(const WindowSpacePosition& pos)
   data.window_space_position = pos;
 }
 
-InvocationKey::InvocationKey(Type type, const Data& data)
-    : type(type), data(data) {}
+InvocationKey::InvocationKey(Type type_, const Data& data_)
+    : type(type_), data(data_) {}
 
 std::string InvocationKey::String() const {
   std::stringstream ss;
@@ -564,7 +548,7 @@ class Thread : public debug::Thread {
     });
   }
 
-  ~Thread() { Flush(); }
+  ~Thread() override { Flush(); }
 
   // Flush waits for the debugger thread script to complete, and returns any
   // errors encountered.
@@ -707,21 +691,32 @@ class Thread : public debug::Thread {
 
   void ExpectLocal(const std::string& name, int64_t value) override {
     DEBUGGER_LOG("ExpectLocal('%s', %d)", name.c_str(), (int)value);
-    ExpectLocalT(name, value);
+    ExpectLocalT(name, value, [](int64_t a, int64_t b) { return a == b; });
   }
 
   void ExpectLocal(const std::string& name, double value) override {
     DEBUGGER_LOG("ExpectLocal('%s', %f)", name.c_str(), value);
-    ExpectLocalT(name, value);
+    ExpectLocalT(name, value,
+                 [](double a, double b) { return std::abs(a - b) < 0.00001; });
   }
 
   void ExpectLocal(const std::string& name, const std::string& value) override {
     DEBUGGER_LOG("ExpectLocal('%s', '%s')", name.c_str(), value.c_str());
-    ExpectLocalT(name, value);
+    ExpectLocalT(name, value, [](const std::string& a, const std::string& b) {
+      return a == b;
+    });
   }
 
-  template <typename T>
-  void ExpectLocalT(const std::string& name, const T& expect) {
+  // ExpectLocalT verifies that the local variable with the given name has the
+  // expected value. |name| may contain `.` delimiters to index structure or
+  // array types. ExpectLocalT uses the function equal to compare the expected
+  // and actual values, returning true if considered equal, otherwise false.
+  // EQUAL_FUNC is a function-like type with the signature:
+  //   bool(T a, T b)
+  template <typename T, typename EQUAL_FUNC>
+  void ExpectLocalT(const std::string& name,
+                    const T& expect,
+                    EQUAL_FUNC&& equal) {
     dap::StackFrame frame;
     if (!client_.TopStackFrame(thread_id_, &frame)) {
       return;
@@ -758,7 +753,7 @@ class Thread : public debug::Thread {
         return;
       }
 
-      if (got != expect) {
+      if (!equal(got, expect)) {
         std::stringstream ss;
         ss << "Local '" << name << "' did not have expected value. Value is '"
            << got << "', expected '" << expect << "'";
@@ -805,11 +800,8 @@ class Thread : public debug::Thread {
   Result error_;
 };
 
-}  // namespace
-
-// EngineVulkan::VkDebugger is a private implementation of the Engine::Debugger
-// interface.
-class EngineVulkan::VkDebugger : public Engine::Debugger {
+// VkDebugger is a private implementation of the Engine::Debugger interface.
+class VkDebugger : public Engine::Debugger {
   static constexpr const char* kComputeShaderFunctionName = "ComputeShader";
   static constexpr const char* kVertexShaderFunctionName = "VertexShader";
   static constexpr const char* kFragmentShaderFunctionName = "FragmentShader";
@@ -927,7 +919,7 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
       const std::shared_ptr<const debug::ThreadScript>& script) override {
     std::unique_lock<std::mutex> lock(threads_mutex_);
     pendingThreads_.emplace(GlobalInvocationId{x, y, z}, script);
-  };
+  }
 
   void BreakOnVertexIndex(
       uint32_t index,
@@ -1140,6 +1132,7 @@ class EngineVulkan::VkDebugger : public Engine::Debugger {
   std::mutex error_mutex_;
   Result error_;  // guarded by error_mutex_
 };
+}  // namespace
 
 std::pair<Engine::Debugger*, Result> EngineVulkan::GetDebugger(
     VirtualFileStore* virtual_files) {

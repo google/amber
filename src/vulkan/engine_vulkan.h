@@ -38,8 +38,6 @@ namespace vulkan {
 /// Engine implementation based on Vulkan.
 class EngineVulkan : public Engine {
  public:
-  class VkDebugger;
-
   EngineVulkan();
   ~EngineVulkan() override;
 
