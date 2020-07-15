@@ -338,7 +338,12 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
           "Descriptors bound to the same binding needs to have matching "
           "descriptor types");
     }
-    desc->AsBufferBackedDescriptor()->AddAmberBuffer(cmd->GetBuffer());
+    // Check that the buffer is not added already.
+    const auto& buffers = desc->AsBufferBackedDescriptor()->GetAmberBuffers();
+    if (std::find(buffers.begin(), buffers.end(), cmd->GetBuffer()) ==
+        buffers.end()) {
+      desc->AsBufferBackedDescriptor()->AddAmberBuffer(cmd->GetBuffer());
+    }
   }
 
   if (cmd->IsUniformDynamic() || cmd->IsSSBODynamic())
