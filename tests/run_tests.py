@@ -333,7 +333,7 @@ class TestRunner:
       print("--test-prog-path must point to an executable")
       return 1
 
-    input_file_re = re.compile('^.+[\.]amber|vkscript')
+    input_file_re = re.compile('^.+[\.](amber|vkscript)')
     self.test_cases = []
 
     if self.args:

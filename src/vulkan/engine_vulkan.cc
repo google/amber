@@ -652,13 +652,17 @@ Result EngineVulkan::DoBuffer(const BufferCommand* cmd) {
         "Vulkan::DoBuffer exceed maxBoundDescriptorSets limit of physical "
         "device");
   }
-  auto& info = pipeline_map_[cmd->GetPipeline()];
   if (cmd->GetValues().empty()) {
     cmd->GetBuffer()->SetSizeInElements(cmd->GetBuffer()->ElementCount());
   } else {
     cmd->GetBuffer()->SetDataWithOffset(cmd->GetValues(), cmd->GetOffset());
   }
-  return info.vk_pipeline->AddBufferDescriptor(cmd);
+  if (cmd->IsPushConstant()) {
+    auto& info = pipeline_map_[cmd->GetPipeline()];
+    return info.vk_pipeline->AddPushConstantBuffer(cmd->GetBuffer(),
+                                                   cmd->GetOffset());
+  }
+  return {};
 }
 
 }  // namespace vulkan
