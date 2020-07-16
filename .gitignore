@@ -1,4 +1,5 @@
 out
+build
 third_party/clspv
 third_party/clspv-clang
 third_party/clspv-llvm
