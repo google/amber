@@ -40,11 +40,8 @@ TEST_F(VulkanPipelineTest, AddBufferDescriptorAddBufferTwice) {
   std::vector<VkPipelineShaderStageCreateInfo> create_infos;
   ComputePipeline pipeline(nullptr, 0, create_infos);
 
-  auto cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kPushConstant,
+  auto cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kUniform,
                                        &amber_pipeline);
-
-  cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kUniform,
-                                  &amber_pipeline);
   Result r = pipeline.AddBufferDescriptor(cmd.get());
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   // Adding same buffer again should fail.
