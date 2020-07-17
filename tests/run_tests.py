@@ -227,7 +227,7 @@ class TestCase:
 
 class TestRunner:
   def RunTest(self, tc):
-    print("Testing {}".format(tc.GetInputPath()))
+    print("Testing {}".format(tc.GetInputPath()), flush=True)
 
     cmd = [self.options.test_prog_path, '-q']
     if tc.IsParseOnly():
