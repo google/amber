@@ -32,7 +32,7 @@ echo $(date): $(cmake --version)
 
 DEPS_ARGS=""
 if [[ "$EXTRA_CONFIG" =~ "ENABLE_SWIFTSHADER=TRUE" ]]; then
-  DEPS_ARGS+=" --use-swiftshader"
+  DEPS_ARGS+=" --with-swiftshader"
 fi
 
 cd $SRC
