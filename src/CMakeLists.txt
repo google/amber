@@ -180,7 +180,9 @@ if (${AMBER_ENABLE_TESTS})
   )
 
   if (${Vulkan_FOUND})
-    list(APPEND TEST_SRCS vulkan/vertex_buffer_test.cc)
+    list(APPEND TEST_SRCS
+            vulkan/vertex_buffer_test.cc
+            vulkan/pipeline_test.cc)
   endif()
 
   if (${Dawn_FOUND})

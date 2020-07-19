@@ -276,8 +276,6 @@ Result Pipeline::GetDescriptorSlot(uint32_t desc_set,
 Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
   if (cmd == nullptr)
     return Result("Pipeline::AddBufferDescriptor BufferCommand is nullptr");
-  if (cmd->IsPushConstant())
-    return AddPushConstantBuffer(cmd->GetBuffer(), cmd->GetOffset());
   if (!cmd->IsSSBO() && !cmd->IsUniform() && !cmd->IsStorageImage() &&
       !cmd->IsSampledImage() && !cmd->IsCombinedImageSampler() &&
       !cmd->IsUniformTexelBuffer() && !cmd->IsStorageTexelBuffer() &&
@@ -337,6 +335,12 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
       return Result(
           "Descriptors bound to the same binding needs to have matching "
           "descriptor types");
+    }
+    // Check that the buffer is not added already.
+    const auto& buffers = desc->AsBufferBackedDescriptor()->GetAmberBuffers();
+    if (std::find(buffers.begin(), buffers.end(), cmd->GetBuffer()) !=
+        buffers.end()) {
+      return Result("Buffer has been added already");
     }
     desc->AsBufferBackedDescriptor()->AddAmberBuffer(cmd->GetBuffer());
   }
