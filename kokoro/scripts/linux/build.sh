@@ -71,10 +71,10 @@ if [[ "$EXTRA_CONFIG" =~ "USE_CLSPV=TRUE" ]]; then
   DEPS_ARGS+=" --with-clspv"
 fi
 if [[ "$EXTRA_CONFIG" =~ "USE_DXC=TRUE" ]]; then
-  DEPS_ARGS+=" --use-dxc"
+  DEPS_ARGS+=" --with-dxc"
 fi
 if [[ "$EXTRA_CONFIG" =~ "ENABLE_SWIFTSHADER=TRUE" ]]; then
-  DEPS_ARGS+=" --use-swiftshader"
+  DEPS_ARGS+=" --with-swiftshader"
 fi
 
 cd $SRC

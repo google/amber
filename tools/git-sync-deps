@@ -228,16 +228,16 @@ def git_sync_deps(deps_file_path, command_line_os_requests, verbose):
     else:
       raise Exception("please specify commit or tag")
 
-    if not with_clspv and directory is 'third_party/clspv':
+    if not with_clspv and directory == 'third_party/clspv':
       continue
 
-    if not with_clspv and directory is 'third_party/clspv-llvm':
+    if not with_clspv and directory == 'third_party/clspv-llvm':
       continue
 
-    if not with_dxc and directory is 'third_party/dxc':
+    if not with_dxc and directory == 'third_party/dxc':
       continue
 
-    if not with_swiftshader and directory is 'third_party/swiftshader':
+    if not with_swiftshader and directory == 'third_party/swiftshader':
       continue
 
     relative_directory = os.path.join(deps_file_directory, directory)
@@ -266,6 +266,9 @@ def multithread(function, list_of_arg_lists):
 
 
 def main(argv):
+  global with_clspv
+  global with_dxc
+  global with_swiftshader
   deps_file_path = os.environ.get('GIT_SYNC_DEPS_PATH', DEFAULT_DEPS_PATH)
   verbose = not bool(os.environ.get('GIT_SYNC_DEPS_QUIET', False))
 
