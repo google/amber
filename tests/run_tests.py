@@ -75,9 +75,6 @@ SUPPRESSIONS_SWIFTSHADER = [
   "int8.amber",
   # No supporting device for the required 16-bit storage features
   "storage16.amber",
-  # SEGV: github.com/google/amber/issues/725
-  "multiple_ssbo_update_with_graphics_pipeline.vkscript",
-  "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline_less_than_4.vkscript",
   # Exceeded maxBoundDescriptorSets limit of physical device
   "multiple_ssbo_with_sparse_descriptor_set_in_compute_pipeline.vkscript",
   # shaderStorageImageWriteWithoutFormat but is not enabled on the device
