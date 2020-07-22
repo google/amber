@@ -17,4 +17,4 @@ set -e  # fail on error
 set -x  # display commands
 
 SCRIPT_DIR=`dirname "$BASH_SOURCE"`
-source $SCRIPT_DIR/../scripts/linux/build_dawn.sh DEBUG gcc
+source $SCRIPT_DIR/../scripts/linux/build_dawn.sh DEBUG "gcc-9"
