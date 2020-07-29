@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# Copyright 2019 The VKB Authors
+#!/usr/bin/env bash
+# Copyright 2020 The Amber Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,53 +13,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Parse a DEPS file and rolls all of the dependencies.
-"""
-
-import os
-import re
-import subprocess
-import sys
-
-
-DEFAULT_DEPS_PATH = os.path.normpath(
-  os.path.join(os.path.dirname(__file__), os.pardir, 'DEPS'))
-
-
-def parse_file_to_dict(path):
-  dictionary = {}
-  contents = open(path).read()
-  # Need to convert Var() to vars[], so that the DEPS is actually Python. Var()
-  # comes from Autoroller using gclient which has a slightly different DEPS
-  # format.
-  contents = re.sub(r"Var\((.*?)\)", r"vars[\1]", contents)
-  exec(contents, dictionary)
-  return dictionary
+# Defined to use origin/master instead of origin/main
+clspv=1
+clspv_llvm=1
+cpplint=1
+dxc=1
+glslang=1
+googletest=1
+json=1
+lodepng=1
+spirv_headers=1
+spirv_tools=1
+swiftshader=1
+vulkan_headers=1
+vulkan_loader=1
+vulkan_validationlayers=1
 
 
-def roll_all_deps(deps_file_path):
-  deps_file_directory = os.path.dirname(deps_file_path)
-  deps_file = parse_file_to_dict(deps_file_path)
+# This script assumes it's parent directory is the repo root.
+repo_path=$(dirname "$0")/..
 
-  dependencies = deps_file['deps'].copy()
+cd "$repo_path"
 
-  list_of_deps = ['roll-dep', '--ignore-dirty-tree']
-  for directory in sorted(deps_file['deps']):
-    # cpplint uses gh-pages as the main branch, which doesn't work with roll-dep
-    if directory == "third_party/cpplint":
-      continue
+if [[ $(git diff --stat) != '' ]]; then
+    echo "Working tree is dirty, commit changes before attempting to roll DEPS"
+    exit 1
+fi
 
-    relative_directory = os.path.join(deps_file_directory, directory)
-    list_of_deps.append(relative_directory)
+old_head=$(git rev-parse HEAD)
 
-  subprocess.check_call(list_of_deps)
+for i in $(find third_party -type d -maxdepth 1 -depth 1); do
+  name=`echo "${i%%/}" | cut -f2 -d'/' | tr '-' '_'`
 
+  if [ "x${name}" == "xcpplint" ]; then
+    continue
+  fi
 
-def main(argv):
-  deps_file_path = DEFAULT_DEPS_PATH
+  trunk="origin/main"
+  if [ ! -z ${!name} ]; then
+    trunk="origin/master"
+  fi
 
-  roll_all_deps(deps_file_path)
+  roll-dep --ignore-dirty-tree --roll-to="${trunk}" "${i%%/}";
+done
 
-
-if __name__ == '__main__':
-  exit(main(sys.argv[1:]))
+git rebase --interactive "${old_head}"
