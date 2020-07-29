@@ -22,18 +22,18 @@ import re
 import sys
 
 REGEXES = [
-	r"(?i)(black|white|gr[ea]y)[-_]?list",
-	r"(?i)(first class citizen)",
-	r"(?i)(black|white|gr[ea]y)[-_]?hat",
-	r"(?i)(master|slave)",
-	r"(?i)\b(him|his|she|her|hers|man|woman)\b",
-	r"(?i)\s(he|he'd|he's|he'll)\s",
-	r"(?i)grandfather",
-	r"(?i)\bmitm\b",
-	r"(?i)native",
-	r"(?i)\b(crazy|insane|blind\sto|flying\sblind|blind\seye|cripple|crippled|dumb|dummy|paranoid)\b",
-	r"(?i)\b(sane|sanity)\b",
-	r"(?i)red[-_]?line",
+    r"(?i)(black|white|gr[ea]y)[-_]?list",
+    r"(?i)(first class citizen)",
+    r"(?i)(black|white|gr[ea]y)[-_]?hat",
+    r"(?i)(master|slave)",
+    r"(?i)\b(him|his|she|her|hers|man|woman)\b",
+    r"(?i)\s(he|he'd|he's|he'll)\s",
+    r"(?i)grandfather",
+    r"(?i)\bmitm\b",
+    r"(?i)native",
+    r"(?i)\b(crazy|insane|blind\sto|flying\sblind|blind\seye|cripple|crippled|dumb|dummy|paranoid)\b",
+    r"(?i)\b(sane|sanity)\b",
+    r"(?i)red[-_]?line",
 ]
 
 def find(top, filename_glob, skip_glob_list):
@@ -46,9 +46,9 @@ def find(top, filename_glob, skip_glob_list):
             for match in fnmatch.filter(dirs, glob):
                 dirs.remove(match)
         for filename in fnmatch.filter(files, filename_glob):
-        	if filename == os.path.basename(__file__):
-      			continue
-        	file_list.append(os.path.join(path, filename))
+            if filename == os.path.basename(__file__):
+                continue
+            file_list.append(os.path.join(path, filename))
     return file_list
 
 
@@ -71,18 +71,18 @@ def alert_if_lang_matches(glob):
 
     reg_list = []
     for reg in REGEXES:
-    	reg_list.append(re.compile(reg))
+        reg_list.append(re.compile(reg))
 
     printed_count = 0
     for file in filtered_descendants(glob):
         has_match = False
         with open(file) as contents:
             for line in contents:
-            	for reg in reg_list:
-            		match = reg.search(line)
-            		if match:
-            			print(file, ': found non-inclusive language:', match.group(0))
-            			printed_count += 1
+                for reg in reg_list:
+                    match = reg.search(line)
+                    if match:
+                        print(file, ': found non-inclusive language:', match.group(0))
+                        printed_count += 1
 
     return printed_count
 
@@ -96,4 +96,4 @@ def main():
     sys.exit(count > 0)
 
 if __name__ == '__main__':
-  main()
+      main()
