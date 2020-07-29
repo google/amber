@@ -107,7 +107,7 @@ SHADER compute test_shader GLSL
 END
 PIPELINE compute pipeline
   ATTACH test_shader
-  SUBGROUP dummy
+  SUBGROUP unused
   END
 END)";
 
@@ -167,7 +167,7 @@ END
 PIPELINE compute pipeline
   ATTACH test_shader
   SUBGROUP test_shader
-    REQUIRED_SIZE dummy
+    REQUIRED_SIZE unused
   END
 END)";
 
@@ -256,7 +256,7 @@ END
 PIPELINE compute pipeline
   ATTACH test_shader
   SUBGROUP test_shader
-    FULLY_POPULATED dummy
+    FULLY_POPULATED unused
   END
 END)";
   Parser parser;
@@ -275,7 +275,7 @@ END
 PIPELINE compute pipeline
   ATTACH test_shader
   SUBGROUP test_shader
-    VARYING_SIZE dummy
+    VARYING_SIZE unused
   END
 END)";
   Parser parser;
