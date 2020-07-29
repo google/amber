@@ -29,7 +29,7 @@ REGEXES = [
 	r"(?i)\b(him|his|she|her|hers|man|woman)\b",
 	r"(?i)\s(he|he'd|he's|he'll)\s",
 	r"(?i)grandfather",
-	r"(?i)\bmitm\\b",
+	r"(?i)\bmitm\b",
 	r"(?i)native",
 	r"(?i)\b(crazy|insane|blind\sto|flying\sblind|blind\seye|cripple|crippled|dumb|dummy|paranoid)\b",
 	r"(?i)\b(sane|sanity)\b",
