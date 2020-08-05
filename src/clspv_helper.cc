@@ -14,6 +14,7 @@
 
 #include "src/clspv_helper.h"
 
+#include <unordered_map>
 #include <utility>
 
 #include "clspv/ArgKind.h"
@@ -24,7 +25,7 @@
 #include "spirv-tools/libspirv.hpp"
 #include "spirv-tools/optimizer.hpp"
 
-using namespace amber;
+using amber::Pipeline;
 
 namespace {
 
