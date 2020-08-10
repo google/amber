@@ -30,8 +30,8 @@ using amber::Pipeline;
 namespace {
 
 struct ReflectionHelper {
-  Pipeline::ShaderInfo* shader_info;
-  Pipeline* pipeline;
+  Pipeline::ShaderInfo* shader_info = nullptr;
+  Pipeline* pipeline = nullptr;
   uint32_t uint_id = 0;
   std::unordered_map<uint32_t, std::string> strings;
   std::unordered_map<uint32_t, uint32_t> constants;
@@ -203,7 +203,7 @@ spv_result_t ParseExtendedInst(ReflectionHelper* helper,
 
 spv_result_t ParseReflection(void* user_data,
                              const spv_parsed_instruction_t* inst) {
-  ReflectionHelper* helper = reinterpret_cast<ReflectionHelper*>(user_data);
+  auto* helper = reinterpret_cast<ReflectionHelper*>(user_data);
   switch (inst->opcode) {
     case spv::OpTypeInt:
       if (inst->words[inst->operands[1].offset] == 32 &&

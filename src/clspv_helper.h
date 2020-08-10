@@ -18,9 +18,8 @@
 #include <string>
 #include <vector>
 
-#include "spirv-tools/libspirv.h"
-
 #include "amber/result.h"
+#include "spirv-tools/libspirv.h"
 #include "src/pipeline.h"
 
 namespace amber {

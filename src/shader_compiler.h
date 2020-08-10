@@ -19,10 +19,9 @@
 #include <utility>
 #include <vector>
 
-#include "spirv-tools/libspirv.h"
-
 #include "amber/amber.h"
 #include "amber/result.h"
+#include "spirv-tools/libspirv.h"
 #include "src/pipeline.h"
 #include "src/shader.h"
 #include "src/virtual_file_store.h"
