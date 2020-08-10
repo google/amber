@@ -20,10 +20,10 @@
 #include "clspv/ArgKind.h"
 #include "clspv/Compiler.h"
 #include "clspv/Sampler.h"
-#include "spirv/unified1/NonSemanticClspvReflection.h"
-#include "spirv/unified1/spirv.hpp"
 #include "spirv-tools/libspirv.hpp"
 #include "spirv-tools/optimizer.hpp"
+#include "spirv/unified1/NonSemanticClspvReflection.h"
+#include "spirv/unified1/spirv.hpp"
 
 using amber::Pipeline;
 
