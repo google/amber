@@ -48,18 +48,18 @@ REGEXES = [
 	r"(?i)\she$",
 	r"(?i)^he\s",
 	r"(?i)^he$",
-	"(?i)\\she['|\u2019]d\\s",
-	"(?i)\\she['|\u2019]d$",
-	"(?i)^he['|\u2019]d\\s",
-	"(?i)^he['|\u2019]d$",
-	"(?i)\\she['|\u2019]s\\s",
-	"(?i)\\she['|\u2019]s$",
-	"(?i)^he['|\u2019]s\\s",
-	"(?i)^he['|\u2019]s$",
-	"(?i)\\she['|\u2019]ll\\s",
-	"(?i)\\she['|\u2019]ll$",
-	"(?i)^he['|\u2019]ll\\s",
-	"(?i)^he['|\u2019]ll$",
+	r"(?i)\she['|\u2019]d\s",
+	r"(?i)\she['|\u2019]d$",
+	r"(?i)^he['|\u2019]d\s",
+	r"(?i)^he['|\u2019]d$",
+	r"(?i)\she['|\u2019]s\s",
+	r"(?i)\she['|\u2019]s$",
+	r"(?i)^he['|\u2019]s\s",
+	r"(?i)^he['|\u2019]s$",
+	r"(?i)\she['|\u2019]ll\s",
+	r"(?i)\she['|\u2019]ll$",
+	r"(?i)^he['|\u2019]ll\s",
+	r"(?i)^he['|\u2019]ll$",
 	r"(?i)grandfather",
 	r"(?i)\bmitm\b",
 	r"(?i)\bcrazy\b",
@@ -152,12 +152,17 @@ def alert_if_lang_matches(glob):
 
 	Returns the total number of file names printed.
 	"""
+	verbose = False
 	printed_count = 0
 	for file in filtered_descendants(glob):
 		has_match = False
-		with open(file) as contents:
-			if check_match(file, contents.read()):
-				printed_count += 1
+		try:
+			with open(file, 'r', encoding='utf8') as contents:
+				if check_match(file, contents.read()):
+					printed_count += 1
+		except:
+			if verbose:
+				print("skipping {}".format(file))
 
 	return printed_count
 
