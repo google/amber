@@ -33,7 +33,7 @@ class TestCheckLanguage(unittest.TestCase):
 			"white_hat", "greyhat", "grey-hat", "grey_hat", "grayhat",
 			"gray-hat", "gray_hat", "master", "slave", "him", "his", "she",
 			"her", "hers", "man", "woman", "he", "he'd", "he's", "he'll",
-			#"he\u2019d", "he\u2019s", "he\u2019ll",
+			"he\u2019d", "he\u2019s", "he\u2019ll",
 			"grandfather", "mitm", "crazy", "insane", "blind to",
 			"flying blind", "blind eye", "cripple", "crippled", "dumb",
 			"dummy", "paranoid", "sane", "sanity", "redline", "red-line",
@@ -41,8 +41,7 @@ class TestCheckLanguage(unittest.TestCase):
 
 		for word in tests:
 			self.assertTrue(
-				check_language.check_match("", "this is a " + word + " attempt"),
-				word)
+				check_language.check_match("", "this is a " + word + " attempt"), word)
 
 
 	def testSuppression(self):
