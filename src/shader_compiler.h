@@ -21,6 +21,7 @@
 
 #include "amber/amber.h"
 #include "amber/result.h"
+#include "spirv-tools/libspirv.h"
 #include "src/pipeline.h"
 #include "src/shader.h"
 #include "src/virtual_file_store.h"
@@ -60,6 +61,7 @@ class ShaderCompiler {
   Result CompileHlsl(const Shader* shader, std::vector<uint32_t>* result) const;
   Result CompileOpenCLC(Pipeline::ShaderInfo* shader,
                         Pipeline* pipeline,
+                        spv_target_env env,
                         std::vector<uint32_t>* result) const;
 
   std::string spv_env_;

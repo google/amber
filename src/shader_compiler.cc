@@ -148,7 +148,7 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
 
 #if AMBER_ENABLE_CLSPV
   } else if (shader->GetFormat() == kShaderFormatOpenCLC) {
-    Result r = CompileOpenCLC(shader_info, pipeline, &results);
+    Result r = CompileOpenCLC(shader_info, pipeline, target_env, &results);
     if (!r.IsSuccess())
       return {r, {}};
 #endif  // AMBER_ENABLE_CLSPV
@@ -288,12 +288,14 @@ Result ShaderCompiler::CompileHlsl(const Shader*,
 #if AMBER_ENABLE_CLSPV
 Result ShaderCompiler::CompileOpenCLC(Pipeline::ShaderInfo* shader_info,
                                       Pipeline* pipeline,
+                                      spv_target_env env,
                                       std::vector<uint32_t>* result) const {
-  return clspvhelper::Compile(shader_info, pipeline, result);
+  return clspvhelper::Compile(shader_info, pipeline, env, result);
 }
 #else
 Result ShaderCompiler::CompileOpenCLC(Pipeline::ShaderInfo*,
                                       Pipeline*,
+                                      spv_target_env,
                                       std::vector<uint32_t>*) const {
   return {};
 }
