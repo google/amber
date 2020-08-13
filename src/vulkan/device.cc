@@ -629,35 +629,40 @@ Result Device::Initialize(
   ptrs_.vkGetPhysicalDeviceMemoryProperties(physical_device_,
                                             &physical_memory_properties_);
 
-  bool use_physical_device_features_2 = false;
-  for (auto& ext : required_instance_extensions) {
-    if (ext == "VK_KHR_get_physical_device_properties2")
-      use_physical_device_features_2 = true;
-  }
-
   subgroup_size_control_properties_ = {};
   const bool needs_subgroup_size_control =
       std::find(required_features.begin(), required_features.end(),
                 kSubgroupSizeControl) != required_features.end();
 
   if (needs_subgroup_size_control) {
-    if (!use_physical_device_features_2) {
-      return Result(
-          "Vulkan: Device::Initialize subgroup size control feature also "
-          "requires VK_KHR_get_physical_device_properties2");
-    }
-
-    PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR =
-        reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(
-            getInstanceProcAddr(instance_,
-                                "vkGetPhysicalDeviceProperties2KHR"));
-
     VkPhysicalDeviceProperties2KHR properties2 = {};
     properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
     properties2.pNext = &subgroup_size_control_properties_;
     subgroup_size_control_properties_.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES_EXT;
-    vkGetPhysicalDeviceProperties2KHR(physical_device_, &properties2);
+
+    if (physical_device_properties_.apiVersion >= VK_API_VERSION_1_1) {
+      // Use native vkGetPhysicalDeviceProperties2
+      ptrs_.vkGetPhysicalDeviceProperties2(physical_device_, &properties2);
+    } else {
+      bool extension_found = false;
+      for (auto& ext : required_instance_extensions) {
+        if (ext == "VK_KHR_get_physical_device_properties2")
+          extension_found = true;
+      }
+      if (!extension_found) {
+        return Result(
+            "Vulkan: Device::Initialize subgroup size control feature also "
+            "requires VK_KHR_get_physical_device_properties2 or an API version "
+            "of 1.1 or higher");
+      }
+      PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR =
+          reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(
+              getInstanceProcAddr(instance_,
+                                  "vkGetPhysicalDeviceProperties2KHR"));
+
+      vkGetPhysicalDeviceProperties2KHR(physical_device_, &properties2);
+    }
   }
 
   return {};
