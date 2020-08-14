@@ -92,6 +92,7 @@ class Device {
 
  private:
   Result LoadVulkanPointers(PFN_vkGetInstanceProcAddr, Delegate* delegate);
+  bool SupportsApiVersion(uint32_t major, uint32_t minor, uint32_t patch);
 
   VkInstance instance_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
