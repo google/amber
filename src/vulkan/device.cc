@@ -393,15 +393,11 @@ Result Device::LoadVulkanPointers(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
 bool Device::SupportsApiVersion(uint32_t major,
                                 uint32_t minor,
                                 uint32_t patch) {
-#if defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-#endif
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wold-style-cast"
   return physical_device_properties_.apiVersion >=
          VK_MAKE_VERSION(major, minor, patch);
-#if defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+#pragma clang diagnostic pop
 }
 
 Result Device::Initialize(
