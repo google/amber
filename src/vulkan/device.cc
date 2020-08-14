@@ -390,6 +390,20 @@ Result Device::LoadVulkanPointers(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
   return {};
 }
 
+bool Device::SupportsApiVersion(uint32_t major,
+                                uint32_t minor,
+                                uint32_t patch) {
+#if defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+  return physical_device_properties_.apiVersion >=
+         VK_MAKE_VERSION(major, minor, patch);
+#if defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+}
+
 Result Device::Initialize(
     PFN_vkGetInstanceProcAddr getInstanceProcAddr,
     Delegate* delegate,
@@ -641,10 +655,13 @@ Result Device::Initialize(
     subgroup_size_control_properties_.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES_EXT;
 
-    if (physical_device_properties_.apiVersion >= VK_API_VERSION_1_1) {
-      // Use native vkGetPhysicalDeviceProperties2
+    if (SupportsApiVersion(1, 1, 0)) {
+      // Use vkGetPhysicalDeviceProperties2 available starting Vulkan
+      // version 1.1.
       ptrs_.vkGetPhysicalDeviceProperties2(physical_device_, &properties2);
     } else {
+      // Vulkan 1.0: search for the VK_KHR_get_physical_device_properties2
+      // extension and use that for filling the properties2 structure.
       bool extension_found = false;
       for (auto& ext : required_instance_extensions) {
         if (ext == "VK_KHR_get_physical_device_properties2")
