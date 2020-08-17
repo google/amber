@@ -645,37 +645,18 @@ Result Device::Initialize(
                 kSubgroupSizeControl) != required_features.end();
 
   if (needs_subgroup_size_control) {
-    VkPhysicalDeviceProperties2KHR properties2 = {};
-    properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
+    VkPhysicalDeviceProperties2 properties2 = {};
+    properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
     properties2.pNext = &subgroup_size_control_properties_;
     subgroup_size_control_properties_.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES_EXT;
 
-    if (SupportsApiVersion(1, 1, 0)) {
-      // Use vkGetPhysicalDeviceProperties2 available starting Vulkan
-      // version 1.1.
-      ptrs_.vkGetPhysicalDeviceProperties2(physical_device_, &properties2);
-    } else {
-      // Vulkan 1.0: search for the VK_KHR_get_physical_device_properties2
-      // extension and use that for filling the properties2 structure.
-      bool extension_found = false;
-      for (auto& ext : required_instance_extensions) {
-        if (ext == "VK_KHR_get_physical_device_properties2")
-          extension_found = true;
-      }
-      if (!extension_found) {
-        return Result(
-            "Vulkan: Device::Initialize subgroup size control feature also "
-            "requires VK_KHR_get_physical_device_properties2 or an API version "
-            "of 1.1 or higher");
-      }
-      PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR =
-          reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(
-              getInstanceProcAddr(instance_,
-                                  "vkGetPhysicalDeviceProperties2KHR"));
-
-      vkGetPhysicalDeviceProperties2KHR(physical_device_, &properties2);
+    if (!SupportsApiVersion(1, 1, 0)) {
+      return Result(
+          "Vulkan: Device::Initialize subgroup size control feature also "
+          "requires an API version of 1.1 or higher");
     }
+    ptrs_.vkGetPhysicalDeviceProperties2(physical_device_, &properties2);
   }
 
   return {};
