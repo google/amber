@@ -21,7 +21,7 @@
 
 #include "amber/amber.h"
 #include "amber/result.h"
-#if AMBER_ENABLE_SPIRV_TOOLS
+#if AMBER_ENABLE_CLSPV
 #include "spirv-tools/libspirv.h"
 #endif
 #include "src/pipeline.h"
