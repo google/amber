@@ -21,7 +21,9 @@
 
 #include "amber/amber.h"
 #include "amber/result.h"
+#if AMBER_ENABLE_SPIRV_TOOLS
 #include "spirv-tools/libspirv.h"
+#endif
 #include "src/pipeline.h"
 #include "src/shader.h"
 #include "src/virtual_file_store.h"
@@ -59,10 +61,12 @@ class ShaderCompiler {
   Result ParseHex(const std::string& data, std::vector<uint32_t>* result) const;
   Result CompileGlsl(const Shader* shader, std::vector<uint32_t>* result) const;
   Result CompileHlsl(const Shader* shader, std::vector<uint32_t>* result) const;
+#if AMBER_ENABLE_CLSPV
   Result CompileOpenCLC(Pipeline::ShaderInfo* shader,
                         Pipeline* pipeline,
                         spv_target_env env,
                         std::vector<uint32_t>* result) const;
+#endif
 
   std::string spv_env_;
   bool disable_spirv_validation_ = false;

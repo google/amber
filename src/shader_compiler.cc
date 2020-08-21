@@ -39,7 +39,7 @@
 #include "src/dxc_helper.h"
 #endif  // AMBER_ENABLE_DXC
 
-#ifdef AMBER_ENABLE_CLSPV
+#if AMBER_ENABLE_CLSPV
 #include "src/clspv_helper.h"
 #endif  // AMBER_ENABLE_CLSPV
 
@@ -291,13 +291,6 @@ Result ShaderCompiler::CompileOpenCLC(Pipeline::ShaderInfo* shader_info,
                                       spv_target_env env,
                                       std::vector<uint32_t>* result) const {
   return clspvhelper::Compile(shader_info, pipeline, env, result);
-}
-#else
-Result ShaderCompiler::CompileOpenCLC(Pipeline::ShaderInfo*,
-                                      Pipeline*,
-                                      spv_target_env,
-                                      std::vector<uint32_t>*) const {
-  return {};
 }
 #endif  // AMBER_ENABLE_CLSPV
 
