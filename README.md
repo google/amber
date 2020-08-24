@@ -278,8 +278,7 @@ export VK_ICD_FILENAMES=$PWD/Linux/vk_swiftshader_icd.json
 
 The build will generate an `out/Debug/amber` executable which can be used to
 run amber scripts. The script can be used as
-`out/Debug/amber <path to amber file>`. Where, currently, the amber file is
-in the [VkScript](docs/vk_script.md) format.
+`out/Debug/amber <path to amber file>`.
 
 ```
 out/Debug/amber tests/cases/clear.amber
@@ -287,6 +286,16 @@ out/Debug/amber tests/cases/clear.amber
 
 The sample app returns a value of 0 on success or non-zero on error. Any issues
 encountered should be displayed on the console.
+
+Run `out/Debug/amber -h` to see a description of the program's command line options.
+
+Example AmberScript files can be found in the [tests/cases](tests/cases)
+directory in this repository.
+Also the [Vulkan Conformance Test
+Suite](https://github.com/KhronosGroup/VK-GL-CTS) contains many real-world
+examples in its
+[external/vulkancts/data/vulkan/amber](https://github.com/KhronosGroup/VK-GL-CTS/tree/master/external/vulkancts/data/vulkan/amber)
+subdirectory.
 
 By default, `out/Debug/amber` supports saving the output image into '.png'
 file. You can disable this by passing `-DAMBER_SKIP_LODEPNG=true` to cmake.
