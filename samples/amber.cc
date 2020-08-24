@@ -14,13 +14,16 @@
 
 #include "amber/amber.h"
 
+#include <stdio.h>
 #include <algorithm>
 #include <cassert>
+#include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <set>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -102,6 +105,33 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   -h                        -- This help text.
 )";
 
+// Parses a decimal integer from the given string, and writes it to |retval|.
+// Returns 1 if the parse was successful and consumed the whole string.
+static int ParseOneInt(const char* str, int* retval) {
+  char trailing = 0;
+  return
+#if defined(_MSC_VER)
+      sscanf_s(str, "%d%c", retval, &trailing, 1)
+#else
+      std::sscanf(str, "%d%c", retval, &trailing)
+#endif
+          ;
+}
+
+// Parses a decimal integer, then a period (.), then a decimal integer  from the
+// given string, and writes it to |retval|.
+// Returns 2 if the parse was successful and consumed the whole string.
+static int ParseIntDotInt(const char* str, int* retval0, int* retval1) {
+  char trailing = 0;
+  return
+#if defined(_MSC_VER)
+      sscanf_s(str, "%d.%d%c", retval, retval1, &trailing, 1)
+#else
+      std::sscanf(str, "%d.%d%c", retval0, retval1, &trailing)
+#endif
+          ;
+}
+
 bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
   for (size_t i = 1; i < args.size(); ++i) {
     const std::string& arg = args[i];
@@ -168,7 +198,11 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         return false;
       }
 
-      int32_t val = std::stoi(std::string(args[i]));
+      int32_t val = 0;
+      if (1 != ParseOneInt(args[i].c_str(), &val)) {
+        std::cerr << "Invalid device ID: " << args[i] << std::endl;
+        return false;
+      }
       if (val < 0) {
         std::cerr << "Device ID must be non-negative" << std::endl;
         return false;
@@ -182,7 +216,11 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         return false;
       }
 
-      int32_t val = std::stoi(std::string(args[i]));
+      int32_t val = 0;
+      if (1 != ParseOneInt(args[i].c_str(), &val)) {
+        std::cerr << "Invalid fence timeout: " << args[i] << std::endl;
+        return false;
+      }
       if (val < 0) {
         std::cerr << "Fence timeout must be non-negative" << std::endl;
         return false;
@@ -204,23 +242,25 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
         std::cerr << "Missing value for -v argument." << std::endl;
         return false;
       }
-      const std::string& ver = args[i];
+      const std::string& ver = std::string(args[i]);
 
-      size_t dot_pos = 0;
-      int32_t val = std::stoi(ver, &dot_pos);
-      if (val < 0) {
-        std::cerr << "Version major must be non-negative" << std::endl;
-        return false;
-      }
-
-      opts->engine_major = static_cast<uint32_t>(val);
-      if (dot_pos != std::string::npos && (dot_pos + 1) < ver.size()) {
-        val = std::stoi(ver.substr(dot_pos + 1));
-        if (val < 0) {
+      int32_t major = 0;
+      int32_t minor = 0;
+      if (2 == ParseIntDotInt(ver.c_str(), &major, &minor) ||
+          1 == ParseOneInt(ver.c_str(), &major)) {
+        if (major < 0) {
+          std::cerr << "Version major must be non-negative" << std::endl;
+          return false;
+        }
+        if (minor < 0) {
           std::cerr << "Version minor must be non-negative" << std::endl;
           return false;
         }
-        opts->engine_minor = static_cast<uint32_t>(val);
+        opts->engine_major = static_cast<uint32_t>(major);
+        opts->engine_minor = static_cast<uint32_t>(minor);
+      } else {
+        std::cerr << "Invalid engine version number: " << ver << std::endl;
+        return false;
       }
     } else if (arg == "-V" || arg == "--version") {
       opts->show_version_info = true;
