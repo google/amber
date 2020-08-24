@@ -6,7 +6,8 @@ Amber lets you capture and communicate shader bugs with the fluidity and ease of
 a scripting flow:
 
 * No graphics API programming is required.
-  * WIP: Supports Vulkan and [Dawn][Dawn] graphics APIs.
+  * Supports Vulkan graphics API
+  * WIP: Supports [Dawn][Dawn] graphics API
 * A single text string (or file) maps to a single graphics API pipeline test
   case. The text includes:
   * Input data, including buffers and images.
