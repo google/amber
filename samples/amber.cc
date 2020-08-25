@@ -106,30 +106,26 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
 )";
 
 // Parses a decimal integer from the given string, and writes it to |retval|.
-// Returns 1 if the parse was successful and consumed the whole string.
-static int ParseOneInt(const char* str, int* retval) {
+// Returns true if parsing succeeded and consumed the whole string.
+static bool ParseOneInt(const char* str, int* retval) {
   char trailing = 0;
-  return
 #if defined(_MSC_VER)
-      sscanf_s(str, "%d%c", retval, &trailing, 1)
+  return sscanf_s(str, "%d%c", retval, &trailing, 1) == 1;
 #else
-      std::sscanf(str, "%d%c", retval, &trailing)
+  return std::sscanf(str, "%d%c", retval, &trailing) == 1;
 #endif
-          ;
 }
 
 // Parses a decimal integer, then a period (.), then a decimal integer  from the
-// given string, and writes it to |retval|.
-// Returns 2 if the parse was successful and consumed the whole string.
+// given string, and writes it to |retval|.  Returns true if parsing succeeded
+// and consumed the whole string.
 static int ParseIntDotInt(const char* str, int* retval0, int* retval1) {
   char trailing = 0;
-  return
 #if defined(_MSC_VER)
-      sscanf_s(str, "%d.%d%c", retval, retval1, &trailing, 1)
+  return sscanf_s(str, "%d.%d%c", retval0, retval1, &trailing, 1) == 2;
 #else
-      std::sscanf(str, "%d.%d%c", retval0, retval1, &trailing)
+  return std::sscanf(str, "%d.%d%c", retval0, retval1, &trailing) == 2;
 #endif
-          ;
 }
 
 bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
@@ -199,7 +195,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       }
 
       int32_t val = 0;
-      if (1 != ParseOneInt(args[i].c_str(), &val)) {
+      if (!ParseOneInt(args[i].c_str(), &val)) {
         std::cerr << "Invalid device ID: " << args[i] << std::endl;
         return false;
       }
@@ -217,7 +213,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       }
 
       int32_t val = 0;
-      if (1 != ParseOneInt(args[i].c_str(), &val)) {
+      if (!ParseOneInt(args[i].c_str(), &val)) {
         std::cerr << "Invalid fence timeout: " << args[i] << std::endl;
         return false;
       }
@@ -246,8 +242,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
 
       int32_t major = 0;
       int32_t minor = 0;
-      if (2 == ParseIntDotInt(ver.c_str(), &major, &minor) ||
-          1 == ParseOneInt(ver.c_str(), &major)) {
+      if (ParseIntDotInt(ver.c_str(), &major, &minor) ||
+          ParseOneInt(ver.c_str(), &major)) {
         if (major < 0) {
           std::cerr << "Version major must be non-negative" << std::endl;
           return false;
