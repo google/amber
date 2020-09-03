@@ -54,32 +54,41 @@ ProbeSSBOCommand::Comparator ToComparator(const std::string& in) {
   return ProbeSSBOCommand::Comparator::kLessOrEqual;
 }
 
-std::unique_ptr<type::Type> ToType(const std::string& str) {
-  TypeParser parser;
-  if (str == "int8")
-    return parser.Parse("R8_SINT");
-  if (str == "int16")
-    return parser.Parse("R16_SINT");
-  if (str == "int32")
-    return parser.Parse("R32_SINT");
-  if (str == "int64")
-    return parser.Parse("R64_SINT");
-  if (str == "uint8")
-    return parser.Parse("R8_UINT");
-  if (str == "uint16")
-    return parser.Parse("R16_UINT");
-  if (str == "uint32")
-    return parser.Parse("R32_UINT");
-  if (str == "uint64")
-    return parser.Parse("R64_UINT");
-  if (str == "float16")
-    return parser.Parse("R16_SFLOAT");
-  if (str == "float")
-    return parser.Parse("R32_SFLOAT");
-  if (str == "double")
-    return parser.Parse("R64_SFLOAT");
+std::unique_ptr<type::Type> ToType(const std::string& str_in) {
+  std::string str = str_in;
 
-  if (str.length() > 7 && str.substr(0, 3) == "vec") {
+  bool is_array = false;
+  if (str.length() > 2 && str[str.length() - 2] == '[' &&
+      str[str.length() - 1] == ']') {
+    is_array = true;
+    str = str.substr(0, str.length() - 2);
+  }
+
+  TypeParser parser;
+  std::unique_ptr<type::Type> type;
+  if (str == "int8") {
+    type = parser.Parse("R8_SINT");
+  } else if (str == "int16") {
+    type = parser.Parse("R16_SINT");
+  } else if (str == "int32") {
+    type = parser.Parse("R32_SINT");
+  } else if (str == "int64") {
+    type = parser.Parse("R64_SINT");
+  } else if (str == "uint8") {
+    type = parser.Parse("R8_UINT");
+  } else if (str == "uint16") {
+    type = parser.Parse("R16_UINT");
+  } else if (str == "uint32") {
+    type = parser.Parse("R32_UINT");
+  } else if (str == "uint64") {
+    type = parser.Parse("R64_UINT");
+  } else if (str == "float16") {
+    type = parser.Parse("R16_SFLOAT");
+  } else if (str == "float") {
+    type = parser.Parse("R32_SFLOAT");
+  } else if (str == "double") {
+    type = parser.Parse("R64_SFLOAT");
+  } else if (str.length() > 7 && str.substr(0, 3) == "vec") {
     if (str[4] != '<' || str[str.length() - 1] != '>')
       return nullptr;
 
@@ -87,7 +96,7 @@ std::unique_ptr<type::Type> ToType(const std::string& str) {
     if (component_count < 2 || component_count > 4)
       return nullptr;
 
-    auto type = ToType(str.substr(5, str.length() - 6));
+    type = ToType(str.substr(5, str.length() - 6));
     if (!type)
       return nullptr;
 
@@ -97,10 +106,7 @@ std::unique_ptr<type::Type> ToType(const std::string& str) {
     }
 
     type->SetRowCount(static_cast<uint32_t>(component_count));
-    return type;
-  }
-
-  if (str.length() > 9 && str.substr(0, 3) == "mat") {
+  } else if (str.length() > 9 && str.substr(0, 3) == "mat") {
     if (str[4] != 'x' || str[6] != '<' || str[str.length() - 1] != '>')
       return nullptr;
 
@@ -112,7 +118,7 @@ std::unique_ptr<type::Type> ToType(const std::string& str) {
     if (row_count < 2 || row_count > 4)
       return nullptr;
 
-    auto type = ToType(str.substr(7, str.length() - 8));
+    type = ToType(str.substr(7, str.length() - 8));
     if (!type)
       return nullptr;
     if (!type->IsNumber() || type->IsArray() || type->IsVec() ||
@@ -122,9 +128,14 @@ std::unique_ptr<type::Type> ToType(const std::string& str) {
 
     type->SetRowCount(static_cast<uint32_t>(row_count));
     type->SetColumnCount(static_cast<uint32_t>(column_count));
-    return type;
   }
-  return nullptr;
+
+  if (!type)
+    return nullptr;
+  if (is_array)
+    type->SetIsRuntimeArray();
+
+  return type;
 }
 
 AddressMode StrToAddressMode(std::string str) {
