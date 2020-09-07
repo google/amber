@@ -440,6 +440,15 @@ void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
 
     std::vector<uint32_t> dynamic_offsets;
 
+    // Sort descriptors by binding number to get correct order of dynamic
+    // offsets.
+    std::sort(std::begin(descriptor_set_info_[i].descriptors),
+              std::end(descriptor_set_info_[i].descriptors),
+              [](const std::unique_ptr<Descriptor>& a,
+                 const std::unique_ptr<Descriptor>& b) {
+                return a->GetBinding() < b->GetBinding();
+              });
+
     for (const auto& desc : descriptor_set_info_[i].descriptors) {
       for (auto offset : desc->GetDynamicOffsets())
         dynamic_offsets.push_back(offset);
