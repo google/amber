@@ -438,20 +438,26 @@ void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
     if (descriptor_set_info_[i].empty)
       continue;
 
-    std::vector<uint32_t> dynamic_offsets;
-
     // Sort descriptors by binding number to get correct order of dynamic
     // offsets.
-    std::sort(std::begin(descriptor_set_info_[i].descriptors),
-              std::end(descriptor_set_info_[i].descriptors),
-              [](const std::unique_ptr<Descriptor>& a,
-                 const std::unique_ptr<Descriptor>& b) {
-                return a->GetBinding() < b->GetBinding();
+    typedef std::pair<uint32_t, std::vector<uint32_t>> binding_offsets_pair;
+    std::vector<binding_offsets_pair> binding_offsets;
+    for (const auto& desc : descriptor_set_info_[i].descriptors) {
+      binding_offsets.push_back(
+          {desc->GetBinding(), desc->GetDynamicOffsets()});
+    }
+
+    std::sort(std::begin(binding_offsets), std::end(binding_offsets),
+              [](const binding_offsets_pair& a, const binding_offsets_pair& b) {
+                return a.first < b.first;
               });
 
-    for (const auto& desc : descriptor_set_info_[i].descriptors) {
-      for (auto offset : desc->GetDynamicOffsets())
+    // Add the sorted dynamic offsets.
+    std::vector<uint32_t> dynamic_offsets;
+    for (const auto& binding_offset : binding_offsets) {
+      for (auto offset : binding_offset.second) {
         dynamic_offsets.push_back(offset);
+      }
     }
 
     device_->GetPtrs()->vkCmdBindDescriptorSets(
