@@ -212,6 +212,72 @@ END)";
   }
 }
 
+TEST_F(AmberScriptParserTest, BufferDataArrayStd140) {
+  std::string in = R"(
+BUFFER my_buffer DATA_TYPE uint32[] STD140 DATA
+1 2 3 4
+55 99 1234
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->IsUint32());
+  EXPECT_EQ(Format::Layout::kStd140, buffer->GetFormat()->GetLayout());
+  EXPECT_EQ(7U, buffer->ElementCount());
+  EXPECT_EQ(28U * sizeof(uint32_t), buffer->GetSizeInBytes());
+
+  std::vector<uint32_t> results = {1,  0, 0, 0, 2,    0, 0,  0, 3, 0,
+                                   0,  0, 4, 0, 0,    0, 55, 0, 0, 0,
+                                   99, 0, 0, 0, 1234, 0, 0,  0};
+  const auto* data = buffer->GetValues<uint32_t>();
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_EQ(results[i], data[i]);
+  }
+}
+
+TEST_F(AmberScriptParserTest, BufferDataArrayStd430) {
+  std::string in = R"(
+BUFFER my_buffer DATA_TYPE uint32[] STD430 DATA
+1 2 3 4
+55 99 1234
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("my_buffer", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->IsUint32());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
+  EXPECT_EQ(7U, buffer->ElementCount());
+  EXPECT_EQ(7U, buffer->ValueCount());
+  EXPECT_EQ(7U * sizeof(uint32_t), buffer->GetSizeInBytes());
+
+  std::vector<uint32_t> results = {1, 2, 3, 4, 55, 99, 1234};
+  const auto* data = buffer->GetValues<uint32_t>();
+  ASSERT_EQ(results.size(), buffer->ValueCount());
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_EQ(results[i], data[i]);
+  }
+}
+
 TEST_F(AmberScriptParserTest, BufferDataOneLine) {
   std::string in = "BUFFER my_buffer DATA_TYPE uint32 DATA 1 2 3 4 END";
 
@@ -719,6 +785,7 @@ struct BufferData {
   size_t num_bits;
   size_t row_count;
   size_t column_count;
+  bool is_array;
 };
 
 using AmberScriptParserBufferDataTypeTest = testing::TestWithParam<BufferData>;
@@ -743,30 +810,55 @@ TEST_P(AmberScriptParserBufferDataTypeTest, BufferTypes) {
   EXPECT_EQ(test_data.row_count, fmt->GetType()->RowCount());
   EXPECT_EQ(test_data.column_count, fmt->GetType()->ColumnCount());
 
-  EXPECT_EQ(test_data.type, fmt->GetSegments()[0].GetFormatMode());
-  EXPECT_EQ(test_data.num_bits, fmt->GetSegments()[0].GetNumBits());
+  auto& seg = fmt->GetSegments()[0];
+  EXPECT_EQ(test_data.type, seg.GetFormatMode());
+  EXPECT_EQ(test_data.num_bits, seg.GetNumBits());
+  EXPECT_EQ(test_data.is_array, fmt->GetType()->IsArray());
 }
 INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserTestsDataType,
     AmberScriptParserBufferDataTypeTest,
-    testing::Values(BufferData{"int8", FormatMode::kSInt, 8, 1, 1},
-                    BufferData{"int16", FormatMode::kSInt, 16, 1, 1},
-                    BufferData{"int32", FormatMode::kSInt, 32, 1, 1},
-                    BufferData{"int64", FormatMode::kSInt, 64, 1, 1},
-                    BufferData{"uint8", FormatMode::kUInt, 8, 1, 1},
-                    BufferData{"uint16", FormatMode::kUInt, 16, 1, 1},
-                    BufferData{"uint32", FormatMode::kUInt, 32, 1, 1},
-                    BufferData{"uint64", FormatMode::kUInt, 64, 1, 1},
-                    BufferData{"vec2<int8>", FormatMode::kSInt, 8, 2, 1},
-                    BufferData{"vec4<uint32>", FormatMode::kUInt, 32, 4, 1},
-                    BufferData{"mat2x4<int32>", FormatMode::kSInt, 32, 4, 2},
-                    BufferData{"mat4x2<uint16>", FormatMode::kUInt, 16, 2, 4},
-                    BufferData{"B8G8R8_UNORM", FormatMode::kUNorm, 8, 3, 1},
-                    BufferData{"float", FormatMode::kSFloat, 32, 1, 1},
-                    BufferData{"double", FormatMode::kSFloat, 64, 1, 1},
-                    BufferData{"vec3<float>", FormatMode::kSFloat, 32, 3, 1},
-                    BufferData{"mat3x3<float>", FormatMode::kSFloat, 32, 3,
-                               3}));  // NOLINT(whitespace/parens)
+    testing::Values(
+        BufferData{"int8", FormatMode::kSInt, 8, 1, 1, false},
+        BufferData{"int16", FormatMode::kSInt, 16, 1, 1, false},
+        BufferData{"int32", FormatMode::kSInt, 32, 1, 1, false},
+        BufferData{"int64", FormatMode::kSInt, 64, 1, 1, false},
+        BufferData{"uint8", FormatMode::kUInt, 8, 1, 1, false},
+        BufferData{"uint16", FormatMode::kUInt, 16, 1, 1, false},
+        BufferData{"uint32", FormatMode::kUInt, 32, 1, 1, false},
+        BufferData{"uint64", FormatMode::kUInt, 64, 1, 1, false},
+        BufferData{"float", FormatMode::kSFloat, 32, 1, 1, false},
+        BufferData{"double", FormatMode::kSFloat, 64, 1, 1, false},
+        BufferData{"vec2<int8>", FormatMode::kSInt, 8, 2, 1, false},
+        BufferData{"vec3<float>", FormatMode::kSFloat, 32, 3, 1, false},
+        BufferData{"vec4<uint32>", FormatMode::kUInt, 32, 4, 1, false},
+        BufferData{"mat2x4<int32>", FormatMode::kSInt, 32, 4, 2, false},
+        BufferData{"mat3x3<float>", FormatMode::kSFloat, 32, 3, 3, false},
+        BufferData{"mat4x2<uint16>", FormatMode::kUInt, 16, 2, 4, false},
+        BufferData{"B8G8R8_UNORM", FormatMode::kUNorm, 8, 3, 1,
+                   false}));  // NOLINT(whitespace/parens)
+
+INSTANTIATE_TEST_SUITE_P(
+    AmberScriptParserTestsDataType2,
+    AmberScriptParserBufferDataTypeTest,
+    testing::Values(
+        BufferData{"int8[]", FormatMode::kSInt, 8, 1, 1, true},
+        BufferData{"int16[]", FormatMode::kSInt, 16, 1, 1, true},
+        BufferData{"int32[]", FormatMode::kSInt, 32, 1, 1, true},
+        BufferData{"int64[]", FormatMode::kSInt, 64, 1, 1, true},
+        BufferData{"uint8[]", FormatMode::kUInt, 8, 1, 1, true},
+        BufferData{"uint16[]", FormatMode::kUInt, 16, 1, 1, true},
+        BufferData{"uint32[]", FormatMode::kUInt, 32, 1, 1, true},
+        BufferData{"uint64[]", FormatMode::kUInt, 64, 1, 1, true},
+        BufferData{"float[]", FormatMode::kSFloat, 32, 1, 1, true},
+        BufferData{"double[]", FormatMode::kSFloat, 64, 1, 1, true},
+        BufferData{"vec2<int8>[]", FormatMode::kSInt, 8, 2, 1, true},
+        BufferData{"vec3<float>[]", FormatMode::kSFloat, 32, 3, 1, true},
+        BufferData{"vec4<uint32>[]", FormatMode::kUInt, 32, 4, 1, true},
+        BufferData{"mat2x4<int32>[]", FormatMode::kSInt, 32, 4, 2, true},
+        BufferData{"mat3x3<float>[]", FormatMode::kSFloat, 32, 3, 3, true},
+        BufferData{"mat4x2<uint16>[]", FormatMode::kUInt, 16, 2, 4,
+                   true}));  // NOLINT(whitespace/parens)
 
 struct NameData {
   const char* name;
@@ -792,6 +884,9 @@ INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserBufferDataTypeInvalidTestSamples,
     AmberScriptParserBufferDataTypeInvalidTest,
     testing::Values(NameData{"int17"},
+                    NameData{"int["},
+                    NameData{"int]"},
+                    NameData{"B8G8R8_UNORM[]"},
                     NameData{"uintt0"},
                     NameData{"vec7<uint8>"},
                     NameData{"vec27<uint8>"},

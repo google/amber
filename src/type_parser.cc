@@ -40,12 +40,16 @@ std::unique_ptr<type::Type> TypeParser::Parse(const std::string& data) {
   for (;;) {
     size_t next_pos = data.rfind('_', cur_pos);
     if (next_pos == std::string::npos) {
-      if (cur_pos != std::string::npos)
-        ProcessChunk(data.substr(0, cur_pos + 1));
+      if (cur_pos != std::string::npos) {
+        if (!ProcessChunk(data.substr(0, cur_pos + 1)))
+          return nullptr;
+      }
       break;
     }
 
-    ProcessChunk(data.substr(next_pos + 1, cur_pos - next_pos));
+    if (!ProcessChunk(data.substr(next_pos + 1, cur_pos - next_pos)))
+      return nullptr;
+
     cur_pos = next_pos - 1;
   }
 
@@ -78,8 +82,9 @@ void TypeParser::AddPiece(FormatComponentType type,
   pieces_.insert(pieces_.begin(), Pieces{type, mode, bits});
 }
 
-void TypeParser::ProcessChunk(const std::string& data) {
-  assert(data.size() > 0);
+bool TypeParser::ProcessChunk(const std::string& data) {
+  if (data.size() == 0)
+    return false;
 
   if (data[0] == 'P') {
     if (data == "PACK8")
@@ -89,9 +94,9 @@ void TypeParser::ProcessChunk(const std::string& data) {
     else if (data == "PACK32")
       pack_size_ = 32;
     else
-      assert(false);
+      return false;
 
-    return;
+    return true;
   }
 
   if (data[0] == 'U') {
@@ -104,9 +109,9 @@ void TypeParser::ProcessChunk(const std::string& data) {
     else if (data == "USCALED")
       mode_ = FormatMode::kUScaled;
     else
-      assert(false);
+      return false;
 
-    return;
+    return true;
   }
 
   if (data[0] == 'S') {
@@ -123,9 +128,9 @@ void TypeParser::ProcessChunk(const std::string& data) {
     else if (data == "S8")
       AddPiece(FormatComponentType::kS, mode_, 8);
     else
-      assert(false);
+      return false;
 
-    return;
+    return true;
   }
 
   int32_t cur_pos = static_cast<int32_t>(data.size()) - 1;
@@ -167,6 +172,7 @@ void TypeParser::ProcessChunk(const std::string& data) {
 
     --cur_pos;
   }
+  return true;
 }
 
 // static
