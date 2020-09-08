@@ -41,7 +41,7 @@ class TypeParser {
 
  private:
   std::unique_ptr<type::Type> ParseGlslFormat(const std::string& fmt);
-  void ProcessChunk(const std::string&);
+  bool ProcessChunk(const std::string&);
   void AddPiece(FormatComponentType type, FormatMode mode, uint8_t bits);
   void FlushPieces(type::Type* type, FormatMode mode);
 

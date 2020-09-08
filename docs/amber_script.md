@@ -209,6 +209,8 @@ either image buffers or, what the target API would refer to as a buffer.
  * vec[2,3,4]{type}
  * mat[2,3,4]x[2,3,4]{type}  (mat<columns>x<rows>)
  * Any of the `Image Formats` listed below.
+ * For any of the non-Image Formats types above appending '[]' will treat the
+    data as an array. e.g. int8[], vec2<float>[]
 
 Sized arrays and structures are not currently representable.
 
