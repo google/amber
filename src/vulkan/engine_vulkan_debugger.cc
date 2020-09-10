@@ -1026,7 +1026,7 @@ class VkDebugger : public Engine::Debugger {
     auto it = runningThreads_.find(thread_id);
     if (it == runningThreads_.end()) {
       OnError("Step event reported for non-running thread " +
-              std::to_string(thread_id.operator int()));
+              std::to_string(thread_id.operator int64_t()));
     }
 
     it->second->OnStep();
