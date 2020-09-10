@@ -33,6 +33,9 @@ class Shader {
   void SetName(const std::string& name) { name_ = name; }
   const std::string& GetName() const { return name_; }
 
+  void SetFilePath(const std::string& path) { file_path_ = path; }
+  const std::string& GetFilePath() const { return file_path_; }
+
   void SetFormat(ShaderFormat fmt) { shader_format_ = fmt; }
   ShaderFormat GetFormat() const { return shader_format_; }
 
@@ -49,6 +52,7 @@ class Shader {
   ShaderFormat shader_format_;
   std::string data_;
   std::string name_;
+  std::string file_path_;
   std::string target_env_;
 };
 

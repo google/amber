@@ -515,34 +515,40 @@ Result Parser::ParseShaderBlock() {
     if (!token->IsIdentifier() && !token->IsString())
       return Result("expected virtual file path after VIRTUAL_FILE");
 
-    r = ValidateEndOfStatement("SHADER command");
-    if (!r.IsSuccess())
-      return r;
-
     auto path = token->AsString();
 
     std::string data;
     r = script_->GetVirtualFile(path, &data);
-    if (!r.IsSuccess()) {
-      return r;
-    }
-
-    shader->SetData(data);
-  } else {
-    r = ValidateEndOfStatement("SHADER command");
     if (!r.IsSuccess())
       return r;
 
-    std::string data = tokenizer_->ExtractToNext("END");
-    if (data.empty())
-      return Result("SHADER must not be empty");
-
     shader->SetData(data);
+    shader->SetFilePath(path);
 
-    token = tokenizer_->NextToken();
-    if (!token->IsIdentifier() || token->AsString() != "END")
-      return Result("SHADER missing END command");
+    r = script_->AddShader(std::move(shader));
+    if (!r.IsSuccess())
+      return r;
+
+    return ValidateEndOfStatement("SHADER command");
   }
+
+  r = ValidateEndOfStatement("SHADER command");
+  if (!r.IsSuccess())
+    return r;
+
+  std::string data = tokenizer_->ExtractToNext("END");
+  if (data.empty())
+    return Result("SHADER must not be empty");
+
+  shader->SetData(data);
+
+  auto path = "embedded-shaders/" + shader->GetName();
+  script_->AddVirtualFile(path, data);
+  shader->SetFilePath(path);
+
+  token = tokenizer_->NextToken();
+  if (!token->IsIdentifier() || token->AsString() != "END")
+    return Result("SHADER missing END command");
 
   r = script_->AddShader(std::move(shader));
   if (!r.IsSuccess())

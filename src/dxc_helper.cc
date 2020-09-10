@@ -135,6 +135,7 @@ Result Compile(const std::string& src,
                const std::string& entry,
                const std::string& profile,
                const std::string& spv_env,
+               const std::string& filename,
                const VirtualFileStore* virtual_files,
                std::vector<uint32_t>* generated_binary) {
   if (hlsl::options::initHlslOptTable()) {
@@ -173,9 +174,7 @@ Result Compile(const std::string& src,
     return Result("DXCCreateInstance for DXCCompiler failed");
   }
 
-  IDxcOperationResult* result;
-  std::wstring src_filename =
-      L"amber." + std::wstring(profile.begin(), profile.end());
+  std::string filepath = filename.empty() ? ("amber." + profile) : filename;
 
   std::vector<const wchar_t*> dxc_flags(kDxcFlags, &kDxcFlags[kDxcFlagsCount]);
   const wchar_t* target_env = nullptr;
@@ -191,9 +190,11 @@ Result Compile(const std::string& src,
   if (target_env)
     dxc_flags.push_back(target_env);
 
+  IDxcOperationResult* result;
   if (compiler->Compile(
-          source,               /* source text */
-          src_filename.c_str(), /* original file source */
+          source, /* source text */
+          std::wstring(filepath.begin(), filepath.end())
+              .c_str(), /* original file source */
           std::wstring(entry.begin(), entry.end())
               .c_str(), /* entry point name */
           std::wstring(profile.begin(), profile.end())
