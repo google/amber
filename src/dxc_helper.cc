@@ -163,8 +163,8 @@ Result Compile(const std::string& src,
     return Result("DXC compile failure: CreateIncludeHandler");
   }
 
-  IDxcIncludeHandler* include_handler =
-      new IncludeHandler(virtual_files, dxc_lib, fallback_include_handler);
+  CComPtr<IDxcIncludeHandler> include_handler(
+      new IncludeHandler(virtual_files, dxc_lib, fallback_include_handler));
 
   IDxcCompiler* compiler;
   if (DxcCreateInstance(CLSID_DxcCompiler, __uuidof(IDxcCompiler),
