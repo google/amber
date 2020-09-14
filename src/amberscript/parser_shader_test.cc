@@ -461,5 +461,42 @@ END
   ASSERT_TRUE(r.IsSuccess());
 }
 
+TEST_F(AmberScriptParserTest, ShaderDefaultFilePath) {
+  std::string in = R"(#!amber
+SHADER fragment shader_name GLSL
+void main() {
+  gl_FragColor = vec3(2, 3, 4);
+}
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  auto shader = script->GetShader("shader_name");
+  EXPECT_EQ("embedded-shaders/shader_name", shader->GetFilePath());
+}
+
+TEST_F(AmberScriptParserTest, ShaderVirtualFilePath) {
+  std::string in = R"(#!amber
+VIRTUAL_FILE my_fragment_shader
+void main() {
+  gl_FragColor = vec3(2, 3, 4);
+}
+END
+
+SHADER fragment shader_name GLSL VIRTUAL_FILE my_fragment_shader
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  auto shader = script->GetShader("shader_name");
+  EXPECT_EQ("my_fragment_shader", shader->GetFilePath());
+}
+
 }  // namespace amberscript
 }  // namespace amber

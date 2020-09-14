@@ -276,7 +276,7 @@ Result ShaderCompiler::CompileHlsl(const Shader* shader,
     return Result("Unknown shader type");
 
   return dxchelper::Compile(shader->GetData(), "main", target, spv_env_,
-                            virtual_files_, result);
+                            shader->GetFilePath(), virtual_files_, result);
 }
 #else
 Result ShaderCompiler::CompileHlsl(const Shader*,
