@@ -835,7 +835,8 @@ class VkDebugger : public Engine::Debugger {
       // https://microsoft.github.io/debug-adapter-protocol/specification#Events_Stopped
       session_->registerHandler([&](const dap::StoppedEvent& event) {
         DEBUGGER_LOG("THREAD STOPPED. Reason: %s", event.reason.c_str());
-        if (event.reason == "function breakpoint") {
+        if (event.reason == "function breakpoint" ||
+            event.reason == "breakpoint") {
           OnBreakpointHit(event.threadId.value(0));
         } else if (event.reason == "step") {
           OnStep(event.threadId.value(0));
