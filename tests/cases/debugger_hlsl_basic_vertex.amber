@@ -1,0 +1,130 @@
+#!amber
+# Copyright 2020 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https:#www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SET ENGINE_DATA fence_timeout_ms 1000000
+
+VIRTUAL_FILE "vs.hlsl"
+struct VS_OUTPUT {
+  float4 pos : SV_POSITION;
+  float4 color : COLOR;
+};
+
+VS_OUTPUT main(float4 pos : POSITION,
+               float4 color : COLOR) {
+  VS_OUTPUT vout;
+  vout.pos = pos;
+  vout.color = color;
+  return vout;
+}
+END
+
+VIRTUAL_FILE "fs.hlsl"
+float4 main(float4 color : COLOR) : SV_TARGET {
+  return color;
+}
+END
+
+SHADER vertex   vtex_shader HLSL VIRTUAL_FILE "vs.hlsl"
+SHADER fragment frag_shader HLSL VIRTUAL_FILE "fs.hlsl"
+
+BUFFER position_buf DATA_TYPE R8G8_SNORM DATA
+# Full frame
+-128 -128
+ 127  127
+-128  127
+-128 -128
+ 127  127
+ 127 -128
+END
+
+BUFFER vert_color DATA_TYPE R8G8B8A8_UNORM DATA
+255   0   0 255
+255   0   0 255
+255   0   0 255
+255   0   0 255
+255   0   0 255
+255   0   0 255
+
+  0 255   0 255
+  0 255   0 255
+  0 255   0 255
+  0 255   0 255
+  0 255   0 255
+  0 255   0 255
+
+  0   0 255 255
+  0   0 255 255
+  0   0 255 255
+  0   0 255 255
+  0   0 255 255
+  0   0 255 255
+
+127 127 127 255
+127 127 127 255
+127 127 127 255
+127 127 127 255
+127 127 127 255
+127 127 127 255
+END
+
+BUFFER framebuffer FORMAT B8G8R8A8_UNORM
+
+PIPELINE graphics pipeline
+  FRAMEBUFFER_SIZE 32 32
+
+  ATTACH vtex_shader
+  SHADER_OPTIMIZATION vtex_shader
+    --inline-entry-points-exhaustive
+    --eliminate-dead-functions
+  END
+
+  ATTACH frag_shader
+  SHADER_OPTIMIZATION frag_shader
+    --inline-entry-points-exhaustive
+    --eliminate-dead-functions
+  END
+
+  VERTEX_DATA position_buf LOCATION 0
+  VERTEX_DATA vert_color LOCATION 1
+
+  BIND BUFFER framebuffer AS color LOCATION 0
+END
+
+CLEAR pipeline
+
+DEBUG pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 6
+    THREAD VERTEX_INDEX 0
+        EXPECT LOCATION "vs.hlsl" 9 "  vout.pos = pos;"
+        EXPECT LOCAL "pos.x" EQ -1.000000
+        EXPECT LOCAL "pos.y" EQ -1.000000
+        EXPECT LOCAL "pos.z" EQ 0.000000
+        EXPECT LOCAL "color.x" EQ 1.000000
+        EXPECT LOCAL "color.y" EQ 0.000000
+        EXPECT LOCAL "color.z" EQ 0.000000
+        STEP_IN
+        EXPECT LOCAL "vout.pos.x" EQ -1.000000
+        EXPECT LOCAL "vout.pos.y" EQ -1.000000
+        EXPECT LOCAL "vout.pos.z" EQ 0.000000
+        EXPECT LOCATION "vs.hlsl" 10 "  vout.color = color;"
+        STEP_IN
+        EXPECT LOCAL "vout.color.x" EQ 1.000000
+        EXPECT LOCAL "vout.color.y" EQ 0.000000
+        EXPECT LOCAL "vout.color.z" EQ 0.000000
+        EXPECT LOCATION "vs.hlsl" 11 "  return vout;"
+        CONTINUE
+    END
+END
+
+EXPECT framebuffer IDX 0 0 SIZE 32 32 EQ_RGB 255 0 0

@@ -90,7 +90,7 @@ END
 DEBUG pipeline 1 1 1
     THREAD GLOBAL_INVOCATION_ID 2 0 0
         EXPECT CALLSTACK
-            "ComputeShader" "ComputeShader0.spvasm" 20
+            "SPIR-V" "ComputeShader0.spvasm" 20
         END
         EXPECT LOCATION "ComputeShader0.spvasm" 20 "%5 = OpVariable %11 Uniform"
         STEP_IN
@@ -113,7 +113,7 @@ DEBUG pipeline 1 1 1
         EXPECT LOCATION "ComputeShader0.spvasm" 36 "OpStore %23 %22"
         STEP_IN
         EXPECT CALLSTACK
-            "ComputeShader" "ComputeShader0.spvasm" 37
+            "SPIR-V" "ComputeShader0.spvasm" 37
         END
         EXPECT LOCATION "ComputeShader0.spvasm" 37 "OpReturn"
         CONTINUE
