@@ -74,7 +74,7 @@ class Parser : public amber::Parser {
   Result ParsePipelineStencil(Pipeline* pipeline);
   Result ParseRun();
   Result ParseDebug();
-  Result ParseDebugThread(debug::Events*);
+  Result ParseDebugThread(debug::Events*, Pipeline* pipeline);
   Result ParseDebugThreadBody(debug::Thread* thread);
   Result ParseClear();
   Result ParseClearColor();

@@ -2606,6 +2606,15 @@ Result Parser::ParseDebug() {
     return res;
   }
 
+  // As ParseRun() succeeded, we know it emplaced a run command at the back of
+  // the command_list_.
+  auto cmd = command_list_.back().get();
+
+  // We also know this command must derive from PipelineCommand, as it is
+  // runnable.
+  auto pipeline_cmd = static_cast<PipelineCommand*>(cmd);
+  auto pipeline = pipeline_cmd->GetPipeline();
+
   auto dbg = debug::Script::Create();
   for (auto token = tokenizer_->NextToken();; token = tokenizer_->NextToken()) {
     if (token->IsEOL())
@@ -2616,7 +2625,7 @@ Result Parser::ParseDebug() {
       break;
 
     if (token->AsString() == "THREAD") {
-      res = ParseDebugThread(dbg.get());
+      res = ParseDebugThread(dbg.get(), pipeline);
       if (!res.IsSuccess()) {
         return res;
       }
@@ -2625,14 +2634,18 @@ Result Parser::ParseDebug() {
     }
   }
 
-  command_list_.back()->SetDebugScript(std::move(dbg));
+  cmd->SetDebugScript(std::move(dbg));
 
   return Result();
 }
 
-Result Parser::ParseDebugThread(debug::Events* dbg) {
+Result Parser::ParseDebugThread(debug::Events* dbg, Pipeline* pipeline) {
   auto token = tokenizer_->NextToken();
   if (token->AsString() == "GLOBAL_INVOCATION_ID") {
+    for (auto& shader : pipeline->GetShaders()) {
+      shader.SetEmitDebugInfo(true);
+    }
+
     uint32_t invocation[3] = {};
     for (int i = 0; i < 3; i++) {
       token = tokenizer_->NextToken();
@@ -2650,6 +2663,12 @@ Result Parser::ParseDebugThread(debug::Events* dbg) {
     dbg->BreakOnComputeGlobalInvocation(invocation[0], invocation[1],
                                         invocation[2], thread);
   } else if (token->AsString() == "VERTEX_INDEX") {
+    for (auto& shader : pipeline->GetShaders()) {
+      if (shader.GetShaderType() == kShaderTypeVertex) {
+        shader.SetEmitDebugInfo(true);
+      }
+    }
+
     token = tokenizer_->NextToken();
     if (!token->IsInteger())
       return Result("expected vertex index");
@@ -2663,6 +2682,12 @@ Result Parser::ParseDebugThread(debug::Events* dbg) {
 
     dbg->BreakOnVertexIndex(vertex_index, thread);
   } else if (token->AsString() == "FRAGMENT_WINDOW_SPACE_POSITION") {
+    for (auto& shader : pipeline->GetShaders()) {
+      if (shader.GetShaderType() == kShaderTypeFragment) {
+        shader.SetEmitDebugInfo(true);
+      }
+    }
+
     token = tokenizer_->NextToken();
     if (!token->IsInteger())
       return Result("expected x unsigned integer coordinate");

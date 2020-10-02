@@ -34,6 +34,7 @@ Result Compile(const std::string& src,
                const std::string& profile_str,
                const std::string& spv_env,
                const VirtualFileStore* virtual_files,
+               bool emit_debug_info,
                std::vector<uint32_t>* generated_binary);
 
 }  // namespace dxchelper
