@@ -90,6 +90,9 @@ class Pipeline {
     }
     bool GetRequireFullSubgroups() const { return require_full_subgroups_; }
 
+    void SetEmitDebugInfo(const bool isSet) { emit_debug_info_ = isSet; }
+    bool GetEmitDebugInfo() const { return emit_debug_info_; }
+
     void SetShader(Shader* shader) { shader_ = shader; }
     const Shader* GetShader() const { return shader_; }
 
@@ -174,6 +177,7 @@ class Pipeline {
     uint32_t required_subgroup_size_;
     bool varying_subgroup_size_;
     bool require_full_subgroups_;
+    bool emit_debug_info_;
   };
 
   /// Information on a buffer attached to the pipeline.
