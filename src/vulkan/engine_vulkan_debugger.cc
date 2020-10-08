@@ -427,7 +427,7 @@ class Client {
 
  private:
   struct SourceCache {
-    std::unordered_map<int, SourceLines> by_ref;
+    std::unordered_map<int64_t, SourceLines> by_ref;
     std::unordered_map<std::string, SourceLines> by_path;
   };
 
@@ -533,7 +533,7 @@ class Thread : public debug::Thread {
  public:
   Thread(VirtualFileStore* virtual_files,
          std::shared_ptr<dap::Session> session,
-         int threadId,
+         dap::integer threadId,
          int lane,
          std::shared_ptr<const debug::ThreadScript> script)
       : virtual_files_(virtual_files),
@@ -1117,7 +1117,7 @@ class VkDebugger : public Engine::Debugger {
                          std::shared_ptr<const debug::ThreadScript>,
                          InvocationKey::Hash>;
   using ThreadVector = std::vector<std::unique_ptr<Thread>>;
-  using ThreadMap = std::unordered_map<int, std::unique_ptr<Thread>>;
+  using ThreadMap = std::unordered_map<int64_t, std::unique_ptr<Thread>>;
   VirtualFileStore* const virtual_files_;
   std::shared_ptr<dap::Session> session_;
   std::mutex threads_mutex_;
