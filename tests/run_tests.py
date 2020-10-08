@@ -48,9 +48,11 @@ SUPPRESSIONS = {
   ]
 }
 
-SUPPRESSIONS_DEBUGGER = [
-  # Debugger functionality is not ready for testing (yet)
-  "debugger_hlsl_line_stepping.amber",
+DEBUGGER_CASES = [
+  "debugger_hlsl_basic_compute.amber",
+  "debugger_hlsl_basic_fragment.amber",
+  "debugger_hlsl_basic_vertex.amber",
+  "debugger_hlsl_shadowed_vars.amber",
   "debugger_spirv_line_stepping.amber",
 ]
 
@@ -99,6 +101,10 @@ OPENCL_CASES = [
 DXC_CASES = [
   "draw_triangle_list_hlsl.amber",
   "relative_includes_hlsl.amber",
+  "debugger_hlsl_basic_compute.amber",
+  "debugger_hlsl_basic_fragment.amber",
+  "debugger_hlsl_basic_vertex.amber",
+  "debugger_hlsl_shadowed_vars.amber",
 ]
 
 SUPPRESSIONS_DAWN = [
@@ -169,13 +175,14 @@ SUPPRESSIONS_DAWN = [
 
 class TestCase:
   def __init__(self, input_path, parse_only, use_dawn, use_opencl, use_dxc,
-               use_swiftshader):
+               use_swiftshader, test_debugger):
     self.input_path = input_path
     self.parse_only = parse_only
     self.use_dawn = use_dawn
     self.use_opencl = use_opencl
     self.use_dxc = use_dxc
     self.use_swiftshader = use_swiftshader
+    self.test_debugger = test_debugger
 
     self.results = {}
 
@@ -203,7 +210,8 @@ class TestCase:
     if not self.use_dxc and is_dxc_test:
       return True
 
-    if base in SUPPRESSIONS_DEBUGGER:
+    is_debugger_test = base in DEBUGGER_CASES
+    if not self.test_debugger and is_debugger_test:
       return True
 
     if system in SUPPRESSIONS.keys():
@@ -228,6 +236,17 @@ class TestCase:
 class TestRunner:
   def RunTest(self, tc):
     print("Testing {}".format(tc.GetInputPath()))
+
+    # Amber and SwiftShader both use the VK_DEBUGGER_PORT environment variable
+    # for specifying the Debug Adapter Protocol port number.
+    # This needs to be set before creating the Vulkan device.
+    # We remove this key from the enviroment if the test is not a debugger test
+    # so that full SPIR-V optimizations are preserved.
+    is_debugger_test = os.path.basename(tc.GetInputPath()) in DEBUGGER_CASES
+    if is_debugger_test:
+      os.environ["VK_DEBUGGER_PORT"] = "19020"
+    elif "VK_DEBUGGER_PORT" in os.environ:
+      del os.environ["VK_DEBUGGER_PORT"]
 
     cmd = [self.options.test_prog_path, '-q']
     if tc.IsParseOnly():
@@ -315,6 +334,9 @@ class TestRunner:
     parser.add_option('--use-swiftshader',
                       action="store_true", default=False,
                       help='Tells test runner swiftshader is the device')
+    parser.add_option('--test-debugger',
+                      action="store_true", default=False,
+                      help='Include debugger tests')
 
     self.options, self.args = parser.parse_args()
 
@@ -342,7 +364,8 @@ class TestRunner:
 
         self.test_cases.append(TestCase(input_path, self.options.parse_only,
             self.options.use_dawn, self.options.use_opencl,
-            self.options.use_dxc, self.options.use_swiftshader))
+            self.options.use_dxc, self.options.use_swiftshader,
+            self.options.test_debugger))
 
     else:
       for file_dir, _, filename_list in os.walk(self.options.test_dir):
@@ -353,7 +376,8 @@ class TestRunner:
               self.test_cases.append(
                   TestCase(input_path, self.options.parse_only,
                       self.options.use_dawn, self.options.use_opencl,
-                      self.options.use_dxc, self.options.use_swiftshader))
+                      self.options.use_dxc, self.options.use_swiftshader,
+                      self.options.test_debugger))
 
     self.failures = []
     self.suppressed = []
