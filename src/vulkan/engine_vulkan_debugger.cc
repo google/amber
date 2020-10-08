@@ -16,6 +16,8 @@
 
 #if AMBER_ENABLE_VK_DEBUGGING
 
+#include <stdlib.h>
+
 #include <chrono>              // NOLINT(build/c++11)
 #include <condition_variable>  // NOLINT(build/c++11)
 #include <fstream>
@@ -816,10 +818,20 @@ class VkDebugger : public Engine::Debugger {
   /// Connect establishes the connection to the shader debugger. Must be
   /// called before any of the |debug::Events| methods.
   Result Connect() {
+    auto port_str = getenv("VK_DEBUGGER_PORT");
+    if (!port_str) {
+      return Result("The environment variable VK_DEBUGGER_PORT was not set\n");
+    }
+    int port = atoi(port_str);
+    if (port == 0) {
+      return Result("Could not parse port number from VK_DEBUGGER_PORT ('" +
+                    std::string(port_str) + "')");
+    }
+
     constexpr int kMaxAttempts = 10;
     // The socket might take a while to open - retry connecting.
     for (int attempt = 0; attempt < kMaxAttempts; attempt++) {
-      auto connection = dap::net::connect("localhost", 19020);
+      auto connection = dap::net::connect("localhost", port);
       if (!connection) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         continue;
@@ -887,7 +899,8 @@ class VkDebugger : public Engine::Debugger {
 
       return Result();
     }
-    return Result("Unable to connect to debugger");
+    return Result("Unable to connect to debugger on port " +
+                  std::to_string(port));
   }
 
   // Flush checks that all breakpoints were hit, waits for all threads to
