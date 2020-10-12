@@ -18,4 +18,5 @@ set -x  # display commands
 
 SCRIPT_DIR=`dirname "$BASH_SOURCE"`
 source $SCRIPT_DIR/../scripts/linux/build.sh DEBUG "gcc-9" \
-    -DAMBER_ENABLE_SWIFTSHADER=TRUE
+    -DAMBER_ENABLE_SWIFTSHADER=TRUE \
+    -DAMBER_ENABLE_VK_DEBUGGING=TRUE
