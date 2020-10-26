@@ -34,7 +34,7 @@ namespace {
 class VerifierTest : public testing::Test {
  public:
   VerifierTest() = default;
-  ~VerifierTest() = default;
+  ~VerifierTest() override = default;
 
   const Format* GetColorFormat() {
     if (color_frame_format_)

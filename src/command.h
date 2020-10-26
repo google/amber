@@ -471,7 +471,7 @@ class ProbeSSBOCommand : public Probe {
 class BindableResourceCommand : public PipelineCommand {
  public:
   BindableResourceCommand(Type type, Pipeline* pipeline);
-  virtual ~BindableResourceCommand();
+  ~BindableResourceCommand() override;
 
   void SetDescriptorSet(uint32_t set) { descriptor_set_ = set; }
   uint32_t GetDescriptorSet() const { return descriptor_set_; }
