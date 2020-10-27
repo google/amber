@@ -1,0 +1,105 @@
+#!amber
+# Copyright 2019 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# Demonstrate edge case behaviour of packHalf2x16 around the maximum normal
+# f16 value.  We'll construct the buffer inputs and outputs as integers,
+# but read the input values as 32-bit floats.
+#
+# Results were verified with an NVIDIA GPU. It appears that the implementation
+# truncates the f32 mantissa bits that can never be represented in f16.  That
+# is, ignore the least significant 12 bits in the mantissa.
+
+SHADER compute packer GLSL
+#version 450
+layout(set=0, binding=0) buffer Output {
+  uint data[];
+} Out;
+layout(set=0, binding=1) buffer Input {
+  vec2 data[];
+} In;
+
+void main() {
+  Out.data[0] = packHalf2x16(In.data[0]);
+  Out.data[1] = packHalf2x16(In.data[1]);
+  Out.data[2] = packHalf2x16(In.data[2]);
+  Out.data[3] = packHalf2x16(In.data[3]);
+  Out.data[4] = packHalf2x16(In.data[4]);
+  Out.data[5] = packHalf2x16(In.data[5]);
+}
+END
+
+# How do you represent the f16 max normal value in an hexadecimal value for f32?
+#
+# The f16 exponent is 5 bits wide, with an excess-15 representation.
+# The max normal exponent is, in binary 11110, or 30.
+# Subtract the bias of 15, produces 15.
+# Add the f32 bias of 127, produces 142.
+# In binary, that's 10001110
+# Schematically:
+# f16 max normal:     1(bias bit), then 1110 in LSB positions
+# Translates into
+# f32:                1(bias bit), then filler, then 1110 in LSB positions.
+#   The f32 exponent is 8 bits, so that's 3 filler 0 bits.
+#
+# Including the sign bit:
+#    0 1 000 1110 then mantissa.
+#
+# The f16 mantissa is 10 bits wide, with max value 1111 1111 11
+#
+# All together, the max normal f16 value is:
+#    0 1 000 1110 1111 1111 11 ... and then 0 bits to fill the mantissa
+#
+# Regroup by 4 bits:
+#    0100  0111 0111 1111 111
+#
+# or in hexadecimal:
+#    4     7    7    f    e and then 0 bits to fill the mantissa
+#
+
+BUFFER orig_buf DATA_TYPE vec2<uint32> STD430 DATA
+# Positives
+   0x477fe000 # f16 max normal value.  Maps to max normal f16
+   0x477fe001 # just beyond...         Maps to max normal f16
+   0x477fefff #                  Still maps to max normal f16
+   0x477ff000 #                 Maps to f16 infinity
+   0x787ff000 # f16 infinity
+   0x787ff001 # just beyond      Still maps to f16 infinity
+
+# Now do negatives
+   0xc77fe000 # f16 max normal value.  Maps to max normal f16
+   0xc77fe001 # just beyond...         Maps to max normal f16
+   0xc77fefff #                  Still maps to max normal f16
+   0xc77ff000 #                 Maps to f16 infinity
+   0xf87ff000 # f16 infinity
+   0xf87ff001 # just beyond      Still maps to f16 infinity
+END
+# Treat the output like a bunch of uint16 values
+BUFFER dest_buf DATA_TYPE uint16 SIZE 12 FILL 1
+
+PIPELINE compute pipeline
+  ATTACH packer
+  BIND BUFFER dest_buf AS storage DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER orig_buf AS storage DESCRIPTOR_SET 0 BINDING 1
+END
+
+RUN pipeline 1 1 1
+
+
+ # 31743 =  0x7bff  # f16 max normal
+ # 31744 =  0x7c00  # f16 infinity
+ # 64511 =  0xfbff  # f16 max negative normal
+ # 64512 =  0xfc00  # f16 negative infinity
+EXPECT dest_buf IDX 0 EQ 31743 31743 31743 31744 31744 31744 64511 64511 64511 64512 64512 64512
