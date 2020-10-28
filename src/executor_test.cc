@@ -207,7 +207,7 @@ class EngineStub : public Engine {
 class VkScriptExecutorTest : public testing::Test {
  public:
   VkScriptExecutorTest() = default;
-  ~VkScriptExecutorTest() = default;
+  ~VkScriptExecutorTest() override = default;
 
   std::unique_ptr<Engine> MakeEngine() { return MakeUnique<EngineStub>(); }
   std::unique_ptr<Engine> MakeAndInitializeEngine(

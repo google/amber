@@ -144,7 +144,7 @@ class VertexBufferTest : public testing::Test {
     commandBuffer_->Initialize();
   }
 
-  ~VertexBufferTest() { vertex_buffer_.reset(); }
+  ~VertexBufferTest() override { vertex_buffer_.reset(); }
 
   Result SetData(uint8_t location, Format* format, std::vector<Value> values) {
     auto buffer = MakeUnique<Buffer>();

@@ -59,7 +59,7 @@ class Engine {
   /// Debugger is the interface to the engine's shader debugger.
   class Debugger : public debug::Events {
    public:
-    ~Debugger();
+    ~Debugger() override;
 
     /// Flush waits for all the debugger commands issued to complete, and
     /// returns a Result that includes any debugger test failure.
