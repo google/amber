@@ -44,6 +44,7 @@ class ImageDescriptor : public BufferBackedDescriptor {
 
  protected:
   std::vector<Resource*> GetResources() override;
+  bool IsReadOnly() override;
 
  private:
   uint32_t base_mip_level_ = 0;

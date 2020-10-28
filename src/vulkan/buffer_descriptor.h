@@ -54,6 +54,7 @@ class BufferDescriptor : public BufferBackedDescriptor {
 
  protected:
   std::vector<Resource*> GetResources() override;
+  bool IsReadOnly() override;
 
  private:
   std::vector<std::unique_ptr<TransferBuffer>> transfer_buffers_;

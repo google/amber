@@ -74,7 +74,11 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
 }
 
 Result BufferDescriptor::MoveResourceToBufferOutput() {
-  Result r = BufferBackedDescriptor::MoveResourceToBufferOutput();
+  Result r;
+
+  if (!IsReadOnly())
+    r = BufferBackedDescriptor::MoveResourceToBufferOutput();
+
   transfer_buffers_.clear();
 
   return r;
@@ -121,6 +125,22 @@ std::vector<Resource*> BufferDescriptor::GetResources() {
     ret.push_back(b.get());
   }
   return ret;
+}
+
+bool BufferDescriptor::IsReadOnly() {
+  switch (type_) {
+    case DescriptorType::kUniformBuffer:
+    case DescriptorType::kUniformBufferDynamic:
+    case DescriptorType::kUniformTexelBuffer:
+      return true;
+    case DescriptorType::kStorageBuffer:
+    case DescriptorType::kStorageBufferDynamic:
+    case DescriptorType::kStorageTexelBuffer:
+      return false;
+    default:
+      assert(false && "Unexpected descriptor type");
+      return false;
+  }
 }
 
 }  // namespace vulkan

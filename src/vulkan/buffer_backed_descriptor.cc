@@ -45,7 +45,10 @@ Result BufferBackedDescriptor::RecordCopyDataToResourceIfNeeded(
   for (size_t i = 0; i < resources.size(); i++) {
     if (!buffers[i]->ValuePtr()->empty()) {
       resources[i]->UpdateMemoryWithRawData(*buffers[i]->ValuePtr());
-      buffers[i]->ValuePtr()->clear();
+      // Keep the data if the resource is read only. Otherwise the data will
+      // be regenerated after a draw.
+      if (!IsReadOnly())
+        buffers[i]->ValuePtr()->clear();
     }
 
     resources[i]->CopyToDevice(command);
@@ -55,14 +58,16 @@ Result BufferBackedDescriptor::RecordCopyDataToResourceIfNeeded(
 }
 
 Result BufferBackedDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
-  if (GetResources().empty()) {
-    return Result(
-        "Vulkan: BufferBackedDescriptor::RecordCopyDataToHost() no transfer "
-        "resources");
-  }
+  if (!IsReadOnly()) {
+    if (GetResources().empty()) {
+      return Result(
+          "Vulkan: BufferBackedDescriptor::RecordCopyDataToHost() no transfer "
+          "resources");
+    }
 
-  for (const auto& r : GetResources())
-    r->CopyToHost(command);
+    for (const auto& r : GetResources())
+      r->CopyToHost(command);
+  }
 
   return {};
 }
@@ -78,8 +83,7 @@ Result BufferBackedDescriptor::MoveResourceToBufferOutput() {
   if (resources.empty()) {
     return Result(
         "Vulkan: BufferBackedDescriptor::MoveResourceToBufferOutput() no "
-        "transfer"
-        " resource");
+        "transfer resource");
   }
 
   for (size_t i = 0; i < resources.size(); i++) {

@@ -125,18 +125,24 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
 }
 
 Result ImageDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
-  for (auto& image : transfer_images_) {
-    image->ImageBarrier(command, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                        VK_PIPELINE_STAGE_TRANSFER_BIT);
-  }
+  if (!IsReadOnly()) {
+    for (auto& image : transfer_images_) {
+      image->ImageBarrier(command, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                          VK_PIPELINE_STAGE_TRANSFER_BIT);
+    }
 
-  BufferBackedDescriptor::RecordCopyDataToHost(command);
+    BufferBackedDescriptor::RecordCopyDataToHost(command);
+  }
 
   return {};
 }
 
 Result ImageDescriptor::MoveResourceToBufferOutput() {
-  Result r = BufferBackedDescriptor::MoveResourceToBufferOutput();
+  Result r;
+
+  if (!IsReadOnly())
+    r = BufferBackedDescriptor::MoveResourceToBufferOutput();
+
   transfer_images_.clear();
 
   return r;
@@ -179,6 +185,19 @@ std::vector<Resource*> ImageDescriptor::GetResources() {
     ret.push_back(i.get());
   }
   return ret;
+}
+
+bool ImageDescriptor::IsReadOnly() {
+  switch (type_) {
+    case DescriptorType::kSampledImage:
+    case DescriptorType::kCombinedImageSampler:
+      return true;
+    case DescriptorType::kStorageImage:
+      return false;
+    default:
+      assert(false && "Unexpected descriptor type");
+      return false;
+  }
 }
 
 }  // namespace vulkan
