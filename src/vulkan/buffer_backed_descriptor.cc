@@ -111,5 +111,24 @@ Result BufferBackedDescriptor::MoveResourceToBufferOutput() {
   return {};
 }
 
+bool BufferBackedDescriptor::IsReadOnly() const {
+  switch (type_) {
+    case DescriptorType::kUniformBuffer:
+    case DescriptorType::kUniformBufferDynamic:
+    case DescriptorType::kUniformTexelBuffer:
+    case DescriptorType::kSampledImage:
+    case DescriptorType::kCombinedImageSampler:
+      return true;
+    case DescriptorType::kStorageBuffer:
+    case DescriptorType::kStorageBufferDynamic:
+    case DescriptorType::kStorageTexelBuffer:
+    case DescriptorType::kStorageImage:
+      return false;
+    default:
+      assert(false && "Unexpected descriptor type");
+      return false;
+  }
+}
+
 }  // namespace vulkan
 }  // namespace amber

@@ -48,10 +48,10 @@ class BufferBackedDescriptor : public Descriptor {
   const std::vector<Buffer*>& GetAmberBuffers() const { return amber_buffers_; }
   void AddAmberBuffer(Buffer* buffer) { amber_buffers_.push_back(buffer); }
   BufferBackedDescriptor* AsBufferBackedDescriptor() override { return this; }
+  bool IsReadOnly() const;
 
  protected:
   virtual std::vector<Resource*> GetResources() = 0;
-  virtual bool IsReadOnly() = 0;
 
  private:
   std::vector<Buffer*> amber_buffers_;

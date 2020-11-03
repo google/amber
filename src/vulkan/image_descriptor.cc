@@ -187,18 +187,5 @@ std::vector<Resource*> ImageDescriptor::GetResources() {
   return ret;
 }
 
-bool ImageDescriptor::IsReadOnly() {
-  switch (type_) {
-    case DescriptorType::kSampledImage:
-    case DescriptorType::kCombinedImageSampler:
-      return true;
-    case DescriptorType::kStorageImage:
-      return false;
-    default:
-      assert(false && "Unexpected descriptor type");
-      return false;
-  }
-}
-
 }  // namespace vulkan
 }  // namespace amber

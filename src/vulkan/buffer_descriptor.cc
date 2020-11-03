@@ -127,21 +127,5 @@ std::vector<Resource*> BufferDescriptor::GetResources() {
   return ret;
 }
 
-bool BufferDescriptor::IsReadOnly() {
-  switch (type_) {
-    case DescriptorType::kUniformBuffer:
-    case DescriptorType::kUniformBufferDynamic:
-    case DescriptorType::kUniformTexelBuffer:
-      return true;
-    case DescriptorType::kStorageBuffer:
-    case DescriptorType::kStorageBufferDynamic:
-    case DescriptorType::kStorageTexelBuffer:
-      return false;
-    default:
-      assert(false && "Unexpected descriptor type");
-      return false;
-  }
-}
-
 }  // namespace vulkan
 }  // namespace amber
