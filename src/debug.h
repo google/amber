@@ -125,7 +125,7 @@ class Events {
 /// with |ThreadScript::Run|.
 class ThreadScript : public Thread {
  public:
-  ~ThreadScript();
+  ~ThreadScript() override;
 
   /// Run replays all the calls made to the |ThreadScript| on the given |Thread|
   /// parameter.
@@ -140,7 +140,7 @@ class ThreadScript : public Thread {
 /// |Script::Run|.
 class Script : public Events {
  public:
-  ~Script();
+  ~Script() override;
 
   /// Run replays all the calls made to the |Script| on the given |Events|
   /// parameter.
