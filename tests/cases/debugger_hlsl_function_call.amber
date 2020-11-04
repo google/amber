@@ -1,0 +1,212 @@
+#!amber
+# Copyright 2020 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https:#www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SET ENGINE_DATA fence_timeout_ms 1000000
+
+VIRTUAL_FILE "compute.hlsl"
+
+[[vk::binding(0)]]
+StructuredBuffer<int> data;
+
+int C(int x)
+{
+  int y = x*x;
+  return y;
+}
+
+int B(int x)
+{
+  int y = x + 2;
+  return C(y) * 2;
+}
+
+int A(int x)
+{
+  int y = B(x + 1);
+  int z = B(y) + B(y+1);
+  return x + y + z;
+}
+
+[numthreads(1,1,1)]
+void main() {
+  data[0] = A(data[0]);
+}
+END
+
+SHADER compute shader HLSL VIRTUAL_FILE "compute.hlsl"
+
+BUFFER data DATA_TYPE int32 DATA
+  10
+END
+
+PIPELINE compute pipeline
+  ATTACH shader
+  SHADER_OPTIMIZATION shader
+    --legalize-hlsl
+  END
+  BIND BUFFER data AS storage DESCRIPTOR_SET 0 BINDING 0
+END
+
+DEBUG pipeline 1 1 1
+    THREAD GLOBAL_INVOCATION_ID 0 0 0
+        EXPECT CALLSTACK
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 26  "  data[0] = A(data[0]);"
+        STEP_IN
+
+        EXPECT CALLSTACK
+          "A"    "compute.hlsl" 18
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 18  "{"
+        STEP_IN
+
+        EXPECT CALLSTACK
+          "A"    "compute.hlsl" 19
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 19  "  int y = B(x + 1);"
+        EXPECT LOCAL "x" EQ 10
+        STEP_IN
+
+        EXPECT CALLSTACK
+          "B"    "compute.hlsl" 12
+          "A"    "compute.hlsl" 19
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 12  "{"
+        STEP_IN
+
+        EXPECT CALLSTACK
+          "B"    "compute.hlsl" 13
+          "A"    "compute.hlsl" 19
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 13  "  int y = x + 2;"
+        EXPECT LOCAL "x" EQ 11
+        STEP_IN
+
+        EXPECT CALLSTACK
+          "B"    "compute.hlsl" 14
+          "A"    "compute.hlsl" 19
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 14  "  return C(y) * 2;"
+        EXPECT LOCAL "x" EQ 11
+        EXPECT LOCAL "y" EQ 13
+        STEP_IN
+
+        EXPECT CALLSTACK
+          "C"    "compute.hlsl" 6
+          "B"    "compute.hlsl" 14
+          "A"    "compute.hlsl" 19
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 6  "{"
+        STEP_IN
+
+        EXPECT CALLSTACK
+          "C"    "compute.hlsl" 7
+          "B"    "compute.hlsl" 14
+          "A"    "compute.hlsl" 19
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 7   "  int y = x*x;"
+        EXPECT LOCAL "x" EQ 13
+        STEP_IN
+
+        # TODO: Returns are non-steppable. Fix
+        # EXPECT LOCATION "compute.hlsl" 8   "  return y;"
+        # EXPECT LOCAL "x" EQ 11 # TODO: "x" should be visible
+        # EXPECT LOCAL "y" EQ 0
+        # STEP_IN
+        # EXPECT CALLSTACK
+        #   "B"    "compute.hlsl" 14
+        #   "A"    "compute.hlsl" 19
+        #   "main" "compute.hlsl" 26
+        # END
+
+        EXPECT CALLSTACK
+          "B"    "compute.hlsl" 14
+          "A"    "compute.hlsl" 19
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 14  "  return C(y) * 2;"
+        STEP_IN
+        EXPECT CALLSTACK
+          "A"    "compute.hlsl" 19
+          "main" "compute.hlsl" 26
+        END
+
+        EXPECT CALLSTACK
+          "A"    "compute.hlsl" 19
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 19  "  int y = B(x + 1);"
+        STEP_IN
+
+        EXPECT CALLSTACK
+          "A"    "compute.hlsl" 20
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 20  "  int z = B(y) + B(y+1);"
+        EXPECT LOCAL "y" EQ 338
+        STEP_IN
+
+        EXPECT CALLSTACK
+          "B"    "compute.hlsl" 12
+          "A"    "compute.hlsl" 20
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 12  "{"
+        STEP_IN
+
+        EXPECT CALLSTACK
+          "B"    "compute.hlsl" 13
+          "A"    "compute.hlsl" 20
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 13  "  int y = x + 2;"
+        STEP_OUT
+
+        EXPECT CALLSTACK
+          "A"    "compute.hlsl" 20
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 20  "  int z = B(y) + B(y+1);"
+        EXPECT LOCAL "y" EQ 338
+        STEP_OVER
+        STEP_OVER
+
+        EXPECT CALLSTACK
+          "A"    "compute.hlsl" 21
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 21  "  return x + y + z;"
+        EXPECT LOCAL "y" EQ 338
+        EXPECT LOCAL "z" EQ 463762
+        STEP_OUT
+
+        EXPECT CALLSTACK
+          "main" "compute.hlsl" 26
+        END
+        EXPECT LOCATION "compute.hlsl" 26  "  data[0] = A(data[0]);"
+
+        CONTINUE
+    END
+END
+
+EXPECT data IDX 0 EQ 464110
