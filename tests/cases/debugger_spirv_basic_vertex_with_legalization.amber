@@ -1,0 +1,199 @@
+#!amber
+# Copyright 2020 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https:#www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SET ENGINE_DATA fence_timeout_ms 1000000
+
+VIRTUAL_FILE "vs.hlsl"
+struct VS_OUTPUT {
+  float4 pos : SV_POSITION;
+  float4 color : COLOR;
+};
+
+VS_OUTPUT main(float4 pos : POSITION,
+               float4 color : COLOR) {
+  VS_OUTPUT vout;
+  vout.pos = pos;
+  vout.color = color;
+  return vout;
+}
+END
+
+VIRTUAL_FILE "fs.hlsl"
+float4 main(float4 color : COLOR) : SV_TARGET {
+  return color;
+}
+END
+
+SHADER vertex   vtex_shader SPIRV-ASM
+               OpCapability Shader
+          %1 = OpExtInstImport "OpenCL.DebugInfo.100"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %main "main" %in_var_POSITION %in_var_COLOR %gl_Position %out_var_COLOR
+          %7 = OpString "vs.hlsl"
+         %17 = OpString "float"
+         %23 = OpString "VS_OUTPUT"
+         %28 = OpString "color"
+         %30 = OpString "pos"
+         %33 = OpString "main"
+         %34 = OpString ""
+         %38 = OpString "vout"
+               OpName %in_var_POSITION "in.var.POSITION"
+               OpName %in_var_COLOR "in.var.COLOR"
+               OpName %out_var_COLOR "out.var.COLOR"
+               OpName %main "main"
+               OpDecorate %gl_Position BuiltIn Position
+               OpDecorate %in_var_POSITION Location 0
+               OpDecorate %in_var_COLOR Location 1
+               OpDecorate %out_var_COLOR Location 0
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+      %int_1 = OpConstant %int 1
+       %uint = OpTypeInt 32 0
+    %uint_32 = OpConstant %uint 32
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+%_ptr_Input_v4float = OpTypePointer Input %v4float
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+       %void = OpTypeVoid
+   %uint_256 = OpConstant %uint 256
+   %uint_128 = OpConstant %uint 128
+     %uint_0 = OpConstant %uint 0
+         %43 = OpTypeFunction %void
+%in_var_POSITION = OpVariable %_ptr_Input_v4float Input
+%in_var_COLOR = OpVariable %_ptr_Input_v4float Input
+%gl_Position = OpVariable %_ptr_Output_v4float Output
+%out_var_COLOR = OpVariable %_ptr_Output_v4float Output
+         %81 = OpExtInst %void %1 DebugInfoNone
+         %41 = OpExtInst %void %1 DebugExpression
+         %19 = OpExtInst %void %1 DebugTypeBasic %17 %uint_32 Float
+         %20 = OpExtInst %void %1 DebugTypeVector %19 4
+         %21 = OpExtInst %void %1 DebugSource %7
+         %22 = OpExtInst %void %1 DebugCompilationUnit 1 4 %21 HLSL
+         %25 = OpExtInst %void %1 DebugTypeComposite %23 Structure %21 1 8 %22 %23 %uint_256 FlagIsProtected|FlagIsPrivate %26 %27
+         %27 = OpExtInst %void %1 DebugTypeMember %28 %20 %21 3 10 %25 %uint_128 %uint_128 FlagIsProtected|FlagIsPrivate
+         %26 = OpExtInst %void %1 DebugTypeMember %30 %20 %21 2 10 %25 %uint_0 %uint_128 FlagIsProtected|FlagIsPrivate
+         %32 = OpExtInst %void %1 DebugTypeFunction FlagIsProtected|FlagIsPrivate %25 %20 %20
+         %35 = OpExtInst %void %1 DebugFunction %33 %32 %21 6 1 %22 %34 FlagIsProtected|FlagIsPrivate 7 %81
+         %37 = OpExtInst %void %1 DebugLexicalBlock %21 7 38 %35
+         %39 = OpExtInst %void %1 DebugLocalVariable %38 %25 %21 8 13 %37 FlagIsLocal
+         %40 = OpExtInst %void %1 DebugLocalVariable %28 %20 %21 7 23 %35 FlagIsLocal 2
+         %42 = OpExtInst %void %1 DebugLocalVariable %30 %20 %21 6 23 %35 FlagIsLocal 1
+       %main = OpFunction %void None %43
+         %44 = OpLabel
+         %48 = OpLoad %v4float %in_var_POSITION
+         %49 = OpLoad %v4float %in_var_COLOR
+         %95 = OpExtInst %void %1 DebugScope %35
+               OpNoLine
+         %94 = OpExtInst %void %1 DebugValue %42 %48 %41
+         %93 = OpExtInst %void %1 DebugValue %40 %49 %41
+         %96 = OpExtInst %void %1 DebugScope %37
+               OpLine %7 9 3
+         %92 = OpExtInst %void %1 DebugValue %39 %48 %41 %int_0
+               OpLine %7 10 3
+         %91 = OpExtInst %void %1 DebugValue %39 %49 %41 %int_1
+               OpNoLine
+         %97 = OpExtInst %void %1 DebugNoScope
+               OpStore %gl_Position %48
+               OpStore %out_var_COLOR %49
+               OpLine %7 12 1
+               OpReturn
+               OpFunctionEnd
+END
+SHADER fragment frag_shader HLSL VIRTUAL_FILE "fs.hlsl"
+
+BUFFER position_buf DATA_TYPE R8G8_SNORM DATA
+# Full frame
+-128 -128
+ 127  127
+-128  127
+-128 -128
+ 127  127
+ 127 -128
+END
+
+BUFFER vert_color DATA_TYPE R8G8B8A8_UNORM DATA
+255   0   0 255
+255   0   0 255
+255   0   0 255
+255   0   0 255
+255   0   0 255
+255   0   0 255
+
+  0 255   0 255
+  0 255   0 255
+  0 255   0 255
+  0 255   0 255
+  0 255   0 255
+  0 255   0 255
+
+  0   0 255 255
+  0   0 255 255
+  0   0 255 255
+  0   0 255 255
+  0   0 255 255
+  0   0 255 255
+
+127 127 127 255
+127 127 127 255
+127 127 127 255
+127 127 127 255
+127 127 127 255
+127 127 127 255
+END
+
+BUFFER framebuffer FORMAT B8G8R8A8_UNORM
+
+PIPELINE graphics pipeline
+  FRAMEBUFFER_SIZE 32 32
+
+  ATTACH vtex_shader
+
+  ATTACH frag_shader
+  SHADER_OPTIMIZATION frag_shader
+    --legalize-hlsl
+  END
+
+  VERTEX_DATA position_buf LOCATION 0
+  VERTEX_DATA vert_color LOCATION 1
+
+  BIND BUFFER framebuffer AS color LOCATION 0
+END
+
+CLEAR pipeline
+
+DEBUG pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 6
+    THREAD VERTEX_INDEX 0
+        EXPECT LOCATION "vs.hlsl" 9 "  vout.pos = pos;"
+        EXPECT LOCAL "pos.x" EQ -1.000000
+        EXPECT LOCAL "pos.y" EQ -1.000000
+        EXPECT LOCAL "pos.z" EQ 0.000000
+        EXPECT LOCAL "color.x" EQ 1.000000
+        EXPECT LOCAL "color.y" EQ 0.000000
+        EXPECT LOCAL "color.z" EQ 0.000000
+        STEP_IN
+        EXPECT LOCAL "vout.pos.x" EQ -1.000000
+        EXPECT LOCAL "vout.pos.y" EQ -1.000000
+        EXPECT LOCAL "vout.pos.z" EQ 0.000000
+        EXPECT LOCATION "vs.hlsl" 10 "  vout.color = color;"
+        STEP_IN
+        EXPECT LOCAL "vout.color.x" EQ 1.000000
+        EXPECT LOCAL "vout.color.y" EQ 0.000000
+        EXPECT LOCAL "vout.color.z" EQ 0.000000
+        EXPECT LOCATION "vs.hlsl" 12 "}"
+        CONTINUE
+    END
+END
+
+EXPECT framebuffer IDX 0 0 SIZE 32 32 EQ_RGB 255 0 0

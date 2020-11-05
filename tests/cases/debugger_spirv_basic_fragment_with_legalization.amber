@@ -1,0 +1,205 @@
+#!amber
+# Copyright 2020 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https:#www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SET ENGINE_DATA fence_timeout_ms 1000000
+
+VIRTUAL_FILE "vs.hlsl"
+struct VS_OUTPUT {
+  float4 pos : SV_POSITION;
+  float4 color : COLOR;
+};
+
+VS_OUTPUT main(float4 pos : POSITION) {
+  VS_OUTPUT vout;
+  vout.pos = pos;
+  vout.color = float4(25.1 / 255.0, 50.1 / 255.0, 100.1 / 255.0, 1.0);
+  return vout;
+}
+END
+
+VIRTUAL_FILE "fs.hlsl"
+float4 main(float4 color : COLOR) : SV_TARGET {
+  int r = color.r * 255;
+  int g = color.g * 255;
+  int b = color.b * 255;
+  int a = color.a * 255;
+  return color;
+}
+END
+
+SHADER vertex   vtex_shader HLSL VIRTUAL_FILE "vs.hlsl"
+SHADER fragment frag_shader SPIRV-ASM
+               OpCapability Shader
+          %1 = OpExtInstImport "OpenCL.DebugInfo.100"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %in_var_COLOR %out_var_SV_TARGET
+               OpExecutionMode %main OriginUpperLeft
+          %5 = OpString "fs.hlsl"
+         %18 = OpString "int"
+         %21 = OpString "float"
+         %27 = OpString "main"
+         %28 = OpString ""
+         %32 = OpString "a"
+         %34 = OpString "b"
+         %36 = OpString "g"
+         %38 = OpString "r"
+         %41 = OpString "color"
+               OpName %in_var_COLOR "in.var.COLOR"
+               OpName %out_var_SV_TARGET "out.var.SV_TARGET"
+               OpName %main "main"
+               OpName %param_var_color "param.var.color"
+               OpDecorate %in_var_COLOR Location 0
+               OpDecorate %out_var_SV_TARGET Location 0
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+      %float = OpTypeFloat 32
+  %float_255 = OpConstant %float 255
+      %int_1 = OpConstant %int 1
+      %int_2 = OpConstant %int 2
+      %int_3 = OpConstant %int 3
+       %uint = OpTypeInt 32 0
+    %uint_32 = OpConstant %uint 32
+    %v4float = OpTypeVector %float 4
+%_ptr_Input_v4float = OpTypePointer Input %v4float
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+       %void = OpTypeVoid
+         %43 = OpTypeFunction %void
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+%_ptr_Function_float = OpTypePointer Function %float
+%in_var_COLOR = OpVariable %_ptr_Input_v4float Input
+%out_var_SV_TARGET = OpVariable %_ptr_Output_v4float Output
+        %110 = OpExtInst %void %1 DebugInfoNone
+         %40 = OpExtInst %void %1 DebugExpression
+         %20 = OpExtInst %void %1 DebugTypeBasic %18 %uint_32 Signed
+         %22 = OpExtInst %void %1 DebugTypeBasic %21 %uint_32 Float
+         %23 = OpExtInst %void %1 DebugTypeVector %22 4
+         %24 = OpExtInst %void %1 DebugTypeFunction FlagIsProtected|FlagIsPrivate %23 %23
+         %25 = OpExtInst %void %1 DebugSource %5
+         %26 = OpExtInst %void %1 DebugCompilationUnit 1 4 %25 HLSL
+         %29 = OpExtInst %void %1 DebugFunction %27 %24 %25 1 1 %26 %28 FlagIsProtected|FlagIsPrivate 1 %110
+         %31 = OpExtInst %void %1 DebugLexicalBlock %25 1 47 %29
+         %33 = OpExtInst %void %1 DebugLocalVariable %32 %20 %25 5 7 %31 FlagIsLocal
+         %35 = OpExtInst %void %1 DebugLocalVariable %34 %20 %25 4 7 %31 FlagIsLocal
+         %37 = OpExtInst %void %1 DebugLocalVariable %36 %20 %25 3 7 %31 FlagIsLocal
+         %39 = OpExtInst %void %1 DebugLocalVariable %38 %20 %25 2 7 %31 FlagIsLocal
+         %42 = OpExtInst %void %1 DebugLocalVariable %41 %23 %25 1 20 %29 FlagIsLocal 1
+       %main = OpFunction %void None %43
+         %44 = OpLabel
+%param_var_color = OpVariable %_ptr_Function_v4float Function
+         %47 = OpLoad %v4float %in_var_COLOR
+               OpStore %param_var_color %47
+        %115 = OpExtInst %void %1 DebugScope %29
+               OpNoLine
+         %88 = OpExtInst %void %1 DebugDeclare %42 %param_var_color %40
+        %116 = OpExtInst %void %1 DebugScope %31
+               OpLine %5 2 11
+         %89 = OpAccessChain %_ptr_Function_float %param_var_color %int_0
+         %90 = OpLoad %float %89
+               OpLine %5 2 19
+         %91 = OpFMul %float %90 %float_255
+               OpLine %5 2 11
+         %92 = OpConvertFToS %int %91
+               OpLine %5 2 7
+        %111 = OpExtInst %void %1 DebugValue %39 %92 %40
+               OpLine %5 3 11
+         %94 = OpAccessChain %_ptr_Function_float %param_var_color %int_1
+         %95 = OpLoad %float %94
+               OpLine %5 3 19
+         %96 = OpFMul %float %95 %float_255
+               OpLine %5 3 11
+         %97 = OpConvertFToS %int %96
+               OpLine %5 3 7
+        %112 = OpExtInst %void %1 DebugValue %37 %97 %40
+               OpLine %5 4 11
+         %99 = OpAccessChain %_ptr_Function_float %param_var_color %int_2
+        %100 = OpLoad %float %99
+               OpLine %5 4 19
+        %101 = OpFMul %float %100 %float_255
+               OpLine %5 4 11
+        %102 = OpConvertFToS %int %101
+               OpLine %5 4 7
+        %113 = OpExtInst %void %1 DebugValue %35 %102 %40
+               OpLine %5 5 11
+        %104 = OpAccessChain %_ptr_Function_float %param_var_color %int_3
+        %105 = OpLoad %float %104
+               OpLine %5 5 19
+        %106 = OpFMul %float %105 %float_255
+               OpLine %5 5 11
+        %107 = OpConvertFToS %int %106
+               OpLine %5 5 7
+        %114 = OpExtInst %void %1 DebugValue %33 %107 %40
+               OpNoLine
+        %117 = OpExtInst %void %1 DebugNoScope
+               OpStore %out_var_SV_TARGET %47
+               OpLine %5 7 1
+               OpReturn
+               OpFunctionEnd
+END
+
+BUFFER position_buf DATA_TYPE R8G8_SNORM DATA
+# Full frame
+-128 -128
+ 127  127
+-128  127
+-128 -128
+ 127  127
+ 127 -128
+END
+
+BUFFER framebuffer FORMAT B8G8R8A8_UNORM
+
+PIPELINE graphics pipeline
+  FRAMEBUFFER_SIZE 32 32
+
+  ATTACH vtex_shader
+  SHADER_OPTIMIZATION vtex_shader
+    --legalize-hlsl
+  END
+
+  ATTACH frag_shader
+
+  VERTEX_DATA position_buf LOCATION 0
+
+  BIND BUFFER framebuffer AS color LOCATION 0
+END
+
+CLEAR pipeline
+
+DEBUG pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 6
+    THREAD FRAGMENT_WINDOW_SPACE_POSITION 10 10
+        EXPECT LOCATION "fs.hlsl" 2 "  int r = color.r * 255;"
+        STEP_IN
+        EXPECT LOCAL "r" EQ 25
+        EXPECT LOCATION "fs.hlsl" 3 "  int g = color.g * 255;"
+        STEP_IN
+        EXPECT LOCAL "r" EQ 25
+        EXPECT LOCAL "g" EQ 50
+        EXPECT LOCATION "fs.hlsl" 4 "  int b = color.b * 255;"
+        STEP_IN
+        EXPECT LOCAL "r" EQ 25
+        EXPECT LOCAL "g" EQ 50
+        EXPECT LOCAL "b" EQ 100
+        EXPECT LOCATION "fs.hlsl" 5 "  int a = color.a * 255;"
+        STEP_IN
+        EXPECT LOCAL "r" EQ 25
+        EXPECT LOCAL "g" EQ 50
+        EXPECT LOCAL "b" EQ 100
+        EXPECT LOCAL "a" EQ 255
+        EXPECT LOCATION "fs.hlsl" 7 "}"
+        CONTINUE
+    END
+END
+
+EXPECT framebuffer IDX 0 0 SIZE 32 32 EQ_RGB 25 50 100

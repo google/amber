@@ -120,7 +120,7 @@ DEBUG pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 6
         EXPECT LOCAL "vout.color.x" EQ 1.000000
         EXPECT LOCAL "vout.color.y" EQ 0.000000
         EXPECT LOCAL "vout.color.z" EQ 0.000000
-        EXPECT LOCATION "vs.hlsl" 11 "  return vout;"
+        EXPECT LOCATION "vs.hlsl" 12 "}"
         CONTINUE
     END
 END

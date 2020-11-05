@@ -94,7 +94,7 @@ DEBUG pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 6
         EXPECT LOCAL "g" EQ 50
         EXPECT LOCAL "b" EQ 100
         EXPECT LOCAL "a" EQ 255
-        EXPECT LOCATION "fs.hlsl" 6 "  return color;"
+        EXPECT LOCATION "fs.hlsl" 7 "}"
         CONTINUE
     END
 END
