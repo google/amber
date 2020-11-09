@@ -22,7 +22,7 @@
 #include "src/sampler.h"
 #include "src/shader_data.h"
 #if AMBER_ENABLE_SHADERC
-#include "shaderc/env.h"
+#include "shaderc/shaderc.hpp"
 #endif
 
 namespace amber {
@@ -112,7 +112,7 @@ void main() {
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   EXPECT_FALSE(binary.empty());
-  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+  EXPECT_EQ(0x07230203u, binary[0]);  // Verify SPIR-V header present.
 }
 #endif  // AMBER_ENABLE_SHADERC
 
@@ -131,7 +131,7 @@ TEST_F(ShaderCompilerTest, CompilesSpirvAsm) {
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_FALSE(binary.empty());
-  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+  EXPECT_EQ(0x07230203u, binary[0]);  // Verify SPIR-V header present.
 }
 
 TEST_F(ShaderCompilerTest, InvalidSpirvHex) {
@@ -241,7 +241,7 @@ TEST_F(ShaderCompilerTest, CompilesSpirvHex) {
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_FALSE(binary.empty());
-  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+  EXPECT_EQ(0x07230203u, binary[0]);  // Verify SPIR-V header present.
 }
 
 TEST_F(ShaderCompilerTest, FailsOnInvalidShader) {
@@ -312,7 +312,7 @@ kernel void TestShader(global int* in, global int* out) {
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_FALSE(binary.empty());
-  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+  EXPECT_EQ(0x07230203u, binary[0]);  // Verify SPIR-V header present.
 }
 
 TEST_F(ShaderCompilerTest, ClspvDisallowCaching) {
@@ -361,7 +361,7 @@ kernel void TestShader(global int* in, global int* out, int m, int b) {
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info1, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_FALSE(binary.empty());
-  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+  EXPECT_EQ(0x07230203u, binary[0]);  // Verify SPIR-V header present.
   auto iter = shader_info1.GetDescriptorMap().find("TestShader");
   ASSERT_NE(iter, shader_info1.GetDescriptorMap().end());
   uint32_t max_binding = 0;
@@ -380,7 +380,7 @@ kernel void TestShader(global int* in, global int* out, int m, int b) {
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info2, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_FALSE(binary.empty());
-  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+  EXPECT_EQ(0x07230203u, binary[0]);  // Verify SPIR-V header present.
   iter = shader_info2.GetDescriptorMap().find("TestShader");
   ASSERT_NE(iter, shader_info2.GetDescriptorMap().end());
   max_binding = 0;
@@ -416,7 +416,7 @@ kernel void TestShader(read_only image2d_t ro_image, write_only image2d_t wo_ima
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info1, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_FALSE(binary.empty());
-  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+  EXPECT_EQ(0x07230203u, binary[0]);  // Verify SPIR-V header present.
   auto iter = shader_info1.GetDescriptorMap().find("TestShader");
   for (const auto& entry : iter->second) {
     if (entry.binding == 0) {
@@ -459,7 +459,7 @@ kernel void foo(read_only image2d_t im, global float4* out) {
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info1, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_FALSE(binary.empty());
-  EXPECT_EQ(0x07230203, binary[0]);  // Verify SPIR-V header present.
+  EXPECT_EQ(0x07230203u, binary[0]);  // Verify SPIR-V header present.
   bool found_s1 = false;
   bool found_s2 = false;
   EXPECT_EQ(0, pipeline.GetSamplers()[0].descriptor_set);

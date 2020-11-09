@@ -26,11 +26,10 @@
 #include <thread>  // NOLINT(build/c++11)
 #include <unordered_map>
 
-#include "src/virtual_file_store.h"
-
 #include "dap/network.h"
 #include "dap/protocol.h"
 #include "dap/session.h"
+#include "src/virtual_file_store.h"
 
 // Set to 1 to enable verbose debugger logging
 #define ENABLE_DEBUGGER_LOG 0

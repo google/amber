@@ -214,10 +214,10 @@ IMAGE image DATA_TYPE uint32 DIM_1D WIDTH 4
   auto* buffer = buffers[0].get();
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
   EXPECT_EQ(ImageDimension::k1D, buffer->GetImageDimension());
-  EXPECT_EQ(4, buffer->GetWidth());
-  EXPECT_EQ(1, buffer->GetHeight());
-  EXPECT_EQ(1, buffer->GetDepth());
-  EXPECT_EQ(4, buffer->ElementCount());
+  EXPECT_EQ(4u, buffer->GetWidth());
+  EXPECT_EQ(1u, buffer->GetHeight());
+  EXPECT_EQ(1u, buffer->GetDepth());
+  EXPECT_EQ(4u, buffer->ElementCount());
 }
 
 TEST_F(AmberScriptParserTest, Image2D) {
@@ -238,10 +238,10 @@ IMAGE image DATA_TYPE uint32 DIM_2D WIDTH 3 HEIGHT 4
   auto* buffer = buffers[0].get();
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
   EXPECT_EQ(ImageDimension::k2D, buffer->GetImageDimension());
-  EXPECT_EQ(3, buffer->GetWidth());
-  EXPECT_EQ(4, buffer->GetHeight());
-  EXPECT_EQ(1, buffer->GetDepth());
-  EXPECT_EQ(12, buffer->ElementCount());
+  EXPECT_EQ(3u, buffer->GetWidth());
+  EXPECT_EQ(4u, buffer->GetHeight());
+  EXPECT_EQ(1u, buffer->GetDepth());
+  EXPECT_EQ(12u, buffer->ElementCount());
 }
 
 TEST_F(AmberScriptParserTest, Image2DMultiSample) {
@@ -260,7 +260,7 @@ IMAGE image DATA_TYPE uint32 DIM_2D WIDTH 3 HEIGHT 4 SAMPLES 4
   EXPECT_EQ("image", buffers[0]->GetName());
 
   auto* buffer = buffers[0].get();
-  EXPECT_EQ(4, buffer->GetSamples());
+  EXPECT_EQ(4u, buffer->GetSamples());
 }
 
 TEST_F(AmberScriptParserTest, Image2DInvalidSampleValue) {
@@ -303,10 +303,10 @@ IMAGE image DATA_TYPE uint32 DIM_3D WIDTH 3 HEIGHT 4 DEPTH 5
   auto* buffer = buffers[0].get();
   EXPECT_TRUE(buffer->GetFormat()->IsUint32());
   EXPECT_EQ(ImageDimension::k3D, buffer->GetImageDimension());
-  EXPECT_EQ(3, buffer->GetWidth());
-  EXPECT_EQ(4, buffer->GetHeight());
-  EXPECT_EQ(5, buffer->GetDepth());
-  EXPECT_EQ(60, buffer->ElementCount());
+  EXPECT_EQ(3u, buffer->GetWidth());
+  EXPECT_EQ(4u, buffer->GetHeight());
+  EXPECT_EQ(5u, buffer->GetDepth());
+  EXPECT_EQ(60u, buffer->ElementCount());
 }
 
 }  // namespace amberscript

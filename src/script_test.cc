@@ -58,7 +58,7 @@ TEST_F(ScriptTest, GetShaderInfo) {
   EXPECT_EQ(kShaderFormatGlsl, info[0].format);
   EXPECT_EQ(kShaderTypeVertex, info[0].type);
   EXPECT_EQ("This is my shader data", info[0].shader_source);
-  ASSERT_EQ(2, info[0].optimizations.size());
+  ASSERT_EQ(2u, info[0].optimizations.size());
   EXPECT_EQ("opt1", info[0].optimizations[0]);
   EXPECT_EQ("opt2", info[0].optimizations[1]);
 

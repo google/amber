@@ -662,7 +662,7 @@ TEST_F(AmberScriptParserTest, BufferFormat) {
   ASSERT_EQ(4U, segs.size());
 
   for (size_t i = 0; i < 4; ++i) {
-    EXPECT_EQ(segs[i].GetNumBits(), 32);
+    EXPECT_EQ(segs[i].GetNumBits(), 32u);
     EXPECT_EQ(segs[i].GetFormatMode(), FormatMode::kSInt);
     EXPECT_EQ(segs[i].GetName(), static_cast<FormatComponentType>(i));
   }
@@ -950,12 +950,12 @@ END)";
 
   const auto* data = buffer->GetValues<uint8_t>();
   EXPECT_FLOAT_EQ(1.f, *reinterpret_cast<const float*>(data + 0));
-  EXPECT_EQ(64,
+  EXPECT_EQ(64u,
             *reinterpret_cast<const uint32_t*>(data + 4 /* sizeof(float) */));
-  EXPECT_EQ(128,
+  EXPECT_EQ(128u,
             *reinterpret_cast<const uint32_t*>(data + 16 /* 8 round -> 16 */));
-  EXPECT_EQ(220, *reinterpret_cast<const uint32_t*>(
-                     data + 20 /* 8 round -> 16 + 4 */));
+  EXPECT_EQ(220u, *reinterpret_cast<const uint32_t*>(
+                      data + 20 /* 8 round -> 16 + 4 */));
 }
 
 TEST_F(AmberScriptParserTest, BufferWithStructStd430) {
@@ -998,9 +998,9 @@ END)";
 
   const auto* data = buffer->GetValues<uint8_t>();
   EXPECT_FLOAT_EQ(1.f, *reinterpret_cast<const float*>(data + 0));
-  EXPECT_EQ(64, *reinterpret_cast<const uint32_t*>(data + 4));
-  EXPECT_EQ(128, *reinterpret_cast<const uint32_t*>(data + 8));
-  EXPECT_EQ(220, *reinterpret_cast<const uint32_t*>(data + 12));
+  EXPECT_EQ(64u, *reinterpret_cast<const uint32_t*>(data + 4));
+  EXPECT_EQ(128u, *reinterpret_cast<const uint32_t*>(data + 8));
+  EXPECT_EQ(220u, *reinterpret_cast<const uint32_t*>(data + 12));
 }
 
 TEST_F(AmberScriptParserTest, BufferWithStructAndPaddingStd430) {
@@ -1043,9 +1043,9 @@ END)";
 
   const auto* data = buffer->GetValues<uint8_t>();
   EXPECT_FLOAT_EQ(1.f, *reinterpret_cast<const float*>(data + 8));
-  EXPECT_EQ(64, *reinterpret_cast<const uint32_t*>(data + 16));
-  EXPECT_EQ(128, *reinterpret_cast<const uint32_t*>(data + 28));
-  EXPECT_EQ(220, *reinterpret_cast<const uint32_t*>(data + 36));
+  EXPECT_EQ(64u, *reinterpret_cast<const uint32_t*>(data + 16));
+  EXPECT_EQ(128u, *reinterpret_cast<const uint32_t*>(data + 28));
+  EXPECT_EQ(220u, *reinterpret_cast<const uint32_t*>(data + 36));
 }
 
 TEST_F(AmberScriptParserTest, BufferWithStructPartialInitialization) {
@@ -1101,9 +1101,9 @@ END)";
 
   const auto* data = buffer->GetValues<uint8_t>();
   EXPECT_FLOAT_EQ(1.f, *reinterpret_cast<const float*>(data + 0));
-  EXPECT_FLOAT_EQ(64, *reinterpret_cast<const float*>(data + 16));
-  EXPECT_FLOAT_EQ(128, *reinterpret_cast<const float*>(data + 20));
-  EXPECT_FLOAT_EQ(220, *reinterpret_cast<const float*>(data + 24));
+  EXPECT_FLOAT_EQ(64u, *reinterpret_cast<const float*>(data + 16));
+  EXPECT_FLOAT_EQ(128u, *reinterpret_cast<const float*>(data + 20));
+  EXPECT_FLOAT_EQ(220u, *reinterpret_cast<const float*>(data + 24));
 }
 
 TEST_F(AmberScriptParserTest, InvalidBufferWidth) {
@@ -1178,9 +1178,9 @@ BUFFER buf DATA_TYPE vec4<float> WIDTH 2 HEIGHT 3
   EXPECT_EQ("buf", buffers[0]->GetName());
 
   auto* buffer = buffers[0].get();
-  EXPECT_EQ(2, buffer->GetWidth());
-  EXPECT_EQ(3, buffer->GetHeight());
-  EXPECT_EQ(6, buffer->ElementCount());
+  EXPECT_EQ(2u, buffer->GetWidth());
+  EXPECT_EQ(3u, buffer->GetHeight());
+  EXPECT_EQ(6u, buffer->ElementCount());
 }
 
 TEST_F(AmberScriptParserTest, BufferMipLevels) {

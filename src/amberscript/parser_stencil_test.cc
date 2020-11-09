@@ -84,12 +84,12 @@ END)";
   ASSERT_EQ(CompareOp::kGreater,
             pipeline->GetPipelineData()->GetBackCompareOp());
 
-  ASSERT_EQ(1, pipeline->GetPipelineData()->GetFrontCompareMask());
-  ASSERT_EQ(4, pipeline->GetPipelineData()->GetBackCompareMask());
-  ASSERT_EQ(2, pipeline->GetPipelineData()->GetFrontWriteMask());
-  ASSERT_EQ(5, pipeline->GetPipelineData()->GetBackWriteMask());
-  ASSERT_EQ(3, pipeline->GetPipelineData()->GetFrontReference());
-  ASSERT_EQ(6, pipeline->GetPipelineData()->GetBackReference());
+  ASSERT_EQ(1u, pipeline->GetPipelineData()->GetFrontCompareMask());
+  ASSERT_EQ(4u, pipeline->GetPipelineData()->GetBackCompareMask());
+  ASSERT_EQ(2u, pipeline->GetPipelineData()->GetFrontWriteMask());
+  ASSERT_EQ(5u, pipeline->GetPipelineData()->GetBackWriteMask());
+  ASSERT_EQ(3u, pipeline->GetPipelineData()->GetFrontReference());
+  ASSERT_EQ(6u, pipeline->GetPipelineData()->GetBackReference());
 }
 
 TEST_F(AmberScriptParserTest, StencilMissingFace) {

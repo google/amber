@@ -198,21 +198,21 @@ END)";
 
   Buffer* buffer1 = buf1.buffer;
   EXPECT_EQ(FormatType::kB8G8R8A8_UNORM, buffer1->GetFormat()->GetFormatType());
-  EXPECT_EQ(0, buf1.location);
-  EXPECT_EQ(250 * 250, buffer1->ElementCount());
-  EXPECT_EQ(250 * 250 * 4, buffer1->ValueCount());
-  EXPECT_EQ(250 * 250 * 4 * sizeof(uint8_t), buffer1->GetSizeInBytes());
+  EXPECT_EQ(0u, buf1.location);
+  EXPECT_EQ(250u * 250u, buffer1->ElementCount());
+  EXPECT_EQ(250u * 250u * 4u, buffer1->ValueCount());
+  EXPECT_EQ(250u * 250u * 4u * sizeof(uint8_t), buffer1->GetSizeInBytes());
 
   ASSERT_EQ(1U, pipelines[1]->GetColorAttachments().size());
   const auto& buf2 = pipelines[1]->GetColorAttachments()[0];
   ASSERT_TRUE(buf2.buffer != nullptr);
   ASSERT_EQ(buffer1, buf2.buffer);
-  EXPECT_EQ(0, buf2.location);
+  EXPECT_EQ(0u, buf2.location);
   EXPECT_EQ(FormatType::kB8G8R8A8_UNORM,
             buf2.buffer->GetFormat()->GetFormatType());
-  EXPECT_EQ(250 * 250, buf2.buffer->ElementCount());
-  EXPECT_EQ(250 * 250 * 4, buf2.buffer->ValueCount());
-  EXPECT_EQ(250 * 250 * 4 * sizeof(uint8_t), buf2.buffer->GetSizeInBytes());
+  EXPECT_EQ(250u * 250u, buf2.buffer->ElementCount());
+  EXPECT_EQ(250u * 250u * 4u, buf2.buffer->ValueCount());
+  EXPECT_EQ(250u * 250u * 4u * sizeof(uint8_t), buf2.buffer->GetSizeInBytes());
 }
 
 TEST_F(AmberScriptParserTest, PipelineDefaultColorBufferMismatchSize) {
@@ -367,8 +367,8 @@ END
   auto buffers1 = pipeline1->GetBuffers();
   ASSERT_EQ(1U, buffers1.size());
   EXPECT_EQ("buf1", buffers1[0].buffer->GetName());
-  EXPECT_EQ(1, buffers1[0].descriptor_set);
-  EXPECT_EQ(3, buffers1[0].binding);
+  EXPECT_EQ(1u, buffers1[0].descriptor_set);
+  EXPECT_EQ(3u, buffers1[0].binding);
 
   auto shaders1 = pipeline1->GetShaders();
   ASSERT_EQ(2U, shaders1.size());
@@ -381,8 +381,8 @@ END
   auto buffers2 = pipeline2->GetBuffers();
   ASSERT_EQ(1U, buffers2.size());
   EXPECT_EQ("buf2", buffers2[0].buffer->GetName());
-  EXPECT_EQ(1, buffers2[0].descriptor_set);
-  EXPECT_EQ(3, buffers2[0].binding);
+  EXPECT_EQ(1u, buffers2[0].descriptor_set);
+  EXPECT_EQ(3u, buffers2[0].binding);
 
   auto shaders2 = pipeline2->GetShaders();
   ASSERT_EQ(2U, shaders2.size());
@@ -530,15 +530,15 @@ END
   const auto& s1 = p1->GetShaders();
   ASSERT_EQ(1U, s1.size());
 
-  EXPECT_EQ(1, s1[0].GetSpecialization().size());
-  EXPECT_EQ(4, s1[0].GetSpecialization().at(3));
+  EXPECT_EQ(1u, s1[0].GetSpecialization().size());
+  EXPECT_EQ(4u, s1[0].GetSpecialization().at(3));
 
   const auto* p2 = pipelines[1].get();
   const auto& s2 = p2->GetShaders();
   ASSERT_EQ(1U, s2.size());
 
-  EXPECT_EQ(1, s2[0].GetSpecialization().size());
-  EXPECT_EQ(4, s2[0].GetSpecialization().at(3));
+  EXPECT_EQ(1u, s2[0].GetSpecialization().size());
+  EXPECT_EQ(4u, s2[0].GetSpecialization().at(3));
 }
 
 }  // namespace amberscript

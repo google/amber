@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/vulkan/sampler_descriptor.h"
+
 #include "src/vulkan/device.h"
 #include "src/vulkan/resource.h"
 
