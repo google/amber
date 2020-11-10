@@ -45,8 +45,9 @@ Result BufferBackedDescriptor::RecordCopyDataToResourceIfNeeded(
   for (size_t i = 0; i < resources.size(); i++) {
     if (!buffers[i]->ValuePtr()->empty()) {
       resources[i]->UpdateMemoryWithRawData(*buffers[i]->ValuePtr());
-      // Keep the data if the resource is read only. Otherwise the data will
-      // be regenerated after a draw.
+      // If the resource is read-only, keep the buffer data; Amber won't copy
+      // read-only resources back into the host buffers, so it makes sense to
+      // leave the buffer intact.
       if (!IsReadOnly())
         buffers[i]->ValuePtr()->clear();
     }
@@ -73,6 +74,10 @@ Result BufferBackedDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
 }
 
 Result BufferBackedDescriptor::MoveResourceToBufferOutput() {
+  // No need to copy results of read only resources.
+  if (IsReadOnly())
+    return {};
+
   auto resources = GetResources();
   auto buffers = GetAmberBuffers();
   if (resources.size() != buffers.size())

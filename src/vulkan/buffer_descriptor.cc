@@ -74,10 +74,7 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
 }
 
 Result BufferDescriptor::MoveResourceToBufferOutput() {
-  Result r;
-
-  if (!IsReadOnly())
-    r = BufferBackedDescriptor::MoveResourceToBufferOutput();
+  Result r = BufferBackedDescriptor::MoveResourceToBufferOutput();
 
   transfer_buffers_.clear();
 

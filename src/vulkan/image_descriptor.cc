@@ -138,10 +138,7 @@ Result ImageDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
 }
 
 Result ImageDescriptor::MoveResourceToBufferOutput() {
-  Result r;
-
-  if (!IsReadOnly())
-    r = BufferBackedDescriptor::MoveResourceToBufferOutput();
+  Result r = BufferBackedDescriptor::MoveResourceToBufferOutput();
 
   transfer_images_.clear();
 
