@@ -521,6 +521,7 @@ void Pipeline::AddBuffer(Buffer* buf,
   info.type = type;
   info.base_mip_level = base_mip_level;
   info.dynamic_offset = dynamic_offset;
+  info.sampler = buf->GetSampler();
 }
 
 void Pipeline::AddBuffer(Buffer* buf,

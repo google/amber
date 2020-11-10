@@ -45,7 +45,11 @@ Result BufferBackedDescriptor::RecordCopyDataToResourceIfNeeded(
   for (size_t i = 0; i < resources.size(); i++) {
     if (!buffers[i]->ValuePtr()->empty()) {
       resources[i]->UpdateMemoryWithRawData(*buffers[i]->ValuePtr());
-      buffers[i]->ValuePtr()->clear();
+      // If the resource is read-only, keep the buffer data; Amber won't copy
+      // read-only resources back into the host buffers, so it makes sense to
+      // leave the buffer intact.
+      if (!IsReadOnly())
+        buffers[i]->ValuePtr()->clear();
     }
 
     resources[i]->CopyToDevice(command);
@@ -55,19 +59,25 @@ Result BufferBackedDescriptor::RecordCopyDataToResourceIfNeeded(
 }
 
 Result BufferBackedDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
-  if (GetResources().empty()) {
-    return Result(
-        "Vulkan: BufferBackedDescriptor::RecordCopyDataToHost() no transfer "
-        "resources");
-  }
+  if (!IsReadOnly()) {
+    if (GetResources().empty()) {
+      return Result(
+          "Vulkan: BufferBackedDescriptor::RecordCopyDataToHost() no transfer "
+          "resources");
+    }
 
-  for (const auto& r : GetResources())
-    r->CopyToHost(command);
+    for (const auto& r : GetResources())
+      r->CopyToHost(command);
+  }
 
   return {};
 }
 
 Result BufferBackedDescriptor::MoveResourceToBufferOutput() {
+  // No need to copy results of read only resources.
+  if (IsReadOnly())
+    return {};
+
   auto resources = GetResources();
   auto buffers = GetAmberBuffers();
   if (resources.size() != buffers.size())
@@ -78,8 +88,7 @@ Result BufferBackedDescriptor::MoveResourceToBufferOutput() {
   if (resources.empty()) {
     return Result(
         "Vulkan: BufferBackedDescriptor::MoveResourceToBufferOutput() no "
-        "transfer"
-        " resource");
+        "transfer resource");
   }
 
   for (size_t i = 0; i < resources.size(); i++) {
@@ -105,6 +114,25 @@ Result BufferBackedDescriptor::MoveResourceToBufferOutput() {
   }
 
   return {};
+}
+
+bool BufferBackedDescriptor::IsReadOnly() const {
+  switch (type_) {
+    case DescriptorType::kUniformBuffer:
+    case DescriptorType::kUniformBufferDynamic:
+    case DescriptorType::kUniformTexelBuffer:
+    case DescriptorType::kSampledImage:
+    case DescriptorType::kCombinedImageSampler:
+      return true;
+    case DescriptorType::kStorageBuffer:
+    case DescriptorType::kStorageBufferDynamic:
+    case DescriptorType::kStorageTexelBuffer:
+    case DescriptorType::kStorageImage:
+      return false;
+    default:
+      assert(false && "Unexpected descriptor type");
+      return false;
+  }
 }
 
 }  // namespace vulkan

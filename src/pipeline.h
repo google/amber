@@ -199,6 +199,7 @@ class Pipeline {
     uint32_t arg_no = 0;
     BufferType type = BufferType::kUnknown;
     InputRate input_rate = InputRate::kVertex;
+    Sampler* sampler;
   };
 
   /// Information on a sampler attached to the pipeline.

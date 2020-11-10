@@ -552,10 +552,14 @@ class BufferCommand : public BindableResourceCommand {
   void SetBuffer(Buffer* buffer) { buffer_ = buffer; }
   Buffer* GetBuffer() const { return buffer_; }
 
+  void SetSampler(Sampler* sampler) { sampler_ = sampler; }
+  Sampler* GetSampler() const { return sampler_; }
+
   std::string ToString() const override { return "BufferCommand"; }
 
  private:
   Buffer* buffer_ = nullptr;
+  Sampler* sampler_ = nullptr;
   BufferType buffer_type_;
   bool is_subdata_ = false;
   uint32_t offset_ = 0;

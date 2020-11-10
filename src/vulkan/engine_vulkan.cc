@@ -253,6 +253,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     cmd->SetBaseMipLevel(buf_info.base_mip_level);
     cmd->SetDynamicOffset(buf_info.dynamic_offset);
     cmd->SetBuffer(buf_info.buffer);
+    cmd->SetSampler(buf_info.sampler);
 
     if (cmd->GetValues().empty()) {
       cmd->GetBuffer()->SetSizeInElements(cmd->GetBuffer()->ElementCount());

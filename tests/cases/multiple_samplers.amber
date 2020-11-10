@@ -1,0 +1,126 @@
+#!amber
+# Copyright 2020 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER vertex vert_shader PASSTHROUGH
+
+SHADER fragment frag_shader_red GLSL
+#version 430
+layout(location = 0) out vec4 color_out;
+void main() {
+  color_out = vec4(1.0, 0.0, 0.0, 1.0);
+}
+END
+
+SHADER vertex vert_shader_tex GLSL
+#version 430
+layout(location = 0) in vec4 position;
+layout(location = 1) in vec2 texcoords_in;
+layout(location = 0) out vec2 texcoords_out;
+void main() {
+  gl_Position = position;
+  texcoords_out = texcoords_in;
+}
+END
+
+SHADER fragment frag_shader_tex GLSL
+#version 430
+layout(location = 0) in vec2 texcoords_in;
+layout(location = 0) out vec4 color_out;
+uniform layout(set=0, binding=0) sampler2D tex_sampler_white;
+uniform layout(set=0, binding=1) sampler2D tex_sampler_black;
+void main() {
+  // Use a sampler with a white border color for the right
+  // side of the color buffer and a sampler with a black
+  // border color for the left side.
+  if (gl_FragCoord.x > 128.0)
+      color_out = texture(tex_sampler_white, texcoords_in);
+  else
+      color_out = texture(tex_sampler_black, texcoords_in);
+}
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+BUFFER framebuffer FORMAT B8G8R8A8_UNORM
+
+# A sampler that generates white when texture coordinates
+# go out of range [0..1].
+SAMPLER sampler_white \
+  ADDRESS_MODE_U clamp_to_border \
+  ADDRESS_MODE_V clamp_to_border \
+  BORDER_COLOR float_opaque_white
+
+# A sampler that generates black when texture coordinates
+# go out of range [0..1].
+SAMPLER sampler_black \
+  ADDRESS_MODE_U clamp_to_border \
+  ADDRESS_MODE_V clamp_to_border \
+  BORDER_COLOR float_opaque_black
+
+BUFFER position DATA_TYPE vec2<float> DATA
+-0.75 -0.75
+ 0.75 -0.75
+ 0.75  0.75
+-0.75  0.75
+END
+BUFFER texcoords DATA_TYPE vec2<float> DATA
+-0.5 -0.5
+ 1.5 -0.5
+ 1.5  1.5
+-0.5  1.5
+END
+
+# A pipeline for generating a texture. Renders pure red.
+PIPELINE graphics texgen
+  ATTACH vert_shader
+  ATTACH frag_shader_red
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER texture AS color LOCATION 0
+END
+
+# A pipeline for drawing a textured quad using two samplers.
+PIPELINE graphics pipeline
+  ATTACH vert_shader_tex
+  ATTACH frag_shader_tex
+  BIND BUFFER texture AS combined_image_sampler SAMPLER sampler_white DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER texture AS combined_image_sampler SAMPLER sampler_black DESCRIPTOR_SET 0 BINDING 1
+  VERTEX_DATA position LOCATION 0
+  VERTEX_DATA texcoords LOCATION 1
+  FRAMEBUFFER_SIZE 256 256
+  BIND BUFFER framebuffer AS color LOCATION 0
+END
+
+# Generate a texture with a blue background and red quad at the lower right corner.
+CLEAR_COLOR texgen 0 0 255 255
+CLEAR texgen
+RUN texgen DRAW_RECT POS 128 128 SIZE 128 128
+
+# Clear to green and draw the generated texture in the center of the screen leaving
+# the background color to the edges. Use texture coordinates that go past the [0..1]
+# range to show border colors. The left side of the texture is using a sampler with
+# a black border, and the right side uses a sampler with a white border.
+CLEAR_COLOR pipeline 0 255 0 255
+CLEAR pipeline
+RUN pipeline DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4
+
+# Check for the green background.
+EXPECT framebuffer IDX 1 1 SIZE 1 1 EQ_RGBA 0 255 0 255
+# Check for the black border color.
+EXPECT framebuffer IDX 55 55 SIZE 1 1 EQ_RGBA 0 0 0 255
+# Check for the blue part of the texture.
+EXPECT framebuffer IDX 105 105 SIZE 1 1 EQ_RGBA 0 0 255 255
+# Check for the red part of the texture.
+EXPECT framebuffer IDX 150 150 SIZE 1 1 EQ_RGBA 255 0 0 255
+# Check for the white border color.
+EXPECT framebuffer IDX 200 200 SIZE 1 1 EQ_RGBA 255 255 255 255
