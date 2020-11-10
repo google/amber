@@ -149,6 +149,7 @@ class Pipeline {
       enum class PushConstantType {
         kDimensions = 0,
         kGlobalOffset,
+        kRegionOffset,
       };
       PushConstantType type;
       uint32_t offset = 0;

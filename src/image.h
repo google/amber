@@ -15,6 +15,8 @@
 #ifndef SRC_IMAGE_H_
 #define SRC_IMAGE_H_
 
+#include <cstdint>
+
 namespace amber {
 
 enum class ImageDimension : int8_t { kUnknown = -1, k1D = 0, k2D = 1, k3D = 2 };

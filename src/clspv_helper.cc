@@ -180,9 +180,17 @@ spv_result_t ParseExtendedInst(ReflectionHelper* helper,
       helper->shader_info->AddPushConstant(std::move(push_constant));
       break;
     }
+    case NonSemanticClspvReflectionPushConstantRegionOffset: {
+      auto offset_id = inst->words[inst->operands[4].offset];
+      auto size_id = inst->words[inst->operands[5].offset];
+      Pipeline::ShaderInfo::PushConstant push_constant{
+          Pipeline::ShaderInfo::PushConstant::PushConstantType::kRegionOffset,
+          helper->constants[offset_id], helper->constants[size_id]};
+      helper->shader_info->AddPushConstant(std::move(push_constant));
+      break;
+    }
     case NonSemanticClspvReflectionPushConstantEnqueuedLocalSize:
     case NonSemanticClspvReflectionPushConstantGlobalSize:
-    case NonSemanticClspvReflectionPushConstantRegionOffset:
     case NonSemanticClspvReflectionPushConstantNumWorkgroups:
     case NonSemanticClspvReflectionPushConstantRegionGroupOffset:
       helper->error_message = "Unsupported push constant";

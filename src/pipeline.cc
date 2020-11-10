@@ -1016,6 +1016,12 @@ Result Pipeline::GenerateOpenCLPushConstants() {
         bytes[base + 1] = 0;
         bytes[base + 2] = 0;
         break;
+      case Pipeline::ShaderInfo::PushConstant::PushConstantType::kRegionOffset:
+        // Region offsets are not currently supported.
+        bytes[base] = 0;
+        bytes[base + 1] = 0;
+        bytes[base + 2] = 0;
+        break;
     }
     memcpy(buf->ValuePtr()->data() + pc.offset, bytes.data(),
            bytes.size() * sizeof(uint32_t));
