@@ -54,6 +54,10 @@ DEBUGGER_CASES = [
   "debugger_hlsl_basic_vertex.amber",
   "debugger_hlsl_shadowed_vars.amber",
   "debugger_spirv_line_stepping.amber",
+  "debugger_hlsl_basic_fragment_with_legalization.amber",
+  "debugger_hlsl_basic_vertex_with_legalization.amber",
+  "debugger_hlsl_function_call.amber",
+  "debugger_hlsl_shadowed_vars.amber",
 ]
 
 SUPPRESSIONS_SWIFTSHADER = [
@@ -104,6 +108,10 @@ DXC_CASES = [
   "debugger_hlsl_basic_compute.amber",
   "debugger_hlsl_basic_fragment.amber",
   "debugger_hlsl_basic_vertex.amber",
+  "debugger_hlsl_shadowed_vars.amber",
+  "debugger_hlsl_basic_fragment_with_legalization.amber",
+  "debugger_hlsl_basic_vertex_with_legalization.amber",
+  "debugger_hlsl_function_call.amber",
   "debugger_hlsl_shadowed_vars.amber",
 ]
 
