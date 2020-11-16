@@ -39,8 +39,7 @@ END
 PIPELINE compute pipeline
   ATTACH shader
   SHADER_OPTIMIZATION shader
-    --inline-entry-points-exhaustive
-    --eliminate-dead-functions
+    --legalize-hlsl
   END
   BIND BUFFER data AS storage DESCRIPTOR_SET 0 BINDING 0
 END
