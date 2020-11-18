@@ -15,6 +15,7 @@
 #include "amber/amber.h"
 
 #include <stdio.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cstdio>

@@ -47,7 +47,7 @@ CLEAR_STENCIL my_pipeline 15)";
   ASSERT_TRUE(cmd->IsClearStencil());
 
   auto* clr = cmd->AsClearStencil();
-  EXPECT_EQ(15, clr->GetValue());
+  EXPECT_EQ(15u, clr->GetValue());
 }
 
 TEST_F(AmberScriptParserTest, ClearStencilWithComputePipeline) {

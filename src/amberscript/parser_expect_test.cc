@@ -656,7 +656,7 @@ EXPECT orig_buf IDX 5 EQ 11)";
   EXPECT_EQ(5U, probe->GetOffset());
   EXPECT_TRUE(probe->GetFormat()->IsInt32());
   ASSERT_EQ(1U, probe->GetValues().size());
-  EXPECT_EQ(11U, probe->GetValues()[0].AsInt32());
+  EXPECT_EQ(11, probe->GetValues()[0].AsInt32());
 }
 
 TEST_F(AmberScriptParserTest, ExpectEQStruct) {
@@ -874,7 +874,7 @@ EXPECT orig_buf IDX 5 TOLERANCE 1 EQ 11)";
   EXPECT_EQ(5U, probe->GetOffset());
   EXPECT_TRUE(probe->GetFormat()->IsInt32());
   ASSERT_EQ(1U, probe->GetValues().size());
-  EXPECT_EQ(11U, probe->GetValues()[0].AsInt32());
+  EXPECT_EQ(11, probe->GetValues()[0].AsInt32());
   EXPECT_TRUE(probe->HasTolerances());
 
   auto& tolerances = probe->GetTolerances();
@@ -904,7 +904,7 @@ EXPECT orig_buf IDX 5 TOLERANCE 1% EQ 11)";
   EXPECT_EQ(5U, probe->GetOffset());
   EXPECT_TRUE(probe->GetFormat()->IsInt32());
   ASSERT_EQ(1U, probe->GetValues().size());
-  EXPECT_EQ(11U, probe->GetValues()[0].AsInt32());
+  EXPECT_EQ(11, probe->GetValues()[0].AsInt32());
   EXPECT_TRUE(probe->HasTolerances());
 
   auto& tolerances = probe->GetTolerances();
@@ -934,7 +934,7 @@ EXPECT orig_buf IDX 5 TOLERANCE 1% .2 3.7% 4 EQ 11)";
   EXPECT_EQ(5U, probe->GetOffset());
   EXPECT_TRUE(probe->GetFormat()->IsInt32());
   ASSERT_EQ(1U, probe->GetValues().size());
-  EXPECT_EQ(11U, probe->GetValues()[0].AsInt32());
+  EXPECT_EQ(11, probe->GetValues()[0].AsInt32());
 
   EXPECT_TRUE(probe->HasTolerances());
   auto& tolerances = probe->GetTolerances();

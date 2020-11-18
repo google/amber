@@ -329,8 +329,8 @@ END)";
   const auto& shaders = pipeline->GetShaders();
   ASSERT_EQ(1U, shaders.size());
 
-  EXPECT_EQ(1, shaders[0].GetSpecialization().size());
-  EXPECT_EQ(4, shaders[0].GetSpecialization().at(1));
+  EXPECT_EQ(1u, shaders[0].GetSpecialization().size());
+  EXPECT_EQ(4u, shaders[0].GetSpecialization().at(1));
 }
 
 TEST_F(AmberScriptParserTest, PipelineSpecializationInt32) {
@@ -354,8 +354,8 @@ END)";
   const auto& shaders = pipeline->GetShaders();
   ASSERT_EQ(1U, shaders.size());
 
-  EXPECT_EQ(1, shaders[0].GetSpecialization().size());
-  EXPECT_EQ(0xffffffff, shaders[0].GetSpecialization().at(2));
+  EXPECT_EQ(1u, shaders[0].GetSpecialization().size());
+  EXPECT_EQ(0xffffffffu, shaders[0].GetSpecialization().at(2));
 }
 
 TEST_F(AmberScriptParserTest, PipelineSpecializationFloat) {
@@ -379,8 +379,8 @@ END)";
   const auto& shaders = pipeline->GetShaders();
   ASSERT_EQ(1U, shaders.size());
 
-  EXPECT_EQ(1, shaders[0].GetSpecialization().size());
-  EXPECT_EQ(0x3f8ccccd, shaders[0].GetSpecialization().at(3));
+  EXPECT_EQ(1u, shaders[0].GetSpecialization().size());
+  EXPECT_EQ(0x3f8ccccdu, shaders[0].GetSpecialization().at(3));
 }
 
 TEST_F(AmberScriptParserTest, PipelineSpecializationIDIsString) {
@@ -469,10 +469,10 @@ END)";
   const auto& shaders = pipeline->GetShaders();
   ASSERT_EQ(1U, shaders.size());
 
-  EXPECT_EQ(3, shaders[0].GetSpecialization().size());
-  EXPECT_EQ(4, shaders[0].GetSpecialization().at(1));
-  EXPECT_EQ(5, shaders[0].GetSpecialization().at(2));
-  EXPECT_EQ(1, shaders[0].GetSpecialization().at(5));
+  EXPECT_EQ(3u, shaders[0].GetSpecialization().size());
+  EXPECT_EQ(4u, shaders[0].GetSpecialization().at(1));
+  EXPECT_EQ(5u, shaders[0].GetSpecialization().at(2));
+  EXPECT_EQ(1u, shaders[0].GetSpecialization().at(5));
 }
 
 TEST_F(AmberScriptParserTest, PipelineSpecializationNoType) {
@@ -496,8 +496,8 @@ END)";
   const auto& shaders = pipeline->GetShaders();
   ASSERT_EQ(1U, shaders.size());
 
-  EXPECT_EQ(1, shaders[0].GetSpecialization().size());
-  EXPECT_EQ(4, shaders[0].GetSpecialization().at(1));
+  EXPECT_EQ(1u, shaders[0].GetSpecialization().size());
+  EXPECT_EQ(4u, shaders[0].GetSpecialization().at(1));
 }
 
 }  // namespace amberscript

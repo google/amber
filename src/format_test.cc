@@ -263,13 +263,13 @@ TEST_F(FormatTest, SegmentPackedList_Std430) {
   auto type = parser.Parse("A8B8G8R8_SINT_PACK32");
 
   Format fmt(type.get());
-  EXPECT_EQ(4, fmt.SizeInBytes());
+  EXPECT_EQ(4u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(1U, segs.size());
   // Always packs into a unsigned ...
   EXPECT_EQ(FormatMode::kUInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
 }
 
 TEST_F(FormatTest, SegmentListR32G32_Std140) {
@@ -278,14 +278,14 @@ TEST_F(FormatTest, SegmentListR32G32_Std140) {
 
   Format fmt(type.get());
   fmt.SetLayout(Format::Layout::kStd140);
-  EXPECT_EQ(8, fmt.SizeInBytes());
+  EXPECT_EQ(8u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(2U, segs.size());
   EXPECT_EQ(FormatMode::kUInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kUInt, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
 }
 
 TEST_F(FormatTest, SegmentListR32G32B32_Std140) {
@@ -294,18 +294,18 @@ TEST_F(FormatTest, SegmentListR32G32B32_Std140) {
 
   Format fmt(type.get());
   fmt.SetLayout(Format::Layout::kStd140);
-  EXPECT_EQ(16, fmt.SizeInBytes());
+  EXPECT_EQ(16u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(4U, segs.size());
   EXPECT_EQ(FormatMode::kUInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kUInt, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   EXPECT_EQ(FormatMode::kUInt, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_TRUE(segs[3].IsPadding());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
 }
 
 TEST_F(FormatTest, SegmentListR32G32B32_Std430) {
@@ -314,18 +314,18 @@ TEST_F(FormatTest, SegmentListR32G32B32_Std430) {
 
   Format fmt(type.get());
   fmt.SetLayout(Format::Format::Layout::kStd430);
-  EXPECT_EQ(16, fmt.SizeInBytes());
+  EXPECT_EQ(16u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(4U, segs.size());
   EXPECT_EQ(FormatMode::kUInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kUInt, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   EXPECT_EQ(FormatMode::kUInt, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_TRUE(segs[3].IsPadding());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
 }
 
 TEST_F(FormatTest, SegmentMat2x2_Std140) {
@@ -335,23 +335,23 @@ TEST_F(FormatTest, SegmentMat2x2_Std140) {
 
   Format fmt(type.get());
   fmt.SetLayout(Format::Format::Layout::kStd140);
-  EXPECT_EQ(32, fmt.SizeInBytes());
+  EXPECT_EQ(32u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(6U, segs.size());
   EXPECT_EQ(FormatMode::kSFloat, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   EXPECT_TRUE(segs[2].IsPadding());
-  EXPECT_EQ(8, segs[2].SizeInBytes());
+  EXPECT_EQ(8u, segs[2].SizeInBytes());
 
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[4].GetFormatMode());
-  EXPECT_EQ(4, segs[4].SizeInBytes());
+  EXPECT_EQ(4u, segs[4].SizeInBytes());
   EXPECT_TRUE(segs[5].IsPadding());
-  EXPECT_EQ(8, segs[5].SizeInBytes());
+  EXPECT_EQ(8u, segs[5].SizeInBytes());
 }
 
 TEST_F(FormatTest, SegmentMat2x2_Std430) {
@@ -361,19 +361,19 @@ TEST_F(FormatTest, SegmentMat2x2_Std430) {
 
   Format fmt(type.get());
   fmt.SetLayout(Format::Layout::kStd430);
-  EXPECT_EQ(16, fmt.SizeInBytes());
+  EXPECT_EQ(16u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(4U, segs.size());
   EXPECT_EQ(FormatMode::kSFloat, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
 
   EXPECT_EQ(FormatMode::kSFloat, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
 }
 
 TEST_F(FormatTest, SegmentMat2x3_Std430) {
@@ -383,27 +383,27 @@ TEST_F(FormatTest, SegmentMat2x3_Std430) {
 
   Format fmt(type.get());
   fmt.SetLayout(Format::Layout::kStd430);
-  EXPECT_EQ(32, fmt.SizeInBytes());
+  EXPECT_EQ(32u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(8U, segs.size());
   EXPECT_EQ(FormatMode::kSFloat, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_TRUE(segs[3].IsPadding());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
 
   EXPECT_EQ(FormatMode::kSFloat, segs[4].GetFormatMode());
-  EXPECT_EQ(4, segs[4].SizeInBytes());
+  EXPECT_EQ(4u, segs[4].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[5].GetFormatMode());
-  EXPECT_EQ(4, segs[5].SizeInBytes());
+  EXPECT_EQ(4u, segs[5].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[6].GetFormatMode());
-  EXPECT_EQ(4, segs[6].SizeInBytes());
+  EXPECT_EQ(4u, segs[6].SizeInBytes());
   EXPECT_TRUE(segs[7].IsPadding());
-  EXPECT_EQ(4, segs[7].SizeInBytes());
+  EXPECT_EQ(4u, segs[7].SizeInBytes());
 }
 
 TEST_F(FormatTest, SegmentRuntimeArray_Std140) {
@@ -413,14 +413,14 @@ TEST_F(FormatTest, SegmentRuntimeArray_Std140) {
 
   Format fmt(type.get());
   fmt.SetLayout(Format::Format::Layout::kStd140);
-  EXPECT_EQ(16, fmt.SizeInBytes());
+  EXPECT_EQ(16u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(2U, segs.size());
   EXPECT_EQ(FormatMode::kSFloat, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_TRUE(segs[1].IsPadding());
-  EXPECT_EQ(12, segs[1].SizeInBytes());
+  EXPECT_EQ(12u, segs[1].SizeInBytes());
 }
 
 TEST_F(FormatTest, SegmentRuntimeArray_Std430) {
@@ -430,12 +430,12 @@ TEST_F(FormatTest, SegmentRuntimeArray_Std430) {
 
   Format fmt(type.get());
   fmt.SetLayout(Format::Layout::kStd430);
-  EXPECT_EQ(4, fmt.SizeInBytes());
+  EXPECT_EQ(4u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(1U, segs.size());
   EXPECT_EQ(FormatMode::kSFloat, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
 }
 
 // struct {
@@ -451,16 +451,16 @@ TEST_F(FormatTest, SegmentStruct_Std140) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd140);
-  EXPECT_EQ(16, fmt.SizeInBytes());
+  EXPECT_EQ(16u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
-  ASSERT_EQ(3, segs.size());
+  ASSERT_EQ(3u, segs.size());
   EXPECT_EQ(FormatMode::kSFloat, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kUInt, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   EXPECT_TRUE(segs[2].IsPadding());
-  EXPECT_EQ(8, segs[2].SizeInBytes());
+  EXPECT_EQ(8u, segs[2].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStruct_Std430) {
   auto s = MakeUnique<type::Struct>();
@@ -471,14 +471,14 @@ TEST_F(FormatTest, SegmentStruct_Std430) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd430);
-  EXPECT_EQ(8, fmt.SizeInBytes());
+  EXPECT_EQ(8u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(2U, segs.size());
   EXPECT_EQ(FormatMode::kSFloat, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kUInt, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
 }
 
 // struct STRIDE 20 {
@@ -496,16 +496,16 @@ TEST_F(FormatTest, SegmentStructWithStride_Std140) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd140);
-  EXPECT_EQ(20, fmt.SizeInBytes());
+  EXPECT_EQ(20u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(3U, segs.size());
   EXPECT_EQ(FormatMode::kSFloat, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kUInt, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   EXPECT_TRUE(segs[2].IsPadding());
-  EXPECT_EQ((20 - sizeof(float) - sizeof(uint32_t)), segs[2].SizeInBytes());
+  EXPECT_EQ((20u - sizeof(float) - sizeof(uint32_t)), segs[2].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithStride_Std430) {
   auto s = MakeUnique<type::Struct>();
@@ -517,7 +517,7 @@ TEST_F(FormatTest, SegmentStructWithStride_Std430) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd430);
-  EXPECT_EQ(20, fmt.SizeInBytes());
+  EXPECT_EQ(20u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(3U, segs.size());
@@ -526,7 +526,7 @@ TEST_F(FormatTest, SegmentStructWithStride_Std430) {
   EXPECT_EQ(FormatMode::kUInt, segs[1].GetFormatMode());
   EXPECT_EQ(32U, segs[1].GetNumBits());
   EXPECT_TRUE(segs[2].IsPadding());
-  EXPECT_EQ((20 - sizeof(float) - sizeof(uint32_t)) * 8, segs[2].GetNumBits());
+  EXPECT_EQ((20u - sizeof(float) - sizeof(uint32_t)) * 8, segs[2].GetNumBits());
 }
 
 // struct {
@@ -545,18 +545,18 @@ TEST_F(FormatTest, SegmentStructWithMemberOffset_Std140) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd140);
-  EXPECT_EQ(16, fmt.SizeInBytes());
+  EXPECT_EQ(16u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(4U, segs.size());
   EXPECT_TRUE(segs[0].IsPadding());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   EXPECT_EQ(FormatMode::kUInt, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_TRUE(segs[3].IsPadding());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithMemberOffset_Std430) {
   auto s = MakeUnique<type::Struct>();
@@ -575,11 +575,11 @@ TEST_F(FormatTest, SegmentStructWithMemberOffset_Std430) {
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(3U, segs.size());
   EXPECT_TRUE(segs[0].IsPadding());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   EXPECT_EQ(FormatMode::kUInt, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
 }
 
 // struct {
@@ -602,20 +602,20 @@ TEST_F(FormatTest, SegmentStructWithStruct_Std140) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd140);
-  EXPECT_EQ(32, fmt.SizeInBytes());
+  EXPECT_EQ(32u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(5U, segs.size());
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   EXPECT_TRUE(segs[2].IsPadding());
-  EXPECT_EQ(8, segs[2].SizeInBytes());
+  EXPECT_EQ(8u, segs[2].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   EXPECT_TRUE(segs[4].IsPadding());
-  EXPECT_EQ(12, segs[4].SizeInBytes());
+  EXPECT_EQ(12u, segs[4].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithStruct_Std430) {
   auto x = MakeUnique<type::Struct>();
@@ -630,16 +630,16 @@ TEST_F(FormatTest, SegmentStructWithStruct_Std430) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd430);
-  EXPECT_EQ(12, fmt.SizeInBytes());
+  EXPECT_EQ(12u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(3U, segs.size());
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
 }
 
 // struct {
@@ -660,27 +660,27 @@ TEST_F(FormatTest, SegmentStructWithVec2_Std140) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd140);
-  EXPECT_EQ(32, fmt.SizeInBytes());
+  EXPECT_EQ(32u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(6U, segs.size());
   /* w */
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[1].IsPadding());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   /* vec2 */
   EXPECT_EQ(FormatMode::kSFloat, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   /* y */
   EXPECT_EQ(FormatMode::kSFloat, segs[4].GetFormatMode());
-  EXPECT_EQ(4, segs[4].SizeInBytes());
+  EXPECT_EQ(4u, segs[4].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[5].IsPadding());
-  EXPECT_EQ(12, segs[5].SizeInBytes());
+  EXPECT_EQ(12u, segs[5].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithVec2_Std430) {
   auto s = MakeUnique<type::Struct>();
@@ -695,27 +695,27 @@ TEST_F(FormatTest, SegmentStructWithVec2_Std430) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd430);
-  EXPECT_EQ(24, fmt.SizeInBytes());
+  EXPECT_EQ(24u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(6U, segs.size());
   /* w */
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[1].IsPadding());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   /* vec2 */
   EXPECT_EQ(FormatMode::kSFloat, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   /* y */
   EXPECT_EQ(FormatMode::kSFloat, segs[4].GetFormatMode());
-  EXPECT_EQ(4, segs[4].SizeInBytes());
+  EXPECT_EQ(4u, segs[4].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[5].IsPadding());
-  EXPECT_EQ(4, segs[5].SizeInBytes());
+  EXPECT_EQ(4u, segs[5].SizeInBytes());
 }
 
 // struct {
@@ -736,26 +736,26 @@ TEST_F(FormatTest, SegmentStructWithFloatPackedToVec_Std140) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd140);
-  EXPECT_EQ(32, fmt.SizeInBytes());
+  EXPECT_EQ(32u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(6U, segs.size());
   /* w */
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[1].IsPadding());
-  EXPECT_EQ(12, segs[1].SizeInBytes());
+  EXPECT_EQ(12u, segs[1].SizeInBytes());
   /* vec2 */
   EXPECT_EQ(FormatMode::kSFloat, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[4].GetFormatMode());
-  EXPECT_EQ(4, segs[4].SizeInBytes());
+  EXPECT_EQ(4u, segs[4].SizeInBytes());
   /* y */
   EXPECT_EQ(FormatMode::kSFloat, segs[5].GetFormatMode());
-  EXPECT_EQ(4, segs[5].SizeInBytes());
+  EXPECT_EQ(4u, segs[5].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithFloatPackedToVec_Std430) {
   auto s = MakeUnique<type::Struct>();
@@ -770,26 +770,26 @@ TEST_F(FormatTest, SegmentStructWithFloatPackedToVec_Std430) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd430);
-  EXPECT_EQ(32, fmt.SizeInBytes());
+  EXPECT_EQ(32u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(6U, segs.size());
   /* w */
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[1].IsPadding());
-  EXPECT_EQ(12, segs[1].SizeInBytes());
+  EXPECT_EQ(12u, segs[1].SizeInBytes());
   /* vec2 */
   EXPECT_EQ(FormatMode::kSFloat, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[4].GetFormatMode());
-  EXPECT_EQ(4, segs[4].SizeInBytes());
+  EXPECT_EQ(4u, segs[4].SizeInBytes());
   /* y */
   EXPECT_EQ(FormatMode::kSFloat, segs[5].GetFormatMode());
-  EXPECT_EQ(4, segs[5].SizeInBytes());
+  EXPECT_EQ(4u, segs[5].SizeInBytes());
 }
 
 // struct {
@@ -811,34 +811,34 @@ TEST_F(FormatTest, SegmentStructVec3Vec2_Std140) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd140);
-  EXPECT_EQ(48, fmt.SizeInBytes());
+  EXPECT_EQ(48u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(9U, segs.size());
   /* w */
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[1].IsPadding());
-  EXPECT_EQ(12, segs[1].SizeInBytes());
+  EXPECT_EQ(12u, segs[1].SizeInBytes());
   /* vec3 */
   EXPECT_EQ(FormatMode::kSFloat, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[4].GetFormatMode());
-  EXPECT_EQ(4, segs[4].SizeInBytes());
+  EXPECT_EQ(4u, segs[4].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[5].IsPadding());
-  EXPECT_EQ(4, segs[5].SizeInBytes());
+  EXPECT_EQ(4u, segs[5].SizeInBytes());
   /* vec2 */
   EXPECT_EQ(FormatMode::kSFloat, segs[6].GetFormatMode());
-  EXPECT_EQ(4, segs[6].SizeInBytes());
+  EXPECT_EQ(4u, segs[6].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[7].GetFormatMode());
-  EXPECT_EQ(4, segs[7].SizeInBytes());
+  EXPECT_EQ(4u, segs[7].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[8].IsPadding());
-  EXPECT_EQ(8, segs[8].SizeInBytes());
+  EXPECT_EQ(8u, segs[8].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructVec3Vec2_Std430) {
   auto s = MakeUnique<type::Struct>();
@@ -854,34 +854,34 @@ TEST_F(FormatTest, SegmentStructVec3Vec2_Std430) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd430);
-  EXPECT_EQ(48, fmt.SizeInBytes());
+  EXPECT_EQ(48u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(9U, segs.size());
   /* w */
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[1].IsPadding());
-  EXPECT_EQ(12, segs[1].SizeInBytes());
+  EXPECT_EQ(12u, segs[1].SizeInBytes());
   /* vec3 */
   EXPECT_EQ(FormatMode::kSFloat, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[4].GetFormatMode());
-  EXPECT_EQ(4, segs[4].SizeInBytes());
+  EXPECT_EQ(4u, segs[4].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[5].IsPadding());
-  EXPECT_EQ(4, segs[5].SizeInBytes());
+  EXPECT_EQ(4u, segs[5].SizeInBytes());
   /* vec2 */
   EXPECT_EQ(FormatMode::kSFloat, segs[6].GetFormatMode());
-  EXPECT_EQ(4, segs[6].SizeInBytes());
+  EXPECT_EQ(4u, segs[6].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[7].GetFormatMode());
-  EXPECT_EQ(4, segs[7].SizeInBytes());
+  EXPECT_EQ(4u, segs[7].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[8].IsPadding());
-  EXPECT_EQ(8, segs[8].SizeInBytes());
+  EXPECT_EQ(8u, segs[8].SizeInBytes());
 }
 
 // struct {
@@ -903,36 +903,36 @@ TEST_F(FormatTest, SegmentStructMat2x2_Std140) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd140);
-  EXPECT_EQ(64, fmt.SizeInBytes());
+  EXPECT_EQ(64u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(10U, segs.size());
   /* w */
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[1].IsPadding());
-  EXPECT_EQ(12, segs[1].SizeInBytes());
+  EXPECT_EQ(12u, segs[1].SizeInBytes());
   /* column 1 */
   EXPECT_EQ(FormatMode::kSFloat, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   EXPECT_TRUE(segs[4].IsPadding());
-  EXPECT_EQ(8, segs[4].SizeInBytes());
+  EXPECT_EQ(8u, segs[4].SizeInBytes());
   /* column 2 */
   EXPECT_EQ(FormatMode::kSFloat, segs[5].GetFormatMode());
-  EXPECT_EQ(4, segs[5].SizeInBytes());
+  EXPECT_EQ(4u, segs[5].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[6].GetFormatMode());
-  EXPECT_EQ(4, segs[6].SizeInBytes());
+  EXPECT_EQ(4u, segs[6].SizeInBytes());
   EXPECT_TRUE(segs[7].IsPadding());
-  EXPECT_EQ(8, segs[7].SizeInBytes());
+  EXPECT_EQ(8u, segs[7].SizeInBytes());
   /* y */
   EXPECT_EQ(FormatMode::kSFloat, segs[8].GetFormatMode());
-  EXPECT_EQ(4, segs[8].SizeInBytes());
+  EXPECT_EQ(4u, segs[8].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[9].IsPadding());
-  EXPECT_EQ(12, segs[9].SizeInBytes());
+  EXPECT_EQ(12u, segs[9].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructMat2x2_Std430) {
   auto s = MakeUnique<type::Struct>();
@@ -948,32 +948,32 @@ TEST_F(FormatTest, SegmentStructMat2x2_Std430) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd430);
-  EXPECT_EQ(32, fmt.SizeInBytes());
+  EXPECT_EQ(32u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(8U, segs.size());
   /* w */
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[1].IsPadding());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   /* column 1 */
   EXPECT_EQ(FormatMode::kSFloat, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   /* column 2 */
   EXPECT_EQ(FormatMode::kSFloat, segs[4].GetFormatMode());
-  EXPECT_EQ(4, segs[4].SizeInBytes());
+  EXPECT_EQ(4u, segs[4].SizeInBytes());
   EXPECT_EQ(FormatMode::kSFloat, segs[5].GetFormatMode());
-  EXPECT_EQ(4, segs[5].SizeInBytes());
+  EXPECT_EQ(4u, segs[5].SizeInBytes());
   /* y */
   EXPECT_EQ(FormatMode::kSFloat, segs[6].GetFormatMode());
-  EXPECT_EQ(4, segs[6].SizeInBytes());
+  EXPECT_EQ(4u, segs[6].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[7].IsPadding());
-  EXPECT_EQ(4, segs[7].SizeInBytes());
+  EXPECT_EQ(4u, segs[7].SizeInBytes());
 }
 
 // struct {
@@ -1000,34 +1000,34 @@ TEST_F(FormatTest, SegmentStructWithStructNoPack_Std140) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd140);
-  EXPECT_EQ(48, fmt.SizeInBytes());
+  EXPECT_EQ(48u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(8U, segs.size());
   /* w */
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[1].IsPadding());
-  EXPECT_EQ(12, segs[1].SizeInBytes());
+  EXPECT_EQ(12u, segs[1].SizeInBytes());
   /* a */
   EXPECT_EQ(FormatMode::kSInt, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   /* b */
   EXPECT_EQ(FormatMode::kSInt, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   /* c */
   EXPECT_EQ(FormatMode::kSFloat, segs[4].GetFormatMode());
-  EXPECT_EQ(4, segs[4].SizeInBytes());
+  EXPECT_EQ(4u, segs[4].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[5].IsPadding());
-  EXPECT_EQ(4, segs[5].SizeInBytes());
+  EXPECT_EQ(4u, segs[5].SizeInBytes());
   /* y */
   EXPECT_EQ(FormatMode::kSFloat, segs[6].GetFormatMode());
-  EXPECT_EQ(4, segs[6].SizeInBytes());
+  EXPECT_EQ(4u, segs[6].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[7].IsPadding());
-  EXPECT_EQ(12, segs[7].SizeInBytes());
+  EXPECT_EQ(12u, segs[7].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithStructNoPack_Std430) {
   auto s = MakeUnique<type::Struct>();
@@ -1044,25 +1044,25 @@ TEST_F(FormatTest, SegmentStructWithStructNoPack_Std430) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd430);
-  EXPECT_EQ(20, fmt.SizeInBytes());
+  EXPECT_EQ(20u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(5U, segs.size());
   /* w */
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   /* a */
   EXPECT_EQ(FormatMode::kSInt, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   /* b */
   EXPECT_EQ(FormatMode::kSInt, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   /* c */
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   /* y */
   EXPECT_EQ(FormatMode::kSFloat, segs[4].GetFormatMode());
-  EXPECT_EQ(4, segs[4].SizeInBytes());
+  EXPECT_EQ(4u, segs[4].SizeInBytes());
 }
 
 // struct {
@@ -1092,49 +1092,49 @@ TEST_F(FormatTest, SegmentStructWithStructArray_Std140) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd140);
-  EXPECT_EQ(96, fmt.SizeInBytes());
+  EXPECT_EQ(96u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(13U, segs.size());
   /* w */
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[1].IsPadding());
-  EXPECT_EQ(12, segs[1].SizeInBytes());
+  EXPECT_EQ(12u, segs[1].SizeInBytes());
   /* a */
   EXPECT_EQ(FormatMode::kSInt, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   /* b */
   EXPECT_EQ(FormatMode::kSInt, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[4].IsPadding());
-  EXPECT_EQ(8, segs[4].SizeInBytes());
+  EXPECT_EQ(8u, segs[4].SizeInBytes());
   /* c[0] */
   EXPECT_EQ(FormatMode::kSFloat, segs[5].GetFormatMode());
-  EXPECT_EQ(4, segs[5].SizeInBytes());
+  EXPECT_EQ(4u, segs[5].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[6].IsPadding());
-  EXPECT_EQ(12, segs[6].SizeInBytes());
+  EXPECT_EQ(12u, segs[6].SizeInBytes());
   /* c[1] */
   EXPECT_EQ(FormatMode::kSFloat, segs[7].GetFormatMode());
-  EXPECT_EQ(4, segs[7].SizeInBytes());
+  EXPECT_EQ(4u, segs[7].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[8].IsPadding());
-  EXPECT_EQ(12, segs[8].SizeInBytes());
+  EXPECT_EQ(12u, segs[8].SizeInBytes());
   /* c[2] */
   EXPECT_EQ(FormatMode::kSFloat, segs[9].GetFormatMode());
-  EXPECT_EQ(4, segs[9].SizeInBytes());
+  EXPECT_EQ(4u, segs[9].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[10].IsPadding());
-  EXPECT_EQ(12, segs[10].SizeInBytes());
+  EXPECT_EQ(12u, segs[10].SizeInBytes());
   /* y */
   EXPECT_EQ(FormatMode::kSFloat, segs[11].GetFormatMode());
-  EXPECT_EQ(4, segs[11].SizeInBytes());
+  EXPECT_EQ(4u, segs[11].SizeInBytes());
   /* pad */
   EXPECT_TRUE(segs[12].IsPadding());
-  EXPECT_EQ(12, segs[12].SizeInBytes());
+  EXPECT_EQ(12u, segs[12].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithStructArray_Std430) {
   auto s = MakeUnique<type::Struct>();
@@ -1153,31 +1153,31 @@ TEST_F(FormatTest, SegmentStructWithStructArray_Std430) {
 
   Format fmt(s.get());
   fmt.SetLayout(Format::Layout::kStd430);
-  EXPECT_EQ(28, fmt.SizeInBytes());
+  EXPECT_EQ(28u, fmt.SizeInBytes());
 
   const auto& segs = fmt.GetSegments();
   ASSERT_EQ(7U, segs.size());
   /* w */
   EXPECT_EQ(FormatMode::kSInt, segs[0].GetFormatMode());
-  EXPECT_EQ(4, segs[0].SizeInBytes());
+  EXPECT_EQ(4u, segs[0].SizeInBytes());
   /* a */
   EXPECT_EQ(FormatMode::kSInt, segs[1].GetFormatMode());
-  EXPECT_EQ(4, segs[1].SizeInBytes());
+  EXPECT_EQ(4u, segs[1].SizeInBytes());
   /* b */
   EXPECT_EQ(FormatMode::kSInt, segs[2].GetFormatMode());
-  EXPECT_EQ(4, segs[2].SizeInBytes());
+  EXPECT_EQ(4u, segs[2].SizeInBytes());
   /* c[0] */
   EXPECT_EQ(FormatMode::kSFloat, segs[3].GetFormatMode());
-  EXPECT_EQ(4, segs[3].SizeInBytes());
+  EXPECT_EQ(4u, segs[3].SizeInBytes());
   /* c[1] */
   EXPECT_EQ(FormatMode::kSFloat, segs[4].GetFormatMode());
-  EXPECT_EQ(4, segs[4].SizeInBytes());
+  EXPECT_EQ(4u, segs[4].SizeInBytes());
   /* c[2] */
   EXPECT_EQ(FormatMode::kSFloat, segs[5].GetFormatMode());
-  EXPECT_EQ(4, segs[5].SizeInBytes());
+  EXPECT_EQ(4u, segs[5].SizeInBytes());
   /* y */
   EXPECT_EQ(FormatMode::kSFloat, segs[6].GetFormatMode());
-  EXPECT_EQ(4, segs[6].SizeInBytes());
+  EXPECT_EQ(4u, segs[6].SizeInBytes());
 }
 
 }  // namespace amber

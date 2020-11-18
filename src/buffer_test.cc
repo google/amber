@@ -14,9 +14,9 @@
 
 #include "src/buffer.h"
 
+#include <limits>
 #include <utility>
 
-#include <limits>
 #include "gtest/gtest.h"
 #include "src/float16_helper.h"
 #include "src/type_parser.h"
@@ -40,9 +40,9 @@ TEST_F(BufferTest, Size) {
   Buffer b;
   b.SetFormat(&fmt);
   b.SetElementCount(10);
-  EXPECT_EQ(10, b.ElementCount());
-  EXPECT_EQ(10, b.ValueCount());
-  EXPECT_EQ(10 * sizeof(int16_t), b.GetSizeInBytes());
+  EXPECT_EQ(10u, b.ElementCount());
+  EXPECT_EQ(10u, b.ValueCount());
+  EXPECT_EQ(10u * sizeof(int16_t), b.GetSizeInBytes());
 }
 
 TEST_F(BufferTest, SizeFromData) {
@@ -57,9 +57,9 @@ TEST_F(BufferTest, SizeFromData) {
   b.SetFormat(&fmt);
   b.SetData(std::move(values));
 
-  EXPECT_EQ(5, b.ElementCount());
-  EXPECT_EQ(5, b.ValueCount());
-  EXPECT_EQ(5 * sizeof(float), b.GetSizeInBytes());
+  EXPECT_EQ(5u, b.ElementCount());
+  EXPECT_EQ(5u, b.ValueCount());
+  EXPECT_EQ(5u * sizeof(float), b.GetSizeInBytes());
 }
 
 TEST_F(BufferTest, SizeFromDataDoesNotOverrideSize) {
@@ -75,9 +75,9 @@ TEST_F(BufferTest, SizeFromDataDoesNotOverrideSize) {
   b.SetElementCount(20);
   b.SetData(std::move(values));
 
-  EXPECT_EQ(20, b.ElementCount());
-  EXPECT_EQ(20, b.ValueCount());
-  EXPECT_EQ(20 * sizeof(float), b.GetSizeInBytes());
+  EXPECT_EQ(20u, b.ElementCount());
+  EXPECT_EQ(20u, b.ValueCount());
+  EXPECT_EQ(20u * sizeof(float), b.GetSizeInBytes());
 }
 
 TEST_F(BufferTest, SizeMatrixStd430) {
@@ -90,9 +90,9 @@ TEST_F(BufferTest, SizeMatrixStd430) {
   b.SetFormat(&fmt);
   b.SetElementCount(10);
 
-  EXPECT_EQ(10, b.ElementCount());
-  EXPECT_EQ(60, b.ValueCount());
-  EXPECT_EQ(60 * sizeof(int16_t), b.GetSizeInBytes());
+  EXPECT_EQ(10u, b.ElementCount());
+  EXPECT_EQ(60u, b.ValueCount());
+  EXPECT_EQ(60u * sizeof(int16_t), b.GetSizeInBytes());
 }
 
 TEST_F(BufferTest, SizeMatrixStd140) {
@@ -106,9 +106,9 @@ TEST_F(BufferTest, SizeMatrixStd140) {
   b.SetFormat(&fmt);
   b.SetElementCount(10);
 
-  EXPECT_EQ(10, b.ElementCount());
-  EXPECT_EQ(10 * 2 * 3, b.ValueCount());
-  EXPECT_EQ(120 * sizeof(int16_t), b.GetSizeInBytes());
+  EXPECT_EQ(10u, b.ElementCount());
+  EXPECT_EQ(10u * 2u * 3u, b.ValueCount());
+  EXPECT_EQ(120u * sizeof(int16_t), b.GetSizeInBytes());
 }
 
 TEST_F(BufferTest, SizeMatrixPaddedStd430) {
@@ -145,7 +145,7 @@ TEST_F(BufferTest, GetHistogramForChannelGradient) {
 
   std::vector<uint64_t> bins = b.GetHistogramForChannel(2, 256);
   for (uint32_t i = 0; i < values.size(); i += 4)
-    EXPECT_EQ(1, bins[i / 4 * 25]);
+    EXPECT_EQ(1u, bins[i / 4 * 25]);
 }
 
 // Creates 10 RGBA pixel values, with all channels being 0, and checks that all
@@ -166,7 +166,7 @@ TEST_F(BufferTest, GetHistogramForChannelAllBlack) {
   for (uint8_t i = 0; i < 4; i++) {
     std::vector<uint64_t> bins = b.GetHistogramForChannel(i, 256);
     for (uint32_t y = 0; y < values.size(); y++)
-      EXPECT_EQ(10, bins[0]);
+      EXPECT_EQ(10u, bins[0]);
   }
 }
 
@@ -189,7 +189,7 @@ TEST_F(BufferTest, GetHistogramForChannelAllWhite) {
   for (uint8_t i = 0; i < 4; i++) {
     std::vector<uint64_t> bins = b.GetHistogramForChannel(i, 256);
     for (uint32_t y = 0; y < values.size(); y++)
-      EXPECT_EQ(10, bins[255]);
+      EXPECT_EQ(10u, bins[255]);
   }
 }
 
@@ -309,9 +309,9 @@ TEST_F(BufferTest, SetFloat16) {
   b.SetFormat(&fmt);
   b.SetData(std::move(values));
 
-  EXPECT_EQ(2, b.ElementCount());
-  EXPECT_EQ(2, b.ValueCount());
-  EXPECT_EQ(4, b.GetSizeInBytes());
+  EXPECT_EQ(2u, b.ElementCount());
+  EXPECT_EQ(2u, b.ValueCount());
+  EXPECT_EQ(4u, b.GetSizeInBytes());
 
   auto v = b.GetValues<uint16_t>();
   EXPECT_EQ(float16::FloatToHexFloat16(2.8f), v[0]);

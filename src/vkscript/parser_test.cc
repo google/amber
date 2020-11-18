@@ -163,8 +163,8 @@ TEST_F(VkScriptParserTest, RequireFbSize) {
   auto script = parser.GetScript();
   const auto& pipelines = script->GetPipelines();
   ASSERT_EQ(1U, pipelines.size());
-  EXPECT_EQ(300, pipelines[0]->GetFramebufferWidth());
-  EXPECT_EQ(400, pipelines[0]->GetFramebufferHeight());
+  EXPECT_EQ(300u, pipelines[0]->GetFramebufferWidth());
+  EXPECT_EQ(400u, pipelines[0]->GetFramebufferHeight());
 }
 
 TEST_F(VkScriptParserTest, RequireFbSizeMissingSize) {
@@ -260,9 +260,9 @@ TEST_F(VkScriptParserTest, IndicesBlock) {
   EXPECT_EQ(3U * sizeof(uint32_t), bufs[1]->GetSizeInBytes());
 
   const auto* data = bufs[1]->GetValues<uint32_t>();
-  EXPECT_EQ(1, data[0]);
-  EXPECT_EQ(2, data[1]);
-  EXPECT_EQ(3, data[2]);
+  EXPECT_EQ(1u, data[0]);
+  EXPECT_EQ(2u, data[1]);
+  EXPECT_EQ(3u, data[2]);
 }
 
 TEST_F(VkScriptParserTest, IndicesBlockMultipleLines) {
@@ -380,7 +380,7 @@ TEST_F(VkScriptParserTest, VertexDataHeaderGlslString) {
   EXPECT_EQ(FormatType::kR32G32B32_SINT, bufs[2]->GetFormat()->GetFormatType());
 
   auto& segs2 = bufs[2]->GetFormat()->GetSegments();
-  ASSERT_EQ(4, segs2.size());
+  ASSERT_EQ(4u, segs2.size());
   EXPECT_EQ(FormatMode::kSInt, segs2[0].GetFormatMode());
   EXPECT_EQ(FormatMode::kSInt, segs2[1].GetFormatMode());
   EXPECT_EQ(FormatMode::kSInt, segs2[2].GetFormatMode());

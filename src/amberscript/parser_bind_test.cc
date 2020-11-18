@@ -49,10 +49,11 @@ END)";
 
   const auto& buf_info = color_buffers[0];
   ASSERT_TRUE(buf_info.buffer != nullptr);
-  EXPECT_EQ(0, buf_info.location);
-  EXPECT_EQ(250 * 250, buf_info.buffer->ElementCount());
-  EXPECT_EQ(250 * 250 * 4, buf_info.buffer->ValueCount());
-  EXPECT_EQ(250 * 250 * 4 * sizeof(float), buf_info.buffer->GetSizeInBytes());
+  EXPECT_EQ(0u, buf_info.location);
+  EXPECT_EQ(250u * 250u, buf_info.buffer->ElementCount());
+  EXPECT_EQ(250u * 250u * 4u, buf_info.buffer->ValueCount());
+  EXPECT_EQ(250u * 250u * 4u * sizeof(float),
+            buf_info.buffer->GetSizeInBytes());
 }
 
 TEST_F(AmberScriptParserTest, BindColorBufferTwice) {
@@ -297,19 +298,19 @@ END)";
 
   const auto& buf1 = color_buffers1[0];
   ASSERT_TRUE(buf1.buffer != nullptr);
-  EXPECT_EQ(0, buf1.location);
-  EXPECT_EQ(90 * 180, buf1.buffer->ElementCount());
-  EXPECT_EQ(90 * 180 * 4, buf1.buffer->ValueCount());
-  EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf1.buffer->GetSizeInBytes());
+  EXPECT_EQ(0u, buf1.location);
+  EXPECT_EQ(90u * 180u, buf1.buffer->ElementCount());
+  EXPECT_EQ(90u * 180u * 4u, buf1.buffer->ValueCount());
+  EXPECT_EQ(90u * 180u * 4u * sizeof(float), buf1.buffer->GetSizeInBytes());
 
   pipeline = pipelines[1].get();
   const auto& color_buffers2 = pipeline->GetColorAttachments();
   const auto& buf2 = color_buffers2[0];
   ASSERT_TRUE(buf2.buffer != nullptr);
-  EXPECT_EQ(9, buf2.location);
-  EXPECT_EQ(256 * 300, buf2.buffer->ElementCount());
-  EXPECT_EQ(256 * 300 * 4, buf2.buffer->ValueCount());
-  EXPECT_EQ(256 * 300 * 4 * sizeof(uint8_t), buf2.buffer->GetSizeInBytes());
+  EXPECT_EQ(9u, buf2.location);
+  EXPECT_EQ(256u * 300u, buf2.buffer->ElementCount());
+  EXPECT_EQ(256u * 300u * 4u, buf2.buffer->ValueCount());
+  EXPECT_EQ(256u * 300u * 4u * sizeof(uint8_t), buf2.buffer->GetSizeInBytes());
 }
 
 TEST_F(AmberScriptParserTest, BindColorFBSizeSetBeforeBuffer) {
@@ -342,10 +343,10 @@ END)";
 
   const auto& buf1 = color_buffers1[0];
   ASSERT_TRUE(buf1.buffer != nullptr);
-  EXPECT_EQ(0, buf1.location);
-  EXPECT_EQ(90 * 180, buf1.buffer->ElementCount());
-  EXPECT_EQ(90 * 180 * 4, buf1.buffer->ValueCount());
-  EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf1.buffer->GetSizeInBytes());
+  EXPECT_EQ(0u, buf1.location);
+  EXPECT_EQ(90u * 180u, buf1.buffer->ElementCount());
+  EXPECT_EQ(90u * 180u * 4u, buf1.buffer->ValueCount());
+  EXPECT_EQ(90u * 180u * 4u * sizeof(float), buf1.buffer->GetSizeInBytes());
 }
 
 TEST_F(AmberScriptParserTest, BindColorFBSizeSetAfterBuffer) {
@@ -378,10 +379,10 @@ END)";
 
   const auto& buf1 = color_buffers1[0];
   ASSERT_TRUE(buf1.buffer != nullptr);
-  EXPECT_EQ(0, buf1.location);
-  EXPECT_EQ(90 * 180, buf1.buffer->ElementCount());
-  EXPECT_EQ(90 * 180 * 4, buf1.buffer->ValueCount());
-  EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf1.buffer->GetSizeInBytes());
+  EXPECT_EQ(0u, buf1.location);
+  EXPECT_EQ(90u * 180u, buf1.buffer->ElementCount());
+  EXPECT_EQ(90u * 180u * 4u, buf1.buffer->ValueCount());
+  EXPECT_EQ(90u * 180u * 4u * sizeof(float), buf1.buffer->GetSizeInBytes());
 }
 
 TEST_F(AmberScriptParserTest, BindColorBaseMipLevel) {
@@ -414,7 +415,7 @@ END)";
 
   const auto& buf1 = color_buffers1[0];
   ASSERT_TRUE(buf1.buffer != nullptr);
-  EXPECT_EQ(1, buf1.base_mip_level);
+  EXPECT_EQ(1u, buf1.base_mip_level);
 }
 
 TEST_F(AmberScriptParserTest, BindColorMissingBaseMipLevel) {
@@ -515,9 +516,9 @@ END)";
   const auto* pipeline = pipelines[0].get();
   const auto& buf = pipeline->GetDepthStencilBuffer();
   ASSERT_TRUE(buf.buffer != nullptr);
-  EXPECT_EQ(90 * 180, buf.buffer->ElementCount());
-  EXPECT_EQ(90 * 180 * 4, buf.buffer->ValueCount());
-  EXPECT_EQ(90 * 180 * 4 * sizeof(float), buf.buffer->GetSizeInBytes());
+  EXPECT_EQ(90u * 180u, buf.buffer->ElementCount());
+  EXPECT_EQ(90u * 180u * 4u, buf.buffer->ValueCount());
+  EXPECT_EQ(90u * 180u * 4u * sizeof(float), buf.buffer->GetSizeInBytes());
 }
 
 TEST_F(AmberScriptParserTest, BindDepthBufferExtraParams) {
@@ -680,16 +681,16 @@ END)";
 
   const auto* pipeline = pipelines[0].get();
   const auto& vertex_buffers = pipeline->GetVertexBuffers();
-  ASSERT_EQ(2, vertex_buffers.size());
+  ASSERT_EQ(2u, vertex_buffers.size());
 
   const auto& info1 = vertex_buffers[0];
   ASSERT_TRUE(info1.buffer != nullptr);
-  EXPECT_EQ(0, info1.location);
+  EXPECT_EQ(0u, info1.location);
   EXPECT_EQ(InputRate::kVertex, info1.input_rate);
 
   const auto& info2 = vertex_buffers[1];
   ASSERT_TRUE(info2.buffer != nullptr);
-  EXPECT_EQ(1, info2.location);
+  EXPECT_EQ(1u, info2.location);
   EXPECT_EQ(InputRate::kVertex, info2.input_rate);
 }
 
@@ -871,16 +872,16 @@ END)";
 
   const auto* pipeline = pipelines[0].get();
   const auto& vertex_buffers = pipeline->GetVertexBuffers();
-  ASSERT_EQ(2, vertex_buffers.size());
+  ASSERT_EQ(2u, vertex_buffers.size());
 
   const auto& info1 = vertex_buffers[0];
   ASSERT_TRUE(info1.buffer != nullptr);
-  EXPECT_EQ(0, info1.location);
+  EXPECT_EQ(0u, info1.location);
   EXPECT_EQ(InputRate::kVertex, info1.input_rate);
 
   const auto& info2 = vertex_buffers[1];
   ASSERT_TRUE(info2.buffer != nullptr);
-  EXPECT_EQ(1, info2.location);
+  EXPECT_EQ(1u, info2.location);
   EXPECT_EQ(InputRate::kInstance, info2.input_rate);
 }
 
@@ -1312,9 +1313,9 @@ END)";
   const auto* pipeline = pipelines[0].get();
   const auto& buf = pipeline->GetPushConstantBuffer();
   ASSERT_TRUE(buf.buffer != nullptr);
-  EXPECT_EQ(20, buf.buffer->ElementCount());
-  EXPECT_EQ(20, buf.buffer->ValueCount());
-  EXPECT_EQ(20 * sizeof(float), buf.buffer->GetSizeInBytes());
+  EXPECT_EQ(20u, buf.buffer->ElementCount());
+  EXPECT_EQ(20u, buf.buffer->ValueCount());
+  EXPECT_EQ(20u * sizeof(float), buf.buffer->GetSizeInBytes());
 }
 
 TEST_F(AmberScriptParserTest, BindPushConstantsExtraParams) {

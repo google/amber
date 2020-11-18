@@ -517,8 +517,8 @@ RUN my_pipeline DRAW_GRID POS 2 4 SIZE 10 20 CELLS 4 5)";
   EXPECT_FLOAT_EQ(4.f, cmd->AsDrawGrid()->GetY());
   EXPECT_FLOAT_EQ(10.f, cmd->AsDrawGrid()->GetWidth());
   EXPECT_FLOAT_EQ(20.f, cmd->AsDrawGrid()->GetHeight());
-  EXPECT_EQ(4, cmd->AsDrawGrid()->GetColumns());
-  EXPECT_EQ(5, cmd->AsDrawGrid()->GetRows());
+  EXPECT_EQ(4u, cmd->AsDrawGrid()->GetColumns());
+  EXPECT_EQ(5u, cmd->AsDrawGrid()->GetRows());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawGridWithComputePipelineInvalid) {
