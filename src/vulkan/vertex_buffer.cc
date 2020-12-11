@@ -36,18 +36,22 @@ VertexBuffer::VertexBuffer(Device* device) : device_(device) {}
 
 VertexBuffer::~VertexBuffer() = default;
 
-void VertexBuffer::SetData(uint8_t location, Buffer* buffer, InputRate rate) {
-  auto format = buffer->GetFormat();
+void VertexBuffer::SetData(uint8_t location,
+                           Buffer* buffer,
+                           InputRate rate,
+                           Format* format,
+                           uint32_t offset,
+                           uint32_t stride) {
   const uint32_t binding = static_cast<uint32_t>(vertex_attr_desc_.size());
   vertex_attr_desc_.emplace_back();
   vertex_attr_desc_.back().binding = binding;
   vertex_attr_desc_.back().location = location;
-  vertex_attr_desc_.back().offset = 0u;
+  vertex_attr_desc_.back().offset = offset;
   vertex_attr_desc_.back().format = device_->GetVkFormat(*format);
 
   vertex_binding_desc_.emplace_back();
   vertex_binding_desc_.back().binding = binding;
-  vertex_binding_desc_.back().stride = format->SizeInBytes();
+  vertex_binding_desc_.back().stride = stride;
   vertex_binding_desc_.back().inputRate = GetVkInputRate(rate);
 
   data_.push_back(buffer);

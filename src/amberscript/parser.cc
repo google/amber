@@ -1301,20 +1301,55 @@ Result Parser::ParsePipelineVertexData(Pipeline* pipeline) {
   const uint32_t location = token->AsUint32();
 
   InputRate rate = InputRate::kVertex;
+  uint32_t offset = 0;
+  Format* format = buffer->GetFormat();
+  uint32_t stride = format->SizeInBytes();
+
   token = tokenizer_->PeekNextToken();
-  if (token->IsIdentifier() && token->AsString() == "RATE") {
-    tokenizer_->NextToken();
-    token = tokenizer_->NextToken();
-    if (!token->IsIdentifier())
-      return Result("missing input rate value for RATE");
-    if (token->AsString() == "instance") {
-      rate = InputRate::kInstance;
-    } else if (token->AsString() != "vertex") {
-      return Result("expecting 'vertex' or 'instance' for RATE value");
+  while (token->IsIdentifier()) {
+    if (token->AsString() == "RATE") {
+      tokenizer_->NextToken();
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier())
+        return Result("missing input rate value for RATE");
+      if (token->AsString() == "instance") {
+        rate = InputRate::kInstance;
+      } else if (token->AsString() != "vertex") {
+        return Result("expecting 'vertex' or 'instance' for RATE value");
+      }
+    } else if (token->AsString() == "OFFSET") {
+      tokenizer_->NextToken();
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("expected unsigned integer for OFFSET");
+      offset = token->AsUint32();
+    } else if (token->AsString() == "STRIDE") {
+      tokenizer_->NextToken();
+      token = tokenizer_->NextToken();
+      if (!token->IsInteger())
+        return Result("expected unsigned integer for STRIDE");
+      stride = token->AsUint32();
+    } else if (token->AsString() == "FORMAT") {
+      tokenizer_->NextToken();
+      token = tokenizer_->NextToken();
+      if (!token->IsIdentifier())
+        return Result("vertex data FORMAT must be an identifier");
+      auto type = script_->ParseType(token->AsString());
+      if (!type)
+        return Result("invalid vertex data FORMAT");
+      auto fmt = MakeUnique<Format>(type);
+      format = fmt.get();
+      script_->RegisterFormat(std::move(fmt));
+    } else {
+      return Result("unexpected identifier for VERTEX_DATA command: " +
+                    token->ToOriginalString());
     }
+
+    token = tokenizer_->PeekNextToken();
   }
 
-  Result r = pipeline->AddVertexBuffer(buffer, location, rate);
+  Result r =
+      pipeline->AddVertexBuffer(buffer, location, rate, format, offset, stride);
   if (!r.IsSuccess())
     return r;
 

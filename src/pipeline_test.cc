@@ -353,7 +353,11 @@ TEST_F(PipelineTest, Clone) {
 
   auto vtex_buf = MakeUnique<Buffer>();
   vtex_buf->SetName("vertex_buffer");
-  p.AddVertexBuffer(vtex_buf.get(), 1, InputRate::kVertex);
+  TypeParser parser;
+  auto int_type = parser.Parse("R32_SINT");
+  auto int_fmt = MakeUnique<Format>(int_type.get());
+  p.AddVertexBuffer(vtex_buf.get(), 1, InputRate::kVertex, int_fmt.get(), 5,
+                    10);
 
   auto idx_buf = MakeUnique<Buffer>();
   idx_buf->SetName("Index Buffer");
@@ -385,6 +389,10 @@ TEST_F(PipelineTest, Clone) {
   ASSERT_EQ(1U, vtex_buffers.size());
   EXPECT_EQ(1, vtex_buffers[0].location);
   EXPECT_EQ("vertex_buffer", vtex_buffers[0].buffer->GetName());
+  EXPECT_EQ(InputRate::kVertex, vtex_buffers[0].input_rate);
+  EXPECT_EQ(FormatType::kR32_SINT, vtex_buffers[0].format->GetFormatType());
+  EXPECT_EQ(5, vtex_buffers[0].offset);
+  EXPECT_EQ(10, vtex_buffers[0].stride);
 
   auto bufs = clone->GetBuffers();
   ASSERT_EQ(2U, bufs.size());

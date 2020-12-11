@@ -842,7 +842,8 @@ END)";
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("12: extra parameters after VERTEX_DATA command: EXTRA", r.Error());
+  EXPECT_EQ("12: unexpected identifier for VERTEX_DATA command: EXTRA",
+            r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindVertexDataInputRate) {
@@ -925,6 +926,252 @@ END)";
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("12: expecting 'vertex' or 'instance' for RATE value", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataOffset) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+BUFFER my_buf2 DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 OFFSET 5
+  VERTEX_DATA my_buf2 LOCATION 1 OFFSET 10
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& vertex_buffers = pipeline->GetVertexBuffers();
+  ASSERT_EQ(2u, vertex_buffers.size());
+
+  const auto& info1 = vertex_buffers[0];
+  ASSERT_TRUE(info1.buffer != nullptr);
+  EXPECT_EQ(0u, info1.location);
+  EXPECT_EQ(5u, info1.offset);
+
+  const auto& info2 = vertex_buffers[1];
+  ASSERT_TRUE(info2.buffer != nullptr);
+  EXPECT_EQ(1u, info2.location);
+  EXPECT_EQ(10u, info2.offset);
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataOffsetMissingValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 OFFSET
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: expected unsigned integer for OFFSET", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataOffsetIncorrectValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 OFFSET foo
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: expected unsigned integer for OFFSET", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataStride) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+BUFFER my_buf2 DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 STRIDE 5
+  VERTEX_DATA my_buf2 LOCATION 1 STRIDE 10
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& vertex_buffers = pipeline->GetVertexBuffers();
+  ASSERT_EQ(2u, vertex_buffers.size());
+
+  const auto& info1 = vertex_buffers[0];
+  ASSERT_TRUE(info1.buffer != nullptr);
+  EXPECT_EQ(0u, info1.location);
+  EXPECT_EQ(5u, info1.stride);
+
+  const auto& info2 = vertex_buffers[1];
+  ASSERT_TRUE(info2.buffer != nullptr);
+  EXPECT_EQ(1u, info2.location);
+  EXPECT_EQ(10u, info2.stride);
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataStrideMissingValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 STRIDE
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: expected unsigned integer for STRIDE", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataStrideIncorrectValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 STRIDE foo
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: expected unsigned integer for STRIDE", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataFormat) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+BUFFER my_buf2 DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 FORMAT R8G8_UNORM
+  VERTEX_DATA my_buf2 LOCATION 1 FORMAT R8_SRGB
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& vertex_buffers = pipeline->GetVertexBuffers();
+  ASSERT_EQ(2u, vertex_buffers.size());
+
+  const auto& info1 = vertex_buffers[0];
+  ASSERT_TRUE(info1.buffer != nullptr);
+  EXPECT_EQ(0u, info1.location);
+  EXPECT_EQ(FormatType::kR8G8_UNORM, info1.format->GetFormatType());
+
+  const auto& info2 = vertex_buffers[1];
+  ASSERT_TRUE(info2.buffer != nullptr);
+  EXPECT_EQ(1u, info2.location);
+  EXPECT_EQ(FormatType::kR8_SRGB, info2.format->GetFormatType());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataFormatMissingValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 FORMAT
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("13: vertex data FORMAT must be an identifier", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataFormatIncorrectValue) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 FORMAT foo
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: invalid vertex data FORMAT", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindIndexData) {
