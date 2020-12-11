@@ -1050,6 +1050,46 @@ END)";
   EXPECT_EQ(10u, info2.stride);
 }
 
+TEST_F(AmberScriptParserTest, BindVertexDataStrideFromFormat) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+BUFFER my_buf2 DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0
+  VERTEX_DATA my_buf2 LOCATION 1 FORMAT R16_UINT
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& vertex_buffers = pipeline->GetVertexBuffers();
+  ASSERT_EQ(2u, vertex_buffers.size());
+
+  const auto& info1 = vertex_buffers[0];
+  ASSERT_TRUE(info1.buffer != nullptr);
+  EXPECT_EQ(0u, info1.location);
+  EXPECT_EQ(1u, info1.stride);
+
+  const auto& info2 = vertex_buffers[1];
+  ASSERT_TRUE(info2.buffer != nullptr);
+  EXPECT_EQ(1u, info2.location);
+  EXPECT_EQ(2u, info2.stride);
+}
+
 TEST_F(AmberScriptParserTest, BindVertexDataStrideMissingValue) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
@@ -1090,6 +1130,27 @@ END)";
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("12: expected unsigned integer for STRIDE", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindVertexDataStrideZero) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf DATA_TYPE int8 SIZE 5 FILL 5
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  VERTEX_DATA my_buf LOCATION 0 STRIDE 0
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: STRIDE needs to be larger than zero", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindVertexDataFormat) {

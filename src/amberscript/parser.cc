@@ -1303,7 +1303,7 @@ Result Parser::ParsePipelineVertexData(Pipeline* pipeline) {
   InputRate rate = InputRate::kVertex;
   uint32_t offset = 0;
   Format* format = buffer->GetFormat();
-  uint32_t stride = format->SizeInBytes();
+  uint32_t stride = 0;
 
   token = tokenizer_->PeekNextToken();
   while (token->IsIdentifier()) {
@@ -1329,6 +1329,8 @@ Result Parser::ParsePipelineVertexData(Pipeline* pipeline) {
       if (!token->IsInteger())
         return Result("expected unsigned integer for STRIDE");
       stride = token->AsUint32();
+      if (stride == 0)
+        return Result("STRIDE needs to be larger than zero");
     } else if (token->AsString() == "FORMAT") {
       tokenizer_->NextToken();
       token = tokenizer_->NextToken();
@@ -1347,6 +1349,9 @@ Result Parser::ParsePipelineVertexData(Pipeline* pipeline) {
 
     token = tokenizer_->PeekNextToken();
   }
+
+  if (stride == 0)
+    stride = format->SizeInBytes();
 
   Result r =
       pipeline->AddVertexBuffer(buffer, location, rate, format, offset, stride);
