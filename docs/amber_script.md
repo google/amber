@@ -587,9 +587,15 @@ when using dynamic buffers with BUFFER_ARRAY.
 ```
 
 ```groovy
-  # Set |buffer_name| as the vertex data at location |val|. `RATE` defines the
-  # input rate for vertex attribute reading.
-  VERTEX_DATA {buffer_name} LOCATION _val_ [ RATE { vertex | instance } (default vertex) ]
+  # Set |buffer_name| as the vertex data at location |val|. RATE defines the
+  # input rate for vertex attribute reading. OFFSET sets the byte offset for the
+  # vertex data within the buffer |buffer_name|, which by default is 0. FORMAT
+  # sets the vertex buffer format, which by default is the format of the buffer
+  # |buffer_name|. STRIDE sets the byte stride, which by default is the stride
+  # of the format (set explicitly via FORMAT or from the format of the buffer
+  # |buffer_name|).
+  VERTEX_DATA {buffer_name} LOCATION _val_ [ RATE { vertex | instance } (default vertex) ] \
+        [ FORMAT {format} ] [ OFFSET {offset} ] [ STRIDE {stride} ]
 
   # Set |buffer_name| as the index data to use for `INDEXED` draw commands.
   INDEX_DATA {buffer_name}
