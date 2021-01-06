@@ -309,5 +309,60 @@ IMAGE image DATA_TYPE uint32 DIM_3D WIDTH 3 HEIGHT 4 DEPTH 5
   EXPECT_EQ(60u, buffer->ElementCount());
 }
 
+TEST_F(AmberScriptParserTest, ImageWithData) {
+  std::string in = R"(
+IMAGE image DATA_TYPE float DIM_3D HEIGHT 2 WIDTH 2 DEPTH 2 DATA
+ 0.11 0.12
+ 0.21 0.22
+
+ 0.31 0.32
+ 0.41 0.42
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+  EXPECT_EQ("image", buffers[0]->GetName());
+
+  auto* buffer = buffers[0].get();
+  EXPECT_TRUE(buffer->GetFormat()->IsFloat32());
+  EXPECT_EQ(ImageDimension::k3D, buffer->GetImageDimension());
+  EXPECT_EQ(2u, buffer->GetWidth());
+  EXPECT_EQ(2u, buffer->GetHeight());
+  EXPECT_EQ(2u, buffer->GetDepth());
+  EXPECT_EQ(8u, buffer->ElementCount());
+
+  auto* values = buffer->GetValues<float>();
+  std::vector<float> result = {0.11, 0.12, 0.21, 0.22, 0.31, 0.32, 0.41, 0.42};
+
+  EXPECT_EQ((*buffer->ValuePtr()).size(), 8u * sizeof(float));
+  for (auto i = 0; i < result.size(); ++i) {
+    EXPECT_FLOAT_EQ(result[i], values[i]);
+  }
+}
+
+TEST_F(AmberScriptParserTest, ImageDataSizeIncorrect) {
+  std::string in = R"(
+IMAGE image DATA_TYPE float DIM_3D HEIGHT 2 WIDTH 2 DEPTH 2 DATA
+ 0.11 0.12
+ 0.21 0.22
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ(
+      "6: Elements provided in data does not match size specified: 8 specified "
+      "vs 4 provided",
+      r.Error());
+}
+
 }  // namespace amberscript
 }  // namespace amber
