@@ -343,7 +343,7 @@ END
                                0.31f, 0.32f, 0.41f, 0.42f};
 
   EXPECT_EQ((*buffer->ValuePtr()).size(), 8u * sizeof(float));
-  for (auto i = 0; i < result.size(); ++i) {
+  for (size_t i = 0; i < result.size(); ++i) {
     EXPECT_FLOAT_EQ(result[i], values[i]);
   }
 }
