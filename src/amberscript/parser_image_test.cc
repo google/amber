@@ -339,7 +339,8 @@ END
   EXPECT_EQ(8u, buffer->ElementCount());
 
   auto* values = buffer->GetValues<float>();
-  std::vector<float> result = {0.11, 0.12, 0.21, 0.22, 0.31, 0.32, 0.41, 0.42};
+  std::vector<float> result = {0.11f, 0.12f, 0.21f, 0.22f,
+                               0.31f, 0.32f, 0.41f, 0.42f};
 
   EXPECT_EQ((*buffer->ValuePtr()).size(), 8u * sizeof(float));
   for (auto i = 0; i < result.size(); ++i) {
