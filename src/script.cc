@@ -48,6 +48,7 @@ std::vector<ShaderInfo> Script::GetShaderInfo() const {
                                   shader->GetName(),
                                   shader->GetData(),
                                   {},
+                                  shader->GetTargetEnv(),
                                   {}});
     }
   }
