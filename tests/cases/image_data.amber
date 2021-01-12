@@ -1,0 +1,92 @@
+#!amber
+# Copyright 2021 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER compute compute_shader GLSL
+#version 460
+
+layout(local_size_x = 4, local_size_y = 4, local_size_z = 1) in;
+
+layout(binding = 0, r32f) uniform readonly image3D inImg;
+layout(binding = 1, r32f) uniform image3D outImg;
+
+void main() {
+  // Get current pixel
+  const int current_x = int(gl_GlobalInvocationID.x);
+  const int current_y = int(gl_GlobalInvocationID.y);
+
+  for (int idx = 0; idx < 4; ++idx) {
+    vec4 result = imageLoad(inImg, ivec3(current_x, current_y, 3 - idx));
+    imageStore(outImg, ivec3(current_x, current_y, idx), result);
+  }
+}
+END
+
+IMAGE outputImage DATA_TYPE float DIM_3D WIDTH 4 HEIGHT 4 DEPTH 4 FILL 0.0
+
+IMAGE inputImage DATA_TYPE float DIM_3D WIDTH 4 HEIGHT 4 DEPTH 4 DATA
+  0.110 0.111 0.112 0.113
+  0.120 0.121 0.122 0.123
+  0.130 0.131 0.132 0.133
+  0.140 0.141 0.142 0.143
+
+  0.210 0.211 0.212 0.213
+  0.220 0.221 0.222 0.223
+  0.230 0.231 0.232 0.233
+  0.240 0.241 0.242 0.243
+
+  0.310 0.311 0.312 0.313
+  0.320 0.321 0.322 0.323
+  0.330 0.331 0.332 0.333
+  0.340 0.341 0.342 0.343
+
+  0.410 0.411 0.412 0.413
+  0.420 0.421 0.422 0.423
+  0.430 0.431 0.432 0.433
+  0.440 0.441 0.442 0.443
+END
+
+IMAGE expectedImage DATA_TYPE float DIM_3D WIDTH 4 HEIGHT 4 DEPTH 4 DATA
+  0.410 0.411 0.412 0.413
+  0.420 0.421 0.422 0.423
+  0.430 0.431 0.432 0.433
+  0.440 0.441 0.442 0.443
+
+  0.310 0.311 0.312 0.313
+  0.320 0.321 0.322 0.323
+  0.330 0.331 0.332 0.333
+  0.340 0.341 0.342 0.343
+
+  0.210 0.211 0.212 0.213
+  0.220 0.221 0.222 0.223
+  0.230 0.231 0.232 0.233
+  0.240 0.241 0.242 0.243
+
+  0.110 0.111 0.112 0.113
+  0.120 0.121 0.122 0.123
+  0.130 0.131 0.132 0.133
+  0.140 0.141 0.142 0.143
+END
+
+PIPELINE compute pipeline
+  ATTACH compute_shader
+
+  BIND BUFFER inputImage AS storage_image DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER outputImage AS storage_image DESCRIPTOR_SET 0 BINDING 1
+END
+
+RUN pipeline 1 1 1
+
+EXPECT outputImage EQ_BUFFER expectedImage
+
