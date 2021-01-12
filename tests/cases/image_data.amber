@@ -86,7 +86,7 @@ PIPELINE compute pipeline
   BIND BUFFER outputImage AS storage_image DESCRIPTOR_SET 0 BINDING 1
 END
 
-RUN pipeline 8 8 1
+RUN pipeline 4 4 4
 
 EXPECT outputImage EQ_BUFFER expectedImage
 
