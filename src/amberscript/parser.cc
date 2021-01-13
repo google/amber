@@ -1937,8 +1937,10 @@ Result Parser::ParseImage() {
 
   token = tokenizer_->PeekNextToken();
   while (token->IsIdentifier()) {
-    if (token->AsString() == "FILL" || token->AsString() == "SERIES_FROM")
+    if (token->AsString() == "FILL" || token->AsString() == "SERIES_FROM" ||
+        token->AsString() == "DATA") {
       break;
+    }
 
     tokenizer_->NextToken();
 
@@ -2045,7 +2047,18 @@ Result Parser::ParseImage() {
   // Parse initializers.
   token = tokenizer_->NextToken();
   if (token->IsIdentifier()) {
-    if (token->AsString() == "FILL") {
+    if (token->AsString() == "DATA") {
+      Result r = ParseBufferInitializerData(buffer.get());
+      if (!r.IsSuccess())
+        return r;
+
+      if (size_in_items != buffer->ElementCount()) {
+        return Result(
+            "Elements provided in data does not match size specified: " +
+            std::to_string(size_in_items) + " specified vs " +
+            std::to_string(buffer->ElementCount()) + " provided");
+      }
+    } else if (token->AsString() == "FILL") {
       Result r = ParseBufferInitializerFill(buffer.get(), size_in_items);
       if (!r.IsSuccess())
         return r;
