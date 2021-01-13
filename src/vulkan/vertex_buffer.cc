@@ -75,11 +75,23 @@ Result VertexBuffer::SendVertexData(CommandBuffer* command) {
   if (!is_vertex_data_pending_)
     return Result("Vulkan::Vertices data was already sent");
 
-  for (const auto& buf : data_) {
-    uint32_t bytes = buf->GetSizeInBytes();
+  for (size_t i = 0; i < data_.size(); i++) {
+    const auto& buf = data_[i];
 
+    // Search the previous bindings to see if the same Amber buffer is
+    // already bound.
+    for (size_t j = 0; j < i; j++) {
+      if (buf == data_[j]) {
+        // Found one. Reuse existing transfer buffer.
+        transfer_buffers_.emplace_back(transfer_buffers_[j]);
+        return {};
+      }
+    }
+
+    // Create a new transfer buffer to hold vertex data.
+    uint32_t bytes = buf->GetSizeInBytes();
     transfer_buffers_.push_back(
-        MakeUnique<TransferBuffer>(device_, bytes, nullptr));
+        std::make_shared<TransferBuffer>(device_, bytes, nullptr));
     Result r = transfer_buffers_.back()->Initialize(
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 

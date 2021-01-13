@@ -63,7 +63,7 @@ class VertexBuffer {
 
   bool is_vertex_data_pending_ = true;
 
-  std::vector<std::unique_ptr<TransferBuffer>> transfer_buffers_;
+  std::vector<std::shared_ptr<TransferBuffer>> transfer_buffers_;
 
   std::vector<Buffer*> data_;
   std::vector<VkVertexInputBindingDescription> vertex_binding_desc_;
