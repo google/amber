@@ -1278,5 +1278,59 @@ EXPECT buf_1 RMSE_BUFFER buf_2)";
       r.Error());
 }
 
+TEST_F(AmberScriptParserTest, ExpectAllowIntegerHexValue) {
+  std::string in = R"(
+BUFFER b1 DATA_TYPE uint32 SIZE 4 FILL 0
+EXPECT b1 IDX 0 EQ 0x0 0x1 0x2 0x3
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(1U, commands.size());
+
+  auto* cmd = commands[0].get();
+  ASSERT_TRUE(cmd->IsProbeSSBO());
+
+  auto* probe = cmd->AsProbeSSBO();
+  EXPECT_EQ(probe->GetComparator(), ProbeSSBOCommand::Comparator::kEqual);
+
+  EXPECT_EQ(4, probe->GetValues().size());
+  EXPECT_EQ(0, probe->GetValues()[0].AsUint64());
+  EXPECT_EQ(1, probe->GetValues()[1].AsUint64());
+  EXPECT_EQ(2, probe->GetValues()[2].AsUint64());
+  EXPECT_EQ(3, probe->GetValues()[3].AsUint64());
+}
+
+TEST_F(AmberScriptParserTest, ExpectAllowFloatHexValue) {
+  std::string in = R"(
+BUFFER b1 DATA_TYPE float SIZE 4 FILL 0
+EXPECT b1 IDX 0 EQ 0x0 0x1 0x2 0x3
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess());
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(1U, commands.size());
+
+  auto* cmd = commands[0].get();
+  ASSERT_TRUE(cmd->IsProbeSSBO());
+
+  auto* probe = cmd->AsProbeSSBO();
+  EXPECT_EQ(probe->GetComparator(), ProbeSSBOCommand::Comparator::kEqual);
+
+  EXPECT_EQ(4, probe->GetValues().size());
+  EXPECT_EQ(static_cast<double>(0), probe->GetValues()[0].AsDouble());
+  EXPECT_EQ(static_cast<double>(1), probe->GetValues()[1].AsDouble());
+  EXPECT_EQ(static_cast<double>(2), probe->GetValues()[2].AsDouble());
+  EXPECT_EQ(static_cast<double>(3), probe->GetValues()[3].AsDouble());
+}
+
 }  // namespace amberscript
 }  // namespace amber
