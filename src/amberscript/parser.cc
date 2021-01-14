@@ -2912,8 +2912,6 @@ Result Parser::ParseValues(const std::string& name,
                       " command: " + token->ToOriginalString());
       }
 
-      double val = token->IsHex() ? static_cast<double>(token->AsHex())
-                                  : token->AsDouble();
       Result r = token->ConvertToDouble();
       if (!r.IsSuccess())
         return r;
