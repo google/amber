@@ -2907,7 +2907,7 @@ Result Parser::ParseValues(const std::string& name,
     }
 
     if (type::Type::IsFloat(segs[seg_idx].GetFormatMode())) {
-      if (!token->IsInteger() && !token->IsDouble()) {
+      if (!token->IsInteger() && !token->IsDouble() && !token->IsHex()) {
         return Result(std::string("Invalid value provided to ") + name +
                       " command: " + token->ToOriginalString());
       }
@@ -2918,12 +2918,13 @@ Result Parser::ParseValues(const std::string& name,
 
       v.SetDoubleValue(token->AsDouble());
     } else {
-      if (!token->IsInteger()) {
+      if (!token->IsInteger() && !token->IsHex()) {
         return Result(std::string("Invalid value provided to ") + name +
                       " command: " + token->ToOriginalString());
       }
 
-      v.SetIntValue(token->AsUint64());
+      uint64_t val = token->IsHex() ? token->AsHex() : token->AsUint64();
+      v.SetIntValue(val);
     }
     ++seg_idx;
     if (seg_idx >= segs.size())
