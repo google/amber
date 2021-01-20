@@ -15,6 +15,7 @@
 #ifndef SRC_VULKAN_VERTEX_BUFFER_H_
 #define SRC_VULKAN_VERTEX_BUFFER_H_
 
+#include <map>
 #include <memory>
 #include <vector>
 
