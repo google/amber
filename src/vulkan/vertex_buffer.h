@@ -63,11 +63,12 @@ class VertexBuffer {
 
   bool is_vertex_data_pending_ = true;
 
-  std::vector<std::shared_ptr<TransferBuffer>> transfer_buffers_;
+  std::vector<std::unique_ptr<TransferBuffer>> transfer_buffers_;
 
   std::vector<Buffer*> data_;
   std::vector<VkVertexInputBindingDescription> vertex_binding_desc_;
   std::vector<VkVertexInputAttributeDescription> vertex_attr_desc_;
+  std::map<Buffer*, VkBuffer> buffer_map_;
 };
 
 }  // namespace vulkan

@@ -61,46 +61,39 @@ void VertexBuffer::BindToCommandBuffer(CommandBuffer* command) {
   std::vector<VkBuffer> buffers;
   std::vector<VkDeviceSize> offsets;
 
-  for (const auto& buf : transfer_buffers_) {
-    buffers.push_back(buf->GetVkBuffer());
+  for (const auto& buf : data_) {
+    buffers.push_back(buffer_map_[buf]);
     offsets.push_back(0);
   }
   device_->GetPtrs()->vkCmdBindVertexBuffers(
-      command->GetVkCommandBuffer(), 0,
-      static_cast<uint32_t>(transfer_buffers_.size()), buffers.data(),
-      offsets.data());
+      command->GetVkCommandBuffer(), 0, static_cast<uint32_t>(buffers.size()),
+      buffers.data(), offsets.data());
 }
 
 Result VertexBuffer::SendVertexData(CommandBuffer* command) {
   if (!is_vertex_data_pending_)
     return Result("Vulkan::Vertices data was already sent");
 
-  for (size_t i = 0; i < data_.size(); i++) {
-    const auto& buf = data_[i];
+  buffer_map_.clear();
 
-    // Search the previous bindings to see if the same Amber buffer is
-    // already bound.
-    for (size_t j = 0; j < i; j++) {
-      if (buf == data_[j]) {
-        // Found one. Reuse existing transfer buffer.
-        transfer_buffers_.emplace_back(transfer_buffers_[j]);
-        return {};
-      }
+  for (const auto& buf : data_) {
+    if (buffer_map_.count(buf) == 0) {
+      // Create a new transfer buffer to hold vertex data.
+      uint32_t bytes = buf->GetSizeInBytes();
+      transfer_buffers_.push_back(
+          MakeUnique<TransferBuffer>(device_, bytes, nullptr));
+      Result r = transfer_buffers_.back()->Initialize(
+          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+
+      std::memcpy(transfer_buffers_.back()->HostAccessibleMemoryPtr(),
+                  buf->GetValues<void>(), bytes);
+      transfer_buffers_.back()->CopyToDevice(command);
+
+      if (!r.IsSuccess())
+        return r;
+
+      buffer_map_[buf] = transfer_buffers_.back()->GetVkBuffer();
     }
-
-    // Create a new transfer buffer to hold vertex data.
-    uint32_t bytes = buf->GetSizeInBytes();
-    transfer_buffers_.push_back(
-        std::make_shared<TransferBuffer>(device_, bytes, nullptr));
-    Result r = transfer_buffers_.back()->Initialize(
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-
-    std::memcpy(transfer_buffers_.back()->HostAccessibleMemoryPtr(),
-                buf->GetValues<void>(), bytes);
-    transfer_buffers_.back()->CopyToDevice(command);
-
-    if (!r.IsSuccess())
-      return r;
   }
 
   is_vertex_data_pending_ = false;
