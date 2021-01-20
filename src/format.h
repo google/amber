@@ -67,8 +67,8 @@ class Format {
    private:
     bool is_padding_ = false;
     bool is_packable_ = false;
-    FormatComponentType name_ = FormatComponentType::kR;
-    FormatMode mode_ = FormatMode::kSInt;
+    FormatComponentType name_ = FormatComponentType::kX;
+    FormatMode mode_ = FormatMode::kUNorm;
     uint32_t num_bits_ = 0;
   };
 

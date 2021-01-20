@@ -422,9 +422,10 @@ TEST_F(TypeParserTest, Formats) {
       {"D24_UNORM_S8_UINT",
        FormatType::kD24_UNORM_S8_UINT,
        0U,
-       2U,
+       3U,
        {
            {FormatComponentType::kD, FormatMode::kUNorm, 24},
+           {FormatComponentType::kX, FormatMode::kUNorm, 8},
            {FormatComponentType::kS, FormatMode::kUInt, 8},
        }},
       {"D32_SFLOAT",

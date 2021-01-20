@@ -322,6 +322,11 @@ uint32_t Format::AddSegmentsForType(type::Type* type) {
       for (const auto& m : l->Members()) {
         if (AddSegment(Segment{m.name, m.mode, m.num_bits}))
           size += m.SizeInBytes();
+        // 24bit depth component is padded to 32 bits.
+        if (m.name == FormatComponentType::kD && m.SizeInBytes() == 3) {
+          AddSegment(Segment{1});
+          size++;
+        }
       }
 
       if (NeedsPadding(type)) {
