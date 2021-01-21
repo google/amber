@@ -69,7 +69,7 @@ class VertexBuffer {
   std::vector<Buffer*> data_;
   std::vector<VkVertexInputBindingDescription> vertex_binding_desc_;
   std::vector<VkVertexInputAttributeDescription> vertex_attr_desc_;
-  std::map<Buffer*, VkBuffer> buffer_map_;
+  std::map<Buffer*, VkBuffer> buffer_to_vk_buffer_;
 };
 
 }  // namespace vulkan

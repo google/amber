@@ -62,7 +62,7 @@ void VertexBuffer::BindToCommandBuffer(CommandBuffer* command) {
   std::vector<VkDeviceSize> offsets;
 
   for (const auto& buf : data_) {
-    buffers.push_back(buffer_map_[buf]);
+    buffers.push_back(buffer_to_vk_buffer_[buf]);
     offsets.push_back(0);
   }
   device_->GetPtrs()->vkCmdBindVertexBuffers(
@@ -74,26 +74,28 @@ Result VertexBuffer::SendVertexData(CommandBuffer* command) {
   if (!is_vertex_data_pending_)
     return Result("Vulkan::Vertices data was already sent");
 
-  buffer_map_.clear();
+  buffer_to_vk_buffer_.clear();
 
   for (const auto& buf : data_) {
-    if (buffer_map_.count(buf) == 0) {
-      // Create a new transfer buffer to hold vertex data.
-      uint32_t bytes = buf->GetSizeInBytes();
-      transfer_buffers_.push_back(
-          MakeUnique<TransferBuffer>(device_, bytes, nullptr));
-      Result r = transfer_buffers_.back()->Initialize(
-          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-
-      std::memcpy(transfer_buffers_.back()->HostAccessibleMemoryPtr(),
-                  buf->GetValues<void>(), bytes);
-      transfer_buffers_.back()->CopyToDevice(command);
-
-      if (!r.IsSuccess())
-        return r;
-
-      buffer_map_[buf] = transfer_buffers_.back()->GetVkBuffer();
+    if (buffer_to_vk_buffer_.count(buf) != 0) {
+      continue;
     }
+
+    // Create a new transfer buffer to hold vertex data.
+    uint32_t bytes = buf->GetSizeInBytes();
+    transfer_buffers_.push_back(
+        MakeUnique<TransferBuffer>(device_, bytes, nullptr));
+    Result r = transfer_buffers_.back()->Initialize(
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+
+    std::memcpy(transfer_buffers_.back()->HostAccessibleMemoryPtr(),
+                buf->GetValues<void>(), bytes);
+    transfer_buffers_.back()->CopyToDevice(command);
+
+    if (!r.IsSuccess())
+      return r;
+
+    buffer_to_vk_buffer_[buf] = transfer_buffers_.back()->GetVkBuffer();
   }
 
   is_vertex_data_pending_ = false;
