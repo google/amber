@@ -93,6 +93,9 @@ SUPPRESSIONS_SWIFTSHADER = [
   "debugger_hlsl_basic_vertex_with_legalization.amber",
   "debugger_hlsl_function_call.amber",
   "debugger_hlsl_shadowed_vars.amber",
+  # Unsupported depth/stencil formats
+  "draw_rectangles_depth_test_d24s8.amber",
+  "draw_rectangles_depth_test_x8d24.amber",
 ]
 
 OPENCL_CASES = [
