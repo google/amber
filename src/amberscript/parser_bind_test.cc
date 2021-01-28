@@ -731,14 +731,30 @@ PIPELINE graphics my_pipeline
   ATTACH my_fragment
 
   VERTEX_DATA my_buf LOCATION 0
-  VERTEX_DATA my_buf LOCATION 1
+  VERTEX_DATA my_buf LOCATION 1 OFFSET 10
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("13: vertex buffer may only be bound to a PIPELINE once",
-            r.Error());
+  ASSERT_TRUE(r.IsSuccess());
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& vertex_buffers = pipeline->GetVertexBuffers();
+  ASSERT_EQ(2u, vertex_buffers.size());
+
+  const auto& info1 = vertex_buffers[0];
+  ASSERT_TRUE(info1.buffer != nullptr);
+  EXPECT_EQ(0u, info1.location);
+  EXPECT_EQ(0u, info1.offset);
+
+  const auto& info2 = vertex_buffers[1];
+  ASSERT_TRUE(info2.buffer != nullptr);
+  EXPECT_EQ(1u, info2.location);
+  EXPECT_EQ(10u, info2.offset);
 }
 
 TEST_F(AmberScriptParserTest, BindVertexDataMissingBuffer) {

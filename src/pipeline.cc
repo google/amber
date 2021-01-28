@@ -430,8 +430,6 @@ Result Pipeline::AddVertexBuffer(Buffer* buf,
   for (const auto& vtex : vertex_buffers_) {
     if (vtex.location == location)
       return Result("can not bind two vertex buffers to the same LOCATION");
-    if (vtex.buffer == buf)
-      return Result("vertex buffer may only be bound to a PIPELINE once");
   }
 
   vertex_buffers_.push_back(BufferInfo{buf});
