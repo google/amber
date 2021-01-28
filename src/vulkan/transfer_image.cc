@@ -81,6 +81,8 @@ TransferImage::TransferImage(Device* device,
           device,
           x * y * z *
               (format.SizeInBytes() +
+               // D24_UNORM_S8_UINT requires 32bit component for depth when
+               // performing buffer copies. Reserve extra room to handle that.
                (format.GetFormatType() == FormatType::kD24_UNORM_S8_UINT ? 1
                                                                          : 0))),
       image_info_(kDefaultImageInfo),
