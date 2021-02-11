@@ -30,7 +30,8 @@ namespace amber {
 namespace vulkan {
 
 struct VulkanPtrs {
-#include "vk-wrappers.h"  // NOLINT(build/include)
+#include "vk-wrappers-1-0.h"  // NOLINT(build/include)
+#include "vk-wrappers-1-1.h"  // NOLINT(build/include)
 };
 
 /// Wrapper around a Vulkan Device object.
@@ -71,7 +72,7 @@ class Device {
                               const VkMemoryPropertyFlags flags) const;
   /// Returns true if the memory at |memory_type_index| is host accessible.
   bool IsMemoryHostAccessible(uint32_t memory_type_index) const;
-  /// Returns true if the memory at |memory_type_index| is host corherent.
+  /// Returns true if the memory at |memory_type_index| is host coherent.
   bool IsMemoryHostCoherent(uint32_t memory_type_index) const;
 
   /// Returns the pointers to the Vulkan API methods.
