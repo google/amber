@@ -186,36 +186,40 @@ def main():
   outdir = sys.argv[1]
   srcdir = sys.argv[2]
 
-  vkfile = os.path.join(srcdir, 'third_party', 'vulkan-headers', 'registry', 'vk.xml')
-  incfile = os.path.join(srcdir, 'src', 'vulkan', 'vk-funcs.inc')
+  vulkan_versions = ("1-0", "1-1")
 
-  data = read_inc(incfile)
+  for vulkan_version in vulkan_versions:
 
-  wrapper_content = ''
-  header_content = ''
-  if os.path.isfile(vkfile):
-    vk_data = read_vk(vkfile)
-    wrapper_content = gen_wrappers(data, vk_data)
-    header_content = gen_headers(data, vk_data)
-  else:
-    wrapper_content = gen_direct(data)
-    header_content = gen_direct_headers(data)
+    vkfile = os.path.join(srcdir, 'third_party', 'vulkan-headers', 'registry', 'vk.xml')
+    incfile = os.path.join(srcdir, 'src', 'vulkan', 'vk-funcs-%s.inc' % vulkan_version)
 
-  outfile = os.path.join(outdir, 'vk-wrappers.inc')
-  if os.path.isfile(outfile):
-    with open(outfile, 'r') as f:
-      if wrapper_content == f.read():
-        return
-  with open(outfile, 'w') as f:
-    f.write(wrapper_content)
+    data = read_inc(incfile)
 
-  hdrfile = os.path.join(outdir, 'vk-wrappers.h')
-  if os.path.isfile(hdrfile):
-    with open(hdrfile, 'r') as f:
-      if header_content == f.read():
-        return
-  with open(hdrfile, 'w') as f:
-    f.write(header_content)
+    wrapper_content = ''
+    header_content = ''
+    if os.path.isfile(vkfile):
+      vk_data = read_vk(vkfile)
+      wrapper_content = gen_wrappers(data, vk_data)
+      header_content = gen_headers(data, vk_data)
+    else:
+      wrapper_content = gen_direct(data)
+      header_content = gen_direct_headers(data)
+
+    outfile = os.path.join(outdir, 'vk-wrappers-%s.inc' % vulkan_version)
+    if os.path.isfile(outfile):
+      with open(outfile, 'r') as f:
+        if wrapper_content == f.read():
+          return
+    with open(outfile, 'w') as f:
+      f.write(wrapper_content)
+
+    hdrfile = os.path.join(outdir, 'vk-wrappers-%s.h' % vulkan_version)
+    if os.path.isfile(hdrfile):
+      with open(hdrfile, 'r') as f:
+        if header_content == f.read():
+          return
+    with open(hdrfile, 'w') as f:
+      f.write(header_content)
 
 
 if __name__ == '__main__':
