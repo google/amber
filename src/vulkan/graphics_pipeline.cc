@@ -579,6 +579,15 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
       0, 0, static_cast<float>(frame_width_), static_cast<float>(frame_height_),
       0, 1};
 
+  if (pipeline_data->HasViewportData()) {
+    viewport.x = pipeline_data->GetViewportX();
+    viewport.y = pipeline_data->GetViewportY();
+    viewport.width = pipeline_data->GetViewportW();
+    viewport.height = pipeline_data->GetViewportH();
+    viewport.minDepth = pipeline_data->GetViewportMinDepth();
+    viewport.maxDepth = pipeline_data->GetViewportMaxDepth();
+  }
+
   VkRect2D scissor = {{0, 0}, {frame_width_, frame_height_}};
 
   VkPipelineViewportStateCreateInfo viewport_info =

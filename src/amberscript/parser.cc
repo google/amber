@@ -602,6 +602,8 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelineShaderOptimizations(pipeline.get());
     } else if (tok == "FRAMEBUFFER_SIZE") {
       r = ParsePipelineFramebufferSize(pipeline.get());
+    } else if (tok == "VIEWPORT") {
+      r = ParsePipelineViewport(pipeline.get());
     } else if (tok == "BIND") {
       r = ParsePipelineBind(pipeline.get());
     } else if (tok == "VERTEX_DATA") {
@@ -947,6 +949,64 @@ Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
   pipeline->SetFramebufferHeight(token->AsUint32());
 
   return ValidateEndOfStatement("FRAMEBUFFER_SIZE command");
+}
+
+Result Parser::ParsePipelineViewport(Pipeline* pipeline) {
+  float vp[6] = {0, 0, 0, 0, 0, 1};
+
+  for (int i = 0; i < 2; i++) {
+    auto token = tokenizer_->NextToken();
+    if (token->IsEOL() || token->IsEOS())
+      return Result("missing offset for VIEWPORT command");
+    if (!token->IsDouble())
+      return Result("invalid offset for VIEWPORT command");
+
+    vp[i] = token->AsFloat();
+  }
+
+  auto token = tokenizer_->NextToken();
+  if (!token->IsIdentifier() || token->AsString() != "SIZE")
+    return Result("missing SIZE for VIEWPORT command");
+
+  for (int i = 0; i < 2; i++) {
+    token = tokenizer_->NextToken();
+    if (token->IsEOL() || token->IsEOS())
+      return Result("missing size for VIEWPORT command");
+    if (!token->IsDouble())
+      return Result("invalid size for VIEWPORT command");
+
+    vp[2 + i] = token->AsFloat();
+  }
+
+  token = tokenizer_->PeekNextToken();
+  while (token->IsIdentifier()) {
+    if (token->AsString() == "MIN_DEPTH") {
+      tokenizer_->NextToken();
+      token = tokenizer_->NextToken();
+      if (token->IsEOL() || token->IsEOS())
+        return Result("missing min_depth for VIEWPORT command");
+      if (!token->IsDouble())
+        return Result("invalid min_depth for VIEWPORT command");
+
+      vp[4] = token->AsFloat();
+    }
+    if (token->AsString() == "MAX_DEPTH") {
+      tokenizer_->NextToken();
+      token = tokenizer_->NextToken();
+      if (token->IsEOL() || token->IsEOS())
+        return Result("missing max_depth for VIEWPORT command");
+      if (!token->IsDouble())
+        return Result("invalid max_depth for VIEWPORT command");
+
+      vp[5] = token->AsFloat();
+    }
+
+    token = tokenizer_->PeekNextToken();
+  }
+
+  pipeline->GetPipelineData()->SetViewport(vp);
+
+  return ValidateEndOfStatement("VIEWPORT command");
 }
 
 Result Parser::ToBufferType(const std::string& name, BufferType* type) {

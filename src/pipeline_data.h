@@ -161,6 +161,24 @@ class PipelineData {
   void SetAlphaBlendOp(BlendOp op) { alpha_blend_op_ = op; }
   BlendOp GetAlphaBlendOp() const { return alpha_blend_op_; }
 
+  void SetViewport(const float vp[6]) {
+    has_viewport_data = true;
+    vp_x = vp[0];
+    vp_y = vp[1];
+    vp_w = vp[2];
+    vp_h = vp[3];
+    vp_mind = vp[4];
+    vp_maxd = vp[5];
+  }
+
+  bool HasViewportData() const { return has_viewport_data; }
+  float GetViewportX() const { return vp_x; }
+  float GetViewportY() const { return vp_y; }
+  float GetViewportW() const { return vp_w; }
+  float GetViewportH() const { return vp_h; }
+  float GetViewportMinDepth() const { return vp_mind; }
+  float GetViewportMaxDepth() const { return vp_maxd; }
+
  private:
   StencilOp front_fail_op_ = StencilOp::kKeep;
   StencilOp front_pass_op_ = StencilOp::kKeep;
@@ -213,6 +231,14 @@ class PipelineData {
   float depth_bias_slope_factor_ = 0.0f;
   float min_depth_bounds_ = 0.0f;
   float max_depth_bounds_ = 0.0f;
+
+  bool has_viewport_data = false;
+  float vp_x;
+  float vp_y;
+  float vp_w;
+  float vp_h;
+  float vp_mind;
+  float vp_maxd;
 };
 
 }  // namespace amber
