@@ -485,6 +485,12 @@ The following commands are all specified within the `PIPELINE` command.
 ```
 
 ```groovy
+  # Set the viewport size. If no viewport is provided then it defaults to the
+  # whole framebuffer size. Depth range defaults to 0 to 1.
+  VIEWPORT {x} {y} SIZE {width} {height} [MIN_DEPTH {mind}] [MAX_DEPTH {maxd}]
+```
+
+```groovy
   # Set subgroup size control setting. Require that subgroups must be launched
   # with all invocations active for given shader. Allow SubgroupSize to vary
   # for given shader. Require a specific SubgroupSize the for given shader.
