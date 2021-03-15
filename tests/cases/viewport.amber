@@ -34,20 +34,11 @@ void main() {
 }
 END
 
-BUFFER position DATA_TYPE vec2<float> DATA
--1.0 -1.0
- 1.0 -1.0
- 1.0  1.0
--1.0  1.0
-END
-
 BUFFER framebuffer FORMAT B8G8R8A8_UNORM
 
 PIPELINE graphics pipeline1
   ATTACH vert_shader
   ATTACH frag_shader
-
-  VERTEX_DATA position LOCATION 0
 
   FRAMEBUFFER_SIZE 256 256
   VIEWPORT 10.0 10.0 SIZE 100.0 100.0
@@ -57,7 +48,7 @@ END
 
 CLEAR_COLOR pipeline1 255 255 255 255
 CLEAR pipeline1
-RUN pipeline1 DRAW_ARRAY AS TRIANGLE_FAN START_IDX 0 COUNT 4
+RUN pipeline1 DRAW_RECT POS 0 0 SIZE 256 256
 
 # Check within the viewport
 EXPECT framebuffer IDX 10 10 SIZE 100 100 EQ_RGBA   0 255   0 255
