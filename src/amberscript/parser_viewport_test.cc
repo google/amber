@@ -185,11 +185,11 @@ END)";
   auto* pipeline = pipelines[0].get();
   ASSERT_TRUE(pipeline->GetPipelineData()->HasViewportData());
   ASSERT_FLOAT_EQ(-0.6f, pipeline->GetPipelineData()->GetViewport().x);
-  ASSERT_FLOAT_EQ(5.2f,  pipeline->GetPipelineData()->GetViewport().y);
+  ASSERT_FLOAT_EQ(5.2f, pipeline->GetPipelineData()->GetViewport().y);
   ASSERT_FLOAT_EQ(13.8f, pipeline->GetPipelineData()->GetViewport().w);
-  ASSERT_FLOAT_EQ(9.4f,  pipeline->GetPipelineData()->GetViewport().h);
-  ASSERT_FLOAT_EQ(0.5f,  pipeline->GetPipelineData()->GetViewport().mind);
-  ASSERT_FLOAT_EQ(0.6f,  pipeline->GetPipelineData()->GetViewport().maxd);
+  ASSERT_FLOAT_EQ(9.4f, pipeline->GetPipelineData()->GetViewport().h);
+  ASSERT_FLOAT_EQ(0.5f, pipeline->GetPipelineData()->GetViewport().mind);
+  ASSERT_FLOAT_EQ(0.6f, pipeline->GetPipelineData()->GetViewport().maxd);
 }
 
 TEST_F(AmberScriptParserTest, ViewportIntegers) {

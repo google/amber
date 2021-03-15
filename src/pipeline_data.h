@@ -22,12 +22,12 @@
 namespace amber {
 
 struct Viewport {
-   float x;
-   float y;
-   float w;
-   float h;
-   float mind;
-   float maxd;
+  float x;
+  float y;
+  float w;
+  float h;
+  float mind;
+  float maxd;
 };
 
 /// Stores information used to configure a pipeline.
@@ -170,13 +170,13 @@ class PipelineData {
   void SetAlphaBlendOp(BlendOp op) { alpha_blend_op_ = op; }
   BlendOp GetAlphaBlendOp() const { return alpha_blend_op_; }
 
-  void SetViewport(const Viewport &v) {
+  void SetViewport(const Viewport& v) {
     has_viewport_data = true;
     vp = v;
   }
 
   bool HasViewportData() const { return has_viewport_data; }
-  const Viewport &GetViewport() const { return vp; }
+  const Viewport& GetViewport() const { return vp; }
 
  private:
   StencilOp front_fail_op_ = StencilOp::kKeep;
