@@ -76,12 +76,12 @@ END)";
 
   auto* pipeline = pipelines[0].get();
   ASSERT_TRUE(pipeline->GetPipelineData()->HasViewportData());
-  ASSERT_FLOAT_EQ(5.0f, pipeline->GetPipelineData()->GetViewportX());
-  ASSERT_FLOAT_EQ(7.0f, pipeline->GetPipelineData()->GetViewportY());
-  ASSERT_FLOAT_EQ(10.0f, pipeline->GetPipelineData()->GetViewportW());
-  ASSERT_FLOAT_EQ(12.0f, pipeline->GetPipelineData()->GetViewportH());
-  ASSERT_FLOAT_EQ(0.0f, pipeline->GetPipelineData()->GetViewportMinDepth());
-  ASSERT_FLOAT_EQ(1.0f, pipeline->GetPipelineData()->GetViewportMaxDepth());
+  ASSERT_FLOAT_EQ(5.0f, pipeline->GetPipelineData()->GetViewport().x);
+  ASSERT_FLOAT_EQ(7.0f, pipeline->GetPipelineData()->GetViewport().y);
+  ASSERT_FLOAT_EQ(10.0f, pipeline->GetPipelineData()->GetViewport().w);
+  ASSERT_FLOAT_EQ(12.0f, pipeline->GetPipelineData()->GetViewport().h);
+  ASSERT_FLOAT_EQ(0.0f, pipeline->GetPipelineData()->GetViewport().mind);
+  ASSERT_FLOAT_EQ(1.0f, pipeline->GetPipelineData()->GetViewport().maxd);
 }
 
 TEST_F(AmberScriptParserTest, ViewportMinDepth) {
@@ -112,12 +112,12 @@ END)";
 
   auto* pipeline = pipelines[0].get();
   ASSERT_TRUE(pipeline->GetPipelineData()->HasViewportData());
-  ASSERT_FLOAT_EQ(12.2f, pipeline->GetPipelineData()->GetViewportX());
-  ASSERT_FLOAT_EQ(9.7f, pipeline->GetPipelineData()->GetViewportY());
-  ASSERT_FLOAT_EQ(0.5f, pipeline->GetPipelineData()->GetViewportW());
-  ASSERT_FLOAT_EQ(106.1f, pipeline->GetPipelineData()->GetViewportH());
-  ASSERT_FLOAT_EQ(0.3f, pipeline->GetPipelineData()->GetViewportMinDepth());
-  ASSERT_FLOAT_EQ(1.0f, pipeline->GetPipelineData()->GetViewportMaxDepth());
+  ASSERT_FLOAT_EQ(12.2f, pipeline->GetPipelineData()->GetViewport().x);
+  ASSERT_FLOAT_EQ(9.7f, pipeline->GetPipelineData()->GetViewport().y);
+  ASSERT_FLOAT_EQ(0.5f, pipeline->GetPipelineData()->GetViewport().w);
+  ASSERT_FLOAT_EQ(106.1f, pipeline->GetPipelineData()->GetViewport().h);
+  ASSERT_FLOAT_EQ(0.3f, pipeline->GetPipelineData()->GetViewport().mind);
+  ASSERT_FLOAT_EQ(1.0f, pipeline->GetPipelineData()->GetViewport().maxd);
 }
 
 TEST_F(AmberScriptParserTest, ViewportMaxDepth) {
@@ -148,12 +148,12 @@ END)";
 
   auto* pipeline = pipelines[0].get();
   ASSERT_TRUE(pipeline->GetPipelineData()->HasViewportData());
-  ASSERT_FLOAT_EQ(12.2f, pipeline->GetPipelineData()->GetViewportX());
-  ASSERT_FLOAT_EQ(9.7f, pipeline->GetPipelineData()->GetViewportY());
-  ASSERT_FLOAT_EQ(0.5f, pipeline->GetPipelineData()->GetViewportW());
-  ASSERT_FLOAT_EQ(106.1f, pipeline->GetPipelineData()->GetViewportH());
-  ASSERT_FLOAT_EQ(0.0f, pipeline->GetPipelineData()->GetViewportMinDepth());
-  ASSERT_FLOAT_EQ(0.456f, pipeline->GetPipelineData()->GetViewportMaxDepth());
+  ASSERT_FLOAT_EQ(12.2f, pipeline->GetPipelineData()->GetViewport().x);
+  ASSERT_FLOAT_EQ(9.7f, pipeline->GetPipelineData()->GetViewport().y);
+  ASSERT_FLOAT_EQ(0.5f, pipeline->GetPipelineData()->GetViewport().w);
+  ASSERT_FLOAT_EQ(106.1f, pipeline->GetPipelineData()->GetViewport().h);
+  ASSERT_FLOAT_EQ(0.0f, pipeline->GetPipelineData()->GetViewport().mind);
+  ASSERT_FLOAT_EQ(0.456f, pipeline->GetPipelineData()->GetViewport().maxd);
 }
 
 TEST_F(AmberScriptParserTest, ViewportAllValues) {
@@ -184,12 +184,12 @@ END)";
 
   auto* pipeline = pipelines[0].get();
   ASSERT_TRUE(pipeline->GetPipelineData()->HasViewportData());
-  ASSERT_FLOAT_EQ(-0.6f, pipeline->GetPipelineData()->GetViewportX());
-  ASSERT_FLOAT_EQ(5.2f, pipeline->GetPipelineData()->GetViewportY());
-  ASSERT_FLOAT_EQ(13.8f, pipeline->GetPipelineData()->GetViewportW());
-  ASSERT_FLOAT_EQ(9.4f, pipeline->GetPipelineData()->GetViewportH());
-  ASSERT_FLOAT_EQ(0.5f, pipeline->GetPipelineData()->GetViewportMinDepth());
-  ASSERT_FLOAT_EQ(0.6f, pipeline->GetPipelineData()->GetViewportMaxDepth());
+  ASSERT_FLOAT_EQ(-0.6f, pipeline->GetPipelineData()->GetViewport().x);
+  ASSERT_FLOAT_EQ(5.2f,  pipeline->GetPipelineData()->GetViewport().y);
+  ASSERT_FLOAT_EQ(13.8f, pipeline->GetPipelineData()->GetViewport().w);
+  ASSERT_FLOAT_EQ(9.4f,  pipeline->GetPipelineData()->GetViewport().h);
+  ASSERT_FLOAT_EQ(0.5f,  pipeline->GetPipelineData()->GetViewport().mind);
+  ASSERT_FLOAT_EQ(0.6f,  pipeline->GetPipelineData()->GetViewport().maxd);
 }
 
 TEST_F(AmberScriptParserTest, ViewportIntegers) {
@@ -220,12 +220,12 @@ END)";
 
   auto* pipeline = pipelines[0].get();
   ASSERT_TRUE(pipeline->GetPipelineData()->HasViewportData());
-  ASSERT_FLOAT_EQ(-2.0f, pipeline->GetPipelineData()->GetViewportX());
-  ASSERT_FLOAT_EQ(7.0f, pipeline->GetPipelineData()->GetViewportY());
-  ASSERT_FLOAT_EQ(15.0f, pipeline->GetPipelineData()->GetViewportW());
-  ASSERT_FLOAT_EQ(20.0f, pipeline->GetPipelineData()->GetViewportH());
-  ASSERT_FLOAT_EQ(1.0f, pipeline->GetPipelineData()->GetViewportMinDepth());
-  ASSERT_FLOAT_EQ(2.0f, pipeline->GetPipelineData()->GetViewportMaxDepth());
+  ASSERT_FLOAT_EQ(-2.0f, pipeline->GetPipelineData()->GetViewport().x);
+  ASSERT_FLOAT_EQ(7.0f, pipeline->GetPipelineData()->GetViewport().y);
+  ASSERT_FLOAT_EQ(15.0f, pipeline->GetPipelineData()->GetViewport().w);
+  ASSERT_FLOAT_EQ(20.0f, pipeline->GetPipelineData()->GetViewport().h);
+  ASSERT_FLOAT_EQ(1.0f, pipeline->GetPipelineData()->GetViewport().mind);
+  ASSERT_FLOAT_EQ(2.0f, pipeline->GetPipelineData()->GetViewport().maxd);
 }
 
 TEST_F(AmberScriptParserTest, ViewportMixedIntegers) {
@@ -256,12 +256,12 @@ END)";
 
   auto* pipeline = pipelines[0].get();
   ASSERT_TRUE(pipeline->GetPipelineData()->HasViewportData());
-  ASSERT_FLOAT_EQ(-2.0f, pipeline->GetPipelineData()->GetViewportX());
-  ASSERT_FLOAT_EQ(13.1f, pipeline->GetPipelineData()->GetViewportY());
-  ASSERT_FLOAT_EQ(15.9f, pipeline->GetPipelineData()->GetViewportW());
-  ASSERT_FLOAT_EQ(20.0f, pipeline->GetPipelineData()->GetViewportH());
-  ASSERT_FLOAT_EQ(0.0f, pipeline->GetPipelineData()->GetViewportMinDepth());
-  ASSERT_FLOAT_EQ(1.0f, pipeline->GetPipelineData()->GetViewportMaxDepth());
+  ASSERT_FLOAT_EQ(-2.0f, pipeline->GetPipelineData()->GetViewport().x);
+  ASSERT_FLOAT_EQ(13.1f, pipeline->GetPipelineData()->GetViewport().y);
+  ASSERT_FLOAT_EQ(15.9f, pipeline->GetPipelineData()->GetViewport().w);
+  ASSERT_FLOAT_EQ(20.0f, pipeline->GetPipelineData()->GetViewport().h);
+  ASSERT_FLOAT_EQ(0.0f, pipeline->GetPipelineData()->GetViewport().mind);
+  ASSERT_FLOAT_EQ(1.0f, pipeline->GetPipelineData()->GetViewport().maxd);
 }
 
 TEST_F(AmberScriptParserTest, ViewportInvalidMissingSize) {

@@ -21,6 +21,15 @@
 
 namespace amber {
 
+struct Viewport {
+   float x;
+   float y;
+   float w;
+   float h;
+   float mind;
+   float maxd;
+};
+
 /// Stores information used to configure a pipeline.
 class PipelineData {
  public:
@@ -161,23 +170,13 @@ class PipelineData {
   void SetAlphaBlendOp(BlendOp op) { alpha_blend_op_ = op; }
   BlendOp GetAlphaBlendOp() const { return alpha_blend_op_; }
 
-  void SetViewport(const float vp[6]) {
+  void SetViewport(const Viewport &v) {
     has_viewport_data = true;
-    vp_x = vp[0];
-    vp_y = vp[1];
-    vp_w = vp[2];
-    vp_h = vp[3];
-    vp_mind = vp[4];
-    vp_maxd = vp[5];
+    vp = v;
   }
 
   bool HasViewportData() const { return has_viewport_data; }
-  float GetViewportX() const { return vp_x; }
-  float GetViewportY() const { return vp_y; }
-  float GetViewportW() const { return vp_w; }
-  float GetViewportH() const { return vp_h; }
-  float GetViewportMinDepth() const { return vp_mind; }
-  float GetViewportMaxDepth() const { return vp_maxd; }
+  const Viewport &GetViewport() const { return vp; }
 
  private:
   StencilOp front_fail_op_ = StencilOp::kKeep;
@@ -233,12 +232,7 @@ class PipelineData {
   float max_depth_bounds_ = 0.0f;
 
   bool has_viewport_data = false;
-  float vp_x;
-  float vp_y;
-  float vp_w;
-  float vp_h;
-  float vp_mind;
-  float vp_maxd;
+  Viewport vp;
 };
 
 }  // namespace amber

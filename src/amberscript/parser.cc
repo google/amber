@@ -952,8 +952,11 @@ Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
 }
 
 Result Parser::ParsePipelineViewport(Pipeline* pipeline) {
-  float vp[6] = {0, 0, 0, 0, 0, 1};
+  Viewport vp;
+  vp.mind = 0.0f;
+  vp.maxd = 1.0f;
 
+  float val[2];
   for (int i = 0; i < 2; i++) {
     auto token = tokenizer_->NextToken();
     if (token->IsEOL() || token->IsEOS())
@@ -962,8 +965,10 @@ Result Parser::ParsePipelineViewport(Pipeline* pipeline) {
     if (!r.IsSuccess())
       return Result("invalid offset for VIEWPORT command");
 
-    vp[i] = token->AsFloat();
+    val[i] = token->AsFloat();
   }
+  vp.x = val[0];
+  vp.y = val[1];
 
   auto token = tokenizer_->NextToken();
   if (!token->IsIdentifier() || token->AsString() != "SIZE")
@@ -977,8 +982,10 @@ Result Parser::ParsePipelineViewport(Pipeline* pipeline) {
     if (!r.IsSuccess())
       return Result("invalid size for VIEWPORT command");
 
-    vp[2 + i] = token->AsFloat();
+    val[i] = token->AsFloat();
   }
+  vp.w = val[0];
+  vp.h = val[1];
 
   token = tokenizer_->PeekNextToken();
   while (token->IsIdentifier()) {
@@ -991,7 +998,7 @@ Result Parser::ParsePipelineViewport(Pipeline* pipeline) {
       if (!r.IsSuccess())
         return Result("invalid min_depth for VIEWPORT command");
 
-      vp[4] = token->AsFloat();
+      vp.mind = token->AsFloat();
     }
     if (token->AsString() == "MAX_DEPTH") {
       tokenizer_->NextToken();
@@ -1002,7 +1009,7 @@ Result Parser::ParsePipelineViewport(Pipeline* pipeline) {
       if (!r.IsSuccess())
         return Result("invalid max_depth for VIEWPORT command");
 
-      vp[5] = token->AsFloat();
+      vp.maxd = token->AsFloat();
     }
 
     token = tokenizer_->PeekNextToken();
