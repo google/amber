@@ -192,7 +192,7 @@ END)";
   ASSERT_FLOAT_EQ(0.6f, pipeline->GetPipelineData()->GetViewportMaxDepth());
 }
 
-TEST_F(AmberScriptParserTest, ViewportInvalidIntegers) {
+TEST_F(AmberScriptParserTest, ViewportIntegers) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
 SHADER fragment my_fragment GLSL
@@ -207,13 +207,61 @@ PIPELINE graphics my_pipeline
   BIND BUFFER my_fb AS color LOCATION 0
   BIND BUFFER my_ds AS depth_stencil
 
-  VIEWPORT 0 0 SIZE 15 20
+  VIEWPORT -2 7 SIZE 15 20 MIN_DEPTH 1 MAX_DEPTH 2
 END)";
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess()) << r.Error();
-  EXPECT_EQ("15: invalid offset for VIEWPORT command", r.Error());
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  auto* pipeline = pipelines[0].get();
+  ASSERT_TRUE(pipeline->GetPipelineData()->HasViewportData());
+  ASSERT_FLOAT_EQ(-2.0f, pipeline->GetPipelineData()->GetViewportX());
+  ASSERT_FLOAT_EQ(7.0f, pipeline->GetPipelineData()->GetViewportY());
+  ASSERT_FLOAT_EQ(15.0f, pipeline->GetPipelineData()->GetViewportW());
+  ASSERT_FLOAT_EQ(20.0f, pipeline->GetPipelineData()->GetViewportH());
+  ASSERT_FLOAT_EQ(1.0f, pipeline->GetPipelineData()->GetViewportMinDepth());
+  ASSERT_FLOAT_EQ(2.0f, pipeline->GetPipelineData()->GetViewportMaxDepth());
+}
+
+TEST_F(AmberScriptParserTest, ViewportMixedIntegers) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+BUFFER my_ds FORMAT D32_SFLOAT_S8_UINT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+  BIND BUFFER my_fb AS color LOCATION 0
+  BIND BUFFER my_ds AS depth_stencil
+
+  VIEWPORT -2 13.1 SIZE 15.9 20
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  auto* pipeline = pipelines[0].get();
+  ASSERT_TRUE(pipeline->GetPipelineData()->HasViewportData());
+  ASSERT_FLOAT_EQ(-2.0f, pipeline->GetPipelineData()->GetViewportX());
+  ASSERT_FLOAT_EQ(13.1f, pipeline->GetPipelineData()->GetViewportY());
+  ASSERT_FLOAT_EQ(15.9f, pipeline->GetPipelineData()->GetViewportW());
+  ASSERT_FLOAT_EQ(20.0f, pipeline->GetPipelineData()->GetViewportH());
+  ASSERT_FLOAT_EQ(0.0f, pipeline->GetPipelineData()->GetViewportMinDepth());
+  ASSERT_FLOAT_EQ(1.0f, pipeline->GetPipelineData()->GetViewportMaxDepth());
 }
 
 TEST_F(AmberScriptParserTest, ViewportInvalidMissingSize) {
