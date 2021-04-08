@@ -15,6 +15,7 @@
 #ifndef SRC_VULKAN_VERTEX_BUFFER_H_
 #define SRC_VULKAN_VERTEX_BUFFER_H_
 
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -40,7 +41,12 @@ class VertexBuffer {
   Result SendVertexData(CommandBuffer* command);
   bool VertexDataSent() const { return !is_vertex_data_pending_; }
 
-  void SetData(uint8_t location, Buffer* buffer, InputRate rate);
+  void SetData(uint8_t location,
+               Buffer* buffer,
+               InputRate rate,
+               Format* format,
+               uint32_t offset,
+               uint32_t stride);
 
   const std::vector<VkVertexInputAttributeDescription>& GetVkVertexInputAttr()
       const {
@@ -63,6 +69,7 @@ class VertexBuffer {
   std::vector<Buffer*> data_;
   std::vector<VkVertexInputBindingDescription> vertex_binding_desc_;
   std::vector<VkVertexInputAttributeDescription> vertex_attr_desc_;
+  std::map<Buffer*, VkBuffer> buffer_to_vk_buffer_;
 };
 
 }  // namespace vulkan

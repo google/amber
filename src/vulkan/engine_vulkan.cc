@@ -209,7 +209,9 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       info.vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
 
     info.vertex_buffer->SetData(static_cast<uint8_t>(vtex_info.location),
-                                vtex_info.buffer, vtex_info.input_rate);
+                                vtex_info.buffer, vtex_info.input_rate,
+                                vtex_info.format, vtex_info.offset,
+                                vtex_info.stride);
   }
 
   if (pipeline->GetIndexBuffer()) {
@@ -253,6 +255,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     cmd->SetBaseMipLevel(buf_info.base_mip_level);
     cmd->SetDynamicOffset(buf_info.dynamic_offset);
     cmd->SetBuffer(buf_info.buffer);
+    cmd->SetSampler(buf_info.sampler);
 
     if (cmd->GetValues().empty()) {
       cmd->GetBuffer()->SetSizeInElements(cmd->GetBuffer()->ElementCount());
@@ -501,7 +504,8 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   buf->SetData(std::move(values));
 
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
-  vertex_buffer->SetData(0, buf.get(), InputRate::kVertex);
+  vertex_buffer->SetData(0, buf.get(), InputRate::kVertex, buf->GetFormat(), 0,
+                         buf->GetFormat()->SizeInBytes());
 
   DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
   draw.SetTopology(command->IsPatch() ? Topology::kPatchList
@@ -588,7 +592,8 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   buf->SetData(std::move(values));
 
   auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
-  vertex_buffer->SetData(0, buf.get(), InputRate::kVertex);
+  vertex_buffer->SetData(0, buf.get(), InputRate::kVertex, buf->GetFormat(), 0,
+                         buf->GetFormat()->SizeInBytes());
 
   DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
   draw.SetTopology(Topology::kTriangleList);

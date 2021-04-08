@@ -37,7 +37,7 @@ TEST_F(TypeTest, IsArray) {
   EXPECT_TRUE(i.IsArray());
   EXPECT_FALSE(i.IsRuntimeArray());
   EXPECT_TRUE(i.IsSizedArray());
-  EXPECT_EQ(3, i.ArraySize());
+  EXPECT_EQ(3u, i.ArraySize());
 }
 
 TEST_F(TypeTest, IsStruct) {
@@ -62,7 +62,7 @@ TEST_F(TypeTest, Vectors) {
   Number i(FormatMode::kSInt, 16);
   i.SetRowCount(2);
 
-  EXPECT_EQ(2, i.RowCount());
+  EXPECT_EQ(2u, i.RowCount());
   EXPECT_TRUE(i.IsVec());
   EXPECT_FALSE(i.IsVec3());
   EXPECT_FALSE(i.IsMatrix());
@@ -76,8 +76,8 @@ TEST_F(TypeTest, Matrix) {
   i.SetColumnCount(2);
   i.SetRowCount(2);
 
-  EXPECT_EQ(2, i.ColumnCount());
-  EXPECT_EQ(2, i.RowCount());
+  EXPECT_EQ(2u, i.ColumnCount());
+  EXPECT_EQ(2u, i.RowCount());
 
   EXPECT_FALSE(i.IsVec());
   EXPECT_TRUE(i.IsMatrix());
@@ -205,14 +205,14 @@ TEST_F(TypeTest, StructEqual) {
 }
 
 TEST_F(TypeTest, NumberDefault32Bits) {
-  EXPECT_EQ(4, Number(FormatMode::kUNorm).SizeInBytes());
+  EXPECT_EQ(4u, Number(FormatMode::kUNorm).SizeInBytes());
 }
 
 TEST_F(TypeTest, NumberInBytes) {
-  EXPECT_EQ(1, Number(FormatMode::kSInt, 8).SizeInBytes());
-  EXPECT_EQ(2, Number(FormatMode::kSInt, 16).SizeInBytes());
-  EXPECT_EQ(4, Number(FormatMode::kSInt, 32).SizeInBytes());
-  EXPECT_EQ(8, Number(FormatMode::kSInt, 64).SizeInBytes());
+  EXPECT_EQ(1u, Number(FormatMode::kSInt, 8).SizeInBytes());
+  EXPECT_EQ(2u, Number(FormatMode::kSInt, 16).SizeInBytes());
+  EXPECT_EQ(4u, Number(FormatMode::kSInt, 32).SizeInBytes());
+  EXPECT_EQ(8u, Number(FormatMode::kSInt, 64).SizeInBytes());
 }
 
 TEST_F(TypeTest, IsInt) {

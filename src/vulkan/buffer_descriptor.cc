@@ -75,6 +75,7 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
 
 Result BufferDescriptor::MoveResourceToBufferOutput() {
   Result r = BufferBackedDescriptor::MoveResourceToBufferOutput();
+
   transfer_buffers_.clear();
 
   return r;

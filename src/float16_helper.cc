@@ -15,6 +15,7 @@
 #include "src/float16_helper.h"
 
 #include <cassert>
+#include <cstring>
 
 // Float10
 // | 9 8 7 6 5 | 4 3 2 1 0 |
@@ -75,8 +76,11 @@ float HexFloat16ToFloat(const uint8_t* value) {
   }
 
   uint32_t hex = sign | exponent | mantissa;
-  float* hex_float = reinterpret_cast<float*>(&hex);
-  return *hex_float;
+  float hex_float;
+  static_assert((sizeof(uint32_t) == sizeof(float)),
+                "sizeof(uint32_t) != sizeof(float)");
+  memcpy(&hex_float, &hex, sizeof(float));
+  return hex_float;
 }
 
 // Convert float |value| whose size is 11 bits to 32 bits float
@@ -89,8 +93,11 @@ float HexFloat11ToFloat(const uint8_t* value) {
   uint32_t mantissa = (static_cast<uint32_t>(value[0]) & 0x3f) << 17U;
 
   uint32_t hex = exponent | mantissa;
-  float* hex_float = reinterpret_cast<float*>(&hex);
-  return *hex_float;
+  float hex_float;
+  static_assert((sizeof(uint32_t) == sizeof(float)),
+                "sizeof(uint32_t) != sizeof(float)");
+  memcpy(&hex_float, &hex, sizeof(float));
+  return hex_float;
 }
 
 // Convert float |value| whose size is 10 bits to 32 bits float
@@ -103,8 +110,11 @@ float HexFloat10ToFloat(const uint8_t* value) {
   uint32_t mantissa = (static_cast<uint32_t>(value[0]) & 0x1f) << 18U;
 
   uint32_t hex = exponent | mantissa;
-  float* hex_float = reinterpret_cast<float*>(&hex);
-  return *hex_float;
+  float hex_float;
+  static_assert((sizeof(uint32_t) == sizeof(float)),
+                "sizeof(uint32_t) != sizeof(float)");
+  memcpy(&hex_float, &hex, sizeof(float));
+  return hex_float;
 }
 
 }  // namespace

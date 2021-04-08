@@ -54,6 +54,10 @@ DEBUGGER_CASES = [
   "debugger_hlsl_basic_vertex.amber",
   "debugger_hlsl_shadowed_vars.amber",
   "debugger_spirv_line_stepping.amber",
+  "debugger_hlsl_basic_fragment_with_legalization.amber",
+  "debugger_hlsl_basic_vertex_with_legalization.amber",
+  "debugger_hlsl_function_call.amber",
+  "debugger_hlsl_shadowed_vars.amber",
 ]
 
 SUPPRESSIONS_SWIFTSHADER = [
@@ -85,6 +89,13 @@ SUPPRESSIONS_SWIFTSHADER = [
   "glsl_read_and_write_image3d_rgba32i.amber",
   # shaderStorageImageMultisample feature not supported
   "draw_storageimage_multisample.amber",
+  # Fails on Ubuntu bot
+  "debugger_hlsl_basic_vertex_with_legalization.amber",
+  "debugger_hlsl_function_call.amber",
+  "debugger_hlsl_shadowed_vars.amber",
+  # Unsupported depth/stencil formats
+  "draw_rectangles_depth_test_d24s8.amber",
+  "draw_rectangles_depth_test_x8d24.amber",
 ]
 
 OPENCL_CASES = [
@@ -104,6 +115,10 @@ DXC_CASES = [
   "debugger_hlsl_basic_compute.amber",
   "debugger_hlsl_basic_fragment.amber",
   "debugger_hlsl_basic_vertex.amber",
+  "debugger_hlsl_shadowed_vars.amber",
+  "debugger_hlsl_basic_fragment_with_legalization.amber",
+  "debugger_hlsl_basic_vertex_with_legalization.amber",
+  "debugger_hlsl_function_call.amber",
   "debugger_hlsl_shadowed_vars.amber",
 ]
 

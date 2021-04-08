@@ -149,6 +149,7 @@ class Pipeline {
       enum class PushConstantType {
         kDimensions = 0,
         kGlobalOffset,
+        kRegionOffset,
       };
       PushConstantType type;
       uint32_t offset = 0;
@@ -198,6 +199,10 @@ class Pipeline {
     uint32_t arg_no = 0;
     BufferType type = BufferType::kUnknown;
     InputRate input_rate = InputRate::kVertex;
+    Format* format;
+    uint32_t offset = 0;
+    uint32_t stride = 0;
+    Sampler* sampler = nullptr;
   };
 
   /// Information on a sampler attached to the pipeline.
@@ -313,8 +318,15 @@ class Pipeline {
     return vertex_buffers_;
   }
   /// Adds |buf| as a vertex buffer at |location| in the pipeline using |rate|
-  /// as the input rate.
-  Result AddVertexBuffer(Buffer* buf, uint32_t location, InputRate rate);
+  /// as the input rate, |format| as vertex data format, |offset| as a starting
+  /// offset for the vertex buffer data, and |stride| for the data stride in
+  /// bytes.
+  Result AddVertexBuffer(Buffer* buf,
+                         uint32_t location,
+                         InputRate rate,
+                         Format* format,
+                         uint32_t offset,
+                         uint32_t stride);
 
   /// Binds |buf| as the index buffer for this pipeline.
   Result SetIndexBuffer(Buffer* buf);

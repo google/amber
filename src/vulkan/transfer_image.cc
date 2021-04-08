@@ -77,7 +77,14 @@ TransferImage::TransferImage(Device* device,
                              uint32_t base_mip_level,
                              uint32_t used_mip_levels,
                              uint32_t samples)
-    : Resource(device, x * y * z * format.SizeInBytes()),
+    : Resource(
+          device,
+          x * y * z *
+              (format.SizeInBytes() +
+               // D24_UNORM_S8_UINT requires 32bit component for depth when
+               // performing buffer copies. Reserve extra room to handle that.
+               (format.GetFormatType() == FormatType::kD24_UNORM_S8_UINT ? 1
+                                                                         : 0))),
       image_info_(kDefaultImageInfo),
       aspect_(aspect),
       mip_levels_(mip_levels),
@@ -342,10 +349,12 @@ void TransferImage::ImageBarrier(CommandBuffer* command_buffer,
 
   switch (to_layout) {
     case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-      barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+      barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
       break;
     case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-      barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+      barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                              VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
       break;
     case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
       barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;

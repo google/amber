@@ -215,12 +215,9 @@ either image buffers or, what the target API would refer to as a buffer.
 Sized arrays and structures are not currently representable.
 
 ```groovy
-# Filling the buffer with a given set of data. The values must be
-# of |type| data. The data can be provided as the type or as a hex value.
-# Buffers are STD430 by default.
-BUFFER {name} DATA_TYPE {type} {STD140 | STD430} DATA
-_value_+
-END
+# Filling the buffer with a given initializer. Initializer data must be
+# of |type|. Buffers are STD430 by default.
+BUFFER {name} DATA_TYPE {type} {STD140 | STD430} {initializer}
 
 # Defines a buffer which is filled with data as specified by the `initializer`.
 BUFFER {name} DATA_TYPE {type} {STD140 | STD430} SIZE _size_in_items_ \
@@ -285,6 +282,14 @@ IMAGE {name} DATA_TYPE {type} {dimensionality} \
 ```
 
 #### Buffer Initializers
+
+```groovy
+# Filling the buffer with a given set of data. The values must be
+# of the correct type. The data can be provided as the type or as a hex
+# value.
+DATA
+_value_+
+END
 
 ```groovy
 # Fill the buffer with a single value.
@@ -480,6 +485,12 @@ The following commands are all specified within the `PIPELINE` command.
 ```
 
 ```groovy
+  # Set the viewport size. If no viewport is provided then it defaults to the
+  # whole framebuffer size. Depth range defaults to 0 to 1.
+  VIEWPORT {x} {y} SIZE {width} {height} [MIN_DEPTH {mind}] [MAX_DEPTH {maxd}]
+```
+
+```groovy
   # Set subgroup size control setting. Require that subgroups must be launched
   # with all invocations active for given shader. Allow SubgroupSize to vary
   # for given shader. Require a specific SubgroupSize the for given shader.
@@ -488,7 +499,7 @@ The following commands are all specified within the `PIPELINE` command.
   #  - a power-of-two integer that _must_ be greater or equal to minSubgroupSize
   #    and be less than or equal to maxSubgroupSize
   # - MIN to set the required subgroup size to the minSubgroupSize
-  # - MAX to set the required subgroup size to the maxSubgroupSize  
+  # - MAX to set the required subgroup size to the maxSubgroupSize
   SUBROUP {name_of_shader}
     FULLY_POPULATED {fully_populated_enable}
     VARYING_SIZE {varying_size_enable}
@@ -587,9 +598,15 @@ when using dynamic buffers with BUFFER_ARRAY.
 ```
 
 ```groovy
-  # Set |buffer_name| as the vertex data at location |val|. `RATE` defines the
-  # input rate for vertex attribute reading.
-  VERTEX_DATA {buffer_name} LOCATION _val_ [ RATE { vertex | instance } (default vertex) ]
+  # Set |buffer_name| as the vertex data at location |val|. RATE defines the
+  # input rate for vertex attribute reading. OFFSET sets the byte offset for the
+  # vertex data within the buffer |buffer_name|, which by default is 0. FORMAT
+  # sets the vertex buffer format, which by default is the format of the buffer
+  # |buffer_name|. STRIDE sets the byte stride, which by default is the stride
+  # of the format (set explicitly via FORMAT or from the format of the buffer
+  # |buffer_name|).
+  VERTEX_DATA {buffer_name} LOCATION _val_ [ RATE { vertex | instance } (default vertex) ] \
+        [ FORMAT {format} ] [ OFFSET {offset} ] [ STRIDE {stride} ]
 
   # Set |buffer_name| as the index data to use for `INDEXED` draw commands.
   INDEX_DATA {buffer_name}

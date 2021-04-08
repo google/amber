@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/float16_helper.h"
+
 #include "gtest/gtest.h"
 
 namespace amber {

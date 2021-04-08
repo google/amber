@@ -518,13 +518,13 @@ TEST_F(TokenizerTest, Continuations) {
   ASSERT_TRUE(next != nullptr);
   ASSERT_TRUE(next->IsInteger());
   EXPECT_EQ(1, next->AsInt32());
-  EXPECT_EQ(1, t.GetCurrentLine());
+  EXPECT_EQ(1u, t.GetCurrentLine());
 
   next = t.NextToken();
   ASSERT_TRUE(next != nullptr);
   ASSERT_TRUE(next->IsInteger());
   EXPECT_EQ(2, next->AsInt32());
-  EXPECT_EQ(2, t.GetCurrentLine());
+  EXPECT_EQ(2u, t.GetCurrentLine());
 
   next = t.NextToken();
   ASSERT_TRUE(next != nullptr);
@@ -580,7 +580,7 @@ TEST_F(TokenizerTest, ContinuationTokenInMiddleOfLine) {
   next = t.NextToken();
   ASSERT_TRUE(next != nullptr);
   ASSERT_TRUE(next->IsInteger());
-  EXPECT_EQ(2U, next->AsInt32());
+  EXPECT_EQ(2u, next->AsInt32());
 
   next = t.NextToken();
   ASSERT_TRUE(next != nullptr);

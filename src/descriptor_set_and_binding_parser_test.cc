@@ -26,8 +26,8 @@ TEST_F(DescriptorSetAndBindingParserTest, CommaAndBinding) {
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   EXPECT_FALSE(parser.HasPipelineName());
-  EXPECT_EQ(0, parser.GetDescriptorSet());
-  EXPECT_EQ(1234, parser.GetBinding());
+  EXPECT_EQ(0u, parser.GetDescriptorSet());
+  EXPECT_EQ(1234u, parser.GetBinding());
 }
 
 TEST_F(DescriptorSetAndBindingParserTest, Binding) {
@@ -35,8 +35,8 @@ TEST_F(DescriptorSetAndBindingParserTest, Binding) {
   Result r = parser.Parse("1234");
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  EXPECT_EQ(0, parser.GetDescriptorSet());
-  EXPECT_EQ(1234, parser.GetBinding());
+  EXPECT_EQ(0u, parser.GetDescriptorSet());
+  EXPECT_EQ(1234u, parser.GetBinding());
 }
 
 TEST_F(DescriptorSetAndBindingParserTest, DescSetAndBinding) {
@@ -44,8 +44,8 @@ TEST_F(DescriptorSetAndBindingParserTest, DescSetAndBinding) {
   Result r = parser.Parse("1234:5678");
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  EXPECT_EQ(1234, parser.GetDescriptorSet());
-  EXPECT_EQ(5678, parser.GetBinding());
+  EXPECT_EQ(1234u, parser.GetDescriptorSet());
+  EXPECT_EQ(5678u, parser.GetBinding());
 }
 
 TEST_F(DescriptorSetAndBindingParserTest, EmptyBufferId) {
@@ -115,8 +115,8 @@ TEST_F(DescriptorSetAndBindingParserTest, WithPipelineName) {
 
   EXPECT_TRUE(parser.HasPipelineName());
   EXPECT_EQ("pipeline1", parser.PipelineName());
-  EXPECT_EQ(123, parser.GetDescriptorSet());
-  EXPECT_EQ(234, parser.GetBinding());
+  EXPECT_EQ(123u, parser.GetDescriptorSet());
+  EXPECT_EQ(234u, parser.GetBinding());
 }
 
 }  // namespace amber

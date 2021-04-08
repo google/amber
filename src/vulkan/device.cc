@@ -385,7 +385,14 @@ Result Device::LoadVulkanPointers(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
   if (delegate && delegate->LogGraphicsCalls())
     delegate->Log("Loading Vulkan Pointers");
 
-#include "vk-wrappers.inc"
+#include "vk-wrappers-1-0.inc"
+
+  ptrs_.vkGetPhysicalDeviceProperties(physical_device_,
+                                      &physical_device_properties_);
+
+  if (SupportsApiVersion(1, 1, 0)) {
+#include "vk-wrappers-1-1.inc"
+  }
 
   return {};
 }
@@ -631,9 +638,6 @@ Result Device::Initialize(
         "Vulkan: Device::Initialize given physical device does not support "
         "required extensions");
   }
-
-  ptrs_.vkGetPhysicalDeviceProperties(physical_device_,
-                                      &physical_device_properties_);
 
   ptrs_.vkGetPhysicalDeviceMemoryProperties(physical_device_,
                                             &physical_memory_properties_);

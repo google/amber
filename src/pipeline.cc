@@ -423,18 +423,22 @@ Result Pipeline::SetIndexBuffer(Buffer* buf) {
 
 Result Pipeline::AddVertexBuffer(Buffer* buf,
                                  uint32_t location,
-                                 InputRate rate) {
+                                 InputRate rate,
+                                 Format* format,
+                                 uint32_t offset,
+                                 uint32_t stride) {
   for (const auto& vtex : vertex_buffers_) {
     if (vtex.location == location)
       return Result("can not bind two vertex buffers to the same LOCATION");
-    if (vtex.buffer == buf)
-      return Result("vertex buffer may only be bound to a PIPELINE once");
   }
 
   vertex_buffers_.push_back(BufferInfo{buf});
   vertex_buffers_.back().location = location;
   vertex_buffers_.back().type = BufferType::kVertex;
   vertex_buffers_.back().input_rate = rate;
+  vertex_buffers_.back().format = format;
+  vertex_buffers_.back().offset = offset;
+  vertex_buffers_.back().stride = stride;
   return {};
 }
 
@@ -521,6 +525,7 @@ void Pipeline::AddBuffer(Buffer* buf,
   info.type = type;
   info.base_mip_level = base_mip_level;
   info.dynamic_offset = dynamic_offset;
+  info.sampler = buf->GetSampler();
 }
 
 void Pipeline::AddBuffer(Buffer* buf,
@@ -1011,6 +1016,12 @@ Result Pipeline::GenerateOpenCLPushConstants() {
         break;
       case Pipeline::ShaderInfo::PushConstant::PushConstantType::kGlobalOffset:
         // Global offsets are not currently supported.
+        bytes[base] = 0;
+        bytes[base + 1] = 0;
+        bytes[base + 2] = 0;
+        break;
+      case Pipeline::ShaderInfo::PushConstant::PushConstantType::kRegionOffset:
+        // Region offsets are not currently supported.
         bytes[base] = 0;
         bytes[base + 1] = 0;
         bytes[base + 2] = 0;

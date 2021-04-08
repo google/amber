@@ -320,8 +320,8 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
       auto image_desc = MakeUnique<ImageDescriptor>(
           cmd->GetBuffer(), desc_type, device_, cmd->GetBaseMipLevel(),
           cmd->GetDescriptorSet(), cmd->GetBinding());
-      if (cmd->IsSampledImage() || cmd->IsCombinedImageSampler())
-        image_desc->SetAmberSampler(cmd->GetBuffer()->GetSampler());
+      if (cmd->IsCombinedImageSampler())
+        image_desc->SetAmberSampler(cmd->GetSampler());
       descriptors.push_back(std::move(image_desc));
     } else {
       auto buffer_desc = MakeUnique<BufferDescriptor>(

@@ -151,7 +151,8 @@ class VertexBufferTest : public testing::Test {
     buffer->SetFormat(format);
     buffer->SetData(std::move(values));
 
-    vertex_buffer_->SetData(location, buffer.get(), InputRate::kVertex);
+    vertex_buffer_->SetData(location, buffer.get(), InputRate::kVertex, format,
+                            0, format->SizeInBytes());
     return vertex_buffer_->SendVertexData(commandBuffer_.get());
   }
 

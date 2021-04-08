@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/vulkan/image_descriptor.h"
+
 #include "src/vulkan/device.h"
 #include "src/vulkan/resource.h"
 
@@ -125,18 +126,21 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
 }
 
 Result ImageDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
-  for (auto& image : transfer_images_) {
-    image->ImageBarrier(command, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                        VK_PIPELINE_STAGE_TRANSFER_BIT);
-  }
+  if (!IsReadOnly()) {
+    for (auto& image : transfer_images_) {
+      image->ImageBarrier(command, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                          VK_PIPELINE_STAGE_TRANSFER_BIT);
+    }
 
-  BufferBackedDescriptor::RecordCopyDataToHost(command);
+    BufferBackedDescriptor::RecordCopyDataToHost(command);
+  }
 
   return {};
 }
 
 Result ImageDescriptor::MoveResourceToBufferOutput() {
   Result r = BufferBackedDescriptor::MoveResourceToBufferOutput();
+
   transfer_images_.clear();
 
   return r;

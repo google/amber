@@ -1208,7 +1208,7 @@ TEST_F(TypeParserTest, Formats) {
 
       if (data.component_count < segs.size()) {
         // Only one padding added
-        EXPECT_EQ(1, segs.size() - data.component_count);
+        EXPECT_EQ(1u, segs.size() - data.component_count);
         EXPECT_TRUE(segs.back().IsPadding());
       }
     }

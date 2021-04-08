@@ -444,7 +444,9 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
 
     script_->AddBuffer(std::move(buffer));
 
-    pipeline->AddVertexBuffer(buf, headers[i].location, InputRate::kVertex);
+    pipeline->AddVertexBuffer(buf, headers[i].location, InputRate::kVertex,
+                              buf->GetFormat(), 0,
+                              buf->GetFormat()->SizeInBytes());
   }
 
   return {};

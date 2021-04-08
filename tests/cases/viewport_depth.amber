@@ -1,0 +1,61 @@
+#!amber
+#
+# Copyright 2021 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER vertex vert_shader GLSL
+#version 430
+
+layout(location = 0) in vec4 position;
+
+void main() {
+  gl_Position = vec4(position.xy, 0.5, 1.0);
+}
+END
+
+SHADER fragment frag_shader GLSL
+#version 430
+
+layout(location = 0) out vec4 final_color;
+
+void main() {
+  final_color = vec4(0, 1, 0, 1);
+}
+END
+
+BUFFER framebuffer FORMAT B8G8R8A8_UNORM
+BUFFER depth FORMAT D32_SFLOAT
+
+PIPELINE graphics pipeline1
+  ATTACH vert_shader
+  ATTACH frag_shader
+
+  DEPTH
+    TEST on
+    WRITE on
+  END
+
+  FRAMEBUFFER_SIZE 256 256
+  VIEWPORT 0.0 0.0 SIZE 256.0 256.0 MIN_DEPTH 0.3 MAX_DEPTH 0.9
+
+  BIND BUFFER framebuffer AS color LOCATION 0
+  BIND BUFFER depth AS depth_stencil
+END
+
+CLEAR_DEPTH pipeline1 1.0
+CLEAR_COLOR pipeline1 255 255 255 255
+CLEAR pipeline1
+RUN pipeline1 DRAW_RECT POS 0 0 SIZE 256 256
+
+EXPECT depth IDX 0 TOLERANCE 1.0e-6 EQ 0.6

@@ -42,13 +42,16 @@ class BufferBackedDescriptor : public Descriptor {
   Result RecordCopyDataToResourceIfNeeded(CommandBuffer* command) override;
   Result RecordCopyDataToHost(CommandBuffer* command) override;
   Result MoveResourceToBufferOutput() override;
-  virtual std::vector<Resource*> GetResources() = 0;
   uint32_t GetDescriptorCount() override {
     return static_cast<uint32_t>(amber_buffers_.size());
   }
   const std::vector<Buffer*>& GetAmberBuffers() const { return amber_buffers_; }
   void AddAmberBuffer(Buffer* buffer) { amber_buffers_.push_back(buffer); }
   BufferBackedDescriptor* AsBufferBackedDescriptor() override { return this; }
+  bool IsReadOnly() const;
+
+ protected:
+  virtual std::vector<Resource*> GetResources() = 0;
 
  private:
   std::vector<Buffer*> amber_buffers_;

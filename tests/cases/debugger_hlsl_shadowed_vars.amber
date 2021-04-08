@@ -99,14 +99,12 @@ BUFFER framebuffer FORMAT B8G8R8A8_UNORM
 PIPELINE graphics pipeline
   ATTACH vtex_shader
   SHADER_OPTIMIZATION vtex_shader
-    --inline-entry-points-exhaustive
-    --eliminate-dead-functions
+    --legalize-hlsl
   END
 
   ATTACH frag_shader
   SHADER_OPTIMIZATION frag_shader
-    --inline-entry-points-exhaustive
-    --eliminate-dead-functions
+    --legalize-hlsl
   END
 
   VERTEX_DATA position_buf LOCATION 0

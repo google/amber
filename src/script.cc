@@ -32,10 +32,11 @@ std::vector<ShaderInfo> Script::GetShaderInfo() const {
     for (const auto& pipeline : pipelines_) {
       auto shader_info = pipeline->GetShader(shader.get());
       if (shader_info) {
-        ret.emplace_back(ShaderInfo{
-            shader->GetFormat(), shader->GetType(),
-            pipeline->GetName() + "-" + shader->GetName(), shader->GetData(),
-            shader_info->GetShaderOptimizations(), shader_info->GetData()});
+        ret.emplace_back(
+            ShaderInfo{shader->GetFormat(), shader->GetType(),
+                       pipeline->GetName() + "-" + shader->GetName(),
+                       shader->GetData(), shader_info->GetShaderOptimizations(),
+                       shader->GetTargetEnv(), shader_info->GetData()});
 
         in_pipeline = true;
       }
@@ -47,6 +48,7 @@ std::vector<ShaderInfo> Script::GetShaderInfo() const {
                                   shader->GetName(),
                                   shader->GetData(),
                                   {},
+                                  shader->GetTargetEnv(),
                                   {}});
     }
   }
