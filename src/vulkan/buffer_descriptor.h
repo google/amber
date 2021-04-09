@@ -16,6 +16,7 @@
 #define SRC_VULKAN_BUFFER_DESCRIPTOR_H_
 
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include "amber/result.h"

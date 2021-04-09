@@ -16,6 +16,7 @@
 #define SRC_VULKAN_IMAGE_DESCRIPTOR_H_
 
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include "src/vulkan/buffer_backed_descriptor.h"

@@ -14,6 +14,9 @@
 
 #include "src/vulkan/image_descriptor.h"
 
+#include <unordered_map>
+#include <utility>
+
 #include "src/vulkan/device.h"
 #include "src/vulkan/resource.h"
 
