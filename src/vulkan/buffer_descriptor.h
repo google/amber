@@ -50,14 +50,30 @@ class BufferDescriptor : public BufferBackedDescriptor {
     return dynamic_offsets_;
   }
   void AddDynamicOffset(uint32_t offset) { dynamic_offsets_.push_back(offset); }
+  std::vector<uint64_t> GetDescriptorOffsets() override {
+    return descriptor_offsets_;
+  }
+  void AddDescriptorOffset(uint64_t descriptor_offset) {
+    descriptor_offsets_.push_back(descriptor_offset);
+  }
+  std::vector<uint64_t> GetDescriptorRanges() override {
+    return descriptor_ranges_;
+  }
+  void AddDescriptorRange(uint64_t descriptor_range) {
+    descriptor_ranges_.push_back(descriptor_range);
+  }
+
   BufferDescriptor* AsBufferDescriptor() override { return this; }
 
  protected:
-  std::vector<Resource*> GetResources() override;
+  std::unordered_map<Buffer*, Resource*> GetResources() override;
 
  private:
-  std::vector<std::unique_ptr<TransferBuffer>> transfer_buffers_;
+  std::unordered_map<Buffer*, std::unique_ptr<TransferBuffer>>
+      transfer_buffers_;
   std::vector<uint32_t> dynamic_offsets_;
+  std::vector<VkDeviceSize> descriptor_offsets_;
+  std::vector<VkDeviceSize> descriptor_ranges_;
 };
 
 }  // namespace vulkan

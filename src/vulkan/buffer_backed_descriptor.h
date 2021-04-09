@@ -51,7 +51,7 @@ class BufferBackedDescriptor : public Descriptor {
   bool IsReadOnly() const;
 
  protected:
-  virtual std::vector<Resource*> GetResources() = 0;
+  virtual std::unordered_map<Buffer*, Resource*> GetResources() = 0;
 
  private:
   std::vector<Buffer*> amber_buffers_;

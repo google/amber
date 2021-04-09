@@ -25,11 +25,16 @@ layout(set = 0, binding = 1) buffer block1
 {
     vec4 data1;
 };
+layout(set = 0, binding = 2) buffer block2
+{
+    vec4 data2;
+};
 
 void main()
 {
     data0 = vec4(1, 2, 3, 4);
     data1 = vec4(5, 6, 7, 8);
+    data2 = vec4(9, 10, 11, 12);
 }
 END
 
@@ -39,6 +44,7 @@ END
 # after the alignment (256 / 16 + 1).
 BUFFER buf0 DATA_TYPE vec4<float> SIZE 17 FILL 0.0
 BUFFER buf1 DATA_TYPE vec4<float> SIZE 17 FILL 0.0
+BUFFER buf2 DATA_TYPE vec4<float> SIZE 33 FILL 0.0
 
 PIPELINE compute pipeline
   ATTACH compute_shader
@@ -46,9 +52,12 @@ PIPELINE compute pipeline
   BIND BUFFER buf0 AS storage_dynamic DESCRIPTOR_SET 0 BINDING 0 OFFSET 0
   # Using the maximum possible required offset alignment of 256 bytes to support all implementations.
   BIND BUFFER buf1 AS storage_dynamic DESCRIPTOR_SET 0 BINDING 1 OFFSET 256
+  # Same as above, but with buffer offset of 256 bytes (total offset of 512).
+  BIND BUFFER buf2 AS storage_dynamic DESCRIPTOR_SET 0 BINDING 2 OFFSET 256 DESCRIPTOR_OFFSET 256
 END
 
 RUN pipeline 1 1 1
 
 EXPECT buf0 IDX 0 EQ 1.0 2.0 3.0 4.0
 EXPECT buf1 IDX 256 EQ 5.0 6.0 7.0 8.0
+EXPECT buf2 IDX 512 EQ 9.0 10.0 11.0 12.0

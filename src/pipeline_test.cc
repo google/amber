@@ -262,7 +262,7 @@ TEST_F(PipelineTest, PipelineBufferWithoutFormat) {
 
   auto buf = MakeUnique<Buffer>();
   buf->SetName("MyBuffer");
-  p.AddBuffer(buf.get(), BufferType::kStorage, 0, 0, 0, 0);
+  p.AddBuffer(buf.get(), BufferType::kStorage, 0, 0, 0, 0, 0, 0);
 
   Result r = p.Validate();
   EXPECT_FALSE(r.IsSuccess()) << r.Error();
@@ -365,11 +365,11 @@ TEST_F(PipelineTest, Clone) {
 
   auto buf1 = MakeUnique<Buffer>();
   buf1->SetName("buf1");
-  p.AddBuffer(buf1.get(), BufferType::kStorage, 1, 1, 0, 0);
+  p.AddBuffer(buf1.get(), BufferType::kStorage, 1, 1, 0, 0, 0, 0);
 
   auto buf2 = MakeUnique<Buffer>();
   buf2->SetName("buf2");
-  p.AddBuffer(buf2.get(), BufferType::kStorage, 1, 2, 0, 16);
+  p.AddBuffer(buf2.get(), BufferType::kStorage, 1, 2, 0, 16, 256, 512);
 
   auto clone = p.Clone();
   EXPECT_EQ("", clone->GetName());
@@ -400,11 +400,15 @@ TEST_F(PipelineTest, Clone) {
   EXPECT_EQ(1U, bufs[0].descriptor_set);
   EXPECT_EQ(1U, bufs[0].binding);
   EXPECT_EQ(0U, bufs[0].dynamic_offset);
+  EXPECT_EQ(0U, bufs[0].descriptor_offset);
+  EXPECT_EQ(0U, bufs[0].descriptor_range);
 
   EXPECT_EQ("buf2", bufs[1].buffer->GetName());
   EXPECT_EQ(1U, bufs[1].descriptor_set);
   EXPECT_EQ(2U, bufs[1].binding);
   EXPECT_EQ(16U, bufs[1].dynamic_offset);
+  EXPECT_EQ(256U, bufs[1].descriptor_offset);
+  EXPECT_EQ(512U, bufs[1].descriptor_range);
 }
 
 TEST_F(PipelineTest, OpenCLUpdateBindings) {

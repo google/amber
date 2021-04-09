@@ -20,12 +20,19 @@ layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(binding = 0) buffer block0
 {
     int data;
-} ssbo_array[2];
+} ssbo_array_0[2];
+
+layout(binding = 1) buffer block1
+{
+    int data;
+} ssbo_array_1[2];
 
 void main()
 {
-    ssbo_array[0].data = 1;
-    ssbo_array[1].data = 2;
+    ssbo_array_0[0].data = 1;
+    ssbo_array_0[1].data = 2;
+    ssbo_array_1[0].data = 3;
+    ssbo_array_1[1].data = 4;
 }
 END
 
@@ -37,13 +44,21 @@ BUFFER buf1 DATA_TYPE int32 DATA
 0
 END
 
+# The Vulkan spec lists the maximum value of minStorageBufferOffsetAlignment
+# (i.e. the maximum possible alignment requirement) as 256 bytes, so we will use
+# buffer with size of 65 int32 values = 260 bytes.
+BUFFER buf2 DATA_TYPE int32 SIZE 65 FILL 0
+
 PIPELINE compute pipeline
   ATTACH compute_shader
 
   BIND BUFFER_ARRAY buf0 buf1 AS storage DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER_ARRAY buf2 buf2 AS storage DESCRIPTOR_SET 0 BINDING 1 DESCRIPTOR_OFFSET 0 256 DESCRIPTOR_RANGE 256 4
 END
 
 RUN pipeline 1 1 1
 
 EXPECT buf0 IDX 0 EQ 1
 EXPECT buf1 IDX 0 EQ 2
+EXPECT buf2 IDX 0 EQ 3
+EXPECT buf2 IDX 256 EQ 4

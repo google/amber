@@ -565,13 +565,18 @@ All BIND BUFFER and BIND SAMPLER commands below define a descriptor set and bind
 These commands can be replaced with BIND BUFFER_ARRAY and BIND SAMPLER_ARRAY commands.
 In these cases multiple buffer or sampler names need to be provided, separated by spaces.
 This creates a descriptor array of buffers or samplers bound to the same descriptor set
-and binding ID. An array of offsets should be provided via `OFFSET offset1 offset2 ...`
-when using dynamic buffers with BUFFER_ARRAY.
+and binding ID. An array of dynamic offsets should be provided via `OFFSET offset1 offset2 ...`
+when using dynamic buffers with BUFFER_ARRAY. Optional descriptor binding offset(s) and range(s)
+can be defined via `DESCRIPTOR_OFFSET offset1 offset2 ...` and 
+`DESCRIPTOR_RANGE range1 range2 ...` when using uniform or storage buffers. Offsets and 
+ranges can be used also with dynamic buffers.
 ```groovy
   # Bind the buffer of the given |buffer_type| at the given descriptor set
-  # and binding. The buffer will use a start index of 0.
+  # and binding. The buffer will use a byte offset |descriptor_offset| 
+  # with range |range|.
   BIND {BUFFER | BUFFER_ARRAY} {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
-       BINDING _id_
+       BINDING _id_ [ DESCRIPTOR_OFFSET _descriptor_offset_ (default 0) ] \ 
+       [ DESCRIPTOR_RANGE _range_ (default VK_WHOLE_SIZE) ]
 
   # Attach |buffer_name| as a storage image. The MIP level will have a base
   # value of |level|.
@@ -592,9 +597,12 @@ when using dynamic buffers with BUFFER_ARRAY.
   BIND {SAMPLER | SAMPLER_ARRAY} {sampler_name} DESCRIPTOR_SET _id_ BINDING _id_
 
   # Bind |buffer_name| as dynamic uniform/storage buffer at the given descriptor set
-  # and binding. The buffer will use a start index of |offset|.
+  # and binding. The buffer will use a byte offset |offset| + |descriptor_offset|
+  # with range |range|.
   BIND {BUFFER | BUFFER_ARRAY} {buffer_name} AS {uniform_dynamic | storage_dynamic} \
-       DESCRIPTOR_SET _id_ BINDING _id_ OFFSET _offset_
+       DESCRIPTOR_SET _id_ BINDING _id_ OFFSET _offset_ \
+       [ DESCRIPTOR_OFFSET _descriptor_offset_ (default 0) ] \ 
+       [ DESCRIPTOR_RANGE _range_ (default VK_WHOLE_SIZE) ]
 ```
 
 ```groovy
