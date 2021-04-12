@@ -22,7 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include "amber/vulkan_header.h"
 #include "src/image.h"
 #include "src/make_unique.h"
 #include "src/sampler.h"
@@ -1245,10 +1244,9 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
         }
 
         // Set default descriptor buffer offsets to 0 and descriptor buffer
-        // ranges to VK_WHOLE_SIZE.
-        std::vector<VkDeviceSize> descriptor_offsets(buffers.size(), 0);
-        std::vector<VkDeviceSize> descriptor_ranges(buffers.size(),
-                                                    VK_WHOLE_SIZE);
+        // ranges to VK_WHOLE_SIZE (~0ULL).
+        std::vector<uint64_t> descriptor_offsets(buffers.size(), 0);
+        std::vector<uint64_t> descriptor_ranges(buffers.size(), ~0ULL);
         if (buffer_type == BufferType::kUniformDynamic ||
             buffer_type == BufferType::kStorageDynamic ||
             buffer_type == BufferType::kStorage ||

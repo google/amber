@@ -500,7 +500,7 @@ The following commands are all specified within the `PIPELINE` command.
   #    and be less than or equal to maxSubgroupSize
   # - MIN to set the required subgroup size to the minSubgroupSize
   # - MAX to set the required subgroup size to the maxSubgroupSize
-  SUBROUP {name_of_shader}
+  SUBGROUP {name_of_shader}
     FULLY_POPULATED {fully_populated_enable}
     VARYING_SIZE {varying_size_enable}
     REQUIRED_SIZE {subgroup_size}
@@ -576,7 +576,7 @@ ranges can be used also with dynamic buffers.
   # with range |range|.
   BIND {BUFFER | BUFFER_ARRAY} {buffer_name} AS {buffer_type} DESCRIPTOR_SET _id_ \
        BINDING _id_ [ DESCRIPTOR_OFFSET _descriptor_offset_ (default 0) ] \ 
-       [ DESCRIPTOR_RANGE _range_ (default VK_WHOLE_SIZE) ]
+       [ DESCRIPTOR_RANGE _range_ (default -1 == VK_WHOLE_SIZE) ]
 
   # Attach |buffer_name| as a storage image. The MIP level will have a base
   # value of |level|.
@@ -602,7 +602,7 @@ ranges can be used also with dynamic buffers.
   BIND {BUFFER | BUFFER_ARRAY} {buffer_name} AS {uniform_dynamic | storage_dynamic} \
        DESCRIPTOR_SET _id_ BINDING _id_ OFFSET _offset_ \
        [ DESCRIPTOR_OFFSET _descriptor_offset_ (default 0) ] \ 
-       [ DESCRIPTOR_RANGE _range_ (default VK_WHOLE_SIZE) ]
+       [ DESCRIPTOR_RANGE _range_ (default -1 == VK_WHOLE_SIZE) ]
 ```
 
 ```groovy

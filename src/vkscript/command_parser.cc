@@ -578,7 +578,7 @@ Result CommandParser::ProcessSSBO() {
       script_->AddBuffer(std::move(b));
       pipeline_->ClearBuffers(set, binding);
       pipeline_->AddBuffer(buffer, BufferType::kStorage, set, binding, 0, 0, 0,
-                           VK_WHOLE_SIZE);
+                           ~0ULL);
     }
     cmd->SetBuffer(buffer);
   }
@@ -731,7 +731,7 @@ Result CommandParser::ProcessUniform() {
       script_->AddBuffer(std::move(b));
       pipeline_->ClearBuffers(set, binding);
       pipeline_->AddBuffer(buffer, BufferType::kUniform, set, binding, 0, 0, 0,
-                           VK_WHOLE_SIZE);
+                           ~0ULL);
     }
     cmd->SetBuffer(buffer);
 

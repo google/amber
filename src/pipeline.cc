@@ -517,8 +517,8 @@ void Pipeline::AddBuffer(Buffer* buf,
                          uint32_t binding,
                          uint32_t base_mip_level,
                          uint32_t dynamic_offset,
-                         VkDeviceSize descriptor_offset,
-                         VkDeviceSize descriptor_range) {
+                         uint64_t descriptor_offset,
+                         uint64_t descriptor_range) {
   buffers_.push_back(BufferInfo{buf});
 
   auto& info = buffers_.back();
@@ -866,8 +866,7 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
         opencl_pod_buffer_map_.insert(
             buf_iter,
             std::make_pair(std::make_pair(descriptor_set, binding), buffer));
-        AddBuffer(buffer, buffer_type, descriptor_set, binding, 0, 0, 0,
-                  VK_WHOLE_SIZE);
+        AddBuffer(buffer, buffer_type, descriptor_set, binding, 0, 0, 0, ~0ULL);
       } else {
         buffer = buf_iter->second;
       }

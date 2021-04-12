@@ -1394,7 +1394,7 @@ END
   EXPECT_EQ(1U, bufs[0].descriptor_set);
   EXPECT_EQ(2U, bufs[0].binding);
   EXPECT_EQ(0U, bufs[0].descriptor_offset);
-  EXPECT_EQ(VK_WHOLE_SIZE, bufs[0].descriptor_range);
+  EXPECT_EQ(~0ULL, bufs[0].descriptor_range);
   EXPECT_EQ(static_cast<uint32_t>(0), bufs[0].location);
   EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
             bufs[0].buffer->GetFormat()->GetFormatType());
@@ -1413,6 +1413,7 @@ PIPELINE graphics my_pipeline
   ATTACH my_fragment
 
   BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 DESCRIPTOR_OFFSET 256 DESCRIPTOR_RANGE 512
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 3 DESCRIPTOR_OFFSET 256 DESCRIPTOR_RANGE -1
 END
 )";
 
@@ -1426,7 +1427,7 @@ END
 
   const auto* pipeline = pipelines[0].get();
   const auto& bufs = pipeline->GetBuffers();
-  ASSERT_EQ(1U, bufs.size());
+  ASSERT_EQ(2U, bufs.size());
   EXPECT_EQ(BufferType::kUniform, bufs[0].type);
   EXPECT_EQ(1U, bufs[0].descriptor_set);
   EXPECT_EQ(2U, bufs[0].binding);
@@ -1435,6 +1436,8 @@ END
   EXPECT_EQ(static_cast<uint32_t>(0), bufs[0].location);
   EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
             bufs[0].buffer->GetFormat()->GetFormatType());
+  // Verify the descriptor range from the second buffer.
+  EXPECT_EQ(~0ULL, bufs[1].descriptor_range);
 }
 
 TEST_F(AmberScriptParserTest, BindBufferMissingBindingValue) {
@@ -2958,7 +2961,7 @@ END
     EXPECT_EQ(1U, bufs[i].descriptor_set);
     EXPECT_EQ(2U, bufs[i].binding);
     EXPECT_EQ(0U, bufs[i].descriptor_offset);
-    EXPECT_EQ(VK_WHOLE_SIZE, bufs[i].descriptor_range);
+    EXPECT_EQ(~0ULL, bufs[i].descriptor_range);
     EXPECT_EQ(static_cast<uint32_t>(0), bufs[i].location);
     EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
               bufs[i].buffer->GetFormat()->GetFormatType());

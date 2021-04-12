@@ -23,7 +23,6 @@
 
 #include "amber/shader_info.h"
 #include "amber/value.h"
-#include "amber/vulkan_header.h"
 #include "src/buffer.h"
 #include "src/command_data.h"
 #include "src/debug.h"
@@ -577,7 +576,7 @@ class BufferCommand : public BindableResourceCommand {
   uint32_t base_mip_level_ = 0;
   uint32_t dynamic_offset_ = 0;
   uint64_t descriptor_offset_ = 0;
-  uint64_t descriptor_range_ = VK_WHOLE_SIZE;
+  uint64_t descriptor_range_ = ~0ULL;
   std::vector<Value> values_;
 };
 
