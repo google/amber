@@ -48,7 +48,7 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
     if (amber_buffer->ValuePtr()->empty())
       continue;
 
-    // Check if the transfer buffer is already initialized.
+    // Check if the transfer buffer is already created.
     if (transfer_buffers_.count(amber_buffer) > 0)
       continue;
 
@@ -99,6 +99,7 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   std::vector<VkDescriptorBufferInfo> buffer_infos;
   std::vector<VkBufferView> buffer_views;
 
+  // Create VkDescriptorBufferInfo for every descriptor buffer.
   for (uint32_t i = 0; i < GetAmberBuffers().size(); i++) {
     const auto& buffer = transfer_buffers_[GetAmberBuffers()[i]];
     assert(buffer->GetVkBuffer() && "Unexpected descriptor type");
@@ -146,10 +147,18 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   is_descriptor_set_update_needed_ = false;
 }
 
-std::unordered_map<Buffer*, Resource*> BufferDescriptor::GetResources() {
-  std::unordered_map<Buffer*, Resource*> ret;
-  for (const auto& b : transfer_buffers_) {
-    ret[b.first] = b.second.get();
+std::vector<std::pair<Buffer*, Resource*>> BufferDescriptor::GetResources() {
+  std::vector<std::pair<Buffer*, Resource*>> ret;
+  // Add unique amber buffers and related transfer buffers to the vector.
+  for (const auto& amber_buffer : GetAmberBuffers()) {
+    // Skip duplicate values.
+    const auto& image = std::find_if(
+        ret.begin(), ret.end(),
+        [&](const auto& buffer) { return buffer.first == amber_buffer; });
+    if (image != ret.end())
+      continue;
+
+    ret.emplace_back(amber_buffer, transfer_buffers_[amber_buffer].get());
   }
   return ret;
 }

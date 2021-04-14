@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "src/vulkan/buffer_backed_descriptor.h"
@@ -44,7 +45,7 @@ class ImageDescriptor : public BufferBackedDescriptor {
   void SetAmberSampler(amber::Sampler* sampler) { amber_sampler_ = sampler; }
 
  protected:
-  std::unordered_map<Buffer*, Resource*> GetResources() override;
+  std::vector<std::pair<Buffer*, Resource*>> GetResources() override;
 
  private:
   uint32_t base_mip_level_ = 0;

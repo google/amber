@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "amber/result.h"
@@ -67,7 +68,7 @@ class BufferDescriptor : public BufferBackedDescriptor {
   BufferDescriptor* AsBufferDescriptor() override { return this; }
 
  protected:
-  std::unordered_map<Buffer*, Resource*> GetResources() override;
+  std::vector<std::pair<Buffer*, Resource*>> GetResources() override;
 
  private:
   std::unordered_map<Buffer*, std::unique_ptr<TransferBuffer>>
