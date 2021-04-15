@@ -14,6 +14,7 @@
 
 #include "src/vulkan/buffer_descriptor.h"
 
+#include <algorithm>
 #include <unordered_map>
 #include <utility>
 #include <vector>

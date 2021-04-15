@@ -14,6 +14,7 @@
 
 #include "src/vulkan/image_descriptor.h"
 
+#include <algorithm>
 #include <unordered_map>
 #include <utility>
 
