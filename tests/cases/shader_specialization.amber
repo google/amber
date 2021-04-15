@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+DEVICE_EXTENSION VK_KHR_storage_buffer_storage_class
+
 SHADER compute my_compute SPIRV-ASM
 OpCapability Shader
 OpExtension "SPV_KHR_storage_buffer_storage_class"
