@@ -196,9 +196,11 @@ std::vector<std::pair<Buffer*, Resource*>> ImageDescriptor::GetResources() {
   // Add unique amber buffers and related transfer images to the vector.
   for (const auto& amber_buffer : GetAmberBuffers()) {
     // Skip duplicate values.
-    const auto& image = std::find_if(
-        ret.begin(), ret.end(),
-        [&](const auto& buffer) { return buffer.first == amber_buffer; });
+    const auto& image =
+        std::find_if(ret.begin(), ret.end(),
+                     [&](const std::pair<Buffer*, Resource*>& buffer) {
+                       return buffer.first == amber_buffer;
+                     });
     if (image != ret.end())
       continue;
 
