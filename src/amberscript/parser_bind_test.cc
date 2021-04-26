@@ -3069,7 +3069,7 @@ END
 
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
-      "13: expecting an DESCRIPTOR_OFFSET value for each buffer in the array",
+      "13: expecting a DESCRIPTOR_OFFSET value for each buffer in the array",
       r.Error());
 }
 
@@ -3094,7 +3094,7 @@ END
 
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ(
-      "13: expecting an DESCRIPTOR_RANGE value for each buffer in the array",
+      "13: expecting a DESCRIPTOR_RANGE value for each buffer in the array",
       r.Error());
 }
 
