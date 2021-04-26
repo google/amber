@@ -16,7 +16,6 @@
 #define SRC_VULKAN_BUFFER_BACKED_DESCRIPTOR_H_
 
 #include <memory>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 

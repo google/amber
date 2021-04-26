@@ -1260,7 +1260,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
               if (!token->IsInteger()) {
                 if (i > 0) {
                   return Result(
-                      "expecting an DESCRIPTOR_OFFSET value for each buffer in "
+                      "expecting a DESCRIPTOR_OFFSET value for each buffer in "
                       "the array");
                 } else {
                   return Result(
@@ -1280,7 +1280,7 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
               if (!token->IsInteger()) {
                 if (i > 0) {
                   return Result(
-                      "expecting an DESCRIPTOR_RANGE value for each buffer in "
+                      "expecting a DESCRIPTOR_RANGE value for each buffer in "
                       "the array");
                 } else {
                   return Result(

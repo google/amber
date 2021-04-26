@@ -15,7 +15,6 @@
 #include "src/vulkan/buffer_descriptor.h"
 
 #include <algorithm>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -53,9 +52,8 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
     if (transfer_buffers_.count(amber_buffer) > 0)
       continue;
 
-    uint32_t size_in_bytes =
-        amber_buffer ? static_cast<uint32_t>(amber_buffer->ValuePtr()->size())
-                     : 0;
+    auto size_in_bytes =
+        static_cast<uint32_t>(amber_buffer->ValuePtr()->size());
 
     auto transfer_buffer = MakeUnique<TransferBuffer>(
         device_, size_in_bytes, amber_buffer->GetFormat());
