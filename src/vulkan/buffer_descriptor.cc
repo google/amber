@@ -14,6 +14,8 @@
 
 #include "src/vulkan/buffer_descriptor.h"
 
+#include <algorithm>
+#include <utility>
 #include <vector>
 
 #include "src/make_unique.h"
@@ -39,17 +41,23 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
         "only when |transfer_buffers| is empty");
   }
 
-  transfer_buffers_.reserve(GetAmberBuffers().size());
+  descriptor_offsets_.reserve(GetAmberBuffers().size());
+  descriptor_ranges_.reserve(GetAmberBuffers().size());
 
   for (const auto& amber_buffer : GetAmberBuffers()) {
     if (amber_buffer->ValuePtr()->empty())
       continue;
 
-    uint32_t size_in_bytes =
-        amber_buffer ? static_cast<uint32_t>(amber_buffer->ValuePtr()->size())
-                     : 0;
-    transfer_buffers_.emplace_back(MakeUnique<TransferBuffer>(
-        device_, size_in_bytes, amber_buffer->GetFormat()));
+    // Check if the transfer buffer is already created.
+    if (transfer_buffers_.count(amber_buffer) > 0)
+      continue;
+
+    auto size_in_bytes =
+        static_cast<uint32_t>(amber_buffer->ValuePtr()->size());
+
+    auto transfer_buffer = MakeUnique<TransferBuffer>(
+        device_, size_in_bytes, amber_buffer->GetFormat());
+
     VkBufferUsageFlags flags =
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     if (IsUniformBuffer() || IsUniformBufferDynamic()) {
@@ -64,9 +72,10 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
       return Result("Unexpected buffer type when deciding usage flags");
     }
 
-    Result r = transfer_buffers_.back()->Initialize(flags);
+    Result r = transfer_buffer->Initialize(flags);
     if (!r.IsSuccess())
       return r;
+    transfer_buffers_[amber_buffer] = std::move(transfer_buffer);
   }
 
   is_descriptor_set_update_needed_ = true;
@@ -89,12 +98,33 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   std::vector<VkDescriptorBufferInfo> buffer_infos;
   std::vector<VkBufferView> buffer_views;
 
-  for (const auto& buffer : transfer_buffers_) {
-    VkDescriptorBufferInfo buffer_info;
-    buffer_info.buffer = buffer->GetVkBuffer();
-    buffer_info.offset = 0;
-    buffer_info.range = VK_WHOLE_SIZE;
-    buffer_infos.push_back(buffer_info);
+  // Create VkDescriptorBufferInfo for every descriptor buffer.
+  for (uint32_t i = 0; i < GetAmberBuffers().size(); i++) {
+    const auto& buffer = transfer_buffers_[GetAmberBuffers()[i]];
+    assert(buffer->GetVkBuffer() && "Unexpected descriptor type");
+    // Add buffer infos for uniform and storage buffers.
+    if (IsUniformBuffer() || IsUniformBufferDynamic() || IsStorageBuffer() ||
+        IsStorageBufferDynamic()) {
+      uint64_t range = descriptor_ranges_[i];
+      // If dynamic offset is used, we must change range with VK_WHOLE_SIZE to
+      // an actual range.
+      // From vulkan spec: For each dynamic uniform or storage buffer binding in
+      // pDescriptorSets, the sum of the effective offset, as defined above, and
+      // the range of the binding must be less than or equal to the size of the
+      // buffer.
+      if ((IsUniformBufferDynamic() || IsStorageBufferDynamic()) &&
+          descriptor_ranges_[i] == VK_WHOLE_SIZE) {
+        range = buffer->GetSizeInBytes() - dynamic_offsets_[i] -
+                descriptor_offsets_[i];
+      }
+
+      VkDescriptorBufferInfo buffer_info;
+      buffer_info.buffer = buffer->GetVkBuffer();
+      buffer_info.offset = descriptor_offsets_[i];
+      buffer_info.range = range;
+
+      buffer_infos.push_back(buffer_info);
+    }
 
     if (IsUniformTexelBuffer() || IsStorageTexelBuffer()) {
       buffer_views.push_back(*buffer->GetVkBufferView());
@@ -106,7 +136,7 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   write.dstSet = descriptor_set;
   write.dstBinding = binding_;
   write.dstArrayElement = 0;
-  write.descriptorCount = static_cast<uint32_t>(buffer_infos.size());
+  write.descriptorCount = static_cast<uint32_t>(GetAmberBuffers().size());
   write.descriptorType = GetVkDescriptorType();
   write.pBufferInfo = buffer_infos.data();
   write.pTexelBufferView = buffer_views.data();
@@ -116,10 +146,20 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   is_descriptor_set_update_needed_ = false;
 }
 
-std::vector<Resource*> BufferDescriptor::GetResources() {
-  std::vector<Resource*> ret;
-  for (auto& b : transfer_buffers_) {
-    ret.push_back(b.get());
+std::vector<std::pair<Buffer*, Resource*>> BufferDescriptor::GetResources() {
+  std::vector<std::pair<Buffer*, Resource*>> ret;
+  // Add unique amber buffers and related transfer buffers to the vector.
+  for (const auto& amber_buffer : GetAmberBuffers()) {
+    // Skip duplicate values.
+    const auto& image =
+        std::find_if(ret.begin(), ret.end(),
+                     [&](const std::pair<Buffer*, Resource*>& buffer) {
+                       return buffer.first == amber_buffer;
+                     });
+    if (image != ret.end())
+      continue;
+
+    ret.emplace_back(amber_buffer, transfer_buffers_[amber_buffer].get());
   }
   return ret;
 }

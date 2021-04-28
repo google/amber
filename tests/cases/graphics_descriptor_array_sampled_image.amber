@@ -40,11 +40,18 @@ SHADER fragment frag_shader_tex GLSL
 #version 430
 layout(location = 0) in vec2 texcoords_in;
 layout(location = 0) out vec4 color_out;
-uniform layout(set=0, binding=0) texture2D tex[2];
+uniform layout(set=0, binding=0) texture2D tex_0[2];
 uniform layout(set=0, binding=1) sampler tex_sampler;
+uniform layout(set=0, binding=2) texture2D tex_1[2];
 void main() {
-  color_out = texture(sampler2D(tex[0], tex_sampler), texcoords_in);
-  color_out += texture(sampler2D(tex[1], tex_sampler), texcoords_in);
+  vec4 tex_0_color = texture(sampler2D(tex_0[0], tex_sampler), texcoords_in);
+  color_out = tex_0_color;
+  color_out += texture(sampler2D(tex_0[1], tex_sampler), texcoords_in);
+  // tex_1[0] and tex_1[1] should be equal to tex_0[0].
+  if (tex_0_color != texture(sampler2D(tex_1[0], tex_sampler), texcoords_in) ||
+      tex_0_color != texture(sampler2D(tex_1[1], tex_sampler), texcoords_in)) {
+      color_out = vec4(1.0);
+  }
 }
 END
 
@@ -77,6 +84,7 @@ PIPELINE graphics pipeline
   ATTACH frag_shader_tex
   BIND BUFFER_ARRAY texture0 texture1 AS sampled_image DESCRIPTOR_SET 0 BINDING 0
   BIND SAMPLER sampler DESCRIPTOR_SET 0 BINDING 1
+  BIND BUFFER_ARRAY texture0 texture0 AS sampled_image DESCRIPTOR_SET 0 BINDING 2
   VERTEX_DATA position LOCATION 0
   VERTEX_DATA texcoords LOCATION 1
   BIND BUFFER framebuffer AS color LOCATION 0

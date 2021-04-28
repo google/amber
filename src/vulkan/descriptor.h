@@ -64,6 +64,8 @@ class Descriptor {
   virtual Result AddToBuffer(const std::vector<Value>&, uint32_t) { return {}; }
   virtual uint32_t GetDescriptorCount() { return 1; }
   virtual std::vector<uint32_t> GetDynamicOffsets() { return {}; }
+  virtual std::vector<VkDeviceSize> GetDescriptorOffsets() { return {}; }
+  virtual std::vector<VkDeviceSize> GetDescriptorRanges() { return {}; }
   virtual BufferDescriptor* AsBufferDescriptor() { return nullptr; }
   virtual BufferBackedDescriptor* AsBufferBackedDescriptor() { return nullptr; }
   virtual SamplerDescriptor* AsSamplerDescriptor() { return nullptr; }

@@ -203,6 +203,8 @@ class Pipeline {
     uint32_t offset = 0;
     uint32_t stride = 0;
     Sampler* sampler = nullptr;
+    uint64_t descriptor_offset = 0;
+    uint64_t descriptor_range = ~0ULL;  // ~0ULL == VK_WHOLE_SIZE
   };
 
   /// Information on a sampler attached to the pipeline.
@@ -335,13 +337,16 @@ class Pipeline {
   Buffer* GetIndexBuffer() const { return index_buffer_; }
 
   /// Adds |buf| of |type| to the pipeline at the given |descriptor_set|,
-  /// |binding|, |base_mip_level|, and |dynamic_offset|.
+  /// |binding|, |base_mip_level|, |descriptor_offset|, |descriptor_range| and
+  /// |dynamic_offset|.
   void AddBuffer(Buffer* buf,
                  BufferType type,
                  uint32_t descriptor_set,
                  uint32_t binding,
                  uint32_t base_mip_level,
-                 uint32_t dynamic_offset);
+                 uint32_t dynamic_offset,
+                 uint64_t descriptor_offset,
+                 uint64_t descriptor_range);
   /// Adds |buf| to the pipeline at the given |arg_name|.
   void AddBuffer(Buffer* buf, BufferType type, const std::string& arg_name);
   /// Adds |buf| to the pipeline at the given |arg_no|.

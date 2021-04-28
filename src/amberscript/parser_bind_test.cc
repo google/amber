@@ -1393,9 +1393,51 @@ END
   EXPECT_EQ(BufferType::kUniform, bufs[0].type);
   EXPECT_EQ(1U, bufs[0].descriptor_set);
   EXPECT_EQ(2U, bufs[0].binding);
+  EXPECT_EQ(0U, bufs[0].descriptor_offset);
+  EXPECT_EQ(~0ULL, bufs[0].descriptor_range);
   EXPECT_EQ(static_cast<uint32_t>(0), bufs[0].location);
   EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
             bufs[0].buffer->GetFormat()->GetFormatType());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferDescriptorOffsetAndRange) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 DESCRIPTOR_OFFSET 256 DESCRIPTOR_RANGE 512
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 3 DESCRIPTOR_OFFSET 256 DESCRIPTOR_RANGE -1
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(2U, bufs.size());
+  EXPECT_EQ(BufferType::kUniform, bufs[0].type);
+  EXPECT_EQ(1U, bufs[0].descriptor_set);
+  EXPECT_EQ(2U, bufs[0].binding);
+  EXPECT_EQ(256U, bufs[0].descriptor_offset);
+  EXPECT_EQ(512U, bufs[0].descriptor_range);
+  EXPECT_EQ(static_cast<uint32_t>(0), bufs[0].location);
+  EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+            bufs[0].buffer->GetFormat()->GetFormatType());
+  // Verify the descriptor range from the second buffer.
+  EXPECT_EQ(~0ULL, bufs[1].descriptor_range);
 }
 
 TEST_F(AmberScriptParserTest, BindBufferMissingBindingValue) {
@@ -2859,6 +2901,33 @@ END)";
   EXPECT_EQ("13: missing BINDING for BIND command", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, BindDescriptorOffsetWithUnsupportedBufferType) {
+  std::string unsupported_buffer_types[] = {"uniform_texel_buffer",
+                                            "storage_texel_buffer",
+                                            "sampled_image", "storage_image"};
+
+  for (const auto& buffer_type : unsupported_buffer_types) {
+    std::ostringstream in;
+    in << R"(
+SHADER compute compute_shader GLSL
+# GLSL Shader
+END
+
+BUFFER texture FORMAT R8G8B8A8_UNORM
+
+PIPELINE compute pipeline
+  ATTACH compute_shader
+  BIND BUFFER texture AS )"
+       << buffer_type << R"( DESCRIPTOR_SET 0 BINDING 0 DESCRIPTOR_OFFSET 0
+END)";
+    Parser parser;
+    Result r = parser.Parse(in.str());
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("10: extra parameters after BIND command: DESCRIPTOR_OFFSET",
+              r.Error());
+  }
+}
+
 TEST_F(AmberScriptParserTest, BindBufferArray) {
   std::string in = R"(
 SHADER vertex my_shader PASSTHROUGH
@@ -2891,10 +2960,198 @@ END
     EXPECT_EQ(BufferType::kUniform, bufs[i].type);
     EXPECT_EQ(1U, bufs[i].descriptor_set);
     EXPECT_EQ(2U, bufs[i].binding);
+    EXPECT_EQ(0U, bufs[i].descriptor_offset);
+    EXPECT_EQ(~0ULL, bufs[i].descriptor_range);
     EXPECT_EQ(static_cast<uint32_t>(0), bufs[i].location);
     EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
               bufs[i].buffer->GetFormat()->GetFormatType());
   }
+}
+
+TEST_F(AmberScriptParserTest, BindBufferArrayWithDescriptorOffsetAndRange) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf1 FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER_ARRAY my_buf1 my_buf1 AS uniform DESCRIPTOR_SET 1 BINDING 2 DESCRIPTOR_OFFSET 256 512 DESCRIPTOR_RANGE 1024 2048
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(2U, bufs.size());
+  for (size_t i = 0; i < 2; i++) {
+    EXPECT_EQ(BufferType::kUniform, bufs[i].type);
+    EXPECT_EQ(1U, bufs[i].descriptor_set);
+    EXPECT_EQ(2U, bufs[i].binding);
+    EXPECT_EQ(256U * (i + 1), bufs[i].descriptor_offset);
+    EXPECT_EQ(1024U * (i + 1), bufs[i].descriptor_range);
+    EXPECT_EQ(static_cast<uint32_t>(0), bufs[i].location);
+    EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+              bufs[i].buffer->GetFormat()->GetFormatType());
+  }
+}
+
+TEST_F(AmberScriptParserTest,
+       BindDynamicBufferArrayWithDescriptorOffsetAndRange) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf1 FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER_ARRAY my_buf1 my_buf1 AS uniform_dynamic DESCRIPTOR_SET 1 BINDING 2 OFFSET 16 32 DESCRIPTOR_OFFSET 256 512 DESCRIPTOR_RANGE 1024 2048
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& bufs = pipeline->GetBuffers();
+  ASSERT_EQ(2U, bufs.size());
+  for (size_t i = 0; i < 2; i++) {
+    EXPECT_EQ(BufferType::kUniformDynamic, bufs[i].type);
+    EXPECT_EQ(1U, bufs[i].descriptor_set);
+    EXPECT_EQ(2U, bufs[i].binding);
+    EXPECT_EQ(16U * (i + 1), bufs[i].dynamic_offset);
+    EXPECT_EQ(256U * (i + 1), bufs[i].descriptor_offset);
+    EXPECT_EQ(1024U * (i + 1), bufs[i].descriptor_range);
+    EXPECT_EQ(static_cast<uint32_t>(0), bufs[i].location);
+    EXPECT_EQ(FormatType::kR32G32B32A32_SFLOAT,
+              bufs[i].buffer->GetFormat()->GetFormatType());
+  }
+}
+
+TEST_F(AmberScriptParserTest, BindBufferArrayOnlyOneDescriptorOffset) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER_ARRAY my_buf my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 DESCRIPTOR_OFFSET 256
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ(
+      "13: expecting a DESCRIPTOR_OFFSET value for each buffer in the array",
+      r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindBufferArrayOnlyOneDescriptorRange) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER_ARRAY my_buf my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 DESCRIPTOR_RANGE 256
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ(
+      "13: expecting a DESCRIPTOR_RANGE value for each buffer in the array",
+      r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindUniformBufferEmptyDescriptorOffset) {
+  std::string in = R"(
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+PIPELINE graphics my_pipeline
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 DESCRIPTOR_OFFSET
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("5: expecting an integer value for DESCRIPTOR_OFFSET", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindUniformBufferInvalidDescriptorOffset) {
+  std::string in = R"(
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+PIPELINE graphics my_pipeline
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 DESCRIPTOR_OFFSET foo
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("4: expecting an integer value for DESCRIPTOR_OFFSET", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindUniformBufferEmptyDescriptorRange) {
+  std::string in = R"(
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+PIPELINE graphics my_pipeline
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 DESCRIPTOR_RANGE
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("5: expecting an integer value for DESCRIPTOR_RANGE", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindUniformBufferInvalidDescriptorRange) {
+  std::string in = R"(
+BUFFER my_buf FORMAT R32G32B32A32_SFLOAT
+PIPELINE graphics my_pipeline
+  BIND BUFFER my_buf AS uniform DESCRIPTOR_SET 1 BINDING 2 DESCRIPTOR_RANGE foo
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("4: expecting an integer value for DESCRIPTOR_RANGE", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, BindBufferArrayOnlyOneBuffer) {

@@ -322,6 +322,7 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
           cmd->GetDescriptorSet(), cmd->GetBinding());
       if (cmd->IsCombinedImageSampler())
         image_desc->SetAmberSampler(cmd->GetSampler());
+
       descriptors.push_back(std::move(image_desc));
     } else {
       auto buffer_desc = MakeUnique<BufferDescriptor>(
@@ -336,17 +337,17 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
           "Descriptors bound to the same binding needs to have matching "
           "descriptor types");
     }
-    // Check that the buffer is not added already.
-    const auto& buffers = desc->AsBufferBackedDescriptor()->GetAmberBuffers();
-    if (std::find(buffers.begin(), buffers.end(), cmd->GetBuffer()) !=
-        buffers.end()) {
-      return Result("Buffer has been added already");
-    }
     desc->AsBufferBackedDescriptor()->AddAmberBuffer(cmd->GetBuffer());
   }
 
   if (cmd->IsUniformDynamic() || cmd->IsSSBODynamic())
     desc->AsBufferDescriptor()->AddDynamicOffset(cmd->GetDynamicOffset());
+
+  if (cmd->IsUniform() || cmd->IsUniformDynamic() || cmd->IsSSBO() ||
+      cmd->IsSSBODynamic()) {
+    desc->AsBufferDescriptor()->AddDescriptorOffset(cmd->GetDescriptorOffset());
+    desc->AsBufferDescriptor()->AddDescriptorRange(cmd->GetDescriptorRange());
+  }
 
   if (cmd->IsSSBO() && !desc->IsStorageBuffer()) {
     return Result(

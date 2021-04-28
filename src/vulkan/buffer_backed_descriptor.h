@@ -16,6 +16,7 @@
 #define SRC_VULKAN_BUFFER_BACKED_DESCRIPTOR_H_
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "amber/result.h"
@@ -51,7 +52,10 @@ class BufferBackedDescriptor : public Descriptor {
   bool IsReadOnly() const;
 
  protected:
-  virtual std::vector<Resource*> GetResources() = 0;
+  /// Returns a list of unique transfer buffer resources. Note that this list
+  /// may contain less items than the |amber_buffers| vector contains if two or
+  /// more amber buffers use same Vulkan buffer.
+  virtual std::vector<std::pair<Buffer*, Resource*>> GetResources() = 0;
 
  private:
   std::vector<Buffer*> amber_buffers_;

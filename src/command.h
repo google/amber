@@ -546,6 +546,16 @@ class BufferCommand : public BindableResourceCommand {
   }
   uint32_t GetDynamicOffset() const { return dynamic_offset_; }
 
+  void SetDescriptorOffset(uint64_t descriptor_offset) {
+    descriptor_offset_ = descriptor_offset;
+  }
+  uint64_t GetDescriptorOffset() const { return descriptor_offset_; }
+
+  void SetDescriptorRange(uint64_t descriptor_range) {
+    descriptor_range_ = descriptor_range;
+  }
+  uint64_t GetDescriptorRange() const { return descriptor_range_; }
+
   void SetValues(std::vector<Value>&& values) { values_ = std::move(values); }
   const std::vector<Value>& GetValues() const { return values_; }
 
@@ -565,6 +575,8 @@ class BufferCommand : public BindableResourceCommand {
   uint32_t offset_ = 0;
   uint32_t base_mip_level_ = 0;
   uint32_t dynamic_offset_ = 0;
+  uint64_t descriptor_offset_ = 0;
+  uint64_t descriptor_range_ = ~0ULL;
   std::vector<Value> values_;
 };
 

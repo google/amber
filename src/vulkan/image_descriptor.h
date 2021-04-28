@@ -16,6 +16,8 @@
 #define SRC_VULKAN_IMAGE_DESCRIPTOR_H_
 
 #include <memory>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "src/vulkan/buffer_backed_descriptor.h"
@@ -43,11 +45,11 @@ class ImageDescriptor : public BufferBackedDescriptor {
   void SetAmberSampler(amber::Sampler* sampler) { amber_sampler_ = sampler; }
 
  protected:
-  std::vector<Resource*> GetResources() override;
+  std::vector<std::pair<Buffer*, Resource*>> GetResources() override;
 
  private:
   uint32_t base_mip_level_ = 0;
-  std::vector<std::unique_ptr<TransferImage>> transfer_images_;
+  std::unordered_map<Buffer*, std::unique_ptr<TransferImage>> transfer_images_;
   amber::Sampler* amber_sampler_ = nullptr;
   amber::vulkan::Sampler vulkan_sampler_;
 };

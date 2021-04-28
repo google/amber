@@ -17,13 +17,20 @@ SHADER compute compute_shader GLSL
 #version 430
 layout(local_size_x=4,local_size_y=1) in;
 uniform layout(set=0, binding=0) samplerBuffer texelsIn;
-uniform layout(set=0, binding=1, rgba32f) imageBuffer texelsOut[2];
+uniform layout(set=0, binding=1, rgba32f) imageBuffer texelsOut_0[2];
+uniform layout(set=0, binding=2, rgba32f) imageBuffer texelsOut_1[2];
 
 void main ()
 {
     vec4 color = texelFetch(texelsIn, int(gl_GlobalInvocationID));
-    imageStore(texelsOut[0], int(gl_GlobalInvocationID), color);
-    imageStore(texelsOut[1], int(gl_GlobalInvocationID), color * 2.0);
+    imageStore(texelsOut_0[0], int(gl_GlobalInvocationID), color);
+    imageStore(texelsOut_0[1], int(gl_GlobalInvocationID), color * 2.0);
+    if (int(gl_GlobalInvocationID) < 2) {
+      imageStore(texelsOut_1[0], int(gl_GlobalInvocationID), color * 3.0);
+    }
+    else {
+      imageStore(texelsOut_1[1], int(gl_GlobalInvocationID), color * 4.0);
+    }
 }
 END
 
@@ -36,6 +43,7 @@ END
 
 BUFFER texel_buffer_out0 DATA_TYPE R32G32B32A32_SFLOAT SIZE 4 FILL 0
 BUFFER texel_buffer_out1 DATA_TYPE R32G32B32A32_SFLOAT SIZE 4 FILL 0
+BUFFER texel_buffer_out2 DATA_TYPE R32G32B32A32_SFLOAT SIZE 4 FILL 0
 
 BUFFER ref0 DATA_TYPE R32G32B32A32_SFLOAT DATA
 1.0 0.0 0.0 1.0
@@ -51,13 +59,22 @@ BUFFER ref1 DATA_TYPE R32G32B32A32_SFLOAT DATA
 0.0 2.0 2.0 2.0
 END
 
+BUFFER ref2 DATA_TYPE R32G32B32A32_SFLOAT DATA
+3.0 0.0 0.0 3.0
+0.0 3.0 0.0 3.0
+0.0 0.0 4.0 4.0
+0.0 4.0 4.0 4.0
+END
+
 PIPELINE compute pipeline
   ATTACH compute_shader
   BIND BUFFER texel_buffer_in AS uniform_texel_buffer DESCRIPTOR_SET 0 BINDING 0
   BIND BUFFER_ARRAY texel_buffer_out0 texel_buffer_out1 AS storage_texel_buffer DESCRIPTOR_SET 0 BINDING 1
+  BIND BUFFER_ARRAY texel_buffer_out2 texel_buffer_out2 AS storage_texel_buffer DESCRIPTOR_SET 0 BINDING 2
 END
 
 RUN pipeline 1 1 1
 
 EXPECT texel_buffer_out0 EQ_BUFFER ref0
 EXPECT texel_buffer_out1 EQ_BUFFER ref1
+EXPECT texel_buffer_out2 EQ_BUFFER ref2

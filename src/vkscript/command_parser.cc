@@ -577,7 +577,8 @@ Result CommandParser::ProcessSSBO() {
       buffer = b.get();
       script_->AddBuffer(std::move(b));
       pipeline_->ClearBuffers(set, binding);
-      pipeline_->AddBuffer(buffer, BufferType::kStorage, set, binding, 0, 0);
+      pipeline_->AddBuffer(buffer, BufferType::kStorage, set, binding, 0, 0, 0,
+                           ~0ULL);
     }
     cmd->SetBuffer(buffer);
   }
@@ -729,7 +730,8 @@ Result CommandParser::ProcessUniform() {
       buffer = b.get();
       script_->AddBuffer(std::move(b));
       pipeline_->ClearBuffers(set, binding);
-      pipeline_->AddBuffer(buffer, BufferType::kUniform, set, binding, 0, 0);
+      pipeline_->AddBuffer(buffer, BufferType::kUniform, set, binding, 0, 0, 0,
+                           ~0ULL);
     }
     cmd->SetBuffer(buffer);
 
