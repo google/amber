@@ -277,7 +277,7 @@ Result Pipeline::AddDescriptorBuffer(Buffer* amber_buffer) {
   // Don't add the buffer if it's already added.
   const auto& buffer = std::find_if(
       descriptor_buffers_.begin(), descriptor_buffers_.end(),
-      [&](const Buffer* buffer) { return buffer == amber_buffer; });
+      [&](const Buffer* buf) { return buf == amber_buffer; });
   if (buffer != descriptor_buffers_.end()) {
     return {};
   }

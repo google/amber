@@ -43,7 +43,7 @@ class ImageDescriptor : public BufferBackedDescriptor {
   Result CreateResourceIfNeeded() override;
   void SetAmberSampler(amber::Sampler* sampler) { amber_sampler_ = sampler; }
 
-  ImageDescriptor* AsImageDescriptor() override { return this; };
+  ImageDescriptor* AsImageDescriptor() override { return this; }
 
  private:
   uint32_t base_mip_level_ = 0;

@@ -28,7 +28,7 @@ BufferBackedDescriptor::BufferBackedDescriptor(Buffer* buffer,
                                                uint32_t desc_set,
                                                uint32_t binding,
                                                Pipeline* pipeline)
-    : pipeline_(pipeline), Descriptor(type, device, desc_set, binding) {
+    : Descriptor(type, device, desc_set, binding), pipeline_(pipeline) {
   AddAmberBuffer(buffer);
 }
 
