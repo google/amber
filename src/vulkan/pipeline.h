@@ -123,7 +123,7 @@ class Pipeline {
   Result CreateDescriptorSets();
   /// Adds a buffer used by a descriptor. The added buffers are be stored in
   /// |descriptor_buffers_| vector in the order they are added.
-  Result Pipeline::AddDescriptorBuffer(Buffer* amber_buffer);
+  Result AddDescriptorBuffer(Buffer* amber_buffer);
 
   PipelineType pipeline_type_;
   std::vector<DescriptorSetInfo> descriptor_set_info_;
