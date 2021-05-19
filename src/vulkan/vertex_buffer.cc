@@ -85,8 +85,9 @@ Result VertexBuffer::SendVertexData(CommandBuffer* command) {
     uint32_t bytes = buf->GetSizeInBytes();
     transfer_buffers_.push_back(
         MakeUnique<TransferBuffer>(device_, bytes, nullptr));
-    Result r = transfer_buffers_.back()->Initialize(
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+    transfer_buffers_.back()->AddUsageFlags(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                                            VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+    Result r = transfer_buffers_.back()->Initialize();
 
     std::memcpy(transfer_buffers_.back()->HostAccessibleMemoryPtr(),
                 buf->GetValues<void>(), bytes);

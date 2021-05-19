@@ -44,8 +44,14 @@ TransferBuffer::~TransferBuffer() {
   }
 }
 
-Result TransferBuffer::Initialize(const VkBufferUsageFlags usage) {
-  Result r = CreateVkBuffer(&buffer_, usage);
+Result TransferBuffer::Initialize() {
+  if (buffer_) {
+    return Result(
+        "Vulkan: TransferBuffer::Initialize() transfer buffer already "
+        "initialized.");
+  }
+
+  Result r = CreateVkBuffer(&buffer_, usage_flags_);
   if (!r.IsSuccess())
     return r;
 
@@ -58,8 +64,8 @@ Result TransferBuffer::Initialize(const VkBufferUsageFlags usage) {
     return r;
 
   // Create buffer view
-  if (usage & (VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT |
-               VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT)) {
+  if (usage_flags_ & (VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT |
+                      VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT)) {
     VkBufferViewCreateInfo buffer_view_info = VkBufferViewCreateInfo();
     buffer_view_info.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
     buffer_view_info.buffer = buffer_;

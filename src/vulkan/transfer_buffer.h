@@ -34,7 +34,9 @@ class TransferBuffer : public Resource {
   TransferBuffer(Device* device, uint32_t size_in_bytes, Format* format);
   ~TransferBuffer() override;
 
-  Result Initialize(const VkBufferUsageFlags usage);
+  TransferBuffer* AsTransferBuffer() override { return this; }
+  void AddUsageFlags(VkBufferUsageFlags flags) { usage_flags_ |= flags; }
+  Result Initialize();
   const VkBufferView* GetVkBufferView() const { return &view_; }
 
   VkBuffer GetVkBuffer() const { return buffer_; }
@@ -47,6 +49,7 @@ class TransferBuffer : public Resource {
   void CopyToHost(CommandBuffer* command_buffer) override;
 
  private:
+  VkBufferUsageFlags usage_flags_ = 0;
   VkBuffer buffer_ = VK_NULL_HANDLE;
   VkDeviceMemory memory_ = VK_NULL_HANDLE;
   VkBufferView view_ = VK_NULL_HANDLE;

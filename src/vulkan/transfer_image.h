@@ -42,6 +42,7 @@ class TransferImage : public Resource {
                 uint32_t samples);
   ~TransferImage() override;
 
+  TransferImage* AsTransferImage() override { return this; }
   Result Initialize(VkImageUsageFlags usage);
   VkImageView GetVkImageView() const { return view_; }
 
