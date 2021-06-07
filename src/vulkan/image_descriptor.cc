@@ -77,14 +77,8 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
       aspect = VK_IMAGE_ASPECT_COLOR_BIT;
     }
 
-    auto transfer_image = MakeUnique<TransferImage>(
-        device_, *fmt, aspect, image_type, amber_buffer->GetWidth(),
-        amber_buffer->GetHeight(), amber_buffer->GetDepth(),
-        amber_buffer->GetMipLevels(), base_mip_level_, VK_REMAINING_MIP_LEVELS,
-        amber_buffer->GetSamples());
     VkImageUsageFlags usage =
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-
     if (type_ == DescriptorType::kStorageImage) {
       usage |= VK_IMAGE_USAGE_STORAGE_BIT;
     } else {
@@ -93,9 +87,12 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
       usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
     }
 
-    Result r = transfer_image->Initialize(usage);
-    if (!r.IsSuccess())
-      return r;
+    auto transfer_image = MakeUnique<TransferImage>(
+        device_, *fmt, aspect, image_type, usage, amber_buffer->GetWidth(),
+        amber_buffer->GetHeight(), amber_buffer->GetDepth(),
+        amber_buffer->GetMipLevels(), base_mip_level_, VK_REMAINING_MIP_LEVELS,
+        amber_buffer->GetSamples());
+
     // Store the transfer image to the pipeline's map of transfer images.
     transfer_resources[amber_buffer] = std::move(transfer_image);
   }

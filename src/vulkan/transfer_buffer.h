@@ -36,7 +36,7 @@ class TransferBuffer : public Resource {
 
   TransferBuffer* AsTransferBuffer() override { return this; }
   void AddUsageFlags(VkBufferUsageFlags flags) { usage_flags_ |= flags; }
-  Result Initialize();
+  Result Initialize() override;
   const VkBufferView* GetVkBufferView() const { return &view_; }
 
   VkBuffer GetVkBuffer() const { return buffer_; }

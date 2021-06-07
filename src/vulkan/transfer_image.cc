@@ -70,6 +70,7 @@ TransferImage::TransferImage(Device* device,
                              const Format& format,
                              VkImageAspectFlags aspect,
                              VkImageType image_type,
+                             VkImageUsageFlags image_usage_flags,
                              uint32_t x,
                              uint32_t y,
                              uint32_t z,
@@ -96,6 +97,7 @@ TransferImage::TransferImage(Device* device,
   image_info_.extent = {x, y, z};
   image_info_.mipLevels = mip_levels;
   image_info_.samples = GetVkSampleCount(samples);
+  image_info_.usage = image_usage_flags;
 }
 
 TransferImage::~TransferImage() {
@@ -122,11 +124,9 @@ TransferImage::~TransferImage() {
   }
 }
 
-Result TransferImage::Initialize(VkImageUsageFlags usage) {
+Result TransferImage::Initialize() {
   if (image_ != VK_NULL_HANDLE)
     return Result("Vulkan::TransferImage was already initialized");
-
-  image_info_.usage = usage;
 
   if (device_->GetPtrs()->vkCreateImage(device_->GetVkDevice(), &image_info_,
                                         nullptr, &image_) != VK_SUCCESS) {
@@ -141,7 +141,7 @@ Result TransferImage::Initialize(VkImageUsageFlags usage) {
     return r;
 
   if (aspect_ & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) &&
-      !(usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)) {
+      !(image_info_.usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)) {
     // Combined depth/stencil image used as a descriptor. Only one aspect can be
     // used for the image view.
     r = CreateVkImageView(VK_IMAGE_ASPECT_DEPTH_BIT);

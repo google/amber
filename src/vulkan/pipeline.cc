@@ -423,18 +423,14 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
       }
     }
 
-    // Initialize transfer buffers. Transfer images are already initialized in
-    // |CreateResourceIfNeeded()| function.
+    // Initialize transfer buffers / images.
     for (auto buffer : descriptor_buffers_) {
       if (descriptor_transfer_resources_.count(buffer) == 0) {
         return Result(
             "Vulkan: Pipeline::SendDescriptorDataToDeviceIfNeeded() "
             "descriptor's transfer resource is not found");
       }
-      if (auto transfer_buffer =
-              descriptor_transfer_resources_[buffer]->AsTransferBuffer()) {
-        transfer_buffer->AsTransferBuffer()->Initialize();
-      }
+      descriptor_transfer_resources_[buffer]->Initialize();
     }
 
     // Note that if a buffer for a descriptor is host accessible and

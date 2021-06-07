@@ -67,10 +67,9 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
       transfer_buffer->SetReadOnly(IsReadOnly());
       transfer_resources[amber_buffer] = std::move(transfer_buffer);
     } else {
-      auto& transfer_buffer = transfer_resources[amber_buffer];
       // Unset transfer buffer's read only property if needed.
-      if (!IsReadOnly() && transfer_resources[amber_buffer]->IsReadOnly()) {
-        transfer_buffer->SetReadOnly(false);
+      if (!IsReadOnly()) {
+        transfer_resources[amber_buffer]->SetReadOnly(false);
       }
     }
 

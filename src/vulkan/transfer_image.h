@@ -33,6 +33,7 @@ class TransferImage : public Resource {
                 const Format& format,
                 VkImageAspectFlags aspect,
                 VkImageType image_type,
+                VkImageUsageFlags image_usage_flags,
                 uint32_t x,
                 uint32_t y,
                 uint32_t z,
@@ -43,7 +44,7 @@ class TransferImage : public Resource {
   ~TransferImage() override;
 
   TransferImage* AsTransferImage() override { return this; }
-  Result Initialize(VkImageUsageFlags usage);
+  Result Initialize() override;
   VkImageView GetVkImageView() const { return view_; }
 
   void ImageBarrier(CommandBuffer* command_buffer,
