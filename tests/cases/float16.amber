@@ -13,9 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-INSTANCE_EXTENSION VK_KHR_get_physical_device_properties2
 DEVICE_EXTENSION VK_KHR_shader_float16_int8
+DEVICE_EXTENSION VK_KHR_16bit_storage
+DEVICE_EXTENSION VK_KHR_storage_buffer_storage_class
 DEVICE_FEATURE Float16Int8Features.shaderFloat16
+DEVICE_FEATURE Storage16BitFeatures.storageBuffer16BitAccess
 
 SHADER compute f16 GLSL
 #version 450

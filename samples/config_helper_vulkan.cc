@@ -762,21 +762,36 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       VkPhysicalDeviceFeatures();
 
   if (supports_get_physical_device_properties2_) {
-    VkPhysicalDeviceSubgroupSizeControlFeaturesEXT size_control =
-        VkPhysicalDeviceSubgroupSizeControlFeaturesEXT();
-    size_control.sType =
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT;
-    size_control.pNext = nullptr;
+    VkPhysicalDeviceSubgroupSizeControlFeaturesEXT
+        subgroup_size_control_features;
+    VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_features = {};
+    VkPhysicalDeviceFloat16Int8FeaturesKHR float16_int8_features = {};
+    VkPhysicalDevice8BitStorageFeaturesKHR storage_8bit_features = {};
+    VkPhysicalDevice16BitStorageFeaturesKHR storage_16bit_features = {};
 
-    VkPhysicalDeviceVariablePointerFeaturesKHR var_ptrs =
-        VkPhysicalDeviceVariablePointerFeaturesKHR();
-    var_ptrs.sType =
+    subgroup_size_control_features.sType =
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT;
+    subgroup_size_control_features.pNext = nullptr;
+
+    variable_pointers_features.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
-    var_ptrs.pNext = &size_control;
+    variable_pointers_features.pNext = &subgroup_size_control_features;
+
+    float16_int8_features.sType =
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
+    float16_int8_features.pNext = &variable_pointers_features;
+
+    storage_8bit_features.sType =
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR;
+    storage_8bit_features.pNext = &float16_int8_features;
+
+    storage_16bit_features.sType =
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR;
+    storage_16bit_features.pNext = &storage_8bit_features;
 
     VkPhysicalDeviceFeatures2KHR features2 = VkPhysicalDeviceFeatures2KHR();
     features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
-    features2.pNext = &var_ptrs;
+    features2.pNext = &storage_16bit_features;
 
     auto vkGetPhysicalDeviceFeatures2KHR =
         reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
@@ -794,13 +809,34 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       }
 
       if ((feature == kVariablePointers &&
-           var_ptrs.variablePointers == VK_FALSE) ||
+           variable_pointers_features.variablePointers == VK_FALSE) ||
           (feature == kVariablePointersStorageBuffer &&
-           var_ptrs.variablePointersStorageBuffer == VK_FALSE) ||
+           variable_pointers_features.variablePointersStorageBuffer ==
+               VK_FALSE) ||
           (feature == kSubgroupSizeControl &&
-           size_control.subgroupSizeControl == VK_FALSE) ||
+           subgroup_size_control_features.subgroupSizeControl == VK_FALSE) ||
           (feature == kComputeFullSubgroups &&
-           size_control.computeFullSubgroups == VK_FALSE)) {
+           subgroup_size_control_features.computeFullSubgroups == VK_FALSE) ||
+          (feature == kFloat16Int8_Float16 &&
+           float16_int8_features.shaderFloat16 == VK_FALSE) ||
+          (feature == kFloat16Int8_Int8 &&
+           float16_int8_features.shaderInt8 == VK_FALSE) ||
+          (feature == k8BitStorage_Storage &&
+           storage_8bit_features.storageBuffer8BitAccess == VK_FALSE) ||
+          (feature == k8BitStorage_UniformAndStorage &&
+           storage_8bit_features.uniformAndStorageBuffer8BitAccess ==
+               VK_FALSE) ||
+          (feature == k8BitStorage_PushConstant &&
+           storage_8bit_features.storagePushConstant8 == VK_FALSE) ||
+          (feature == k16BitStorage_Storage &&
+           storage_16bit_features.storageBuffer16BitAccess == VK_FALSE) ||
+          (feature == k16BitStorage_InputOutput &&
+           storage_16bit_features.storageInputOutput16 == VK_FALSE) ||
+          (feature == k16BitStorage_PushConstant &&
+           storage_16bit_features.storagePushConstant16 == VK_FALSE) ||
+          (feature == k16BitStorage_UniformAndStorage &&
+           storage_16bit_features.uniformAndStorageBuffer16BitAccess ==
+               VK_FALSE)) {
         return amber::Result("Device does not support all required features");
       }
     }
