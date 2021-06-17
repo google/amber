@@ -74,7 +74,11 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
     }
 
     // Update the buffer create flags.
-    transfer_resources[amber_buffer]->AsTransferBuffer()->AddUsageFlags(flags);
+    Result r =
+        transfer_resources[amber_buffer]->AsTransferBuffer()->AddUsageFlags(
+            flags);
+    if (!r.IsSuccess())
+      return r;
   }
   is_descriptor_set_update_needed_ = true;
 

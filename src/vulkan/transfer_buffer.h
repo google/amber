@@ -35,7 +35,15 @@ class TransferBuffer : public Resource {
   ~TransferBuffer() override;
 
   TransferBuffer* AsTransferBuffer() override { return this; }
-  void AddUsageFlags(VkBufferUsageFlags flags) { usage_flags_ |= flags; }
+  Result AddUsageFlags(VkBufferUsageFlags flags) {
+    if (buffer_ != VK_NULL_HANDLE) {
+      return Result(
+          "Vulkan: TransferBuffer::AddUsageFlags Usage flags can't be changed "
+          "after initializing the buffer.");
+    }
+    usage_flags_ |= flags;
+    return {};
+  }
   Result Initialize() override;
   const VkBufferView* GetVkBufferView() const { return &view_; }
 
