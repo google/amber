@@ -27,6 +27,7 @@
 #include "src/vulkan/buffer_backed_descriptor.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/push_constant.h"
+#include "src/vulkan/resource.h"
 
 namespace amber {
 
@@ -58,6 +59,11 @@ class Pipeline {
   /// Reads back the contents of resources of all descriptors to a
   /// buffer data object and put it into buffer data queue in host.
   Result ReadbackDescriptorsToHostDataQueue();
+
+  std::unordered_map<Buffer*, std::unique_ptr<Resource>>&
+  GetDescriptorTransferResources() {
+    return descriptor_transfer_resources_;
+  }
 
   void SetEntryPointName(VkShaderStageFlagBits stage,
                          const std::string& entry) {
@@ -115,10 +121,17 @@ class Pipeline {
   Result CreateDescriptorSetLayouts();
   Result CreateDescriptorPools();
   Result CreateDescriptorSets();
+  /// Adds a buffer used by a descriptor. The added buffers are be stored in
+  /// |descriptor_buffers_| vector in the order they are added.
+  Result AddDescriptorBuffer(Buffer* amber_buffer);
 
   PipelineType pipeline_type_;
   std::vector<DescriptorSetInfo> descriptor_set_info_;
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info_;
+  std::unordered_map<Buffer*, std::unique_ptr<Resource>>
+      descriptor_transfer_resources_;
+  /// Buffers used by descriptors (buffer descriptors and image descriptors).
+  std::vector<Buffer*> descriptor_buffers_;
 
   uint32_t fence_timeout_ms_ = 1000;
   bool descriptor_related_objects_already_created_ = false;

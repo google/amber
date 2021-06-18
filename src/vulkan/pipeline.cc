@@ -273,6 +273,18 @@ Result Pipeline::GetDescriptorSlot(uint32_t desc_set,
   return {};
 }
 
+Result Pipeline::AddDescriptorBuffer(Buffer* amber_buffer) {
+  // Don't add the buffer if it's already added.
+  const auto& buffer = std::find_if(
+      descriptor_buffers_.begin(), descriptor_buffers_.end(),
+      [&](const Buffer* buf) { return buf == amber_buffer; });
+  if (buffer != descriptor_buffers_.end()) {
+    return {};
+  }
+  descriptor_buffers_.push_back(amber_buffer);
+  return {};
+}
+
 Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
   if (cmd == nullptr)
     return Result("Pipeline::AddBufferDescriptor BufferCommand is nullptr");
@@ -319,7 +331,7 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
     if (is_image) {
       auto image_desc = MakeUnique<ImageDescriptor>(
           cmd->GetBuffer(), desc_type, device_, cmd->GetBaseMipLevel(),
-          cmd->GetDescriptorSet(), cmd->GetBinding());
+          cmd->GetDescriptorSet(), cmd->GetBinding(), this);
       if (cmd->IsCombinedImageSampler())
         image_desc->SetAmberSampler(cmd->GetSampler());
 
@@ -327,9 +339,10 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
     } else {
       auto buffer_desc = MakeUnique<BufferDescriptor>(
           cmd->GetBuffer(), desc_type, device_, cmd->GetDescriptorSet(),
-          cmd->GetBinding());
+          cmd->GetBinding(), this);
       descriptors.push_back(std::move(buffer_desc));
     }
+    AddDescriptorBuffer(cmd->GetBuffer());
     desc = descriptors.back().get();
   } else {
     if (desc->GetDescriptorType() != desc_type) {
@@ -338,6 +351,7 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
           "descriptor types");
     }
     desc->AsBufferBackedDescriptor()->AddAmberBuffer(cmd->GetBuffer());
+    AddDescriptorBuffer(cmd->GetBuffer());
   }
 
   if (cmd->IsUniformDynamic() || cmd->IsSSBODynamic())
@@ -409,6 +423,16 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
       }
     }
 
+    // Initialize transfer buffers / images.
+    for (auto buffer : descriptor_buffers_) {
+      if (descriptor_transfer_resources_.count(buffer) == 0) {
+        return Result(
+            "Vulkan: Pipeline::SendDescriptorDataToDeviceIfNeeded() "
+            "descriptor's transfer resource is not found");
+      }
+      descriptor_transfer_resources_[buffer]->Initialize();
+    }
+
     // Note that if a buffer for a descriptor is host accessible and
     // does not need to record a command to copy data to device, it
     // directly writes data to the buffer. The direct write must be
@@ -424,11 +448,27 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
   if (!guard.IsRecording())
     return guard.GetResult();
 
-  for (auto& info : descriptor_set_info_) {
-    for (auto& desc : info.descriptors) {
-      Result r = desc->RecordCopyDataToResourceIfNeeded(command_.get());
-      if (!r.IsSuccess())
-        return r;
+  // Copy descriptor data to transfer resources.
+  for (auto& buffer : descriptor_buffers_) {
+    if (auto transfer_buffer =
+            descriptor_transfer_resources_[buffer]->AsTransferBuffer()) {
+      BufferBackedDescriptor::RecordCopyBufferDataToTransferResourceIfNeeded(
+          GetCommandBuffer(), buffer, transfer_buffer);
+    } else if (auto transfer_image =
+                   descriptor_transfer_resources_[buffer]->AsTransferImage()) {
+      transfer_image->ImageBarrier(GetCommandBuffer(),
+                                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                   VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+      BufferBackedDescriptor::RecordCopyBufferDataToTransferResourceIfNeeded(
+          GetCommandBuffer(), buffer, transfer_image);
+
+      transfer_image->ImageBarrier(GetCommandBuffer(), VK_IMAGE_LAYOUT_GENERAL,
+                                   VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+    } else {
+      return Result(
+          "Vulkan: Pipeline::SendDescriptorDataToDeviceIfNeeded() "
+          "this should be unreachable");
     }
   }
   return guard.Submit(GetFenceTimeout());
@@ -472,14 +512,38 @@ void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
 }
 
 Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
+  // Record required commands to copy the data to a host visible buffer.
   {
     CommandBufferGuard guard(GetCommandBuffer());
     if (!guard.IsRecording())
       return guard.GetResult();
 
-    for (auto& desc_set : descriptor_set_info_) {
-      for (auto& desc : desc_set.descriptors)
-        desc->RecordCopyDataToHost(command_.get());
+    for (auto& buffer : descriptor_buffers_) {
+      if (descriptor_transfer_resources_.count(buffer) == 0) {
+        return Result(
+            "Vulkan: Pipeline::ReadbackDescriptorsToHostDataQueue() "
+            "descriptor's transfer resource is not found");
+      }
+      if (auto transfer_buffer =
+              descriptor_transfer_resources_[buffer]->AsTransferBuffer()) {
+        Result r = BufferBackedDescriptor::RecordCopyTransferResourceToHost(
+            GetCommandBuffer(), transfer_buffer);
+        if (!r.IsSuccess())
+          return r;
+      } else if (auto transfer_image = descriptor_transfer_resources_[buffer]
+                                           ->AsTransferImage()) {
+        transfer_image->ImageBarrier(GetCommandBuffer(),
+                                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                     VK_PIPELINE_STAGE_TRANSFER_BIT);
+        Result r = BufferBackedDescriptor::RecordCopyTransferResourceToHost(
+            GetCommandBuffer(), transfer_image);
+        if (!r.IsSuccess())
+          return r;
+      } else {
+        return Result(
+            "Vulkan: Pipeline::ReadbackDescriptorsToHostDataQueue() "
+            "this should be unreachable");
+      }
     }
 
     Result r = guard.Submit(GetFenceTimeout());
@@ -487,14 +551,15 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
       return r;
   }
 
-  for (auto& desc_set : descriptor_set_info_) {
-    for (auto& desc : desc_set.descriptors) {
-      Result r = desc->MoveResourceToBufferOutput();
-      if (!r.IsSuccess())
-        return r;
-    }
+  // Move data from transfer buffers to output buffers.
+  for (auto& buffer : descriptor_buffers_) {
+    auto& transfer_resource = descriptor_transfer_resources_[buffer];
+    Result r = BufferBackedDescriptor::MoveTransferResourceToBufferOutput(
+        transfer_resource.get(), buffer);
+    if (!r.IsSuccess())
+      return r;
   }
-
+  descriptor_transfer_resources_.clear();
   return {};
 }
 

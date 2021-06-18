@@ -29,65 +29,63 @@ BufferDescriptor::BufferDescriptor(Buffer* buffer,
                                    DescriptorType type,
                                    Device* device,
                                    uint32_t desc_set,
-                                   uint32_t binding)
-    : BufferBackedDescriptor(buffer, type, device, desc_set, binding) {}
+                                   uint32_t binding,
+                                   Pipeline* pipeline)
+    : BufferBackedDescriptor(buffer,
+                             type,
+                             device,
+                             desc_set,
+                             binding,
+                             pipeline) {}
 
 BufferDescriptor::~BufferDescriptor() = default;
 
 Result BufferDescriptor::CreateResourceIfNeeded() {
-  if (!transfer_buffers_.empty()) {
-    return Result(
-        "Vulkan: BufferDescriptor::CreateResourceIfNeeded() must be called "
-        "only when |transfer_buffers| is empty");
+  auto& transfer_resources = pipeline_->GetDescriptorTransferResources();
+
+  VkBufferUsageFlags flags =
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+  if (IsUniformBuffer() || IsUniformBufferDynamic()) {
+    flags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+  } else if (IsStorageBuffer() || IsStorageBufferDynamic()) {
+    flags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+  } else if (IsUniformTexelBuffer()) {
+    flags |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+  } else if (IsStorageTexelBuffer()) {
+    flags |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
+  } else {
+    return Result("Unexpected buffer type when deciding usage flags");
   }
+
+  for (const auto& amber_buffer : GetAmberBuffers()) {
+    // Create (but don't initialize) the transfer buffer if not already created.
+    if (transfer_resources.count(amber_buffer) == 0) {
+      auto size_in_bytes =
+          static_cast<uint32_t>(amber_buffer->ValuePtr()->size());
+      auto transfer_buffer = MakeUnique<TransferBuffer>(
+          device_, size_in_bytes, amber_buffer->GetFormat());
+      transfer_buffer->SetReadOnly(IsReadOnly());
+      transfer_resources[amber_buffer] = std::move(transfer_buffer);
+    } else {
+      // Unset transfer buffer's read only property if needed.
+      if (!IsReadOnly()) {
+        transfer_resources[amber_buffer]->SetReadOnly(false);
+      }
+    }
+
+    // Update the buffer create flags.
+    Result r =
+        transfer_resources[amber_buffer]->AsTransferBuffer()->AddUsageFlags(
+            flags);
+    if (!r.IsSuccess())
+      return r;
+  }
+  is_descriptor_set_update_needed_ = true;
 
   descriptor_offsets_.reserve(GetAmberBuffers().size());
   descriptor_ranges_.reserve(GetAmberBuffers().size());
 
-  for (const auto& amber_buffer : GetAmberBuffers()) {
-    if (amber_buffer->ValuePtr()->empty())
-      continue;
-
-    // Check if the transfer buffer is already created.
-    if (transfer_buffers_.count(amber_buffer) > 0)
-      continue;
-
-    auto size_in_bytes =
-        static_cast<uint32_t>(amber_buffer->ValuePtr()->size());
-
-    auto transfer_buffer = MakeUnique<TransferBuffer>(
-        device_, size_in_bytes, amber_buffer->GetFormat());
-
-    VkBufferUsageFlags flags =
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    if (IsUniformBuffer() || IsUniformBufferDynamic()) {
-      flags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    } else if (IsStorageBuffer() || IsStorageBufferDynamic()) {
-      flags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-    } else if (IsUniformTexelBuffer()) {
-      flags |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
-    } else if (IsStorageTexelBuffer()) {
-      flags |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
-    } else {
-      return Result("Unexpected buffer type when deciding usage flags");
-    }
-
-    Result r = transfer_buffer->Initialize(flags);
-    if (!r.IsSuccess())
-      return r;
-    transfer_buffers_[amber_buffer] = std::move(transfer_buffer);
-  }
-
-  is_descriptor_set_update_needed_ = true;
   return {};
-}
-
-Result BufferDescriptor::MoveResourceToBufferOutput() {
-  Result r = BufferBackedDescriptor::MoveResourceToBufferOutput();
-
-  transfer_buffers_.clear();
-
-  return r;
 }
 
 void BufferDescriptor::UpdateDescriptorSetIfNeeded(
@@ -100,7 +98,9 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
 
   // Create VkDescriptorBufferInfo for every descriptor buffer.
   for (uint32_t i = 0; i < GetAmberBuffers().size(); i++) {
-    const auto& buffer = transfer_buffers_[GetAmberBuffers()[i]];
+    const auto& buffer =
+        pipeline_->GetDescriptorTransferResources()[GetAmberBuffers()[i]]
+            ->AsTransferBuffer();
     assert(buffer->GetVkBuffer() && "Unexpected descriptor type");
     // Add buffer infos for uniform and storage buffers.
     if (IsUniformBuffer() || IsUniformBufferDynamic() || IsStorageBuffer() ||
@@ -144,24 +144,6 @@ void BufferDescriptor::UpdateDescriptorSetIfNeeded(
   device_->GetPtrs()->vkUpdateDescriptorSets(device_->GetVkDevice(), 1, &write,
                                              0, nullptr);
   is_descriptor_set_update_needed_ = false;
-}
-
-std::vector<std::pair<Buffer*, Resource*>> BufferDescriptor::GetResources() {
-  std::vector<std::pair<Buffer*, Resource*>> ret;
-  // Add unique amber buffers and related transfer buffers to the vector.
-  for (const auto& amber_buffer : GetAmberBuffers()) {
-    // Skip duplicate values.
-    const auto& image =
-        std::find_if(ret.begin(), ret.end(),
-                     [&](const std::pair<Buffer*, Resource*>& buffer) {
-                       return buffer.first == amber_buffer;
-                     });
-    if (image != ret.end())
-      continue;
-
-    ret.emplace_back(amber_buffer, transfer_buffers_[amber_buffer].get());
-  }
-  return ret;
 }
 
 }  // namespace vulkan

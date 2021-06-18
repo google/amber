@@ -31,6 +31,7 @@ namespace vulkan {
 class CommandBuffer;
 class Device;
 class BufferDescriptor;
+class ImageDescriptor;
 class BufferBackedDescriptor;
 class SamplerDescriptor;
 
@@ -57,16 +58,12 @@ class Descriptor {
 
   virtual void UpdateDescriptorSetIfNeeded(VkDescriptorSet descriptor_set) = 0;
   virtual Result CreateResourceIfNeeded() = 0;
-  virtual Result RecordCopyDataToResourceIfNeeded(CommandBuffer*) { return {}; }
-  virtual Result RecordCopyDataToHost(CommandBuffer*) { return {}; }
-  virtual Result MoveResourceToBufferOutput() { return {}; }
-  virtual Result SetSizeInElements(uint32_t) { return {}; }
-  virtual Result AddToBuffer(const std::vector<Value>&, uint32_t) { return {}; }
   virtual uint32_t GetDescriptorCount() { return 1; }
   virtual std::vector<uint32_t> GetDynamicOffsets() { return {}; }
   virtual std::vector<VkDeviceSize> GetDescriptorOffsets() { return {}; }
   virtual std::vector<VkDeviceSize> GetDescriptorRanges() { return {}; }
   virtual BufferDescriptor* AsBufferDescriptor() { return nullptr; }
+  virtual ImageDescriptor* AsImageDescriptor() { return nullptr; }
   virtual BufferBackedDescriptor* AsBufferBackedDescriptor() { return nullptr; }
   virtual SamplerDescriptor* AsSamplerDescriptor() { return nullptr; }
   uint32_t GetDescriptorSet() const { return descriptor_set_; }

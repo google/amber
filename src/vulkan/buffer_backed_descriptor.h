@@ -25,6 +25,7 @@
 #include "src/buffer.h"
 #include "src/engine.h"
 #include "src/vulkan/descriptor.h"
+#include "src/vulkan/pipeline.h"
 #include "src/vulkan/resource.h"
 
 namespace amber {
@@ -36,13 +37,19 @@ class BufferBackedDescriptor : public Descriptor {
                          DescriptorType type,
                          Device* device,
                          uint32_t desc_set,
-                         uint32_t binding);
+                         uint32_t binding,
+                         Pipeline* pipeline);
   ~BufferBackedDescriptor() override;
 
   Result CreateResourceIfNeeded() override { return {}; }
-  Result RecordCopyDataToResourceIfNeeded(CommandBuffer* command) override;
-  Result RecordCopyDataToHost(CommandBuffer* command) override;
-  Result MoveResourceToBufferOutput() override;
+  static Result RecordCopyBufferDataToTransferResourceIfNeeded(
+      CommandBuffer* command_buffer,
+      Buffer* buffer,
+      Resource* transfer_resource);
+  static Result RecordCopyTransferResourceToHost(CommandBuffer* command_buffer,
+                                                 Resource* transfer_resource);
+  static Result MoveTransferResourceToBufferOutput(Resource* transfer_resource,
+                                                   Buffer* buffer);
   uint32_t GetDescriptorCount() override {
     return static_cast<uint32_t>(amber_buffers_.size());
   }
@@ -52,10 +59,8 @@ class BufferBackedDescriptor : public Descriptor {
   bool IsReadOnly() const;
 
  protected:
-  /// Returns a list of unique transfer buffer resources. Note that this list
-  /// may contain less items than the |amber_buffers| vector contains if two or
-  /// more amber buffers use same Vulkan buffer.
-  virtual std::vector<std::pair<Buffer*, Resource*>> GetResources() = 0;
+  // Pipeline where this descriptor is attached to.
+  Pipeline* pipeline_;
 
  private:
   std::vector<Buffer*> amber_buffers_;

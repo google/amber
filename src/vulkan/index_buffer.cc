@@ -38,8 +38,12 @@ Result IndexBuffer::SendIndexData(CommandBuffer* command, Buffer* buffer) {
 
   transfer_buffer_ =
       MakeUnique<TransferBuffer>(device_, buffer->GetSizeInBytes(), nullptr);
-  Result r = transfer_buffer_->Initialize(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-                                          VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+  Result r = transfer_buffer_->AddUsageFlags(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+                                             VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+  if (!r.IsSuccess())
+    return r;
+
+  r = transfer_buffer_->Initialize();
   if (!r.IsSuccess())
     return r;
 

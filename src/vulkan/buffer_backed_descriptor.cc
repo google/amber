@@ -26,78 +26,64 @@ BufferBackedDescriptor::BufferBackedDescriptor(Buffer* buffer,
                                                DescriptorType type,
                                                Device* device,
                                                uint32_t desc_set,
-                                               uint32_t binding)
-    : Descriptor(type, device, desc_set, binding) {
+                                               uint32_t binding,
+                                               Pipeline* pipeline)
+    : Descriptor(type, device, desc_set, binding), pipeline_(pipeline) {
   AddAmberBuffer(buffer);
 }
 
 BufferBackedDescriptor::~BufferBackedDescriptor() = default;
 
-Result BufferBackedDescriptor::RecordCopyDataToResourceIfNeeded(
-    CommandBuffer* command) {
-  for (const auto& resource : GetResources()) {
-    if (!resource.first->ValuePtr()->empty()) {
-      resource.second->UpdateMemoryWithRawData(*resource.first->ValuePtr());
-      // If the resource is read-only, keep the buffer data; Amber won't copy
-      // read-only resources back into the host buffers, so it makes sense to
-      // leave the buffer intact.
-      if (!IsReadOnly())
-        resource.first->ValuePtr()->clear();
-    }
+Result BufferBackedDescriptor::RecordCopyBufferDataToTransferResourceIfNeeded(
+    CommandBuffer* command_buffer,
+    Buffer* buffer,
+    Resource* transfer_resource) {
+  transfer_resource->UpdateMemoryWithRawData(*buffer->ValuePtr());
+  // If the resource is read-only, keep the buffer data; Amber won't copy
+  // read-only resources back into the host buffers, so it makes sense to
+  // leave the buffer intact.
+  if (!transfer_resource->IsReadOnly())
+    buffer->ValuePtr()->clear();
 
-    resource.second->CopyToDevice(command);
-  }
+  transfer_resource->CopyToDevice(command_buffer);
   return {};
 }
 
-Result BufferBackedDescriptor::RecordCopyDataToHost(CommandBuffer* command) {
-  if (!IsReadOnly()) {
-    if (GetResources().empty()) {
-      return Result(
-          "Vulkan: BufferBackedDescriptor::RecordCopyDataToHost() no transfer "
-          "resources");
-    }
-
-    for (const auto& r : GetResources())
-      r.second->CopyToHost(command);
+Result BufferBackedDescriptor::RecordCopyTransferResourceToHost(
+    CommandBuffer* command_buffer,
+    Resource* transfer_resource) {
+  if (!transfer_resource->IsReadOnly()) {
+    transfer_resource->CopyToHost(command_buffer);
   }
 
   return {};
 }
 
-Result BufferBackedDescriptor::MoveResourceToBufferOutput() {
-  // No need to copy results of read only resources.
-  if (IsReadOnly())
+Result BufferBackedDescriptor::MoveTransferResourceToBufferOutput(
+    Resource* transfer_resource,
+    Buffer* buffer) {
+  // No need to move read only resources to an output buffer.
+  if (transfer_resource->IsReadOnly()) {
     return {};
+  }
 
-  auto resources = GetResources();
-
-  if (resources.empty()) {
+  void* resource_memory_ptr = transfer_resource->HostAccessibleMemoryPtr();
+  if (!resource_memory_ptr) {
     return Result(
-        "Vulkan: BufferBackedDescriptor::MoveResourceToBufferOutput() no "
-        "transfer resource");
+        "Vulkan: BufferBackedDescriptor::MoveTransferResourceToBufferOutput() "
+        "no host accessible memory pointer");
   }
 
-  for (const auto& resource : resources) {
-    void* resource_memory_ptr = resource.second->HostAccessibleMemoryPtr();
-    auto* buffer = resource.first;
-    if (!resource_memory_ptr) {
-      return Result(
-          "Vulkan: BufferBackedDescriptor::MoveResourceToBufferOutput() "
-          "no host accessible memory pointer");
-    }
-
-    if (!buffer->ValuePtr()->empty()) {
-      return Result(
-          "Vulkan: BufferBackedDescriptor::MoveResourceToBufferOutput() "
-          "output buffer is not empty");
-    }
-
-    auto size_in_bytes = resource.second->GetSizeInBytes();
-    buffer->SetElementCount(size_in_bytes / buffer->GetFormat()->SizeInBytes());
-    buffer->ValuePtr()->resize(size_in_bytes);
-    std::memcpy(buffer->ValuePtr()->data(), resource_memory_ptr, size_in_bytes);
+  if (!buffer->ValuePtr()->empty()) {
+    return Result(
+        "Vulkan: BufferBackedDescriptor::MoveTransferResourceToBufferOutput() "
+        "output buffer is not empty");
   }
+
+  auto size_in_bytes = transfer_resource->GetSizeInBytes();
+  buffer->SetElementCount(size_in_bytes / buffer->GetFormat()->SizeInBytes());
+  buffer->ValuePtr()->resize(size_in_bytes);
+  std::memcpy(buffer->ValuePtr()->data(), resource_memory_ptr, size_in_bytes);
 
   return {};
 }
