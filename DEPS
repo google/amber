@@ -15,7 +15,7 @@ vars = {
   'cpplint_revision': '26470f9ccb354ff2f6d098f831271a1833701b28',
   'dxc_revision': '9f771648e6feee85e70d3a92bd31ec053a4d82b3',
   'glslang_revision': '7f6559d2802d0653541060f0909e33d137b9c8ba',
-  'googletest_revision': '0555b0eacbc56df1fd762c6aa87bb84be9e4ce7e',
+  'googletest_revision': '5b40153003d1a5ad7b8f40cffcd09434afda3428',
   'json_revision': '350ff4f7ced7c4117eae2fb93df02823c8021fcb',
   'lodepng_revision': '7fdcc96a5e5864eee72911c3ca79b1d9f0d12292',
   'shaderc_revision': 'fadb0edb247a1daa74f9a206a27e9a1c0417ce49',
