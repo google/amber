@@ -18,14 +18,14 @@ SET ENGINE_DATA fence_timeout_ms 1000000
 VIRTUAL_FILE "compute.hlsl"
 
 [[vk::binding(0)]]
-StructuredBuffer<int> data;
+RWStructuredBuffer<int> data;
 
 [numthreads(1,1,1)]
 void main() {
-  const int a = data[0];
-  const int b = data[1];
-  const int c = data[2];
-  const int d = data[3];
+  int a = data[0];
+  int b = data[1];
+  int c = data[2];
+  int d = data[3];
   data[0] = a + b + c + d;
 }
 END
