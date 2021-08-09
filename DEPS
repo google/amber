@@ -8,6 +8,7 @@ vars = {
   'microsoft_git': 'https://github.com/Microsoft',
   'nlohmann_git': 'https://github.com/nlohmann',
   'swiftshader_git': 'https://swiftshader.googlesource.com',
+  'martinus_git': 'https://github.com/martinus',
 
   'clspv_llvm_revision': '8b754e2f756775c9ac20363753fc51d011f164db',
   'clspv_revision': '3970681ca8144e9a8d3cdd3f0d37c12465434211',
@@ -25,6 +26,7 @@ vars = {
   'vulkan_headers_revision': '9fe958cdabcaf87650a4517b27df1ec2034d051f',
   'vulkan_loader_revision': '4c901a731a63baf5e6049e1a976a6655fb83be01',
   'vulkan_validationlayers_revision': '28bd6d60be55549ce2c617b9c065d44dddf9f146',
+  'robin_hood_hashing_revision': '24b3f50f9532153edc23b29ae277dcccfd75a462',
 }
 
 deps = {
@@ -75,4 +77,7 @@ deps = {
 
   'third_party/vulkan-loader': Var('khronos_git') + '/Vulkan-Loader.git@' +
       Var('vulkan_loader_revision'),
+
+  'third_party/robin-hood-hashing': Var('martinus_git') + '/robin-hood-hashing.git@' +
+      Var('robin_hood_hashing_revision'),
 }

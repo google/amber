@@ -63,6 +63,8 @@ if (${AMBER_USE_LOCAL_VULKAN})
   message(STATUS "Amber: Disabling X11 support in Vulkan-Loader")
   set(BUILD_WSI_XLIB_SUPPORT OFF CACHE BOOL "" FORCE)
 
+  set(ROBIN_HOOD_HASHING_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/robin-hood-hashing" CACHE STRING "" FORCE)
+
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-loader)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-validationlayers)
 endif()
