@@ -15,7 +15,6 @@
 
 # Defined to use origin/master instead of origin/main
 clspv=1
-clspv_llvm=1
 cpplint=1
 dxc=1
 glslang=1
