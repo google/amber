@@ -114,7 +114,21 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name == "Storage16BitFeatures.storagePushConstant16" ||
          name == "Storage16BitFeatures.storageInputOutput16" ||
          name == "SubgroupSizeControl.subgroupSizeControl" ||
-         name == "SubgroupSizeControl.computeFullSubgroups";
+         name == "SubgroupSizeControl.computeFullSubgroups" ||
+         name == "SubgroupSupportedOperations.basic" ||
+         name == "SubgroupSupportedOperations.vote" ||
+         name == "SubgroupSupportedOperations.arithmetic" ||
+         name == "SubgroupSupportedOperations.ballot" ||
+         name == "SubgroupSupportedOperations.shuffle" ||
+         name == "SubgroupSupportedOperations.shuffleRelative" ||
+         name == "SubgroupSupportedOperations.clustered" ||
+         name == "SubgroupSupportedOperations.quad" ||
+         name == "SubgroupSupportedStages.vertex" ||
+         name == "SubgroupSupportedStages.tessellationControl" ||
+         name == "SubgroupSupportedStages.tessellationEvaluation" ||
+         name == "SubgroupSupportedStages.geometry" ||
+         name == "SubgroupSupportedStages.fragment" ||
+         name == "SubgroupSupportedStages.compute";
 }
 
 type::Type* Script::ParseType(const std::string& str) {

@@ -53,6 +53,36 @@ const char k16BitStorage_InputOutput[] =
 const char kSubgroupSizeControl[] = "SubgroupSizeControl.subgroupSizeControl";
 const char kComputeFullSubgroups[] = "SubgroupSizeControl.computeFullSubgroups";
 
+const char kSubgroupSupportedOperations[] = "SubgroupSupportedOperations";
+const char kSubgroupSupportedOperationsBasic[] =
+    "SubgroupSupportedOperations.basic";
+const char kSubgroupSupportedOperationsVote[] =
+    "SubgroupSupportedOperations.vote";
+const char kSubgroupSupportedOperationsArithmetic[] =
+    "SubgroupSupportedOperations.arithmetic";
+const char kSubgroupSupportedOperationsBallot[] =
+    "SubgroupSupportedOperations.ballot";
+const char kSubgroupSupportedOperationsShuffle[] =
+    "SubgroupSupportedOperations.shuffle";
+const char kSubgroupSupportedOperationsShuffleRelative[] =
+    "SubgroupSupportedOperations.shuffleRelative";
+const char kSubgroupSupportedOperationsClustered[] =
+    "SubgroupSupportedOperations.clustered";
+const char kSubgroupSupportedOperationsQuad[] =
+    "SubgroupSupportedOperations.quad";
+const char kSubgroupSupportedStages[] = "SubgroupSupportedStages";
+const char kSubgroupSupportedStagesVertex[] = "SubgroupSupportedStages.vertex";
+const char kSubgroupSupportedStagesTessellationControl[] =
+    "SubgroupSupportedStages.tessellationControl";
+const char kSubgroupSupportedStagesTessellationEvaluation[] =
+    "SubgroupSupportedStages.tessellationEvaluation";
+const char kSubgroupSupportedStagesGeometry[] =
+    "SubgroupSupportedStages.geometry";
+const char kSubgroupSupportedStagesFragment[] =
+    "SubgroupSupportedStages.fragment";
+const char kSubgroupSupportedStagesCompute[] =
+    "SubgroupSupportedStages.compute";
+
 struct BaseOutStructure {
   VkStructureType sType;
   void* pNext;
@@ -647,19 +677,157 @@ Result Device::Initialize(
       std::find(required_features.begin(), required_features.end(),
                 kSubgroupSizeControl) != required_features.end();
 
-  if (needs_subgroup_size_control) {
+  bool needs_subgroup_supported_operations = false;
+  bool needs_subgroup_supported_stages = false;
+
+  // Search for subgroup supported operations requirements.
+  for (const auto& feature : required_features)
+    if (feature.find(kSubgroupSupportedOperations) != std::string::npos)
+      needs_subgroup_supported_operations = true;
+
+  // Search for subgroup supported stages requirements.
+  for (const auto& feature : required_features)
+    if (feature.find(kSubgroupSupportedStages) != std::string::npos)
+      needs_subgroup_supported_stages = true;
+
+  const bool needs_subgroup_properties =
+      needs_subgroup_supported_operations || needs_subgroup_supported_stages;
+
+  if (needs_subgroup_size_control || needs_subgroup_properties) {
+    // Always chain all physical device properties structs in case at least one
+    // of them is needed.
     VkPhysicalDeviceProperties2 properties2 = {};
+    VkPhysicalDeviceSubgroupProperties subgroup_properties = {};
+    VkPhysicalDeviceVulkan11Properties vulkan11_properties = {};
+    VkSubgroupFeatureFlags subgroup_supported_operations;
+    VkShaderStageFlags subgroup_supported_stages;
     properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
     properties2.pNext = &subgroup_size_control_properties_;
     subgroup_size_control_properties_.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES_EXT;
+    if (SupportsApiVersion(1, 2, 0)) {
+      subgroup_size_control_properties_.pNext = &vulkan11_properties;
+      vulkan11_properties.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES;
+    } else {
+      subgroup_size_control_properties_.pNext = &subgroup_properties;
+      subgroup_properties.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
+    }
 
-    if (!SupportsApiVersion(1, 1, 0)) {
+    if (needs_subgroup_size_control && !SupportsApiVersion(1, 1, 0)) {
       return Result(
           "Vulkan: Device::Initialize subgroup size control feature also "
           "requires an API version of 1.1 or higher");
     }
+    if (needs_subgroup_properties && !SupportsApiVersion(1, 1, 0)) {
+      return Result(
+          "Vulkan: Device::Initialize subgroup properties also "
+          "requires an API version of 1.1 or higher");
+    }
     ptrs_.vkGetPhysicalDeviceProperties2(physical_device_, &properties2);
+
+    if (needs_subgroup_supported_operations) {
+      // Read supported subgroup operations from the correct struct depending on
+      // the device API
+      if (SupportsApiVersion(1, 2, 0)) {
+        subgroup_supported_operations =
+            vulkan11_properties.subgroupSupportedOperations;
+      } else {
+        subgroup_supported_operations = subgroup_properties.supportedOperations;
+      }
+
+      for (const auto& feature : required_features) {
+        if (feature == kSubgroupSupportedOperationsBasic &&
+            !(subgroup_supported_operations & VK_SUBGROUP_FEATURE_BASIC_BIT)) {
+          return amber::Result("Missing subgroup operation basic feature");
+        }
+        if (feature == kSubgroupSupportedOperationsVote &&
+            !(subgroup_supported_operations & VK_SUBGROUP_FEATURE_VOTE_BIT)) {
+          return amber::Result("Missing subgroup operation vote feature");
+        }
+        if (feature == kSubgroupSupportedOperationsArithmetic &&
+            !(subgroup_supported_operations &
+              VK_SUBGROUP_FEATURE_ARITHMETIC_BIT)) {
+          return amber::Result("Missing subgroup operation arithmetic feature");
+        }
+        if (feature == kSubgroupSupportedOperationsBallot &&
+            !(subgroup_supported_operations & VK_SUBGROUP_FEATURE_BALLOT_BIT)) {
+          return amber::Result("Missing subgroup operation ballot feature");
+        }
+        if (feature == kSubgroupSupportedOperationsShuffle &&
+            !(subgroup_supported_operations &
+              VK_SUBGROUP_FEATURE_SHUFFLE_BIT)) {
+          return amber::Result("Missing subgroup operation shuffle feature");
+        }
+        if (feature == kSubgroupSupportedOperationsShuffleRelative &&
+            !(subgroup_supported_operations &
+              VK_SUBGROUP_FEATURE_SHUFFLE_RELATIVE_BIT)) {
+          return amber::Result(
+              "Missing subgroup operation shuffle relative feature");
+        }
+        if (feature == kSubgroupSupportedOperationsClustered &&
+            !(subgroup_supported_operations &
+              VK_SUBGROUP_FEATURE_CLUSTERED_BIT)) {
+          return amber::Result("Missing subgroup operation clustered feature");
+        }
+        if (feature == kSubgroupSupportedOperationsQuad &&
+            !(subgroup_supported_operations & VK_SUBGROUP_FEATURE_QUAD_BIT)) {
+          return amber::Result("Missing subgroup operation quad feature");
+        }
+      }
+    }
+
+    if (needs_subgroup_supported_stages) {
+      // Read supported subgroup stages from the correct struct depending on the
+      // device API
+      if (SupportsApiVersion(1, 2, 0)) {
+        subgroup_supported_stages = vulkan11_properties.subgroupSupportedStages;
+      } else {
+        subgroup_supported_stages = subgroup_properties.supportedStages;
+      }
+
+      for (const auto& feature : required_features) {
+        if (feature == kSubgroupSupportedStagesVertex &&
+            !(subgroup_supported_stages &
+              VK_PIPELINE_STAGE_VERTEX_SHADER_BIT)) {
+          return amber::Result(
+              "Subgroup operations not supported for vertex shader stage");
+        }
+        if (feature == kSubgroupSupportedStagesTessellationControl &&
+            !(subgroup_supported_stages &
+              VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT)) {
+          return amber::Result(
+              "Subgroup operations not supported for tessellation control "
+              "shader stage");
+        }
+        if (feature == kSubgroupSupportedStagesTessellationEvaluation &&
+            !(subgroup_supported_stages &
+              VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT)) {
+          return amber::Result(
+              "Subgroup operations not supported for tessellation evaluation "
+              "shader stage");
+        }
+        if (feature == kSubgroupSupportedStagesGeometry &&
+            !(subgroup_supported_stages &
+              VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT)) {
+          return amber::Result(
+              "Subgroup operations not supported for geometry shader stage");
+        }
+        if (feature == kSubgroupSupportedStagesFragment &&
+            !(subgroup_supported_stages &
+              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)) {
+          return amber::Result(
+              "Subgroup operations not supported for fragment shader stage");
+        }
+        if (feature == kSubgroupSupportedStagesCompute &&
+            !(subgroup_supported_stages &
+              VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT)) {
+          return amber::Result(
+              "Subgroup operations not supported for compute shader stage");
+        }
+      }
+    }
   }
 
   return {};
