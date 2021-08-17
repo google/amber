@@ -48,6 +48,20 @@ with:
  * `Storage16BitFeatures.storageInputOutput16`
  * `SubgroupSizeControl.subgroupSizeControl`
  * `SubgroupSizeControl.computeFullSubgroups`
+ * `SubgroupSupportedOperations.basic`
+ * `SubgroupSupportedOperations.vote`
+ * `SubgroupSupportedOperations.arithmetic`
+ * `SubgroupSupportedOperations.ballot`
+ * `SubgroupSupportedOperations.shuffle`
+ * `SubgroupSupportedOperations.shuffleRelative`
+ * `SubgroupSupportedOperations.clustered`
+ * `SubgroupSupportedOperations.quad`
+ * `SubgroupSupportedStages.vertex`
+ * `SubgroupSupportedStages.tessellationControl`
+ * `SubgroupSupportedStages.tessellationEvaluation`
+ * `SubgroupSupportedStages.geometry`
+ * `SubgroupSupportedStages.fragment`
+ * `SubgroupSupportedStages.compute`
 
 
 Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
