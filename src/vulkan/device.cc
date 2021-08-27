@@ -789,40 +789,36 @@ Result Device::Initialize(
 
       for (const auto& feature : required_features) {
         if (feature == kSubgroupSupportedStagesVertex &&
-            !(subgroup_supported_stages &
-              VK_PIPELINE_STAGE_VERTEX_SHADER_BIT)) {
+            !(subgroup_supported_stages & VK_SHADER_STAGE_VERTEX_BIT)) {
           return amber::Result(
               "Subgroup operations not supported for vertex shader stage");
         }
         if (feature == kSubgroupSupportedStagesTessellationControl &&
             !(subgroup_supported_stages &
-              VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT)) {
+              VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)) {
           return amber::Result(
               "Subgroup operations not supported for tessellation control "
               "shader stage");
         }
         if (feature == kSubgroupSupportedStagesTessellationEvaluation &&
             !(subgroup_supported_stages &
-              VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT)) {
+              VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)) {
           return amber::Result(
               "Subgroup operations not supported for tessellation evaluation "
               "shader stage");
         }
         if (feature == kSubgroupSupportedStagesGeometry &&
-            !(subgroup_supported_stages &
-              VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT)) {
+            !(subgroup_supported_stages & VK_SHADER_STAGE_GEOMETRY_BIT)) {
           return amber::Result(
               "Subgroup operations not supported for geometry shader stage");
         }
         if (feature == kSubgroupSupportedStagesFragment &&
-            !(subgroup_supported_stages &
-              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)) {
+            !(subgroup_supported_stages & VK_SHADER_STAGE_FRAGMENT_BIT)) {
           return amber::Result(
               "Subgroup operations not supported for fragment shader stage");
         }
         if (feature == kSubgroupSupportedStagesCompute &&
-            !(subgroup_supported_stages &
-              VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT)) {
+            !(subgroup_supported_stages & VK_SHADER_STAGE_COMPUTE_BIT)) {
           return amber::Result(
               "Subgroup operations not supported for compute shader stage");
         }
