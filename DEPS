@@ -10,7 +10,7 @@ vars = {
   'swiftshader_git': 'https://swiftshader.googlesource.com',
   'martinus_git': 'https://github.com/martinus',
 
-  'clspv_llvm_revision': 'd4ce9e463d51b18547dbd181884046abf77c5c91',
+  'clspv_llvm_revision': 'ac312a9d7c03f0be53834d3f295f1971aaf54649',
   'clspv_revision': 'a6001ae61c7330e3b22a2acf6af6f4efd35de239',
   'cppdap_revision': '9a97ffce52445e2b5f353cd632be30108cf1859e',
   'cpplint_revision': '26470f9ccb354ff2f6d098f831271a1833701b28',
