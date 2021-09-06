@@ -12,7 +12,7 @@ vars = {
 
   'clspv_llvm_revision': 'd4ce9e463d51b18547dbd181884046abf77c5c91',
   'clspv_revision': '3970681ca8144e9a8d3cdd3f0d37c12465434211',
-  'cppdap_revision': 'be5b677c7b85b52f7570c572e99833514e754b62',
+  'cppdap_revision': '9a97ffce52445e2b5f353cd632be30108cf1859e',
   'cpplint_revision': '26470f9ccb354ff2f6d098f831271a1833701b28',
   'dxc_revision': '794ba5da1ad6bafe296455ca30117d4ccd05b689',
   'glslang_revision': 'e0f3fdf43385061a1e3a049208e98527ee6af4af',
