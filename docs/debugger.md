@@ -3,9 +3,7 @@
 This document describes Amber's shader debugger testing framework, which allows developers to write tests for Vulkan drivers that expose shader debugging functionality via the [Debug Adapter Protocol](https://microsoft.github.io/debug-adapter-protocol/).
 
 ---
-**Work In Progress**
-
-Note that shader debugging is very much work-in-progress:
+**Caveats**
 
 * Vulkan shader debugging currently does not have a formalized specification. A shader debugger implementation is being developed in [SwiftShader](https://swiftshader.googlesource.com/SwiftShader/), which one day may become a reference implementation for a formal specifiction.
 * Currently SwiftShader is the only Vulkan driver to implement a [DAP based shader debugger](https://swiftshader.googlesource.com/SwiftShader/+/refs/heads/master/docs/VulkanShaderDebugging.md). This implementation is also work-in-progress, and may significantly change.
