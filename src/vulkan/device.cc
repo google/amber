@@ -467,6 +467,7 @@ Result Device::Initialize(
   VkPhysicalDevice16BitStorageFeaturesKHR* storage16_ptrs = nullptr;
   VkPhysicalDeviceVulkan11Features* vulkan11_ptrs = nullptr;
   VkPhysicalDeviceVulkan12Features* vulkan12_ptrs = nullptr;
+  VkPhysicalDeviceVulkan13Features* vulkan13_ptrs = nullptr;
   VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*
       subgroup_size_control_features = nullptr;
   void* ptr = available_features2.pNext;
@@ -499,6 +500,9 @@ Result Device::Initialize(
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES:
         vulkan12_ptrs = static_cast<VkPhysicalDeviceVulkan12Features*>(ptr);
         break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES:
+          vulkan13_ptrs = static_cast<VkPhysicalDeviceVulkan13Features*>(ptr);
+          break;
       default:
         break;
     }
@@ -543,7 +547,7 @@ Result Device::Initialize(
           "Shader 8-bit storage requested but feature not returned");
     }
     if ((feature == kSubgroupSizeControl || feature == kComputeFullSubgroups) &&
-        subgroup_size_control_features == nullptr) {
+        subgroup_size_control_features == nullptr && vulkan13_ptrs == nullptr) {
       return amber::Result("Missing subgroup size control features");
     }
 
@@ -652,13 +656,25 @@ Result Device::Initialize(
       }
     }
 
-    if (feature == kSubgroupSizeControl &&
-        subgroup_size_control_features->subgroupSizeControl != VK_TRUE) {
-      return amber::Result("Missing subgroup size control feature");
-    }
-    if (feature == kComputeFullSubgroups &&
-        subgroup_size_control_features->computeFullSubgroups != VK_TRUE) {
-      return amber::Result("Missing compute full subgroups feature");
+    // If Vulkan 1.3 structure exists the features are set there.
+    if (vulkan13_ptrs) {
+        if (feature == kSubgroupSizeControl &&
+            vulkan13_ptrs->subgroupSizeControl != VK_TRUE) {
+          return amber::Result("Missing subgroup size control feature");
+        }
+        if (feature == kComputeFullSubgroups &&
+            vulkan13_ptrs->computeFullSubgroups != VK_TRUE) {
+          return amber::Result("Missing compute full subgroups feature");
+        }
+    } else {
+      if (feature == kSubgroupSizeControl &&
+          subgroup_size_control_features->subgroupSizeControl != VK_TRUE) {
+        return amber::Result("Missing subgroup size control feature");
+      }
+      if (feature == kComputeFullSubgroups &&
+          subgroup_size_control_features->computeFullSubgroups != VK_TRUE) {
+        return amber::Result("Missing compute full subgroups feature");
+      }
     }
   }
 
