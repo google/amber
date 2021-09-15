@@ -11,7 +11,7 @@ vars = {
   'martinus_git': 'https://github.com/martinus',
 
   'clspv_llvm_revision': 'd4ce9e463d51b18547dbd181884046abf77c5c91',
-  'clspv_revision': '3970681ca8144e9a8d3cdd3f0d37c12465434211',
+  'clspv_revision': 'a0d39a143135ce0a9610298b123ad1f8fb798132',
   'cppdap_revision': '5f3169421ebf151d5583252618a0631e23a89066',
   'cpplint_revision': '26470f9ccb354ff2f6d098f831271a1833701b28',
   'dxc_revision': '5fba0c36b35685bf54a08676f9cb9335bc846b26',
