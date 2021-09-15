@@ -20,7 +20,7 @@ vars = {
   'json_revision': '350ff4f7ced7c4117eae2fb93df02823c8021fcb',
   'lodepng_revision': '8c6a9e30576f07bf470ad6f09458a2dcd7a6a84a',
   'shaderc_revision': 'c42db5815fad0424f0f1311de1eec92cdd77203d',
-  'spirv_headers_revision': 'e7b49d7fb59808a650618e0a4008d4bae927e112',
+  'spirv_headers_revision': '635049b5e1451d846d5d307def8c78328aaeb342',
   'spirv_tools_revision': '706dc27a62d8138cfef11aa3fe9eae9fa5344636',
   'swiftshader_revision': 'b2af6a85583d1adf61033e82eaa5d067d764ece9',
   'vulkan_headers_revision': '9fe958cdabcaf87650a4517b27df1ec2034d051f',
