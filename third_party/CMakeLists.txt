@@ -175,4 +175,8 @@ if (${AMBER_ENABLE_CLSPV})
   set(LLVM_INCLUDE_UTILS OFF CACHE BOOL "")
 
   add_subdirectory(${AMBER_CLSPV_DIR} ${CMAKE_CURRENT_BINARY_DIR}/clspv)
+
+  # TODO(asuonpaa): Using the latest LLVM gives multiple warnings of using deprecated
+  # arguments. Remove this when CLSPV doesn't use them.
+  add_compile_options(clspv, NO_DEPRECATED_FLAGS)
 endif()
