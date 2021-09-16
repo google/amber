@@ -24,7 +24,6 @@ lodepng=1
 spirv_headers=1
 spirv_tools=1
 swiftshader=1
-vulkan_headers=1
 vulkan_loader=1
 vulkan_validationlayers=1
 
