@@ -96,6 +96,8 @@ SUPPRESSIONS_SWIFTSHADER = [
   # Unsupported depth/stencil formats
   "draw_rectangles_depth_test_d24s8.amber",
   "draw_rectangles_depth_test_x8d24.amber",
+  # Tessellation not supported
+  "tessellation_isolines.amber",
 ]
 
 OPENCL_CASES = [
