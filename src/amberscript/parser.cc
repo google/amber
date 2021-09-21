@@ -622,6 +622,8 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelineStencil(pipeline.get());
     } else if (tok == "SUBGROUP") {
       r = ParsePipelineSubgroup(pipeline.get());
+    } else if (tok == "PATCH_CONTROL_POINTS") {
+      r = ParsePipelinePatchControlPoints(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -929,6 +931,20 @@ Result Parser::ParsePipelineSubgroup(Pipeline* pipeline) {
   }
 
   return ValidateEndOfStatement("SUBGROUP command");
+}
+
+Result Parser::ParsePipelinePatchControlPoints(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (token->IsEOL() || token->IsEOS())
+    return Result(
+        "missing number of control points in PATCH_CONTROL_POINTS command");
+
+  if (!token->IsInteger())
+    return Result("expecting integer for the number of control points");
+
+  pipeline->GetPipelineData()->SetPatchControlPoints(token->AsUint32());
+
+  return ValidateEndOfStatement("PATCH_CONTROL_POINTS command");
 }
 
 Result Parser::ParsePipelineFramebufferSize(Pipeline* pipeline) {
