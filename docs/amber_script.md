@@ -442,7 +442,7 @@ The following commands are all specified within the `PIPELINE` command.
 ```
 
 ```groovy
-  # Set the number of patch control points used by tessellation.
+  # Set the number of patch control points used by tessellation. The default value is 3.
   PATCH_CONTROL_POINTS {control_points}
 ```
 
