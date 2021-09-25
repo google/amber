@@ -180,6 +180,9 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
         pipeline->GetDepthStencilBuffer(), engine_data.fence_timeout_ms,
         stage_create_info);
 
+    vk_pipeline->AsGraphics()->SetPatchControlPoints(
+        pipeline->GetPipelineData()->GetPatchControlPoints());
+
     r = vk_pipeline->AsGraphics()->Initialize(pipeline->GetFramebufferWidth(),
                                               pipeline->GetFramebufferHeight(),
                                               pool_.get());

@@ -61,6 +61,8 @@ END
   EXPECT_EQ(kShaderTypeFragment, shaders[1].GetShader()->GetType());
   EXPECT_EQ(static_cast<uint32_t>(0),
             shaders[1].GetShaderOptimizations().size());
+
+  EXPECT_EQ(pipelines[0]->GetPipelineData()->GetPatchControlPoints(), 3u);
 }
 
 TEST_F(AmberScriptParserTest, PipelineMissingEnd) {
@@ -539,6 +541,86 @@ END
 
   EXPECT_EQ(1u, s2[0].GetSpecialization().size());
   EXPECT_EQ(4u, s2[0].GetSpecialization().at(3));
+}
+
+TEST_F(AmberScriptParserTest, PipelinePatchControlPoints) {
+  std::string in = R"(
+DEVICE_FEATURE tessellationShader
+
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+SHADER tessellation_control my_tesc GLSL
+# GLSL Shader
+END
+
+SHADER tessellation_evaluation my_tese GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_tesc
+  ATTACH my_tese
+  ATTACH my_fragment
+
+  PATCH_CONTROL_POINTS 4
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  EXPECT_EQ(pipelines[0]->GetPipelineData()->GetPatchControlPoints(), 4u);
+}
+
+TEST_F(AmberScriptParserTest, PipelineDerivePatchControlPoints) {
+  std::string in = R"(
+DEVICE_FEATURE tessellationShader
+
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+SHADER tessellation_control my_tesc GLSL
+# GLSL Shader
+END
+
+SHADER tessellation_evaluation my_tese GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_tesc
+  ATTACH my_tese
+  ATTACH my_fragment
+
+  PATCH_CONTROL_POINTS 4
+END
+
+DERIVE_PIPELINE child_pipeline FROM my_pipeline
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(2U, pipelines.size());
+
+  EXPECT_EQ(pipelines[0]->GetPipelineData()->GetPatchControlPoints(), 4u);
+  EXPECT_EQ(pipelines[1]->GetPipelineData()->GetPatchControlPoints(), 4u);
 }
 
 }  // namespace amberscript

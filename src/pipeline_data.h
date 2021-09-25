@@ -178,6 +178,11 @@ class PipelineData {
   bool HasViewportData() const { return has_viewport_data; }
   const Viewport& GetViewport() const { return vp; }
 
+  void SetPatchControlPoints(uint32_t control_points) {
+    patch_control_points_ = control_points;
+  }
+  uint32_t GetPatchControlPoints() const { return patch_control_points_; }
+
  private:
   StencilOp front_fail_op_ = StencilOp::kKeep;
   StencilOp front_pass_op_ = StencilOp::kKeep;
@@ -233,6 +238,8 @@ class PipelineData {
 
   bool has_viewport_data = false;
   Viewport vp;
+
+  uint32_t patch_control_points_ = 3u;
 };
 
 }  // namespace amber

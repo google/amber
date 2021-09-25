@@ -1,0 +1,130 @@
+#!amber
+# Copyright 2021 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+DEVICE_FEATURE tessellationShader
+
+SHADER vertex vert GLSL
+#version 450
+
+layout (location = 0) in vec3 inPosition;
+
+void main(void)
+{
+    gl_Position = vec4(inPosition, 1.0);
+}
+END
+
+SHADER tessellation_control tesc GLSL
+#version 450
+
+layout (vertices = 4) out;
+
+void main(void)
+{
+    gl_TessLevelOuter[0] = 6.0;
+    gl_TessLevelOuter[1] = 2.0;
+
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+}
+END
+
+SHADER tessellation_evaluation tese GLSL
+#version 450
+
+layout (isolines, equal_spacing, cw) in;
+
+void main(void)
+{
+    vec4 p1 = mix(gl_in[0].gl_Position,
+            gl_in[1].gl_Position,
+            gl_TessCoord.x);
+
+    vec4 p2 = mix(gl_in[2].gl_Position,
+            gl_in[3].gl_Position,
+            gl_TessCoord.x);
+
+    gl_Position = mix(p1, p2, gl_TessCoord.y);
+}
+END
+
+SHADER fragment frag GLSL
+#version 450
+
+layout (location = 0) out vec4 outColor;
+
+void main(void)
+{
+    outColor = vec4(1, 0, 0, 1);
+}
+END
+
+SHADER compute comp_shader GLSL
+#version 450
+layout(local_size_x=10,local_size_y=10) in;
+uniform layout(set=0, binding=0, rgba8) image2D resultImage;
+
+layout(set = 0, binding = 1) buffer block0
+{
+    int counter;
+};
+
+void main()
+{
+    ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
+    vec4 color = imageLoad(resultImage, uv);
+    if(color.r > 0.0) atomicAdd(counter, 1);
+}
+END
+
+BUFFER vertexPosition DATA_TYPE vec3<float> DATA
+-1.0 -1.0  0.0
+ 1.0 -1.0  0.0
+-1.0  1.0  0.0
+ 1.0  1.0  0.0
+END
+
+BUFFER counter DATA_TYPE int32 DATA 0 END
+
+BUFFER framebuffer FORMAT B8G8R8A8_UNORM
+
+PIPELINE graphics pipeline
+  ATTACH vert
+  ATTACH tesc
+  ATTACH tese
+  ATTACH frag
+
+  PATCH_CONTROL_POINTS 4
+
+  FRAMEBUFFER_SIZE 100 100
+  VERTEX_DATA vertexPosition LOCATION 0
+  BIND BUFFER framebuffer AS color LOCATION 0
+END
+
+CLEAR_COLOR pipeline 0 0 0 255
+CLEAR pipeline
+
+RUN pipeline DRAW_ARRAY AS PATCH_LIST START_IDX 0 COUNT 4
+
+PIPELINE compute verify_pipeline
+  ATTACH comp_shader
+  BIND BUFFER framebuffer AS storage_image DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER counter AS storage DESCRIPTOR_SET 0 BINDING 1
+  FRAMEBUFFER_SIZE 100 100
+END
+
+# Count the number of red pixels as the line position might differ between implementations.
+RUN verify_pipeline 10 10 1
+
+EXPECT counter IDX 0 TOLERANCE 50 EQ 500
