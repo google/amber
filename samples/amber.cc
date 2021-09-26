@@ -447,7 +447,15 @@ std::string disassemble(const std::string& env,
 
 }  // namespace
 
+#ifdef AMBER_ANDROID_MAIN
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+int android_main(int argc, const char** argv) {
+#pragma clang diagnostic pop
+#else
 int main(int argc, const char** argv) {
+#endif
   std::vector<std::string> args(argv, argv + argc);
   Options options;
   SampleDelegate delegate;

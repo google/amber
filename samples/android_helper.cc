@@ -18,16 +18,20 @@
 #include <string>
 #include <vector>
 
-extern int main(int argc, const char** argv);
+extern int android_main(int argc, const char** argv);
 
-extern "C" JNIEXPORT JNICALL int Java_com_google_amber_Amber_androidMain(
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+
+extern "C" JNIEXPORT JNICALL int Java_com_google_amber_Amber_androidHelper(
     JNIEnv* env,
     jobject,
     jobjectArray args,
     jstring stdoutFile,
     jstring stderrFile) {
-  const char* stdout_file_cstr = env->GetStringUTFChars(stdoutFile, NULL);
-  const char* stderr_file_cstr = env->GetStringUTFChars(stderrFile, NULL);
+  const char* stdout_file_cstr = env->GetStringUTFChars(stdoutFile, nullptr);
+  const char* stderr_file_cstr = env->GetStringUTFChars(stderrFile, nullptr);
 
   // Redirect std output to a file
   freopen(stdout_file_cstr, "w", stdout);
@@ -43,7 +47,7 @@ extern "C" JNIEXPORT JNICALL int Java_com_google_amber_Amber_androidMain(
 
   for (jsize i = 0; i < arg_count; i++) {
     jstring js = static_cast<jstring>(env->GetObjectArrayElement(args, i));
-    const char* arg_cstr = env->GetStringUTFChars(js, NULL);
+    const char* arg_cstr = env->GetStringUTFChars(js, nullptr);
     argv_string.push_back(arg_cstr);
     env->ReleaseStringUTFChars(js, arg_cstr);
   }
@@ -53,5 +57,7 @@ extern "C" JNIEXPORT JNICALL int Java_com_google_amber_Amber_androidMain(
   for (const std::string& arg : argv_string)
     argv.push_back(arg.c_str());
 
-  return main(argv.size(), argv.data());
+  return android_main(static_cast<int>(argv.size()), argv.data());
 }
+
+#pragma clang diagnostic pop

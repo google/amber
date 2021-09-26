@@ -19,5 +19,5 @@ public class Amber {
     System.loadLibrary("amber_ndk");
   }
 
-  public static native int androidMain(String[] args, String stdout_file, String stderr_file);
+  public static native int androidHelper(String[] args, String stdout_file, String stderr_file);
 }
