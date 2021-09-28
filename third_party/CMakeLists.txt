@@ -52,24 +52,28 @@ endif()
 if (${AMBER_USE_LOCAL_VULKAN})
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-headers)
 
-  set(BUILD_TESTS FALSE)
+  # Skip adding the validation layers and the Vulkan loader on Android.
+  if (NOT ANDROID)
 
-  # The vulkan-loader CMake file assumes that directory exists if
-  # Wayland support is to be built.
-  if(NOT EXISTS ${WAYLAND_CLIENT_INCLUDE_DIR})
-    message(STATUS "Amber: Disabling Wayland support in Vulkan-Loader")
-    set(BUILD_WSI_WAYLAND_SUPPORT OFF CACHE BOOL "" FORCE)
+    set(BUILD_TESTS FALSE)
+
+    # The vulkan-loader CMake file assumes that directory exists if
+    # Wayland support is to be built.
+    if(NOT EXISTS ${WAYLAND_CLIENT_INCLUDE_DIR})
+      message(STATUS "Amber: Disabling Wayland support in Vulkan-Loader")
+      set(BUILD_WSI_WAYLAND_SUPPORT OFF CACHE BOOL "" FORCE)
+    endif()
+    message(STATUS "Amber: Disabling X11 support in Vulkan-Loader")
+    set(BUILD_WSI_XLIB_SUPPORT OFF CACHE BOOL "" FORCE)
+
+    set(ROBIN_HOOD_HASHING_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/robin-hood-hashing" CACHE STRING "" FORCE)
+
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-loader)
+    if (MSVC)
+      option(BUILD_WERROR "Treat compiler warnings as errors" OFF)
+    endif()
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-validationlayers)
   endif()
-  message(STATUS "Amber: Disabling X11 support in Vulkan-Loader")
-  set(BUILD_WSI_XLIB_SUPPORT OFF CACHE BOOL "" FORCE)
-
-  set(ROBIN_HOOD_HASHING_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/robin-hood-hashing" CACHE STRING "" FORCE)
-
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-loader)
-  if (MSVC)
-    option(BUILD_WERROR "Treat compiler warnings as errors" OFF)
-  endif()
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-validationlayers)
 endif()
 
 if (${AMBER_ENABLE_VK_DEBUGGING})

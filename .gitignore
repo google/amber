@@ -26,5 +26,5 @@ third_party/robin-hood-hashing
 [._]*.s[a-w][a-z]
 
 # C-Lion
-.idea
-cmake-build-debug
+.idea/
+cmake-build-*/

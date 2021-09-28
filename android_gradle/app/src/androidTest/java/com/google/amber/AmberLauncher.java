@@ -54,7 +54,7 @@ public class AmberLauncher {
     String stdout_file = args.getString("stdout", new File(outputDir, "amber_stdout.txt").toString());
     String stderr_file = args.getString("stderr", new File(outputDir, "amber_stderr.txt").toString());
 
-    int res = Amber.androidMain(args_list.toArray(new String[0]), stdout_file, stderr_file);
+    int res = Amber.androidHelper(args_list.toArray(new String[0]), stdout_file, stderr_file);
 
     // If the process crashes during the above call or we call System.exit below, the output
     // from `adb shell am instrument ...` will be:
