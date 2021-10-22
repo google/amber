@@ -758,12 +758,28 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
     const VkPhysicalDevice physical_device,
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions) {
+  available_device_extensions_ = GetAvailableDeviceExtensions(physical_device);
+  if (!AreAllExtensionsSupported(available_device_extensions_,
+                                 required_extensions)) {
+    return amber::Result("Device does not support all required extensions");
+  }
+  for (const auto& ext : available_device_extensions_) {
+    if (ext == "VK_KHR_shader_float16_int8")
+      supports_shader_float16_int8_ = true;
+    else if (ext == "VK_KHR_8bit_storage")
+      supports_shader_8bit_storage_ = true;
+    else if (ext == "VK_KHR_16bit_storage")
+      supports_shader_16bit_storage_ = true;
+    else if (ext == "VK_EXT_subgroup_size_control")
+      supports_subgroup_size_control_ = true;
+  }
+
   VkPhysicalDeviceFeatures required_vulkan_features =
       VkPhysicalDeviceFeatures();
 
   if (supports_get_physical_device_properties2_) {
     VkPhysicalDeviceSubgroupSizeControlFeaturesEXT
-        subgroup_size_control_features;
+        subgroup_size_control_features = {};
     VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_features = {};
     VkPhysicalDeviceFloat16Int8FeaturesKHR float16_int8_features = {};
     VkPhysicalDevice8BitStorageFeaturesKHR storage_8bit_features = {};
@@ -773,9 +789,13 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT;
     subgroup_size_control_features.pNext = nullptr;
 
+    // Add subgroup size control struct into the chain only if
+    // VK_EXT_subgroup_size_control is supported.
     variable_pointers_features.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
-    variable_pointers_features.pNext = &subgroup_size_control_features;
+    variable_pointers_features.pNext = supports_subgroup_size_control_
+                                           ? &subgroup_size_control_features
+                                           : nullptr;
 
     float16_int8_features.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
@@ -857,22 +877,6 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
   if (!AreAllRequiredFeaturesSupported(available_features_,
                                        required_vulkan_features)) {
     return amber::Result("Device does not support all required features");
-  }
-
-  available_device_extensions_ = GetAvailableDeviceExtensions(physical_device);
-  if (!AreAllExtensionsSupported(available_device_extensions_,
-                                 required_extensions)) {
-    return amber::Result("Device does not support all required extensions");
-  }
-  for (const auto& ext : available_device_extensions_) {
-    if (ext == "VK_KHR_shader_float16_int8")
-      supports_shader_float16_int8_ = true;
-    else if (ext == "VK_KHR_8bit_storage")
-      supports_shader_8bit_storage_ = true;
-    else if (ext == "VK_KHR_16bit_storage")
-      supports_shader_16bit_storage_ = true;
-    else if (ext == "VK_EXT_subgroup_size_control")
-      supports_subgroup_size_control_ = true;
   }
 
   vulkan_queue_family_index_ = ChooseQueueFamilyIndex(physical_device);
