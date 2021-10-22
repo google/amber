@@ -202,7 +202,6 @@ endif()
 function(amber_default_compile_options TARGET)
   if (${COMPILER_IS_LIKE_GNU})
     target_compile_options(${TARGET} PRIVATE
-      -std=c++11
       -fno-exceptions
       -fvisibility=hidden
       -Wall
@@ -230,7 +229,6 @@ function(amber_default_compile_options TARGET)
   endif()
 
   if (MSVC)
-    # Specify /EHs for exception handling.
     target_compile_options(${TARGET} PRIVATE
       /bigobj
       /EHsc
@@ -266,6 +264,6 @@ endfunction()
 add_subdirectory(third_party)
 add_subdirectory(src)
 
-if (${AMBER_ENABLE_SAMPLES} AND NOT ANDROID)
+if (${AMBER_ENABLE_SAMPLES})
   add_subdirectory(samples)
 endif()

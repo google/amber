@@ -64,6 +64,7 @@ class Parser : public amber::Parser {
   Result ParsePipelineShaderOptimizations(Pipeline*);
   Result ParsePipelineShaderCompileOptions(Pipeline*);
   Result ParsePipelineSubgroup(Pipeline* pipeline);
+  Result ParsePipelinePatchControlPoints(Pipeline* pipeline);
   Result ParsePipelineFramebufferSize(Pipeline*);
   Result ParsePipelineViewport(Pipeline*);
   Result ParsePipelineBind(Pipeline*);
