@@ -43,6 +43,13 @@ target_include_directories(libamberenginevulkan PRIVATE "${CMAKE_BINARY_DIR}")
 # Add the Vulkan include directory to the list of include paths.
 target_include_directories(libamberenginevulkan PRIVATE "${VulkanHeaders_INCLUDE_DIR}")
 
+# When building with dEQP Vulkan CTS the inl files needs to be included and a dependency 
+# must be added to the target `deqp-vk-inl` that generates the inl files.
+if (${VULKAN_CTS_HEADER} AND DEFINED AMBER_CTS_INL_DIR)
+    target_include_directories(libamberenginevulkan PRIVATE "${AMBER_CTS_INL_DIR}")
+    add_dependencies(libamberenginevulkan deqp-vk-inl)
+endif()
+
 set_target_properties(libamberenginevulkan PROPERTIES
     OUTPUT_NAME "amberenginevulkan"
 )
@@ -52,7 +59,7 @@ endif()
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
   # vulkan/vulkan.h defines VK_NULL_HANDLE as 0u and that also serves as a null pointer.
-  # Disable Clang's warning that will alwaays fire on that.  This is required to build
+  # Disable Clang's warning that will always fire on that. This is required to build
   # with XCode 10.
   target_compile_options(libamberenginevulkan PRIVATE -Wno-zero-as-null-pointer-constant)
 endif()
