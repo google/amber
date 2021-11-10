@@ -35,8 +35,8 @@ FrameBuffer::FrameBuffer(
     uint32_t height)
     : device_(device),
       color_attachments_(color_attachments),
-      depth_stencil_attachment_(depth_stencil_attachment),
       resolve_targets_(resolve_targets),
+      depth_stencil_attachment_(depth_stencil_attachment),
       width_(width),
       height_(height) {}
 
