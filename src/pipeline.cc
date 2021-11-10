@@ -389,6 +389,18 @@ Result Pipeline::AddColorAttachment(Buffer* buf,
   return {};
 }
 
+Result Pipeline::AddResolveTarget(Buffer* buf) {
+  resolve_targets_.push_back(BufferInfo{buf});
+
+  auto& info = resolve_targets_.back();
+  info.type = BufferType::kResolve;
+  buf->SetWidth(fb_width_);
+  buf->SetHeight(fb_height_);
+  buf->SetElementCount(fb_width_ * fb_height_);
+
+  return {};
+}
+
 Result Pipeline::GetLocationForColorAttachment(Buffer* buf,
                                                uint32_t* loc) const {
   for (const auto& info : color_attachments_) {

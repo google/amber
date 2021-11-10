@@ -840,6 +840,7 @@ bool Device::IsFormatSupportedByPhysicalDevice(const Format& format,
   bool is_buffer_type_image = false;
   switch (type) {
     case BufferType::kColor:
+    case BufferType::kResolve:
     case BufferType::kStorageImage:
       flag = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
       is_buffer_type_image = true;

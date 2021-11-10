@@ -43,6 +43,7 @@ class GraphicsPipeline : public Pipeline {
       Device* device,
       const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
       amber::Pipeline::BufferInfo depth_stencil_buffer,
+      const std::vector<amber::Pipeline::BufferInfo>& resolve_targets,
       uint32_t fence_timeout_ms,
       const std::vector<VkPipelineShaderStageCreateInfo>&);
   ~GraphicsPipeline() override;
@@ -86,8 +87,9 @@ class GraphicsPipeline : public Pipeline {
   VkRenderPass render_pass_ = VK_NULL_HANDLE;
   std::unique_ptr<FrameBuffer> frame_;
 
-  // color buffers are owned by the amber::Pipeline.
+  // color buffers and resolve targets are owned by the amber::Pipeline.
   std::vector<const amber::Pipeline::BufferInfo*> color_buffers_;
+  std::vector<const amber::Pipeline::BufferInfo*> resolve_targets_;
   amber::Pipeline::BufferInfo depth_stencil_buffer_;
   std::unique_ptr<IndexBuffer> index_buffer_;
 

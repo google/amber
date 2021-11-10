@@ -177,8 +177,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   } else {
     vk_pipeline = MakeUnique<GraphicsPipeline>(
         device_.get(), pipeline->GetColorAttachments(),
-        pipeline->GetDepthStencilBuffer(), engine_data.fence_timeout_ms,
-        stage_create_info);
+        pipeline->GetDepthStencilBuffer(), pipeline->GetResolveTargets(),
+        engine_data.fence_timeout_ms, stage_create_info);
 
     vk_pipeline->AsGraphics()->SetPatchControlPoints(
         pipeline->GetPipelineData()->GetPatchControlPoints());
