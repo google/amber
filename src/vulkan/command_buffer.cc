@@ -108,7 +108,6 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
 
 void CommandBuffer::Reset() {
   if (guarded_) {
-    device_->GetPtrs()->vkEndCommandBuffer(command_);
     device_->GetPtrs()->vkResetCommandBuffer(command_, 0);
     guarded_ = false;
   }
