@@ -555,9 +555,9 @@ contain image attachment content, depth/stencil content, uniform buffers, etc.
   # pipelines.
   BIND BUFFER {buffer_name} AS depth_stencil
 
-  # Attach |buffer_name| as a multisample resolve target. Each color attachment
-  # with more than one sample must have a corresponding single sample resolve
-  # target image.
+  # Attach |buffer_name| as a multisample resolve target. The order of resolve
+  # target images match with the order of color attachments that have more than
+  # one sample.
   BIND BUFFER {buffer_name} AS resolve
 
   # Attach |buffer_name| as the push_constant buffer. There can be only one
