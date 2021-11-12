@@ -1,0 +1,50 @@
+#!amber
+# Copyright 2021 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+DEVICE_FEATURE sampleRateShading
+
+SHADER vertex vert_shader PASSTHROUGH
+
+SHADER fragment frag_shader GLSL
+#version 440
+layout(location = 0) out vec4 color;
+
+void main (void)
+{
+    if (gl_SampleID == 0)
+        color = vec4(1, 0, 0, 1);
+    else if (gl_SampleID == 1)
+        color = vec4(0, 1, 0, 1);
+    else if (gl_SampleID == 2)
+        color = vec4(0, 0, 1, 1);
+    else 
+        color = vec4(1, 1, 1, 1);
+}
+END
+
+IMAGE framebuffer_ms FORMAT R8G8B8A8_UNORM DIM_2D WIDTH 64 HEIGHT 64 SAMPLES 4
+IMAGE framebuffer FORMAT R8G8B8A8_UNORM DIM_2D WIDTH 64 HEIGHT 64
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  FRAMEBUFFER_SIZE 64 64
+  BIND BUFFER framebuffer_ms AS color LOCATION 0
+  BIND BUFFER framebuffer AS resolve
+END
+
+RUN pipeline DRAW_RECT POS 0 0 SIZE 64 64
+
+EXPECT framebuffer IDX 0 0 SIZE 64 64 EQ_RGBA 128 128 128 255 TOLERANCE 5%

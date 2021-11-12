@@ -3508,5 +3508,132 @@ END
             r.Error());
 }
 
+TEST_F(AmberScriptParserTest, BindResolveTarget) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+IMAGE my_fb_ms DIM_2D WIDTH 64 HEIGHT 64 FORMAT R32G32B32A32_SFLOAT SAMPLES 4
+IMAGE my_fb DIM_2D WIDTH 64 HEIGHT 64 FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  FRAMEBUFFER_SIZE 64 64
+  BIND BUFFER my_fb_ms AS color LOCATION 0
+  BIND BUFFER my_fb AS resolve
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& resolve_targets = pipeline->GetResolveTargets();
+  ASSERT_EQ(1U, resolve_targets.size());
+
+  const auto& buf_info = resolve_targets[0];
+  ASSERT_TRUE(buf_info.buffer != nullptr);
+  EXPECT_EQ(64u * 64u, buf_info.buffer->ElementCount());
+  EXPECT_EQ(64u * 64u * 4u, buf_info.buffer->ValueCount());
+  EXPECT_EQ(64u * 64u * 4u * sizeof(float), buf_info.buffer->GetSizeInBytes());
+}
+
+TEST_F(AmberScriptParserTest, BindResolveTargetMissingBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+BUFFER my_fb FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  BIND BUFFER AS resolve
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: unknown buffer: AS", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindResolveTargetNonDeclaredBuffer) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+IMAGE my_fb_ms DIM_2D WIDTH 64 HEIGHT 64 FORMAT R32G32B32A32_SFLOAT SAMPLES 4
+
+PIPELINE graphics my_pipeline
+ATTACH my_shader
+ATTACH my_fragment
+
+FRAMEBUFFER_SIZE 64 64
+BIND BUFFER my_fb_ms AS color LOCATION 0
+BIND BUFFER my_fb AS resolve
+END)";
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("14: unknown buffer: my_fb", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, BindMultipleResolveTargets) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+IMAGE my_fb_ms0 DIM_2D WIDTH 64 HEIGHT 64 FORMAT R32G32B32A32_SFLOAT SAMPLES 4
+IMAGE my_fb_ms1 DIM_2D WIDTH 64 HEIGHT 64 FORMAT R32G32B32A32_SFLOAT SAMPLES 4
+IMAGE my_fb_ms2 DIM_2D WIDTH 64 HEIGHT 64 FORMAT R32G32B32A32_SFLOAT SAMPLES 4
+IMAGE my_fb0 DIM_2D WIDTH 64 HEIGHT 64 FORMAT R32G32B32A32_SFLOAT
+IMAGE my_fb1 DIM_2D WIDTH 64 HEIGHT 64 FORMAT R32G32B32A32_SFLOAT
+IMAGE my_fb2 DIM_2D WIDTH 64 HEIGHT 64 FORMAT R32G32B32A32_SFLOAT
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  FRAMEBUFFER_SIZE 64 64
+  BIND BUFFER my_fb_ms0 AS color LOCATION 0
+  BIND BUFFER my_fb_ms1 AS color LOCATION 1
+  BIND BUFFER my_fb_ms2 AS color LOCATION 2
+  BIND BUFFER my_fb0 AS resolve
+  BIND BUFFER my_fb1 AS resolve
+  BIND BUFFER my_fb2 AS resolve
+END)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  const auto* pipeline = pipelines[0].get();
+  const auto& resolve_targets = pipeline->GetResolveTargets();
+  ASSERT_EQ(3U, resolve_targets.size());
+
+  for (const auto& buf_info : resolve_targets) {
+    ASSERT_TRUE(buf_info.buffer != nullptr);
+    EXPECT_EQ(64u * 64u, buf_info.buffer->ElementCount());
+    EXPECT_EQ(64u * 64u * 4u, buf_info.buffer->ValueCount());
+    EXPECT_EQ(64u * 64u * 4u * sizeof(float),
+              buf_info.buffer->GetSizeInBytes());
+  }
+}
+
 }  // namespace amberscript
 }  // namespace amber

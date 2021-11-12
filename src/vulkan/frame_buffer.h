@@ -34,6 +34,7 @@ class FrameBuffer {
       Device* device,
       const std::vector<const amber::Pipeline::BufferInfo*>& color_attachments,
       amber::Pipeline::BufferInfo depth_stencil_attachment,
+      const std::vector<const amber::Pipeline::BufferInfo*>& resolve_targets,
       uint32_t width,
       uint32_t height);
   ~FrameBuffer();
@@ -70,9 +71,11 @@ class FrameBuffer {
 
   Device* device_ = nullptr;
   std::vector<const amber::Pipeline::BufferInfo*> color_attachments_;
+  std::vector<const amber::Pipeline::BufferInfo*> resolve_targets_;
   amber::Pipeline::BufferInfo depth_stencil_attachment_;
   VkFramebuffer frame_ = VK_NULL_HANDLE;
   std::vector<std::unique_ptr<TransferImage>> color_images_;
+  std::vector<std::unique_ptr<TransferImage>> resolve_images_;
   std::unique_ptr<TransferImage> depth_stencil_image_;
   uint32_t width_ = 0;
   uint32_t height_ = 0;

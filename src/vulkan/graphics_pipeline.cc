@@ -386,6 +386,7 @@ GraphicsPipeline::GraphicsPipeline(
     Device* device,
     const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
     amber::Pipeline::BufferInfo depth_stencil_buffer,
+    const std::vector<amber::Pipeline::BufferInfo>& resolve_targets,
     uint32_t fence_timeout_ms,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : Pipeline(PipelineType::kGraphics,
@@ -395,6 +396,8 @@ GraphicsPipeline::GraphicsPipeline(
       depth_stencil_buffer_(depth_stencil_buffer) {
   for (const auto& info : color_buffers)
     color_buffers_.push_back(&info);
+  for (const auto& info : resolve_targets)
+    resolve_targets_.push_back(&info);
 }
 
 GraphicsPipeline::~GraphicsPipeline() {
@@ -412,6 +415,7 @@ Result GraphicsPipeline::CreateRenderPass() {
 
   std::vector<VkAttachmentReference> color_refer;
   VkAttachmentReference depth_refer = VkAttachmentReference();
+  std::vector<VkAttachmentReference> resolve_refer;
 
   for (const auto* info : color_buffers_) {
     attachment_desc.push_back(kDefaultAttachmentDesc);
@@ -421,6 +425,8 @@ Result GraphicsPipeline::CreateRenderPass() {
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     attachment_desc.back().finalLayout =
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    attachment_desc.back().samples =
+        static_cast<VkSampleCountFlagBits>(info->buffer->GetSamples());
 
     VkAttachmentReference ref = VkAttachmentReference();
     ref.attachment = static_cast<uint32_t>(attachment_desc.size() - 1);
@@ -445,6 +451,23 @@ Result GraphicsPipeline::CreateRenderPass() {
 
     subpass_desc.pDepthStencilAttachment = &depth_refer;
   }
+
+  for (const auto* info : resolve_targets_) {
+    attachment_desc.push_back(kDefaultAttachmentDesc);
+    attachment_desc.back().format =
+        device_->GetVkFormat(*info->buffer->GetFormat());
+    attachment_desc.back().initialLayout =
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    attachment_desc.back().finalLayout =
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference ref = VkAttachmentReference();
+    ref.attachment = static_cast<uint32_t>(attachment_desc.size() - 1);
+    ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    resolve_refer.push_back(ref);
+  }
+
+  subpass_desc.pResolveAttachments = resolve_refer.data();
 
   VkRenderPassCreateInfo render_pass_info = VkRenderPassCreateInfo();
   render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -621,6 +644,16 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
       VK_FALSE,                       /* alphaToOneEnable */
   };
 
+  // Search for multisampled color buffers and adjust the rasterization samples
+  // to match.
+  for (const auto& cb : color_buffers_) {
+    uint32_t samples = cb->buffer->GetSamples();
+    assert(static_cast<VkSampleCountFlagBits>(samples) >=
+           multisampleInfo.rasterizationSamples);
+    multisampleInfo.rasterizationSamples =
+        static_cast<VkSampleCountFlagBits>(samples);
+  }
+
   VkGraphicsPipelineCreateInfo pipeline_info = VkGraphicsPipelineCreateInfo();
   pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipeline_info.stageCount = static_cast<uint32_t>(shader_stage_info.size());
@@ -704,8 +737,9 @@ Result GraphicsPipeline::Initialize(uint32_t width,
   if (!r.IsSuccess())
     return r;
 
-  frame_ = MakeUnique<FrameBuffer>(device_, color_buffers_,
-                                   depth_stencil_buffer_, width, height);
+  frame_ =
+      MakeUnique<FrameBuffer>(device_, color_buffers_, depth_stencil_buffer_,
+                              resolve_targets_, width, height);
   r = frame_->Initialize(render_pass_);
   if (!r.IsSuccess())
     return r;

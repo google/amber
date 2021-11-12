@@ -1062,6 +1062,8 @@ Result Parser::ToBufferType(const std::string& name, BufferType* type) {
     *type = BufferType::kUniformTexelBuffer;
   else if (name == "storage_texel_buffer")
     *type = BufferType::kStorageTexelBuffer;
+  else if (name == "resolve")
+    *type = BufferType::kResolve;
   else
     return Result("unknown buffer_type: " + name);
 
@@ -1176,6 +1178,8 @@ Result Parser::ParsePipelineBind(Pipeline* pipeline) {
 
         for (auto& buf : buffers)
           buf->SetSampler(sampler);
+      } else if (buffer_type == BufferType::kResolve) {
+        r = pipeline->AddResolveTarget(buffer);
       }
     }
 

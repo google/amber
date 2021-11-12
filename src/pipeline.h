@@ -303,6 +303,14 @@ class Pipeline {
   /// something goes wrong.
   Result GetLocationForColorAttachment(Buffer* buf, uint32_t* loc) const;
 
+  /// Returns a list of all resolve targets in this pipeline.
+  const std::vector<BufferInfo>& GetResolveTargets() const {
+    return resolve_targets_;
+  }
+
+  /// Adds |buf| as a multisample resolve target in the pipeline.
+  Result AddResolveTarget(Buffer* buf);
+
   /// Sets |buf| as the depth/stencil buffer for this pipeline.
   Result SetDepthStencilBuffer(Buffer* buf);
   /// Returns information on the depth/stencil buffer bound to the pipeline. If
@@ -436,6 +444,7 @@ class Pipeline {
   std::string name_;
   std::vector<ShaderInfo> shaders_;
   std::vector<BufferInfo> color_attachments_;
+  std::vector<BufferInfo> resolve_targets_;
   std::vector<BufferInfo> vertex_buffers_;
   std::vector<BufferInfo> buffers_;
   std::vector<std::unique_ptr<type::Type>> types_;

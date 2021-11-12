@@ -62,7 +62,9 @@ enum class BufferType : int8_t {
   /// A uniform texel buffer.
   kUniformTexelBuffer,
   /// A storage texel buffer.
-  kStorageTexelBuffer
+  kStorageTexelBuffer,
+  /// A resolve target.
+  kResolve
 };
 
 enum class InputRate : int8_t {
