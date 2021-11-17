@@ -234,6 +234,8 @@ VkBlendFactor ToVkBlendFactor(BlendFactor factor) {
       return VK_BLEND_FACTOR_SRC1_ALPHA;
     case BlendFactor::kOneMinusSrc1Alpha:
       return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+    case BlendFactor::kUnknown:
+      break;
   }
   assert(false && "Vulkan::Unknown BlendFactor");
   return VK_BLEND_FACTOR_ZERO;
@@ -343,6 +345,8 @@ VkBlendOp ToVkBlendOp(BlendOp op) {
       return VK_BLEND_OP_GREEN_EXT;
     case BlendOp::kBlue:
       return VK_BLEND_OP_BLUE_EXT;
+    case BlendOp::kUnknown:
+      break;
   }
   assert(false && "Vulkan::Unknown BlendOp");
   return VK_BLEND_OP_ADD;
