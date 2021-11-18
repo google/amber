@@ -497,6 +497,96 @@ The following commands are all specified within the `PIPELINE` command.
   END
 ```
 
+#### Blend factors
+* `zero`
+* `one`
+* `src_color`
+* `one_minus_src_color`
+* `dst_color`
+* `one_minus_dst_color`
+* `src_alpha`
+* `one_minus_src_alpha`
+* `dst_alpha`
+* `one_minus_dst_alpha`
+* `constant_color`
+* `one_minus_constant_color`
+* `constant_alpha`
+* `one_minus_constant_alpha`
+* `src_alpha_saturate`
+* `src1_color`
+* `one_minus_src1_color`
+* `src1_alpha`
+* `one_minus_src1_alpha`
+
+#### Blend operations
+* `add`
+* `substract`
+* `reverse_substract`
+* `min`
+* `max`
+
+The following operations also require VK_EXT_blend_operation_advanced
+when using a Vulkan backend.
+* `zero`
+* `src`
+* `dst`
+* `src_over`
+* `dst_over`
+* `src_in`
+* `dst_in`
+* `src_out`
+* `dst_out`
+* `src_atop`
+* `dst_atop`
+* `xor`
+* `multiply`
+* `screen`
+* `overlay`
+* `darken`
+* `lighten`
+* `color_dodge`
+* `color_burn`
+* `hard_light`
+* `soft_light`
+* `difference`
+* `exclusion`
+* `invert`
+* `invert_rgb`
+* `linear_dodge`
+* `linear_burn`
+* `vivid_light`
+* `linear_light`
+* `pin_light`
+* `hard_mix`
+* `hsl_hue`
+* `hsl_saturation`
+* `hsl_color`
+* `hsl_luminosity`
+* `plus`
+* `plus_clamped`
+* `plus_clamped_alpha`
+* `plus_darker`
+* `minus`
+* `minus_clamped`
+* `contrast`
+* `invert_org`
+* `red`
+* `green`
+* `blue`
+
+```groovy
+  # Enable alpha blending and set blend factors and operations. Available
+  # blend factors and operations are listed above.
+  BLEND
+    SRC_COLOR_FACTOR {src_color_factor}
+    DST_COLOR_FACTOR {dst_color_factor}
+    COLOR_OP {color_op}
+    SRC_ALPHA_FACTOR {src_alpha_factor}
+    DST_ALPHA_FACTOR {dst_alpha_factor}
+    ALPHA_OP {alpha_op}
+  END
+```
+
 ```groovy
   # Set the size of the render buffers. |width| and |height| are integers and
   # default to 250x250.
