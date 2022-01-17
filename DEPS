@@ -25,7 +25,7 @@ vars = {
   'swiftshader_revision': '0fa19bd6c285e8ad3459a3f58ca903ceb2d7ab00',
   'vulkan_headers_revision': '0873a22a11ec7e3f13762900ad0da39206189886',
   'vulkan_loader_revision': '0fd1cf08c9b10db8f7de99290b4eb88662112725',
-  'vulkan_validationlayers_revision': 'b9168891cb55c00e2054220082775f6e0c114df0',
+  'vulkan_validationlayers_revision': '610d3a664792372540d3093e0ffe372318b1e437',
   'robin_hood_hashing_revision': '24b3f50f9532153edc23b29ae277dcccfd75a462',
 }
 
