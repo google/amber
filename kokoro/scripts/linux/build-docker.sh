@@ -56,7 +56,9 @@ cd $ROOT_DIR/build
 
 # Install prerequisites for local Vulkan build.
 echo $(date): Build and install SPIR-V headers.
-cmake -GNinja -DCMAKE_INSTALL_PREFIX=. ../third_party/spirv-headers/
+mkdir -p spirv-headers
+cd spirv-headers
+cmake -GNinja -DCMAKE_INSTALL_PREFIX=.. ../../third_party/spirv-headers/
 cmake --build . --target install
 
 # Invoke the build.
