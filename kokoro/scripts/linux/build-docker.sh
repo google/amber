@@ -60,6 +60,7 @@ mkdir -p spirv-headers
 cd spirv-headers
 cmake -GNinja -DCMAKE_INSTALL_PREFIX=.. ../../third_party/spirv-headers/
 cmake --build . --target install
+cd ..
 
 # Invoke the build.
 BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
