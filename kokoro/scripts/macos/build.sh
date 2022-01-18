@@ -52,7 +52,7 @@ cd ..
 echo $(date): Build and install SPIR-V tools.
 mkdir -p spirv-tools
 cd spirv-tools
-cmake -GNinja -DCMAKE_INSTALL_PREFIX=.. -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_C_CXX_COMPILER -DSPIRV-Headers_SOURCE_DIR=$ROOT_DIR/third_party/spirv-headers -DSPIRV_SKIP_TESTS=ON ../../third_party/spirv-tools
+cmake -GNinja -DCMAKE_INSTALL_PREFIX=.. -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_C_CXX_COMPILER -DSPIRV-Headers_SOURCE_DIR=$SRC/third_party/spirv-headers -DSPIRV_SKIP_TESTS=ON ../../third_party/spirv-tools
 cmake --build . --target install
 cd ..
 
