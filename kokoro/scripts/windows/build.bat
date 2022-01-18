@@ -40,6 +40,26 @@ mkdir build
 cd build
 
 :: #########################################
+:: Install prerequisites for local Vulkan build.
+:: #########################################
+echo "Build and install SPIR-V headers. %DATE% %TIME%"
+mkdir -p spirv-headers
+cd spirv-headers
+cmake -GNinja -DCMAKE_INSTALL_PREFIX=.. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe ..\..\third_party\spirv-headers\
+if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
+cmake --build . --target install
+if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
+cd ..
+echo "Build and install SPIR-V tools. %DATE% %TIME%"
+mkdir -p spirv-tools
+cd spirv-tools
+cmake -GNinja -DCMAKE_INSTALL_PREFIX=.. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe -DSPIRV-Headers_SOURCE_DIR=%SRC%\third_party\spirv-headers -DSPIRV_SKIP_TESTS=ON ..\..\third_party\spirv-tools
+if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
+cmake --build . --target install
+if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
+cd ..
+
+:: #########################################
 :: Start building.
 :: #########################################
 echo "Starting build... %DATE% %TIME%"

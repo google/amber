@@ -42,6 +42,20 @@ mkdir build && cd $SRC/build
 
 CMAKE_C_CXX_COMPILER="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
 
+# Install prerequisites for local Vulkan build.
+echo $(date): Build and install SPIR-V headers.
+mkdir -p spirv-headers
+cd spirv-headers
+cmake -GNinja -DCMAKE_INSTALL_PREFIX=.. -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_C_CXX_COMPILER ../../third_party/spirv-headers/
+cmake --build . --target install
+cd ..
+echo $(date): Build and install SPIR-V tools.
+mkdir -p spirv-tools
+cd spirv-tools
+cmake -GNinja -DCMAKE_INSTALL_PREFIX=.. -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_C_CXX_COMPILER -DSPIRV-Headers_SOURCE_DIR=$ROOT_DIR/third_party/spirv-headers -DSPIRV_SKIP_TESTS=ON ../../third_party/spirv-tools
+cmake --build . --target install
+cd ..
+
 # Invoke the build.
 BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
 echo $(date): Starting build...
