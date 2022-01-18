@@ -54,6 +54,11 @@ cd $ROOT_DIR
 mkdir -p build
 cd $ROOT_DIR/build
 
+# Install prerequisites for local Vulkan build.
+echo $(date): Build and install SPIR-V headers.
+cmake -GNinja -DCMAKE_INSTALL_PREFIX=. ../third_party/spirv-headers/
+cmake --build . --target install
+
 # Invoke the build.
 BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
 echo $(date): Starting build...
