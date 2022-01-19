@@ -74,7 +74,7 @@ deps = {
 
 #  'third_party/vulkan-validationlayers': Var('khronos_git') + '/Vulkan-ValidationLayers.git@' +
 #      Var('vulkan_validationlayers_revision'),
-  'third_party/vulkan-validationlayers': 'https://github.com/asuonpaa/Vulkan-ValidationLayers.git@d841abee5ce2123c33c1a0f632d947d89b4b2fd5',
+  'third_party/vulkan-validationlayers': 'https://github.com/asuonpaa/Vulkan-ValidationLayers.git@e50271369e09b15fa96b1144fb96fb727143a326',
 
 
   'third_party/vulkan-loader': Var('khronos_git') + '/Vulkan-Loader.git@' +

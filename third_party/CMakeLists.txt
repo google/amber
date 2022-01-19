@@ -67,13 +67,9 @@ if (${AMBER_USE_LOCAL_VULKAN})
     set(BUILD_WSI_XLIB_SUPPORT OFF CACHE BOOL "" FORCE)
 
     set(ROBIN_HOOD_HASHING_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/robin-hood-hashing" CACHE STRING "" FORCE)
-#    set(ROBIN_HOOD_HASHING_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/robin-hood-hashing/src/include" CACHE STRING "" FORCE)
-
-#TODO Ari
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/robin-hood-hashing)
-    if (NOT ${AMBER_ENABLE_SPIRV_TOOLS})
-        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spirv-headers)
-    endif()
+    set(SPIRV_HEADERS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/spirv-headers/include" CACHE STRING "" FORCE)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spirv-headers)
 
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-loader)
     if (MSVC)
