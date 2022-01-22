@@ -266,8 +266,6 @@ class TestRunner:
       del os.environ["VK_DEBUGGER_PORT"]
 
     cmd = [self.options.test_prog_path, '-q']
-    # TODO Ari
-    cmd += ['-d']
 
     if tc.IsParseOnly():
       cmd += ['-p']

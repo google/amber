@@ -77,8 +77,9 @@ deps = {
   'third_party/vulkan-validationlayers': 'https://github.com/asuonpaa/Vulkan-ValidationLayers.git@d9d6d851a9d43ac559f683af657c7f72816721aa',
 
 
-  'third_party/vulkan-loader': Var('khronos_git') + '/Vulkan-Loader.git@' +
-      Var('vulkan_loader_revision'),
+#  'third_party/vulkan-loader': Var('khronos_git') + '/Vulkan-Loader.git@' +
+#      Var('vulkan_loader_revision'),
+  'third_party/vulkan-loader': 'https://github.com/asuonpaa/Vulkan-Loader.git@1b8b0d6a6f4b3f8a4da38e928fc7a0608e645d52',
 
   'third_party/robin-hood-hashing': Var('martinus_git') + '/robin-hood-hashing.git@' +
       Var('robin_hood_hashing_revision'),
