@@ -25,8 +25,8 @@ vars = {
   'spirv_tools_revision': '8a40f6de57d7b78bc431678d90aa8a570d1631f2',
   'swiftshader_revision': 'f6bdbed95b3703d782c2a2a537092afb39455442',
   'vulkan_headers_revision': '0873a22a11ec7e3f13762900ad0da39206189886',
-  'vulkan_loader_revision': '0fd1cf08c9b10db8f7de99290b4eb88662112725',
-  'vulkan_validationlayers_revision': '15ed1f653004a7b2936f71f8643851ba1011d954',
+  'vulkan_loader_revision': 'ec84a665fd05c67455e5540888bc79f655b626c4',
+  'vulkan_validationlayers_revision': '7f229d154400d745259b10c21a6e4091a059ae86',
   'robin_hood_hashing_revision': '24b3f50f9532153edc23b29ae277dcccfd75a462',
 }
 
