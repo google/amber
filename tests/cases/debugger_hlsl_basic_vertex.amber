@@ -106,6 +106,12 @@ CLEAR pipeline
 
 DEBUG pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 6
     THREAD VERTEX_INDEX 0
+        EXPECT LOCATION "vs.hlsl" 6 "VS_OUTPUT main(float4 pos : POSITION,"
+        STEP_IN
+        EXPECT LOCATION "vs.hlsl" 7 "               float4 color : COLOR) {"
+        STEP_IN
+        EXPECT LOCATION "vs.hlsl" 8 "  VS_OUTPUT vout;"
+        STEP_IN
         EXPECT LOCATION "vs.hlsl" 9 "  vout.pos = pos;"
         EXPECT LOCAL "pos.x" EQ -1.000000
         EXPECT LOCAL "pos.y" EQ -1.000000

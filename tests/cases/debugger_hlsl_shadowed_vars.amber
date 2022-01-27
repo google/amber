@@ -99,7 +99,8 @@ BUFFER framebuffer FORMAT B8G8R8A8_UNORM
 PIPELINE graphics pipeline
   ATTACH vtex_shader
   SHADER_OPTIMIZATION vtex_shader
-    --legalize-hlsl
+    --inline-entry-points-exhaustive
+    --eliminate-dead-functions
   END
 
   ATTACH frag_shader
@@ -117,6 +118,10 @@ CLEAR pipeline
 
 DEBUG pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 6
     THREAD VERTEX_INDEX 0
+        EXPECT LOCATION "vs.hlsl" 5 "VS_OUTPUT main(float4 pos : POSITION,"
+        STEP_IN
+        EXPECT LOCATION "vs.hlsl" 6 "               float4 color : COLOR) {"
+        STEP_IN
         EXPECT LOCATION "vs.hlsl" 7 "  float a = 1.0;"
         STEP_IN
         EXPECT LOCATION "vs.hlsl" 8 "  float b = 2.0;"

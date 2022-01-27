@@ -94,9 +94,15 @@ DEBUG pipeline 1 1 1
         END
         EXPECT LOCATION "ComputeShader0.spvasm" 20 "%5 = OpVariable %11 Uniform"
         STEP_IN
+        EXPECT LOCATION "ComputeShader0.spvasm" 21 "%12 = OpConstant %9 0"
+        STEP_IN
+        EXPECT LOCATION "ComputeShader0.spvasm" 22 "%13 = OpConstant %10 0"
+        STEP_IN
         EXPECT LOCATION "ComputeShader0.spvasm" 25 "%2 = OpVariable %15 Input"
         STEP_IN
         EXPECT LOCATION "ComputeShader0.spvasm" 27 "%6 = OpVariable %11 Uniform"
+        STEP_IN
+        EXPECT LOCATION "ComputeShader0.spvasm" 29 "%1 = OpFunction %7 None %8"
         STEP_IN
         EXPECT LOCATION "ComputeShader0.spvasm" 31 "%19 = OpAccessChain %16 %2 %13"
         STEP_IN
