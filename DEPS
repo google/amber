@@ -17,7 +17,7 @@ vars = {
   'dxc_revision': 'c45db48d565a9edc14b025e43b90e62264d06eea',
   'glslang_revision': '81cc10a498b25a90147cccd6e8939493c1e9e20e',
   'googletest_revision': '16f637fbf4ffc3f7a01fa4eceb7906634565242f',
-  'json_revision': 'fec56a1a16c6e1c1b1f4e116a20e79398282626c',
+  'json_revision': '4f8fba14066156b73f1189a2b8bd568bde5284c5',
   'lodepng_revision': '8c6a9e30576f07bf470ad6f09458a2dcd7a6a84a',
   'shaderc_revision': 'f6d6dddfabfec1041c0dfb8e7ff3608a5f82227c',
   'spirv_headers_revision': '1380cbbec10756b492e9397d03c4250887e15090',
