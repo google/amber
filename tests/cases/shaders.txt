@@ -1,0 +1,270 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; pipeline-vtex_shader
+;
+; SPIR-V
+; Version: 1.0
+; Generator: Google spiregg; 0
+; Bound: 214
+; Schema: 0
+               OpCapability Shader
+          %1 = OpExtInstImport "OpenCL.DebugInfo.100"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %main "main" %in_var_POSITION %in_var_COLOR %gl_Position
+          %6 = OpString "vs.hlsl"
+         %23 = OpString "float"
+         %29 = OpString "VS_OUTPUT"
+         %33 = OpString "pos"
+         %36 = OpString "main"
+         %37 = OpString ""
+         %41 = OpString "vout"
+         %45 = OpString "a"
+         %47 = OpString "b"
+         %50 = OpString "x"
+         %52 = OpString "c"
+         %56 = OpString "color"
+               OpName %in_var_POSITION "in.var.POSITION"
+               OpName %in_var_COLOR "in.var.COLOR"
+               OpName %main "main"
+               OpName %param_var_pos "param.var.pos"
+               OpName %param_var_color "param.var.color"
+               OpName %VS_OUTPUT "VS_OUTPUT"
+               OpMemberName %VS_OUTPUT 0 "pos"
+               OpDecorate %gl_Position BuiltIn Position
+               OpDecorate %in_var_POSITION Location 0
+               OpDecorate %in_var_COLOR Location 1
+      %float = OpTypeFloat 32
+    %float_1 = OpConstant %float 1
+    %float_2 = OpConstant %float 2
+    %float_3 = OpConstant %float 3
+    %float_4 = OpConstant %float 4
+    %float_6 = OpConstant %float 6
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+%float_9_99999997en07 = OpConstant %float 9.99999997e-07
+      %int_3 = OpConstant %int 3
+       %uint = OpTypeInt 32 0
+     %uint_3 = OpConstant %uint 3
+    %uint_32 = OpConstant %uint 32
+    %v4float = OpTypeVector %float 4
+%_ptr_Input_v4float = OpTypePointer Input %v4float
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+       %void = OpTypeVoid
+   %uint_128 = OpConstant %uint 128
+     %uint_0 = OpConstant %uint 0
+         %60 = OpTypeFunction %void
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+  %VS_OUTPUT = OpTypeStruct %v4float
+         %70 = OpTypeFunction %VS_OUTPUT %_ptr_Function_v4float %_ptr_Function_v4float
+%_ptr_Function_float = OpTypePointer Function %float
+%_ptr_Function_VS_OUTPUT = OpTypePointer Function %VS_OUTPUT
+%in_var_POSITION = OpVariable %_ptr_Input_v4float Input
+%in_var_COLOR = OpVariable %_ptr_Input_v4float Input
+%gl_Position = OpVariable %_ptr_Output_v4float Output
+        %204 = OpExtInst %void %1 DebugInfoNone
+         %58 = OpExtInst %void %1 DebugExpression
+         %25 = OpExtInst %void %1 DebugTypeBasic %23 %uint_32 Float
+         %26 = OpExtInst %void %1 DebugTypeVector %25 4
+         %27 = OpExtInst %void %1 DebugSource %6
+         %28 = OpExtInst %void %1 DebugCompilationUnit 1 4 %27 HLSL
+         %31 = OpExtInst %void %1 DebugTypeComposite %29 Structure %27 1 8 %28 %29 %uint_128 FlagIsProtected|FlagIsPrivate %32
+         %32 = OpExtInst %void %1 DebugTypeMember %33 %26 %27 2 10 %31 %uint_0 %uint_128 FlagIsProtected|FlagIsPrivate
+         %35 = OpExtInst %void %1 DebugTypeFunction FlagIsProtected|FlagIsPrivate %31 %26 %26
+         %38 = OpExtInst %void %1 DebugFunction %36 %35 %27 5 1 %28 %37 FlagIsProtected|FlagIsPrivate 6 %204
+         %40 = OpExtInst %void %1 DebugLexicalBlock %27 6 38 %38
+         %42 = OpExtInst %void %1 DebugLocalVariable %41 %31 %27 23 13 %40 FlagIsLocal
+         %43 = OpExtInst %void %1 DebugLexicalBlock %27 11 3 %40
+         %44 = OpExtInst %void %1 DebugLexicalBlock %27 15 5 %43
+         %46 = OpExtInst %void %1 DebugLocalVariable %45 %25 %27 16 13 %44 FlagIsLocal
+         %48 = OpExtInst %void %1 DebugLocalVariable %47 %25 %27 13 11 %43 FlagIsLocal
+         %49 = OpExtInst %void %1 DebugLocalVariable %45 %25 %27 12 11 %43 FlagIsLocal
+         %51 = OpExtInst %void %1 DebugLocalVariable %50 %25 %27 10 9 %40 FlagIsLocal
+         %53 = OpExtInst %void %1 DebugLocalVariable %52 %25 %27 9 9 %40 FlagIsLocal
+         %54 = OpExtInst %void %1 DebugLocalVariable %47 %25 %27 8 9 %40 FlagIsLocal
+         %55 = OpExtInst %void %1 DebugLocalVariable %45 %25 %27 7 9 %40 FlagIsLocal
+         %57 = OpExtInst %void %1 DebugLocalVariable %56 %26 %27 6 23 %38 FlagIsLocal 2
+         %59 = OpExtInst %void %1 DebugLocalVariable %33 %26 %27 5 23 %38 FlagIsLocal 1
+       %main = OpFunction %void None %60
+         %61 = OpLabel
+        %205 = OpExtInst %void %1 DebugScope %40
+        %142 = OpVariable %_ptr_Function_float Function
+        %143 = OpVariable %_ptr_Function_float Function
+        %144 = OpVariable %_ptr_Function_float Function
+        %145 = OpVariable %_ptr_Function_float Function
+        %146 = OpVariable %_ptr_Function_float Function
+        %147 = OpVariable %_ptr_Function_float Function
+        %148 = OpVariable %_ptr_Function_float Function
+        %149 = OpVariable %_ptr_Function_VS_OUTPUT Function
+        %206 = OpExtInst %void %1 DebugNoScope
+        %150 = OpVariable %_ptr_Function_VS_OUTPUT Function
+%param_var_pos = OpVariable %_ptr_Function_v4float Function
+%param_var_color = OpVariable %_ptr_Function_v4float Function
+         %65 = OpLoad %v4float %in_var_POSITION
+               OpStore %param_var_pos %65
+         %66 = OpLoad %v4float %in_var_COLOR
+        %207 = OpExtInst %void %1 DebugScope %38
+               OpLine %6 5 23
+        %152 = OpExtInst %void %1 DebugDeclare %59 %param_var_pos %58
+               OpLine %6 6 23
+        %153 = OpExtInst %void %1 DebugDeclare %57 %param_var_color %58
+        %208 = OpExtInst %void %1 DebugScope %40
+               OpLine %6 7 9
+               OpStore %142 %float_1
+        %154 = OpExtInst %void %1 DebugDeclare %55 %142 %58
+               OpLine %6 8 9
+               OpStore %143 %float_2
+        %155 = OpExtInst %void %1 DebugDeclare %54 %143 %58
+               OpLine %6 9 9
+               OpStore %144 %float_3
+        %156 = OpExtInst %void %1 DebugDeclare %53 %144 %58
+               OpLine %6 10 13
+        %157 = OpLoad %float %142
+               OpLine %6 10 17
+        %158 = OpLoad %float %143
+               OpLine %6 10 15
+        %159 = OpFAdd %float %157 %158
+               OpLine %6 10 21
+        %160 = OpLoad %float %144
+               OpLine %6 10 19
+        %161 = OpFAdd %float %159 %160
+               OpLine %6 10 9
+               OpStore %145 %161
+        %162 = OpExtInst %void %1 DebugDeclare %51 %145 %58
+        %209 = OpExtInst %void %1 DebugScope %43
+               OpLine %6 12 11
+               OpStore %146 %float_3
+        %163 = OpExtInst %void %1 DebugDeclare %49 %146 %58
+               OpLine %6 13 11
+               OpStore %147 %float_4
+        %164 = OpExtInst %void %1 DebugDeclare %48 %147 %58
+               OpLine %6 14 10
+        %165 = OpLoad %float %146
+               OpLine %6 14 14
+        %166 = OpLoad %float %147
+               OpLine %6 14 12
+        %167 = OpFAdd %float %165 %166
+               OpLine %6 14 18
+        %168 = OpLoad %float %144
+               OpLine %6 14 16
+        %169 = OpFAdd %float %167 %168
+               OpLine %6 14 5
+        %170 = OpLoad %float %145
+               OpLine %6 14 7
+        %171 = OpFAdd %float %170 %169
+               OpLine %6 14 5
+               OpStore %145 %171
+        %210 = OpExtInst %void %1 DebugScope %44
+               OpLine %6 16 13
+               OpStore %148 %float_6
+        %172 = OpExtInst %void %1 DebugDeclare %46 %148 %58
+               OpLine %6 17 12
+        %173 = OpLoad %float %148
+               OpLine %6 17 16
+        %174 = OpLoad %float %147
+               OpLine %6 17 14
+        %175 = OpFAdd %float %173 %174
+               OpLine %6 17 20
+        %176 = OpLoad %float %144
+               OpLine %6 17 18
+        %177 = OpFAdd %float %175 %176
+               OpLine %6 17 7
+        %178 = OpLoad %float %145
+               OpLine %6 17 9
+        %179 = OpFAdd %float %178 %177
+               OpLine %6 17 7
+               OpStore %145 %179
+        %211 = OpExtInst %void %1 DebugScope %43
+               OpLine %6 19 10
+        %180 = OpLoad %float %146
+               OpLine %6 19 14
+        %181 = OpLoad %float %147
+               OpLine %6 19 12
+        %182 = OpFAdd %float %180 %181
+               OpLine %6 19 18
+        %183 = OpLoad %float %144
+               OpLine %6 19 16
+        %184 = OpFAdd %float %182 %183
+               OpLine %6 19 5
+        %185 = OpLoad %float %145
+               OpLine %6 19 7
+        %186 = OpFAdd %float %185 %184
+               OpLine %6 19 5
+               OpStore %145 %186
+        %212 = OpExtInst %void %1 DebugScope %40
+               OpLine %6 21 8
+        %187 = OpLoad %float %142
+               OpLine %6 21 12
+        %188 = OpLoad %float %143
+               OpLine %6 21 10
+        %189 = OpFAdd %float %187 %188
+               OpLine %6 21 16
+        %190 = OpLoad %float %144
+               OpLine %6 21 14
+        %191 = OpFAdd %float %189 %190
+               OpLine %6 21 3
+        %192 = OpLoad %float %145
+               OpLine %6 21 5
+        %193 = OpFAdd %float %192 %191
+               OpLine %6 21 3
+               OpStore %145 %193
+               OpLine %6 23 13
+        %194 = OpExtInst %void %1 DebugDeclare %42 %149 %58
+               OpLine %6 24 14
+        %195 = OpLoad %v4float %param_var_pos
+               OpLine %6 24 3
+        %196 = OpAccessChain %_ptr_Function_v4float %149 %int_0
+               OpStore %196 %195
+               OpLine %6 25 17
+        %197 = OpLoad %float %145
+               OpLine %6 25 19
+        %198 = OpFMul %float %197 %float_9_99999997en07
+               OpLine %6 25 3
+        %199 = OpAccessChain %_ptr_Function_v4float %149 %int_0
+        %200 = OpAccessChain %_ptr_Function_float %199 %int_3
+        %201 = OpLoad %float %200
+               OpLine %6 25 14
+        %202 = OpFAdd %float %201 %198
+               OpLine %6 25 3
+               OpStore %200 %202
+               OpLine %6 26 10
+        %203 = OpLoad %VS_OUTPUT %149
+               OpLine %6 26 3
+               OpStore %150 %203
+               OpNoLine
+        %213 = OpExtInst %void %1 DebugNoScope
+         %68 = OpLoad %VS_OUTPUT %150
+         %69 = OpCompositeExtract %v4float %68 0
+               OpStore %gl_Position %69
+               OpLine %6 27 1
+               OpReturn
+               OpFunctionEnd
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; pipeline-frag_shader
+;
+; SPIR-V
+; Version: 1.0
+; Generator: Google spiregg; 0
+; Bound: 11
+; Schema: 0
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %out_var_SV_TARGET
+               OpExecutionMode %main OriginUpperLeft
+               OpSource HLSL 620
+               OpName %out_var_SV_TARGET "out.var.SV_TARGET"
+               OpName %main "main"
+               OpDecorate %out_var_SV_TARGET Location 0
+      %float = OpTypeFloat 32
+    %float_1 = OpConstant %float 1
+    %v4float = OpTypeVector %float 4
+          %6 = OpConstantComposite %v4float %float_1 %float_1 %float_1 %float_1
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+       %void = OpTypeVoid
+          %9 = OpTypeFunction %void
+%out_var_SV_TARGET = OpVariable %_ptr_Output_v4float Output
+       %main = OpFunction %void None %9
+         %10 = OpLabel
+               OpStore %out_var_SV_TARGET %6
+               OpReturn
+               OpFunctionEnd
+
