@@ -18,7 +18,7 @@ SET ENGINE_DATA fence_timeout_ms 1000000
 VIRTUAL_FILE "compute.hlsl"
 
 [[vk::binding(0)]]
-StructuredBuffer<int> data;
+RWStructuredBuffer<int> data;
 
 int C(int x)
 {
