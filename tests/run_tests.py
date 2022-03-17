@@ -98,6 +98,8 @@ SUPPRESSIONS_SWIFTSHADER = [
   "draw_rectangles_depth_test_x8d24.amber",
   # Tessellation not supported
   "tessellation_isolines.amber",
+  # 8 bit indices not supported
+  "draw_indexed_uint8.amber",
 ]
 
 OPENCL_CASES = [

@@ -36,6 +36,15 @@ Result IndexBuffer::SendIndexData(CommandBuffer* command, Buffer* buffer) {
   if (buffer->ElementCount() == 0)
     return Result("IndexBuffer::SendIndexData |buffer| is empty");
 
+  if (buffer->GetFormat()->IsUint32())
+    index_type_ = VK_INDEX_TYPE_UINT32;
+  else if (buffer->GetFormat()->IsUint16())
+    index_type_ = VK_INDEX_TYPE_UINT16;
+  else if (buffer->GetFormat()->IsUint8())
+    index_type_ = VK_INDEX_TYPE_UINT8_EXT;
+  else
+    return Result("IndexBuffer::SendIndexData unexpected index buffer format");
+
   transfer_buffer_ =
       MakeUnique<TransferBuffer>(device_, buffer->GetSizeInBytes(), nullptr);
   Result r = transfer_buffer_->AddUsageFlags(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
@@ -62,7 +71,7 @@ Result IndexBuffer::BindToCommandBuffer(CommandBuffer* command) {
 
   device_->GetPtrs()->vkCmdBindIndexBuffer(command->GetVkCommandBuffer(),
                                            transfer_buffer_->GetVkBuffer(), 0,
-                                           VK_INDEX_TYPE_UINT32);
+                                           index_type_);
   return {};
 }
 
