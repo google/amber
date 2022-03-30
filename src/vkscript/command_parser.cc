@@ -486,7 +486,6 @@ Result CommandParser::ParseValues(const std::string& name,
                                   std::vector<Value>* values) {
   assert(values);
 
-  uint32_t row_index = 0;
   auto token = tokenizer_->NextToken();
   size_t seen = 0;
   while (!token->IsEOL() && !token->IsEOS()) {
@@ -515,7 +514,6 @@ Result CommandParser::ParseValues(const std::string& name,
     values->push_back(v);
     token = tokenizer_->NextToken();
 
-    ++row_index;
     ++seen;
   }
 
