@@ -45,6 +45,8 @@ TEST_F(AmberScriptParserTest, SamplerDefaultValues) {
   EXPECT_EQ(0.0, sampler->GetMinLOD());
   EXPECT_EQ(1.0, sampler->GetMaxLOD());
   EXPECT_EQ(true, sampler->GetNormalizedCoords());
+  EXPECT_EQ(false, sampler->GetCompareEnable());
+  EXPECT_EQ(CompareOp::kNever, sampler->GetCompareOp());
 }
 
 TEST_F(AmberScriptParserTest, SamplerCustomValues) {
@@ -57,7 +59,9 @@ SAMPLER sampler MAG_FILTER linear \
   BORDER_COLOR float_opaque_white \
   MIN_LOD 2.5 \
   MAX_LOD 5.0 \
-  NORMALIZED_COORDS)";
+  NORMALIZED_COORDS \
+  COMPARE on \
+  COMPARE_OP greater)";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -81,6 +85,8 @@ SAMPLER sampler MAG_FILTER linear \
   EXPECT_EQ(2.5, sampler->GetMinLOD());
   EXPECT_EQ(5.0, sampler->GetMaxLOD());
   EXPECT_EQ(true, sampler->GetNormalizedCoords());
+  EXPECT_EQ(true, sampler->GetCompareEnable());
+  EXPECT_EQ(CompareOp::kGreater, sampler->GetCompareOp());
 }
 
 TEST_F(AmberScriptParserTest, SamplerUnexpectedParameter) {

@@ -52,6 +52,31 @@ VkBorderColor GetVkBorderColor(BorderColor color) {
   }
 }
 
+VkCompareOp ToVkCompareOp(CompareOp op) {
+  switch (op) {
+    case CompareOp::kNever:
+      return VK_COMPARE_OP_NEVER;
+    case CompareOp::kLess:
+      return VK_COMPARE_OP_LESS;
+    case CompareOp::kEqual:
+      return VK_COMPARE_OP_EQUAL;
+    case CompareOp::kLessOrEqual:
+      return VK_COMPARE_OP_LESS_OR_EQUAL;
+    case CompareOp::kGreater:
+      return VK_COMPARE_OP_GREATER;
+    case CompareOp::kNotEqual:
+      return VK_COMPARE_OP_NOT_EQUAL;
+    case CompareOp::kGreaterOrEqual:
+      return VK_COMPARE_OP_GREATER_OR_EQUAL;
+    case CompareOp::kAlways:
+      return VK_COMPARE_OP_ALWAYS;
+    case CompareOp::kUnknown:
+      break;
+  }
+  assert(false && "Vulkan::Unknown CompareOp");
+  return VK_COMPARE_OP_NEVER;
+}
+
 }  // namespace
 
 Sampler::Sampler(Device* device) : device_(device) {}
@@ -76,6 +101,9 @@ Result Sampler::CreateSampler(amber::Sampler* sampler) {
   sampler_info.maxLod = sampler->GetMaxLOD();
   sampler_info.unnormalizedCoordinates =
       (sampler->GetNormalizedCoords() ? VK_FALSE : VK_TRUE);
+  sampler_info.compareEnable =
+      (sampler->GetCompareEnable() ? VK_TRUE : VK_FALSE);
+  sampler_info.compareOp = ToVkCompareOp(sampler->GetCompareOp());
 
   if (device_->GetPtrs()->vkCreateSampler(device_->GetVkDevice(), &sampler_info,
                                           nullptr, &sampler_) != VK_SUCCESS) {

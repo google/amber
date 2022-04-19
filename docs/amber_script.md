@@ -363,6 +363,8 @@ SAMPLER {name} \
     [ MIN_LOD _val_ (default 0.0) ] \
     [ MAX_LOD _val_ (default 1.0) ] \
     [ NORMALIZED_COORDS | UNNORMALIZED_COORDS (default NORMALIZED_COORDS) ]
+    [ COMPARE _val_ (default off) ] \
+    [ COMPARE_OP _val_ (default never) ] \
 ```
 
 Note: unnormalized coordinates will override MIN\_LOD and MAX\_LOD to 0.0.
