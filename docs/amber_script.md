@@ -350,9 +350,19 @@ sampled image or combined image sampler.
  * `float_opaque_white`
  * `int_opaque_white`
 
+#### Compare operations
+* `never`
+* `less`
+* `equal`
+* `less_or_equal`
+* `greater`
+* `not_equal`
+* `greater_or_equal`
+* `always`
+
 ```groovy
 
-# Creates a sampler with |name|.
+# Creates a sampler with |name|. |compare_enable| is either on or off.
 SAMPLER {name} \
     [ MAG_FILTER {filter_type} (default nearest) ] \
     [ MIN_FILTER {filter_type} (default nearest) ] \
@@ -362,7 +372,9 @@ SAMPLER {name} \
     [ BORDER_COLOR {border_color} (default float_transparent_black) ] \
     [ MIN_LOD _val_ (default 0.0) ] \
     [ MAX_LOD _val_ (default 1.0) ] \
-    [ NORMALIZED_COORDS | UNNORMALIZED_COORDS (default NORMALIZED_COORDS) ]
+    [ NORMALIZED_COORDS | UNNORMALIZED_COORDS (default NORMALIZED_COORDS) ] \
+    [ COMPARE _compare_enable_ (default off) ] \
+    [ COMPARE_OP _compare_op_ (default never) ]
 ```
 
 Note: unnormalized coordinates will override MIN\_LOD and MAX\_LOD to 0.0.

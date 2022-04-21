@@ -3893,6 +3893,30 @@ Result Parser::ParseSampler() {
       sampler->SetNormalizedCoords(false);
       sampler->SetMinLOD(0.0f);
       sampler->SetMaxLOD(0.0f);
+    } else if (param == "COMPARE") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("invalid value for COMPARE");
+
+      if (token->AsString() == "on")
+        sampler->SetCompareEnable(true);
+      else if (token->AsString() == "off")
+        sampler->SetCompareEnable(false);
+      else
+        return Result("invalid value for COMPARE: " + token->AsString());
+    } else if (param == "COMPARE_OP") {
+      token = tokenizer_->NextToken();
+
+      if (!token->IsIdentifier())
+        return Result("invalid value for COMPARE_OP");
+
+      CompareOp compare_op = StrToCompareOp(token->AsString());
+      if (compare_op != CompareOp::kUnknown) {
+        sampler->SetCompareOp(compare_op);
+      } else {
+        return Result("invalid value for COMPARE_OP: " + token->AsString());
+      }
     } else {
       return Result("unexpected sampler parameter " + param);
     }

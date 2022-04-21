@@ -23,6 +23,7 @@
 
 #include "amber/result.h"
 #include "amber/value.h"
+#include "src/command_data.h"
 #include "src/format.h"
 
 namespace amber {
@@ -86,6 +87,14 @@ class Sampler {
   void SetNormalizedCoords(bool norm) { normalized_coords_ = norm; }
   bool GetNormalizedCoords() const { return normalized_coords_; }
 
+  void SetCompareEnable(bool compare_enable) {
+    compare_enable_ = compare_enable;
+  }
+  bool GetCompareEnable() const { return compare_enable_; }
+
+  void SetCompareOp(CompareOp compare_op) { compare_op_ = compare_op; }
+  CompareOp GetCompareOp() const { return compare_op_; }
+
  private:
   std::string name_;
   FilterType min_filter_ = FilterType::kNearest;
@@ -98,6 +107,8 @@ class Sampler {
   float min_lod_ = 0.0f;
   float max_lod_ = 1.0f;
   bool normalized_coords_ = true;
+  bool compare_enable_ = false;
+  CompareOp compare_op_ = CompareOp::kNever;
 };
 
 }  // namespace amber
