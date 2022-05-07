@@ -13,3 +13,6 @@ build/
 /captures
 .externalNativeBuild
 .cxx
+/gradle/wrapper/
+/gradlew
+/gradlew.bat
