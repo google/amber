@@ -17,3 +17,7 @@ buildscript {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+tasks.named('wrapper') {
+    gradleVersion = "7.0.2"
+}
