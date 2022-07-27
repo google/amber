@@ -38,4 +38,4 @@ docker run --rm -i \
   --entrypoint "${SCRIPT_DIR}/build-docker.sh" \
   "gcr.io/shaderc-build/radial-build:latest"
 
-sudo chown -R "$(id -u):$(id -g)" "${ROOT_DIR}/build"
+sudo chown -R "$(id -u):$(id -g)" "${ROOT_DIR}"
