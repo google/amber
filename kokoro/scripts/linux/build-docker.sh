@@ -51,6 +51,10 @@ fi
 cd $ROOT_DIR
 ./tools/git-sync-deps $DEPS_ARGS
 
+# Erase any core file that might be laying around.
+# Do it conditionally so we can see this occur in the build log.
+[ -f $ROOT_DIR ] && rm -rf $ROOT_DIR/core
+
 mkdir -p build
 cd $ROOT_DIR/build
 
