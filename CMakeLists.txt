@@ -53,7 +53,7 @@ option(AMBER_ENABLE_RTTI
   "Build with runtime type information" OFF)
 
 if (${AMBER_USE_CLSPV} OR ${AMBER_ENABLE_SWIFTSHADER})
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 else()
   set(CMAKE_CXX_STANDARD 11)
 endif()
