@@ -128,7 +128,9 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name == "SubgroupSupportedStages.tessellationEvaluation" ||
          name == "SubgroupSupportedStages.geometry" ||
          name == "SubgroupSupportedStages.fragment" ||
-         name == "SubgroupSupportedStages.compute";
+         name == "SubgroupSupportedStages.compute" ||
+         name ==
+             "ShaderSubgroupExtendedTypesFeatures.shaderSubgroupExtendedTypes";
 }
 
 type::Type* Script::ParseType(const std::string& str) {
