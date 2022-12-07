@@ -47,8 +47,11 @@ option(AMBER_USE_LOCAL_VULKAN "Build with vulkan in third_party" OFF)
 option(AMBER_USE_CLSPV "Build with Clspv support" OFF)
 option(AMBER_ENABLE_SWIFTSHADER
   "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
-option(AMBER_ENABLE_VK_DEBUGGING
-  "Build with cppdap debugging support" ${AMBER_ENABLE_VK_DEBUGGING})
+if (${AMBER_ENABLE_VK_DEBUGGING})
+  message(FATAL_ERROR "Amber no longer supports Vulkan debugging")
+else()
+  set(AMBER_ENABLE_VK_DEBUGGING OFF)
+endif()
 option(AMBER_ENABLE_RTTI
   "Build with runtime type information" OFF)
 
