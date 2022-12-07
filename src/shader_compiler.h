@@ -60,9 +60,7 @@ class ShaderCompiler {
  private:
   Result ParseHex(const std::string& data, std::vector<uint32_t>* result) const;
   Result CompileGlsl(const Shader* shader, std::vector<uint32_t>* result) const;
-  Result CompileHlsl(const Shader* shader,
-                     bool emit_debug_info,
-                     std::vector<uint32_t>* result) const;
+  Result CompileHlsl(const Shader* shader, std::vector<uint32_t>* result) const;
 #if AMBER_ENABLE_CLSPV
   Result CompileOpenCLC(Pipeline::ShaderInfo* shader,
                         Pipeline* pipeline,

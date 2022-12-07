@@ -92,40 +92,15 @@ Result Executor::Execute(Engine* engine,
   if (options->execution_type == ExecutionType::kPipelineCreateOnly)
     return {};
 
-  Engine::Debugger* debugger = nullptr;
-
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
     if (delegate && delegate->LogExecuteCalls()) {
       delegate->Log(std::to_string(cmd->GetLine()) + ": " + cmd->ToString());
     }
 
-    auto dbg_script = cmd->GetDebugScript();
-    if (dbg_script != nullptr) {
-      if (debugger == nullptr) {
-        // Lazilly obtain the debugger from the engine.
-        Result res;
-        std::tie(debugger, res) =
-            engine->GetDebugger(script->GetVirtualFiles());
-        if (!res.IsSuccess()) {
-          return res;
-        }
-      }
-      // Run the debugger script on the debugger for this command.
-      // This will run concurrently with the command.
-      dbg_script->Run(debugger);
-    }
-
     Result r = ExecuteCommand(engine, cmd.get());
     if (!r.IsSuccess())
       return r;
-
-    if (debugger != nullptr) {
-      // Collect the debugger test results.
-      r = debugger->Flush();
-      if (!r.IsSuccess())
-        return r;
-    }
   }
   return {};
 }

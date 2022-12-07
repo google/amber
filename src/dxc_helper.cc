@@ -137,7 +137,6 @@ Result Compile(const std::string& src,
                const std::string& spv_env,
                const std::string& filename,
                const VirtualFileStore* virtual_files,
-               bool emit_debug_info,
                std::vector<uint32_t>* generated_binary) {
   if (hlsl::options::initHlslOptTable()) {
     DxcCleanupThreadMalloc();
@@ -178,9 +177,6 @@ Result Compile(const std::string& src,
   std::string filepath = filename.empty() ? ("amber." + profile) : filename;
 
   std::vector<const wchar_t*> dxc_flags(kDxcFlags, &kDxcFlags[kDxcFlagsCount]);
-  if (emit_debug_info) {  // Enable debug info generation
-    dxc_flags.emplace_back(L"-fspv-debug=rich");
-  }
 
   const wchar_t* target_env = nullptr;
   if (!spv_env.compare("spv1.3") || !spv_env.compare("vulkan1.1")) {

@@ -78,9 +78,6 @@ if [[ "$EXTRA_CONFIG" =~ "ENABLE_SWIFTSHADER=TRUE" ]]; then
   if [[ "$EXTRA_CONFIG" =~ "USE_DXC=TRUE" ]]; then
     OPTS+=" --use-dxc"
   fi
-  if [[ "$EXTRA_CONFIG" =~ "ENABLE_VK_DEBUGGING=TRUE" ]]; then
-    OPTS+=" --test-debugger"
-  fi
 
   echo $(date): Starting integration tests..
   export LD_LIBRARY_PATH=$ROOT_DIR/build/third_party/vulkan-loader/loader

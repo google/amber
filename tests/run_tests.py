@@ -48,18 +48,6 @@ SUPPRESSIONS = {
   ]
 }
 
-DEBUGGER_CASES = [
-  "debugger_hlsl_basic_compute.amber",
-  "debugger_hlsl_basic_fragment.amber",
-  "debugger_hlsl_basic_vertex.amber",
-  "debugger_hlsl_shadowed_vars.amber",
-  "debugger_spirv_line_stepping.amber",
-  "debugger_hlsl_basic_fragment_with_legalization.amber",
-  "debugger_hlsl_basic_vertex_with_legalization.amber",
-  "debugger_hlsl_function_call.amber",
-  "debugger_hlsl_shadowed_vars.amber",
-]
-
 SUPPRESSIONS_SWIFTSHADER = [
   # Incorrect rendering: github.com/google/amber/issues/727
   "draw_array_instanced.vkscript",
@@ -89,10 +77,6 @@ SUPPRESSIONS_SWIFTSHADER = [
   "glsl_read_and_write_image3d_rgba32i.amber",
   # shaderStorageImageMultisample feature not supported
   "draw_storageimage_multisample.amber",
-  # Fails on Ubuntu bot
-  "debugger_hlsl_basic_vertex_with_legalization.amber",
-  "debugger_hlsl_function_call.amber",
-  "debugger_hlsl_shadowed_vars.amber",
   # Unsupported depth/stencil formats
   "draw_rectangles_depth_test_d24s8.amber",
   "draw_rectangles_depth_test_x8d24.amber",
@@ -116,14 +100,6 @@ OPENCL_CASES = [
 DXC_CASES = [
   "draw_triangle_list_hlsl.amber",
   "relative_includes_hlsl.amber",
-  "debugger_hlsl_basic_compute.amber",
-  "debugger_hlsl_basic_fragment.amber",
-  "debugger_hlsl_basic_vertex.amber",
-  "debugger_hlsl_shadowed_vars.amber",
-  "debugger_hlsl_basic_fragment_with_legalization.amber",
-  "debugger_hlsl_basic_vertex_with_legalization.amber",
-  "debugger_hlsl_function_call.amber",
-  "debugger_hlsl_shadowed_vars.amber",
 ]
 
 SUPPRESSIONS_DAWN = [
@@ -194,14 +170,13 @@ SUPPRESSIONS_DAWN = [
 
 class TestCase:
   def __init__(self, input_path, parse_only, use_dawn, use_opencl, use_dxc,
-               use_swiftshader, test_debugger):
+               use_swiftshader):
     self.input_path = input_path
     self.parse_only = parse_only
     self.use_dawn = use_dawn
     self.use_opencl = use_opencl
     self.use_dxc = use_dxc
     self.use_swiftshader = use_swiftshader
-    self.test_debugger = test_debugger
 
     self.results = {}
 
@@ -229,10 +204,6 @@ class TestCase:
     if not self.use_dxc and is_dxc_test:
       return True
 
-    is_debugger_test = base in DEBUGGER_CASES
-    if not self.test_debugger and is_debugger_test:
-      return True
-
     if system in SUPPRESSIONS.keys():
       is_system_suppressed = base in SUPPRESSIONS[system]
       return is_system_suppressed
@@ -255,17 +226,6 @@ class TestCase:
 class TestRunner:
   def RunTest(self, tc):
     print("Testing {}".format(tc.GetInputPath()))
-
-    # Amber and SwiftShader both use the VK_DEBUGGER_PORT environment variable
-    # for specifying the Debug Adapter Protocol port number.
-    # This needs to be set before creating the Vulkan device.
-    # We remove this key from the enviroment if the test is not a debugger test
-    # so that full SPIR-V optimizations are preserved.
-    is_debugger_test = os.path.basename(tc.GetInputPath()) in DEBUGGER_CASES
-    if is_debugger_test:
-      os.environ["VK_DEBUGGER_PORT"] = "19020"
-    elif "VK_DEBUGGER_PORT" in os.environ:
-      del os.environ["VK_DEBUGGER_PORT"]
 
     cmd = [self.options.test_prog_path, '-q']
     if tc.IsParseOnly():
@@ -353,9 +313,6 @@ class TestRunner:
     parser.add_option('--use-swiftshader',
                       action="store_true", default=False,
                       help='Tells test runner swiftshader is the device')
-    parser.add_option('--test-debugger',
-                      action="store_true", default=False,
-                      help='Include debugger tests')
 
     self.options, self.args = parser.parse_args()
 
@@ -383,8 +340,7 @@ class TestRunner:
 
         self.test_cases.append(TestCase(input_path, self.options.parse_only,
             self.options.use_dawn, self.options.use_opencl,
-            self.options.use_dxc, self.options.use_swiftshader,
-            self.options.test_debugger))
+            self.options.use_dxc, self.options.use_swiftshader))
 
     else:
       for file_dir, _, filename_list in os.walk(self.options.test_dir):
@@ -395,8 +351,7 @@ class TestRunner:
               self.test_cases.append(
                   TestCase(input_path, self.options.parse_only,
                       self.options.use_dawn, self.options.use_opencl,
-                      self.options.use_dxc, self.options.use_swiftshader,
-                      self.options.test_debugger))
+                      self.options.use_dxc, self.options.use_swiftshader))
 
     self.failures = []
     self.suppressed = []

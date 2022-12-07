@@ -21,7 +21,6 @@ set(VULKAN_ENGINE_SOURCES
     device.cc
     descriptor.cc
     engine_vulkan.cc
-    engine_vulkan_debugger.cc
     frame_buffer.cc
     graphics_pipeline.cc
     image_descriptor.cc
@@ -43,7 +42,7 @@ target_include_directories(libamberenginevulkan PRIVATE "${CMAKE_BINARY_DIR}")
 # Add the Vulkan include directory to the list of include paths.
 target_include_directories(libamberenginevulkan PRIVATE "${VulkanHeaders_INCLUDE_DIR}")
 
-# When building with dEQP Vulkan CTS the inl files needs to be included and a dependency 
+# When building with dEQP Vulkan CTS the inl files needs to be included and a dependency
 # must be added to the target `deqp-vk-inl` that generates the inl files.
 if (${VULKAN_CTS_HEADER} AND DEFINED AMBER_CTS_INL_DIR)
     target_include_directories(libamberenginevulkan PRIVATE "${AMBER_CTS_INL_DIR}")
@@ -62,10 +61,6 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
   # Disable Clang's warning that will always fire on that. This is required to build
   # with XCode 10.
   target_compile_options(libamberenginevulkan PRIVATE -Wno-zero-as-null-pointer-constant)
-endif()
-
-if (${AMBER_ENABLE_VK_DEBUGGING})
-  target_link_libraries(libamberenginevulkan cppdap)
 endif()
 
 add_custom_command(

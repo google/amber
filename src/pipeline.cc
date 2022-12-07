@@ -55,8 +55,7 @@ Pipeline::ShaderInfo::ShaderInfo(Shader* shader, ShaderType type)
       required_subgroup_size_setting_(RequiredSubgroupSizeSetting::kNotSet),
       required_subgroup_size_(0),
       varying_subgroup_size_(false),
-      require_full_subgroups_(false),
-      emit_debug_info_(false) {}
+      require_full_subgroups_(false) {}
 
 Pipeline::ShaderInfo::ShaderInfo(const ShaderInfo&) = default;
 

@@ -133,7 +133,7 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
 
 #if AMBER_ENABLE_DXC
   } else if (shader->GetFormat() == kShaderFormatHlsl) {
-    Result r = CompileHlsl(shader, shader_info->GetEmitDebugInfo(), &results);
+    Result r = CompileHlsl(shader, &results);
     if (!r.IsSuccess())
       return {r, {}};
 #endif  // AMBER_ENABLE_DXC
@@ -262,7 +262,6 @@ Result ShaderCompiler::CompileGlsl(const Shader*,
 
 #if AMBER_ENABLE_DXC
 Result ShaderCompiler::CompileHlsl(const Shader* shader,
-                                   bool emit_debug_info,
                                    std::vector<uint32_t>* result) const {
   std::string target;
   if (shader->GetType() == kShaderTypeCompute)
@@ -277,12 +276,10 @@ Result ShaderCompiler::CompileHlsl(const Shader* shader,
     return Result("Unknown shader type");
 
   return dxchelper::Compile(shader->GetData(), "main", target, spv_env_,
-                            shader->GetFilePath(), virtual_files_,
-                            emit_debug_info, result);
+                            shader->GetFilePath(), virtual_files_, result);
 }
 #else
 Result ShaderCompiler::CompileHlsl(const Shader*,
-                                   bool,
                                    std::vector<uint32_t>*) const {
   return {};
 }
