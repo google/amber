@@ -20,7 +20,9 @@ set -e  # fail on error
 
 set -x  # show commands
 
-BUILD_TYPE="Debug"
+# Disable git's "detected dubious ownership" error - kokoro checks out the repo with a different
+# user, and we don't care about this warning.
+git config --global --add safe.directory '*'
 
 using cmake-3.17.2
 using ninja-1.10.0
@@ -32,6 +34,7 @@ fi
 # Possible configurations are:
 # DEBUG, RELEASE
 
+BUILD_TYPE="Debug"
 if [ $CONFIG = "RELEASE" ]
 then
   BUILD_TYPE="RelWithDebInfo"

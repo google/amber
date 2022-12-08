@@ -26,6 +26,10 @@ ANDROID_ABI="armeabi-v7a with NEON"
 
 TOOLCHAIN_PATH="$ANDROID_NDK/build/cmake/android.toolchain.cmake"
 
+# Disable git's "detected dubious ownership" error - kokoro checks out the repo with a different
+# user, and we don't care about this warning.
+git config --global --add safe.directory '*'
+
 # removing the old version
 echo y | sudo apt-get purge --auto-remove cmake
 
