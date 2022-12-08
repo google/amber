@@ -35,9 +35,6 @@ deps = {
   'third_party/clspv-llvm': Var('llvm_git') + '/llvm-project.git@' +
       Var('clspv_llvm_revision'),
 
-  'third_party/cppdap': Var('google_git') + '/cppdap.git@' +
-      Var('cppdap_revision'),
-
   'third_party/cpplint': Var('google_git') + '/styleguide.git@' +
       Var('cpplint_revision'),
 
