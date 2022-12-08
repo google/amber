@@ -117,7 +117,7 @@ def is_git_toplevel(git, directory):
 
 def status(directory, checkoutable):
   def tail_truncate(s, length):
-    return s if len(s) <= length else s[-(length - 3):] + '...'
+    return s if len(s) <= length else '...' + s[-(length - 3):]
   dlen = 36
   directory = tail_truncate(directory, dlen)
   checkoutable = tail_truncate(checkoutable, 40)
