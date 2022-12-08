@@ -19,6 +19,10 @@ set -x  # display commands
 BUILD_ROOT="$PWD"
 SRC="$PWD/github/amber"
 
+# Disable git's "detected dubious ownership" error - kokoro checks out the repo with a different
+# user, and we don't care about this warning.
+git config --global --add safe.directory '*'
+
 # NDK Path
 export ANDROID_NDK="$BUILD_ROOT/android-ndk-r21"
 

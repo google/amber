@@ -35,9 +35,9 @@ def command_output(cmd, directory):
                        cwd=directory,
                        stdout=subprocess.PIPE,
                        stderr=subprocess.PIPE)
-  (stdout, _) = p.communicate()
+  (stdout, stderr) = p.communicate()
   if p.returncode != 0:
-    raise RuntimeError('Failed to run {} in {}'.format(cmd, directory))
+    raise RuntimeError('Failed to run {} in {}\nstdout: {}\nstderr: {}'.format(cmd, directory, stdout, stderr))
   return stdout
 
 

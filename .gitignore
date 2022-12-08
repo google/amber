@@ -3,7 +3,6 @@ build
 third_party/clspv
 third_party/clspv-clang
 third_party/clspv-llvm
-third_party/cppdap
 third_party/cpplint
 third_party/dxc
 third_party/glslang

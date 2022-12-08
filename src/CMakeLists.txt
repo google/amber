@@ -18,7 +18,6 @@ set(AMBER_SOURCES
     buffer.cc
     command.cc
     command_data.cc
-    debug.cc
     descriptor_set_and_binding_parser.cc
     engine.cc
     executor.cc
@@ -113,10 +112,6 @@ if (${AMBER_ENABLE_SHADERC})
   target_link_libraries(libamber shaderc SPIRV)
 endif()
 
-if (${AMBER_ENABLE_VK_DEBUGGING})
-  target_link_libraries(libamber cppdap)
-endif()
-
 if (NOT MSVC AND NOT ANDROID)
   target_link_libraries(libamber pthread)
 endif()
@@ -144,7 +139,6 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_clear_test.cc
     amberscript/parser_compile_options_test.cc
     amberscript/parser_copy_test.cc
-    amberscript/parser_debug_test.cc
     amberscript/parser_depth_test.cc
     amberscript/parser_device_feature_test.cc
     amberscript/parser_expect_test.cc

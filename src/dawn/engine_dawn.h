@@ -63,10 +63,6 @@ class EngineDawn : public Engine {
       const PatchParameterVerticesCommand* cmd) override;
   Result DoBuffer(const BufferCommand* cmd) override;
 
-  std::pair<Debugger*, Result> GetDebugger(VirtualFileStore*) override {
-    return {nullptr, Result("Dawn does not currently support a debugger")};
-  }
-
  private:
   // Returns the Dawn-specific render pipeline for the given command,
   // if it exists.  Returns nullptr otherwise.

@@ -62,8 +62,6 @@ class EngineVulkan : public Engine {
       const PatchParameterVerticesCommand* cmd) override;
   Result DoBuffer(const BufferCommand* cmd) override;
 
-  std::pair<Debugger*, Result> GetDebugger(VirtualFileStore*) override;
-
  private:
   struct PipelineInfo {
     std::unique_ptr<Pipeline> vk_pipeline;
@@ -93,7 +91,6 @@ class EngineVulkan : public Engine {
 
   std::map<amber::Pipeline*, PipelineInfo> pipeline_map_;
 
-  std::unique_ptr<Debugger> debugger_;
   std::map<std::string, VkShaderModule> shaders_;
 };
 
