@@ -67,6 +67,9 @@ const char k16BitStorage_InputOutput[] =
 const char kSubgroupSizeControl[] = "SubgroupSizeControl.subgroupSizeControl";
 const char kComputeFullSubgroups[] = "SubgroupSizeControl.computeFullSubgroups";
 
+const char kShaderSubgroupExtendedTypes[] =
+    "ShaderSubgroupExtendedTypesFeatures.shaderSubgroupExtendedTypes";
+
 const char kExtensionForValidationLayer[] = "VK_EXT_debug_report";
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flag,
@@ -772,12 +775,16 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       supports_shader_16bit_storage_ = true;
     else if (ext == "VK_EXT_subgroup_size_control")
       supports_subgroup_size_control_ = true;
+    else if (ext == "VK_KHR_shader_subgroup_extended_types")
+      supports_shader_subgroup_extended_types_ = true;
   }
 
   VkPhysicalDeviceFeatures required_vulkan_features =
       VkPhysicalDeviceFeatures();
 
   if (supports_get_physical_device_properties2_) {
+    VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures
+        shader_subgroup_extended_types_features = {};
     VkPhysicalDeviceSubgroupSizeControlFeaturesEXT
         subgroup_size_control_features = {};
     VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_features = {};
@@ -797,9 +804,14 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
                                            ? &subgroup_size_control_features
                                            : nullptr;
 
+    shader_subgroup_extended_types_features.sType =
+    // NOLINTNEXTLINE(whitespace/line_length)
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES;
+    shader_subgroup_extended_types_features.pNext = &variable_pointers_features;
+
     float16_int8_features.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
-    float16_int8_features.pNext = &variable_pointers_features;
+    float16_int8_features.pNext = &shader_subgroup_extended_types_features;
 
     storage_8bit_features.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR;
@@ -856,7 +868,10 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
            storage_16bit_features.storagePushConstant16 == VK_FALSE) ||
           (feature == k16BitStorage_UniformAndStorage &&
            storage_16bit_features.uniformAndStorageBuffer16BitAccess ==
-               VK_FALSE)) {
+               VK_FALSE) ||
+          (feature == kShaderSubgroupExtendedTypes &&
+           shader_subgroup_extended_types_features
+                   .shaderSubgroupExtendedTypes == VK_FALSE)) {
         return amber::Result("Device does not support all required features");
       }
     }
@@ -1005,6 +1020,10 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT;
   subgroup_size_control_feature_.pNext = nullptr;
 
+  shader_subgroup_extended_types_feature_.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES;
+  shader_subgroup_extended_types_feature_.pNext = nullptr;
+
   void** next_ptr = &variable_pointers_feature_.pNext;
 
   if (supports_shader_float16_int8_) {
@@ -1025,6 +1044,11 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
   if (supports_subgroup_size_control_) {
     *next_ptr = &subgroup_size_control_feature_;
     next_ptr = &subgroup_size_control_feature_.pNext;
+  }
+
+  if (supports_shader_subgroup_extended_types_) {
+    *next_ptr = &shader_subgroup_extended_types_feature_;
+    next_ptr = &shader_subgroup_extended_types_feature_.pNext;
   }
 
   available_features2_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
@@ -1064,6 +1088,9 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       subgroup_size_control_feature_.subgroupSizeControl = VK_TRUE;
     else if (feature == kComputeFullSubgroups)
       subgroup_size_control_feature_.computeFullSubgroups = VK_TRUE;
+    else if (feature == kShaderSubgroupExtendedTypes)
+      shader_subgroup_extended_types_feature_.shaderSubgroupExtendedTypes =
+          VK_TRUE;
   }
 
   VkPhysicalDeviceFeatures required_vulkan_features =
