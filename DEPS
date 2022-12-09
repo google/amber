@@ -1,6 +1,7 @@
 use_relative_paths = True
 
 vars = {
+  'cpplint_git':  'https://github.com/cpplint',
   'google_git':  'https://github.com/google',
   'khronos_git': 'https://github.com/KhronosGroup',
   'llvm_git': 'https://github.com/llvm',
@@ -12,7 +13,7 @@ vars = {
 
   'clspv_llvm_revision': 'b70366c9c430e1eadd59d5a1dfbb9c4d84f83de5',
   'clspv_revision': 'f99809bdab1710846633b4ec24f5448263e75da7',
-  'cpplint_revision': '26470f9ccb354ff2f6d098f831271a1833701b28',
+  'cpplint_revision': 'fa12a0bbdafa15291276ddd2a2dcd2ac7a2ce4cb',
   'dxc_revision': 'c45db48d565a9edc14b025e43b90e62264d06eea',
   'glslang_revision': '81cc10a498b25a90147cccd6e8939493c1e9e20e',
   'googletest_revision': '16f637fbf4ffc3f7a01fa4eceb7906634565242f',
@@ -35,7 +36,7 @@ deps = {
   'third_party/clspv-llvm': Var('llvm_git') + '/llvm-project.git@' +
       Var('clspv_llvm_revision'),
 
-  'third_party/cpplint': Var('google_git') + '/styleguide.git@' +
+  'third_party/cpplint': Var('cpplint_git') + '/cpplint.git@' +
       Var('cpplint_revision'),
 
   'third_party/dxc': Var('microsoft_git') + '/DirectXShaderCompiler.git@' +

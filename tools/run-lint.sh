@@ -15,5 +15,6 @@
 
 set -e  # fail on error
 
-./third_party/cpplint/cpplint/cpplint.py `find src samples -type f`
-./third_party/cpplint/cpplint/cpplint.py --root include `find ./include -type f`
+FILTERS=-build/header_guard
+./third_party/cpplint/cpplint.py  --filter "$FILTERS" `find src samples -type f`
+./third_party/cpplint/cpplint.py  --filter "$FILTERS" --root include `find ./include -type f`
