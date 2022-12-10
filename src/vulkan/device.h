@@ -30,8 +30,8 @@ namespace amber {
 namespace vulkan {
 
 struct VulkanPtrs {
-#include "vk-wrappers-1-0.h"  // NOLINT(build/include)
-#include "vk-wrappers-1-1.h"  // NOLINT(build/include)
+#include "vk-wrappers-1-0.h"  // NOLINT(build/include_subdir)
+#include "vk-wrappers-1-1.h"  // NOLINT(build/include_subdir)
 };
 
 /// Wrapper around a Vulkan Device object.
