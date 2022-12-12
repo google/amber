@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -123,6 +124,9 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
     Result r = ParseHex(shader->GetData(), &results);
     if (!r.IsSuccess())
       return {Result("Unable to parse shader hex."), {}};
+  } else if (shader->GetFormat() == kShaderFormatSpirvBin) {
+    results.resize(shader->GetData().size() / 4);
+    memcpy(results.data(), shader->GetData().data(), shader->GetData().size());
 
 #if AMBER_ENABLE_SHADERC
   } else if (shader->GetFormat() == kShaderFormatGlsl) {

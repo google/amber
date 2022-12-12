@@ -63,7 +63,7 @@ syn keyword amberComparator EQ_HISTOGRAM_EMD_BUFFER
 syn keyword amberKeyword compute vertex geometry fragment graphics
 syn keyword amberKeyword tessellation_evaulation tessellation_control multi
 
-syn keyword amberFormat GLSL HLSL SPIRV-ASM SPIRV-HEX OPENCL-C
+syn keyword amberFormat GLSL HLSL SPIRV-ASM SPIRV-HEX SPIRV-BIN OPENCL-C
 
 syn keyword amberTopology point_list line_list line_list_with_adjacency
 syn keyword amberTopology line_strip line_strip_with_adjacency triangle_list

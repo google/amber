@@ -111,7 +111,7 @@ file system, before falling back to the standard file system.
 
 Shader programs are declared using the `SHADER` command. \
 Shaders can be declared as `PASSTHROUGH`, with inlined source or using source
-from a `VIRTUAL_FILE`.
+from a `VIRTUAL_FILE` or from a `FILE` in the file system.
 
 Pass-through shader:
 
@@ -132,12 +132,12 @@ SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ]
 END
 ```
 
-Shader using source from `VIRTUAL_FILE`:
+Shader using source from `VIRTUAL_FILE` or `FILE`:
 
 ```groovy
 # Creates a shader of |shader_type| with the given |shader_name|. The shader
 # will be of |shader_format|. The shader will use the virtual file with |path|.
-SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ] VIRTUAL_FILE {path}
+SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ] ( VIRTUAL_FILE | FILE ) {path}
 ```
 
 `{shader_name}` is used to identify the shader to attach to `PIPELINE`s,
@@ -164,12 +164,13 @@ can not contain compute shaders, and must contain a vertex shader and a fragment
 shader. Ray tracing pipeline can contain only shaders of ray tracing types:
 ray generation, any hit, closest hit, miss, intersection, and callable shaders.
 
-The provided `multi` shader can only be used with `SPIRV-ASM` and `SPIRV-HEX`
-and allows for providing multiple shaders in a single module (so the `vertex`
-and `fragment` shaders can be provided together.)
+The provided `multi` shader can only be used with `SPIRV-ASM`, `SPIRV-HEX`, and
+`SPIRV-BIN` and allows for providing multiple shaders in a single module (so the
+`vertex` and `fragment` shaders can be provided together.)
 
-Note, `SPIRV-ASM` and `SPIRV-HEX` can also be used with each of the other shader
-types, but in that case must only provide a single shader type in the module.
+Note, `SPIRV-ASM`, `SPIRV-HEX`, and `SPIRV-BIN` can also be used with each of
+the other shader types, but in that case must only provide a single shader type
+in the module.
 
 #### Shader Format
  * `GLSL`  (with glslang)
@@ -177,6 +178,7 @@ types, but in that case must only provide a single shader type in the module.
  * `SPIRV-ASM` (with spirv-as; specifying `TARGET_ENV` is _highly recommended_
     in this case, as explained below)
  * `SPIRV-HEX` (decoded straight to SPIR-V)
+ * `SPIRV-BIN` (read as binary SPIR-V, only with `FILE`)
  * `OPENCL-C` (with clspv)
 
 ### Target environment
@@ -190,8 +192,8 @@ SPIR-V environment. For example:
  * `vulkan1.2`
 
 Check the help text of the corresponding tool (e.g. spirv-as, glslangValidator)
-for the full list. The `SPIRV-HEX` shader format is not affected by the target
-environment.
+for the full list. The `SPIRV-HEX` and `SPIRV-BIN` shader formats are not
+affected by the target environment.
 
 The specified target environment for the shader overrides the default (`spv1.0`)
 or the one specified on the command line.
