@@ -410,6 +410,14 @@ class SampleDelegate : public amber::Delegate {
     return {};
   }
 
+  amber::Result LoadFile(const std::string file_name,
+                         std::vector<char>& buffer) const override {
+    buffer = ReadFile(path_ + file_name);
+    if (buffer.empty())
+      return amber::Result("Failed to load file " + file_name);
+    return {};
+  }
+
  private:
   bool log_graphics_calls_ = false;
   bool log_graphics_calls_time_ = false;
