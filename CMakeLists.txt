@@ -208,6 +208,7 @@ function(amber_default_compile_options TARGET)
       -Wall
       -Werror
       -Wextra
+      -Wno-cast-function-type-strict
       -Wno-padded
       -Wno-switch-enum
       -Wno-unknown-pragmas
