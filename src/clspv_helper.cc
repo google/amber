@@ -278,7 +278,7 @@ Result Compile(Pipeline::ShaderInfo* shader_info,
   // Strip the reflection instructions to avoid requiring the implementation to
   // support VK_KHR_shader_non_semantic_info.
   spvtools::Optimizer opt(env);
-  opt.RegisterPass(spvtools::CreateStripReflectInfoPass());
+  opt.RegisterPass(spvtools::CreateStripNonSemanticInfoPass());
   std::vector<uint32_t> stripped;
   if (!opt.Run(generated_binary->data(), generated_binary->size(), &stripped)) {
     return Result("failed to strip reflection instructions");
