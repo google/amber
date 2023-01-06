@@ -225,7 +225,6 @@ function(amber_default_compile_options TARGET)
         -Wno-c++98-compat-pedantic
         -Wno-format-pedantic
         -Wno-unknown-warning-option
-        -Weverything
       )
     endif()
   endif()
