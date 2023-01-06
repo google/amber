@@ -35,9 +35,9 @@ echo y | sudo apt-get purge --auto-remove cmake
 
 # Installing the 3.14.0 version.
 #   Glslang requires 3.14.0
-wget http://www.cmake.org/files/v3.14/cmake-3.18.0.tar.gz
-tar -xvzf cmake-3.18.0.tar.gz
-pushd cmake-3.18.0/
+wget http://www.cmake.org/files/v3.18/cmake-3.18.6.tar.gz
+tar -xvzf cmake-3.18.6.tar.gz
+pushd cmake-3.18.6/
 ./configure
 make
 sudo make install
