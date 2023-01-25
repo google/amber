@@ -15,6 +15,7 @@
 #ifndef AMBER_SHADER_INFO_H_
 #define AMBER_SHADER_INFO_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
