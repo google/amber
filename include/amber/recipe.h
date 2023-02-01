@@ -15,6 +15,7 @@
 #ifndef AMBER_RECIPE_H_
 #define AMBER_RECIPE_H_
 
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
