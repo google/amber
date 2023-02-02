@@ -18,7 +18,6 @@
 # to main
 cpplint=1
 dxc=1
-glslang=1
 googletest=1
 json=1
 lodepng=1
