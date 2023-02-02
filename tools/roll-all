@@ -14,19 +14,16 @@
 # limitations under the License.
 
 # Defined to use origin/master instead of origin/main
-clspv=1
+# TODO(https://github.com/google/amber/issues/1014): Khronos repos are switching
+# to main
 cpplint=1
 dxc=1
-glslang=1
 googletest=1
 json=1
 lodepng=1
-spirv_headers=1
-spirv_tools=1
 swiftshader=1
 vulkan_loader=1
 vulkan_validationlayers=1
-
 
 # This script assumes it's parent directory is the repo root.
 repo_path=$(dirname "$0")/..
