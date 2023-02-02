@@ -49,6 +49,8 @@ option(AMBER_ENABLE_SWIFTSHADER
   "Build using SwiftShader" ${AMBER_ENABLE_SWIFTSHADER})
 option(AMBER_ENABLE_RTTI
   "Build with runtime type information" OFF)
+option(AMBER_DISABLE_WERROR "Build without the -Werror flag" ${AMBER_DISABLE_WERROR})
+option(AMBER_DISABLE_WEVERYTHING "Build without the -Weverything flag" ${AMBER_DISABLE_WEVERYTHING})
 
 if (${AMBER_ENABLE_VK_DEBUGGING})
   message(FATAL_ERROR "Amber no longer supports Vulkan debugging")
@@ -206,7 +208,6 @@ function(amber_default_compile_options TARGET)
       -fno-exceptions
       -fvisibility=hidden
       -Wall
-      -Werror
       -Wextra
       -Wno-cast-function-type-strict
       -Wno-padded
@@ -214,6 +215,9 @@ function(amber_default_compile_options TARGET)
       -Wno-unknown-pragmas
       -pedantic-errors
     )
+    if (NOT ${AMBER_DISABLE_WERROR})
+      target_compile_options(${TARGET} PRIVATE -Werror)
+    endif()
 
     if(NOT ${AMBER_ENABLE_RTTI})
       target_compile_options(${TARGET} PRIVATE -fno-rtti)
@@ -225,8 +229,10 @@ function(amber_default_compile_options TARGET)
         -Wno-c++98-compat-pedantic
         -Wno-format-pedantic
         -Wno-unknown-warning-option
-        -Weverything
       )
+      if (NOT ${AMBER_DISABLE_WEVERYTHING})
+        target_compile_options(${TARGET} PRIVATE -Weverything)
+      endif()
     endif()
   endif()
 
