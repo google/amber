@@ -22,8 +22,6 @@ googletest=1
 json=1
 lodepng=1
 swiftshader=1
-vulkan_loader=1
-vulkan_validationlayers=1
 
 # This script assumes it's parent directory is the repo root.
 repo_path=$(dirname "$0")/..
