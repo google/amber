@@ -18,16 +18,16 @@ import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
 import android.os.Bundle;
-
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import org.junit.Test;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 // Instrumented test used for launching Amber.
+@RunWith(JUnit4.class)
 public class AmberLauncher {
   @Test
   public void LaunchAmber() {

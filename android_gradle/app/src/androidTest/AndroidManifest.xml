@@ -5,4 +5,8 @@
             android:name="com.android.graphics.developerdriver.enable"
             android:value="true" />
     </application>
+
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+      android:targetPackage="com.google.amber"
+      android:label="Amber" />
 </manifest>
