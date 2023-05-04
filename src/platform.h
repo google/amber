@@ -30,6 +30,9 @@ namespace amber {
 #define AMBER_PLATFORM_POSIX 1
 #elif defined(__Fuchsia__)
 #define AMBER_PLATFORM_POSIX 1
+#elif defined(__QNX__)
+#define AMBER_PLATFORM_QNX 1
+#define AMBER_PLATFORM_POSIX 1
 #else
 #error "Unknown platform."
 #endif
@@ -52,6 +55,10 @@ namespace amber {
 
 #if !defined(AMBER_PLATFORM_POSIX)
 #define AMBER_PLATFORM_POSIX 0
+#endif
+
+#if !defined(AMBER_PLATFORM_QNX)
+#define AMBER_PLATFORM_QNX 0
 #endif
 
 }  // namespace amber
