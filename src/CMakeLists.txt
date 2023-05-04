@@ -112,7 +112,7 @@ if (${AMBER_ENABLE_SHADERC})
   target_link_libraries(libamber shaderc SPIRV)
 endif()
 
-if (NOT MSVC AND NOT ANDROID)
+if (NOT MSVC AND NOT ANDROID AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "QNX")
   target_link_libraries(libamber pthread)
 endif()
 
