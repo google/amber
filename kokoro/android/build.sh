@@ -21,8 +21,8 @@ BUILD_TYPE="Release"
 
 export ANDROID_NDK="$BUILD_ROOT/android-ndk-r25b"
 ANDROID_STL="c++_static"
-ANDROID_PLATFORM="android-14"
-ANDROID_ABI="armeabi-v7a with NEON"
+ANDROID_PLATFORM="android-24"
+ANDROID_ABI="armeabi-v7a"
 
 TOOLCHAIN_PATH="$ANDROID_NDK/build/cmake/android.toolchain.cmake"
 
