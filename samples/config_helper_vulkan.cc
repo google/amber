@@ -708,7 +708,8 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
   }
 
   instance_info.enabledLayerCount = static_cast<uint32_t>(layer_names.size());
-  instance_info.ppEnabledLayerNames = instance_info.enabledLayerCount > 0 ? layer_names.data() : nullptr;
+  instance_info.ppEnabledLayerNames =
+      instance_info.enabledLayerCount > 0 ? layer_names.data() : nullptr;
 
   available_instance_extensions_ = GetAvailableInstanceExtensions();
   if (!required_extensions.empty()) {
@@ -741,7 +742,8 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
       static_cast<uint32_t>(required_extensions_in_char.size());
   instance_info.ppEnabledExtensionNames = required_extensions_in_char.data();
 
-  const VkResult result = vkCreateInstance(&instance_info, nullptr, &vulkan_instance_);
+  const VkResult result =
+      vkCreateInstance(&instance_info, nullptr, &vulkan_instance_);
   if (result != VK_SUCCESS) {
     std::stringstream error_message;
     error_message << "Unable to create vulkan instance (code=" << result << ")";
@@ -819,7 +821,7 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
                                            : nullptr;
 
     shader_subgroup_extended_types_features.sType =
-    // NOLINTNEXTLINE(whitespace/line_length)
+        // NOLINTNEXTLINE(whitespace/line_length)
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES;
     shader_subgroup_extended_types_features.pNext = &variable_pointers_features;
 
@@ -1244,10 +1246,9 @@ amber::Result ConfigHelperVulkan::CreateConfig(
     bool enable_pipeline_runtime_layer,
     bool show_version_info,
     std::unique_ptr<amber::EngineConfig>* cfg_holder) {
-  amber::Result r = CreateVulkanInstance(engine_major, engine_minor,
-                                         required_instance_extensions,
-                                         disable_validation_layer,
-                                         enable_pipeline_runtime_layer);
+  amber::Result r = CreateVulkanInstance(
+      engine_major, engine_minor, required_instance_extensions,
+      disable_validation_layer, enable_pipeline_runtime_layer);
   if (!r.IsSuccess())
     return r;
 

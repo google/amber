@@ -71,7 +71,8 @@ amber::Result ConfigHelper::CreateConfig(
   return impl_->CreateConfig(
       engine_major, engine_minor, selected_device, required_features,
       required_instance_extensions, required_device_extensions,
-      disable_validation_layer, enable_pipeline_runtime_layer, show_version_info, config);
+      disable_validation_layer, enable_pipeline_runtime_layer,
+      show_version_info, config);
 }
 
 }  // namespace sample

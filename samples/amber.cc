@@ -282,7 +282,7 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->log_execute_calls = true;
     } else if (arg == "--disable-spirv-val") {
       opts->disable_spirv_validation = true;
-    } else if(arg == "--enable-runtime-layer") {
+    } else if (arg == "--enable-runtime-layer") {
       opts->enable_pipeline_runtime_layer = true;
     } else if (arg.size() > 0 && arg[0] == '-') {
       std::cerr << "Unrecognized option " << arg << std::endl;
