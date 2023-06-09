@@ -44,6 +44,8 @@ const char* const kRequiredValidationLayers[] = {
 const size_t kNumberOfRequiredValidationLayers =
     sizeof(kRequiredValidationLayers) / sizeof(const char*);
 
+const char kPipelineRuntimeLayerName[] = "VK_LAYER_STADIA_pipeline_runtime";
+
 const char kVariablePointers[] = "VariablePointerFeatures.variablePointers";
 const char kVariablePointersStorageBuffer[] =
     "VariablePointerFeatures.variablePointersStorageBuffer";
@@ -672,7 +674,8 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     uint32_t engine_major,
     uint32_t engine_minor,
     std::vector<std::string> required_extensions,
-    bool disable_validation_layer) {
+    bool disable_validation_layer,
+    bool enable_pipeline_runtime_layer) {
   VkApplicationInfo app_info = VkApplicationInfo();
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 
@@ -685,6 +688,8 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_info.pApplicationInfo = &app_info;
 
+  std::vector<const char*> layer_names;
+
   if (!disable_validation_layer) {
     if (!AreAllValidationLayersSupported())
       return amber::Result("Sample: not all validation layers are supported");
@@ -692,11 +697,19 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
       return amber::Result(
           "Sample: extensions of validation layers are not supported");
     }
-    instance_info.enabledLayerCount = kNumberOfRequiredValidationLayers;
-    instance_info.ppEnabledLayerNames = kRequiredValidationLayers;
-
+    for (size_t i = 0; i < kNumberOfRequiredValidationLayers; ++i) {
+      layer_names.push_back(kRequiredValidationLayers[i]);
+    }
     required_extensions.push_back(kExtensionForValidationLayer);
   }
+
+  if (enable_pipeline_runtime_layer) {
+    layer_names.push_back(kPipelineRuntimeLayerName);
+  }
+
+  instance_info.enabledLayerCount = static_cast<uint32_t>(layer_names.size());
+  instance_info.ppEnabledLayerNames =
+      instance_info.enabledLayerCount > 0 ? layer_names.data() : nullptr;
 
   available_instance_extensions_ = GetAvailableInstanceExtensions();
   if (!required_extensions.empty()) {
@@ -729,9 +742,12 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
       static_cast<uint32_t>(required_extensions_in_char.size());
   instance_info.ppEnabledExtensionNames = required_extensions_in_char.data();
 
-  if (vkCreateInstance(&instance_info, nullptr, &vulkan_instance_) !=
-      VK_SUCCESS) {
-    return amber::Result("Unable to create vulkan instance");
+  const VkResult result =
+      vkCreateInstance(&instance_info, nullptr, &vulkan_instance_);
+  if (result != VK_SUCCESS) {
+    std::stringstream error_message;
+    error_message << "Unable to create vulkan instance (code=" << result << ")";
+    return amber::Result(error_message.str());
   }
   return {};
 }
@@ -805,7 +821,7 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
                                            : nullptr;
 
     shader_subgroup_extended_types_features.sType =
-    // NOLINTNEXTLINE(whitespace/line_length)
+        // NOLINTNEXTLINE(whitespace/line_length)
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES;
     shader_subgroup_extended_types_features.pNext = &variable_pointers_features;
 
@@ -1227,11 +1243,12 @@ amber::Result ConfigHelperVulkan::CreateConfig(
     const std::vector<std::string>& required_instance_extensions,
     const std::vector<std::string>& required_device_extensions,
     bool disable_validation_layer,
+    bool enable_pipeline_runtime_layer,
     bool show_version_info,
     std::unique_ptr<amber::EngineConfig>* cfg_holder) {
-  amber::Result r = CreateVulkanInstance(engine_major, engine_minor,
-                                         required_instance_extensions,
-                                         disable_validation_layer);
+  amber::Result r = CreateVulkanInstance(
+      engine_major, engine_minor, required_instance_extensions,
+      disable_validation_layer, enable_pipeline_runtime_layer);
   if (!r.IsSuccess())
     return r;
 
