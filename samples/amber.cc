@@ -68,6 +68,7 @@ struct Options {
   bool log_graphics_calls_time = false;
   bool log_execute_calls = false;
   bool disable_spirv_validation = false;
+  bool enable_pipeline_runtime_layer = false;
   std::string shader_filename;
   amber::EngineType engine = amber::kEngineTypeVulkan;
   std::string spv_env;
@@ -103,6 +104,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   --log-graphics-calls-time -- Log timing of graphics API calls timing (Vulkan only).
   --log-execute-calls       -- Log each execute call before run.
   --disable-spirv-val       -- Disable SPIR-V validation.
+  --enable-runtime-layer    -- Enable pipeline runtime layer.
   -h                        -- This help text.
 )";
 
@@ -280,6 +282,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->log_execute_calls = true;
     } else if (arg == "--disable-spirv-val") {
       opts->disable_spirv_validation = true;
+    } else if (arg == "--enable-runtime-layer") {
+      opts->enable_pipeline_runtime_layer = true;
     } else if (arg.size() > 0 && arg[0] == '-') {
       std::cerr << "Unrecognized option " << arg << std::endl;
       return false;
@@ -567,7 +571,8 @@ int main(int argc, const char** argv) {
                                required_instance_extensions.end()),
       std::vector<std::string>(required_device_extensions.begin(),
                                required_device_extensions.end()),
-      options.disable_validation_layer, options.show_version_info, &config);
+      options.disable_validation_layer, options.enable_pipeline_runtime_layer,
+      options.show_version_info, &config);
 
   if (!r.IsSuccess()) {
     std::cout << r.Error() << std::endl;

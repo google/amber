@@ -57,6 +57,7 @@ amber::Result ConfigHelperDawn::CreateConfig(
     const std::vector<std::string>&,
     bool,
     bool,
+    bool,
     std::unique_ptr<amber::EngineConfig>* config) {
   // Set procedure table and error callback.
   DawnProcTable backendProcs = dawn_native::GetProcs();
