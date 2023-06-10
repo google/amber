@@ -99,7 +99,7 @@ Other example shader header lines are:
 
 ## Vertex Data
 The `vertex data` section provides vertex attributes and data for `draw array`
-commands. The data is formated with a header row followed by data rows.
+commands. The data is formatted with a header row followed by data rows.
 
 The headers can be provided in one of two forms. The first,
 `attribute_location/format` where `attribute_location` is the location of the
