@@ -30,6 +30,7 @@ class ComputePipeline : public Pipeline {
   ComputePipeline(
       Device* device,
       uint32_t fence_timeout_ms,
+      bool pipeline_runtime_layer_enabled,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
   ~ComputePipeline() override;
 

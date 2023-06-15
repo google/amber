@@ -50,4 +50,9 @@ void Recipe::SetFenceTimeout(uint32_t timeout_ms) {
     impl_->SetFenceTimeout(timeout_ms);
 }
 
+void Recipe::SetPipelineRuntimeLayerEnabled(bool enabled) {
+  if (impl_)
+    impl_->SetPipelineRuntimeLayerEnabled(enabled);
+}
+
 }  // namespace amber
