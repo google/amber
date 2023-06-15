@@ -20,6 +20,8 @@
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 
+#include "src/engine.h"
+
 namespace amber {
 namespace vulkan {
 
@@ -119,6 +121,9 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
 
   if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS)
     return Result("Vulkan::Calling vkResetCommandBuffer Fail");
+
+  if((timeout_ms == EngineData::DEFAULT_IMEOUT) || (timeout_ms == uint32_t(-1)))
+    device_->GetPtrs()->vkQueueWaitIdle(device_->GetVkQueue());
 
   return {};
 }
