@@ -33,8 +33,9 @@ class VirtualFileStore;
 
 /// EngineData stores information used during engine execution.
 struct EngineData {
+  static constexpr uint32_t DEFAULT_IMEOUT = 10000;
   /// The timeout to use for fences, in milliseconds.
-  uint32_t fence_timeout_ms = 10000;
+  uint32_t fence_timeout_ms = DEFAULT_IMEOUT;
 };
 
 /// Abstract class which describes a backing engine for Amber.
