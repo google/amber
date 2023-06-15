@@ -122,6 +122,12 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS)
     return Result("Vulkan::Calling vkResetCommandBuffer Fail");
 
+  /*
+  google/vulkan-performance-layers requires a call to vkDeviceWaitIdle or
+  vkQueueWaitIdle in order to report the information. Since we want to be
+  able to use that layer in conjunction with Amber we need to somehow
+  communicate that the Amber script has completed.
+  */
   if((timeout_ms == EngineData::DEFAULT_IMEOUT) || (timeout_ms == uint32_t(-1)))
     device_->GetPtrs()->vkQueueWaitIdle(device_->GetVkQueue());
 
