@@ -170,7 +170,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   std::unique_ptr<Pipeline> vk_pipeline;
   if (pipeline->GetType() == PipelineType::kCompute) {
     vk_pipeline = MakeUnique<ComputePipeline>(
-        device_.get(), engine_data.fence_timeout_ms, stage_create_info);
+        device_.get(), engine_data.fence_timeout_ms,
+        engine_data.pipeline_runtime_layer_enabled, stage_create_info);
     r = vk_pipeline->AsCompute()->Initialize(pool_.get());
     if (!r.IsSuccess())
       return r;
@@ -178,7 +179,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     vk_pipeline = MakeUnique<GraphicsPipeline>(
         device_.get(), pipeline->GetColorAttachments(),
         pipeline->GetDepthStencilBuffer(), pipeline->GetResolveTargets(),
-        engine_data.fence_timeout_ms, stage_create_info);
+        engine_data.fence_timeout_ms,
+        engine_data.pipeline_runtime_layer_enabled, stage_create_info);
 
     vk_pipeline->AsGraphics()->SetPatchControlPoints(
         pipeline->GetPipelineData()->GetPatchControlPoints());
