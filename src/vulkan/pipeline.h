@@ -102,7 +102,8 @@ class Pipeline {
 
   const char* GetEntryPointName(VkShaderStageFlagBits stage) const;
   uint32_t GetFenceTimeout() const { return fence_timeout_ms_; }
-  bool     GetPipelineRuntimeLayerEnabled() const { return pipeline_runtime_layer_enabled_; }
+  bool     GetPipelineRuntimeLayerEnabled()
+       const { return pipeline_runtime_layer_enabled_; }
 
   Result CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout);
 

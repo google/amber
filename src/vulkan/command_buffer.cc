@@ -124,7 +124,7 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms,
   able to use that layer in conjunction with Amber we need to somehow
   communicate that the Amber script has completed.
   */
-  if(pipeline_runtime_layer_enabled)
+  if (pipeline_runtime_layer_enabled)
     device_->GetPtrs()->vkQueueWaitIdle(device_->GetVkQueue());
 
   if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS)

@@ -443,7 +443,8 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     // done after resizing backed buffer i.e., copying data to the new
     // buffer from the old one. Thus, we must submit commands here to
     // guarantee this.
-    Result r = guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
+    Result r = guard.Submit(GetFenceTimeout(),
+                            GetPipelineRuntimeLayerEnabled());
     if (!r.IsSuccess())
       return r;
   }
@@ -550,7 +551,8 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
       }
     }
 
-    Result r = guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
+    Result r = guard.Submit(GetFenceTimeout(),
+                            GetPipelineRuntimeLayerEnabled());
     if (!r.IsSuccess())
       return r;
   }
