@@ -136,8 +136,8 @@ class Pipeline {
   /// Buffers used by descriptors (buffer descriptors and image descriptors).
   std::vector<Buffer*> descriptor_buffers_;
 
-  bool pipeline_runtime_layer_enabled_ = false;
   uint32_t fence_timeout_ms_ = 1000;
+  bool pipeline_runtime_layer_enabled_ = false;
   bool descriptor_related_objects_already_created_ = false;
   std::unordered_map<VkShaderStageFlagBits,
                      std::string,
