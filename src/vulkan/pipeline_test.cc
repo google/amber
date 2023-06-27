@@ -26,7 +26,7 @@ using VulkanPipelineTest = testing::Test;
 TEST_F(VulkanPipelineTest, AddBufferDescriptorAddPushConstant) {
   amber::Pipeline amber_pipeline(PipelineType::kCompute);
   std::vector<VkPipelineShaderStageCreateInfo> create_infos;
-  ComputePipeline pipeline(nullptr, 0, create_infos);
+  ComputePipeline pipeline(nullptr, 0, false, create_infos);
 
   auto cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kPushConstant,
                                        &amber_pipeline);
@@ -38,7 +38,7 @@ TEST_F(VulkanPipelineTest, AddBufferDescriptorAddPushConstant) {
 TEST_F(VulkanPipelineTest, AddBufferDescriptorAddBufferTwice) {
   amber::Pipeline amber_pipeline(PipelineType::kCompute);
   std::vector<VkPipelineShaderStageCreateInfo> create_infos;
-  ComputePipeline pipeline(nullptr, 0, create_infos);
+  ComputePipeline pipeline(nullptr, 0, false, create_infos);
 
   auto cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kUniform,
                                        &amber_pipeline);

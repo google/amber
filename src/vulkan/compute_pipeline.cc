@@ -23,10 +23,12 @@ namespace vulkan {
 ComputePipeline::ComputePipeline(
     Device* device,
     uint32_t fence_timeout_ms,
+    bool pipeline_runtime_layer_enabled,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : Pipeline(PipelineType::kCompute,
                device,
                fence_timeout_ms,
+               pipeline_runtime_layer_enabled,
                shader_stage_info) {}
 
 ComputePipeline::~ComputePipeline() = default;
@@ -100,7 +102,7 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
                                           pipeline);
     device_->GetPtrs()->vkCmdDispatch(command_->GetVkCommandBuffer(), x, y, z);
 
-    r = guard.Submit(GetFenceTimeout());
+    r = guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
     if (!r.IsSuccess())
       return r;
   }

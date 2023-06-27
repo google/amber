@@ -518,6 +518,9 @@ int main(int argc, const char** argv) {
     if (options.fence_timeout > -1)
       recipe->SetFenceTimeout(static_cast<uint32_t>(options.fence_timeout));
 
+    recipe->SetPipelineRuntimeLayerEnabled(
+      options.enable_pipeline_runtime_layer);
+
     recipe_data.emplace_back();
     recipe_data.back().file = file;
     recipe_data.back().recipe = std::move(recipe);

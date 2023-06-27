@@ -78,6 +78,7 @@ class Pipeline {
       PipelineType type,
       Device* device,
       uint32_t fence_timeout_ms,
+      bool    pipeline_runtime_layer_enabled,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
 
   /// Initializes the pipeline.
@@ -101,6 +102,8 @@ class Pipeline {
 
   const char* GetEntryPointName(VkShaderStageFlagBits stage) const;
   uint32_t GetFenceTimeout() const { return fence_timeout_ms_; }
+  bool     GetPipelineRuntimeLayerEnabled()
+       const { return pipeline_runtime_layer_enabled_; }
 
   Result CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout);
 
@@ -134,6 +137,7 @@ class Pipeline {
   std::vector<Buffer*> descriptor_buffers_;
 
   uint32_t fence_timeout_ms_ = 1000;
+  bool pipeline_runtime_layer_enabled_ = false;
   bool descriptor_related_objects_already_created_ = false;
   std::unordered_map<VkShaderStageFlagBits,
                      std::string,

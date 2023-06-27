@@ -44,6 +44,9 @@ class RecipeImpl {
   /// Sets the fence timeout value to |timeout_ms|.
   virtual void SetFenceTimeout(uint32_t timeout_ms) = 0;
 
+  /// Sets or clears runtime layer bit to |enabled|.
+  virtual void SetPipelineRuntimeLayerEnabled(bool enabled) = 0;
+
  protected:
   RecipeImpl();
 };
@@ -72,6 +75,9 @@ class Recipe {
 
   /// Sets the timeout value for fences to |timeout_ms|.
   void SetFenceTimeout(uint32_t timeout_ms);
+
+  /// Sets or clears runtime layer bit to |enabled|.
+  void SetPipelineRuntimeLayerEnabled(bool enabled);
 
  private:
   RecipeImpl* impl_;

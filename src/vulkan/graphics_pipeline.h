@@ -45,6 +45,7 @@ class GraphicsPipeline : public Pipeline {
       amber::Pipeline::BufferInfo depth_stencil_buffer,
       const std::vector<amber::Pipeline::BufferInfo>& resolve_targets,
       uint32_t fence_timeout_ms,
+      bool pipeline_runtime_layer_enabled,
       const std::vector<VkPipelineShaderStageCreateInfo>&);
   ~GraphicsPipeline() override;
 

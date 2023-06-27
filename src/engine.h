@@ -35,6 +35,7 @@ class VirtualFileStore;
 struct EngineData {
   /// The timeout to use for fences, in milliseconds.
   uint32_t fence_timeout_ms = 10000;
+  bool pipeline_runtime_layer_enabled = false;
 };
 
 /// Abstract class which describes a backing engine for Amber.

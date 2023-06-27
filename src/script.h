@@ -67,6 +67,11 @@ class Script : public RecipeImpl {
     engine_data_.fence_timeout_ms = timeout_ms;
   }
 
+  /// Sets or clears runtime layer bit to |enabled|.
+  void SetPipelineRuntimeLayerEnabled(bool enabled) override {
+    engine_data_.pipeline_runtime_layer_enabled = enabled;
+  }
+
   /// Adds |pipeline| to the list of known pipelines. The |pipeline| must have
   /// a unique name over all pipelines in the script.
   Result AddPipeline(std::unique_ptr<Pipeline> pipeline) {

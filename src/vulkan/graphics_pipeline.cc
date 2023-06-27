@@ -392,10 +392,12 @@ GraphicsPipeline::GraphicsPipeline(
     amber::Pipeline::BufferInfo depth_stencil_buffer,
     const std::vector<amber::Pipeline::BufferInfo>& resolve_targets,
     uint32_t fence_timeout_ms,
+    bool pipeline_runtime_layer_enabled,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : Pipeline(PipelineType::kGraphics,
                device,
                fence_timeout_ms,
+               pipeline_runtime_layer_enabled,
                shader_stage_info),
       depth_stencil_buffer_(depth_stencil_buffer) {
   for (const auto& info : color_buffers)
@@ -778,7 +780,7 @@ Result GraphicsPipeline::SetIndexBuffer(Buffer* buffer) {
   if (!r.IsSuccess())
     return r;
 
-  return guard.Submit(GetFenceTimeout());
+  return guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
 }
 
 Result GraphicsPipeline::SetClearColor(float r, float g, float b, float a) {
@@ -869,7 +871,8 @@ Result GraphicsPipeline::Clear() {
 
   frame_->TransferImagesToHost(command_.get());
 
-  Result r = cmd_buf_guard.Submit(GetFenceTimeout());
+  Result r = cmd_buf_guard.Submit(GetFenceTimeout(),
+                                  GetPipelineRuntimeLayerEnabled());
   if (!r.IsSuccess())
     return r;
 
@@ -958,7 +961,8 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
 
     frame_->TransferImagesToHost(command_.get());
 
-    r = cmd_buf_guard.Submit(GetFenceTimeout());
+    r = cmd_buf_guard.Submit(GetFenceTimeout(),
+                             GetPipelineRuntimeLayerEnabled());
     if (!r.IsSuccess())
       return r;
   }

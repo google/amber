@@ -48,7 +48,8 @@ class CommandBuffer {
   friend CommandBufferGuard;
 
   Result BeginRecording();
-  Result SubmitAndReset(uint32_t timeout_ms);
+  Result SubmitAndReset(uint32_t timeout_ms,
+                        bool pipeline_runtime_layer_enabled);
   void Reset();
 
   bool guarded_ = false;
@@ -83,7 +84,8 @@ class CommandBufferGuard {
   Result GetResult() { return result_; }
 
   /// Submits and resets the internal command buffer.
-  Result Submit(uint32_t timeout_ms);
+  Result Submit(uint32_t timeout_ms,
+                bool pipeline_runtime_layer_enabled);
 
  private:
   Result result_;

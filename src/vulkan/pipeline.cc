@@ -40,11 +40,13 @@ Pipeline::Pipeline(
     PipelineType type,
     Device* device,
     uint32_t fence_timeout_ms,
+    bool    pipeline_runtime_layer_enabled,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : device_(device),
       pipeline_type_(type),
       shader_stage_info_(shader_stage_info),
-      fence_timeout_ms_(fence_timeout_ms) {}
+      fence_timeout_ms_(fence_timeout_ms),
+      pipeline_runtime_layer_enabled_(pipeline_runtime_layer_enabled) {}
 
 Pipeline::~Pipeline() {
   // Command must be reset before we destroy descriptors or we get a validation
@@ -441,7 +443,8 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     // done after resizing backed buffer i.e., copying data to the new
     // buffer from the old one. Thus, we must submit commands here to
     // guarantee this.
-    Result r = guard.Submit(GetFenceTimeout());
+    Result r = guard.Submit(GetFenceTimeout(),
+                            GetPipelineRuntimeLayerEnabled());
     if (!r.IsSuccess())
       return r;
   }
@@ -473,7 +476,7 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
           "this should be unreachable");
     }
   }
-  return guard.Submit(GetFenceTimeout());
+  return guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
 }
 
 void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
@@ -548,7 +551,8 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
       }
     }
 
-    Result r = guard.Submit(GetFenceTimeout());
+    Result r = guard.Submit(GetFenceTimeout(),
+                            GetPipelineRuntimeLayerEnabled());
     if (!r.IsSuccess())
       return r;
   }
