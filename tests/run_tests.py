@@ -84,6 +84,8 @@ SUPPRESSIONS_SWIFTSHADER = [
   "tessellation_isolines.amber",
   # 8 bit indices not supported
   "draw_indexed_uint8.amber",
+  # Intermittent failures (https://github.com/google/amber/issues/1019).
+  "draw_polygon_mode.amber",
 ]
 
 OPENCL_CASES = [
