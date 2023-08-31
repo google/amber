@@ -130,7 +130,8 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name == "SubgroupSupportedStages.fragment" ||
          name == "SubgroupSupportedStages.compute" ||
          name ==
-             "ShaderSubgroupExtendedTypesFeatures.shaderSubgroupExtendedTypes";
+             "ShaderSubgroupExtendedTypesFeatures.shaderSubgroupExtendedTypes" ||
+         name == "IndexTypeUint8Features.indexTypeUint8";
 }
 
 type::Type* Script::ParseType(const std::string& str) {
