@@ -129,6 +129,7 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name == "SubgroupSupportedStages.geometry" ||
          name == "SubgroupSupportedStages.fragment" ||
          name == "SubgroupSupportedStages.compute" ||
+         name == "IndexTypeUint8Features.indexTypeUint8" ||
          name ==
              "ShaderSubgroupExtendedTypesFeatures.shaderSubgroupExtendedTypes";
 }

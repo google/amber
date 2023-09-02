@@ -86,6 +86,9 @@ const char kSubgroupSupportedStagesCompute[] =
 const char kShaderSubgroupExtendedTypes[] =
     "ShaderSubgroupExtendedTypesFeatures.shaderSubgroupExtendedTypes";
 
+const char kIndexTypeUint8[] =
+    "IndexTypeUint8Features.indexTypeUint8";
+
 struct BaseOutStructure {
   VkStructureType sType;
   void* pNext;
@@ -475,6 +478,7 @@ Result Device::Initialize(
       subgroup_size_control_features = nullptr;
   VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures*
       shader_subgroup_extended_types_ptrs = nullptr;
+  VkPhysicalDeviceIndexTypeUint8FeaturesEXT* index_type_uint8_ptrs = nullptr;
   void* ptr = available_features2.pNext;
   while (ptr != nullptr) {
     BaseOutStructure* s = static_cast<BaseOutStructure*>(ptr);
@@ -504,6 +508,10 @@ Result Device::Initialize(
         shader_subgroup_extended_types_ptrs =
             static_cast<VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures*>(
                 ptr);
+        break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT:
+        index_type_uint8_ptrs =
+            static_cast<VkPhysicalDeviceIndexTypeUint8FeaturesEXT*>(ptr);
         break;
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES:
         vulkan11_ptrs = static_cast<VkPhysicalDeviceVulkan11Features*>(ptr);
@@ -567,6 +575,13 @@ Result Device::Initialize(
       return amber::Result(
           "Subgroup extended types requested but feature not returned");
     }
+    if (feature == kIndexTypeUint8 &&
+        (index_type_uint8_ptrs == nullptr ||
+         index_type_uint8_ptrs->indexTypeUint8 != VK_TRUE)) {
+      return amber::Result(
+          "Index type uint8_t requested but feature not returned");
+    }
+
 
     // Next check the fields of the feature structures.
 
