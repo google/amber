@@ -84,8 +84,7 @@ class CommandBufferGuard {
   Result GetResult() { return result_; }
 
   /// Submits and resets the internal command buffer.
-  Result Submit(uint32_t timeout_ms,
-                bool pipeline_runtime_layer_enabled);
+  Result Submit(uint32_t timeout_ms, bool pipeline_runtime_layer_enabled);
 
  private:
   Result result_;

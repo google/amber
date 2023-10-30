@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +24,7 @@
 #include <vector>
 
 #include "amber/result.h"
+#include "src/acceleration_structure.h"
 #include "src/buffer.h"
 #include "src/command_data.h"
 #include "src/pipeline_data.h"
@@ -31,7 +33,7 @@
 
 namespace amber {
 
-enum class PipelineType { kCompute = 0, kGraphics };
+enum class PipelineType { kCompute = 0, kGraphics, kRayTracing };
 
 /// Stores all information related to a pipeline.
 class Pipeline {
@@ -216,6 +218,15 @@ class Pipeline {
     uint32_t mask = 0;
   };
 
+  /// Information on a top level acceleration structure at the pipeline.
+  struct TLASInfo {
+    TLASInfo() = default;
+    explicit TLASInfo(TLAS* as) : tlas(as) {}
+
+    TLAS* tlas = nullptr;
+    uint32_t descriptor_set = 0;
+    uint32_t binding = 0;
+  };
   static const char* kGeneratedColorBuffer;
   static const char* kGeneratedDepthBuffer;
   static const char* kGeneratedPushConstantBuffer;
@@ -227,6 +238,9 @@ class Pipeline {
 
   bool IsGraphics() const { return pipeline_type_ == PipelineType::kGraphics; }
   bool IsCompute() const { return pipeline_type_ == PipelineType::kCompute; }
+  bool IsRayTracing() const {
+    return pipeline_type_ == PipelineType::kRayTracing;
+  }
 
   PipelineType GetType() const { return pipeline_type_; }
 
@@ -259,6 +273,18 @@ class Pipeline {
         return &info;
     }
     return nullptr;
+  }
+
+  /// Returns a success result if |shader| found and the shader index is
+  /// returned in |out|. Returns failure otherwise.
+  Result GetShaderIndex(Shader* shader, uint32_t* out) const {
+    for (size_t index = 0; index < shaders_.size(); index++) {
+      if (shaders_[index].GetShader() == shader) {
+        *out = static_cast<uint32_t>(index);
+        return {};
+      }
+    }
+    return Result("Referred shader not found in group");
   }
 
   /// Sets the |type| of |shader| in the pipeline.
@@ -377,6 +403,68 @@ class Pipeline {
   /// Returns information on all samplers in this pipeline.
   const std::vector<SamplerInfo>& GetSamplers() const { return samplers_; }
 
+  /// Adds |tlas| to the pipeline at the given |descriptor_set| and
+  /// |binding|.
+  void AddTLAS(TLAS* tlas, uint32_t descriptor_set, uint32_t binding);
+
+  /// Returns information on all bound TLAS in the pipeline.
+  std::vector<TLASInfo>& GetTLASes() { return tlases_; }
+
+  /// Adds |sbt| to the list of known shader binding tables.
+  /// The |sbt| must have a unique name within pipeline.
+  Result AddSBT(std::unique_ptr<SBT> sbt) {
+    if (name_to_sbt_.count(sbt->GetName()) > 0)
+      return Result("duplicate SBT name provided");
+
+    sbts_.push_back(std::move(sbt));
+    name_to_sbt_[sbts_.back()->GetName()] = sbts_.back().get();
+
+    return {};
+  }
+
+  /// Retrieves the SBT with |name|, |nullptr| if not found.
+  SBT* GetSBT(const std::string& name) const {
+    auto it = name_to_sbt_.find(name);
+    return it == name_to_sbt_.end() ? nullptr : it->second;
+  }
+
+  /// Retrieves a list of all SBTs.
+  const std::vector<std::unique_ptr<SBT>>& GetSBTs() const { return sbts_; }
+
+  /// Adds |group| to the list of known shader groups.
+  /// The |group| must have a unique name within pipeline.
+  Result AddShaderGroup(std::unique_ptr<ShaderGroup> group) {
+    if (name_to_shader_group_.count(group->GetName()) > 0)
+      return Result("shader group name already exists");
+
+    shader_groups_.push_back(std::move(group));
+    name_to_shader_group_[shader_groups_.back()->GetName()] =
+        shader_groups_.back().get();
+
+    return {};
+  }
+
+  /// Retrieves the Shader Group with |name|, |nullptr| if not found.
+  ShaderGroup* GetShaderGroup(const std::string& name) const {
+    auto it = name_to_shader_group_.find(name);
+    return it == name_to_shader_group_.end() ? nullptr : it->second;
+  }
+  uint32_t GetShaderGroupIndex(const std::string& name) const {
+    ShaderGroup* shader_group = GetShaderGroup(name);
+
+    for (size_t i = 0; i < shader_groups_.size(); i++) {
+      if (shader_groups_[i].get() == shader_group) {
+        return static_cast<uint32_t>(i);
+      }
+    }
+    return static_cast<uint32_t>(-1);
+  }
+
+  /// Retrieves a list of all Shader Groups.
+  const std::vector<std::unique_ptr<ShaderGroup>>& GetShaderGroups() const {
+    return shader_groups_;
+  }
+
   /// Updates the descriptor set and binding info for the OpenCL-C kernel bound
   /// to the pipeline. No effect for other shader formats.
   Result UpdateOpenCLBufferBindings();
@@ -435,10 +523,12 @@ class Pipeline {
 
   Result ValidateGraphics() const;
   Result ValidateCompute() const;
+  Result ValidateRayTracing() const;
 
   PipelineType pipeline_type_ = PipelineType::kCompute;
   std::string name_;
   std::vector<ShaderInfo> shaders_;
+  std::vector<TLASInfo> tlases_;
   std::vector<BufferInfo> color_attachments_;
   std::vector<BufferInfo> resolve_targets_;
   std::vector<BufferInfo> vertex_buffers_;
@@ -459,6 +549,11 @@ class Pipeline {
   std::map<std::pair<uint32_t, uint32_t>, Buffer*> opencl_pod_buffer_map_;
   std::vector<std::unique_ptr<Sampler>> opencl_literal_samplers_;
   std::unique_ptr<Buffer> opencl_push_constants_;
+
+  std::map<std::string, ShaderGroup*> name_to_shader_group_;
+  std::vector<std::unique_ptr<ShaderGroup>> shader_groups_;
+  std::map<std::string, SBT*> name_to_sbt_;
+  std::vector<std::unique_ptr<SBT>> sbts_;
 };
 
 }  // namespace amber

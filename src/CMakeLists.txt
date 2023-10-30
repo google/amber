@@ -1,4 +1,5 @@
 # Copyright 2018 The Amber Authors.
+# Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +14,7 @@
 # limitations under the License.
 
 set(AMBER_SOURCES
+    acceleration_structure.cc
     amber.cc
     amberscript/parser.cc
     buffer.cc
@@ -148,6 +150,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_image_test.cc
     amberscript/parser_pipeline_test.cc
     amberscript/parser_pipeline_set_test.cc
+    amberscript/parser_raytracing_test.cc
     amberscript/parser_repeat_test.cc
     amberscript/parser_run_test.cc
     amberscript/parser_sampler_test.cc

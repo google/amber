@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,10 +57,8 @@ Result TransferBuffer::Initialize() {
     return r;
 
   uint32_t memory_type_index = 0;
-  r = AllocateAndBindMemoryToVkBuffer(buffer_, &memory_,
-                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                      true, &memory_type_index);
+  r = AllocateAndBindMemoryToVkBuffer(
+      buffer_, &memory_, GetMemoryPropertiesFlags(), true, &memory_type_index);
   if (!r.IsSuccess())
     return r;
 
@@ -88,6 +87,17 @@ Result TransferBuffer::Initialize() {
   }
 
   return MapMemory(memory_);
+}
+
+VkDeviceAddress TransferBuffer::getBufferDeviceAddress() {
+  const VkBufferDeviceAddressInfo bufferDeviceAddressInfo = {
+      VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_KHR,
+      nullptr,
+      GetVkBuffer(),
+  };
+
+  return device_->GetPtrs()->vkGetBufferDeviceAddress(device_->GetVkDevice(),
+                                                      &bufferDeviceAddressInfo);
 }
 
 void TransferBuffer::CopyToDevice(CommandBuffer* command_buffer) {

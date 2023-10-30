@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,13 +24,17 @@
 #include <vector>
 
 #include "amber/vulkan_header.h"
+#include "src/acceleration_structure.h"
 #include "src/cast_hash.h"
 #include "src/engine.h"
 #include "src/pipeline.h"
+#include "src/vulkan/blas.h"
 #include "src/vulkan/buffer_descriptor.h"
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 #include "src/vulkan/pipeline.h"
+#include "src/vulkan/tlas.h"
+#include "src/vulkan/tlas_descriptor.h"
 #include "src/vulkan/vertex_buffer.h"
 
 namespace amber {
@@ -58,6 +63,7 @@ class EngineVulkan : public Engine {
   Result DoDrawGrid(const DrawGridCommand* cmd) override;
   Result DoDrawArrays(const DrawArraysCommand* cmd) override;
   Result DoCompute(const ComputeCommand* cmd) override;
+  Result DoTraceRays(const RayTracingCommand* cmd) override;
   Result DoEntryPoint(const EntryPointCommand* cmd) override;
   Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) override;
@@ -68,6 +74,7 @@ class EngineVulkan : public Engine {
     std::unique_ptr<Pipeline> vk_pipeline;
     std::unique_ptr<VertexBuffer> vertex_buffer;
     struct ShaderInfo {
+      ShaderType type;
       VkShaderModule shader;
       std::unique_ptr<std::vector<VkSpecializationMapEntry>>
           specialization_entries;
@@ -78,14 +85,24 @@ class EngineVulkan : public Engine {
     };
     std::unordered_map<ShaderType, ShaderInfo, CastHash<ShaderType>>
         shader_info;
+    std::vector<PipelineInfo::ShaderInfo> shader_info_rt;
   };
+
+  Result GetVkShaderStageInfo(ShaderType shader_type,
+                              const PipelineInfo::ShaderInfo& shader_info,
+                              VkPipelineShaderStageCreateInfo* stage_ci);
 
   Result GetVkShaderStageInfo(
       amber::Pipeline* pipeline,
       std::vector<VkPipelineShaderStageCreateInfo>* out);
 
   Result SetShader(amber::Pipeline* pipeline,
-                   const amber::Pipeline::ShaderInfo& shader);
+                   const amber::Pipeline::ShaderInfo& shader,
+                   size_t index);
+
+  Result GetVkShaderGroupInfo(
+      amber::Pipeline* pipeline,
+      std::vector<VkRayTracingShaderGroupCreateInfoKHR>* out);
 
   std::unique_ptr<Device> device_;
   std::unique_ptr<CommandPool> pool_;
@@ -93,6 +110,10 @@ class EngineVulkan : public Engine {
   std::map<amber::Pipeline*, PipelineInfo> pipeline_map_;
 
   std::map<std::string, VkShaderModule> shaders_;
+
+  BlasesMap blases_;
+
+  TlasesMap tlases_;
 };
 
 }  // namespace vulkan

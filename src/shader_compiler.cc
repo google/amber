@@ -241,6 +241,18 @@ Result ShaderCompiler::CompileGlsl(const Shader* shader,
     kind = shaderc_tess_control_shader;
   else if (shader->GetType() == kShaderTypeTessellationEvaluation)
     kind = shaderc_tess_evaluation_shader;
+  else if (shader->GetType() == kShaderTypeRayGeneration)
+    kind = shaderc_raygen_shader;
+  else if (shader->GetType() == kShaderTypeAnyHit)
+    kind = shaderc_anyhit_shader;
+  else if (shader->GetType() == kShaderTypeClosestHit)
+    kind = shaderc_closesthit_shader;
+  else if (shader->GetType() == kShaderTypeMiss)
+    kind = shaderc_miss_shader;
+  else if (shader->GetType() == kShaderTypeIntersection)
+    kind = shaderc_intersection_shader;
+  else if (shader->GetType() == kShaderTypeCall)
+    kind = shaderc_callable_shader;
   else
     return Result("Unknown shader type");
 

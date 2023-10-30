@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +24,7 @@
 
 #include "amber/shader_info.h"
 #include "amber/value.h"
+#include "src/acceleration_structure.h"
 #include "src/buffer.h"
 #include "src/command_data.h"
 #include "src/pipeline_data.h"
@@ -46,7 +48,9 @@ class PatchParameterVerticesCommand;
 class Pipeline;
 class ProbeCommand;
 class ProbeSSBOCommand;
+class RayTracingCommand;
 class RepeatCommand;
+class TLASCommand;
 
 /// Base class for all commands.
 class Command {
@@ -69,7 +73,9 @@ class Command {
     kProbeSSBO,
     kBuffer,
     kRepeat,
-    kSampler
+    kSampler,
+    kTLAS,
+    kRayTracing
   };
 
   virtual ~Command();
@@ -81,6 +87,8 @@ class Command {
   bool IsDrawArrays() const { return command_type_ == Type::kDrawArrays; }
   bool IsCompareBuffer() const { return command_type_ == Type::kCompareBuffer; }
   bool IsCompute() const { return command_type_ == Type::kCompute; }
+  bool IsRayTracing() const { return command_type_ == Type::kRayTracing; }
+  bool IsTLAS() const { return command_type_ == Type::kTLAS; }
   bool IsCopy() const { return command_type_ == Type::kCopy; }
   bool IsProbe() const { return command_type_ == Type::kProbe; }
   bool IsProbeSSBO() const { return command_type_ == Type::kProbeSSBO; }
@@ -101,6 +109,7 @@ class Command {
   ClearStencilCommand* AsClearStencil();
   CompareBufferCommand* AsCompareBuffer();
   ComputeCommand* AsCompute();
+  RayTracingCommand* AsRayTracing();
   CopyCommand* AsCopy();
   DrawArraysCommand* AsDrawArrays();
   DrawRectCommand* AsDrawRect();
@@ -709,6 +718,60 @@ class RepeatCommand : public Command {
  private:
   uint32_t count_ = 0;
   std::vector<std::unique_ptr<Command>> commands_;
+};
+
+/// Command for setting TLAS parameters and binding.
+class TLASCommand : public BindableResourceCommand {
+ public:
+  explicit TLASCommand(Pipeline* pipeline);
+  ~TLASCommand() override;
+
+  void SetTLAS(TLAS* tlas) { tlas_ = tlas; }
+  TLAS* GetTLAS() const { return tlas_; }
+
+  std::string ToString() const override { return "TLASCommand"; }
+
+ private:
+  TLAS* tlas_ = nullptr;
+};
+
+/// Command to execute a ray tracing command.
+class RayTracingCommand : public PipelineCommand {
+ public:
+  explicit RayTracingCommand(Pipeline* pipeline);
+  ~RayTracingCommand() override;
+
+  void SetX(uint32_t x) { x_ = x; }
+  uint32_t GetX() const { return x_; }
+
+  void SetY(uint32_t y) { y_ = y; }
+  uint32_t GetY() const { return y_; }
+
+  void SetZ(uint32_t z) { z_ = z; }
+  uint32_t GetZ() const { return z_; }
+
+  void SetRayGenSBTName(const std::string& name) { rgen_sbt_name_ = name; }
+  std::string GetRayGenSBTName() const { return rgen_sbt_name_; }
+
+  void SetMissSBTName(const std::string& name) { miss_sbt_name_ = name; }
+  std::string GetMissSBTName() const { return miss_sbt_name_; }
+
+  void SetHitsSBTName(const std::string& name) { hits_sbt_name_ = name; }
+  std::string GetHitsSBTName() const { return hits_sbt_name_; }
+
+  void SetCallSBTName(const std::string& name) { call_sbt_name_ = name; }
+  std::string GetCallSBTName() const { return call_sbt_name_; }
+
+  std::string ToString() const override { return "RayTracingCommand"; }
+
+ private:
+  uint32_t x_ = 0;
+  uint32_t y_ = 0;
+  uint32_t z_ = 0;
+  std::string rgen_sbt_name_;
+  std::string miss_sbt_name_;
+  std::string hits_sbt_name_;
+  std::string call_sbt_name_;
 };
 
 }  // namespace amber

@@ -149,11 +149,18 @@ SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ] V
  * `tessellation_evaluation`
  * `tessellation_control`
  * `compute`
+ * `ray_generation`
+ * `any_hit`
+ * `closest_hit`
+ * `miss`
+ * `intersection`
+ * `callable`
  * `multi`
 
 The compute pipeline can only contain compute shaders. The graphics pipeline
 can not contain compute shaders, and must contain a vertex shader and a fragment
-shader.
+shader. Ray tracing pipeline can contain only shaders of ray tracing types:
+ray generation, any hit, closest hit, miss, intersection, and callable shaders.
 
 The provided `multi` shader can only be used with `SPIRV-ASM` and `SPIRV-HEX`
 and allows for providing multiple shaders in a single module (so the `vertex`
@@ -389,15 +396,107 @@ Note: currently the border color is always transparent black.
 Note: the addressing mode is used for all coordinates currently. Arrayed images
 should use `clamp_to_edge` for the array index.
 
+### Acceleration Structures
+
+Acceleration structures are used to enumerate geometries to describe a scene.
+There are two kinds of acceleration structures:
+ * Bottom level
+ * Top level
+
+#### Bottom Level
+
+Bottom level acceleration structures consists of a set of geometries.
+Each bottom level acceleration structure can consists either of triangle or
+axis aligned bounding box (AABB) geometries. It is prohibited to mix triangle
+geometries and AABBs inside same bottom level acceleration structures.
+
+A bottom level acceleration structure consisting of triangle geometries is defined as:
+
+```groovy
+  # Bottom level acceleration structure consisting of triangles
+  ACCELERATION_STRUCTURE BOTTOM_LEVEL {name_of_bottom_level_acceleration_structure}
+    {GEOMETRY TRIANGLES
+      {x0 y0 z0
+       x1 y1 z1
+       x2 y2 z2}+
+    END}+
+  END
+```
+
+A bottom level acceleration structure consisting of axis aligned bounding boxes is defined as:
+
+```groovy
+  # Bottom level acceleration structure consisting of AABBs
+  ACCELERATION_STRUCTURE BOTTOM_LEVEL {name_of_bottom_level_acceleration_structure}
+    {GEOMETRY AABBS
+      {x0 y0 z0 x1 y1 z1}+
+    END}+
+  END
+```
+
+Each coordinate |x{n}|, |y{n}|, and |z{n}| should be floating point values.
+
+#### Top Level
+
+Top level acceleration structures consists of a set of instances of bottom
+level acceleration structures.
+
+```groovy
+  # Acceleration structure with instance defined in one line
+  ACCELERATION_STRUCTURE TOP_LEVEL {name_of_top_level_acceleration_structure}
+    {BLAS_INSTANCE USE {name_of_bottom_level_acceleration_structure}}+
+  END
+
+  # Acceleration structure with instance defined in multiple lines
+  ACCELERATION_STRUCTURE TOP_LEVEL {name_of_top_level_acceleration_structure}
+    {BOTTOM_LEVEL_INSTANCE {name_of_bottom_level_acceleration_structure}
+      [INDEX {index}]
+      [OFFSET {offset}]
+      [FLAGS {flags}]
+      [MASK {mask}]
+      [TRANSFORM \
+        {transform} \
+      END]
+    END}+
+  END
+```
+
+The value of |index| should be an integer in range of [0..16,777,215] is a 24-bit user-specified
+index value accessible to ray shaders in the InstanceCustomIndexKHR built-in.
+
+The value of |offset| should be an integer in range of [0..16,777,215] is a 24-bit offset used
+in calculating the hit shader binding table index.
+
+The value of |mask| should be an integer in range of [0..255] (may be specified as 0xNN) is an
+8-bit visibility mask for the geometry.
+
+The value of |flags| is space-separated or EOL-separated list of following:
+ * `TRIANGLE_FACING_CULL_DISABLE`
+ * `TRIANGLE_FLIP_FACING`
+ * `FORCE_OPAQUE`
+ * `FORCE_NO_OPAQUE`
+ * `FORCE_OPACITY_MICROMAP_2_STATE`
+ * `DISABLE_OPACITY_MICROMAPS`
+ * <any integer number>
+
+If |flags| is a EOL-separated list it should be ended with END statement.
+If |flags| is a space-separated list it should not be ended with END statement.
+
+The |transform| is 12 space-separated values describing a 3x4 row-major affine transformation matrix applied to
+the acceleration structure.
+
+
 ### Pipelines
 
 #### Pipeline type
  * `compute`
  * `graphics`
-
+ * `ray_tracing`
+ 
 ```groovy
-# The PIPELINE command creates a pipeline. This can be either compute or
-# graphics. Shaders are attached to the pipeline at pipeline creation time.
+# The PIPELINE command creates a pipeline. This can be either compute,
+# graphics, or ray_tracing. Shaders are attached to the pipeline
+# at pipeline creation time.
 PIPELINE {pipeline_type} {pipeline_name}
 ...
 END
@@ -457,6 +556,38 @@ The following commands are all specified within the `PIPELINE` command.
   # Set the number of patch control points used by tessellation. The default value is 3.
   PATCH_CONTROL_POINTS {control_points}
 ```
+
+Ray tracing pipelines do not attach shaders directly like compute or graphics pipelines.
+Ray tracing pipelines organize shaders into shader groups in one of four ways
+depending on shader types used:
+
+```groovy
+  # Four possible shader group definitions
+  SHADER_GROUP {group_name_1} {ray_generation_shader_name}
+  SHADER_GROUP {group_name_2} {miss_shader_name}
+  SHADER_GROUP {group_name_3} {call_shader_name}
+  SHADER_GROUP {group_name_4} [closest_hit_shader_name] [any_hit_shader_name] [intersection_shader_name]
+```
+
+Shader group cannot be empty.
+Each group name must be unique within a pipeline. The same shader can be used within one or more
+shader groups. The shader group order is important, further commands as shader code might refer
+them directly. With the shader groups defined, they are then added into shader binding tables:
+
+```groovy
+  # Create shader binding tables and set shader groups into it
+  SHADER_BINDING_TABLE {sbt_name}
+    {group_name_1}
+    [ | {group_name_n}]
+  END
+```
+
+Generally a program needs three shader binding tables:
+ * ray generation shader binding table with one ray generation shader group
+ * miss shader binding table containing one or more miss shader groups
+ * hit shader binding table containing one or more hit shader groups
+
+Shader binding tables for call shaders are optional.
 
 #### Compare operations
  * `never`
@@ -746,6 +877,13 @@ ranges can be used also with dynamic buffers.
   INDEX_DATA {buffer_name}
 ```
 
+Ray tracing pipelines allow bind top level acceleration structures.
+
+```groovy
+  # Bind the top level acceleration structure at the given descriptor set and binding.
+  BIND ACCELERATION_STRUCTURE {tlas_name} DESCRIPTOR_SET _set_id_ BINDING _id_
+```
+
 #### OpenCL Plain-Old-Data Arguments
 OpenCL kernels can have plain-old-data (pod or pod_ubo in the desriptor map)
 arguments set their data via this command. Amber will generate the appropriate
@@ -843,6 +981,25 @@ RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
     [ COUNT _count_value_ (default index_buffer size - start_idx) ] \
     [ START_INSTANCE _inst_value_ (default 0) ] \
     [ INSTANCE_COUNT _inst_count_value_ (default 1) ]
+```
+
+```groovy
+# Run the |pipeline_name| which must be a `ray tracing` pipeline.
+# Next four shader binding table names should be specified:
+# * RAYGEN |ray_gen_sbt_name| - shader binding table containing ray generation shader group
+# * MISS |miss_sbt_name| - shader binding table containing one or more miss shader groups
+# * HIT |hit_sbt_name| - shader binding table containing one or more hit shader groups
+# * CALL |call_sbt_name| - shader binding table containing one or more call shader groups
+# RAYGEN is required, other shader binding tables (MISS, HIT and CALL) are optional.
+#
+# The pipeline will be run with the given ray tracing dimensions |x|, |y|, |z|.
+# Each of the x, y and z values must be a uint32.
+RUN {pipeline_name} \
+    RAYGEN {ray_gen_sbt_name} \
+    [MISS {miss_sbt_name}] \
+    [HIT {hit_sbt_name}] \
+    [CALL {call_sbt_name}] \
+     _x_ _y_ _z_
 ```
 
 ### Repeating commands

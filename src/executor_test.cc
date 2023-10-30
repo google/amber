@@ -169,6 +169,10 @@ class EngineStub : public Engine {
     return {};
   }
 
+  Result DoTraceRays(const RayTracingCommand*) override {
+    return Result("traceray stub not implemented");
+  }
+
  private:
   bool fail_clear_command_ = false;
   bool fail_clear_color_command_ = false;

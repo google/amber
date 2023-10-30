@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +24,7 @@
 #include "src/type_parser.h"
 #include "src/vulkan/compute_pipeline.h"
 #include "src/vulkan/graphics_pipeline.h"
+#include "src/vulkan/raytracing_pipeline.h"
 
 namespace amber {
 namespace vulkan {
@@ -47,6 +49,24 @@ Result ToVkShaderStage(ShaderType type, VkShaderStageFlagBits* ret) {
       break;
     case kShaderTypeTessellationEvaluation:
       *ret = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+      break;
+    case kShaderTypeRayGeneration:
+      *ret = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+      break;
+    case kShaderTypeAnyHit:
+      *ret = VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
+      break;
+    case kShaderTypeClosestHit:
+      *ret = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+      break;
+    case kShaderTypeMiss:
+      *ret = VK_SHADER_STAGE_MISS_BIT_KHR;
+      break;
+    case kShaderTypeIntersection:
+      *ret = VK_SHADER_STAGE_INTERSECTION_BIT_KHR;
+      break;
+    case kShaderTypeCall:
+      *ret = VK_SHADER_STAGE_CALLABLE_BIT_KHR;
       break;
     case kShaderTypeCompute:
       *ret = VK_SHADER_STAGE_COMPUTE_BIT;
@@ -85,6 +105,9 @@ EngineVulkan::~EngineVulkan() {
       device_->GetPtrs()->vkDestroyShaderModule(vk_device, shader.second,
                                                 nullptr);
     }
+    pipeline_map_.clear();
+    tlases_.clear();
+    blases_.clear();
   }
 }
 
@@ -141,8 +164,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   pipeline_map_[pipeline] = PipelineInfo();
   auto& info = pipeline_map_[pipeline];
 
-  for (const auto& shader_info : pipeline->GetShaders()) {
-    Result r = SetShader(pipeline, shader_info);
+  for (size_t i = 0; i < pipeline->GetShaders().size(); i++) {
+    Result r = SetShader(pipeline, pipeline->GetShaders()[i], i);
     if (!r.IsSuccess())
       return r;
   }
@@ -170,13 +193,23 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   const auto& engine_data = GetEngineData();
   std::unique_ptr<Pipeline> vk_pipeline;
-  if (pipeline->GetType() == PipelineType::kCompute) {
+  if (pipeline->GetType() == PipelineType::kRayTracing) {
+    std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_group_create_info;
+
+    r = GetVkShaderGroupInfo(pipeline, &shader_group_create_info);
+    if (!r.IsSuccess())
+      return r;
+
+    vk_pipeline = MakeUnique<RayTracingPipeline>(
+        device_.get(), &blases_, &tlases_, engine_data.fence_timeout_ms,
+        engine_data.pipeline_runtime_layer_enabled, stage_create_info);
+    r = vk_pipeline->AsRayTracingPipeline()->Initialize(
+        pool_.get(), shader_group_create_info);
+  } else if (pipeline->GetType() == PipelineType::kCompute) {
     vk_pipeline = MakeUnique<ComputePipeline>(
         device_.get(), engine_data.fence_timeout_ms,
         engine_data.pipeline_runtime_layer_enabled, stage_create_info);
     r = vk_pipeline->AsCompute()->Initialize(pool_.get());
-    if (!r.IsSuccess())
-      return r;
   } else {
     vk_pipeline = MakeUnique<GraphicsPipeline>(
         device_.get(), pipeline->GetColorAttachments(),
@@ -190,9 +223,10 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     r = vk_pipeline->AsGraphics()->Initialize(pipeline->GetFramebufferWidth(),
                                               pipeline->GetFramebufferHeight(),
                                               pool_.get());
-    if (!r.IsSuccess())
-      return r;
   }
+
+  if (!r.IsSuccess())
+    return r;
 
   info.vk_pipeline = std::move(vk_pipeline);
 
@@ -288,21 +322,38 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       return r;
   }
 
+  if (info.vk_pipeline->IsRayTracing()) {
+    for (const auto& tlas_info : pipeline->GetTLASes()) {
+      auto cmd = MakeUnique<TLASCommand>(pipeline);
+      cmd->SetDescriptorSet(tlas_info.descriptor_set);
+      cmd->SetBinding(tlas_info.binding);
+      cmd->SetTLAS(tlas_info.tlas);
+
+      r = info.vk_pipeline->AddTLASDescriptor(cmd.get());
+      if (!r.IsSuccess())
+        return r;
+    }
+  }
+
   return {};
 }
 
 Result EngineVulkan::SetShader(amber::Pipeline* pipeline,
-                               const amber::Pipeline::ShaderInfo& shader) {
+                               const amber::Pipeline::ShaderInfo& shader,
+                               size_t index) {
+  const bool rt = pipeline->IsRayTracing();
   const auto type = shader.GetShaderType();
   const auto& data = shader.GetData();
   const auto shader_name = shader.GetShader()->GetName();
   auto& info = pipeline_map_[pipeline];
 
-  auto it = info.shader_info.find(type);
-  if (it != info.shader_info.end())
-    return Result("Vulkan::Setting Duplicated Shader Types Fail");
+  if (!rt) {
+    auto it = info.shader_info.find(type);
+    if (it != info.shader_info.end())
+      return Result("Vulkan::Setting Duplicated Shader Types Fail");
+  }
 
-  VkShaderModule shader_module;
+  VkShaderModule shader_module = VK_NULL_HANDLE;
   if (shaders_.find(shader_name) != shaders_.end()) {
     shader_module = shaders_[shader_name];
   } else {
@@ -320,7 +371,18 @@ Result EngineVulkan::SetShader(amber::Pipeline* pipeline,
     shaders_[shader_name] = shader_module;
   }
 
-  info.shader_info[type].shader = shader_module;
+  if (!rt) {
+    info.shader_info[type].shader = shader_module;
+  } else {
+    assert(index <= info.shader_info_rt.size());
+    if (info.shader_info_rt.size() == index) {
+      info.shader_info_rt.push_back(PipelineInfo::ShaderInfo());
+    }
+    info.shader_info_rt[index].shader = shader_module;
+    info.shader_info_rt[index].type = type;
+
+    return {};
+  }
 
   for (auto& shader_info : pipeline->GetShaders()) {
     if (shader_info.GetShaderType() != type)
@@ -350,6 +412,7 @@ Result EngineVulkan::SetShader(amber::Pipeline* pipeline,
             "device.");
       }
     }
+
     info.shader_info[type].required_subgroup_size = required_subgroup_size_uint;
 
     info.shader_info[type].create_flags = 0;
@@ -390,45 +453,135 @@ Result EngineVulkan::SetShader(amber::Pipeline* pipeline,
 }
 
 Result EngineVulkan::GetVkShaderStageInfo(
+    ShaderType shader_type,
+    const PipelineInfo::ShaderInfo& shader_info,
+    VkPipelineShaderStageCreateInfo* stage_info) {
+  VkShaderStageFlagBits stage = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+  Result r = ToVkShaderStage(shader_type, &stage);
+  if (!r.IsSuccess())
+    return r;
+
+  *stage_info = VkPipelineShaderStageCreateInfo();
+  stage_info->sType =
+      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  stage_info->flags = shader_info.create_flags;
+  stage_info->stage = stage;
+  stage_info->module = shader_info.shader;
+
+  stage_info->pName = nullptr;
+  if (shader_info.specialization_entries &&
+      !shader_info.specialization_entries->empty()) {
+    stage_info->pSpecializationInfo = shader_info.specialization_info.get();
+  }
+
+  return {};
+}
+
+Result EngineVulkan::GetVkShaderStageInfo(
     amber::Pipeline* pipeline,
     std::vector<VkPipelineShaderStageCreateInfo>* out) {
   auto& info = pipeline_map_[pipeline];
 
-  std::vector<VkPipelineShaderStageCreateInfo> stage_info(
-      info.shader_info.size());
-  uint32_t stage_count = 0;
-  for (auto& it : info.shader_info) {
-    VkShaderStageFlagBits stage = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
-    Result r = ToVkShaderStage(it.first, &stage);
-    if (!r.IsSuccess())
-      return r;
-
-    stage_info[stage_count] = VkPipelineShaderStageCreateInfo();
-    stage_info[stage_count].sType =
-        VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    stage_info[stage_count].flags = it.second.create_flags;
-    stage_info[stage_count].stage = stage;
-    stage_info[stage_count].module = it.second.shader;
-    stage_info[stage_count].pName = nullptr;
-    if (it.second.specialization_entries &&
-        !it.second.specialization_entries->empty()) {
-      stage_info[stage_count].pSpecializationInfo =
-          it.second.specialization_info.get();
+  const size_t size = pipeline->IsRayTracing() ? info.shader_info_rt.size()
+                                               : info.shader_info.size();
+  std::vector<VkPipelineShaderStageCreateInfo> stage_info(size);
+  if (pipeline->IsRayTracing()) {
+    for (size_t i = 0; i < info.shader_info_rt.size(); i++) {
+      Result r = GetVkShaderStageInfo(info.shader_info_rt[i].type,
+                                      info.shader_info_rt[i], &stage_info[i]);
+      if (!r.IsSuccess())
+        return r;
     }
+  } else {
+    uint32_t stage_count = 0;
+    for (auto& it : info.shader_info) {
+      Result r =
+          GetVkShaderStageInfo(it.first, it.second, &stage_info[stage_count]);
+      if (!r.IsSuccess())
+        return r;
 
-    if (stage == VK_SHADER_STAGE_COMPUTE_BIT &&
-        it.second.required_subgroup_size > 0) {
-      VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT* pSubgroupSize =
-          new VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT();
-      pSubgroupSize->sType =
-          VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO_EXT;  // NOLINT(whitespace/line_length)
-      pSubgroupSize->pNext = nullptr;
-      pSubgroupSize->requiredSubgroupSize = it.second.required_subgroup_size;
-      stage_info[stage_count].pNext = pSubgroupSize;
+      if (it.first == kShaderTypeCompute &&
+          it.second.required_subgroup_size > 0) {
+        VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT* pSubgroupSize =
+            new VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT();
+        pSubgroupSize->sType =
+            VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO_EXT;  // NOLINT(whitespace/line_length)
+        pSubgroupSize->pNext = nullptr;
+        pSubgroupSize->requiredSubgroupSize = it.second.required_subgroup_size;
+        stage_info[stage_count].pNext = pSubgroupSize;
+      }
+      ++stage_count;
     }
-    ++stage_count;
   }
   *out = stage_info;
+  return {};
+}
+
+Result EngineVulkan::GetVkShaderGroupInfo(
+    amber::Pipeline* pipeline,
+    std::vector<VkRayTracingShaderGroupCreateInfoKHR>* out) {
+  auto shaders = pipeline->GetShaders();
+
+  out->clear();
+  out->reserve(pipeline->GetShaderGroups().size());
+
+  for (auto& g : pipeline->GetShaderGroups()) {
+    Result r;
+    ShaderGroup* sg = g.get();
+
+    if (sg == nullptr)
+      return Result("Invalid shader group");
+
+    VkRayTracingShaderGroupCreateInfoKHR group_info = {
+      VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
+      nullptr,
+      VK_RAY_TRACING_SHADER_GROUP_TYPE_MAX_ENUM_KHR,
+      VK_SHADER_UNUSED_KHR,
+      VK_SHADER_UNUSED_KHR,
+      VK_SHADER_UNUSED_KHR,
+      VK_SHADER_UNUSED_KHR,
+      nullptr
+    };
+
+    if (sg->IsGeneralGroup()) {
+      group_info.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+      r = pipeline->GetShaderIndex(sg->GetGeneralShader(),
+                                   &group_info.generalShader);
+      if (!r.IsSuccess())
+        return r;
+    } else if (sg->IsHitGroup()) {
+      group_info.type =
+          sg->GetIntersectionShader() == nullptr
+              ? VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR
+              : VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_KHR;
+
+      if (sg->GetClosestHitShader()) {
+        r = pipeline->GetShaderIndex(sg->GetClosestHitShader(),
+                                     &group_info.closestHitShader);
+        if (!r.IsSuccess())
+          return r;
+      }
+
+      if (sg->GetAnyHitShader()) {
+        r = pipeline->GetShaderIndex(sg->GetAnyHitShader(),
+                                     &group_info.anyHitShader);
+        if (!r.IsSuccess())
+          return r;
+      }
+
+      if (sg->GetIntersectionShader()) {
+        r = pipeline->GetShaderIndex(sg->GetIntersectionShader(),
+                                     &group_info.intersectionShader);
+        if (!r.IsSuccess())
+          return r;
+      }
+    } else {
+      return Result("Uninitialized shader group");
+    }
+
+    out->push_back(group_info);
+  }
+
   return {};
 }
 
@@ -628,11 +781,28 @@ Result EngineVulkan::DoDrawArrays(const DrawArraysCommand* command) {
 
 Result EngineVulkan::DoCompute(const ComputeCommand* command) {
   auto& info = pipeline_map_[command->GetPipeline()];
-  if (info.vk_pipeline->IsGraphics())
-    return Result("Vulkan: Compute called for graphics pipeline.");
+  if (!info.vk_pipeline->IsCompute())
+    return Result("Vulkan: Compute called for non-compute pipeline.");
 
   return info.vk_pipeline->AsCompute()->Compute(
       command->GetX(), command->GetY(), command->GetZ());
+}
+
+Result EngineVulkan::DoTraceRays(const RayTracingCommand* command) {
+  auto& info = pipeline_map_[command->GetPipeline()];
+  if (!info.vk_pipeline->IsRayTracing())
+    return Result("Vulkan: RayTracing called for non-RayTracing pipeline.");
+
+  amber::Pipeline* pipeline = command->GetPipeline();
+
+  amber::SBT* rSBT = pipeline->GetSBT(command->GetRayGenSBTName());
+  amber::SBT* mSBT = pipeline->GetSBT(command->GetMissSBTName());
+  amber::SBT* hSBT = pipeline->GetSBT(command->GetHitsSBTName());
+  amber::SBT* cSBT = pipeline->GetSBT(command->GetCallSBTName());
+
+  return info.vk_pipeline->AsRayTracingPipeline()->TraceRays(
+      rSBT, mSBT, hSBT, cSBT, command->GetX(), command->GetY(),
+      command->GetZ());
 }
 
 Result EngineVulkan::DoEntryPoint(const EntryPointCommand* command) {

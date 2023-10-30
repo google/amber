@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +26,7 @@
 
 #include "amber/recipe.h"
 #include "amber/result.h"
+#include "src/acceleration_structure.h"
 #include "src/buffer.h"
 #include "src/command.h"
 #include "src/engine.h"
@@ -160,6 +162,52 @@ class Script : public RecipeImpl {
     return it == name_to_sampler_.end() ? nullptr : it->second;
   }
 
+  /// Adds |blas| to the list of known bottom level acceleration structures.
+  /// The |blas| must have a unique name over all BLASes in the script.
+  Result AddBLAS(std::unique_ptr<BLAS> blas) {
+    if (name_to_blas_.count(blas->GetName()) > 0)
+      return Result("duplicate BLAS name provided");
+
+    blases_.push_back(std::move(blas));
+    name_to_blas_[blases_.back()->GetName()] = blases_.back().get();
+
+    return {};
+  }
+
+  /// Retrieves the BLAS with |name|, |nullptr| if not found.
+  BLAS* GetBLAS(const std::string& name) const {
+    auto it = name_to_blas_.find(name);
+    return it == name_to_blas_.end() ? nullptr : it->second;
+  }
+
+  /// Retrieves a list of all BLASes.
+  const std::vector<std::unique_ptr<BLAS>>& GetBLASes() const {
+    return blases_;
+  }
+
+  /// Adds |tlas| to the list of known top level acceleration structures.
+  /// The |tlas| must have a unique name over all TLASes in the script.
+  Result AddTLAS(std::unique_ptr<TLAS> tlas) {
+    if (name_to_tlas_.count(tlas->GetName()) > 0)
+      return Result("duplicate TLAS name provided");
+
+    tlases_.push_back(std::move(tlas));
+    name_to_tlas_[tlases_.back()->GetName()] = tlases_.back().get();
+
+    return {};
+  }
+
+  /// Retrieves the TLAS with |name|, |nullptr| if not found.
+  TLAS* GetTLAS(const std::string& name) const {
+    auto it = name_to_tlas_.find(name);
+    return it == name_to_tlas_.end() ? nullptr : it->second;
+  }
+
+  /// Retrieves a list of all TLASes.
+  const std::vector<std::unique_ptr<TLAS>>& GetTLASes() const {
+    return tlases_;
+  }
+
   /// Retrieves a list of all samplers.
   const std::vector<std::unique_ptr<Sampler>>& GetSamplers() const {
     return samplers_;
@@ -286,12 +334,16 @@ class Script : public RecipeImpl {
   std::map<std::string, Buffer*> name_to_buffer_;
   std::map<std::string, Sampler*> name_to_sampler_;
   std::map<std::string, Pipeline*> name_to_pipeline_;
+  std::map<std::string, BLAS*> name_to_blas_;
+  std::map<std::string, TLAS*> name_to_tlas_;
   std::map<std::string, std::unique_ptr<type::Type>> name_to_type_;
   std::vector<std::unique_ptr<Shader>> shaders_;
   std::vector<std::unique_ptr<Command>> commands_;
   std::vector<std::unique_ptr<Buffer>> buffers_;
   std::vector<std::unique_ptr<Sampler>> samplers_;
   std::vector<std::unique_ptr<Pipeline>> pipelines_;
+  std::vector<std::unique_ptr<BLAS>> blases_;
+  std::vector<std::unique_ptr<TLAS>> tlases_;
   std::vector<std::unique_ptr<type::Type>> types_;
   std::vector<std::unique_ptr<Format>> formats_;
   std::unique_ptr<VirtualFileStore> virtual_files_;
