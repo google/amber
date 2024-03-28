@@ -134,6 +134,24 @@ bool Script::IsKnownFeature(const std::string& name) const {
              "ShaderSubgroupExtendedTypesFeatures.shaderSubgroupExtendedTypes";
 }
 
+bool Script::IsKnownProperty(const std::string& name) const {
+  return name == "FloatControls.shaderSignedZeroInfNanPreserveFloat16" ||
+      name == "FloatControls.shaderSignedZeroInfNanPreserveFloat32" ||
+      name == "FloatControls.shaderSignedZeroInfNanPreserveFloat64" ||
+      name == "FloatControls.shaderDenormPreserveFloat16" ||
+      name == "FloatControls.shaderDenormPreserveFloat32" ||
+      name == "FloatControls.shaderDenormPreserveFloat64" ||
+      name == "FloatControls.shaderDenormFlushToZeroFloat16" ||
+      name == "FloatControls.shaderDenormFlushToZeroFloat32" ||
+      name == "FloatControls.shaderDenormFlushToZeroFloat64" ||
+      name == "FloatControls.shaderRoundingModeRTEFloat16" ||
+      name == "FloatControls.shaderRoundingModeRTEFloat32" ||
+      name == "FloatControls.shaderRoundingModeRTEFloat64" ||
+      name == "FloatControls.shaderRoundingModeRTZFloat16" ||
+      name == "FloatControls.shaderRoundingModeRTZFloat32" ||
+      name == "FloatControls.shaderRoundingModeRTZFloat64";
+}
+
 type::Type* Script::ParseType(const std::string& str) {
   auto type = GetType(str);
   if (type)

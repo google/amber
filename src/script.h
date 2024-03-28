@@ -43,6 +43,7 @@ class Script : public RecipeImpl {
   ~Script() override;
 
   bool IsKnownFeature(const std::string& name) const;
+  bool IsKnownProperty(const std::string& name) const;
 
   /// Retrieves information on the shaders in the given script.
   std::vector<ShaderInfo> GetShaderInfo() const override;
@@ -50,6 +51,10 @@ class Script : public RecipeImpl {
   /// Returns required features in the given recipe.
   std::vector<std::string> GetRequiredFeatures() const override {
     return engine_info_.required_features;
+  }
+
+  std::vector<std::string> GetRequiredProperties() const override {
+    return engine_info_.required_properties;
   }
 
   /// Returns required device extensions in the given recipe.
@@ -166,11 +171,24 @@ class Script : public RecipeImpl {
     engine_info_.required_features.push_back(feature);
   }
 
+  /// Adds |prop| to the list of properties that must be supported by the
+  /// engine.
+  void AddRequiredProperty(const std::string& prop) {
+    engine_info_.required_properties.push_back(prop);
+  }
+
   /// Checks if |feature| is in required features
   bool IsRequiredFeature(const std::string& feature) const {
     return std::find(engine_info_.required_features.begin(),
                      engine_info_.required_features.end(),
                      feature) != engine_info_.required_features.end();
+  }
+
+  /// Checks if |prop| is in required features
+  bool IsRequiredProperty(const std::string& prop) const {
+    return std::find(engine_info_.required_properties.begin(),
+                     engine_info_.required_properties.end(),
+                     prop) != engine_info_.required_properties.end();
   }
 
   /// Adds |ext| to the list of device extensions that must be supported.
@@ -257,6 +275,7 @@ class Script : public RecipeImpl {
  private:
   struct {
     std::vector<std::string> required_features;
+    std::vector<std::string> required_properties;
     std::vector<std::string> required_device_extensions;
     std::vector<std::string> required_instance_extensions;
   } engine_info_;
