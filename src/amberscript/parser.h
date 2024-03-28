@@ -84,6 +84,7 @@ class Parser : public amber::Parser {
   Result ParseCopy();
   Result ParseDeviceFeature();
   Result ParseDeviceExtension();
+  Result ParseDeviceProperty();
   Result ParseInstanceExtension();
   Result ParseRepeat();
   Result ParseSet();
