@@ -761,7 +761,7 @@ Result Device::Initialize(
     const std::string name = dot_found ? prop.substr(dot_pos + 1) : prop;
     int supported = -1;
 
-    if (supported == -1 && prefix == "FloatControls") {
+    if (supported == -1 && prefix == "FloatControlsProperties") {
       if (fc_props_ptrs == nullptr && vulkan12_props_ptrs == nullptr)
         return Result(
             "Vulkan: Device::Initialize given physical device does not support "

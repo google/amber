@@ -22,21 +22,21 @@ using AmberScriptParserTest = testing::Test;
 
 TEST_F(AmberScriptParserTest, DeviceProperty) {
   std::string in = R"(
-DEVICE_PROPERTY FloatControls.shaderSignedZeroInfNanPreserveFloat16
-DEVICE_PROPERTY FloatControls.shaderSignedZeroInfNanPreserveFloat32
-DEVICE_PROPERTY FloatControls.shaderSignedZeroInfNanPreserveFloat64
-DEVICE_PROPERTY FloatControls.shaderDenormPreserveFloat16
-DEVICE_PROPERTY FloatControls.shaderDenormPreserveFloat32
-DEVICE_PROPERTY FloatControls.shaderDenormPreserveFloat64
-DEVICE_PROPERTY FloatControls.shaderDenormFlushToZeroFloat16
-DEVICE_PROPERTY FloatControls.shaderDenormFlushToZeroFloat32
-DEVICE_PROPERTY FloatControls.shaderDenormFlushToZeroFloat64
-DEVICE_PROPERTY FloatControls.shaderRoundingModeRTEFloat16
-DEVICE_PROPERTY FloatControls.shaderRoundingModeRTEFloat32
-DEVICE_PROPERTY FloatControls.shaderRoundingModeRTEFloat64
-DEVICE_PROPERTY FloatControls.shaderRoundingModeRTZFloat16
-DEVICE_PROPERTY FloatControls.shaderRoundingModeRTZFloat32
-DEVICE_PROPERTY FloatControls.shaderRoundingModeRTZFloat64)";
+DEVICE_PROPERTY FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat16
+DEVICE_PROPERTY FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat32
+DEVICE_PROPERTY FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat64
+DEVICE_PROPERTY FloatControlsProperties.shaderDenormPreserveFloat16
+DEVICE_PROPERTY FloatControlsProperties.shaderDenormPreserveFloat32
+DEVICE_PROPERTY FloatControlsProperties.shaderDenormPreserveFloat64
+DEVICE_PROPERTY FloatControlsProperties.shaderDenormFlushToZeroFloat16
+DEVICE_PROPERTY FloatControlsProperties.shaderDenormFlushToZeroFloat32
+DEVICE_PROPERTY FloatControlsProperties.shaderDenormFlushToZeroFloat64
+DEVICE_PROPERTY FloatControlsProperties.shaderRoundingModeRTEFloat16
+DEVICE_PROPERTY FloatControlsProperties.shaderRoundingModeRTEFloat32
+DEVICE_PROPERTY FloatControlsProperties.shaderRoundingModeRTEFloat64
+DEVICE_PROPERTY FloatControlsProperties.shaderRoundingModeRTZFloat16
+DEVICE_PROPERTY FloatControlsProperties.shaderRoundingModeRTZFloat32
+DEVICE_PROPERTY FloatControlsProperties.shaderRoundingModeRTZFloat64)";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -45,24 +45,36 @@ DEVICE_PROPERTY FloatControls.shaderRoundingModeRTZFloat64)";
   auto script = parser.GetScript();
   const auto& properties = script->GetRequiredProperties();
   ASSERT_EQ(15U, properties.size());
-  EXPECT_EQ("FloatControls.shaderSignedZeroInfNanPreserveFloat16",
+  EXPECT_EQ("FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat16",
             properties[0]);
-  EXPECT_EQ("FloatControls.shaderSignedZeroInfNanPreserveFloat32",
+  EXPECT_EQ("FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat32",
             properties[1]);
-  EXPECT_EQ("FloatControls.shaderSignedZeroInfNanPreserveFloat64",
+  EXPECT_EQ("FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat64",
             properties[2]);
-  EXPECT_EQ("FloatControls.shaderDenormPreserveFloat16", properties[3]);
-  EXPECT_EQ("FloatControls.shaderDenormPreserveFloat32", properties[4]);
-  EXPECT_EQ("FloatControls.shaderDenormPreserveFloat64", properties[5]);
-  EXPECT_EQ("FloatControls.shaderDenormFlushToZeroFloat16", properties[6]);
-  EXPECT_EQ("FloatControls.shaderDenormFlushToZeroFloat32", properties[7]);
-  EXPECT_EQ("FloatControls.shaderDenormFlushToZeroFloat64", properties[8]);
-  EXPECT_EQ("FloatControls.shaderRoundingModeRTEFloat16", properties[9]);
-  EXPECT_EQ("FloatControls.shaderRoundingModeRTEFloat32", properties[10]);
-  EXPECT_EQ("FloatControls.shaderRoundingModeRTEFloat64", properties[11]);
-  EXPECT_EQ("FloatControls.shaderRoundingModeRTZFloat16", properties[12]);
-  EXPECT_EQ("FloatControls.shaderRoundingModeRTZFloat32", properties[13]);
-  EXPECT_EQ("FloatControls.shaderRoundingModeRTZFloat64", properties[14]);
+  EXPECT_EQ("FloatControlsProperties.shaderDenormPreserveFloat16",
+            properties[3]);
+  EXPECT_EQ("FloatControlsProperties.shaderDenormPreserveFloat32",
+            properties[4]);
+  EXPECT_EQ("FloatControlsProperties.shaderDenormPreserveFloat64",
+            properties[5]);
+  EXPECT_EQ("FloatControlsProperties.shaderDenormFlushToZeroFloat16",
+            properties[6]);
+  EXPECT_EQ("FloatControlsProperties.shaderDenormFlushToZeroFloat32",
+            properties[7]);
+  EXPECT_EQ("FloatControlsProperties.shaderDenormFlushToZeroFloat64",
+            properties[8]);
+  EXPECT_EQ("FloatControlsProperties.shaderRoundingModeRTEFloat16",
+            properties[9]);
+  EXPECT_EQ("FloatControlsProperties.shaderRoundingModeRTEFloat32",
+            properties[10]);
+  EXPECT_EQ("FloatControlsProperties.shaderRoundingModeRTEFloat64",
+            properties[11]);
+  EXPECT_EQ("FloatControlsProperties.shaderRoundingModeRTZFloat16",
+            properties[12]);
+  EXPECT_EQ("FloatControlsProperties.shaderRoundingModeRTZFloat32",
+            properties[13]);
+  EXPECT_EQ("FloatControlsProperties.shaderRoundingModeRTZFloat64",
+            properties[14]);
 }
 
 TEST_F(AmberScriptParserTest, DevicePropertyMissingProperty) {
@@ -94,7 +106,8 @@ TEST_F(AmberScriptParserTest, DevicePropertyInvalid) {
 
 TEST_F(AmberScriptParserTest, DevicePropertyExtraParams) {
   std::string in =
-      "DEVICE_PROPERTY FloatControls.shaderDenormPreserveFloat16 EXTRA";
+      "DEVICE_PROPERTY FloatControlsProperties.shaderDenormPreserveFloat16 "
+      "EXTRA";
 
   Parser parser;
   Result r = parser.Parse(in);

@@ -70,6 +70,9 @@ class Recipe {
   /// Returns required features in the given recipe.
   std::vector<std::string> GetRequiredFeatures() const;
 
+  /// Returns required properties in the given recipe.
+  std::vector<std::string> GetRequiredProperties() const;
+
   /// Returns required device extensions in the given recipe.
   std::vector<std::string> GetRequiredDeviceExtensions() const;
 
