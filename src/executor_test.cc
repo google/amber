@@ -37,6 +37,7 @@ class EngineStub : public Engine {
   Result Initialize(EngineConfig*,
                     Delegate*,
                     const std::vector<std::string>& features,
+                    const std::vector<std::string>& properties,
                     const std::vector<std::string>& instance_exts,
                     const std::vector<std::string>& device_exts) override {
     features_ = features;
@@ -207,11 +208,12 @@ class VkScriptExecutorTest : public testing::Test {
   std::unique_ptr<Engine> MakeEngine() { return MakeUnique<EngineStub>(); }
   std::unique_ptr<Engine> MakeAndInitializeEngine(
       const std::vector<std::string>& features,
+      const std::vector<std::string>& properties,
       const std::vector<std::string>& instance_extensions,
       const std::vector<std::string>& device_extensions) {
     std::unique_ptr<Engine> engine = MakeUnique<EngineStub>();
-    engine->Initialize(nullptr, nullptr, features, instance_extensions,
-                       device_extensions);
+    engine->Initialize(nullptr, nullptr, features, properties,
+                       instance_extensions, device_extensions);
     return engine;
   }
   EngineStub* ToStub(Engine* engine) {
@@ -233,6 +235,7 @@ logicOp)";
 
   auto script = parser.GetScript();
   auto engine = MakeAndInitializeEngine(script->GetRequiredFeatures(),
+                                        script->GetRequiredProperties(),
                                         script->GetRequiredInstanceExtensions(),
                                         script->GetRequiredDeviceExtensions());
 
@@ -263,6 +266,7 @@ VK_KHR_variable_pointers)";
 
   auto script = parser.GetScript();
   auto engine = MakeAndInitializeEngine(script->GetRequiredFeatures(),
+                                        script->GetRequiredProperties(),
                                         script->GetRequiredInstanceExtensions(),
                                         script->GetRequiredDeviceExtensions());
 
@@ -293,6 +297,7 @@ depthstencil D24_UNORM_S8_UINT)";
 
   auto script = parser.GetScript();
   auto engine = MakeAndInitializeEngine(script->GetRequiredFeatures(),
+                                        script->GetRequiredProperties(),
                                         script->GetRequiredInstanceExtensions(),
                                         script->GetRequiredDeviceExtensions());
 
@@ -320,6 +325,7 @@ fence_timeout 12345)";
 
   auto script = parser.GetScript();
   auto engine = MakeAndInitializeEngine(script->GetRequiredFeatures(),
+                                        script->GetRequiredProperties(),
                                         script->GetRequiredInstanceExtensions(),
                                         script->GetRequiredDeviceExtensions());
 
@@ -355,6 +361,7 @@ fence_timeout 12345)";
 
   auto script = parser.GetScript();
   auto engine = MakeAndInitializeEngine(script->GetRequiredFeatures(),
+                                        script->GetRequiredProperties(),
                                         script->GetRequiredInstanceExtensions(),
                                         script->GetRequiredDeviceExtensions());
 

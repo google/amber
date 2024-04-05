@@ -784,6 +784,9 @@ Result Device::Initialize(
       CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderRoundingModeRTZFloat64, fc_props_ptrs, vulkan12_props_ptrs);
     }
 
+    if (supported == 0)
+      return Result("Vulkan: Device::Initialize missing " + prop + " property");
+
     if (supported == -1)
       return Result(
           "Vulkan: Device::Initialize property not handled " + prop);

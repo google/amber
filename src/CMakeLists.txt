@@ -141,6 +141,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_copy_test.cc
     amberscript/parser_depth_test.cc
     amberscript/parser_device_feature_test.cc
+    amberscript/parser_device_property_test.cc
     amberscript/parser_expect_test.cc
     amberscript/parser_extension_test.cc
     amberscript/parser_framebuffer_test.cc

@@ -3426,11 +3426,11 @@ Result Parser::ParseDeviceFeature() {
 Result Parser::ParseDeviceProperty() {
   auto token = tokenizer_->NextToken();
   if (token->IsEOS() || token->IsEOL())
-    return Result("missing feature name for DEVICE_PROPERTY command");
+    return Result("missing property name for DEVICE_PROPERTY command");
   if (!token->IsIdentifier())
-    return Result("invalid feature name for DEVICE_PROPERTY command");
+    return Result("invalid property name for DEVICE_PROPERTY command");
   if (!script_->IsKnownProperty(token->AsString()))
-    return Result("unknown feature name for DEVICE_PROPERTY command");
+    return Result("unknown property name for DEVICE_PROPERTY command");
 
   script_->AddRequiredProperty(token->AsString());
 
