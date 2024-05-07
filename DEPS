@@ -14,7 +14,8 @@ vars = {
   'clspv_llvm_revision': 'b70366c9c430e1eadd59d5a1dfbb9c4d84f83de5',
   'clspv_revision': 'f99809bdab1710846633b4ec24f5448263e75da7',
   'cpplint_revision': 'fa12a0bbdafa15291276ddd2a2dcd2ac7a2ce4cb',
-  'dxc_revision': 'c45db48d565a9edc14b025e43b90e62264d06eea',
+  'dxc_revision': '14c440712d7411f184bd29a70718e3b8568dcfe7',
+  'directx_headers_revision': 'aafb798404373bec7875e6a36a8d9635642587c1',
   'glslang_revision': '81cc10a498b25a90147cccd6e8939493c1e9e20e',
   'googletest_revision': '16f637fbf4ffc3f7a01fa4eceb7906634565242f',
   'json_revision': '4f8fba14066156b73f1189a2b8bd568bde5284c5',
@@ -41,6 +42,9 @@ deps = {
 
   'third_party/dxc': Var('microsoft_git') + '/DirectXShaderCompiler.git@' +
       Var('dxc_revision'),
+
+  'third_party/DirectX-Headers': Var('microsoft_git') + '/DirectX-Headers.git@' +
+      Var('directx_headers_revision'),
 
   'third_party/googletest': Var('google_git') + '/googletest.git@' +
       Var('googletest_revision'),
