@@ -55,9 +55,10 @@ struct VulkanEngineConfig : public EngineConfig {
   /// will be used in that case.
   VkPhysicalDeviceProperties available_properties;
 
-  /// Physical device properties for |physical_device|.The |available_properties2|
-  /// will only be used if VK_KHR_get_physical_device_properties2 is enabled. If
-  /// the extension is not enabled, |available_properties| will be used.
+  /// Physical device properties for |physical_device|.The
+  /// |available_properties2| will only be used if
+  /// VK_KHR_get_physical_device_properties2 is enabled. If the extension is not
+  /// enabled, |available_properties| will be used.
   VkPhysicalDeviceProperties2KHR available_properties2;
 
   /// Instance extensions available.
