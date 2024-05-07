@@ -22,7 +22,7 @@ vars = {
   'shaderc_revision': 'e72186b66bb90ed06aaf15cbdc9a053581a0616b',
   'spirv_headers_revision': 'd13b52222c39a7e9a401b44646f0ca3a640fbd47',
   'spirv_tools_revision': 'd87f61605b3647fbceae9aaa922fce0031afdc63',
-  'swiftshader_revision': 'bca23447ad4667a7b79973569ab5d8d905d211ac',
+  'swiftshader_revision': '76f7f8cfea80d26fa41d51f52cfbade49ec1f838',
   'vulkan_headers_revision': '1dace16d8044758d32736eb59802d171970e9448',
   'vulkan_loader_revision': '8aad559a09388ceb5b968af64a2b965d3886e5a0',
   'vulkan_validationlayers_revision': 'a6c1ddca49331d8addde052554487180ee8aec13',

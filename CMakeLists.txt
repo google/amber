@@ -213,6 +213,7 @@ function(amber_default_compile_options TARGET)
       -Wno-padded
       -Wno-switch-enum
       -Wno-unknown-pragmas
+      -Wno-unsafe-buffer-usage
       -pedantic-errors
     )
     if (NOT ${AMBER_DISABLE_WERROR})

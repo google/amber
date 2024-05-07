@@ -171,7 +171,7 @@ cd /data/local/tmp
 ./amber_ndk -d <shader-test-files>
 ```
 
-### Optional Components
+### Optional components
 
 The components which build up Amber can be enabled or disabled as needed. Any
 option with `_SKIP_` in the name is on by default, any with `_USE_` is off by
