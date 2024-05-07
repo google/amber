@@ -135,21 +135,24 @@ bool Script::IsKnownFeature(const std::string& name) const {
 }
 
 bool Script::IsKnownProperty(const std::string& name) const {
-  return name == "FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat16" ||
-      name == "FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat32" ||
-      name == "FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat64" ||
-      name == "FloatControlsProperties.shaderDenormPreserveFloat16" ||
-      name == "FloatControlsProperties.shaderDenormPreserveFloat32" ||
-      name == "FloatControlsProperties.shaderDenormPreserveFloat64" ||
-      name == "FloatControlsProperties.shaderDenormFlushToZeroFloat16" ||
-      name == "FloatControlsProperties.shaderDenormFlushToZeroFloat32" ||
-      name == "FloatControlsProperties.shaderDenormFlushToZeroFloat64" ||
-      name == "FloatControlsProperties.shaderRoundingModeRTEFloat16" ||
-      name == "FloatControlsProperties.shaderRoundingModeRTEFloat32" ||
-      name == "FloatControlsProperties.shaderRoundingModeRTEFloat64" ||
-      name == "FloatControlsProperties.shaderRoundingModeRTZFloat16" ||
-      name == "FloatControlsProperties.shaderRoundingModeRTZFloat32" ||
-      name == "FloatControlsProperties.shaderRoundingModeRTZFloat64";
+  return name ==
+             "FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat16" ||
+         name ==
+             "FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat32" ||
+         name ==
+             "FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat64" ||
+         name == "FloatControlsProperties.shaderDenormPreserveFloat16" ||
+         name == "FloatControlsProperties.shaderDenormPreserveFloat32" ||
+         name == "FloatControlsProperties.shaderDenormPreserveFloat64" ||
+         name == "FloatControlsProperties.shaderDenormFlushToZeroFloat16" ||
+         name == "FloatControlsProperties.shaderDenormFlushToZeroFloat32" ||
+         name == "FloatControlsProperties.shaderDenormFlushToZeroFloat64" ||
+         name == "FloatControlsProperties.shaderRoundingModeRTEFloat16" ||
+         name == "FloatControlsProperties.shaderRoundingModeRTEFloat32" ||
+         name == "FloatControlsProperties.shaderRoundingModeRTEFloat64" ||
+         name == "FloatControlsProperties.shaderRoundingModeRTZFloat16" ||
+         name == "FloatControlsProperties.shaderRoundingModeRTZFloat32" ||
+         name == "FloatControlsProperties.shaderRoundingModeRTZFloat64";
 }
 
 type::Type* Script::ParseType(const std::string& str) {

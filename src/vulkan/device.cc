@@ -729,20 +729,18 @@ Result Device::Initialize(
         "required extensions");
   }
 
-  VkPhysicalDeviceVulkan12Properties* vulkan12_props_ptrs = nullptr;
-  VkPhysicalDeviceFloatControlsProperties* fc_props_ptrs = nullptr;
+  VkPhysicalDeviceVulkan12Properties* pv12 = nullptr;
+  VkPhysicalDeviceFloatControlsProperties* pfc = nullptr;
 
   ptr = available_properties2.pNext;
   while (ptr != nullptr) {
     BaseOutStructure* s = static_cast<BaseOutStructure*>(ptr);
     switch (s->sType) {
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES:
-        vulkan12_props_ptrs =
-            static_cast<VkPhysicalDeviceVulkan12Properties*>(ptr);
+        pv12 = static_cast<VkPhysicalDeviceVulkan12Properties*>(ptr);
         break;
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES_KHR:
-        fc_props_ptrs =
-            static_cast<VkPhysicalDeviceFloatControlsPropertiesKHR*>(ptr);
+        pfc = static_cast<VkPhysicalDeviceFloatControlsPropertiesKHR*>(ptr);
         break;
       default:
         break;
@@ -750,7 +748,7 @@ Result Device::Initialize(
     ptr = s->pNext;
   }
 
-#define CHECK_FLOAT_CONTROL_PROPERTY(R, P, NAME, S1, S2) \
+#define CHK_P(R, P, NAME, S1, S2) \
   if (R == -1 && P == #NAME) \
     R = ((S1 && S1->NAME) || (S2 && S2->NAME)) ? 1 : 0;
 
@@ -762,26 +760,26 @@ Result Device::Initialize(
     int supported = -1;
 
     if (supported == -1 && prefix == "FloatControlsProperties") {
-      if (fc_props_ptrs == nullptr && vulkan12_props_ptrs == nullptr)
+      if (pfc == nullptr && pv12 == nullptr)
         return Result(
             "Vulkan: Device::Initialize given physical device does not support "
             "required float control properties");
 
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderSignedZeroInfNanPreserveFloat16, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderSignedZeroInfNanPreserveFloat32, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderSignedZeroInfNanPreserveFloat64, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderDenormPreserveFloat16, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderDenormPreserveFloat32, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderDenormPreserveFloat64, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderDenormFlushToZeroFloat16, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderDenormFlushToZeroFloat32, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderDenormFlushToZeroFloat64, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderRoundingModeRTEFloat16, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderRoundingModeRTEFloat32, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderRoundingModeRTEFloat64, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderRoundingModeRTZFloat16, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderRoundingModeRTZFloat32, fc_props_ptrs, vulkan12_props_ptrs);
-      CHECK_FLOAT_CONTROL_PROPERTY(supported, name, shaderRoundingModeRTZFloat64, fc_props_ptrs, vulkan12_props_ptrs);
+      CHK_P(supported, name, shaderSignedZeroInfNanPreserveFloat16, pfc, pv12);
+      CHK_P(supported, name, shaderSignedZeroInfNanPreserveFloat32, pfc, pv12);
+      CHK_P(supported, name, shaderSignedZeroInfNanPreserveFloat64, pfc, pv12);
+      CHK_P(supported, name, shaderDenormPreserveFloat16, pfc, pv12);
+      CHK_P(supported, name, shaderDenormPreserveFloat32, pfc, pv12);
+      CHK_P(supported, name, shaderDenormPreserveFloat64, pfc, pv12);
+      CHK_P(supported, name, shaderDenormFlushToZeroFloat16, pfc, pv12);
+      CHK_P(supported, name, shaderDenormFlushToZeroFloat32, pfc, pv12);
+      CHK_P(supported, name, shaderDenormFlushToZeroFloat64, pfc, pv12);
+      CHK_P(supported, name, shaderRoundingModeRTEFloat16, pfc, pv12);
+      CHK_P(supported, name, shaderRoundingModeRTEFloat32, pfc, pv12);
+      CHK_P(supported, name, shaderRoundingModeRTEFloat64, pfc, pv12);
+      CHK_P(supported, name, shaderRoundingModeRTZFloat16, pfc, pv12);
+      CHK_P(supported, name, shaderRoundingModeRTZFloat32, pfc, pv12);
+      CHK_P(supported, name, shaderRoundingModeRTZFloat64, pfc, pv12);
     }
 
     if (supported == 0)
