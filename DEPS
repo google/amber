@@ -16,18 +16,17 @@ vars = {
   'cpplint_revision': 'fa12a0bbdafa15291276ddd2a2dcd2ac7a2ce4cb',
   'dxc_revision': '773b01272719e07ea369bc17f5ddfce248751c7a',
   'directx_headers_revision': '980971e835876dc0cde415e8f9bc646e64667bf7',
-  'glslang_revision': '81cc10a498b25a90147cccd6e8939493c1e9e20e',
+  'glslang_revision': 'e8dd0b6903b34f1879520b444634c75ea2deedf5',
   'googletest_revision': '16f637fbf4ffc3f7a01fa4eceb7906634565242f',
   'json_revision': '4f8fba14066156b73f1189a2b8bd568bde5284c5',
   'lodepng_revision': '5601b8272a6850b7c5d693dd0c0e16da50be8d8d',
   'shaderc_revision': 'e72186b66bb90ed06aaf15cbdc9a053581a0616b',
-  'spirv_headers_revision': 'd13b52222c39a7e9a401b44646f0ca3a640fbd47',
-  'spirv_tools_revision': 'd87f61605b3647fbceae9aaa922fce0031afdc63',
+  'spirv_headers_revision': '5e3ad389ee56fca27c9705d093ae5387ce404df4',
+  'spirv_tools_revision': '9241a58a8028c49510bc174b6c970e3c2b4b8e51',
   'swiftshader_revision': '76f7f8cfea80d26fa41d51f52cfbade49ec1f838',
-  'vulkan_headers_revision': '1dace16d8044758d32736eb59802d171970e9448',
-  'vulkan_loader_revision': '8aad559a09388ceb5b968af64a2b965d3886e5a0',
-  'vulkan_validationlayers_revision': 'a6c1ddca49331d8addde052554487180ee8aec13',
-  'robin_hood_hashing_revision': '24b3f50f9532153edc23b29ae277dcccfd75a462',
+  'vulkan_headers_revision': '4bc77c26ff9ce89cf4a4f79e1c24a44604132d53',
+  'vulkan_loader_revision': 'e69a59a96b241038f24a0e425445d001ea099b2c',
+  'vulkan_validationlayers_revision': 'a5f65dae0d9b08cd7076d88c3dabddf1b41b73b4',
 }
 
 deps = {
@@ -78,7 +77,4 @@ deps = {
 
   'third_party/vulkan-loader': Var('khronos_git') + '/Vulkan-Loader.git@' +
       Var('vulkan_loader_revision'),
-
-  'third_party/robin-hood-hashing': Var('martinus_git') + '/robin-hood-hashing.git@' +
-      Var('robin_hood_hashing_revision'),
 }
