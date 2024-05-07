@@ -136,6 +136,11 @@ if (${AMBER_ENABLE_DXC})
 
   set(LLVM_ENABLE_WERROR OFF)
 
+  # Disable HCT.cmake looking for and using clang-format. This is used to compare generated files
+  # against the copy that is committed to the repo, but fails because the DXC .clangformat file is
+  # not visible from our build dir. We don't need this validation, so just disable it.
+  set(CLANG_FORMAT_EXE "" CACHE STRING "" FORCE)
+
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/dxc EXCLUDE_FROM_ALL)
 
   if (MSVC)
