@@ -195,6 +195,23 @@ class ShaderGroup {
     return closestHitShader_ != nullptr || anyHitShader_ != nullptr ||
            intersectionShader_ != nullptr;
   }
+  Shader* GetShaderByType(ShaderType type) const {
+    switch (type) {
+      case kShaderTypeRayGeneration:
+      case kShaderTypeMiss:
+      case kShaderTypeCall:
+        return generalShader_;
+      case kShaderTypeAnyHit:
+        return anyHitShader_;
+      case kShaderTypeClosestHit:
+        return closestHitShader_;
+      case kShaderTypeIntersection:
+        return intersectionShader_;
+      default:
+        assert(0 && "Unsupported shader type");
+        return nullptr;
+    }
+  }
 
  private:
   std::string name_;
@@ -209,21 +226,21 @@ class SBTRecord {
   SBTRecord();
   ~SBTRecord();
 
-  void SetUsedShaderGroupName(const std::string& shader_group_name,
-                              uint32_t pipeline_index) {
+  void SetUsedShaderGroupName(const std::string& shader_group_name) {
     used_shader_group_name_ = shader_group_name;
-    pipeline_index_ = pipeline_index;
   }
   std::string GetUsedShaderGroupName() const { return used_shader_group_name_; }
-  uint32_t GetUsedShaderGroupPipelineIndex() const { return pipeline_index_; }
 
   void SetCount(const uint32_t count) { count_ = count; }
   uint32_t GetCount() const { return count_; }
 
+  void SetIndex(const uint32_t index) { index_ = index; }
+  uint32_t GetIndex() const { return index_; }
+
  private:
   std::string used_shader_group_name_;
   uint32_t count_ = 1;
-  uint32_t pipeline_index_ = static_cast<uint32_t>(-1);
+  uint32_t index_ = static_cast<uint32_t>(-1);
 };
 
 class SBT {

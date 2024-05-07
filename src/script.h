@@ -123,6 +123,29 @@ class Script : public RecipeImpl {
     return shaders_;
   }
 
+  /// Search |pipeline| and all included into pipeline libraries whether shader
+  /// with |name| is present. Returns shader if found, |nullptr| if not found.
+  Shader* FindShader(const Pipeline* pipeline, const std::string& name) const {
+    Shader* shader = GetShader(name);
+    if (shader) {
+      assert(isRayTracingShaderType(shader->GetType()));
+
+      for (auto group : pipeline->GetShaderGroups()) {
+        Shader* test_shader = group->GetShaderByType(shader->GetType());
+        if (test_shader == shader)
+          return shader;
+      }
+
+      for (auto lib : pipeline->GetPipelineLibraries()) {
+        shader = FindShader(lib, name);
+        if (shader)
+          return shader;
+      }
+    }
+
+    return nullptr;
+  }
+
   /// Adds |buffer| to the list of known buffers. The |buffer| must have a
   /// unique name over all buffers in the script.
   Result AddBuffer(std::unique_ptr<Buffer> buffer) {
@@ -160,6 +183,11 @@ class Script : public RecipeImpl {
   Sampler* GetSampler(const std::string& name) const {
     auto it = name_to_sampler_.find(name);
     return it == name_to_sampler_.end() ? nullptr : it->second;
+  }
+
+  /// Retrieves a list of all samplers.
+  const std::vector<std::unique_ptr<Sampler>>& GetSamplers() const {
+    return samplers_;
   }
 
   /// Adds |blas| to the list of known bottom level acceleration structures.
@@ -206,11 +234,6 @@ class Script : public RecipeImpl {
   /// Retrieves a list of all TLASes.
   const std::vector<std::unique_ptr<TLAS>>& GetTLASes() const {
     return tlases_;
-  }
-
-  /// Retrieves a list of all samplers.
-  const std::vector<std::unique_ptr<Sampler>>& GetSamplers() const {
-    return samplers_;
   }
 
   /// Adds |feature| to the list of features that must be supported by the

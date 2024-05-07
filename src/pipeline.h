@@ -275,6 +275,18 @@ class Pipeline {
     return nullptr;
   }
 
+  /// Adds |shaders| to the pipeline.
+  /// Designed to support libraries
+  Result AddShaders(const std::vector<ShaderInfo>& lib_shaders) {
+    shaders_.reserve(shaders_.size() + lib_shaders.size());
+
+    for (auto lib_shader : lib_shaders) {
+      shaders_.push_back(std::move(lib_shader));
+    }
+
+    return {};
+  }
+
   /// Returns a success result if |shader| found and the shader index is
   /// returned in |out|. Returns failure otherwise.
   Result GetShaderIndex(Shader* shader, uint32_t* out) const {
@@ -433,7 +445,7 @@ class Pipeline {
 
   /// Adds |group| to the list of known shader groups.
   /// The |group| must have a unique name within pipeline.
-  Result AddShaderGroup(std::unique_ptr<ShaderGroup> group) {
+  Result AddShaderGroup(std::shared_ptr<ShaderGroup> group) {
     if (name_to_shader_group_.count(group->GetName()) > 0)
       return Result("shader group name already exists");
 
@@ -444,11 +456,24 @@ class Pipeline {
     return {};
   }
 
+  /// Adds |lib_groups| to the list of known to pipeline shader groups.
+  /// Designed to support pipeline libraries.
+  Result AddShaderGroups(
+      const std::vector<std::shared_ptr<ShaderGroup>>& lib_groups) {
+    shader_groups_.reserve(shader_groups_.size() + lib_groups.size());
+
+    for (auto lib_group : lib_groups)
+      AddShaderGroup(lib_group);
+
+    return {};
+  }
+
   /// Retrieves the Shader Group with |name|, |nullptr| if not found.
   ShaderGroup* GetShaderGroup(const std::string& name) const {
     auto it = name_to_shader_group_.find(name);
     return it == name_to_shader_group_.end() ? nullptr : it->second;
   }
+  /// Retreives index of shader group specified by |name|
   uint32_t GetShaderGroupIndex(const std::string& name) const {
     ShaderGroup* shader_group = GetShaderGroup(name);
 
@@ -457,12 +482,38 @@ class Pipeline {
         return static_cast<uint32_t>(i);
       }
     }
+    assert(0 && "GetShaderGroupIndex called too early");
+
     return static_cast<uint32_t>(-1);
   }
-
-  /// Retrieves a list of all Shader Groups.
-  const std::vector<std::unique_ptr<ShaderGroup>>& GetShaderGroups() const {
+  /// Remembers number of shader groups belonging to this pipeline without
+  /// libraries addition.
+  void SetNonLibShaderGroupCount() {
+    assert(non_lib_shader_groups_count_ == -1); // Should be set only once
+    non_lib_shader_groups_count_ = shader_groups_.size();
+  }
+  /// Returns number of shader groups belonging to this pipeline without
+  /// libraries addition.
+  size_t GetNonLibShaderGroupCount() {
+    assert(non_lib_shader_groups_count_ != -1);  // Should be set before usage
+    return non_lib_shader_groups_count_;
+  }
+  /// Retrieves a list of all Shader Groups. Might include library additions
+  const std::vector<std::shared_ptr<ShaderGroup>>& GetShaderGroups() const {
     return shader_groups_;
+  }
+
+  /// Remembers number of shader belonging to this pipeline without
+  /// libraries addition.
+  void SetNonLibShadersCount() {
+    assert(non_lib_shader_count_ == -1);  // Should be set only once
+    non_lib_shader_count_ = shaders_.size();
+  }
+  /// Returns number of shaders belonging to this pipeline without
+  /// libraries addition.
+  size_t GetNonLibShadersCount() {
+    assert(non_lib_shader_count_ != -1);  // Should be set before usage
+    return non_lib_shader_count_;
   }
 
   /// Updates the descriptor set and binding info for the OpenCL-C kernel bound
@@ -511,6 +562,34 @@ class Pipeline {
   /// Generate the push constant buffers necessary for OpenCL kernels.
   Result GenerateOpenCLPushConstants();
 
+  void SetMaxPipelineRayPayloadSize(uint32_t size) {
+    max_pipeline_ray_payload_size_ = size;
+  }
+  uint32_t GetMaxPipelineRayPayloadSize() {
+    return max_pipeline_ray_payload_size_;
+  }
+  void SetMaxPipelineRayHitAttributeSize(uint32_t size) {
+    max_pipeline_ray_hit_attribute_size_ = size;
+  }
+  uint32_t GetMaxPipelineRayHitAttributeSize() {
+    return max_pipeline_ray_hit_attribute_size_;
+  }
+  void SetMaxPipelineRayRecursionDepth(uint32_t depth) {
+    max_pipeline_ray_recursion_depth_ = depth;
+  }
+  uint32_t GetMaxPipelineRayRecursionDepth() {
+    return max_pipeline_ray_recursion_depth_;
+  }
+  void SetCreateFlags(uint32_t flags) {
+    create_flags_ = flags;
+  }
+  uint32_t GetCreateFlags() const {
+    return create_flags_;
+  }
+
+  void AddPipelineLibrary(Pipeline* pipeline) { libs_.push_back(pipeline); }
+  const std::vector<Pipeline*>& GetPipelineLibraries() const { return libs_; }
+
  private:
   void UpdateFramebufferSizes();
 
@@ -551,9 +630,16 @@ class Pipeline {
   std::unique_ptr<Buffer> opencl_push_constants_;
 
   std::map<std::string, ShaderGroup*> name_to_shader_group_;
-  std::vector<std::unique_ptr<ShaderGroup>> shader_groups_;
+  size_t non_lib_shader_groups_count_ = -1;
+  size_t non_lib_shader_count_ = -1;
+  std::vector<std::shared_ptr<ShaderGroup>> shader_groups_;
   std::map<std::string, SBT*> name_to_sbt_;
   std::vector<std::unique_ptr<SBT>> sbts_;
+  uint32_t max_pipeline_ray_payload_size_ = 0;
+  uint32_t max_pipeline_ray_hit_attribute_size_ = 0;
+  uint32_t max_pipeline_ray_recursion_depth_ = 1;
+  uint32_t create_flags_ = 0;
+  std::vector<Pipeline*> libs_;
 };
 
 }  // namespace amber

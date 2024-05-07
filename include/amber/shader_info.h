@@ -48,6 +48,13 @@ enum ShaderType {
   kShaderTypeMulti,
 };
 
+inline bool isRayTracingShaderType(ShaderType type)
+{
+  return type == kShaderTypeRayGeneration || type == kShaderTypeAnyHit ||
+         type == kShaderTypeClosestHit || type == kShaderTypeMiss ||
+         type == kShaderTypeIntersection || type == kShaderTypeCall;
+}
+
 /// Stores information for a shader.
 struct ShaderInfo {
   /// The format of the shader.

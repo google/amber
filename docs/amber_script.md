@@ -62,7 +62,9 @@ with:
  * `SubgroupSupportedStages.geometry`
  * `SubgroupSupportedStages.fragment`
  * `SubgroupSupportedStages.compute`
-
+ * `RayTracingPipelineFeaturesKHR.rayTracingPipeline`
+ * `AccelerationStructureFeaturesKHR.accelerationStructure`
+ * `BufferDeviceAddressFeatures.bufferDeviceAddress`
 
 Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
 commands.
@@ -416,6 +418,7 @@ A bottom level acceleration structure consisting of triangle geometries is defin
   # Bottom level acceleration structure consisting of triangles
   ACCELERATION_STRUCTURE BOTTOM_LEVEL {name_of_bottom_level_acceleration_structure}
     {GEOMETRY TRIANGLES
+      [FLAGS <geometry_flags>]
       {x0 y0 z0
        x1 y1 z1
        x2 y2 z2}+
@@ -429,12 +432,17 @@ A bottom level acceleration structure consisting of axis aligned bounding boxes 
   # Bottom level acceleration structure consisting of AABBs
   ACCELERATION_STRUCTURE BOTTOM_LEVEL {name_of_bottom_level_acceleration_structure}
     {GEOMETRY AABBS
+      [FLAGS <geometry_flags>]
       {x0 y0 z0 x1 y1 z1}+
     END}+
   END
 ```
 
 Each coordinate |x{n}|, |y{n}|, and |z{n}| should be floating point values.
+
+FLAGS is a space separated list of following geometry flags:
+ * OPAQUE
+ * NO_DUPLICATE_ANY_HIT
 
 #### Top Level
 
@@ -588,6 +596,58 @@ Generally a program needs three shader binding tables:
  * hit shader binding table containing one or more hit shader groups
 
 Shader binding tables for call shaders are optional.
+
+Ray tracing pipelines support pipeline libraries. To declare pipeline as pipeline library
+pipeline should declare library specifying LIBRARY in FLAGS:
+
+```groovy
+  # Declare this pipeline as a library
+  FLAGS LIBRARY
+```
+
+or multiline version:
+
+```groovy
+  # Declare this pipeline as a library
+  FLAGS
+    LIBRARY
+  END
+```
+
+Ray tracing pipeline can include one or more pipeline libraries:
+
+```groovy
+  # Specify list of libraries to use
+  USE_LIBRARY {library_name_1} [{library_name_2} [...]]
+```
+
+Ray tracing pipelines that declare and use pipeline libraries should declare
+maximum ray payload size and maximum ray hit attribute size:
+```groovy
+  # Define maximum ray payload size
+  MAX_RAY_PAYLOAD_SIZE <max_ray_payload_size>
+  # Define maximum ray hit attribute size
+  MAX_RAY_HIT_ATTRIBUTE_SIZE <max_ray_hit_attribute_size>
+```
+
+Default for both maximum ray payload size and maximum ray hit attribute size is zero.
+Specification requires that all pipeline libraries used within pipeline and pipeline using
+libraries itself have same value.
+
+List of used libraries must preceed shader group (SHADER_GROUP) or shader binding tables
+(SHADER_BINDING_TABLE) declarations. Pipeline can be a library and use other pipelines as a libraries.
+
+Ray tracing pipelines can declare maximum ray recursion depth:
+
+```groovy
+  # Define maximum ray recursion depth
+  MAX_RAY_RECURSION_DEPTH <max_ray_recursion_depth>
+```
+
+If the MAX_RAY_RECURSION_DEPTH is not specified, then maximum ray recursion depth is set to 1.
+
+If some pipeline library is used within this pipeline (via USE_LIBRARY keyword), then
+shader binding table can use shader groups from any of used libraries.
 
 #### Compare operations
  * `never`

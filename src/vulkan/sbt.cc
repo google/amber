@@ -46,7 +46,7 @@ Result SBT::Create(amber::SBT* sbt, VkPipeline pipeline) {
 
   size_t start = 0;
   for (auto& x : sbt->GetSBTRecords()) {
-    const uint32_t index = x->GetUsedShaderGroupPipelineIndex();
+    const uint32_t index = x->GetIndex();
     const uint32_t count = x->GetCount();
     if (index != static_cast<uint32_t>(-1)) {
       VkResult vr = device_->GetPtrs()->vkGetRayTracingShaderGroupHandlesKHR(
@@ -57,7 +57,7 @@ Result SBT::Create(amber::SBT* sbt, VkPipeline pipeline) {
         return Result("vkGetRayTracingShaderGroupHandlesKHR has failed");
     }
 
-    start += x->GetCount();
+    start += count;
   }
 
   memcpy(buffer_->HostAccessibleMemoryPtr(), handles.data(), handles.size());
