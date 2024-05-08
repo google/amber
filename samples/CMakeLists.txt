@@ -50,10 +50,6 @@ endif()
 add_executable(amber ${AMBER_SOURCES})
 target_include_directories(amber PRIVATE "${CMAKE_BINARY_DIR}")
 
-if (${Vulkan_FOUND})
-  target_include_directories(amber PRIVATE "${VulkanHeaders_INCLUDE}")
-endif()
-
 set_target_properties(amber PROPERTIES OUTPUT_NAME "amber")
 target_link_libraries(amber libamber ${AMBER_EXTRA_LIBS})
 amber_default_compile_options(amber)
