@@ -23,7 +23,7 @@ if (NOT ${Vulkan_FOUND})
   if (${AMBER_USE_LOCAL_VULKAN})
     set(Vulkan_FOUND TRUE)
 
-    set(VulkanHeaders_INCLUDE DIR
+    set(VulkanHeaders_INCLUDE_DIR
       ${PROJECT_SOURCE_DIR}/third_party/vulkan-headers/include
       CACHE PATH "vk headers dir" FORCE)
     set(VulkanHeaders_INCLUDE_DIRS ${VulkanHeaders_INCLUDE_DIR}
