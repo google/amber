@@ -20,12 +20,13 @@ vars = {
   'googletest_revision': '16f637fbf4ffc3f7a01fa4eceb7906634565242f',
   'json_revision': '4f8fba14066156b73f1189a2b8bd568bde5284c5',
   'lodepng_revision': '5601b8272a6850b7c5d693dd0c0e16da50be8d8d',
-  'shaderc_revision': 'e72186b66bb90ed06aaf15cbdc9a053581a0616b',
+  'shaderc_revision': 'f59f0d11b80fd622383199c867137ededf89d43b',
   'spirv_headers_revision': '5e3ad389ee56fca27c9705d093ae5387ce404df4',
   'spirv_tools_revision': '9241a58a8028c49510bc174b6c970e3c2b4b8e51',
   'swiftshader_revision': 'da334852e70510d259bfa8cbaa7c5412966b2f41',
   'vulkan_headers_revision': '4bc77c26ff9ce89cf4a4f79e1c24a44604132d53',
   'vulkan_loader_revision': 'e69a59a96b241038f24a0e425445d001ea099b2c',
+  'vulkan_utility_libraries_revision': '358a107a6ff284906dcccbabe5b0183c03fd85b6',
   'vulkan_validationlayers_revision': 'a5f65dae0d9b08cd7076d88c3dabddf1b41b73b4',
 }
 
@@ -77,4 +78,7 @@ deps = {
 
   'third_party/vulkan-loader': Var('khronos_git') + '/Vulkan-Loader.git@' +
       Var('vulkan_loader_revision'),
+
+  'third_party/vulkan-utility-libraries': Var('khronos_git') + '/Vulkan-Utility-Libraries.git@' +
+      Var('vulkan_utility_libraries_revision'),
 }

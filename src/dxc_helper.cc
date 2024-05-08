@@ -41,6 +41,13 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#pragma clang diagnostic ignored "-Wdocumentation-deprecated-sync"
+#pragma clang diagnostic ignored "-Wsuggest-override"
+#pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#pragma clang diagnostic ignored "-Wdeprecated"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -83,7 +90,11 @@ void ConvertIDxcBlobToUint32(IDxcBlob* blob,
 }
 
 class IncludeHandler : public IDxcIncludeHandler {
+  DXC_MICROCOM_REF_FIELD(dw_ref_)
+
  public:
+  DXC_MICROCOM_ADDREF_RELEASE_IMPL(dw_ref_)
+
   IncludeHandler(const VirtualFileStore* file_store,
                  IDxcLibrary* dxc_lib,
                  IDxcIncludeHandler* fallback)

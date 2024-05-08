@@ -56,11 +56,7 @@ if (${AMBER_ENABLE_VK_DEBUGGING})
   message(FATAL_ERROR "Amber no longer supports Vulkan debugging")
 endif()
 
-if (${AMBER_USE_CLSPV} OR ${AMBER_ENABLE_SWIFTSHADER})
-  set(CMAKE_CXX_STANDARD 17)
-else()
-  set(CMAKE_CXX_STANDARD 11)
-endif()
+set(CMAKE_CXX_STANDARD 17)
 
 if(WIN32)
   # On Windows, CMake by default compiles with the shared CRT.

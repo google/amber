@@ -17,6 +17,7 @@ third_party/swiftshader
 third_party/vulkan-headers
 third_party/vulkan-loader
 third_party/vulkan-validationlayers/
+third_party/vulkan-utility-libraries/
 third_party/robin-hood-hashing
 .vs
 

@@ -52,6 +52,8 @@ endif()
 if (${AMBER_USE_LOCAL_VULKAN})
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-headers)
 
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-utility-libraries)
+
   # Skip adding the validation layers and the Vulkan loader on Android.
   if (NOT ANDROID)
 
