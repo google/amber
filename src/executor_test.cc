@@ -41,6 +41,7 @@ class EngineStub : public Engine {
                     const std::vector<std::string>& instance_exts,
                     const std::vector<std::string>& device_exts) override {
     features_ = features;
+    properties_ = properties;
     instance_extensions_ = instance_exts;
     device_extensions_ = device_exts;
     return {};
