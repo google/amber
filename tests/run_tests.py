@@ -86,6 +86,8 @@ SUPPRESSIONS_SWIFTSHADER = [
   "draw_indexed_uint8.amber",
   # Intermittent failures (https://github.com/google/amber/issues/1019).
   "draw_polygon_mode.amber",
+  # Missing opcapability abort
+  "draw_triangle_list_hlsl.amber",
 ]
 
 OPENCL_CASES = [
