@@ -30,8 +30,8 @@ python tools\git-sync-deps
 :: #########################################
 :: set up msvc build env
 :: #########################################
-call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-echo "Using VS 2017..."
+call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+echo "Using VS 2019..."
 
 cmake --version
 

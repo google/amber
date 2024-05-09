@@ -57,6 +57,9 @@ cp scripts/standalone.gclient .gclient
 # Fetch external dependencies and toolchains with gclient
 gclient sync
 
+sudo chown -R "$(id -u):$(id -g)" build/
+sudo chown -R "$(id -u):$(id -g)" third_party/
+
 # Generate build files
 mkdir -p out/Release
 touch out/Release/args.gn

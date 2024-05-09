@@ -52,10 +52,13 @@ endif()
 if (${AMBER_USE_LOCAL_VULKAN})
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-headers)
 
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-utility-libraries)
+
   # Skip adding the validation layers and the Vulkan loader on Android.
   if (NOT ANDROID)
 
     set(BUILD_TESTS FALSE)
+    set(BUILD_WERROR OFF)
 
     # The vulkan-loader CMake file assumes that directory exists if
     # Wayland support is to be built.
@@ -66,8 +69,6 @@ if (${AMBER_USE_LOCAL_VULKAN})
     message(STATUS "Amber: Disabling X11 support in Vulkan-Loader")
     set(BUILD_WSI_XLIB_SUPPORT OFF CACHE BOOL "" FORCE)
 
-    set(ROBIN_HOOD_HASHING_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/robin-hood-hashing" CACHE STRING "" FORCE)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/robin-hood-hashing)
     set(SPIRV_HEADERS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/spirv-headers/include" CACHE STRING "" FORCE)
 
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkan-loader)
@@ -85,6 +86,10 @@ if (${AMBER_ENABLE_SWIFTSHADER})
   set(SWIFTSHADER_BUILD_VULKAN TRUE)
   set(SWIFTSHADER_BUILD_SAMPLES FALSE)
   set(SWIFTSHADER_BUILD_TESTS FALSE)
+  set(SWIFTSHADER_BUILD_PVR FALSE)
+  set(SWIFTSHADER_BUILD_BENCHMARKS FALSE)
+  set(SWIFTSHADER_WARNINGS_AS_ERRORS FALSE)
+  set(SWIFTSHADER_USE_GROUP_SOURCES FALSE)
   set(SWIFTSHADER_WARNINGS_AS_ERRORS FALSE)
   set(SWIFTSHADER_LOGGING_LEVEL "Error")
 
@@ -128,6 +133,13 @@ if (${AMBER_ENABLE_DXC})
 
   set(LLVM_BUILD_STATIC ON CACHE BOOL "")
   set(BUILD_SHARED_LIBS OFF CACHE BOOL "")
+
+  set(LLVM_ENABLE_WERROR OFF)
+
+  # Disable HCT.cmake looking for and using clang-format. This is used to compare generated files
+  # against the copy that is committed to the repo, but fails because the DXC .clangformat file is
+  # not visible from our build dir. We don't need this validation, so just disable it.
+  set(CLANG_FORMAT_EXE "" CACHE STRING "" FORCE)
 
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/dxc EXCLUDE_FROM_ALL)
 

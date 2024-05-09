@@ -5,6 +5,7 @@ third_party/clspv-clang
 third_party/clspv-llvm
 third_party/cpplint
 third_party/dxc
+third_party/DirectX-Headers
 third_party/glslang
 third_party/googletest
 third_party/json
@@ -16,6 +17,7 @@ third_party/swiftshader
 third_party/vulkan-headers
 third_party/vulkan-loader
 third_party/vulkan-validationlayers/
+third_party/vulkan-utility-libraries/
 third_party/robin-hood-hashing
 .vs
 

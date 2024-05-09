@@ -22,6 +22,7 @@ set(VULKAN_LIB "")
 if (NOT ${Vulkan_FOUND})
   if (${AMBER_USE_LOCAL_VULKAN})
     set(Vulkan_FOUND TRUE)
+
     set(VulkanHeaders_INCLUDE_DIR
       ${PROJECT_SOURCE_DIR}/third_party/vulkan-headers/include
       CACHE PATH "vk headers dir" FORCE)
@@ -33,7 +34,8 @@ if (NOT ${Vulkan_FOUND})
     set(VulkanRegistry_DIRS ${VulkanRegistry_DIR}
       CACHE PATH "vk_registry_dir" FORCE)
     set(VULKAN_LIB vulkan)
-    message(STATUS "Amber: using local vulkan")
+
+    message(STATUS "Amber: using local vulkan ${VulkanHeaders_INCLUDE_DIR}")
   endif()
 endif()
 

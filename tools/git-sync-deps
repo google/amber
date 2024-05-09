@@ -237,6 +237,9 @@ def git_sync_deps(deps_file_path, command_line_os_requests, verbose):
     if not with_dxc and directory == 'third_party/dxc':
       continue
 
+    if not with_dxc and directory == 'third_party/DirectX-Headers':
+      continue
+
     if not with_swiftshader and directory == 'third_party/swiftshader':
       continue
 

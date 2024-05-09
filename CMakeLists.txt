@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.13)
 if (POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)
 endif()
@@ -56,11 +56,7 @@ if (${AMBER_ENABLE_VK_DEBUGGING})
   message(FATAL_ERROR "Amber no longer supports Vulkan debugging")
 endif()
 
-if (${AMBER_USE_CLSPV} OR ${AMBER_ENABLE_SWIFTSHADER})
-  set(CMAKE_CXX_STANDARD 17)
-else()
-  set(CMAKE_CXX_STANDARD 11)
-endif()
+set(CMAKE_CXX_STANDARD 17)
 
 if(WIN32)
   # On Windows, CMake by default compiles with the shared CRT.
@@ -213,6 +209,7 @@ function(amber_default_compile_options TARGET)
       -Wno-padded
       -Wno-switch-enum
       -Wno-unknown-pragmas
+      -Wno-unsafe-buffer-usage
       -pedantic-errors
     )
     if (NOT ${AMBER_DISABLE_WERROR})
