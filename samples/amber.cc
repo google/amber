@@ -55,7 +55,7 @@ struct Options {
   std::vector<std::string> fb_names;
   std::vector<amber::BufferInfo> buffer_to_dump;
   uint32_t engine_major = 1;
-  uint32_t engine_minor = 0;
+  uint32_t engine_minor = 1;
   int32_t fence_timeout = -1;
   int32_t selected_device = -1;
   bool parse_only = false;

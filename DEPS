@@ -27,7 +27,7 @@ vars = {
   'vulkan_headers_revision': '4bc77c26ff9ce89cf4a4f79e1c24a44604132d53',
   'vulkan_loader_revision': 'e69a59a96b241038f24a0e425445d001ea099b2c',
   'vulkan_utility_libraries_revision': '358a107a6ff284906dcccbabe5b0183c03fd85b6',
-  'vulkan_validationlayers_revision': 'a5f65dae0d9b08cd7076d88c3dabddf1b41b73b4',
+  'vulkan_validationlayers_revision': '23455c903e2ab21db2b4497331d80d610841cae1',
 }
 
 deps = {

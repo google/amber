@@ -793,6 +793,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       supports_subgroup_size_control_ = true;
     else if (ext == "VK_KHR_shader_subgroup_extended_types")
       supports_shader_subgroup_extended_types_ = true;
+    else if (ext == "VK_KHR_variable_pointers")
+      supports_variable_pointers_ = true;
   }
 
   VkPhysicalDeviceFeatures required_vulkan_features =
@@ -980,28 +982,32 @@ amber::Result ConfigHelperVulkan::CreateVulkanDevice(
   queue_info.queueCount = 1;
   queue_info.pQueuePriorities = priorities;
 
+  VkDeviceCreateInfo info = VkDeviceCreateInfo();
+  info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  info.pQueueCreateInfos = &queue_info;
+  info.queueCreateInfoCount = 1;
+
+  if (supports_get_physical_device_properties2_)
+    return CreateDeviceWithFeatures2(required_features, required_extensions,
+                                     &info);
+  return CreateDeviceWithFeatures1(required_features, required_extensions,
+                                   &info);
+}
+
+amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures1(
+    const std::vector<std::string>& required_features,
+    const std::vector<std::string>& required_extensions,
+    VkDeviceCreateInfo* info) {
   std::vector<const char*> required_extensions_in_char;
   std::transform(
       required_extensions.begin(), required_extensions.end(),
       std::back_inserter(required_extensions_in_char),
       [](const std::string& ext) -> const char* { return ext.c_str(); });
 
-  VkDeviceCreateInfo info = VkDeviceCreateInfo();
-  info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  info.pQueueCreateInfos = &queue_info;
-  info.queueCreateInfoCount = 1;
-  info.enabledExtensionCount =
+  info->enabledExtensionCount =
       static_cast<uint32_t>(required_extensions_in_char.size());
-  info.ppEnabledExtensionNames = required_extensions_in_char.data();
+  info->ppEnabledExtensionNames = required_extensions_in_char.data();
 
-  if (supports_get_physical_device_properties2_)
-    return CreateDeviceWithFeatures2(required_features, &info);
-  return CreateDeviceWithFeatures1(required_features, &info);
-}
-
-amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures1(
-    const std::vector<std::string>& required_features,
-    VkDeviceCreateInfo* info) {
   VkPhysicalDeviceFeatures required_vulkan_features =
       VkPhysicalDeviceFeatures();
   amber::Result r =
@@ -1015,6 +1021,7 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures1(
 
 amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
     const std::vector<std::string>& required_features,
+    const std::vector<std::string>& required_extensions,
     VkDeviceCreateInfo* info) {
   variable_pointers_feature_.sType =
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
@@ -1040,35 +1047,84 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES;
   shader_subgroup_extended_types_feature_.pNext = nullptr;
 
-  void** next_ptr = &variable_pointers_feature_.pNext;
+  std::vector<std::string> exts = required_extensions;
+
+  void* pnext = nullptr;
+  void** next_ptr = nullptr;
+
+  if (supports_variable_pointers_) {
+    if (pnext == nullptr) {
+      pnext = &variable_pointers_feature_;
+    }
+    if (next_ptr != nullptr) {
+      *next_ptr = &variable_pointers_feature_.pNext;
+    }
+    exts.push_back(VK_KHR_VARIABLE_POINTERS_EXTENSION_NAME);
+  }
 
   if (supports_shader_float16_int8_) {
-    *next_ptr = &float16_int8_feature_;
+    if (pnext == nullptr) {
+      pnext = &float16_int8_feature_;
+    }
+    if (next_ptr != nullptr) {
+      *next_ptr = &float16_int8_feature_;
+    }
     next_ptr = &float16_int8_feature_.pNext;
   }
 
   if (supports_shader_8bit_storage_) {
-    *next_ptr = &storage_8bit_feature_;
+    if (pnext == nullptr) {
+      pnext = &storage_8bit_feature_;
+    }
+    if (next_ptr != nullptr) {
+      *next_ptr = &storage_8bit_feature_;
+    }
     next_ptr = &storage_8bit_feature_.pNext;
   }
 
   if (supports_shader_16bit_storage_) {
-    *next_ptr = &storage_16bit_feature_;
+    if (pnext == nullptr) {
+      pnext = &storage_16bit_feature_;
+    }
+    if (next_ptr != nullptr) {
+      *next_ptr = &storage_16bit_feature_;
+    }
     next_ptr = &storage_16bit_feature_.pNext;
   }
 
   if (supports_subgroup_size_control_) {
-    *next_ptr = &subgroup_size_control_feature_;
+    if (pnext == nullptr) {
+      pnext = &subgroup_size_control_feature_;
+    }
+    if (next_ptr != nullptr) {
+      *next_ptr = &subgroup_size_control_feature_;
+    }
     next_ptr = &subgroup_size_control_feature_.pNext;
+
+    exts.push_back(VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME);
   }
 
   if (supports_shader_subgroup_extended_types_) {
-    *next_ptr = &shader_subgroup_extended_types_feature_;
+    if (pnext == nullptr) {
+      pnext = &shader_subgroup_extended_types_feature_;
+    }
+    if (next_ptr != nullptr) {
+      *next_ptr = &shader_subgroup_extended_types_feature_;
+    }
     next_ptr = &shader_subgroup_extended_types_feature_.pNext;
   }
 
   available_features2_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
-  available_features2_.pNext = &variable_pointers_feature_;
+  available_features2_.pNext = pnext;
+
+  std::vector<const char*> required_extensions_in_char;
+  std::transform(
+      exts.begin(), exts.end(), std::back_inserter(required_extensions_in_char),
+      [](const std::string& ext) -> const char* { return ext.c_str(); });
+
+  info->enabledExtensionCount =
+      static_cast<uint32_t>(required_extensions_in_char.size());
+  info->ppEnabledExtensionNames = required_extensions_in_char.data();
 
   std::vector<std::string> feature1_names;
   for (const auto& feature : required_features) {

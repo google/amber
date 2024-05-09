@@ -89,10 +89,12 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   /// Sets up the device creation to use VkPhysicalDeviceFeatures.
   amber::Result CreateDeviceWithFeatures1(
       const std::vector<std::string>& required_features,
+      const std::vector<std::string>& required_extensions,
       VkDeviceCreateInfo* info);
   /// Sets up the device creation to use VkPhysicalDeviceFeatures2KHR.
   amber::Result CreateDeviceWithFeatures2(
       const std::vector<std::string>& required_features,
+      const std::vector<std::string>& required_extensions,
       VkDeviceCreateInfo* info);
 
   /// Creates the physical device given the device |info|.
@@ -111,6 +113,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   VkDevice vulkan_device_ = VK_NULL_HANDLE;
 
   bool supports_get_physical_device_properties2_ = false;
+  bool supports_variable_pointers_ = false;
   bool supports_shader_float16_int8_ = false;
   bool supports_shader_8bit_storage_ = false;
   bool supports_shader_16bit_storage_ = false;
