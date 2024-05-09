@@ -533,7 +533,7 @@ INSTANTIATE_TEST_SUITE_P(ParseSpvEnvFailures,
 INSTANTIATE_TEST_SUITE_P(ParseSpvEnvSuccesses,
                          ParseSpvEnvTest,
                          ::testing::ValuesIn(std::vector<ParseSpvEnvCase>{
-                             {"", true, vulkan, vulkan_1_1, spv_1_1},
+                             {"", true, vulkan, vulkan_1_0, spv_1_0},
                              {"spv1.0", true, vulkan, vulkan_1_0, spv_1_0},
                              {"spv1.1", true, vulkan, vulkan_1_1, spv_1_1},
                              {"spv1.2", true, vulkan, vulkan_1_1, spv_1_2},

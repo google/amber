@@ -352,9 +352,9 @@ Result ParseSpvEnv(const std::string& spv_env,
   };
   Values values{kVulkan, kVulkan_1_0, kSpv_1_0};
 
-  if (spv_env == "spv1.0") {
+  if (spv_env == "" || spv_env == "spv1.0") {
     values = {kVulkan, kVulkan_1_0, kSpv_1_0};
-  } else if (spv_env == "" || spv_env == "spv1.1") {
+  } else if (spv_env == "spv1.1") {
     values = {kVulkan, kVulkan_1_1, kSpv_1_1};
   } else if (spv_env == "spv1.2") {
     values = {kVulkan, kVulkan_1_1, kSpv_1_2};
