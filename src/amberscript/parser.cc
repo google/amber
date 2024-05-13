@@ -304,6 +304,8 @@ Result Parser::Parse(const std::string& data) {
       r = ParseDeviceFeature();
     } else if (tok == "DEVICE_EXTENSION") {
       r = ParseDeviceExtension();
+    } else if (tok == "DEVICE_PROPERTY") {
+      r = ParseDeviceProperty();
     } else if (tok == "IMAGE") {
       r = ParseImage();
     } else if (tok == "INSTANCE_EXTENSION") {
@@ -3419,6 +3421,20 @@ Result Parser::ParseDeviceFeature() {
   script_->AddRequiredFeature(token->AsString());
 
   return ValidateEndOfStatement("DEVICE_FEATURE command");
+}
+
+Result Parser::ParseDeviceProperty() {
+  auto token = tokenizer_->NextToken();
+  if (token->IsEOS() || token->IsEOL())
+    return Result("missing property name for DEVICE_PROPERTY command");
+  if (!token->IsIdentifier())
+    return Result("invalid property name for DEVICE_PROPERTY command");
+  if (!script_->IsKnownProperty(token->AsString()))
+    return Result("unknown property name for DEVICE_PROPERTY command");
+
+  script_->AddRequiredProperty(token->AsString());
+
+  return ValidateEndOfStatement("DEVICE_PROPERTY command");
 }
 
 Result Parser::ParseRepeat() {

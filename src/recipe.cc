@@ -35,6 +35,10 @@ std::vector<std::string> Recipe::GetRequiredFeatures() const {
   return impl_ ? impl_->GetRequiredFeatures() : std::vector<std::string>();
 }
 
+std::vector<std::string> Recipe::GetRequiredProperties() const {
+  return impl_ ? impl_->GetRequiredProperties() : std::vector<std::string>();
+}
+
 std::vector<std::string> Recipe::GetRequiredDeviceExtensions() const {
   return impl_ ? impl_->GetRequiredDeviceExtensions()
                : std::vector<std::string>();

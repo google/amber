@@ -92,6 +92,7 @@ Result EngineVulkan::Initialize(
     EngineConfig* config,
     Delegate* delegate,
     const std::vector<std::string>& features,
+    const std::vector<std::string>& properties,
     const std::vector<std::string>& instance_extensions,
     const std::vector<std::string>& device_extensions) {
   if (device_)
@@ -118,8 +119,9 @@ Result EngineVulkan::Initialize(
                                vk_config->queue);
 
   Result r = device_->Initialize(
-      vk_config->vkGetInstanceProcAddr, delegate, features, device_extensions,
-      vk_config->available_features, vk_config->available_features2,
+      vk_config->vkGetInstanceProcAddr, delegate, features, properties,
+      device_extensions, vk_config->available_features,
+      vk_config->available_features2, vk_config->available_properties2,
       vk_config->available_device_extensions);
   if (!r.IsSuccess())
     return r;

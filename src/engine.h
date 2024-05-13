@@ -71,6 +71,7 @@ class Engine {
       EngineConfig* config,
       Delegate* delegate,
       const std::vector<std::string>& features,
+      const std::vector<std::string>& properties,
       const std::vector<std::string>& instance_extensions,
       const std::vector<std::string>& device_extensions) = 0;
 

@@ -35,6 +35,9 @@ class RecipeImpl {
   /// Returns required features in the given recipe.
   virtual std::vector<std::string> GetRequiredFeatures() const = 0;
 
+  /// Returns required features in the given recipe.
+  virtual std::vector<std::string> GetRequiredProperties() const = 0;
+
   /// Returns required device extensions in the given recipe.
   virtual std::vector<std::string> GetRequiredDeviceExtensions() const = 0;
 
@@ -66,6 +69,9 @@ class Recipe {
 
   /// Returns required features in the given recipe.
   std::vector<std::string> GetRequiredFeatures() const;
+
+  /// Returns required properties in the given recipe.
+  std::vector<std::string> GetRequiredProperties() const;
 
   /// Returns required device extensions in the given recipe.
   std::vector<std::string> GetRequiredDeviceExtensions() const;

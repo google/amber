@@ -447,9 +447,11 @@ Result Device::Initialize(
     PFN_vkGetInstanceProcAddr getInstanceProcAddr,
     Delegate* delegate,
     const std::vector<std::string>& required_features,
+    const std::vector<std::string>& required_properties,
     const std::vector<std::string>& required_device_extensions,
     const VkPhysicalDeviceFeatures& available_features,
     const VkPhysicalDeviceFeatures2KHR& available_features2,
+    const VkPhysicalDeviceProperties2KHR& available_properties2,
     const std::vector<std::string>& available_extensions) {
   Result r = LoadVulkanPointers(getInstanceProcAddr, delegate);
   if (!r.IsSuccess())
@@ -724,6 +726,69 @@ Result Device::Initialize(
     return Result(
         "Vulkan: Device::Initialize given physical device does not support "
         "required extensions");
+  }
+
+  VkPhysicalDeviceVulkan12Properties* pv12 = nullptr;
+  VkPhysicalDeviceFloatControlsProperties* pfc = nullptr;
+
+  ptr = available_properties2.pNext;
+  while (ptr != nullptr) {
+    BaseOutStructure* s = static_cast<BaseOutStructure*>(ptr);
+    switch (s->sType) {
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES:
+        pv12 = static_cast<VkPhysicalDeviceVulkan12Properties*>(ptr);
+        break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES_KHR:
+        pfc = static_cast<VkPhysicalDeviceFloatControlsPropertiesKHR*>(ptr);
+        break;
+      default:
+        break;
+    }
+    ptr = s->pNext;
+  }
+
+#define CHK_P(R, P, NAME, S1, S2) \
+  do {                            \
+    if (R == -1 && P == #NAME) \
+      R = ((S1 && S1->NAME) || (S2 && S2->NAME)) ? 1 : 0; \
+  } while (false)
+
+  for (const std::string& prop : required_properties) {
+    const size_t dot_pos = prop.find('.');
+    const size_t dot_found = dot_pos != std::string::npos;
+    const std::string prefix = dot_found ? prop.substr(0, dot_pos) : "";
+    const std::string name = dot_found ? prop.substr(dot_pos + 1) : prop;
+    int supported = -1;
+
+    if (supported == -1 && prefix == "FloatControlsProperties") {
+      if (pfc == nullptr && pv12 == nullptr)
+        return Result(
+            "Vulkan: Device::Initialize given physical device does not support "
+            "required float control properties");
+
+      CHK_P(supported, name, shaderSignedZeroInfNanPreserveFloat16, pfc, pv12);
+      CHK_P(supported, name, shaderSignedZeroInfNanPreserveFloat32, pfc, pv12);
+      CHK_P(supported, name, shaderSignedZeroInfNanPreserveFloat64, pfc, pv12);
+      CHK_P(supported, name, shaderDenormPreserveFloat16, pfc, pv12);
+      CHK_P(supported, name, shaderDenormPreserveFloat32, pfc, pv12);
+      CHK_P(supported, name, shaderDenormPreserveFloat64, pfc, pv12);
+      CHK_P(supported, name, shaderDenormFlushToZeroFloat16, pfc, pv12);
+      CHK_P(supported, name, shaderDenormFlushToZeroFloat32, pfc, pv12);
+      CHK_P(supported, name, shaderDenormFlushToZeroFloat64, pfc, pv12);
+      CHK_P(supported, name, shaderRoundingModeRTEFloat16, pfc, pv12);
+      CHK_P(supported, name, shaderRoundingModeRTEFloat32, pfc, pv12);
+      CHK_P(supported, name, shaderRoundingModeRTEFloat64, pfc, pv12);
+      CHK_P(supported, name, shaderRoundingModeRTZFloat16, pfc, pv12);
+      CHK_P(supported, name, shaderRoundingModeRTZFloat32, pfc, pv12);
+      CHK_P(supported, name, shaderRoundingModeRTZFloat64, pfc, pv12);
+    }
+
+    if (supported == 0)
+      return Result("Vulkan: Device::Initialize missing " + prop + " property");
+
+    if (supported == -1)
+      return Result(
+          "Vulkan: Device::Initialize property not handled " + prop);
   }
 
   ptrs_.vkGetPhysicalDeviceMemoryProperties(physical_device_,

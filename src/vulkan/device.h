@@ -47,9 +47,11 @@ class Device {
   Result Initialize(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
                     Delegate* delegate,
                     const std::vector<std::string>& required_features,
+                    const std::vector<std::string>& required_properties,
                     const std::vector<std::string>& required_device_extensions,
                     const VkPhysicalDeviceFeatures& available_features,
                     const VkPhysicalDeviceFeatures2KHR& available_features2,
+                    const VkPhysicalDeviceProperties2KHR& available_properties2,
                     const std::vector<std::string>& available_extensions);
 
   /// Returns true if |format| and the |buffer|s buffer type combination is
