@@ -748,8 +748,10 @@ Result Device::Initialize(
   }
 
 #define CHK_P(R, P, NAME, S1, S2) \
-  if (R == -1 && P == #NAME) \
-    R = ((S1 && S1->NAME) || (S2 && S2->NAME)) ? 1 : 0;
+  do {                            \
+    if (R == -1 && P == #NAME) \
+      R = ((S1 && S1->NAME) || (S2 && S2->NAME)) ? 1 : 0; \
+  } while (false)
 
   for (const std::string& prop : required_properties) {
     const size_t dot_pos = prop.find('.');
