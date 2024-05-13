@@ -195,6 +195,7 @@ class EngineStub : public Engine {
   bool did_buffer_command_ = false;
 
   std::vector<std::string> features_;
+  std::vector<std::string> properties_;
   std::vector<std::string> instance_extensions_;
   std::vector<std::string> device_extensions_;
 

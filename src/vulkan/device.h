@@ -51,7 +51,6 @@ class Device {
                     const std::vector<std::string>& required_device_extensions,
                     const VkPhysicalDeviceFeatures& available_features,
                     const VkPhysicalDeviceFeatures2KHR& available_features2,
-                    const VkPhysicalDeviceProperties& available_properties,
                     const VkPhysicalDeviceProperties2KHR& available_properties2,
                     const std::vector<std::string>& available_extensions);
 

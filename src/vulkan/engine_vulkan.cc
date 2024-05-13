@@ -121,8 +121,8 @@ Result EngineVulkan::Initialize(
   Result r = device_->Initialize(
       vk_config->vkGetInstanceProcAddr, delegate, features, properties,
       device_extensions, vk_config->available_features,
-      vk_config->available_features2, vk_config->available_properties,
-      vk_config->available_properties2, vk_config->available_device_extensions);
+      vk_config->available_features2, vk_config->available_properties2,
+      vk_config->available_device_extensions);
   if (!r.IsSuccess())
     return r;
 
