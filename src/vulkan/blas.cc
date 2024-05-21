@@ -39,7 +39,7 @@ Result BLAS::CreateBLAS(amber::BLAS* blas) {
   if (blas_ != VK_NULL_HANDLE)
     return Result("Cannot recreate acceleration structure");
 
-  std::vector<std::shared_ptr<Geometry>>& geometries = blas->GetGeometries();
+  std::vector<std::unique_ptr<Geometry>>& geometries = blas->GetGeometries();
   std::vector<VkDeviceSize> vertexBufferOffsets;
   VkDeviceSize vertexBufferSize = 0;
 
@@ -52,7 +52,7 @@ Result BLAS::CreateBLAS(amber::BLAS* blas) {
   vertexBufferOffsets.resize(geometries.size());
 
   for (size_t geometryNdx = 0; geometryNdx < geometries.size(); ++geometryNdx) {
-    const std::shared_ptr<Geometry>& geometryData = geometries[geometryNdx];
+    const std::unique_ptr<Geometry>& geometryData = geometries[geometryNdx];
     VkDeviceOrHostAddressConstKHR vertexData = {};
     VkAccelerationStructureGeometryDataKHR geometry;
     VkGeometryTypeKHR geometryType = VK_GEOMETRY_TYPE_MAX_ENUM_KHR;

@@ -75,15 +75,15 @@ class BLAS {
   void SetName(const std::string& name) { name_ = name; }
   std::string GetName() const { return name_; }
 
-  void AddGeometry(std::shared_ptr<Geometry> geometry) {
-    geometry_.push_back(geometry);
+  void AddGeometry(std::unique_ptr<Geometry>& geometry) {
+    geometry_.push_back(std::move(geometry));
   }
   size_t GetGeometrySize() { return geometry_.size(); }
-  std::vector<std::shared_ptr<Geometry>>& GetGeometries() { return geometry_; }
+  std::vector<std::unique_ptr<Geometry>>& GetGeometries() { return geometry_; }
 
  private:
   std::string name_;
-  std::vector<std::shared_ptr<Geometry>> geometry_;
+  std::vector<std::unique_ptr<Geometry>> geometry_;
 };
 
 class BLASInstance {
@@ -158,16 +158,16 @@ class TLAS {
 
   void AddInstance(std::unique_ptr<BLASInstance> instance) {
     blas_instances_.push_back(
-        std::shared_ptr<BLASInstance>(instance.release()));
+        std::unique_ptr<BLASInstance>(instance.release()));
   }
   size_t GetInstanceSize() { return blas_instances_.size(); }
-  std::vector<std::shared_ptr<BLASInstance>>& GetInstances() {
+  std::vector<std::unique_ptr<BLASInstance>>& GetInstances() {
     return blas_instances_;
   }
 
  private:
   std::string name_;
-  std::vector<std::shared_ptr<BLASInstance>> blas_instances_;
+  std::vector<std::unique_ptr<BLASInstance>> blas_instances_;
 };
 
 class ShaderGroup {
@@ -234,11 +234,11 @@ class SBT {
   void SetName(const std::string& name) { name_ = name; }
   std::string GetName() const { return name_; }
 
-  void AddSBTRecord(std::shared_ptr<SBTRecord> record) {
-    records_.push_back(record);
+  void AddSBTRecord(std::unique_ptr<SBTRecord> record) {
+    records_.push_back(std::move(record));
   }
   size_t GetSBTRecordCount() { return records_.size(); }
-  std::vector<std::shared_ptr<SBTRecord>>& GetSBTRecords() { return records_; }
+  std::vector<std::unique_ptr<SBTRecord>>& GetSBTRecords() { return records_; }
   uint32_t GetSBTSize() {
     uint32_t size = 0;
     for (auto& x : records_)
@@ -249,7 +249,7 @@ class SBT {
 
  private:
   std::string name_;
-  std::vector<std::shared_ptr<SBTRecord>> records_;
+  std::vector<std::unique_ptr<SBTRecord>> records_;
 };
 
 }  // namespace amber

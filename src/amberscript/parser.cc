@@ -4006,8 +4006,8 @@ Result Parser::ParseBLAS() {
 
   if (blas->GetGeometrySize() > 0) {
     auto type = blas->GetGeometries()[0]->GetType();
-    auto geometries = blas->GetGeometries();
-    for (auto g : geometries)
+    auto& geometries = blas->GetGeometries();
+    for (auto& g : geometries)
       if (g->GetType() != type)
         return Result("Only one type of geometry is allowed within a BLAS");
   }
@@ -4053,7 +4053,7 @@ Result Parser::ParseBLASTriangle(BLAS* blas) {
 
   geometry->SetData(g);
 
-  blas->AddGeometry(std::shared_ptr<Geometry>(geometry.release()));
+  blas->AddGeometry(std::unique_ptr<Geometry>(geometry.release()));
 
   return {};
 }
@@ -4095,7 +4095,7 @@ Result Parser::ParseBLASAABB(BLAS* blas) {
 
   geometry->SetData(g);
 
-  blas->AddGeometry(std::shared_ptr<Geometry>(geometry.release()));
+  blas->AddGeometry(std::unique_ptr<Geometry>(geometry.release()));
 
   return {};
 }

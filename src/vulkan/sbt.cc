@@ -25,7 +25,7 @@ SBT::SBT(Device* device) : device_(device) {}
 
 Result SBT::Create(amber::SBT* sbt, VkPipeline pipeline) {
   uint32_t handles_count = 0;
-  for (auto x : sbt->GetSBTRecords())
+  for (auto& x : sbt->GetSBTRecords())
     handles_count += x->GetCount();
 
   if (handles_count == 0)
@@ -45,7 +45,7 @@ Result SBT::Create(amber::SBT* sbt, VkPipeline pipeline) {
     return r;
 
   size_t start = 0;
-  for (auto x : sbt->GetSBTRecords()) {
+  for (auto& x : sbt->GetSBTRecords()) {
     const uint32_t index = x->GetUsedShaderGroupPipelineIndex();
     const uint32_t count = x->GetCount();
     if (index != static_cast<uint32_t>(-1)) {
