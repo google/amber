@@ -871,8 +871,8 @@ Result GraphicsPipeline::Clear() {
 
   frame_->TransferImagesToHost(command_.get());
 
-  Result r = cmd_buf_guard.Submit(GetFenceTimeout(),
-                                  GetPipelineRuntimeLayerEnabled());
+  Result r =
+      cmd_buf_guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
   if (!r.IsSuccess())
     return r;
 

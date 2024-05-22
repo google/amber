@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -141,9 +142,21 @@ Result Resource::AllocateMemory(VkDeviceMemory* memory,
                                 VkDeviceSize size,
                                 uint32_t memory_type_index) {
   VkMemoryAllocateInfo alloc_info = VkMemoryAllocateInfo();
+  VkMemoryAllocateFlagsInfo allocFlagsInfo = VkMemoryAllocateFlagsInfo();
+
   alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   alloc_info.allocationSize = size;
   alloc_info.memoryTypeIndex = memory_type_index;
+
+  if (memory_allocate_flags_ != 0) {
+    allocFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+    allocFlagsInfo.pNext = nullptr;
+    allocFlagsInfo.flags = memory_allocate_flags_;
+    allocFlagsInfo.deviceMask = 0u;
+
+    alloc_info.pNext = &allocFlagsInfo;
+  }
+
   if (device_->GetPtrs()->vkAllocateMemory(device_->GetVkDevice(), &alloc_info,
                                            nullptr, memory) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkAllocateMemory Fail");

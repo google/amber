@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +27,9 @@
 #include "src/vulkan/device.h"
 #include "src/vulkan/graphics_pipeline.h"
 #include "src/vulkan/image_descriptor.h"
+#include "src/vulkan/raytracing_pipeline.h"
 #include "src/vulkan/sampler_descriptor.h"
+#include "src/vulkan/tlas_descriptor.h"
 
 namespace amber {
 namespace vulkan {
@@ -40,7 +43,7 @@ Pipeline::Pipeline(
     PipelineType type,
     Device* device,
     uint32_t fence_timeout_ms,
-    bool    pipeline_runtime_layer_enabled,
+    bool pipeline_runtime_layer_enabled,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : device_(device),
       pipeline_type_(type),
@@ -75,6 +78,10 @@ GraphicsPipeline* Pipeline::AsGraphics() {
 
 ComputePipeline* Pipeline::AsCompute() {
   return static_cast<ComputePipeline*>(this);
+}
+
+RayTracingPipeline* Pipeline::AsRayTracingPipeline() {
+  return static_cast<RayTracingPipeline*>(this);
 }
 
 Result Pipeline::Initialize(CommandPool* pool) {
@@ -277,9 +284,9 @@ Result Pipeline::GetDescriptorSlot(uint32_t desc_set,
 
 Result Pipeline::AddDescriptorBuffer(Buffer* amber_buffer) {
   // Don't add the buffer if it's already added.
-  const auto& buffer = std::find_if(
-      descriptor_buffers_.begin(), descriptor_buffers_.end(),
-      [&](const Buffer* buf) { return buf == amber_buffer; });
+  const auto& buffer =
+      std::find_if(descriptor_buffers_.begin(), descriptor_buffers_.end(),
+                   [&](const Buffer* buf) { return buf == amber_buffer; });
   if (buffer != descriptor_buffers_.end()) {
     return {};
   }
@@ -411,6 +418,35 @@ Result Pipeline::AddSamplerDescriptor(const SamplerCommand* cmd) {
   return {};
 }
 
+Result Pipeline::AddTLASDescriptor(const TLASCommand* cmd) {
+  if (cmd == nullptr)
+    return Result("Pipeline::AddTLASDescriptor TLASCommand is nullptr");
+
+  Descriptor* desc;
+  Result r =
+      GetDescriptorSlot(cmd->GetDescriptorSet(), cmd->GetBinding(), &desc);
+  if (!r.IsSuccess())
+    return r;
+
+  auto& descriptors = descriptor_set_info_[cmd->GetDescriptorSet()].descriptors;
+
+  if (desc == nullptr) {
+    auto tlas_desc = MakeUnique<TLASDescriptor>(
+        cmd->GetTLAS(), DescriptorType::kTLAS, device_, GetBlases(),
+        GetTlases(), cmd->GetDescriptorSet(), cmd->GetBinding());
+    descriptors.push_back(std::move(tlas_desc));
+  } else {
+    if (desc->GetDescriptorType() != DescriptorType::kTLAS) {
+      return Result(
+          "Descriptors bound to the same binding needs to have matching "
+          "descriptor types");
+    }
+    desc->AsTLASDescriptor()->AddAmberTLAS(cmd->GetTLAS());
+  }
+
+  return {};
+}
+
 Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
   {
     CommandBufferGuard guard(GetCommandBuffer());
@@ -434,7 +470,7 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
       }
       Result r = descriptor_transfer_resources_[buffer]->Initialize();
       if (!r.IsSuccess())
-         return r;
+        return r;
     }
 
     // Note that if a buffer for a descriptor is host accessible and
@@ -443,8 +479,8 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     // done after resizing backed buffer i.e., copying data to the new
     // buffer from the old one. Thus, we must submit commands here to
     // guarantee this.
-    Result r = guard.Submit(GetFenceTimeout(),
-                            GetPipelineRuntimeLayerEnabled());
+    Result r =
+        guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
     if (!r.IsSuccess())
       return r;
   }
@@ -508,8 +544,10 @@ void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
 
     device_->GetPtrs()->vkCmdBindDescriptorSets(
         command_->GetVkCommandBuffer(),
-        IsGraphics() ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                     : VK_PIPELINE_BIND_POINT_COMPUTE,
+        IsGraphics()     ? VK_PIPELINE_BIND_POINT_GRAPHICS
+        : IsCompute()    ? VK_PIPELINE_BIND_POINT_COMPUTE
+        : IsRayTracing() ? VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR
+                         : VK_PIPELINE_BIND_POINT_MAX_ENUM,
         pipeline_layout, static_cast<uint32_t>(i), 1,
         &descriptor_set_info_[i].vk_desc_set,
         static_cast<uint32_t>(dynamic_offsets.size()), dynamic_offsets.data());
@@ -517,6 +555,9 @@ void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
 }
 
 Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
+  if (descriptor_buffers_.empty())
+    return Result{};
+
   // Record required commands to copy the data to a host visible buffer.
   {
     CommandBufferGuard guard(GetCommandBuffer());
@@ -551,8 +592,8 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
       }
     }
 
-    Result r = guard.Submit(GetFenceTimeout(),
-                            GetPipelineRuntimeLayerEnabled());
+    Result r =
+        guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
     if (!r.IsSuccess())
       return r;
   }

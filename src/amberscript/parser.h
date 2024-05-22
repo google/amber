@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -75,6 +76,7 @@ class Parser : public amber::Parser {
   Result ParsePipelineDepth(Pipeline* pipeline);
   Result ParsePipelineStencil(Pipeline* pipeline);
   Result ParsePipelineBlend(Pipeline* pipeline);
+  Result ParsePipelineShaderGroup(Pipeline* pipeline);
   Result ParseRun();
   Result ParseClear();
   Result ParseClearColor();
@@ -95,6 +97,16 @@ class Parser : public amber::Parser {
                            std::unique_ptr<Pipeline> pipeline);
   Result ParseShaderSpecialization(Pipeline* pipeline);
   Result ParseSampler();
+  bool IsRayTracingShader(ShaderType type);
+  Result ParseAS();
+  Result ParseBLAS();
+  Result ParseBLASTriangle(BLAS* blas);
+  Result ParseBLASAABB(BLAS* blas);
+  Result ParseTLAS();
+  Result ParseBLASInstance(TLAS* tlas);
+  Result ParseBLASInstanceTransform(BLASInstance* instance);
+  Result ParseBLASInstanceFlags(BLASInstance* instance);
+  Result ParseSBT(Pipeline* pipeline);
   Result ParseTolerances(std::vector<Probe::Tolerance>* tolerances);
 
   /// Parses a set of values out of the token stream. |name| is the name of the

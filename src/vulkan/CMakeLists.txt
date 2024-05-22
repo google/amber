@@ -1,4 +1,5 @@
 # Copyright 2018 The Amber Authors.
+# Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +14,7 @@
 # limitations under the License.
 
 set(VULKAN_ENGINE_SOURCES
+    blas.cc
     buffer_descriptor.cc
     buffer_backed_descriptor.cc
     command_buffer.cc
@@ -27,9 +29,13 @@ set(VULKAN_ENGINE_SOURCES
     index_buffer.cc
     pipeline.cc
     push_constant.cc
+    raytracing_pipeline.cc
     resource.cc
     sampler.cc
     sampler_descriptor.cc
+    sbt.cc
+    tlas.cc
+    tlas_descriptor.cc
     transfer_buffer.cc
     transfer_image.cc
     vertex_buffer.cc

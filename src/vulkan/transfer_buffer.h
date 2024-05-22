@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,6 +49,7 @@ class TransferBuffer : public Resource {
   const VkBufferView* GetVkBufferView() const { return &view_; }
 
   VkBuffer GetVkBuffer() const { return buffer_; }
+  VkDeviceAddress getBufferDeviceAddress();
 
   /// Records a command on |command_buffer| to copy the buffer contents from the
   /// host to the device.

@@ -22,6 +22,7 @@ LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti \
     -DAMBER_ENABLE_SHADERC=1 \
     -DAMBER_ENGINE_VULKAN=1
 LOCAL_SRC_FILES:= \
+    src/acceleration_structure.cc \
     src/amber.cc \
     src/amberscript/parser.cc \
     src/buffer.cc \
@@ -53,6 +54,7 @@ LOCAL_SRC_FILES:= \
     src/vkscript/section_parser.cc \
     src/vulkan/buffer_descriptor.cc \
     src/vulkan/buffer_backed_descriptor.cc \
+    src/vulkan/blas.cc \
     src/vulkan/command_buffer.cc \
     src/vulkan/command_pool.cc \
     src/vulkan/compute_pipeline.cc \
@@ -65,9 +67,13 @@ LOCAL_SRC_FILES:= \
     src/vulkan/index_buffer.cc \
     src/vulkan/pipeline.cc \
     src/vulkan/push_constant.cc \
+    src/vulkan/raytracing_pipeline.cc \
     src/vulkan/resource.cc \
     src/vulkan/sampler.cc \
     src/vulkan/sampler_descriptor.cc \
+    src/vulkan/sbt.cc \
+    src/vulkan/tlas.cc \
+    src/vulkan/tlas_descriptor.cc \
     src/vulkan/transfer_buffer.cc \
     src/vulkan/transfer_image.cc \
     src/vulkan/vertex_buffer.cc \

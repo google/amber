@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,6 +39,7 @@ namespace vulkan {
 class ComputePipeline;
 class Device;
 class GraphicsPipeline;
+class RayTracingPipeline;
 
 /// Base class for a pipeline in Vulkan.
 class Pipeline {
@@ -46,12 +48,17 @@ class Pipeline {
 
   bool IsGraphics() const { return pipeline_type_ == PipelineType::kGraphics; }
   bool IsCompute() const { return pipeline_type_ == PipelineType::kCompute; }
+  bool IsRayTracing() const {
+    return pipeline_type_ == PipelineType::kRayTracing;
+  }
 
   GraphicsPipeline* AsGraphics();
   ComputePipeline* AsCompute();
+  RayTracingPipeline* AsRayTracingPipeline();
 
   Result AddBufferDescriptor(const BufferCommand*);
   Result AddSamplerDescriptor(const SamplerCommand*);
+  Result AddTLASDescriptor(const TLASCommand*);
 
   /// Add |buffer| data to the push constants at |offset|.
   Result AddPushConstantBuffer(const Buffer* buf, uint32_t offset);
@@ -72,6 +79,8 @@ class Pipeline {
 
   CommandBuffer* GetCommandBuffer() const { return command_.get(); }
   Device* GetDevice() const { return device_; }
+  virtual BlasesMap* GetBlases() { return nullptr; }
+  virtual TlasesMap* GetTlases() { return nullptr; }
 
  protected:
   Pipeline(

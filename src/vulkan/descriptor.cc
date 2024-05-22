@@ -1,4 +1,5 @@
 // Copyright 2019 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,6 +55,8 @@ VkDescriptorType Descriptor::GetVkDescriptorType() const {
       return VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
     case DescriptorType::kStorageTexelBuffer:
       return VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
+    case DescriptorType::kTLAS:
+      return VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
     default:
       assert(type_ == DescriptorType::kSampledImage);
       return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
