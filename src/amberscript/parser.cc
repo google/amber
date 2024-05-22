@@ -4053,7 +4053,7 @@ Result Parser::ParseBLASTriangle(BLAS* blas) {
 
   geometry->SetData(g);
 
-  blas->AddGeometry(std::unique_ptr<Geometry>(geometry.release()));
+  blas->AddGeometry(&geometry);
 
   return {};
 }
@@ -4095,7 +4095,7 @@ Result Parser::ParseBLASAABB(BLAS* blas) {
 
   geometry->SetData(g);
 
-  blas->AddGeometry(std::unique_ptr<Geometry>(geometry.release()));
+  blas->AddGeometry(&geometry);
 
   return {};
 }

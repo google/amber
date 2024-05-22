@@ -75,8 +75,8 @@ class BLAS {
   void SetName(const std::string& name) { name_ = name; }
   std::string GetName() const { return name_; }
 
-  void AddGeometry(std::unique_ptr<Geometry>& geometry) {
-    geometry_.push_back(std::move(geometry));
+  void AddGeometry(std::unique_ptr<Geometry>* geometry) {
+    geometry_.push_back(std::move(*geometry));
   }
   size_t GetGeometrySize() { return geometry_.size(); }
   std::vector<std::unique_ptr<Geometry>>& GetGeometries() { return geometry_; }
