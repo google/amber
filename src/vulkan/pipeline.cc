@@ -50,8 +50,8 @@ Pipeline::Pipeline(
       pipeline_type_(type),
       shader_stage_info_(shader_stage_info),
       fence_timeout_ms_(fence_timeout_ms),
-      pipeline_runtime_layer_enabled_(pipeline_runtime_layer_enabled),
-      create_flags_(create_flags) {}
+      create_flags_(create_flags),
+      pipeline_runtime_layer_enabled_(pipeline_runtime_layer_enabled) {}
 
 Pipeline::~Pipeline() {
   // Command must be reset before we destroy descriptors or we get a validation

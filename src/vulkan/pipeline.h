@@ -129,12 +129,12 @@ class Pipeline {
     pipeline_ = pipeline;
   }
 
-  VkPipelineCreateFlags create_flags_ = 0;
   VkPipeline pipeline_ = VK_NULL_HANDLE;
   VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
 
   Device* device_ = nullptr;
   std::unique_ptr<CommandBuffer> command_;
+  VkPipelineCreateFlags create_flags_ = 0;
 
  private:
   struct DescriptorSetInfo {

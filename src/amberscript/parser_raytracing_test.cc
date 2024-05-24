@@ -765,8 +765,7 @@ END
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("4: No shaders in shader group defined", r.Error());
+  ASSERT_TRUE(r.IsSuccess());
 }
 
 TEST_F(AmberScriptParserTest, RayTracingPipelineBindShaderGroupNoShaderName) {

@@ -2086,7 +2086,7 @@ Result Parser::ParsePipelineShaderGroup(Pipeline* pipeline) {
       add_shader_to_pipeline = false;
     }
 
-    if (add_shader_to_pipeline){
+    if (add_shader_to_pipeline) {
       Result r = pipeline->AddShader(shader, shader->GetType());
       if (!r.IsSuccess())
         return r;
@@ -4129,7 +4129,7 @@ Result Parser::ParseBLASAABB(BLAS* blas) {
     } else if (token->IsDouble()) {
       g.push_back(token->AsFloat());
     } else if (token->IsInteger()) {
-      g.push_back(float(token->AsInt64()));
+      g.push_back(static_cast<float>(token->AsInt64()));
     } else {
       return Result("Unexpected data type");
     }
@@ -4490,8 +4490,9 @@ Result Parser::ParseFlags(Pipeline* pipeline) {
         flags |= VK_PIPELINE_CREATE_LIBRARY_BIT_KHR;
       else
         return Result("Unknown flag: " + token->AsString());
-    } else
+    } else {
       r = Result("Identifier expected");
+    }
 
     if (!r.IsSuccess())
       return r;
@@ -4530,8 +4531,9 @@ Result Parser::ParseUseLibrary(Pipeline* pipeline) {
         return Result("Pipeline not found: " + tok);
 
       pipeline->AddPipelineLibrary(use_pipeline);
-    } else
+    } else {
       return Result("Unexpected data type");
+    }
   }
 
   return {};
