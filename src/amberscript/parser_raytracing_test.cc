@@ -195,6 +195,33 @@ ACCELERATION_STRUCTURE BOTTOM_LEVEL blas_name
   EXPECT_EQ("3: Unexpected data type", r.Error());
 }
 
+TEST_F(AmberScriptParserTest, RayTracingBlasTriangleGeometryFlags) {
+  {
+    std::string in = R"(
+ACCELERATION_STRUCTURE BOTTOM_LEVEL blas_name
+  GEOMETRY TRIANGLES
+    FLAGS OPAQUE NO_DUPLICATE_ANY_HIT NO_SUCH_FLAG
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("4: Unknown flag: NO_SUCH_FLAG", r.Error());
+  }
+  {
+    std::string in = R"(
+ACCELERATION_STRUCTURE BOTTOM_LEVEL blas_name
+  GEOMETRY TRIANGLES
+    FLAGS 1
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("4: Identifier expected", r.Error());
+  }
+}
+
 TEST_F(AmberScriptParserTest, RayTracingBlasAABBEmpty) {
   std::string in = R"(
 ACCELERATION_STRUCTURE BOTTOM_LEVEL blas_name
@@ -247,6 +274,33 @@ ACCELERATION_STRUCTURE BOTTOM_LEVEL blas_name
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("3: Unexpected data type", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RayTracingBlasAABBGeometryFlags) {
+  {
+    std::string in = R"(
+ACCELERATION_STRUCTURE BOTTOM_LEVEL blas_name
+  GEOMETRY AABBS
+    FLAGS OPAQUE NO_DUPLICATE_ANY_HIT NO_SUCH_FLAG
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("4: Unknown flag: NO_SUCH_FLAG", r.Error());
+  }
+  {
+    std::string in = R"(
+ACCELERATION_STRUCTURE BOTTOM_LEVEL blas_name
+  GEOMETRY AABBS
+    FLAGS 1
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("4: Identifier expected", r.Error());
+  }
 }
 
 TEST_F(AmberScriptParserTest, RayTracingTlasName) {

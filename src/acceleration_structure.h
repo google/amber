@@ -49,6 +49,9 @@ class Geometry {
   void SetData(std::vector<float>& data) { data_.swap(data); }
   std::vector<float>& GetData() { return data_; }
 
+  void SetFlags(uint32_t flags) { flags_ = flags; }
+  uint32_t GetFlags() { return flags_; }
+
   size_t getVertexCount() const {
     return data_.size() / 3;  // Three floats to define vertex
   }
@@ -65,6 +68,7 @@ class Geometry {
  private:
   GeometryType type_ = GeometryType::kUnknown;
   std::vector<float> data_;
+  uint32_t flags_ = 0u;
 };
 
 class BLAS {
