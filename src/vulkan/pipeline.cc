@@ -47,10 +47,10 @@ Pipeline::Pipeline(
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info,
     VkPipelineCreateFlags create_flags)
     : device_(device),
+      create_flags_(create_flags),
       pipeline_type_(type),
       shader_stage_info_(shader_stage_info),
       fence_timeout_ms_(fence_timeout_ms),
-      create_flags_(create_flags),
       pipeline_runtime_layer_enabled_(pipeline_runtime_layer_enabled) {}
 
 Pipeline::~Pipeline() {

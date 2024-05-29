@@ -4479,11 +4479,11 @@ Result Parser::ParseFlags(Pipeline* pipeline) {
     if (token->IsEOS())
       return Result("END command missing");
 
-    if (token->IsInteger())
+    if (token->IsInteger()) {
       flags |= token->AsInt32();
-    else if (token->IsHex())
+    } else if (token->IsHex()) {
       flags |= uint32_t(token->AsHex());
-    else if (token->IsIdentifier()) {
+    } else if (token->IsIdentifier()) {
       if (token->AsString() == "END")
         break;
       else if (token->AsString() == "LIBRARY")

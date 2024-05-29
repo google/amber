@@ -105,7 +105,7 @@ class EngineVulkan : public Engine {
       std::vector<VkRayTracingShaderGroupCreateInfoKHR>* out);
 
   Result InitDependendLibraries(amber::Pipeline* pipeline,
-                                std::vector<VkPipeline>& libs);
+                                std::vector<VkPipeline>* libs);
 
   std::unique_ptr<Device> device_;
   std::unique_ptr<CommandPool> pool_;

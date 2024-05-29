@@ -508,13 +508,15 @@ class Pipeline {
   /// Remembers number of shader belonging to this pipeline without
   /// libraries addition.
   void SetNonLibShadersCount() {
-    assert(non_lib_shader_count_ == -1);  // Should be set only once
+    assert(non_lib_shader_count_ ==
+           static_cast<size_t>(-1));  // Should be set only once
     non_lib_shader_count_ = shaders_.size();
   }
   /// Returns number of shaders belonging to this pipeline without
   /// libraries addition.
   size_t GetNonLibShadersCount() {
-    assert(non_lib_shader_count_ != -1);  // Should be set before usage
+    assert(non_lib_shader_count_ !=
+           static_cast<size_t>(-1));  // Should be set before usage
     return non_lib_shader_count_;
   }
 

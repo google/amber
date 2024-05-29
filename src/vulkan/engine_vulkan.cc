@@ -795,7 +795,7 @@ Result EngineVulkan::DoCompute(const ComputeCommand* command) {
 }
 
 Result EngineVulkan::InitDependendLibraries(amber::Pipeline* pipeline,
-                                            std::vector<VkPipeline>& libs) {
+                                            std::vector<VkPipeline>* libs) {
   for (auto& p : pipeline->GetPipelineLibraries()) {
     for (auto& s : pipeline_map_) {
       amber::Pipeline* sub_pipeline = s.first;
@@ -805,7 +805,7 @@ Result EngineVulkan::InitDependendLibraries(amber::Pipeline* pipeline,
         std::vector<VkPipeline> sub_libs;
 
         if (!sub_pipeline->GetPipelineLibraries().empty()) {
-          Result r = InitDependendLibraries(sub_pipeline, sub_libs);
+          Result r = InitDependendLibraries(sub_pipeline, &sub_libs);
 
           if (!r.IsSuccess())
             return r;
@@ -818,7 +818,7 @@ Result EngineVulkan::InitDependendLibraries(amber::Pipeline* pipeline,
               sub_pipeline->GetMaxPipelineRayRecursionDepth());
         }
 
-        libs.push_back(vk_sub_pipeline->GetVkPipeline());
+        libs->push_back(vk_sub_pipeline->GetVkPipeline());
 
         break;
       }
