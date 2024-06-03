@@ -698,7 +698,7 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       for (const auto& record : sbt->GetSBTRecords()) {
         const std::string group_name = record->GetUsedShaderGroupName();
         const uint32_t group_index = pipeline->GetShaderGroupIndex(group_name);
-        assert(group_index != -1);
+        assert(group_index != static_cast<uint32_t>(-1));
         record->SetIndex(group_index);
       }
     }
@@ -4404,7 +4404,7 @@ Result Parser::ParseSBT(Pipeline* pipeline) {
 
     sbtrecord->SetUsedShaderGroupName(tok);
     sbtrecord->SetCount(1);
-    sbtrecord->SetIndex(-1);
+    sbtrecord->SetIndex(static_cast<uint32_t>(-1));
 
     sbt->AddSBTRecord(std::move(sbtrecord));
   }
@@ -4421,7 +4421,7 @@ Result Parser::ParseMaxRayPayloadSize(Pipeline* pipeline) {
   if (!token->IsInteger())
     return Result("Ray payload size expects an integer");
 
-  pipeline->SetMaxPipelineRayPayloadSize(token->AsInt32());
+  pipeline->SetMaxPipelineRayPayloadSize(token->AsUint32());
 
   return {};
 }
@@ -4435,7 +4435,7 @@ Result Parser::ParseMaxRayHitAttributeSize(Pipeline* pipeline) {
   if (!token->IsInteger())
     return Result("Ray hit attribute size expects an integer");
 
-  pipeline->SetMaxPipelineRayHitAttributeSize(token->AsInt32());
+  pipeline->SetMaxPipelineRayHitAttributeSize(token->AsUint32());
 
   return {};
 }
@@ -4449,7 +4449,7 @@ Result Parser::ParseMaxRayRecursionDepth(Pipeline* pipeline) {
   if (!token->IsInteger())
     return Result("Ray recursion depth expects an integer");
 
-  pipeline->SetMaxPipelineRayRecursionDepth(token->AsInt32());
+  pipeline->SetMaxPipelineRayRecursionDepth(token->AsUint32());
 
   return {};
 }
@@ -4480,7 +4480,7 @@ Result Parser::ParseFlags(Pipeline* pipeline) {
       return Result("END command missing");
 
     if (token->IsInteger()) {
-      flags |= token->AsInt32();
+      flags |= token->AsUint32();
     } else if (token->IsHex()) {
       flags |= uint32_t(token->AsHex());
     } else if (token->IsIdentifier()) {

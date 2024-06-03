@@ -496,8 +496,7 @@ class Pipeline {
   /// Returns number of shader groups belonging to this pipeline without
   /// libraries addition.
   size_t GetNonLibShaderGroupCount() {
-    assert(non_lib_shader_groups_count_ ==
-           static_cast<size_t>(-1));  // Should be set only once
+    assert(non_lib_shader_groups_count_ != static_cast<size_t>(-1));
     return non_lib_shader_groups_count_;
   }
   /// Retrieves a list of all Shader Groups. Might include library additions
@@ -515,8 +514,7 @@ class Pipeline {
   /// Returns number of shaders belonging to this pipeline without
   /// libraries addition.
   size_t GetNonLibShadersCount() {
-    assert(non_lib_shader_count_ !=
-           static_cast<size_t>(-1));  // Should be set before usage
+    assert(non_lib_shader_count_ != static_cast<size_t>(-1));
     return non_lib_shader_count_;
   }
 

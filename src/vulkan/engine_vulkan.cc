@@ -837,7 +837,7 @@ Result EngineVulkan::DoTraceRays(const RayTracingCommand* command) {
   std::vector<VkPipeline> libs;
 
   if (!pipeline->GetPipelineLibraries().empty()) {
-    Result r = InitDependendLibraries(pipeline, libs);
+    Result r = InitDependendLibraries(pipeline, &libs);
     if (!r.IsSuccess())
       return r;
   }
