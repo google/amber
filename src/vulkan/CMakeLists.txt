@@ -73,7 +73,7 @@ endif()
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/src/vk-wrappers.inc.fake
     COMMAND
-      ${PYTHON_EXECUTABLE}
+      ${Python3_EXECUTABLE}
         ${PROJECT_SOURCE_DIR}/tools/update_vk_wrappers.py
         ${CMAKE_BINARY_DIR}
         ${PROJECT_SOURCE_DIR}

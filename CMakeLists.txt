@@ -120,7 +120,7 @@ if (${AMBER_USE_CLSPV} OR ${AMBER_ENABLE_SWIFTSHADER})
 endif()
 
 message(STATUS "Using python3")
-find_package(PythonInterp 3 REQUIRED)
+find_package(Python3 REQUIRED)
 
 message(STATUS "Amber enable SPIRV-Tools: ${AMBER_ENABLE_SPIRV_TOOLS}")
 message(STATUS "Amber enable Shaderc: ${AMBER_ENABLE_SHADERC}")
