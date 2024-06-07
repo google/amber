@@ -1526,7 +1526,7 @@ END
     Parser parser;
     Result r = parser.Parse(in);
     ASSERT_FALSE(r.IsSuccess());
-    EXPECT_EQ("4: USE_LIBRARY should preceed any SHADER_GROUP declarations",
+    EXPECT_EQ("4: USE_LIBRARY should precede any SHADER_GROUP declarations",
               r.Error());
   }
   {
@@ -1542,7 +1542,7 @@ END
     Result r = parser.Parse(in);
     ASSERT_FALSE(r.IsSuccess());
     EXPECT_EQ(
-        "5: USE_LIBRARY should preceed any SHADER_BINDING_TABLE declarations",
+        "5: USE_LIBRARY should precede any SHADER_BINDING_TABLE declarations",
         r.Error());
   }
   {

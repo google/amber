@@ -4509,11 +4509,11 @@ Result Parser::ParseUseLibrary(Pipeline* pipeline) {
     return Result("Use library is allowed only for ray tracing pipeline");
 
   if (!pipeline->GetShaderGroups().empty())
-    return Result("USE_LIBRARY should preceed any SHADER_GROUP declarations");
+    return Result("USE_LIBRARY should precede any SHADER_GROUP declarations");
 
   if (!pipeline->GetSBTs().empty())
     return Result(
-        "USE_LIBRARY should preceed any SHADER_BINDING_TABLE declarations");
+        "USE_LIBRARY should precede any SHADER_BINDING_TABLE declarations");
 
   while (true) {
     auto token = tokenizer_->NextToken();

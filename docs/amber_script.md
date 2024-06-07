@@ -597,8 +597,8 @@ Generally a program needs three shader binding tables:
 
 Shader binding tables for call shaders are optional.
 
-Ray tracing pipelines support pipeline libraries. To declare pipeline as pipeline library
-pipeline should declare library specifying LIBRARY in FLAGS:
+Ray tracing pipelines support pipeline libraries. To declare a pipeline as a pipeline library
+the pipeline should declare itself a library by specifying `LIBRARY` in `FLAGS`:
 
 ```groovy
   # Declare this pipeline as a library
@@ -614,6 +614,10 @@ or multiline version:
   END
 ```
 
+Pipeline `FLAGS` can contain:
+
+ * `LIBRARY`
+
 Ray tracing pipeline can include one or more pipeline libraries:
 
 ```groovy
@@ -622,7 +626,7 @@ Ray tracing pipeline can include one or more pipeline libraries:
 ```
 
 Ray tracing pipelines that declare and use pipeline libraries should declare
-maximum ray payload size and maximum ray hit attribute size:
+the maximum ray payload size and the maximum ray hit attribute size:
 ```groovy
   # Define maximum ray payload size
   MAX_RAY_PAYLOAD_SIZE <max_ray_payload_size>
@@ -631,13 +635,13 @@ maximum ray payload size and maximum ray hit attribute size:
 ```
 
 Default for both maximum ray payload size and maximum ray hit attribute size is zero.
-Specification requires that all pipeline libraries used within pipeline and pipeline using
-libraries itself have same value.
+If there is a pipeline which uses a pipeline library then the `MAX_RAY_PAYLOAD_SIZE` and `MAX_RAY_HIT_ATTRIBUTE_SIZE`
+values must be the same between the pipeline and all the pipeline libraries used.
 
-List of used libraries must preceed shader group (SHADER_GROUP) or shader binding tables
-(SHADER_BINDING_TABLE) declarations. Pipeline can be a library and use other pipelines as a libraries.
+Used libraries must precede shader group `SHADER_GROUP` and shader binding tables
+`SHADER_BINDING_TABLE` declarations. A pipeline can be a library and use other pipelines as a libraries.
 
-Ray tracing pipelines can declare maximum ray recursion depth:
+Ray tracing pipelines can declare a maximum ray recursion depth:
 
 ```groovy
   # Define maximum ray recursion depth
@@ -646,8 +650,8 @@ Ray tracing pipelines can declare maximum ray recursion depth:
 
 If the MAX_RAY_RECURSION_DEPTH is not specified, then maximum ray recursion depth is set to 1.
 
-If some pipeline library is used within this pipeline (via USE_LIBRARY keyword), then
-shader binding table can use shader groups from any of used libraries.
+If a pipeline library is used within this pipeline (via `USE_LIBRARY` keyword), then the
+shader binding table can use shader groups from any of the used libraries.
 
 #### Compare operations
  * `never`

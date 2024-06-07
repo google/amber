@@ -279,10 +279,8 @@ class Pipeline {
   /// Designed to support libraries
   Result AddShaders(const std::vector<ShaderInfo>& lib_shaders) {
     shaders_.reserve(shaders_.size() + lib_shaders.size());
-
-    for (auto lib_shader : lib_shaders) {
-      shaders_.push_back(std::move(lib_shader));
-    }
+    shaders_.insert(std::end(shaders_), std::begin(lib_shaders),
+                    std::end(lib_shaders));
 
     return {};
   }
