@@ -124,12 +124,10 @@ class Script : public RecipeImpl {
   }
 
   /// Search |pipeline| and all included into pipeline libraries whether shader
-  /// with |name| is present. Returns shader if found, |nullptr| if not found.
-  Shader* FindShader(const Pipeline* pipeline, const std::string& name) const {
-    Shader* shader = GetShader(name);
+  /// with |name| is present in pipeline groups. Returns shader if found,
+  /// |nullptr| if not found.
+  Shader* FindShader(const Pipeline* pipeline, Shader* shader) const {
     if (shader) {
-      assert(isRayTracingShaderType(shader->GetType()));
-
       for (auto group : pipeline->GetShaderGroups()) {
         Shader* test_shader = group->GetShaderByType(shader->GetType());
         if (test_shader == shader)
@@ -137,11 +135,38 @@ class Script : public RecipeImpl {
       }
 
       for (auto lib : pipeline->GetPipelineLibraries()) {
-        shader = FindShader(lib, name);
+        shader = FindShader(lib, shader);
         if (shader)
           return shader;
       }
     }
+
+    return nullptr;
+  }
+
+  /// Search |pipeline| and all included into pipeline libraries whether shader
+  /// group with |name| is present. Returns shader group if found, |nullptr|
+  /// if not found. |index| is an shader group index in pipeline or library.
+  ShaderGroup* FindShaderGroup(const Pipeline* pipeline,
+                               const std::string& name,
+                               uint32_t* index) const {
+    ShaderGroup* result = nullptr;
+    uint32_t shader_group_index = pipeline->GetShaderGroupIndex(name);
+    if (shader_group_index != static_cast<uint32_t>(-1)) {
+      (*index) += shader_group_index;
+      result = pipeline->GetShaderGroupByIndex(shader_group_index);
+      return result;
+    } else {
+      (*index) += static_cast<uint32_t>(pipeline->GetShaderGroups().size());
+    }
+
+    for (auto lib : pipeline->GetPipelineLibraries()) {
+      result = FindShaderGroup(lib, name, index);
+      if (result)
+        return result;
+    }
+
+    *index = static_cast<uint32_t>(-1);
 
     return nullptr;
   }

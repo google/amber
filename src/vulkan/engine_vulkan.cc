@@ -163,11 +163,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   // Create the pipeline data early so we can access them as needed.
   pipeline_map_[pipeline] = PipelineInfo();
   auto& info = pipeline_map_[pipeline];
-  const size_t shader_count = pipeline->IsRayTracing()
-                                  ? pipeline->GetNonLibShadersCount()
-                                  : pipeline->GetShaders().size();
 
-  for (size_t i = 0; i < shader_count; i++) {
+  for (size_t i = 0; i < pipeline->GetShaders().size(); i++) {
     Result r = SetShader(pipeline, pipeline->GetShaders()[i], i);
     if (!r.IsSuccess())
       return r;
@@ -524,8 +521,8 @@ Result EngineVulkan::GetVkShaderStageInfo(
 Result EngineVulkan::GetVkShaderGroupInfo(
     amber::Pipeline* pipeline,
     std::vector<VkRayTracingShaderGroupCreateInfoKHR>* out) {
-  const size_t shader_group_count = pipeline->GetNonLibShaderGroupCount();
   auto& groups = pipeline->GetShaderGroups();
+  const size_t shader_group_count = groups.size();
 
   out->clear();
   out->reserve(shader_group_count);
@@ -842,7 +839,7 @@ Result EngineVulkan::DoTraceRays(const RayTracingCommand* command) {
       return r;
   }
 
-  amber::SBT* rSBT = pipeline->GetSBT(command->GetRGenSBTName());
+  amber::SBT* rSBT = pipeline->GetSBT(command->GetRayGenSBTName());
   amber::SBT* mSBT = pipeline->GetSBT(command->GetMissSBTName());
   amber::SBT* hSBT = pipeline->GetSBT(command->GetHitsSBTName());
   amber::SBT* cSBT = pipeline->GetSBT(command->GetCallSBTName());

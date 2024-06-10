@@ -671,39 +671,6 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
   if (!token->IsIdentifier() || token->AsString() != "END")
     return Result(cmd_name + " missing END command");
 
-  if (pipeline->IsRayTracing()) {
-    // Here is a tricky step: add shaders and shader groups from library to
-    // pipeline itself. Like spec "suggests":
-    //
-    // If pipeline libraries are included in  pLibraryInfo, shaders defined in
-    // those libraries are treated as if they were defined as additional entries
-    // in pStages, appended in the order they appear in the pLibraries array and
-    // in the pStages array when those libraries were defined.
-    //
-    // When referencing shader groups in order to obtain a shader group handle,
-    // groups defined in those libraries are treated as if they were defined as
-    // additional entries in pGroups, appended in the order they appear in the
-    // pLibraries array and in the pGroups array when those libraries were
-    // defined.The shaders these groups reference are set when the pipeline
-    // library is created, referencing those specified in the pipeline library,
-    // not in the pipeline that includes it.
-
-    pipeline->SetNonLibShaderGroupCount();
-    pipeline->SetNonLibShadersCount();
-    for (auto lib : pipeline->GetPipelineLibraries()) {
-      pipeline->AddShaders(lib->GetShaders());
-      pipeline->AddShaderGroups(lib->GetShaderGroups());
-    }
-    for (const auto& sbt : pipeline->GetSBTs()) {
-      for (const auto& record : sbt->GetSBTRecords()) {
-        const std::string group_name = record->GetUsedShaderGroupName();
-        const uint32_t group_index = pipeline->GetShaderGroupIndex(group_name);
-        assert(group_index != static_cast<uint32_t>(-1));
-        record->SetIndex(group_index);
-      }
-    }
-  }
-
   Result r = script_->AddPipeline(std::move(pipeline));
   if (!r.IsSuccess())
     return r;
@@ -2080,13 +2047,7 @@ Result Parser::ParsePipelineShaderGroup(Pipeline* pipeline) {
     if (shader == nullptr)
       return Result("Shader not found: " + tok);
 
-    bool add_shader_to_pipeline = true;
-    if (!pipeline->GetPipelineLibraries().empty() &&
-        script_->FindShader(pipeline, tok) != nullptr) {
-      add_shader_to_pipeline = false;
-    }
-
-    if (add_shader_to_pipeline) {
+    if (script_->FindShader(pipeline, shader) == nullptr) {
       Result r = pipeline->AddShader(shader, shader->GetType());
       if (!r.IsSuccess())
         return r;
@@ -2781,7 +2742,7 @@ Result Parser::ParseRun() {
         return Result("Shader binding table with this name was not defined");
 
       if (tok == "RAYGEN") {
-        if (!cmd->GetRGenSBTName().empty())
+        if (!cmd->GetRayGenSBTName().empty())
           return Result("RAYGEN shader binding table can specified only once");
         cmd->SetRGenSBTName(sbtname);
       } else if (tok == "MISS") {
@@ -4400,11 +4361,17 @@ Result Parser::ParseSBT(Pipeline* pipeline) {
       break;
     }
 
+    uint32_t index = 0;
+    ShaderGroup* shader_group = script_->FindShaderGroup(pipeline, tok, &index);
+
+    if (shader_group == nullptr)
+      return Result("Shader group not found neither in pipeline, nor in libraries");
+
     std::unique_ptr<SBTRecord> sbtrecord = MakeUnique<SBTRecord>();
 
     sbtrecord->SetUsedShaderGroupName(tok);
+    sbtrecord->SetIndex(index);
     sbtrecord->SetCount(1);
-    sbtrecord->SetIndex(static_cast<uint32_t>(-1));
 
     sbt->AddSBTRecord(std::move(sbtrecord));
   }
@@ -4507,13 +4474,6 @@ Result Parser::ParseFlags(Pipeline* pipeline) {
 Result Parser::ParseUseLibrary(Pipeline* pipeline) {
   if (!pipeline->IsRayTracing())
     return Result("Use library is allowed only for ray tracing pipeline");
-
-  if (!pipeline->GetShaderGroups().empty())
-    return Result("USE_LIBRARY should precede any SHADER_GROUP declarations");
-
-  if (!pipeline->GetSBTs().empty())
-    return Result(
-        "USE_LIBRARY should precede any SHADER_BINDING_TABLE declarations");
 
   while (true) {
     auto token = tokenizer_->NextToken();

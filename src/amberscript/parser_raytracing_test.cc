@@ -1518,36 +1518,6 @@ PIPELINE raytracing my_pipeline
   {
     std::string in = R"(
 PIPELINE raytracing my_pipeline
-  SHADER_GROUP g1
-  USE_LIBRARY base_pipeline_lib
-END
-)";
-
-    Parser parser;
-    Result r = parser.Parse(in);
-    ASSERT_FALSE(r.IsSuccess());
-    EXPECT_EQ("4: USE_LIBRARY should precede any SHADER_GROUP declarations",
-              r.Error());
-  }
-  {
-    std::string in = R"(
-PIPELINE raytracing my_pipeline
-  SHADER_BINDING_TABLE sbt1
-  END
-  USE_LIBRARY base_pipeline_lib
-END
-)";
-
-    Parser parser;
-    Result r = parser.Parse(in);
-    ASSERT_FALSE(r.IsSuccess());
-    EXPECT_EQ(
-        "5: USE_LIBRARY should precede any SHADER_BINDING_TABLE declarations",
-        r.Error());
-  }
-  {
-    std::string in = R"(
-PIPELINE raytracing my_pipeline
   USE_LIBRARY)";
 
     Parser parser;

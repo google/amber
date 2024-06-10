@@ -454,22 +454,14 @@ class Pipeline {
     return {};
   }
 
-  /// Adds |lib_groups| to the list of known to pipeline shader groups.
-  /// Designed to support pipeline libraries.
-  Result AddShaderGroups(
-      const std::vector<std::shared_ptr<ShaderGroup>>& lib_groups) {
-    shader_groups_.reserve(shader_groups_.size() + lib_groups.size());
-
-    for (auto lib_group : lib_groups)
-      AddShaderGroup(lib_group);
-
-    return {};
-  }
-
   /// Retrieves the Shader Group with |name|, |nullptr| if not found.
   ShaderGroup* GetShaderGroup(const std::string& name) const {
     auto it = name_to_shader_group_.find(name);
     return it == name_to_shader_group_.end() ? nullptr : it->second;
+  }
+  /// Retrieves a Shader Group at given |index|.
+  ShaderGroup* GetShaderGroupByIndex(uint32_t index) const {
+    return shader_groups_[index].get();
   }
   /// Retreives index of shader group specified by |name|
   uint32_t GetShaderGroupIndex(const std::string& name) const {
@@ -480,40 +472,12 @@ class Pipeline {
         return static_cast<uint32_t>(i);
       }
     }
-    assert(0 && "GetShaderGroupIndex called too early");
 
     return static_cast<uint32_t>(-1);
   }
-  /// Remembers number of shader groups belonging to this pipeline without
-  /// libraries addition.
-  void SetNonLibShaderGroupCount() {
-    assert(non_lib_shader_groups_count_ ==
-           static_cast<size_t>(-1));  // Should be set only once
-    non_lib_shader_groups_count_ = shader_groups_.size();
-  }
-  /// Returns number of shader groups belonging to this pipeline without
-  /// libraries addition.
-  size_t GetNonLibShaderGroupCount() {
-    assert(non_lib_shader_groups_count_ != static_cast<size_t>(-1));
-    return non_lib_shader_groups_count_;
-  }
-  /// Retrieves a list of all Shader Groups. Might include library additions
+  /// Retrieves a list of all Shader Groups.
   const std::vector<std::shared_ptr<ShaderGroup>>& GetShaderGroups() const {
     return shader_groups_;
-  }
-
-  /// Remembers number of shader belonging to this pipeline without
-  /// libraries addition.
-  void SetNonLibShadersCount() {
-    assert(non_lib_shader_count_ ==
-           static_cast<size_t>(-1));  // Should be set only once
-    non_lib_shader_count_ = shaders_.size();
-  }
-  /// Returns number of shaders belonging to this pipeline without
-  /// libraries addition.
-  size_t GetNonLibShadersCount() {
-    assert(non_lib_shader_count_ != static_cast<size_t>(-1));
-    return non_lib_shader_count_;
   }
 
   /// Updates the descriptor set and binding info for the OpenCL-C kernel bound
@@ -630,8 +594,6 @@ class Pipeline {
   std::unique_ptr<Buffer> opencl_push_constants_;
 
   std::map<std::string, ShaderGroup*> name_to_shader_group_;
-  size_t non_lib_shader_groups_count_ = static_cast <size_t>(-1);
-  size_t non_lib_shader_count_ = static_cast<size_t>(-1);
   std::vector<std::shared_ptr<ShaderGroup>> shader_groups_;
   std::map<std::string, SBT*> name_to_sbt_;
   std::vector<std::unique_ptr<SBT>> sbts_;
