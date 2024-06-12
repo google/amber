@@ -4365,7 +4365,8 @@ Result Parser::ParseSBT(Pipeline* pipeline) {
     ShaderGroup* shader_group = script_->FindShaderGroup(pipeline, tok, &index);
 
     if (shader_group == nullptr)
-      return Result("Shader group not found neither in pipeline, nor in libraries");
+      return Result(
+          "Shader group not found neither in pipeline, nor in libraries");
 
     std::unique_ptr<SBTRecord> sbtrecord = MakeUnique<SBTRecord>();
 
