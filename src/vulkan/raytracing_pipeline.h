@@ -35,7 +35,8 @@ class RayTracingPipeline : public Pipeline {
       TlasesMap* tlases,
       uint32_t fence_timeout_ms,
       bool pipeline_runtime_layer_enabled,
-      const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
+      const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info,
+      VkPipelineCreateFlags create_flags);
   ~RayTracingPipeline() override;
 
   Result AddTLASDescriptor(const TLASCommand* cmd);
@@ -48,20 +49,33 @@ class RayTracingPipeline : public Pipeline {
                             amber::SBT* aSBT,
                             VkStridedDeviceAddressRegionKHR* region);
 
+  Result InitLibrary(const std::vector<VkPipeline>& lib,
+                     uint32_t maxPipelineRayPayloadSize,
+                     uint32_t maxPipelineRayHitAttributeSize,
+                     uint32_t maxPipelineRayRecursionDepth);
+
   Result TraceRays(amber::SBT* rSBT,
                    amber::SBT* mSBT,
                    amber::SBT* hSBT,
                    amber::SBT* cSBT,
                    uint32_t x,
                    uint32_t y,
-                   uint32_t z);
+                   uint32_t z,
+                   uint32_t maxPipelineRayPayloadSize,
+                   uint32_t maxPipelineRayHitAttributeSize,
+                   uint32_t maxPipelineRayRecursionDepth,
+                   const std::vector<VkPipeline>& lib);
 
   BlasesMap* GetBlases() override { return blases_; }
   TlasesMap* GetTlases() override { return tlases_; }
 
  private:
   Result CreateVkRayTracingPipeline(const VkPipelineLayout& pipeline_layout,
-                                    VkPipeline* pipeline);
+                                    VkPipeline* pipeline,
+                                    const std::vector<VkPipeline>& libs,
+                                    uint32_t maxPipelineRayPayloadSize,
+                                    uint32_t maxPipelineRayHitAttributeSize,
+                                    uint32_t maxPipelineRayRecursionDepth);
 
   std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_group_create_info_;
   BlasesMap* blases_;

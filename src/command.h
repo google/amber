@@ -750,7 +750,7 @@ class RayTracingCommand : public PipelineCommand {
   void SetZ(uint32_t z) { z_ = z; }
   uint32_t GetZ() const { return z_; }
 
-  void SetRayGenSBTName(const std::string& name) { rgen_sbt_name_ = name; }
+  void SetRGenSBTName(const std::string& name) { rgen_sbt_name_ = name; }
   std::string GetRayGenSBTName() const { return rgen_sbt_name_; }
 
   void SetMissSBTName(const std::string& name) { miss_sbt_name_ = name; }

@@ -123,6 +123,54 @@ class Script : public RecipeImpl {
     return shaders_;
   }
 
+  /// Search |pipeline| and all included into pipeline libraries whether shader
+  /// with |name| is present in pipeline groups. Returns shader if found,
+  /// |nullptr| if not found.
+  Shader* FindShader(const Pipeline* pipeline, Shader* shader) const {
+    if (shader) {
+      for (auto group : pipeline->GetShaderGroups()) {
+        Shader* test_shader = group->GetShaderByType(shader->GetType());
+        if (test_shader == shader)
+          return shader;
+      }
+
+      for (auto lib : pipeline->GetPipelineLibraries()) {
+        shader = FindShader(lib, shader);
+        if (shader)
+          return shader;
+      }
+    }
+
+    return nullptr;
+  }
+
+  /// Search |pipeline| and all included into pipeline libraries whether shader
+  /// group with |name| is present. Returns shader group if found, |nullptr|
+  /// if not found. |index| is an shader group index in pipeline or library.
+  ShaderGroup* FindShaderGroup(const Pipeline* pipeline,
+                               const std::string& name,
+                               uint32_t* index) const {
+    ShaderGroup* result = nullptr;
+    uint32_t shader_group_index = pipeline->GetShaderGroupIndex(name);
+    if (shader_group_index != static_cast<uint32_t>(-1)) {
+      (*index) += shader_group_index;
+      result = pipeline->GetShaderGroupByIndex(shader_group_index);
+      return result;
+    } else {
+      (*index) += static_cast<uint32_t>(pipeline->GetShaderGroups().size());
+    }
+
+    for (auto lib : pipeline->GetPipelineLibraries()) {
+      result = FindShaderGroup(lib, name, index);
+      if (result)
+        return result;
+    }
+
+    *index = static_cast<uint32_t>(-1);
+
+    return nullptr;
+  }
+
   /// Adds |buffer| to the list of known buffers. The |buffer| must have a
   /// unique name over all buffers in the script.
   Result AddBuffer(std::unique_ptr<Buffer> buffer) {
@@ -160,6 +208,11 @@ class Script : public RecipeImpl {
   Sampler* GetSampler(const std::string& name) const {
     auto it = name_to_sampler_.find(name);
     return it == name_to_sampler_.end() ? nullptr : it->second;
+  }
+
+  /// Retrieves a list of all samplers.
+  const std::vector<std::unique_ptr<Sampler>>& GetSamplers() const {
+    return samplers_;
   }
 
   /// Adds |blas| to the list of known bottom level acceleration structures.
@@ -206,11 +259,6 @@ class Script : public RecipeImpl {
   /// Retrieves a list of all TLASes.
   const std::vector<std::unique_ptr<TLAS>>& GetTLASes() const {
     return tlases_;
-  }
-
-  /// Retrieves a list of all samplers.
-  const std::vector<std::unique_ptr<Sampler>>& GetSamplers() const {
-    return samplers_;
   }
 
   /// Adds |feature| to the list of features that must be supported by the

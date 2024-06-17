@@ -107,6 +107,11 @@ class Parser : public amber::Parser {
   Result ParseBLASInstanceTransform(BLASInstance* instance);
   Result ParseBLASInstanceFlags(BLASInstance* instance);
   Result ParseSBT(Pipeline* pipeline);
+  Result ParseMaxRayPayloadSize(Pipeline* pipeline);
+  Result ParseMaxRayHitAttributeSize(Pipeline* pipeline);
+  Result ParseMaxRayRecursionDepth(Pipeline* pipeline);
+  Result ParseFlags(Pipeline* pipeline);
+  Result ParseUseLibrary(Pipeline* pipeline);
   Result ParseTolerances(std::vector<Probe::Tolerance>* tolerances);
 
   /// Parses a set of values out of the token stream. |name| is the name of the

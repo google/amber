@@ -651,6 +651,16 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelineShaderGroup(pipeline.get());
     } else if (tok == "SHADER_BINDING_TABLE") {
       r = ParseSBT(pipeline.get());
+    } else if (tok == "MAX_RAY_PAYLOAD_SIZE") {
+      r = ParseMaxRayPayloadSize(pipeline.get());
+    } else if (tok == "MAX_RAY_HIT_ATTRIBUTE_SIZE") {
+      r = ParseMaxRayHitAttributeSize(pipeline.get());
+    } else if (tok == "MAX_RAY_RECURSION_DEPTH") {
+      r = ParseMaxRayRecursionDepth(pipeline.get());
+    } else if (tok == "FLAGS") {
+      r = ParseFlags(pipeline.get());
+    } else if (tok == "USE_LIBRARY") {
+      r = ParseUseLibrary(pipeline.get());
     } else {
       r = Result("unknown token in pipeline block: " + tok);
     }
@@ -2037,9 +2047,11 @@ Result Parser::ParsePipelineShaderGroup(Pipeline* pipeline) {
     if (shader == nullptr)
       return Result("Shader not found: " + tok);
 
-    Result r = pipeline->AddShader(shader, shader->GetType());
-    if (!r.IsSuccess())
-      return r;
+    if (script_->FindShader(pipeline, shader) == nullptr) {
+      Result r = pipeline->AddShader(shader, shader->GetType());
+      if (!r.IsSuccess())
+        return r;
+    }
 
     switch (shader->GetType()) {
       case kShaderTypeRayGeneration:
@@ -2080,9 +2092,6 @@ Result Parser::ParsePipelineShaderGroup(Pipeline* pipeline) {
         return Result("Shader must be of raytracing type");
     }
   }
-
-  if (!group->IsGeneralGroup() && !group->IsHitGroup())
-    return Result("No shaders in shader group defined");
 
   pipeline->AddShaderGroup(std::move(group));
 
@@ -2735,7 +2744,7 @@ Result Parser::ParseRun() {
       if (tok == "RAYGEN") {
         if (!cmd->GetRayGenSBTName().empty())
           return Result("RAYGEN shader binding table can specified only once");
-        cmd->SetRayGenSBTName(sbtname);
+        cmd->SetRGenSBTName(sbtname);
       } else if (tok == "MISS") {
         if (!cmd->GetMissSBTName().empty())
           return Result("MISS shader binding table can specified only once");
@@ -4078,8 +4087,10 @@ Result Parser::ParseBLASAABB(BLAS* blas) {
       } else {
         return Result("END or float value is expected");
       }
-    } else if (token->IsInteger() || token->IsDouble()) {
+    } else if (token->IsDouble()) {
       g.push_back(token->AsFloat());
+    } else if (token->IsInteger()) {
+      g.push_back(static_cast<float>(token->AsInt64()));
     } else {
       return Result("Unexpected data type");
     }
@@ -4350,15 +4361,143 @@ Result Parser::ParseSBT(Pipeline* pipeline) {
       break;
     }
 
+    uint32_t index = 0;
+    ShaderGroup* shader_group = script_->FindShaderGroup(pipeline, tok, &index);
+
+    if (shader_group == nullptr)
+      return Result(
+          "Shader group not found neither in pipeline, nor in libraries");
+
     std::unique_ptr<SBTRecord> sbtrecord = MakeUnique<SBTRecord>();
 
-    sbtrecord->SetUsedShaderGroupName(tok, pipeline->GetShaderGroupIndex(tok));
+    sbtrecord->SetUsedShaderGroupName(tok);
+    sbtrecord->SetIndex(index);
     sbtrecord->SetCount(1);
 
     sbt->AddSBTRecord(std::move(sbtrecord));
   }
 
   return pipeline->AddSBT(std::move(sbt));
+}
+
+Result Parser::ParseMaxRayPayloadSize(Pipeline* pipeline) {
+  if (!pipeline->IsRayTracing())
+    return Result(
+        "Ray payload size parameter is allowed only for ray tracing pipeline");
+
+  auto token = tokenizer_->NextToken();
+  if (!token->IsInteger())
+    return Result("Ray payload size expects an integer");
+
+  pipeline->SetMaxPipelineRayPayloadSize(token->AsUint32());
+
+  return {};
+}
+
+Result Parser::ParseMaxRayHitAttributeSize(Pipeline* pipeline) {
+  if (!pipeline->IsRayTracing())
+    return Result(
+        "Ray hit attribute size is allowed only for ray tracing pipeline");
+
+  auto token = tokenizer_->NextToken();
+  if (!token->IsInteger())
+    return Result("Ray hit attribute size expects an integer");
+
+  pipeline->SetMaxPipelineRayHitAttributeSize(token->AsUint32());
+
+  return {};
+}
+
+Result Parser::ParseMaxRayRecursionDepth(Pipeline* pipeline) {
+  if (!pipeline->IsRayTracing())
+    return Result(
+        "Ray recursion depth is allowed only for ray tracing pipeline");
+
+  auto token = tokenizer_->NextToken();
+  if (!token->IsInteger())
+    return Result("Ray recursion depth expects an integer");
+
+  pipeline->SetMaxPipelineRayRecursionDepth(token->AsUint32());
+
+  return {};
+}
+
+Result Parser::ParseFlags(Pipeline* pipeline) {
+  if (!pipeline->IsRayTracing())
+    return Result("Flags are allowed only for ray tracing pipeline");
+
+  std::unique_ptr<Token> token;
+  uint32_t flags = pipeline->GetCreateFlags();
+  bool first_eol = true;
+  bool singleline = true;
+  Result r;
+
+  while (true) {
+    token = tokenizer_->NextToken();
+    if (token->IsEOL()) {
+      if (first_eol) {
+        first_eol = false;
+        singleline = (flags != 0);
+      }
+      if (singleline)
+        break;
+      else
+        continue;
+    }
+    if (token->IsEOS())
+      return Result("END command missing");
+
+    if (token->IsInteger()) {
+      flags |= token->AsUint32();
+    } else if (token->IsHex()) {
+      flags |= uint32_t(token->AsHex());
+    } else if (token->IsIdentifier()) {
+      if (token->AsString() == "END")
+        break;
+      else if (token->AsString() == "LIBRARY")
+        flags |= VK_PIPELINE_CREATE_LIBRARY_BIT_KHR;
+      else
+        return Result("Unknown flag: " + token->AsString());
+    } else {
+      r = Result("Identifier expected");
+    }
+
+    if (!r.IsSuccess())
+      return r;
+  }
+
+  if (r.IsSuccess())
+    pipeline->SetCreateFlags(flags);
+
+  return {};
+}
+
+Result Parser::ParseUseLibrary(Pipeline* pipeline) {
+  if (!pipeline->IsRayTracing())
+    return Result("Use library is allowed only for ray tracing pipeline");
+
+  while (true) {
+    auto token = tokenizer_->NextToken();
+
+    if (token->IsEOS())
+      return Result("EOL expected");
+    if (token->IsEOL())
+      break;
+
+    if (token->IsIdentifier()) {
+      std::string tok = token->AsString();
+
+      Pipeline* use_pipeline = script_->GetPipeline(tok);
+      if (!use_pipeline)
+        return Result("Pipeline not found: " + tok);
+
+      pipeline->AddPipelineLibrary(use_pipeline);
+    } else {
+      return Result("Unexpected data type");
+    }
+  }
+
+  return {};
 }
 
 Result Parser::ParseTolerances(std::vector<Probe::Tolerance>* tolerances) {

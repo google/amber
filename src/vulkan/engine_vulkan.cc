@@ -202,7 +202,8 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
     vk_pipeline = MakeUnique<RayTracingPipeline>(
         device_.get(), &blases_, &tlases_, engine_data.fence_timeout_ms,
-        engine_data.pipeline_runtime_layer_enabled, stage_create_info);
+        engine_data.pipeline_runtime_layer_enabled, stage_create_info,
+        pipeline->GetCreateFlags());
     r = vk_pipeline->AsRayTracingPipeline()->Initialize(
         pool_.get(), shader_group_create_info);
   } else if (pipeline->GetType() == PipelineType::kCompute) {
@@ -520,13 +521,15 @@ Result EngineVulkan::GetVkShaderStageInfo(
 Result EngineVulkan::GetVkShaderGroupInfo(
     amber::Pipeline* pipeline,
     std::vector<VkRayTracingShaderGroupCreateInfoKHR>* out) {
-  auto shaders = pipeline->GetShaders();
+  auto& groups = pipeline->GetShaderGroups();
+  const size_t shader_group_count = groups.size();
 
   out->clear();
-  out->reserve(pipeline->GetShaderGroups().size());
+  out->reserve(shader_group_count);
 
-  for (auto& g : pipeline->GetShaderGroups()) {
+  for (size_t i = 0; i < shader_group_count; ++i) {
     Result r;
+    auto& g = groups[i];
     ShaderGroup* sg = g.get();
 
     if (sg == nullptr)
@@ -788,12 +791,53 @@ Result EngineVulkan::DoCompute(const ComputeCommand* command) {
       command->GetX(), command->GetY(), command->GetZ());
 }
 
+Result EngineVulkan::InitDependendLibraries(amber::Pipeline* pipeline,
+                                            std::vector<VkPipeline>* libs) {
+  for (auto& p : pipeline->GetPipelineLibraries()) {
+    for (auto& s : pipeline_map_) {
+      amber::Pipeline* sub_pipeline = s.first;
+      Pipeline* vk_sub_pipeline = pipeline_map_[sub_pipeline].vk_pipeline.get();
+
+      if (sub_pipeline == p) {
+        std::vector<VkPipeline> sub_libs;
+
+        if (!sub_pipeline->GetPipelineLibraries().empty()) {
+          Result r = InitDependendLibraries(sub_pipeline, &sub_libs);
+
+          if (!r.IsSuccess())
+            return r;
+        }
+
+        if (vk_sub_pipeline->GetVkPipeline() == VK_NULL_HANDLE) {
+          vk_sub_pipeline->AsRayTracingPipeline()->InitLibrary(
+              sub_libs, sub_pipeline->GetMaxPipelineRayPayloadSize(),
+              sub_pipeline->GetMaxPipelineRayHitAttributeSize(),
+              sub_pipeline->GetMaxPipelineRayRecursionDepth());
+        }
+
+        libs->push_back(vk_sub_pipeline->GetVkPipeline());
+
+        break;
+      }
+    }
+  }
+
+  return {};
+}
+
 Result EngineVulkan::DoTraceRays(const RayTracingCommand* command) {
   auto& info = pipeline_map_[command->GetPipeline()];
   if (!info.vk_pipeline->IsRayTracing())
     return Result("Vulkan: RayTracing called for non-RayTracing pipeline.");
 
   amber::Pipeline* pipeline = command->GetPipeline();
+  std::vector<VkPipeline> libs;
+
+  if (!pipeline->GetPipelineLibraries().empty()) {
+    Result r = InitDependendLibraries(pipeline, &libs);
+    if (!r.IsSuccess())
+      return r;
+  }
 
   amber::SBT* rSBT = pipeline->GetSBT(command->GetRayGenSBTName());
   amber::SBT* mSBT = pipeline->GetSBT(command->GetMissSBTName());
@@ -801,8 +845,10 @@ Result EngineVulkan::DoTraceRays(const RayTracingCommand* command) {
   amber::SBT* cSBT = pipeline->GetSBT(command->GetCallSBTName());
 
   return info.vk_pipeline->AsRayTracingPipeline()->TraceRays(
-      rSBT, mSBT, hSBT, cSBT, command->GetX(), command->GetY(),
-      command->GetZ());
+      rSBT, mSBT, hSBT, cSBT, command->GetX(), command->GetY(), command->GetZ(),
+      pipeline->GetMaxPipelineRayPayloadSize(),
+      pipeline->GetMaxPipelineRayHitAttributeSize(),
+      pipeline->GetMaxPipelineRayRecursionDepth(), libs);
 }
 
 Result EngineVulkan::DoEntryPoint(const EntryPointCommand* command) {

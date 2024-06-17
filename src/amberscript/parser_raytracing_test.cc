@@ -765,8 +765,7 @@ END
 
   Parser parser;
   Result r = parser.Parse(in);
-  ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("4: No shaders in shader group defined", r.Error());
+  ASSERT_TRUE(r.IsSuccess());
 }
 
 TEST_F(AmberScriptParserTest, RayTracingPipelineBindShaderGroupNoShaderName) {
@@ -1291,6 +1290,252 @@ RUN my_rtpipeline CALL sbt1 CALL sbt1
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("14: CALL shader binding table can specified only once", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, RayTracingPipelineMaxRaypayloadSize) {
+  {
+    std::string in = R"(
+PIPELINE compute my_pipeline
+  MAX_RAY_PAYLOAD_SIZE 16
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ(
+        "3: Ray payload size parameter is allowed only for ray tracing "
+        "pipeline",
+        r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE graphics my_pipeline
+  MAX_RAY_PAYLOAD_SIZE 16
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ(
+        "3: Ray payload size parameter is allowed only for ray tracing "
+        "pipeline",
+        r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE raytracing my_pipeline
+  MAX_RAY_PAYLOAD_SIZE a
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("3: Ray payload size expects an integer", r.Error());
+  }
+}
+
+TEST_F(AmberScriptParserTest, RayTracingPipelineMaxRayHitAttributeSize) {
+  {
+    std::string in = R"(
+PIPELINE compute my_pipeline
+  MAX_RAY_HIT_ATTRIBUTE_SIZE 16
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ(
+        "3: Ray hit attribute size is allowed only for ray tracing pipeline",
+        r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE graphics my_pipeline
+  MAX_RAY_HIT_ATTRIBUTE_SIZE 16
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ(
+        "3: Ray hit attribute size is allowed only for ray tracing pipeline",
+        r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE raytracing my_pipeline
+  MAX_RAY_HIT_ATTRIBUTE_SIZE a
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("3: Ray hit attribute size expects an integer", r.Error());
+  }
+}
+
+TEST_F(AmberScriptParserTest, RayTracingPipelineMaxRecursionDepthSize) {
+  {
+    std::string in = R"(
+PIPELINE compute my_pipeline
+  MAX_RAY_RECURSION_DEPTH 1
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("3: Ray recursion depth is allowed only for ray tracing pipeline",
+              r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE graphics my_pipeline
+  MAX_RAY_RECURSION_DEPTH 1
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("3: Ray recursion depth is allowed only for ray tracing pipeline",
+              r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE raytracing my_pipeline
+  MAX_RAY_RECURSION_DEPTH a
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("3: Ray recursion depth expects an integer", r.Error());
+  }
+}
+
+TEST_F(AmberScriptParserTest, RayTracingPipelineFlags) {
+  {
+    std::string in = R"(
+PIPELINE compute my_pipeline
+  FLAGS LIBRARY
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("3: Flags are allowed only for ray tracing pipeline", r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE graphics my_pipeline
+  FLAGS LIBRARY
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("3: Flags are allowed only for ray tracing pipeline", r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE raytracing my_pipeline
+  FLAGS
+    LIBRARY
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("5: END command missing", r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE raytracing my_pipeline
+  FLAGS UNKNOWN_FLAG
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("3: Unknown flag: UNKNOWN_FLAG", r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE raytracing my_pipeline
+  FLAGS 1.0
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("3: Identifier expected", r.Error());
+  }
+}
+
+TEST_F(AmberScriptParserTest, RayTracingPipelineUseLibrary) {
+  {
+    std::string in = R"(
+PIPELINE raytracing base_pipeline_lib
+  FLAGS LIBRARY
+END
+
+PIPELINE compute my_pipeline
+  USE_LIBRARY base_pipeline_lib
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("7: Use library is allowed only for ray tracing pipeline",
+              r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE raytracing base_pipeline_lib
+  FLAGS LIBRARY
+END
+
+PIPELINE graphics my_pipeline
+  USE_LIBRARY base_pipeline_lib
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("7: Use library is allowed only for ray tracing pipeline",
+              r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE raytracing my_pipeline
+  USE_LIBRARY base_pipeline_lib
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("3: Pipeline not found: base_pipeline_lib", r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE raytracing my_pipeline
+  USE_LIBRARY)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("3: EOL expected", r.Error());
+  }
+  {
+    std::string in = R"(
+PIPELINE raytracing my_pipeline
+  USE_LIBRARY 1
+)";
+
+    Parser parser;
+    Result r = parser.Parse(in);
+    ASSERT_FALSE(r.IsSuccess());
+    EXPECT_EQ("3: Unexpected data type", r.Error());
+  }
 }
 
 }  // namespace amberscript

@@ -81,6 +81,8 @@ class Pipeline {
   Device* GetDevice() const { return device_; }
   virtual BlasesMap* GetBlases() { return nullptr; }
   virtual TlasesMap* GetTlases() { return nullptr; }
+  VkPipelineLayout GetVkPipelineLayout() const { return pipeline_layout_; }
+  VkPipeline GetVkPipeline() const { return pipeline_; }
 
  protected:
   Pipeline(
@@ -88,7 +90,8 @@ class Pipeline {
       Device* device,
       uint32_t fence_timeout_ms,
       bool    pipeline_runtime_layer_enabled,
-      const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
+      const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info,
+      VkPipelineCreateFlags create_flags = 0);
 
   /// Initializes the pipeline.
   Result Initialize(CommandPool* pool);
@@ -116,8 +119,22 @@ class Pipeline {
 
   Result CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout);
 
+  void SetVkPipelineLayout(VkPipelineLayout pipeline_layout) {
+    assert(pipeline_layout_ == VK_NULL_HANDLE);
+    pipeline_layout_ = pipeline_layout;
+  }
+
+  void SetVkPipeline(VkPipeline pipeline) {
+    assert(pipeline_ == VK_NULL_HANDLE);
+    pipeline_ = pipeline;
+  }
+
+  VkPipeline pipeline_ = VK_NULL_HANDLE;
+  VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
+
   Device* device_ = nullptr;
   std::unique_ptr<CommandBuffer> command_;
+  VkPipelineCreateFlags create_flags_ = 0;
 
  private:
   struct DescriptorSetInfo {

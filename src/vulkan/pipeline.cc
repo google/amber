@@ -44,8 +44,10 @@ Pipeline::Pipeline(
     Device* device,
     uint32_t fence_timeout_ms,
     bool pipeline_runtime_layer_enabled,
-    const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
+    const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info,
+    VkPipelineCreateFlags create_flags)
     : device_(device),
+      create_flags_(create_flags),
       pipeline_type_(type),
       shader_stage_info_(shader_stage_info),
       fence_timeout_ms_(fence_timeout_ms),
@@ -69,6 +71,18 @@ Pipeline::~Pipeline() {
       device_->GetPtrs()->vkDestroyDescriptorPool(device_->GetVkDevice(),
                                                   info.pool, nullptr);
     }
+  }
+
+  if (pipeline_layout_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetVkDevice(),
+                                                pipeline_layout_, nullptr);
+    pipeline_layout_ = VK_NULL_HANDLE;
+  }
+
+  if (pipeline_ != VK_NULL_HANDLE) {
+    device_->GetPtrs()->vkDestroyPipeline(device_->GetVkDevice(), pipeline_,
+                                          nullptr);
+    pipeline_ = VK_NULL_HANDLE;
   }
 }
 

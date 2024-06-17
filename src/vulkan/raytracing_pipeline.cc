@@ -54,12 +54,14 @@ RayTracingPipeline::RayTracingPipeline(
     TlasesMap* tlases,
     uint32_t fence_timeout_ms,
     bool pipeline_runtime_layer_enabled,
-    const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
+    const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info,
+    VkPipelineCreateFlags create_flags)
     : Pipeline(PipelineType::kRayTracing,
                device,
                fence_timeout_ms,
                pipeline_runtime_layer_enabled,
-               shader_stage_info),
+               shader_stage_info,
+               create_flags),
       shader_group_create_info_(),
       blases_(blases),
       tlases_(tlases) {}
@@ -77,27 +79,36 @@ Result RayTracingPipeline::Initialize(
 
 Result RayTracingPipeline::CreateVkRayTracingPipeline(
     const VkPipelineLayout& pipeline_layout,
-    VkPipeline* pipeline) {
+    VkPipeline* pipeline,
+    const std::vector<VkPipeline>& libs,
+    uint32_t maxPipelineRayPayloadSize,
+    uint32_t maxPipelineRayHitAttributeSize,
+    uint32_t maxPipelineRayRecursionDepth) {
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info =
       GetVkShaderStageInfo();
 
   for (auto& info : shader_stage_info)
     info.pName = GetEntryPointName(info.stage);
 
-  const uint32_t maxRecursionDepth =
-      1u;  // make it a parameter in the AmberScript
+  const bool lib = (create_flags_ & VK_PIPELINE_CREATE_LIBRARY_BIT_KHR) != 0;
+  const VkPipelineLibraryCreateInfoKHR libraryInfo = {
+      VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR, nullptr,
+      static_cast<uint32_t>(libs.size()), libs.size() ? &libs[0] : nullptr};
+  const VkRayTracingPipelineInterfaceCreateInfoKHR libraryInterface = {
+      VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_INTERFACE_CREATE_INFO_KHR, nullptr,
+      maxPipelineRayPayloadSize, maxPipelineRayHitAttributeSize};
 
   VkRayTracingPipelineCreateInfoKHR pipelineCreateInfo{
       VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR,
       nullptr,
-      static_cast<VkPipelineCreateFlags>(0),
+      create_flags_,
       static_cast<uint32_t>(shader_stage_info.size()),
       shader_stage_info.data(),
       static_cast<uint32_t>(shader_group_create_info_.size()),
       shader_group_create_info_.data(),
-      maxRecursionDepth,
-      nullptr,
-      nullptr,
+      maxPipelineRayRecursionDepth,
+      libs.empty() ? nullptr : &libraryInfo,
+      lib || !libs.empty() ? &libraryInterface : nullptr,
       nullptr,
       pipeline_layout,
       VK_NULL_HANDLE,
@@ -146,24 +157,42 @@ Result RayTracingPipeline::getVulkanSBTRegion(
   return {};
 }
 
+Result RayTracingPipeline::InitLibrary(const std::vector<VkPipeline>& libs,
+                                       uint32_t maxPipelineRayPayloadSize,
+                                       uint32_t maxPipelineRayHitAttributeSize,
+                                       uint32_t maxPipelineRayRecursionDepth) {
+  assert(pipeline_layout_ == VK_NULL_HANDLE);
+  Result r = CreateVkPipelineLayout(&pipeline_layout_);
+  if (!r.IsSuccess())
+    return r;
+
+  assert(pipeline_ == VK_NULL_HANDLE);
+  r = CreateVkRayTracingPipeline(
+      pipeline_layout_, &pipeline_, libs, maxPipelineRayPayloadSize,
+      maxPipelineRayHitAttributeSize, maxPipelineRayRecursionDepth);
+  if (!r.IsSuccess())
+    return r;
+
+  return {};
+}
+
 Result RayTracingPipeline::TraceRays(amber::SBT* rSBT,
                                      amber::SBT* mSBT,
                                      amber::SBT* hSBT,
                                      amber::SBT* cSBT,
                                      uint32_t x,
                                      uint32_t y,
-                                     uint32_t z) {
+                                     uint32_t z,
+                                     uint32_t maxPipelineRayPayloadSize,
+                                     uint32_t maxPipelineRayHitAttributeSize,
+                                     uint32_t maxPipelineRayRecursionDepth,
+                                     const std::vector<VkPipeline>& libs) {
   Result r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
     return r;
 
-  VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
-  r = CreateVkPipelineLayout(&pipeline_layout);
-  if (!r.IsSuccess())
-    return r;
-
-  VkPipeline pipeline = VK_NULL_HANDLE;
-  r = CreateVkRayTracingPipeline(pipeline_layout, &pipeline);
+  r = InitLibrary(libs, maxPipelineRayPayloadSize,
+                  maxPipelineRayHitAttributeSize, maxPipelineRayRecursionDepth);
   if (!r.IsSuccess())
     return r;
 
@@ -184,34 +213,34 @@ Result RayTracingPipeline::TraceRays(amber::SBT* rSBT,
       i.second->BuildTLAS(GetCommandBuffer()->GetVkCommandBuffer());
     }
 
-    BindVkDescriptorSets(pipeline_layout);
+    BindVkDescriptorSets(pipeline_layout_);
 
-    r = RecordPushConstant(pipeline_layout);
+    r = RecordPushConstant(pipeline_layout_);
     if (!r.IsSuccess())
       return r;
 
     device_->GetPtrs()->vkCmdBindPipeline(
         command_->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
-        pipeline);
+        pipeline_);
 
     VkStridedDeviceAddressRegionKHR rSBTRegion = {};
     VkStridedDeviceAddressRegionKHR mSBTRegion = {};
     VkStridedDeviceAddressRegionKHR hSBTRegion = {};
     VkStridedDeviceAddressRegionKHR cSBTRegion = {};
 
-    r = getVulkanSBTRegion(pipeline, rSBT, &rSBTRegion);
+    r = getVulkanSBTRegion(pipeline_, rSBT, &rSBTRegion);
     if (!r.IsSuccess())
       return r;
 
-    r = getVulkanSBTRegion(pipeline, mSBT, &mSBTRegion);
+    r = getVulkanSBTRegion(pipeline_, mSBT, &mSBTRegion);
     if (!r.IsSuccess())
       return r;
 
-    r = getVulkanSBTRegion(pipeline, hSBT, &hSBTRegion);
+    r = getVulkanSBTRegion(pipeline_, hSBT, &hSBTRegion);
     if (!r.IsSuccess())
       return r;
 
-    r = getVulkanSBTRegion(pipeline, cSBT, &cSBTRegion);
+    r = getVulkanSBTRegion(pipeline_, cSBT, &cSBTRegion);
     if (!r.IsSuccess())
       return r;
 
@@ -227,11 +256,6 @@ Result RayTracingPipeline::TraceRays(amber::SBT* rSBT,
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;
-
-  device_->GetPtrs()->vkDestroyPipeline(device_->GetVkDevice(), pipeline,
-                                        nullptr);
-  device_->GetPtrs()->vkDestroyPipelineLayout(device_->GetVkDevice(),
-                                              pipeline_layout, nullptr);
 
   return {};
 }
