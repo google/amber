@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <android/log.h>
+#include <android/looper.h>
 #include <android_native_app_glue.h>
 
 #include "amber/amber.h"
@@ -93,13 +94,17 @@ void android_main(struct android_app* app) {
   app->onAppCmd = handle_cmd;
 
   // Used to poll the events in the main loop
-  int events;
   android_poll_source* source;
 
   // Main loop
   while (app->destroyRequested == 0) {
-    if (ALooper_pollAll(1, nullptr, &events, (void**)&source) >= 0) {
-      if (source != NULL)
+    auto result = ALooper_pollOnce(1, nullptr, nullptr, (void**)&source);
+    if (result == ALOOPER_POLL_ERROR) {
+      LOGE("ALooper_pollOnce returned an error.");
+      exit(1);
+    }
+
+    if (result >= 0 && source != nullptr) {
         source->process(app, source);
     }
   }
