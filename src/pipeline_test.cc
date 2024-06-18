@@ -35,15 +35,17 @@ class PipelineTest : public testing::Test {
   }
 
   void SetupColorAttachment(Pipeline* p, uint32_t location) {
-    if (!color_buffer_)
+    if (!color_buffer_) {
       color_buffer_ = p->GenerateDefaultColorAttachmentBuffer();
+    }
 
     p->AddColorAttachment(color_buffer_.get(), location, 0);
   }
 
   void SetupDepthStencilAttachment(Pipeline* p) {
-    if (!depth_stencil_buffer_)
+    if (!depth_stencil_buffer_) {
       depth_stencil_buffer_ = p->GenerateDefaultDepthStencilAttachmentBuffer();
+    }
 
     p->SetDepthStencilBuffer(depth_stencil_buffer_.get());
   }

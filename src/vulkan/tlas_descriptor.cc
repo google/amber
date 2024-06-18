@@ -43,8 +43,9 @@ Result TLASDescriptor::CreateResourceIfNeeded() {
     if (tlases_->find(amber_tlas) == tlases_->end()) {
       auto& vulkan_tlas = ((*tlases_)[amber_tlas] = MakeUnique<TLAS>(device_));
       Result r = vulkan_tlas->CreateTLAS(amber_tlas, blases_);
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
     }
   }
 

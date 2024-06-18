@@ -78,8 +78,9 @@ TEST_P(FormatStdTest, Test) {
   type->SetColumnCount(test_data.column_count);
 
   Format fmt(type.get());
-  if (test_data.is_std140)
+  if (test_data.is_std140) {
     fmt.SetLayout(Format::Format::Layout::kStd140);
+  }
 
   EXPECT_EQ(test_data.size_in_bytes, fmt.SizeInBytes()) << test_data.name;
 }

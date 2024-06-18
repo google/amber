@@ -65,8 +65,9 @@ amber::Result ConfigHelper::CreateConfig(
 #endif  // AMBER_ENGINE_DAWN
   }
 
-  if (!impl_)
+  if (!impl_) {
     return amber::Result("Unable to create config helper");
+  }
 
   return impl_->CreateConfig(
       engine_major, engine_minor, selected_device, required_features,

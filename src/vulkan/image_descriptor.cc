@@ -41,8 +41,9 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
   auto& transfer_resources = pipeline_->GetDescriptorTransferResources();
 
   for (const auto& amber_buffer : GetAmberBuffers()) {
-    if (amber_buffer->ValuePtr()->empty())
+    if (amber_buffer->ValuePtr()->empty()) {
       continue;
+    }
 
     // Check if the transfer image is already created.
     if (transfer_resources.count(amber_buffer) > 0) {
@@ -99,8 +100,9 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
 
   if (amber_sampler_) {
     Result r = vulkan_sampler_.CreateSampler(amber_sampler_);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
 
   is_descriptor_set_update_needed_ = true;
@@ -109,8 +111,9 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
 
 void ImageDescriptor::UpdateDescriptorSetIfNeeded(
     VkDescriptorSet descriptor_set) {
-  if (!is_descriptor_set_update_needed_)
+  if (!is_descriptor_set_update_needed_) {
     return;
+  }
 
   // Always use general layout.
   VkImageLayout layout = VK_IMAGE_LAYOUT_GENERAL;

@@ -250,12 +250,14 @@ bool AreAllValidationLayersSupported() {
     required_layer_set.erase(property.layerName);
   }
 
-  if (required_layer_set.empty())
+  if (required_layer_set.empty()) {
     return true;
+  }
 
   std::string missing_layers;
-  for (const auto& missing_layer : required_layer_set)
+  for (const auto& missing_layer : required_layer_set) {
     missing_layers = missing_layers + missing_layer + ",\n\t\t";
+  }
   LogError("Vulkan: missing validation layers:\n\t\t" + missing_layers);
   return true;
 }
@@ -277,8 +279,9 @@ bool AreAllValidationExtensionsSupported() {
     }
 
     for (const auto& ext : extension_properties) {
-      if (!strcmp(kExtensionForValidationLayer, ext.extensionName))
+      if (!strcmp(kExtensionForValidationLayer, ext.extensionName)) {
         return true;
+      }
     }
   }
 
@@ -524,8 +527,9 @@ std::vector<std::string> GetAvailableInstanceExtensions() {
     return available_extensions;
   }
 
-  if (available_extension_count == 0)
+  if (available_extension_count == 0) {
     return available_extensions;
+  }
 
   available_extension_properties.resize(available_extension_count);
   if (vkEnumerateInstanceExtensionProperties(
@@ -534,8 +538,9 @@ std::vector<std::string> GetAvailableInstanceExtensions() {
     return available_extensions;
   }
 
-  for (const auto& property : available_extension_properties)
+  for (const auto& property : available_extension_properties) {
     available_extensions.push_back(property.extensionName);
+  }
 
   return available_extensions;
 }
@@ -553,8 +558,9 @@ std::vector<std::string> GetAvailableDeviceExtensions(
     return available_extensions;
   }
 
-  if (available_extension_count == 0)
+  if (available_extension_count == 0) {
     return available_extensions;
+  }
 
   available_extension_properties.resize(available_extension_count);
   if (vkEnumerateDeviceExtensionProperties(
@@ -563,8 +569,9 @@ std::vector<std::string> GetAvailableDeviceExtensions(
     return available_extensions;
   }
 
-  for (const auto& property : available_extension_properties)
+  for (const auto& property : available_extension_properties) {
     available_extensions.push_back(property.extensionName);
+  }
 
   return available_extensions;
 }
@@ -574,8 +581,9 @@ std::vector<std::string> GetAvailableDeviceExtensions(
 bool AreAllExtensionsSupported(
     const std::vector<std::string>& available_extensions,
     const std::vector<std::string>& required_extensions) {
-  if (required_extensions.empty())
+  if (required_extensions.empty()) {
     return true;
+  }
 
   std::set<std::string> required_extension_set(required_extensions.begin(),
                                                required_extensions.end());
@@ -637,8 +645,9 @@ std::string stageFlagBitsToNames(const VkShaderStageFlags bits) {
   bool addSeparator = false;
   for (const auto& stage : stages) {
     if ((bits & stage.first) != 0) {
-      if (addSeparator)
+      if (addSeparator) {
         result << ", ";
+      }
       result << stage.second;
       addSeparator = true;
     }
@@ -665,8 +674,9 @@ ConfigHelperVulkan::ConfigHelperVulkan()
           VkPhysicalDeviceRayTracingPipelineFeaturesKHR()) {}
 
 ConfigHelperVulkan::~ConfigHelperVulkan() {
-  if (vulkan_device_)
+  if (vulkan_device_) {
     vkDestroyDevice(vulkan_device_, nullptr);
+  }
 
   if (vulkan_callback_) {
     auto vkDestroyDebugReportCallbackEXT =
@@ -679,8 +689,9 @@ ConfigHelperVulkan::~ConfigHelperVulkan() {
     }
   }
 
-  if (vulkan_instance_)
+  if (vulkan_instance_) {
     vkDestroyInstance(vulkan_instance_, nullptr);
+  }
 }
 
 amber::Result ConfigHelperVulkan::CreateVulkanInstance(
@@ -704,8 +715,9 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
   std::vector<const char*> layer_names;
 
   if (!disable_validation_layer) {
-    if (!AreAllValidationLayersSupported())
+    if (!AreAllValidationLayersSupported()) {
       return amber::Result("Sample: not all validation layers are supported");
+    }
     if (!AreAllValidationExtensionsSupported()) {
       return amber::Result(
           "Sample: extensions of validation layers are not supported");
@@ -741,8 +753,9 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
 
   // Determine if VkPhysicalDeviceProperties2KHR should be used
   for (auto& ext : required_extensions) {
-    if (ext == "VK_KHR_get_physical_device_properties2")
+    if (ext == "VK_KHR_get_physical_device_properties2") {
       supports_get_physical_device_properties2_ = true;
+    }
   }
 
   std::vector<const char*> required_extensions_in_char;
@@ -776,8 +789,9 @@ amber::Result ConfigHelperVulkan::CreateDebugReportCallback() {
       reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
           vkGetInstanceProcAddr(vulkan_instance_,
                                 "vkCreateDebugReportCallbackEXT"));
-  if (!vkCreateDebugReportCallbackEXT)
+  if (!vkCreateDebugReportCallbackEXT) {
     return amber::Result("Sample: vkCreateDebugReportCallbackEXT is nullptr");
+  }
 
   if (vkCreateDebugReportCallbackEXT(vulkan_instance_, &info, nullptr,
                                      &vulkan_callback_) != VK_SUCCESS) {
@@ -796,24 +810,25 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
     return amber::Result("Device does not support all required extensions");
   }
   for (const auto& ext : available_device_extensions_) {
-    if (ext == "VK_KHR_shader_float16_int8")
+    if (ext == "VK_KHR_shader_float16_int8") {
       supports_shader_float16_int8_ = true;
-    else if (ext == "VK_KHR_8bit_storage")
+    } else if (ext == "VK_KHR_8bit_storage") {
       supports_shader_8bit_storage_ = true;
-    else if (ext == "VK_KHR_16bit_storage")
+    } else if (ext == "VK_KHR_16bit_storage") {
       supports_shader_16bit_storage_ = true;
-    else if (ext == "VK_EXT_subgroup_size_control")
+    } else if (ext == "VK_EXT_subgroup_size_control") {
       supports_subgroup_size_control_ = true;
-    else if (ext == "VK_KHR_shader_subgroup_extended_types")
+    } else if (ext == "VK_KHR_shader_subgroup_extended_types") {
       supports_shader_subgroup_extended_types_ = true;
-    else if (ext == "VK_KHR_variable_pointers")
+    } else if (ext == "VK_KHR_variable_pointers") {
       supports_variable_pointers_ = true;
-    else if (ext == "VK_KHR_acceleration_structure")
+    } else if (ext == "VK_KHR_acceleration_structure") {
       supports_acceleration_structure_ = true;
-    else if (ext == "VK_KHR_buffer_device_address")
+    } else if (ext == "VK_KHR_buffer_device_address") {
       supports_buffer_device_address_ = true;
-    else if (ext == "VK_KHR_ray_tracing_pipeline")
+    } else if (ext == "VK_KHR_ray_tracing_pipeline") {
       supports_ray_tracing_pipeline_ = true;
+    }
   }
 
   VkPhysicalDeviceFeatures required_vulkan_features =
@@ -953,14 +968,16 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
 
     amber::Result r =
         NamesToVulkanFeatures(required_features1, &required_vulkan_features);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
   } else {
     amber::Result r =
         NamesToVulkanFeatures(required_features, &required_vulkan_features);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     vkGetPhysicalDeviceFeatures(physical_device, &available_features_);
   }
@@ -1003,16 +1020,18 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
     }
     amber::Result r = CheckVulkanPhysicalDeviceRequirements(
         physical_devices[deviceID], required_features, required_extensions);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
     vulkan_physical_device_ = physical_devices[deviceID];
     return {};
   } else {
     for (uint32_t i = 0; i < count; ++i) {
       amber::Result r = CheckVulkanPhysicalDeviceRequirements(
           physical_devices[i], required_features, required_extensions);
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         continue;
+      }
       vulkan_physical_device_ = physical_devices[i];
       return {};
     }
@@ -1020,10 +1039,12 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
 
   std::ostringstream out;
   out << "Unable to find Vulkan device supporting:" << std::endl;
-  for (const auto& str : required_features)
+  for (const auto& str : required_features) {
     out << "  " << str << std::endl;
-  for (const auto& str : required_extensions)
+  }
+  for (const auto& str : required_extensions) {
     out << "  " << str << std::endl;
+  }
 
   return amber::Result(out.str());
 }
@@ -1044,9 +1065,10 @@ amber::Result ConfigHelperVulkan::CreateVulkanDevice(
   info.pQueueCreateInfos = &queue_info;
   info.queueCreateInfoCount = 1;
 
-  if (supports_get_physical_device_properties2_)
+  if (supports_get_physical_device_properties2_) {
     return CreateDeviceWithFeatures2(required_features, required_extensions,
                                      &info);
+  }
   return CreateDeviceWithFeatures1(required_features, required_extensions,
                                    &info);
 }
@@ -1069,8 +1091,9 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures1(
       VkPhysicalDeviceFeatures();
   amber::Result r =
       NamesToVulkanFeatures(required_features, &required_vulkan_features);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   info->pEnabledFeatures = &required_vulkan_features;
   return DoCreateDevice(info);
@@ -1233,49 +1256,51 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       continue;
     }
 
-    if (feature == kVariablePointers)
+    if (feature == kVariablePointers) {
       variable_pointers_feature_.variablePointers = VK_TRUE;
-    else if (feature == kVariablePointersStorageBuffer)
+    } else if (feature == kVariablePointersStorageBuffer) {
       variable_pointers_feature_.variablePointersStorageBuffer = VK_TRUE;
-    else if (feature == kFloat16Int8_Float16)
+    } else if (feature == kFloat16Int8_Float16) {
       float16_int8_feature_.shaderFloat16 = VK_TRUE;
-    else if (feature == kFloat16Int8_Int8)
+    } else if (feature == kFloat16Int8_Int8) {
       float16_int8_feature_.shaderInt8 = VK_TRUE;
-    else if (feature == k8BitStorage_Storage)
+    } else if (feature == k8BitStorage_Storage) {
       storage_8bit_feature_.storageBuffer8BitAccess = VK_TRUE;
-    else if (feature == k8BitStorage_UniformAndStorage)
+    } else if (feature == k8BitStorage_UniformAndStorage) {
       storage_8bit_feature_.uniformAndStorageBuffer8BitAccess = VK_TRUE;
-    else if (feature == k8BitStorage_PushConstant)
+    } else if (feature == k8BitStorage_PushConstant) {
       storage_8bit_feature_.storagePushConstant8 = VK_TRUE;
-    else if (feature == k16BitStorage_Storage)
+    } else if (feature == k16BitStorage_Storage) {
       storage_16bit_feature_.storageBuffer16BitAccess = VK_TRUE;
-    else if (feature == k16BitStorage_UniformAndStorage)
+    } else if (feature == k16BitStorage_UniformAndStorage) {
       storage_16bit_feature_.uniformAndStorageBuffer16BitAccess = VK_TRUE;
-    else if (feature == k16BitStorage_PushConstant)
+    } else if (feature == k16BitStorage_PushConstant) {
       storage_16bit_feature_.storagePushConstant16 = VK_TRUE;
-    else if (feature == k16BitStorage_InputOutput)
+    } else if (feature == k16BitStorage_InputOutput) {
       storage_16bit_feature_.storageInputOutput16 = VK_TRUE;
-    else if (feature == kSubgroupSizeControl)
+    } else if (feature == kSubgroupSizeControl) {
       subgroup_size_control_feature_.subgroupSizeControl = VK_TRUE;
-    else if (feature == kComputeFullSubgroups)
+    } else if (feature == kComputeFullSubgroups) {
       subgroup_size_control_feature_.computeFullSubgroups = VK_TRUE;
-    else if (feature == kShaderSubgroupExtendedTypes)
+    } else if (feature == kShaderSubgroupExtendedTypes) {
       shader_subgroup_extended_types_feature_.shaderSubgroupExtendedTypes =
           VK_TRUE;
-    else if (feature == kAccelerationStructure)
+    } else if (feature == kAccelerationStructure) {
       acceleration_structure_feature_.accelerationStructure = VK_TRUE;
-    else if (feature == kBufferDeviceAddress)
+    } else if (feature == kBufferDeviceAddress) {
       buffer_device_address_feature_.bufferDeviceAddress = VK_TRUE;
-    else if (feature == kRayTracingPipeline)
+    } else if (feature == kRayTracingPipeline) {
       ray_tracing_pipeline_feature_.rayTracingPipeline = VK_TRUE;
+    }
   }
 
   VkPhysicalDeviceFeatures required_vulkan_features =
       VkPhysicalDeviceFeatures();
   amber::Result r =
       NamesToVulkanFeatures(feature1_names, &required_vulkan_features);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   available_features2_.features = required_vulkan_features;
 
@@ -1410,26 +1435,31 @@ amber::Result ConfigHelperVulkan::CreateConfig(
   amber::Result r = CreateVulkanInstance(
       engine_major, engine_minor, required_instance_extensions,
       disable_validation_layer, enable_pipeline_runtime_layer);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   if (!disable_validation_layer) {
     r = CreateDebugReportCallback();
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
 
   r = ChooseVulkanPhysicalDevice(required_features, required_device_extensions,
                                  selected_device);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
-  if (show_version_info)
+  if (show_version_info) {
     DumpPhysicalDeviceInfo();
+  }
 
   r = CreateVulkanDevice(required_features, required_device_extensions);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   vkGetDeviceQueue(vulkan_device_, vulkan_queue_family_index_, 0,
                    &vulkan_queue_);

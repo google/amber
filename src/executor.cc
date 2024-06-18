@@ -37,8 +37,9 @@ Result Executor::CompileShaders(const amber::Script* script,
   for (auto& pipeline : script->GetPipelines()) {
     for (auto& shader_info : pipeline->GetShaders()) {
       std::string target_env = shader_info.GetShader()->GetTargetEnv();
-      if (target_env.empty())
+      if (target_env.empty()) {
         target_env = script->GetSpvTargetEnv();
+      }
 
       ShaderCompiler sc(target_env, options->disable_spirv_validation,
                         script->GetVirtualFiles());
@@ -46,8 +47,9 @@ Result Executor::CompileShaders(const amber::Script* script,
       Result r;
       std::vector<uint32_t> data;
       std::tie(r, data) = sc.Compile(pipeline.get(), &shader_info, shader_map);
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
 
       shader_info.SetData(std::move(data));
     }
@@ -64,34 +66,41 @@ Result Executor::Execute(Engine* engine,
 
   if (!script->GetPipelines().empty()) {
     Result r = CompileShaders(script, shader_map, options);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     // OpenCL specific pipeline updates.
     for (auto& pipeline : script->GetPipelines()) {
       r = pipeline->UpdateOpenCLBufferBindings();
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
       r = pipeline->GenerateOpenCLPodBuffers();
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
       r = pipeline->GenerateOpenCLLiteralSamplers();
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
       r = pipeline->GenerateOpenCLPushConstants();
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
     }
 
     for (auto& pipeline : script->GetPipelines()) {
       r = engine->CreatePipeline(pipeline.get());
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
     }
   }
 
-  if (options->execution_type == ExecutionType::kPipelineCreateOnly)
+  if (options->execution_type == ExecutionType::kPipelineCreateOnly) {
     return {};
+  }
 
   // Process Commands
   for (const auto& cmd : script->GetCommands()) {
@@ -100,8 +109,9 @@ Result Executor::Execute(Engine* engine,
     }
 
     Result r = ExecuteCommand(engine, cmd.get());
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
   return {};
 }
@@ -125,14 +135,18 @@ Result Executor::ExecuteCommand(Engine* engine, Command* cmd) {
     return verifier_.ProbeSSBO(probe_ssbo, buffer->ElementCount(),
                                buffer->ValuePtr()->data());
   }
-  if (cmd->IsClear())
+  if (cmd->IsClear()) {
     return engine->DoClear(cmd->AsClear());
-  if (cmd->IsClearColor())
+  }
+  if (cmd->IsClearColor()) {
     return engine->DoClearColor(cmd->AsClearColor());
-  if (cmd->IsClearDepth())
+  }
+  if (cmd->IsClearDepth()) {
     return engine->DoClearDepth(cmd->AsClearDepth());
-  if (cmd->IsClearStencil())
+  }
+  if (cmd->IsClearStencil()) {
     return engine->DoClearStencil(cmd->AsClearStencil());
+  }
   if (cmd->IsCompareBuffer()) {
     auto compare = cmd->AsCompareBuffer();
     auto buffer_1 = compare->GetBuffer1();
@@ -152,28 +166,37 @@ Result Executor::ExecuteCommand(Engine* engine, Command* cmd) {
     auto buffer_to = copy->GetBufferTo();
     return buffer_from->CopyTo(buffer_to);
   }
-  if (cmd->IsDrawRect())
+  if (cmd->IsDrawRect()) {
     return engine->DoDrawRect(cmd->AsDrawRect());
-  if (cmd->IsDrawGrid())
+  }
+  if (cmd->IsDrawGrid()) {
     return engine->DoDrawGrid(cmd->AsDrawGrid());
-  if (cmd->IsDrawArrays())
+  }
+  if (cmd->IsDrawArrays()) {
     return engine->DoDrawArrays(cmd->AsDrawArrays());
-  if (cmd->IsCompute())
+  }
+  if (cmd->IsCompute()) {
     return engine->DoCompute(cmd->AsCompute());
-  if (cmd->IsRayTracing())
+  }
+  if (cmd->IsRayTracing()) {
     return engine->DoTraceRays(cmd->AsRayTracing());
-  if (cmd->IsEntryPoint())
+  }
+  if (cmd->IsEntryPoint()) {
     return engine->DoEntryPoint(cmd->AsEntryPoint());
-  if (cmd->IsPatchParameterVertices())
+  }
+  if (cmd->IsPatchParameterVertices()) {
     return engine->DoPatchParameterVertices(cmd->AsPatchParameterVertices());
-  if (cmd->IsBuffer())
+  }
+  if (cmd->IsBuffer()) {
     return engine->DoBuffer(cmd->AsBuffer());
+  }
   if (cmd->IsRepeat()) {
     for (uint32_t i = 0; i < cmd->AsRepeat()->GetCount(); ++i) {
       for (const auto& sub_cmd : cmd->AsRepeat()->GetCommands()) {
         Result r = ExecuteCommand(engine, sub_cmd.get());
-        if (!r.IsSuccess())
+        if (!r.IsSuccess()) {
           return r;
+        }
       }
     }
     return {};

@@ -154,8 +154,9 @@ class Number : public Type {
   uint32_t SizeInBytes() const override { return bits_ / 8; }
 
   bool Equal(const Type* b) const override {
-    if (!b->IsNumber())
+    if (!b->IsNumber()) {
       return false;
+    }
 
     auto n = b->AsNumber();
     return format_mode_ == n->format_mode_ && bits_ == n->bits_;
@@ -188,23 +189,29 @@ class List : public Type {
   bool IsList() const override { return true; }
 
   bool Equal(const Type* b) const override {
-    if (!b->IsList())
+    if (!b->IsList()) {
       return false;
+    }
 
     auto l = b->AsList();
-    if (pack_size_in_bits_ != l->pack_size_in_bits_)
+    if (pack_size_in_bits_ != l->pack_size_in_bits_) {
       return false;
-    if (members_.size() != l->members_.size())
+    }
+    if (members_.size() != l->members_.size()) {
       return false;
+    }
 
     auto& lm = l->Members();
     for (size_t i = 0; i < members_.size(); ++i) {
-      if (members_[i].name != lm[i].name)
+      if (members_[i].name != lm[i].name) {
         return false;
-      if (members_[i].mode != lm[i].mode)
+      }
+      if (members_[i].mode != lm[i].mode) {
         return false;
-      if (members_[i].num_bits != lm[i].num_bits)
+      }
+      if (members_[i].num_bits != lm[i].num_bits) {
         return false;
+      }
     }
     return true;
   }
@@ -248,27 +255,35 @@ class Struct : public Type {
   bool IsStruct() const override { return true; }
 
   bool Equal(const Type* b) const override {
-    if (!b->IsStruct())
+    if (!b->IsStruct()) {
       return false;
+    }
 
     auto s = b->AsStruct();
-    if (is_stride_specified_ != s->is_stride_specified_)
+    if (is_stride_specified_ != s->is_stride_specified_) {
       return false;
-    if (stride_in_bytes_ != s->stride_in_bytes_)
+    }
+    if (stride_in_bytes_ != s->stride_in_bytes_) {
       return false;
-    if (members_.size() != s->members_.size())
+    }
+    if (members_.size() != s->members_.size()) {
       return false;
+    }
 
     auto& sm = s->Members();
     for (size_t i = 0; i < members_.size(); ++i) {
-      if (members_[i].offset_in_bytes != sm[i].offset_in_bytes)
+      if (members_[i].offset_in_bytes != sm[i].offset_in_bytes) {
         return false;
-      if (members_[i].array_stride_in_bytes != sm[i].array_stride_in_bytes)
+      }
+      if (members_[i].array_stride_in_bytes != sm[i].array_stride_in_bytes) {
         return false;
-      if (members_[i].matrix_stride_in_bytes != sm[i].matrix_stride_in_bytes)
+      }
+      if (members_[i].matrix_stride_in_bytes != sm[i].matrix_stride_in_bytes) {
         return false;
-      if (!members_[i].type->Equal(sm[i].type))
+      }
+      if (!members_[i].type->Equal(sm[i].type)) {
         return false;
+      }
     }
     return true;
   }

@@ -37,8 +37,9 @@ class VerifierTest : public testing::Test {
   ~VerifierTest() override = default;
 
   const Format* GetColorFormat() {
-    if (color_frame_format_)
+    if (color_frame_format_) {
       return color_frame_format_.get();
+    }
 
     TypeParser parser;
     color_frame_type_ = parser.Parse("B8G8R8A8_UNORM");

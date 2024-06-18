@@ -54,8 +54,9 @@ extern "C" JNIEXPORT JNICALL int Java_com_google_amber_Amber_androidHelper(
 
   std::vector<const char*> argv;
 
-  for (const std::string& arg : argv_string)
+  for (const std::string& arg : argv_string) {
     argv.push_back(arg.c_str());
+  }
 
   return android_main(static_cast<int>(argv.size()), argv.data());
 }

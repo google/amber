@@ -28,11 +28,13 @@ Token::Token(TokenType type) : type_(type) {}
 Token::~Token() = default;
 
 Result Token::ConvertToDouble() {
-  if (IsDouble())
+  if (IsDouble()) {
     return {};
+  }
 
-  if (IsIdentifier() || IsEOL() || IsEOS())
+  if (IsIdentifier() || IsEOL() || IsEOS()) {
     return Result("Invalid conversion to double");
+  }
 
   if (IsInteger()) {
     if (is_negative_ ||
@@ -58,15 +60,17 @@ Tokenizer::~Tokenizer() = default;
 
 std::unique_ptr<Token> Tokenizer::NextToken() {
   SkipWhitespace();
-  if (current_position_ >= data_.length())
+  if (current_position_ >= data_.length()) {
     return MakeUnique<Token>(TokenType::kEOS);
+  }
 
   if (data_[current_position_] == '#') {
     SkipComment();
     SkipWhitespace();
   }
-  if (current_position_ >= data_.length())
+  if (current_position_ >= data_.length()) {
     return MakeUnique<Token>(TokenType::kEOS);
+  }
 
   if (data_[current_position_] == '\n') {
     ++current_line_;
@@ -243,8 +247,9 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
     uint64_t val = uint64_t(std::strtoull(tok_str.c_str(), &final_pos, 10));
     tok->SetUint64Value(static_cast<uint64_t>(val));
   }
-  if (tok_str.size() > 1 && tok_str[0] == '-')
+  if (tok_str.size() > 1 && tok_str[0] == '-') {
     tok->SetNegative();
+  }
 
   tok->SetOriginalString(
       tok_str.substr(0, static_cast<size_t>(final_pos - tok_str.c_str())));
@@ -252,8 +257,9 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
   // If the number isn't the whole token then move back so we can then parse
   // the string portion.
   auto diff = size_t(final_pos - tok_str.c_str());
-  if (diff > 0)
+  if (diff > 0) {
     current_position_ -= tok_str.length() - diff;
+  }
 
   return tok;
 }
@@ -283,8 +289,9 @@ std::string Tokenizer::ExtractToNext(const std::string& str) {
   // Account for any new lines in the extracted text so our current line
   // number stays correct.
   for (const char c : ret) {
-    if (c == '\n')
+    if (c == '\n') {
       ++current_line_;
+    }
   }
 
   return ret;

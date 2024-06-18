@@ -15,8 +15,8 @@
 
 #include <cstring>
 
-#include "src/vulkan/sbt.h"
 #include "src/vulkan/pipeline.h"
+#include "src/vulkan/sbt.h"
 
 namespace amber {
 namespace vulkan {
@@ -25,11 +25,13 @@ SBT::SBT(Device* device) : device_(device) {}
 
 Result SBT::Create(amber::SBT* sbt, VkPipeline pipeline) {
   uint32_t handles_count = 0;
-  for (auto& x : sbt->GetSBTRecords())
+  for (auto& x : sbt->GetSBTRecords()) {
     handles_count += x->GetCount();
+  }
 
-  if (handles_count == 0)
+  if (handles_count == 0) {
     return Result("SBT must contain at least one record");
+  }
 
   const uint32_t handle_size = device_->GetRayTracingShaderGroupHandleSize();
   const uint32_t buffer_size = handle_size * handles_count;
@@ -41,8 +43,9 @@ Result SBT::Create(amber::SBT* sbt, VkPipeline pipeline) {
                          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
   buffer_->AddAllocateFlags(VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
   Result r = buffer_->Initialize();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   size_t start = 0;
   for (auto& x : sbt->GetSBTRecords()) {
@@ -53,8 +56,9 @@ Result SBT::Create(amber::SBT* sbt, VkPipeline pipeline) {
           device_->GetVkDevice(), pipeline, index, count, count * handle_size,
           &handles[start * handle_size]);
 
-      if (vr != VK_SUCCESS)
+      if (vr != VK_SUCCESS) {
         return Result("vkGetRayTracingShaderGroupHandlesKHR has failed");
+      }
     }
 
     start += count;

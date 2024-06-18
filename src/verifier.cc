@@ -52,8 +52,9 @@ void CopyBitsOfMemoryToBuffer(uint8_t* dst,
   }
 
   data >>= src_bit_offset;
-  if (bits != 64)
+  if (bits != 64) {
     data &= (1ULL << bits) - 1ULL;
+  }
 
   std::memcpy(dst, &data, static_cast<size_t>((bits + 7) / kBitsPerByte));
 }
@@ -61,8 +62,9 @@ void CopyBitsOfMemoryToBuffer(uint8_t* dst,
 // This is based on "18.3. sRGB transfer functions" of
 // https://www.khronos.org/registry/DataFormat/specs/1.2/dataformat.1.2.html
 double SRGBToLinearValue(double sRGB) {
-  if (sRGB <= 0.04045)
+  if (sRGB <= 0.04045) {
     return sRGB / 12.92;
+  }
 
   return pow((sRGB + 0.055) / 1.055, 2.4);
 }
@@ -139,24 +141,28 @@ Result CheckActualValue(const ProbeSSBOCommand* command,
       }
       break;
     case ProbeSSBOCommand::Comparator::kLess:
-      if (actual_value >= val)
+      if (actual_value >= val) {
         return Result(std::to_string(actual_value) + " < " +
                       std::to_string(val));
+      }
       break;
     case ProbeSSBOCommand::Comparator::kLessOrEqual:
-      if (actual_value > val)
+      if (actual_value > val) {
         return Result(std::to_string(actual_value) +
                       " <= " + std::to_string(val));
+      }
       break;
     case ProbeSSBOCommand::Comparator::kGreater:
-      if (actual_value <= val)
+      if (actual_value <= val) {
         return Result(std::to_string(actual_value) + " > " +
                       std::to_string(val));
+      }
       break;
     case ProbeSSBOCommand::Comparator::kGreaterOrEqual:
-      if (actual_value < val)
+      if (actual_value < val) {
         return Result(std::to_string(actual_value) +
                       " >= " + std::to_string(val));
+      }
       break;
   }
   return {};
@@ -285,8 +291,9 @@ void ScaleTexelValuesIfNeeded(std::vector<double>* texel, const Format* fmt) {
 
   for (size_t i = 0; i < fmt->GetSegments().size(); ++i) {
     const auto& seg = fmt->GetSegments()[i];
-    if (seg.IsPadding())
+    if (seg.IsPadding()) {
       continue;
+    }
 
     double scaled_value = (*texel)[i];
     if (seg.GetFormatMode() == FormatMode::kUNorm) {
@@ -295,8 +302,9 @@ void ScaleTexelValuesIfNeeded(std::vector<double>* texel, const Format* fmt) {
       scaled_value /= static_cast<double>((1 << (seg.GetNumBits() - 1)) - 1);
     } else if (seg.GetFormatMode() == FormatMode::kSRGB) {
       scaled_value /= static_cast<double>((1 << seg.GetNumBits()) - 1);
-      if (seg.GetName() != FormatComponentType::kA)
+      if (seg.GetName() != FormatComponentType::kA) {
         scaled_value = SRGBToLinearValue(scaled_value);
+      }
     } else if (seg.GetFormatMode() == FormatMode::kSScaled ||
                seg.GetFormatMode() == FormatMode::kUScaled) {
       assert(false && "UScaled and SScaled are not implemented");
@@ -318,8 +326,9 @@ bool IsTexelEqualToExpected(const std::vector<double>& texel,
                             const bool* is_tolerance_percent) {
   for (size_t i = 0; i < fmt->GetSegments().size(); ++i) {
     const auto& seg = fmt->GetSegments()[i];
-    if (seg.IsPadding())
+    if (seg.IsPadding()) {
       continue;
+    }
 
     double texel_for_component = texel[i];
     double expected = 0;
@@ -327,8 +336,9 @@ bool IsTexelEqualToExpected(const std::vector<double>& texel,
     bool is_current_tolerance_percent = false;
     switch (seg.GetName()) {
       case FormatComponentType::kA:
-        if (!command->IsRGBA())
+        if (!command->IsRGBA()) {
           continue;
+        }
 
         expected = static_cast<double>(command->GetA());
         current_tolerance = tolerance[3];
@@ -367,8 +377,9 @@ std::vector<double> GetTexelInRGBA(const std::vector<double>& texel,
   std::vector<double> texel_in_rgba(texel.size());
   for (size_t i = 0; i < fmt->GetSegments().size(); ++i) {
     const auto& seg = fmt->GetSegments()[i];
-    if (seg.IsPadding())
+    if (seg.IsPadding()) {
       continue;
+    }
 
     switch (seg.GetName()) {
       case FormatComponentType::kR:
@@ -403,12 +414,15 @@ Result Verifier::Probe(const ProbeCommand* command,
                        uint32_t frame_width,
                        uint32_t frame_height,
                        const void* buf) {
-  if (!command)
+  if (!command) {
     return Result("Verifier::Probe given ProbeCommand is nullptr");
-  if (!fmt)
+  }
+  if (!fmt) {
     return Result("Verifier::Probe given texel's Format is nullptr");
-  if (!buf)
+  }
+  if (!buf) {
     return Result("Verifier::Probe given buffer to probe is nullptr");
+  }
 
   uint32_t x = 0;
   uint32_t y = 0;
@@ -518,8 +532,9 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
                            const void* buffer) {
   const auto& values = command->GetValues();
   if (!buffer) {
-    if (values.empty())
+    if (values.empty()) {
       return {};
+    }
     return Result(
         "Verifier::ProbeSSBO actual data is empty while expected "
         "data is not");
@@ -549,8 +564,9 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
 
   const uint8_t* ptr = static_cast<const uint8_t*>(buffer) + offset;
   for (size_t i = 0, k = 0; i < values.size(); ++i, ++k) {
-    if (k >= segments.size())
+    if (k >= segments.size()) {
       k = 0;
+    }
 
     const auto& value = values[i];
     auto segment = segments[k];
@@ -558,8 +574,9 @@ Result Verifier::ProbeSSBO(const ProbeSSBOCommand* command,
     while (segment.IsPadding()) {
       ptr += segment.PaddingBytes();
       ++k;
-      if (k >= segments.size())
+      if (k >= segments.size()) {
         k = 0;
+      }
 
       segment = segments[k];
     }

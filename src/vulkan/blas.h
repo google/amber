@@ -16,8 +16,8 @@
 #ifndef SRC_VULKAN_BLAS_H_
 #define SRC_VULKAN_BLAS_H_
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "src/acceleration_structure.h"
 #include "src/vulkan/device.h"

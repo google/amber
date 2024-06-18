@@ -49,8 +49,9 @@ std::string FormatModeToName(FormatMode mode) {
 }
 
 uint32_t CalculatePad(uint32_t val) {
-  if ((val % 16) == 0)
+  if ((val % 16) == 0) {
     return 0;
+  }
   return 16 - (val % 16);
 }
 
@@ -58,10 +59,11 @@ uint32_t CalculatePad(uint32_t val) {
 
 Format::Format(type::Type* type) : type_(type) {
   auto name = GenerateName();
-  if (name == "")
+  if (name == "") {
     format_type_ = FormatType::kUnknown;
-  else
+  } else {
     format_type_ = TypeParser::NameToFormatType(name);
+  }
   RebuildSegments();
 }
 
@@ -88,8 +90,9 @@ bool Format::Equal(const Format* b) const {
 uint32_t Format::InputNeededPerElement() const {
   uint32_t count = 0;
   for (const auto& seg : segments_) {
-    if (seg.IsPadding())
+    if (seg.IsPadding()) {
       continue;
+    }
 
     count += 1;
   }
@@ -97,8 +100,9 @@ uint32_t Format::InputNeededPerElement() const {
 }
 
 void Format::SetLayout(Layout layout) {
-  if (layout == layout_)
+  if (layout == layout_) {
     return;
+  }
 
   layout_ = layout;
   RebuildSegments();
@@ -132,8 +136,9 @@ bool Format::AddSegment(const Segment& seg) {
         last.SizeInBytes() >= seg.SizeInBytes()) {
       segments_.back() = seg;
       auto pad = last.SizeInBytes() - seg.SizeInBytes();
-      if (pad > 0)
+      if (pad > 0) {
         AddPaddedSegmentPackable(pad);
+      }
 
       return false;
     }
@@ -143,17 +148,20 @@ bool Format::AddSegment(const Segment& seg) {
 }
 
 bool Format::NeedsPadding(type::Type* t) const {
-  if (layout_ == Layout::kStd140 && (t->IsMatrix() || t->IsArray()))
+  if (layout_ == Layout::kStd140 && (t->IsMatrix() || t->IsArray())) {
     return true;
-  if (t->IsVec3() || (t->IsMatrix() && t->RowCount() == 3))
+  }
+  if (t->IsVec3() || (t->IsMatrix() && t->RowCount() == 3)) {
     return true;
+  }
   return false;
 }
 
 uint32_t Format::CalcVecBaseAlignmentInBytes(type::Number* n) const {
   // vec3 rounds up to a Vec4, so 4 * N
-  if (n->IsVec3())
+  if (n->IsVec3()) {
     return 4 * n->SizeInBytes();
+  }
 
   // vec2 and vec4 are 2 * N and 4 * N respectively
   return n->RowCount() * n->SizeInBytes();
@@ -174,8 +182,9 @@ uint32_t Format::CalcArrayBaseAlignmentInBytes(type::Type* t) const {
   }
 
   // In std140 array elements round up to multiple of vec4.
-  if (layout_ == Layout::kStd140)
+  if (layout_ == Layout::kStd140) {
     align += CalculatePad(align);
+  }
 
   return align;
 }
@@ -195,14 +204,16 @@ uint32_t Format::CalcMatrixBaseAlignmentInBytes(type::Number* m) const {
   // the matrix is column major.
 
   uint32_t align = 0;
-  if (m->RowCount() == 3)
+  if (m->RowCount() == 3) {
     align = 4 * m->SizeInBytes();
-  else
+  } else {
     align = m->RowCount() * m->SizeInBytes();
+  }
 
   // STD140 rounds up to 16 byte alignment
-  if (layout_ == Layout::kStd140)
+  if (layout_ == Layout::kStd140) {
     align += CalculatePad(align);
+  }
 
   return align;
 }
@@ -212,21 +223,27 @@ uint32_t Format::CalcListBaseAlignmentInBytes(type::List* l) const {
 }
 
 uint32_t Format::CalcTypeBaseAlignmentInBytes(type::Type* t) const {
-  if (t->IsArray())
+  if (t->IsArray()) {
     return CalcArrayBaseAlignmentInBytes(t);
-  if (t->IsVec())
+  }
+  if (t->IsVec()) {
     return CalcVecBaseAlignmentInBytes(t->AsNumber());
-  if (t->IsMatrix())
+  }
+  if (t->IsMatrix()) {
     return CalcMatrixBaseAlignmentInBytes(t->AsNumber());
-  if (t->IsNumber())
+  }
+  if (t->IsNumber()) {
     return t->SizeInBytes();
-  if (t->IsList())
+  }
+  if (t->IsList()) {
     return CalcListBaseAlignmentInBytes(t->AsList());
+  }
   if (t->IsStruct()) {
     // Pad struct to 16 bytes in STD140
     uint32_t base = CalcStructBaseAlignmentInBytes(t->AsStruct());
-    if (layout_ == Layout::kStd140)
+    if (layout_ == Layout::kStd140) {
       base += CalculatePad(base);
+    }
     return base;
   }
 
@@ -247,8 +264,9 @@ uint32_t Format::AddSegmentsForType(type::Type* type) {
   // Remove packable from previous packing for types which can't pack back.
   if (type->IsStruct() || type->IsVec() || type->IsMatrix() ||
       type->IsArray()) {
-    if (!segments_.empty() && segments_.back().IsPadding())
+    if (!segments_.empty() && segments_.back().IsPadding()) {
       segments_.back().SetPackable(false);
+    }
   }
 
   // TODO(dsinclair): How to handle matrix stride .... Stride comes from parent
@@ -273,8 +291,9 @@ uint32_t Format::AddSegmentsForType(type::Type* type) {
         for (size_t i = 0; i < member.type->ArraySize(); ++i) {
           auto ary_seg_size = AddSegmentsForType(member.type);
           // Don't allow array members to pack together
-          if (!segments_.empty() && segments_.back().IsPadding())
+          if (!segments_.empty() && segments_.back().IsPadding()) {
             segments_.back().SetPackable(false);
+          }
 
           if (member.HasArrayStride()) {
             uint32_t array_stride =
@@ -320,8 +339,9 @@ uint32_t Format::AddSegmentsForType(type::Type* type) {
     auto l = type->AsList();
     for (uint32_t i = 0; i < type->ColumnCount(); ++i) {
       for (const auto& m : l->Members()) {
-        if (AddSegment(Segment{m.name, m.mode, m.num_bits}))
+        if (AddSegment(Segment{m.name, m.mode, m.num_bits})) {
           size += m.SizeInBytes();
+        }
       }
 
       if (NeedsPadding(type)) {
@@ -357,15 +377,17 @@ uint32_t Format::AddSegmentsForType(type::Type* type) {
     }
 
     // Make sure matrix rows don't accidentally pack together.
-    if (type->IsMatrix() && segments_.back().IsPadding())
+    if (type->IsMatrix() && segments_.back().IsPadding()) {
       segments_.back().SetPackable(false);
+    }
   }
   return size;
 }
 
 std::string Format::GenerateName() const {
-  if (type_->IsMatrix())
+  if (type_->IsMatrix()) {
     return "";
+  }
 
   static const char NAME_PARTS[] = "RGBAXDS";
   if (type_->IsList()) {
@@ -384,24 +406,28 @@ std::string Format::GenerateName() const {
     for (size_t i = 0; i < parts.size(); ++i) {
       name += parts[i].first;
 
-      if (i + 1 < parts.size() && parts[i].second != parts[i + 1].second)
+      if (i + 1 < parts.size() && parts[i].second != parts[i + 1].second) {
         name += "_" + parts[i].second + "_";
+      }
 
       // Handle the X8_D24 underscore.
-      if (parts[i].first[0] == 'X')
+      if (parts[i].first[0] == 'X') {
         name += "_";
+      }
     }
     name += "_" + parts.back().second;
-    if (type_->AsList()->IsPacked())
+    if (type_->AsList()->IsPacked()) {
       name += "_PACK" + std::to_string(type_->AsList()->PackSizeInBits());
+    }
 
     return name;
   }
 
   if (type_->IsNumber()) {
     std::string name = "";
-    for (uint32_t i = 0; i < type_->RowCount(); ++i)
+    for (uint32_t i = 0; i < type_->RowCount(); ++i) {
       name += NAME_PARTS[i] + std::to_string(type_->SizeInBytes() * 8);
+    }
 
     name += "_" + FormatModeToName(type_->AsNumber()->GetFormatMode());
     return name;

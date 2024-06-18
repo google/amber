@@ -77,8 +77,9 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
     Result r =
         transfer_resources[amber_buffer]->AsTransferBuffer()->AddUsageFlags(
             flags);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
   is_descriptor_set_update_needed_ = true;
 
@@ -90,8 +91,9 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
 
 void BufferDescriptor::UpdateDescriptorSetIfNeeded(
     VkDescriptorSet descriptor_set) {
-  if (!is_descriptor_set_update_needed_)
+  if (!is_descriptor_set_update_needed_) {
     return;
+  }
 
   std::vector<VkDescriptorBufferInfo> buffer_infos;
   std::vector<VkBufferView> buffer_views;

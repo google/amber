@@ -77,12 +77,14 @@ List::List() = default;
 List::~List() = default;
 
 uint32_t List::SizeInBytes() const {
-  if (pack_size_in_bits_ > 0)
+  if (pack_size_in_bits_ > 0) {
     return pack_size_in_bits_;
+  }
 
   uint32_t size = 0;
-  for (const auto& member : members_)
+  for (const auto& member : members_) {
     size += member.SizeInBytes();
+  }
 
   return size;
 }

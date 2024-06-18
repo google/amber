@@ -25,8 +25,9 @@ TransferBuffer::TransferBuffer(Device* device,
                                uint32_t size_in_bytes,
                                Format* format)
     : Resource(device, size_in_bytes) {
-  if (format)
+  if (format) {
     format_ = device->GetVkFormat(*format);
+  }
 }
 
 TransferBuffer::~TransferBuffer() {
@@ -53,14 +54,16 @@ Result TransferBuffer::Initialize() {
   }
 
   Result r = CreateVkBuffer(&buffer_, usage_flags_);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   uint32_t memory_type_index = 0;
   r = AllocateAndBindMemoryToVkBuffer(
       buffer_, &memory_, GetMemoryPropertiesFlags(), true, &memory_type_index);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   // Create buffer view
   if (usage_flags_ & (VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT |

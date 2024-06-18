@@ -269,8 +269,9 @@ class Pipeline {
   /// Returns the ShaderInfo for |shader| or nullptr.
   const ShaderInfo* GetShader(Shader* shader) const {
     for (const auto& info : shaders_) {
-      if (info.GetShader() == shader)
+      if (info.GetShader() == shader) {
         return &info;
+      }
     }
     return nullptr;
   }
@@ -423,8 +424,9 @@ class Pipeline {
   /// Adds |sbt| to the list of known shader binding tables.
   /// The |sbt| must have a unique name within pipeline.
   Result AddSBT(std::unique_ptr<SBT> sbt) {
-    if (name_to_sbt_.count(sbt->GetName()) > 0)
+    if (name_to_sbt_.count(sbt->GetName()) > 0) {
       return Result("duplicate SBT name provided");
+    }
 
     sbts_.push_back(std::move(sbt));
     name_to_sbt_[sbts_.back()->GetName()] = sbts_.back().get();
@@ -444,8 +446,9 @@ class Pipeline {
   /// Adds |group| to the list of known shader groups.
   /// The |group| must have a unique name within pipeline.
   Result AddShaderGroup(std::shared_ptr<ShaderGroup> group) {
-    if (name_to_shader_group_.count(group->GetName()) > 0)
+    if (name_to_shader_group_.count(group->GetName()) > 0) {
       return Result("shader group name already exists");
+    }
 
     shader_groups_.push_back(std::move(group));
     name_to_shader_group_[shader_groups_.back()->GetName()] =
@@ -544,12 +547,8 @@ class Pipeline {
   uint32_t GetMaxPipelineRayRecursionDepth() {
     return max_pipeline_ray_recursion_depth_;
   }
-  void SetCreateFlags(uint32_t flags) {
-    create_flags_ = flags;
-  }
-  uint32_t GetCreateFlags() const {
-    return create_flags_;
-  }
+  void SetCreateFlags(uint32_t flags) { create_flags_ = flags; }
+  uint32_t GetCreateFlags() const { return create_flags_; }
 
   void AddPipelineLibrary(Pipeline* pipeline) { libs_.push_back(pipeline); }
   const std::vector<Pipeline*>& GetPipelineLibraries() const { return libs_; }
