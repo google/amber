@@ -46,8 +46,9 @@ uint16_t FloatSign(const uint32_t hex_float) {
 uint16_t FloatExponent(const uint32_t hex_float) {
   uint32_t exponent_bits = ((hex_float >> 23U) & ((1U << 8U) - 1U));
   // Handle zero and denormals.
-  if (exponent_bits == 0U)
+  if (exponent_bits == 0U) {
     return 0;
+  }
   uint32_t exponent = exponent_bits - 112U;
   const uint32_t half_exponent_mask = (1U << 5U) - 1U;
   assert(((exponent & ~half_exponent_mask) == 0U) && "Float exponent overflow");

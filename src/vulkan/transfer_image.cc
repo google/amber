@@ -106,11 +106,13 @@ TransferImage::~TransferImage() {
                                            nullptr);
   }
 
-  if (image_ != VK_NULL_HANDLE)
+  if (image_ != VK_NULL_HANDLE) {
     device_->GetPtrs()->vkDestroyImage(device_->GetVkDevice(), image_, nullptr);
+  }
 
-  if (memory_ != VK_NULL_HANDLE)
+  if (memory_ != VK_NULL_HANDLE) {
     device_->GetPtrs()->vkFreeMemory(device_->GetVkDevice(), memory_, nullptr);
+  }
 
   if (host_accessible_memory_ != VK_NULL_HANDLE) {
     UnMapMemory(host_accessible_memory_);
@@ -125,8 +127,9 @@ TransferImage::~TransferImage() {
 }
 
 Result TransferImage::Initialize() {
-  if (image_ != VK_NULL_HANDLE)
+  if (image_ != VK_NULL_HANDLE) {
     return Result("Vulkan::TransferImage was already initialized");
+  }
 
   if (device_->GetPtrs()->vkCreateImage(device_->GetVkDevice(), &image_info_,
                                         nullptr, &image_) != VK_SUCCESS) {
@@ -137,8 +140,9 @@ Result TransferImage::Initialize() {
   Result r = AllocateAndBindMemoryToVkImage(image_, &memory_,
                                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                             false, &memory_type_index);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   if (aspect_ & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) &&
       !(image_info_.usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)) {
@@ -149,8 +153,9 @@ Result TransferImage::Initialize() {
     r = CreateVkImageView(aspect_);
   }
 
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   // For images, we always make a secondary buffer. When the tiling of an image
   // is optimal, read/write data from CPU does not show correct values. We need
@@ -159,8 +164,9 @@ Result TransferImage::Initialize() {
   r = CreateVkBuffer(
       &host_accessible_buffer_,
       VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   memory_type_index = 0;
   r = AllocateAndBindMemoryToVkBuffer(host_accessible_buffer_,
@@ -168,8 +174,9 @@ Result TransferImage::Initialize() {
                                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                       true, &memory_type_index);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   return MapMemory(host_accessible_memory_);
 }
@@ -254,8 +261,9 @@ void TransferImage::CopyToHost(CommandBuffer* command_buffer) {
                                            VK_IMAGE_ASPECT_DEPTH_BIT,
                                            VK_IMAGE_ASPECT_STENCIL_BIT};
   // Copy operations don't support multisample images.
-  if (samples_ > 1)
+  if (samples_ > 1) {
     return;
+  }
 
   std::vector<VkBufferImageCopy> copy_regions;
   uint32_t last_mip_level = used_mip_levels_ == VK_REMAINING_MIP_LEVELS
@@ -279,8 +287,9 @@ void TransferImage::CopyToHost(CommandBuffer* command_buffer) {
 
 void TransferImage::CopyToDevice(CommandBuffer* command_buffer) {
   // Copy operations don't support multisample images.
-  if (samples_ > 1)
+  if (samples_ > 1) {
     return;
+  }
 
   const VkImageAspectFlagBits aspects[] = {VK_IMAGE_ASPECT_COLOR_BIT,
                                            VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -308,8 +317,9 @@ void TransferImage::CopyToDevice(CommandBuffer* command_buffer) {
 void TransferImage::ImageBarrier(CommandBuffer* command_buffer,
                                  VkImageLayout to_layout,
                                  VkPipelineStageFlags to_stage) {
-  if (to_layout == layout_ && to_stage == stage_)
+  if (to_layout == layout_ && to_stage == stage_) {
     return;
+  }
 
   VkImageMemoryBarrier barrier = VkImageMemoryBarrier();
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -396,10 +406,12 @@ Result TransferImage::AllocateAndBindMemoryToVkImage(
 
   *memory_type_index = 0;
 
-  if (image == VK_NULL_HANDLE)
+  if (image == VK_NULL_HANDLE) {
     return Result("Vulkan::Given VkImage is VK_NULL_HANDLE");
-  if (memory == nullptr)
+  }
+  if (memory == nullptr) {
     return Result("Vulkan::Given VkDeviceMemory pointer is nullptr");
+  }
 
   VkMemoryRequirements requirement;
   device_->GetPtrs()->vkGetImageMemoryRequirements(device_->GetVkDevice(),
@@ -407,12 +419,14 @@ Result TransferImage::AllocateAndBindMemoryToVkImage(
 
   *memory_type_index =
       ChooseMemory(requirement.memoryTypeBits, flags, force_flags);
-  if (*memory_type_index == std::numeric_limits<uint32_t>::max())
+  if (*memory_type_index == std::numeric_limits<uint32_t>::max()) {
     return Result("Vulkan::Find Proper Memory Fail");
+  }
 
   Result r = AllocateMemory(memory, requirement.size, *memory_type_index);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   if (device_->GetPtrs()->vkBindImageMemory(device_->GetVkDevice(), image,
                                             *memory, 0) != VK_SUCCESS) {

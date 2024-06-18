@@ -1137,7 +1137,6 @@ RUN my_rtpipeline 0.0
   EXPECT_EQ("14: Shader binding table type is expected", r.Error());
 }
 
-
 TEST_F(AmberScriptParserTest, RayTracingRunExpectsSBTName) {
   std::string in = R"(
 SHADER ray_generation raygen1 GLSL
@@ -1242,8 +1241,7 @@ RUN my_rtpipeline MISS sbt1 MISS sbt1
   Parser parser;
   Result r = parser.Parse(in);
   ASSERT_FALSE(r.IsSuccess());
-  EXPECT_EQ("14: MISS shader binding table can specified only once",
-            r.Error());
+  EXPECT_EQ("14: MISS shader binding table can specified only once", r.Error());
 }
 
 TEST_F(AmberScriptParserTest, RayTracingRunSBTHitDup) {

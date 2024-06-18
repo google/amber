@@ -198,8 +198,9 @@ Result Compile(const std::string& src,
         "Invalid target environment. Choose spv1.3 or vulkan1.1 for vulkan1.1 "
         "and spv1.0 or vulkan1.0 for vulkan1.0.");
   }
-  if (target_env)
+  if (target_env) {
     dxc_flags.push_back(target_env);
+  }
 
   IDxcOperationResult* result;
   if (compiler->Compile(

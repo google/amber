@@ -87,8 +87,9 @@ Result RayTracingPipeline::CreateVkRayTracingPipeline(
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_info =
       GetVkShaderStageInfo();
 
-  for (auto& info : shader_stage_info)
+  for (auto& info : shader_stage_info) {
     info.pName = GetEntryPointName(info.stage);
+  }
 
   const bool lib = (create_flags_ & VK_PIPELINE_CREATE_LIBRARY_BIT_KHR) != 0;
   const VkPipelineLibraryCreateInfoKHR libraryInfo = {
@@ -118,8 +119,9 @@ Result RayTracingPipeline::CreateVkRayTracingPipeline(
   VkResult r = device_->GetPtrs()->vkCreateRayTracingPipelinesKHR(
       device_->GetVkDevice(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1u,
       &pipelineCreateInfo, nullptr, pipeline);
-  if (r != VK_SUCCESS)
+  if (r != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateRayTracingPipelinesKHR Fail");
+  }
 
   return {};
 }
@@ -141,8 +143,9 @@ Result RayTracingPipeline::getVulkanSBTRegion(
       vSBT = sbt_vulkan.first->second;
 
       Result r = vSBT->Create(aSBT, pipeline);
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
     } else {
       vSBT = x->second;
     }
@@ -163,15 +166,17 @@ Result RayTracingPipeline::InitLibrary(const std::vector<VkPipeline>& libs,
                                        uint32_t maxPipelineRayRecursionDepth) {
   assert(pipeline_layout_ == VK_NULL_HANDLE);
   Result r = CreateVkPipelineLayout(&pipeline_layout_);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   assert(pipeline_ == VK_NULL_HANDLE);
   r = CreateVkRayTracingPipeline(
       pipeline_layout_, &pipeline_, libs, maxPipelineRayPayloadSize,
       maxPipelineRayHitAttributeSize, maxPipelineRayRecursionDepth);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   return {};
 }
@@ -188,13 +193,15 @@ Result RayTracingPipeline::TraceRays(amber::SBT* rSBT,
                                      uint32_t maxPipelineRayRecursionDepth,
                                      const std::vector<VkPipeline>& libs) {
   Result r = SendDescriptorDataToDeviceIfNeeded();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   r = InitLibrary(libs, maxPipelineRayPayloadSize,
                   maxPipelineRayHitAttributeSize, maxPipelineRayRecursionDepth);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   // Note that a command updating a descriptor set and a command using
   // it must be submitted separately, because using a descriptor set
@@ -203,8 +210,9 @@ Result RayTracingPipeline::TraceRays(amber::SBT* rSBT,
 
   {
     CommandBufferGuard guard(GetCommandBuffer());
-    if (!guard.IsRecording())
+    if (!guard.IsRecording()) {
       return guard.GetResult();
+    }
 
     for (auto& i : *blases_) {
       i.second->BuildBLAS(GetCommandBuffer());
@@ -216,8 +224,9 @@ Result RayTracingPipeline::TraceRays(amber::SBT* rSBT,
     BindVkDescriptorSets(pipeline_layout_);
 
     r = RecordPushConstant(pipeline_layout_);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     device_->GetPtrs()->vkCmdBindPipeline(
         command_->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
@@ -229,33 +238,39 @@ Result RayTracingPipeline::TraceRays(amber::SBT* rSBT,
     VkStridedDeviceAddressRegionKHR cSBTRegion = {};
 
     r = getVulkanSBTRegion(pipeline_, rSBT, &rSBTRegion);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     r = getVulkanSBTRegion(pipeline_, mSBT, &mSBTRegion);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     r = getVulkanSBTRegion(pipeline_, hSBT, &hSBTRegion);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     r = getVulkanSBTRegion(pipeline_, cSBT, &cSBTRegion);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     device_->GetPtrs()->vkCmdTraceRaysKHR(command_->GetVkCommandBuffer(),
                                           &rSBTRegion, &mSBTRegion, &hSBTRegion,
                                           &cSBTRegion, x, y, z);
 
     r = guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
 
   r = ReadbackDescriptorsToHostDataQueue();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   return {};
 }

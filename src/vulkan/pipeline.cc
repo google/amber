@@ -64,8 +64,9 @@ Pipeline::~Pipeline() {
                                                        info.layout, nullptr);
     }
 
-    if (info.empty)
+    if (info.empty) {
       continue;
+    }
 
     if (info.pool != VK_NULL_HANDLE) {
       device_->GetPtrs()->vkDestroyDescriptorPool(device_->GetVkDevice(),
@@ -136,8 +137,9 @@ Result Pipeline::CreateDescriptorSetLayouts() {
 
 Result Pipeline::CreateDescriptorPools() {
   for (auto& info : descriptor_set_info_) {
-    if (info.empty)
+    if (info.empty) {
       continue;
+    }
 
     std::vector<VkDescriptorPoolSize> pool_sizes;
     for (auto& desc : info.descriptors) {
@@ -174,8 +176,9 @@ Result Pipeline::CreateDescriptorPools() {
 
 Result Pipeline::CreateDescriptorSets() {
   for (size_t i = 0; i < descriptor_set_info_.size(); ++i) {
-    if (descriptor_set_info_[i].empty)
+    if (descriptor_set_info_[i].empty) {
       continue;
+    }
 
     VkDescriptorSetAllocateInfo desc_set_info = VkDescriptorSetAllocateInfo();
     desc_set_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -196,12 +199,14 @@ Result Pipeline::CreateDescriptorSets() {
 
 Result Pipeline::CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout) {
   Result r = CreateVkDescriptorRelatedObjectsIfNeeded();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
-  for (const auto& desc_set : descriptor_set_info_)
+  for (const auto& desc_set : descriptor_set_info_) {
     descriptor_set_layouts.push_back(desc_set.layout);
+  }
 
   VkPipelineLayoutCreateInfo pipeline_layout_info =
       VkPipelineLayoutCreateInfo();
@@ -227,20 +232,24 @@ Result Pipeline::CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout) {
 }
 
 Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
-  if (descriptor_related_objects_already_created_)
+  if (descriptor_related_objects_already_created_) {
     return {};
+  }
 
   Result r = CreateDescriptorSetLayouts();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   r = CreateDescriptorPools();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   r = CreateDescriptorSets();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   descriptor_related_objects_already_created_ = true;
   return {};
@@ -248,8 +257,9 @@ Result Pipeline::CreateVkDescriptorRelatedObjectsIfNeeded() {
 
 void Pipeline::UpdateDescriptorSetsIfNeeded() {
   for (auto& info : descriptor_set_info_) {
-    for (auto& desc : info.descriptors)
+    for (auto& desc : info.descriptors) {
       desc->UpdateDescriptorSetIfNeeded(info.vk_desc_set);
+    }
   }
 }
 
@@ -259,8 +269,9 @@ Result Pipeline::RecordPushConstant(const VkPipelineLayout& pipeline_layout) {
 }
 
 Result Pipeline::AddPushConstantBuffer(const Buffer* buf, uint32_t offset) {
-  if (!buf)
+  if (!buf) {
     return Result("Missing push constant buffer data");
+  }
   return push_constant_->AddBuffer(buf, offset);
 }
 
@@ -289,8 +300,9 @@ Result Pipeline::GetDescriptorSlot(uint32_t desc_set,
 
   auto& descriptors = descriptor_set_info_[desc_set].descriptors;
   for (auto& descriptor : descriptors) {
-    if (descriptor->GetBinding() == binding)
+    if (descriptor->GetBinding() == binding) {
       *desc = descriptor.get();
+    }
   }
 
   return {};
@@ -309,8 +321,9 @@ Result Pipeline::AddDescriptorBuffer(Buffer* amber_buffer) {
 }
 
 Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
-  if (cmd == nullptr)
+  if (cmd == nullptr) {
     return Result("Pipeline::AddBufferDescriptor BufferCommand is nullptr");
+  }
   if (!cmd->IsSSBO() && !cmd->IsUniform() && !cmd->IsStorageImage() &&
       !cmd->IsSampledImage() && !cmd->IsCombinedImageSampler() &&
       !cmd->IsUniformTexelBuffer() && !cmd->IsStorageTexelBuffer() &&
@@ -321,8 +334,9 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
   Descriptor* desc;
   Result r =
       GetDescriptorSlot(cmd->GetDescriptorSet(), cmd->GetBinding(), &desc);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   auto& descriptors = descriptor_set_info_[cmd->GetDescriptorSet()].descriptors;
 
@@ -355,8 +369,9 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
       auto image_desc = MakeUnique<ImageDescriptor>(
           cmd->GetBuffer(), desc_type, device_, cmd->GetBaseMipLevel(),
           cmd->GetDescriptorSet(), cmd->GetBinding(), this);
-      if (cmd->IsCombinedImageSampler())
+      if (cmd->IsCombinedImageSampler()) {
         image_desc->SetAmberSampler(cmd->GetSampler());
+      }
 
       descriptors.push_back(std::move(image_desc));
     } else {
@@ -377,8 +392,9 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
     AddDescriptorBuffer(cmd->GetBuffer());
   }
 
-  if (cmd->IsUniformDynamic() || cmd->IsSSBODynamic())
+  if (cmd->IsUniformDynamic() || cmd->IsSSBODynamic()) {
     desc->AsBufferDescriptor()->AddDynamicOffset(cmd->GetDynamicOffset());
+  }
 
   if (cmd->IsUniform() || cmd->IsUniformDynamic() || cmd->IsSSBO() ||
       cmd->IsSSBODynamic()) {
@@ -404,14 +420,16 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
 }
 
 Result Pipeline::AddSamplerDescriptor(const SamplerCommand* cmd) {
-  if (cmd == nullptr)
+  if (cmd == nullptr) {
     return Result("Pipeline::AddSamplerDescriptor SamplerCommand is nullptr");
+  }
 
   Descriptor* desc;
   Result r =
       GetDescriptorSlot(cmd->GetDescriptorSet(), cmd->GetBinding(), &desc);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   auto& descriptors = descriptor_set_info_[cmd->GetDescriptorSet()].descriptors;
 
@@ -433,14 +451,16 @@ Result Pipeline::AddSamplerDescriptor(const SamplerCommand* cmd) {
 }
 
 Result Pipeline::AddTLASDescriptor(const TLASCommand* cmd) {
-  if (cmd == nullptr)
+  if (cmd == nullptr) {
     return Result("Pipeline::AddTLASDescriptor TLASCommand is nullptr");
+  }
 
   Descriptor* desc;
   Result r =
       GetDescriptorSlot(cmd->GetDescriptorSet(), cmd->GetBinding(), &desc);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   auto& descriptors = descriptor_set_info_[cmd->GetDescriptorSet()].descriptors;
 
@@ -464,14 +484,16 @@ Result Pipeline::AddTLASDescriptor(const TLASCommand* cmd) {
 Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
   {
     CommandBufferGuard guard(GetCommandBuffer());
-    if (!guard.IsRecording())
+    if (!guard.IsRecording()) {
       return guard.GetResult();
+    }
 
     for (auto& info : descriptor_set_info_) {
       for (auto& desc : info.descriptors) {
         Result r = desc->CreateResourceIfNeeded();
-        if (!r.IsSuccess())
+        if (!r.IsSuccess()) {
           return r;
+        }
       }
     }
 
@@ -483,8 +505,9 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
             "descriptor's transfer resource is not found");
       }
       Result r = descriptor_transfer_resources_[buffer]->Initialize();
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
     }
 
     // Note that if a buffer for a descriptor is host accessible and
@@ -495,13 +518,15 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
     // guarantee this.
     Result r =
         guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
 
   CommandBufferGuard guard(GetCommandBuffer());
-  if (!guard.IsRecording())
+  if (!guard.IsRecording()) {
     return guard.GetResult();
+  }
 
   // Copy descriptor data to transfer resources.
   for (auto& buffer : descriptor_buffers_) {
@@ -531,8 +556,9 @@ Result Pipeline::SendDescriptorDataToDeviceIfNeeded() {
 
 void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
   for (size_t i = 0; i < descriptor_set_info_.size(); ++i) {
-    if (descriptor_set_info_[i].empty)
+    if (descriptor_set_info_[i].empty) {
       continue;
+    }
 
     // Sort descriptors by binding number to get correct order of dynamic
     // offsets.
@@ -569,14 +595,16 @@ void Pipeline::BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout) {
 }
 
 Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
-  if (descriptor_buffers_.empty())
+  if (descriptor_buffers_.empty()) {
     return Result{};
+  }
 
   // Record required commands to copy the data to a host visible buffer.
   {
     CommandBufferGuard guard(GetCommandBuffer());
-    if (!guard.IsRecording())
+    if (!guard.IsRecording()) {
       return guard.GetResult();
+    }
 
     for (auto& buffer : descriptor_buffers_) {
       if (descriptor_transfer_resources_.count(buffer) == 0) {
@@ -588,8 +616,9 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
               descriptor_transfer_resources_[buffer]->AsTransferBuffer()) {
         Result r = BufferBackedDescriptor::RecordCopyTransferResourceToHost(
             GetCommandBuffer(), transfer_buffer);
-        if (!r.IsSuccess())
+        if (!r.IsSuccess()) {
           return r;
+        }
       } else if (auto transfer_image = descriptor_transfer_resources_[buffer]
                                            ->AsTransferImage()) {
         transfer_image->ImageBarrier(GetCommandBuffer(),
@@ -597,8 +626,9 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
                                      VK_PIPELINE_STAGE_TRANSFER_BIT);
         Result r = BufferBackedDescriptor::RecordCopyTransferResourceToHost(
             GetCommandBuffer(), transfer_image);
-        if (!r.IsSuccess())
+        if (!r.IsSuccess()) {
           return r;
+        }
       } else {
         return Result(
             "Vulkan: Pipeline::ReadbackDescriptorsToHostDataQueue() "
@@ -608,8 +638,9 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
 
     Result r =
         guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
 
   // Move data from transfer buffers to output buffers.
@@ -617,8 +648,9 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
     auto& transfer_resource = descriptor_transfer_resources_[buffer];
     Result r = BufferBackedDescriptor::MoveTransferResourceToBufferOutput(
         transfer_resource.get(), buffer);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
   descriptor_transfer_resources_.clear();
   return {};
@@ -626,8 +658,9 @@ Result Pipeline::ReadbackDescriptorsToHostDataQueue() {
 
 const char* Pipeline::GetEntryPointName(VkShaderStageFlagBits stage) const {
   auto it = entry_points_.find(stage);
-  if (it != entry_points_.end())
+  if (it != entry_points_.end()) {
     return it->second.c_str();
+  }
 
   return kDefaultEntryPointName;
 }

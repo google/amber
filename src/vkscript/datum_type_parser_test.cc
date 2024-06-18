@@ -23,12 +23,15 @@ namespace {
 
 bool AllCompsAreType(Format* fmt, FormatMode mode, uint8_t num_bits) {
   for (auto& seg : fmt->GetSegments()) {
-    if (seg.IsPadding())
+    if (seg.IsPadding()) {
       continue;
-    if (seg.GetNumBits() != num_bits)
+    }
+    if (seg.GetNumBits() != num_bits) {
       return false;
-    if (seg.GetFormatMode() != mode)
+    }
+    if (seg.GetFormatMode() != mode) {
       return false;
+    }
   }
 
   return true;
