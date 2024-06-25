@@ -91,7 +91,7 @@ Result BLAS::CreateBLAS(amber::BLAS* blas) {
             nullptr,
             geometryType,
             geometry,
-            0u,
+            VkGeometryFlagsKHR(geometryData->GetFlags())
         };
     const VkAccelerationStructureBuildRangeInfoKHR
         accelerationStructureBuildRangeInfosKHR = {
@@ -209,6 +209,8 @@ Result BLAS::CreateBLAS(amber::BLAS* blas) {
       } else {
         assert(false && "unknown geometry type");
       }
+      accelerationStructureGeometriesKHR_[geometryNdx].flags =
+          VkGeometryFlagsKHR(geometries[geometryNdx]->GetFlags());
     }
   }
 

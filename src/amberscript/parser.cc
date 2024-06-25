@@ -4027,6 +4027,7 @@ Result Parser::ParseBLAS() {
 Result Parser::ParseBLASTriangle(BLAS* blas) {
   std::unique_ptr<Geometry> geometry = MakeUnique<Geometry>();
   std::vector<float> g;
+  uint32_t flags = 0;
   geometry->SetType(GeometryType::kTriangle);
 
   while (true) {
@@ -4041,6 +4042,10 @@ Result Parser::ParseBLASTriangle(BLAS* blas) {
       std::string tok = token->AsString();
       if (tok == "END") {
         break;
+      } else if (tok == "FLAGS") {
+        Result r = ParseGeometryFlags(&flags);
+        if (!r.IsSuccess())
+          return r;
       } else {
         return Result("END or float value is expected");
       }
@@ -4061,6 +4066,7 @@ Result Parser::ParseBLASTriangle(BLAS* blas) {
     return Result("Each triangle should include three vertices.");
 
   geometry->SetData(g);
+  geometry->SetFlags(flags);
 
   blas->AddGeometry(&geometry);
 
@@ -4070,6 +4076,7 @@ Result Parser::ParseBLASTriangle(BLAS* blas) {
 Result Parser::ParseBLASAABB(BLAS* blas) {
   std::unique_ptr<Geometry> geometry = MakeUnique<Geometry>();
   std::vector<float> g;
+  uint32_t flags = 0;
   geometry->SetType(GeometryType::kAABB);
 
   while (true) {
@@ -4084,6 +4091,10 @@ Result Parser::ParseBLASAABB(BLAS* blas) {
       std::string tok = token->AsString();
       if (tok == "END") {
         break;
+      } else if (tok == "FLAGS") {
+        Result r = ParseGeometryFlags(&flags);
+        if (!r.IsSuccess())
+          return r;
       } else {
         return Result("END or float value is expected");
       }
@@ -4105,8 +4116,50 @@ Result Parser::ParseBLASAABB(BLAS* blas) {
         "include two vertices.");
 
   geometry->SetData(g);
+  geometry->SetFlags(flags);
 
   blas->AddGeometry(&geometry);
+
+  return {};
+}
+
+Result Parser::ParseGeometryFlags(uint32_t* flags) {
+  std::unique_ptr<Token> token;
+  bool first_eol = true;
+  bool singleline = true;
+  Result r;
+
+  while (true) {
+    token = tokenizer_->NextToken();
+    if (token->IsEOL()) {
+      if (first_eol) {
+        first_eol = false;
+        singleline = (*flags != 0);
+      }
+      if (singleline)
+        break;
+      else
+        continue;
+    }
+    if (token->IsEOS())
+      return Result("END command missing");
+
+    if (token->IsIdentifier()) {
+      if (token->AsString() == "END")
+        break;
+      else if (token->AsString() == "OPAQUE")
+        *flags |= VK_GEOMETRY_OPAQUE_BIT_KHR;
+      else if (token->AsString() == "NO_DUPLICATE_ANY_HIT")
+        *flags |= VK_GEOMETRY_NO_DUPLICATE_ANY_HIT_INVOCATION_BIT_KHR;
+      else
+        return Result("Unknown flag: " + token->AsString());
+    } else {
+      r = Result("Identifier expected");
+    }
+
+    if (!r.IsSuccess())
+      return r;
+  }
 
   return {};
 }

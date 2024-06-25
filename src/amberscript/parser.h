@@ -102,6 +102,7 @@ class Parser : public amber::Parser {
   Result ParseBLAS();
   Result ParseBLASTriangle(BLAS* blas);
   Result ParseBLASAABB(BLAS* blas);
+  Result ParseGeometryFlags(uint32_t* flags);
   Result ParseTLAS();
   Result ParseBLASInstance(TLAS* tlas);
   Result ParseBLASInstanceTransform(BLASInstance* instance);
