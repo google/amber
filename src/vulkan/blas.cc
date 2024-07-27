@@ -182,11 +182,11 @@ Result BLAS::CreateBLAS(amber::BLAS* blas) {
     vertex_buffer_->AddAllocateFlags(VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
     vertex_buffer_->SetMemoryPropertiesFlags(
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
-        VK_MEMORY_PROPERTY_HOST_CACHED_BIT);
+        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     vertex_buffer_->Initialize();
 
     void* memory_ptr = vertex_buffer_->HostAccessibleMemoryPtr();
+    assert(memory_ptr != nullptr);
 
     for (size_t geometryNdx = 0; geometryNdx < geometries.size();
          ++geometryNdx) {
