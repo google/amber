@@ -93,7 +93,7 @@ relative probe rect rgba (0.0, 0.0, 1.0, 1.0) (0, 0, 0, 0)
  * Git
  * CMake (version 3.7+ enables automatic discovery of an installed Vulkan SDK)
  * Ninja (or other build tool)
- * Python, for fetching dependencies and building Vulkan wrappers
+ * Python3, for fetching dependencies and building Vulkan wrappers
 
 
 ## Building
