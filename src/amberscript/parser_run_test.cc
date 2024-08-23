@@ -48,6 +48,7 @@ RUN my_pipeline 2 4 5
   EXPECT_EQ(2U, cmd->AsCompute()->GetX());
   EXPECT_EQ(4U, cmd->AsCompute()->GetY());
   EXPECT_EQ(5U, cmd->AsCompute()->GetZ());
+  EXPECT_FALSE(cmd->AsCompute()->IsTimedExecution());
 }
 
 TEST_F(AmberScriptParserTest, RunWithoutPipeline) {
@@ -218,6 +219,7 @@ RUN my_pipeline DRAW_RECT POS 2 4 SIZE 10 20)";
   EXPECT_FLOAT_EQ(4.f, cmd->AsDrawRect()->GetY());
   EXPECT_FLOAT_EQ(10.f, cmd->AsDrawRect()->GetWidth());
   EXPECT_FLOAT_EQ(20.f, cmd->AsDrawRect()->GetHeight());
+  EXPECT_FALSE(cmd->AsDrawRect()->IsTimedExecution());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawRectWithComputePipelineInvalid) {
@@ -519,6 +521,7 @@ RUN my_pipeline DRAW_GRID POS 2 4 SIZE 10 20 CELLS 4 5)";
   EXPECT_FLOAT_EQ(20.f, cmd->AsDrawGrid()->GetHeight());
   EXPECT_EQ(4u, cmd->AsDrawGrid()->GetColumns());
   EXPECT_EQ(5u, cmd->AsDrawGrid()->GetRows());
+  EXPECT_FALSE(cmd->AsDrawGrid()->IsTimedExecution());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawGridWithComputePipelineInvalid) {
@@ -887,6 +890,7 @@ RUN my_pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 1 COUNT 2)";
   EXPECT_EQ(Topology::kTriangleList, cmd->GetTopology());
   EXPECT_EQ(1U, cmd->GetFirstVertexIndex());
   EXPECT_EQ(2U, cmd->GetVertexCount());
+  EXPECT_FALSE(cmd->IsTimedExecution());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawArraysInstanced) {
@@ -926,6 +930,7 @@ RUN my_pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 1 COUNT 2 START_INSTANCE 2
   EXPECT_EQ(Topology::kTriangleList, cmd->GetTopology());
   EXPECT_EQ(1U, cmd->GetFirstVertexIndex());
   EXPECT_EQ(2U, cmd->GetVertexCount());
+  EXPECT_FALSE(cmd->IsTimedExecution());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawArraysCountOmitted) {
@@ -966,6 +971,7 @@ RUN my_pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 1)";
   EXPECT_EQ(1U, cmd->GetFirstVertexIndex());
   // There are 3 elements in the vertex buffer, but we start at element 1.
   EXPECT_EQ(2U, cmd->GetVertexCount());
+  EXPECT_FALSE(cmd->IsTimedExecution());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawArraysStartIdxAndCountOmitted) {
@@ -1006,6 +1012,7 @@ RUN my_pipeline DRAW_ARRAY AS TRIANGLE_LIST)";
   EXPECT_EQ(static_cast<uint32_t>(0U), cmd->GetFirstVertexIndex());
   // There are 3 elements in the vertex buffer.
   EXPECT_EQ(3U, cmd->GetVertexCount());
+  EXPECT_FALSE(cmd->IsTimedExecution());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawArraysIndexed) {
@@ -1052,6 +1059,7 @@ RUN my_pipeline DRAW_ARRAY AS TRIANGLE_LIST INDEXED)";
   EXPECT_EQ(static_cast<uint32_t>(0U), cmd->GetFirstVertexIndex());
   // There are 3 elements in the vertex buffer.
   EXPECT_EQ(3U, cmd->GetVertexCount());
+  EXPECT_FALSE(cmd->IsTimedExecution());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawArraysIndexedMissingIndexData) {

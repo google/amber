@@ -105,7 +105,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   --log-graphics-calls      -- Log graphics API calls (only for Vulkan so far).
   --log-graphics-calls-time -- Log timing of graphics API calls timing (Vulkan only).
   --log-execute-calls       -- Log each execute call before run.
-  --log-execution-timing    -- Log timing results from each 'TIMED_EXECUTION' flagged command.
+  --log-execution-timing    -- Log timing results from each command with the 'TIMED_EXECUTION' flag.
   --disable-spirv-val       -- Disable SPIR-V validation.
   --enable-runtime-layer    -- Enable pipeline runtime layer.
   -h                        -- This help text.
