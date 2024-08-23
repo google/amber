@@ -161,6 +161,7 @@ amber::Result Amber::Execute(const amber::Recipe* recipe, Options* opts) {
   return ExecuteWithShaderData(recipe, opts, map);
 }
 
+
 amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
                                            Options* opts,
                                            const ShaderMap& shader_data) {

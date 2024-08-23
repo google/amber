@@ -672,14 +672,14 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   vertex_buffer->SetData(0, buf.get(), InputRate::kVertex, buf->GetFormat(), 0,
                          buf->GetFormat()->SizeInBytes());
 
-  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
+  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData(), command->IsTimedExecution());
   draw.SetTopology(command->IsPatch() ? Topology::kPatchList
                                       : Topology::kTriangleStrip);
   draw.SetFirstVertexIndex(0);
   draw.SetVertexCount(4);
   draw.SetInstanceCount(1);
 
-  Result r = graphics->Draw(&draw, vertex_buffer.get());
+  Result r = graphics->Draw(&draw, vertex_buffer.get(), command->IsTimedExecution());
   if (!r.IsSuccess())
     return r;
 
@@ -760,13 +760,13 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   vertex_buffer->SetData(0, buf.get(), InputRate::kVertex, buf->GetFormat(), 0,
                          buf->GetFormat()->SizeInBytes());
 
-  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
+  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData(), command->IsTimedExecution());
   draw.SetTopology(Topology::kTriangleList);
   draw.SetFirstVertexIndex(0);
   draw.SetVertexCount(vertices);
   draw.SetInstanceCount(1);
 
-  Result r = graphics->Draw(&draw, vertex_buffer.get());
+  Result r = graphics->Draw(&draw, vertex_buffer.get(), command->IsTimedExecution());
   if (!r.IsSuccess())
     return r;
 
@@ -779,7 +779,7 @@ Result EngineVulkan::DoDrawArrays(const DrawArraysCommand* command) {
     return Result("Vulkan::DrawArrays for Non-Graphics Pipeline");
 
   return info.vk_pipeline->AsGraphics()->Draw(command,
-                                              info.vertex_buffer.get());
+                                              info.vertex_buffer.get(), command->IsTimedExecution());
 }
 
 Result EngineVulkan::DoCompute(const ComputeCommand* command) {
@@ -788,7 +788,7 @@ Result EngineVulkan::DoCompute(const ComputeCommand* command) {
     return Result("Vulkan: Compute called for non-compute pipeline.");
 
   return info.vk_pipeline->AsCompute()->Compute(
-      command->GetX(), command->GetY(), command->GetZ());
+      command->GetX(), command->GetY(), command->GetZ(), command->IsTimedExecution());
 }
 
 Result EngineVulkan::InitDependendLibraries(amber::Pipeline* pipeline,
@@ -848,7 +848,7 @@ Result EngineVulkan::DoTraceRays(const RayTracingCommand* command) {
       rSBT, mSBT, hSBT, cSBT, command->GetX(), command->GetY(), command->GetZ(),
       pipeline->GetMaxPipelineRayPayloadSize(),
       pipeline->GetMaxPipelineRayHitAttributeSize(),
-      pipeline->GetMaxPipelineRayRecursionDepth(), libs);
+      pipeline->GetMaxPipelineRayRecursionDepth(), libs, command->IsTimedExecution());
 }
 
 Result EngineVulkan::DoEntryPoint(const EntryPointCommand* command) {

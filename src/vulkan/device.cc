@@ -450,6 +450,12 @@ bool Device::SupportsApiVersion(uint32_t major,
 #pragma clang diagnostic pop
 }
 
+void Device::ReportExecutionTiming(double time_in_ms){
+  if(delegate_){
+      delegate_->ReportExecutionTiming(time_in_ms);
+  }
+}
+
 Result Device::Initialize(
     PFN_vkGetInstanceProcAddr getInstanceProcAddr,
     Delegate* delegate,
@@ -460,7 +466,8 @@ Result Device::Initialize(
     const VkPhysicalDeviceFeatures2KHR& available_features2,
     const VkPhysicalDeviceProperties2KHR& available_properties2,
     const std::vector<std::string>& available_extensions) {
-  Result r = LoadVulkanPointers(getInstanceProcAddr, delegate);
+  delegate_ = delegate;
+  Result r = LoadVulkanPointers(getInstanceProcAddr, delegate_);
   if (!r.IsSuccess())
     return r;
 
@@ -1073,6 +1080,14 @@ bool Device::IsMemoryHostCoherent(uint32_t memory_type_index) const {
 
 uint32_t Device::GetMaxPushConstants() const {
   return physical_device_properties_.limits.maxPushConstantsSize;
+}
+
+bool Device::IsTimestampComputeAndGraphicsSupported() const {
+    return physical_device_properties_.limits.timestampComputeAndGraphics;
+}
+
+float Device::GetTimestampPeriod() const {
+    return physical_device_properties_.limits.timestampPeriod;
 }
 
 bool Device::IsDescriptorSetInBounds(uint32_t descriptor_set) const {

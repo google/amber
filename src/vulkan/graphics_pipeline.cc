@@ -881,7 +881,8 @@ Result GraphicsPipeline::Clear() {
 }
 
 Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
-                              VertexBuffer* vertex_buffer) {
+                              VertexBuffer* vertex_buffer,
+                              bool is_timed_execution) {
   Result r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
     return r;
@@ -902,7 +903,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   // it must be submitted separately, because using a descriptor set
   // while updating it is not safe.
   UpdateDescriptorSetsIfNeeded();
-
+  CreateTimingQueryObjectIfNeeded(is_timed_execution);
   {
     CommandBufferGuard cmd_buf_guard(GetCommandBuffer());
     if (!cmd_buf_guard.IsRecording())
@@ -939,10 +940,11 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
         r = index_buffer_->BindToCommandBuffer(command_.get());
         if (!r.IsSuccess())
           return r;
-
+          
         // VkRunner spec says
         //   "vertexCount will be used as the index count, firstVertex
         //    becomes the vertex offset and firstIndex will always be zero."
+            BeginTimerQuery(is_timed_execution);
         device_->GetPtrs()->vkCmdDrawIndexed(
             command_->GetVkCommandBuffer(),
             command->GetVertexCount(),   /* indexCount */
@@ -951,11 +953,14 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
             static_cast<int32_t>(
                 command->GetFirstVertexIndex()), /* vertexOffset */
             command->GetFirstInstance());        /* firstInstance */
+                EndTimerQuery(is_timed_execution);
       } else {
+                  BeginTimerQuery(is_timed_execution);
         device_->GetPtrs()->vkCmdDraw(
             command_->GetVkCommandBuffer(), command->GetVertexCount(),
             command->GetInstanceCount(), command->GetFirstVertexIndex(),
             command->GetFirstInstance());
+                  EndTimerQuery(is_timed_execution);
       }
     }
 
@@ -966,7 +971,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     if (!r.IsSuccess())
       return r;
   }
-
+  DestroyTimingQueryObjectIfNeeded(is_timed_execution);
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;

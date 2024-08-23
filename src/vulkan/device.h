@@ -94,6 +94,10 @@ class Device {
   /// Returns ray tracing shader group handle size.
   uint32_t GetRayTracingShaderGroupHandleSize() const;
 
+  bool IsTimestampComputeAndGraphicsSupported() const;
+
+  float GetTimestampPeriod() const;
+  void ReportExecutionTiming(double time_in_ns);
  private:
   Result LoadVulkanPointers(PFN_vkGetInstanceProcAddr, Delegate* delegate);
   bool SupportsApiVersion(uint32_t major, uint32_t minor, uint32_t patch);
@@ -110,6 +114,8 @@ class Device {
   uint32_t shader_group_handle_size_ = 0;
 
   VulkanPtrs ptrs_;
+
+  Delegate* delegate_=nullptr;
 };
 
 }  // namespace vulkan

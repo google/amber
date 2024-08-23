@@ -29,3 +29,9 @@ third_party/robin-hood-hashing
 # C-Lion
 .idea/
 cmake-build-*/
+
+### Clangd cached index files
+/.cache
+
+### The 'compile_commands' file can be generated at root
+compile_commands.json

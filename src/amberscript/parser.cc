@@ -2706,6 +2706,14 @@ Result Parser::ParseBufferInitializerFile(Buffer* buffer) {
 
 Result Parser::ParseRun() {
   auto token = tokenizer_->NextToken();
+
+  // Timed execution option for this specific run.
+  bool is_timed_execution = false;
+  if(token->AsString() == "TIMED_EXECUTION"){
+    token = tokenizer_->NextToken();
+    is_timed_execution = true;
+  }
+
   if (!token->IsIdentifier())
     return Result("missing pipeline name for RUN command");
 
@@ -2716,7 +2724,7 @@ Result Parser::ParseRun() {
     return Result("unknown pipeline for RUN command: " + token->AsString());
 
   if (pipeline->IsRayTracing()) {
-    auto cmd = MakeUnique<RayTracingCommand>(pipeline);
+    auto cmd = MakeUnique<RayTracingCommand>(pipeline, is_timed_execution);
     cmd->SetLine(line);
 
     while (true) {
@@ -2788,7 +2796,7 @@ Result Parser::ParseRun() {
     if (!pipeline->IsCompute())
       return Result("RUN command requires compute pipeline");
 
-    auto cmd = MakeUnique<ComputeCommand>(pipeline);
+    auto cmd = MakeUnique<ComputeCommand>(pipeline, is_timed_execution);
     cmd->SetLine(line);
     cmd->SetX(token->AsUint32());
 
@@ -2837,7 +2845,7 @@ Result Parser::ParseRun() {
       return Result("missing X position for RUN command");
 
     auto cmd =
-        MakeUnique<DrawRectCommand>(pipeline, *pipeline->GetPipelineData());
+        MakeUnique<DrawRectCommand>(pipeline, *pipeline->GetPipelineData(), is_timed_execution);
     cmd->SetLine(line);
     cmd->EnableOrtho();
 
@@ -2907,7 +2915,7 @@ Result Parser::ParseRun() {
       return Result("missing X position for RUN command");
 
     auto cmd =
-        MakeUnique<DrawGridCommand>(pipeline, *pipeline->GetPipelineData());
+        MakeUnique<DrawGridCommand>(pipeline, *pipeline->GetPipelineData(), is_timed_execution);
     cmd->SetLine(line);
 
     Result r = token->ConvertToDouble();
@@ -3075,7 +3083,7 @@ Result Parser::ParseRun() {
     }
 
     auto cmd =
-        MakeUnique<DrawArraysCommand>(pipeline, *pipeline->GetPipelineData());
+        MakeUnique<DrawArraysCommand>(pipeline, *pipeline->GetPipelineData(), is_timed_execution);
     cmd->SetLine(line);
     cmd->SetTopology(topo);
     cmd->SetFirstVertexIndex(start_idx);

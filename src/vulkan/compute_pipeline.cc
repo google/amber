@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/vulkan/compute_pipeline.h"
+#include <cstdint>
 
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
@@ -66,7 +67,7 @@ Result ComputePipeline::CreateVkComputePipeline(
   return {};
 }
 
-Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
+Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z, bool is_timed_execution) {
   Result r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
     return r;
@@ -85,7 +86,7 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
   // it must be submitted separately, because using a descriptor set
   // while updating it is not safe.
   UpdateDescriptorSetsIfNeeded();
-
+  CreateTimingQueryObjectIfNeeded(is_timed_execution);
   {
     CommandBufferGuard guard(GetCommandBuffer());
     if (!guard.IsRecording())
@@ -100,13 +101,15 @@ Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z) {
     device_->GetPtrs()->vkCmdBindPipeline(command_->GetVkCommandBuffer(),
                                           VK_PIPELINE_BIND_POINT_COMPUTE,
                                           pipeline);
+    BeginTimerQuery(is_timed_execution);
     device_->GetPtrs()->vkCmdDispatch(command_->GetVkCommandBuffer(), x, y, z);
+    EndTimerQuery(is_timed_execution);
 
     r = guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
     if (!r.IsSuccess())
       return r;
   }
-
+  DestroyTimingQueryObjectIfNeeded(is_timed_execution);
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;

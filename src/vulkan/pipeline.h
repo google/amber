@@ -29,6 +29,7 @@
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/push_constant.h"
 #include "src/vulkan/resource.h"
+#include "vulkan/vulkan_core.h"
 
 namespace amber {
 
@@ -101,6 +102,13 @@ class Pipeline {
                            Descriptor** desc);
   void UpdateDescriptorSetsIfNeeded();
 
+  // This functions are used in benchmarking when 'TIMED_EXECUTION' option is specifed.
+  void CreateTimingQueryObjectIfNeeded(bool is_timed_execution);
+  void DestroyTimingQueryObjectIfNeeded(bool is_timed_execution);
+  void BeginTimerQuery(bool is_timed_execution);
+  void EndTimerQuery(bool is_timed_execution);
+
+
   Result SendDescriptorDataToDeviceIfNeeded();
   void BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout);
 
@@ -129,6 +137,8 @@ class Pipeline {
     pipeline_ = pipeline;
   }
 
+
+  VkQueryPool query_pool_ = VK_NULL_HANDLE;
   VkPipeline pipeline_ = VK_NULL_HANDLE;
   VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
 
@@ -137,6 +147,9 @@ class Pipeline {
   VkPipelineCreateFlags create_flags_ = 0;
 
  private:
+
+
+
   struct DescriptorSetInfo {
     bool empty = true;
     VkDescriptorSetLayout layout = VK_NULL_HANDLE;

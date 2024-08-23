@@ -91,23 +91,23 @@ RepeatCommand* Command::AsRepeat() {
   return static_cast<RepeatCommand*>(this);
 }
 
-PipelineCommand::PipelineCommand(Type type, Pipeline* pipeline)
-    : Command(type), pipeline_(pipeline) {}
+PipelineCommand::PipelineCommand(Type type, Pipeline* pipeline, bool timed_execution)
+    : Command(type), timed_execution_(timed_execution), pipeline_(pipeline) {}
 
 PipelineCommand::~PipelineCommand() = default;
 
-DrawRectCommand::DrawRectCommand(Pipeline* pipeline, PipelineData data)
-    : PipelineCommand(Type::kDrawRect, pipeline), data_(data) {}
+DrawRectCommand::DrawRectCommand(Pipeline* pipeline, PipelineData data, bool timed_execution)
+    : PipelineCommand(Type::kDrawRect, pipeline, timed_execution), data_(data) {}
 
 DrawRectCommand::~DrawRectCommand() = default;
 
-DrawGridCommand::DrawGridCommand(Pipeline* pipeline, PipelineData data)
-    : PipelineCommand(Type::kDrawGrid, pipeline), data_(data) {}
+DrawGridCommand::DrawGridCommand(Pipeline* pipeline, PipelineData data, bool timed_execution)
+    : PipelineCommand(Type::kDrawGrid, pipeline, timed_execution), data_(data) {}
 
 DrawGridCommand::~DrawGridCommand() = default;
 
-DrawArraysCommand::DrawArraysCommand(Pipeline* pipeline, PipelineData data)
-    : PipelineCommand(Type::kDrawArrays, pipeline), data_(data) {}
+DrawArraysCommand::DrawArraysCommand(Pipeline* pipeline, PipelineData data, bool timed_execution)
+    : PipelineCommand(Type::kDrawArrays, pipeline, timed_execution), data_(data) {}
 
 DrawArraysCommand::~DrawArraysCommand() = default;
 
@@ -116,8 +116,8 @@ CompareBufferCommand::CompareBufferCommand(Buffer* buffer_1, Buffer* buffer_2)
 
 CompareBufferCommand::~CompareBufferCommand() = default;
 
-ComputeCommand::ComputeCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kCompute, pipeline) {}
+ComputeCommand::ComputeCommand(Pipeline* pipeline, bool timed_execution)
+    : PipelineCommand(Type::kCompute, pipeline, timed_execution) {}
 
 ComputeCommand::~ComputeCommand() = default;
 
@@ -135,7 +135,7 @@ ProbeSSBOCommand::ProbeSSBOCommand(Buffer* buffer)
 ProbeSSBOCommand::~ProbeSSBOCommand() = default;
 
 BindableResourceCommand::BindableResourceCommand(Type type, Pipeline* pipeline)
-    : PipelineCommand(type, pipeline) {}
+    : PipelineCommand(type, pipeline, false) {}
 
 BindableResourceCommand::~BindableResourceCommand() = default;
 
@@ -155,32 +155,32 @@ CopyCommand::CopyCommand(Buffer* buffer_from, Buffer* buffer_to)
 CopyCommand::~CopyCommand() = default;
 
 ClearCommand::ClearCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kClear, pipeline) {}
+    : PipelineCommand(Type::kClear, pipeline, false) {}
 
 ClearCommand::~ClearCommand() = default;
 
 ClearColorCommand::ClearColorCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kClearColor, pipeline) {}
+    : PipelineCommand(Type::kClearColor, pipeline, false) {}
 
 ClearColorCommand::~ClearColorCommand() = default;
 
 ClearDepthCommand::ClearDepthCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kClearDepth, pipeline) {}
+    : PipelineCommand(Type::kClearDepth, pipeline, false) {}
 
 ClearDepthCommand::~ClearDepthCommand() = default;
 
 ClearStencilCommand::ClearStencilCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kClearStencil, pipeline) {}
+    : PipelineCommand(Type::kClearStencil, pipeline, false) {}
 
 ClearStencilCommand::~ClearStencilCommand() = default;
 
 PatchParameterVerticesCommand::PatchParameterVerticesCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kPatchParameterVertices, pipeline) {}
+    : PipelineCommand(Type::kPatchParameterVertices, pipeline, false) {}
 
 PatchParameterVerticesCommand::~PatchParameterVerticesCommand() = default;
 
-EntryPointCommand::EntryPointCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kEntryPoint, pipeline) {}
+EntryPointCommand::EntryPointCommand(Pipeline* pipeline, bool timed_execution)
+    : PipelineCommand(Type::kEntryPoint, pipeline, timed_execution) {}
 
 EntryPointCommand::~EntryPointCommand() = default;
 
@@ -194,8 +194,8 @@ TLASCommand::TLASCommand(Pipeline* pipeline)
 
 TLASCommand::~TLASCommand() = default;
 
-RayTracingCommand::RayTracingCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kRayTracing, pipeline) {}
+RayTracingCommand::RayTracingCommand(Pipeline* pipeline, bool timed_execution)
+    : PipelineCommand(Type::kRayTracing, pipeline, timed_execution) {}
 
 RayTracingCommand::~RayTracingCommand() = default;
 

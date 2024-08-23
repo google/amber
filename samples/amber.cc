@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <ostream>
 #include <set>
 #include <string>
 #include <utility>
@@ -67,6 +68,7 @@ struct Options {
   bool log_graphics_calls = false;
   bool log_graphics_calls_time = false;
   bool log_execute_calls = false;
+  bool log_execution_timing= false;
   bool disable_spirv_validation = false;
   bool enable_pipeline_runtime_layer = false;
   std::string shader_filename;
@@ -103,6 +105,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   --log-graphics-calls      -- Log graphics API calls (only for Vulkan so far).
   --log-graphics-calls-time -- Log timing of graphics API calls timing (Vulkan only).
   --log-execute-calls       -- Log each execute call before run.
+  --log-execution-timing    -- Log timing results from each 'TIMED_EXECUTION' flagged command.
   --disable-spirv-val       -- Disable SPIR-V validation.
   --enable-runtime-layer    -- Enable pipeline runtime layer.
   -h                        -- This help text.
@@ -278,6 +281,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->log_graphics_calls = true;
     } else if (arg == "--log-graphics-calls-time") {
       opts->log_graphics_calls_time = true;
+    } else if (arg == "--log-execution-timing") {
+      opts->log_execution_timing = true;
     } else if (arg == "--log-execute-calls") {
       opts->log_execute_calls = true;
     } else if (arg == "--disable-spirv-val") {
@@ -349,6 +354,7 @@ class SampleDelegate : public amber::Delegate {
   void SetLogExecuteCalls(bool log_execute_calls) {
     log_execute_calls_ = log_execute_calls;
   }
+ 
 
   bool LogGraphicsCallsTime() const override {
     return log_graphics_calls_time_;
@@ -359,6 +365,16 @@ class SampleDelegate : public amber::Delegate {
       // Make sure regular logging is also enabled
       log_graphics_calls_ = true;
     }
+  }
+
+  void ReportExecutionTiming(double time_in_ms) override {
+      reported_execution_timing.push_back(time_in_ms);
+  }
+
+  std::vector<double> GetAndClearExecutionTiming() {
+    auto returning = reported_execution_timing;
+    reported_execution_timing.clear();
+    return returning;
   }
 
   uint64_t GetTimestampNs() const override {
@@ -400,6 +416,7 @@ class SampleDelegate : public amber::Delegate {
   bool log_graphics_calls_time_ = false;
   bool log_execute_calls_ = false;
   std::string path_ = "";
+  std::vector<double> reported_execution_timing;
 };
 
 std::string disassemble(const std::string& env,
@@ -625,6 +642,27 @@ int main(int argc, const char** argv) {
       failures.push_back(file);
       // Note, we continue after failure to allow dumping the buffers which may
       // give clues as to the failure.
+    }
+
+    if (result.IsSuccess() && options.log_execution_timing)
+    {
+      auto execution_timing = delegate.GetAndClearExecutionTiming();
+      if(!execution_timing.empty()){
+        std::cout << "Execution timing (in-order):" << std::endl;
+        std::cout << "    ";
+        bool is_first_iter = true;
+        for(auto& timing : execution_timing){
+          if(!is_first_iter){
+            std::cout << ", ";
+          }
+          is_first_iter = false;
+          std::cout << timing;
+        }
+        std::cout << std::endl;
+        std::sort(execution_timing.begin(), execution_timing.end());
+        auto report_median = (execution_timing[execution_timing.size()/2] + execution_timing[(execution_timing.size()-1)/2]) / 2;
+        std::cout << "Execution time median = " << report_median << " ms" << std::endl;
+      }
     }
 
     // Dump the shader assembly

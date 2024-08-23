@@ -31,10 +31,12 @@ class DummyDelegate : public amber::Delegate {
   bool LogExecuteCalls() const override { return false; }
   void SetLogExecuteCalls(bool) {}
   bool LogGraphicsCallsTime() const override { return false; }
+
   void SetLogGraphicsCallsTime(bool) {}
   uint64_t GetTimestampNs() const override { return 0; }
   void SetScriptPath(std::string) {}
 
+  void ReportExecutionTiming(double) override {};
   amber::Result LoadBufferData(const std::string,
                                amber::BufferDataFileType type,
                                amber::BufferInfo* buffer) const override {
