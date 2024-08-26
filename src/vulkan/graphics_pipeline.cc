@@ -917,6 +917,9 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     frame_->CopyBuffersToImages();
     frame_->TransferImagesToDevice(GetCommandBuffer());
 
+    // Timing must be place outside the render pass scope. The full pipeline
+    // barrier used by our specific implementation cannot be within a
+    // renderpass.
     BeginTimerQuery(is_timed_execution);
     {
       RenderPassGuard render_pass_guard(this);
