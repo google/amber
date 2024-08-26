@@ -67,7 +67,10 @@ Result ComputePipeline::CreateVkComputePipeline(
   return {};
 }
 
-Result ComputePipeline::Compute(uint32_t x, uint32_t y, uint32_t z, bool is_timed_execution) {
+Result ComputePipeline::Compute(uint32_t x,
+                                uint32_t y,
+                                uint32_t z,
+                                bool is_timed_execution) {
   Result r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
     return r;

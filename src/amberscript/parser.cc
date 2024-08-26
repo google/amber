@@ -2709,7 +2709,7 @@ Result Parser::ParseRun() {
 
   // Timed execution option for this specific run.
   bool is_timed_execution = false;
-  if(token->AsString() == "TIMED_EXECUTION"){
+  if (token->AsString() == "TIMED_EXECUTION") {
     token = tokenizer_->NextToken();
     is_timed_execution = true;
   }
@@ -2844,8 +2844,8 @@ Result Parser::ParseRun() {
     if (!token->IsInteger())
       return Result("missing X position for RUN command");
 
-    auto cmd =
-        MakeUnique<DrawRectCommand>(pipeline, *pipeline->GetPipelineData(), is_timed_execution);
+    auto cmd = MakeUnique<DrawRectCommand>(
+        pipeline, *pipeline->GetPipelineData(), is_timed_execution);
     cmd->SetLine(line);
     cmd->EnableOrtho();
 
@@ -2914,8 +2914,8 @@ Result Parser::ParseRun() {
     if (!token->IsInteger())
       return Result("missing X position for RUN command");
 
-    auto cmd =
-        MakeUnique<DrawGridCommand>(pipeline, *pipeline->GetPipelineData(), is_timed_execution);
+    auto cmd = MakeUnique<DrawGridCommand>(
+        pipeline, *pipeline->GetPipelineData(), is_timed_execution);
     cmd->SetLine(line);
 
     Result r = token->ConvertToDouble();
@@ -3082,8 +3082,8 @@ Result Parser::ParseRun() {
         return Result("START_IDX plus COUNT exceeds vertex buffer data size");
     }
 
-    auto cmd =
-        MakeUnique<DrawArraysCommand>(pipeline, *pipeline->GetPipelineData(), is_timed_execution);
+    auto cmd = MakeUnique<DrawArraysCommand>(
+        pipeline, *pipeline->GetPipelineData(), is_timed_execution);
     cmd->SetLine(line);
     cmd->SetTopology(topo);
     cmd->SetFirstVertexIndex(start_idx);

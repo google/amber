@@ -68,7 +68,7 @@ struct Options {
   bool log_graphics_calls = false;
   bool log_graphics_calls_time = false;
   bool log_execute_calls = false;
-  bool log_execution_timing= false;
+  bool log_execution_timing = false;
   bool disable_spirv_validation = false;
   bool enable_pipeline_runtime_layer = false;
   std::string shader_filename;
@@ -354,7 +354,6 @@ class SampleDelegate : public amber::Delegate {
   void SetLogExecuteCalls(bool log_execute_calls) {
     log_execute_calls_ = log_execute_calls;
   }
- 
 
   bool LogGraphicsCallsTime() const override {
     return log_graphics_calls_time_;
@@ -368,7 +367,7 @@ class SampleDelegate : public amber::Delegate {
   }
 
   void ReportExecutionTiming(double time_in_ms) override {
-      reported_execution_timing.push_back(time_in_ms);
+    reported_execution_timing.push_back(time_in_ms);
   }
 
   std::vector<double> GetAndClearExecutionTiming() {
@@ -536,7 +535,7 @@ int main(int argc, const char** argv) {
       recipe->SetFenceTimeout(static_cast<uint32_t>(options.fence_timeout));
 
     recipe->SetPipelineRuntimeLayerEnabled(
-      options.enable_pipeline_runtime_layer);
+        options.enable_pipeline_runtime_layer);
 
     recipe_data.emplace_back();
     recipe_data.back().file = file;
@@ -644,15 +643,14 @@ int main(int argc, const char** argv) {
       // give clues as to the failure.
     }
 
-    if (result.IsSuccess() && options.log_execution_timing)
-    {
+    if (result.IsSuccess() && options.log_execution_timing) {
       auto execution_timing = delegate.GetAndClearExecutionTiming();
-      if(!execution_timing.empty()){
+      if (!execution_timing.empty()) {
         std::cout << "Execution timing (in-order):" << std::endl;
         std::cout << "    ";
         bool is_first_iter = true;
-        for(auto& timing : execution_timing){
-          if(!is_first_iter){
+        for (auto& timing : execution_timing) {
+          if (!is_first_iter) {
             std::cout << ", ";
           }
           is_first_iter = false;
@@ -660,8 +658,12 @@ int main(int argc, const char** argv) {
         }
         std::cout << std::endl;
         std::sort(execution_timing.begin(), execution_timing.end());
-        auto report_median = (execution_timing[execution_timing.size()/2] + execution_timing[(execution_timing.size()-1)/2]) / 2;
-        std::cout << "Execution time median = " << report_median << " ms" << std::endl;
+        auto report_median =
+            (execution_timing[execution_timing.size() / 2] +
+             execution_timing[(execution_timing.size() - 1) / 2]) /
+            2;
+        std::cout << "Execution time median = " << report_median << " ms"
+                  << std::endl;
       }
     }
 

@@ -132,11 +132,10 @@ Result CreateEngineAndCheckRequirements(const Recipe* recipe,
 
   // Engine initialization checks requirements.  Current backends don't do
   // much else.  Refactor this if they end up doing to much here.
-  Result r =
-      engine->Initialize(opts->config, delegate, script->GetRequiredFeatures(),
-                         script->GetRequiredProperties(),
-                         script->GetRequiredInstanceExtensions(),
-                         script->GetRequiredDeviceExtensions());
+  Result r = engine->Initialize(
+      opts->config, delegate, script->GetRequiredFeatures(),
+      script->GetRequiredProperties(), script->GetRequiredInstanceExtensions(),
+      script->GetRequiredDeviceExtensions());
   if (!r.IsSuccess())
     return r;
 
@@ -160,7 +159,6 @@ amber::Result Amber::Execute(const amber::Recipe* recipe, Options* opts) {
   ShaderMap map;
   return ExecuteWithShaderData(recipe, opts, map);
 }
-
 
 amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
                                            Options* opts,

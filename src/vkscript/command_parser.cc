@@ -46,8 +46,8 @@ ShaderType ShaderNameToType(const std::string& name) {
   return kShaderTypeVertex;
 }
 
-  // Timed execution is not supported in VkScript.
-  constexpr bool kTimedExecution = false;
+// Timed execution is not supported in VkScript.
+constexpr bool kTimedExecution = false;
 
 }  // namespace
 
@@ -255,7 +255,8 @@ Result CommandParser::Parse() {
 }
 
 Result CommandParser::ProcessDrawRect() {
-  auto cmd = MakeUnique<DrawRectCommand>(pipeline_, pipeline_data_, kTimedExecution);
+  auto cmd =
+      MakeUnique<DrawRectCommand>(pipeline_, pipeline_data_, kTimedExecution);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   if (pipeline_->GetVertexBuffers().size() > 1) {
@@ -311,7 +312,8 @@ Result CommandParser::ProcessDrawRect() {
 }
 
 Result CommandParser::ProcessDrawArrays() {
-  auto cmd = MakeUnique<DrawArraysCommand>(pipeline_, pipeline_data_, kTimedExecution);
+  auto cmd =
+      MakeUnique<DrawArraysCommand>(pipeline_, pipeline_data_, kTimedExecution);
   cmd->SetLine(tokenizer_->GetCurrentLine());
   bool instanced = false;
 

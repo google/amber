@@ -98,6 +98,7 @@ class Device {
 
   float GetTimestampPeriod() const;
   void ReportExecutionTiming(double time_in_ns);
+
  private:
   Result LoadVulkanPointers(PFN_vkGetInstanceProcAddr, Delegate* delegate);
   bool SupportsApiVersion(uint32_t major, uint32_t minor, uint32_t patch);
@@ -115,7 +116,7 @@ class Device {
 
   VulkanPtrs ptrs_;
 
-  Delegate* delegate_=nullptr;
+  Delegate* delegate_ = nullptr;
 };
 
 }  // namespace vulkan

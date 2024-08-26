@@ -81,10 +81,8 @@ RUN TIMED_EXECUTION my_pipeline DRAW_RECT POS 2 4 SIZE 10 20)";
   EXPECT_FLOAT_EQ(4.f, cmd->AsDrawRect()->GetY());
   EXPECT_FLOAT_EQ(10.f, cmd->AsDrawRect()->GetWidth());
   EXPECT_FLOAT_EQ(20.f, cmd->AsDrawRect()->GetHeight());
-    EXPECT_TRUE(cmd->AsDrawRect()->IsTimedExecution());
+  EXPECT_TRUE(cmd->AsDrawRect()->IsTimedExecution());
 }
-
-
 
 TEST_F(AmberScriptParserTest, RunDrawGridTimedExecution) {
   std::string in = R"(
@@ -116,7 +114,7 @@ RUN TIMED_EXECUTION my_pipeline DRAW_GRID POS 2 4 SIZE 10 20 CELLS 4 5)";
   EXPECT_FLOAT_EQ(20.f, cmd->AsDrawGrid()->GetHeight());
   EXPECT_EQ(4u, cmd->AsDrawGrid()->GetColumns());
   EXPECT_EQ(5u, cmd->AsDrawGrid()->GetRows());
-    EXPECT_TRUE(cmd->AsDrawGrid()->IsTimedExecution());
+  EXPECT_TRUE(cmd->AsDrawGrid()->IsTimedExecution());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawArraysTimedExecution) {
@@ -156,7 +154,7 @@ RUN TIMED_EXECUTION my_pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 1 COUNT 2)
   EXPECT_EQ(Topology::kTriangleList, cmd->GetTopology());
   EXPECT_EQ(1U, cmd->GetFirstVertexIndex());
   EXPECT_EQ(2U, cmd->GetVertexCount());
-    EXPECT_TRUE(cmd->IsTimedExecution());
+  EXPECT_TRUE(cmd->IsTimedExecution());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawArraysInstancedTimedExecution) {
@@ -196,9 +194,8 @@ RUN TIMED_EXECUTION my_pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 1 COUNT 2 
   EXPECT_EQ(Topology::kTriangleList, cmd->GetTopology());
   EXPECT_EQ(1U, cmd->GetFirstVertexIndex());
   EXPECT_EQ(2U, cmd->GetVertexCount());
-    EXPECT_TRUE(cmd->IsTimedExecution());
+  EXPECT_TRUE(cmd->IsTimedExecution());
 }
-
 
 TEST_F(AmberScriptParserTest, RunDrawArraysIndexedTimedExecution) {
   std::string in = R"(
@@ -246,8 +243,6 @@ RUN TIMED_EXECUTION my_pipeline DRAW_ARRAY AS TRIANGLE_LIST INDEXED)";
   EXPECT_EQ(3U, cmd->GetVertexCount());
   EXPECT_TRUE(cmd->IsTimedExecution());
 }
-
-
 
 }  // namespace amberscript
 }  // namespace amber

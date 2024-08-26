@@ -91,23 +91,34 @@ RepeatCommand* Command::AsRepeat() {
   return static_cast<RepeatCommand*>(this);
 }
 
-PipelineCommand::PipelineCommand(Type type, Pipeline* pipeline, bool timed_execution)
+PipelineCommand::PipelineCommand(Type type,
+                                 Pipeline* pipeline,
+                                 bool timed_execution)
     : Command(type), timed_execution_(timed_execution), pipeline_(pipeline) {}
 
 PipelineCommand::~PipelineCommand() = default;
 
-DrawRectCommand::DrawRectCommand(Pipeline* pipeline, PipelineData data, bool timed_execution)
-    : PipelineCommand(Type::kDrawRect, pipeline, timed_execution), data_(data) {}
+DrawRectCommand::DrawRectCommand(Pipeline* pipeline,
+                                 PipelineData data,
+                                 bool timed_execution)
+    : PipelineCommand(Type::kDrawRect, pipeline, timed_execution),
+      data_(data) {}
 
 DrawRectCommand::~DrawRectCommand() = default;
 
-DrawGridCommand::DrawGridCommand(Pipeline* pipeline, PipelineData data, bool timed_execution)
-    : PipelineCommand(Type::kDrawGrid, pipeline, timed_execution), data_(data) {}
+DrawGridCommand::DrawGridCommand(Pipeline* pipeline,
+                                 PipelineData data,
+                                 bool timed_execution)
+    : PipelineCommand(Type::kDrawGrid, pipeline, timed_execution),
+      data_(data) {}
 
 DrawGridCommand::~DrawGridCommand() = default;
 
-DrawArraysCommand::DrawArraysCommand(Pipeline* pipeline, PipelineData data, bool timed_execution)
-    : PipelineCommand(Type::kDrawArrays, pipeline, timed_execution), data_(data) {}
+DrawArraysCommand::DrawArraysCommand(Pipeline* pipeline,
+                                     PipelineData data,
+                                     bool timed_execution)
+    : PipelineCommand(Type::kDrawArrays, pipeline, timed_execution),
+      data_(data) {}
 
 DrawArraysCommand::~DrawArraysCommand() = default;
 

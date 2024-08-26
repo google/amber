@@ -64,7 +64,7 @@ class RayTracingPipeline : public Pipeline {
                    uint32_t maxPipelineRayPayloadSize,
                    uint32_t maxPipelineRayHitAttributeSize,
                    uint32_t maxPipelineRayRecursionDepth,
-                   const std::vector<VkPipeline>& lib, 
+                   const std::vector<VkPipeline>& lib,
                    bool is_timed_execution);
 
   BlasesMap* GetBlases() override { return blases_; }

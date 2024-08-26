@@ -142,7 +142,7 @@ class PipelineCommand : public Command {
 
   Pipeline* GetPipeline() const { return pipeline_; }
 
-  bool IsTimedExecution() const {return timed_execution_;}
+  bool IsTimedExecution() const { return timed_execution_; }
 
  protected:
   PipelineCommand(Type type, Pipeline* pipeline, bool timed_execution);
@@ -230,7 +230,9 @@ class DrawGridCommand : public PipelineCommand {
 /// Command to draw from a vertex and index buffer.
 class DrawArraysCommand : public PipelineCommand {
  public:
-  DrawArraysCommand(Pipeline* pipeline, PipelineData data, bool timed_execution);
+  DrawArraysCommand(Pipeline* pipeline,
+                    PipelineData data,
+                    bool timed_execution);
   ~DrawArraysCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }

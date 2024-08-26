@@ -39,10 +39,8 @@ const char* kDefaultEntryPointName = "main";
 
 constexpr VkMemoryBarrier kMemoryBarrierFull = {
     VK_STRUCTURE_TYPE_MEMORY_BARRIER, nullptr,
-     VK_ACCESS_2_MEMORY_READ_BIT_KHR |
-                   VK_ACCESS_2_MEMORY_WRITE_BIT_KHR,
-     VK_ACCESS_2_MEMORY_READ_BIT_KHR |
-                   VK_ACCESS_2_MEMORY_WRITE_BIT_KHR};
+    VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR,
+    VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR};
 
 constexpr uint32_t kNumQueryObjects = 2;
 
@@ -262,64 +260,83 @@ void Pipeline::UpdateDescriptorSetsIfNeeded() {
   }
 }
 
-
 void Pipeline::CreateTimingQueryObjectIfNeeded(bool is_timed_execution) {
-    if(!is_timed_execution ||!device_->IsTimestampComputeAndGraphicsSupported()){
-      return;
-    }
-    VkQueryPoolCreateInfo pool_create_info {VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO, nullptr,0, VK_QUERY_TYPE_TIMESTAMP,kNumQueryObjects,
-    0};
-    device_->GetPtrs()->vkCreateQueryPool( device_->GetVkDevice(), &pool_create_info, nullptr, &query_pool_);
-
+  if (!is_timed_execution ||
+      !device_->IsTimestampComputeAndGraphicsSupported()) {
+    return;
+  }
+  VkQueryPoolCreateInfo pool_create_info{
+      VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
+      nullptr,
+      0,
+      VK_QUERY_TYPE_TIMESTAMP,
+      kNumQueryObjects,
+      0};
+  device_->GetPtrs()->vkCreateQueryPool(
+      device_->GetVkDevice(), &pool_create_info, nullptr, &query_pool_);
 }
 
 void Pipeline::DestroyTimingQueryObjectIfNeeded(bool is_timed_execution) {
-   if(!is_timed_execution || !device_->IsTimestampComputeAndGraphicsSupported()){
-      return;
-    }
-  // Flags set so we may/will wait on the CPU for the availiblity of our queries.
-  const VkQueryResultFlags flags = VK_QUERY_RESULT_WAIT_BIT | VK_QUERY_RESULT_64_BIT;
+  if (!is_timed_execution ||
+      !device_->IsTimestampComputeAndGraphicsSupported()) {
+    return;
+  }
+  // Flags set so we may/will wait on the CPU for the availiblity of our
+  // queries.
+  const VkQueryResultFlags flags =
+      VK_QUERY_RESULT_WAIT_BIT | VK_QUERY_RESULT_64_BIT;
   uint64_t time_stamps[kNumQueryObjects];
   constexpr VkDeviceSize kStrideBytes = sizeof(uint64_t);
-  
-  device_->GetPtrs()->vkGetQueryPoolResults(device_->GetVkDevice(), query_pool_, 0, kNumQueryObjects, sizeof(time_stamps),  time_stamps, kStrideBytes, flags);
-  double time_in_ns = static_cast<double>(time_stamps[1]-time_stamps[0])* device_->GetTimestampPeriod();
-  //printf("Delta = %f ms,  %f ns \n", delta_t_in_ns / 1000000.0, delta_t_in_ns);
 
-  constexpr double kNsToMsTime = 1.0/ 1'000'000.0;
-  device_->ReportExecutionTiming(time_in_ns*kNsToMsTime);
-  device_->GetPtrs()->vkDestroyQueryPool(device_->GetVkDevice(), query_pool_, nullptr);
+  device_->GetPtrs()->vkGetQueryPoolResults(
+      device_->GetVkDevice(), query_pool_, 0, kNumQueryObjects,
+      sizeof(time_stamps), time_stamps, kStrideBytes, flags);
+  double time_in_ns = static_cast<double>(time_stamps[1] - time_stamps[0]) *
+                      device_->GetTimestampPeriod();
+  // printf("Delta = %f ms,  %f ns \n", delta_t_in_ns / 1000000.0,
+  // delta_t_in_ns);
+
+  constexpr double kNsToMsTime = 1.0 / 1'000'000.0;
+  device_->ReportExecutionTiming(time_in_ns * kNsToMsTime);
+  device_->GetPtrs()->vkDestroyQueryPool(device_->GetVkDevice(), query_pool_,
+                                         nullptr);
 }
 
 void Pipeline::BeginTimerQuery(bool is_timed_execution) {
-     if(!is_timed_execution ||!device_->IsTimestampComputeAndGraphicsSupported()){
-      return;
-    }
-    device_->GetPtrs()->vkCmdResetQueryPool(command_->GetVkCommandBuffer(), query_pool_, 0 , kNumQueryObjects);
-    // Full barrier prevents any work from before the point being still in the pipeline.
-    device_->GetPtrs()->vkCmdPipelineBarrier(
+  if (!is_timed_execution ||
+      !device_->IsTimestampComputeAndGraphicsSupported()) {
+    return;
+  }
+  device_->GetPtrs()->vkCmdResetQueryPool(command_->GetVkCommandBuffer(),
+                                          query_pool_, 0, kNumQueryObjects);
+  // Full barrier prevents any work from before the point being still in the
+  // pipeline.
+  device_->GetPtrs()->vkCmdPipelineBarrier(
       command_->GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1, &kMemoryBarrierFull, 0,
-      nullptr, 0, nullptr);
-    constexpr uint32_t kBeginQueryIndexOffset = 0;
-    device_->GetPtrs()->vkCmdWriteTimestamp( command_->GetVkCommandBuffer(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, query_pool_, kBeginQueryIndexOffset);       
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1, &kMemoryBarrierFull, 0, nullptr,
+      0, nullptr);
+  constexpr uint32_t kBeginQueryIndexOffset = 0;
+  device_->GetPtrs()->vkCmdWriteTimestamp(command_->GetVkCommandBuffer(),
+                                          VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                                          query_pool_, kBeginQueryIndexOffset);
 }
 
 void Pipeline::EndTimerQuery(bool is_timed_execution) {
-    if(!is_timed_execution || !device_->IsTimestampComputeAndGraphicsSupported()){
-      return;
-    }
-    // Full barrier ensures that work after our timing is executed before the timestamp.
-   device_->GetPtrs()->vkCmdPipelineBarrier(
+  if (!is_timed_execution ||
+      !device_->IsTimestampComputeAndGraphicsSupported()) {
+    return;
+  }
+  // Full barrier ensures that work after our timing is executed before the
+  // timestamp.
+  device_->GetPtrs()->vkCmdPipelineBarrier(
       command_->GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1, &kMemoryBarrierFull, 0,
-      nullptr, 0, nullptr);
-     constexpr uint32_t kEndQueryIndexOffset = 1;
-    device_->GetPtrs()->vkCmdWriteTimestamp( command_->GetVkCommandBuffer(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, query_pool_, kEndQueryIndexOffset);
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1, &kMemoryBarrierFull, 0, nullptr,
+      0, nullptr);
+  constexpr uint32_t kEndQueryIndexOffset = 1;
+  device_->GetPtrs()->vkCmdWriteTimestamp(command_->GetVkCommandBuffer(),
+                                          VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                                          query_pool_, kEndQueryIndexOffset);
 }
-
-
-
 
 Result Pipeline::RecordPushConstant(const VkPipelineLayout& pipeline_layout) {
   return push_constant_->RecordPushConstantVkCommand(command_.get(),

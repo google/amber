@@ -917,6 +917,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     frame_->CopyBuffersToImages();
     frame_->TransferImagesToDevice(GetCommandBuffer());
 
+    BeginTimerQuery(is_timed_execution);
     {
       RenderPassGuard render_pass_guard(this);
 
@@ -940,11 +941,11 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
         r = index_buffer_->BindToCommandBuffer(command_.get());
         if (!r.IsSuccess())
           return r;
-          
+
         // VkRunner spec says
         //   "vertexCount will be used as the index count, firstVertex
         //    becomes the vertex offset and firstIndex will always be zero."
-            BeginTimerQuery(is_timed_execution);
+
         device_->GetPtrs()->vkCmdDrawIndexed(
             command_->GetVkCommandBuffer(),
             command->GetVertexCount(),   /* indexCount */
@@ -953,17 +954,14 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
             static_cast<int32_t>(
                 command->GetFirstVertexIndex()), /* vertexOffset */
             command->GetFirstInstance());        /* firstInstance */
-                EndTimerQuery(is_timed_execution);
       } else {
-                  BeginTimerQuery(is_timed_execution);
         device_->GetPtrs()->vkCmdDraw(
             command_->GetVkCommandBuffer(), command->GetVertexCount(),
             command->GetInstanceCount(), command->GetFirstVertexIndex(),
             command->GetFirstInstance());
-                  EndTimerQuery(is_timed_execution);
       }
     }
-
+    EndTimerQuery(is_timed_execution);
     frame_->TransferImagesToHost(command_.get());
 
     r = cmd_buf_guard.Submit(GetFenceTimeout(),

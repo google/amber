@@ -450,9 +450,9 @@ bool Device::SupportsApiVersion(uint32_t major,
 #pragma clang diagnostic pop
 }
 
-void Device::ReportExecutionTiming(double time_in_ms){
-  if(delegate_){
-      delegate_->ReportExecutionTiming(time_in_ms);
+void Device::ReportExecutionTiming(double time_in_ms) {
+  if (delegate_) {
+    delegate_->ReportExecutionTiming(time_in_ms);
   }
 }
 
@@ -820,9 +820,9 @@ Result Device::Initialize(
     ptr = s->pNext;
   }
 
-#define CHK_P(R, P, NAME, S1, S2) \
-  do {                            \
-    if (R == -1 && P == #NAME) \
+#define CHK_P(R, P, NAME, S1, S2)                         \
+  do {                                                    \
+    if (R == -1 && P == #NAME)                            \
       R = ((S1 && S1->NAME) || (S2 && S2->NAME)) ? 1 : 0; \
   } while (false)
 
@@ -860,8 +860,7 @@ Result Device::Initialize(
       return Result("Vulkan: Device::Initialize missing " + prop + " property");
 
     if (supported == -1)
-      return Result(
-          "Vulkan: Device::Initialize property not handled " + prop);
+      return Result("Vulkan: Device::Initialize property not handled " + prop);
   }
 
   ptrs_.vkGetPhysicalDeviceMemoryProperties(physical_device_,
@@ -1083,11 +1082,11 @@ uint32_t Device::GetMaxPushConstants() const {
 }
 
 bool Device::IsTimestampComputeAndGraphicsSupported() const {
-    return physical_device_properties_.limits.timestampComputeAndGraphics;
+  return physical_device_properties_.limits.timestampComputeAndGraphics;
 }
 
 float Device::GetTimestampPeriod() const {
-    return physical_device_properties_.limits.timestampPeriod;
+  return physical_device_properties_.limits.timestampPeriod;
 }
 
 bool Device::IsDescriptorSetInBounds(uint32_t descriptor_set) const {

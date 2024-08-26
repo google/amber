@@ -90,7 +90,7 @@ class Pipeline {
       PipelineType type,
       Device* device,
       uint32_t fence_timeout_ms,
-      bool    pipeline_runtime_layer_enabled,
+      bool pipeline_runtime_layer_enabled,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info,
       VkPipelineCreateFlags create_flags = 0);
 
@@ -102,12 +102,12 @@ class Pipeline {
                            Descriptor** desc);
   void UpdateDescriptorSetsIfNeeded();
 
-  // This functions are used in benchmarking when 'TIMED_EXECUTION' option is specifed.
+  // This functions are used in benchmarking when 'TIMED_EXECUTION' option is
+  // specifed.
   void CreateTimingQueryObjectIfNeeded(bool is_timed_execution);
   void DestroyTimingQueryObjectIfNeeded(bool is_timed_execution);
   void BeginTimerQuery(bool is_timed_execution);
   void EndTimerQuery(bool is_timed_execution);
-
 
   Result SendDescriptorDataToDeviceIfNeeded();
   void BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout);
@@ -122,8 +122,9 @@ class Pipeline {
 
   const char* GetEntryPointName(VkShaderStageFlagBits stage) const;
   uint32_t GetFenceTimeout() const { return fence_timeout_ms_; }
-  bool     GetPipelineRuntimeLayerEnabled()
-       const { return pipeline_runtime_layer_enabled_; }
+  bool GetPipelineRuntimeLayerEnabled() const {
+    return pipeline_runtime_layer_enabled_;
+  }
 
   Result CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout);
 
@@ -137,7 +138,6 @@ class Pipeline {
     pipeline_ = pipeline;
   }
 
-
   VkQueryPool query_pool_ = VK_NULL_HANDLE;
   VkPipeline pipeline_ = VK_NULL_HANDLE;
   VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
@@ -147,9 +147,6 @@ class Pipeline {
   VkPipelineCreateFlags create_flags_ = 0;
 
  private:
-
-
-
   struct DescriptorSetInfo {
     bool empty = true;
     VkDescriptorSetLayout layout = VK_NULL_HANDLE;

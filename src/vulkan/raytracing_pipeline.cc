@@ -250,7 +250,7 @@ Result RayTracingPipeline::TraceRays(amber::SBT* rSBT,
                                           &cSBTRegion, x, y, z);
     BeginTimerQuery(is_timed_execution);
     r = guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
-          EndTimerQuery(is_timed_execution);
+    EndTimerQuery(is_timed_execution);
     if (!r.IsSuccess())
       return r;
   }
