@@ -47,7 +47,7 @@ ShaderType ShaderNameToType(const std::string& name) {
 }
 
 // Timed execution is not supported in VkScript.
-constexpr bool kTimedExecution = false;
+constexpr bool kTimedExecutionSupported = false;
 
 }  // namespace
 
@@ -255,8 +255,8 @@ Result CommandParser::Parse() {
 }
 
 Result CommandParser::ProcessDrawRect() {
-  auto cmd =
-      MakeUnique<DrawRectCommand>(pipeline_, pipeline_data_, kTimedExecution);
+  auto cmd = MakeUnique<DrawRectCommand>(pipeline_, pipeline_data_,
+                                         kTimedExecutionSupported);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   if (pipeline_->GetVertexBuffers().size() > 1) {
@@ -312,8 +312,8 @@ Result CommandParser::ProcessDrawRect() {
 }
 
 Result CommandParser::ProcessDrawArrays() {
-  auto cmd =
-      MakeUnique<DrawArraysCommand>(pipeline_, pipeline_data_, kTimedExecution);
+  auto cmd = MakeUnique<DrawArraysCommand>(pipeline_, pipeline_data_,
+                                           kTimedExecutionSupported);
   cmd->SetLine(tokenizer_->GetCurrentLine());
   bool instanced = false;
 
@@ -375,7 +375,7 @@ Result CommandParser::ProcessDrawArrays() {
 }
 
 Result CommandParser::ProcessCompute() {
-  auto cmd = MakeUnique<ComputeCommand>(pipeline_, kTimedExecution);
+  auto cmd = MakeUnique<ComputeCommand>(pipeline_, kTimedExecutionSupported);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -881,7 +881,7 @@ Result CommandParser::ProcessPatch() {
 }
 
 Result CommandParser::ProcessEntryPoint(const std::string& name) {
-  auto cmd = MakeUnique<EntryPointCommand>(pipeline_, kTimedExecution);
+  auto cmd = MakeUnique<EntryPointCommand>(pipeline_, kTimedExecutionSupported);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();

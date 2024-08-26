@@ -91,17 +91,22 @@ RepeatCommand* Command::AsRepeat() {
   return static_cast<RepeatCommand*>(this);
 }
 
-PipelineCommand::PipelineCommand(Type type,
-                                 Pipeline* pipeline,
-                                 bool timed_execution)
-    : Command(type), timed_execution_(timed_execution), pipeline_(pipeline) {}
+PipelineCommand::PipelineCommand(Type type, Pipeline* pipeline)
+    : Command(type), pipeline_(pipeline) {}
 
 PipelineCommand::~PipelineCommand() = default;
+
+TimedPipelineCommand::TimedPipelineCommand(Type type,
+                                           Pipeline* pipeline,
+                                           bool timed_execution)
+    : PipelineCommand(type, pipeline), timed_execution_(timed_execution) {}
+
+TimedPipelineCommand::~TimedPipelineCommand() = default;
 
 DrawRectCommand::DrawRectCommand(Pipeline* pipeline,
                                  PipelineData data,
                                  bool timed_execution)
-    : PipelineCommand(Type::kDrawRect, pipeline, timed_execution),
+    : TimedPipelineCommand(Type::kDrawRect, pipeline, timed_execution),
       data_(data) {}
 
 DrawRectCommand::~DrawRectCommand() = default;
@@ -109,7 +114,7 @@ DrawRectCommand::~DrawRectCommand() = default;
 DrawGridCommand::DrawGridCommand(Pipeline* pipeline,
                                  PipelineData data,
                                  bool timed_execution)
-    : PipelineCommand(Type::kDrawGrid, pipeline, timed_execution),
+    : TimedPipelineCommand(Type::kDrawGrid, pipeline, timed_execution),
       data_(data) {}
 
 DrawGridCommand::~DrawGridCommand() = default;
@@ -117,7 +122,7 @@ DrawGridCommand::~DrawGridCommand() = default;
 DrawArraysCommand::DrawArraysCommand(Pipeline* pipeline,
                                      PipelineData data,
                                      bool timed_execution)
-    : PipelineCommand(Type::kDrawArrays, pipeline, timed_execution),
+    : TimedPipelineCommand(Type::kDrawArrays, pipeline, timed_execution),
       data_(data) {}
 
 DrawArraysCommand::~DrawArraysCommand() = default;
@@ -128,7 +133,7 @@ CompareBufferCommand::CompareBufferCommand(Buffer* buffer_1, Buffer* buffer_2)
 CompareBufferCommand::~CompareBufferCommand() = default;
 
 ComputeCommand::ComputeCommand(Pipeline* pipeline, bool timed_execution)
-    : PipelineCommand(Type::kCompute, pipeline, timed_execution) {}
+    : TimedPipelineCommand(Type::kCompute, pipeline, timed_execution) {}
 
 ComputeCommand::~ComputeCommand() = default;
 
@@ -146,7 +151,7 @@ ProbeSSBOCommand::ProbeSSBOCommand(Buffer* buffer)
 ProbeSSBOCommand::~ProbeSSBOCommand() = default;
 
 BindableResourceCommand::BindableResourceCommand(Type type, Pipeline* pipeline)
-    : PipelineCommand(type, pipeline, false) {}
+    : PipelineCommand(type, pipeline) {}
 
 BindableResourceCommand::~BindableResourceCommand() = default;
 
@@ -166,32 +171,32 @@ CopyCommand::CopyCommand(Buffer* buffer_from, Buffer* buffer_to)
 CopyCommand::~CopyCommand() = default;
 
 ClearCommand::ClearCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kClear, pipeline, false) {}
+    : PipelineCommand(Type::kClear, pipeline) {}
 
 ClearCommand::~ClearCommand() = default;
 
 ClearColorCommand::ClearColorCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kClearColor, pipeline, false) {}
+    : PipelineCommand(Type::kClearColor, pipeline) {}
 
 ClearColorCommand::~ClearColorCommand() = default;
 
 ClearDepthCommand::ClearDepthCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kClearDepth, pipeline, false) {}
+    : PipelineCommand(Type::kClearDepth, pipeline) {}
 
 ClearDepthCommand::~ClearDepthCommand() = default;
 
 ClearStencilCommand::ClearStencilCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kClearStencil, pipeline, false) {}
+    : PipelineCommand(Type::kClearStencil, pipeline) {}
 
 ClearStencilCommand::~ClearStencilCommand() = default;
 
 PatchParameterVerticesCommand::PatchParameterVerticesCommand(Pipeline* pipeline)
-    : PipelineCommand(Type::kPatchParameterVertices, pipeline, false) {}
+    : PipelineCommand(Type::kPatchParameterVertices, pipeline) {}
 
 PatchParameterVerticesCommand::~PatchParameterVerticesCommand() = default;
 
 EntryPointCommand::EntryPointCommand(Pipeline* pipeline, bool timed_execution)
-    : PipelineCommand(Type::kEntryPoint, pipeline, timed_execution) {}
+    : TimedPipelineCommand(Type::kEntryPoint, pipeline, timed_execution) {}
 
 EntryPointCommand::~EntryPointCommand() = default;
 
@@ -206,7 +211,7 @@ TLASCommand::TLASCommand(Pipeline* pipeline)
 TLASCommand::~TLASCommand() = default;
 
 RayTracingCommand::RayTracingCommand(Pipeline* pipeline, bool timed_execution)
-    : PipelineCommand(Type::kRayTracing, pipeline, timed_execution) {}
+    : TimedPipelineCommand(Type::kRayTracing, pipeline, timed_execution) {}
 
 RayTracingCommand::~RayTracingCommand() = default;
 

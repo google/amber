@@ -142,17 +142,27 @@ class PipelineCommand : public Command {
 
   Pipeline* GetPipeline() const { return pipeline_; }
 
-  bool IsTimedExecution() const { return timed_execution_; }
-
  protected:
-  PipelineCommand(Type type, Pipeline* pipeline, bool timed_execution);
+  PipelineCommand(Type type, Pipeline* pipeline);
 
-  bool timed_execution_ = false;
   Pipeline* pipeline_ = nullptr;
 };
 
+/// Base class for commands which contain a pipeline.
+class TimedPipelineCommand : public PipelineCommand {
+ public:
+  ~TimedPipelineCommand() override;
+
+  bool IsTimedExecution() const { return timed_execution_; }
+
+ protected:
+  TimedPipelineCommand(Type type, Pipeline* pipeline, bool timed_execution);
+
+  bool timed_execution_ = false;
+};
+
 /// Command to draw a rectangle on screen.
-class DrawRectCommand : public PipelineCommand {
+class DrawRectCommand : public TimedPipelineCommand {
  public:
   DrawRectCommand(Pipeline* pipeline, PipelineData data, bool timed_execution);
   ~DrawRectCommand() override;
@@ -190,7 +200,7 @@ class DrawRectCommand : public PipelineCommand {
 };
 
 /// Command to draw a grid of recrangles on screen.
-class DrawGridCommand : public PipelineCommand {
+class DrawGridCommand : public TimedPipelineCommand {
  public:
   DrawGridCommand(Pipeline* pipeline, PipelineData data, bool timed_execution);
   ~DrawGridCommand() override;
@@ -228,7 +238,7 @@ class DrawGridCommand : public PipelineCommand {
 };
 
 /// Command to draw from a vertex and index buffer.
-class DrawArraysCommand : public PipelineCommand {
+class DrawArraysCommand : public TimedPipelineCommand {
  public:
   DrawArraysCommand(Pipeline* pipeline,
                     PipelineData data,
@@ -294,7 +304,7 @@ class CompareBufferCommand : public Command {
 };
 
 /// Command to execute a compute command.
-class ComputeCommand : public PipelineCommand {
+class ComputeCommand : public TimedPipelineCommand {
  public:
   explicit ComputeCommand(Pipeline* pipeline, bool timed_execution);
   ~ComputeCommand() override;
@@ -684,7 +694,7 @@ class PatchParameterVerticesCommand : public PipelineCommand {
 };
 
 /// Command to set the entry point to use for a given shader type.
-class EntryPointCommand : public PipelineCommand {
+class EntryPointCommand : public TimedPipelineCommand {
  public:
   explicit EntryPointCommand(Pipeline* pipeline, bool timed_execution);
   ~EntryPointCommand() override;
@@ -741,7 +751,7 @@ class TLASCommand : public BindableResourceCommand {
 };
 
 /// Command to execute a ray tracing command.
-class RayTracingCommand : public PipelineCommand {
+class RayTracingCommand : public TimedPipelineCommand {
  public:
   explicit RayTracingCommand(Pipeline* pipeline, bool timed_execution);
   ~RayTracingCommand() override;

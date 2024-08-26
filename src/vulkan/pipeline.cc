@@ -293,8 +293,6 @@ void Pipeline::DestroyTimingQueryObjectIfNeeded(bool is_timed_execution) {
       sizeof(time_stamps), time_stamps, kStrideBytes, flags);
   double time_in_ns = static_cast<double>(time_stamps[1] - time_stamps[0]) *
                       device_->GetTimestampPeriod();
-  // printf("Delta = %f ms,  %f ns \n", delta_t_in_ns / 1000000.0,
-  // delta_t_in_ns);
 
   constexpr double kNsToMsTime = 1.0 / 1'000'000.0;
   device_->ReportExecutionTiming(time_in_ns * kNsToMsTime);

@@ -643,28 +643,27 @@ int main(int argc, const char** argv) {
       // give clues as to the failure.
     }
 
-    if (result.IsSuccess() && options.log_execution_timing) {
-      auto execution_timing = delegate.GetAndClearExecutionTiming();
-      if (!execution_timing.empty()) {
-        std::cout << "Execution timing (in-order):" << std::endl;
-        std::cout << "    ";
-        bool is_first_iter = true;
-        for (auto& timing : execution_timing) {
-          if (!is_first_iter) {
-            std::cout << ", ";
-          }
-          is_first_iter = false;
-          std::cout << timing;
+    auto execution_timing = delegate.GetAndClearExecutionTiming();
+    if (result.IsSuccess() && options.log_execution_timing &&
+        !execution_timing.empty()) {
+      std::cout << "Execution timing (in-order):" << std::endl;
+      std::cout << "    ";
+      bool is_first_iter = true;
+      for (auto& timing : execution_timing) {
+        if (!is_first_iter) {
+          std::cout << ", ";
         }
-        std::cout << std::endl;
-        std::sort(execution_timing.begin(), execution_timing.end());
-        auto report_median =
-            (execution_timing[execution_timing.size() / 2] +
-             execution_timing[(execution_timing.size() - 1) / 2]) /
-            2;
-        std::cout << "Execution time median = " << report_median << " ms"
-                  << std::endl;
+        is_first_iter = false;
+        std::cout << timing;
       }
+      std::cout << std::endl;
+      std::sort(execution_timing.begin(), execution_timing.end());
+      auto report_median =
+          (execution_timing[execution_timing.size() / 2] +
+           execution_timing[(execution_timing.size() - 1) / 2]) /
+          2;
+      std::cout << "Execution time median = " << report_median << " ms"
+                << std::endl;
     }
 
     // Dump the shader assembly

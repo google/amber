@@ -94,9 +94,13 @@ class Device {
   /// Returns ray tracing shader group handle size.
   uint32_t GetRayTracingShaderGroupHandleSize() const;
 
+  // Returns true if we have support for timestamps.
   bool IsTimestampComputeAndGraphicsSupported() const;
 
+  // Returns a float used to convert between timestamps and actual elapsed time.
   float GetTimestampPeriod() const;
+
+  // Each timed execution reports timing to the device and on to the delegate.
   void ReportExecutionTiming(double time_in_ns);
 
  private:
