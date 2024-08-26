@@ -17,7 +17,7 @@ SHADER compute buffer_overrun GLSL
 #version 430
 
 // Only one invocation per workgroup.
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) buffer BlockUint {
   uint data[];
@@ -63,7 +63,19 @@ END
 
 # Only one workgroup.  Having only one invocation execute ensures
 # there are no race conditions.
-RUN pipeline 2 1 1
-REPEAT 10
-  RUN TIMED_EXECUTION pipeline 16 1 1
-END
+RUN pipeline 1 1 1
+
+# In the unsigned int index case:
+#   The first 4 entries are incremented, as expected.
+#   Beyond that, the remaining indices are clamped to the upper
+#   bound of the length of the array, minus 1.
+EXPECT buf_uint IDX 0 EQ 10001 1 1 9997
+
+# In the signed int index case:
+#
+#   Index 0 is incremented 6 times, for i values -5, -4, -3, -2, -1, 0
+#   since negative indices are clamped to 0.
+#     So initial value -5 + 6 --> 1
+#   Indices 1, 2, 3 are incremented once each.
+#   Index 4 is incremented 6 times, for i values 4, 5, 6, 7, 8, 9
+EXPECT buf_int IDX 0 EQ 1 11 1 1 6
