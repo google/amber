@@ -2724,8 +2724,11 @@ Result Parser::ParseRun() {
     return Result("unknown pipeline for RUN command: " + token->AsString());
 
   if (pipeline->IsRayTracing()) {
-    auto cmd = MakeUnique<RayTracingCommand>(pipeline, is_timed_execution);
+    auto cmd = MakeUnique<RayTracingCommand>(pipeline);
     cmd->SetLine(line);
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     while (true) {
       if (tokenizer_->PeekNextToken()->IsInteger())
@@ -2796,9 +2799,12 @@ Result Parser::ParseRun() {
     if (!pipeline->IsCompute())
       return Result("RUN command requires compute pipeline");
 
-    auto cmd = MakeUnique<ComputeCommand>(pipeline, is_timed_execution);
+    auto cmd = MakeUnique<ComputeCommand>(pipeline);
     cmd->SetLine(line);
     cmd->SetX(token->AsUint32());
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger()) {
@@ -2844,10 +2850,13 @@ Result Parser::ParseRun() {
     if (!token->IsInteger())
       return Result("missing X position for RUN command");
 
-    auto cmd = MakeUnique<DrawRectCommand>(
-        pipeline, *pipeline->GetPipelineData(), is_timed_execution);
+    auto cmd =
+        MakeUnique<DrawRectCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
     cmd->EnableOrtho();
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -2914,9 +2923,12 @@ Result Parser::ParseRun() {
     if (!token->IsInteger())
       return Result("missing X position for RUN command");
 
-    auto cmd = MakeUnique<DrawGridCommand>(
-        pipeline, *pipeline->GetPipelineData(), is_timed_execution);
+    auto cmd =
+        MakeUnique<DrawGridCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -3082,14 +3094,17 @@ Result Parser::ParseRun() {
         return Result("START_IDX plus COUNT exceeds vertex buffer data size");
     }
 
-    auto cmd = MakeUnique<DrawArraysCommand>(
-        pipeline, *pipeline->GetPipelineData(), is_timed_execution);
+    auto cmd =
+        MakeUnique<DrawArraysCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
     cmd->SetTopology(topo);
     cmd->SetFirstVertexIndex(start_idx);
     cmd->SetVertexCount(count);
     cmd->SetInstanceCount(instance_count);
     cmd->SetFirstInstance(start_instance);
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     if (indexed)
       cmd->EnableIndexed();

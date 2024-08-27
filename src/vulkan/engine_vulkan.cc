@@ -670,8 +670,10 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   vertex_buffer->SetData(0, buf.get(), InputRate::kVertex, buf->GetFormat(), 0,
                          buf->GetFormat()->SizeInBytes());
 
-  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData(),
-                         command->IsTimedExecution());
+  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
+  if (command->IsTimedExecution()) {
+    draw.SetTimedExecution();
+  }
   draw.SetTopology(command->IsPatch() ? Topology::kPatchList
                                       : Topology::kTriangleStrip);
   draw.SetFirstVertexIndex(0);
@@ -760,8 +762,10 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   vertex_buffer->SetData(0, buf.get(), InputRate::kVertex, buf->GetFormat(), 0,
                          buf->GetFormat()->SizeInBytes());
 
-  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData(),
-                         command->IsTimedExecution());
+  DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
+  if (command->IsTimedExecution()) {
+    draw.SetTimedExecution();
+  }
   draw.SetTopology(Topology::kTriangleList);
   draw.SetFirstVertexIndex(0);
   draw.SetVertexCount(vertices);

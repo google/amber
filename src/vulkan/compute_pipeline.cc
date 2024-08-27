@@ -104,15 +104,15 @@ Result ComputePipeline::Compute(uint32_t x,
     device_->GetPtrs()->vkCmdBindPipeline(command_->GetVkCommandBuffer(),
                                           VK_PIPELINE_BIND_POINT_COMPUTE,
                                           pipeline);
-    BeginTimerQuery(is_timed_execution);
+    BeginTimerQuery();
     device_->GetPtrs()->vkCmdDispatch(command_->GetVkCommandBuffer(), x, y, z);
-    EndTimerQuery(is_timed_execution);
+    EndTimerQuery();
 
     r = guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
     if (!r.IsSuccess())
       return r;
   }
-  DestroyTimingQueryObjectIfNeeded(is_timed_execution);
+  DestroyTimingQueryObjectIfNeeded();
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;

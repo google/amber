@@ -142,29 +142,20 @@ class PipelineCommand : public Command {
 
   Pipeline* GetPipeline() const { return pipeline_; }
 
+  void SetTimedExecution() { timed_execution_ = true; }
+  bool IsTimedExecution() const { return timed_execution_; }
+
  protected:
   PipelineCommand(Type type, Pipeline* pipeline);
 
   Pipeline* pipeline_ = nullptr;
-};
-
-/// Base class for commands which contain a pipeline.
-class TimedPipelineCommand : public PipelineCommand {
- public:
-  ~TimedPipelineCommand() override;
-
-  bool IsTimedExecution() const { return timed_execution_; }
-
- protected:
-  TimedPipelineCommand(Type type, Pipeline* pipeline, bool timed_execution);
-
   bool timed_execution_ = false;
 };
 
 /// Command to draw a rectangle on screen.
-class DrawRectCommand : public TimedPipelineCommand {
+class DrawRectCommand : public PipelineCommand {
  public:
-  DrawRectCommand(Pipeline* pipeline, PipelineData data, bool timed_execution);
+  DrawRectCommand(Pipeline* pipeline, PipelineData data);
   ~DrawRectCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
@@ -200,9 +191,9 @@ class DrawRectCommand : public TimedPipelineCommand {
 };
 
 /// Command to draw a grid of recrangles on screen.
-class DrawGridCommand : public TimedPipelineCommand {
+class DrawGridCommand : public PipelineCommand {
  public:
-  DrawGridCommand(Pipeline* pipeline, PipelineData data, bool timed_execution);
+  DrawGridCommand(Pipeline* pipeline, PipelineData data);
   ~DrawGridCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
@@ -238,11 +229,9 @@ class DrawGridCommand : public TimedPipelineCommand {
 };
 
 /// Command to draw from a vertex and index buffer.
-class DrawArraysCommand : public TimedPipelineCommand {
+class DrawArraysCommand : public PipelineCommand {
  public:
-  DrawArraysCommand(Pipeline* pipeline,
-                    PipelineData data,
-                    bool timed_execution);
+  DrawArraysCommand(Pipeline* pipeline, PipelineData data);
   ~DrawArraysCommand() override;
 
   const PipelineData* GetPipelineData() const { return &data_; }
@@ -304,9 +293,9 @@ class CompareBufferCommand : public Command {
 };
 
 /// Command to execute a compute command.
-class ComputeCommand : public TimedPipelineCommand {
+class ComputeCommand : public PipelineCommand {
  public:
-  explicit ComputeCommand(Pipeline* pipeline, bool timed_execution);
+  explicit ComputeCommand(Pipeline* pipeline);
   ~ComputeCommand() override;
 
   void SetX(uint32_t x) { x_ = x; }
@@ -694,9 +683,9 @@ class PatchParameterVerticesCommand : public PipelineCommand {
 };
 
 /// Command to set the entry point to use for a given shader type.
-class EntryPointCommand : public TimedPipelineCommand {
+class EntryPointCommand : public PipelineCommand {
  public:
-  explicit EntryPointCommand(Pipeline* pipeline, bool timed_execution);
+  explicit EntryPointCommand(Pipeline* pipeline);
   ~EntryPointCommand() override;
 
   void SetShaderType(ShaderType type) { shader_type_ = type; }
@@ -751,9 +740,9 @@ class TLASCommand : public BindableResourceCommand {
 };
 
 /// Command to execute a ray tracing command.
-class RayTracingCommand : public TimedPipelineCommand {
+class RayTracingCommand : public PipelineCommand {
  public:
-  explicit RayTracingCommand(Pipeline* pipeline, bool timed_execution);
+  explicit RayTracingCommand(Pipeline* pipeline);
   ~RayTracingCommand() override;
 
   void SetX(uint32_t x) { x_ = x; }

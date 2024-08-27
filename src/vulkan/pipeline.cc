@@ -265,6 +265,7 @@ void Pipeline::CreateTimingQueryObjectIfNeeded(bool is_timed_execution) {
       !device_->IsTimestampComputeAndGraphicsSupported()) {
     return;
   }
+  in_timed_execution_ = true;
   VkQueryPoolCreateInfo pool_create_info{
       VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
       nullptr,
@@ -276,21 +277,21 @@ void Pipeline::CreateTimingQueryObjectIfNeeded(bool is_timed_execution) {
       device_->GetVkDevice(), &pool_create_info, nullptr, &query_pool_);
 }
 
-void Pipeline::DestroyTimingQueryObjectIfNeeded(bool is_timed_execution) {
-  if (!is_timed_execution ||
-      !device_->IsTimestampComputeAndGraphicsSupported()) {
+void Pipeline::DestroyTimingQueryObjectIfNeeded() {
+  if (!in_timed_execution_) {
     return;
   }
+
   // Flags set so we may/will wait on the CPU for the availiblity of our
   // queries.
   const VkQueryResultFlags flags =
       VK_QUERY_RESULT_WAIT_BIT | VK_QUERY_RESULT_64_BIT;
-  uint64_t time_stamps[kNumQueryObjects];
+  std::array<uint64_t, kNumQueryObjects> time_stamps = {};
   constexpr VkDeviceSize kStrideBytes = sizeof(uint64_t);
 
   device_->GetPtrs()->vkGetQueryPoolResults(
       device_->GetVkDevice(), query_pool_, 0, kNumQueryObjects,
-      sizeof(time_stamps), time_stamps, kStrideBytes, flags);
+      sizeof(time_stamps), time_stamps.data(), kStrideBytes, flags);
   double time_in_ns = static_cast<double>(time_stamps[1] - time_stamps[0]) *
                       device_->GetTimestampPeriod();
 
@@ -298,13 +299,14 @@ void Pipeline::DestroyTimingQueryObjectIfNeeded(bool is_timed_execution) {
   device_->ReportExecutionTiming(time_in_ns * kNsToMsTime);
   device_->GetPtrs()->vkDestroyQueryPool(device_->GetVkDevice(), query_pool_,
                                          nullptr);
+  in_timed_execution_ = false;
 }
 
-void Pipeline::BeginTimerQuery(bool is_timed_execution) {
-  if (!is_timed_execution ||
-      !device_->IsTimestampComputeAndGraphicsSupported()) {
+void Pipeline::BeginTimerQuery() {
+  if (!in_timed_execution_) {
     return;
   }
+
   device_->GetPtrs()->vkCmdResetQueryPool(command_->GetVkCommandBuffer(),
                                           query_pool_, 0, kNumQueryObjects);
   // Full barrier prevents any work from before the point being still in the
@@ -319,13 +321,13 @@ void Pipeline::BeginTimerQuery(bool is_timed_execution) {
                                           query_pool_, kBeginQueryIndexOffset);
 }
 
-void Pipeline::EndTimerQuery(bool is_timed_execution) {
-  if (!is_timed_execution ||
-      !device_->IsTimestampComputeAndGraphicsSupported()) {
+void Pipeline::EndTimerQuery() {
+  if (!in_timed_execution_) {
     return;
   }
-  // Full barrier ensures that work after our timing is executed before the
-  // timestamp.
+
+  // Full barrier ensures that work including in our timing is executed before
+  // the timestamp.
   device_->GetPtrs()->vkCmdPipelineBarrier(
       command_->GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1, &kMemoryBarrierFull, 0, nullptr,

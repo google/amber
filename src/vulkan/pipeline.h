@@ -105,9 +105,9 @@ class Pipeline {
   // This functions are used in benchmarking when 'TIMED_EXECUTION' option is
   // specifed.
   void CreateTimingQueryObjectIfNeeded(bool is_timed_execution);
-  void DestroyTimingQueryObjectIfNeeded(bool is_timed_execution);
-  void BeginTimerQuery(bool is_timed_execution);
-  void EndTimerQuery(bool is_timed_execution);
+  void DestroyTimingQueryObjectIfNeeded();
+  void BeginTimerQuery();
+  void EndTimerQuery();
 
   Result SendDescriptorDataToDeviceIfNeeded();
   void BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout);
@@ -181,6 +181,7 @@ class Pipeline {
       entry_points_;
 
   std::unique_ptr<PushConstant> push_constant_;
+  bool in_timed_execution_ = false;
 };
 
 }  // namespace vulkan

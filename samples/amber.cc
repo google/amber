@@ -637,7 +637,7 @@ int main(int argc, const char** argv) {
     amber::Amber am(&delegate);
     result = am.Execute(recipe, &amber_options);
     if (!result.IsSuccess()) {
-      std::cerr << file << ": " << result.Error() << std::endl;
+      std::cerr << file << ": " << result.Error() << "\n";
       failures.push_back(file);
       // Note, we continue after failure to allow dumping the buffers which may
       // give clues as to the failure.
@@ -646,7 +646,7 @@ int main(int argc, const char** argv) {
     auto execution_timing = delegate.GetAndClearExecutionTiming();
     if (result.IsSuccess() && options.log_execution_timing &&
         !execution_timing.empty()) {
-      std::cout << "Execution timing (in-order):" << std::endl;
+      std::cout << "Execution timing (in script-order):" << "\n";
       std::cout << "    ";
       bool is_first_iter = true;
       for (auto& timing : execution_timing) {
@@ -656,14 +656,13 @@ int main(int argc, const char** argv) {
         is_first_iter = false;
         std::cout << timing;
       }
-      std::cout << std::endl;
+      std::cout << "\n";
       std::sort(execution_timing.begin(), execution_timing.end());
       auto report_median =
           (execution_timing[execution_timing.size() / 2] +
            execution_timing[(execution_timing.size() - 1) / 2]) /
           2;
-      std::cout << "Execution time median = " << report_median << " ms"
-                << std::endl;
+      std::cout << "Execution time median = " << report_median << " ms" << "\n";
     }
 
     // Dump the shader assembly

@@ -248,13 +248,13 @@ Result RayTracingPipeline::TraceRays(amber::SBT* rSBT,
     device_->GetPtrs()->vkCmdTraceRaysKHR(command_->GetVkCommandBuffer(),
                                           &rSBTRegion, &mSBTRegion, &hSBTRegion,
                                           &cSBTRegion, x, y, z);
-    BeginTimerQuery(is_timed_execution);
+    BeginTimerQuery();
     r = guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
-    EndTimerQuery(is_timed_execution);
+    EndTimerQuery();
     if (!r.IsSuccess())
       return r;
   }
-  DestroyTimingQueryObjectIfNeeded(is_timed_execution);
+  DestroyTimingQueryObjectIfNeeded();
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;

@@ -920,7 +920,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     // Timing must be place outside the render pass scope. The full pipeline
     // barrier used by our specific implementation cannot be within a
     // renderpass.
-    BeginTimerQuery(is_timed_execution);
+    BeginTimerQuery();
     {
       RenderPassGuard render_pass_guard(this);
 
@@ -964,7 +964,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
             command->GetFirstInstance());
       }
     }
-    EndTimerQuery(is_timed_execution);
+    EndTimerQuery();
     frame_->TransferImagesToHost(command_.get());
 
     r = cmd_buf_guard.Submit(GetFenceTimeout(),
@@ -972,7 +972,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     if (!r.IsSuccess())
       return r;
   }
-  DestroyTimingQueryObjectIfNeeded(is_timed_execution);
+  DestroyTimingQueryObjectIfNeeded();
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;
