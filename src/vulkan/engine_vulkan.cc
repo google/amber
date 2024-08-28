@@ -139,13 +139,12 @@ Result EngineVulkan::Initialize(
 
   device_ = MakeUnique<Device>(vk_config->instance, vk_config->physical_device,
                                vk_config->queue_family_index, vk_config->device,
-                               vk_config->queue);
+                               vk_config->queue, delegate);
 
   Result r = device_->Initialize(
-      vk_config->vkGetInstanceProcAddr, delegate, features, properties,
-      device_extensions, vk_config->available_features,
-      vk_config->available_features2, vk_config->available_properties2,
-      vk_config->available_device_extensions);
+      vk_config->vkGetInstanceProcAddr, features, properties, device_extensions,
+      vk_config->available_features, vk_config->available_features2,
+      vk_config->available_properties2, vk_config->available_device_extensions);
   if (!r.IsSuccess())
     return r;
 

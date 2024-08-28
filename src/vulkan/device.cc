@@ -411,12 +411,14 @@ Device::Device(VkInstance instance,
                VkPhysicalDevice physical_device,
                uint32_t queue_family_index,
                VkDevice device,
-               VkQueue queue)
+               VkQueue queue,
+               Delegate* delegate)
     : instance_(instance),
       physical_device_(physical_device),
       device_(device),
       queue_(queue),
-      queue_family_index_(queue_family_index) {}
+      queue_family_index_(queue_family_index),
+      delegate_(delegate) {}
 
 Device::~Device() = default;
 
@@ -458,7 +460,6 @@ void Device::ReportExecutionTiming(double time_in_ms) {
 
 Result Device::Initialize(
     PFN_vkGetInstanceProcAddr getInstanceProcAddr,
-    Delegate* delegate,
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_properties,
     const std::vector<std::string>& required_device_extensions,
@@ -466,7 +467,6 @@ Result Device::Initialize(
     const VkPhysicalDeviceFeatures2KHR& available_features2,
     const VkPhysicalDeviceProperties2KHR& available_properties2,
     const std::vector<std::string>& available_extensions) {
-  delegate_ = delegate;
   Result r = LoadVulkanPointers(getInstanceProcAddr, delegate_);
   if (!r.IsSuccess())
     return r;

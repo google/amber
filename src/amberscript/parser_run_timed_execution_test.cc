@@ -1,4 +1,4 @@
-// Copyright 2019 The Amber Authors.
+// Copyright 2024 The Amber Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,6 +49,37 @@ RUN TIMED_EXECUTION my_pipeline 2 4 5
   EXPECT_EQ(4U, cmd->AsCompute()->GetY());
   EXPECT_EQ(5U, cmd->AsCompute()->GetZ());
   EXPECT_TRUE(cmd->AsCompute()->IsTimedExecution());
+}
+
+TEST_F(AmberScriptParserTest, RunComputeNoTimedExecution) {
+  std::string in = R"(
+SHADER compute my_shader GLSL
+void main() {
+  gl_FragColor = vec3(2, 3, 4);
+}
+END
+
+PIPELINE compute my_pipeline
+  ATTACH my_shader
+END
+
+RUN my_pipeline 2 4 5
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& commands = script->GetCommands();
+  ASSERT_EQ(1U, commands.size());
+
+  auto* cmd = commands[0].get();
+  ASSERT_TRUE(cmd->IsCompute());
+  EXPECT_EQ(2U, cmd->AsCompute()->GetX());
+  EXPECT_EQ(4U, cmd->AsCompute()->GetY());
+  EXPECT_EQ(5U, cmd->AsCompute()->GetZ());
+  EXPECT_FALSE(cmd->AsCompute()->IsTimedExecution());
 }
 
 TEST_F(AmberScriptParserTest, RunDrawRectTimedExecution) {
