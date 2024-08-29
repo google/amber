@@ -293,7 +293,7 @@ void Pipeline::DestroyTimingQueryObjectIfNeeded() {
       device_->GetVkDevice(), query_pool_, 0, kNumQueryObjects,
       sizeof(time_stamps), time_stamps.data(), kStrideBytes, flags);
   double time_in_ns = static_cast<double>(time_stamps[1] - time_stamps[0]) *
-                      device_->GetTimestampPeriod();
+                      static_cast<double>(device_->GetTimestampPeriod());
 
   constexpr double kNsToMsTime = 1.0 / 1'000'000.0;
   device_->ReportExecutionTiming(time_in_ns * kNsToMsTime);
