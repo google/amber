@@ -153,6 +153,7 @@ if (${AMBER_ENABLE_TESTS})
     amberscript/parser_raytracing_test.cc
     amberscript/parser_repeat_test.cc
     amberscript/parser_run_test.cc
+    amberscript/parser_run_timed_execution_test.cc
     amberscript/parser_sampler_test.cc
     amberscript/parser_set_test.cc
     amberscript/parser_shader_opt_test.cc

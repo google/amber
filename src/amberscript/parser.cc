@@ -2706,6 +2706,14 @@ Result Parser::ParseBufferInitializerFile(Buffer* buffer) {
 
 Result Parser::ParseRun() {
   auto token = tokenizer_->NextToken();
+
+  // Timed execution option for this specific run.
+  bool is_timed_execution = false;
+  if (token->AsString() == "TIMED_EXECUTION") {
+    token = tokenizer_->NextToken();
+    is_timed_execution = true;
+  }
+
   if (!token->IsIdentifier())
     return Result("missing pipeline name for RUN command");
 
@@ -2718,6 +2726,9 @@ Result Parser::ParseRun() {
   if (pipeline->IsRayTracing()) {
     auto cmd = MakeUnique<RayTracingCommand>(pipeline);
     cmd->SetLine(line);
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     while (true) {
       if (tokenizer_->PeekNextToken()->IsInteger())
@@ -2791,6 +2802,9 @@ Result Parser::ParseRun() {
     auto cmd = MakeUnique<ComputeCommand>(pipeline);
     cmd->SetLine(line);
     cmd->SetX(token->AsUint32());
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger()) {
@@ -2840,6 +2854,9 @@ Result Parser::ParseRun() {
         MakeUnique<DrawRectCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
     cmd->EnableOrtho();
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -2909,6 +2926,9 @@ Result Parser::ParseRun() {
     auto cmd =
         MakeUnique<DrawGridCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -3082,6 +3102,9 @@ Result Parser::ParseRun() {
     cmd->SetVertexCount(count);
     cmd->SetInstanceCount(instance_count);
     cmd->SetFirstInstance(start_instance);
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     if (indexed)
       cmd->EnableIndexed();

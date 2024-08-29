@@ -29,6 +29,7 @@
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/push_constant.h"
 #include "src/vulkan/resource.h"
+#include "vulkan/vulkan_core.h"
 
 namespace amber {
 
@@ -89,7 +90,7 @@ class Pipeline {
       PipelineType type,
       Device* device,
       uint32_t fence_timeout_ms,
-      bool    pipeline_runtime_layer_enabled,
+      bool pipeline_runtime_layer_enabled,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info,
       VkPipelineCreateFlags create_flags = 0);
 
@@ -100,6 +101,13 @@ class Pipeline {
                            uint32_t binding,
                            Descriptor** desc);
   void UpdateDescriptorSetsIfNeeded();
+
+  // This functions are used in benchmarking when 'TIMED_EXECUTION' option is
+  // specifed.
+  void CreateTimingQueryObjectIfNeeded(bool is_timed_execution);
+  void DestroyTimingQueryObjectIfNeeded();
+  void BeginTimerQuery();
+  void EndTimerQuery();
 
   Result SendDescriptorDataToDeviceIfNeeded();
   void BindVkDescriptorSets(const VkPipelineLayout& pipeline_layout);
@@ -114,8 +122,9 @@ class Pipeline {
 
   const char* GetEntryPointName(VkShaderStageFlagBits stage) const;
   uint32_t GetFenceTimeout() const { return fence_timeout_ms_; }
-  bool     GetPipelineRuntimeLayerEnabled()
-       const { return pipeline_runtime_layer_enabled_; }
+  bool GetPipelineRuntimeLayerEnabled() const {
+    return pipeline_runtime_layer_enabled_;
+  }
 
   Result CreateVkPipelineLayout(VkPipelineLayout* pipeline_layout);
 
@@ -129,6 +138,7 @@ class Pipeline {
     pipeline_ = pipeline;
   }
 
+  VkQueryPool query_pool_ = VK_NULL_HANDLE;
   VkPipeline pipeline_ = VK_NULL_HANDLE;
   VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
 
@@ -171,6 +181,7 @@ class Pipeline {
       entry_points_;
 
   std::unique_ptr<PushConstant> push_constant_;
+  bool in_timed_execution_ = false;
 };
 
 }  // namespace vulkan

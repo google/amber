@@ -142,10 +142,14 @@ class PipelineCommand : public Command {
 
   Pipeline* GetPipeline() const { return pipeline_; }
 
+  void SetTimedExecution() { timed_execution_ = true; }
+  bool IsTimedExecution() const { return timed_execution_; }
+
  protected:
   PipelineCommand(Type type, Pipeline* pipeline);
 
   Pipeline* pipeline_ = nullptr;
+  bool timed_execution_ = false;
 };
 
 /// Command to draw a rectangle on screen.

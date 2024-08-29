@@ -16,6 +16,7 @@
 #include "src/vulkan/pipeline.h"
 
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <utility>
 
@@ -36,6 +37,13 @@ namespace vulkan {
 namespace {
 
 const char* kDefaultEntryPointName = "main";
+
+constexpr VkMemoryBarrier kMemoryBarrierFull = {
+    VK_STRUCTURE_TYPE_MEMORY_BARRIER, nullptr,
+    VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR,
+    VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR};
+
+constexpr uint32_t kNumQueryObjects = 2;
 
 }  // namespace
 
@@ -251,6 +259,84 @@ void Pipeline::UpdateDescriptorSetsIfNeeded() {
     for (auto& desc : info.descriptors)
       desc->UpdateDescriptorSetIfNeeded(info.vk_desc_set);
   }
+}
+
+void Pipeline::CreateTimingQueryObjectIfNeeded(bool is_timed_execution) {
+  if (!is_timed_execution ||
+      !device_->IsTimestampComputeAndGraphicsSupported()) {
+    return;
+  }
+  in_timed_execution_ = true;
+  VkQueryPoolCreateInfo pool_create_info{
+      VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
+      nullptr,
+      0,
+      VK_QUERY_TYPE_TIMESTAMP,
+      kNumQueryObjects,
+      0};
+  device_->GetPtrs()->vkCreateQueryPool(
+      device_->GetVkDevice(), &pool_create_info, nullptr, &query_pool_);
+}
+
+void Pipeline::DestroyTimingQueryObjectIfNeeded() {
+  if (!in_timed_execution_) {
+    return;
+  }
+
+  // Flags set so we may/will wait on the CPU for the availiblity of our
+  // queries.
+  const VkQueryResultFlags flags =
+      VK_QUERY_RESULT_WAIT_BIT | VK_QUERY_RESULT_64_BIT;
+  std::array<uint64_t, kNumQueryObjects> time_stamps = {};
+  constexpr VkDeviceSize kStrideBytes = sizeof(uint64_t);
+
+  device_->GetPtrs()->vkGetQueryPoolResults(
+      device_->GetVkDevice(), query_pool_, 0, kNumQueryObjects,
+      sizeof(time_stamps), time_stamps.data(), kStrideBytes, flags);
+  double time_in_ns = static_cast<double>(time_stamps[1] - time_stamps[0]) *
+                      static_cast<double>(device_->GetTimestampPeriod());
+
+  constexpr double kNsToMsTime = 1.0 / 1000000.0;
+  device_->ReportExecutionTiming(time_in_ns * kNsToMsTime);
+  device_->GetPtrs()->vkDestroyQueryPool(device_->GetVkDevice(), query_pool_,
+                                         nullptr);
+  in_timed_execution_ = false;
+}
+
+void Pipeline::BeginTimerQuery() {
+  if (!in_timed_execution_) {
+    return;
+  }
+
+  device_->GetPtrs()->vkCmdResetQueryPool(command_->GetVkCommandBuffer(),
+                                          query_pool_, 0, kNumQueryObjects);
+  // Full barrier prevents any work from before the point being still in the
+  // pipeline.
+  device_->GetPtrs()->vkCmdPipelineBarrier(
+      command_->GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1, &kMemoryBarrierFull, 0, nullptr,
+      0, nullptr);
+  constexpr uint32_t kBeginQueryIndexOffset = 0;
+  device_->GetPtrs()->vkCmdWriteTimestamp(command_->GetVkCommandBuffer(),
+                                          VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                                          query_pool_, kBeginQueryIndexOffset);
+}
+
+void Pipeline::EndTimerQuery() {
+  if (!in_timed_execution_) {
+    return;
+  }
+
+  // Full barrier ensures that work including in our timing is executed before
+  // the timestamp.
+  device_->GetPtrs()->vkCmdPipelineBarrier(
+      command_->GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1, &kMemoryBarrierFull, 0, nullptr,
+      0, nullptr);
+  constexpr uint32_t kEndQueryIndexOffset = 1;
+  device_->GetPtrs()->vkCmdWriteTimestamp(command_->GetVkCommandBuffer(),
+                                          VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                                          query_pool_, kEndQueryIndexOffset);
 }
 
 Result Pipeline::RecordPushConstant(const VkPipelineLayout& pipeline_layout) {

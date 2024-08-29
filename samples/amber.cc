@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <ostream>
 #include <set>
 #include <string>
 #include <utility>
@@ -67,6 +68,7 @@ struct Options {
   bool log_graphics_calls = false;
   bool log_graphics_calls_time = false;
   bool log_execute_calls = false;
+  bool log_execution_timing = false;
   bool disable_spirv_validation = false;
   bool enable_pipeline_runtime_layer = false;
   std::string shader_filename;
@@ -103,6 +105,7 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   --log-graphics-calls      -- Log graphics API calls (only for Vulkan so far).
   --log-graphics-calls-time -- Log timing of graphics API calls timing (Vulkan only).
   --log-execute-calls       -- Log each execute call before run.
+  --log-execution-timing    -- Log timing results from each command with the 'TIMED_EXECUTION' flag.
   --disable-spirv-val       -- Disable SPIR-V validation.
   --enable-runtime-layer    -- Enable pipeline runtime layer.
   -h                        -- This help text.
@@ -278,6 +281,8 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->log_graphics_calls = true;
     } else if (arg == "--log-graphics-calls-time") {
       opts->log_graphics_calls_time = true;
+    } else if (arg == "--log-execution-timing") {
+      opts->log_execution_timing = true;
     } else if (arg == "--log-execute-calls") {
       opts->log_execute_calls = true;
     } else if (arg == "--disable-spirv-val") {
@@ -361,6 +366,16 @@ class SampleDelegate : public amber::Delegate {
     }
   }
 
+  void ReportExecutionTiming(double time_in_ms) override {
+    reported_execution_timing.push_back(time_in_ms);
+  }
+
+  std::vector<double> GetAndClearExecutionTiming() {
+    auto returning = reported_execution_timing;
+    reported_execution_timing.clear();
+    return returning;
+  }
+
   uint64_t GetTimestampNs() const override {
     return timestamp::SampleGetTimestampNs();
   }
@@ -400,6 +415,7 @@ class SampleDelegate : public amber::Delegate {
   bool log_graphics_calls_time_ = false;
   bool log_execute_calls_ = false;
   std::string path_ = "";
+  std::vector<double> reported_execution_timing;
 };
 
 std::string disassemble(const std::string& env,
@@ -519,7 +535,7 @@ int main(int argc, const char** argv) {
       recipe->SetFenceTimeout(static_cast<uint32_t>(options.fence_timeout));
 
     recipe->SetPipelineRuntimeLayerEnabled(
-      options.enable_pipeline_runtime_layer);
+        options.enable_pipeline_runtime_layer);
 
     recipe_data.emplace_back();
     recipe_data.back().file = file;
@@ -621,10 +637,32 @@ int main(int argc, const char** argv) {
     amber::Amber am(&delegate);
     result = am.Execute(recipe, &amber_options);
     if (!result.IsSuccess()) {
-      std::cerr << file << ": " << result.Error() << std::endl;
+      std::cerr << file << ": " << result.Error() << "\n";
       failures.push_back(file);
       // Note, we continue after failure to allow dumping the buffers which may
       // give clues as to the failure.
+    }
+
+    auto execution_timing = delegate.GetAndClearExecutionTiming();
+    if (result.IsSuccess() && options.log_execution_timing &&
+        !execution_timing.empty()) {
+      std::cout << "Execution timing (in script-order):" << "\n";
+      std::cout << "    ";
+      bool is_first_iter = true;
+      for (auto& timing : execution_timing) {
+        if (!is_first_iter) {
+          std::cout << ", ";
+        }
+        is_first_iter = false;
+        std::cout << timing;
+      }
+      std::cout << "\n";
+      std::sort(execution_timing.begin(), execution_timing.end());
+      auto report_median =
+          (execution_timing[execution_timing.size() / 2] +
+           execution_timing[(execution_timing.size() - 1) / 2]) /
+          2;
+      std::cout << "Execution time median = " << report_median << " ms" << "\n";
     }
 
     // Dump the shader assembly
