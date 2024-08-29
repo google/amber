@@ -16,6 +16,7 @@
 #include "src/vulkan/pipeline.h"
 
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <utility>
 
@@ -295,7 +296,7 @@ void Pipeline::DestroyTimingQueryObjectIfNeeded() {
   double time_in_ns = static_cast<double>(time_stamps[1] - time_stamps[0]) *
                       static_cast<double>(device_->GetTimestampPeriod());
 
-  constexpr double kNsToMsTime = 1.0 / 1'000'000.0;
+  constexpr double kNsToMsTime = 1.0 / 1000000.0;
   device_->ReportExecutionTiming(time_in_ns * kNsToMsTime);
   device_->GetPtrs()->vkDestroyQueryPool(device_->GetVkDevice(), query_pool_,
                                          nullptr);
