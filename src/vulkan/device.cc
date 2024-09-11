@@ -483,6 +483,7 @@ Result Device::Initialize(
   VkPhysicalDeviceVulkan11Features* vulkan11_ptrs = nullptr;
   VkPhysicalDeviceVulkan12Features* vulkan12_ptrs = nullptr;
   VkPhysicalDeviceVulkan13Features* vulkan13_ptrs = nullptr;
+  VkPhysicalDeviceVulkan14Features* vulkan14_ptrs = nullptr;
   VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*
       subgroup_size_control_features = nullptr;
   VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures*
@@ -550,6 +551,9 @@ Result Device::Initialize(
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES:
         vulkan13_ptrs = static_cast<VkPhysicalDeviceVulkan13Features*>(ptr);
         break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES:
+        vulkan14_ptrs = static_cast<VkPhysicalDeviceVulkan14Features*>(ptr);
+        break;
       default:
         break;
     }
@@ -602,12 +606,6 @@ Result Device::Initialize(
         vulkan12_ptrs == nullptr) {
       return amber::Result(
           "Subgroup extended types requested but feature not returned");
-    }
-    if (feature == kIndexTypeUint8 &&
-        (index_type_uint8_ptrs == nullptr ||
-         index_type_uint8_ptrs->indexTypeUint8 != VK_TRUE)) {
-      return amber::Result(
-          "Index type uint8_t requested but feature not returned");
     }
     if (feature == kAccelerationStructure &&
         acceleration_structure_ptrs == nullptr) {
@@ -765,6 +763,22 @@ Result Device::Initialize(
       if (feature == kComputeFullSubgroups &&
           subgroup_size_control_features->computeFullSubgroups != VK_TRUE) {
         return amber::Result("Missing compute full subgroups feature");
+      }
+    }
+
+    // If Vulkan 1.4 structure exists the features are set there.
+    if (vulkan14_ptrs) {
+      if (feature == kIndexTypeUint8 &&
+          vulkan14_ptrs->indexTypeUint8 != VK_TRUE) {
+        return amber::Result(
+            "Index type uint8_t requested but feature not returned");
+      }
+    } else {
+      if (feature == kIndexTypeUint8 &&
+          (index_type_uint8_ptrs == nullptr ||
+           index_type_uint8_ptrs->indexTypeUint8 != VK_TRUE)) {
+        return amber::Result(
+            "Index type uint8_t requested but feature not returned");
       }
     }
   }
