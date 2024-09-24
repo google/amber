@@ -35,7 +35,7 @@ layout(set = 0, binding = 1) buffer BlockB {
 
 void main() {
   float val_iter = ssbo_fake_volatile.data[gl_GlobalInvocationID.x];
-   for(int i = 0 ;i < 1000;i++){
+   for(int i = 0; i < 1000; i++){
       // Loop unroll to reduce looping logic overhead.
       // 10x
       val_iter += val_iter*0.001234;

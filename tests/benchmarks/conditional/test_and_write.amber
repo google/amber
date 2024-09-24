@@ -40,8 +40,9 @@ layout(set = 0, binding = 1) buffer BlockB {
 uint TestAndOperate(uint iter_val, uint invx){
   // We want this to be a real branch per thread
   if(iter_val > invx){ 
-    iter_val = (iter_val*13)%6631 + 1024;
-    iter_val = (iter_val*213)%631 + 1024;
+    // Simple LCGs that ensure iter_val is greater than 1024 
+    iter_val = ((iter_val*13)%6631) + 1024;
+    iter_val = ((iter_val*213)%631) + 1024;
     // You must mutate memory to avoid the compiler just using a select
     ssbo_write.data[invx] = iter_val;
   }
@@ -51,8 +52,6 @@ uint TestAndOperate(uint iter_val, uint invx){
 void main() {
     uint invx = gl_GlobalInvocationID.x;
     uint iter_val = ssbo_init_data.data[invx];
-    groupMemoryBarrier();
-    memoryBarrierShared();
     for(uint i = 0;i<1000;i++){
       iter_val = TestAndOperate(iter_val, invx);
       iter_val = TestAndOperate(iter_val, invx);

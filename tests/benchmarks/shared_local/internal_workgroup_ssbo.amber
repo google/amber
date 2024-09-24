@@ -42,8 +42,7 @@ void main() {
     if( gl_LocalInvocationID.x == 0){
       ssbo_wr.data[0] = 0;
     }
-    groupMemoryBarrier();
-    memoryBarrierShared();
+    barrier();
     uint fv = ssbo_fake_volatile.data[0];
     uint iter_val = ssbo_wr.data[fv];
     for(uint i = 0;i<1000;i++){

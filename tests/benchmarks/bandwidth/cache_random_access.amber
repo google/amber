@@ -28,20 +28,17 @@ layout(set = 0, binding = 0) buffer BlockA {
   uint data[];
 } ssbo_read;
 
-
 layout(set = 0, binding = 1) buffer BlockB {
    uint data[];
-} 
-ssbo_write;
-
+} ssbo_write;
 
 uint ReadStrided(uint iter_val, uint ii){
- // iter_val will always be zero 
- const uint kStride =  1u;//14627u;// 3u;// 47u;//11u;//1u;
+ // iter_val param will always be zero
+ // Suggested strides (prime) 1, 3, 47, 14627
+ const uint kStride =  1u;
  const uint kSizeMask16M = 0xFFFFFF;
- return ssbo_read.data[(iter_val + ii * kStride) & kSizeMask16M];
+ return ssbo_read.data[(iter_val + (ii * kStride)) & kSizeMask16M];
 }
-
 
 void main() {
     uint iter_val = ssbo_read.data[gl_GlobalInvocationID.x];
