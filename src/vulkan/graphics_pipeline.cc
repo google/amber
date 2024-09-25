@@ -881,7 +881,8 @@ Result GraphicsPipeline::Clear() {
 }
 
 Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
-                              VertexBuffer* vertex_buffer) {
+                              VertexBuffer* vertex_buffer,
+                              bool is_timed_execution) {
   Result r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
     return r;
@@ -902,7 +903,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
   // it must be submitted separately, because using a descriptor set
   // while updating it is not safe.
   UpdateDescriptorSetsIfNeeded();
-
+  CreateTimingQueryObjectIfNeeded(is_timed_execution);
   {
     CommandBufferGuard cmd_buf_guard(GetCommandBuffer());
     if (!cmd_buf_guard.IsRecording())
@@ -916,6 +917,10 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     frame_->CopyBuffersToImages();
     frame_->TransferImagesToDevice(GetCommandBuffer());
 
+    // Timing must be place outside the render pass scope. The full pipeline
+    // barrier used by our specific implementation cannot be within a
+    // renderpass.
+    BeginTimerQuery();
     {
       RenderPassGuard render_pass_guard(this);
 
@@ -943,6 +948,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
         // VkRunner spec says
         //   "vertexCount will be used as the index count, firstVertex
         //    becomes the vertex offset and firstIndex will always be zero."
+
         device_->GetPtrs()->vkCmdDrawIndexed(
             command_->GetVkCommandBuffer(),
             command->GetVertexCount(),   /* indexCount */
@@ -958,7 +964,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
             command->GetFirstInstance());
       }
     }
-
+    EndTimerQuery();
     frame_->TransferImagesToHost(command_.get());
 
     r = cmd_buf_guard.Submit(GetFenceTimeout(),
@@ -966,7 +972,7 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     if (!r.IsSuccess())
       return r;
   }
-
+  DestroyTimingQueryObjectIfNeeded();
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;

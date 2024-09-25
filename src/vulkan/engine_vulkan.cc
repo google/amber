@@ -139,13 +139,12 @@ Result EngineVulkan::Initialize(
 
   device_ = MakeUnique<Device>(vk_config->instance, vk_config->physical_device,
                                vk_config->queue_family_index, vk_config->device,
-                               vk_config->queue);
+                               vk_config->queue, delegate);
 
   Result r = device_->Initialize(
-      vk_config->vkGetInstanceProcAddr, delegate, features, properties,
-      device_extensions, vk_config->available_features,
-      vk_config->available_features2, vk_config->available_properties2,
-      vk_config->available_device_extensions);
+      vk_config->vkGetInstanceProcAddr, features, properties, device_extensions,
+      vk_config->available_features, vk_config->available_features2,
+      vk_config->available_properties2, vk_config->available_device_extensions);
   if (!r.IsSuccess())
     return r;
 
@@ -463,8 +462,7 @@ Result EngineVulkan::GetVkShaderStageInfo(
     return r;
 
   *stage_info = VkPipelineShaderStageCreateInfo();
-  stage_info->sType =
-      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  stage_info->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   stage_info->flags = shader_info.create_flags;
   stage_info->stage = stage;
   stage_info->module = shader_info.shader;
@@ -536,15 +534,14 @@ Result EngineVulkan::GetVkShaderGroupInfo(
       return Result("Invalid shader group");
 
     VkRayTracingShaderGroupCreateInfoKHR group_info = {
-      VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
-      nullptr,
-      VK_RAY_TRACING_SHADER_GROUP_TYPE_MAX_ENUM_KHR,
-      VK_SHADER_UNUSED_KHR,
-      VK_SHADER_UNUSED_KHR,
-      VK_SHADER_UNUSED_KHR,
-      VK_SHADER_UNUSED_KHR,
-      nullptr
-    };
+        VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
+        nullptr,
+        VK_RAY_TRACING_SHADER_GROUP_TYPE_MAX_ENUM_KHR,
+        VK_SHADER_UNUSED_KHR,
+        VK_SHADER_UNUSED_KHR,
+        VK_SHADER_UNUSED_KHR,
+        VK_SHADER_UNUSED_KHR,
+        nullptr};
 
     if (sg->IsGeneralGroup()) {
       group_info.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -673,13 +670,17 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
                          buf->GetFormat()->SizeInBytes());
 
   DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
+  if (command->IsTimedExecution()) {
+    draw.SetTimedExecution();
+  }
   draw.SetTopology(command->IsPatch() ? Topology::kPatchList
                                       : Topology::kTriangleStrip);
   draw.SetFirstVertexIndex(0);
   draw.SetVertexCount(4);
   draw.SetInstanceCount(1);
 
-  Result r = graphics->Draw(&draw, vertex_buffer.get());
+  Result r =
+      graphics->Draw(&draw, vertex_buffer.get(), command->IsTimedExecution());
   if (!r.IsSuccess())
     return r;
 
@@ -761,12 +762,16 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
                          buf->GetFormat()->SizeInBytes());
 
   DrawArraysCommand draw(command->GetPipeline(), *command->GetPipelineData());
+  if (command->IsTimedExecution()) {
+    draw.SetTimedExecution();
+  }
   draw.SetTopology(Topology::kTriangleList);
   draw.SetFirstVertexIndex(0);
   draw.SetVertexCount(vertices);
   draw.SetInstanceCount(1);
 
-  Result r = graphics->Draw(&draw, vertex_buffer.get());
+  Result r =
+      graphics->Draw(&draw, vertex_buffer.get(), command->IsTimedExecution());
   if (!r.IsSuccess())
     return r;
 
@@ -778,8 +783,8 @@ Result EngineVulkan::DoDrawArrays(const DrawArraysCommand* command) {
   if (!info.vk_pipeline)
     return Result("Vulkan::DrawArrays for Non-Graphics Pipeline");
 
-  return info.vk_pipeline->AsGraphics()->Draw(command,
-                                              info.vertex_buffer.get());
+  return info.vk_pipeline->AsGraphics()->Draw(command, info.vertex_buffer.get(),
+                                              command->IsTimedExecution());
 }
 
 Result EngineVulkan::DoCompute(const ComputeCommand* command) {
@@ -788,7 +793,8 @@ Result EngineVulkan::DoCompute(const ComputeCommand* command) {
     return Result("Vulkan: Compute called for non-compute pipeline.");
 
   return info.vk_pipeline->AsCompute()->Compute(
-      command->GetX(), command->GetY(), command->GetZ());
+      command->GetX(), command->GetY(), command->GetZ(),
+      command->IsTimedExecution());
 }
 
 Result EngineVulkan::InitDependendLibraries(amber::Pipeline* pipeline,
@@ -848,7 +854,8 @@ Result EngineVulkan::DoTraceRays(const RayTracingCommand* command) {
       rSBT, mSBT, hSBT, cSBT, command->GetX(), command->GetY(), command->GetZ(),
       pipeline->GetMaxPipelineRayPayloadSize(),
       pipeline->GetMaxPipelineRayHitAttributeSize(),
-      pipeline->GetMaxPipelineRayRecursionDepth(), libs);
+      pipeline->GetMaxPipelineRayRecursionDepth(), libs,
+      command->IsTimedExecution());
 }
 
 Result EngineVulkan::DoEntryPoint(const EntryPointCommand* command) {

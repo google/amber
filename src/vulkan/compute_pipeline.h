@@ -36,7 +36,7 @@ class ComputePipeline : public Pipeline {
 
   Result Initialize(CommandPool* pool);
 
-  Result Compute(uint32_t x, uint32_t y, uint32_t z);
+  Result Compute(uint32_t x, uint32_t y, uint32_t z, bool is_timed_execution);
 
  private:
   Result CreateVkComputePipeline(const VkPipelineLayout& pipeline_layout,

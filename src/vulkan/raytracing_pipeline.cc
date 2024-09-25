@@ -186,7 +186,8 @@ Result RayTracingPipeline::TraceRays(amber::SBT* rSBT,
                                      uint32_t maxPipelineRayPayloadSize,
                                      uint32_t maxPipelineRayHitAttributeSize,
                                      uint32_t maxPipelineRayRecursionDepth,
-                                     const std::vector<VkPipeline>& libs) {
+                                     const std::vector<VkPipeline>& libs,
+                                     bool is_timed_execution) {
   Result r = SendDescriptorDataToDeviceIfNeeded();
   if (!r.IsSuccess())
     return r;
@@ -200,7 +201,7 @@ Result RayTracingPipeline::TraceRays(amber::SBT* rSBT,
   // it must be submitted separately, because using a descriptor set
   // while updating it is not safe.
   UpdateDescriptorSetsIfNeeded();
-
+  CreateTimingQueryObjectIfNeeded(is_timed_execution);
   {
     CommandBufferGuard guard(GetCommandBuffer());
     if (!guard.IsRecording())
@@ -247,12 +248,13 @@ Result RayTracingPipeline::TraceRays(amber::SBT* rSBT,
     device_->GetPtrs()->vkCmdTraceRaysKHR(command_->GetVkCommandBuffer(),
                                           &rSBTRegion, &mSBTRegion, &hSBTRegion,
                                           &cSBTRegion, x, y, z);
-
+    BeginTimerQuery();
     r = guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
+    EndTimerQuery();
     if (!r.IsSuccess())
       return r;
   }
-
+  DestroyTimingQueryObjectIfNeeded();
   r = ReadbackDescriptorsToHostDataQueue();
   if (!r.IsSuccess())
     return r;
