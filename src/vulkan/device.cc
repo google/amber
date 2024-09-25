@@ -607,20 +607,52 @@ Result Device::Initialize(
       return amber::Result(
           "Subgroup extended types requested but feature not returned");
     }
-    if (feature == kAccelerationStructure &&
-        acceleration_structure_ptrs == nullptr) {
-      return amber::Result(
-          "Acceleration structure requested but feature not returned");
+    if (feature == kAccelerationStructure) {
+      if (acceleration_structure_ptrs == nullptr)
+        return amber::Result(
+            "Acceleration structure requested but feature not returned");
+      if (ptrs_.vkCreateAccelerationStructureKHR == nullptr)
+        return amber::Result(
+            "vkCreateAccelerationStructureKHR is required, but not provided");
+      if (ptrs_.vkDestroyAccelerationStructureKHR == nullptr)
+        return amber::Result(
+            "vkDestroyAccelerationStructureKHR is required, but not provided");
+      if (ptrs_.vkGetAccelerationStructureBuildSizesKHR == nullptr)
+        return amber::Result(
+            "vkGetAccelerationStructureBuildSizesKHR is required, but not "
+            "provided");
+      if (ptrs_.vkBuildAccelerationStructuresKHR == nullptr)
+        return amber::Result(
+            "vkBuildAccelerationStructuresKHR is required, but not "
+            "provided");
+      if (ptrs_.vkCmdBuildAccelerationStructuresKHR == nullptr)
+        return amber::Result(
+            "vkCmdBuildAccelerationStructuresKHR is required, but not "
+            "provided");
+      if (ptrs_.vkGetAccelerationStructureDeviceAddressKHR == nullptr)
+        return amber::Result(
+            "vkGetAccelerationStructureDeviceAddressKHR is required, but not "
+            "provided");
     }
     if (feature == kBufferDeviceAddress && bda_ptrs == nullptr &&
         vulkan12_ptrs == nullptr) {
       return amber::Result(
           "Buffer device address requested but feature not returned");
     }
-    if (feature == kRayTracingPipeline &&
-        ray_tracing_pipeline_ptrs == nullptr) {
-      return amber::Result(
-          "Ray tracing pipeline requested but feature not returned");
+    if (feature == kRayTracingPipeline) {
+      if (ray_tracing_pipeline_ptrs == nullptr)
+        return amber::Result(
+            "Ray tracing pipeline requested but feature not returned");
+      if (ptrs_.vkCreateRayTracingPipelinesKHR == nullptr)
+        return amber::Result(
+            "vkCreateRayTracingPipelinesKHR is required, but not provided");
+      if (ptrs_.vkCmdTraceRaysKHR == nullptr)
+        return amber::Result(
+            "vkCmdTraceRaysKHR is required, but not provided");
+      if (ptrs_.vkGetRayTracingShaderGroupHandlesKHR == nullptr)
+        return amber::Result(
+            "vkGetRayTracingShaderGroupHandlesKHR is required, but not "
+            "provided");
     }
 
     // Next check the fields of the feature structures.
