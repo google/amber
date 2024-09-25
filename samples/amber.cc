@@ -662,6 +662,7 @@ int main(int argc, const char** argv) {
           (execution_timing[execution_timing.size() / 2] +
            execution_timing[(execution_timing.size() - 1) / 2]) /
           2;
+      std::cout << "\n";
       std::cout << "Execution time median = " << report_median << " ms" << "\n";
     }
 
