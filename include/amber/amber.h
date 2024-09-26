@@ -103,7 +103,7 @@ class Delegate {
                                        amber::BufferInfo* buffer) const = 0;
 
   /// Mechanism for gathering timing from 'TIME_EXECUTION'
-  virtual void ReportExecutionTiming(double time_in_ms) = 0;
+  virtual void ReportExecutionTiming(double){}
 };
 
 /// Stores configuration options for Amber.

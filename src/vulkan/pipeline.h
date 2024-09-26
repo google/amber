@@ -29,7 +29,6 @@
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/push_constant.h"
 #include "src/vulkan/resource.h"
-#include "vulkan/vulkan_core.h"
 
 namespace amber {
 
