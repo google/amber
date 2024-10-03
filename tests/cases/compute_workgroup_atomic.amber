@@ -46,7 +46,7 @@ void main() {
 }
 END
 
-BUFFER buf_uint DATA_TYPE uint32 SIZE 1024 FILL 123
+BUFFER buf_uint DATA_TYPE uint32 SIZE 16 FILL 123
 
 PIPELINE compute pipeline
   ATTACH workgroup_shared_atomic
