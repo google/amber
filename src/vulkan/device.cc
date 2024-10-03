@@ -411,12 +411,14 @@ Device::Device(VkInstance instance,
                VkPhysicalDevice physical_device,
                uint32_t queue_family_index,
                VkDevice device,
-               VkQueue queue)
+               VkQueue queue,
+               Delegate* delegate)
     : instance_(instance),
       physical_device_(physical_device),
       device_(device),
       queue_(queue),
-      queue_family_index_(queue_family_index) {}
+      queue_family_index_(queue_family_index),
+      delegate_(delegate) {}
 
 Device::~Device() = default;
 
@@ -450,9 +452,14 @@ bool Device::SupportsApiVersion(uint32_t major,
 #pragma clang diagnostic pop
 }
 
+void Device::ReportExecutionTiming(double time_in_ms) {
+  if (delegate_) {
+    delegate_->ReportExecutionTiming(time_in_ms);
+  }
+}
+
 Result Device::Initialize(
     PFN_vkGetInstanceProcAddr getInstanceProcAddr,
-    Delegate* delegate,
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_properties,
     const std::vector<std::string>& required_device_extensions,
@@ -460,7 +467,7 @@ Result Device::Initialize(
     const VkPhysicalDeviceFeatures2KHR& available_features2,
     const VkPhysicalDeviceProperties2KHR& available_properties2,
     const std::vector<std::string>& available_extensions) {
-  Result r = LoadVulkanPointers(getInstanceProcAddr, delegate);
+  Result r = LoadVulkanPointers(getInstanceProcAddr, delegate_);
   if (!r.IsSuccess())
     return r;
 
@@ -609,20 +616,52 @@ Result Device::Initialize(
       return amber::Result(
           "Index type uint8_t requested but feature not returned");
     }
-    if (feature == kAccelerationStructure &&
-        acceleration_structure_ptrs == nullptr) {
-      return amber::Result(
-          "Acceleration structure requested but feature not returned");
+    if (feature == kAccelerationStructure) {
+      if (acceleration_structure_ptrs == nullptr)
+        return amber::Result(
+            "Acceleration structure requested but feature not returned");
+      if (ptrs_.vkCreateAccelerationStructureKHR == nullptr)
+        return amber::Result(
+            "vkCreateAccelerationStructureKHR is required, but not provided");
+      if (ptrs_.vkDestroyAccelerationStructureKHR == nullptr)
+        return amber::Result(
+            "vkDestroyAccelerationStructureKHR is required, but not provided");
+      if (ptrs_.vkGetAccelerationStructureBuildSizesKHR == nullptr)
+        return amber::Result(
+            "vkGetAccelerationStructureBuildSizesKHR is required, but not "
+            "provided");
+      if (ptrs_.vkBuildAccelerationStructuresKHR == nullptr)
+        return amber::Result(
+            "vkBuildAccelerationStructuresKHR is required, but not "
+            "provided");
+      if (ptrs_.vkCmdBuildAccelerationStructuresKHR == nullptr)
+        return amber::Result(
+            "vkCmdBuildAccelerationStructuresKHR is required, but not "
+            "provided");
+      if (ptrs_.vkGetAccelerationStructureDeviceAddressKHR == nullptr)
+        return amber::Result(
+            "vkGetAccelerationStructureDeviceAddressKHR is required, but not "
+            "provided");
     }
     if (feature == kBufferDeviceAddress && bda_ptrs == nullptr &&
         vulkan12_ptrs == nullptr) {
       return amber::Result(
           "Buffer device address requested but feature not returned");
     }
-    if (feature == kRayTracingPipeline &&
-        ray_tracing_pipeline_ptrs == nullptr) {
-      return amber::Result(
-          "Ray tracing pipeline requested but feature not returned");
+    if (feature == kRayTracingPipeline) {
+      if (ray_tracing_pipeline_ptrs == nullptr)
+        return amber::Result(
+            "Ray tracing pipeline requested but feature not returned");
+      if (ptrs_.vkCreateRayTracingPipelinesKHR == nullptr)
+        return amber::Result(
+            "vkCreateRayTracingPipelinesKHR is required, but not provided");
+      if (ptrs_.vkCmdTraceRaysKHR == nullptr)
+        return amber::Result(
+            "vkCmdTraceRaysKHR is required, but not provided");
+      if (ptrs_.vkGetRayTracingShaderGroupHandlesKHR == nullptr)
+        return amber::Result(
+            "vkGetRayTracingShaderGroupHandlesKHR is required, but not "
+            "provided");
     }
 
     // Next check the fields of the feature structures.
@@ -813,9 +852,9 @@ Result Device::Initialize(
     ptr = s->pNext;
   }
 
-#define CHK_P(R, P, NAME, S1, S2) \
-  do {                            \
-    if (R == -1 && P == #NAME) \
+#define CHK_P(R, P, NAME, S1, S2)                         \
+  do {                                                    \
+    if (R == -1 && P == #NAME)                            \
       R = ((S1 && S1->NAME) || (S2 && S2->NAME)) ? 1 : 0; \
   } while (false)
 
@@ -853,8 +892,7 @@ Result Device::Initialize(
       return Result("Vulkan: Device::Initialize missing " + prop + " property");
 
     if (supported == -1)
-      return Result(
-          "Vulkan: Device::Initialize property not handled " + prop);
+      return Result("Vulkan: Device::Initialize property not handled " + prop);
   }
 
   ptrs_.vkGetPhysicalDeviceMemoryProperties(physical_device_,
@@ -1073,6 +1111,14 @@ bool Device::IsMemoryHostCoherent(uint32_t memory_type_index) const {
 
 uint32_t Device::GetMaxPushConstants() const {
   return physical_device_properties_.limits.maxPushConstantsSize;
+}
+
+bool Device::IsTimestampComputeAndGraphicsSupported() const {
+  return physical_device_properties_.limits.timestampComputeAndGraphics;
+}
+
+float Device::GetTimestampPeriod() const {
+  return physical_device_properties_.limits.timestampPeriod;
 }
 
 bool Device::IsDescriptorSetInBounds(uint32_t descriptor_set) const {

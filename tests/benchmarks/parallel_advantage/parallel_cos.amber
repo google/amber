@@ -1,0 +1,82 @@
+#!amber
+# Copyright 2024 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# This benchmark tests the latency and throughput of cos function.
+# Configs to manually modify:
+#  - local_size_x (workgroup size) : Single SM throughput
+#  - number of loop unrolls : latency of single thread
+#  - compute/dispatch size (currently 1) : Device throughput
+
+SHADER compute parallel_madd_test GLSL
+#version 430
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) buffer BlockA {
+   float data[];
+} ssbo_fake_volatile;
+
+layout(set = 0, binding = 1) buffer BlockB {
+  float data[];
+} ssbo_array;
+
+void main() {
+  float val_iter = ssbo_fake_volatile.data[gl_GlobalInvocationID.x];
+   for(int i = 0 ;i < 1000;i++){
+      // Loop unroll to reduce looping logic overhead.
+      // 10x
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+
+
+      // 10x
+      // This additional 10 can removed to create a difference in measurement.
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+      val_iter = cos(val_iter);
+
+   }
+  ssbo_array.data[gl_GlobalInvocationID.x] = val_iter;
+}
+END
+
+BUFFER buf_fake_volatile DATA_TYPE float SIZE 1048576 FILL 3.0
+BUFFER out_buff DATA_TYPE float SIZE 1048576 FILL 0.0
+
+PIPELINE compute pipeline
+  ATTACH parallel_madd_test
+  BIND BUFFER buf_fake_volatile AS storage DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER out_buff AS storage DESCRIPTOR_SET 0 BINDING 1
+END
+
+REPEAT 333
+RUN TIMED_EXECUTION pipeline 1 1 1
+END

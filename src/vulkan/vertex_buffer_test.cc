@@ -36,7 +36,8 @@ class DummyDevice : public Device {
                VkPhysicalDevice(),
                0u,
                VkDevice(this),
-               VkQueue()) {
+               VkQueue(),
+               nullptr) {
     memory_.resize(64);
     dummyPtrs_.vkCreateBuffer = vkCreateBuffer;
     dummyPtrs_.vkGetBufferMemoryRequirements = vkGetBufferMemoryRequirements;

@@ -101,6 +101,9 @@ class Delegate {
   virtual amber::Result LoadBufferData(const std::string file_name,
                                        BufferDataFileType file_type,
                                        amber::BufferInfo* buffer) const = 0;
+
+  /// Mechanism for gathering timing from 'TIME_EXECUTION'
+  virtual void ReportExecutionTiming(double){}
 };
 
 /// Stores configuration options for Amber.

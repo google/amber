@@ -989,18 +989,22 @@ value for `START_IDX` is 0. The default value for `COUNT` is the item count of
 vertex buffer minus the `START_IDX`. The same applies to `START_INSTANCE`
 (default 0) and `INSTANCE_COUNT` (default 1).
 
+The `TIMED_EXECUTION` is an optional flag that can be passed to the run command.
+This will cause Amber to insert device specific counters to time the execution
+of this pipeline command.
+
 ```groovy
 # Run the given |pipeline_name| which must be a `compute` pipeline. The
 # pipeline will be run with the given number of workgroups in the |x|, |y|, |z|
 # dimensions. Each of the x, y and z values must be a uint32.
-RUN {pipeline_name} _x_ _y_ _z_
+RUN [TIMED_EXECUTION] {pipeline_name} _x_ _y_ _z_
 ```
 
 ```groovy
 # Run the given |pipeline_name| which must be a `graphics` pipeline. The
 # rectangle at |x|, |y|, |width|x|height| will be rendered. Ignores VERTEX_DATA
 # and INDEX_DATA on the given pipeline.
-RUN {pipeline_name} \
+RUN [TIMED_EXECUTION] {pipeline_name} \
   DRAW_RECT POS _x_in_pixels_ _y_in_pixels_ \
   SIZE _width_in_pixels_ _height_in_pixels_
 ```
@@ -1010,7 +1014,7 @@ RUN {pipeline_name} \
 # grid at |x|, |y|, |width|x|height|, |columns|x|rows| will be rendered.
 # Ignores VERTEX_DATA and INDEX_DATA on the given pipeline.
 # For columns, rows of (5, 4) a total of 5*4=20 rectangles will be drawn.
-RUN {pipeline_name} \
+RUN [TIMED_EXECUTION] {pipeline_name} \
   DRAW_GRID POS _x_in_pixels_ _y_in_pixels_ \
   SIZE _width_in_pixels_ _height_in_pixels_ \
   CELLS _columns_of_cells_ _rows_of_cells_
@@ -1024,7 +1028,7 @@ RUN {pipeline_name} \
 # will be processed. The draw is instanced if |inst_count_value| is greater
 # than one. In case of instanced draw |inst_value| controls the starting
 # instance ID.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} \
+RUN [TIMED_EXECUTION] {pipeline_name} DRAW_ARRAY AS {topology} \
     [ START_IDX _value_ (default 0) ] \
     [ COUNT _count_value_ (default vertex_buffer size - start_idx) ] \
     [ START_INSTANCE _inst_value_ (default 0) ] \
@@ -1040,7 +1044,7 @@ RUN {pipeline_name} DRAW_ARRAY AS {topology} \
 # will be processed. The draw is instanced if |inst_count_value| is greater
 # than one. In case of instanced draw |inst_value| controls the starting
 # instance ID.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
+RUN [TIMED_EXECUTION] {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
     [ START_IDX _value_ (default 0) ] \
     [ COUNT _count_value_ (default index_buffer size - start_idx) ] \
     [ START_INSTANCE _inst_value_ (default 0) ] \
@@ -1058,7 +1062,7 @@ RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
 #
 # The pipeline will be run with the given ray tracing dimensions |x|, |y|, |z|.
 # Each of the x, y and z values must be a uint32.
-RUN {pipeline_name} \
+RUN [TIMED_EXECUTION] {pipeline_name} \
     RAYGEN {ray_gen_sbt_name} \
     [MISS {miss_sbt_name}] \
     [HIT {hit_sbt_name}] \

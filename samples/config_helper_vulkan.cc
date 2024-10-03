@@ -1128,6 +1128,7 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
     if (next_ptr != nullptr) {
       *next_ptr = &variable_pointers_feature_.pNext;
     }
+    next_ptr = &variable_pointers_feature_.pNext;
     exts.push_back(VK_KHR_VARIABLE_POINTERS_EXTENSION_NAME);
   }
 
