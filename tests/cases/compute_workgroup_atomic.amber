@@ -30,20 +30,17 @@ layout(set = 0, binding = 0) buffer block1 {
 shared uint wg_shared;
 
 void main() {
-    // These 'memoryBarrierShared' should not be required but do not
-    // impact the test result.
-
-    memoryBarrierShared();
-    barrier();
     if( gl_LocalInvocationID.x == 0){
       atomicExchange(wg_shared, 7);
     }
-    memoryBarrierShared();
+
     barrier();
     atomicAdd(wg_shared,1);
-    memoryBarrierShared();
     barrier();
-    if( gl_LocalInvocationID.x == 0) {
+
+    // If you make this condition on the last thread (idx 2)
+    // the test will work on the mali gpu
+    if(gl_LocalInvocationID.x == 0) {
       ssbo_write[0] = atomicExchange(wg_shared,0);
     }
 }
