@@ -103,7 +103,7 @@ class Delegate {
                                        amber::BufferInfo* buffer) const = 0;
   /// Load a raw file
   virtual amber::Result LoadFile(const std::string file_name,
-                                 std::vector<char>& buffer) const = 0;
+                                 std::vector<char>* buffer) const = 0;
 
   /// Mechanism for gathering timing from 'TIME_EXECUTION'
   virtual void ReportExecutionTiming(double){}

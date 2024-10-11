@@ -411,9 +411,9 @@ class SampleDelegate : public amber::Delegate {
   }
 
   amber::Result LoadFile(const std::string file_name,
-                         std::vector<char>& buffer) const override {
-    buffer = ReadFile(path_ + file_name);
-    if (buffer.empty())
+                         std::vector<char>* buffer) const override {
+    *buffer = ReadFile(path_ + file_name);
+    if (buffer->empty())
       return amber::Result("Failed to load file " + file_name);
     return {};
   }

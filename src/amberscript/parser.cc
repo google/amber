@@ -549,7 +549,7 @@ Result Parser::ParseShaderBlock() {
         return Result("missing delegate for loading shader file");
 
       std::vector<char> buffer;
-      r = delegate_->LoadFile(path, buffer);
+      r = delegate_->LoadFile(path, &buffer);
       if (!r.IsSuccess())
         return r;
 
