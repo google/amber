@@ -42,7 +42,7 @@ contexts:
       scope: constant.character.escape.amber
     - match: '\b(EQ|NE|LT|LE|GT|GE|EQ_RGB|EQ_RGBA|EQ_BUFFER|RMSE_BUFFER)\b'
       scope: constant.character.esape.amber
-    - match: '\b(GLSL|HLSL|SPIRV-ASM|SPIRV-HEX|OPENCL-C)\b'
+    - match: '\b(GLSL|HLSL|SPIRV-ASM|SPIRV-HEX|SPIRV-BIN|OPENCL-C)\b'
       scope: constant.character.escape.amber
 
     - match: '\b(point_list|line_list|line_list_with_adjacency|line_strip)\b'

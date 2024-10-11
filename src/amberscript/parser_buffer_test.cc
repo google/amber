@@ -48,6 +48,10 @@ class DummyDelegate : public amber::Delegate {
 
     return {};
   }
+
+  amber::Result LoadFile(const std::string, std::vector<char>*) const override {
+    return Result("DummyDelegate::LoadFile not implemented");
+  }
 };
 
 TEST_F(AmberScriptParserTest, BufferData) {
