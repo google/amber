@@ -1175,7 +1175,7 @@ SHADER compute kComputeShader GLSL
 #version 450
 
 layout(binding = 3) buffer block {
-  vec2 values[];
+  uvec2 values[];
 };
 
 void main() {
