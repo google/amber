@@ -171,6 +171,84 @@ cd /data/local/tmp
 ./amber_ndk -d <shader-test-files>
 ```
 
+### ChromeOS plain executable (not officially supported)
+
+It is possible to obtain produce a cross compiled amber binary for ChromeOS.
+Start with the standard amber checkout
+```
+git clone https://github.com/google/amber.git
+cd amber
+./tools/git-sync-deps
+./tools/update_build_version.py . samples/ third_party/
+./tools/update_vk_wrappers.py . .
+```
+
+Then add the cmake cross compiling variable to the root amber /CMakeLists.txt
+
+The example ChromeOS platform used here is trogdor.
+
+```
+# Top of CMakeLists.txt file 
+cmake_minimum_required(VERSION 3.13)
+
+set(CMAKE_SYSTEM_NAME Linux)
+# The example processor here is 64 bit arm
+set(CMAKE_SYSTEM_PROCESSOR aarch64)
+
+set(CMAKE_SYSROOT "$ENV{HOME}/chromium/src/build/cros_cache/chrome-sdk/symlinks/trogdor+16074.0.0-1064250+sysroot_chromeos-base_chromeos-chrome.tar.xz/")
+
+set(tools "$ENV{HOME}/chromium/src/build/cros_cache/chrome-sdk/symlinks/trogdor+16074.0.0-1064250+target_toolchain")
+set(CMAKE_C_COMPILER ${tools}/bin/aarch64-cros-linux-gnu-gcc)
+set(CMAKE_CXX_COMPILER ${tools}/bin/aarch64-cros-linux-gnu-g++)
+
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+# To avoid having the host try to execute a cross compiled binary 'asm_offset'
+set(USE_GAS OFF)
+
+```
+We statically link c++ to avoid missing libstdc++.so.X 
+
+Replace these lines
+```
+  if (NOT ${AMBER_ENABLE_SHARED_CRT})
+    # For MinGW cross compile, statically link to the C++ runtime.
+    # But it still depends on MSVCRT.dll.
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+      if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+	set_target_properties(${TARGET} PROPERTIES LINK_FLAGS
+	  -static
+	  -static-libgcc
+	  -static-libstdc++)
+      endif()
+    endif()
+  endif()
+
+```
+With this line.
+```
+	set_target_properties(${TARGET} PROPERTIES LINK_FLAGS -static-libstdc++)
+```
+
+Finally we can build and deploy the amber binary.
+
+```
+mkdir -p out/Debug
+cd out/Debug
+cmake -GNinja ../..  -DAMBER_USE_LOCAL_VULKAN=1  
+ninja amber
+# Copy over the amber binary to the DUT (note the root disk partion has limited space)
+scp amber device:/root/amber
+# An example of how to copy over some amber scripts
+scp ../../tests/cases/* device:/root/
+
+```
+Now by ssh-ing into the DUT you can locally run any amber script. Also, vulkan layers
+may not be available to this executable, so make sure to use the `-d` flag to disable
+Vulkan layers.
+
 ### Optional components
 
 The components which build up Amber can be enabled or disabled as needed. Any
