@@ -618,12 +618,6 @@ Result Device::Initialize(
         acceleration_structure_ptrs == nullptr) {
       return amber::Result(
           "Acceleration structure requested but feature not returned");
-    if (feature == kIndexTypeUint8 &&
-        (index_type_uint8_ptrs == nullptr ||
-         index_type_uint8_ptrs->indexTypeUint8 != VK_TRUE)) {
-      return amber::Result(
-          "Index type uint8_t requested but feature not returned");
-    }
     if (feature == kAccelerationStructure) {
       if (acceleration_structure_ptrs == nullptr)
         return amber::Result(
