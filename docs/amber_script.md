@@ -111,7 +111,7 @@ file system, before falling back to the standard file system.
 
 Shader programs are declared using the `SHADER` command. \
 Shaders can be declared as `PASSTHROUGH`, with inlined source or using source
-from a `VIRTUAL_FILE`.
+from a `VIRTUAL_FILE` or from a `FILE` in the file system.
 
 Pass-through shader:
 
@@ -132,12 +132,12 @@ SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ]
 END
 ```
 
-Shader using source from `VIRTUAL_FILE`:
+Shader using source from `VIRTUAL_FILE` or `FILE`:
 
 ```groovy
 # Creates a shader of |shader_type| with the given |shader_name|. The shader
 # will be of |shader_format|. The shader will use the virtual file with |path|.
-SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ] VIRTUAL_FILE {path}
+SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ] ( VIRTUAL_FILE | FILE ) {path}
 ```
 
 `{shader_name}` is used to identify the shader to attach to `PIPELINE`s,
@@ -164,12 +164,13 @@ can not contain compute shaders, and must contain a vertex shader and a fragment
 shader. Ray tracing pipeline can contain only shaders of ray tracing types:
 ray generation, any hit, closest hit, miss, intersection, and callable shaders.
 
-The provided `multi` shader can only be used with `SPIRV-ASM` and `SPIRV-HEX`
-and allows for providing multiple shaders in a single module (so the `vertex`
-and `fragment` shaders can be provided together.)
+The provided `multi` shader can only be used with `SPIRV-ASM`, `SPIRV-HEX`, and
+`SPIRV-BIN` and allows for providing multiple shaders in a single module (so the
+`vertex` and `fragment` shaders can be provided together.)
 
-Note, `SPIRV-ASM` and `SPIRV-HEX` can also be used with each of the other shader
-types, but in that case must only provide a single shader type in the module.
+Note, `SPIRV-ASM`, `SPIRV-HEX`, and `SPIRV-BIN` can also be used with each of
+the other shader types, but in that case must only provide a single shader type
+in the module.
 
 #### Shader Format
  * `GLSL`  (with glslang)
@@ -177,6 +178,7 @@ types, but in that case must only provide a single shader type in the module.
  * `SPIRV-ASM` (with spirv-as; specifying `TARGET_ENV` is _highly recommended_
     in this case, as explained below)
  * `SPIRV-HEX` (decoded straight to SPIR-V)
+ * `SPIRV-BIN` (read as binary SPIR-V, only with `FILE`)
  * `OPENCL-C` (with clspv)
 
 ### Target environment
@@ -190,8 +192,8 @@ SPIR-V environment. For example:
  * `vulkan1.2`
 
 Check the help text of the corresponding tool (e.g. spirv-as, glslangValidator)
-for the full list. The `SPIRV-HEX` shader format is not affected by the target
-environment.
+for the full list. The `SPIRV-HEX` and `SPIRV-BIN` shader formats are not
+affected by the target environment.
 
 The specified target environment for the shader overrides the default (`spv1.0`)
 or the one specified on the command line.
@@ -989,18 +991,22 @@ value for `START_IDX` is 0. The default value for `COUNT` is the item count of
 vertex buffer minus the `START_IDX`. The same applies to `START_INSTANCE`
 (default 0) and `INSTANCE_COUNT` (default 1).
 
+The `TIMED_EXECUTION` is an optional flag that can be passed to the run command.
+This will cause Amber to insert device specific counters to time the execution
+of this pipeline command.
+
 ```groovy
 # Run the given |pipeline_name| which must be a `compute` pipeline. The
 # pipeline will be run with the given number of workgroups in the |x|, |y|, |z|
 # dimensions. Each of the x, y and z values must be a uint32.
-RUN {pipeline_name} _x_ _y_ _z_
+RUN [TIMED_EXECUTION] {pipeline_name} _x_ _y_ _z_
 ```
 
 ```groovy
 # Run the given |pipeline_name| which must be a `graphics` pipeline. The
 # rectangle at |x|, |y|, |width|x|height| will be rendered. Ignores VERTEX_DATA
 # and INDEX_DATA on the given pipeline.
-RUN {pipeline_name} \
+RUN [TIMED_EXECUTION] {pipeline_name} \
   DRAW_RECT POS _x_in_pixels_ _y_in_pixels_ \
   SIZE _width_in_pixels_ _height_in_pixels_
 ```
@@ -1010,7 +1016,7 @@ RUN {pipeline_name} \
 # grid at |x|, |y|, |width|x|height|, |columns|x|rows| will be rendered.
 # Ignores VERTEX_DATA and INDEX_DATA on the given pipeline.
 # For columns, rows of (5, 4) a total of 5*4=20 rectangles will be drawn.
-RUN {pipeline_name} \
+RUN [TIMED_EXECUTION] {pipeline_name} \
   DRAW_GRID POS _x_in_pixels_ _y_in_pixels_ \
   SIZE _width_in_pixels_ _height_in_pixels_ \
   CELLS _columns_of_cells_ _rows_of_cells_
@@ -1024,7 +1030,7 @@ RUN {pipeline_name} \
 # will be processed. The draw is instanced if |inst_count_value| is greater
 # than one. In case of instanced draw |inst_value| controls the starting
 # instance ID.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} \
+RUN [TIMED_EXECUTION] {pipeline_name} DRAW_ARRAY AS {topology} \
     [ START_IDX _value_ (default 0) ] \
     [ COUNT _count_value_ (default vertex_buffer size - start_idx) ] \
     [ START_INSTANCE _inst_value_ (default 0) ] \
@@ -1040,7 +1046,7 @@ RUN {pipeline_name} DRAW_ARRAY AS {topology} \
 # will be processed. The draw is instanced if |inst_count_value| is greater
 # than one. In case of instanced draw |inst_value| controls the starting
 # instance ID.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
+RUN [TIMED_EXECUTION] {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
     [ START_IDX _value_ (default 0) ] \
     [ COUNT _count_value_ (default index_buffer size - start_idx) ] \
     [ START_INSTANCE _inst_value_ (default 0) ] \
@@ -1058,7 +1064,7 @@ RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
 #
 # The pipeline will be run with the given ray tracing dimensions |x|, |y|, |z|.
 # Each of the x, y and z values must be a uint32.
-RUN {pipeline_name} \
+RUN [TIMED_EXECUTION] {pipeline_name} \
     RAYGEN {ray_gen_sbt_name} \
     [MISS {miss_sbt_name}] \
     [HIT {hit_sbt_name}] \
@@ -1171,7 +1177,7 @@ SHADER compute kComputeShader GLSL
 #version 450
 
 layout(binding = 3) buffer block {
-  vec2 values[];
+  uvec2 values[];
 };
 
 void main() {

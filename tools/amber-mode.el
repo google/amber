@@ -46,7 +46,7 @@
 ;;               "tessellation_control" "multi" "framebuffer" "graphics" "uniform"
 ;;               "storage" "push_constant" "color" "depth_stencil" "EQ" "NE" "LT"
 ;;               "LE" "GT" "GE" "EQ_RGB" "EQ_RGBA" "EQ_BUFFER" "GLSL" "HLSL"
-;;               "SPIRV-ASM" "SPIRV-HEX" "OPENCL-C"
+;;               "SPIRV-ASM" "SPIRV-HEX" "SPIRV-BIN" "OPENCL-C"
 ;;               ) t)
 
 ;; (regexp-opt '(

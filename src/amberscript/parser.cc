@@ -440,6 +440,8 @@ Result Parser::ToShaderFormat(const std::string& str, ShaderFormat* fmt) {
     *fmt = kShaderFormatSpirvAsm;
   else if (str == "SPIRV-HEX")
     *fmt = kShaderFormatSpirvHex;
+  else if (str == "SPIRV-BIN")
+    *fmt = kShaderFormatSpirvBin;
   else if (str == "OPENCL-C")
     *fmt = kShaderFormatOpenCLC;
   else
@@ -526,19 +528,33 @@ Result Parser::ParseShaderBlock() {
   }
 
   token = tokenizer_->PeekNextToken();
-  if (token->IsIdentifier() && token->AsString() == "VIRTUAL_FILE") {
-    tokenizer_->NextToken();  // Skip VIRTUAL_FILE
+  if (token->IsIdentifier() &&
+      (token->AsString() == "VIRTUAL_FILE" || token->AsString() == "FILE")) {
+    bool isVirtual = token->AsString() == "VIRTUAL_FILE";
+    tokenizer_->NextToken();  // Skip VIRTUAL_FILE or FILE
 
     token = tokenizer_->NextToken();
     if (!token->IsIdentifier() && !token->IsString())
-      return Result("expected virtual file path after VIRTUAL_FILE");
+      return Result("expected file path after VIRTUAL_FILE or FILE");
 
     auto path = token->AsString();
 
     std::string data;
-    r = script_->GetVirtualFile(path, &data);
-    if (!r.IsSuccess())
-      return r;
+    if (isVirtual) {
+      r = script_->GetVirtualFile(path, &data);
+      if (!r.IsSuccess())
+        return r;
+    } else {
+      if (!delegate_)
+        return Result("missing delegate for loading shader file");
+
+      std::vector<char> buffer;
+      r = delegate_->LoadFile(path, &buffer);
+      if (!r.IsSuccess())
+        return r;
+
+      data.insert(data.begin(), buffer.begin(), buffer.end());
+    }
 
     shader->SetData(data);
     shader->SetFilePath(path);
@@ -2706,6 +2722,14 @@ Result Parser::ParseBufferInitializerFile(Buffer* buffer) {
 
 Result Parser::ParseRun() {
   auto token = tokenizer_->NextToken();
+
+  // Timed execution option for this specific run.
+  bool is_timed_execution = false;
+  if (token->AsString() == "TIMED_EXECUTION") {
+    token = tokenizer_->NextToken();
+    is_timed_execution = true;
+  }
+
   if (!token->IsIdentifier())
     return Result("missing pipeline name for RUN command");
 
@@ -2718,6 +2742,9 @@ Result Parser::ParseRun() {
   if (pipeline->IsRayTracing()) {
     auto cmd = MakeUnique<RayTracingCommand>(pipeline);
     cmd->SetLine(line);
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     while (true) {
       if (tokenizer_->PeekNextToken()->IsInteger())
@@ -2791,6 +2818,9 @@ Result Parser::ParseRun() {
     auto cmd = MakeUnique<ComputeCommand>(pipeline);
     cmd->SetLine(line);
     cmd->SetX(token->AsUint32());
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     token = tokenizer_->NextToken();
     if (!token->IsInteger()) {
@@ -2840,6 +2870,9 @@ Result Parser::ParseRun() {
         MakeUnique<DrawRectCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
     cmd->EnableOrtho();
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -2909,6 +2942,9 @@ Result Parser::ParseRun() {
     auto cmd =
         MakeUnique<DrawGridCommand>(pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     Result r = token->ConvertToDouble();
     if (!r.IsSuccess())
@@ -3082,6 +3118,9 @@ Result Parser::ParseRun() {
     cmd->SetVertexCount(count);
     cmd->SetInstanceCount(instance_count);
     cmd->SetFirstInstance(start_instance);
+    if (is_timed_execution) {
+      cmd->SetTimedExecution();
+    }
 
     if (indexed)
       cmd->EnableIndexed();

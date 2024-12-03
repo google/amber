@@ -42,11 +42,11 @@ class Device {
          VkPhysicalDevice physical_device,
          uint32_t queue_family_index,
          VkDevice device,
-         VkQueue queue);
+         VkQueue queue,
+         Delegate* delegate);
   virtual ~Device();
 
   Result Initialize(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
-                    Delegate* delegate,
                     const std::vector<std::string>& required_features,
                     const std::vector<std::string>& required_properties,
                     const std::vector<std::string>& required_device_extensions,
@@ -94,6 +94,15 @@ class Device {
   /// Returns ray tracing shader group handle size.
   uint32_t GetRayTracingShaderGroupHandleSize() const;
 
+  // Returns true if we have support for timestamps.
+  bool IsTimestampComputeAndGraphicsSupported() const;
+
+  // Returns a float used to convert between timestamps and actual elapsed time.
+  float GetTimestampPeriod() const;
+
+  // Each timed execution reports timing to the device and on to the delegate.
+  void ReportExecutionTiming(double time_in_ns);
+
  private:
   Result LoadVulkanPointers(PFN_vkGetInstanceProcAddr, Delegate* delegate);
   bool SupportsApiVersion(uint32_t major, uint32_t minor, uint32_t patch);
@@ -110,6 +119,8 @@ class Device {
   uint32_t shader_group_handle_size_ = 0;
 
   VulkanPtrs ptrs_;
+
+  Delegate* delegate_ = nullptr;
 };
 
 }  // namespace vulkan
