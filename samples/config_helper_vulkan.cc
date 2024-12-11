@@ -1126,7 +1126,7 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       pnext = &variable_pointers_feature_;
     }
     if (next_ptr != nullptr) {
-      *next_ptr = &variable_pointers_feature_.pNext;
+      *next_ptr = &variable_pointers_feature_;
     }
     next_ptr = &variable_pointers_feature_.pNext;
     exts.push_back(VK_KHR_VARIABLE_POINTERS_EXTENSION_NAME);
@@ -1140,6 +1140,7 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       *next_ptr = &float16_int8_feature_;
     }
     next_ptr = &float16_int8_feature_.pNext;
+    exts.push_back(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME);
   }
 
   if (supports_shader_8bit_storage_) {
@@ -1150,6 +1151,7 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       *next_ptr = &storage_8bit_feature_;
     }
     next_ptr = &storage_8bit_feature_.pNext;
+    exts.push_back(VK_KHR_8BIT_STORAGE_EXTENSION_NAME);
   }
 
   if (supports_shader_16bit_storage_) {
@@ -1202,6 +1204,7 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       *next_ptr = &buffer_device_address_feature_;
     }
     next_ptr = &buffer_device_address_feature_.pNext;
+    exts.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
   }
 
   if (supports_ray_tracing_pipeline_) {
