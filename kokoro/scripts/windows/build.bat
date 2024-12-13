@@ -18,11 +18,10 @@ set BUILD_ROOT=%cd%
 set SRC=%cd%\github\amber
 set BUILD_TYPE=%1
 
-choco install cmake --yes --no-progress --limit-output
-choco upgrade cmake --yes --no-progress --limit-output
-
-:: Force usage of python 3.6 and add cmake to the path.
-set PATH=C:\python36;"C:\Program Files\CMake\bin";%PATH%
+:: Force usage of python 3.12
+set PATH=C:\python312;%PATH%
+:: Force usage of cmake 3.31.2
+set PATH=C:\cmake-3.31.2\bin;%PATH%
 
 cd %SRC%
 python tools\git-sync-deps

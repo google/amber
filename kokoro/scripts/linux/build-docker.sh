@@ -24,7 +24,7 @@ set -x  # show commands
 # user, and we don't care about this warning.
 git config --global --add safe.directory '*'
 
-using cmake-3.17.2
+using cmake-3.31.2
 using ninja-1.10.0
 using python-3.12
 
