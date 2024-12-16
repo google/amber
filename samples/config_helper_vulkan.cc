@@ -1080,142 +1080,71 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions,
     VkDeviceCreateInfo* info) {
-  variable_pointers_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
-  variable_pointers_feature_.pNext = nullptr;
-
-  float16_int8_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
-  float16_int8_feature_.pNext = nullptr;
-
-  storage_8bit_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR;
-  storage_8bit_feature_.pNext = nullptr;
-
-  storage_16bit_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR;
-  storage_16bit_feature_.pNext = nullptr;
-
-  subgroup_size_control_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT;
-  subgroup_size_control_feature_.pNext = nullptr;
-
-  shader_subgroup_extended_types_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES;
-  shader_subgroup_extended_types_feature_.pNext = nullptr;
-
-  acceleration_structure_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
-  acceleration_structure_feature_.pNext = nullptr;
-
-  buffer_device_address_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
-  buffer_device_address_feature_.pNext = nullptr;
-
-  ray_tracing_pipeline_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
-  ray_tracing_pipeline_feature_.pNext = nullptr;
-
   std::vector<std::string> exts = required_extensions;
-
   void* pnext = nullptr;
   void** next_ptr = nullptr;
 
-  if (supports_variable_pointers_) {
-    if (pnext == nullptr) {
-      pnext = &variable_pointers_feature_;
-    }
-    if (next_ptr != nullptr) {
-      *next_ptr = &variable_pointers_feature_;
-    }
-    next_ptr = &variable_pointers_feature_.pNext;
-    exts.push_back(VK_KHR_VARIABLE_POINTERS_EXTENSION_NAME);
-  }
+  auto init_feature = [&pnext, &next_ptr, &exts](
+                          bool enabled, auto& feature_obj,
+                          enum VkStructureType struct_type,
+                          const char* name = nullptr) {
+    feature_obj.sType = struct_type;
+    feature_obj.pNext = nullptr;
 
-  if (supports_shader_float16_int8_) {
-    if (pnext == nullptr) {
-      pnext = &float16_int8_feature_;
+    if (enabled) {
+      if (pnext == nullptr) {
+        pnext = &feature_obj;
+      }
+      if (next_ptr != nullptr) {
+        *next_ptr = &feature_obj;
+      }
+      next_ptr = &feature_obj.pNext;
+      if (name) {
+        exts.push_back(name);
+      }
     }
-    if (next_ptr != nullptr) {
-      *next_ptr = &float16_int8_feature_;
-    }
-    next_ptr = &float16_int8_feature_.pNext;
-    exts.push_back(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME);
-  }
+  };
 
-  if (supports_shader_8bit_storage_) {
-    if (pnext == nullptr) {
-      pnext = &storage_8bit_feature_;
-    }
-    if (next_ptr != nullptr) {
-      *next_ptr = &storage_8bit_feature_;
-    }
-    next_ptr = &storage_8bit_feature_.pNext;
-    exts.push_back(VK_KHR_8BIT_STORAGE_EXTENSION_NAME);
-  }
+  init_feature(supports_variable_pointers_, variable_pointers_feature_,
+               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR,
+               VK_KHR_VARIABLE_POINTERS_EXTENSION_NAME);
 
-  if (supports_shader_16bit_storage_) {
-    if (pnext == nullptr) {
-      pnext = &storage_16bit_feature_;
-    }
-    if (next_ptr != nullptr) {
-      *next_ptr = &storage_16bit_feature_;
-    }
-    next_ptr = &storage_16bit_feature_.pNext;
-  }
+  init_feature(supports_shader_float16_int8_, float16_int8_feature_,
+               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
+               VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME);
 
-  if (supports_subgroup_size_control_) {
-    if (pnext == nullptr) {
-      pnext = &subgroup_size_control_feature_;
-    }
-    if (next_ptr != nullptr) {
-      *next_ptr = &subgroup_size_control_feature_;
-    }
-    next_ptr = &subgroup_size_control_feature_.pNext;
+  init_feature(supports_shader_8bit_storage_, storage_8bit_feature_,
+               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR,
+               VK_KHR_8BIT_STORAGE_EXTENSION_NAME);
 
-    exts.push_back(VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME);
-  }
+  init_feature(supports_shader_16bit_storage_, storage_16bit_feature_,
+               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR,
+               VK_KHR_16BIT_STORAGE_EXTENSION_NAME);
 
-  if (supports_shader_subgroup_extended_types_) {
-    if (pnext == nullptr) {
-      pnext = &shader_subgroup_extended_types_feature_;
-    }
-    if (next_ptr != nullptr) {
-      *next_ptr = &shader_subgroup_extended_types_feature_;
-    }
-    next_ptr = &shader_subgroup_extended_types_feature_.pNext;
-  }
+  init_feature(
+      supports_subgroup_size_control_, subgroup_size_control_feature_,
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT,
+      VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME);
 
-  if (supports_acceleration_structure_) {
-    if (pnext == nullptr) {
-      pnext = &acceleration_structure_feature_;
-    }
-    if (next_ptr != nullptr) {
-      *next_ptr = &acceleration_structure_feature_;
-    }
-    next_ptr = &acceleration_structure_feature_.pNext;
-  }
+  init_feature(
+      supports_shader_subgroup_extended_types_,
+      shader_subgroup_extended_types_feature_,
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES,
+      VK_KHR_SHADER_SUBGROUP_EXTENDED_TYPES_EXTENSION_NAME);
 
-  if (supports_buffer_device_address_) {
-    if (pnext == nullptr) {
-      pnext = &buffer_device_address_feature_;
-    }
-    if (next_ptr != nullptr) {
-      *next_ptr = &buffer_device_address_feature_;
-    }
-    next_ptr = &buffer_device_address_feature_.pNext;
-    exts.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-  }
+  init_feature(
+      supports_acceleration_structure_, acceleration_structure_feature_,
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
+      VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 
-  if (supports_ray_tracing_pipeline_) {
-    if (pnext == nullptr) {
-      pnext = &ray_tracing_pipeline_feature_;
-    }
-    if (next_ptr != nullptr) {
-      *next_ptr = &ray_tracing_pipeline_feature_;
-    }
-    next_ptr = &ray_tracing_pipeline_feature_.pNext;
-  }
+  init_feature(supports_buffer_device_address_, buffer_device_address_feature_,
+               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
+               VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+
+  init_feature(
+      supports_ray_tracing_pipeline_, ray_tracing_pipeline_feature_,
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR,
+      VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
 
   available_features2_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
   available_features2_.pNext = pnext;
