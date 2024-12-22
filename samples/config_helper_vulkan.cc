@@ -1296,6 +1296,8 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
 
   uint32_t api_version = props.apiVersion;
 
+  // windows test
+
   std::cout << std::endl;
   std::cout << "Physical device properties:" << std::endl;
   std::cout << "  apiVersion: " << static_cast<uint32_t>(api_version >> 22u)
