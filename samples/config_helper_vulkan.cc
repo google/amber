@@ -662,7 +662,9 @@ ConfigHelperVulkan::ConfigHelperVulkan()
       buffer_device_address_feature_(
           VkPhysicalDeviceBufferDeviceAddressFeatures()),
       ray_tracing_pipeline_feature_(
-          VkPhysicalDeviceRayTracingPipelineFeaturesKHR()) {}
+          VkPhysicalDeviceRayTracingPipelineFeaturesKHR()),
+      descriptor_indexing_feature_(
+          VkPhysicalDeviceDescriptorIndexingFeatures()) {}
 
 ConfigHelperVulkan::~ConfigHelperVulkan() {
   if (vulkan_device_)
