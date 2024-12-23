@@ -122,6 +122,10 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   bool supports_acceleration_structure_ = false;
   bool supports_buffer_device_address_ = false;
   bool supports_ray_tracing_pipeline_ = false;
+  bool supports_descriptor_indexing_ = false;
+  bool supports_deferred_host_operations_ = false;
+  bool supports_spirv_1_4_ = false;
+  bool supports_shader_float_controls_ = false;
   VkPhysicalDeviceFeatures available_features_;
   VkPhysicalDeviceFeatures2KHR available_features2_;
   VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_feature_;
@@ -135,6 +139,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
       acceleration_structure_feature_;
   VkPhysicalDeviceBufferDeviceAddressFeatures buffer_device_address_feature_;
   VkPhysicalDeviceRayTracingPipelineFeaturesKHR ray_tracing_pipeline_feature_;
+  VkPhysicalDeviceDescriptorIndexingFeatures descriptor_indexing_feature_;
 };
 
 }  // namespace sample
