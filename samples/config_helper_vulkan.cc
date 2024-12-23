@@ -662,7 +662,9 @@ ConfigHelperVulkan::ConfigHelperVulkan()
       buffer_device_address_feature_(
           VkPhysicalDeviceBufferDeviceAddressFeatures()),
       ray_tracing_pipeline_feature_(
-          VkPhysicalDeviceRayTracingPipelineFeaturesKHR()) {}
+          VkPhysicalDeviceRayTracingPipelineFeaturesKHR()),
+      descriptor_indexing_feature_(
+          VkPhysicalDeviceDescriptorIndexingFeatures()) {}
 
 ConfigHelperVulkan::~ConfigHelperVulkan() {
   if (vulkan_device_)
@@ -814,6 +816,14 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       supports_buffer_device_address_ = true;
     else if (ext == "VK_KHR_ray_tracing_pipeline")
       supports_ray_tracing_pipeline_ = true;
+    else if (ext == VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)
+      supports_descriptor_indexing_ = true;
+    else if (ext == VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME)
+      supports_deferred_host_operations_ = true;
+    else if (ext == VK_KHR_SPIRV_1_4_EXTENSION_NAME)
+      supports_spirv_1_4_ = true;
+    else if (ext == VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME)
+      supports_shader_float_controls_ = true;
   }
 
   VkPhysicalDeviceFeatures required_vulkan_features =
@@ -834,6 +844,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
         {};
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR
         ray_tracing_pipeline_features = {};
+    VkPhysicalDeviceDescriptorIndexingFeatures descriptor_indexing_features =
+        {};
     void* next_ptr = nullptr;
 
     if (supports_subgroup_size_control_) {
@@ -888,6 +900,13 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
       ray_tracing_pipeline_features.pNext = next_ptr;
       next_ptr = &ray_tracing_pipeline_features;
+    }
+
+    if (supports_descriptor_indexing_) {
+      descriptor_indexing_features.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+      descriptor_indexing_feature_.pNext = next_ptr;
+      next_ptr = &descriptor_indexing_features;
     }
 
     VkPhysicalDeviceFeatures2KHR features2 = VkPhysicalDeviceFeatures2KHR();
@@ -1145,6 +1164,24 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       supports_ray_tracing_pipeline_, ray_tracing_pipeline_feature_,
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR,
       VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+
+  init_feature(
+      supports_descriptor_indexing_, descriptor_indexing_feature_,
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
+      VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+
+  // These extensions are required to support the raytracing pipeline.
+  if (supports_deferred_host_operations_) {
+    exts.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+  }
+
+  if (supports_spirv_1_4_) {
+    exts.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+  }
+
+  if (supports_shader_float_controls_) {
+    exts.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+  }
 
   available_features2_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
   available_features2_.pNext = pnext;
