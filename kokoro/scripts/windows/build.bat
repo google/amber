@@ -17,6 +17,7 @@
 set BUILD_ROOT=%cd%
 set SRC=%cd%\github\amber
 set BUILD_TYPE=%1
+set VS_VERSION=%2
 
 :: Force usage of python 3.12
 set PATH=C:\python312;%PATH%
@@ -29,8 +30,10 @@ python tools\git-sync-deps
 :: #########################################
 :: set up msvc build env
 :: #########################################
-call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-echo "Using VS 2019..."
+if %VS_VERSION% == 2019 (
+  call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+  echo "Using VS 2019..."
+)
 
 cmake --version
 

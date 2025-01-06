@@ -17,4 +17,5 @@
 :: Find the directory of the common build script.
 set SCRIPT_DIR=%~dp0
 
-call %SCRIPT_DIR%\..\scripts\windows\build.bat RelWithDebInfo
+call %SCRIPT_DIR%\..\scripts\windows\build.bat RelWithDebInfo 2019
+
