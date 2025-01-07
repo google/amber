@@ -107,7 +107,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flag,
 }
 
 std::string to_str(VkResult result) {
-  switch(result) {
+  switch (result) {
     case VK_SUCCESS:
       return "SUCCESS";
     case VK_NOT_READY:
@@ -1361,7 +1361,8 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
 }
 
 amber::Result ConfigHelperVulkan::DoCreateDevice(VkDeviceCreateInfo* info) {
-  auto result = vkCreateDevice(vulkan_physical_device_, info, nullptr, &vulkan_device_);
+  auto result =
+      vkCreateDevice(vulkan_physical_device_, info, nullptr, &vulkan_device_);
   if (result != VK_SUCCESS) {
     return amber::Result("Unable to create vulkan device: " + to_str(result));
   }
