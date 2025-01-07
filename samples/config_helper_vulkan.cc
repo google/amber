@@ -1002,6 +1002,17 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
     vkGetPhysicalDeviceFeatures2KHR(physical_device, &features2);
     available_features_ = features2.features;
 
+    // Just having the extension does not necessarily mean that the feature is
+    // available. We have to check the features structure for specific flags.
+    if (supports_acceleration_structure_) {
+      supports_acceleration_structure_ =
+          acceleration_structure_features.accelerationStructure;
+    }
+    if (supports_ray_tracing_pipeline_) {
+      supports_ray_tracing_pipeline_ =
+          ray_tracing_pipeline_features.rayTracingPipeline;
+    }
+
     std::vector<std::string> required_features1;
     for (const auto& feature : required_features) {
       // No dot means this is a features1 feature.
