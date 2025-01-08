@@ -106,6 +106,88 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flag,
   return VK_FALSE;
 }
 
+std::string to_str(VkResult result) {
+  switch (result) {
+    case VK_SUCCESS:
+      return "SUCCESS";
+    case VK_NOT_READY:
+      return "NOT READY";
+    case VK_TIMEOUT:
+      return "TIMEOUT";
+    case VK_EVENT_SET:
+      return "EVENT_SET";
+    case VK_EVENT_RESET:
+      return "EVENT_RESET";
+    case VK_INCOMPLETE:
+      return "INCOMPLETE";
+    case VK_ERROR_OUT_OF_HOST_MEMORY:
+      return "ERROR_OUT_OF_HOST_MEMORY";
+    case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+      return "ERROR_OUT_OF_DEVICE_MEMORY";
+    case VK_ERROR_INITIALIZATION_FAILED:
+      return "ERROR_INITIALIZATION_FAILED";
+    case VK_ERROR_DEVICE_LOST:
+      return "ERROR_DEVICE_LOST";
+    case VK_ERROR_MEMORY_MAP_FAILED:
+      return "ERROR_MEMORY_MAP_FAILED";
+    case VK_ERROR_LAYER_NOT_PRESENT:
+      return "ERROR_LAYER_NOT_PRESENT";
+    case VK_ERROR_EXTENSION_NOT_PRESENT:
+      return "ERROR_EXTENSION_NOT_PRESENT";
+    case VK_ERROR_FEATURE_NOT_PRESENT:
+      return "ERROR_FEATURE_NOT_PRESENT";
+    case VK_ERROR_INCOMPATIBLE_DRIVER:
+      return "ERROR_INCOMPATIBLE_DRIVER";
+    case VK_ERROR_TOO_MANY_OBJECTS:
+      return "ERROR_TOO_MANY_OBJECTS";
+    case VK_ERROR_FORMAT_NOT_SUPPORTED:
+      return "ERROR_FORMAT_NOT_SUPPORTED";
+    case VK_ERROR_FRAGMENTED_POOL:
+      return "ERROR_FRAGMENTED_POOL";
+    case VK_ERROR_UNKNOWN:
+      return "ERROR_UNKNOWN";
+    case VK_ERROR_OUT_OF_POOL_MEMORY:
+      return "ERROR_OUT_OF_POOL_MEMORY";
+    case VK_ERROR_INVALID_EXTERNAL_HANDLE:
+      return "ERROR_INVALID_EXTERNAL_HANDLE";
+    case VK_ERROR_FRAGMENTATION:
+      return "ERROR_FRAGMENTATION";
+    case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS:
+      return "ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS";
+    case VK_PIPELINE_COMPILE_REQUIRED:
+      return "PIPELINE_COMPILE_REQUIRED";
+    case VK_ERROR_SURFACE_LOST_KHR:
+      return "ERROR_SURFACE_LOST";
+    case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
+      return "ERROR_NATIVE_WINDOW_IN_USE";
+    case VK_SUBOPTIMAL_KHR:
+      return "SUBOPTIMAL";
+    case VK_ERROR_OUT_OF_DATE_KHR:
+      return "ERROR_OUT_OF_DATE";
+    case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
+      return "ERROR_INCOMPATIBLE_DISPLAY";
+    case VK_ERROR_VALIDATION_FAILED_EXT:
+      return "ERROR_VALIDATION_FAILED";
+    case VK_ERROR_INVALID_SHADER_NV:
+      return "ERROR_INVALID_SHADER";
+    case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT:
+      return "ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT";
+    case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
+      return "ERROR_FULL_SCREEN_EXCULSIVE_MODE_LOST";
+    case VK_THREAD_IDLE_KHR:
+      return "THREAD_IDLE";
+    case VK_THREAD_DONE_KHR:
+      return "THREAD_DONE";
+    case VK_OPERATION_DEFERRED_KHR:
+      return "OPERATION_DEFERRED";
+    case VK_OPERATION_NOT_DEFERRED_KHR:
+      return "OPERATION_NO_DEFERRED";
+    default:
+      break;
+  }
+  return "VkResult(" + std::to_string(static_cast<uint32_t>(result)) + ")";
+}
+
 // Convert required features given as a string array to
 // VkPhysicalDeviceFeatures.
 amber::Result NamesToVulkanFeatures(
@@ -761,7 +843,7 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
       vkCreateInstance(&instance_info, nullptr, &vulkan_instance_);
   if (result != VK_SUCCESS) {
     std::stringstream error_message;
-    error_message << "Unable to create vulkan instance (code=" << result << ")";
+    error_message << "Unable to create vulkan instance: " << to_str(result);
     return amber::Result(error_message.str());
   }
   return {};
@@ -1266,9 +1348,10 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
 }
 
 amber::Result ConfigHelperVulkan::DoCreateDevice(VkDeviceCreateInfo* info) {
-  if (vkCreateDevice(vulkan_physical_device_, info, nullptr, &vulkan_device_) !=
-      VK_SUCCESS) {
-    return amber::Result("Unable to create vulkan device");
+  auto result =
+      vkCreateDevice(vulkan_physical_device_, info, nullptr, &vulkan_device_);
+  if (result != VK_SUCCESS) {
+    return amber::Result("Unable to create vulkan device: " + to_str(result));
   }
   return {};
 }
