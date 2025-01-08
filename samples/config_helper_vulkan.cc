@@ -987,7 +987,7 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
     if (supports_descriptor_indexing_) {
       descriptor_indexing_features.sType =
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
-      descriptor_indexing_feature_.pNext = next_ptr;
+      descriptor_indexing_features.pNext = next_ptr;
       next_ptr = &descriptor_indexing_features;
     }
 
