@@ -24,7 +24,7 @@ SRC="$PWD/github/amber"
 git config --global --add safe.directory '*'
 
 # NDK Path
-export ANDROID_NDK="$BUILD_ROOT/android-ndk-r25b"
+export ANDROID_NDK="$BUILD_ROOT/android-ndk-r27c"
 
 # Get NINJA.
 wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
@@ -32,8 +32,8 @@ unzip -q ninja-linux.zip
 export PATH="$PWD:$PATH"
 
 # Get Android NDK.
-wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
-unzip -q android-ndk-r25b-linux.zip
+wget -q https://dl.google.com/android/repository/android-ndk-r27c-linux.zip
+unzip -q android-ndk-r27c-linux.zip
 # ANDROID_NDK is set earlier.
 
 cd "$SRC"
