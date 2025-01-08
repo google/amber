@@ -69,6 +69,8 @@ const char k16BitStorage_InputOutput[] =
 const char kSubgroupSizeControl[] = "SubgroupSizeControl.subgroupSizeControl";
 const char kComputeFullSubgroups[] = "SubgroupSizeControl.computeFullSubgroups";
 
+const char kDepthClampZeroOne[] = "DepthClampZeroOneFeatures.depthClampZeroOne";
+
 const char kShaderSubgroupExtendedTypes[] =
     "ShaderSubgroupExtendedTypesFeatures.shaderSubgroupExtendedTypes";
 
@@ -739,6 +741,8 @@ ConfigHelperVulkan::ConfigHelperVulkan()
       storage_16bit_feature_(VkPhysicalDevice16BitStorageFeaturesKHR()),
       subgroup_size_control_feature_(
           VkPhysicalDeviceSubgroupSizeControlFeaturesEXT()),
+      depth_clamp_zero_one_feature_(
+          VkPhysicalDeviceDepthClampZeroOneFeaturesEXT()),
       acceleration_structure_feature_(
           VkPhysicalDeviceAccelerationStructureFeaturesKHR()),
       buffer_device_address_feature_(
@@ -888,6 +892,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       supports_shader_16bit_storage_ = true;
     else if (ext == "VK_EXT_subgroup_size_control")
       supports_subgroup_size_control_ = true;
+    else if (ext == "VK_EXT_depth_clamp_zero_one")
+      supports_depth_clamp_zero_one_ = true;
     else if (ext == "VK_KHR_shader_subgroup_extended_types")
       supports_shader_subgroup_extended_types_ = true;
     else if (ext == "VK_KHR_variable_pointers")
@@ -916,6 +922,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
         shader_subgroup_extended_types_features = {};
     VkPhysicalDeviceSubgroupSizeControlFeaturesEXT
         subgroup_size_control_features = {};
+    VkPhysicalDeviceDepthClampZeroOneFeaturesEXT
+        depth_clamp_zero_one_features = {};
     VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_features = {};
     VkPhysicalDeviceFloat16Int8FeaturesKHR float16_int8_features = {};
     VkPhysicalDevice8BitStorageFeaturesKHR storage_8bit_features = {};
@@ -935,6 +943,13 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT;
       subgroup_size_control_features.pNext = next_ptr;
       next_ptr = &subgroup_size_control_features;
+    }
+
+    if (supports_depth_clamp_zero_one_) {
+      depth_clamp_zero_one_features.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT;
+      depth_clamp_zero_one_features.pNext = next_ptr;
+      next_ptr = &depth_clamp_zero_one_features;
     }
 
     variable_pointers_features.sType =
@@ -1030,6 +1045,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
            subgroup_size_control_features.subgroupSizeControl == VK_FALSE) ||
           (feature == kComputeFullSubgroups &&
            subgroup_size_control_features.computeFullSubgroups == VK_FALSE) ||
+          (feature == kDepthClampZeroOne &&
+           depth_clamp_zero_one_features.depthClampZeroOne == VK_FALSE) ||
           (feature == kFloat16Int8_Float16 &&
            float16_int8_features.shaderFloat16 == VK_FALSE) ||
           (feature == kFloat16Int8_Int8 &&
@@ -1245,6 +1262,11 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       VK_KHR_SHADER_SUBGROUP_EXTENDED_TYPES_EXTENSION_NAME);
 
   init_feature(
+      supports_depth_clamp_zero_one_, depth_clamp_zero_one_feature_,
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT,
+      VK_EXT_DEPTH_CLAMP_ZERO_ONE_EXTENSION_NAME);
+
+  init_feature(
       supports_acceleration_structure_, acceleration_structure_feature_,
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
       VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
@@ -1322,6 +1344,8 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       subgroup_size_control_feature_.subgroupSizeControl = VK_TRUE;
     else if (feature == kComputeFullSubgroups)
       subgroup_size_control_feature_.computeFullSubgroups = VK_TRUE;
+    else if (feature == kDepthClampZeroOne)
+      depth_clamp_zero_one_feature_.depthClampZeroOne = VK_TRUE;
     else if (feature == kShaderSubgroupExtendedTypes)
       shader_subgroup_extended_types_feature_.shaderSubgroupExtendedTypes =
           VK_TRUE;

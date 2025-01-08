@@ -48,6 +48,7 @@ with:
  * `Storage16BitFeatures.storageInputOutput16`
  * `SubgroupSizeControl.subgroupSizeControl`
  * `SubgroupSizeControl.computeFullSubgroups`
+ * `DepthClampZeroOneFeatures.depthClampZeroOne`
  * `SubgroupSupportedOperations.basic`
  * `SubgroupSupportedOperations.vote`
  * `SubgroupSupportedOperations.arithmetic`
