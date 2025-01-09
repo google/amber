@@ -54,6 +54,8 @@ const char k16BitStorage_InputOutput[] =
 const char kSubgroupSizeControl[] = "SubgroupSizeControl.subgroupSizeControl";
 const char kComputeFullSubgroups[] = "SubgroupSizeControl.computeFullSubgroups";
 
+const char kDepthClampZeroOne[] = "DepthClampZeroOneFeatures.depthClampZeroOne";
+
 const char kSubgroupSupportedOperations[] = "SubgroupSupportedOperations";
 const char kSubgroupSupportedOperationsBasic[] =
     "SubgroupSupportedOperations.basic";
@@ -493,6 +495,8 @@ Result Device::Initialize(
   VkPhysicalDeviceVulkan14Features* vulkan14_ptrs = nullptr;
   VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*
       subgroup_size_control_features = nullptr;
+  VkPhysicalDeviceDepthClampZeroOneFeaturesEXT* depth_clamp_zero_one_features =
+      nullptr;
   VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures*
       shader_subgroup_extended_types_ptrs = nullptr;
   VkPhysicalDeviceIndexTypeUint8FeaturesEXT* index_type_uint8_ptrs = nullptr;
@@ -525,6 +529,10 @@ Result Device::Initialize(
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT:
         subgroup_size_control_features =
             static_cast<VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*>(ptr);
+        break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT:
+        depth_clamp_zero_one_features =
+            static_cast<VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *>(ptr);
         break;
       // NOLINTNEXTLINE(whitespace/line_length)
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES:
@@ -613,6 +621,11 @@ Result Device::Initialize(
         vulkan12_ptrs == nullptr) {
       return amber::Result(
           "Subgroup extended types requested but feature not returned");
+    }
+    if (feature == kDepthClampZeroOne &&
+        (depth_clamp_zero_one_features == nullptr ||
+         depth_clamp_zero_one_features->depthClampZeroOne != VK_TRUE)) {
+      return amber::Result("Depth clamp zero one requested but not returned");
     }
     if (feature == kAccelerationStructure) {
       if (acceleration_structure_ptrs == nullptr)

@@ -118,6 +118,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   bool supports_shader_8bit_storage_ = false;
   bool supports_shader_16bit_storage_ = false;
   bool supports_subgroup_size_control_ = false;
+  bool supports_depth_clamp_zero_one_ = false;
   bool supports_shader_subgroup_extended_types_ = false;
   bool supports_acceleration_structure_ = false;
   bool supports_buffer_device_address_ = false;
@@ -133,6 +134,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   VkPhysicalDevice8BitStorageFeaturesKHR storage_8bit_feature_;
   VkPhysicalDevice16BitStorageFeaturesKHR storage_16bit_feature_;
   VkPhysicalDeviceSubgroupSizeControlFeaturesEXT subgroup_size_control_feature_;
+  VkPhysicalDeviceDepthClampZeroOneFeaturesEXT depth_clamp_zero_one_feature_;
   VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures
       shader_subgroup_extended_types_feature_;
   VkPhysicalDeviceAccelerationStructureFeaturesKHR
