@@ -25,8 +25,9 @@ static VkTransformMatrixKHR makeVkMatrix(const float* m) {
                                                    {0.0f, 0.0f, 1.0f, 0.0f}}};
   VkTransformMatrixKHR v;
 
-  if (m == nullptr)
+  if (m == nullptr) {
     return identityMatrix3x4;
+  }
 
   for (size_t i = 0; i < 12; i++) {
     const size_t r = i / 4;
@@ -39,10 +40,10 @@ static VkTransformMatrixKHR makeVkMatrix(const float* m) {
 
 TLAS::TLAS(Device* device) : device_(device) {}
 
-Result TLAS::CreateTLAS(amber::TLAS* tlas,
-                        BlasesMap* blases) {
-  if (tlas_ != VK_NULL_HANDLE)
+Result TLAS::CreateTLAS(amber::TLAS* tlas, BlasesMap* blases) {
+  if (tlas_ != VK_NULL_HANDLE) {
     return {};
+  }
 
   assert(tlas != nullptr);
 
@@ -65,8 +66,8 @@ Result TLAS::CreateTLAS(amber::TLAS* tlas,
   instance_buffer_->Initialize();
 
   VkAccelerationStructureInstanceKHR* instances_ptr =
-      reinterpret_cast<VkAccelerationStructureInstanceKHR*>
-          (instance_buffer_->HostAccessibleMemoryPtr());
+      reinterpret_cast<VkAccelerationStructureInstanceKHR*>(
+          instance_buffer_->HostAccessibleMemoryPtr());
 
   for (auto& instance : tlas->GetInstances()) {
     auto blas = instance->GetUsedBLAS();
@@ -83,8 +84,9 @@ Result TLAS::CreateTLAS(amber::TLAS* tlas,
 
       Result r = blas_vulkan_ptr->CreateBLAS(blas);
 
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
     } else {
       blas_vulkan_ptr = blas_vulkan_it->second.get();
     }
@@ -199,10 +201,12 @@ Result TLAS::CreateTLAS(amber::TLAS* tlas,
 }
 
 Result TLAS::BuildTLAS(VkCommandBuffer cmdBuffer) {
-  if (tlas_ == VK_NULL_HANDLE)
+  if (tlas_ == VK_NULL_HANDLE) {
     return Result("Acceleration structure should be created first");
-  if (built_)
+  }
+  if (built_) {
     return {};
+  }
 
   VkAccelerationStructureBuildRangeInfoKHR
       accelerationStructureBuildRangeInfoKHR = {instances_count_, 0, 0, 0};

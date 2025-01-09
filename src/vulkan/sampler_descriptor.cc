@@ -36,8 +36,9 @@ Result SamplerDescriptor::CreateResourceIfNeeded() {
   for (const auto& sampler : amber_samplers_) {
     vulkan_samplers_.emplace_back(MakeUnique<Sampler>(device_));
     Result r = vulkan_samplers_.back()->CreateSampler(sampler);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
 
   return {};

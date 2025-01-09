@@ -42,8 +42,9 @@ Result BufferBackedDescriptor::RecordCopyBufferDataToTransferResourceIfNeeded(
   // If the resource is read-only, keep the buffer data; Amber won't copy
   // read-only resources back into the host buffers, so it makes sense to
   // leave the buffer intact.
-  if (!transfer_resource->IsReadOnly())
+  if (!transfer_resource->IsReadOnly()) {
     buffer->ValuePtr()->clear();
+  }
 
   transfer_resource->CopyToDevice(command_buffer);
   return {};

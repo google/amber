@@ -82,8 +82,9 @@ class Script : public RecipeImpl {
   /// Adds |pipeline| to the list of known pipelines. The |pipeline| must have
   /// a unique name over all pipelines in the script.
   Result AddPipeline(std::unique_ptr<Pipeline> pipeline) {
-    if (name_to_pipeline_.count(pipeline->GetName()) > 0)
+    if (name_to_pipeline_.count(pipeline->GetName()) > 0) {
       return Result("duplicate pipeline name provided");
+    }
 
     pipelines_.push_back(std::move(pipeline));
     name_to_pipeline_[pipelines_.back()->GetName()] = pipelines_.back().get();
@@ -104,8 +105,9 @@ class Script : public RecipeImpl {
   /// Adds |shader| to the list of known shaders. The |shader| must have a
   /// unique name over all shaders in the script.
   Result AddShader(std::unique_ptr<Shader> shader) {
-    if (name_to_shader_.count(shader->GetName()) > 0)
+    if (name_to_shader_.count(shader->GetName()) > 0) {
       return Result("duplicate shader name provided");
+    }
 
     shaders_.push_back(std::move(shader));
     name_to_shader_[shaders_.back()->GetName()] = shaders_.back().get();
@@ -130,14 +132,16 @@ class Script : public RecipeImpl {
     if (shader) {
       for (auto group : pipeline->GetShaderGroups()) {
         Shader* test_shader = group->GetShaderByType(shader->GetType());
-        if (test_shader == shader)
+        if (test_shader == shader) {
           return shader;
+        }
       }
 
       for (auto lib : pipeline->GetPipelineLibraries()) {
         shader = FindShader(lib, shader);
-        if (shader)
+        if (shader) {
           return shader;
+        }
       }
     }
 
@@ -162,8 +166,9 @@ class Script : public RecipeImpl {
 
     for (auto lib : pipeline->GetPipelineLibraries()) {
       result = FindShaderGroup(lib, name, index);
-      if (result)
+      if (result) {
         return result;
+      }
     }
 
     *index = static_cast<uint32_t>(-1);
@@ -174,8 +179,9 @@ class Script : public RecipeImpl {
   /// Adds |buffer| to the list of known buffers. The |buffer| must have a
   /// unique name over all buffers in the script.
   Result AddBuffer(std::unique_ptr<Buffer> buffer) {
-    if (name_to_buffer_.count(buffer->GetName()) > 0)
+    if (name_to_buffer_.count(buffer->GetName()) > 0) {
       return Result("duplicate buffer name provided");
+    }
 
     buffers_.push_back(std::move(buffer));
     name_to_buffer_[buffers_.back()->GetName()] = buffers_.back().get();
@@ -196,8 +202,9 @@ class Script : public RecipeImpl {
   /// Adds |sampler| to the list of known sampler. The |sampler| must have a
   /// unique name over all samplers in the script.
   Result AddSampler(std::unique_ptr<Sampler> sampler) {
-    if (name_to_sampler_.count(sampler->GetName()) > 0)
+    if (name_to_sampler_.count(sampler->GetName()) > 0) {
       return Result("duplicate sampler name provided");
+    }
 
     samplers_.push_back(std::move(sampler));
     name_to_sampler_[samplers_.back()->GetName()] = samplers_.back().get();
@@ -218,8 +225,9 @@ class Script : public RecipeImpl {
   /// Adds |blas| to the list of known bottom level acceleration structures.
   /// The |blas| must have a unique name over all BLASes in the script.
   Result AddBLAS(std::unique_ptr<BLAS> blas) {
-    if (name_to_blas_.count(blas->GetName()) > 0)
+    if (name_to_blas_.count(blas->GetName()) > 0) {
       return Result("duplicate BLAS name provided");
+    }
 
     blases_.push_back(std::move(blas));
     name_to_blas_[blases_.back()->GetName()] = blases_.back().get();
@@ -241,8 +249,9 @@ class Script : public RecipeImpl {
   /// Adds |tlas| to the list of known top level acceleration structures.
   /// The |tlas| must have a unique name over all TLASes in the script.
   Result AddTLAS(std::unique_ptr<TLAS> tlas) {
-    if (name_to_tlas_.count(tlas->GetName()) > 0)
+    if (name_to_tlas_.count(tlas->GetName()) > 0) {
       return Result("duplicate TLAS name provided");
+    }
 
     tlases_.push_back(std::move(tlas));
     name_to_tlas_[tlases_.back()->GetName()] = tlases_.back().get();
@@ -337,8 +346,9 @@ class Script : public RecipeImpl {
   /// Adds |type| to the list of known types. The |type| must have
   /// a unique name over all types in the script.
   Result AddType(const std::string& name, std::unique_ptr<type::Type> type) {
-    if (name_to_type_.count(name) > 0)
+    if (name_to_type_.count(name) > 0) {
       return Result("duplicate type name provided");
+    }
 
     name_to_type_[name] = std::move(type);
     return {};

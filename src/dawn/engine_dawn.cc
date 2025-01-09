@@ -164,8 +164,9 @@ Result MakeTexture(const ::dawn::Device& device,
       ::dawn::TextureUsage::CopySrc | ::dawn::TextureUsage::OutputAttachment;
   // TODO(dneto): Get a better message by using the Dawn error callback.
   *result_ptr = device.CreateTexture(&descriptor);
-  if (*result_ptr)
+  if (*result_ptr) {
     return {};
+  }
   return Result("Dawn: Failed to allocate a framebuffer texture");
 }
 
@@ -335,8 +336,9 @@ Result EngineDawn::MapDeviceTextureToHostBuffer(
     queue.Submit(1, &commands);
 
     MapResult mapped_device_texture = MapBuffer(device, copy_buffer);
-    if (!mapped_device_texture.result.IsSuccess())
+    if (!mapped_device_texture.result.IsSuccess()) {
       return mapped_device_texture.result;
+    }
 
     auto& host_texture = render_pipeline.pipeline->GetColorAttachments()[i];
     auto* values = host_texture.buffer->ValuePtr();
@@ -396,8 +398,9 @@ Result EngineDawn::MapDeviceBufferToHostBuffer(
                 copy_size);
 
     copy_device_buffer.Unmap();
-    if (!mapped_device_buffer.result.IsSuccess())
+    if (!mapped_device_buffer.result.IsSuccess()) {
       return mapped_device_buffer.result;
+    }
   }
   return {};
 }
@@ -413,8 +416,9 @@ Result EngineDawn::MapDeviceBufferToHostBuffer(
   descriptor.usage = usage | ::dawn::BufferUsage::CopyDst;
 
   ::dawn::Buffer buffer = device.CreateBuffer(&descriptor);
-  if (data != nullptr)
+  if (data != nullptr) {
     buffer.SetSubData(0, size, reinterpret_cast<const uint8_t*>(data));
+  }
   return buffer;
 }
 
@@ -509,8 +513,9 @@ struct BindingInitializationHelper {
 // result.
 Result GetDawnTextureFormat(const ::amber::Format& amber_format,
                             ::dawn::TextureFormat* dawn_format_ptr) {
-  if (!dawn_format_ptr)
+  if (!dawn_format_ptr) {
     return Result("Internal error: format pointer argument is null");
+  }
   ::dawn::TextureFormat& dawn_format = *dawn_format_ptr;
 
   switch (amber_format.GetFormatType()) {
@@ -732,20 +737,21 @@ Result GetDawnTopology(const ::amber::Topology& amber_topology,
 }
 
 ::dawn::ColorWriteMask GetDawnColorWriteMask(uint8_t amber_color_write_mask) {
-  if (amber_color_write_mask == 0x00000000)
+  if (amber_color_write_mask == 0x00000000) {
     return ::dawn::ColorWriteMask::None;
-  else if (amber_color_write_mask == 0x00000001)
+  } else if (amber_color_write_mask == 0x00000001) {
     return ::dawn::ColorWriteMask::Red;
-  else if (amber_color_write_mask == 0x00000002)
+  } else if (amber_color_write_mask == 0x00000002) {
     return ::dawn::ColorWriteMask::Green;
-  else if (amber_color_write_mask == 0x00000004)
+  } else if (amber_color_write_mask == 0x00000004) {
     return ::dawn::ColorWriteMask::Blue;
-  else if (amber_color_write_mask == 0x00000008)
+  } else if (amber_color_write_mask == 0x00000008) {
     return ::dawn::ColorWriteMask::Alpha;
-  else if (amber_color_write_mask == 0x0000000F)
+  } else if (amber_color_write_mask == 0x0000000F) {
     return ::dawn::ColorWriteMask::All;
-  else
+  } else {
     assert(false && "Dawn::Unknown ColorWriteMask");
+  }
   return ::dawn::ColorWriteMask::All;
 }
 
@@ -777,14 +783,17 @@ Result EngineDawn::Initialize(EngineConfig* config,
                               const std::vector<std::string>&,
                               const std::vector<std::string>&,
                               const std::vector<std::string>&) {
-  if (device_)
+  if (device_) {
     return Result("Dawn:Initialize device_ already exists");
+  }
 
-  if (!config)
+  if (!config) {
     return Result("Dawn::Initialize config is null");
+  }
   DawnEngineConfig* dawn_config = static_cast<DawnEngineConfig*>(config);
-  if (dawn_config->device == nullptr)
+  if (dawn_config->device == nullptr) {
     return Result("Dawn:Initialize device is a null pointer");
+  }
 
   device_ = dawn_config->device;
 
@@ -819,15 +828,17 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
   switch (pipeline->GetType()) {
     case PipelineType::kCompute: {
       auto& module = module_for_type[kShaderTypeCompute];
-      if (!module)
+      if (!module) {
         return Result("Dawn::CreatePipeline: no compute shader provided");
+      }
 
       pipeline_map_[pipeline].compute_pipeline.reset(
           new ComputePipelineInfo(pipeline, module));
       Result result =
           AttachBuffers(pipeline_map_[pipeline].compute_pipeline.get());
-      if (!result.IsSuccess())
+      if (!result.IsSuccess()) {
         return result;
+      }
       break;
     }
 
@@ -850,8 +861,9 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
           new RenderPipelineInfo(pipeline, vs, fs));
       Result result = AttachBuffersAndTextures(
           pipeline_map_[pipeline].render_pipeline.get());
-      if (!result.IsSuccess())
+      if (!result.IsSuccess()) {
         return result;
+      }
 
       break;
     }
@@ -862,8 +874,9 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
 
 Result EngineDawn::DoClearColor(const ClearColorCommand* command) {
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
-  if (!render_pipeline)
+  if (!render_pipeline) {
     return Result("ClearColor invoked on invalid or missing render pipeline");
+  }
 
   render_pipeline->clear_color_value = ::dawn::Color{
       command->GetR(), command->GetG(), command->GetB(), command->GetA()};
@@ -873,8 +886,9 @@ Result EngineDawn::DoClearColor(const ClearColorCommand* command) {
 
 Result EngineDawn::DoClearStencil(const ClearStencilCommand* command) {
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
-  if (!render_pipeline)
+  if (!render_pipeline) {
     return Result("ClearStencil invoked on invalid or missing render pipeline");
+  }
 
   render_pipeline->clear_stencil_value = command->GetValue();
   return {};
@@ -882,8 +896,9 @@ Result EngineDawn::DoClearStencil(const ClearStencilCommand* command) {
 
 Result EngineDawn::DoClearDepth(const ClearDepthCommand* command) {
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
-  if (!render_pipeline)
+  if (!render_pipeline) {
     return Result("ClearDepth invoked on invalid or missing render pipeline");
+  }
 
   render_pipeline->clear_depth_value = command->GetValue();
   return {};
@@ -892,18 +907,21 @@ Result EngineDawn::DoClearDepth(const ClearDepthCommand* command) {
 Result EngineDawn::DoClear(const ClearCommand* command) {
   Result result;
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
-  if (!render_pipeline)
+  if (!render_pipeline) {
     return Result("Clear invoked on invalid or missing render pipeline");
+  }
 
   DawnPipelineHelper helper;
   result = helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_,
                                                  false, nullptr);
-  if (!result.IsSuccess())
+  if (!result.IsSuccess()) {
     return result;
+  }
   result = helper.CreateRenderPassDescriptor(
       *render_pipeline, *device_, texture_views_, ::dawn::LoadOp::Clear);
-  if (!result.IsSuccess())
+  if (!result.IsSuccess()) {
     return result;
+  }
 
   ::dawn::RenderPassDescriptor* renderPassDescriptor =
       &helper.renderPassDescriptor;
@@ -935,23 +953,27 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
 
   auto* amber_format =
       render_pipeline.pipeline->GetColorAttachments()[0].buffer->GetFormat();
-  if (!amber_format)
+  if (!amber_format) {
     return Result("Color attachment 0 has no format!");
+  }
   ::dawn::TextureFormat fb_format{};
   result = GetDawnTextureFormat(*amber_format, &fb_format);
-  if (!result.IsSuccess())
+  if (!result.IsSuccess()) {
     return result;
+  }
 
   ::dawn::TextureFormat depth_stencil_format{};
   auto* depthBuffer = render_pipeline.pipeline->GetDepthBuffer().buffer;
   if (depthBuffer) {
     auto* amber_depth_stencil_format = depthBuffer->GetFormat();
-    if (!amber_depth_stencil_format)
+    if (!amber_depth_stencil_format) {
       return Result("The depth/stencil attachment has no format!");
+    }
     result = GetDawnTextureFormat(*amber_depth_stencil_format,
                                   &depth_stencil_format);
-    if (!result.IsSuccess())
+    if (!result.IsSuccess()) {
       return result;
+    }
   } else {
     depth_stencil_format = ::dawn::TextureFormat::Depth24PlusStencil8;
   }
@@ -1009,8 +1031,9 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
             render_pipeline.pipeline->GetVertexBuffers()[i].buffer->GetFormat();
         result = GetDawnVertexFormat(
             *amber_vertex_format, &vertexInputDescriptor.cAttributes[i].format);
-        if (!result.IsSuccess())
+        if (!result.IsSuccess()) {
           return result;
+        }
       }
     }
   }
@@ -1020,8 +1043,9 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     auto* amber_index_format =
         render_pipeline.pipeline->GetIndexBuffer()->GetFormat();
     GetDawnIndexFormat(*amber_index_format, &vertexInputDescriptor.indexFormat);
-    if (!result.IsSuccess())
+    if (!result.IsSuccess()) {
       return result;
+    }
   }
 
   renderPipelineDescriptor.vertexInput =
@@ -1099,13 +1123,15 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
       if (i < render_pipeline.pipeline->GetColorAttachments().size()) {
         auto* amber_format = render_pipeline.pipeline->GetColorAttachments()[i]
                                  .buffer->GetFormat();
-        if (!amber_format)
+        if (!amber_format) {
           return Result(
               "AttachBuffersAndTextures: One Color attachment has no "
               "format!");
+        }
         result = GetDawnTextureFormat(*amber_format, &fb_format);
-        if (!result.IsSuccess())
+        if (!result.IsSuccess()) {
           return result;
+        }
       } else {
         fb_format = ::dawn::TextureFormat::RGBA8Unorm;
       }
@@ -1202,12 +1228,14 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
   auto* depthBuffer = render_pipeline.pipeline->GetDepthBuffer().buffer;
   if (depthBuffer) {
     auto* amber_depth_stencil_format = depthBuffer->GetFormat();
-    if (!amber_depth_stencil_format)
+    if (!amber_depth_stencil_format) {
       return Result("The depth/stencil attachment has no format!");
+    }
     Result result = GetDawnTextureFormat(*amber_depth_stencil_format,
                                          &depth_stencil_format);
-    if (!result.IsSuccess())
+    if (!result.IsSuccess()) {
       return result;
+    }
   } else {
     depth_stencil_format = ::dawn::TextureFormat::Depth24PlusStencil8;
   }
@@ -1239,12 +1267,14 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
 
 Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
-  if (!render_pipeline)
+  if (!render_pipeline) {
     return Result("DrawRect invoked on invalid or missing render pipeline");
-  if (render_pipeline->vertex_buffers.size() > 1)
+  }
+  if (render_pipeline->vertex_buffers.size() > 1) {
     return Result(
         "DrawRect invoked on a render pipeline with more than one "
         "VERTEX_DATA attached");
+  }
 
   float x = command->GetX();
   float y = command->GetY();
@@ -1336,12 +1366,14 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   Result result;
 
   RenderPipelineInfo* render_pipeline = GetRenderPipeline(command);
-  if (!render_pipeline)
+  if (!render_pipeline) {
     return Result("DrawArrays invoked on invalid or missing render pipeline");
+  }
 
   if (command->IsIndexed()) {
-    if (!render_pipeline->index_buffer)
+    if (!render_pipeline->index_buffer) {
       return Result("DrawArrays: Draw indexed is used without given indices");
+    }
   } else {
     std::vector<uint32_t> indexData;
     for (uint32_t i = 0;
@@ -1354,18 +1386,21 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   }
 
   uint32_t instance_count = command->GetInstanceCount();
-  if (instance_count == 0 && command->GetVertexCount() != 0)
+  if (instance_count == 0 && command->GetVertexCount() != 0) {
     instance_count = 1;
+  }
 
   DawnPipelineHelper helper;
   result = helper.CreateRenderPipelineDescriptor(
       *render_pipeline, *device_, false, command->GetPipelineData());
-  if (!result.IsSuccess())
+  if (!result.IsSuccess()) {
     return result;
+  }
   result = helper.CreateRenderPassDescriptor(
       *render_pipeline, *device_, texture_views_, ::dawn::LoadOp::Load);
-  if (!result.IsSuccess())
+  if (!result.IsSuccess()) {
     return result;
+  }
 
   ::dawn::RenderPipelineDescriptor* renderPipelineDescriptor =
       &helper.renderPipelineDescriptor;
@@ -1374,8 +1409,9 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
 
   result = GetDawnTopology(command->GetTopology(),
                            &renderPipelineDescriptor->primitiveTopology);
-  if (!result.IsSuccess())
+  if (!result.IsSuccess()) {
     return result;
+  }
 
   const ::dawn::RenderPipeline pipeline =
       device_->CreateRenderPipeline(renderPipelineDescriptor);
@@ -1417,8 +1453,9 @@ Result EngineDawn::DoCompute(const ComputeCommand* command) {
   Result result;
 
   ComputePipelineInfo* compute_pipeline = GetComputePipeline(command);
-  if (!compute_pipeline)
+  if (!compute_pipeline) {
     return Result("DoComput: invoked on invalid or missing compute pipeline");
+  }
 
   ::dawn::ComputePipelineDescriptor computePipelineDescriptor;
   computePipelineDescriptor.layout = MakeBasicPipelineLayout(
@@ -1486,10 +1523,12 @@ Result EngineDawn::DoBuffer(const BufferCommand* command) {
     }
   }
 
-  if (!render_pipeline && !compute_pipeline)
+  if (!render_pipeline && !compute_pipeline) {
     return Result("DoBuffer: invoked on invalid or missing pipeline");
-  if (!command->IsSSBO() && !command->IsUniform())
+  }
+  if (!command->IsSSBO() && !command->IsUniform()) {
     return Result("DoBuffer: only supports SSBO and uniform buffer type");
+  }
   if (!dawn_buffer) {
     return Result("DoBuffer: no Dawn buffer at descriptor set " +
                   std::to_string(descriptor_set) + " and binding " +
@@ -1518,8 +1557,9 @@ Result EngineDawn::AttachBuffersAndTextures(
       render_pipeline->pipeline->GetColorAttachments().size(), -1);
   for (auto info : render_pipeline->pipeline->GetColorAttachments()) {
     if (info.location >=
-        render_pipeline->pipeline->GetColorAttachments().size())
+        render_pipeline->pipeline->GetColorAttachments().size()) {
       return Result("color attachment locations must be sequential from 0");
+    }
     if (seen_idx[info.location] != -1) {
       return Result("duplicate attachment location: " +
                     std::to_string(info.location));
@@ -1534,13 +1574,15 @@ Result EngineDawn::AttachBuffersAndTextures(
       if (i < render_pipeline->pipeline->GetColorAttachments().size()) {
         auto* amber_format = render_pipeline->pipeline->GetColorAttachments()[i]
                                  .buffer->GetFormat();
-        if (!amber_format)
+        if (!amber_format) {
           return Result(
               "AttachBuffersAndTextures: One Color attachment has no "
               "format!");
+        }
         result = GetDawnTextureFormat(*amber_format, &fb_format);
-        if (!result.IsSuccess())
+        if (!result.IsSuccess()) {
           return result;
+        }
       } else {
         fb_format = ::dawn::TextureFormat::RGBA8Unorm;
       }
@@ -1556,20 +1598,23 @@ Result EngineDawn::AttachBuffersAndTextures(
   if (depthBuffer) {
     if (!depth_stencil_texture_) {
       auto* amber_depth_stencil_format = depthBuffer->GetFormat();
-      if (!amber_depth_stencil_format)
+      if (!amber_depth_stencil_format) {
         return Result(
             "AttachBuffersAndTextures: The depth/stencil attachment has no "
             "format!");
+      }
       ::dawn::TextureFormat depth_stencil_format{};
       result = GetDawnTextureFormat(*amber_depth_stencil_format,
                                     &depth_stencil_format);
-      if (!result.IsSuccess())
+      if (!result.IsSuccess()) {
         return result;
+      }
 
       result = MakeTexture(*device_, depth_stencil_format, width, height,
                            &depth_stencil_texture_);
-      if (!result.IsSuccess())
+      if (!result.IsSuccess()) {
         return result;
+      }
       render_pipeline->depth_stencil_texture = depth_stencil_texture_;
     } else {
       render_pipeline->depth_stencil_texture = depth_stencil_texture_;
@@ -1612,8 +1657,9 @@ Result EngineDawn::AttachBuffersAndTextures(
   if (!render_pipeline->pipeline->GetBuffers().empty()) {
     std::vector<uint32_t> max_binding_seen(kMaxDawnBindGroup, -1);
     for (auto& buf_info : render_pipeline->pipeline->GetBuffers()) {
-      while (layouts_info[buf_info.descriptor_set].size() <= buf_info.binding)
+      while (layouts_info[buf_info.descriptor_set].size() <= buf_info.binding) {
         layouts_info[buf_info.descriptor_set].push_back(empty_layout_info);
+      }
     }
   }
 
@@ -1711,8 +1757,9 @@ Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
   if (!compute_pipeline->pipeline->GetBuffers().empty()) {
     std::vector<uint32_t> max_binding_seen(kMaxDawnBindGroup, -1);
     for (auto& buf_info : compute_pipeline->pipeline->GetBuffers()) {
-      while (layouts_info[buf_info.descriptor_set].size() <= buf_info.binding)
+      while (layouts_info[buf_info.descriptor_set].size() <= buf_info.binding) {
         layouts_info[buf_info.descriptor_set].push_back(empty_layout_info);
+      }
     }
   }
 

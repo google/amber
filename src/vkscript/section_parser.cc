@@ -36,8 +36,9 @@ SectionParser::~SectionParser() = default;
 
 Result SectionParser::Parse(const std::string& data) {
   Result result = SplitSections(data);
-  if (!result.IsSuccess())
+  if (!result.IsSuccess()) {
     return result;
+  }
   return {};
 }
 
@@ -85,33 +86,39 @@ Result SectionParser::NameToNodeType(const std::string& data,
   } else if (name == "compute shader") {
     *section_type = NodeType::kShader;
     *shader_type = kShaderTypeCompute;
-    if (*fmt == kShaderFormatText)
+    if (*fmt == kShaderFormatText) {
       *fmt = kShaderFormatGlsl;
+    }
   } else if (name == "fragment shader") {
     *section_type = NodeType::kShader;
     *shader_type = kShaderTypeFragment;
-    if (*fmt == kShaderFormatText)
+    if (*fmt == kShaderFormatText) {
       *fmt = kShaderFormatGlsl;
+    }
   } else if (name == "geometry shader") {
     *section_type = NodeType::kShader;
     *shader_type = kShaderTypeGeometry;
-    if (*fmt == kShaderFormatText)
+    if (*fmt == kShaderFormatText) {
       *fmt = kShaderFormatGlsl;
+    }
   } else if (name == "tessellation control shader") {
     *section_type = NodeType::kShader;
     *shader_type = kShaderTypeTessellationControl;
-    if (*fmt == kShaderFormatText)
+    if (*fmt == kShaderFormatText) {
       *fmt = kShaderFormatGlsl;
+    }
   } else if (name == "tessellation evaluation shader") {
     *section_type = NodeType::kShader;
     *shader_type = kShaderTypeTessellationEvaluation;
-    if (*fmt == kShaderFormatText)
+    if (*fmt == kShaderFormatText) {
       *fmt = kShaderFormatGlsl;
+    }
   } else if (name == "vertex shader") {
     *section_type = NodeType::kShader;
     *shader_type = kShaderTypeVertex;
-    if (*fmt == kShaderFormatText)
+    if (*fmt == kShaderFormatText) {
       *fmt = kShaderFormatGlsl;
+    }
   } else {
     return Result("Invalid name: " + data);
   }
@@ -130,8 +137,9 @@ void SectionParser::AddSection(NodeType section_type,
                                ShaderFormat fmt,
                                size_t line_count,
                                const std::string& contents) {
-  if (section_type == NodeType::kComment)
+  if (section_type == NodeType::kComment) {
     return;
+  }
 
   if (fmt == kShaderFormatDefault) {
     sections_.push_back({section_type, shader_type, kShaderFormatSpirvAsm,
@@ -167,11 +175,13 @@ Result SectionParser::SplitSections(const std::string& data) {
     ++line_count;
 
     if (!in_section) {
-      if (line.empty() || line[0] == '#' || line == "\r")
+      if (line.empty() || line[0] == '#' || line == "\r") {
         continue;
+      }
 
-      if (line[0] != '[')
+      if (line[0] != '[') {
         return Result(std::to_string(line_count) + ": Invalid character");
+      }
 
       section_start = line_count;
       in_section = true;
@@ -189,15 +199,17 @@ Result SectionParser::SplitSections(const std::string& data) {
       section_contents = "";
 
       size_t name_end = line.rfind("]");
-      if (name_end == std::string::npos)
+      if (name_end == std::string::npos) {
         return Result(std::to_string(line_count) + ": Missing section close");
+      }
 
       std::string name = line.substr(1, name_end - 1);
 
       Result r =
           NameToNodeType(name, &current_type, &current_shader, &current_fmt);
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return Result(std::to_string(line_count) + ": " + r.Error());
+      }
     } else {
       section_contents += line + "\n";
     }

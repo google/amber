@@ -262,8 +262,9 @@ class SBT {
   std::vector<std::unique_ptr<SBTRecord>>& GetSBTRecords() { return records_; }
   uint32_t GetSBTSize() {
     uint32_t size = 0;
-    for (auto& x : records_)
+    for (auto& x : records_) {
       size += x->GetCount();
+    }
 
     return size;
   }

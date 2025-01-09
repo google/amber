@@ -106,7 +106,7 @@ class Delegate {
                                  std::vector<char>* buffer) const = 0;
 
   /// Mechanism for gathering timing from 'TIME_EXECUTION'
-  virtual void ReportExecutionTiming(double){}
+  virtual void ReportExecutionTiming(double) {}
 };
 
 /// Stores configuration options for Amber.

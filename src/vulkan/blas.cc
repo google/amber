@@ -36,8 +36,9 @@ BLAS::~BLAS() {
 }
 
 Result BLAS::CreateBLAS(amber::BLAS* blas) {
-  if (blas_ != VK_NULL_HANDLE)
+  if (blas_ != VK_NULL_HANDLE) {
     return Result("Cannot recreate acceleration structure");
+  }
 
   std::vector<std::unique_ptr<Geometry>>& geometries = blas->GetGeometries();
   std::vector<VkDeviceSize> vertexBufferOffsets;
@@ -87,12 +88,8 @@ Result BLAS::CreateBLAS(amber::BLAS* blas) {
     }
 
     const VkAccelerationStructureGeometryKHR accelerationStructureGeometry = {
-            VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR,
-            nullptr,
-            geometryType,
-            geometry,
-            VkGeometryFlagsKHR(geometryData->GetFlags())
-        };
+        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR, nullptr,
+        geometryType, geometry, VkGeometryFlagsKHR(geometryData->GetFlags())};
     const VkAccelerationStructureBuildRangeInfoKHR
         accelerationStructureBuildRangeInfosKHR = {
             static_cast<uint32_t>(geometryData->getPrimitiveCount()), 0, 0, 0};
@@ -156,8 +153,9 @@ Result BLAS::CreateBLAS(amber::BLAS* blas) {
 
   if (device_->GetPtrs()->vkCreateAccelerationStructureKHR(
           device_->GetVkDevice(), &accelerationStructureCreateInfoKHR, nullptr,
-          &blas_) != VK_SUCCESS)
+          &blas_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkCreateAccelerationStructureKHR failed");
+  }
 
   accelerationStructureBuildGeometryInfoKHR_.dstAccelerationStructure = blas_;
 
@@ -218,10 +216,12 @@ Result BLAS::CreateBLAS(amber::BLAS* blas) {
 }
 
 Result BLAS::BuildBLAS(CommandBuffer* command_buffer) {
-  if (blas_ == VK_NULL_HANDLE)
+  if (blas_ == VK_NULL_HANDLE) {
     return Result("Acceleration structure should be created first");
-  if (built_)
+  }
+  if (built_) {
     return {};
+  }
 
   VkCommandBuffer cmdBuffer = command_buffer->GetVkCommandBuffer();
 

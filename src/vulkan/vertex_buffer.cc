@@ -71,8 +71,9 @@ void VertexBuffer::BindToCommandBuffer(CommandBuffer* command) {
 }
 
 Result VertexBuffer::SendVertexData(CommandBuffer* command) {
-  if (!is_vertex_data_pending_)
+  if (!is_vertex_data_pending_) {
     return Result("Vulkan::Vertices data was already sent");
+  }
 
   buffer_to_vk_buffer_.clear();
 
@@ -87,16 +88,18 @@ Result VertexBuffer::SendVertexData(CommandBuffer* command) {
         MakeUnique<TransferBuffer>(device_, bytes, nullptr));
     Result r = transfer_buffers_.back()->AddUsageFlags(
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
     r = transfer_buffers_.back()->Initialize();
 
     std::memcpy(transfer_buffers_.back()->HostAccessibleMemoryPtr(),
                 buf->GetValues<void>(), bytes);
     transfer_buffers_.back()->CopyToDevice(command);
 
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     buffer_to_vk_buffer_[buf] = transfer_buffers_.back()->GetVkBuffer();
   }

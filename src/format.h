@@ -98,8 +98,9 @@ class Format {
   /// Returns a pointer to the only type in this format. Only valid if
   /// there is only an int or float type, nullptr otherwise.
   type::Type* GetOnlyType() const {
-    if (type_->IsNumber())
+    if (type_->IsNumber()) {
       return type_;
+    }
     return nullptr;
   }
 
@@ -131,8 +132,9 @@ class Format {
 
   /// Returns true if the format components are normalized.
   bool IsNormalized() const {
-    if (type_->IsNumber() && IsNormalized(type_->AsNumber()->GetFormatMode()))
+    if (type_->IsNumber() && IsNormalized(type_->AsNumber()->GetFormatMode())) {
       return true;
+    }
 
     if (type_->IsList()) {
       for (auto& member : type_->AsList()->Members()) {

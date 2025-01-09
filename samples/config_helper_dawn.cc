@@ -76,8 +76,9 @@ amber::Result ConfigHelperDawn::CreateConfig(
     }
   }
 
-  if (!dawn_device_)
+  if (!dawn_device_) {
     return amber::Result("could not find Vulkan or Metal backend for Dawn");
+  }
 
   backendProcs.deviceSetUncapturedErrorCallback(dawn_device_.Get(),
                                                 PrintDeviceError, nullptr);

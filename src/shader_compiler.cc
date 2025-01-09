@@ -87,8 +87,9 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
 
   spv_target_env target_env = SPV_ENV_UNIVERSAL_1_0;
   if (!spv_env_.empty()) {
-    if (!spvParseTargetEnv(spv_env_.c_str(), &target_env))
+    if (!spvParseTargetEnv(spv_env_.c_str(), &target_env)) {
       return {Result("Unable to parse SPIR-V target environment"), {}};
+    }
   }
 
   auto msg_consumer = [&spv_errors](spv_message_level_t level, const char*,
@@ -122,8 +123,9 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
 
   if (shader->GetFormat() == kShaderFormatSpirvHex) {
     Result r = ParseHex(shader->GetData(), &results);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return {Result("Unable to parse shader hex."), {}};
+    }
   } else if (shader->GetFormat() == kShaderFormatSpirvBin) {
     results.resize(shader->GetData().size() / 4);
     memcpy(results.data(), shader->GetData().data(), shader->GetData().size());
@@ -131,15 +133,17 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
 #if AMBER_ENABLE_SHADERC
   } else if (shader->GetFormat() == kShaderFormatGlsl) {
     Result r = CompileGlsl(shader, &results);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return {r, {}};
+    }
 #endif  // AMBER_ENABLE_SHADERC
 
 #if AMBER_ENABLE_DXC
   } else if (shader->GetFormat() == kShaderFormatHlsl) {
     Result r = CompileHlsl(shader, &results);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return {r, {}};
+    }
 #endif  // AMBER_ENABLE_DXC
 
 #if AMBER_ENABLE_SPIRV_TOOLS
@@ -153,8 +157,9 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
 #if AMBER_ENABLE_CLSPV
   } else if (shader->GetFormat() == kShaderFormatOpenCLC) {
     Result r = CompileOpenCLC(shader_info, pipeline, target_env, &results);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return {r, {}};
+    }
 #endif  // AMBER_ENABLE_CLSPV
 
   } else {
@@ -167,8 +172,9 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
   if (!disable_spirv_validation_) {
 #if AMBER_ENABLE_SPIRV_TOOLS
     spvtools::ValidatorOptions options;
-    if (!tools.Validate(results.data(), results.size(), options))
+    if (!tools.Validate(results.data(), results.size(), options)) {
       return {Result("Invalid shader: " + spv_errors), {}};
+    }
 #endif  // AMBER_ENABLE_SPIRV_TOOLS
   }
 
@@ -181,8 +187,9 @@ std::pair<Result, std::vector<uint32_t>> ShaderCompiler::Compile(
             shader_info->GetShaderOptimizations())) {
       return {Result("Invalid optimizations: " + spv_errors), {}};
     }
-    if (!optimizer.Run(results.data(), results.size(), &results))
+    if (!optimizer.Run(results.data(), results.size(), &results)) {
       return {Result("Optimizations failed: " + spv_errors), {}};
+    }
   }
 #endif  // AMBER_ENABLE_SPIRV_TOOLS
 
@@ -225,46 +232,49 @@ Result ShaderCompiler::CompileGlsl(const Shader* shader,
   uint32_t env_version = 0u;
   uint32_t spirv_version = 0u;
   auto r = ParseSpvEnv(spv_env_, &env, &env_version, &spirv_version);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   options.SetTargetEnvironment(static_cast<shaderc_target_env>(env),
                                env_version);
   options.SetTargetSpirv(static_cast<shaderc_spirv_version>(spirv_version));
 
   shaderc_shader_kind kind;
-  if (shader->GetType() == kShaderTypeCompute)
+  if (shader->GetType() == kShaderTypeCompute) {
     kind = shaderc_compute_shader;
-  else if (shader->GetType() == kShaderTypeFragment)
+  } else if (shader->GetType() == kShaderTypeFragment) {
     kind = shaderc_fragment_shader;
-  else if (shader->GetType() == kShaderTypeGeometry)
+  } else if (shader->GetType() == kShaderTypeGeometry) {
     kind = shaderc_geometry_shader;
-  else if (shader->GetType() == kShaderTypeVertex)
+  } else if (shader->GetType() == kShaderTypeVertex) {
     kind = shaderc_vertex_shader;
-  else if (shader->GetType() == kShaderTypeTessellationControl)
+  } else if (shader->GetType() == kShaderTypeTessellationControl) {
     kind = shaderc_tess_control_shader;
-  else if (shader->GetType() == kShaderTypeTessellationEvaluation)
+  } else if (shader->GetType() == kShaderTypeTessellationEvaluation) {
     kind = shaderc_tess_evaluation_shader;
-  else if (shader->GetType() == kShaderTypeRayGeneration)
+  } else if (shader->GetType() == kShaderTypeRayGeneration) {
     kind = shaderc_raygen_shader;
-  else if (shader->GetType() == kShaderTypeAnyHit)
+  } else if (shader->GetType() == kShaderTypeAnyHit) {
     kind = shaderc_anyhit_shader;
-  else if (shader->GetType() == kShaderTypeClosestHit)
+  } else if (shader->GetType() == kShaderTypeClosestHit) {
     kind = shaderc_closesthit_shader;
-  else if (shader->GetType() == kShaderTypeMiss)
+  } else if (shader->GetType() == kShaderTypeMiss) {
     kind = shaderc_miss_shader;
-  else if (shader->GetType() == kShaderTypeIntersection)
+  } else if (shader->GetType() == kShaderTypeIntersection) {
     kind = shaderc_intersection_shader;
-  else if (shader->GetType() == kShaderTypeCall)
+  } else if (shader->GetType() == kShaderTypeCall) {
     kind = shaderc_callable_shader;
-  else
+  } else {
     return Result("Unknown shader type");
+  }
 
   shaderc::SpvCompilationResult module =
       compiler.CompileGlslToSpv(shader->GetData(), kind, "-", options);
 
-  if (module.GetCompilationStatus() != shaderc_compilation_status_success)
+  if (module.GetCompilationStatus() != shaderc_compilation_status_success) {
     return Result(module.GetErrorMessage());
+  }
 
   std::copy(module.cbegin(), module.cend(), std::back_inserter(*result));
   return {};
@@ -280,16 +290,17 @@ Result ShaderCompiler::CompileGlsl(const Shader*,
 Result ShaderCompiler::CompileHlsl(const Shader* shader,
                                    std::vector<uint32_t>* result) const {
   std::string target;
-  if (shader->GetType() == kShaderTypeCompute)
+  if (shader->GetType() == kShaderTypeCompute) {
     target = "cs_6_2";
-  else if (shader->GetType() == kShaderTypeFragment)
+  } else if (shader->GetType() == kShaderTypeFragment) {
     target = "ps_6_2";
-  else if (shader->GetType() == kShaderTypeGeometry)
+  } else if (shader->GetType() == kShaderTypeGeometry) {
     target = "gs_6_2";
-  else if (shader->GetType() == kShaderTypeVertex)
+  } else if (shader->GetType() == kShaderTypeVertex) {
     target = "vs_6_2";
-  else
+  } else {
     return Result("Unknown shader type");
+  }
 
   return dxchelper::Compile(shader->GetData(), "main", target, spv_env_,
                             shader->GetFilePath(), virtual_files_, result);
@@ -357,8 +368,9 @@ Result ParseSpvEnv(const std::string& spv_env,
                    uint32_t* target_env,
                    uint32_t* target_env_version,
                    uint32_t* spirv_version) {
-  if (!target_env || !target_env_version || !spirv_version)
+  if (!target_env || !target_env_version || !spirv_version) {
     return Result("ParseSpvEnv: null pointer parameter");
+  }
 
   // Use the same values as in Shaderc's shaderc/env.h
   struct Values {

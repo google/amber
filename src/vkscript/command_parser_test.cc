@@ -751,8 +751,9 @@ TEST_F(CommandParserTest, EntryPointNameMissing) {
 TEST_F(CommandParserTest, EntryPointEntryPointMissing) {
   for (const auto& ep : kEntryPoints) {
     // Skip compute because compute is also a command ....
-    if (std::string(ep.name) == "compute")
+    if (std::string(ep.name) == "compute") {
       continue;
+    }
 
     std::string data = std::string(ep.name) + " main";
 
@@ -1465,8 +1466,9 @@ TEST_P(CommandDataPipelineDataInvalidParser, ExtraPipelineParamValue) {
   const auto& test_data = GetParam();
 
   // CullMode consumes all parameters, so skip this test.
-  if (std::string(test_data.name) == "cullMode")
+  if (std::string(test_data.name) == "cullMode") {
     return;
+  }
 
   std::string data =
       std::string(test_data.name) + " " + test_data.arg + " EXTRA";
@@ -3696,10 +3698,11 @@ TEST_F(CommandParserTest, ToleranceMultiFloatValueWithPercent) {
   std::vector<double> results = {0.5, 2.4, 3.9, 99.7};
   ASSERT_EQ(results.size(), tolerances.size());
   for (size_t i = 0; i < results.size(); ++i) {
-    if (i % 2 == 0)
+    if (i % 2 == 0) {
       EXPECT_TRUE(tolerances[i].is_percent);
-    else
+    } else {
       EXPECT_FALSE(tolerances[i].is_percent);
+    }
 
     EXPECT_DOUBLE_EQ(results[i], tolerances[i].value);
   }
@@ -3736,10 +3739,11 @@ TEST_F(CommandParserTest, ToleranceMultiIntValueWithPercent) {
   std::vector<double> results = {5.0, 4.0, 3.0, 99.0};
   ASSERT_EQ(results.size(), tolerances.size());
   for (size_t i = 0; i < results.size(); ++i) {
-    if (i % 2 == 0)
+    if (i % 2 == 0) {
       EXPECT_TRUE(tolerances[i].is_percent);
-    else
+    } else {
       EXPECT_FALSE(tolerances[i].is_percent);
+    }
 
     EXPECT_DOUBLE_EQ(results[i], tolerances[i].value);
   }

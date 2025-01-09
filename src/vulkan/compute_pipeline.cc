@@ -48,8 +48,9 @@ Result ComputePipeline::CreateVkComputePipeline(
         "pipeline is not 1");
   }
 
-  if (shader_stage_info[0].stage != VK_SHADER_STAGE_COMPUTE_BIT)
+  if (shader_stage_info[0].stage != VK_SHADER_STAGE_COMPUTE_BIT) {
     return Result("Vulkan: Non compute shader for compute pipeline");
+  }
 
   shader_stage_info[0].pName = GetEntryPointName(VK_SHADER_STAGE_COMPUTE_BIT);
 
@@ -72,18 +73,21 @@ Result ComputePipeline::Compute(uint32_t x,
                                 uint32_t z,
                                 bool is_timed_execution) {
   Result r = SendDescriptorDataToDeviceIfNeeded();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
   r = CreateVkPipelineLayout(&pipeline_layout);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   VkPipeline pipeline = VK_NULL_HANDLE;
   r = CreateVkComputePipeline(pipeline_layout, &pipeline);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   // Note that a command updating a descriptor set and a command using
   // it must be submitted separately, because using a descriptor set
@@ -92,14 +96,16 @@ Result ComputePipeline::Compute(uint32_t x,
   CreateTimingQueryObjectIfNeeded(is_timed_execution);
   {
     CommandBufferGuard guard(GetCommandBuffer());
-    if (!guard.IsRecording())
+    if (!guard.IsRecording()) {
       return guard.GetResult();
+    }
 
     BindVkDescriptorSets(pipeline_layout);
 
     r = RecordPushConstant(pipeline_layout);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     device_->GetPtrs()->vkCmdBindPipeline(command_->GetVkCommandBuffer(),
                                           VK_PIPELINE_BIND_POINT_COMPUTE,
@@ -109,13 +115,15 @@ Result ComputePipeline::Compute(uint32_t x,
     EndTimerQuery();
 
     r = guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
   DestroyTimingQueryObjectIfNeeded();
   r = ReadbackDescriptorsToHostDataQueue();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   device_->GetPtrs()->vkDestroyPipeline(device_->GetVkDevice(), pipeline,
                                         nullptr);
