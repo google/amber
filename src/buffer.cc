@@ -40,31 +40,41 @@ double CalculateDiff(const Format::Segment* seg,
                      const uint8_t* buf2) {
   FormatMode mode = seg->GetFormatMode();
   uint32_t num_bits = seg->GetNumBits();
-  if (type::Type::IsInt8(mode, num_bits))
+  if (type::Type::IsInt8(mode, num_bits)) {
     return Sub<int8_t>(buf1, buf2);
-  if (type::Type::IsInt16(mode, num_bits))
+  }
+  if (type::Type::IsInt16(mode, num_bits)) {
     return Sub<int16_t>(buf1, buf2);
-  if (type::Type::IsInt32(mode, num_bits))
+  }
+  if (type::Type::IsInt32(mode, num_bits)) {
     return Sub<int32_t>(buf1, buf2);
-  if (type::Type::IsInt64(mode, num_bits))
+  }
+  if (type::Type::IsInt64(mode, num_bits)) {
     return Sub<int64_t>(buf1, buf2);
-  if (type::Type::IsUint8(mode, num_bits))
+  }
+  if (type::Type::IsUint8(mode, num_bits)) {
     return Sub<uint8_t>(buf1, buf2);
-  if (type::Type::IsUint16(mode, num_bits))
+  }
+  if (type::Type::IsUint16(mode, num_bits)) {
     return Sub<uint16_t>(buf1, buf2);
-  if (type::Type::IsUint32(mode, num_bits))
+  }
+  if (type::Type::IsUint32(mode, num_bits)) {
     return Sub<uint32_t>(buf1, buf2);
-  if (type::Type::IsUint64(mode, num_bits))
+  }
+  if (type::Type::IsUint64(mode, num_bits)) {
     return Sub<uint64_t>(buf1, buf2);
+  }
   if (type::Type::IsFloat16(mode, num_bits)) {
     float val1 = float16::HexFloatToFloat(buf1, 16);
     float val2 = float16::HexFloatToFloat(buf2, 16);
     return static_cast<double>(val1 - val2);
   }
-  if (type::Type::IsFloat32(mode, num_bits))
+  if (type::Type::IsFloat32(mode, num_bits)) {
     return Sub<float>(buf1, buf2);
-  if (type::Type::IsFloat64(mode, num_bits))
+  }
+  if (type::Type::IsFloat64(mode, num_bits)) {
     return Sub<double>(buf1, buf2);
+  }
 
   assert(false && "NOTREACHED");
   return 0.0;
@@ -77,20 +87,24 @@ Buffer::Buffer() = default;
 Buffer::~Buffer() = default;
 
 Result Buffer::CopyTo(Buffer* buffer) const {
-  if (buffer->width_ != width_)
+  if (buffer->width_ != width_) {
     return Result("Buffer::CopyBaseFields() buffers have a different width");
-  if (buffer->height_ != height_)
+  }
+  if (buffer->height_ != height_) {
     return Result("Buffer::CopyBaseFields() buffers have a different height");
-  if (buffer->element_count_ != element_count_)
+  }
+  if (buffer->element_count_ != element_count_) {
     return Result("Buffer::CopyBaseFields() buffers have a different size");
+  }
   buffer->bytes_ = bytes_;
   return {};
 }
 
 Result Buffer::IsEqual(Buffer* buffer) const {
   auto result = CheckCompability(buffer);
-  if (!result.IsSuccess())
+  if (!result.IsSuccess()) {
     return result;
+  }
 
   uint32_t num_different = 0;
   uint32_t first_different_index = 0;
@@ -144,29 +158,36 @@ std::vector<double> Buffer::CalculateDiffs(const Buffer* buffer) const {
 }
 
 Result Buffer::CheckCompability(Buffer* buffer) const {
-  if (!buffer->format_->Equal(format_))
+  if (!buffer->format_->Equal(format_)) {
     return Result{"Buffers have a different format"};
-  if (buffer->element_count_ != element_count_)
+  }
+  if (buffer->element_count_ != element_count_) {
     return Result{"Buffers have a different size"};
-  if (buffer->width_ != width_)
+  }
+  if (buffer->width_ != width_) {
     return Result{"Buffers have a different width"};
-  if (buffer->height_ != height_)
+  }
+  if (buffer->height_ != height_) {
     return Result{"Buffers have a different height"};
-  if (buffer->ValueCount() != ValueCount())
+  }
+  if (buffer->ValueCount() != ValueCount()) {
     return Result{"Buffers have a different number of values"};
+  }
 
   return {};
 }
 
 Result Buffer::CompareRMSE(Buffer* buffer, float tolerance) const {
   auto result = CheckCompability(buffer);
-  if (!result.IsSuccess())
+  if (!result.IsSuccess()) {
     return result;
+  }
 
   auto diffs = CalculateDiffs(buffer);
   double sum = 0.0;
-  for (const auto val : diffs)
+  for (const auto val : diffs) {
     sum += (val * val);
+  }
 
   sum /= static_cast<double>(diffs.size());
   double rmse = std::sqrt(sum);
@@ -207,8 +228,9 @@ std::vector<uint64_t> Buffer::GetHistogramForChannel(uint32_t channel,
 
 Result Buffer::CompareHistogramEMD(Buffer* buffer, float tolerance) const {
   auto result = CheckCompability(buffer);
-  if (!result.IsSuccess())
+  if (!result.IsSuccess()) {
     return result;
+  }
 
   const int num_bins = 256;
   auto num_channels = format_->InputNeededPerElement();
@@ -282,8 +304,9 @@ Result Buffer::RecalculateMaxSizeInBytes(const std::vector<Value>& data,
     // values per element.
     element_count = value_count / format_->InputNeededPerElement();
   }
-  if (GetMaxSizeInBytes() < element_count * format_->SizeInBytes())
+  if (GetMaxSizeInBytes() < element_count * format_->SizeInBytes()) {
     SetMaxSizeInBytes(element_count * format_->SizeInBytes());
+  }
   return {};
 }
 
@@ -298,8 +321,9 @@ Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
   // The buffer should only be resized to become bigger. This means that if a
   // command was run to set the buffer size we'll honour that size until a
   // request happens to make the buffer bigger.
-  if (value_count > ValueCount())
+  if (value_count > ValueCount()) {
     SetValueCount(value_count);
+  }
 
   // Even if the value count doesn't change, the buffer is still resized because
   // this maybe the first time data is set into the buffer.
@@ -311,11 +335,13 @@ Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
       format_->SizeInBytes();
   assert(new_space + offset <= GetSizeInBytes());
 
-  if (new_space > 0)
+  if (new_space > 0) {
     memset(bytes_.data() + offset, 0, new_space);
+  }
 
-  if (data.size() > (ElementCount() * format_->InputNeededPerElement()))
+  if (data.size() > (ElementCount() * format_->InputNeededPerElement())) {
     return Result("Mismatched number of items in buffer");
+  }
 
   uint8_t* ptr = bytes_.data() + offset;
   const auto& segments = format_->GetSegments();
@@ -329,8 +355,9 @@ Result Buffer::SetDataWithOffset(const std::vector<Value>& data,
       Value v = data[i++];
       ptr += WriteValueFromComponent(v, seg.GetFormatMode(), seg.GetNumBits(),
                                      ptr);
-      if (i >= data.size())
+      if (i >= data.size()) {
         break;
+      }
     }
   }
   return {};
@@ -406,15 +433,17 @@ void Buffer::SetMaxSizeInBytes(uint32_t max_size_in_bytes) {
 }
 
 uint32_t Buffer::GetMaxSizeInBytes() const {
-  if (max_size_in_bytes_ != 0)
+  if (max_size_in_bytes_ != 0) {
     return max_size_in_bytes_;
-  else
+  } else {
     return GetSizeInBytes();
+  }
 }
 
 Result Buffer::SetDataFromBuffer(const Buffer* src, uint32_t offset) {
-  if (bytes_.size() < offset + src->bytes_.size())
+  if (bytes_.size() < offset + src->bytes_.size()) {
     bytes_.resize(offset + src->bytes_.size());
+  }
 
   std::memcpy(bytes_.data() + offset, src->bytes_.data(), src->bytes_.size());
   element_count_ =

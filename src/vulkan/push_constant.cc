@@ -31,8 +31,9 @@ PushConstant::PushConstant(Device* device)
 PushConstant::~PushConstant() = default;
 
 VkPushConstantRange PushConstant::GetVkPushConstantRange() {
-  if (push_constant_data_.empty())
+  if (push_constant_data_.empty()) {
     return VkPushConstantRange();
+  }
 
   auto it =
       std::min_element(push_constant_data_.begin(), push_constant_data_.end(),
@@ -71,8 +72,9 @@ VkPushConstantRange PushConstant::GetVkPushConstantRange() {
 Result PushConstant::RecordPushConstantVkCommand(
     CommandBuffer* command,
     VkPipelineLayout pipeline_layout) {
-  if (push_constant_data_.empty())
+  if (push_constant_data_.empty()) {
     return {};
+  }
 
   auto push_const_range = GetVkPushConstantRange();
   if (push_const_range.offset + push_const_range.size >
@@ -84,16 +86,19 @@ Result PushConstant::RecordPushConstantVkCommand(
 
   for (const auto& data : push_constant_data_) {
     Result r = UpdateMemoryWithInput(data);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
 
   // Based on spec, offset and size in bytes of push constant must
   // be multiple of 4.
-  if (push_const_range.offset % 4U != 0)
+  if (push_const_range.offset % 4U != 0) {
     return Result("PushConstant:: Offset must be a multiple of 4");
-  if (push_const_range.size % 4U != 0)
+  }
+  if (push_const_range.size % 4U != 0) {
     return Result("PushConstant:: Size must be a multiple of 4");
+  }
 
   device_->GetPtrs()->vkCmdPushConstants(
       command->GetVkCommandBuffer(), pipeline_layout, VK_SHADER_STAGE_ALL,

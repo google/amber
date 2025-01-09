@@ -106,285 +106,344 @@ struct BaseOutStructure {
 bool AreAllRequiredFeaturesSupported(
     const VkPhysicalDeviceFeatures& available_features,
     const std::vector<std::string>& required_features) {
-  if (required_features.empty())
+  if (required_features.empty()) {
     return true;
+  }
 
   for (const auto& feature : required_features) {
     if (feature == "robustBufferAccess") {
-      if (available_features.robustBufferAccess == VK_FALSE)
+      if (available_features.robustBufferAccess == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "fullDrawIndexUint32") {
-      if (available_features.fullDrawIndexUint32 == VK_FALSE)
+      if (available_features.fullDrawIndexUint32 == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "imageCubeArray") {
-      if (available_features.imageCubeArray == VK_FALSE)
+      if (available_features.imageCubeArray == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "independentBlend") {
-      if (available_features.independentBlend == VK_FALSE)
+      if (available_features.independentBlend == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "geometryShader") {
-      if (available_features.geometryShader == VK_FALSE)
+      if (available_features.geometryShader == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "tessellationShader") {
-      if (available_features.tessellationShader == VK_FALSE)
+      if (available_features.tessellationShader == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "sampleRateShading") {
-      if (available_features.sampleRateShading == VK_FALSE)
+      if (available_features.sampleRateShading == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "dualSrcBlend") {
-      if (available_features.dualSrcBlend == VK_FALSE)
+      if (available_features.dualSrcBlend == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "logicOp") {
-      if (available_features.logicOp == VK_FALSE)
+      if (available_features.logicOp == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "multiDrawIndirect") {
-      if (available_features.multiDrawIndirect == VK_FALSE)
+      if (available_features.multiDrawIndirect == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "drawIndirectFirstInstance") {
-      if (available_features.drawIndirectFirstInstance == VK_FALSE)
+      if (available_features.drawIndirectFirstInstance == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "depthClamp") {
-      if (available_features.depthClamp == VK_FALSE)
+      if (available_features.depthClamp == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "depthBiasClamp") {
-      if (available_features.depthBiasClamp == VK_FALSE)
+      if (available_features.depthBiasClamp == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "fillModeNonSolid") {
-      if (available_features.fillModeNonSolid == VK_FALSE)
+      if (available_features.fillModeNonSolid == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "depthBounds") {
-      if (available_features.depthBounds == VK_FALSE)
+      if (available_features.depthBounds == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "wideLines") {
-      if (available_features.wideLines == VK_FALSE)
+      if (available_features.wideLines == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "largePoints") {
-      if (available_features.largePoints == VK_FALSE)
+      if (available_features.largePoints == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "alphaToOne") {
-      if (available_features.alphaToOne == VK_FALSE)
+      if (available_features.alphaToOne == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "multiViewport") {
-      if (available_features.multiViewport == VK_FALSE)
+      if (available_features.multiViewport == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "samplerAnisotropy") {
-      if (available_features.samplerAnisotropy == VK_FALSE)
+      if (available_features.samplerAnisotropy == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "textureCompressionETC2") {
-      if (available_features.textureCompressionETC2 == VK_FALSE)
+      if (available_features.textureCompressionETC2 == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "textureCompressionASTC_LDR") {
-      if (available_features.textureCompressionASTC_LDR == VK_FALSE)
+      if (available_features.textureCompressionASTC_LDR == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "textureCompressionBC") {
-      if (available_features.textureCompressionBC == VK_FALSE)
+      if (available_features.textureCompressionBC == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "occlusionQueryPrecise") {
-      if (available_features.occlusionQueryPrecise == VK_FALSE)
+      if (available_features.occlusionQueryPrecise == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "pipelineStatisticsQuery") {
-      if (available_features.pipelineStatisticsQuery == VK_FALSE)
+      if (available_features.pipelineStatisticsQuery == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "vertexPipelineStoresAndAtomics") {
-      if (available_features.vertexPipelineStoresAndAtomics == VK_FALSE)
+      if (available_features.vertexPipelineStoresAndAtomics == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "fragmentStoresAndAtomics") {
-      if (available_features.fragmentStoresAndAtomics == VK_FALSE)
+      if (available_features.fragmentStoresAndAtomics == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderTessellationAndGeometryPointSize") {
-      if (available_features.shaderTessellationAndGeometryPointSize == VK_FALSE)
+      if (available_features.shaderTessellationAndGeometryPointSize ==
+          VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderImageGatherExtended") {
-      if (available_features.shaderImageGatherExtended == VK_FALSE)
+      if (available_features.shaderImageGatherExtended == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderStorageImageExtendedFormats") {
-      if (available_features.shaderStorageImageExtendedFormats == VK_FALSE)
+      if (available_features.shaderStorageImageExtendedFormats == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderStorageImageMultisample") {
-      if (available_features.shaderStorageImageMultisample == VK_FALSE)
+      if (available_features.shaderStorageImageMultisample == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderStorageImageReadWithoutFormat") {
-      if (available_features.shaderStorageImageReadWithoutFormat == VK_FALSE)
+      if (available_features.shaderStorageImageReadWithoutFormat == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderStorageImageWriteWithoutFormat") {
-      if (available_features.shaderStorageImageWriteWithoutFormat == VK_FALSE)
+      if (available_features.shaderStorageImageWriteWithoutFormat == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderUniformBufferArrayDynamicIndexing") {
       if (available_features.shaderUniformBufferArrayDynamicIndexing ==
-          VK_FALSE)
+          VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderSampledImageArrayDynamicIndexing") {
-      if (available_features.shaderSampledImageArrayDynamicIndexing == VK_FALSE)
+      if (available_features.shaderSampledImageArrayDynamicIndexing ==
+          VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderStorageBufferArrayDynamicIndexing") {
       if (available_features.shaderStorageBufferArrayDynamicIndexing ==
-          VK_FALSE)
+          VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderStorageImageArrayDynamicIndexing") {
-      if (available_features.shaderStorageImageArrayDynamicIndexing == VK_FALSE)
+      if (available_features.shaderStorageImageArrayDynamicIndexing ==
+          VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderClipDistance") {
-      if (available_features.shaderClipDistance == VK_FALSE)
+      if (available_features.shaderClipDistance == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderCullDistance") {
-      if (available_features.shaderCullDistance == VK_FALSE)
+      if (available_features.shaderCullDistance == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderFloat64") {
-      if (available_features.shaderFloat64 == VK_FALSE)
+      if (available_features.shaderFloat64 == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderInt64") {
-      if (available_features.shaderInt64 == VK_FALSE)
+      if (available_features.shaderInt64 == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderInt16") {
-      if (available_features.shaderInt16 == VK_FALSE)
+      if (available_features.shaderInt16 == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderResourceResidency") {
-      if (available_features.shaderResourceResidency == VK_FALSE)
+      if (available_features.shaderResourceResidency == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "shaderResourceMinLod") {
-      if (available_features.shaderResourceMinLod == VK_FALSE)
+      if (available_features.shaderResourceMinLod == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "sparseBinding") {
-      if (available_features.sparseBinding == VK_FALSE)
+      if (available_features.sparseBinding == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "sparseResidencyBuffer") {
-      if (available_features.sparseResidencyBuffer == VK_FALSE)
+      if (available_features.sparseResidencyBuffer == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "sparseResidencyImage2D") {
-      if (available_features.sparseResidencyImage2D == VK_FALSE)
+      if (available_features.sparseResidencyImage2D == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "sparseResidencyImage3D") {
-      if (available_features.sparseResidencyImage3D == VK_FALSE)
+      if (available_features.sparseResidencyImage3D == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "sparseResidency2Samples") {
-      if (available_features.sparseResidency2Samples == VK_FALSE)
+      if (available_features.sparseResidency2Samples == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "sparseResidency4Samples") {
-      if (available_features.sparseResidency4Samples == VK_FALSE)
+      if (available_features.sparseResidency4Samples == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "sparseResidency8Samples") {
-      if (available_features.sparseResidency8Samples == VK_FALSE)
+      if (available_features.sparseResidency8Samples == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "sparseResidency16Samples") {
-      if (available_features.sparseResidency16Samples == VK_FALSE)
+      if (available_features.sparseResidency16Samples == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "sparseResidencyAliased") {
-      if (available_features.sparseResidencyAliased == VK_FALSE)
+      if (available_features.sparseResidencyAliased == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "variableMultisampleRate") {
-      if (available_features.variableMultisampleRate == VK_FALSE)
+      if (available_features.variableMultisampleRate == VK_FALSE) {
         return false;
+      }
       continue;
     }
     if (feature == "inheritedQueries") {
-      if (available_features.inheritedQueries == VK_FALSE)
+      if (available_features.inheritedQueries == VK_FALSE) {
         return false;
+      }
       continue;
     }
   }
@@ -395,8 +454,9 @@ bool AreAllRequiredFeaturesSupported(
 bool AreAllExtensionsSupported(
     const std::vector<std::string>& available_extensions,
     const std::vector<std::string>& required_extensions) {
-  if (required_extensions.empty())
+  if (required_extensions.empty()) {
     return true;
+  }
 
   std::set<std::string> required_extension_set(required_extensions.begin(),
                                                required_extensions.end());
@@ -429,8 +489,9 @@ Result Device::LoadVulkanPointers(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
   // Note: logging Vulkan calls is done via the delegate rather than a Vulkan
   // layer because we want such logging even when Amber is built as a native
   // executable on Android, where Vulkan layers are usable only with APKs.
-  if (delegate && delegate->LogGraphicsCalls())
+  if (delegate && delegate->LogGraphicsCalls()) {
     delegate->Log("Loading Vulkan Pointers");
+  }
 
 #include "vk-wrappers-1-0.inc"
 
@@ -470,8 +531,9 @@ Result Device::Initialize(
     const VkPhysicalDeviceProperties2KHR& available_properties2,
     const std::vector<std::string>& available_extensions) {
   Result r = LoadVulkanPointers(getInstanceProcAddr, delegate_);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   // Check for the core features. We don't know if available_features or
   // available_features2 is provided, so check both.
@@ -532,7 +594,7 @@ Result Device::Initialize(
         break;
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT:
         depth_clamp_zero_one_features =
-            static_cast<VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *>(ptr);
+            static_cast<VkPhysicalDeviceDepthClampZeroOneFeaturesEXT*>(ptr);
         break;
       // NOLINTNEXTLINE(whitespace/line_length)
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES:
@@ -628,31 +690,38 @@ Result Device::Initialize(
       return amber::Result("Depth clamp zero one requested but not returned");
     }
     if (feature == kAccelerationStructure) {
-      if (acceleration_structure_ptrs == nullptr)
+      if (acceleration_structure_ptrs == nullptr) {
         return amber::Result(
             "Acceleration structure requested but feature not returned");
-      if (ptrs_.vkCreateAccelerationStructureKHR == nullptr)
+      }
+      if (ptrs_.vkCreateAccelerationStructureKHR == nullptr) {
         return amber::Result(
             "vkCreateAccelerationStructureKHR is required, but not provided");
-      if (ptrs_.vkDestroyAccelerationStructureKHR == nullptr)
+      }
+      if (ptrs_.vkDestroyAccelerationStructureKHR == nullptr) {
         return amber::Result(
             "vkDestroyAccelerationStructureKHR is required, but not provided");
-      if (ptrs_.vkGetAccelerationStructureBuildSizesKHR == nullptr)
+      }
+      if (ptrs_.vkGetAccelerationStructureBuildSizesKHR == nullptr) {
         return amber::Result(
             "vkGetAccelerationStructureBuildSizesKHR is required, but not "
             "provided");
-      if (ptrs_.vkBuildAccelerationStructuresKHR == nullptr)
+      }
+      if (ptrs_.vkBuildAccelerationStructuresKHR == nullptr) {
         return amber::Result(
             "vkBuildAccelerationStructuresKHR is required, but not "
             "provided");
-      if (ptrs_.vkCmdBuildAccelerationStructuresKHR == nullptr)
+      }
+      if (ptrs_.vkCmdBuildAccelerationStructuresKHR == nullptr) {
         return amber::Result(
             "vkCmdBuildAccelerationStructuresKHR is required, but not "
             "provided");
-      if (ptrs_.vkGetAccelerationStructureDeviceAddressKHR == nullptr)
+      }
+      if (ptrs_.vkGetAccelerationStructureDeviceAddressKHR == nullptr) {
         return amber::Result(
             "vkGetAccelerationStructureDeviceAddressKHR is required, but not "
             "provided");
+      }
     }
     if (feature == kBufferDeviceAddress && bda_ptrs == nullptr &&
         vulkan12_ptrs == nullptr) {
@@ -660,19 +729,22 @@ Result Device::Initialize(
           "Buffer device address requested but feature not returned");
     }
     if (feature == kRayTracingPipeline) {
-      if (ray_tracing_pipeline_ptrs == nullptr)
+      if (ray_tracing_pipeline_ptrs == nullptr) {
         return amber::Result(
             "Ray tracing pipeline requested but feature not returned");
-      if (ptrs_.vkCreateRayTracingPipelinesKHR == nullptr)
+      }
+      if (ptrs_.vkCreateRayTracingPipelinesKHR == nullptr) {
         return amber::Result(
             "vkCreateRayTracingPipelinesKHR is required, but not provided");
-      if (ptrs_.vkCmdTraceRaysKHR == nullptr)
-        return amber::Result(
-            "vkCmdTraceRaysKHR is required, but not provided");
-      if (ptrs_.vkGetRayTracingShaderGroupHandlesKHR == nullptr)
+      }
+      if (ptrs_.vkCmdTraceRaysKHR == nullptr) {
+        return amber::Result("vkCmdTraceRaysKHR is required, but not provided");
+      }
+      if (ptrs_.vkGetRayTracingShaderGroupHandlesKHR == nullptr) {
         return amber::Result(
             "vkGetRayTracingShaderGroupHandlesKHR is required, but not "
             "provided");
+      }
     }
 
     // Next check the fields of the feature structures.
@@ -893,10 +965,11 @@ Result Device::Initialize(
     int supported = -1;
 
     if (supported == -1 && prefix == "FloatControlsProperties") {
-      if (pfc == nullptr && pv12 == nullptr)
+      if (pfc == nullptr && pv12 == nullptr) {
         return Result(
             "Vulkan: Device::Initialize given physical device does not support "
             "required float control properties");
+      }
 
       CHK_P(supported, name, shaderSignedZeroInfNanPreserveFloat16, pfc, pv12);
       CHK_P(supported, name, shaderSignedZeroInfNanPreserveFloat32, pfc, pv12);
@@ -915,11 +988,13 @@ Result Device::Initialize(
       CHK_P(supported, name, shaderRoundingModeRTZFloat64, pfc, pv12);
     }
 
-    if (supported == 0)
+    if (supported == 0) {
       return Result("Vulkan: Device::Initialize missing " + prop + " property");
+    }
 
-    if (supported == -1)
+    if (supported == -1) {
       return Result("Vulkan: Device::Initialize property not handled " + prop);
+    }
   }
 
   ptrs_.vkGetPhysicalDeviceMemoryProperties(physical_device_,
@@ -934,14 +1009,18 @@ Result Device::Initialize(
   bool needs_subgroup_supported_stages = false;
 
   // Search for subgroup supported operations requirements.
-  for (const auto& feature : required_features)
-    if (feature.find(kSubgroupSupportedOperations) != std::string::npos)
+  for (const auto& feature : required_features) {
+    if (feature.find(kSubgroupSupportedOperations) != std::string::npos) {
       needs_subgroup_supported_operations = true;
+    }
+  }
 
   // Search for subgroup supported stages requirements.
-  for (const auto& feature : required_features)
-    if (feature.find(kSubgroupSupportedStages) != std::string::npos)
+  for (const auto& feature : required_features) {
+    if (feature.find(kSubgroupSupportedStages) != std::string::npos) {
       needs_subgroup_supported_stages = true;
+    }
+  }
 
   const bool needs_subgroup_properties =
       needs_subgroup_supported_operations || needs_subgroup_supported_stages;

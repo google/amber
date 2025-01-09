@@ -33,16 +33,18 @@ Result DescriptorSetAndBindingParser::Parse(const std::string& buffer_id) {
   if (!std::isdigit(buffer_id[idx]) && std::isalpha(buffer_id[idx]) &&
       buffer_id[idx] != ':' && buffer_id[idx] != '-') {
     idx++;
-    while (idx < buffer_id.size() && buffer_id[idx] != ':')
+    while (idx < buffer_id.size() && buffer_id[idx] != ':') {
       idx++;
+    }
 
     pipeline_name_ = buffer_id.substr(0, idx);
 
     // Move past the :
     idx += 1;
   }
-  if (idx >= buffer_id.size())
+  if (idx >= buffer_id.size()) {
     return Result("Invalid buffer id: " + buffer_id);
+  }
 
   Tokenizer t(buffer_id.substr(idx));
   auto token = t.NextToken();
@@ -65,12 +67,14 @@ Result DescriptorSetAndBindingParser::Parse(const std::string& buffer_id) {
     descriptor_set_ = val;
   }
 
-  if (!token->IsIdentifier())
+  if (!token->IsIdentifier()) {
     return Result("Invalid buffer id: " + buffer_id);
+  }
 
   auto& str = token->AsString();
-  if (str.size() < 2 || str[0] != ':')
+  if (str.size() < 2 || str[0] != ':') {
     return Result("Invalid buffer id: " + buffer_id);
+  }
 
   auto substr = str.substr(1, str.size());
   // Validate all characters are integers.
@@ -84,9 +88,10 @@ Result DescriptorSetAndBindingParser::Parse(const std::string& buffer_id) {
   }
 
   uint64_t binding_val = strtoul(substr.c_str(), nullptr, 10);
-  if (binding_val > std::numeric_limits<uint32_t>::max())
+  if (binding_val > std::numeric_limits<uint32_t>::max()) {
     return Result("binding value too large in probe ssbo command: " +
                   token->ToOriginalString());
+  }
   if (static_cast<int32_t>(binding_val) < 0) {
     return Result(
         "Binding for a buffer must be non-negative integer, but you gave: " +

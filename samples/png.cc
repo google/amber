@@ -75,8 +75,9 @@ amber::Result ConvertToPNG(uint32_t width,
   state.info_png.color.colortype = LodePNGColorType::LCT_RGBA;
   state.info_png.color.bitdepth = 8;
 
-  if (lodepng::encode(*buffer, data, width, height, state) != 0)
+  if (lodepng::encode(*buffer, data, width, height, state) != 0) {
     return amber::Result("lodepng::encode() returned non-zero");
+  }
 
   return {};
 }

@@ -394,8 +394,9 @@ class SampleDelegate : public amber::Delegate {
 #endif  // AMBER_ENABLE_LODEPNG
     } else {
       auto data = ReadFile(path_ + file_name);
-      if (data.empty())
+      if (data.empty()) {
         return amber::Result("Failed to load buffer data " + file_name);
+      }
 
       for (auto d : data) {
         amber::Value v;
@@ -413,8 +414,9 @@ class SampleDelegate : public amber::Delegate {
   amber::Result LoadFile(const std::string file_name,
                          std::vector<char>* buffer) const override {
     *buffer = ReadFile(path_ + file_name);
-    if (buffer->empty())
+    if (buffer->empty()) {
       return amber::Result("Failed to load file " + file_name);
+    }
     return {};
   }
 
@@ -433,8 +435,9 @@ std::string disassemble(const std::string& env,
 
   spv_target_env target_env = SPV_ENV_UNIVERSAL_1_0;
   if (!env.empty()) {
-    if (!spvParseTargetEnv(env.c_str(), &target_env))
+    if (!spvParseTargetEnv(env.c_str(), &target_env)) {
       return "";
+    }
   }
 
   auto msg_consumer = [&spv_errors](spv_message_level_t level, const char*,
@@ -539,8 +542,9 @@ int main(int argc, const char** argv) {
       continue;
     }
 
-    if (options.fence_timeout > -1)
+    if (options.fence_timeout > -1) {
       recipe->SetFenceTimeout(static_cast<uint32_t>(options.fence_timeout));
+    }
 
     recipe->SetPipelineRuntimeLayerEnabled(
         options.enable_pipeline_runtime_layer);
@@ -550,15 +554,19 @@ int main(int argc, const char** argv) {
     recipe_data.back().recipe = std::move(recipe);
   }
 
-  if (options.parse_only)
+  if (options.parse_only) {
     return 0;
+  }
 
-  if (options.log_graphics_calls)
+  if (options.log_graphics_calls) {
     delegate.SetLogGraphicsCalls(true);
-  if (options.log_graphics_calls_time)
+  }
+  if (options.log_graphics_calls_time) {
     delegate.SetLogGraphicsCallsTime(true);
-  if (options.log_execute_calls)
+  }
+  if (options.log_execute_calls) {
     delegate.SetLogExecuteCalls(true);
+  }
 
   amber::Options amber_options;
   amber_options.engine = options.engine;
@@ -628,8 +636,9 @@ int main(int argc, const char** argv) {
   }
 
   // Use default frame buffer name when not specified.
-  while (options.image_filenames.size() > options.fb_names.size())
+  while (options.image_filenames.size() > options.fb_names.size()) {
     options.fb_names.push_back(kGeneratedColorBuffer);
+  }
 
   for (const auto& fb_name : options.fb_names) {
     amber::BufferInfo buffer_info;
@@ -773,8 +782,9 @@ int main(int argc, const char** argv) {
           for (size_t i = 0; i < values.size(); ++i) {
             buffer_file << " " << std::setfill('0') << std::setw(2) << std::hex
                         << values[i].AsUint32();
-            if (i % 16 == 15)
+            if (i % 16 == 15) {
               buffer_file << std::endl;
+            }
           }
           buffer_file << std::endl;
         }
@@ -787,8 +797,9 @@ int main(int argc, const char** argv) {
     if (!failures.empty()) {
       std::cout << "\nSummary of Failures:" << std::endl;
 
-      for (const auto& failure : failures)
+      for (const auto& failure : failures) {
         std::cout << "  " << failure << std::endl;
+      }
     }
 
     std::cout << "\nSummary: "

@@ -136,16 +136,18 @@ TEST_F(BufferTest, GetHistogramForChannelGradient) {
   // Creates 10 RBGA pixel values with the blue channels ranging from 0 to 255.
   // Every value gets multiplied by 25 to create a gradient
   std::vector<Value> values(40);
-  for (uint32_t i = 0; i < values.size(); i += 4)
+  for (uint32_t i = 0; i < values.size(); i += 4) {
     values[i + 2].SetIntValue(i / 4 * 25);
+  }
 
   Buffer b;
   b.SetFormat(&fmt);
   b.SetData(values);
 
   std::vector<uint64_t> bins = b.GetHistogramForChannel(2, 256);
-  for (uint32_t i = 0; i < values.size(); i += 4)
+  for (uint32_t i = 0; i < values.size(); i += 4) {
     EXPECT_EQ(1u, bins[i / 4 * 25]);
+  }
 }
 
 // Creates 10 RGBA pixel values, with all channels being 0, and checks that all
@@ -156,8 +158,9 @@ TEST_F(BufferTest, GetHistogramForChannelAllBlack) {
   Format fmt(type.get());
 
   std::vector<Value> values(40);
-  for (uint32_t i = 0; i < values.size(); i++)
+  for (uint32_t i = 0; i < values.size(); i++) {
     values[i].SetIntValue(0);
+  }
 
   Buffer b;
   b.SetFormat(&fmt);
@@ -165,8 +168,9 @@ TEST_F(BufferTest, GetHistogramForChannelAllBlack) {
 
   for (uint8_t i = 0; i < 4; i++) {
     std::vector<uint64_t> bins = b.GetHistogramForChannel(i, 256);
-    for (uint32_t y = 0; y < values.size(); y++)
+    for (uint32_t y = 0; y < values.size(); y++) {
       EXPECT_EQ(10u, bins[0]);
+    }
   }
 }
 
@@ -179,8 +183,9 @@ TEST_F(BufferTest, GetHistogramForChannelAllWhite) {
   Format fmt(type.get());
 
   std::vector<Value> values(40);
-  for (uint32_t i = 0; i < values.size(); i++)
+  for (uint32_t i = 0; i < values.size(); i++) {
     values[i].SetIntValue(std::numeric_limits<uint8_t>::max());
+  }
 
   Buffer b;
   b.SetFormat(&fmt);
@@ -188,8 +193,9 @@ TEST_F(BufferTest, GetHistogramForChannelAllWhite) {
 
   for (uint8_t i = 0; i < 4; i++) {
     std::vector<uint64_t> bins = b.GetHistogramForChannel(i, 256);
-    for (uint32_t y = 0; y < values.size(); y++)
+    for (uint32_t y = 0; y < values.size(); y++) {
       EXPECT_EQ(10u, bins[255]);
+    }
   }
 }
 
@@ -203,8 +209,9 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceFalse) {
 
   // Every value gets multiplied by 25 to create a gradient
   std::vector<Value> values1(40);
-  for (uint32_t i = 0; i < values1.size(); i += 4)
+  for (uint32_t i = 0; i < values1.size(); i += 4) {
     values1[i].SetIntValue(i / 4 * 25);
+  }
 
   std::vector<Value> values2 = values1;
   values2[4].SetIntValue(values2[4].AsUint8() + 50);
@@ -230,8 +237,9 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceTrue) {
 
   // Every value gets multiplied by 25 to create a gradient
   std::vector<Value> values1(40);
-  for (uint32_t i = 0; i < values1.size(); i += 4)
+  for (uint32_t i = 0; i < values1.size(); i += 4) {
     values1[i].SetIntValue(i / 4 * 25);
+  }
 
   std::vector<Value> values2 = values1;
   values2[4].SetIntValue(values2[4].AsUint8() + 50);
@@ -255,8 +263,9 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceAllBlack) {
   Format fmt(type.get());
 
   std::vector<Value> values1(40);
-  for (uint32_t i = 0; i < values1.size(); i++)
+  for (uint32_t i = 0; i < values1.size(); i++) {
     values1[i].SetIntValue(0);
+  }
 
   std::vector<Value> values2 = values1;
 
@@ -279,8 +288,9 @@ TEST_F(BufferTest, CompareHistogramEMDToleranceAllWhite) {
   Format fmt(type.get());
 
   std::vector<Value> values1(40);
-  for (uint32_t i = 0; i < values1.size(); i++)
+  for (uint32_t i = 0; i < values1.size(); i++) {
     values1[i].SetIntValue(std::numeric_limits<uint8_t>().max());
+  }
 
   std::vector<Value> values2 = values1;
 

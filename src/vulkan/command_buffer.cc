@@ -29,8 +29,9 @@ CommandBuffer::CommandBuffer(Device* device, CommandPool* pool)
 CommandBuffer::~CommandBuffer() {
   Reset();
 
-  if (fence_ != VK_NULL_HANDLE)
+  if (fence_ != VK_NULL_HANDLE) {
     device_->GetPtrs()->vkDestroyFence(device_->GetVkDevice(), fence_, nullptr);
+  }
 
   if (command_ != VK_NULL_HANDLE) {
     device_->GetPtrs()->vkFreeCommandBuffers(
@@ -75,8 +76,9 @@ Result CommandBuffer::BeginRecording() {
 
 Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms,
                                      bool pipeline_runtime_layer_enabled) {
-  if (device_->GetPtrs()->vkEndCommandBuffer(command_) != VK_SUCCESS)
+  if (device_->GetPtrs()->vkEndCommandBuffer(command_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkEndCommandBuffer Fail");
+  }
 
   if (device_->GetPtrs()->vkResetFences(device_->GetVkDevice(), 1, &fence_) !=
       VK_SUCCESS) {
@@ -101,8 +103,9 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms,
           : static_cast<uint64_t>(timeout_ms) * 1000ULL * 1000ULL;
   VkResult r = device_->GetPtrs()->vkWaitForFences(
       device_->GetVkDevice(), 1, &fence_, VK_TRUE, timeout_ns);
-  if (r == VK_TIMEOUT)
+  if (r == VK_TIMEOUT) {
     return Result("Vulkan::Calling vkWaitForFences Timeout");
+  }
   if (r != VK_SUCCESS) {
     std::string result_str;
     switch (r) {
@@ -128,11 +131,13 @@ vkQueueWaitIdle in order to report the information. Since we want to be
 able to use that layer in conjunction with Amber we need to somehow
 communicate that the Amber script has completed.
 */
-  if (pipeline_runtime_layer_enabled)
+  if (pipeline_runtime_layer_enabled) {
     device_->GetPtrs()->vkQueueWaitIdle(device_->GetVkQueue());
+  }
 
-  if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS)
+  if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkResetCommandBuffer Fail");
+  }
 
   return {};
 }
@@ -151,8 +156,9 @@ CommandBufferGuard::CommandBufferGuard(CommandBuffer* buffer)
 }
 
 CommandBufferGuard::~CommandBufferGuard() {
-  if (buffer_->guarded_)
+  if (buffer_->guarded_) {
     buffer_->Reset();
+  }
 }
 
 Result CommandBufferGuard::Submit(uint32_t timeout_ms,

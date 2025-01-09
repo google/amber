@@ -22,8 +22,9 @@ namespace vulkan {
 CommandPool::CommandPool(Device* device) : device_(device) {}
 
 CommandPool::~CommandPool() {
-  if (pool_ == VK_NULL_HANDLE)
+  if (pool_ == VK_NULL_HANDLE) {
     return;
+  }
 
   device_->GetPtrs()->vkDestroyCommandPool(device_->GetVkDevice(), pool_,
                                            nullptr);
