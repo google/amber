@@ -22,37 +22,37 @@
 
 namespace amber {
 
-enum ShaderFormat {
-  kShaderFormatDefault = 0,
-  kShaderFormatText,
-  kShaderFormatGlsl,
-  kShaderFormatHlsl,
-  kShaderFormatSpirvAsm,
-  kShaderFormatSpirvHex,
-  kShaderFormatSpirvBin,
-  kShaderFormatOpenCLC,
+enum class ShaderFormat : uint8_t {
+  kDefault = 0,
+  kText,
+  kGlsl,
+  kHlsl,
+  kSpirvAsm,
+  kSpirvHex,
+  kSpirvBin,
+  kOpenCLC,
 };
 
-enum ShaderType {
-  kShaderTypeCompute = 0,
-  kShaderTypeGeometry,
-  kShaderTypeFragment,
-  kShaderTypeVertex,
-  kShaderTypeTessellationControl,
-  kShaderTypeTessellationEvaluation,
-  kShaderTypeRayGeneration,
-  kShaderTypeAnyHit,
-  kShaderTypeClosestHit,
-  kShaderTypeMiss,
-  kShaderTypeIntersection,
-  kShaderTypeCall,
-  kShaderTypeMulti,
+enum class ShaderType : uint8_t {
+  kCompute = 0,
+  kGeometry,
+  kFragment,
+  kVertex,
+  kTessellationControl,
+  kTessellationEvaluation,
+  kRayGeneration,
+  kAnyHit,
+  kClosestHit,
+  kMiss,
+  kIntersection,
+  kCall,
+  kMulti,
 };
 
 inline bool isRayTracingShaderType(ShaderType type) {
-  return type == kShaderTypeRayGeneration || type == kShaderTypeAnyHit ||
-         type == kShaderTypeClosestHit || type == kShaderTypeMiss ||
-         type == kShaderTypeIntersection || type == kShaderTypeCall;
+  return type == ShaderType::kRayGeneration || type == ShaderType::kAnyHit ||
+         type == ShaderType::kClosestHit || type == ShaderType::kMiss ||
+         type == ShaderType::kIntersection || type == ShaderType::kCall;
 }
 
 /// Stores information for a shader.

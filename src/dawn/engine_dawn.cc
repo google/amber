@@ -827,7 +827,7 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
 
   switch (pipeline->GetType()) {
     case PipelineType::kCompute: {
-      auto& module = module_for_type[kShaderTypeCompute];
+      auto& module = module_for_type[ShaderType::kCompute];
       if (!module) {
         return Result("Dawn::CreatePipeline: no compute shader provided");
       }
@@ -844,8 +844,8 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
 
     case PipelineType::kGraphics: {
       // TODO(dneto): Handle other shader types as well.  They are optional.
-      auto& vs = module_for_type[kShaderTypeVertex];
-      auto& fs = module_for_type[kShaderTypeFragment];
+      auto& vs = module_for_type[ShaderType::kVertex];
+      auto& fs = module_for_type[ShaderType::kFragment];
       if (!vs) {
         return Result(
             "Dawn::CreatePipeline: no vertex shader provided for graphics "
@@ -987,9 +987,9 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
 
   // Lookup shaders' entrypoints
   for (const auto& shader_info : render_pipeline.pipeline->GetShaders()) {
-    if (shader_info.GetShaderType() == kShaderTypeVertex) {
+    if (shader_info.GetShaderType() == ShaderType::kVertex) {
       vertexEntryPoint = shader_info.GetEntryPoint();
-    } else if (shader_info.GetShaderType() == kShaderTypeFragment) {
+    } else if (shader_info.GetShaderType() == ShaderType::kFragment) {
       fragmentEntryPoint = shader_info.GetEntryPoint();
     } else {
       return Result(

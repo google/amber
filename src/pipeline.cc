@@ -93,11 +93,11 @@ Result Pipeline::AddShader(Shader* shader, ShaderType shader_type) {
   }
 
   if (pipeline_type_ == PipelineType::kCompute &&
-      shader_type != kShaderTypeCompute) {
+      shader_type != ShaderType::kCompute) {
     return Result("only compute shaders allowed in a compute pipeline");
   }
   if (pipeline_type_ == PipelineType::kGraphics &&
-      shader_type == kShaderTypeCompute) {
+      shader_type == ShaderType::kCompute) {
     return Result("can not add a compute shader to a graphics pipeline");
   }
 
@@ -332,7 +332,7 @@ Result Pipeline::ValidateGraphics() const {
   bool found_vertex = false;
   for (const auto& info : shaders_) {
     const auto* s = info.GetShader();
-    if (s->GetType() == kShaderTypeVertex) {
+    if (s->GetType() == ShaderType::kVertex) {
       found_vertex = true;
       break;
     }
@@ -716,7 +716,7 @@ void Pipeline::ClearSamplers(uint32_t descriptor_set, uint32_t binding) {
 
 Result Pipeline::UpdateOpenCLBufferBindings() {
   if (!IsCompute() || GetShaders().empty() ||
-      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC) {
+      GetShaders()[0].GetShader()->GetFormat() != ShaderFormat::kOpenCLC) {
     return {};
   }
 
@@ -818,7 +818,7 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
 
 Result Pipeline::GenerateOpenCLPodBuffers() {
   if (!IsCompute() || GetShaders().empty() ||
-      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC) {
+      GetShaders()[0].GetShader()->GetFormat() != ShaderFormat::kOpenCLC) {
     return {};
   }
 
@@ -1055,7 +1055,7 @@ Result Pipeline::GenerateOpenCLLiteralSamplers() {
 
 Result Pipeline::GenerateOpenCLPushConstants() {
   if (!IsCompute() || GetShaders().empty() ||
-      GetShaders()[0].GetShader()->GetFormat() != kShaderFormatOpenCLC) {
+      GetShaders()[0].GetShader()->GetFormat() != ShaderFormat::kOpenCLC) {
     return {};
   }
 

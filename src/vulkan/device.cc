@@ -1635,22 +1635,22 @@ bool Device::IsRequiredSubgroupSizeSupported(
     const uint32_t required_subgroup_size) const {
   VkShaderStageFlagBits stage = {};
   switch (type) {
-    case kShaderTypeGeometry:
+    case ShaderType::kGeometry:
       stage = VK_SHADER_STAGE_GEOMETRY_BIT;
       break;
-    case kShaderTypeFragment:
+    case ShaderType::kFragment:
       stage = VK_SHADER_STAGE_FRAGMENT_BIT;
       break;
-    case kShaderTypeVertex:
+    case ShaderType::kVertex:
       stage = VK_SHADER_STAGE_VERTEX_BIT;
       break;
-    case kShaderTypeTessellationControl:
+    case ShaderType::kTessellationControl:
       stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
       break;
-    case kShaderTypeTessellationEvaluation:
+    case ShaderType::kTessellationEvaluation:
       stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
       break;
-    case kShaderTypeCompute:
+    case ShaderType::kCompute:
       stage = VK_SHADER_STAGE_COMPUTE_BIT;
       break;
     default:

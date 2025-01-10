@@ -201,15 +201,15 @@ class ShaderGroup {
   }
   Shader* GetShaderByType(ShaderType type) const {
     switch (type) {
-      case kShaderTypeRayGeneration:
-      case kShaderTypeMiss:
-      case kShaderTypeCall:
+      case ShaderType::kRayGeneration:
+      case ShaderType::kMiss:
+      case ShaderType::kCall:
         return generalShader_;
-      case kShaderTypeAnyHit:
+      case ShaderType::kAnyHit:
         return anyHitShader_;
-      case kShaderTypeClosestHit:
+      case ShaderType::kClosestHit:
         return closestHitShader_;
-      case kShaderTypeIntersection:
+      case ShaderType::kIntersection:
         return intersectionShader_;
       default:
         assert(0 && "Unsupported shader type");

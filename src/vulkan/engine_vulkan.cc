@@ -35,43 +35,43 @@ const uint32_t kVerticesPerTriangle = 3;
 
 Result ToVkShaderStage(ShaderType type, VkShaderStageFlagBits* ret) {
   switch (type) {
-    case kShaderTypeGeometry:
+    case ShaderType::kGeometry:
       *ret = VK_SHADER_STAGE_GEOMETRY_BIT;
       break;
-    case kShaderTypeFragment:
+    case ShaderType::kFragment:
       *ret = VK_SHADER_STAGE_FRAGMENT_BIT;
       break;
-    case kShaderTypeVertex:
+    case ShaderType::kVertex:
       *ret = VK_SHADER_STAGE_VERTEX_BIT;
       break;
-    case kShaderTypeTessellationControl:
+    case ShaderType::kTessellationControl:
       *ret = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
       break;
-    case kShaderTypeTessellationEvaluation:
+    case ShaderType::kTessellationEvaluation:
       *ret = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
       break;
-    case kShaderTypeRayGeneration:
+    case ShaderType::kRayGeneration:
       *ret = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
       break;
-    case kShaderTypeAnyHit:
+    case ShaderType::kAnyHit:
       *ret = VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
       break;
-    case kShaderTypeClosestHit:
+    case ShaderType::kClosestHit:
       *ret = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
       break;
-    case kShaderTypeMiss:
+    case ShaderType::kMiss:
       *ret = VK_SHADER_STAGE_MISS_BIT_KHR;
       break;
-    case kShaderTypeIntersection:
+    case ShaderType::kIntersection:
       *ret = VK_SHADER_STAGE_INTERSECTION_BIT_KHR;
       break;
-    case kShaderTypeCall:
+    case ShaderType::kCall:
       *ret = VK_SHADER_STAGE_CALLABLE_BIT_KHR;
       break;
-    case kShaderTypeCompute:
+    case ShaderType::kCompute:
       *ret = VK_SHADER_STAGE_COMPUTE_BIT;
       break;
-    case kShaderTypeMulti:
+    case ShaderType::kMulti:
       *ret = VK_SHADER_STAGE_FRAGMENT_BIT;
       return Result("Vulkan::Unknown shader stage");
   }
@@ -525,7 +525,7 @@ Result EngineVulkan::GetVkShaderStageInfo(
         return r;
       }
 
-      if (it.first == kShaderTypeCompute &&
+      if (it.first == ShaderType::kCompute &&
           it.second.required_subgroup_size > 0) {
         VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT* pSubgroupSize =
             new VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT();

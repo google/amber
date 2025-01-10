@@ -84,7 +84,7 @@ Result Parser::GenerateDefaultPipeline(const SectionParser& section_parser) {
       continue;
     }
 
-    if (section.shader_type != kShaderTypeCompute) {
+    if (section.shader_type != ShaderType::kCompute) {
       pipeline_type = PipelineType::kGraphics;
       break;
     }

@@ -56,14 +56,14 @@ class PipelineTest : public testing::Test {
 };
 
 TEST_F(PipelineTest, AddShader) {
-  Shader v(kShaderTypeVertex);
-  Shader f(kShaderTypeFragment);
+  Shader v(ShaderType::kVertex);
+  Shader f(ShaderType::kFragment);
 
   Pipeline p(PipelineType::kGraphics);
-  Result r = p.AddShader(&v, kShaderTypeVertex);
+  Result r = p.AddShader(&v, ShaderType::kVertex);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  r = p.AddShader(&f, kShaderTypeFragment);
+  r = p.AddShader(&f, ShaderType::kFragment);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   const auto& shaders = p.GetShaders();
@@ -75,23 +75,23 @@ TEST_F(PipelineTest, AddShader) {
 
 TEST_F(PipelineTest, MissingShader) {
   Pipeline p(PipelineType::kGraphics);
-  Result r = p.AddShader(nullptr, kShaderTypeVertex);
+  Result r = p.AddShader(nullptr, ShaderType::kVertex);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("shader can not be null when attached to pipeline", r.Error());
 }
 
 TEST_F(PipelineTest, DuplicateShaders) {
-  Shader v(kShaderTypeVertex);
-  Shader f(kShaderTypeFragment);
+  Shader v(ShaderType::kVertex);
+  Shader f(ShaderType::kFragment);
 
   Pipeline p(PipelineType::kGraphics);
-  Result r = p.AddShader(&v, kShaderTypeVertex);
+  Result r = p.AddShader(&v, ShaderType::kVertex);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  r = p.AddShader(&f, kShaderTypeFragment);
+  r = p.AddShader(&f, ShaderType::kFragment);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  r = p.AddShader(&v, kShaderTypeVertex);
+  r = p.AddShader(&v, ShaderType::kVertex);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("can not add duplicate shader to pipeline", r.Error());
 }
@@ -113,31 +113,31 @@ INSTANTIATE_TEST_SUITE_P(
     AmberScriptPipelineComputePipelineTests,
     AmberScriptPipelineComputePipelineTest,
     testing::Values(
-        ShaderTypeData{kShaderTypeVertex},
-        ShaderTypeData{kShaderTypeFragment},
-        ShaderTypeData{kShaderTypeGeometry},
-        ShaderTypeData{kShaderTypeTessellationEvaluation},
+        ShaderTypeData{ShaderType::kVertex},
+        ShaderTypeData{ShaderType::kFragment},
+        ShaderTypeData{ShaderType::kGeometry},
+        ShaderTypeData{ShaderType::kTessellationEvaluation},
         ShaderTypeData{
-            kShaderTypeTessellationControl}));  // NOLINT(whitespace/parens)
+            ShaderType::kTessellationControl}));  // NOLINT(whitespace/parens)
 
 TEST_F(PipelineTest, SettingComputeShaderToGraphicsPipeline) {
-  Shader c(kShaderTypeCompute);
+  Shader c(ShaderType::kCompute);
 
   Pipeline p(PipelineType::kGraphics);
-  Result r = p.AddShader(&c, kShaderTypeCompute);
+  Result r = p.AddShader(&c, ShaderType::kCompute);
   ASSERT_FALSE(r.IsSuccess());
   EXPECT_EQ("can not add a compute shader to a graphics pipeline", r.Error());
 }
 
 TEST_F(PipelineTest, SetShaderOptimizations) {
-  Shader v(kShaderTypeVertex);
-  Shader f(kShaderTypeFragment);
+  Shader v(ShaderType::kVertex);
+  Shader f(ShaderType::kFragment);
 
   Pipeline p(PipelineType::kGraphics);
-  Result r = p.AddShader(&v, kShaderTypeVertex);
+  Result r = p.AddShader(&v, ShaderType::kVertex);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  r = p.AddShader(&f, kShaderTypeFragment);
+  r = p.AddShader(&f, ShaderType::kFragment);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   std::vector<std::string> first = {"First", "Second"};
@@ -156,10 +156,10 @@ TEST_F(PipelineTest, SetShaderOptimizations) {
 }
 
 TEST_F(PipelineTest, DuplicateShaderOptimizations) {
-  Shader v(kShaderTypeVertex);
+  Shader v(ShaderType::kVertex);
 
   Pipeline p(PipelineType::kGraphics);
-  Result r = p.AddShader(&v, kShaderTypeVertex);
+  Result r = p.AddShader(&v, ShaderType::kVertex);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   std::vector<std::string> data = {"One", "One"};
@@ -176,7 +176,7 @@ TEST_F(PipelineTest, SetOptimizationForMissingShader) {
 }
 
 TEST_F(PipelineTest, SetOptimizationForInvalidShader) {
-  Shader v(kShaderTypeVertex);
+  Shader v(ShaderType::kVertex);
   v.SetName("my_shader");
 
   Pipeline p(PipelineType::kGraphics);
@@ -195,21 +195,21 @@ TEST_F(PipelineTest, GraphicsPipelineRequiresColorAttachment) {
 }
 
 TEST_F(PipelineTest, GraphicsPipelineRequiresVertexAndFragmentShader) {
-  Shader v(kShaderTypeVertex);
-  Shader f(kShaderTypeFragment);
-  Shader g(kShaderTypeGeometry);
+  Shader v(ShaderType::kVertex);
+  Shader f(ShaderType::kFragment);
+  Shader g(ShaderType::kGeometry);
 
   Pipeline p(PipelineType::kGraphics);
   SetupColorAttachment(&p, 0);
   SetupDepthStencilAttachment(&p);
 
-  Result r = p.AddShader(&v, kShaderTypeVertex);
+  Result r = p.AddShader(&v, ShaderType::kVertex);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 
-  r = p.AddShader(&g, kShaderTypeGeometry);
+  r = p.AddShader(&g, ShaderType::kGeometry);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 
-  r = p.AddShader(&f, kShaderTypeFragment);
+  r = p.AddShader(&f, ShaderType::kFragment);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 
   r = p.Validate();
@@ -217,17 +217,17 @@ TEST_F(PipelineTest, GraphicsPipelineRequiresVertexAndFragmentShader) {
 }
 
 TEST_F(PipelineTest, GraphicsPipelineMissingVertexShader) {
-  Shader f(kShaderTypeFragment);
-  Shader g(kShaderTypeGeometry);
+  Shader f(ShaderType::kFragment);
+  Shader g(ShaderType::kGeometry);
 
   Pipeline p(PipelineType::kGraphics);
   SetupColorAttachment(&p, 0);
   SetupDepthStencilAttachment(&p);
 
-  Result r = p.AddShader(&g, kShaderTypeGeometry);
+  Result r = p.AddShader(&g, ShaderType::kGeometry);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 
-  r = p.AddShader(&f, kShaderTypeFragment);
+  r = p.AddShader(&f, ShaderType::kFragment);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 
   r = p.Validate();
@@ -236,13 +236,13 @@ TEST_F(PipelineTest, GraphicsPipelineMissingVertexShader) {
 }
 
 TEST_F(PipelineTest, ComputePipelineRequiresComputeShader) {
-  Shader c(kShaderTypeCompute);
+  Shader c(ShaderType::kCompute);
 
   Pipeline p(PipelineType::kCompute);
   SetupColorAttachment(&p, 0);
   SetupDepthStencilAttachment(&p);
 
-  Result r = p.AddShader(&c, kShaderTypeCompute);
+  Result r = p.AddShader(&c, ShaderType::kCompute);
   EXPECT_TRUE(r.IsSuccess()) << r.Error();
 
   r = p.Validate();
@@ -272,7 +272,7 @@ TEST_F(PipelineTest, PipelineBufferWithoutFormat) {
 }
 
 TEST_F(PipelineTest, SetEntryPointForMissingShader) {
-  Shader c(kShaderTypeCompute);
+  Shader c(ShaderType::kCompute);
   c.SetName("my_shader");
 
   Pipeline p(PipelineType::kCompute);
@@ -289,9 +289,9 @@ TEST_F(PipelineTest, SetEntryPointForNullShader) {
 }
 
 TEST_F(PipelineTest, SetBlankEntryPoint) {
-  Shader c(kShaderTypeCompute);
+  Shader c(ShaderType::kCompute);
   Pipeline p(PipelineType::kCompute);
-  Result r = p.AddShader(&c, kShaderTypeCompute);
+  Result r = p.AddShader(&c, ShaderType::kCompute);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   r = p.SetShaderEntryPoint(&c, "");
@@ -300,9 +300,9 @@ TEST_F(PipelineTest, SetBlankEntryPoint) {
 }
 
 TEST_F(PipelineTest, ShaderDefaultEntryPoint) {
-  Shader c(kShaderTypeCompute);
+  Shader c(ShaderType::kCompute);
   Pipeline p(PipelineType::kCompute);
-  Result r = p.AddShader(&c, kShaderTypeCompute);
+  Result r = p.AddShader(&c, ShaderType::kCompute);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   const auto& shaders = p.GetShaders();
@@ -311,9 +311,9 @@ TEST_F(PipelineTest, ShaderDefaultEntryPoint) {
 }
 
 TEST_F(PipelineTest, SetShaderEntryPoint) {
-  Shader c(kShaderTypeCompute);
+  Shader c(ShaderType::kCompute);
   Pipeline p(PipelineType::kCompute);
-  Result r = p.AddShader(&c, kShaderTypeCompute);
+  Result r = p.AddShader(&c, ShaderType::kCompute);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   r = p.SetShaderEntryPoint(&c, "my_main");
@@ -325,9 +325,9 @@ TEST_F(PipelineTest, SetShaderEntryPoint) {
 }
 
 TEST_F(PipelineTest, SetEntryPointMulitpleTimes) {
-  Shader c(kShaderTypeCompute);
+  Shader c(ShaderType::kCompute);
   Pipeline p(PipelineType::kCompute);
-  Result r = p.AddShader(&c, kShaderTypeCompute);
+  Result r = p.AddShader(&c, ShaderType::kCompute);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
   r = p.SetShaderEntryPoint(&c, "my_main");
@@ -347,10 +347,10 @@ TEST_F(PipelineTest, Clone) {
   SetupColorAttachment(&p, 0);
   SetupDepthStencilAttachment(&p);
 
-  Shader f(kShaderTypeFragment);
-  p.AddShader(&f, kShaderTypeFragment);
-  Shader v(kShaderTypeVertex);
-  p.AddShader(&v, kShaderTypeVertex);
+  Shader f(ShaderType::kFragment);
+  p.AddShader(&f, ShaderType::kFragment);
+  Shader v(ShaderType::kVertex);
+  p.AddShader(&v, ShaderType::kVertex);
   p.SetShaderEntryPoint(&v, "my_main");
 
   auto vtex_buf = MakeUnique<Buffer>();
@@ -380,8 +380,8 @@ TEST_F(PipelineTest, Clone) {
 
   auto shaders = clone->GetShaders();
   ASSERT_EQ(2U, shaders.size());
-  EXPECT_EQ(kShaderTypeFragment, shaders[0].GetShaderType());
-  EXPECT_EQ(kShaderTypeVertex, shaders[1].GetShaderType());
+  EXPECT_EQ(ShaderType::kFragment, shaders[0].GetShaderType());
+  EXPECT_EQ(ShaderType::kVertex, shaders[1].GetShaderType());
   EXPECT_EQ("my_main", shaders[1].GetEntryPoint());
 
   ASSERT_TRUE(clone->GetIndexBuffer() != nullptr);
@@ -417,9 +417,9 @@ TEST_F(PipelineTest, OpenCLUpdateBindings) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
 
-  Shader cs(kShaderTypeCompute);
-  cs.SetFormat(kShaderFormatOpenCLC);
-  p.AddShader(&cs, kShaderTypeCompute);
+  Shader cs(ShaderType::kCompute);
+  cs.SetFormat(ShaderFormat::kOpenCLC);
+  p.AddShader(&cs, ShaderType::kCompute);
   p.SetShaderEntryPoint(&cs, "my_main");
 
   Pipeline::ShaderInfo::DescriptorMapEntry entry1;
@@ -462,9 +462,9 @@ TEST_F(PipelineTest, OpenCLUpdateBindingTypeMismatch) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
 
-  Shader cs(kShaderTypeCompute);
-  cs.SetFormat(kShaderFormatOpenCLC);
-  p.AddShader(&cs, kShaderTypeCompute);
+  Shader cs(ShaderType::kCompute);
+  cs.SetFormat(ShaderFormat::kOpenCLC);
+  p.AddShader(&cs, ShaderType::kCompute);
   p.SetShaderEntryPoint(&cs, "my_main");
 
   Pipeline::ShaderInfo::DescriptorMapEntry entry1;
@@ -501,9 +501,9 @@ TEST_F(PipelineTest, OpenCLUpdateBindingImagesAndSamplers) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
 
-  Shader cs(kShaderTypeCompute);
-  cs.SetFormat(kShaderFormatOpenCLC);
-  p.AddShader(&cs, kShaderTypeCompute);
+  Shader cs(ShaderType::kCompute);
+  cs.SetFormat(ShaderFormat::kOpenCLC);
+  p.AddShader(&cs, ShaderType::kCompute);
   p.SetShaderEntryPoint(&cs, "my_main");
 
   Pipeline::ShaderInfo::DescriptorMapEntry entry1;
@@ -551,9 +551,9 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffers) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
 
-  Shader cs(kShaderTypeCompute);
-  cs.SetFormat(kShaderFormatOpenCLC);
-  p.AddShader(&cs, kShaderTypeCompute);
+  Shader cs(ShaderType::kCompute);
+  cs.SetFormat(ShaderFormat::kOpenCLC);
+  p.AddShader(&cs, ShaderType::kCompute);
   p.SetShaderEntryPoint(&cs, "my_main");
 
   // Descriptor map.
@@ -637,9 +637,9 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffersBadName) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
 
-  Shader cs(kShaderTypeCompute);
-  cs.SetFormat(kShaderFormatOpenCLC);
-  p.AddShader(&cs, kShaderTypeCompute);
+  Shader cs(ShaderType::kCompute);
+  cs.SetFormat(ShaderFormat::kOpenCLC);
+  p.AddShader(&cs, ShaderType::kCompute);
   p.SetShaderEntryPoint(&cs, "my_main");
 
   // Descriptor map.
@@ -680,9 +680,9 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffersBadSize) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
 
-  Shader cs(kShaderTypeCompute);
-  cs.SetFormat(kShaderFormatOpenCLC);
-  p.AddShader(&cs, kShaderTypeCompute);
+  Shader cs(ShaderType::kCompute);
+  cs.SetFormat(ShaderFormat::kOpenCLC);
+  p.AddShader(&cs, ShaderType::kCompute);
   p.SetShaderEntryPoint(&cs, "my_main");
 
   // Descriptor map.
@@ -721,9 +721,9 @@ TEST_F(PipelineTest, OpenCLClone) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
 
-  Shader cs(kShaderTypeCompute);
-  cs.SetFormat(kShaderFormatOpenCLC);
-  p.AddShader(&cs, kShaderTypeCompute);
+  Shader cs(ShaderType::kCompute);
+  cs.SetFormat(ShaderFormat::kOpenCLC);
+  p.AddShader(&cs, ShaderType::kCompute);
   p.SetShaderEntryPoint(&cs, "my_main");
 
   // Descriptor map.
@@ -841,9 +841,9 @@ TEST_F(PipelineTest, OpenCLGeneratePushConstants) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
 
-  Shader cs(kShaderTypeCompute);
-  cs.SetFormat(kShaderFormatOpenCLC);
-  p.AddShader(&cs, kShaderTypeCompute);
+  Shader cs(ShaderType::kCompute);
+  cs.SetFormat(ShaderFormat::kOpenCLC);
+  p.AddShader(&cs, ShaderType::kCompute);
   p.SetShaderEntryPoint(&cs, "my_main");
 
   Pipeline::ShaderInfo::PushConstant pc1;
@@ -876,9 +876,9 @@ TEST_F(PipelineTest, OpenCLPodPushConstants) {
   Pipeline p(PipelineType::kCompute);
   p.SetName("my_pipeline");
 
-  Shader cs(kShaderTypeCompute);
-  cs.SetFormat(kShaderFormatOpenCLC);
-  p.AddShader(&cs, kShaderTypeCompute);
+  Shader cs(ShaderType::kCompute);
+  cs.SetFormat(ShaderFormat::kOpenCLC);
+  p.AddShader(&cs, ShaderType::kCompute);
   p.SetShaderEntryPoint(&cs, "my_main");
 
   // Descriptor map.

@@ -454,31 +454,31 @@ Result Parser::ToShaderType(const std::string& str, ShaderType* type) {
   assert(type);
 
   if (str == "vertex") {
-    *type = kShaderTypeVertex;
+    *type = ShaderType::kVertex;
   } else if (str == "fragment") {
-    *type = kShaderTypeFragment;
+    *type = ShaderType::kFragment;
   } else if (str == "geometry") {
-    *type = kShaderTypeGeometry;
+    *type = ShaderType::kGeometry;
   } else if (str == "tessellation_evaluation") {
-    *type = kShaderTypeTessellationEvaluation;
+    *type = ShaderType::kTessellationEvaluation;
   } else if (str == "tessellation_control") {
-    *type = kShaderTypeTessellationControl;
+    *type = ShaderType::kTessellationControl;
   } else if (str == "compute") {
-    *type = kShaderTypeCompute;
+    *type = ShaderType::kCompute;
   } else if (str == "ray_generation") {
-    *type = kShaderTypeRayGeneration;
+    *type = ShaderType::kRayGeneration;
   } else if (str == "any_hit") {
-    *type = kShaderTypeAnyHit;
+    *type = ShaderType::kAnyHit;
   } else if (str == "closest_hit") {
-    *type = kShaderTypeClosestHit;
+    *type = ShaderType::kClosestHit;
   } else if (str == "miss") {
-    *type = kShaderTypeMiss;
+    *type = ShaderType::kMiss;
   } else if (str == "intersection") {
-    *type = kShaderTypeIntersection;
+    *type = ShaderType::kIntersection;
   } else if (str == "callable") {
-    *type = kShaderTypeCall;
+    *type = ShaderType::kCall;
   } else if (str == "multi") {
-    *type = kShaderTypeMulti;
+    *type = ShaderType::kMulti;
   } else {
     return Result("unknown shader type: " + str);
   }
@@ -489,17 +489,17 @@ Result Parser::ToShaderFormat(const std::string& str, ShaderFormat* fmt) {
   assert(fmt);
 
   if (str == "GLSL") {
-    *fmt = kShaderFormatGlsl;
+    *fmt = ShaderFormat::kGlsl;
   } else if (str == "HLSL") {
-    *fmt = kShaderFormatHlsl;
+    *fmt = ShaderFormat::kHlsl;
   } else if (str == "SPIRV-ASM") {
-    *fmt = kShaderFormatSpirvAsm;
+    *fmt = ShaderFormat::kSpirvAsm;
   } else if (str == "SPIRV-HEX") {
-    *fmt = kShaderFormatSpirvHex;
+    *fmt = ShaderFormat::kSpirvHex;
   } else if (str == "SPIRV-BIN") {
-    *fmt = kShaderFormatSpirvBin;
+    *fmt = ShaderFormat::kSpirvBin;
   } else if (str == "OPENCL-C") {
-    *fmt = kShaderFormatOpenCLC;
+    *fmt = ShaderFormat::kOpenCLC;
   } else {
     return Result("unknown shader format: " + str);
   }
@@ -536,7 +536,7 @@ Result Parser::ParseShaderBlock() {
     return Result("invalid token when looking for shader type");
   }
 
-  ShaderType type = kShaderTypeVertex;
+  ShaderType type = ShaderType::kVertex;
   Result r = ToShaderType(token->AsString(), &type);
   if (!r.IsSuccess()) {
     return r;
@@ -558,12 +558,12 @@ Result Parser::ParseShaderBlock() {
 
   std::string fmt = token->AsString();
   if (fmt == "PASSTHROUGH") {
-    if (type != kShaderTypeVertex) {
+    if (type != ShaderType::kVertex) {
       return Result(
           "invalid shader type for PASSTHROUGH. Only vertex "
           "PASSTHROUGH allowed");
     }
-    shader->SetFormat(kShaderFormatSpirvAsm);
+    shader->SetFormat(ShaderFormat::kSpirvAsm);
     shader->SetData(kPassThroughShader);
     shader->SetTargetEnv("spv1.0");
 
@@ -575,7 +575,7 @@ Result Parser::ParseShaderBlock() {
     return ValidateEndOfStatement("SHADER PASSTHROUGH");
   }
 
-  ShaderFormat format = kShaderFormatGlsl;
+  ShaderFormat format = ShaderFormat::kGlsl;
   r = ToShaderFormat(fmt, &format);
   if (!r.IsSuccess()) {
     return r;
@@ -792,7 +792,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
 
   token = tokenizer_->NextToken();
   if (token->IsEOL() || token->IsEOS()) {
-    if (shader->GetType() == kShaderTypeMulti) {
+    if (shader->GetType() == ShaderType::kMulti) {
       return Result("multi shader ATTACH requires TYPE");
     }
 
@@ -833,7 +833,7 @@ Result Parser::ParsePipelineAttach(Pipeline* pipeline) {
     return Result("unknown ATTACH parameter: " + type);
   }
 
-  if (shader->GetType() == ShaderType::kShaderTypeMulti && !set_shader_type) {
+  if (shader->GetType() == ShaderType::kMulti && !set_shader_type) {
     return Result("ATTACH missing TYPE for multi shader");
   }
 
@@ -987,7 +987,7 @@ Result Parser::ParsePipelineShaderCompileOptions(Pipeline* pipeline) {
     return Result("unknown shader in COMPILE_OPTIONS command");
   }
 
-  if (shader->GetFormat() != kShaderFormatOpenCLC) {
+  if (shader->GetFormat() != ShaderFormat::kOpenCLC) {
     return Result("COMPILE_OPTIONS currently only supports OPENCL-C shaders");
   }
 
@@ -1817,7 +1817,7 @@ Result Parser::ParsePipelineIndexData(Pipeline* pipeline) {
 Result Parser::ParsePipelineSet(Pipeline* pipeline) {
   if (pipeline->GetShaders().empty() ||
       pipeline->GetShaders()[0].GetShader()->GetFormat() !=
-          kShaderFormatOpenCLC) {
+          ShaderFormat::kOpenCLC) {
     return Result("SET can only be used with OPENCL-C shaders");
   }
 
@@ -2365,9 +2365,9 @@ Result Parser::ParsePipelineShaderGroup(Pipeline* pipeline) {
     }
 
     switch (shader->GetType()) {
-      case kShaderTypeRayGeneration:
-      case kShaderTypeMiss:
-      case kShaderTypeCall: {
+      case ShaderType::kRayGeneration:
+      case ShaderType::kMiss:
+      case ShaderType::kCall: {
         if (group->IsHitGroup()) {
           return Result("Hit group cannot contain general shaders");
         }
@@ -2377,7 +2377,7 @@ Result Parser::ParsePipelineShaderGroup(Pipeline* pipeline) {
         group->SetGeneralShader(shader);
         break;
       }
-      case kShaderTypeAnyHit: {
+      case ShaderType::kAnyHit: {
         if (group->IsGeneralGroup()) {
           return Result("General group cannot contain any hit shaders");
         }
@@ -2387,7 +2387,7 @@ Result Parser::ParsePipelineShaderGroup(Pipeline* pipeline) {
         group->SetAnyHitShader(shader);
         break;
       }
-      case kShaderTypeClosestHit: {
+      case ShaderType::kClosestHit: {
         if (group->IsGeneralGroup()) {
           return Result("General group cannot contain closest hit shaders");
         }
@@ -2397,7 +2397,7 @@ Result Parser::ParsePipelineShaderGroup(Pipeline* pipeline) {
         group->SetClosestHitShader(shader);
         break;
       }
-      case kShaderTypeIntersection: {
+      case ShaderType::kIntersection: {
         if (group->IsGeneralGroup()) {
           return Result("General group cannot contain intersection shaders");
         }
@@ -4519,9 +4519,9 @@ Result Parser::ParseSampler() {
 }
 
 bool Parser::IsRayTracingShader(ShaderType type) {
-  return type == kShaderTypeRayGeneration || type == kShaderTypeAnyHit ||
-         type == kShaderTypeClosestHit || type == kShaderTypeMiss ||
-         type == kShaderTypeIntersection || type == kShaderTypeCall;
+  return type == ShaderType::kRayGeneration || type == ShaderType::kAnyHit ||
+         type == ShaderType::kClosestHit || type == ShaderType::kMiss ||
+         type == ShaderType::kIntersection || type == ShaderType::kCall;
 }
 
 Result Parser::ParseAS() {

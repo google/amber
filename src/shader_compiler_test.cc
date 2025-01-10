@@ -99,15 +99,15 @@ void main() {
   gl_Position = position;
 })";
 
-  Shader shader(kShaderTypeVertex);
+  Shader shader(ShaderType::kVertex);
   shader.SetName("TestShader");
-  shader.SetFormat(kShaderFormatGlsl);
+  shader.SetFormat(ShaderFormat::kGlsl);
   shader.SetData(contents);
 
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info(&shader, ShaderType::kCompute);
   Pipeline pipeline(PipelineType::kCompute);
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
@@ -118,15 +118,15 @@ void main() {
 
 #if AMBER_ENABLE_SPIRV_TOOLS
 TEST_F(ShaderCompilerTest, CompilesSpirvAsm) {
-  Shader shader(kShaderTypeVertex);
+  Shader shader(ShaderType::kVertex);
   shader.SetName("TestShader");
-  shader.SetFormat(kShaderFormatSpirvAsm);
+  shader.SetFormat(ShaderFormat::kSpirvAsm);
   shader.SetData(kPassThroughShader);
 
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info(&shader, ShaderType::kCompute);
   Pipeline pipeline(PipelineType::kCompute);
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
@@ -138,15 +138,15 @@ TEST_F(ShaderCompilerTest, InvalidSpirvHex) {
   std::string contents = kHexShader;
   contents[3] = '0';
 
-  Shader shader(kShaderTypeVertex);
+  Shader shader(ShaderType::kVertex);
   shader.SetName("BadTestShader");
-  shader.SetFormat(kShaderFormatSpirvHex);
+  shader.SetFormat(ShaderFormat::kSpirvHex);
   shader.SetData(contents);
 
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info(&shader, ShaderType::kCompute);
   Pipeline pipeline(PipelineType::kCompute);
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
@@ -155,15 +155,15 @@ TEST_F(ShaderCompilerTest, InvalidSpirvHex) {
 }
 
 TEST_F(ShaderCompilerTest, InvalidHex) {
-  Shader shader(kShaderTypeVertex);
+  Shader shader(ShaderType::kVertex);
   shader.SetName("BadTestShader");
-  shader.SetFormat(kShaderFormatSpirvHex);
+  shader.SetFormat(ShaderFormat::kSpirvHex);
   shader.SetData("aaaaaaaaaa");
 
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info(&shader, ShaderType::kCompute);
   Pipeline pipeline(PipelineType::kCompute);
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
@@ -204,13 +204,13 @@ OpReturn
 OpFunctionEnd
 )";
 
-  Shader shader(kShaderTypeCompute);
+  Shader shader(ShaderType::kCompute);
   shader.SetName("TestShader");
-  shader.SetFormat(kShaderFormatSpirvAsm);
+  shader.SetFormat(ShaderFormat::kSpirvAsm);
   shader.SetData(spirv);
 
-  Pipeline::ShaderInfo unoptimized(&shader, kShaderTypeCompute);
-  Pipeline::ShaderInfo optimized(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo unoptimized(&shader, ShaderType::kCompute);
+  Pipeline::ShaderInfo optimized(&shader, ShaderType::kCompute);
   optimized.SetShaderOptimizations({"--eliminate-dead-code-aggressive"});
 
   ShaderCompiler sc;
@@ -228,15 +228,15 @@ OpFunctionEnd
 #endif  // AMBER_ENABLE_SPIRV_TOOLS
 
 TEST_F(ShaderCompilerTest, CompilesSpirvHex) {
-  Shader shader(kShaderTypeVertex);
+  Shader shader(ShaderType::kVertex);
   shader.SetName("TestShader");
-  shader.SetFormat(kShaderFormatSpirvHex);
+  shader.SetFormat(ShaderFormat::kSpirvHex);
   shader.SetData(kHexShader);
 
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info(&shader, ShaderType::kCompute);
   Pipeline pipeline(PipelineType::kCompute);
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
@@ -247,15 +247,15 @@ TEST_F(ShaderCompilerTest, CompilesSpirvHex) {
 TEST_F(ShaderCompilerTest, FailsOnInvalidShader) {
   std::string contents = "Just Random\nText()\nThat doesn't work.";
 
-  Shader shader(kShaderTypeVertex);
+  Shader shader(ShaderType::kVertex);
   shader.SetName("BadTestShader");
-  shader.SetFormat(kShaderFormatGlsl);
+  shader.SetFormat(ShaderFormat::kGlsl);
   shader.SetData(contents);
 
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info(&shader, ShaderType::kCompute);
   Pipeline pipeline(PipelineType::kCompute);
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, ShaderMap());
   ASSERT_FALSE(r.IsSuccess());
@@ -268,9 +268,9 @@ TEST_F(ShaderCompilerTest, ReturnsCachedShader) {
 
   static const char kShaderName[] = "CachedShader";
   static const char kShaderNameWithPipeline[] = "pipeline-CachedShader";
-  Shader shader(kShaderTypeVertex);
+  Shader shader(ShaderType::kVertex);
   shader.SetName(kShaderName);
-  shader.SetFormat(kShaderFormatGlsl);
+  shader.SetFormat(ShaderFormat::kGlsl);
   shader.SetData(contents);
 
   std::vector<uint32_t> src_bytes = {1, 2, 3, 4, 5};
@@ -281,7 +281,7 @@ TEST_F(ShaderCompilerTest, ReturnsCachedShader) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info(&shader, ShaderType::kCompute);
   Pipeline pipeline(PipelineType::kCompute);
   pipeline.SetName("pipeline");
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, map);
@@ -295,9 +295,9 @@ TEST_F(ShaderCompilerTest, ReturnsCachedShader) {
 
 #if AMBER_ENABLE_CLSPV
 TEST_F(ShaderCompilerTest, ClspvCompile) {
-  Shader shader(kShaderTypeCompute);
+  Shader shader(ShaderType::kCompute);
   shader.SetName("TestShader");
-  shader.SetFormat(kShaderFormatOpenCLC);
+  shader.SetFormat(ShaderFormat::kOpenCLC);
   shader.SetData(R"(
 kernel void TestShader(global int* in, global int* out) {
   *out = *in;
@@ -307,7 +307,7 @@ kernel void TestShader(global int* in, global int* out) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info(&shader, ShaderType::kCompute);
   Pipeline pipeline(PipelineType::kCompute);
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
@@ -316,10 +316,10 @@ kernel void TestShader(global int* in, global int* out) {
 }
 
 TEST_F(ShaderCompilerTest, ClspvDisallowCaching) {
-  Shader shader(kShaderTypeCompute);
+  Shader shader(ShaderType::kCompute);
   std::string name = "TestShader";
   shader.SetName(name);
-  shader.SetFormat(kShaderFormatOpenCLC);
+  shader.SetFormat(ShaderFormat::kOpenCLC);
   shader.SetData(R"(
 kernel void TestShader(global int* in, global int* out) {
   *out = *in;
@@ -334,7 +334,7 @@ kernel void TestShader(global int* in, global int* out) {
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  Pipeline::ShaderInfo shader_info(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info(&shader, ShaderType::kCompute);
   Pipeline pipeline(PipelineType::kCompute);
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info, map);
   ASSERT_FALSE(r.IsSuccess());
@@ -347,15 +347,15 @@ kernel void TestShader(global int* in, global int* out, int m, int b) {
   *out = *in * m + b;
 }
 )";
-  Shader shader(kShaderTypeCompute);
+  Shader shader(ShaderType::kCompute);
   shader.SetName("TestShader");
-  shader.SetFormat(kShaderFormatOpenCLC);
+  shader.SetFormat(ShaderFormat::kOpenCLC);
   shader.SetData(data);
 
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  Pipeline::ShaderInfo shader_info1(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info1(&shader, ShaderType::kCompute);
   shader_info1.SetCompileOptions({"-cluster-pod-kernel-args=0"});
   Pipeline pipeline(PipelineType::kCompute);
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info1, ShaderMap());
@@ -375,7 +375,7 @@ kernel void TestShader(global int* in, global int* out, int m, int b) {
   EXPECT_TRUE(has_pod_ubo);
 
   binary.clear();
-  Pipeline::ShaderInfo shader_info2(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info2(&shader, ShaderType::kCompute);
   shader_info2.SetCompileOptions({"-cluster-pod-kernel-args", "-pod-ubo"});
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info2, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
@@ -403,15 +403,15 @@ kernel void TestShader(read_only image2d_t ro_image, write_only image2d_t wo_ima
 }
 )";
 
-  Shader shader(kShaderTypeCompute);
+  Shader shader(ShaderType::kCompute);
   shader.SetName("TestShader");
-  shader.SetFormat(kShaderFormatOpenCLC);
+  shader.SetFormat(ShaderFormat::kOpenCLC);
   shader.SetData(data);
 
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  Pipeline::ShaderInfo shader_info1(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info1(&shader, ShaderType::kCompute);
   Pipeline pipeline(PipelineType::kCompute);
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info1, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
@@ -447,15 +447,15 @@ kernel void foo(read_only image2d_t im, global float4* out) {
 
   Pipeline pipeline(PipelineType::kCompute);
   pipeline.SetName("pipe");
-  Shader shader(kShaderTypeCompute);
+  Shader shader(ShaderType::kCompute);
   shader.SetName("foo");
-  shader.SetFormat(kShaderFormatOpenCLC);
+  shader.SetFormat(ShaderFormat::kOpenCLC);
   shader.SetData(data);
 
   ShaderCompiler sc;
   Result r;
   std::vector<uint32_t> binary;
-  Pipeline::ShaderInfo shader_info1(&shader, kShaderTypeCompute);
+  Pipeline::ShaderInfo shader_info1(&shader, ShaderType::kCompute);
   std::tie(r, binary) = sc.Compile(&pipeline, &shader_info1, ShaderMap());
   ASSERT_TRUE(r.IsSuccess());
   EXPECT_FALSE(binary.empty());

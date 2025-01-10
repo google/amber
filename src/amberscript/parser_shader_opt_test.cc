@@ -61,17 +61,17 @@ END
   ASSERT_EQ(3U, shaders.size());
 
   ASSERT_TRUE(shaders[0].GetShader() != nullptr);
-  EXPECT_EQ(kShaderTypeVertex, shaders[0].GetShader()->GetType());
+  EXPECT_EQ(ShaderType::kVertex, shaders[0].GetShader()->GetType());
   std::vector<std::string> my_shader_opts = {"opt1", "opt_second"};
   EXPECT_EQ(my_shader_opts, shaders[0].GetShaderOptimizations());
 
   ASSERT_TRUE(shaders[1].GetShader() != nullptr);
-  EXPECT_EQ(kShaderTypeFragment, shaders[1].GetShader()->GetType());
+  EXPECT_EQ(ShaderType::kFragment, shaders[1].GetShader()->GetType());
   std::vector<std::string> my_fragment_opts = {"another_optimization", "third"};
   EXPECT_EQ(my_fragment_opts, shaders[1].GetShaderOptimizations());
 
   ASSERT_TRUE(shaders[2].GetShader() != nullptr);
-  EXPECT_EQ(kShaderTypeGeometry, shaders[2].GetShader()->GetType());
+  EXPECT_EQ(ShaderType::kGeometry, shaders[2].GetShader()->GetType());
   std::vector<std::string> my_geom_opts = {};
   EXPECT_EQ(my_geom_opts, shaders[2].GetShaderOptimizations());
 }

@@ -34,8 +34,8 @@ TEST_F(AmberScriptParserTest, ShaderPassThrough) {
 
   const auto* shader = shaders[0].get();
   EXPECT_EQ("my_shader1", shader->GetName());
-  EXPECT_EQ(kShaderTypeVertex, shader->GetType());
-  EXPECT_EQ(kShaderFormatSpirvAsm, shader->GetFormat());
+  EXPECT_EQ(ShaderType::kVertex, shader->GetType());
+  EXPECT_EQ(ShaderFormat::kSpirvAsm, shader->GetFormat());
   EXPECT_EQ(kPassThroughShader, shader->GetData());
 }
 
@@ -145,8 +145,8 @@ SHADER geometry shader_name GLSL
 
   const auto* shader = shaders[0].get();
   EXPECT_EQ("shader_name", shader->GetName());
-  EXPECT_EQ(kShaderTypeGeometry, shader->GetType());
-  EXPECT_EQ(kShaderFormatGlsl, shader->GetFormat());
+  EXPECT_EQ(ShaderType::kGeometry, shader->GetType());
+  EXPECT_EQ(ShaderFormat::kGlsl, shader->GetFormat());
   EXPECT_EQ(shader_result, shader->GetData());
 }
 
@@ -363,22 +363,23 @@ void main() {
   const auto* shader = shaders[0].get();
   EXPECT_EQ("my_shader", shader->GetName());
   EXPECT_EQ(test_data.type, shader->GetType());
-  EXPECT_EQ(kShaderFormatGlsl, shader->GetFormat());
+  EXPECT_EQ(ShaderFormat::kGlsl, shader->GetFormat());
   EXPECT_EQ(shader_result, shader->GetData());
 }
 INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserTestsShaderType,
     AmberScriptParserShaderTypeTest,
-    testing::Values(
-        ShaderTypeData{"vertex", kShaderTypeVertex},
-        ShaderTypeData{"fragment", kShaderTypeFragment},
-        ShaderTypeData{"geometry", kShaderTypeGeometry},
-        ShaderTypeData{"tessellation_evaluation",
-                       kShaderTypeTessellationEvaluation},
-        ShaderTypeData{"tessellation_control", kShaderTypeTessellationControl},
-        ShaderTypeData{"compute", kShaderTypeCompute},
-        ShaderTypeData{"multi",
-                       kShaderTypeMulti}));  // NOLINT(whitespace/parens)
+    testing::Values(ShaderTypeData{"vertex", ShaderType::kVertex},
+                    ShaderTypeData{"fragment", ShaderType::kFragment},
+                    ShaderTypeData{"geometry", ShaderType::kGeometry},
+                    ShaderTypeData{"tessellation_evaluation",
+                                   ShaderType::kTessellationEvaluation},
+                    ShaderTypeData{"tessellation_control",
+                                   ShaderType::kTessellationControl},
+                    ShaderTypeData{"compute", ShaderType::kCompute},
+                    ShaderTypeData{
+                        "multi",
+                        ShaderType::kMulti}));  // NOLINT(whitespace/parens)
 
 struct ShaderFormatData {
   const char* name;
@@ -408,7 +409,7 @@ TEST_P(AmberScriptParserShaderFormatTest, ShaderFormats) {
 
   const auto* shader = shaders[0].get();
   EXPECT_EQ("my_shader", shader->GetName());
-  EXPECT_EQ(kShaderTypeVertex, shader->GetType());
+  EXPECT_EQ(ShaderType::kVertex, shader->GetType());
   EXPECT_EQ(test_data.format, shader->GetFormat());
   EXPECT_EQ(shader_result, shader->GetData());
 }
@@ -416,11 +417,12 @@ TEST_P(AmberScriptParserShaderFormatTest, ShaderFormats) {
 INSTANTIATE_TEST_SUITE_P(
     AmberScriptParserTestsShaderFormat,
     AmberScriptParserShaderFormatTest,
-    testing::Values(ShaderFormatData{"GLSL", kShaderFormatGlsl},
-                    ShaderFormatData{"SPIRV-ASM", kShaderFormatSpirvAsm},
-                    ShaderFormatData{
-                        "SPIRV-HEX",
-                        kShaderFormatSpirvHex}));  // NOLINT(whitespace/parens)
+    testing::Values(
+        ShaderFormatData{"GLSL", ShaderFormat::kGlsl},
+        ShaderFormatData{"SPIRV-ASM", ShaderFormat::kSpirvAsm},
+        ShaderFormatData{
+            "SPIRV-HEX",
+            ShaderFormat::kSpirvHex}));  // NOLINT(whitespace/parens)
 
 TEST_F(AmberScriptParserTest, DuplicateShaderName) {
   std::string in = R"(
