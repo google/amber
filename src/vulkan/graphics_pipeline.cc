@@ -18,7 +18,6 @@
 #include <cmath>
 
 #include "src/command.h"
-#include "src/make_unique.h"
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 
@@ -747,9 +746,9 @@ Result GraphicsPipeline::Initialize(uint32_t width,
     return r;
   }
 
-  frame_ =
-      MakeUnique<FrameBuffer>(device_, color_buffers_, depth_stencil_buffer_,
-                              resolve_targets_, width, height);
+  frame_ = std::make_unique<FrameBuffer>(device_, color_buffers_,
+                                         depth_stencil_buffer_,
+                                         resolve_targets_, width, height);
   r = frame_->Initialize(render_pass_);
   if (!r.IsSuccess()) {
     return r;
@@ -776,7 +775,7 @@ Result GraphicsPipeline::SetIndexBuffer(Buffer* buffer) {
         "index_buffer_ is created");
   }
 
-  index_buffer_ = MakeUnique<IndexBuffer>(device_);
+  index_buffer_ = std::make_unique<IndexBuffer>(device_);
 
   CommandBufferGuard guard(GetCommandBuffer());
   if (!guard.IsRecording()) {

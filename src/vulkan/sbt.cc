@@ -37,7 +37,7 @@ Result SBT::Create(amber::SBT* sbt, VkPipeline pipeline) {
   const uint32_t buffer_size = handle_size * handles_count;
   std::vector<uint8_t> handles(buffer_size);
 
-  buffer_ = MakeUnique<TransferBuffer>(device_, buffer_size, nullptr);
+  buffer_ = std::make_unique<TransferBuffer>(device_, buffer_size, nullptr);
   buffer_->AddUsageFlags(VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                          VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
                          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);

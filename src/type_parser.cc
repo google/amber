@@ -18,8 +18,6 @@
 #include <cstdlib>
 #include <string>
 
-#include "src/make_unique.h"
-
 namespace amber {
 
 TypeParser::TypeParser() = default;
@@ -64,9 +62,9 @@ std::unique_ptr<type::Type> TypeParser::Parse(const std::string& data) {
   std::unique_ptr<type::Type> type = nullptr;
   if (pack_size_ == 0 && pieces_.size() == 1 &&
       pieces_[0].type == FormatComponentType::kR) {
-    type = MakeUnique<type::Number>(pieces_[0].mode, pieces_[0].num_bits);
+    type = std::make_unique<type::Number>(pieces_[0].mode, pieces_[0].num_bits);
   } else {
-    type = MakeUnique<type::List>();
+    type = std::make_unique<type::List>();
     type->SetRowCount(static_cast<uint32_t>(pieces_.size()));
     type->AsList()->SetPackSizeInBits(pack_size_);
 

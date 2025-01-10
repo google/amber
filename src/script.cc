@@ -15,12 +15,11 @@
 
 #include "src/script.h"
 
-#include "src/make_unique.h"
 #include "src/type_parser.h"
 
 namespace amber {
 
-Script::Script() : virtual_files_(MakeUnique<VirtualFileStore>()) {}
+Script::Script() : virtual_files_(std::make_unique<VirtualFileStore>()) {}
 
 Script::~Script() = default;
 

@@ -25,7 +25,6 @@
 
 #include "amber/vulkan_header.h"
 #include "src/image.h"
-#include "src/make_unique.h"
 #include "src/sampler.h"
 #include "src/shader_data.h"
 #include "src/tokenizer.h"
@@ -327,7 +326,7 @@ std::string Parser::make_error(const std::string& err) {
 }
 
 Result Parser::Parse(const std::string& data) {
-  tokenizer_ = MakeUnique<Tokenizer>(data);
+  tokenizer_ = std::make_unique<Tokenizer>(data);
 
   for (auto token = tokenizer_->NextToken(); !token->IsEOS();
        token = tokenizer_->NextToken()) {
@@ -542,7 +541,7 @@ Result Parser::ParseShaderBlock() {
     return r;
   }
 
-  auto shader = MakeUnique<Shader>(type);
+  auto shader = std::make_unique<Shader>(type);
 
   token = tokenizer_->NextToken();
   if (!token->IsIdentifier()) {
@@ -682,7 +681,7 @@ Result Parser::ParsePipelineBlock() {
     return r;
   }
 
-  auto pipeline = MakeUnique<Pipeline>(type);
+  auto pipeline = std::make_unique<Pipeline>(type);
 
   token = tokenizer_->NextToken();
   if (!token->IsIdentifier()) {
@@ -1771,7 +1770,7 @@ Result Parser::ParsePipelineVertexData(Pipeline* pipeline) {
       if (!type) {
         return Result("invalid vertex data FORMAT");
       }
-      auto fmt = MakeUnique<Format>(type);
+      auto fmt = std::make_unique<Format>(type);
       format = fmt.get();
       script_->RegisterFormat(std::move(fmt));
     } else {
@@ -1876,7 +1875,7 @@ Result Parser::ParsePipelineSet(Pipeline* pipeline) {
     return Result("expected data value");
   }
 
-  auto fmt = MakeUnique<Format>(type.get());
+  auto fmt = std::make_unique<Format>(type.get());
   Value value;
   if (fmt->IsFloat32() || fmt->IsFloat64()) {
     value.SetDoubleValue(token->AsDouble());
@@ -2339,7 +2338,7 @@ Result Parser::ParsePipelineShaderGroup(Pipeline* pipeline) {
   if (pipeline->GetShaderGroup(tok)) {
     return Result("Group name already exists");
   }
-  std::unique_ptr<ShaderGroup> group = MakeUnique<ShaderGroup>();
+  std::unique_ptr<ShaderGroup> group = std::make_unique<ShaderGroup>();
   group->SetName(tok);
 
   while (true) {
@@ -2428,7 +2427,7 @@ Result Parser::ParseStruct() {
     return Result("missing STRUCT name");
   }
 
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto type = s.get();
 
   Result r = script_->AddType(struct_name, std::move(s));
@@ -2575,7 +2574,7 @@ Result Parser::ParseBuffer() {
   std::unique_ptr<Buffer> buffer;
   auto& cmd = token->AsString();
   if (cmd == "DATA_TYPE") {
-    buffer = MakeUnique<Buffer>();
+    buffer = std::make_unique<Buffer>();
 
     Result r = ParseBufferInitializer(buffer.get());
     if (!r.IsSuccess()) {
@@ -2587,14 +2586,14 @@ Result Parser::ParseBuffer() {
       return Result("BUFFER FORMAT must be an identifier");
     }
 
-    buffer = MakeUnique<Buffer>();
+    buffer = std::make_unique<Buffer>();
 
     auto type = script_->ParseType(token->AsString());
     if (!type) {
       return Result("invalid BUFFER FORMAT");
     }
 
-    auto fmt = MakeUnique<Format>(type);
+    auto fmt = std::make_unique<Format>(type);
     buffer->SetFormat(fmt.get());
     script_->RegisterFormat(std::move(fmt));
 
@@ -2658,7 +2657,7 @@ Result Parser::ParseImage() {
     return Result("missing IMAGE name");
   }
 
-  std::unique_ptr<Buffer> buffer = MakeUnique<Buffer>();
+  std::unique_ptr<Buffer> buffer = std::make_unique<Buffer>();
   buffer->SetName(name);
   bool width_set = false;
   bool height_set = false;
@@ -2682,7 +2681,7 @@ Result Parser::ParseImage() {
       auto type = script_->ParseType(token->AsString());
       std::unique_ptr<Format> fmt;
       if (type != nullptr) {
-        fmt = MakeUnique<Format>(type);
+        fmt = std::make_unique<Format>(type);
         buffer->SetFormat(fmt.get());
       } else {
         auto new_type = ToType(token->AsString());
@@ -2691,7 +2690,7 @@ Result Parser::ParseImage() {
                         "' provided");
         }
 
-        fmt = MakeUnique<Format>(new_type.get());
+        fmt = std::make_unique<Format>(new_type.get());
         buffer->SetFormat(fmt.get());
         script_->RegisterType(std::move(new_type));
       }
@@ -2707,7 +2706,7 @@ Result Parser::ParseImage() {
         return Result("invalid IMAGE FORMAT");
       }
 
-      auto fmt = MakeUnique<Format>(type);
+      auto fmt = std::make_unique<Format>(type);
       buffer->SetFormat(fmt.get());
       script_->RegisterFormat(std::move(fmt));
     } else if (token->AsString() == "MIP_LEVELS") {
@@ -2833,7 +2832,7 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
   auto type = script_->ParseType(token->AsString());
   std::unique_ptr<Format> fmt;
   if (type != nullptr) {
-    fmt = MakeUnique<Format>(type);
+    fmt = std::make_unique<Format>(type);
     buffer->SetFormat(fmt.get());
   } else {
     auto new_type = ToType(token->AsString());
@@ -2841,7 +2840,7 @@ Result Parser::ParseBufferInitializer(Buffer* buffer) {
       return Result("invalid data type '" + token->AsString() + "' provided");
     }
 
-    fmt = MakeUnique<Format>(new_type.get());
+    fmt = std::make_unique<Format>(new_type.get());
     buffer->SetFormat(fmt.get());
     type = new_type.get();
     script_->RegisterType(std::move(new_type));
@@ -3131,7 +3130,7 @@ Result Parser::ParseRun() {
   }
 
   if (pipeline->IsRayTracing()) {
-    auto cmd = MakeUnique<RayTracingCommand>(pipeline);
+    auto cmd = std::make_unique<RayTracingCommand>(pipeline);
     cmd->SetLine(line);
     if (is_timed_execution) {
       cmd->SetTimedExecution();
@@ -3219,7 +3218,7 @@ Result Parser::ParseRun() {
       return Result("RUN command requires compute pipeline");
     }
 
-    auto cmd = MakeUnique<ComputeCommand>(pipeline);
+    auto cmd = std::make_unique<ComputeCommand>(pipeline);
     cmd->SetLine(line);
     cmd->SetX(token->AsUint32());
     if (is_timed_execution) {
@@ -3274,8 +3273,8 @@ Result Parser::ParseRun() {
       return Result("missing X position for RUN command");
     }
 
-    auto cmd =
-        MakeUnique<DrawRectCommand>(pipeline, *pipeline->GetPipelineData());
+    auto cmd = std::make_unique<DrawRectCommand>(pipeline,
+                                                 *pipeline->GetPipelineData());
     cmd->SetLine(line);
     cmd->EnableOrtho();
     if (is_timed_execution) {
@@ -3357,8 +3356,8 @@ Result Parser::ParseRun() {
       return Result("missing X position for RUN command");
     }
 
-    auto cmd =
-        MakeUnique<DrawGridCommand>(pipeline, *pipeline->GetPipelineData());
+    auto cmd = std::make_unique<DrawGridCommand>(pipeline,
+                                                 *pipeline->GetPipelineData());
     cmd->SetLine(line);
     if (is_timed_execution) {
       cmd->SetTimedExecution();
@@ -3548,8 +3547,8 @@ Result Parser::ParseRun() {
       }
     }
 
-    auto cmd =
-        MakeUnique<DrawArraysCommand>(pipeline, *pipeline->GetPipelineData());
+    auto cmd = std::make_unique<DrawArraysCommand>(
+        pipeline, *pipeline->GetPipelineData());
     cmd->SetLine(line);
     cmd->SetTopology(topo);
     cmd->SetFirstVertexIndex(start_idx);
@@ -3587,7 +3586,7 @@ Result Parser::ParseClear() {
     return Result("CLEAR command requires graphics pipeline");
   }
 
-  auto cmd = MakeUnique<ClearCommand>(pipeline);
+  auto cmd = std::make_unique<ClearCommand>(pipeline);
   cmd->SetLine(line);
   command_list_.push_back(std::move(cmd));
 
@@ -3711,7 +3710,7 @@ Result Parser::ParseExpect() {
                     " command cannot compare buffers of different height");
     }
 
-    auto cmd = MakeUnique<CompareBufferCommand>(buffer, buffer_2);
+    auto cmd = std::make_unique<CompareBufferCommand>(buffer, buffer_2);
     if (type == "RMSE_BUFFER") {
       cmd->SetComparator(CompareBufferCommand::Comparator::kRmse);
 
@@ -3789,7 +3788,7 @@ Result Parser::ParseExpect() {
       return Result("invalid Y value in EXPECT command");
     }
 
-    auto probe = MakeUnique<ProbeCommand>(buffer);
+    auto probe = std::make_unique<ProbeCommand>(buffer);
     probe->SetLine(line);
     probe->SetX(x);
     probe->SetY(y);
@@ -3891,7 +3890,7 @@ Result Parser::ParseExpect() {
     return {};
   }
 
-  auto probe = MakeUnique<ProbeSSBOCommand>(buffer);
+  auto probe = std::make_unique<ProbeSSBOCommand>(buffer);
   probe->SetLine(line);
 
   if (token->IsIdentifier() && token->AsString() == "TOLERANCE") {
@@ -4009,7 +4008,7 @@ Result Parser::ParseCopy() {
     return Result("COPY origin and destination buffers are identical");
   }
 
-  auto cmd = MakeUnique<CopyCommand>(buffer_from, buffer_to);
+  auto cmd = std::make_unique<CopyCommand>(buffer_from, buffer_to);
   cmd->SetLine(line);
   command_list_.push_back(std::move(cmd));
 
@@ -4033,7 +4032,7 @@ Result Parser::ParseClearColor() {
     return Result("CLEAR_COLOR command requires graphics pipeline");
   }
 
-  auto cmd = MakeUnique<ClearColorCommand>(pipeline);
+  auto cmd = std::make_unique<ClearColorCommand>(pipeline);
   cmd->SetLine(line);
 
   token = tokenizer_->NextToken();
@@ -4101,7 +4100,7 @@ Result Parser::ParseClearDepth() {
     return Result("CLEAR_DEPTH command requires graphics pipeline");
   }
 
-  auto cmd = MakeUnique<ClearDepthCommand>(pipeline);
+  auto cmd = std::make_unique<ClearDepthCommand>(pipeline);
   cmd->SetLine(line);
 
   token = tokenizer_->NextToken();
@@ -4135,7 +4134,7 @@ Result Parser::ParseClearStencil() {
     return Result("CLEAR_STENCIL command requires graphics pipeline");
   }
 
-  auto cmd = MakeUnique<ClearStencilCommand>(pipeline);
+  auto cmd = std::make_unique<ClearStencilCommand>(pipeline);
   cmd->SetLine(line);
 
   token = tokenizer_->NextToken();
@@ -4230,7 +4229,7 @@ Result Parser::ParseRepeat() {
     return Result("missing END for REPEAT command");
   }
 
-  auto cmd = MakeUnique<RepeatCommand>(count);
+  auto cmd = std::make_unique<RepeatCommand>(count);
   cmd->SetCommands(std::move(command_list_));
 
   std::swap(cur_commands, command_list_);
@@ -4344,7 +4343,7 @@ Result Parser::ParseSampler() {
     return Result("invalid token when looking for sampler name");
   }
 
-  auto sampler = MakeUnique<Sampler>();
+  auto sampler = std::make_unique<Sampler>();
   sampler->SetName(token->AsString());
 
   token = tokenizer_->NextToken();
@@ -4555,7 +4554,7 @@ Result Parser::ParseBLAS() {
         "Bottom level acceleration structure with this name already defined");
   }
 
-  std::unique_ptr<BLAS> blas = MakeUnique<BLAS>();
+  std::unique_ptr<BLAS> blas = std::make_unique<BLAS>();
   blas->SetName(name);
 
   token = tokenizer_->NextToken();
@@ -4616,7 +4615,7 @@ Result Parser::ParseBLAS() {
 }
 
 Result Parser::ParseBLASTriangle(BLAS* blas) {
-  std::unique_ptr<Geometry> geometry = MakeUnique<Geometry>();
+  std::unique_ptr<Geometry> geometry = std::make_unique<Geometry>();
   std::vector<float> g;
   uint32_t flags = 0;
   geometry->SetType(GeometryType::kTriangle);
@@ -4671,7 +4670,7 @@ Result Parser::ParseBLASTriangle(BLAS* blas) {
 }
 
 Result Parser::ParseBLASAABB(BLAS* blas) {
-  std::unique_ptr<Geometry> geometry = MakeUnique<Geometry>();
+  std::unique_ptr<Geometry> geometry = std::make_unique<Geometry>();
   std::vector<float> g;
   uint32_t flags = 0;
   geometry->SetType(GeometryType::kAABB);
@@ -4783,7 +4782,7 @@ Result Parser::ParseTLAS() {
     return Result("New line expected");
   }
 
-  std::unique_ptr<TLAS> tlas = MakeUnique<TLAS>();
+  std::unique_ptr<TLAS> tlas = std::make_unique<TLAS>();
 
   tlas->SetName(name);
 
@@ -4827,7 +4826,7 @@ Result Parser::ParseTLAS() {
 // 0-16777215] [FLAGS {flags}] [TRANSFORM {float x 12} END]
 Result Parser::ParseBLASInstance(TLAS* tlas) {
   std::unique_ptr<Token> token;
-  std::unique_ptr<BLASInstance> instance = MakeUnique<BLASInstance>();
+  std::unique_ptr<BLASInstance> instance = std::make_unique<BLASInstance>();
 
   token = tokenizer_->NextToken();
 
@@ -5025,7 +5024,7 @@ Result Parser::ParseSBT(Pipeline* pipeline) {
     return Result("SHADER_BINDINGS_TABLE with this name already defined");
   }
 
-  std::unique_ptr<SBT> sbt = MakeUnique<SBT>();
+  std::unique_ptr<SBT> sbt = std::make_unique<SBT>();
   sbt->SetName(name);
 
   token = tokenizer_->NextToken();
@@ -5058,7 +5057,7 @@ Result Parser::ParseSBT(Pipeline* pipeline) {
           "Shader group not found neither in pipeline, nor in libraries");
     }
 
-    std::unique_ptr<SBTRecord> sbtrecord = MakeUnique<SBTRecord>();
+    std::unique_ptr<SBTRecord> sbtrecord = std::make_unique<SBTRecord>();
 
     sbtrecord->SetUsedShaderGroupName(tok);
     sbtrecord->SetIndex(index);

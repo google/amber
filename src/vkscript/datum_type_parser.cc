@@ -14,7 +14,6 @@
 
 #include "src/vkscript/datum_type_parser.h"
 
-#include "src/make_unique.h"
 #include "src/type_parser.h"
 
 namespace amber {

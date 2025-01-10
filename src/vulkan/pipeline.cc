@@ -22,7 +22,6 @@
 
 #include "src/command.h"
 #include "src/engine.h"
-#include "src/make_unique.h"
 #include "src/vulkan/buffer_descriptor.h"
 #include "src/vulkan/compute_pipeline.h"
 #include "src/vulkan/device.h"
@@ -108,9 +107,9 @@ RayTracingPipeline* Pipeline::AsRayTracingPipeline() {
 }
 
 Result Pipeline::Initialize(CommandPool* pool) {
-  push_constant_ = MakeUnique<PushConstant>(device_);
+  push_constant_ = std::make_unique<PushConstant>(device_);
 
-  command_ = MakeUnique<CommandBuffer>(device_, pool);
+  command_ = std::make_unique<CommandBuffer>(device_, pool);
   return command_->Initialize();
 }
 
@@ -452,7 +451,7 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
 
   if (desc == nullptr) {
     if (is_image) {
-      auto image_desc = MakeUnique<ImageDescriptor>(
+      auto image_desc = std::make_unique<ImageDescriptor>(
           cmd->GetBuffer(), desc_type, device_, cmd->GetBaseMipLevel(),
           cmd->GetDescriptorSet(), cmd->GetBinding(), this);
       if (cmd->IsCombinedImageSampler()) {
@@ -461,7 +460,7 @@ Result Pipeline::AddBufferDescriptor(const BufferCommand* cmd) {
 
       descriptors.push_back(std::move(image_desc));
     } else {
-      auto buffer_desc = MakeUnique<BufferDescriptor>(
+      auto buffer_desc = std::make_unique<BufferDescriptor>(
           cmd->GetBuffer(), desc_type, device_, cmd->GetDescriptorSet(),
           cmd->GetBinding(), this);
       descriptors.push_back(std::move(buffer_desc));
@@ -520,7 +519,7 @@ Result Pipeline::AddSamplerDescriptor(const SamplerCommand* cmd) {
   auto& descriptors = descriptor_set_info_[cmd->GetDescriptorSet()].descriptors;
 
   if (desc == nullptr) {
-    auto sampler_desc = MakeUnique<SamplerDescriptor>(
+    auto sampler_desc = std::make_unique<SamplerDescriptor>(
         cmd->GetSampler(), DescriptorType::kSampler, device_,
         cmd->GetDescriptorSet(), cmd->GetBinding());
     descriptors.push_back(std::move(sampler_desc));
@@ -551,7 +550,7 @@ Result Pipeline::AddTLASDescriptor(const TLASCommand* cmd) {
   auto& descriptors = descriptor_set_info_[cmd->GetDescriptorSet()].descriptors;
 
   if (desc == nullptr) {
-    auto tlas_desc = MakeUnique<TLASDescriptor>(
+    auto tlas_desc = std::make_unique<TLASDescriptor>(
         cmd->GetTLAS(), DescriptorType::kTLAS, device_, GetBlases(),
         GetTlases(), cmd->GetDescriptorSet(), cmd->GetBinding());
     descriptors.push_back(std::move(tlas_desc));

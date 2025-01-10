@@ -20,7 +20,6 @@
 #include <utility>
 
 #include "amber/amber_vulkan.h"
-#include "src/make_unique.h"
 #include "src/type_parser.h"
 #include "src/vulkan/compute_pipeline.h"
 #include "src/vulkan/graphics_pipeline.h"
@@ -143,7 +142,8 @@ Result EngineVulkan::Initialize(
     return Result("Vulkan::Initialize not all instance extensions supported");
   }
 
-  device_ = MakeUnique<Device>(vk_config->instance, vk_config->physical_device,
+  device_ =
+      std::make_unique<Device>(vk_config->instance, vk_config->physical_device,
                                vk_config->queue_family_index, vk_config->device,
                                vk_config->queue, delegate);
 
@@ -156,7 +156,7 @@ Result EngineVulkan::Initialize(
   }
 
   if (!pool_) {
-    pool_ = MakeUnique<CommandPool>(device_.get());
+    pool_ = std::make_unique<CommandPool>(device_.get());
     r = pool_->Initialize();
     if (!r.IsSuccess()) {
       return r;
@@ -211,19 +211,19 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       return r;
     }
 
-    vk_pipeline = MakeUnique<RayTracingPipeline>(
+    vk_pipeline = std::make_unique<RayTracingPipeline>(
         device_.get(), &blases_, &tlases_, engine_data.fence_timeout_ms,
         engine_data.pipeline_runtime_layer_enabled, stage_create_info,
         pipeline->GetCreateFlags());
     r = vk_pipeline->AsRayTracingPipeline()->Initialize(
         pool_.get(), shader_group_create_info);
   } else if (pipeline->GetType() == PipelineType::kCompute) {
-    vk_pipeline = MakeUnique<ComputePipeline>(
+    vk_pipeline = std::make_unique<ComputePipeline>(
         device_.get(), engine_data.fence_timeout_ms,
         engine_data.pipeline_runtime_layer_enabled, stage_create_info);
     r = vk_pipeline->AsCompute()->Initialize(pool_.get());
   } else {
-    vk_pipeline = MakeUnique<GraphicsPipeline>(
+    vk_pipeline = std::make_unique<GraphicsPipeline>(
         device_.get(), pipeline->GetColorAttachments(),
         pipeline->GetDepthStencilBuffer(), pipeline->GetResolveTargets(),
         engine_data.fence_timeout_ms,
@@ -262,7 +262,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
       return Result("Vulkan vertex buffer format is not supported");
     }
     if (!info.vertex_buffer) {
-      info.vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
+      info.vertex_buffer = std::make_unique<VertexBuffer>(device_.get());
     }
 
     info.vertex_buffer->SetData(static_cast<uint8_t>(vtex_info.location),
@@ -307,7 +307,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
                     std::to_string(static_cast<uint32_t>(buf_info.type)));
     }
 
-    auto cmd = MakeUnique<BufferCommand>(type, pipeline);
+    auto cmd = std::make_unique<BufferCommand>(type, pipeline);
     cmd->SetDescriptorSet(buf_info.descriptor_set);
     cmd->SetBinding(buf_info.binding);
     cmd->SetBaseMipLevel(buf_info.base_mip_level);
@@ -330,7 +330,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
   }
 
   for (const auto& sampler_info : pipeline->GetSamplers()) {
-    auto cmd = MakeUnique<SamplerCommand>(pipeline);
+    auto cmd = std::make_unique<SamplerCommand>(pipeline);
     cmd->SetDescriptorSet(sampler_info.descriptor_set);
     cmd->SetBinding(sampler_info.binding);
     cmd->SetSampler(sampler_info.sampler);
@@ -343,7 +343,7 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
 
   if (info.vk_pipeline->IsRayTracing()) {
     for (const auto& tlas_info : pipeline->GetTLASes()) {
-      auto cmd = MakeUnique<TLASCommand>(pipeline);
+      auto cmd = std::make_unique<TLASCommand>(pipeline);
       cmd->SetDescriptorSet(tlas_info.descriptor_set);
       cmd->SetBinding(tlas_info.binding);
       cmd->SetTLAS(tlas_info.tlas);
@@ -697,11 +697,11 @@ Result EngineVulkan::DoDrawRect(const DrawRectCommand* command) {
   auto type = parser.Parse("R32G32_SFLOAT");
   Format fmt(type.get());
 
-  auto buf = MakeUnique<Buffer>();
+  auto buf = std::make_unique<Buffer>();
   buf->SetFormat(&fmt);
   buf->SetData(std::move(values));
 
-  auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
+  auto vertex_buffer = std::make_unique<VertexBuffer>(device_.get());
   vertex_buffer->SetData(0, buf.get(), InputRate::kVertex, buf->GetFormat(), 0,
                          buf->GetFormat()->SizeInBytes());
 
@@ -791,11 +791,11 @@ Result EngineVulkan::DoDrawGrid(const DrawGridCommand* command) {
   auto type = parser.Parse("R32G32_SFLOAT");
   Format fmt(type.get());
 
-  auto buf = MakeUnique<Buffer>();
+  auto buf = std::make_unique<Buffer>();
   buf->SetFormat(&fmt);
   buf->SetData(std::move(values));
 
-  auto vertex_buffer = MakeUnique<VertexBuffer>(device_.get());
+  auto vertex_buffer = std::make_unique<VertexBuffer>(device_.get());
   vertex_buffer->SetData(0, buf.get(), InputRate::kVertex, buf->GetFormat(), 0,
                          buf->GetFormat()->SizeInBytes());
 

@@ -22,7 +22,6 @@
 #include <utility>
 
 #include "src/command_data.h"
-#include "src/make_unique.h"
 #include "src/tokenizer.h"
 #include "src/type_parser.h"
 #include "src/vkscript/datum_type_parser.h"
@@ -59,7 +58,7 @@ CommandParser::CommandParser(Script* script,
                              const std::string& data)
     : script_(script),
       pipeline_(pipeline),
-      tokenizer_(MakeUnique<Tokenizer>(data)) {
+      tokenizer_(std::make_unique<Tokenizer>(data)) {
   tokenizer_->SetCurrentLine(current_line);
 }
 
@@ -263,7 +262,7 @@ Result CommandParser::Parse() {
 }
 
 Result CommandParser::ProcessDrawRect() {
-  auto cmd = MakeUnique<DrawRectCommand>(pipeline_, pipeline_data_);
+  auto cmd = std::make_unique<DrawRectCommand>(pipeline_, pipeline_data_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   if (pipeline_->GetVertexBuffers().size() > 1) {
@@ -325,7 +324,7 @@ Result CommandParser::ProcessDrawRect() {
 }
 
 Result CommandParser::ProcessDrawArrays() {
-  auto cmd = MakeUnique<DrawArraysCommand>(pipeline_, pipeline_data_);
+  auto cmd = std::make_unique<DrawArraysCommand>(pipeline_, pipeline_data_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
   bool instanced = false;
 
@@ -392,7 +391,7 @@ Result CommandParser::ProcessDrawArrays() {
 }
 
 Result CommandParser::ProcessCompute() {
-  auto cmd = MakeUnique<ComputeCommand>(pipeline_);
+  auto cmd = std::make_unique<ComputeCommand>(pipeline_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -441,7 +440,7 @@ Result CommandParser::ProcessClear() {
     std::string str = token->AsString();
     cmd_suffix = str + " ";
     if (str == "depth") {
-      cmd = MakeUnique<ClearDepthCommand>(pipeline_);
+      cmd = std::make_unique<ClearDepthCommand>(pipeline_);
       cmd->SetLine(tokenizer_->GetCurrentLine());
 
       token = tokenizer_->NextToken();
@@ -452,7 +451,7 @@ Result CommandParser::ProcessClear() {
 
       cmd->AsClearDepth()->SetValue(token->AsFloat());
     } else if (str == "stencil") {
-      cmd = MakeUnique<ClearStencilCommand>(pipeline_);
+      cmd = std::make_unique<ClearStencilCommand>(pipeline_);
       cmd->SetLine(tokenizer_->GetCurrentLine());
 
       token = tokenizer_->NextToken();
@@ -467,7 +466,7 @@ Result CommandParser::ProcessClear() {
 
       cmd->AsClearStencil()->SetValue(token->AsUint32());
     } else if (str == "color") {
-      cmd = MakeUnique<ClearColorCommand>(pipeline_);
+      cmd = std::make_unique<ClearColorCommand>(pipeline_);
       cmd->SetLine(tokenizer_->GetCurrentLine());
 
       token = tokenizer_->NextToken();
@@ -504,7 +503,7 @@ Result CommandParser::ProcessClear() {
 
     token = tokenizer_->NextToken();
   } else {
-    cmd = MakeUnique<ClearCommand>(pipeline_);
+    cmd = std::make_unique<ClearCommand>(pipeline_);
     cmd->SetLine(tokenizer_->GetCurrentLine());
   }
   if (!token->IsEOS() && !token->IsEOL()) {
@@ -565,8 +564,8 @@ Result CommandParser::ParseValues(const std::string& name,
 }
 
 Result CommandParser::ProcessSSBO() {
-  auto cmd =
-      MakeUnique<BufferCommand>(BufferCommand::BufferType::kSSBO, pipeline_);
+  auto cmd = std::make_unique<BufferCommand>(BufferCommand::BufferType::kSSBO,
+                                             pipeline_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -609,7 +608,7 @@ Result CommandParser::ProcessSSBO() {
 
     auto* buffer = pipeline_->GetBufferForBinding(set, binding);
     if (!buffer) {
-      auto b = MakeUnique<Buffer>();
+      auto b = std::make_unique<Buffer>();
       b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
       buffer = b.get();
       script_->AddBuffer(std::move(b));
@@ -635,7 +634,7 @@ Result CommandParser::ProcessSSBO() {
       return Result("Invalid type provided: " + token->AsString());
     }
 
-    auto fmt = MakeUnique<Format>(type.get());
+    auto fmt = std::make_unique<Format>(type.get());
     auto* buf = cmd->GetBuffer();
     if (buf->FormatIsDefault() || !buf->GetFormat()) {
       buf->SetFormat(fmt.get());
@@ -690,7 +689,7 @@ Result CommandParser::ProcessSSBO() {
     if (!buf->GetFormat()) {
       TypeParser parser;
       auto type = parser.Parse("R8_SINT");
-      auto fmt = MakeUnique<Format>(type.get());
+      auto fmt = std::make_unique<Format>(type.get());
       buf->SetFormat(fmt.get());
       script_->RegisterFormat(std::move(fmt));
       script_->RegisterType(std::move(type));
@@ -725,8 +724,8 @@ Result CommandParser::ProcessUniform() {
   std::unique_ptr<BufferCommand> cmd;
   bool is_ubo = false;
   if (token->AsString() == "ubo") {
-    cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kUniform,
-                                    pipeline_);
+    cmd = std::make_unique<BufferCommand>(BufferCommand::BufferType::kUniform,
+                                          pipeline_);
     cmd->SetLine(tokenizer_->GetCurrentLine());
 
     token = tokenizer_->NextToken();
@@ -771,7 +770,7 @@ Result CommandParser::ProcessUniform() {
 
     auto* buffer = pipeline_->GetBufferForBinding(set, binding);
     if (!buffer) {
-      auto b = MakeUnique<Buffer>();
+      auto b = std::make_unique<Buffer>();
       b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
       buffer = b.get();
       script_->AddBuffer(std::move(b));
@@ -782,14 +781,14 @@ Result CommandParser::ProcessUniform() {
     cmd->SetBuffer(buffer);
 
   } else {
-    cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kPushConstant,
-                                    pipeline_);
+    cmd = std::make_unique<BufferCommand>(
+        BufferCommand::BufferType::kPushConstant, pipeline_);
     cmd->SetLine(tokenizer_->GetCurrentLine());
 
     // Push constants don't have descriptor set and binding values. So, we do
     // not want to try to lookup the buffer or we'll accidentally get whatever
     // is bound at 0:0.
-    auto b = MakeUnique<Buffer>();
+    auto b = std::make_unique<Buffer>();
     b->SetName("AutoBuf-" + std::to_string(script_->GetBuffers().size()));
     cmd->SetBuffer(b.get());
     script_->AddBuffer(std::move(b));
@@ -801,7 +800,7 @@ Result CommandParser::ProcessUniform() {
     return Result("Invalid type provided: " + token->AsString());
   }
 
-  auto fmt = MakeUnique<Format>(type.get());
+  auto fmt = std::make_unique<Format>(type.get());
 
   // uniform is always std140.
   if (is_ubo) {
@@ -905,7 +904,7 @@ Result CommandParser::ProcessTolerance() {
 }
 
 Result CommandParser::ProcessPatch() {
-  auto cmd = MakeUnique<PatchParameterVerticesCommand>(pipeline_);
+  auto cmd = std::make_unique<PatchParameterVerticesCommand>(pipeline_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -938,7 +937,7 @@ Result CommandParser::ProcessPatch() {
 }
 
 Result CommandParser::ProcessEntryPoint(const std::string& name) {
-  auto cmd = MakeUnique<EntryPointCommand>(pipeline_);
+  auto cmd = std::make_unique<EntryPointCommand>(pipeline_);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   auto token = tokenizer_->NextToken();
@@ -988,7 +987,7 @@ Result CommandParser::ProcessProbe(bool relative) {
     return Result("Pipeline missing color buffers, something went wrong.");
   }
 
-  auto cmd = MakeUnique<ProbeCommand>(buffer);
+  auto cmd = std::make_unique<ProbeCommand>(buffer);
   cmd->SetLine(tokenizer_->GetCurrentLine());
 
   cmd->SetTolerances(current_tolerances_);
@@ -2254,14 +2253,14 @@ Result CommandParser::ProcessProbeSSBO() {
                   std::to_string(binding));
   }
 
-  auto fmt = MakeUnique<Format>(type.get());
+  auto fmt = std::make_unique<Format>(type.get());
   if (buffer->FormatIsDefault() || !buffer->GetFormat()) {
     buffer->SetFormat(fmt.get());
   } else if (buffer->GetFormat() && !buffer->GetFormat()->Equal(fmt.get())) {
     return Result("probe format does not match buffer format");
   }
 
-  auto cmd = MakeUnique<ProbeSSBOCommand>(buffer);
+  auto cmd = std::make_unique<ProbeSSBOCommand>(buffer);
   cmd->SetLine(cur_line);
   cmd->SetTolerances(current_tolerances_);
   cmd->SetFormat(fmt.get());

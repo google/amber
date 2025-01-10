@@ -15,7 +15,6 @@
 #include "src/format.h"
 
 #include "gtest/gtest.h"
-#include "src/make_unique.h"
 #include "src/type_parser.h"
 
 namespace amber {
@@ -444,7 +443,7 @@ TEST_F(FormatTest, SegmentRuntimeArray_Std430) {
 //  int32 y;
 // }
 TEST_F(FormatTest, SegmentStruct_Std140) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto u32 = type::Number::Uint(32);
   s->AddMember(f32.get());
@@ -464,7 +463,7 @@ TEST_F(FormatTest, SegmentStruct_Std140) {
   EXPECT_EQ(8u, segs[2].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStruct_Std430) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto u32 = type::Number::Uint(32);
   s->AddMember(f32.get());
@@ -488,7 +487,7 @@ TEST_F(FormatTest, SegmentStruct_Std430) {
 // }
 // Note, the STRIDE is the stride over the entire structure.
 TEST_F(FormatTest, SegmentStructWithStride_Std140) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto u32 = type::Number::Uint(32);
   s->AddMember(f32.get());
@@ -509,7 +508,7 @@ TEST_F(FormatTest, SegmentStructWithStride_Std140) {
   EXPECT_EQ((20u - sizeof(float) - sizeof(uint32_t)), segs[2].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithStride_Std430) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto u32 = type::Number::Uint(32);
   s->AddMember(f32.get());
@@ -535,7 +534,7 @@ TEST_F(FormatTest, SegmentStructWithStride_Std430) {
 //  int32 y;
 // }
 TEST_F(FormatTest, SegmentStructWithMemberOffset_Std140) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto u32 = type::Number::Uint(32);
 
@@ -560,7 +559,7 @@ TEST_F(FormatTest, SegmentStructWithMemberOffset_Std140) {
   EXPECT_EQ(4u, segs[3].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithMemberOffset_Std430) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto u32 = type::Number::Uint(32);
 
@@ -591,13 +590,13 @@ TEST_F(FormatTest, SegmentStructWithMemberOffset_Std430) {
 //   float y;
 // }
 TEST_F(FormatTest, SegmentStructWithStruct_Std140) {
-  auto x = MakeUnique<type::Struct>();
+  auto x = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto i32 = type::Number::Int(32);
   x->AddMember(i32.get());
   x->AddMember(f32.get());
 
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   s->AddMember(x.get());
   s->AddMember(f32.get());
 
@@ -619,13 +618,13 @@ TEST_F(FormatTest, SegmentStructWithStruct_Std140) {
   EXPECT_EQ(12u, segs[4].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithStruct_Std430) {
-  auto x = MakeUnique<type::Struct>();
+  auto x = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto i32 = type::Number::Int(32);
   x->AddMember(i32.get());
   x->AddMember(f32.get());
 
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   s->AddMember(x.get());
   s->AddMember(f32.get());
 
@@ -649,7 +648,7 @@ TEST_F(FormatTest, SegmentStructWithStruct_Std430) {
 //   float y;
 // }
 TEST_F(FormatTest, SegmentStructWithVec2_Std140) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto i32 = type::Number::Int(32);
   auto vec2 = type::Number::Float(32);
@@ -684,7 +683,7 @@ TEST_F(FormatTest, SegmentStructWithVec2_Std140) {
   EXPECT_EQ(12u, segs[5].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithVec2_Std430) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto i32 = type::Number::Int(32);
   auto vec2 = type::Number::Float(32);
@@ -725,7 +724,7 @@ TEST_F(FormatTest, SegmentStructWithVec2_Std430) {
 //   float y;
 // }
 TEST_F(FormatTest, SegmentStructWithFloatPackedToVec_Std140) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto i32 = type::Number::Int(32);
   auto vec3 = type::Number::Float(32);
@@ -759,7 +758,7 @@ TEST_F(FormatTest, SegmentStructWithFloatPackedToVec_Std140) {
   EXPECT_EQ(4u, segs[5].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithFloatPackedToVec_Std430) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto i32 = type::Number::Int(32);
   auto vec3 = type::Number::Float(32);
@@ -799,7 +798,7 @@ TEST_F(FormatTest, SegmentStructWithFloatPackedToVec_Std430) {
 //   vec2<float> y;
 // }
 TEST_F(FormatTest, SegmentStructVec3Vec2_Std140) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto i32 = type::Number::Int(32);
   auto vec3 = type::Number::Float(32);
   vec3->SetRowCount(3);
@@ -842,7 +841,7 @@ TEST_F(FormatTest, SegmentStructVec3Vec2_Std140) {
   EXPECT_EQ(8u, segs[8].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructVec3Vec2_Std430) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto i32 = type::Number::Int(32);
   auto vec3 = type::Number::Float(32);
   vec3->SetRowCount(3);
@@ -891,7 +890,7 @@ TEST_F(FormatTest, SegmentStructVec3Vec2_Std430) {
 //   float y;
 // }
 TEST_F(FormatTest, SegmentStructMat2x2_Std140) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto i32 = type::Number::Int(32);
   auto mat2x2 = type::Number::Float(32);
@@ -936,7 +935,7 @@ TEST_F(FormatTest, SegmentStructMat2x2_Std140) {
   EXPECT_EQ(12u, segs[9].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructMat2x2_Std430) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto i32 = type::Number::Int(32);
   auto mat2x2 = type::Number::Float(32);
@@ -987,10 +986,10 @@ TEST_F(FormatTest, SegmentStructMat2x2_Std430) {
 //   float y;
 // }
 TEST_F(FormatTest, SegmentStructWithStructNoPack_Std140) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto i32 = type::Number::Int(32);
-  auto x = MakeUnique<type::Struct>();
+  auto x = std::make_unique<type::Struct>();
   x->AddMember(i32.get());
   x->AddMember(i32.get());
   x->AddMember(f32.get());
@@ -1031,10 +1030,10 @@ TEST_F(FormatTest, SegmentStructWithStructNoPack_Std140) {
   EXPECT_EQ(12u, segs[7].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithStructNoPack_Std430) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto i32 = type::Number::Int(32);
-  auto x = MakeUnique<type::Struct>();
+  auto x = std::make_unique<type::Struct>();
   x->AddMember(i32.get());
   x->AddMember(i32.get());
   x->AddMember(f32.get());
@@ -1076,13 +1075,13 @@ TEST_F(FormatTest, SegmentStructWithStructNoPack_Std430) {
 //   float y;
 // }
 TEST_F(FormatTest, SegmentStructWithStructArray_Std140) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto i32 = type::Number::Int(32);
   auto f32_ary = type::Number::Float(32);
   f32_ary->SetIsSizedArray(3);
 
-  auto x = MakeUnique<type::Struct>();
+  auto x = std::make_unique<type::Struct>();
   x->AddMember(i32.get());
   x->AddMember(i32.get());
   x->AddMember(f32_ary.get());
@@ -1138,12 +1137,12 @@ TEST_F(FormatTest, SegmentStructWithStructArray_Std140) {
   EXPECT_EQ(12u, segs[12].SizeInBytes());
 }
 TEST_F(FormatTest, SegmentStructWithStructArray_Std430) {
-  auto s = MakeUnique<type::Struct>();
+  auto s = std::make_unique<type::Struct>();
   auto f32 = type::Number::Float(32);
   auto i32 = type::Number::Int(32);
   auto f32_ary = type::Number::Float(32);
   f32_ary->SetIsSizedArray(3);
-  auto x = MakeUnique<type::Struct>();
+  auto x = std::make_unique<type::Struct>();
   x->AddMember(i32.get());
   x->AddMember(i32.get());
   x->AddMember(f32_ary.get());

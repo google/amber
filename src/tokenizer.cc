@@ -19,8 +19,6 @@
 #include <limits>
 #include <sstream>
 
-#include "src/make_unique.h"
-
 namespace amber {
 
 Token::Token(TokenType type) : type_(type) {}
@@ -61,7 +59,7 @@ Tokenizer::~Tokenizer() = default;
 std::unique_ptr<Token> Tokenizer::NextToken() {
   SkipWhitespace();
   if (current_position_ >= data_.length()) {
-    return MakeUnique<Token>(TokenType::kEOS);
+    return std::make_unique<Token>(TokenType::kEOS);
   }
 
   if (data_[current_position_] == '#') {
@@ -69,13 +67,13 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
     SkipWhitespace();
   }
   if (current_position_ >= data_.length()) {
-    return MakeUnique<Token>(TokenType::kEOS);
+    return std::make_unique<Token>(TokenType::kEOS);
   }
 
   if (data_[current_position_] == '\n') {
     ++current_line_;
     ++current_position_;
-    return MakeUnique<Token>(TokenType::kEOL);
+    return std::make_unique<Token>(TokenType::kEOL);
   }
 
   if (data_[current_position_] == '"') {
@@ -94,7 +92,7 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
         case '"':
           if (!escape) {
             current_position_++;  // Skip closing quote
-            auto tok = MakeUnique<Token>(TokenType::kString);
+            auto tok = std::make_unique<Token>(TokenType::kString);
             tok->SetStringValue(tok_str);
             return tok;
           }
@@ -153,7 +151,7 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
       tok_str += c;
     }
 
-    auto tok = MakeUnique<Token>(TokenType::kString);
+    auto tok = std::make_unique<Token>(TokenType::kString);
     tok->SetStringValue(tok_str);
     return tok;
   }
@@ -162,7 +160,7 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
   // want to consume any other characters.
   if (data_[current_position_] == ',' || data_[current_position_] == '(' ||
       data_[current_position_] == ')') {
-    auto tok = MakeUnique<Token>(TokenType::kIdentifier);
+    auto tok = std::make_unique<Token>(TokenType::kIdentifier);
     std::string str(1, data_[current_position_]);
     tok->SetStringValue(str);
     ++current_position_;
@@ -209,14 +207,14 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
       }
     }
 
-    auto tok = MakeUnique<Token>(TokenType::kIdentifier);
+    auto tok = std::make_unique<Token>(TokenType::kIdentifier);
     tok->SetStringValue(tok_str);
     return tok;
   }
 
   // Handle hex strings
   if (!is_nan && tok_str.size() > 2 && tok_str[0] == '0' && tok_str[1] == 'x') {
-    auto tok = MakeUnique<Token>(TokenType::kHex);
+    auto tok = std::make_unique<Token>(TokenType::kHex);
     tok->SetStringValue(tok_str);
     return tok;
   }
@@ -237,12 +235,12 @@ std::unique_ptr<Token> Tokenizer::NextToken() {
 
   char* final_pos = nullptr;
   if (is_double) {
-    tok = MakeUnique<Token>(TokenType::kDouble);
+    tok = std::make_unique<Token>(TokenType::kDouble);
 
     double val = strtod(tok_str.c_str(), &final_pos);
     tok->SetDoubleValue(val);
   } else {
-    tok = MakeUnique<Token>(TokenType::kInteger);
+    tok = std::make_unique<Token>(TokenType::kInteger);
 
     uint64_t val = uint64_t(std::strtoull(tok_str.c_str(), &final_pos, 10));
     tok->SetUint64Value(static_cast<uint64_t>(val));

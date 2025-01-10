@@ -20,7 +20,6 @@
 #include <limits>
 #include <set>
 
-#include "src/make_unique.h"
 #include "src/type_parser.h"
 
 namespace amber {
@@ -67,7 +66,7 @@ Pipeline::Pipeline(PipelineType type) : pipeline_type_(type) {}
 Pipeline::~Pipeline() = default;
 
 std::unique_ptr<Pipeline> Pipeline::Clone() const {
-  auto clone = MakeUnique<Pipeline>(pipeline_type_);
+  auto clone = std::make_unique<Pipeline>(pipeline_type_);
   clone->shaders_ = shaders_;
   clone->color_attachments_ = color_attachments_;
   clone->vertex_buffers_ = vertex_buffers_;
@@ -507,9 +506,9 @@ Result Pipeline::CreatePushConstantBuffer() {
 
   TypeParser parser;
   auto type = parser.Parse("R8_UINT");
-  auto fmt = MakeUnique<Format>(type.get());
+  auto fmt = std::make_unique<Format>(type.get());
 
-  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
+  std::unique_ptr<Buffer> buf = std::make_unique<Buffer>();
   buf->SetName(kGeneratedPushConstantBuffer);
   buf->SetFormat(fmt.get());
 
@@ -526,9 +525,9 @@ Result Pipeline::CreatePushConstantBuffer() {
 std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() {
   TypeParser parser;
   auto type = parser.Parse(kDefaultColorBufferFormat);
-  auto fmt = MakeUnique<Format>(type.get());
+  auto fmt = std::make_unique<Format>(type.get());
 
-  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
+  std::unique_ptr<Buffer> buf = std::make_unique<Buffer>();
   buf->SetName(kGeneratedColorBuffer);
   buf->SetFormat(fmt.get());
 
@@ -541,9 +540,9 @@ std::unique_ptr<Buffer>
 Pipeline::GenerateDefaultDepthStencilAttachmentBuffer() {
   TypeParser parser;
   auto type = parser.Parse(kDefaultDepthBufferFormat);
-  auto fmt = MakeUnique<Format>(type.get());
+  auto fmt = std::make_unique<Format>(type.get());
 
-  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
+  std::unique_ptr<Buffer> buf = std::make_unique<Buffer>();
   buf->SetName(kGeneratedDepthBuffer);
   buf->SetFormat(fmt.get());
 
@@ -909,7 +908,7 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
         }
 
         // Add a new buffer for this descriptor set and binding.
-        opencl_pod_buffers_.push_back(MakeUnique<Buffer>());
+        opencl_pod_buffers_.push_back(std::make_unique<Buffer>());
         buffer = opencl_pod_buffers_.back().get();
         auto buffer_type =
             kind == Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD
@@ -920,7 +919,7 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
         // byte-based and it simplifies the logic for sizing below.
         TypeParser parser;
         auto type = parser.Parse("R8_UINT");
-        auto fmt = MakeUnique<Format>(type.get());
+        auto fmt = std::make_unique<Format>(type.get());
         buffer->SetFormat(fmt.get());
         formats_.push_back(std::move(fmt));
         types_.push_back(std::move(type));
@@ -996,7 +995,7 @@ Result Pipeline::GenerateOpenCLLiteralSamplers() {
       continue;
     }
 
-    auto literal_sampler = MakeUnique<Sampler>();
+    auto literal_sampler = std::make_unique<Sampler>();
     literal_sampler->SetName("literal." + std::to_string(info.descriptor_set) +
                              "." + std::to_string(info.binding));
 

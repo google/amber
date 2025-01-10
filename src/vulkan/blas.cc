@@ -133,8 +133,8 @@ Result BLAS::CreateBLAS(amber::BLAS* blas) {
   const uint32_t accelerationStructureSize =
       static_cast<uint32_t>(sizeInfo.accelerationStructureSize);
 
-  buffer_ =
-      MakeUnique<TransferBuffer>(device_, accelerationStructureSize, nullptr);
+  buffer_ = std::make_unique<TransferBuffer>(device_, accelerationStructureSize,
+                                             nullptr);
   buffer_->AddUsageFlags(
       VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
@@ -160,7 +160,7 @@ Result BLAS::CreateBLAS(amber::BLAS* blas) {
   accelerationStructureBuildGeometryInfoKHR_.dstAccelerationStructure = blas_;
 
   if (sizeInfo.buildScratchSize > 0) {
-    scratch_buffer_ = MakeUnique<TransferBuffer>(
+    scratch_buffer_ = std::make_unique<TransferBuffer>(
         device_, static_cast<uint32_t>(sizeInfo.buildScratchSize), nullptr);
     scratch_buffer_->AddUsageFlags(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
                                    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
@@ -172,7 +172,7 @@ Result BLAS::CreateBLAS(amber::BLAS* blas) {
   }
 
   if (vertexBufferSize > 0) {
-    vertex_buffer_ = MakeUnique<TransferBuffer>(
+    vertex_buffer_ = std::make_unique<TransferBuffer>(
         device_, static_cast<uint32_t>(vertexBufferSize), nullptr);
     vertex_buffer_->AddUsageFlags(
         VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |

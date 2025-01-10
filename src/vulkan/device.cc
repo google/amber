@@ -25,8 +25,6 @@
 #include <string>
 #include <vector>
 
-#include "src/make_unique.h"
-
 namespace amber {
 namespace vulkan {
 namespace {

@@ -24,7 +24,6 @@
 #include "gtest/gtest.h"
 #include "src/command.h"
 #include "src/float16_helper.h"
-#include "src/make_unique.h"
 #include "src/pipeline.h"
 #include "src/type_parser.h"
 
@@ -44,7 +43,7 @@ class VerifierTest : public testing::Test {
     TypeParser parser;
     color_frame_type_ = parser.Parse("B8G8R8A8_UNORM");
 
-    color_frame_format_ = MakeUnique<Format>(color_frame_type_.get());
+    color_frame_format_ = std::make_unique<Format>(color_frame_type_.get());
     return color_frame_format_.get();
   }
 
@@ -485,7 +484,7 @@ TEST_F(VerifierTest, HexFloatToFloatR16G11B10) {
   frame_buffer |= 380ULL << (16ULL + 11ULL);
   probe.SetB(0.1171875f);
 
-  auto list = MakeUnique<type::List>();
+  auto list = std::make_unique<type::List>();
   list->AddMember(FormatComponentType::kR, FormatMode::kSFloat, 16);
   list->AddMember(FormatComponentType::kG, FormatMode::kSFloat, 11);
   list->AddMember(FormatComponentType::kB, FormatMode::kSFloat, 10);
@@ -527,7 +526,7 @@ TEST_F(VerifierTest, HexFloatToFloatR11G16B10) {
   frame_buffer |= 380ULL << (16ULL + 11ULL);
   probe.SetB(0.1171875f);
 
-  auto list = MakeUnique<type::List>();
+  auto list = std::make_unique<type::List>();
   list->AddMember(FormatComponentType::kR, FormatMode::kSFloat, 11);
   list->AddMember(FormatComponentType::kG, FormatMode::kSFloat, 16);
   list->AddMember(FormatComponentType::kB, FormatMode::kSFloat, 10);
@@ -569,7 +568,7 @@ TEST_F(VerifierTest, HexFloatToFloatR10G11B16) {
   frame_buffer |= 50688ULL << (10ULL + 11ULL);
   probe.SetB(-6.0f);
 
-  auto list = MakeUnique<type::List>();
+  auto list = std::make_unique<type::List>();
   list->AddMember(FormatComponentType::kR, FormatMode::kSFloat, 10);
   list->AddMember(FormatComponentType::kG, FormatMode::kSFloat, 11);
   list->AddMember(FormatComponentType::kB, FormatMode::kSFloat, 16);

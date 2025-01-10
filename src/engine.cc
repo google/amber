@@ -14,8 +14,6 @@
 
 #include "src/engine.h"
 
-#include "src/make_unique.h"
-
 #if AMBER_ENGINE_VULKAN
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
@@ -35,12 +33,12 @@ std::unique_ptr<Engine> Engine::Create(EngineType type) {
   switch (type) {
     case kEngineTypeVulkan:
 #if AMBER_ENGINE_VULKAN
-      engine = MakeUnique<vulkan::EngineVulkan>();
+      engine = std::make_unique<vulkan::EngineVulkan>();
 #endif  // AMBER_ENGINE_VULKAN
       break;
     case kEngineTypeDawn:
 #if AMBER_ENGINE_DAWN
-      engine = MakeUnique<dawn::EngineDawn>();
+      engine = std::make_unique<dawn::EngineDawn>();
 #endif  // AMBER_ENGINE_DAWN
       break;
   }

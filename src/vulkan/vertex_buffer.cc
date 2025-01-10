@@ -17,7 +17,6 @@
 #include <cassert>
 #include <cstring>
 
-#include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
@@ -85,7 +84,7 @@ Result VertexBuffer::SendVertexData(CommandBuffer* command) {
     // Create a new transfer buffer to hold vertex data.
     uint32_t bytes = buf->GetSizeInBytes();
     transfer_buffers_.push_back(
-        MakeUnique<TransferBuffer>(device_, bytes, nullptr));
+        std::make_unique<TransferBuffer>(device_, bytes, nullptr));
     Result r = transfer_buffers_.back()->AddUsageFlags(
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
     if (!r.IsSuccess()) {

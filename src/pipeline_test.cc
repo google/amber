@@ -15,7 +15,6 @@
 #include "src/pipeline.h"
 
 #include "gtest/gtest.h"
-#include "src/make_unique.h"
 #include "src/type_parser.h"
 
 namespace amber {
@@ -262,7 +261,7 @@ TEST_F(PipelineTest, ComputePipelineWithoutShader) {
 TEST_F(PipelineTest, PipelineBufferWithoutFormat) {
   Pipeline p(PipelineType::kCompute);
 
-  auto buf = MakeUnique<Buffer>();
+  auto buf = std::make_unique<Buffer>();
   buf->SetName("MyBuffer");
   p.AddBuffer(buf.get(), BufferType::kStorage, 0, 0, 0, 0, 0, 0);
 
@@ -353,23 +352,23 @@ TEST_F(PipelineTest, Clone) {
   p.AddShader(&v, kShaderTypeVertex);
   p.SetShaderEntryPoint(&v, "my_main");
 
-  auto vtex_buf = MakeUnique<Buffer>();
+  auto vtex_buf = std::make_unique<Buffer>();
   vtex_buf->SetName("vertex_buffer");
   TypeParser parser;
   auto int_type = parser.Parse("R32_SINT");
-  auto int_fmt = MakeUnique<Format>(int_type.get());
+  auto int_fmt = std::make_unique<Format>(int_type.get());
   p.AddVertexBuffer(vtex_buf.get(), 1, InputRate::kVertex, int_fmt.get(), 5,
                     10);
 
-  auto idx_buf = MakeUnique<Buffer>();
+  auto idx_buf = std::make_unique<Buffer>();
   idx_buf->SetName("Index Buffer");
   p.SetIndexBuffer(idx_buf.get());
 
-  auto buf1 = MakeUnique<Buffer>();
+  auto buf1 = std::make_unique<Buffer>();
   buf1->SetName("buf1");
   p.AddBuffer(buf1.get(), BufferType::kStorage, 1, 1, 0, 0, 0, 0);
 
-  auto buf2 = MakeUnique<Buffer>();
+  auto buf2 = std::make_unique<Buffer>();
   buf2->SetName("buf2");
   p.AddBuffer(buf2.get(), BufferType::kStorage, 1, 2, 0, 16, 256, 512);
 
@@ -438,11 +437,11 @@ TEST_F(PipelineTest, OpenCLUpdateBindings) {
   entry2.arg_ordinal = 1;
   p.GetShaders()[0].AddDescriptorEntry("my_main", std::move(entry2));
 
-  auto a_buf = MakeUnique<Buffer>();
+  auto a_buf = std::make_unique<Buffer>();
   a_buf->SetName("buf1");
   p.AddBuffer(a_buf.get(), BufferType::kStorage, "arg_a");
 
-  auto b_buf = MakeUnique<Buffer>();
+  auto b_buf = std::make_unique<Buffer>();
   b_buf->SetName("buf2");
   p.AddBuffer(b_buf.get(), BufferType::kStorage, 1);
 
@@ -483,11 +482,11 @@ TEST_F(PipelineTest, OpenCLUpdateBindingTypeMismatch) {
   entry2.arg_ordinal = 1;
   p.GetShaders()[0].AddDescriptorEntry("my_main", std::move(entry2));
 
-  auto a_buf = MakeUnique<Buffer>();
+  auto a_buf = std::make_unique<Buffer>();
   a_buf->SetName("buf1");
   p.AddBuffer(a_buf.get(), BufferType::kStorage, "arg_a");
 
-  auto b_buf = MakeUnique<Buffer>();
+  auto b_buf = std::make_unique<Buffer>();
   b_buf->SetName("buf2");
   p.AddBuffer(b_buf.get(), BufferType::kUniform, 1);
 
@@ -530,15 +529,15 @@ TEST_F(PipelineTest, OpenCLUpdateBindingImagesAndSamplers) {
   entry2.arg_ordinal = 2;
   p.GetShaders()[0].AddDescriptorEntry("my_main", std::move(entry2));
 
-  auto a_buf = MakeUnique<Buffer>();
+  auto a_buf = std::make_unique<Buffer>();
   a_buf->SetName("buf1");
   p.AddBuffer(a_buf.get(), BufferType::kSampledImage, "arg_a");
 
-  auto b_buf = MakeUnique<Buffer>();
+  auto b_buf = std::make_unique<Buffer>();
   b_buf->SetName("buf2");
   p.AddBuffer(b_buf.get(), BufferType::kStorageImage, 1);
 
-  auto s = MakeUnique<Sampler>();
+  auto s = std::make_unique<Sampler>();
   s->SetName("samp");
   p.AddSampler(s.get(), "arg_c");
 
@@ -593,9 +592,9 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffers) {
 
   TypeParser parser;
   auto int_type = parser.Parse("R32_SINT");
-  auto int_fmt = MakeUnique<Format>(int_type.get());
+  auto int_fmt = std::make_unique<Format>(int_type.get());
   auto char_type = parser.Parse("R8_SINT");
-  auto char_fmt = MakeUnique<Format>(char_type.get());
+  auto char_fmt = std::make_unique<Format>(char_type.get());
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_a";
@@ -659,7 +658,7 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffersBadName) {
 
   TypeParser parser;
   auto int_type = parser.Parse("R32_SINT");
-  auto int_fmt = MakeUnique<Format>(int_type.get());
+  auto int_fmt = std::make_unique<Format>(int_type.get());
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_z";
@@ -702,7 +701,7 @@ TEST_F(PipelineTest, OpenCLGeneratePodBuffersBadSize) {
 
   TypeParser parser;
   auto short_type = parser.Parse("R16_SINT");
-  auto short_fmt = MakeUnique<Format>(short_type.get());
+  auto short_fmt = std::make_unique<Format>(short_type.get());
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "";
@@ -763,9 +762,9 @@ TEST_F(PipelineTest, OpenCLClone) {
 
   TypeParser parser;
   auto int_type = parser.Parse("R32_SINT");
-  auto int_fmt = MakeUnique<Format>(int_type.get());
+  auto int_fmt = std::make_unique<Format>(int_type.get());
   auto char_type = parser.Parse("R8_SINT");
-  auto char_fmt = MakeUnique<Format>(char_type.get());
+  auto char_fmt = std::make_unique<Format>(char_type.get());
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_a";
@@ -921,9 +920,9 @@ TEST_F(PipelineTest, OpenCLPodPushConstants) {
 
   TypeParser parser;
   auto int_type = parser.Parse("R32_SINT");
-  auto int_fmt = MakeUnique<Format>(int_type.get());
+  auto int_fmt = std::make_unique<Format>(int_type.get());
   auto char_type = parser.Parse("R8_SINT");
-  auto char_fmt = MakeUnique<Format>(char_type.get());
+  auto char_fmt = std::make_unique<Format>(char_type.get());
 
   Pipeline::ArgSetInfo arg_info1;
   arg_info1.name = "arg_a";
