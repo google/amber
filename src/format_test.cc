@@ -14,6 +14,8 @@
 
 #include "src/format.h"
 
+#include <memory>
+
 #include "gtest/gtest.h"
 #include "src/type_parser.h"
 
