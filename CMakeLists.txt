@@ -222,12 +222,15 @@ function(amber_default_compile_options TARGET)
       target_compile_options(${TARGET} PRIVATE -fno-rtti)
     endif()
 
-    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
+        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
       target_compile_options(${TARGET} PRIVATE
         -Wno-c++98-compat
         -Wno-c++98-compat-pedantic
         -Wno-format-pedantic
         -Wno-unknown-warning-option
+
+        -Wno-switch-default
       )
       if (NOT ${AMBER_DISABLE_WEVERYTHING})
         target_compile_options(${TARGET} PRIVATE -Weverything)
