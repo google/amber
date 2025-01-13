@@ -1,4 +1,4 @@
-:: Copyright The Amber Authors.
+:: Copyright 2025 The Amber Authors.
 ::
 :: Licensed under the Apache License, Version 2.0 (the "License");
 :: you may not use this file except in compliance with the License.
@@ -32,7 +32,8 @@ python tools\git-sync-deps
 :: #########################################
 if %VS_VERSION% == 2019 (
   call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-  echo "Using VS 2019..."
+) else if %VS_VERSION% == 2022 (
+  call "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build\vcvarsall.bat" x64
 )
 
 cmake --version

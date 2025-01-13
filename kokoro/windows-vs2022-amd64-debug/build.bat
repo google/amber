@@ -1,4 +1,4 @@
-:: Copyright The Amber Authors.
+:: Copyright 2025 The Amber Authors.
 ::
 :: Licensed under the Apache License, Version 2.0 (the "License");
 :: you may not use this file except in compliance with the License.
@@ -17,4 +17,4 @@
 :: Find the directory of the common build script.
 set SCRIPT_DIR=%~dp0
 
-call %SCRIPT_DIR%\..\scripts\windows\build.bat Debug 2019
+call %SCRIPT_DIR%\..\scripts\windows\build.bat Debug 2022
