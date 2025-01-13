@@ -66,8 +66,9 @@ void amber_sample_main(android_app* app) {
 
   if (!failures.empty()) {
     LOGE("\nSummary of Failures:");
-    for (const auto& failure : failures)
+    for (const auto& failure : failures) {
       LOGE("%s", failure.c_str());
+    }
   }
   LOGE("\nsummary: %u pass, %u fail",
        static_cast<uint32_t>(script_info.size() - failures.size()),
@@ -105,7 +106,7 @@ void android_main(struct android_app* app) {
     }
 
     if (result >= 0 && source != nullptr) {
-        source->process(app, source);
+      source->process(app, source);
     }
   }
 }

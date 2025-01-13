@@ -19,7 +19,6 @@
 #include "amber/value.h"
 #include "gtest/gtest.h"
 #include "src/format.h"
-#include "src/make_unique.h"
 #include "src/type_parser.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/command_pool.h"
@@ -137,18 +136,18 @@ class DummyDevice : public Device {
 class VertexBufferTest : public testing::Test {
  public:
   VertexBufferTest()
-      : device_(MakeUnique<DummyDevice>()),
-        commandPool_(MakeUnique<CommandPool>(device_.get())),
+      : device_(std::make_unique<DummyDevice>()),
+        commandPool_(std::make_unique<CommandPool>(device_.get())),
         commandBuffer_(
-            MakeUnique<CommandBuffer>(device_.get(), commandPool_.get())),
-        vertex_buffer_(MakeUnique<VertexBuffer>(device_.get())) {
+            std::make_unique<CommandBuffer>(device_.get(), commandPool_.get())),
+        vertex_buffer_(std::make_unique<VertexBuffer>(device_.get())) {
     commandBuffer_->Initialize();
   }
 
   ~VertexBufferTest() override { vertex_buffer_.reset(); }
 
   Result SetData(uint8_t location, Format* format, std::vector<Value> values) {
-    auto buffer = MakeUnique<Buffer>();
+    auto buffer = std::make_unique<Buffer>();
     buffer->SetFormat(format);
     buffer->SetData(std::move(values));
 

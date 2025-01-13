@@ -28,8 +28,8 @@ TEST_F(VulkanPipelineTest, AddBufferDescriptorAddPushConstant) {
   std::vector<VkPipelineShaderStageCreateInfo> create_infos;
   ComputePipeline pipeline(nullptr, 0, false, create_infos);
 
-  auto cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kPushConstant,
-                                       &amber_pipeline);
+  auto cmd = std::make_unique<BufferCommand>(
+      BufferCommand::BufferType::kPushConstant, &amber_pipeline);
   // Push constant buffers should not be passed to AddBufferDescriptor().
   Result r = pipeline.AddBufferDescriptor(cmd.get());
   ASSERT_FALSE(r.IsSuccess());
@@ -40,8 +40,8 @@ TEST_F(VulkanPipelineTest, AddBufferDescriptorAddBufferTwice) {
   std::vector<VkPipelineShaderStageCreateInfo> create_infos;
   ComputePipeline pipeline(nullptr, 0, false, create_infos);
 
-  auto cmd = MakeUnique<BufferCommand>(BufferCommand::BufferType::kUniform,
-                                       &amber_pipeline);
+  auto cmd = std::make_unique<BufferCommand>(
+      BufferCommand::BufferType::kUniform, &amber_pipeline);
   Result r = pipeline.AddBufferDescriptor(cmd.get());
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
   // Adding same buffer again shouldn't fail.

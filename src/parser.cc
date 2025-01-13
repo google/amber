@@ -14,12 +14,10 @@
 
 #include "src/parser.h"
 
-#include "src/make_unique.h"
-
 namespace amber {
 
 Parser::Parser(Delegate* delegate)
-    : script_(MakeUnique<Script>()), delegate_(delegate) {}
+    : script_(std::make_unique<Script>()), delegate_(delegate) {}
 
 Parser::~Parser() = default;
 

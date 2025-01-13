@@ -16,7 +16,6 @@
 
 #include <cstring>
 
-#include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
@@ -47,8 +46,8 @@ Result IndexBuffer::SendIndexData(CommandBuffer* command, Buffer* buffer) {
     return Result("IndexBuffer::SendIndexData unexpected index buffer format");
   }
 
-  transfer_buffer_ =
-      MakeUnique<TransferBuffer>(device_, buffer->GetSizeInBytes(), nullptr);
+  transfer_buffer_ = std::make_unique<TransferBuffer>(
+      device_, buffer->GetSizeInBytes(), nullptr);
   Result r = transfer_buffer_->AddUsageFlags(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                              VK_BUFFER_USAGE_TRANSFER_DST_BIT);
   if (!r.IsSuccess()) {

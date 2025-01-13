@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include "src/make_unique.h"
 #include "src/shader.h"
 #include "src/type_parser.h"
 #include "src/vkscript/command_parser.h"
@@ -90,7 +89,7 @@ Result Parser::GenerateDefaultPipeline(const SectionParser& section_parser) {
     }
   }
 
-  auto new_pipeline = MakeUnique<Pipeline>(pipeline_type);
+  auto new_pipeline = std::make_unique<Pipeline>(pipeline_type);
   auto* pipeline = new_pipeline.get();
   pipeline->SetName(kDefaultPipelineName);
   pipeline->SetFramebufferWidth(kDefaultFrameBufferSize);
@@ -144,7 +143,7 @@ Result Parser::ProcessSection(const SectionParser::Section& section) {
 Result Parser::ProcessShaderBlock(const SectionParser::Section& section) {
   assert(SectionParser::HasShader(section.section_type));
 
-  auto shader = MakeUnique<Shader>(section.shader_type);
+  auto shader = std::make_unique<Shader>(section.shader_type);
   // Generate a unique name for the shader.
   shader->SetName("vk_shader_" + std::to_string(script_->GetShaders().size()));
   shader->SetFormat(section.format);
@@ -196,7 +195,7 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
                                       token->ToOriginalString()));
       }
 
-      auto fmt = MakeUnique<Format>(type.get());
+      auto fmt = std::make_unique<Format>(type.get());
       script_->GetPipeline(kDefaultPipelineName)
           ->GetColorAttachments()[0]
           .buffer->SetFormat(fmt.get());
@@ -222,7 +221,7 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
         return Result("Only one depthstencil command allowed");
       }
 
-      auto fmt = MakeUnique<Format>(type.get());
+      auto fmt = std::make_unique<Format>(type.get());
       // Generate and add a depth buffer
       auto depth_buf = pipeline->GenerateDefaultDepthStencilAttachmentBuffer();
       depth_buf->SetFormat(fmt.get());
@@ -323,8 +322,8 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
   if (!indices.empty()) {
     TypeParser parser;
     auto type = parser.Parse("R32_UINT");
-    auto fmt = MakeUnique<Format>(type.get());
-    auto b = MakeUnique<Buffer>();
+    auto fmt = std::make_unique<Format>(type.get());
+    auto b = std::make_unique<Buffer>();
     auto* buf = b.get();
     b->SetName("indices");
     b->SetFormat(fmt.get());
@@ -396,7 +395,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
                                     fmt_name.substr(1, fmt_name.length())));
     }
 
-    auto fmt = MakeUnique<Format>(type.get());
+    auto fmt = std::make_unique<Format>(type.get());
     headers.push_back({loc, fmt.get()});
     script_->RegisterFormat(std::move(fmt));
     script_->RegisterType(std::move(type));
@@ -466,7 +465,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
 
   auto* pipeline = script_->GetPipeline(kDefaultPipelineName);
   for (size_t i = 0; i < headers.size(); ++i) {
-    auto buffer = MakeUnique<Buffer>();
+    auto buffer = std::make_unique<Buffer>();
     auto* buf = buffer.get();
     buffer->SetName("Vertices" + std::to_string(i));
     buffer->SetFormat(headers[i].format);

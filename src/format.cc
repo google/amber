@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <utility>
 
-#include "src/make_unique.h"
 #include "src/type_parser.h"
 
 namespace amber {

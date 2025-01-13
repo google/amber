@@ -21,7 +21,6 @@
 
 #include "amber/result.h"
 #include "gtest/gtest.h"
-#include "src/make_unique.h"
 
 namespace amber {
 namespace {

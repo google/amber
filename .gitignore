@@ -35,3 +35,4 @@ cmake-build-*/
 
 ### The 'compile_commands' file can be generated at root
 compile_commands.json
+.DS_Store

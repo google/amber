@@ -28,7 +28,6 @@
 #include "dawn/dawncpp.h"
 #include "src/dawn/pipeline_info.h"
 #include "src/format.h"
-#include "src/make_unique.h"
 #include "src/sleep.h"
 
 namespace amber {

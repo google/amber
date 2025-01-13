@@ -21,7 +21,6 @@
 
 #include "gtest/gtest.h"
 #include "src/engine.h"
-#include "src/make_unique.h"
 #include "src/vkscript/parser.h"
 
 namespace amber {
@@ -222,13 +221,15 @@ class VkScriptExecutorTest : public testing::Test {
   VkScriptExecutorTest() = default;
   ~VkScriptExecutorTest() override = default;
 
-  std::unique_ptr<Engine> MakeEngine() { return MakeUnique<EngineStub>(); }
+  std::unique_ptr<Engine> MakeEngine() {
+    return std::make_unique<EngineStub>();
+  }
   std::unique_ptr<Engine> MakeAndInitializeEngine(
       const std::vector<std::string>& features,
       const std::vector<std::string>& properties,
       const std::vector<std::string>& instance_extensions,
       const std::vector<std::string>& device_extensions) {
-    std::unique_ptr<Engine> engine = MakeUnique<EngineStub>();
+    std::unique_ptr<Engine> engine = std::make_unique<EngineStub>();
     engine->Initialize(nullptr, nullptr, features, properties,
                        instance_extensions, device_extensions);
     return engine;

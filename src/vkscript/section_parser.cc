@@ -19,7 +19,6 @@
 #include <sstream>
 #include <string>
 
-#include "src/make_unique.h"
 #include "src/shader_data.h"
 
 namespace amber {

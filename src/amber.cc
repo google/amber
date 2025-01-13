@@ -24,7 +24,6 @@
 #include "src/descriptor_set_and_binding_parser.h"
 #include "src/engine.h"
 #include "src/executor.h"
-#include "src/make_unique.h"
 #include "src/parser.h"
 #include "src/vkscript/parser.h"
 
@@ -96,9 +95,9 @@ amber::Result Amber::Parse(const std::string& input, amber::Recipe* recipe) {
 
   std::unique_ptr<Parser> parser;
   if (input.substr(0, 7) == "#!amber") {
-    parser = MakeUnique<amberscript::Parser>(GetDelegate());
+    parser = std::make_unique<amberscript::Parser>(GetDelegate());
   } else {
-    parser = MakeUnique<vkscript::Parser>(GetDelegate());
+    parser = std::make_unique<vkscript::Parser>(GetDelegate());
   }
 
   Result r = parser->Parse(input);

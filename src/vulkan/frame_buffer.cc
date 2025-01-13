@@ -19,7 +19,6 @@
 #include <limits>
 #include <vector>
 
-#include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
@@ -68,7 +67,7 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass) {
       const VkImageUsageFlags usage_flags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                                             VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                                             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-      color_images_.push_back(MakeUnique<TransferImage>(
+      color_images_.push_back(std::make_unique<TransferImage>(
           device_, *info->buffer->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
           VK_IMAGE_TYPE_2D, usage_flags, width_ << info->base_mip_level,
           height_ << info->base_mip_level, depth_, info->buffer->GetMipLevels(),
@@ -98,7 +97,7 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass) {
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
-    depth_stencil_image_ = MakeUnique<TransferImage>(
+    depth_stencil_image_ = std::make_unique<TransferImage>(
         device_, *depth_stencil_attachment_.buffer->GetFormat(), aspect,
         VK_IMAGE_TYPE_2D, usage_flags, width_, height_, depth_, 1u, 0u, 1u, 1u);
 
@@ -114,7 +113,7 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass) {
     const VkImageUsageFlags usage_flags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                                           VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    resolve_images_.push_back(MakeUnique<TransferImage>(
+    resolve_images_.push_back(std::make_unique<TransferImage>(
         device_, *info->buffer->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
         VK_IMAGE_TYPE_2D, usage_flags, width_, height_, depth_, 1u, 0u, 1u,
         1u));

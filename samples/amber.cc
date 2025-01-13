@@ -34,7 +34,6 @@
 #include "samples/ppm.h"
 #include "samples/timestamp.h"
 #include "src/build-versions.h"
-#include "src/make_unique.h"
 
 #if AMBER_ENABLE_SPIRV_TOOLS
 #include "spirv-tools/libspirv.hpp"
@@ -533,7 +532,7 @@ int main(int argc, const char** argv) {
     delegate.SetScriptPath(file.substr(0, file.find_last_of("/\\") + 1));
 
     amber::Amber am(&delegate);
-    std::unique_ptr<amber::Recipe> recipe = amber::MakeUnique<amber::Recipe>();
+    std::unique_ptr<amber::Recipe> recipe = std::make_unique<amber::Recipe>();
 
     result = am.Parse(data, recipe.get());
     if (!result.IsSuccess()) {

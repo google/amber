@@ -18,7 +18,6 @@
 #include <cassert>
 #include <limits>
 
-#include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
@@ -26,7 +25,7 @@ namespace amber {
 namespace vulkan {
 
 PushConstant::PushConstant(Device* device)
-    : device_(device), buffer_(MakeUnique<Buffer>()) {}
+    : device_(device), buffer_(std::make_unique<Buffer>()) {}
 
 PushConstant::~PushConstant() = default;
 

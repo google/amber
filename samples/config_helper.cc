@@ -19,8 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "src/make_unique.h"
-
 #if AMBER_ENGINE_DAWN
 #include "samples/config_helper_dawn.h"
 #endif  // AMBER_ENGINE_DAWN
@@ -51,14 +49,14 @@ amber::Result ConfigHelper::CreateConfig(
   switch (engine) {
     case amber::kEngineTypeVulkan:
 #if AMBER_ENGINE_VULKAN
-      impl_ = amber::MakeUnique<ConfigHelperVulkan>();
+      impl_ = std::make_unique<ConfigHelperVulkan>();
       break;
 #else
       return amber::Result("Unable to create engine config for Vulkan");
 #endif  // AMBER_ENGINE_VULKAN
     case amber::kEngineTypeDawn:
 #if AMBER_ENGINE_DAWN
-      impl_ = amber::MakeUnique<ConfigHelperDawn>();
+      impl_ = std::make_unique<ConfigHelperDawn>();
       break;
 #else
       return amber::Result("Unable to create engine config for Dawn");

@@ -58,7 +58,8 @@ Result TLAS::CreateTLAS(amber::TLAS* tlas, BlasesMap* blases) {
   const uint32_t ib_size =
       uint32_t(instances_count_ * sizeof(VkAccelerationStructureInstanceKHR));
 
-  instance_buffer_ = MakeUnique<TransferBuffer>(device_, ib_size, nullptr);
+  instance_buffer_ =
+      std::make_unique<TransferBuffer>(device_, ib_size, nullptr);
   instance_buffer_->AddUsageFlags(
       VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
@@ -153,7 +154,7 @@ Result TLAS::CreateTLAS(amber::TLAS* tlas, BlasesMap* blases) {
   const uint32_t as_size =
       static_cast<uint32_t>(sizeInfo.accelerationStructureSize);
 
-  buffer_ = MakeUnique<TransferBuffer>(device_, as_size, nullptr);
+  buffer_ = std::make_unique<TransferBuffer>(device_, as_size, nullptr);
   buffer_->AddUsageFlags(
       VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
@@ -183,7 +184,7 @@ Result TLAS::CreateTLAS(amber::TLAS* tlas, BlasesMap* blases) {
   accelerationStructureBuildGeometryInfoKHR_.dstAccelerationStructure = tlas_;
 
   if (sizeInfo.buildScratchSize > 0) {
-    scratch_buffer_ = MakeUnique<TransferBuffer>(
+    scratch_buffer_ = std::make_unique<TransferBuffer>(
         device_, static_cast<uint32_t>(sizeInfo.buildScratchSize), nullptr);
     scratch_buffer_->AddUsageFlags(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
                                    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);

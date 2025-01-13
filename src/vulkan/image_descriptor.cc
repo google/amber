@@ -88,7 +88,7 @@ Result ImageDescriptor::CreateResourceIfNeeded() {
       usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
     }
 
-    auto transfer_image = MakeUnique<TransferImage>(
+    auto transfer_image = std::make_unique<TransferImage>(
         device_, *fmt, aspect, image_type, usage, amber_buffer->GetWidth(),
         amber_buffer->GetHeight(), amber_buffer->GetDepth(),
         amber_buffer->GetMipLevels(), base_mip_level_, VK_REMAINING_MIP_LEVELS,

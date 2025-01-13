@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "src/format_data.h"
-#include "src/make_unique.h"
 #include "src/type.h"
 
 namespace amber {

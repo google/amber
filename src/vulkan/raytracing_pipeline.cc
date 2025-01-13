@@ -136,7 +136,7 @@ Result RayTracingPipeline::getVulkanSBTRegion(
     auto x = sbtses_.find(aSBT);
 
     if (x == sbtses_.end()) {
-      auto p = MakeUnique<amber::vulkan::SBT>(device_);
+      auto p = std::make_unique<amber::vulkan::SBT>(device_);
       sbts_.push_back(std::move(p));
       auto sbt_vulkan = sbtses_.emplace(aSBT, sbts_.back().get());
 
