@@ -1024,6 +1024,10 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       supports_.ray_tracing_pipeline =
           ray_tracing_pipeline_features.rayTracingPipeline;
     }
+    if (supports_.depth_clamp_zero_one) {
+      supports_.depth_clamp_zero_one =
+          depth_clamp_zero_one_features.depthClampZeroOne;
+    }
 
     std::vector<std::string> required_features1;
     for (const auto& feature : required_features) {
