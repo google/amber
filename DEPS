@@ -11,8 +11,8 @@ vars = {
   'swiftshader_git': 'https://swiftshader.googlesource.com',
   'martinus_git': 'https://github.com/martinus',
 
-  'clspv_llvm_revision': 'b70366c9c430e1eadd59d5a1dfbb9c4d84f83de5',
-  'clspv_revision': 'f99809bdab1710846633b4ec24f5448263e75da7',
+  'clspv_llvm_revision': '4a2ebd6661cf1c929c280e863e4299164800413e',
+  'clspv_revision': '05fe1edbafb8d98ce798e7d9feb4a219bea114ef',
   'cpplint_revision': 'fa12a0bbdafa15291276ddd2a2dcd2ac7a2ce4cb',
   'dxc_revision': '773b01272719e07ea369bc17f5ddfce248751c7a',
   'directx_headers_revision': '980971e835876dc0cde415e8f9bc646e64667bf7',
