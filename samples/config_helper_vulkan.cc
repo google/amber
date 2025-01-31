@@ -740,8 +740,9 @@ std::string stageFlagBitsToNames(const VkShaderStageFlags bits) {
 }
 
 bool StartsWith(const std::string& str, const std::string& prefix) {
-  if (prefix.size() > str.size())
+  if (prefix.size() > str.size()) {
     return false;
+  }
   return std::equal(prefix.begin(), prefix.end(), str.begin());
 }
 
@@ -1287,9 +1288,7 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       } else if (feature == k8BitStorage_PushConstant) {
         features_.storage_8bit.storagePushConstant8 = VK_TRUE;
       }
-    }
-
-    else if (StartsWith(feature, "Storage16BitFeatures.")) {
+    } else if (StartsWith(feature, "Storage16BitFeatures.")) {
       init_feature(supports_.shader_16bit_storage, features_.storage_16bit,
                    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR,
                    VK_KHR_16BIT_STORAGE_EXTENSION_NAME);
@@ -1312,9 +1311,7 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       } else if (feature == kComputeFullSubgroups) {
         features_.subgroup_size_control.computeFullSubgroups = VK_TRUE;
       }
-    }
-
-    else if (feature == kShaderSubgroupExtendedTypes) {
+    } else if (feature == kShaderSubgroupExtendedTypes) {
       init_feature(
           supports_.shader_subgroup_extended_types,
           features_.shader_subgroup_extended_types,
@@ -1322,25 +1319,19 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
           VK_KHR_SHADER_SUBGROUP_EXTENDED_TYPES_EXTENSION_NAME);
       features_.shader_subgroup_extended_types.shaderSubgroupExtendedTypes =
           VK_TRUE;
-    }
-
-    else if (feature == kDepthClampZeroOne) {
+    } else if (feature == kDepthClampZeroOne) {
       init_feature(
           supports_.depth_clamp_zero_one, features_.depth_clamp_zero_one,
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT,
           VK_EXT_DEPTH_CLAMP_ZERO_ONE_EXTENSION_NAME);
       features_.depth_clamp_zero_one.depthClampZeroOne = VK_TRUE;
-    }
-
-    else if (feature == kAccelerationStructure) {
+    } else if (feature == kAccelerationStructure) {
       init_feature(
           supports_.acceleration_structure, features_.acceleration_structure,
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
           VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
       features_.acceleration_structure.accelerationStructure = VK_TRUE;
-    }
-
-    else if (feature == kBufferDeviceAddress) {
+    } else if (feature == kBufferDeviceAddress) {
       init_feature(
           supports_.buffer_device_address, features_.buffer_device_address,
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,

@@ -16,5 +16,5 @@
 set -e  # fail on error
 
 FILTERS=-build/header_guard,-readability/fn_size
-./third_party/cpplint/cpplint.py  --filter "$FILTERS" `find src samples -type f`
-./third_party/cpplint/cpplint.py  --filter "$FILTERS" --root include `find ./include -type f`
+python3 ./third_party/cpplint/cpplint.py  --filter "$FILTERS" `find src samples -type f`
+python3 ./third_party/cpplint/cpplint.py  --filter "$FILTERS" --root include `find ./include -type f`
