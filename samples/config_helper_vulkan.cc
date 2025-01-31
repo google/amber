@@ -739,6 +739,12 @@ std::string stageFlagBitsToNames(const VkShaderStageFlags bits) {
   return result.str();
 }
 
+bool StartsWith(const std::string& str, const std::string& prefix) {
+  if (prefix.size() > str.size())
+    return false;
+  return std::equal(prefix.begin(), prefix.end(), str.begin());
+}
+
 }  // namespace
 
 ConfigHelperVulkan::ConfigHelperVulkan() = default;
@@ -1242,52 +1248,112 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
     }
   };
 
-  init_feature(supports_.variable_pointers, features_.variable_pointers,
-               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR,
-               VK_KHR_VARIABLE_POINTERS_EXTENSION_NAME);
+  // Initialize physical device features only for the required features.
+  std::vector<std::string> feature1_names;
+  for (const auto& feature : required_features) {
+    // No dot means this is a features1 feature.
+    if (feature.find_first_of('.') == std::string::npos) {
+      feature1_names.push_back(feature);
+      continue;
+    }
 
-  init_feature(supports_.shader_float16_int8, features_.float16_int8,
-               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
-               VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME);
+    if (StartsWith(feature, "VariablePointersFeatures.")) {
+      init_feature(
+          supports_.variable_pointers, features_.variable_pointers,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR,
+          VK_KHR_VARIABLE_POINTERS_EXTENSION_NAME);
+      if (feature == kVariablePointers) {
+        features_.variable_pointers.variablePointers = VK_TRUE;
+      } else if (feature == kVariablePointersStorageBuffer) {
+        features_.variable_pointers.variablePointersStorageBuffer = VK_TRUE;
+      }
+    } else if (StartsWith(feature, "Float16Int8Features.")) {
+      init_feature(supports_.shader_float16_int8, features_.float16_int8,
+                   VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
+                   VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME);
+      if (feature == kFloat16Int8_Float16) {
+        features_.float16_int8.shaderFloat16 = VK_TRUE;
+      } else if (feature == kFloat16Int8_Int8) {
+        features_.float16_int8.shaderInt8 = VK_TRUE;
+      }
+    } else if (StartsWith(feature, "Storage8BitFeatures.")) {
+      init_feature(supports_.shader_8bit_storage, features_.storage_8bit,
+                   VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR,
+                   VK_KHR_8BIT_STORAGE_EXTENSION_NAME);
+      if (feature == k8BitStorage_Storage) {
+        features_.storage_8bit.storageBuffer8BitAccess = VK_TRUE;
+      } else if (feature == k8BitStorage_UniformAndStorage) {
+        features_.storage_8bit.uniformAndStorageBuffer8BitAccess = VK_TRUE;
+      } else if (feature == k8BitStorage_PushConstant) {
+        features_.storage_8bit.storagePushConstant8 = VK_TRUE;
+      }
+    }
 
-  init_feature(supports_.shader_8bit_storage, features_.storage_8bit,
-               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR,
-               VK_KHR_8BIT_STORAGE_EXTENSION_NAME);
+    else if (StartsWith(feature, "Storage16BitFeatures.")) {
+      init_feature(supports_.shader_16bit_storage, features_.storage_16bit,
+                   VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR,
+                   VK_KHR_16BIT_STORAGE_EXTENSION_NAME);
+      if (feature == k16BitStorage_Storage) {
+        features_.storage_16bit.storageBuffer16BitAccess = VK_TRUE;
+      } else if (feature == k16BitStorage_UniformAndStorage) {
+        features_.storage_16bit.uniformAndStorageBuffer16BitAccess = VK_TRUE;
+      } else if (feature == k16BitStorage_PushConstant) {
+        features_.storage_16bit.storagePushConstant16 = VK_TRUE;
+      } else if (feature == k16BitStorage_InputOutput) {
+        features_.storage_16bit.storageInputOutput16 = VK_TRUE;
+      }
+    } else if (StartsWith(feature, "SubgroupSizeControl.")) {
+      init_feature(
+          supports_.subgroup_size_control, features_.subgroup_size_control,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT,
+          VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME);
+      if (feature == kSubgroupSizeControl) {
+        features_.subgroup_size_control.subgroupSizeControl = VK_TRUE;
+      } else if (feature == kComputeFullSubgroups) {
+        features_.subgroup_size_control.computeFullSubgroups = VK_TRUE;
+      }
+    }
 
-  init_feature(supports_.shader_16bit_storage, features_.storage_16bit,
-               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR,
-               VK_KHR_16BIT_STORAGE_EXTENSION_NAME);
+    else if (feature == kShaderSubgroupExtendedTypes) {
+      init_feature(
+          supports_.shader_subgroup_extended_types,
+          features_.shader_subgroup_extended_types,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES,
+          VK_KHR_SHADER_SUBGROUP_EXTENDED_TYPES_EXTENSION_NAME);
+      features_.shader_subgroup_extended_types.shaderSubgroupExtendedTypes =
+          VK_TRUE;
+    }
 
-  init_feature(
-      supports_.subgroup_size_control, features_.subgroup_size_control,
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT,
-      VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME);
+    else if (feature == kDepthClampZeroOne) {
+      init_feature(
+          supports_.depth_clamp_zero_one, features_.depth_clamp_zero_one,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT,
+          VK_EXT_DEPTH_CLAMP_ZERO_ONE_EXTENSION_NAME);
+      features_.depth_clamp_zero_one.depthClampZeroOne = VK_TRUE;
+    }
 
-  init_feature(
-      supports_.shader_subgroup_extended_types,
-      features_.shader_subgroup_extended_types,
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES,
-      VK_KHR_SHADER_SUBGROUP_EXTENDED_TYPES_EXTENSION_NAME);
+    else if (feature == kAccelerationStructure) {
+      init_feature(
+          supports_.acceleration_structure, features_.acceleration_structure,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
+          VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+      features_.acceleration_structure.accelerationStructure = VK_TRUE;
+    }
 
-  init_feature(
-      supports_.depth_clamp_zero_one, features_.depth_clamp_zero_one,
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT,
-      VK_EXT_DEPTH_CLAMP_ZERO_ONE_EXTENSION_NAME);
-
-  init_feature(
-      supports_.acceleration_structure, features_.acceleration_structure,
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
-      VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
-
-  init_feature(supports_.buffer_device_address, features_.buffer_device_address,
-               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
-               VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-
-  init_feature(
-      supports_.ray_tracing_pipeline, features_.ray_tracing_pipeline,
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR,
-      VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
-
+    else if (feature == kBufferDeviceAddress) {
+      init_feature(
+          supports_.buffer_device_address, features_.buffer_device_address,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
+          VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+      features_.buffer_device_address.bufferDeviceAddress = VK_TRUE;
+    } else if (feature == kRayTracingPipeline) {
+      init_feature(
+          supports_.ray_tracing_pipeline, features_.ray_tracing_pipeline,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR,
+          VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+      features_.ray_tracing_pipeline.rayTracingPipeline = VK_TRUE;
+    }
+  }
   init_feature(
       supports_.descriptor_indexing, features_.descriptor_indexing,
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
@@ -1317,54 +1383,6 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
   info->enabledExtensionCount =
       static_cast<uint32_t>(required_extensions_in_char.size());
   info->ppEnabledExtensionNames = required_extensions_in_char.data();
-
-  std::vector<std::string> feature1_names;
-  for (const auto& feature : required_features) {
-    // No dot means this is a features1 feature.
-    if (feature.find_first_of('.') == std::string::npos) {
-      feature1_names.push_back(feature);
-      continue;
-    }
-
-    if (feature == kVariablePointers) {
-      features_.variable_pointers.variablePointers = VK_TRUE;
-    } else if (feature == kVariablePointersStorageBuffer) {
-      features_.variable_pointers.variablePointersStorageBuffer = VK_TRUE;
-    } else if (feature == kFloat16Int8_Float16) {
-      features_.float16_int8.shaderFloat16 = VK_TRUE;
-    } else if (feature == kFloat16Int8_Int8) {
-      features_.float16_int8.shaderInt8 = VK_TRUE;
-    } else if (feature == k8BitStorage_Storage) {
-      features_.storage_8bit.storageBuffer8BitAccess = VK_TRUE;
-    } else if (feature == k8BitStorage_UniformAndStorage) {
-      features_.storage_8bit.uniformAndStorageBuffer8BitAccess = VK_TRUE;
-    } else if (feature == k8BitStorage_PushConstant) {
-      features_.storage_8bit.storagePushConstant8 = VK_TRUE;
-    } else if (feature == k16BitStorage_Storage) {
-      features_.storage_16bit.storageBuffer16BitAccess = VK_TRUE;
-    } else if (feature == k16BitStorage_UniformAndStorage) {
-      features_.storage_16bit.uniformAndStorageBuffer16BitAccess = VK_TRUE;
-    } else if (feature == k16BitStorage_PushConstant) {
-      features_.storage_16bit.storagePushConstant16 = VK_TRUE;
-    } else if (feature == k16BitStorage_InputOutput) {
-      features_.storage_16bit.storageInputOutput16 = VK_TRUE;
-    } else if (feature == kSubgroupSizeControl) {
-      features_.subgroup_size_control.subgroupSizeControl = VK_TRUE;
-    } else if (feature == kComputeFullSubgroups) {
-      features_.subgroup_size_control.computeFullSubgroups = VK_TRUE;
-    } else if (feature == kDepthClampZeroOne) {
-      features_.depth_clamp_zero_one.depthClampZeroOne = VK_TRUE;
-    } else if (feature == kShaderSubgroupExtendedTypes) {
-      features_.shader_subgroup_extended_types.shaderSubgroupExtendedTypes =
-          VK_TRUE;
-    } else if (feature == kAccelerationStructure) {
-      features_.acceleration_structure.accelerationStructure = VK_TRUE;
-    } else if (feature == kBufferDeviceAddress) {
-      features_.buffer_device_address.bufferDeviceAddress = VK_TRUE;
-    } else if (feature == kRayTracingPipeline) {
-      features_.ray_tracing_pipeline.rayTracingPipeline = VK_TRUE;
-    }
-  }
 
   VkPhysicalDeviceFeatures required_vulkan_features{};
   amber::Result r =
