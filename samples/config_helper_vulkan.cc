@@ -1315,6 +1315,7 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       init_feature(
           supports_.shader_subgroup_extended_types,
           features_.shader_subgroup_extended_types,
+          // NOLINTNEXTLINE(whitespace/line_length)
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES,
           VK_KHR_SHADER_SUBGROUP_EXTENDED_TYPES_EXTENSION_NAME);
       features_.shader_subgroup_extended_types.shaderSubgroupExtendedTypes =
