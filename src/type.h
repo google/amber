@@ -16,6 +16,7 @@
 #define SRC_TYPE_H_
 
 #include <cassert>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
