@@ -215,9 +215,10 @@ void Resource::MemoryBarrier(CommandBuffer* command_buffer) {
   // ReadOnly Descriptors          host w         shader r
   //                           transfer w       transfer r
   device_->GetPtrs()->vkCmdPipelineBarrier(
-      command_buffer->GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 1, &kMemoryBarrierForAll, 0,
-      nullptr, 0, nullptr);
+      command_buffer->GetVkCommandBuffer(),
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT | VK_PIPELINE_STAGE_HOST_BIT,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT | VK_PIPELINE_STAGE_HOST_BIT, 0, 1,
+      &kMemoryBarrierForAll, 0, nullptr, 0, nullptr);
 }
 
 }  // namespace vulkan
