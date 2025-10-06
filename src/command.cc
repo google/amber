@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,6 +45,10 @@ CompareBufferCommand* Command::AsCompareBuffer() {
 
 ComputeCommand* Command::AsCompute() {
   return static_cast<ComputeCommand*>(this);
+}
+
+RayTracingCommand* Command::AsRayTracing() {
+  return static_cast<RayTracingCommand*>(this);
 }
 
 CopyCommand* Command::AsCopy() {
@@ -183,5 +188,15 @@ RepeatCommand::RepeatCommand(uint32_t count)
     : Command(Type::kRepeat), count_(count) {}
 
 RepeatCommand::~RepeatCommand() = default;
+
+TLASCommand::TLASCommand(Pipeline* pipeline)
+    : BindableResourceCommand(Type::kTLAS, pipeline) {}
+
+TLASCommand::~TLASCommand() = default;
+
+RayTracingCommand::RayTracingCommand(Pipeline* pipeline)
+    : PipelineCommand(Type::kRayTracing, pipeline) {}
+
+RayTracingCommand::~RayTracingCommand() = default;
 
 }  // namespace amber

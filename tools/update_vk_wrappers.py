@@ -26,14 +26,18 @@ from string import Template
 
 def read_inc(file):
   methods = []
-  pattern = re.compile(r"AMBER_VK_FUNC\((\w+)\)")
+  pattern = re.compile(r"(|OPTIONAL )AMBER_VK_FUNC\((\w+)\)")
   with open(file, 'r') as f:
     for line in f:
       match = pattern.search(line)
       if match == None:
         raise Exception("FAILED TO MATCH PATTERN");
 
-      methods.append(match.group(1))
+      b = False
+      if match.group(1) != None and match.group(1) == "OPTIONAL ":
+        b = True
+      methods.append((match.group(2), b))
+
   return methods
 
 
@@ -69,7 +73,9 @@ def read_vk(file):
 
 def gen_wrappers(methods, xml):
   content = ""
-  for method in methods:
+  for method_ in methods:
+    method = method_[0]
+    optional = method_[1]
     data = xml[method]
     if data == None:
       raise Exception("Failed to find {}".format(method))
@@ -88,11 +94,17 @@ def gen_wrappers(methods, xml):
     if return_type != 'void':
       return_variable = 'ret'
       call_prefix = return_type + ' ' + return_variable + ' = '
-
+    nullptr_check = ''
+    if optional:
+      nullptr_check = '''ptrs_.{} = nullptr;
+    return Result();'''.format(method)
+    else:
+      nullptr_check = 'return Result("Vulkan: Unable to load {} pointer");'.format(method)
+      
     template = Template(R'''{
   PFN_${method} ptr = reinterpret_cast<PFN_${method}>(getInstanceProcAddr(instance_, "${method}"));
   if (!ptr) {
-    return Result("Vulkan: Unable to load ${method} pointer");
+    ${nullptr_check}
   }
   if (delegate && delegate->LogGraphicsCalls()) {
     ptrs_.${method} = [ptr, delegate](${signature}) -> ${return_type} {
@@ -130,14 +142,16 @@ def gen_wrappers(methods, xml):
                                    arguments=arguments,
                                    return_type=return_type,
                                    return_variable=return_variable,
-                                   call_prefix=call_prefix)
+                                   call_prefix=call_prefix,
+                                   nullptr_check=nullptr_check)
 
   return content
 
 
 def gen_headers(methods, xml):
   content = ""
-  for method in methods:
+  for method_ in methods:
+    method = method_[0]
     data = xml[method]
     if data == None:
       raise Exception("Failed to find {}".format(method))
@@ -162,16 +176,25 @@ if (!(ptrs_.${method} = reinterpret_cast<PFN_${method}>(getInstanceProcAddr(inst
   return Result("Vulkan: Unable to load ${method} pointer");
 }
 ''')
+  template_optional = Template(R'''
+ptrs_.${method} = reinterpret_cast<PFN_${method}>(getInstanceProcAddr(instance_, "${method}"));
+''')
 
-  for method in methods:
-    content += template.substitute(method=method)
+  for method_ in methods:
+    method = method_[0]
+    optional = method_[1]
+    if (optional):
+      content += template_optional.substitute(method=method)
+    else:
+      content += template.substitute(method=method)
 
   return content
 
 
 def gen_direct_headers(methods):
   content = ""
-  for method in methods:
+  for method_ in methods:
+    method = method_[0]
     content += "PFN_{} {};\n".format(method, method);
 
   return content

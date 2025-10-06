@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <ostream>
 #include <set>
 #include <string>
 #include <utility>
@@ -33,7 +34,6 @@
 #include "samples/ppm.h"
 #include "samples/timestamp.h"
 #include "src/build-versions.h"
-#include "src/make_unique.h"
 
 #if AMBER_ENABLE_SPIRV_TOOLS
 #include "spirv-tools/libspirv.hpp"
@@ -55,7 +55,7 @@ struct Options {
   std::vector<std::string> fb_names;
   std::vector<amber::BufferInfo> buffer_to_dump;
   uint32_t engine_major = 1;
-  uint32_t engine_minor = 0;
+  uint32_t engine_minor = 1;
   int32_t fence_timeout = -1;
   int32_t selected_device = -1;
   bool parse_only = false;
@@ -67,7 +67,9 @@ struct Options {
   bool log_graphics_calls = false;
   bool log_graphics_calls_time = false;
   bool log_execute_calls = false;
+  bool log_execution_timing = false;
   bool disable_spirv_validation = false;
+  bool enable_pipeline_runtime_layer = false;
   std::string shader_filename;
   amber::EngineType engine = amber::kEngineTypeVulkan;
   std::string spv_env;
@@ -102,7 +104,9 @@ const char kUsage[] = R"(Usage: amber [options] SCRIPT [SCRIPTS...]
   --log-graphics-calls      -- Log graphics API calls (only for Vulkan so far).
   --log-graphics-calls-time -- Log timing of graphics API calls timing (Vulkan only).
   --log-execute-calls       -- Log each execute call before run.
+  --log-execution-timing    -- Log timing results from each command with the 'TIMED_EXECUTION' flag.
   --disable-spirv-val       -- Disable SPIR-V validation.
+  --enable-runtime-layer    -- Enable pipeline runtime layer.
   -h                        -- This help text.
 )";
 
@@ -276,10 +280,14 @@ bool ParseArgs(const std::vector<std::string>& args, Options* opts) {
       opts->log_graphics_calls = true;
     } else if (arg == "--log-graphics-calls-time") {
       opts->log_graphics_calls_time = true;
+    } else if (arg == "--log-execution-timing") {
+      opts->log_execution_timing = true;
     } else if (arg == "--log-execute-calls") {
       opts->log_execute_calls = true;
     } else if (arg == "--disable-spirv-val") {
       opts->disable_spirv_validation = true;
+    } else if (arg == "--enable-runtime-layer") {
+      opts->enable_pipeline_runtime_layer = true;
     } else if (arg.size() > 0 && arg[0] == '-') {
       std::cerr << "Unrecognized option " << arg << std::endl;
       return false;
@@ -357,6 +365,16 @@ class SampleDelegate : public amber::Delegate {
     }
   }
 
+  void ReportExecutionTiming(double time_in_ms) override {
+    reported_execution_timing.push_back(time_in_ms);
+  }
+
+  std::vector<double> GetAndClearExecutionTiming() {
+    auto returning = reported_execution_timing;
+    reported_execution_timing.clear();
+    return returning;
+  }
+
   uint64_t GetTimestampNs() const override {
     return timestamp::SampleGetTimestampNs();
   }
@@ -375,8 +393,9 @@ class SampleDelegate : public amber::Delegate {
 #endif  // AMBER_ENABLE_LODEPNG
     } else {
       auto data = ReadFile(path_ + file_name);
-      if (data.empty())
+      if (data.empty()) {
         return amber::Result("Failed to load buffer data " + file_name);
+      }
 
       for (auto d : data) {
         amber::Value v;
@@ -391,11 +410,21 @@ class SampleDelegate : public amber::Delegate {
     return {};
   }
 
+  amber::Result LoadFile(const std::string file_name,
+                         std::vector<char>* buffer) const override {
+    *buffer = ReadFile(path_ + file_name);
+    if (buffer->empty()) {
+      return amber::Result("Failed to load file " + file_name);
+    }
+    return {};
+  }
+
  private:
   bool log_graphics_calls_ = false;
   bool log_graphics_calls_time_ = false;
   bool log_execute_calls_ = false;
   std::string path_ = "";
+  std::vector<double> reported_execution_timing;
 };
 
 std::string disassemble(const std::string& env,
@@ -405,8 +434,9 @@ std::string disassemble(const std::string& env,
 
   spv_target_env target_env = SPV_ENV_UNIVERSAL_1_0;
   if (!env.empty()) {
-    if (!spvParseTargetEnv(env.c_str(), &target_env))
+    if (!spvParseTargetEnv(env.c_str(), &target_env)) {
       return "";
+    }
   }
 
   auto msg_consumer = [&spv_errors](spv_message_level_t level, const char*,
@@ -502,7 +532,7 @@ int main(int argc, const char** argv) {
     delegate.SetScriptPath(file.substr(0, file.find_last_of("/\\") + 1));
 
     amber::Amber am(&delegate);
-    std::unique_ptr<amber::Recipe> recipe = amber::MakeUnique<amber::Recipe>();
+    std::unique_ptr<amber::Recipe> recipe = std::make_unique<amber::Recipe>();
 
     result = am.Parse(data, recipe.get());
     if (!result.IsSuccess()) {
@@ -511,23 +541,31 @@ int main(int argc, const char** argv) {
       continue;
     }
 
-    if (options.fence_timeout > -1)
+    if (options.fence_timeout > -1) {
       recipe->SetFenceTimeout(static_cast<uint32_t>(options.fence_timeout));
+    }
+
+    recipe->SetPipelineRuntimeLayerEnabled(
+        options.enable_pipeline_runtime_layer);
 
     recipe_data.emplace_back();
     recipe_data.back().file = file;
     recipe_data.back().recipe = std::move(recipe);
   }
 
-  if (options.parse_only)
+  if (options.parse_only) {
     return 0;
+  }
 
-  if (options.log_graphics_calls)
+  if (options.log_graphics_calls) {
     delegate.SetLogGraphicsCalls(true);
-  if (options.log_graphics_calls_time)
+  }
+  if (options.log_graphics_calls_time) {
     delegate.SetLogGraphicsCallsTime(true);
-  if (options.log_execute_calls)
+  }
+  if (options.log_execute_calls) {
     delegate.SetLogExecuteCalls(true);
+  }
 
   amber::Options amber_options;
   amber_options.engine = options.engine;
@@ -567,7 +605,8 @@ int main(int argc, const char** argv) {
                                required_instance_extensions.end()),
       std::vector<std::string>(required_device_extensions.begin(),
                                required_device_extensions.end()),
-      options.disable_validation_layer, options.show_version_info, &config);
+      options.disable_validation_layer, options.enable_pipeline_runtime_layer,
+      options.show_version_info, &config);
 
   if (!r.IsSuccess()) {
     std::cout << r.Error() << std::endl;
@@ -596,8 +635,9 @@ int main(int argc, const char** argv) {
   }
 
   // Use default frame buffer name when not specified.
-  while (options.image_filenames.size() > options.fb_names.size())
+  while (options.image_filenames.size() > options.fb_names.size()) {
     options.fb_names.push_back(kGeneratedColorBuffer);
+  }
 
   for (const auto& fb_name : options.fb_names) {
     amber::BufferInfo buffer_info;
@@ -613,10 +653,33 @@ int main(int argc, const char** argv) {
     amber::Amber am(&delegate);
     result = am.Execute(recipe, &amber_options);
     if (!result.IsSuccess()) {
-      std::cerr << file << ": " << result.Error() << std::endl;
+      std::cerr << file << ": " << result.Error() << "\n";
       failures.push_back(file);
       // Note, we continue after failure to allow dumping the buffers which may
       // give clues as to the failure.
+    }
+
+    auto execution_timing = delegate.GetAndClearExecutionTiming();
+    if (result.IsSuccess() && options.log_execution_timing &&
+        !execution_timing.empty()) {
+      std::cout << "Execution timing (in script-order):" << "\n";
+      std::cout << "    ";
+      bool is_first_iter = true;
+      for (auto& timing : execution_timing) {
+        if (!is_first_iter) {
+          std::cout << ", ";
+        }
+        is_first_iter = false;
+        std::cout << timing;
+      }
+      std::cout << "\n";
+      std::sort(execution_timing.begin(), execution_timing.end());
+      auto report_median =
+          (execution_timing[execution_timing.size() / 2] +
+           execution_timing[(execution_timing.size() - 1) / 2]) /
+          2;
+      std::cout << "\n";
+      std::cout << "Execution time median = " << report_median << " ms" << "\n";
     }
 
     // Dump the shader assembly
@@ -718,8 +781,9 @@ int main(int argc, const char** argv) {
           for (size_t i = 0; i < values.size(); ++i) {
             buffer_file << " " << std::setfill('0') << std::setw(2) << std::hex
                         << values[i].AsUint32();
-            if (i % 16 == 15)
+            if (i % 16 == 15) {
               buffer_file << std::endl;
+            }
           }
           buffer_file << std::endl;
         }
@@ -732,8 +796,9 @@ int main(int argc, const char** argv) {
     if (!failures.empty()) {
       std::cout << "\nSummary of Failures:" << std::endl;
 
-      for (const auto& failure : failures)
+      for (const auto& failure : failures) {
         std::cout << "  " << failure << std::endl;
+      }
     }
 
     std::cout << "\nSummary: "

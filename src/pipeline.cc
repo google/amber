@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +20,6 @@
 #include <limits>
 #include <set>
 
-#include "src/make_unique.h"
 #include "src/type_parser.h"
 
 namespace amber {
@@ -66,7 +66,7 @@ Pipeline::Pipeline(PipelineType type) : pipeline_type_(type) {}
 Pipeline::~Pipeline() = default;
 
 std::unique_ptr<Pipeline> Pipeline::Clone() const {
-  auto clone = MakeUnique<Pipeline>(pipeline_type_);
+  auto clone = std::make_unique<Pipeline>(pipeline_type_);
   clone->shaders_ = shaders_;
   clone->color_attachments_ = color_attachments_;
   clone->vertex_buffers_ = vertex_buffers_;
@@ -87,8 +87,9 @@ std::unique_ptr<Pipeline> Pipeline::Clone() const {
 }
 
 Result Pipeline::AddShader(Shader* shader, ShaderType shader_type) {
-  if (!shader)
+  if (!shader) {
     return Result("shader can not be null when attached to pipeline");
+  }
 
   if (pipeline_type_ == PipelineType::kCompute &&
       shader_type != kShaderTypeCompute) {
@@ -99,13 +100,16 @@ Result Pipeline::AddShader(Shader* shader, ShaderType shader_type) {
     return Result("can not add a compute shader to a graphics pipeline");
   }
 
-  for (auto& info : shaders_) {
-    const auto* is = info.GetShader();
-    if (is == shader)
-      return Result("can not add duplicate shader to pipeline");
-    if (is->GetType() == shader_type) {
-      info.SetShader(shader);
-      return {};
+  if (pipeline_type_ != PipelineType::kRayTracing) {
+    for (auto& info : shaders_) {
+      const auto* is = info.GetShader();
+      if (is == shader) {
+        return Result("can not add duplicate shader to pipeline");
+      }
+      if (is->GetType() == shader_type) {
+        info.SetShader(shader);
+        return {};
+      }
     }
   }
 
@@ -115,13 +119,15 @@ Result Pipeline::AddShader(Shader* shader, ShaderType shader_type) {
 
 Result Pipeline::SetShaderOptimizations(const Shader* shader,
                                         const std::vector<std::string>& opts) {
-  if (!shader)
+  if (!shader) {
     return Result("invalid shader specified for optimizations");
+  }
 
   std::set<std::string> seen;
   for (const auto& opt : opts) {
-    if (seen.count(opt) != 0)
+    if (seen.count(opt) != 0) {
       return Result("duplicate optimization flag (" + opt + ") set on shader");
+    }
 
     seen.insert(opt);
   }
@@ -140,8 +146,9 @@ Result Pipeline::SetShaderOptimizations(const Shader* shader,
 
 Result Pipeline::SetShaderCompileOptions(const Shader* shader,
                                          const std::vector<std::string>& opts) {
-  if (!shader)
+  if (!shader) {
     return Result("invalid shader specified for compile options");
+  }
 
   for (auto& info : shaders_) {
     const auto* is = info.GetShader();
@@ -159,8 +166,9 @@ Result Pipeline::SetShaderRequiredSubgroupSize(
     const Shader* shader,
     const ShaderInfo::RequiredSubgroupSizeSetting setting,
     const uint32_t size) {
-  if (!shader)
+  if (!shader) {
     return Result("invalid shader specified for  required subgroup size");
+  }
 
   for (auto& info : shaders_) {
     const auto* is = info.GetShader();
@@ -202,8 +210,9 @@ Result Pipeline::SetShaderRequiredSubgroupSizeToMaximum(const Shader* shader) {
 
 Result Pipeline::SetShaderVaryingSubgroupSize(const Shader* shader,
                                               const bool isSet) {
-  if (!shader)
+  if (!shader) {
     return Result("invalid shader specified for varying subgroup size");
+  }
 
   for (auto& info : shaders_) {
     const auto* is = info.GetShader();
@@ -219,8 +228,9 @@ Result Pipeline::SetShaderVaryingSubgroupSize(const Shader* shader,
 
 Result Pipeline::SetShaderRequireFullSubgroups(const Shader* shader,
                                                const bool isSet) {
-  if (!shader)
+  if (!shader) {
     return Result("invalid shader specified for optimizations");
+  }
 
   for (auto& info : shaders_) {
     const auto* is = info.GetShader();
@@ -236,15 +246,18 @@ Result Pipeline::SetShaderRequireFullSubgroups(const Shader* shader,
 
 Result Pipeline::SetShaderEntryPoint(const Shader* shader,
                                      const std::string& name) {
-  if (!shader)
+  if (!shader) {
     return Result("invalid shader specified for entry point");
-  if (name.empty())
+  }
+  if (name.empty()) {
     return Result("entry point should not be blank");
+  }
 
   for (auto& info : shaders_) {
     if (info.GetShader() == shader) {
-      if (info.GetEntryPoint() != "main")
+      if (info.GetEntryPoint() != "main") {
         return Result("multiple entry points given for the same shader");
+      }
 
       info.SetEntryPoint(name);
       return {};
@@ -256,8 +269,9 @@ Result Pipeline::SetShaderEntryPoint(const Shader* shader,
 }
 
 Result Pipeline::SetShaderType(const Shader* shader, ShaderType type) {
-  if (!shader)
+  if (!shader) {
     return Result("invalid shader specified for shader type");
+  }
 
   for (auto& info : shaders_) {
     if (info.GetShader() == shader) {
@@ -292,15 +306,27 @@ Result Pipeline::Validate() const {
     }
   }
 
-  if (pipeline_type_ == PipelineType::kGraphics)
+  if (pipeline_type_ == PipelineType::kRayTracing) {
+    return ValidateRayTracing();
+  } else if (pipeline_type_ == PipelineType::kGraphics) {
     return ValidateGraphics();
+  }
 
   return ValidateCompute();
 }
 
+Result Pipeline::ValidateRayTracing() const {
+  if (shader_groups_.empty() && shaders_.empty() && tlases_.empty()) {
+    return Result("Shader groups are missing");
+  }
+
+  return {};
+}
+
 Result Pipeline::ValidateGraphics() const {
-  if (color_attachments_.empty())
+  if (color_attachments_.empty()) {
     return Result("PIPELINE missing color attachment");
+  }
 
   bool found_vertex = false;
   for (const auto& info : shaders_) {
@@ -311,25 +337,28 @@ Result Pipeline::ValidateGraphics() const {
     }
   }
 
-  if (!found_vertex)
+  if (!found_vertex) {
     return Result("graphics pipeline requires a vertex shader");
+  }
 
   for (const auto& att : color_attachments_) {
     auto width = att.buffer->GetWidth();
     auto height = att.buffer->GetHeight();
     for (uint32_t level = 1; level < att.buffer->GetMipLevels(); level++) {
       width >>= 1;
-      if (width == 0)
+      if (width == 0) {
         return Result("color attachment with " +
                       std::to_string(att.buffer->GetMipLevels()) +
                       " mip levels would have zero width for level " +
                       std::to_string(level));
+      }
       height >>= 1;
-      if (height == 0)
+      if (height == 0) {
         return Result("color attachment with " +
                       std::to_string(att.buffer->GetMipLevels()) +
                       " mip levels would have zero height for level " +
                       std::to_string(level));
+      }
     }
   }
 
@@ -337,16 +366,18 @@ Result Pipeline::ValidateGraphics() const {
 }
 
 Result Pipeline::ValidateCompute() const {
-  if (shaders_.empty())
+  if (shaders_.empty()) {
     return Result("compute pipeline requires a compute shader");
+  }
 
   return {};
 }
 
 void Pipeline::UpdateFramebufferSizes() {
   uint32_t size = fb_width_ * fb_height_;
-  if (size == 0)
+  if (size == 0) {
     return;
+  }
 
   for (auto& attachment : color_attachments_) {
     auto mip0_width = fb_width_ << attachment.base_mip_level;
@@ -367,10 +398,12 @@ Result Pipeline::AddColorAttachment(Buffer* buf,
                                     uint32_t location,
                                     uint32_t base_mip_level) {
   for (const auto& attachment : color_attachments_) {
-    if (attachment.location == location)
+    if (attachment.location == location) {
       return Result("can not bind two color buffers to the same LOCATION");
-    if (attachment.buffer == buf)
+    }
+    if (attachment.buffer == buf) {
       return Result("color buffer may only be bound to a PIPELINE once");
+    }
   }
 
   color_attachments_.push_back(BufferInfo{buf});
@@ -412,8 +445,9 @@ Result Pipeline::GetLocationForColorAttachment(Buffer* buf,
 }
 
 Result Pipeline::SetDepthStencilBuffer(Buffer* buf) {
-  if (depth_stencil_buffer_.buffer != nullptr)
+  if (depth_stencil_buffer_.buffer != nullptr) {
     return Result("can only bind one depth/stencil buffer in a PIPELINE");
+  }
 
   depth_stencil_buffer_.buffer = buf;
   depth_stencil_buffer_.type = BufferType::kDepthStencil;
@@ -425,8 +459,9 @@ Result Pipeline::SetDepthStencilBuffer(Buffer* buf) {
 }
 
 Result Pipeline::SetIndexBuffer(Buffer* buf) {
-  if (index_buffer_ != nullptr)
+  if (index_buffer_ != nullptr) {
     return Result("can only bind one INDEX_DATA buffer in a pipeline");
+  }
 
   index_buffer_ = buf;
   return {};
@@ -439,8 +474,9 @@ Result Pipeline::AddVertexBuffer(Buffer* buf,
                                  uint32_t offset,
                                  uint32_t stride) {
   for (const auto& vtex : vertex_buffers_) {
-    if (vtex.location == location)
+    if (vtex.location == location) {
       return Result("can not bind two vertex buffers to the same LOCATION");
+    }
   }
 
   vertex_buffers_.push_back(BufferInfo{buf});
@@ -454,8 +490,9 @@ Result Pipeline::AddVertexBuffer(Buffer* buf,
 }
 
 Result Pipeline::SetPushConstantBuffer(Buffer* buf) {
-  if (push_constant_buffer_.buffer != nullptr)
+  if (push_constant_buffer_.buffer != nullptr) {
     return Result("can only bind one push constant buffer in a PIPELINE");
+  }
 
   push_constant_buffer_.buffer = buf;
   push_constant_buffer_.type = BufferType::kPushConstant;
@@ -463,14 +500,15 @@ Result Pipeline::SetPushConstantBuffer(Buffer* buf) {
 }
 
 Result Pipeline::CreatePushConstantBuffer() {
-  if (push_constant_buffer_.buffer != nullptr)
+  if (push_constant_buffer_.buffer != nullptr) {
     return Result("can only bind one push constant buffer in a PIPELINE");
+  }
 
   TypeParser parser;
   auto type = parser.Parse("R8_UINT");
-  auto fmt = MakeUnique<Format>(type.get());
+  auto fmt = std::make_unique<Format>(type.get());
 
-  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
+  std::unique_ptr<Buffer> buf = std::make_unique<Buffer>();
   buf->SetName(kGeneratedPushConstantBuffer);
   buf->SetFormat(fmt.get());
 
@@ -487,9 +525,9 @@ Result Pipeline::CreatePushConstantBuffer() {
 std::unique_ptr<Buffer> Pipeline::GenerateDefaultColorAttachmentBuffer() {
   TypeParser parser;
   auto type = parser.Parse(kDefaultColorBufferFormat);
-  auto fmt = MakeUnique<Format>(type.get());
+  auto fmt = std::make_unique<Format>(type.get());
 
-  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
+  std::unique_ptr<Buffer> buf = std::make_unique<Buffer>();
   buf->SetName(kGeneratedColorBuffer);
   buf->SetFormat(fmt.get());
 
@@ -502,9 +540,9 @@ std::unique_ptr<Buffer>
 Pipeline::GenerateDefaultDepthStencilAttachmentBuffer() {
   TypeParser parser;
   auto type = parser.Parse(kDefaultDepthBufferFormat);
-  auto fmt = MakeUnique<Format>(type.get());
+  auto fmt = std::make_unique<Format>(type.get());
 
-  std::unique_ptr<Buffer> buf = MakeUnique<Buffer>();
+  std::unique_ptr<Buffer> buf = std::make_unique<Buffer>();
   buf->SetName(kGeneratedDepthBuffer);
   buf->SetFormat(fmt.get());
 
@@ -516,8 +554,9 @@ Pipeline::GenerateDefaultDepthStencilAttachmentBuffer() {
 Buffer* Pipeline::GetBufferForBinding(uint32_t descriptor_set,
                                       uint32_t binding) const {
   for (const auto& info : buffers_) {
-    if (info.descriptor_set == descriptor_set && info.binding == binding)
+    if (info.descriptor_set == descriptor_set && info.binding == binding) {
       return info.buffer;
+    }
   }
   return nullptr;
 }
@@ -655,6 +694,15 @@ void Pipeline::AddSampler(uint32_t mask,
   info.binding = binding;
 }
 
+void Pipeline::AddTLAS(TLAS* tlas, uint32_t descriptor_set, uint32_t binding) {
+  tlases_.push_back(TLASInfo(tlas));
+
+  auto& info = tlases_.back();
+
+  info.descriptor_set = descriptor_set;
+  info.binding = binding;
+}
+
 void Pipeline::ClearSamplers(uint32_t descriptor_set, uint32_t binding) {
   samplers_.erase(
       std::remove_if(samplers_.begin(), samplers_.end(),
@@ -673,12 +721,14 @@ Result Pipeline::UpdateOpenCLBufferBindings() {
 
   const auto& shader_info = GetShaders()[0];
   const auto& descriptor_map = shader_info.GetDescriptorMap();
-  if (descriptor_map.empty())
+  if (descriptor_map.empty()) {
     return {};
+  }
 
   const auto iter = descriptor_map.find(shader_info.GetEntryPoint());
-  if (iter == descriptor_map.end())
+  if (iter == descriptor_map.end()) {
     return {};
+  }
 
   for (auto& info : samplers_) {
     if (info.descriptor_set == std::numeric_limits<uint32_t>::max() &&
@@ -773,12 +823,14 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
 
   const auto& shader_info = GetShaders()[0];
   const auto& descriptor_map = shader_info.GetDescriptorMap();
-  if (descriptor_map.empty())
+  if (descriptor_map.empty()) {
     return {};
+  }
 
   const auto iter = descriptor_map.find(shader_info.GetEntryPoint());
-  if (iter == descriptor_map.end())
+  if (iter == descriptor_map.end()) {
     return {};
+  }
 
   // For each SET command, do the following:
   // 1. Find the descriptor map entry for that argument.
@@ -818,8 +870,9 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
         Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD_PUSHCONSTANT) {
       if (GetPushConstantBuffer().buffer == nullptr) {
         auto r = CreatePushConstantBuffer();
-        if (!r.IsSuccess())
+        if (!r.IsSuccess()) {
           return r;
+        }
       }
       buffer = GetPushConstantBuffer().buffer;
     } else {
@@ -855,7 +908,7 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
         }
 
         // Add a new buffer for this descriptor set and binding.
-        opencl_pod_buffers_.push_back(MakeUnique<Buffer>());
+        opencl_pod_buffers_.push_back(std::make_unique<Buffer>());
         buffer = opencl_pod_buffers_.back().get();
         auto buffer_type =
             kind == Pipeline::ShaderInfo::DescriptorMapEntry::Kind::POD
@@ -866,7 +919,7 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
         // byte-based and it simplifies the logic for sizing below.
         TypeParser parser;
         auto type = parser.Parse("R8_UINT");
-        auto fmt = MakeUnique<Format>(type.get());
+        auto fmt = std::make_unique<Format>(type.get());
         buffer->SetFormat(fmt.get());
         formats_.push_back(std::move(fmt));
         types_.push_back(std::move(type));
@@ -928,8 +981,9 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
       data_bytes.push_back(v);
     }
     Result r = buffer->SetDataWithOffset(data_bytes, offset);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
 
   return {};
@@ -937,10 +991,11 @@ Result Pipeline::GenerateOpenCLPodBuffers() {
 
 Result Pipeline::GenerateOpenCLLiteralSamplers() {
   for (auto& info : samplers_) {
-    if (info.sampler || info.mask == std::numeric_limits<uint32_t>::max())
+    if (info.sampler || info.mask == std::numeric_limits<uint32_t>::max()) {
       continue;
+    }
 
-    auto literal_sampler = MakeUnique<Sampler>();
+    auto literal_sampler = std::make_unique<Sampler>();
     literal_sampler->SetName("literal." + std::to_string(info.descriptor_set) +
                              "." + std::to_string(info.binding));
 
@@ -1004,12 +1059,14 @@ Result Pipeline::GenerateOpenCLPushConstants() {
   }
 
   const auto& shader_info = GetShaders()[0];
-  if (shader_info.GetPushConstants().empty())
+  if (shader_info.GetPushConstants().empty()) {
     return {};
+  }
 
   Result r = CreatePushConstantBuffer();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   auto* buf = GetPushConstantBuffer().buffer;
   assert(buf);
@@ -1019,8 +1076,9 @@ Result Pipeline::GenerateOpenCLPushConstants() {
     assert(pc.size % sizeof(uint32_t) == 0);
     assert(pc.offset % sizeof(uint32_t) == 0);
 
-    if (buf->GetSizeInBytes() < pc.offset + pc.size)
+    if (buf->GetSizeInBytes() < pc.offset + pc.size) {
       buf->SetSizeInBytes(pc.offset + pc.size);
+    }
 
     std::vector<uint32_t> bytes(pc.size / sizeof(uint32_t));
     uint32_t base = 0;

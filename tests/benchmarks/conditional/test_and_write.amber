@@ -1,0 +1,93 @@
+#!amber
+# Copyright 2024 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# This benchmark is to test the cost of real branches
+# It has been crafted ensure that a select operation cannot be used.
+#
+# Configs to manually modify:
+#  - buf_init_data fill to non zero : Branch taken/not
+#  - local_size_x (workgroup size) : Single SM throughput
+#  - number of loop unrolls : latency of single thread
+#  - compute/dispatch size (currently 1) : Device throughput
+
+
+SHADER compute conditional_test GLSL
+#version 430
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) buffer BlockA { 
+  uint data[];
+} ssbo_init_data;
+
+layout(set = 0, binding = 1) buffer BlockB {
+  uint data[];
+} ssbo_write;
+
+uint TestAndOperate(uint iter_val, uint invx){
+  // We want this to be a real branch per thread
+  if(iter_val > invx){ 
+    // Simple LCGs that ensure iter_val is greater than 1024 
+    iter_val = ((iter_val*13u) % 6631u) + 1024;
+    iter_val = ((iter_val*213u) % 631u) + 1024;
+    // You must mutate memory to avoid the compiler just using a select
+    ssbo_write.data[invx] = iter_val;
+  }
+  return iter_val;
+}
+
+void main() {
+    uint invx = gl_GlobalInvocationID.x;
+    uint iter_val = ssbo_init_data.data[invx];
+    for(uint i = 0;i<1000;i++){
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+      iter_val = TestAndOperate(iter_val, invx);
+    }
+    ssbo_write.data[invx]  = iter_val;
+}
+END
+
+BUFFER buf_init_data DATA_TYPE uint32 SIZE 1048576 FILL 0
+BUFFER out_buff DATA_TYPE uint32 SIZE 1048576 FILL 0
+
+PIPELINE compute pipeline
+  ATTACH conditional_test
+  BIND BUFFER buf_init_data AS storage DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER out_buff AS storage DESCRIPTOR_SET 0 BINDING 1
+END
+
+REPEAT 133
+RUN TIMED_EXECUTION pipeline 1 1 1
+END

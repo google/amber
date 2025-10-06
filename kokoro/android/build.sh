@@ -1,4 +1,4 @@
-# Copyright The Amber Authors.
+# Copyright 2025 The Amber Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ BUILD_ROOT="$PWD"
 SRC="$PWD/github/amber"
 BUILD_TYPE="Release"
 
-export ANDROID_NDK="$BUILD_ROOT/android-ndk-r25b"
+export ANDROID_NDK="$BUILD_ROOT/android-ndk-r27c"
 ANDROID_STL="c++_static"
-ANDROID_PLATFORM="android-14"
-ANDROID_ABI="armeabi-v7a with NEON"
+ANDROID_PLATFORM="android-24"
+ANDROID_ABI="armeabi-v7a"
 
 TOOLCHAIN_PATH="$ANDROID_NDK/build/cmake/android.toolchain.cmake"
 
@@ -50,8 +50,8 @@ unzip -q ninja-linux.zip
 export PATH="$PWD:$PATH"
 
 # Get Android NDK.
-wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
-unzip -q android-ndk-r25b-linux.zip
+wget -q https://dl.google.com/android/repository/android-ndk-r27c-linux.zip
+unzip -q android-ndk-r27c-linux.zip
 # ANDROID_NDK is set earlier.
 
 cd "$SRC"

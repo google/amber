@@ -16,6 +16,7 @@
 #define SRC_TOKENIZER_H_
 
 #include <cstdlib>
+#include <cstdint>
 #include <memory>
 #include <string>
 

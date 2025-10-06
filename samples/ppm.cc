@@ -51,8 +51,9 @@ amber::Result ConvertToPPM(uint32_t width,
   image += std::to_string(width) + " " + std::to_string(height) + "\n";
   image += std::to_string(kMaximumColorValue) + "\n";
 
-  for (char ch : image)
+  for (char ch : image) {
     buffer->push_back(static_cast<uint8_t>(ch));
+  }
 
   // Write PPM data
   for (amber::Value value : values) {

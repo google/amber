@@ -99,7 +99,7 @@ Other example shader header lines are:
 
 ## Vertex Data
 The `vertex data` section provides vertex attributes and data for `draw array`
-commands. The data is formated with a header row followed by data rows.
+commands. The data is formatted with a header row followed by data rows.
 
 The headers can be provided in one of two forms. The first,
 `attribute_location/format` where `attribute_location` is the location of the
@@ -182,7 +182,7 @@ specified then the `a` parameter is dis-allowed.
 ### Probe
  * `[relative] probe [rect] (rgb|rgba) (_x_, _y_[, _width_, _height_]) (_r_, _g_, _b_[, _a_])`
 
-Probes a portion of the window to verify the pixes are of color r,g,b and
+Probes a portion of the window to verify the pixels are of color r,g,b and
 optionally a. If `rgba` is specifed then the `a` parameter is required. If
 `rgb` is specified then the `a` parameter is dis-allowed. If `rect` is specified
 then `width` and `height` are required. If `rect` is not specified then `width`

@@ -184,15 +184,17 @@ int main(int argc, const char** argv) {
   }
 
   amber::Result res;
-  if (options.compare_algorithm == CompareAlgorithm::kRMSE)
+  if (options.compare_algorithm == CompareAlgorithm::kRMSE) {
     res = buffers[0].CompareRMSE(&buffers[1], options.tolerance);
-  else if (options.compare_algorithm == CompareAlgorithm::kHISTOGRAM_EMD)
+  } else if (options.compare_algorithm == CompareAlgorithm::kHISTOGRAM_EMD) {
     res = buffers[0].CompareHistogramEMD(&buffers[1], options.tolerance);
+  }
 
-  if (res.IsSuccess())
+  if (res.IsSuccess()) {
     std::cout << "Images similar" << std::endl;
-  else
+  } else {
     std::cout << "Images differ: " << res.Error() << std::endl;
+  }
 
   return !res.IsSuccess();
 }

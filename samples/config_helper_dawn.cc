@@ -57,6 +57,7 @@ amber::Result ConfigHelperDawn::CreateConfig(
     const std::vector<std::string>&,
     bool,
     bool,
+    bool,
     std::unique_ptr<amber::EngineConfig>* config) {
   // Set procedure table and error callback.
   DawnProcTable backendProcs = dawn_native::GetProcs();
@@ -75,8 +76,9 @@ amber::Result ConfigHelperDawn::CreateConfig(
     }
   }
 
-  if (!dawn_device_)
+  if (!dawn_device_) {
     return amber::Result("could not find Vulkan or Metal backend for Dawn");
+  }
 
   backendProcs.deviceSetUncapturedErrorCallback(dawn_device_.Get(),
                                                 PrintDeviceError, nullptr);

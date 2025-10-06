@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include "src/make_unique.h"
 #include "src/shader.h"
 #include "src/type_parser.h"
 #include "src/vkscript/command_parser.h"
@@ -48,24 +47,28 @@ std::string Parser::make_error(const Tokenizer& tokenizer,
 Result Parser::Parse(const std::string& input) {
   SectionParser section_parser;
   Result r = section_parser.Parse(input);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   r = GenerateDefaultPipeline(section_parser);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   for (const auto& section : section_parser.Sections()) {
     r = ProcessSection(section);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
 
   if (!skip_validation_for_test_) {
     for (const auto& pipeline : script_->GetPipelines()) {
       r = pipeline->Validate();
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
     }
   }
 
@@ -76,8 +79,9 @@ Result Parser::GenerateDefaultPipeline(const SectionParser& section_parser) {
   // Generate a pipeline for VkScript.
   PipelineType pipeline_type = PipelineType::kCompute;
   for (const auto& section : section_parser.Sections()) {
-    if (!SectionParser::HasShader(section.section_type))
+    if (!SectionParser::HasShader(section.section_type)) {
       continue;
+    }
 
     if (section.shader_type != kShaderTypeCompute) {
       pipeline_type = PipelineType::kGraphics;
@@ -85,44 +89,53 @@ Result Parser::GenerateDefaultPipeline(const SectionParser& section_parser) {
     }
   }
 
-  auto new_pipeline = MakeUnique<Pipeline>(pipeline_type);
+  auto new_pipeline = std::make_unique<Pipeline>(pipeline_type);
   auto* pipeline = new_pipeline.get();
   pipeline->SetName(kDefaultPipelineName);
   pipeline->SetFramebufferWidth(kDefaultFrameBufferSize);
   pipeline->SetFramebufferHeight(kDefaultFrameBufferSize);
 
   Result r = script_->AddPipeline(std::move(new_pipeline));
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   // Generate and add a framebuffer
   auto color_buf = pipeline->GenerateDefaultColorAttachmentBuffer();
   r = pipeline->AddColorAttachment(color_buf.get(), 0, 0);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   r = script_->AddBuffer(std::move(color_buf));
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   return {};
 }
 
 Result Parser::ProcessSection(const SectionParser::Section& section) {
   // Should never get here, but skip it anyway.
-  if (section.section_type == NodeType::kComment)
+  if (section.section_type == NodeType::kComment) {
     return {};
+  }
 
-  if (SectionParser::HasShader(section.section_type))
+  if (SectionParser::HasShader(section.section_type)) {
     return ProcessShaderBlock(section);
-  if (section.section_type == NodeType::kRequire)
+  }
+  if (section.section_type == NodeType::kRequire) {
     return ProcessRequireBlock(section);
-  if (section.section_type == NodeType::kIndices)
+  }
+  if (section.section_type == NodeType::kIndices) {
     return ProcessIndicesBlock(section);
-  if (section.section_type == NodeType::kVertexData)
+  }
+  if (section.section_type == NodeType::kVertexData) {
     return ProcessVertexDataBlock(section);
-  if (section.section_type == NodeType::kTest)
+  }
+  if (section.section_type == NodeType::kTest) {
     return ProcessTestBlock(section);
+  }
 
   return Result("Unknown node type ....");
 }
@@ -130,7 +143,7 @@ Result Parser::ProcessSection(const SectionParser::Section& section) {
 Result Parser::ProcessShaderBlock(const SectionParser::Section& section) {
   assert(SectionParser::HasShader(section.section_type));
 
-  auto shader = MakeUnique<Shader>(section.shader_type);
+  auto shader = std::make_unique<Shader>(section.shader_type);
   // Generate a unique name for the shader.
   shader->SetName("vk_shader_" + std::to_string(script_->GetShaders().size()));
   shader->SetFormat(section.format);
@@ -138,12 +151,14 @@ Result Parser::ProcessShaderBlock(const SectionParser::Section& section) {
 
   Result r = script_->GetPipeline(kDefaultPipelineName)
                  ->AddShader(shader.get(), shader->GetType());
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   r = script_->AddShader(std::move(shader));
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   return {};
 }
@@ -154,8 +169,9 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
 
   for (auto token = tokenizer.NextToken(); !token->IsEOS();
        token = tokenizer.NextToken()) {
-    if (token->IsEOL())
+    if (token->IsEOL()) {
       continue;
+    }
     if (!token->IsIdentifier()) {
       return Result(make_error(
           tokenizer,
@@ -167,8 +183,9 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       script_->AddRequiredFeature(str);
     } else if (str == Pipeline::kGeneratedColorBuffer) {
       token = tokenizer.NextToken();
-      if (!token->IsIdentifier())
+      if (!token->IsIdentifier()) {
         return Result(make_error(tokenizer, "Missing framebuffer format"));
+      }
 
       TypeParser type_parser;
       auto type = type_parser.Parse(token->AsString());
@@ -178,7 +195,7 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
                                       token->ToOriginalString()));
       }
 
-      auto fmt = MakeUnique<Format>(type.get());
+      auto fmt = std::make_unique<Format>(type.get());
       script_->GetPipeline(kDefaultPipelineName)
           ->GetColorAttachments()[0]
           .buffer->SetFormat(fmt.get());
@@ -187,8 +204,9 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
 
     } else if (str == "depthstencil") {
       token = tokenizer.NextToken();
-      if (!token->IsIdentifier())
+      if (!token->IsIdentifier()) {
         return Result(make_error(tokenizer, "Missing depthStencil format"));
+      }
 
       TypeParser type_parser;
       auto type = type_parser.Parse(token->AsString());
@@ -199,10 +217,11 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       }
 
       auto* pipeline = script_->GetPipeline(kDefaultPipelineName);
-      if (pipeline->GetDepthStencilBuffer().buffer != nullptr)
+      if (pipeline->GetDepthStencilBuffer().buffer != nullptr) {
         return Result("Only one depthstencil command allowed");
+      }
 
-      auto fmt = MakeUnique<Format>(type.get());
+      auto fmt = std::make_unique<Format>(type.get());
       // Generate and add a depth buffer
       auto depth_buf = pipeline->GenerateDefaultDepthStencilAttachmentBuffer();
       depth_buf->SetFormat(fmt.get());
@@ -210,17 +229,20 @@ Result Parser::ProcessRequireBlock(const SectionParser::Section& section) {
       script_->RegisterType(std::move(type));
 
       Result r = pipeline->SetDepthStencilBuffer(depth_buf.get());
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
 
       r = script_->AddBuffer(std::move(depth_buf));
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
 
     } else if (str == "fence_timeout") {
       token = tokenizer.NextToken();
-      if (!token->IsInteger())
+      if (!token->IsInteger()) {
         return Result(make_error(tokenizer, "Missing fence_timeout value"));
+      }
 
       script_->GetEngineData().fence_timeout_ms = token->AsUint32();
 
@@ -279,12 +301,14 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
   tokenizer.SetCurrentLine(section.starting_line_number);
   for (auto token = tokenizer.NextToken(); !token->IsEOS();
        token = tokenizer.NextToken()) {
-    if (token->IsEOL())
+    if (token->IsEOL()) {
       continue;
+    }
 
-    if (!token->IsInteger())
+    if (!token->IsInteger()) {
       return Result(make_error(tokenizer, "Invalid value in indices block: " +
                                               token->ToOriginalString()));
+    }
     if (token->AsUint64() >
         static_cast<uint64_t>(std::numeric_limits<uint16_t>::max())) {
       return Result(make_error(tokenizer, "Value too large in indices block: " +
@@ -298,8 +322,8 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
   if (!indices.empty()) {
     TypeParser parser;
     auto type = parser.Parse("R32_UINT");
-    auto fmt = MakeUnique<Format>(type.get());
-    auto b = MakeUnique<Buffer>();
+    auto fmt = std::make_unique<Format>(type.get());
+    auto b = std::make_unique<Buffer>();
     auto* buf = b.get();
     b->SetName("indices");
     b->SetFormat(fmt.get());
@@ -308,8 +332,9 @@ Result Parser::ProcessIndicesBlock(const SectionParser::Section& section) {
     script_->RegisterType(std::move(type));
 
     Result r = script_->AddBuffer(std::move(b));
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     script_->GetPipeline(kDefaultPipelineName)->SetIndexBuffer(buf);
   }
@@ -323,12 +348,14 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
 
   // Skip blank and comment lines
   auto token = tokenizer.NextToken();
-  while (token->IsEOL())
+  while (token->IsEOL()) {
     token = tokenizer.NextToken();
+  }
 
   // Skip empty vertex data blocks
-  if (token->IsEOS())
+  if (token->IsEOS()) {
     return {};
+  }
 
   // Process the header line.
   struct Header {
@@ -355,9 +382,10 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
     }
 
     std::string fmt_name = token->AsString();
-    if (fmt_name.size() < 2)
+    if (fmt_name.size() < 2) {
       return Result(make_error(tokenizer, "Vertex data format too short: " +
                                               token->ToOriginalString()));
+    }
 
     TypeParser parser;
     auto type = parser.Parse(fmt_name.substr(1, fmt_name.length()));
@@ -367,7 +395,7 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
                                     fmt_name.substr(1, fmt_name.length())));
     }
 
-    auto fmt = MakeUnique<Format>(type.get());
+    auto fmt = std::make_unique<Format>(type.get());
     headers.push_back({loc, fmt.get()});
     script_->RegisterFormat(std::move(fmt));
     script_->RegisterType(std::move(type));
@@ -381,8 +409,9 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
 
   // Process data lines
   for (; !token->IsEOS(); token = tokenizer.NextToken()) {
-    if (token->IsEOL())
+    if (token->IsEOL()) {
       continue;
+    }
 
     for (size_t j = 0; j < headers.size(); ++j) {
       const auto& header = headers[j];
@@ -402,8 +431,9 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
       } else {
         auto& segs = header.format->GetSegments();
         for (const auto& seg : segs) {
-          if (seg.IsPadding())
+          if (seg.IsPadding()) {
             continue;
+          }
 
           if (token->IsEOS() || token->IsEOL()) {
             return Result(make_error(tokenizer,
@@ -414,8 +444,9 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
           if (seg.GetFormatMode() == FormatMode::kUFloat ||
               seg.GetFormatMode() == FormatMode::kSFloat) {
             Result r = token->ConvertToDouble();
-            if (!r.IsSuccess())
+            if (!r.IsSuccess()) {
               return r;
+            }
 
             v.SetDoubleValue(token->AsDouble());
           } else if (token->IsInteger()) {
@@ -434,13 +465,14 @@ Result Parser::ProcessVertexDataBlock(const SectionParser::Section& section) {
 
   auto* pipeline = script_->GetPipeline(kDefaultPipelineName);
   for (size_t i = 0; i < headers.size(); ++i) {
-    auto buffer = MakeUnique<Buffer>();
+    auto buffer = std::make_unique<Buffer>();
     auto* buf = buffer.get();
     buffer->SetName("Vertices" + std::to_string(i));
     buffer->SetFormat(headers[i].format);
     Result r = buffer->SetData(std::move(values[i]));
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     script_->AddBuffer(std::move(buffer));
 
@@ -457,8 +489,9 @@ Result Parser::ProcessTestBlock(const SectionParser::Section& section) {
   CommandParser cp(script_.get(), pipeline, section.starting_line_number + 1,
                    section.contents);
   Result r = cp.Parse();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   script_->SetCommands(cp.TakeCommands());
 

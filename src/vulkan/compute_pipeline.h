@@ -30,12 +30,13 @@ class ComputePipeline : public Pipeline {
   ComputePipeline(
       Device* device,
       uint32_t fence_timeout_ms,
+      bool pipeline_runtime_layer_enabled,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
   ~ComputePipeline() override;
 
   Result Initialize(CommandPool* pool);
 
-  Result Compute(uint32_t x, uint32_t y, uint32_t z);
+  Result Compute(uint32_t x, uint32_t y, uint32_t z, bool is_timed_execution);
 
  private:
   Result CreateVkComputePipeline(const VkPipelineLayout& pipeline_layout,

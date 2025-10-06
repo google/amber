@@ -16,7 +16,6 @@
 
 #include <cstring>
 
-#include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
@@ -33,28 +32,32 @@ Result IndexBuffer::SendIndexData(CommandBuffer* command, Buffer* buffer) {
         "IndexBuffer::SendIndexData must be called once when it is created");
   }
 
-  if (buffer->ElementCount() == 0)
+  if (buffer->ElementCount() == 0) {
     return Result("IndexBuffer::SendIndexData |buffer| is empty");
+  }
 
-  if (buffer->GetFormat()->IsUint32())
+  if (buffer->GetFormat()->IsUint32()) {
     index_type_ = VK_INDEX_TYPE_UINT32;
-  else if (buffer->GetFormat()->IsUint16())
+  } else if (buffer->GetFormat()->IsUint16()) {
     index_type_ = VK_INDEX_TYPE_UINT16;
-  else if (buffer->GetFormat()->IsUint8())
+  } else if (buffer->GetFormat()->IsUint8()) {
     index_type_ = VK_INDEX_TYPE_UINT8_EXT;
-  else
+  } else {
     return Result("IndexBuffer::SendIndexData unexpected index buffer format");
+  }
 
-  transfer_buffer_ =
-      MakeUnique<TransferBuffer>(device_, buffer->GetSizeInBytes(), nullptr);
+  transfer_buffer_ = std::make_unique<TransferBuffer>(
+      device_, buffer->GetSizeInBytes(), nullptr);
   Result r = transfer_buffer_->AddUsageFlags(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                              VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   r = transfer_buffer_->Initialize();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   std::memcpy(transfer_buffer_->HostAccessibleMemoryPtr(),
               buffer->ValuePtr()->data(), buffer->GetSizeInBytes());

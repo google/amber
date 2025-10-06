@@ -44,6 +44,8 @@ const char* const kRequiredValidationLayers[] = {
 const size_t kNumberOfRequiredValidationLayers =
     sizeof(kRequiredValidationLayers) / sizeof(const char*);
 
+const char kPipelineRuntimeLayerName[] = "VK_LAYER_STADIA_pipeline_runtime";
+
 const char kVariablePointers[] = "VariablePointerFeatures.variablePointers";
 const char kVariablePointersStorageBuffer[] =
     "VariablePointerFeatures.variablePointersStorageBuffer";
@@ -67,8 +69,17 @@ const char k16BitStorage_InputOutput[] =
 const char kSubgroupSizeControl[] = "SubgroupSizeControl.subgroupSizeControl";
 const char kComputeFullSubgroups[] = "SubgroupSizeControl.computeFullSubgroups";
 
+const char kDepthClampZeroOne[] = "DepthClampZeroOneFeatures.depthClampZeroOne";
+
 const char kShaderSubgroupExtendedTypes[] =
     "ShaderSubgroupExtendedTypesFeatures.shaderSubgroupExtendedTypes";
+
+const char kAccelerationStructure[] =
+    "AccelerationStructureFeaturesKHR.accelerationStructure";
+const char kBufferDeviceAddress[] =
+    "BufferDeviceAddressFeatures.bufferDeviceAddress";
+const char kRayTracingPipeline[] =
+    "RayTracingPipelineFeaturesKHR.rayTracingPipeline";
 
 const char kExtensionForValidationLayer[] = "VK_EXT_debug_report";
 
@@ -95,6 +106,88 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flag,
 
   LogError(flag_message + " validation layer (" + layerPrefix + "):\n" + msg);
   return VK_FALSE;
+}
+
+std::string to_str(VkResult result) {
+  switch (result) {
+    case VK_SUCCESS:
+      return "SUCCESS";
+    case VK_NOT_READY:
+      return "NOT READY";
+    case VK_TIMEOUT:
+      return "TIMEOUT";
+    case VK_EVENT_SET:
+      return "EVENT_SET";
+    case VK_EVENT_RESET:
+      return "EVENT_RESET";
+    case VK_INCOMPLETE:
+      return "INCOMPLETE";
+    case VK_ERROR_OUT_OF_HOST_MEMORY:
+      return "ERROR_OUT_OF_HOST_MEMORY";
+    case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+      return "ERROR_OUT_OF_DEVICE_MEMORY";
+    case VK_ERROR_INITIALIZATION_FAILED:
+      return "ERROR_INITIALIZATION_FAILED";
+    case VK_ERROR_DEVICE_LOST:
+      return "ERROR_DEVICE_LOST";
+    case VK_ERROR_MEMORY_MAP_FAILED:
+      return "ERROR_MEMORY_MAP_FAILED";
+    case VK_ERROR_LAYER_NOT_PRESENT:
+      return "ERROR_LAYER_NOT_PRESENT";
+    case VK_ERROR_EXTENSION_NOT_PRESENT:
+      return "ERROR_EXTENSION_NOT_PRESENT";
+    case VK_ERROR_FEATURE_NOT_PRESENT:
+      return "ERROR_FEATURE_NOT_PRESENT";
+    case VK_ERROR_INCOMPATIBLE_DRIVER:
+      return "ERROR_INCOMPATIBLE_DRIVER";
+    case VK_ERROR_TOO_MANY_OBJECTS:
+      return "ERROR_TOO_MANY_OBJECTS";
+    case VK_ERROR_FORMAT_NOT_SUPPORTED:
+      return "ERROR_FORMAT_NOT_SUPPORTED";
+    case VK_ERROR_FRAGMENTED_POOL:
+      return "ERROR_FRAGMENTED_POOL";
+    case VK_ERROR_UNKNOWN:
+      return "ERROR_UNKNOWN";
+    case VK_ERROR_OUT_OF_POOL_MEMORY:
+      return "ERROR_OUT_OF_POOL_MEMORY";
+    case VK_ERROR_INVALID_EXTERNAL_HANDLE:
+      return "ERROR_INVALID_EXTERNAL_HANDLE";
+    case VK_ERROR_FRAGMENTATION:
+      return "ERROR_FRAGMENTATION";
+    case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS:
+      return "ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS";
+    case VK_PIPELINE_COMPILE_REQUIRED:
+      return "PIPELINE_COMPILE_REQUIRED";
+    case VK_ERROR_SURFACE_LOST_KHR:
+      return "ERROR_SURFACE_LOST";
+    case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
+      return "ERROR_NATIVE_WINDOW_IN_USE";
+    case VK_SUBOPTIMAL_KHR:
+      return "SUBOPTIMAL";
+    case VK_ERROR_OUT_OF_DATE_KHR:
+      return "ERROR_OUT_OF_DATE";
+    case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
+      return "ERROR_INCOMPATIBLE_DISPLAY";
+    case VK_ERROR_VALIDATION_FAILED_EXT:
+      return "ERROR_VALIDATION_FAILED";
+    case VK_ERROR_INVALID_SHADER_NV:
+      return "ERROR_INVALID_SHADER";
+    case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT:
+      return "ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT";
+    case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
+      return "ERROR_FULL_SCREEN_EXCULSIVE_MODE_LOST";
+    case VK_THREAD_IDLE_KHR:
+      return "THREAD_IDLE";
+    case VK_THREAD_DONE_KHR:
+      return "THREAD_DONE";
+    case VK_OPERATION_DEFERRED_KHR:
+      return "OPERATION_DEFERRED";
+    case VK_OPERATION_NOT_DEFERRED_KHR:
+      return "OPERATION_NO_DEFERRED";
+    default:
+      break;
+  }
+  return "VkResult(" + std::to_string(static_cast<uint32_t>(result)) + ")";
 }
 
 // Convert required features given as a string array to
@@ -241,12 +334,14 @@ bool AreAllValidationLayersSupported() {
     required_layer_set.erase(property.layerName);
   }
 
-  if (required_layer_set.empty())
+  if (required_layer_set.empty()) {
     return true;
+  }
 
   std::string missing_layers;
-  for (const auto& missing_layer : required_layer_set)
+  for (const auto& missing_layer : required_layer_set) {
     missing_layers = missing_layers + missing_layer + ",\n\t\t";
+  }
   LogError("Vulkan: missing validation layers:\n\t\t" + missing_layers);
   return true;
 }
@@ -268,8 +363,9 @@ bool AreAllValidationExtensionsSupported() {
     }
 
     for (const auto& ext : extension_properties) {
-      if (!strcmp(kExtensionForValidationLayer, ext.extensionName))
+      if (!strcmp(kExtensionForValidationLayer, ext.extensionName)) {
         return true;
+      }
     }
   }
 
@@ -515,8 +611,9 @@ std::vector<std::string> GetAvailableInstanceExtensions() {
     return available_extensions;
   }
 
-  if (available_extension_count == 0)
+  if (available_extension_count == 0) {
     return available_extensions;
+  }
 
   available_extension_properties.resize(available_extension_count);
   if (vkEnumerateInstanceExtensionProperties(
@@ -525,8 +622,9 @@ std::vector<std::string> GetAvailableInstanceExtensions() {
     return available_extensions;
   }
 
-  for (const auto& property : available_extension_properties)
+  for (const auto& property : available_extension_properties) {
     available_extensions.push_back(property.extensionName);
+  }
 
   return available_extensions;
 }
@@ -544,8 +642,9 @@ std::vector<std::string> GetAvailableDeviceExtensions(
     return available_extensions;
   }
 
-  if (available_extension_count == 0)
+  if (available_extension_count == 0) {
     return available_extensions;
+  }
 
   available_extension_properties.resize(available_extension_count);
   if (vkEnumerateDeviceExtensionProperties(
@@ -554,8 +653,9 @@ std::vector<std::string> GetAvailableDeviceExtensions(
     return available_extensions;
   }
 
-  for (const auto& property : available_extension_properties)
+  for (const auto& property : available_extension_properties) {
     available_extensions.push_back(property.extensionName);
+  }
 
   return available_extensions;
 }
@@ -565,8 +665,9 @@ std::vector<std::string> GetAvailableDeviceExtensions(
 bool AreAllExtensionsSupported(
     const std::vector<std::string>& available_extensions,
     const std::vector<std::string>& required_extensions) {
-  if (required_extensions.empty())
+  if (required_extensions.empty()) {
     return true;
+  }
 
   std::set<std::string> required_extension_set(required_extensions.begin(),
                                                required_extensions.end());
@@ -628,8 +729,9 @@ std::string stageFlagBitsToNames(const VkShaderStageFlags bits) {
   bool addSeparator = false;
   for (const auto& stage : stages) {
     if ((bits & stage.first) != 0) {
-      if (addSeparator)
+      if (addSeparator) {
         result << ", ";
+      }
       result << stage.second;
       addSeparator = true;
     }
@@ -637,42 +739,43 @@ std::string stageFlagBitsToNames(const VkShaderStageFlags bits) {
   return result.str();
 }
 
+bool StartsWith(const std::string& str, const std::string& prefix) {
+  if (prefix.size() > str.size()) {
+    return false;
+  }
+  return std::equal(prefix.begin(), prefix.end(), str.begin());
+}
+
 }  // namespace
 
-ConfigHelperVulkan::ConfigHelperVulkan()
-    : available_features_(VkPhysicalDeviceFeatures()),
-      available_features2_(VkPhysicalDeviceFeatures2KHR()),
-      variable_pointers_feature_(VkPhysicalDeviceVariablePointerFeaturesKHR()),
-      float16_int8_feature_(VkPhysicalDeviceFloat16Int8FeaturesKHR()),
-      storage_8bit_feature_(VkPhysicalDevice8BitStorageFeaturesKHR()),
-      storage_16bit_feature_(VkPhysicalDevice16BitStorageFeaturesKHR()),
-      subgroup_size_control_feature_(
-          VkPhysicalDeviceSubgroupSizeControlFeaturesEXT()) {}
+ConfigHelperVulkan::ConfigHelperVulkan() = default;
 
 ConfigHelperVulkan::~ConfigHelperVulkan() {
-  if (vulkan_device_)
-    vkDestroyDevice(vulkan_device_, nullptr);
+  if (vk_.device) {
+    vkDestroyDevice(vk_.device, nullptr);
+  }
 
-  if (vulkan_callback_) {
+  if (vk_.debug_cb) {
     auto vkDestroyDebugReportCallbackEXT =
         reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
-            vkGetInstanceProcAddr(vulkan_instance_,
+            vkGetInstanceProcAddr(vk_.instance,
                                   "vkDestroyDebugReportCallbackEXT"));
     if (vkDestroyDebugReportCallbackEXT) {
-      vkDestroyDebugReportCallbackEXT(vulkan_instance_, vulkan_callback_,
-                                      nullptr);
+      vkDestroyDebugReportCallbackEXT(vk_.instance, vk_.debug_cb, nullptr);
     }
   }
 
-  if (vulkan_instance_)
-    vkDestroyInstance(vulkan_instance_, nullptr);
+  if (vk_.instance) {
+    vkDestroyInstance(vk_.instance, nullptr);
+  }
 }
 
 amber::Result ConfigHelperVulkan::CreateVulkanInstance(
     uint32_t engine_major,
     uint32_t engine_minor,
     std::vector<std::string> required_extensions,
-    bool disable_validation_layer) {
+    bool disable_validation_layer,
+    bool enable_pipeline_runtime_layer) {
   VkApplicationInfo app_info = VkApplicationInfo();
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 
@@ -685,38 +788,50 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_info.pApplicationInfo = &app_info;
 
+  std::vector<const char*> layer_names;
+
   if (!disable_validation_layer) {
-    if (!AreAllValidationLayersSupported())
+    if (!AreAllValidationLayersSupported()) {
       return amber::Result("Sample: not all validation layers are supported");
+    }
     if (!AreAllValidationExtensionsSupported()) {
       return amber::Result(
           "Sample: extensions of validation layers are not supported");
     }
-    instance_info.enabledLayerCount = kNumberOfRequiredValidationLayers;
-    instance_info.ppEnabledLayerNames = kRequiredValidationLayers;
-
+    for (size_t i = 0; i < kNumberOfRequiredValidationLayers; ++i) {
+      layer_names.push_back(kRequiredValidationLayers[i]);
+    }
     required_extensions.push_back(kExtensionForValidationLayer);
   }
 
-  available_instance_extensions_ = GetAvailableInstanceExtensions();
+  if (enable_pipeline_runtime_layer) {
+    layer_names.push_back(kPipelineRuntimeLayerName);
+  }
+
+  instance_info.enabledLayerCount = static_cast<uint32_t>(layer_names.size());
+  instance_info.ppEnabledLayerNames =
+      instance_info.enabledLayerCount > 0 ? layer_names.data() : nullptr;
+
+  vk_.available_instance_extensions = GetAvailableInstanceExtensions();
   if (!required_extensions.empty()) {
-    if (!AreAllExtensionsSupported(available_instance_extensions_,
+    if (!AreAllExtensionsSupported(vk_.available_instance_extensions,
                                    required_extensions)) {
       return amber::Result("Missing required instance extensions");
     }
   }
 
-  if (std::find(available_instance_extensions_.begin(),
-                available_instance_extensions_.end(),
+  if (std::find(vk_.available_instance_extensions.begin(),
+                vk_.available_instance_extensions.end(),
                 "VK_KHR_get_physical_device_properties2") !=
-      available_instance_extensions_.end()) {
+      vk_.available_instance_extensions.end()) {
     required_extensions.push_back("VK_KHR_get_physical_device_properties2");
   }
 
   // Determine if VkPhysicalDeviceProperties2KHR should be used
   for (auto& ext : required_extensions) {
-    if (ext == "VK_KHR_get_physical_device_properties2")
-      supports_get_physical_device_properties2_ = true;
+    if (ext == "VK_KHR_get_physical_device_properties2") {
+      supports_.get_physical_device_properties2 = true;
+    }
   }
 
   std::vector<const char*> required_extensions_in_char;
@@ -729,9 +844,12 @@ amber::Result ConfigHelperVulkan::CreateVulkanInstance(
       static_cast<uint32_t>(required_extensions_in_char.size());
   instance_info.ppEnabledExtensionNames = required_extensions_in_char.data();
 
-  if (vkCreateInstance(&instance_info, nullptr, &vulkan_instance_) !=
-      VK_SUCCESS) {
-    return amber::Result("Unable to create vulkan instance");
+  const VkResult result =
+      vkCreateInstance(&instance_info, nullptr, &vk_.instance);
+  if (result != VK_SUCCESS) {
+    std::stringstream error_message;
+    error_message << "Unable to create vulkan instance: " << to_str(result);
+    return amber::Result(error_message.str());
   }
   return {};
 }
@@ -745,13 +863,14 @@ amber::Result ConfigHelperVulkan::CreateDebugReportCallback() {
 
   auto vkCreateDebugReportCallbackEXT =
       reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
-          vkGetInstanceProcAddr(vulkan_instance_,
+          vkGetInstanceProcAddr(vk_.instance,
                                 "vkCreateDebugReportCallbackEXT"));
-  if (!vkCreateDebugReportCallbackEXT)
+  if (!vkCreateDebugReportCallbackEXT) {
     return amber::Result("Sample: vkCreateDebugReportCallbackEXT is nullptr");
+  }
 
-  if (vkCreateDebugReportCallbackEXT(vulkan_instance_, &info, nullptr,
-                                     &vulkan_callback_) != VK_SUCCESS) {
+  if (vkCreateDebugReportCallbackEXT(vk_.instance, &info, nullptr,
+                                     &vk_.debug_cb) != VK_SUCCESS) {
     return amber::Result("Sample: vkCreateDebugReportCallbackEXT fail");
   }
   return {};
@@ -761,76 +880,161 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
     const VkPhysicalDevice physical_device,
     const std::vector<std::string>& required_features,
     const std::vector<std::string>& required_extensions) {
-  available_device_extensions_ = GetAvailableDeviceExtensions(physical_device);
-  if (!AreAllExtensionsSupported(available_device_extensions_,
+  vk_.available_device_extensions =
+      GetAvailableDeviceExtensions(physical_device);
+  if (!AreAllExtensionsSupported(vk_.available_device_extensions,
                                  required_extensions)) {
     return amber::Result("Device does not support all required extensions");
   }
-  for (const auto& ext : available_device_extensions_) {
-    if (ext == "VK_KHR_shader_float16_int8")
-      supports_shader_float16_int8_ = true;
-    else if (ext == "VK_KHR_8bit_storage")
-      supports_shader_8bit_storage_ = true;
-    else if (ext == "VK_KHR_16bit_storage")
-      supports_shader_16bit_storage_ = true;
-    else if (ext == "VK_EXT_subgroup_size_control")
-      supports_subgroup_size_control_ = true;
-    else if (ext == "VK_KHR_shader_subgroup_extended_types")
-      supports_shader_subgroup_extended_types_ = true;
+  for (const auto& ext : vk_.available_device_extensions) {
+    if (ext == "VK_KHR_shader_float16_int8") {
+      supports_.shader_float16_int8 = true;
+    } else if (ext == "VK_KHR_8bit_storage") {
+      supports_.shader_8bit_storage = true;
+    } else if (ext == "VK_KHR_16bit_storage") {
+      supports_.shader_16bit_storage = true;
+    } else if (ext == "VK_EXT_subgroup_size_control") {
+      supports_.subgroup_size_control = true;
+    } else if (ext == "VK_EXT_depth_clamp_zero_one") {
+      supports_.depth_clamp_zero_one = true;
+    } else if (ext == "VK_KHR_shader_subgroup_extended_types") {
+      supports_.shader_subgroup_extended_types = true;
+    } else if (ext == "VK_KHR_variable_pointers") {
+      supports_.variable_pointers = true;
+    } else if (ext == "VK_KHR_acceleration_structure") {
+      supports_.acceleration_structure = true;
+    } else if (ext == "VK_KHR_buffer_device_address") {
+      supports_.buffer_device_address = true;
+    } else if (ext == "VK_KHR_ray_tracing_pipeline") {
+      supports_.ray_tracing_pipeline = true;
+    } else if (ext == VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME) {
+      supports_.descriptor_indexing = true;
+    } else if (ext == VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME) {
+      supports_.deferred_host_operations = true;
+    } else if (ext == VK_KHR_SPIRV_1_4_EXTENSION_NAME) {
+      supports_.spirv_1_4 = true;
+    } else if (ext == VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME) {
+      supports_.shader_float_controls = true;
+    }
   }
 
   VkPhysicalDeviceFeatures required_vulkan_features =
       VkPhysicalDeviceFeatures();
 
-  if (supports_get_physical_device_properties2_) {
+  if (supports_.get_physical_device_properties2) {
     VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures
         shader_subgroup_extended_types_features = {};
     VkPhysicalDeviceSubgroupSizeControlFeaturesEXT
         subgroup_size_control_features = {};
+    VkPhysicalDeviceDepthClampZeroOneFeaturesEXT depth_clamp_zero_one_features =
+        {};
     VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_features = {};
     VkPhysicalDeviceFloat16Int8FeaturesKHR float16_int8_features = {};
     VkPhysicalDevice8BitStorageFeaturesKHR storage_8bit_features = {};
     VkPhysicalDevice16BitStorageFeaturesKHR storage_16bit_features = {};
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR
+        acceleration_structure_features = {};
+    VkPhysicalDeviceBufferDeviceAddressFeatures buffer_device_address_features =
+        {};
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR
+        ray_tracing_pipeline_features = {};
+    VkPhysicalDeviceDescriptorIndexingFeatures descriptor_indexing_features =
+        {};
+    void* next_ptr = nullptr;
 
-    subgroup_size_control_features.sType =
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT;
-    subgroup_size_control_features.pNext = nullptr;
+    if (supports_.subgroup_size_control) {
+      subgroup_size_control_features.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT;
+      subgroup_size_control_features.pNext = next_ptr;
+      next_ptr = &subgroup_size_control_features;
+    }
 
-    // Add subgroup size control struct into the chain only if
-    // VK_EXT_subgroup_size_control is supported.
+    if (supports_.depth_clamp_zero_one) {
+      depth_clamp_zero_one_features.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT;
+      depth_clamp_zero_one_features.pNext = next_ptr;
+      next_ptr = &depth_clamp_zero_one_features;
+    }
+
     variable_pointers_features.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
-    variable_pointers_features.pNext = supports_subgroup_size_control_
-                                           ? &subgroup_size_control_features
-                                           : nullptr;
+    variable_pointers_features.pNext = next_ptr;
+    next_ptr = &variable_pointers_features;
 
     shader_subgroup_extended_types_features.sType =
-    // NOLINTNEXTLINE(whitespace/line_length)
+        // NOLINTNEXTLINE(whitespace/line_length)
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES;
-    shader_subgroup_extended_types_features.pNext = &variable_pointers_features;
+    shader_subgroup_extended_types_features.pNext = next_ptr;
+    next_ptr = &shader_subgroup_extended_types_features;
 
     float16_int8_features.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
-    float16_int8_features.pNext = &shader_subgroup_extended_types_features;
+    float16_int8_features.pNext = next_ptr;
+    next_ptr = &float16_int8_features;
 
     storage_8bit_features.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR;
-    storage_8bit_features.pNext = &float16_int8_features;
+    storage_8bit_features.pNext = next_ptr;
+    next_ptr = &storage_8bit_features;
 
     storage_16bit_features.sType =
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR;
-    storage_16bit_features.pNext = &storage_8bit_features;
+    storage_16bit_features.pNext = next_ptr;
+    next_ptr = &storage_16bit_features;
+
+    if (supports_.acceleration_structure) {
+      acceleration_structure_features.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+      acceleration_structure_features.pNext = next_ptr;
+      next_ptr = &acceleration_structure_features;
+    }
+
+    if (supports_.buffer_device_address) {
+      buffer_device_address_features.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+      buffer_device_address_features.pNext = next_ptr;
+      next_ptr = &buffer_device_address_features;
+    }
+
+    if (supports_.ray_tracing_pipeline) {
+      ray_tracing_pipeline_features.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+      ray_tracing_pipeline_features.pNext = next_ptr;
+      next_ptr = &ray_tracing_pipeline_features;
+    }
+
+    if (supports_.descriptor_indexing) {
+      descriptor_indexing_features.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+      descriptor_indexing_features.pNext = next_ptr;
+      next_ptr = &descriptor_indexing_features;
+    }
 
     VkPhysicalDeviceFeatures2KHR features2 = VkPhysicalDeviceFeatures2KHR();
     features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
-    features2.pNext = &storage_16bit_features;
+    features2.pNext = next_ptr;
 
     auto vkGetPhysicalDeviceFeatures2KHR =
         reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
-            vkGetInstanceProcAddr(vulkan_instance_,
+            vkGetInstanceProcAddr(vk_.instance,
                                   "vkGetPhysicalDeviceFeatures2KHR"));
     vkGetPhysicalDeviceFeatures2KHR(physical_device, &features2);
-    available_features_ = features2.features;
+    features_.device = features2.features;
+
+    // Just having the extension does not necessarily mean that the feature is
+    // available. We have to check the features structure for specific flags.
+    if (supports_.acceleration_structure) {
+      supports_.acceleration_structure =
+          acceleration_structure_features.accelerationStructure;
+    }
+    if (supports_.ray_tracing_pipeline) {
+      supports_.ray_tracing_pipeline =
+          ray_tracing_pipeline_features.rayTracingPipeline;
+    }
+    if (supports_.depth_clamp_zero_one) {
+      supports_.depth_clamp_zero_one =
+          depth_clamp_zero_one_features.depthClampZeroOne;
+    }
 
     std::vector<std::string> required_features1;
     for (const auto& feature : required_features) {
@@ -849,6 +1053,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
            subgroup_size_control_features.subgroupSizeControl == VK_FALSE) ||
           (feature == kComputeFullSubgroups &&
            subgroup_size_control_features.computeFullSubgroups == VK_FALSE) ||
+          (feature == kDepthClampZeroOne &&
+           depth_clamp_zero_one_features.depthClampZeroOne == VK_FALSE) ||
           (feature == kFloat16Int8_Float16 &&
            float16_int8_features.shaderFloat16 == VK_FALSE) ||
           (feature == kFloat16Int8_Int8 &&
@@ -871,31 +1077,39 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
                VK_FALSE) ||
           (feature == kShaderSubgroupExtendedTypes &&
            shader_subgroup_extended_types_features
-                   .shaderSubgroupExtendedTypes == VK_FALSE)) {
+                   .shaderSubgroupExtendedTypes == VK_FALSE) ||
+          (feature == kAccelerationStructure &&
+           acceleration_structure_features.accelerationStructure == VK_FALSE) ||
+          (feature == kBufferDeviceAddress &&
+           buffer_device_address_features.bufferDeviceAddress == VK_FALSE) ||
+          (feature == kRayTracingPipeline &&
+           ray_tracing_pipeline_features.rayTracingPipeline == VK_FALSE)) {
         return amber::Result("Device does not support all required features");
       }
     }
 
     amber::Result r =
         NamesToVulkanFeatures(required_features1, &required_vulkan_features);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
   } else {
     amber::Result r =
         NamesToVulkanFeatures(required_features, &required_vulkan_features);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
-    vkGetPhysicalDeviceFeatures(physical_device, &available_features_);
+    vkGetPhysicalDeviceFeatures(physical_device, &features_.device);
   }
-  if (!AreAllRequiredFeaturesSupported(available_features_,
+  if (!AreAllRequiredFeaturesSupported(features_.device,
                                        required_vulkan_features)) {
     return amber::Result("Device does not support all required features");
   }
 
-  vulkan_queue_family_index_ = ChooseQueueFamilyIndex(physical_device);
-  if (vulkan_queue_family_index_ == std::numeric_limits<uint32_t>::max()) {
+  vk_.queue_family_index = ChooseQueueFamilyIndex(physical_device);
+  if (vk_.queue_family_index == std::numeric_limits<uint32_t>::max()) {
     return amber::Result("Device does not support required queue flags");
   }
 
@@ -909,13 +1123,12 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
   uint32_t count = 0;
   std::vector<VkPhysicalDevice> physical_devices;
 
-  if (vkEnumeratePhysicalDevices(vulkan_instance_, &count, nullptr) !=
-      VK_SUCCESS) {
+  if (vkEnumeratePhysicalDevices(vk_.instance, &count, nullptr) != VK_SUCCESS) {
     return amber::Result("Unable to enumerate physical devices");
   }
 
   physical_devices.resize(count);
-  if (vkEnumeratePhysicalDevices(vulkan_instance_, &count,
+  if (vkEnumeratePhysicalDevices(vk_.instance, &count,
                                  physical_devices.data()) != VK_SUCCESS) {
     return amber::Result("Unable to enumerate physical devices");
   }
@@ -928,27 +1141,31 @@ amber::Result ConfigHelperVulkan::ChooseVulkanPhysicalDevice(
     }
     amber::Result r = CheckVulkanPhysicalDeviceRequirements(
         physical_devices[deviceID], required_features, required_extensions);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
-    vulkan_physical_device_ = physical_devices[deviceID];
+    }
+    vk_.physical_device = physical_devices[deviceID];
     return {};
   } else {
     for (uint32_t i = 0; i < count; ++i) {
       amber::Result r = CheckVulkanPhysicalDeviceRequirements(
           physical_devices[i], required_features, required_extensions);
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         continue;
-      vulkan_physical_device_ = physical_devices[i];
+      }
+      vk_.physical_device = physical_devices[i];
       return {};
     }
   }
 
   std::ostringstream out;
   out << "Unable to find Vulkan device supporting:" << std::endl;
-  for (const auto& str : required_features)
+  for (const auto& str : required_features) {
     out << "  " << str << std::endl;
-  for (const auto& str : required_extensions)
+  }
+  for (const auto& str : required_extensions) {
     out << "  " << str << std::endl;
+  }
 
   return amber::Result(out.str());
 }
@@ -960,38 +1177,44 @@ amber::Result ConfigHelperVulkan::CreateVulkanDevice(
   const float priorities[] = {1.0f};
 
   queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-  queue_info.queueFamilyIndex = vulkan_queue_family_index_;
+  queue_info.queueFamilyIndex = vk_.queue_family_index;
   queue_info.queueCount = 1;
   queue_info.pQueuePriorities = priorities;
 
+  VkDeviceCreateInfo info = VkDeviceCreateInfo();
+  info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  info.pQueueCreateInfos = &queue_info;
+  info.queueCreateInfoCount = 1;
+
+  if (supports_.get_physical_device_properties2) {
+    return CreateDeviceWithFeatures2(required_features, required_extensions,
+                                     &info);
+  }
+  return CreateDeviceWithFeatures1(required_features, required_extensions,
+                                   &info);
+}
+
+amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures1(
+    const std::vector<std::string>& required_features,
+    const std::vector<std::string>& required_extensions,
+    VkDeviceCreateInfo* info) {
   std::vector<const char*> required_extensions_in_char;
   std::transform(
       required_extensions.begin(), required_extensions.end(),
       std::back_inserter(required_extensions_in_char),
       [](const std::string& ext) -> const char* { return ext.c_str(); });
 
-  VkDeviceCreateInfo info = VkDeviceCreateInfo();
-  info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  info.pQueueCreateInfos = &queue_info;
-  info.queueCreateInfoCount = 1;
-  info.enabledExtensionCount =
+  info->enabledExtensionCount =
       static_cast<uint32_t>(required_extensions_in_char.size());
-  info.ppEnabledExtensionNames = required_extensions_in_char.data();
+  info->ppEnabledExtensionNames = required_extensions_in_char.data();
 
-  if (supports_get_physical_device_properties2_)
-    return CreateDeviceWithFeatures2(required_features, &info);
-  return CreateDeviceWithFeatures1(required_features, &info);
-}
-
-amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures1(
-    const std::vector<std::string>& required_features,
-    VkDeviceCreateInfo* info) {
   VkPhysicalDeviceFeatures required_vulkan_features =
       VkPhysicalDeviceFeatures();
   amber::Result r =
       NamesToVulkanFeatures(required_features, &required_vulkan_features);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   info->pEnabledFeatures = &required_vulkan_features;
   return DoCreateDevice(info);
@@ -999,61 +1222,34 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures1(
 
 amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
     const std::vector<std::string>& required_features,
+    const std::vector<std::string>& required_extensions,
     VkDeviceCreateInfo* info) {
-  variable_pointers_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR;
-  variable_pointers_feature_.pNext = nullptr;
+  std::vector<std::string> exts = required_extensions;
+  void* pnext = nullptr;
+  void** next_ptr = nullptr;
 
-  float16_int8_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
-  float16_int8_feature_.pNext = nullptr;
+  auto init_feature = [&pnext, &next_ptr, &exts](
+                          bool enabled, auto& feature_obj,
+                          enum VkStructureType struct_type,
+                          const char* name = nullptr) {
+    feature_obj.sType = struct_type;
+    feature_obj.pNext = nullptr;
 
-  storage_8bit_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR;
-  storage_8bit_feature_.pNext = nullptr;
+    if (enabled) {
+      if (pnext == nullptr) {
+        pnext = &feature_obj;
+      }
+      if (next_ptr != nullptr) {
+        *next_ptr = &feature_obj;
+      }
+      next_ptr = &feature_obj.pNext;
+      if (name) {
+        exts.push_back(name);
+      }
+    }
+  };
 
-  storage_16bit_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR;
-  storage_16bit_feature_.pNext = nullptr;
-
-  subgroup_size_control_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT;
-  subgroup_size_control_feature_.pNext = nullptr;
-
-  shader_subgroup_extended_types_feature_.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES;
-  shader_subgroup_extended_types_feature_.pNext = nullptr;
-
-  void** next_ptr = &variable_pointers_feature_.pNext;
-
-  if (supports_shader_float16_int8_) {
-    *next_ptr = &float16_int8_feature_;
-    next_ptr = &float16_int8_feature_.pNext;
-  }
-
-  if (supports_shader_8bit_storage_) {
-    *next_ptr = &storage_8bit_feature_;
-    next_ptr = &storage_8bit_feature_.pNext;
-  }
-
-  if (supports_shader_16bit_storage_) {
-    *next_ptr = &storage_16bit_feature_;
-    next_ptr = &storage_16bit_feature_.pNext;
-  }
-
-  if (supports_subgroup_size_control_) {
-    *next_ptr = &subgroup_size_control_feature_;
-    next_ptr = &subgroup_size_control_feature_.pNext;
-  }
-
-  if (supports_shader_subgroup_extended_types_) {
-    *next_ptr = &shader_subgroup_extended_types_feature_;
-    next_ptr = &shader_subgroup_extended_types_feature_.pNext;
-  }
-
-  available_features2_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
-  available_features2_.pNext = &variable_pointers_feature_;
-
+  // Initialize physical device features only for the required features.
   std::vector<std::string> feature1_names;
   for (const auto& feature : required_features) {
     // No dot means this is a features1 feature.
@@ -1062,55 +1258,142 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
       continue;
     }
 
-    if (feature == kVariablePointers)
-      variable_pointers_feature_.variablePointers = VK_TRUE;
-    else if (feature == kVariablePointersStorageBuffer)
-      variable_pointers_feature_.variablePointersStorageBuffer = VK_TRUE;
-    else if (feature == kFloat16Int8_Float16)
-      float16_int8_feature_.shaderFloat16 = VK_TRUE;
-    else if (feature == kFloat16Int8_Int8)
-      float16_int8_feature_.shaderInt8 = VK_TRUE;
-    else if (feature == k8BitStorage_Storage)
-      storage_8bit_feature_.storageBuffer8BitAccess = VK_TRUE;
-    else if (feature == k8BitStorage_UniformAndStorage)
-      storage_8bit_feature_.uniformAndStorageBuffer8BitAccess = VK_TRUE;
-    else if (feature == k8BitStorage_PushConstant)
-      storage_8bit_feature_.storagePushConstant8 = VK_TRUE;
-    else if (feature == k16BitStorage_Storage)
-      storage_16bit_feature_.storageBuffer16BitAccess = VK_TRUE;
-    else if (feature == k16BitStorage_UniformAndStorage)
-      storage_16bit_feature_.uniformAndStorageBuffer16BitAccess = VK_TRUE;
-    else if (feature == k16BitStorage_PushConstant)
-      storage_16bit_feature_.storagePushConstant16 = VK_TRUE;
-    else if (feature == k16BitStorage_InputOutput)
-      storage_16bit_feature_.storageInputOutput16 = VK_TRUE;
-    else if (feature == kSubgroupSizeControl)
-      subgroup_size_control_feature_.subgroupSizeControl = VK_TRUE;
-    else if (feature == kComputeFullSubgroups)
-      subgroup_size_control_feature_.computeFullSubgroups = VK_TRUE;
-    else if (feature == kShaderSubgroupExtendedTypes)
-      shader_subgroup_extended_types_feature_.shaderSubgroupExtendedTypes =
+    if (StartsWith(feature, "VariablePointersFeatures.")) {
+      init_feature(
+          supports_.variable_pointers, features_.variable_pointers,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES_KHR,
+          VK_KHR_VARIABLE_POINTERS_EXTENSION_NAME);
+      if (feature == kVariablePointers) {
+        features_.variable_pointers.variablePointers = VK_TRUE;
+      } else if (feature == kVariablePointersStorageBuffer) {
+        features_.variable_pointers.variablePointersStorageBuffer = VK_TRUE;
+      }
+    } else if (StartsWith(feature, "Float16Int8Features.")) {
+      init_feature(supports_.shader_float16_int8, features_.float16_int8,
+                   VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
+                   VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME);
+      if (feature == kFloat16Int8_Float16) {
+        features_.float16_int8.shaderFloat16 = VK_TRUE;
+      } else if (feature == kFloat16Int8_Int8) {
+        features_.float16_int8.shaderInt8 = VK_TRUE;
+      }
+    } else if (StartsWith(feature, "Storage8BitFeatures.")) {
+      init_feature(supports_.shader_8bit_storage, features_.storage_8bit,
+                   VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR,
+                   VK_KHR_8BIT_STORAGE_EXTENSION_NAME);
+      if (feature == k8BitStorage_Storage) {
+        features_.storage_8bit.storageBuffer8BitAccess = VK_TRUE;
+      } else if (feature == k8BitStorage_UniformAndStorage) {
+        features_.storage_8bit.uniformAndStorageBuffer8BitAccess = VK_TRUE;
+      } else if (feature == k8BitStorage_PushConstant) {
+        features_.storage_8bit.storagePushConstant8 = VK_TRUE;
+      }
+    } else if (StartsWith(feature, "Storage16BitFeatures.")) {
+      init_feature(supports_.shader_16bit_storage, features_.storage_16bit,
+                   VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR,
+                   VK_KHR_16BIT_STORAGE_EXTENSION_NAME);
+      if (feature == k16BitStorage_Storage) {
+        features_.storage_16bit.storageBuffer16BitAccess = VK_TRUE;
+      } else if (feature == k16BitStorage_UniformAndStorage) {
+        features_.storage_16bit.uniformAndStorageBuffer16BitAccess = VK_TRUE;
+      } else if (feature == k16BitStorage_PushConstant) {
+        features_.storage_16bit.storagePushConstant16 = VK_TRUE;
+      } else if (feature == k16BitStorage_InputOutput) {
+        features_.storage_16bit.storageInputOutput16 = VK_TRUE;
+      }
+    } else if (StartsWith(feature, "SubgroupSizeControl.")) {
+      init_feature(
+          supports_.subgroup_size_control, features_.subgroup_size_control,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT,
+          VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME);
+      if (feature == kSubgroupSizeControl) {
+        features_.subgroup_size_control.subgroupSizeControl = VK_TRUE;
+      } else if (feature == kComputeFullSubgroups) {
+        features_.subgroup_size_control.computeFullSubgroups = VK_TRUE;
+      }
+    } else if (feature == kShaderSubgroupExtendedTypes) {
+      init_feature(
+          supports_.shader_subgroup_extended_types,
+          features_.shader_subgroup_extended_types,
+          // NOLINTNEXTLINE(whitespace/line_length)
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES,
+          VK_KHR_SHADER_SUBGROUP_EXTENDED_TYPES_EXTENSION_NAME);
+      features_.shader_subgroup_extended_types.shaderSubgroupExtendedTypes =
           VK_TRUE;
+    } else if (feature == kDepthClampZeroOne) {
+      init_feature(
+          supports_.depth_clamp_zero_one, features_.depth_clamp_zero_one,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT,
+          VK_EXT_DEPTH_CLAMP_ZERO_ONE_EXTENSION_NAME);
+      features_.depth_clamp_zero_one.depthClampZeroOne = VK_TRUE;
+    } else if (feature == kAccelerationStructure) {
+      init_feature(
+          supports_.acceleration_structure, features_.acceleration_structure,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
+          VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+      features_.acceleration_structure.accelerationStructure = VK_TRUE;
+    } else if (feature == kBufferDeviceAddress) {
+      init_feature(
+          supports_.buffer_device_address, features_.buffer_device_address,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
+          VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+      features_.buffer_device_address.bufferDeviceAddress = VK_TRUE;
+    } else if (feature == kRayTracingPipeline) {
+      init_feature(
+          supports_.ray_tracing_pipeline, features_.ray_tracing_pipeline,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR,
+          VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+      features_.ray_tracing_pipeline.rayTracingPipeline = VK_TRUE;
+    }
+  }
+  init_feature(
+      supports_.descriptor_indexing, features_.descriptor_indexing,
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
+      VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+
+  // These extensions are required to support the raytracing pipeline.
+  if (supports_.deferred_host_operations) {
+    exts.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
   }
 
-  VkPhysicalDeviceFeatures required_vulkan_features =
-      VkPhysicalDeviceFeatures();
+  if (supports_.spirv_1_4) {
+    exts.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+  }
+
+  if (supports_.shader_float_controls) {
+    exts.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+  }
+
+  features_.features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+  features_.features2.pNext = pnext;
+
+  std::vector<const char*> required_extensions_in_char;
+  std::transform(
+      exts.begin(), exts.end(), std::back_inserter(required_extensions_in_char),
+      [](const std::string& ext) -> const char* { return ext.c_str(); });
+
+  info->enabledExtensionCount =
+      static_cast<uint32_t>(required_extensions_in_char.size());
+  info->ppEnabledExtensionNames = required_extensions_in_char.data();
+
+  VkPhysicalDeviceFeatures required_vulkan_features{};
   amber::Result r =
       NamesToVulkanFeatures(feature1_names, &required_vulkan_features);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
-  available_features2_.features = required_vulkan_features;
+  features_.features2.features = required_vulkan_features;
 
-  info->pNext = &available_features2_;
+  info->pNext = &features_.features2;
   info->pEnabledFeatures = nullptr;
   return DoCreateDevice(info);
 }
 
 amber::Result ConfigHelperVulkan::DoCreateDevice(VkDeviceCreateInfo* info) {
-  if (vkCreateDevice(vulkan_physical_device_, info, nullptr, &vulkan_device_) !=
-      VK_SUCCESS) {
-    return amber::Result("Unable to create vulkan device");
+  auto result = vkCreateDevice(vk_.physical_device, info, nullptr, &vk_.device);
+  if (result != VK_SUCCESS) {
+    return amber::Result("Unable to create vulkan device: " + to_str(result));
   }
   return {};
 }
@@ -1123,8 +1406,9 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
                 // "VK_KHR_driver_properties" extensions are both available.
       {},  // properties: this is the older VkPhysicalDeviceProperties struct,
            // wrapped by this newer struct that adds the pNext member. We use
-           // this older struct if the "VK_KHR_get_physical_device_properties2"
-           // extension is unavailable.
+           // this older struct if the
+           // "VK_KHR_get_physical_device_properties2" extension is
+           // unavailable.
   };
 
   VkPhysicalDeviceDriverPropertiesKHR driver_properties = {
@@ -1153,16 +1437,16 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
   PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR =
       nullptr;
 
-  if (supports_get_physical_device_properties2_ &&
-      std::find(available_device_extensions_.begin(),
-                available_device_extensions_.end(),
+  if (supports_.get_physical_device_properties2 &&
+      std::find(vk_.available_device_extensions.begin(),
+                vk_.available_device_extensions.end(),
                 "VK_KHR_driver_properties") !=
-          available_device_extensions_.end()) {
+          vk_.available_device_extensions.end()) {
     properties2.pNext = &driver_properties;
 
     vkGetPhysicalDeviceProperties2KHR =
         reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(
-            vkGetInstanceProcAddr(vulkan_instance_,
+            vkGetInstanceProcAddr(vk_.instance,
                                   "vkGetPhysicalDeviceProperties2KHR"));
     if (!vkGetPhysicalDeviceProperties2KHR) {
       std::cout << "Warning: device claimed to support "
@@ -1170,16 +1454,15 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
                    "function."
                 << std::endl;
     }
-    if (supports_subgroup_size_control_) {
+    if (supports_.subgroup_size_control) {
       driver_properties.pNext = &subgroup_size_control_properties;
     }
   }
 
   if (vkGetPhysicalDeviceProperties2KHR) {
-    vkGetPhysicalDeviceProperties2KHR(vulkan_physical_device_, &properties2);
+    vkGetPhysicalDeviceProperties2KHR(vk_.physical_device, &properties2);
   } else {
-    vkGetPhysicalDeviceProperties(vulkan_physical_device_,
-                                  &properties2.properties);
+    vkGetPhysicalDeviceProperties(vk_.physical_device, &properties2.properties);
   }
 
   const VkPhysicalDeviceProperties& props = properties2.properties;
@@ -1200,7 +1483,7 @@ void ConfigHelperVulkan::DumpPhysicalDeviceInfo() {
   if (vkGetPhysicalDeviceProperties2KHR) {
     std::cout << "  driverName: " << driver_properties.driverName << std::endl;
     std::cout << "  driverInfo: " << driver_properties.driverInfo << std::endl;
-    if (supports_subgroup_size_control_) {
+    if (supports_.subgroup_size_control) {
       std::cout << "  minSubgroupSize: "
                 << subgroup_size_control_properties.minSubgroupSize
                 << std::endl;
@@ -1227,48 +1510,53 @@ amber::Result ConfigHelperVulkan::CreateConfig(
     const std::vector<std::string>& required_instance_extensions,
     const std::vector<std::string>& required_device_extensions,
     bool disable_validation_layer,
+    bool enable_pipeline_runtime_layer,
     bool show_version_info,
     std::unique_ptr<amber::EngineConfig>* cfg_holder) {
-  amber::Result r = CreateVulkanInstance(engine_major, engine_minor,
-                                         required_instance_extensions,
-                                         disable_validation_layer);
-  if (!r.IsSuccess())
+  amber::Result r = CreateVulkanInstance(
+      engine_major, engine_minor, required_instance_extensions,
+      disable_validation_layer, enable_pipeline_runtime_layer);
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   if (!disable_validation_layer) {
     r = CreateDebugReportCallback();
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
 
   r = ChooseVulkanPhysicalDevice(required_features, required_device_extensions,
                                  selected_device);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
-  if (show_version_info)
+  if (show_version_info) {
     DumpPhysicalDeviceInfo();
+  }
 
   r = CreateVulkanDevice(required_features, required_device_extensions);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
-  vkGetDeviceQueue(vulkan_device_, vulkan_queue_family_index_, 0,
-                   &vulkan_queue_);
+  vkGetDeviceQueue(vk_.device, vk_.queue_family_index, 0, &vk_.queue);
 
   *cfg_holder =
       std::unique_ptr<amber::EngineConfig>(new amber::VulkanEngineConfig());
   amber::VulkanEngineConfig* config =
       static_cast<amber::VulkanEngineConfig*>(cfg_holder->get());
-  config->physical_device = vulkan_physical_device_;
-  config->available_features = available_features_;
-  config->available_features2 = available_features2_;
-  config->available_instance_extensions = available_instance_extensions_;
-  config->available_device_extensions = available_device_extensions_;
-  config->instance = vulkan_instance_;
-  config->queue_family_index = vulkan_queue_family_index_;
-  config->queue = vulkan_queue_;
-  config->device = vulkan_device_;
+  config->physical_device = vk_.physical_device;
+  config->available_features = features_.device;
+  config->available_features2 = features_.features2;
+  config->available_instance_extensions = vk_.available_instance_extensions;
+  config->available_device_extensions = vk_.available_device_extensions;
+  config->instance = vk_.instance;
+  config->queue_family_index = vk_.queue_family_index;
+  config->queue = vk_.queue;
+  config->device = vk_.device;
   config->vkGetInstanceProcAddr = vkGetInstanceProcAddr;
 
   return {};

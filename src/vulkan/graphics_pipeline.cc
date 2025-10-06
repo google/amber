@@ -18,7 +18,6 @@
 #include <cmath>
 
 #include "src/command.h"
-#include "src/make_unique.h"
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
 
@@ -392,16 +391,20 @@ GraphicsPipeline::GraphicsPipeline(
     amber::Pipeline::BufferInfo depth_stencil_buffer,
     const std::vector<amber::Pipeline::BufferInfo>& resolve_targets,
     uint32_t fence_timeout_ms,
+    bool pipeline_runtime_layer_enabled,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
     : Pipeline(PipelineType::kGraphics,
                device,
                fence_timeout_ms,
+               pipeline_runtime_layer_enabled,
                shader_stage_info),
       depth_stencil_buffer_(depth_stencil_buffer) {
-  for (const auto& info : color_buffers)
+  for (const auto& info : color_buffers) {
     color_buffers_.push_back(&info);
-  for (const auto& info : resolve_targets)
+  }
+  for (const auto& info : resolve_targets) {
     resolve_targets_.push_back(&info);
+  }
 }
 
 GraphicsPipeline::~GraphicsPipeline() {
@@ -734,19 +737,22 @@ Result GraphicsPipeline::Initialize(uint32_t width,
                                     uint32_t height,
                                     CommandPool* pool) {
   Result r = Pipeline::Initialize(pool);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   r = CreateRenderPass();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
-  frame_ =
-      MakeUnique<FrameBuffer>(device_, color_buffers_, depth_stencil_buffer_,
-                              resolve_targets_, width, height);
+  frame_ = std::make_unique<FrameBuffer>(device_, color_buffers_,
+                                         depth_stencil_buffer_,
+                                         resolve_targets_, width, height);
   r = frame_->Initialize(render_pass_);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   frame_width_ = width;
   frame_height_ = height;
@@ -756,8 +762,9 @@ Result GraphicsPipeline::Initialize(uint32_t width,
 
 Result GraphicsPipeline::SendVertexBufferDataIfNeeded(
     VertexBuffer* vertex_buffer) {
-  if (!vertex_buffer || vertex_buffer->VertexDataSent())
+  if (!vertex_buffer || vertex_buffer->VertexDataSent()) {
     return {};
+  }
   return vertex_buffer->SendVertexData(command_.get());
 }
 
@@ -768,17 +775,19 @@ Result GraphicsPipeline::SetIndexBuffer(Buffer* buffer) {
         "index_buffer_ is created");
   }
 
-  index_buffer_ = MakeUnique<IndexBuffer>(device_);
+  index_buffer_ = std::make_unique<IndexBuffer>(device_);
 
   CommandBufferGuard guard(GetCommandBuffer());
-  if (!guard.IsRecording())
+  if (!guard.IsRecording()) {
     return guard.GetResult();
+  }
 
   Result r = index_buffer_->SendIndexData(command_.get(), buffer);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
-  return guard.Submit(GetFenceTimeout());
+  return guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
 }
 
 Result GraphicsPipeline::SetClearColor(float r, float g, float b, float a) {
@@ -819,8 +828,9 @@ Result GraphicsPipeline::Clear() {
       {clear_color_r_, clear_color_g_, clear_color_b_, clear_color_a_}};
 
   CommandBufferGuard cmd_buf_guard(GetCommandBuffer());
-  if (!cmd_buf_guard.IsRecording())
+  if (!cmd_buf_guard.IsRecording()) {
     return cmd_buf_guard.GetResult();
+  }
 
   frame_->ChangeFrameToWriteLayout(GetCommandBuffer());
   frame_->CopyBuffersToImages();
@@ -845,8 +855,9 @@ Result GraphicsPipeline::Clear() {
       depth_stencil_clear.depthStencil = {clear_depth_, clear_stencil_};
 
       VkImageAspectFlags aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
-      if (depth_stencil_buffer_.buffer->GetFormat()->HasStencilComponent())
+      if (depth_stencil_buffer_.buffer->GetFormat()->HasStencilComponent()) {
         aspect |= VK_IMAGE_ASPECT_STENCIL_BIT;
+      }
 
       VkClearAttachment clear_attachment = VkClearAttachment();
       clear_attachment.aspectMask = aspect;
@@ -869,77 +880,94 @@ Result GraphicsPipeline::Clear() {
 
   frame_->TransferImagesToHost(command_.get());
 
-  Result r = cmd_buf_guard.Submit(GetFenceTimeout());
-  if (!r.IsSuccess())
+  Result r =
+      cmd_buf_guard.Submit(GetFenceTimeout(), GetPipelineRuntimeLayerEnabled());
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   frame_->CopyImagesToBuffers();
   return {};
 }
 
 Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
-                              VertexBuffer* vertex_buffer) {
+                              VertexBuffer* vertex_buffer,
+                              bool is_timed_execution) {
   Result r = SendDescriptorDataToDeviceIfNeeded();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
   r = CreateVkPipelineLayout(&pipeline_layout);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   VkPipeline pipeline = VK_NULL_HANDLE;
   r = CreateVkGraphicsPipeline(command->GetPipelineData(),
                                ToVkTopology(command->GetTopology()),
                                vertex_buffer, pipeline_layout, &pipeline);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   // Note that a command updating a descriptor set and a command using
   // it must be submitted separately, because using a descriptor set
   // while updating it is not safe.
   UpdateDescriptorSetsIfNeeded();
-
+  CreateTimingQueryObjectIfNeeded(is_timed_execution);
   {
     CommandBufferGuard cmd_buf_guard(GetCommandBuffer());
-    if (!cmd_buf_guard.IsRecording())
+    if (!cmd_buf_guard.IsRecording()) {
       return cmd_buf_guard.GetResult();
+    }
 
     r = SendVertexBufferDataIfNeeded(vertex_buffer);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     frame_->ChangeFrameToWriteLayout(GetCommandBuffer());
     frame_->CopyBuffersToImages();
     frame_->TransferImagesToDevice(GetCommandBuffer());
 
+    // Timing must be place outside the render pass scope. The full pipeline
+    // barrier used by our specific implementation cannot be within a
+    // renderpass.
+    BeginTimerQuery();
     {
       RenderPassGuard render_pass_guard(this);
 
       BindVkDescriptorSets(pipeline_layout);
 
       r = RecordPushConstant(pipeline_layout);
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
 
       device_->GetPtrs()->vkCmdBindPipeline(command_->GetVkCommandBuffer(),
                                             VK_PIPELINE_BIND_POINT_GRAPHICS,
                                             pipeline);
 
-      if (vertex_buffer != nullptr)
+      if (vertex_buffer != nullptr) {
         vertex_buffer->BindToCommandBuffer(command_.get());
+      }
 
       if (command->IsIndexed()) {
-        if (!index_buffer_)
+        if (!index_buffer_) {
           return Result("Vulkan: Draw indexed is used without given indices");
+        }
 
         r = index_buffer_->BindToCommandBuffer(command_.get());
-        if (!r.IsSuccess())
+        if (!r.IsSuccess()) {
           return r;
+        }
 
         // VkRunner spec says
         //   "vertexCount will be used as the index count, firstVertex
         //    becomes the vertex offset and firstIndex will always be zero."
+
         device_->GetPtrs()->vkCmdDrawIndexed(
             command_->GetVkCommandBuffer(),
             command->GetVertexCount(),   /* indexCount */
@@ -955,17 +983,20 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
             command->GetFirstInstance());
       }
     }
-
+    EndTimerQuery();
     frame_->TransferImagesToHost(command_.get());
 
-    r = cmd_buf_guard.Submit(GetFenceTimeout());
-    if (!r.IsSuccess())
+    r = cmd_buf_guard.Submit(GetFenceTimeout(),
+                             GetPipelineRuntimeLayerEnabled());
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
-
+  DestroyTimingQueryObjectIfNeeded();
   r = ReadbackDescriptorsToHostDataQueue();
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   frame_->CopyImagesToBuffers();
 

@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,15 +42,17 @@ class Device {
          VkPhysicalDevice physical_device,
          uint32_t queue_family_index,
          VkDevice device,
-         VkQueue queue);
+         VkQueue queue,
+         Delegate* delegate);
   virtual ~Device();
 
   Result Initialize(PFN_vkGetInstanceProcAddr getInstanceProcAddr,
-                    Delegate* delegate,
                     const std::vector<std::string>& required_features,
+                    const std::vector<std::string>& required_properties,
                     const std::vector<std::string>& required_device_extensions,
                     const VkPhysicalDeviceFeatures& available_features,
                     const VkPhysicalDeviceFeatures2KHR& available_features2,
+                    const VkPhysicalDeviceProperties2KHR& available_properties2,
                     const std::vector<std::string>& available_extensions);
 
   /// Returns true if |format| and the |buffer|s buffer type combination is
@@ -88,6 +91,17 @@ class Device {
   /// Returns the maximum required subgroup size or 0 if subgroup size control
   /// is not supported.
   uint32_t GetMaxSubgroupSize() const;
+  /// Returns ray tracing shader group handle size.
+  uint32_t GetRayTracingShaderGroupHandleSize() const;
+
+  // Returns true if we have support for timestamps.
+  bool IsTimestampComputeAndGraphicsSupported() const;
+
+  // Returns a float used to convert between timestamps and actual elapsed time.
+  float GetTimestampPeriod() const;
+
+  // Each timed execution reports timing to the device and on to the delegate.
+  void ReportExecutionTiming(double time_in_ns);
 
  private:
   Result LoadVulkanPointers(PFN_vkGetInstanceProcAddr, Delegate* delegate);
@@ -102,8 +116,11 @@ class Device {
   VkDevice device_ = VK_NULL_HANDLE;
   VkQueue queue_ = VK_NULL_HANDLE;
   uint32_t queue_family_index_ = 0;
+  uint32_t shader_group_handle_size_ = 0;
 
   VulkanPtrs ptrs_;
+
+  Delegate* delegate_ = nullptr;
 };
 
 }  // namespace vulkan

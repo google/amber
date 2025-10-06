@@ -1,0 +1,89 @@
+#!amber
+# Copyright 2024 The Amber Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# This benchmark tests the latency and throughput of
+# shared memory vs  ssbo (main cached) memory.
+# Configs to manually modify:
+#  - Comment in/out declaration : Shared vs ssbo
+#  - local_size_x (workgroup size) : Single SM throughput
+#  - number of loop unrolls : latency of single thread
+#  - compute/dispatch size (currently 1) : Device throughput
+
+
+SHADER compute workgroup_shared_vs_ssbo GLSL
+#version 430
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+// Comment in/out these two lines to test shared memory
+struct BlockB { uint data[8]; };  shared BlockB ssbo_wr;
+//layout(set = 0, binding = 0) buffer BlockB { uint data[];} ssbo_wr;
+
+layout(set = 0, binding = 1) buffer BlockA { 
+  uint data[];
+} ssbo_fake_volatile;
+
+
+void main() {
+    // This is required when using shared memory
+    if( gl_LocalInvocationID.x == 0){
+      ssbo_wr.data[0] = 0;
+    }
+    barrier();
+    uint fv = ssbo_fake_volatile.data[0];
+    uint iter_val = ssbo_wr.data[fv];
+    for(uint i = 0;i<1000;i++){
+      // 10x
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+
+      // 10x
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+      iter_val = ssbo_wr.data[iter_val];
+    }
+    ssbo_wr.data[gl_LocalInvocationID.x]  = iter_val;
+}
+END
+
+BUFFER buf_uint DATA_TYPE uint32 SIZE 1024 FILL 0
+BUFFER buf_fake_volatile DATA_TYPE uint32 SIZE 1048576 FILL 0
+
+PIPELINE compute pipeline
+  ATTACH workgroup_shared_vs_ssbo
+  BIND BUFFER buf_uint AS storage DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER buf_fake_volatile AS storage DESCRIPTOR_SET 0 BINDING 1
+END
+
+REPEAT 333
+RUN TIMED_EXECUTION pipeline 1 1 1
+END
+

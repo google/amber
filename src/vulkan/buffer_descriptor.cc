@@ -18,7 +18,6 @@
 #include <utility>
 #include <vector>
 
-#include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
@@ -62,7 +61,7 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
     if (transfer_resources.count(amber_buffer) == 0) {
       auto size_in_bytes =
           static_cast<uint32_t>(amber_buffer->ValuePtr()->size());
-      auto transfer_buffer = MakeUnique<TransferBuffer>(
+      auto transfer_buffer = std::make_unique<TransferBuffer>(
           device_, size_in_bytes, amber_buffer->GetFormat());
       transfer_buffer->SetReadOnly(IsReadOnly());
       transfer_resources[amber_buffer] = std::move(transfer_buffer);
@@ -77,8 +76,9 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
     Result r =
         transfer_resources[amber_buffer]->AsTransferBuffer()->AddUsageFlags(
             flags);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
   }
   is_descriptor_set_update_needed_ = true;
 
@@ -90,8 +90,9 @@ Result BufferDescriptor::CreateResourceIfNeeded() {
 
 void BufferDescriptor::UpdateDescriptorSetIfNeeded(
     VkDescriptorSet descriptor_set) {
-  if (!is_descriptor_set_update_needed_)
+  if (!is_descriptor_set_update_needed_) {
     return;
+  }
 
   std::vector<VkDescriptorBufferInfo> buffer_infos;
   std::vector<VkBufferView> buffer_views;

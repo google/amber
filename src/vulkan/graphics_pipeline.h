@@ -45,6 +45,7 @@ class GraphicsPipeline : public Pipeline {
       amber::Pipeline::BufferInfo depth_stencil_buffer,
       const std::vector<amber::Pipeline::BufferInfo>& resolve_targets,
       uint32_t fence_timeout_ms,
+      bool pipeline_runtime_layer_enabled,
       const std::vector<VkPipelineShaderStageCreateInfo>&);
   ~GraphicsPipeline() override;
 
@@ -58,7 +59,9 @@ class GraphicsPipeline : public Pipeline {
   Result SetClearStencil(uint32_t stencil);
   Result SetClearDepth(float depth);
 
-  Result Draw(const DrawArraysCommand* command, VertexBuffer* vertex_buffer);
+  Result Draw(const DrawArraysCommand* command,
+              VertexBuffer* vertex_buffer,
+              bool is_timed_execution);
 
   VkRenderPass GetVkRenderPass() const { return render_pass_; }
   FrameBuffer* GetFrameBuffer() const { return frame_.get(); }

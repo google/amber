@@ -19,7 +19,6 @@
 #include <limits>
 #include <vector>
 
-#include "src/make_unique.h"
 #include "src/vulkan/command_buffer.h"
 #include "src/vulkan/device.h"
 
@@ -53,8 +52,9 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass) {
   if (!color_attachments_.empty()) {
     std::vector<int32_t> seen_idx(color_attachments_.size(), -1);
     for (auto* info : color_attachments_) {
-      if (info->location >= color_attachments_.size())
+      if (info->location >= color_attachments_.size()) {
         return Result("color attachment locations must be sequential from 0");
+      }
       if (seen_idx[info->location] != -1) {
         return Result("duplicate attachment location: " +
                       std::to_string(info->location));
@@ -67,15 +67,16 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass) {
       const VkImageUsageFlags usage_flags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                                             VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                                             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-      color_images_.push_back(MakeUnique<TransferImage>(
+      color_images_.push_back(std::make_unique<TransferImage>(
           device_, *info->buffer->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
           VK_IMAGE_TYPE_2D, usage_flags, width_ << info->base_mip_level,
           height_ << info->base_mip_level, depth_, info->buffer->GetMipLevels(),
           info->base_mip_level, 1u, info->buffer->GetSamples()));
 
       Result r = color_images_.back()->Initialize();
-      if (!r.IsSuccess())
+      if (!r.IsSuccess()) {
         return r;
+      }
 
       attachments[info->location] = color_images_.back()->GetVkImageView();
     }
@@ -84,23 +85,26 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass) {
   if (depth_stencil_attachment_.buffer &&
       depth_stencil_attachment_.buffer->GetFormat()->IsFormatKnown()) {
     VkImageAspectFlags aspect = 0;
-    if (depth_stencil_attachment_.buffer->GetFormat()->HasDepthComponent())
+    if (depth_stencil_attachment_.buffer->GetFormat()->HasDepthComponent()) {
       aspect |= VK_IMAGE_ASPECT_DEPTH_BIT;
-    if (depth_stencil_attachment_.buffer->GetFormat()->HasStencilComponent())
+    }
+    if (depth_stencil_attachment_.buffer->GetFormat()->HasStencilComponent()) {
       aspect |= VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
     assert(aspect != 0);
 
     const VkImageUsageFlags usage_flags =
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
-    depth_stencil_image_ = MakeUnique<TransferImage>(
+    depth_stencil_image_ = std::make_unique<TransferImage>(
         device_, *depth_stencil_attachment_.buffer->GetFormat(), aspect,
         VK_IMAGE_TYPE_2D, usage_flags, width_, height_, depth_, 1u, 0u, 1u, 1u);
 
     Result r = depth_stencil_image_->Initialize();
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     attachments.push_back(depth_stencil_image_->GetVkImageView());
   }
@@ -109,14 +113,15 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass) {
     const VkImageUsageFlags usage_flags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                                           VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    resolve_images_.push_back(MakeUnique<TransferImage>(
+    resolve_images_.push_back(std::make_unique<TransferImage>(
         device_, *info->buffer->GetFormat(), VK_IMAGE_ASPECT_COLOR_BIT,
         VK_IMAGE_TYPE_2D, usage_flags, width_, height_, depth_, 1u, 0u, 1u,
         1u));
 
     Result r = resolve_images_.back()->Initialize();
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       return r;
+    }
 
     attachments.push_back(resolve_images_.back()->GetVkImageView());
   }
@@ -144,14 +149,17 @@ void FrameBuffer::ChangeFrameLayout(CommandBuffer* command,
                                     VkPipelineStageFlags color_stage,
                                     VkImageLayout depth_layout,
                                     VkPipelineStageFlags depth_stage) {
-  for (auto& img : color_images_)
+  for (auto& img : color_images_) {
     img->ImageBarrier(command, color_layout, color_stage);
+  }
 
-  for (auto& img : resolve_images_)
+  for (auto& img : resolve_images_) {
     img->ImageBarrier(command, color_layout, color_stage);
+  }
 
-  if (depth_stencil_image_)
+  if (depth_stencil_image_) {
     depth_stencil_image_->ImageBarrier(command, depth_layout, depth_stage);
+  }
 }
 
 void FrameBuffer::ChangeFrameToDrawLayout(CommandBuffer* command) {
@@ -183,14 +191,17 @@ void FrameBuffer::ChangeFrameToWriteLayout(CommandBuffer* command) {
 }
 
 void FrameBuffer::TransferImagesToHost(CommandBuffer* command) {
-  for (auto& img : color_images_)
+  for (auto& img : color_images_) {
     img->CopyToHost(command);
+  }
 
-  for (auto& img : resolve_images_)
+  for (auto& img : resolve_images_) {
     img->CopyToHost(command);
+  }
 
-  if (depth_stencil_image_)
+  if (depth_stencil_image_) {
     depth_stencil_image_->CopyToHost(command);
+  }
 }
 
 void FrameBuffer::CopyImagesToBuffers() {
@@ -221,11 +232,13 @@ void FrameBuffer::CopyImagesToBuffers() {
 }
 
 void FrameBuffer::TransferImagesToDevice(CommandBuffer* command) {
-  for (auto& img : color_images_)
+  for (auto& img : color_images_) {
     img->CopyToDevice(command);
+  }
 
-  if (depth_stencil_image_)
+  if (depth_stencil_image_) {
     depth_stencil_image_->CopyToDevice(command);
+  }
 }
 
 void FrameBuffer::CopyBuffersToImages() {
@@ -234,8 +247,9 @@ void FrameBuffer::CopyBuffersToImages() {
     auto* info = color_attachments_[i];
     auto* values = info->buffer->ValuePtr();
     // Nothing to do if our local buffer is empty
-    if (values->empty())
+    if (values->empty()) {
       continue;
+    }
 
     std::memcpy(img->HostAccessibleMemoryPtr(), values->data(),
                 info->buffer->GetSizeInBytes());
@@ -246,8 +260,9 @@ void FrameBuffer::CopyBuffersToImages() {
     auto* info = resolve_targets_[i];
     auto* values = info->buffer->ValuePtr();
     // Nothing to do if our local buffer is empty
-    if (values->empty())
+    if (values->empty()) {
       continue;
+    }
 
     std::memcpy(img->HostAccessibleMemoryPtr(), values->data(),
                 info->buffer->GetSizeInBytes());

@@ -17,8 +17,6 @@
 #include <cassert>
 #include <memory>
 
-#include "src/make_unique.h"
-
 namespace amber {
 namespace type {
 
@@ -52,17 +50,17 @@ const Struct* Type::AsStruct() const {
 
 // static
 std::unique_ptr<Number> Number::Int(uint32_t bits) {
-  return MakeUnique<Number>(FormatMode::kSInt, bits);
+  return std::make_unique<Number>(FormatMode::kSInt, bits);
 }
 
 // static
 std::unique_ptr<Number> Number::Uint(uint32_t bits) {
-  return MakeUnique<Number>(FormatMode::kUInt, bits);
+  return std::make_unique<Number>(FormatMode::kUInt, bits);
 }
 
 // static
 std::unique_ptr<Number> Number::Float(uint32_t bits) {
-  return MakeUnique<Number>(FormatMode::kSFloat, bits);
+  return std::make_unique<Number>(FormatMode::kSFloat, bits);
 }
 
 Number::Number(FormatMode format_mode) : format_mode_(format_mode) {}
@@ -77,12 +75,14 @@ List::List() = default;
 List::~List() = default;
 
 uint32_t List::SizeInBytes() const {
-  if (pack_size_in_bits_ > 0)
+  if (pack_size_in_bits_ > 0) {
     return pack_size_in_bits_;
+  }
 
   uint32_t size = 0;
-  for (const auto& member : members_)
+  for (const auto& member : members_) {
     size += member.SizeInBytes();
+  }
 
   return size;
 }

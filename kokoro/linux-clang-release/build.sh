@@ -17,6 +17,6 @@ set -e  # fail on error
 set -x  # display commands
 
 SCRIPT_DIR=`dirname "$BASH_SOURCE"`
-source $SCRIPT_DIR/../scripts/linux/build.sh RELEASE "clang-10.0.0" \
+source $SCRIPT_DIR/../scripts/linux/build.sh RELEASE "clang-13.0.1" \
     -DAMBER_ENABLE_SWIFTSHADER=TRUE \
     -DAMBER_USE_DXC=TRUE

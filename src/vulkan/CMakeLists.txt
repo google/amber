@@ -1,4 +1,5 @@
 # Copyright 2018 The Amber Authors.
+# Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +14,7 @@
 # limitations under the License.
 
 set(VULKAN_ENGINE_SOURCES
+    blas.cc
     buffer_descriptor.cc
     buffer_backed_descriptor.cc
     command_buffer.cc
@@ -27,9 +29,13 @@ set(VULKAN_ENGINE_SOURCES
     index_buffer.cc
     pipeline.cc
     push_constant.cc
+    raytracing_pipeline.cc
     resource.cc
     sampler.cc
     sampler_descriptor.cc
+    sbt.cc
+    tlas.cc
+    tlas_descriptor.cc
     transfer_buffer.cc
     transfer_image.cc
     vertex_buffer.cc
@@ -39,8 +45,9 @@ set(VULKAN_ENGINE_SOURCES
 add_library(libamberenginevulkan ${VULKAN_ENGINE_SOURCES})
 amber_default_compile_options(libamberenginevulkan)
 target_include_directories(libamberenginevulkan PRIVATE "${CMAKE_BINARY_DIR}")
+
 # Add the Vulkan include directory to the list of include paths.
-target_include_directories(libamberenginevulkan PRIVATE "${VulkanHeaders_INCLUDE_DIR}")
+target_include_directories(libamberenginevulkan PUBLIC "${VulkanHeaders_INCLUDE_DIR}")
 
 # When building with dEQP Vulkan CTS the inl files needs to be included and a dependency
 # must be added to the target `deqp-vk-inl` that generates the inl files.
@@ -66,7 +73,7 @@ endif()
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/src/vk-wrappers.inc.fake
     COMMAND
-      ${PYTHON_EXECUTABLE}
+      ${Python3_EXECUTABLE}
         ${PROJECT_SOURCE_DIR}/tools/update_vk_wrappers.py
         ${CMAKE_BINARY_DIR}
         ${PROJECT_SOURCE_DIR}

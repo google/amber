@@ -48,6 +48,7 @@ with:
  * `Storage16BitFeatures.storageInputOutput16`
  * `SubgroupSizeControl.subgroupSizeControl`
  * `SubgroupSizeControl.computeFullSubgroups`
+ * `DepthClampZeroOneFeatures.depthClampZeroOne`
  * `SubgroupSupportedOperations.basic`
  * `SubgroupSupportedOperations.vote`
  * `SubgroupSupportedOperations.arithmetic`
@@ -62,7 +63,9 @@ with:
  * `SubgroupSupportedStages.geometry`
  * `SubgroupSupportedStages.fragment`
  * `SubgroupSupportedStages.compute`
-
+ * `RayTracingPipelineFeaturesKHR.rayTracingPipeline`
+ * `AccelerationStructureFeaturesKHR.accelerationStructure`
+ * `BufferDeviceAddressFeatures.bufferDeviceAddress`
 
 Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
 commands.
@@ -109,7 +112,7 @@ file system, before falling back to the standard file system.
 
 Shader programs are declared using the `SHADER` command. \
 Shaders can be declared as `PASSTHROUGH`, with inlined source or using source
-from a `VIRTUAL_FILE`.
+from a `VIRTUAL_FILE` or from a `FILE` in the file system.
 
 Pass-through shader:
 
@@ -130,12 +133,12 @@ SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ]
 END
 ```
 
-Shader using source from `VIRTUAL_FILE`:
+Shader using source from `VIRTUAL_FILE` or `FILE`:
 
 ```groovy
 # Creates a shader of |shader_type| with the given |shader_name|. The shader
 # will be of |shader_format|. The shader will use the virtual file with |path|.
-SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ] VIRTUAL_FILE {path}
+SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ] ( VIRTUAL_FILE | FILE ) {path}
 ```
 
 `{shader_name}` is used to identify the shader to attach to `PIPELINE`s,
@@ -149,18 +152,26 @@ SHADER {shader_type} {shader_name} {shader_format} [ TARGET_ENV {target_env} ] V
  * `tessellation_evaluation`
  * `tessellation_control`
  * `compute`
+ * `ray_generation`
+ * `any_hit`
+ * `closest_hit`
+ * `miss`
+ * `intersection`
+ * `callable`
  * `multi`
 
 The compute pipeline can only contain compute shaders. The graphics pipeline
 can not contain compute shaders, and must contain a vertex shader and a fragment
-shader.
+shader. Ray tracing pipeline can contain only shaders of ray tracing types:
+ray generation, any hit, closest hit, miss, intersection, and callable shaders.
 
-The provided `multi` shader can only be used with `SPIRV-ASM` and `SPIRV-HEX`
-and allows for providing multiple shaders in a single module (so the `vertex`
-and `fragment` shaders can be provided together.)
+The provided `multi` shader can only be used with `SPIRV-ASM`, `SPIRV-HEX`, and
+`SPIRV-BIN` and allows for providing multiple shaders in a single module (so the
+`vertex` and `fragment` shaders can be provided together.)
 
-Note, `SPIRV-ASM` and `SPIRV-HEX` can also be used with each of the other shader
-types, but in that case must only provide a single shader type in the module.
+Note, `SPIRV-ASM`, `SPIRV-HEX`, and `SPIRV-BIN` can also be used with each of
+the other shader types, but in that case must only provide a single shader type
+in the module.
 
 #### Shader Format
  * `GLSL`  (with glslang)
@@ -168,6 +179,7 @@ types, but in that case must only provide a single shader type in the module.
  * `SPIRV-ASM` (with spirv-as; specifying `TARGET_ENV` is _highly recommended_
     in this case, as explained below)
  * `SPIRV-HEX` (decoded straight to SPIR-V)
+ * `SPIRV-BIN` (read as binary SPIR-V, only with `FILE`)
  * `OPENCL-C` (with clspv)
 
 ### Target environment
@@ -181,8 +193,8 @@ SPIR-V environment. For example:
  * `vulkan1.2`
 
 Check the help text of the corresponding tool (e.g. spirv-as, glslangValidator)
-for the full list. The `SPIRV-HEX` shader format is not affected by the target
-environment.
+for the full list. The `SPIRV-HEX` and `SPIRV-BIN` shader formats are not
+affected by the target environment.
 
 The specified target environment for the shader overrides the default (`spv1.0`)
 or the one specified on the command line.
@@ -389,15 +401,113 @@ Note: currently the border color is always transparent black.
 Note: the addressing mode is used for all coordinates currently. Arrayed images
 should use `clamp_to_edge` for the array index.
 
+### Acceleration Structures
+
+Acceleration structures are used to enumerate geometries to describe a scene.
+There are two kinds of acceleration structures:
+ * Bottom level
+ * Top level
+
+#### Bottom Level
+
+Bottom level acceleration structures consists of a set of geometries.
+Each bottom level acceleration structure can consists either of triangle or
+axis aligned bounding box (AABB) geometries. It is prohibited to mix triangle
+geometries and AABBs inside same bottom level acceleration structures.
+
+A bottom level acceleration structure consisting of triangle geometries is defined as:
+
+```groovy
+  # Bottom level acceleration structure consisting of triangles
+  ACCELERATION_STRUCTURE BOTTOM_LEVEL {name_of_bottom_level_acceleration_structure}
+    {GEOMETRY TRIANGLES
+      [FLAGS <geometry_flags>]
+      {x0 y0 z0
+       x1 y1 z1
+       x2 y2 z2}+
+    END}+
+  END
+```
+
+A bottom level acceleration structure consisting of axis aligned bounding boxes is defined as:
+
+```groovy
+  # Bottom level acceleration structure consisting of AABBs
+  ACCELERATION_STRUCTURE BOTTOM_LEVEL {name_of_bottom_level_acceleration_structure}
+    {GEOMETRY AABBS
+      [FLAGS <geometry_flags>]
+      {x0 y0 z0 x1 y1 z1}+
+    END}+
+  END
+```
+
+Each coordinate |x{n}|, |y{n}|, and |z{n}| should be floating point values.
+
+FLAGS is a space separated list of following geometry flags:
+ * OPAQUE
+ * NO_DUPLICATE_ANY_HIT
+
+#### Top Level
+
+Top level acceleration structures consists of a set of instances of bottom
+level acceleration structures.
+
+```groovy
+  # Acceleration structure with instance defined in one line
+  ACCELERATION_STRUCTURE TOP_LEVEL {name_of_top_level_acceleration_structure}
+    {BLAS_INSTANCE USE {name_of_bottom_level_acceleration_structure}}+
+  END
+
+  # Acceleration structure with instance defined in multiple lines
+  ACCELERATION_STRUCTURE TOP_LEVEL {name_of_top_level_acceleration_structure}
+    {BOTTOM_LEVEL_INSTANCE {name_of_bottom_level_acceleration_structure}
+      [INDEX {index}]
+      [OFFSET {offset}]
+      [FLAGS {flags}]
+      [MASK {mask}]
+      [TRANSFORM \
+        {transform} \
+      END]
+    END}+
+  END
+```
+
+The value of |index| should be an integer in range of [0..16,777,215] is a 24-bit user-specified
+index value accessible to ray shaders in the InstanceCustomIndexKHR built-in.
+
+The value of |offset| should be an integer in range of [0..16,777,215] is a 24-bit offset used
+in calculating the hit shader binding table index.
+
+The value of |mask| should be an integer in range of [0..255] (may be specified as 0xNN) is an
+8-bit visibility mask for the geometry.
+
+The value of |flags| is space-separated or EOL-separated list of following:
+ * `TRIANGLE_FACING_CULL_DISABLE`
+ * `TRIANGLE_FLIP_FACING`
+ * `FORCE_OPAQUE`
+ * `FORCE_NO_OPAQUE`
+ * `FORCE_OPACITY_MICROMAP_2_STATE`
+ * `DISABLE_OPACITY_MICROMAPS`
+ * <any integer number>
+
+If |flags| is a EOL-separated list it should be ended with END statement.
+If |flags| is a space-separated list it should not be ended with END statement.
+
+The |transform| is 12 space-separated values describing a 3x4 row-major affine transformation matrix applied to
+the acceleration structure.
+
+
 ### Pipelines
 
 #### Pipeline type
  * `compute`
  * `graphics`
-
+ * `ray_tracing`
+ 
 ```groovy
-# The PIPELINE command creates a pipeline. This can be either compute or
-# graphics. Shaders are attached to the pipeline at pipeline creation time.
+# The PIPELINE command creates a pipeline. This can be either compute,
+# graphics, or ray_tracing. Shaders are attached to the pipeline
+# at pipeline creation time.
 PIPELINE {pipeline_type} {pipeline_name}
 ...
 END
@@ -457,6 +567,94 @@ The following commands are all specified within the `PIPELINE` command.
   # Set the number of patch control points used by tessellation. The default value is 3.
   PATCH_CONTROL_POINTS {control_points}
 ```
+
+Ray tracing pipelines do not attach shaders directly like compute or graphics pipelines.
+Ray tracing pipelines organize shaders into shader groups in one of four ways
+depending on shader types used:
+
+```groovy
+  # Four possible shader group definitions
+  SHADER_GROUP {group_name_1} {ray_generation_shader_name}
+  SHADER_GROUP {group_name_2} {miss_shader_name}
+  SHADER_GROUP {group_name_3} {call_shader_name}
+  SHADER_GROUP {group_name_4} [closest_hit_shader_name] [any_hit_shader_name] [intersection_shader_name]
+```
+
+Shader group cannot be empty.
+Each group name must be unique within a pipeline. The same shader can be used within one or more
+shader groups. The shader group order is important, further commands as shader code might refer
+them directly. With the shader groups defined, they are then added into shader binding tables:
+
+```groovy
+  # Create shader binding tables and set shader groups into it
+  SHADER_BINDING_TABLE {sbt_name}
+    {group_name_1}
+    [ | {group_name_n}]
+  END
+```
+
+Generally a program needs three shader binding tables:
+ * ray generation shader binding table with one ray generation shader group
+ * miss shader binding table containing one or more miss shader groups
+ * hit shader binding table containing one or more hit shader groups
+
+Shader binding tables for call shaders are optional.
+
+Ray tracing pipelines support pipeline libraries. To declare a pipeline as a pipeline library
+the pipeline should declare itself a library by specifying `LIBRARY` in `FLAGS`:
+
+```groovy
+  # Declare this pipeline as a library
+  FLAGS LIBRARY
+```
+
+or multiline version:
+
+```groovy
+  # Declare this pipeline as a library
+  FLAGS
+    LIBRARY
+  END
+```
+
+Pipeline `FLAGS` can contain:
+
+ * `LIBRARY`
+
+Ray tracing pipeline can include one or more pipeline libraries:
+
+```groovy
+  # Specify list of libraries to use
+  USE_LIBRARY {library_name_1} [{library_name_2} [...]]
+```
+
+Ray tracing pipelines that declare and use pipeline libraries should declare
+the maximum ray payload size and the maximum ray hit attribute size:
+```groovy
+  # Define maximum ray payload size
+  MAX_RAY_PAYLOAD_SIZE <max_ray_payload_size>
+  # Define maximum ray hit attribute size
+  MAX_RAY_HIT_ATTRIBUTE_SIZE <max_ray_hit_attribute_size>
+```
+
+Default for both maximum ray payload size and maximum ray hit attribute size is zero.
+If there is a pipeline which uses a pipeline library then the `MAX_RAY_PAYLOAD_SIZE` and `MAX_RAY_HIT_ATTRIBUTE_SIZE`
+values must be the same between the pipeline and all the pipeline libraries used.
+
+Used libraries must precede shader group `SHADER_GROUP` and shader binding tables
+`SHADER_BINDING_TABLE` declarations. A pipeline can be a library and use other pipelines as a libraries.
+
+Ray tracing pipelines can declare a maximum ray recursion depth:
+
+```groovy
+  # Define maximum ray recursion depth
+  MAX_RAY_RECURSION_DEPTH <max_ray_recursion_depth>
+```
+
+If the MAX_RAY_RECURSION_DEPTH is not specified, then maximum ray recursion depth is set to 1.
+
+If a pipeline library is used within this pipeline (via `USE_LIBRARY` keyword), then the
+shader binding table can use shader groups from any of the used libraries.
 
 #### Compare operations
  * `never`
@@ -746,6 +944,13 @@ ranges can be used also with dynamic buffers.
   INDEX_DATA {buffer_name}
 ```
 
+Ray tracing pipelines allow bind top level acceleration structures.
+
+```groovy
+  # Bind the top level acceleration structure at the given descriptor set and binding.
+  BIND ACCELERATION_STRUCTURE {tlas_name} DESCRIPTOR_SET _set_id_ BINDING _id_
+```
+
 #### OpenCL Plain-Old-Data Arguments
 OpenCL kernels can have plain-old-data (pod or pod_ubo in the desriptor map)
 arguments set their data via this command. Amber will generate the appropriate
@@ -787,18 +992,22 @@ value for `START_IDX` is 0. The default value for `COUNT` is the item count of
 vertex buffer minus the `START_IDX`. The same applies to `START_INSTANCE`
 (default 0) and `INSTANCE_COUNT` (default 1).
 
+The `TIMED_EXECUTION` is an optional flag that can be passed to the run command.
+This will cause Amber to insert device specific counters to time the execution
+of this pipeline command.
+
 ```groovy
 # Run the given |pipeline_name| which must be a `compute` pipeline. The
 # pipeline will be run with the given number of workgroups in the |x|, |y|, |z|
 # dimensions. Each of the x, y and z values must be a uint32.
-RUN {pipeline_name} _x_ _y_ _z_
+RUN [TIMED_EXECUTION] {pipeline_name} _x_ _y_ _z_
 ```
 
 ```groovy
 # Run the given |pipeline_name| which must be a `graphics` pipeline. The
 # rectangle at |x|, |y|, |width|x|height| will be rendered. Ignores VERTEX_DATA
 # and INDEX_DATA on the given pipeline.
-RUN {pipeline_name} \
+RUN [TIMED_EXECUTION] {pipeline_name} \
   DRAW_RECT POS _x_in_pixels_ _y_in_pixels_ \
   SIZE _width_in_pixels_ _height_in_pixels_
 ```
@@ -808,7 +1017,7 @@ RUN {pipeline_name} \
 # grid at |x|, |y|, |width|x|height|, |columns|x|rows| will be rendered.
 # Ignores VERTEX_DATA and INDEX_DATA on the given pipeline.
 # For columns, rows of (5, 4) a total of 5*4=20 rectangles will be drawn.
-RUN {pipeline_name} \
+RUN [TIMED_EXECUTION] {pipeline_name} \
   DRAW_GRID POS _x_in_pixels_ _y_in_pixels_ \
   SIZE _width_in_pixels_ _height_in_pixels_ \
   CELLS _columns_of_cells_ _rows_of_cells_
@@ -822,7 +1031,7 @@ RUN {pipeline_name} \
 # will be processed. The draw is instanced if |inst_count_value| is greater
 # than one. In case of instanced draw |inst_value| controls the starting
 # instance ID.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} \
+RUN [TIMED_EXECUTION] {pipeline_name} DRAW_ARRAY AS {topology} \
     [ START_IDX _value_ (default 0) ] \
     [ COUNT _count_value_ (default vertex_buffer size - start_idx) ] \
     [ START_INSTANCE _inst_value_ (default 0) ] \
@@ -838,11 +1047,30 @@ RUN {pipeline_name} DRAW_ARRAY AS {topology} \
 # will be processed. The draw is instanced if |inst_count_value| is greater
 # than one. In case of instanced draw |inst_value| controls the starting
 # instance ID.
-RUN {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
+RUN [TIMED_EXECUTION] {pipeline_name} DRAW_ARRAY AS {topology} INDEXED \
     [ START_IDX _value_ (default 0) ] \
     [ COUNT _count_value_ (default index_buffer size - start_idx) ] \
     [ START_INSTANCE _inst_value_ (default 0) ] \
     [ INSTANCE_COUNT _inst_count_value_ (default 1) ]
+```
+
+```groovy
+# Run the |pipeline_name| which must be a `ray tracing` pipeline.
+# Next four shader binding table names should be specified:
+# * RAYGEN |ray_gen_sbt_name| - shader binding table containing ray generation shader group
+# * MISS |miss_sbt_name| - shader binding table containing one or more miss shader groups
+# * HIT |hit_sbt_name| - shader binding table containing one or more hit shader groups
+# * CALL |call_sbt_name| - shader binding table containing one or more call shader groups
+# RAYGEN is required, other shader binding tables (MISS, HIT and CALL) are optional.
+#
+# The pipeline will be run with the given ray tracing dimensions |x|, |y|, |z|.
+# Each of the x, y and z values must be a uint32.
+RUN [TIMED_EXECUTION] {pipeline_name} \
+    RAYGEN {ray_gen_sbt_name} \
+    [MISS {miss_sbt_name}] \
+    [HIT {hit_sbt_name}] \
+    [CALL {call_sbt_name}] \
+     _x_ _y_ _z_
 ```
 
 ### Repeating commands
@@ -950,7 +1178,7 @@ SHADER compute kComputeShader GLSL
 #version 450
 
 layout(binding = 3) buffer block {
-  vec2 values[];
+  uvec2 values[];
 };
 
 void main() {

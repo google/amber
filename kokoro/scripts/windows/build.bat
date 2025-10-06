@@ -1,4 +1,4 @@
-:: Copyright The Amber Authors.
+:: Copyright 2025 The Amber Authors.
 ::
 :: Licensed under the Apache License, Version 2.0 (the "License");
 :: you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 set BUILD_ROOT=%cd%
 set SRC=%cd%\github\amber
 set BUILD_TYPE=%1
+set VS_VERSION=%2
 
-choco install cmake --yes --no-progress --limit-output
-choco upgrade cmake --yes --no-progress --limit-output
-
-:: Force usage of python 3.6 and add cmake to the path.
-set PATH=C:\python36;"C:\Program Files\CMake\bin";%PATH%
+:: Force usage of python 3.12
+set PATH=C:\python312;%PATH%
+:: Force usage of cmake 3.31.2
+set PATH=C:\cmake-3.31.2\bin;%PATH%
 
 cd %SRC%
 python tools\git-sync-deps
@@ -30,8 +30,9 @@ python tools\git-sync-deps
 :: #########################################
 :: set up msvc build env
 :: #########################################
-call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-echo "Using VS 2017..."
+if %VS_VERSION% == 2022 (
+  call "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build\vcvarsall.bat" x64
+)
 
 cmake --version
 

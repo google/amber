@@ -58,15 +58,13 @@ END)";
             pipeline->GetPipelineData()->GetSrcColorBlendFactor());
   ASSERT_EQ(BlendFactor::kOneMinusSrcAlpha,
             pipeline->GetPipelineData()->GetDstColorBlendFactor());
-  ASSERT_EQ(BlendOp::kAdd,
-            pipeline->GetPipelineData()->GetColorBlendOp());
+  ASSERT_EQ(BlendOp::kAdd, pipeline->GetPipelineData()->GetColorBlendOp());
 
   ASSERT_EQ(BlendFactor::kOne,
             pipeline->GetPipelineData()->GetSrcAlphaBlendFactor());
   ASSERT_EQ(BlendFactor::kZero,
             pipeline->GetPipelineData()->GetDstAlphaBlendFactor());
-  ASSERT_EQ(BlendOp::kMax,
-            pipeline->GetPipelineData()->GetAlphaBlendOp());
+  ASSERT_EQ(BlendOp::kMax, pipeline->GetPipelineData()->GetAlphaBlendOp());
 }
 
 TEST_F(AmberScriptParserTest, BlendDefaultValues) {
@@ -101,15 +99,13 @@ END)";
             pipeline->GetPipelineData()->GetSrcColorBlendFactor());
   ASSERT_EQ(BlendFactor::kZero,
             pipeline->GetPipelineData()->GetDstColorBlendFactor());
-  ASSERT_EQ(BlendOp::kAdd,
-            pipeline->GetPipelineData()->GetColorBlendOp());
+  ASSERT_EQ(BlendOp::kAdd, pipeline->GetPipelineData()->GetColorBlendOp());
 
   ASSERT_EQ(BlendFactor::kOne,
             pipeline->GetPipelineData()->GetSrcAlphaBlendFactor());
   ASSERT_EQ(BlendFactor::kZero,
             pipeline->GetPipelineData()->GetDstAlphaBlendFactor());
-  ASSERT_EQ(BlendOp::kAdd,
-            pipeline->GetPipelineData()->GetAlphaBlendOp());
+  ASSERT_EQ(BlendOp::kAdd, pipeline->GetPipelineData()->GetAlphaBlendOp());
 }
 
 TEST_F(AmberScriptParserTest, BlendInvalidColorFactor) {

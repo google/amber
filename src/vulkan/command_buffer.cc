@@ -29,8 +29,9 @@ CommandBuffer::CommandBuffer(Device* device, CommandPool* pool)
 CommandBuffer::~CommandBuffer() {
   Reset();
 
-  if (fence_ != VK_NULL_HANDLE)
+  if (fence_ != VK_NULL_HANDLE) {
     device_->GetPtrs()->vkDestroyFence(device_->GetVkDevice(), fence_, nullptr);
+  }
 
   if (command_ != VK_NULL_HANDLE) {
     device_->GetPtrs()->vkFreeCommandBuffers(
@@ -73,9 +74,11 @@ Result CommandBuffer::BeginRecording() {
   return {};
 }
 
-Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
-  if (device_->GetPtrs()->vkEndCommandBuffer(command_) != VK_SUCCESS)
+Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms,
+                                     bool pipeline_runtime_layer_enabled) {
+  if (device_->GetPtrs()->vkEndCommandBuffer(command_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkEndCommandBuffer Fail");
+  }
 
   if (device_->GetPtrs()->vkResetFences(device_->GetVkDevice(), 1, &fence_) !=
       VK_SUCCESS) {
@@ -86,6 +89,7 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
   submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submit_info.commandBufferCount = 1;
   submit_info.pCommandBuffers = &command_;
+
   if (device_->GetPtrs()->vkQueueSubmit(device_->GetVkQueue(), 1, &submit_info,
                                         fence_) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkQueueSubmit Fail");
@@ -93,11 +97,15 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
 
   guarded_ = false;
 
+  const uint64_t timeout_ns =
+      timeout_ms == static_cast<uint32_t>(~0u)  // honor 32bit infinity
+          ? ~0ull
+          : static_cast<uint64_t>(timeout_ms) * 1000ULL * 1000ULL;
   VkResult r = device_->GetPtrs()->vkWaitForFences(
-      device_->GetVkDevice(), 1, &fence_, VK_TRUE,
-      static_cast<uint64_t>(timeout_ms) * 1000ULL * 1000ULL /* nanosecond */);
-  if (r == VK_TIMEOUT)
+      device_->GetVkDevice(), 1, &fence_, VK_TRUE, timeout_ns);
+  if (r == VK_TIMEOUT) {
     return Result("Vulkan::Calling vkWaitForFences Timeout");
+  }
   if (r != VK_SUCCESS) {
     std::string result_str;
     switch (r) {
@@ -117,8 +125,19 @@ Result CommandBuffer::SubmitAndReset(uint32_t timeout_ms) {
     return Result("Vulkan::Calling vkWaitForFences Fail (" + result_str + ")");
   }
 
-  if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS)
+  /*
+google/vulkan-performance-layers requires a call to vkDeviceWaitIdle or
+vkQueueWaitIdle in order to report the information. Since we want to be
+able to use that layer in conjunction with Amber we need to somehow
+communicate that the Amber script has completed.
+*/
+  if (pipeline_runtime_layer_enabled) {
+    device_->GetPtrs()->vkQueueWaitIdle(device_->GetVkQueue());
+  }
+
+  if (device_->GetPtrs()->vkResetCommandBuffer(command_, 0) != VK_SUCCESS) {
     return Result("Vulkan::Calling vkResetCommandBuffer Fail");
+  }
 
   return {};
 }
@@ -137,13 +156,15 @@ CommandBufferGuard::CommandBufferGuard(CommandBuffer* buffer)
 }
 
 CommandBufferGuard::~CommandBufferGuard() {
-  if (buffer_->guarded_)
+  if (buffer_->guarded_) {
     buffer_->Reset();
+  }
 }
 
-Result CommandBufferGuard::Submit(uint32_t timeout_ms) {
+Result CommandBufferGuard::Submit(uint32_t timeout_ms,
+                                  bool pipeline_runtime_layer_enabled) {
   assert(buffer_->guarded_);
-  return buffer_->SubmitAndReset(timeout_ms);
+  return buffer_->SubmitAndReset(timeout_ms, pipeline_runtime_layer_enabled);
 }
 
 }  // namespace vulkan

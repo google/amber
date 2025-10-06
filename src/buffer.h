@@ -150,18 +150,21 @@ class Buffer {
   }
   /// Returns the number of values in the buffer.
   uint32_t ValueCount() const {
-    if (!format_)
+    if (!format_) {
       return 0;
+    }
     // Packed formats are single values.
-    if (format_->IsPacked())
+    if (format_->IsPacked()) {
       return element_count_;
+    }
     return element_count_ * format_->InputNeededPerElement();
   }
 
   /// Returns the number of bytes needed for the data in the buffer.
   uint32_t GetSizeInBytes() const {
-    if (!format_)
+    if (!format_) {
       return 0;
+    }
     return ElementCount() * format_->SizeInBytes();
   }
 

@@ -49,6 +49,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
       const std::vector<std::string>& required_instance_extensions,
       const std::vector<std::string>& required_device_extensions,
       bool disable_validation_layer,
+      bool enable_pipeline_runtime_layer,
       bool show_version_info,
       std::unique_ptr<amber::EngineConfig>* config) override;
 
@@ -58,7 +59,8 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
       uint32_t engine_major,
       uint32_t engine_minor,
       std::vector<std::string> required_instance_extensions,
-      bool disable_validation_layer);
+      bool disable_validation_layer,
+      bool enable_pipeline_runtime_layer);
 
   /// Create |vulkan_callback_| that reports validation layer errors
   /// via debugCallback() function in config_helper_vulkan.cc.
@@ -87,10 +89,12 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   /// Sets up the device creation to use VkPhysicalDeviceFeatures.
   amber::Result CreateDeviceWithFeatures1(
       const std::vector<std::string>& required_features,
+      const std::vector<std::string>& required_extensions,
       VkDeviceCreateInfo* info);
   /// Sets up the device creation to use VkPhysicalDeviceFeatures2KHR.
   amber::Result CreateDeviceWithFeatures2(
       const std::vector<std::string>& required_features,
+      const std::vector<std::string>& required_extensions,
       VkDeviceCreateInfo* info);
 
   /// Creates the physical device given the device |info|.
@@ -99,30 +103,51 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
   /// Writes information related to the vulkan instance to stdout.
   void DumpPhysicalDeviceInfo();
 
-  VkInstance vulkan_instance_ = VK_NULL_HANDLE;
-  VkDebugReportCallbackEXT vulkan_callback_ = VK_NULL_HANDLE;
-  VkPhysicalDevice vulkan_physical_device_ = VK_NULL_HANDLE;
-  std::vector<std::string> available_instance_extensions_;
-  std::vector<std::string> available_device_extensions_;
-  uint32_t vulkan_queue_family_index_ = std::numeric_limits<uint32_t>::max();
-  VkQueue vulkan_queue_ = VK_NULL_HANDLE;
-  VkDevice vulkan_device_ = VK_NULL_HANDLE;
+  struct {
+    VkInstance instance = VK_NULL_HANDLE;
+    VkDebugReportCallbackEXT debug_cb = VK_NULL_HANDLE;
+    VkPhysicalDevice physical_device = VK_NULL_HANDLE;
+    std::vector<std::string> available_instance_extensions;
+    std::vector<std::string> available_device_extensions;
+    uint32_t queue_family_index = std::numeric_limits<uint32_t>::max();
+    VkQueue queue = VK_NULL_HANDLE;
+    VkDevice device = VK_NULL_HANDLE;
+  } vk_;
 
-  bool supports_get_physical_device_properties2_ = false;
-  bool supports_shader_float16_int8_ = false;
-  bool supports_shader_8bit_storage_ = false;
-  bool supports_shader_16bit_storage_ = false;
-  bool supports_subgroup_size_control_ = false;
-  bool supports_shader_subgroup_extended_types_ = false;
-  VkPhysicalDeviceFeatures available_features_;
-  VkPhysicalDeviceFeatures2KHR available_features2_;
-  VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers_feature_;
-  VkPhysicalDeviceFloat16Int8FeaturesKHR float16_int8_feature_;
-  VkPhysicalDevice8BitStorageFeaturesKHR storage_8bit_feature_;
-  VkPhysicalDevice16BitStorageFeaturesKHR storage_16bit_feature_;
-  VkPhysicalDeviceSubgroupSizeControlFeaturesEXT subgroup_size_control_feature_;
-  VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures
-      shader_subgroup_extended_types_feature_;
+  struct {
+    bool get_physical_device_properties2 = false;
+    bool variable_pointers = false;
+    bool shader_float16_int8 = false;
+    bool shader_8bit_storage = false;
+    bool shader_16bit_storage = false;
+    bool subgroup_size_control = false;
+    bool depth_clamp_zero_one = false;
+    bool shader_subgroup_extended_types = false;
+    bool acceleration_structure = false;
+    bool buffer_device_address = false;
+    bool ray_tracing_pipeline = false;
+    bool descriptor_indexing = false;
+    bool deferred_host_operations = false;
+    bool spirv_1_4 = false;
+    bool shader_float_controls = false;
+  } supports_;
+
+  struct {
+    VkPhysicalDeviceFeatures device{};
+    VkPhysicalDeviceFeatures2KHR features2{};
+    VkPhysicalDeviceVariablePointerFeaturesKHR variable_pointers{};
+    VkPhysicalDeviceFloat16Int8FeaturesKHR float16_int8{};
+    VkPhysicalDevice8BitStorageFeaturesKHR storage_8bit{};
+    VkPhysicalDevice16BitStorageFeaturesKHR storage_16bit{};
+    VkPhysicalDeviceSubgroupSizeControlFeaturesEXT subgroup_size_control{};
+    VkPhysicalDeviceDepthClampZeroOneFeaturesEXT depth_clamp_zero_one{};
+    VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures
+        shader_subgroup_extended_types{};
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure{};
+    VkPhysicalDeviceBufferDeviceAddressFeatures buffer_device_address{};
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR ray_tracing_pipeline{};
+    VkPhysicalDeviceDescriptorIndexingFeatures descriptor_indexing{};
+  } features_;
 };
 
 }  // namespace sample

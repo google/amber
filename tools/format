@@ -19,4 +19,5 @@ find src -name "*.cc"  -exec clang-format -i {} \;
 find samples -name "*.h"  -exec clang-format -i {} \;
 find samples -name "*.cc"  -exec clang-format -i {} \;
 find include -name "*.h"  -exec clang-format -i {} \;
+find android_sample -name "*.cc"  -exec clang-format -i {} \;
 

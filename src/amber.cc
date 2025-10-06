@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +24,6 @@
 #include "src/descriptor_set_and_binding_parser.h"
 #include "src/engine.h"
 #include "src/executor.h"
-#include "src/make_unique.h"
 #include "src/parser.h"
 #include "src/vkscript/parser.h"
 
@@ -36,12 +36,14 @@ Result GetFrameBuffer(Buffer* buffer, std::vector<Value>* values) {
   values->clear();
 
   // TODO(jaebaek): Support other formats
-  if (buffer->GetFormat()->GetFormatType() != kDefaultFramebufferFormat)
+  if (buffer->GetFormat()->GetFormatType() != kDefaultFramebufferFormat) {
     return Result("GetFrameBuffer Unsupported buffer format");
+  }
 
   const uint8_t* cpu_memory = buffer->ValuePtr()->data();
-  if (!cpu_memory)
+  if (!cpu_memory) {
     return Result("GetFrameBuffer missing memory pointer");
+  }
 
   const auto texel_stride = buffer->GetElementStride();
   const auto row_stride = buffer->GetRowStride();
@@ -87,18 +89,21 @@ Amber::Amber(Delegate* delegate) : delegate_(delegate) {}
 Amber::~Amber() = default;
 
 amber::Result Amber::Parse(const std::string& input, amber::Recipe* recipe) {
-  if (!recipe)
+  if (!recipe) {
     return Result("Recipe must be provided to Parse.");
+  }
 
   std::unique_ptr<Parser> parser;
-  if (input.substr(0, 7) == "#!amber")
-    parser = MakeUnique<amberscript::Parser>(GetDelegate());
-  else
-    parser = MakeUnique<vkscript::Parser>(GetDelegate());
+  if (input.substr(0, 7) == "#!amber") {
+    parser = std::make_unique<amberscript::Parser>(GetDelegate());
+  } else {
+    parser = std::make_unique<vkscript::Parser>(GetDelegate());
+  }
 
   Result r = parser->Parse(input);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   recipe->SetImpl(parser->GetScript().release());
   return {};
@@ -115,12 +120,14 @@ Result CreateEngineAndCheckRequirements(const Recipe* recipe,
                                         Delegate* delegate,
                                         std::unique_ptr<Engine>* engine_ptr,
                                         Script** script_ptr) {
-  if (!recipe)
+  if (!recipe) {
     return Result("Attempting to check an invalid recipe");
+  }
 
   Script* script = static_cast<Script*>(recipe->GetImpl());
-  if (!script)
+  if (!script) {
     return Result("Recipe must contain a parsed script");
+  }
 
   script->SetSpvTargetEnv(opts->spv_env);
 
@@ -131,12 +138,13 @@ Result CreateEngineAndCheckRequirements(const Recipe* recipe,
 
   // Engine initialization checks requirements.  Current backends don't do
   // much else.  Refactor this if they end up doing to much here.
-  Result r =
-      engine->Initialize(opts->config, delegate, script->GetRequiredFeatures(),
-                         script->GetRequiredInstanceExtensions(),
-                         script->GetRequiredDeviceExtensions());
-  if (!r.IsSuccess())
+  Result r = engine->Initialize(
+      opts->config, delegate, script->GetRequiredFeatures(),
+      script->GetRequiredProperties(), script->GetRequiredInstanceExtensions(),
+      script->GetRequiredDeviceExtensions());
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   *engine_ptr = std::move(engine);
   *script_ptr = script;
@@ -166,8 +174,9 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   Script* script = nullptr;
   Result r = CreateEngineAndCheckRequirements(recipe, opts, GetDelegate(),
                                               &engine, &script);
-  if (!r.IsSuccess())
+  if (!r.IsSuccess()) {
     return r;
+  }
   script->SetSpvTargetEnv(opts->spv_env);
 
   Executor executor;
@@ -177,8 +186,9 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   // us dump any buffers requested even on failure.
 
   if (script->GetPipelines().empty()) {
-    if (!executor_result.IsSuccess())
+    if (!executor_result.IsSuccess()) {
       return executor_result;
+    }
     return {};
   }
 
@@ -187,8 +197,9 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
   for (BufferInfo& buffer_info : opts->extractions) {
     if (buffer_info.is_image_buffer) {
       auto* buffer = script->GetBuffer(buffer_info.buffer_name);
-      if (!buffer)
+      if (!buffer) {
         continue;
+      }
 
       buffer_info.width = buffer->GetWidth();
       buffer_info.height = buffer->GetHeight();
@@ -198,21 +209,24 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
 
     DescriptorSetAndBindingParser p;
     r = p.Parse(buffer_info.buffer_name);
-    if (!r.IsSuccess())
+    if (!r.IsSuccess()) {
       continue;
+    }
 
     // Extract the named pipeline from the request, otherwise use the
     // first pipeline which was parsed.
     Pipeline* pipeline = nullptr;
-    if (p.HasPipelineName())
+    if (p.HasPipelineName()) {
       pipeline = script->GetPipeline(p.PipelineName());
-    else
+    } else {
       pipeline = script->GetPipelines()[0].get();
+    }
 
     const auto* buffer =
         pipeline->GetBufferForBinding(p.GetDescriptorSet(), p.GetBinding());
-    if (!buffer)
+    if (!buffer) {
       continue;
+    }
 
     const uint8_t* ptr = buffer->ValuePtr()->data();
     auto& values = buffer_info.values;
@@ -223,10 +237,12 @@ amber::Result Amber::ExecuteWithShaderData(const amber::Recipe* recipe,
     }
   }
 
-  if (!executor_result.IsSuccess())
+  if (!executor_result.IsSuccess()) {
     return executor_result;
-  if (!r.IsSuccess())
+  }
+  if (!r.IsSuccess()) {
     return r;
+  }
 
   return {};
 }

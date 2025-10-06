@@ -19,8 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "src/make_unique.h"
-
 #if AMBER_ENGINE_DAWN
 #include "samples/config_helper_dawn.h"
 #endif  // AMBER_ENGINE_DAWN
@@ -45,32 +43,35 @@ amber::Result ConfigHelper::CreateConfig(
     const std::vector<std::string>& required_instance_extensions,
     const std::vector<std::string>& required_device_extensions,
     bool disable_validation_layer,
+    bool enable_pipeline_runtime_layer,
     bool show_version_info,
     std::unique_ptr<amber::EngineConfig>* config) {
   switch (engine) {
     case amber::kEngineTypeVulkan:
 #if AMBER_ENGINE_VULKAN
-      impl_ = amber::MakeUnique<ConfigHelperVulkan>();
+      impl_ = std::make_unique<ConfigHelperVulkan>();
       break;
 #else
       return amber::Result("Unable to create engine config for Vulkan");
 #endif  // AMBER_ENGINE_VULKAN
     case amber::kEngineTypeDawn:
 #if AMBER_ENGINE_DAWN
-      impl_ = amber::MakeUnique<ConfigHelperDawn>();
+      impl_ = std::make_unique<ConfigHelperDawn>();
       break;
 #else
       return amber::Result("Unable to create engine config for Dawn");
 #endif  // AMBER_ENGINE_DAWN
   }
 
-  if (!impl_)
+  if (!impl_) {
     return amber::Result("Unable to create config helper");
+  }
 
   return impl_->CreateConfig(
       engine_major, engine_minor, selected_device, required_features,
       required_instance_extensions, required_device_extensions,
-      disable_validation_layer, show_version_info, config);
+      disable_validation_layer, enable_pipeline_runtime_layer,
+      show_version_info, config);
 }
 
 }  // namespace sample

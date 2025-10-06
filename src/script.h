@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +26,7 @@
 
 #include "amber/recipe.h"
 #include "amber/result.h"
+#include "src/acceleration_structure.h"
 #include "src/buffer.h"
 #include "src/command.h"
 #include "src/engine.h"
@@ -43,6 +45,7 @@ class Script : public RecipeImpl {
   ~Script() override;
 
   bool IsKnownFeature(const std::string& name) const;
+  bool IsKnownProperty(const std::string& name) const;
 
   /// Retrieves information on the shaders in the given script.
   std::vector<ShaderInfo> GetShaderInfo() const override;
@@ -50,6 +53,10 @@ class Script : public RecipeImpl {
   /// Returns required features in the given recipe.
   std::vector<std::string> GetRequiredFeatures() const override {
     return engine_info_.required_features;
+  }
+
+  std::vector<std::string> GetRequiredProperties() const override {
+    return engine_info_.required_properties;
   }
 
   /// Returns required device extensions in the given recipe.
@@ -67,11 +74,17 @@ class Script : public RecipeImpl {
     engine_data_.fence_timeout_ms = timeout_ms;
   }
 
+  /// Sets or clears runtime layer bit to |enabled|.
+  void SetPipelineRuntimeLayerEnabled(bool enabled) override {
+    engine_data_.pipeline_runtime_layer_enabled = enabled;
+  }
+
   /// Adds |pipeline| to the list of known pipelines. The |pipeline| must have
   /// a unique name over all pipelines in the script.
   Result AddPipeline(std::unique_ptr<Pipeline> pipeline) {
-    if (name_to_pipeline_.count(pipeline->GetName()) > 0)
+    if (name_to_pipeline_.count(pipeline->GetName()) > 0) {
       return Result("duplicate pipeline name provided");
+    }
 
     pipelines_.push_back(std::move(pipeline));
     name_to_pipeline_[pipelines_.back()->GetName()] = pipelines_.back().get();
@@ -92,8 +105,9 @@ class Script : public RecipeImpl {
   /// Adds |shader| to the list of known shaders. The |shader| must have a
   /// unique name over all shaders in the script.
   Result AddShader(std::unique_ptr<Shader> shader) {
-    if (name_to_shader_.count(shader->GetName()) > 0)
+    if (name_to_shader_.count(shader->GetName()) > 0) {
       return Result("duplicate shader name provided");
+    }
 
     shaders_.push_back(std::move(shader));
     name_to_shader_[shaders_.back()->GetName()] = shaders_.back().get();
@@ -111,11 +125,63 @@ class Script : public RecipeImpl {
     return shaders_;
   }
 
+  /// Search |pipeline| and all included into pipeline libraries whether shader
+  /// with |name| is present in pipeline groups. Returns shader if found,
+  /// |nullptr| if not found.
+  Shader* FindShader(const Pipeline* pipeline, Shader* shader) const {
+    if (shader) {
+      for (auto group : pipeline->GetShaderGroups()) {
+        Shader* test_shader = group->GetShaderByType(shader->GetType());
+        if (test_shader == shader) {
+          return shader;
+        }
+      }
+
+      for (auto lib : pipeline->GetPipelineLibraries()) {
+        shader = FindShader(lib, shader);
+        if (shader) {
+          return shader;
+        }
+      }
+    }
+
+    return nullptr;
+  }
+
+  /// Search |pipeline| and all included into pipeline libraries whether shader
+  /// group with |name| is present. Returns shader group if found, |nullptr|
+  /// if not found. |index| is an shader group index in pipeline or library.
+  ShaderGroup* FindShaderGroup(const Pipeline* pipeline,
+                               const std::string& name,
+                               uint32_t* index) const {
+    ShaderGroup* result = nullptr;
+    uint32_t shader_group_index = pipeline->GetShaderGroupIndex(name);
+    if (shader_group_index != static_cast<uint32_t>(-1)) {
+      (*index) += shader_group_index;
+      result = pipeline->GetShaderGroupByIndex(shader_group_index);
+      return result;
+    } else {
+      (*index) += static_cast<uint32_t>(pipeline->GetShaderGroups().size());
+    }
+
+    for (auto lib : pipeline->GetPipelineLibraries()) {
+      result = FindShaderGroup(lib, name, index);
+      if (result) {
+        return result;
+      }
+    }
+
+    *index = static_cast<uint32_t>(-1);
+
+    return nullptr;
+  }
+
   /// Adds |buffer| to the list of known buffers. The |buffer| must have a
   /// unique name over all buffers in the script.
   Result AddBuffer(std::unique_ptr<Buffer> buffer) {
-    if (name_to_buffer_.count(buffer->GetName()) > 0)
+    if (name_to_buffer_.count(buffer->GetName()) > 0) {
       return Result("duplicate buffer name provided");
+    }
 
     buffers_.push_back(std::move(buffer));
     name_to_buffer_[buffers_.back()->GetName()] = buffers_.back().get();
@@ -136,8 +202,9 @@ class Script : public RecipeImpl {
   /// Adds |sampler| to the list of known sampler. The |sampler| must have a
   /// unique name over all samplers in the script.
   Result AddSampler(std::unique_ptr<Sampler> sampler) {
-    if (name_to_sampler_.count(sampler->GetName()) > 0)
+    if (name_to_sampler_.count(sampler->GetName()) > 0) {
       return Result("duplicate sampler name provided");
+    }
 
     samplers_.push_back(std::move(sampler));
     name_to_sampler_[samplers_.back()->GetName()] = samplers_.back().get();
@@ -155,10 +222,64 @@ class Script : public RecipeImpl {
     return samplers_;
   }
 
+  /// Adds |blas| to the list of known bottom level acceleration structures.
+  /// The |blas| must have a unique name over all BLASes in the script.
+  Result AddBLAS(std::unique_ptr<BLAS> blas) {
+    if (name_to_blas_.count(blas->GetName()) > 0) {
+      return Result("duplicate BLAS name provided");
+    }
+
+    blases_.push_back(std::move(blas));
+    name_to_blas_[blases_.back()->GetName()] = blases_.back().get();
+
+    return {};
+  }
+
+  /// Retrieves the BLAS with |name|, |nullptr| if not found.
+  BLAS* GetBLAS(const std::string& name) const {
+    auto it = name_to_blas_.find(name);
+    return it == name_to_blas_.end() ? nullptr : it->second;
+  }
+
+  /// Retrieves a list of all BLASes.
+  const std::vector<std::unique_ptr<BLAS>>& GetBLASes() const {
+    return blases_;
+  }
+
+  /// Adds |tlas| to the list of known top level acceleration structures.
+  /// The |tlas| must have a unique name over all TLASes in the script.
+  Result AddTLAS(std::unique_ptr<TLAS> tlas) {
+    if (name_to_tlas_.count(tlas->GetName()) > 0) {
+      return Result("duplicate TLAS name provided");
+    }
+
+    tlases_.push_back(std::move(tlas));
+    name_to_tlas_[tlases_.back()->GetName()] = tlases_.back().get();
+
+    return {};
+  }
+
+  /// Retrieves the TLAS with |name|, |nullptr| if not found.
+  TLAS* GetTLAS(const std::string& name) const {
+    auto it = name_to_tlas_.find(name);
+    return it == name_to_tlas_.end() ? nullptr : it->second;
+  }
+
+  /// Retrieves a list of all TLASes.
+  const std::vector<std::unique_ptr<TLAS>>& GetTLASes() const {
+    return tlases_;
+  }
+
   /// Adds |feature| to the list of features that must be supported by the
   /// engine.
   void AddRequiredFeature(const std::string& feature) {
     engine_info_.required_features.push_back(feature);
+  }
+
+  /// Adds |prop| to the list of properties that must be supported by the
+  /// engine.
+  void AddRequiredProperty(const std::string& prop) {
+    engine_info_.required_properties.push_back(prop);
   }
 
   /// Checks if |feature| is in required features
@@ -166,6 +287,13 @@ class Script : public RecipeImpl {
     return std::find(engine_info_.required_features.begin(),
                      engine_info_.required_features.end(),
                      feature) != engine_info_.required_features.end();
+  }
+
+  /// Checks if |prop| is in required features
+  bool IsRequiredProperty(const std::string& prop) const {
+    return std::find(engine_info_.required_properties.begin(),
+                     engine_info_.required_properties.end(),
+                     prop) != engine_info_.required_properties.end();
   }
 
   /// Adds |ext| to the list of device extensions that must be supported.
@@ -218,8 +346,9 @@ class Script : public RecipeImpl {
   /// Adds |type| to the list of known types. The |type| must have
   /// a unique name over all types in the script.
   Result AddType(const std::string& name, std::unique_ptr<type::Type> type) {
-    if (name_to_type_.count(name) > 0)
+    if (name_to_type_.count(name) > 0) {
       return Result("duplicate type name provided");
+    }
 
     name_to_type_[name] = std::move(type);
     return {};
@@ -252,6 +381,7 @@ class Script : public RecipeImpl {
  private:
   struct {
     std::vector<std::string> required_features;
+    std::vector<std::string> required_properties;
     std::vector<std::string> required_device_extensions;
     std::vector<std::string> required_instance_extensions;
   } engine_info_;
@@ -262,12 +392,16 @@ class Script : public RecipeImpl {
   std::map<std::string, Buffer*> name_to_buffer_;
   std::map<std::string, Sampler*> name_to_sampler_;
   std::map<std::string, Pipeline*> name_to_pipeline_;
+  std::map<std::string, BLAS*> name_to_blas_;
+  std::map<std::string, TLAS*> name_to_tlas_;
   std::map<std::string, std::unique_ptr<type::Type>> name_to_type_;
   std::vector<std::unique_ptr<Shader>> shaders_;
   std::vector<std::unique_ptr<Command>> commands_;
   std::vector<std::unique_ptr<Buffer>> buffers_;
   std::vector<std::unique_ptr<Sampler>> samplers_;
   std::vector<std::unique_ptr<Pipeline>> pipelines_;
+  std::vector<std::unique_ptr<BLAS>> blases_;
+  std::vector<std::unique_ptr<TLAS>> tlases_;
   std::vector<std::unique_ptr<type::Type>> types_;
   std::vector<std::unique_ptr<Format>> formats_;
   std::unique_ptr<VirtualFileStore> virtual_files_;

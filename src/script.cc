@@ -1,4 +1,5 @@
 // Copyright 2018 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,12 +15,11 @@
 
 #include "src/script.h"
 
-#include "src/make_unique.h"
 #include "src/type_parser.h"
 
 namespace amber {
 
-Script::Script() : virtual_files_(MakeUnique<VirtualFileStore>()) {}
+Script::Script() : virtual_files_(std::make_unique<VirtualFileStore>()) {}
 
 Script::~Script() = default;
 
@@ -57,10 +57,11 @@ std::vector<ShaderInfo> Script::GetShaderInfo() const {
 
 void Script::AddRequiredExtension(const std::string& ext) {
   // Make this smarter when we have more instance extensions to match.
-  if (ext == "VK_KHR_get_physical_device_properties2")
+  if (ext == "VK_KHR_get_physical_device_properties2") {
     AddRequiredInstanceExtension(ext);
-  else
+  } else {
     AddRequiredDeviceExtension(ext);
+  }
 }
 
 bool Script::IsKnownFeature(const std::string& name) const {
@@ -113,6 +114,7 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name == "Storage16BitFeatures.uniformAndStorageBuffer16BitAccess" ||
          name == "Storage16BitFeatures.storagePushConstant16" ||
          name == "Storage16BitFeatures.storageInputOutput16" ||
+         name == "DepthClampZeroOneFeatures.depthClampZeroOne" ||
          name == "SubgroupSizeControl.subgroupSizeControl" ||
          name == "SubgroupSizeControl.computeFullSubgroups" ||
          name == "SubgroupSupportedOperations.basic" ||
@@ -129,14 +131,41 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name == "SubgroupSupportedStages.geometry" ||
          name == "SubgroupSupportedStages.fragment" ||
          name == "SubgroupSupportedStages.compute" ||
+         name == "IndexTypeUint8Features.indexTypeUint8" ||
          name ==
-             "ShaderSubgroupExtendedTypesFeatures.shaderSubgroupExtendedTypes";
+             "ShaderSubgroupExtendedTypesFeatures"
+             ".shaderSubgroupExtendedTypes" ||
+         name == "RayTracingPipelineFeaturesKHR.rayTracingPipeline" ||
+         name == "AccelerationStructureFeaturesKHR.accelerationStructure" ||
+         name == "BufferDeviceAddressFeatures.bufferDeviceAddress";
+}
+
+bool Script::IsKnownProperty(const std::string& name) const {
+  return name ==
+             "FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat16" ||
+         name ==
+             "FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat32" ||
+         name ==
+             "FloatControlsProperties.shaderSignedZeroInfNanPreserveFloat64" ||
+         name == "FloatControlsProperties.shaderDenormPreserveFloat16" ||
+         name == "FloatControlsProperties.shaderDenormPreserveFloat32" ||
+         name == "FloatControlsProperties.shaderDenormPreserveFloat64" ||
+         name == "FloatControlsProperties.shaderDenormFlushToZeroFloat16" ||
+         name == "FloatControlsProperties.shaderDenormFlushToZeroFloat32" ||
+         name == "FloatControlsProperties.shaderDenormFlushToZeroFloat64" ||
+         name == "FloatControlsProperties.shaderRoundingModeRTEFloat16" ||
+         name == "FloatControlsProperties.shaderRoundingModeRTEFloat32" ||
+         name == "FloatControlsProperties.shaderRoundingModeRTEFloat64" ||
+         name == "FloatControlsProperties.shaderRoundingModeRTZFloat16" ||
+         name == "FloatControlsProperties.shaderRoundingModeRTZFloat32" ||
+         name == "FloatControlsProperties.shaderRoundingModeRTZFloat64";
 }
 
 type::Type* Script::ParseType(const std::string& str) {
   auto type = GetType(str);
-  if (type)
+  if (type) {
     return type;
+  }
 
   TypeParser parser;
   auto new_type = parser.Parse(str);

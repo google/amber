@@ -1,4 +1,5 @@
 // Copyright 2019 The Amber Authors.
+// Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,6 +35,7 @@ class BufferDescriptor;
 class ImageDescriptor;
 class BufferBackedDescriptor;
 class SamplerDescriptor;
+class TLASDescriptor;
 
 enum class DescriptorType : uint8_t {
   kStorageBuffer = 0,
@@ -45,7 +47,8 @@ enum class DescriptorType : uint8_t {
   kCombinedImageSampler,
   kUniformTexelBuffer,
   kStorageTexelBuffer,
-  kSampler
+  kSampler,
+  kTLAS
 };
 
 class Descriptor {
@@ -66,6 +69,7 @@ class Descriptor {
   virtual ImageDescriptor* AsImageDescriptor() { return nullptr; }
   virtual BufferBackedDescriptor* AsBufferBackedDescriptor() { return nullptr; }
   virtual SamplerDescriptor* AsSamplerDescriptor() { return nullptr; }
+  virtual TLASDescriptor* AsTLASDescriptor() { return nullptr; }
   uint32_t GetDescriptorSet() const { return descriptor_set_; }
   uint32_t GetBinding() const { return binding_; }
   VkDescriptorType GetVkDescriptorType() const;

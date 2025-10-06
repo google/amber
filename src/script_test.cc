@@ -17,7 +17,6 @@
 #include <utility>
 
 #include "gtest/gtest.h"
-#include "src/make_unique.h"
 #include "src/shader.h"
 
 namespace amber {
@@ -27,14 +26,14 @@ using ScriptTest = testing::Test;
 TEST_F(ScriptTest, GetShaderInfo) {
   Script s;
 
-  auto p = MakeUnique<Pipeline>(PipelineType::kGraphics);
+  auto p = std::make_unique<Pipeline>(PipelineType::kGraphics);
   p->SetName("my_pipeline");
   auto pipeline = p.get();
 
   Result r = s.AddPipeline(std::move(p));
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto shader = MakeUnique<Shader>(kShaderTypeVertex);
+  auto shader = std::make_unique<Shader>(kShaderTypeVertex);
   r = pipeline->AddShader(shader.get(), ShaderType::kShaderTypeVertex);
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
@@ -45,7 +44,7 @@ TEST_F(ScriptTest, GetShaderInfo) {
   shader->SetData("This is my shader data");
   s.AddShader(std::move(shader));
 
-  shader = MakeUnique<Shader>(kShaderTypeFragment);
+  shader = std::make_unique<Shader>(kShaderTypeFragment);
   shader->SetName("Shader2");
   shader->SetFormat(kShaderFormatSpirvAsm);
   shader->SetData("More shader data");
@@ -76,7 +75,7 @@ TEST_F(ScriptTest, GetShaderInfoNoShaders) {
 }
 
 TEST_F(ScriptTest, AddShader) {
-  auto shader = MakeUnique<Shader>(kShaderTypeVertex);
+  auto shader = std::make_unique<Shader>(kShaderTypeVertex);
   shader->SetName("My Shader");
 
   Script s;
@@ -85,14 +84,14 @@ TEST_F(ScriptTest, AddShader) {
 }
 
 TEST_F(ScriptTest, AddDuplicateShader) {
-  auto shader1 = MakeUnique<Shader>(kShaderTypeVertex);
+  auto shader1 = std::make_unique<Shader>(kShaderTypeVertex);
   shader1->SetName("My Shader");
 
   Script s;
   Result r = s.AddShader(std::move(shader1));
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto shader2 = MakeUnique<Shader>(kShaderTypeFragment);
+  auto shader2 = std::make_unique<Shader>(kShaderTypeFragment);
   shader2->SetName("My Shader");
 
   r = s.AddShader(std::move(shader2));
@@ -101,7 +100,7 @@ TEST_F(ScriptTest, AddDuplicateShader) {
 }
 
 TEST_F(ScriptTest, GetShader) {
-  auto shader = MakeUnique<Shader>(kShaderTypeVertex);
+  auto shader = std::make_unique<Shader>(kShaderTypeVertex);
   shader->SetName("My Shader");
 
   auto* ptr = shader.get();
@@ -125,7 +124,7 @@ TEST_F(ScriptTest, GetShadersEmpty) {
 }
 
 TEST_F(ScriptTest, GetShaders) {
-  auto shader1 = MakeUnique<Shader>(kShaderTypeVertex);
+  auto shader1 = std::make_unique<Shader>(kShaderTypeVertex);
   shader1->SetName("My Shader");
 
   const auto* ptr1 = shader1.get();
@@ -134,7 +133,7 @@ TEST_F(ScriptTest, GetShaders) {
   Result r = s.AddShader(std::move(shader1));
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto shader2 = MakeUnique<Shader>(kShaderTypeFragment);
+  auto shader2 = std::make_unique<Shader>(kShaderTypeFragment);
   shader2->SetName("My Fragment");
 
   const auto* ptr2 = shader2.get();
@@ -149,7 +148,7 @@ TEST_F(ScriptTest, GetShaders) {
 }
 
 TEST_F(ScriptTest, AddPipeline) {
-  auto pipeline = MakeUnique<Pipeline>(PipelineType::kCompute);
+  auto pipeline = std::make_unique<Pipeline>(PipelineType::kCompute);
   pipeline->SetName("my_pipeline");
 
   Script s;
@@ -158,14 +157,14 @@ TEST_F(ScriptTest, AddPipeline) {
 }
 
 TEST_F(ScriptTest, AddDuplicatePipeline) {
-  auto pipeline1 = MakeUnique<Pipeline>(PipelineType::kCompute);
+  auto pipeline1 = std::make_unique<Pipeline>(PipelineType::kCompute);
   pipeline1->SetName("my_pipeline");
 
   Script s;
   Result r = s.AddPipeline(std::move(pipeline1));
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto pipeline2 = MakeUnique<Pipeline>(PipelineType::kGraphics);
+  auto pipeline2 = std::make_unique<Pipeline>(PipelineType::kGraphics);
   pipeline2->SetName("my_pipeline");
   r = s.AddPipeline(std::move(pipeline2));
   ASSERT_FALSE(r.IsSuccess());
@@ -173,7 +172,7 @@ TEST_F(ScriptTest, AddDuplicatePipeline) {
 }
 
 TEST_F(ScriptTest, GetPipeline) {
-  auto pipeline = MakeUnique<Pipeline>(PipelineType::kCompute);
+  auto pipeline = std::make_unique<Pipeline>(PipelineType::kCompute);
   pipeline->SetName("my_pipeline");
 
   const auto* ptr = pipeline.get();
@@ -197,7 +196,7 @@ TEST_F(ScriptTest, GetPipelinesEmpty) {
 }
 
 TEST_F(ScriptTest, GetPipelines) {
-  auto pipeline1 = MakeUnique<Pipeline>(PipelineType::kCompute);
+  auto pipeline1 = std::make_unique<Pipeline>(PipelineType::kCompute);
   pipeline1->SetName("my_pipeline1");
 
   const auto* ptr1 = pipeline1.get();
@@ -206,7 +205,7 @@ TEST_F(ScriptTest, GetPipelines) {
   Result r = s.AddPipeline(std::move(pipeline1));
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto pipeline2 = MakeUnique<Pipeline>(PipelineType::kGraphics);
+  auto pipeline2 = std::make_unique<Pipeline>(PipelineType::kGraphics);
   pipeline2->SetName("my_pipeline2");
 
   const auto* ptr2 = pipeline2.get();
@@ -221,7 +220,7 @@ TEST_F(ScriptTest, GetPipelines) {
 }
 
 TEST_F(ScriptTest, AddBuffer) {
-  auto buffer = MakeUnique<Buffer>();
+  auto buffer = std::make_unique<Buffer>();
   buffer->SetName("my_buffer");
 
   Script s;
@@ -230,14 +229,14 @@ TEST_F(ScriptTest, AddBuffer) {
 }
 
 TEST_F(ScriptTest, AddDuplicateBuffer) {
-  auto buffer1 = MakeUnique<Buffer>();
+  auto buffer1 = std::make_unique<Buffer>();
   buffer1->SetName("my_buffer");
 
   Script s;
   Result r = s.AddBuffer(std::move(buffer1));
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto buffer2 = MakeUnique<Buffer>();
+  auto buffer2 = std::make_unique<Buffer>();
   buffer2->SetName("my_buffer");
 
   r = s.AddBuffer(std::move(buffer2));
@@ -246,7 +245,7 @@ TEST_F(ScriptTest, AddDuplicateBuffer) {
 }
 
 TEST_F(ScriptTest, GetBuffer) {
-  auto buffer = MakeUnique<Buffer>();
+  auto buffer = std::make_unique<Buffer>();
   buffer->SetName("my_buffer");
 
   const auto* ptr = buffer.get();
@@ -270,7 +269,7 @@ TEST_F(ScriptTest, GetBuffersEmpty) {
 }
 
 TEST_F(ScriptTest, GetBuffers) {
-  auto buffer1 = MakeUnique<Buffer>();
+  auto buffer1 = std::make_unique<Buffer>();
   buffer1->SetName("my_buffer1");
 
   const auto* ptr1 = buffer1.get();
@@ -279,7 +278,7 @@ TEST_F(ScriptTest, GetBuffers) {
   Result r = s.AddBuffer(std::move(buffer1));
   ASSERT_TRUE(r.IsSuccess()) << r.Error();
 
-  auto buffer2 = MakeUnique<Buffer>();
+  auto buffer2 = std::make_unique<Buffer>();
   buffer2->SetName("my_buffer2");
 
   const auto* ptr2 = buffer2.get();

@@ -14,8 +14,6 @@
 
 #include "amber_script.h"
 
-#include "src/make_unique.h"
-
 namespace amber {
 namespace android {
 namespace {
@@ -28,8 +26,9 @@ const char kShaderExtension[] = ".spv";
 bool IsEndedWith(const std::string& path, const std::string& end) {
   const size_t path_size = path.size();
   const size_t end_size = end.size();
-  if (path_size < end_size)
+  if (path_size < end_size) {
     return false;
+  }
 
   return path.compare(path_size - end_size, end_size, end) == 0;
 }
@@ -37,24 +36,29 @@ bool IsEndedWith(const std::string& path, const std::string& end) {
 bool IsStartedWith(const std::string& path, const std::string& start) {
   const size_t path_size = path.size();
   const size_t start_size = start.size();
-  if (path_size < start_size)
+  if (path_size < start_size) {
     return false;
+  }
 
   return path.compare(0, start_size, start) == 0;
 }
 
 std::string GetShaderID(const std::string& shader_name) {
   size_t spv_extension_pos = shader_name.find_last_of('.');
-  if (spv_extension_pos == std::string::npos)
+  if (spv_extension_pos == std::string::npos) {
     return std::string();
+  }
 
   size_t shader_id_pos =
       shader_name.find_last_of('.', spv_extension_pos - 1UL) + 1UL;
-  if (shader_id_pos == std::string::npos)
+  if (shader_id_pos == std::string::npos) {
     return std::string();
+  }
 
-  if (shader_id_pos >= spv_extension_pos || shader_name.size() <= shader_id_pos)
+  if (shader_id_pos >= spv_extension_pos ||
+      shader_name.size() <= shader_id_pos) {
     return std::string();
+  }
 
   return shader_name.substr(shader_id_pos, spv_extension_pos - shader_id_pos);
 }
@@ -67,27 +71,32 @@ AmberScriptLoader::~AmberScriptLoader() = default;
 
 Result AmberScriptLoader::LoadAllScriptsFromAsset() {
   auto shader_names = FindAllScriptsAndReturnShaderNames();
-  if (script_info_.empty())
+  if (script_info_.empty()) {
     return Result("No Amber script found");
+  }
 
   for (auto& info : script_info_) {
     info.script_content = ReadScript(info.asset_name);
-    if (info.script_content.empty())
+    if (info.script_content.empty()) {
       return Result(info.asset_name + ":\n\tEmpty Amber script");
+    }
   }
 
   for (auto& info : script_info_) {
     for (const auto& shader : shader_names) {
-      if (!IsStartedWith(shader, info.asset_name + kShaderNameSignature))
+      if (!IsStartedWith(shader, info.asset_name + kShaderNameSignature)) {
         continue;
+      }
 
       auto shader_content = ReadSpvShader(shader);
-      if (shader_content.empty())
+      if (shader_content.empty()) {
         return Result(shader + ":\n\tEmpty shader");
+      }
 
       auto id = GetShaderID(shader);
-      if (id.empty())
+      if (id.empty()) {
         return Result(shader + ":\n\tFail to get shader ID");
+      }
 
       info.shader_map[id] = shader_content;
     }
@@ -110,8 +119,9 @@ AmberScriptLoader::FindAllScriptsAndReturnShaderNames() {
       script_info_.back().asset_name = file_name_in_string;
     }
 
-    if (IsEndedWith(file_name_in_string, kShaderExtension))
+    if (IsEndedWith(file_name_in_string, kShaderExtension)) {
       shaders.push_back(file_name_in_string);
+    }
   }
   AAssetDir_close(asset);
 
@@ -123,8 +133,9 @@ std::vector<uint8_t> AmberScriptLoader::ReadContent(
   auto asset_path = kAmberDir + asset_name;
   AAsset* asset = AAssetManager_open(app_context_->activity->assetManager,
                                      asset_path.c_str(), AASSET_MODE_BUFFER);
-  if (!asset)
+  if (!asset) {
     return std::vector<uint8_t>();
+  }
 
   size_t size_in_bytes = AAsset_getLength(asset);
 
@@ -145,8 +156,9 @@ std::string AmberScriptLoader::ReadScript(const std::string& script_name) {
 std::vector<uint32_t> AmberScriptLoader::ReadSpvShader(
     const std::string& shader_name) {
   auto content = ReadContent(shader_name);
-  if (content.size() % sizeof(uint32_t) != 0)
+  if (content.size() % sizeof(uint32_t) != 0) {
     return std::vector<uint32_t>();
+  }
 
   return std::vector<uint32_t>(
       reinterpret_cast<uint32_t*>(content.data()),
