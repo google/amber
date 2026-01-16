@@ -69,6 +69,7 @@ with:
  * `RayTracingPipelineFeaturesKHR.rayTracingPipeline`
  * `AccelerationStructureFeaturesKHR.accelerationStructure`
  * `BufferDeviceAddressFeatures.bufferDeviceAddress`
+ * `ShaderLongVectorFeaturesEXT.longVector`
 
 Extensions can be enabled with the `DEVICE_EXTENSION` and `INSTANCE_EXTENSION`
 commands.

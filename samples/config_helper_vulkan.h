@@ -132,6 +132,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
     bool shader_float_controls = false;
     bool vulkan_memory_model = false;
     bool zero_initialize_workgroup_memory = false;
+    bool shader_long_vector = false;
   } supports_;
 
   struct {
@@ -152,6 +153,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
     VkPhysicalDeviceVulkanMemoryModelFeatures memory_model_structure{};
     VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeaturesKHR
         zero_initialize_workgroup_memory_features{};
+    VkPhysicalDeviceShaderLongVectorFeaturesEXT shader_long_vector{};
   } features_;
 };
 
