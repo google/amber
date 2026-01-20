@@ -71,7 +71,8 @@ const char kVulkanMemoryModel_vulkanMemoryModel[] =
 const char kVulkanMemoryModel_vulkanMemoryModelDeviceScope[] =
   "VulkanMemoryModelFeatures.vulkanMemoryModelDeviceScope";
 
-const char kZeroInitializeWorkgroupMemory[] =
+// NOLINTNEXTLINE(whitespace/line_length)
+const char kZeroInitializeWorkgroupMemory_shaderZeroInitializeWorkgroupMemory[] =
   "ZeroInitializeWorkgroupMemoryFeatures."
   "shaderZeroInitializeWorkgroupMemory";
 
@@ -1079,7 +1080,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
             memory_model_structure_features.vulkanMemoryModelDeviceScope
             == VK_FALSE) ||
            (feature ==
-            kZeroInitializeWorkgroupMemory &&
+            // NOLINTNEXTLINE(whitespace/line_length)
+            kZeroInitializeWorkgroupMemory_shaderZeroInitializeWorkgroupMemory &&
             zero_initialize_workgroup_memory_features
                 .shaderZeroInitializeWorkgroupMemory == VK_FALSE) ||
           (feature == kVariablePointersStorageBuffer &&
@@ -1320,10 +1322,10 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
           features_.zero_initialize_workgroup_memory_features,
           // NOLINTNEXTLINE(whitespace/line_length)
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_WORKGROUP_MEMORY_FEATURES_KHR,
-          // NOLINTNEXTLINE(whitespace/line_length)
           VK_KHR_ZERO_INITIALIZE_WORKGROUP_MEMORY_EXTENSION_NAME);
       if (feature ==
-          kZeroInitializeWorkgroupMemory) {
+          // NOLINTNEXTLINE(whitespace/line_length)
+          kZeroInitializeWorkgroupMemory_shaderZeroInitializeWorkgroupMemory) {
         features_.zero_initialize_workgroup_memory_features
             .shaderZeroInitializeWorkgroupMemory = VK_TRUE;
       }

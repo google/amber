@@ -1,0 +1,90 @@
+#!amber
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+DEVICE_EXTENSION VK_KHR_storage_buffer_storage_class
+DEVICE_EXTENSION VK_KHR_vulkan_memory_model
+DEVICE_EXTENSION VK_KHR_zero_initialize_workgroup_memory
+DEVICE_FEATURE VulkanMemoryModelFeatures.vulkanMemoryModel
+DEVICE_FEATURE VulkanMemoryModelFeatures.vulkanMemoryModelDeviceScope
+DEVICE_FEATURE ZeroInitializeWorkgroupMemoryFeatures.shaderZeroInitializeWorkgroupMemory
+
+# This test exercises the vulkan memory model extension and
+# the vulkan workgroup memory init extension. (Look for OpConstantNull) 
+# Code created from dawn end2end test ComputeSharedMemoryTests.complexZeroInit
+
+SHADER compute workgroup_shared_atomic SPIRV-ASM TARGET_ENV spv1.4
+; SPIR-V
+; Version: 1.4
+; Generator: Google Tint Compiler; 1
+; Bound: 28
+; Schema: 0
+               OpCapability Shader
+               OpCapability VulkanMemoryModel
+               OpCapability VulkanMemoryModelDeviceScope
+               OpExtension "SPV_KHR_vulkan_memory_model"
+               OpMemoryModel Logical Vulkan
+               OpEntryPoint GLCompute %11 "main" %1 %5
+               OpExecutionMode %11 LocalSize 32 1 1
+               OpMemberDecorate %_struct_3 0 Offset 0
+               OpDecorate %_struct_3 Block
+               OpDecorate %1 DescriptorSet 0
+               OpDecorate %1 Binding 0
+       %uint = OpTypeInt 32 0
+  %_struct_3 = OpTypeStruct %uint
+%_ptr_StorageBuffer__struct_3 = OpTypePointer StorageBuffer %_struct_3
+          %1 = OpVariable %_ptr_StorageBuffer__struct_3 StorageBuffer
+    %uint_33 = OpConstant %uint 33
+%_arr_uint_uint_33 = OpTypeArray %uint %uint_33
+  %_struct_7 = OpTypeStruct %uint %_arr_uint_uint_33
+%_ptr_Workgroup__struct_7 = OpTypePointer Workgroup %_struct_7
+         %10 = OpConstantNull %_struct_7
+          %5 = OpVariable %_ptr_Workgroup__struct_7 Workgroup %10
+       %void = OpTypeVoid
+         %13 = OpTypeFunction %void
+%_ptr_Workgroup_uint = OpTypePointer Workgroup %uint
+     %uint_0 = OpConstant %uint 0
+     %uint_2 = OpConstant %uint 2
+       %bool = OpTypeBool
+%_ptr_StorageBuffer_uint = OpTypePointer StorageBuffer %uint
+     %uint_1 = OpConstant %uint 1
+         %11 = OpFunction %void None %13
+         %14 = OpLabel
+         %15 = OpAccessChain %_ptr_Workgroup_uint %5 %uint_0
+         %18 = OpAtomicLoad %uint %15 %uint_2 %uint_0
+         %20 = OpINotEqual %bool %18 %uint_0
+               OpSelectionMerge %22 None
+               OpBranchConditional %20 %23 %22
+         %23 = OpLabel
+         %24 = OpAccessChain %_ptr_StorageBuffer_uint %1 %uint_0
+               OpAtomicStore %24 %uint_1 %uint_0 %18
+               OpBranch %22
+         %22 = OpLabel
+               OpReturn
+               OpFunctionEnd
+END
+
+BUFFER buf_uint DATA_TYPE uint32 SIZE 16 FILL 123456789
+BUFFER buf_uint2 DATA_TYPE uint32 SIZE 16 FILL 777
+
+PIPELINE compute pipeline
+  ATTACH workgroup_shared_atomic
+  BIND BUFFER buf_uint AS storage DESCRIPTOR_SET 0 BINDING 0
+  BIND BUFFER buf_uint2 AS storage DESCRIPTOR_SET 0 BINDING 1
+END
+
+RUN pipeline 1 1 1
+
+EXPECT buf_uint2 IDX 0 EQ  777
