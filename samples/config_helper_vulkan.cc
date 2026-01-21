@@ -76,6 +76,9 @@ const char kZeroInitializeWorkgroupMemory_shaderZeroInitializeWorkgroupMemory[] 
   "ZeroInitializeWorkgroupMemoryFeatures."
   "shaderZeroInitializeWorkgroupMemory";
 
+const char kShaderLongVector_longVector[] =
+  "ShaderLongVectorFeaturesEXT.longVector";
+
 const char kSubgroupSizeControl[] = "SubgroupSizeControl.subgroupSizeControl";
 const char kComputeFullSubgroups[] = "SubgroupSizeControl.computeFullSubgroups";
 
@@ -929,6 +932,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       supports_.vulkan_memory_model = true;
     } else if (ext == VK_KHR_ZERO_INITIALIZE_WORKGROUP_MEMORY_EXTENSION_NAME) {
       supports_.zero_initialize_workgroup_memory = true;
+    } else if (ext == VK_EXT_SHADER_LONG_VECTOR_EXTENSION_NAME) {
+      supports_.shader_long_vector = true;
     }
   }
 
@@ -949,6 +954,7 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
     VkPhysicalDeviceVulkanMemoryModelFeatures memory_model_structure_features{};
     VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeaturesKHR
         zero_initialize_workgroup_memory_features{};
+    VkPhysicalDeviceShaderLongVectorFeaturesEXT shader_long_vector_features{};
     VkPhysicalDeviceAccelerationStructureFeaturesKHR
         acceleration_structure_features = {};
     VkPhysicalDeviceBufferDeviceAddressFeatures buffer_device_address_features =
@@ -988,6 +994,11 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_WORKGROUP_MEMORY_FEATURES_KHR;
     zero_initialize_workgroup_memory_features.pNext = next_ptr;
     next_ptr = &zero_initialize_workgroup_memory_features;
+
+    shader_long_vector_features.sType =
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_FEATURES_EXT;
+    shader_long_vector_features.pNext = next_ptr;
+    next_ptr = &shader_long_vector_features;
 
     shader_subgroup_extended_types_features.sType =
         // NOLINTNEXTLINE(whitespace/line_length)
@@ -1084,6 +1095,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
             kZeroInitializeWorkgroupMemory_shaderZeroInitializeWorkgroupMemory &&
             zero_initialize_workgroup_memory_features
                 .shaderZeroInitializeWorkgroupMemory == VK_FALSE) ||
+          (feature == kShaderLongVector_longVector &&
+           shader_long_vector_features.longVector == VK_FALSE) ||
           (feature == kVariablePointersStorageBuffer &&
            variable_pointers_features.variablePointersStorageBuffer ==
                VK_FALSE) ||
@@ -1328,6 +1341,14 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
           kZeroInitializeWorkgroupMemory_shaderZeroInitializeWorkgroupMemory) {
         features_.zero_initialize_workgroup_memory_features
             .shaderZeroInitializeWorkgroupMemory = VK_TRUE;
+      }
+    } else if (StartsWith(feature, "ShaderLongVectorFeaturesEXT.")) {
+      init_feature(
+          supports_.shader_long_vector, features_.shader_long_vector,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_FEATURES_EXT,
+          VK_EXT_SHADER_LONG_VECTOR_EXTENSION_NAME);
+      if (feature == kShaderLongVector_longVector) {
+        features_.shader_long_vector.longVector = VK_TRUE;
       }
     } else if (StartsWith(feature, "Float16Int8Features.")) {
       init_feature(supports_.shader_float16_int8, features_.float16_int8,

@@ -21,13 +21,13 @@ vars = {
   'json_revision': '4f8fba14066156b73f1189a2b8bd568bde5284c5',
   'lodepng_revision': '5601b8272a6850b7c5d693dd0c0e16da50be8d8d',
   'shaderc_revision': '690d259384193c90c01b52288e280b05a8481121',
-  'spirv_headers_revision': 'ddd2c099be25e3fec7cdc14106c17aca99512082',
-  'spirv_tools_revision': '9f8ff357d91d20c2a2cc18e9551ac5f7fd3db749',
-  'swiftshader_revision': 'da334852e70510d259bfa8cbaa7c5412966b2f41',
-  'vulkan_headers_revision': '49af1bfe467dd5a9efc22f7867d95fdde50e2b00',
-  'vulkan_loader_revision': 'ce2d68b24b66a91ed798d870ca205f899ee6e79d',
-  'vulkan_utility_libraries_revision': 'b538fb5b08513aa78346cd414ad5e576a2a3e920',
-  'vulkan_validationlayers_revision': '902f3cf8d51e76be0c0deb4be39c6223abebbae2',
+  'spirv_headers_revision': 'babee77020ff82b571d723ce2c0262e2ec0ee3f1',
+  'spirv_tools_revision': '4c1ae3cd6f9076271cd64acde8cbef1d1287f27f',
+  'swiftshader_revision': 'b0c7e1fb7c9e937f28a5aab4c790fc7f09750407',
+  'vulkan_headers_revision': '1ffba765baff5441cf3ec7a41e708d2d91ad21b9',
+  'vulkan_loader_revision': '2b536e57130425d7837e48bf0400b23cf702850a',
+  'vulkan_utility_libraries_revision': '0d5c138f5019ee58be2ba7aed6e82345fd1ddab9',
+  'vulkan_validationlayers_revision': '25a8dbeef81b30491b3b21b2886a6abda1db9ef3',
 }
 
 deps = {

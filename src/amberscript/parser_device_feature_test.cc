@@ -37,7 +37,8 @@ DEVICE_FEATURE SubgroupSizeControl.subgroupSizeControl
 DEVICE_FEATURE SubgroupSizeControl.computeFullSubgroups
 DEVICE_FEATURE VulkanMemoryModelFeatures.vulkanMemoryModel
 DEVICE_FEATURE VulkanMemoryModelFeatures.vulkanMemoryModelDeviceScope
-DEVICE_FEATURE ZeroInitializeWorkgroupMemoryFeatures.shaderZeroInitializeWorkgroupMemory)";
+DEVICE_FEATURE ZeroInitializeWorkgroupMemoryFeatures.shaderZeroInitializeWorkgroupMemory
+DEVICE_FEATURE ShaderLongVectorFeaturesEXT.longVector)";
 
   Parser parser;
   Result r = parser.Parse(in);
@@ -45,7 +46,7 @@ DEVICE_FEATURE ZeroInitializeWorkgroupMemoryFeatures.shaderZeroInitializeWorkgro
 
   auto script = parser.GetScript();
   const auto& features = script->GetRequiredFeatures();
-  ASSERT_EQ(16U, features.size());
+  ASSERT_EQ(17U, features.size());
   EXPECT_EQ("vertexPipelineStoresAndAtomics", features[0]);
   EXPECT_EQ("VariablePointerFeatures.variablePointersStorageBuffer",
             features[1]);
@@ -68,6 +69,7 @@ DEVICE_FEATURE ZeroInitializeWorkgroupMemoryFeatures.shaderZeroInitializeWorkgro
   EXPECT_EQ("ZeroInitializeWorkgroupMemoryFeatures."
             "shaderZeroInitializeWorkgroupMemory",
     features[15]);
+  EXPECT_EQ("ShaderLongVectorFeaturesEXT.longVector", features[16]);
 }
 
 TEST_F(AmberScriptParserTest, DeviceFeatureMissingFeature) {
