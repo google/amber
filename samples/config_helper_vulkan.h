@@ -153,7 +153,10 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
     VkPhysicalDeviceVulkanMemoryModelFeatures memory_model_structure{};
     VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeaturesKHR
         zero_initialize_workgroup_memory_features{};
+#ifdef VK_EXT_SHADER_LONG_VECTOR_EXTENSION_NAME
+    // Not available in the Android NDK r29
     VkPhysicalDeviceShaderLongVectorFeaturesEXT shader_long_vector{};
+#endif
   } features_;
 };
 
