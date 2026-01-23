@@ -62,6 +62,9 @@ set_target_properties(libamberenginevulkan PROPERTIES
 if (NOT ANDROID)
   target_link_libraries(libamberenginevulkan)
 endif()
+if (ANDROID)
+  target_link_libraries(libamberenginevulkan log)
+endif()
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
   # vulkan/vulkan.h defines VK_NULL_HANDLE as 0u and that also serves as a null pointer.

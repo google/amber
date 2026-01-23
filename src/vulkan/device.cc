@@ -25,6 +25,18 @@
 #include <string>
 #include <vector>
 
+// The VK_HEADER_VERSION increases monotonically, even through
+// API version bumps.  The first 1.4 header uses header number 303.
+// I tried using VK_HEADER_VERSION_COMPLETE >= VK_MAKE_VERSION(1,4,0)
+// but Those macros use C-style casts that would not compile in the
+// Android device toolchain, complaining that uint32_t is undefined
+// and defaulting (uint32_t) to zero.
+#if VK_HEADER_VERSION >= 303
+#define VULKAN_1_4_DEFS 1
+#else
+#define VULKAN_1_4_DEFS 0
+#endif
+
 namespace amber {
 namespace vulkan {
 namespace {
@@ -552,7 +564,9 @@ Result Device::Initialize(
   VkPhysicalDeviceVulkan11Features* vulkan11_ptrs = nullptr;
   VkPhysicalDeviceVulkan12Features* vulkan12_ptrs = nullptr;
   VkPhysicalDeviceVulkan13Features* vulkan13_ptrs = nullptr;
+#if VULKAN_1_4_DEFS
   VkPhysicalDeviceVulkan14Features* vulkan14_ptrs = nullptr;
+#endif
   VkPhysicalDeviceSubgroupSizeControlFeaturesEXT*
       subgroup_size_control_features = nullptr;
   VkPhysicalDeviceDepthClampZeroOneFeaturesEXT* depth_clamp_zero_one_features =
@@ -626,9 +640,11 @@ Result Device::Initialize(
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES:
         vulkan13_ptrs = static_cast<VkPhysicalDeviceVulkan13Features*>(ptr);
         break;
+#if VULKAN_1_4_DEFS
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES:
         vulkan14_ptrs = static_cast<VkPhysicalDeviceVulkan14Features*>(ptr);
         break;
+#endif
       default:
         break;
     }
@@ -888,20 +904,22 @@ Result Device::Initialize(
       }
     }
 
-    // If Vulkan 1.4 structure exists the features are set there.
-    if (vulkan14_ptrs) {
-      if (feature == kIndexTypeUint8 &&
-          vulkan14_ptrs->indexTypeUint8 != VK_TRUE) {
-        return amber::Result(
-            "Index type uint8_t requested but feature not returned");
+    auto uint8_supported = [&]() -> bool {
+#if VULKAN_1_4_DEFS
+      // If Vulkan 1.4 structure exists the features are set there.
+      if (vulkan14_ptrs) {
+        return vulkan14_ptrs->indexTypeUint8 == VK_TRUE;
       }
-    } else {
-      if (feature == kIndexTypeUint8 &&
-          (index_type_uint8_ptrs == nullptr ||
-           index_type_uint8_ptrs->indexTypeUint8 != VK_TRUE)) {
-        return amber::Result(
-            "Index type uint8_t requested but feature not returned");
+#endif
+      if (index_type_uint8_ptrs) {
+        return index_type_uint8_ptrs->indexTypeUint8 == VK_TRUE;
       }
+      return false;
+    };
+
+    if (feature == kIndexTypeUint8 && !uint8_supported()) {
+      return amber::Result(
+          "Index type uint8_t requested but feature not returned");
     }
   }
 
