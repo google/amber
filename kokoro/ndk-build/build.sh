@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2018 The Amber Authors.
+# Copyright 2026 The Amber Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,54 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e  # fail on error
-set -x  # display commands
+# Fail on any error.
+set -e
 
-BUILD_ROOT="$PWD"
-SRC="$PWD/github/amber"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd )"
+ROOT_DIR="$( cd "${SCRIPT_DIR}/../.." >/dev/null 2>&1 && pwd )"
 
-# Disable git's "detected dubious ownership" error - kokoro checks out the repo with a different
-# user, and we don't care about this warning.
-git config --global --add safe.directory '*'
+BUILD_SHA=${KOKORO_GITHUB_COMMIT:-$KOKORO_GITHUB_PULL_REQUEST_COMMIT}
 
-# NDK Path
-export ANDROID_NDK="$BUILD_ROOT/android-ndk-r27c"
+set +e
+# Allow build failures
 
-# Get NINJA.
-wget -q https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
-unzip -q ninja-linux.zip
-export PATH="$PWD:$PATH"
+# "--privileged" is required to run ptrace in the asan builds.
+docker run --rm -i \
+  --privileged \
+  --volume "${ROOT_DIR}:${ROOT_DIR}" \
+  --volume "${KOKORO_ARTIFACTS_DIR}:${KOKORO_ARTIFACTS_DIR}" \
+  --workdir "${ROOT_DIR}" \
+  --env SCRIPT_DIR=${SCRIPT_DIR} \
+  --env ROOT_DIR=${ROOT_DIR} \
+  --env KOKORO_ARTIFACTS_DIR="${KOKORO_ARTIFACTS_DIR}" \
+  --env BUILD_SHA="${BUILD_SHA}" \
+  --entrypoint "${SCRIPT_DIR}/build-docker.sh" \
+  us-east4-docker.pkg.dev/shaderc-build/radial-docker/ubuntu-24.04-amd64/cpp-builder
+RESULT=$?
 
-# Get Android NDK.
-wget -q https://dl.google.com/android/repository/android-ndk-r27c-linux.zip
-unzip -q android-ndk-r27c-linux.zip
-# ANDROID_NDK is set earlier.
-
-cd "$SRC"
-./tools/git-sync-deps
-./tools/update_build_version.py . samples/ third_party/
-./tools/update_vk_wrappers.py . .
-
-mkdir -p build/libs build/app
-cd "$SRC/build"
-
-# Invoke the build.
-
-echo "$(date): Starting ndk-build for android_test ..."
-"$ANDROID_NDK/ndk-build"     \
-  -C "$SRC/android_test"     \
-  NDK_PROJECT_PATH=.       \
-  "NDK_LIBS_OUT=$(pwd)/libs"  \
-  "NDK_APP_OUT=$(pwd)/app"    \
-  -j8
-
-echo "$(date): ndk-build for android_test completed."
-
-echo "$(date): Starting ndk-build for samples ..."
-"$ANDROID_NDK/ndk-build"     \
-  -C "$SRC/samples"          \
-  NDK_PROJECT_PATH=.       \
-  "NDK_LIBS_OUT=$(pwd)/libs"  \
-  "NDK_APP_OUT=$(pwd)/app"    \
-  -j8
-echo "$(date): ndk-build for samples completed."
+exit $RESULT
