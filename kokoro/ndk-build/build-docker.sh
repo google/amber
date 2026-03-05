@@ -47,6 +47,7 @@ echo "$(date): Starting ndk-build for android_test ..."
   NDK_PROJECT_PATH=.          \
   "NDK_LIBS_OUT=$(pwd)/libs"  \
   "NDK_APP_OUT=$(pwd)/app"    \
+  "APP_ABI=$ANDROID_ABI"      \
   -j8
 
 echo "$(date): ndk-build for android_test completed."
@@ -57,5 +58,6 @@ echo "$(date): Starting ndk-build for samples ..."
   NDK_PROJECT_PATH=.          \
   "NDK_LIBS_OUT=$(pwd)/libs"  \
   "NDK_APP_OUT=$(pwd)/app"    \
+  "APP_ABI=$ANDROID_ABI"      \
   -j8
 echo "$(date): ndk-build for samples completed."
