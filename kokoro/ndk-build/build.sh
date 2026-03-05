@@ -16,6 +16,8 @@
 # Fail on any error.
 set -e
 
+ANDROID_ABI=${1:-arm64-v8a}
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd )"
 ROOT_DIR="$( cd "${SCRIPT_DIR}/../.." >/dev/null 2>&1 && pwd )"
 
@@ -34,6 +36,7 @@ docker run --rm -i \
   --env ROOT_DIR=${ROOT_DIR} \
   --env KOKORO_ARTIFACTS_DIR="${KOKORO_ARTIFACTS_DIR}" \
   --env BUILD_SHA="${BUILD_SHA}" \
+  --env ANDROID_ABI="${ANDROID_ABI}" \
   --entrypoint "${SCRIPT_DIR}/build-docker.sh" \
   us-east4-docker.pkg.dev/shaderc-build/radial-docker/ubuntu-24.04-amd64/cpp-builder
 RESULT=$?
