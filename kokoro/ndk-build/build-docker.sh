@@ -24,8 +24,9 @@ grep "Amber is a multi-API shader test framework" README.md >/dev/null
 
 # This is required to run any git command in the docker since owner will
 # have changed between the clone environment, and the docker container.
-# Marking the root of the repo as safe for ownership changes.
-git config --global --add safe.directory $ROOT_DIR
+# Mark all repos as safe for ownership changes.  This is needed for
+# the git-sync-deps step.
+git config --global --add safe.directory '*'
 
 . /bin/using.sh
 using ndk-r29
