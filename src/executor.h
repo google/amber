@@ -21,7 +21,7 @@
 #include "src/script.h"
 #include "src/verifier.h"
 
-namespace amber {
+ namespace amber {
 
 /// The executor is responsible for running the given script against an engine.
 class Executor {
