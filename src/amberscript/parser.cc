@@ -2994,9 +2994,10 @@ Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
 
   auto n = type->AsNumber();
   FormatMode mode = n->GetFormatMode();
-  if (type::Type::IsFloat16(mode, n->NumBits()) ||
-      type::Type::IsFloat32(mode, n->NumBits()) ||
-      type::Type::IsFloat64(mode, n->NumBits())) {
+  uint32_t num_bits = n->NumBits();
+  if (type::Type::IsFloat16(mode, num_bits) ||
+      type::Type::IsFloat32(mode, num_bits) ||
+      type::Type::IsFloat64(mode, num_bits)) {
     counter.SetDoubleValue(token->AsDouble());
   } else {
     counter.SetIntValue(token->AsUint64());
@@ -3021,9 +3022,9 @@ Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
   std::vector<Value> values;
   values.resize(size_in_items);
   for (size_t i = 0; i < size_in_items; ++i) {
-    if (type::Type::IsFloat16(mode, n->NumBits()) ||
-        type::Type::IsFloat32(mode, n->NumBits()) ||
-        type::Type::IsFloat64(mode, n->NumBits())) {
+    if (type::Type::IsFloat16(mode, num_bits) ||
+        type::Type::IsFloat32(mode, num_bits) ||
+        type::Type::IsFloat64(mode, num_bits)) {
       double value = counter.AsDouble();
       values[i].SetDoubleValue(value);
       counter.SetDoubleValue(value + token->AsDouble());
