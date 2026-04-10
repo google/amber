@@ -2952,7 +2952,8 @@ Result Parser::ParseBufferInitializerFill(Buffer* buffer,
   }
 
   auto fmt = buffer->GetFormat();
-  bool is_double_data = fmt->IsFloat32() || fmt->IsFloat64();
+  bool is_float_data =
+      fmt->IsFloat16() || fmt->IsFloat32() || fmt->IsFloat64();
 
   // Inflate the size because our items are multi-dimensional.
   size_in_items = size_in_items * fmt->InputNeededPerElement();
@@ -2960,7 +2961,7 @@ Result Parser::ParseBufferInitializerFill(Buffer* buffer,
   std::vector<Value> values;
   values.resize(size_in_items);
   for (size_t i = 0; i < size_in_items; ++i) {
-    if (is_double_data) {
+    if (is_float_data) {
       values[i].SetDoubleValue(token->AsDouble());
     } else {
       values[i].SetIntValue(token->AsUint64());
@@ -2993,9 +2994,9 @@ Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
 
   auto n = type->AsNumber();
   FormatMode mode = n->GetFormatMode();
-  uint32_t num_bits = n->NumBits();
-  if (type::Type::IsFloat32(mode, num_bits) ||
-      type::Type::IsFloat64(mode, num_bits)) {
+  if (type::Type::IsFloat16(mode, n->NumBits()) ||
+      type::Type::IsFloat32(mode, n->NumBits()) ||
+      type::Type::IsFloat64(mode, n->NumBits())) {
     counter.SetDoubleValue(token->AsDouble());
   } else {
     counter.SetIntValue(token->AsUint64());
@@ -3020,8 +3021,9 @@ Result Parser::ParseBufferInitializerSeries(Buffer* buffer,
   std::vector<Value> values;
   values.resize(size_in_items);
   for (size_t i = 0; i < size_in_items; ++i) {
-    if (type::Type::IsFloat32(mode, num_bits) ||
-        type::Type::IsFloat64(mode, num_bits)) {
+    if (type::Type::IsFloat16(mode, n->NumBits()) ||
+        type::Type::IsFloat32(mode, n->NumBits()) ||
+        type::Type::IsFloat64(mode, n->NumBits())) {
       double value = counter.AsDouble();
       values[i].SetDoubleValue(value);
       counter.SetDoubleValue(value + token->AsDouble());

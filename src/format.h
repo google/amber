@@ -199,6 +199,12 @@ class Format {
            type::Type::IsUint64(type_->AsNumber()->GetFormatMode(),
                                 type_->AsNumber()->NumBits());
   }
+  /// Returns true if all components of this format are a 16 bit float.
+  bool IsFloat16() const {
+    return type_->IsNumber() &&
+           type::Type::IsFloat16(type_->AsNumber()->GetFormatMode(),
+                                 type_->AsNumber()->NumBits());
+  }
   /// Returns true if all components of this format are a 32 bit float.
   bool IsFloat32() const {
     return type_->IsNumber() &&
