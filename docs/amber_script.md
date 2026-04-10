@@ -41,6 +41,7 @@ with:
  * `Float16Int8Features.shaderInt8`
  * `VulkanMemoryModelFeatures.vulkanMemoryModel`
  * `VulkanMemoryModelFeatures.vulkanMemoryModelDeviceScope`
+ * `CooperativeMatrixFeaturesKHR.cooperativeMatrix`
  * `ZeroInitializeWorkgroupMemoryFeatures.shaderZeroInitializeWorkgroupMemory`
  * `Storage8BitFeatures.storageBuffer8BitAccess`
  * `Storage8BitFeatures.uniformAndStorageBuffer8BitAccess`

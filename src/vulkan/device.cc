@@ -100,6 +100,8 @@ const char kShaderSubgroupExtendedTypes[] =
     "ShaderSubgroupExtendedTypesFeatures.shaderSubgroupExtendedTypes";
 
 const char kIndexTypeUint8[] = "IndexTypeUint8Features.indexTypeUint8";
+const char kCooperativeMatrix[] =
+    "CooperativeMatrixFeaturesKHR.cooperativeMatrix";
 
 const char kAccelerationStructure[] =
     "AccelerationStructureFeaturesKHR.accelerationStructure";
@@ -574,6 +576,8 @@ Result Device::Initialize(
   VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures*
       shader_subgroup_extended_types_ptrs = nullptr;
   VkPhysicalDeviceIndexTypeUint8FeaturesEXT* index_type_uint8_ptrs = nullptr;
+  VkPhysicalDeviceCooperativeMatrixFeaturesKHR* cooperative_matrix_ptrs =
+      nullptr;
   VkPhysicalDeviceAccelerationStructureFeaturesKHR*
       acceleration_structure_ptrs = nullptr;
   VkPhysicalDeviceBufferDeviceAddressFeatures* bda_ptrs = nullptr;
@@ -617,6 +621,10 @@ Result Device::Initialize(
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT:
         index_type_uint8_ptrs =
             static_cast<VkPhysicalDeviceIndexTypeUint8FeaturesEXT*>(ptr);
+        break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_KHR:
+        cooperative_matrix_ptrs =
+            static_cast<VkPhysicalDeviceCooperativeMatrixFeaturesKHR*>(ptr);
         break;
       // NOLINTNEXTLINE(whitespace/line_length)
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR:
@@ -702,6 +710,10 @@ Result Device::Initialize(
         (depth_clamp_zero_one_features == nullptr ||
          depth_clamp_zero_one_features->depthClampZeroOne != VK_TRUE)) {
       return amber::Result("Depth clamp zero one requested but not returned");
+    }
+    if (feature == kCooperativeMatrix && cooperative_matrix_ptrs == nullptr) {
+      return amber::Result(
+          "Cooperative matrix requested but feature not returned");
     }
     if (feature == kAccelerationStructure) {
       if (acceleration_structure_ptrs == nullptr) {
@@ -920,6 +932,10 @@ Result Device::Initialize(
     if (feature == kIndexTypeUint8 && !uint8_supported()) {
       return amber::Result(
           "Index type uint8_t requested but feature not returned");
+    }
+    if (feature == kCooperativeMatrix &&
+        cooperative_matrix_ptrs->cooperativeMatrix != VK_TRUE) {
+      return amber::Result("Missing cooperative matrix feature");
     }
   }
 

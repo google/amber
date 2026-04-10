@@ -123,6 +123,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
     bool subgroup_size_control = false;
     bool depth_clamp_zero_one = false;
     bool shader_subgroup_extended_types = false;
+    bool cooperative_matrix = false;
     bool acceleration_structure = false;
     bool buffer_device_address = false;
     bool ray_tracing_pipeline = false;
@@ -146,6 +147,7 @@ class ConfigHelperVulkan : public ConfigHelperImpl {
     VkPhysicalDeviceDepthClampZeroOneFeaturesEXT depth_clamp_zero_one{};
     VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures
         shader_subgroup_extended_types{};
+    VkPhysicalDeviceCooperativeMatrixFeaturesKHR cooperative_matrix{};
     VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure{};
     VkPhysicalDeviceBufferDeviceAddressFeatures buffer_device_address{};
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR ray_tracing_pipeline{};
