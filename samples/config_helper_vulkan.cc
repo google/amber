@@ -86,6 +86,8 @@ const char kDepthClampZeroOne[] = "DepthClampZeroOneFeatures.depthClampZeroOne";
 
 const char kShaderSubgroupExtendedTypes[] =
     "ShaderSubgroupExtendedTypesFeatures.shaderSubgroupExtendedTypes";
+const char kCooperativeMatrix[] =
+    "CooperativeMatrixFeaturesKHR.cooperativeMatrix";
 
 const char kAccelerationStructure[] =
     "AccelerationStructureFeaturesKHR.accelerationStructure";
@@ -912,6 +914,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       supports_.depth_clamp_zero_one = true;
     } else if (ext == VK_KHR_SHADER_SUBGROUP_EXTENDED_TYPES_EXTENSION_NAME) {
       supports_.shader_subgroup_extended_types = true;
+    } else if (ext == VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME) {
+      supports_.cooperative_matrix = true;
     } else if (ext == VK_KHR_VARIABLE_POINTERS_EXTENSION_NAME) {
       supports_.variable_pointers = true;
     } else if (ext == VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME) {
@@ -954,6 +958,7 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
     VkPhysicalDevice8BitStorageFeaturesKHR storage_8bit_features = {};
     VkPhysicalDevice16BitStorageFeaturesKHR storage_16bit_features = {};
     VkPhysicalDeviceVulkanMemoryModelFeatures memory_model_structure_features{};
+    VkPhysicalDeviceCooperativeMatrixFeaturesKHR cooperative_matrix_features{};
     VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeaturesKHR
         zero_initialize_workgroup_memory_features{};
 #ifdef VK_EXT_SHADER_LONG_VECTOR_EXTENSION_NAME
@@ -992,6 +997,13 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES_KHR;
     memory_model_structure_features.pNext = next_ptr;
     next_ptr = &memory_model_structure_features;
+
+    if (supports_.cooperative_matrix) {
+      cooperative_matrix_features.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_KHR;
+      cooperative_matrix_features.pNext = next_ptr;
+      next_ptr = &cooperative_matrix_features;
+    }
 
     zero_initialize_workgroup_memory_features.sType =
     // NOLINTNEXTLINE(whitespace/line_length)
@@ -1080,6 +1092,10 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
       supports_.depth_clamp_zero_one =
           depth_clamp_zero_one_features.depthClampZeroOne;
     }
+    if (supports_.cooperative_matrix) {
+      supports_.cooperative_matrix =
+          cooperative_matrix_features.cooperativeMatrix;
+    }
 
     std::vector<std::string> required_features1;
     for (const auto& feature : required_features) {
@@ -1103,6 +1119,8 @@ amber::Result ConfigHelperVulkan::CheckVulkanPhysicalDeviceRequirements(
           (feature == kVulkanMemoryModel_vulkanMemoryModelDeviceScope &&
            memory_model_structure_features.vulkanMemoryModelDeviceScope ==
                VK_FALSE) ||
+          (feature == kCooperativeMatrix &&
+           cooperative_matrix_features.cooperativeMatrix == VK_FALSE) ||
           (feature ==
                // NOLINTNEXTLINE(whitespace/line_length)
                kZeroInitializeWorkgroupMemory_shaderZeroInitializeWorkgroupMemory &&
@@ -1424,6 +1442,12 @@ amber::Result ConfigHelperVulkan::CreateDeviceWithFeatures2(
           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT,
           VK_EXT_DEPTH_CLAMP_ZERO_ONE_EXTENSION_NAME);
       features_.depth_clamp_zero_one.depthClampZeroOne = VK_TRUE;
+    } else if (feature == kCooperativeMatrix) {
+      init_feature(
+          supports_.cooperative_matrix, features_.cooperative_matrix,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_KHR,
+          VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME);
+      features_.cooperative_matrix.cooperativeMatrix = VK_TRUE;
     } else if (feature == kAccelerationStructure) {
       init_feature(
           supports_.acceleration_structure, features_.acceleration_structure,

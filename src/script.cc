@@ -140,6 +140,7 @@ bool Script::IsKnownFeature(const std::string& name) const {
          name ==
              "ShaderSubgroupExtendedTypesFeatures"
              ".shaderSubgroupExtendedTypes" ||
+         name == "CooperativeMatrixFeaturesKHR.cooperativeMatrix" ||
          name == "RayTracingPipelineFeaturesKHR.rayTracingPipeline" ||
          name == "AccelerationStructureFeaturesKHR.accelerationStructure" ||
          name == "BufferDeviceAddressFeatures.bufferDeviceAddress" ||
