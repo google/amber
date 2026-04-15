@@ -14,6 +14,7 @@
 
 #include "gtest/gtest.h"
 #include "src/amberscript/parser.h"
+#include "src/float16_helper.h"
 
 namespace amber {
 namespace amberscript {
@@ -400,6 +401,34 @@ TEST_F(AmberScriptParserTest, BufferFillFloat) {
   }
 }
 
+TEST_F(AmberScriptParserTest, BufferFillFloat16) {
+  std::string in = "BUFFER my_buffer DATA_TYPE float16 SIZE 5 FILL 5.5";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+
+  auto* buffer = buffers[0].get();
+  EXPECT_EQ("my_buffer", buffer->GetName());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
+  EXPECT_EQ(5U, buffer->ElementCount());
+  EXPECT_EQ(5U, buffer->ValueCount());
+  EXPECT_EQ(5U * sizeof(uint16_t), buffer->GetSizeInBytes());
+
+  const auto* data = buffer->GetValues<uint16_t>();
+  for (size_t i = 0; i < buffer->ValueCount(); ++i) {
+    EXPECT_FLOAT_EQ(
+        5.5f, float16::HexFloatToFloat(
+                  reinterpret_cast<const uint8_t*>(&data[i]), 16));
+  }
+}
+
 TEST_F(AmberScriptParserTest, BufferSeries) {
   std::string in =
       "BUFFER my_buffer DATA_TYPE uint8 SIZE 5 SERIES_FROM 2 INC_BY 1";
@@ -458,6 +487,38 @@ TEST_F(AmberScriptParserTest, BufferSeriesFloat) {
   ASSERT_EQ(results.size(), buffer->ValueCount());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_FLOAT_EQ(results[i], data[i]);
+  }
+}
+
+TEST_F(AmberScriptParserTest, BufferSeriesFloat16) {
+  std::string in =
+      "BUFFER my_buffer DATA_TYPE float16 SIZE 5 SERIES_FROM 2.5 INC_BY "
+      "0.5";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& buffers = script->GetBuffers();
+  ASSERT_EQ(1U, buffers.size());
+
+  ASSERT_TRUE(buffers[0] != nullptr);
+
+  auto* buffer = buffers[0].get();
+  EXPECT_EQ("my_buffer", buffer->GetName());
+  EXPECT_EQ(Format::Layout::kStd430, buffer->GetFormat()->GetLayout());
+  EXPECT_EQ(5U, buffer->ElementCount());
+  EXPECT_EQ(5U, buffer->ValueCount());
+  EXPECT_EQ(5U * sizeof(uint16_t), buffer->GetSizeInBytes());
+
+  std::vector<float> results = {2.5f, 3.0f, 3.5f, 4.0f, 4.5f};
+  const auto* data = buffer->GetValues<uint16_t>();
+  ASSERT_EQ(results.size(), buffer->ValueCount());
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_FLOAT_EQ(
+        results[i], float16::HexFloatToFloat(
+                        reinterpret_cast<const uint8_t*>(&data[i]), 16));
   }
 }
 
