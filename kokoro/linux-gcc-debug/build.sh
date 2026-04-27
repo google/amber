@@ -17,5 +17,5 @@ set -e  # fail on error
 set -x  # display commands
 
 SCRIPT_DIR=`dirname "$BASH_SOURCE"`
-source $SCRIPT_DIR/../scripts/linux/build.sh DEBUG "gcc-13" \
+source $SCRIPT_DIR/../scripts/linux/build.sh DEBUG "gcc-15" \
     -DAMBER_ENABLE_SWIFTSHADER=TRUE

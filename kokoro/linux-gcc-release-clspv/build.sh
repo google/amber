@@ -17,6 +17,6 @@ set -e  # fail on error
 set -x  # display commands
 
 SCRIPT_DIR=`dirname "$BASH_SOURCE"`
-source $SCRIPT_DIR/../scripts/linux/build.sh RELEASE "gcc-13" \
+source $SCRIPT_DIR/../scripts/linux/build.sh RELEASE "gcc-15" \
     -DAMBER_USE_CLSPV=TRUE \
     -DAMBER_ENABLE_SWIFTSHADER=TRUE
