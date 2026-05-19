@@ -14,6 +14,8 @@
 
 #include "src/dawn/engine_dawn.h"
 
+#include <webgpu/webgpu_cpp.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
@@ -25,7 +27,6 @@
 #include <vector>
 
 #include "amber/amber_dawn.h"
-#include "dawn/dawncpp.h"
 #include "src/dawn/pipeline_info.h"
 #include "src/format.h"
 #include "src/sleep.h"
@@ -49,25 +50,22 @@ static const uint32_t kMaxDawnBindGroup = 4u;
 // Copied from Dawn utils source code.
 struct ComboVertexInputDescriptor {
   ComboVertexInputDescriptor() {
-    ::dawn::VertexInputDescriptor* descriptor =
-        reinterpret_cast<::dawn::VertexInputDescriptor*>(this);
+    wgpu::VertexState* descriptor = &state;
 
-    descriptor->indexFormat = ::dawn::IndexFormat::Uint32;
     descriptor->bufferCount = 0;
-    descriptor->nextInChain = nullptr;
 
     // Fill the default values for vertexBuffers and vertexAttributes in
     // buffers.
-    ::dawn::VertexAttributeDescriptor vertexAttribute;
+    wgpu::VertexAttribute vertexAttribute;
     vertexAttribute.shaderLocation = 0;
     vertexAttribute.offset = 0;
-    vertexAttribute.format = ::dawn::VertexFormat::Float;
+    vertexAttribute.format = wgpu::VertexFormat::Float32;
     for (uint32_t i = 0; i < kMaxVertexAttributes; ++i) {
       cAttributes[i] = vertexAttribute;
     }
     for (uint32_t i = 0; i < kMaxVertexBuffers; ++i) {
-      cBuffers[i].stride = 0;
-      cBuffers[i].stepMode = ::dawn::InputStepMode::Vertex;
+      cBuffers[i].arrayStride = 0;
+      cBuffers[i].stepMode = wgpu::VertexStepMode::Vertex;
       cBuffers[i].attributeCount = 0;
       cBuffers[i].attributes = nullptr;
     }
@@ -81,19 +79,14 @@ struct ComboVertexInputDescriptor {
     // these relationships are one to one i.e. cBuffers[i].attributes is always
     // pointing to &cAttributes[i] and cBuffers[i].attributeCount == 1
     cBuffers[0].attributes = &cAttributes[0];
-    descriptor->buffers = &cBuffers[0];
+    descriptor->buffers = cBuffers.data();
   }
 
   static const uint32_t kMaxVertexBuffers = 16u;
   static const uint32_t kMaxVertexBufferStride = 2048u;
-  const void* nextInChain = nullptr;
-  ::dawn::IndexFormat indexFormat;
-  uint32_t bufferCount;
-  ::dawn::VertexBufferDescriptor const* buffers;
-
-  std::array<::dawn::VertexBufferDescriptor, kMaxVertexBuffers> cBuffers;
-  std::array<::dawn::VertexAttributeDescriptor, kMaxVertexAttributes>
-      cAttributes;
+  wgpu::VertexState state;
+  std::array<wgpu::VertexBufferLayout, kMaxVertexBuffers> cBuffers;
+  std::array<wgpu::VertexAttribute, kMaxVertexAttributes> cAttributes;
 };
 
 // This structure is a container for a few variables that are created during
@@ -102,65 +95,56 @@ struct ComboVertexInputDescriptor {
 struct DawnPipelineHelper {
   Result CreateRenderPipelineDescriptor(
       const RenderPipelineInfo& render_pipeline,
-      const ::dawn::Device& device,
+      const wgpu::Device& device,
       const bool ignore_vertex_and_Index_buffers,
       const PipelineData* pipeline_data);
   Result CreateRenderPassDescriptor(
       const RenderPipelineInfo& render_pipeline,
-      const ::dawn::Device& device,
-      const std::vector<::dawn::TextureView>& texture_view,
-      const ::dawn::LoadOp load_op);
-  ::dawn::RenderPipelineDescriptor renderPipelineDescriptor;
-  ::dawn::RenderPassDescriptor renderPassDescriptor;
+      const wgpu::Device& device,
+      const std::vector<wgpu::TextureView>& texture_view,
+      const wgpu::LoadOp load_op);
+  wgpu::RenderPipelineDescriptor renderPipelineDescriptor = {};
+  wgpu::RenderPassDescriptor renderPassDescriptor = {};
 
   ComboVertexInputDescriptor vertexInputDescriptor;
-  ::dawn::RasterizationStateDescriptor rasterizationState;
+  wgpu::PrimitiveState primitiveState = {};
+  wgpu::MultisampleState multisampleState = {};
 
  private:
-  ::dawn::ProgrammableStageDescriptor fragmentStage;
-  ::dawn::ProgrammableStageDescriptor vertexStage;
-  ::dawn::RenderPassColorAttachmentDescriptor
-      colorAttachmentsInfoPtr[kMaxColorAttachments];
-  ::dawn::RenderPassDepthStencilAttachmentDescriptor depthStencilAttachmentInfo;
-  std::array<::dawn::ColorStateDescriptor*, kMaxColorAttachments> colorStates;
-  ::dawn::DepthStencilStateDescriptor depthStencilState;
-  ::dawn::ColorStateDescriptor colorStatesDescriptor[kMaxColorAttachments];
-  ::dawn::ColorStateDescriptor colorStateDescriptor;
-  ::dawn::StencilStateFaceDescriptor stencil_front;
-  ::dawn::StencilStateFaceDescriptor stencil_back;
-  ::dawn::BlendDescriptor alpha_blend;
-  ::dawn::BlendDescriptor color_blend;
+  wgpu::FragmentState fragmentState = {};
+  wgpu::RenderPassColorAttachment
+      colorAttachmentsInfoPtr[kMaxColorAttachments] = {};
+  wgpu::RenderPassDepthStencilAttachment depthStencilAttachmentInfo = {};
+  wgpu::ColorTargetState colorTargetStates[kMaxColorAttachments] = {};
+  wgpu::DepthStencilState depthStencilState = {};
+  wgpu::BlendState colorBlends[kMaxColorAttachments] = {};
   std::string vertexEntryPoint;
   std::string fragmentEntryPoint;
-  std::array<::dawn::RenderPassColorAttachmentDescriptor, kMaxColorAttachments>
-      colorAttachmentsInfo;
-  ::dawn::TextureDescriptor depthStencilDescriptor;
-  ::dawn::Texture depthStencilTexture;
-  ::dawn::TextureView depthStencilView;
+  wgpu::RenderPassColorAttachment colorAttachmentsInfo[kMaxColorAttachments] =
+      {};
+  wgpu::TextureDescriptor depthStencilDescriptor = {};
+  wgpu::Texture depthStencilTexture;
+  wgpu::TextureView depthStencilView;
 };
 
 // Creates a device-side texture, and returns it through |result_ptr|.
 // Assumes the device exists and is valid.  Assumes result_ptr is not null.
 // Returns a result code.
-Result MakeTexture(const ::dawn::Device& device,
-                   ::dawn::TextureFormat format,
+Result MakeTexture(const wgpu::Device& device,
+                   wgpu::TextureFormat format,
                    uint32_t width,
                    uint32_t height,
-                   ::dawn::Texture* result_ptr) {
+                   wgpu::Texture* result_ptr) {
   assert(device);
   assert(result_ptr);
   assert(width * height > 0);
-  ::dawn::TextureDescriptor descriptor;
-  descriptor.dimension = ::dawn::TextureDimension::e2D;
+  wgpu::TextureDescriptor descriptor = {};
   descriptor.size.width = width;
   descriptor.size.height = height;
-  descriptor.size.depth = 1;
-  descriptor.arrayLayerCount = 1;
+  descriptor.size.depthOrArrayLayers = 1;
   descriptor.format = format;
-  descriptor.mipLevelCount = 1;
-  descriptor.sampleCount = 1;
   descriptor.usage =
-      ::dawn::TextureUsage::CopySrc | ::dawn::TextureUsage::OutputAttachment;
+      wgpu::TextureUsage::CopySrc | wgpu::TextureUsage::RenderAttachment;
   // TODO(dneto): Get a better message by using the Dawn error callback.
   *result_ptr = device.CreateTexture(&descriptor);
   if (*result_ptr) {
@@ -172,23 +156,19 @@ Result MakeTexture(const ::dawn::Device& device,
 // Creates a device-side texture, and returns it through |result_ptr|.
 // Assumes the device exists and is valid.  Assumes result_ptr is not null.
 // Returns a result code.
-::dawn::Texture MakeDawnTexture(const ::dawn::Device& device,
-                                ::dawn::TextureFormat format,
-                                uint32_t width,
-                                uint32_t height) {
+wgpu::Texture MakeDawnTexture(const wgpu::Device& device,
+                              wgpu::TextureFormat format,
+                              uint32_t width,
+                              uint32_t height) {
   assert(device);
   assert(width * height > 0);
-  ::dawn::TextureDescriptor descriptor;
-  descriptor.dimension = ::dawn::TextureDimension::e2D;
+  wgpu::TextureDescriptor descriptor = {};
   descriptor.size.width = width;
   descriptor.size.height = height;
-  descriptor.size.depth = 1;
-  descriptor.arrayLayerCount = 1;
+  descriptor.size.depthOrArrayLayers = 1;
   descriptor.format = format;
-  descriptor.mipLevelCount = 1;
-  descriptor.sampleCount = 1;
   descriptor.usage =
-      ::dawn::TextureUsage::CopySrc | ::dawn::TextureUsage::OutputAttachment;
+      wgpu::TextureUsage::CopySrc | wgpu::TextureUsage::RenderAttachment;
 
   return device.CreateTexture(&descriptor);
 }
@@ -198,34 +178,36 @@ struct MapResult {
   Result result;
   const void* data = nullptr;
   uint64_t dataLength = 0;
+  bool completed = false;
 };
 
 // Handles the update from an asynchronous buffer map request, updating the
 // state of the MapResult object hidden inside the |userdata| parameter.
-// On a successful mapping outcome, set the data pointer in the map result.
-// Otherwise set the map result object to an error, and the data member is
-// not changed.
-void HandleBufferMapCallback(DawnBufferMapAsyncStatus status,
-                             const void* data,
-                             uint64_t dataLength,
-                             void* userdata) {
-  MapResult& map_result = *reinterpret_cast<MapResult*>(userdata);
+// On a successful mapping outcome, set the completed flag.
+// Otherwise set the map result object to an error.
+void HandleBufferMapCallback(wgpu::MapAsyncStatus status,
+                             wgpu::StringView message,
+                             MapResult* map_result) {
   switch (status) {
-    case DAWN_BUFFER_MAP_ASYNC_STATUS_SUCCESS:
-      map_result.data = data;
-      map_result.dataLength = dataLength;
+    case wgpu::MapAsyncStatus::Success:
       break;
-    case DAWN_BUFFER_MAP_ASYNC_STATUS_ERROR:
-      map_result.result = Result("Buffer map for reading failed: error");
+    case wgpu::MapAsyncStatus::Error:
+      map_result->result =
+          Result("Buffer map failed: " + std::string(message.data));
       break;
-    case DAWN_BUFFER_MAP_ASYNC_STATUS_UNKNOWN:
-    case DAWN_BUFFER_MAP_ASYNC_STATUS_FORCE32:
-      map_result.result = Result("Buffer map for reading failed: unknown");
+    case wgpu::MapAsyncStatus::Aborted:
+      map_result->result =
+          Result("Buffer map aborted: " + std::string(message.data));
       break;
-    case DAWN_BUFFER_MAP_ASYNC_STATUS_DEVICE_LOST:
-      map_result.result = Result("Buffer map for reading failed: device lost");
+    case wgpu::MapAsyncStatus::CallbackCancelled:
+      map_result->result =
+          Result("Buffer map callback cancelled: " + std::string(message.data));
+      break;
+    default:
+      map_result->result = Result("Buffer map failed with unknown status");
       break;
   }
+  map_result->completed = true;
 }
 
 // Returns |value| but rounded up to a multiple of |alignment|. |alignment| is
@@ -240,67 +222,73 @@ uint32_t Align(uint32_t value, size_t alignment) {
 }  // namespace
 
 // Maps the given buffer.  Assumes the buffer has usage bit
-// ::dawn::BufferUsage::MapRead set.  Returns a MapResult structure, with
+// wgpu::BufferUsage::MapRead set.  Returns a MapResult structure, with
 // the status saved in the |result| member and the host pointer to the mapped
 // data in the |data| member. Mapping a buffer can fail if the context is
 // lost, for example. In the failure case, the |data| member will be null.
-MapResult MapBuffer(const ::dawn::Device& device, const ::dawn::Buffer& buf) {
+MapResult MapBuffer(wgpu::Instance instance, wgpu::Buffer buf, uint64_t size) {
   MapResult map_result;
+  map_result.dataLength = size;
 
-  buf.MapReadAsync(
-      HandleBufferMapCallback,
-      reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&map_result)));
-  device.Tick();
+  buf.MapAsync(wgpu::MapMode::Read, 0, size,
+               wgpu::CallbackMode::AllowProcessEvents, HandleBufferMapCallback,
+               &map_result);
+
+  instance.ProcessEvents();
   // Wait until the callback has been processed.  Use an exponential backoff
   // interval, but cap it at one second intervals.  But never loop forever.
   const int max_iters = 100;
   const int one_second_in_us = 1000000;
   for (int iters = 0, interval = 1;
-       !map_result.data && map_result.result.IsSuccess();
+       !map_result.completed && map_result.result.IsSuccess();
        iters++, interval = std::min(2 * interval, one_second_in_us)) {
-    device.Tick();
+    instance.ProcessEvents();
     if (iters > max_iters) {
       map_result.result = Result("MapBuffer timed out after 100 iterations");
       break;
     }
-    USleep(uint32_t(interval));
+    amber::USleep(interval);
+  }
+
+  if (map_result.result.IsSuccess()) {
+    map_result.data = buf.GetConstMappedRange(0, size);
   }
   return map_result;
 }
 
 // Creates and returns a dawn BufferCopyView
 // Copied from Dawn utils source code.
-::dawn::BufferCopyView CreateBufferCopyView(::dawn::Buffer buffer,
-                                            uint64_t offset,
-                                            uint32_t rowPitch,
-                                            uint32_t imageHeight) {
-  ::dawn::BufferCopyView bufferCopyView;
+wgpu::TexelCopyBufferInfo CreateBufferCopyView(wgpu::Buffer buffer,
+                                               uint64_t offset,
+                                               uint32_t bytesPerRow,
+                                               uint32_t rowsPerImage) {
+  wgpu::TexelCopyBufferInfo bufferCopyView;
   bufferCopyView.buffer = buffer;
-  bufferCopyView.offset = offset;
-  bufferCopyView.rowPitch = rowPitch;
-  bufferCopyView.imageHeight = imageHeight;
+  bufferCopyView.layout.offset = offset;
+  bufferCopyView.layout.bytesPerRow = bytesPerRow;
+  bufferCopyView.layout.rowsPerImage =
+      (rowsPerImage == 0) ? wgpu::kCopyStrideUndefined : rowsPerImage;
 
   return bufferCopyView;
 }
 
 // Creates and returns a dawn TextureCopyView
 // Copied from Dawn utils source code.
-::dawn::TextureCopyView CreateTextureCopyView(::dawn::Texture texture,
-                                              uint32_t mipLevel,
-                                              uint32_t arrayLayer,
-                                              ::dawn::Origin3D origin) {
-  ::dawn::TextureCopyView textureCopyView;
+wgpu::TexelCopyTextureInfo CreateTextureCopyView(wgpu::Texture texture,
+                                                 uint32_t mipLevel,
+                                                 wgpu::Origin3D origin) {
+  wgpu::TexelCopyTextureInfo textureCopyView;
   textureCopyView.texture = texture;
   textureCopyView.mipLevel = mipLevel;
-  textureCopyView.arrayLayer = arrayLayer;
   textureCopyView.origin = origin;
+  textureCopyView.aspect = wgpu::TextureAspect::All;
 
   return textureCopyView;
 }
 
 Result EngineDawn::MapDeviceTextureToHostBuffer(
     const RenderPipelineInfo& render_pipeline,
-    const ::dawn::Device& device) {
+    wgpu::Device device) {
   const auto width = render_pipeline.pipeline->GetFramebufferWidth();
   const auto height = render_pipeline.pipeline->GetFramebufferHeight();
 
@@ -310,31 +298,30 @@ Result EngineDawn::MapDeviceTextureToHostBuffer(
   const auto size = height * dawn_row_pitch;
   // Create a temporary buffer to hold the color attachment content and can
   // be mapped
-  ::dawn::BufferDescriptor descriptor;
+  wgpu::BufferDescriptor descriptor = {};
   descriptor.size = size;
-  descriptor.usage =
-      ::dawn::BufferUsage::CopyDst | ::dawn::BufferUsage::MapRead;
-  ::dawn::Buffer copy_buffer = device.CreateBuffer(&descriptor);
-  ::dawn::BufferCopyView copy_buffer_view =
+  descriptor.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead;
+  wgpu::Buffer copy_buffer = device.CreateBuffer(&descriptor);
+  wgpu::TexelCopyBufferInfo copy_buffer_view =
       CreateBufferCopyView(copy_buffer, 0, dawn_row_pitch, 0);
-  ::dawn::Origin3D origin3D;
-  origin3D.x = 0;
-  origin3D.y = 0;
-  origin3D.z = 0;
+  wgpu::Origin3D origin3D = {0, 0, 0};
 
   for (uint32_t i = 0;
        i < render_pipeline.pipeline->GetColorAttachments().size(); i++) {
-    ::dawn::TextureCopyView device_texture_view =
-        CreateTextureCopyView(textures_[i], 0, 0, origin3D);
-    ::dawn::Extent3D copySize = {width, height, 1};
-    auto encoder = device.CreateCommandEncoder();
+    wgpu::TexelCopyTextureInfo device_texture_view =
+        CreateTextureCopyView(textures_[i], 0, origin3D);
+    wgpu::Extent3D copySize = {width, height, 1};
+    wgpu::CommandEncoderDescriptor encoder_desc = {};
+
+    wgpu::CommandEncoder encoder = device.CreateCommandEncoder(&encoder_desc);
     encoder.CopyTextureToBuffer(&device_texture_view, &copy_buffer_view,
                                 &copySize);
-    auto commands = encoder.Finish();
-    auto queue = device.CreateQueue();
+    wgpu::CommandBufferDescriptor command_buffer_desc = {};
+    wgpu::CommandBuffer commands = encoder.Finish(&command_buffer_desc);
+    wgpu::Queue queue = device.GetQueue();
     queue.Submit(1, &commands);
 
-    MapResult mapped_device_texture = MapBuffer(device, copy_buffer);
+    MapResult mapped_device_texture = MapBuffer(instance_, copy_buffer, size);
     if (!mapped_device_texture.result.IsSuccess()) {
       return mapped_device_texture.result;
     }
@@ -364,7 +351,7 @@ Result EngineDawn::MapDeviceTextureToHostBuffer(
 
 Result EngineDawn::MapDeviceBufferToHostBuffer(
     const ComputePipelineInfo& compute_pipeline,
-    const ::dawn::Device& device) {
+    wgpu::Device device) {
   for (uint32_t i = 0; i < compute_pipeline.pipeline->GetBuffers().size();
        i++) {
     auto& device_buffer = compute_pipeline.buffers[i];
@@ -373,23 +360,30 @@ Result EngineDawn::MapDeviceBufferToHostBuffer(
     // Create a copy of device buffer to use it in a map read operation.
     // It's not possible to simply set this bit on the existing buffers since:
     // Device error: Only CopyDst is allowed with MapRead
-    ::dawn::BufferDescriptor descriptor;
-    descriptor.size = host_buffer.buffer->GetSizeInBytes();
-    descriptor.usage =
-        ::dawn::BufferUsage::CopyDst | ::dawn::BufferUsage::MapRead;
-    const auto copy_device_buffer = device.CreateBuffer(&descriptor);
-    const uint64_t source_offset = 0;
-    const uint64_t destination_offset = 0;
     const uint64_t copy_size =
         static_cast<uint64_t>(host_buffer.buffer->GetSizeInBytes());
-    auto encoder = device.CreateCommandEncoder();
+    wgpu::BufferDescriptor descriptor = {};
+    descriptor.size = copy_size;
+    descriptor.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead;
+    const wgpu::Buffer copy_device_buffer = device.CreateBuffer(&descriptor);
+    const uint64_t source_offset = 0;
+    const uint64_t destination_offset = 0;
+    wgpu::CommandEncoderDescriptor encoder_desc = {};
+
+    wgpu::CommandEncoder encoder = device.CreateCommandEncoder(&encoder_desc);
     encoder.CopyBufferToBuffer(device_buffer, source_offset, copy_device_buffer,
                                destination_offset, copy_size);
-    auto commands = encoder.Finish();
-    auto queue = device.CreateQueue();
+    wgpu::CommandBufferDescriptor command_buffer_desc = {};
+    wgpu::CommandBuffer commands = encoder.Finish(&command_buffer_desc);
+    wgpu::Queue queue = device.GetQueue();
     queue.Submit(1, &commands);
 
-    MapResult mapped_device_buffer = MapBuffer(device, copy_device_buffer);
+    MapResult mapped_device_buffer =
+        MapBuffer(instance_, copy_device_buffer, copy_size);
+    if (!mapped_device_buffer.result.IsSuccess()) {
+      return mapped_device_buffer.result;
+    }
+
     auto* values = host_buffer.buffer->ValuePtr();
     values->resize(host_buffer.buffer->GetSizeInBytes());
     std::memcpy(values->data(),
@@ -397,26 +391,24 @@ Result EngineDawn::MapDeviceBufferToHostBuffer(
                 copy_size);
 
     copy_device_buffer.Unmap();
-    if (!mapped_device_buffer.result.IsSuccess()) {
-      return mapped_device_buffer.result;
-    }
   }
   return {};
 }
 
 // Creates a dawn buffer of |size| bytes with TransferDst and the given usage
 // copied from Dawn utils source code
-::dawn::Buffer CreateBufferFromData(const ::dawn::Device& device,
-                                    const void* data,
-                                    uint64_t size,
-                                    ::dawn::BufferUsage usage) {
-  ::dawn::BufferDescriptor descriptor;
+wgpu::Buffer CreateBufferFromData(const wgpu::Device& device,
+                                  const void* data,
+                                  uint64_t size,
+                                  wgpu::BufferUsage usage) {
+  wgpu::BufferDescriptor descriptor = {};
   descriptor.size = size;
-  descriptor.usage = usage | ::dawn::BufferUsage::CopyDst;
+  descriptor.usage = usage | wgpu::BufferUsage::CopyDst;
 
-  ::dawn::Buffer buffer = device.CreateBuffer(&descriptor);
+  wgpu::Buffer buffer = device.CreateBuffer(&descriptor);
   if (data != nullptr) {
-    buffer.SetSubData(0, size, reinterpret_cast<const uint8_t*>(data));
+    wgpu::Queue queue = device.GetQueue();
+    queue.WriteBuffer(buffer, 0, data, size);
   }
   return buffer;
 }
@@ -435,13 +427,13 @@ Result EngineDawn::MapDeviceBufferToHostBuffer(
 // information.
 struct BindingInitializationHelper {
   BindingInitializationHelper(uint32_t binding,
-                              const ::dawn::Buffer& buffer,
+                              const wgpu::Buffer& buffer,
                               uint64_t offset,
                               uint64_t size)
       : binding(binding), buffer(buffer), offset(offset), size(size) {}
 
-  ::dawn::BindGroupBinding GetAsBinding() const {
-    ::dawn::BindGroupBinding result;
+  wgpu::BindGroupEntry GetAsBinding() const {
+    wgpu::BindGroupEntry result;
     result.binding = binding;
     result.sampler = sampler;
     result.textureView = textureView;
@@ -452,57 +444,58 @@ struct BindingInitializationHelper {
   }
 
   uint32_t binding;
-  ::dawn::Sampler sampler;
-  ::dawn::TextureView textureView;
-  ::dawn::Buffer buffer;
+  wgpu::Sampler sampler;
+  wgpu::TextureView textureView;
+  wgpu::Buffer buffer;
   uint64_t offset = 0;
   uint64_t size = 0;
 };
 
-::dawn::BindGroup MakeBindGroup(
-    const ::dawn::Device& device,
-    const ::dawn::BindGroupLayout& layout,
+wgpu::BindGroup MakeBindGroup(
+    const wgpu::Device& device,
+    const wgpu::BindGroupLayout& layout,
     const std::vector<BindingInitializationHelper>& bindingsInitializer) {
-  std::vector<::dawn::BindGroupBinding> bindings;
+  std::vector<wgpu::BindGroupEntry> bindings;
   for (const BindingInitializationHelper& helper : bindingsInitializer) {
     bindings.push_back(helper.GetAsBinding());
   }
 
-  ::dawn::BindGroupDescriptor descriptor;
+  wgpu::BindGroupDescriptor descriptor = {};
   descriptor.layout = layout;
-  descriptor.bindingCount = bindings.size();
-  descriptor.bindings = bindings.data();
+  descriptor.entryCount = static_cast<uint32_t>(bindings.size());
+  descriptor.entries = bindings.data();
 
   return device.CreateBindGroup(&descriptor);
 }
 
 // Creates a bind group layout.
 // Copied from Dawn utils source code.
-::dawn::BindGroupLayout MakeBindGroupLayout(
-    const ::dawn::Device& device,
-    const std::vector<::dawn::BindGroupLayoutBinding>& bindingsInitializer) {
-  constexpr ::dawn::ShaderStage kNoStages{};
+wgpu::BindGroupLayout MakeBindGroupLayout(
+    const wgpu::Device& device,
+    const std::vector<wgpu::BindGroupLayoutEntry>& bindingsInitializer) {
+  constexpr wgpu::ShaderStage kNoStages = wgpu::ShaderStage::None;
 
-  std::vector<::dawn::BindGroupLayoutBinding> bindings;
-  for (const ::dawn::BindGroupLayoutBinding& binding : bindingsInitializer) {
+  std::vector<wgpu::BindGroupLayoutEntry> bindings;
+  for (const wgpu::BindGroupLayoutEntry& binding : bindingsInitializer) {
     if (binding.visibility != kNoStages) {
       bindings.push_back(binding);
     }
   }
 
-  ::dawn::BindGroupLayoutDescriptor descriptor;
-  descriptor.bindingCount = static_cast<uint32_t>(bindings.size());
-  descriptor.bindings = bindings.data();
+  wgpu::BindGroupLayoutDescriptor descriptor = {};
+  descriptor.entryCount = static_cast<uint32_t>(bindings.size());
+  descriptor.entries = bindings.data();
   return device.CreateBindGroupLayout(&descriptor);
 }
 
 // Creates a basic pipeline layout.
 // Copied from Dawn utils source code.
-::dawn::PipelineLayout MakeBasicPipelineLayout(
-    const ::dawn::Device& device,
-    std::vector<::dawn::BindGroupLayout> bindingInitializer) {
-  ::dawn::PipelineLayoutDescriptor descriptor;
-  descriptor.bindGroupLayoutCount = bindingInitializer.size();
+wgpu::PipelineLayout MakeBasicPipelineLayout(
+    const wgpu::Device& device,
+    const std::vector<wgpu::BindGroupLayout>& bindingInitializer) {
+  wgpu::PipelineLayoutDescriptor descriptor = {};
+  descriptor.bindGroupLayoutCount =
+      static_cast<uint32_t>(bindingInitializer.size());
   descriptor.bindGroupLayouts = bindingInitializer.data();
   return device.CreatePipelineLayout(&descriptor);
 }
@@ -511,37 +504,37 @@ struct BindingInitializationHelper {
 // through |dawn_format_ptr|.  If the conversion fails, return an error
 // result.
 Result GetDawnTextureFormat(const ::amber::Format& amber_format,
-                            ::dawn::TextureFormat* dawn_format_ptr) {
+                            wgpu::TextureFormat* dawn_format_ptr) {
   if (!dawn_format_ptr) {
     return Result("Internal error: format pointer argument is null");
   }
-  ::dawn::TextureFormat& dawn_format = *dawn_format_ptr;
+  wgpu::TextureFormat& dawn_format = *dawn_format_ptr;
 
   switch (amber_format.GetFormatType()) {
     // TODO(dneto): These are all the formats that Dawn currently knows about.
     case FormatType::kR8G8B8A8_UNORM:
-      dawn_format = ::dawn::TextureFormat::RGBA8Unorm;
+      dawn_format = wgpu::TextureFormat::RGBA8Unorm;
       break;
     case FormatType::kR8G8_UNORM:
-      dawn_format = ::dawn::TextureFormat::RG8Unorm;
+      dawn_format = wgpu::TextureFormat::RG8Unorm;
       break;
     case FormatType::kR8_UNORM:
-      dawn_format = ::dawn::TextureFormat::R8Unorm;
+      dawn_format = wgpu::TextureFormat::R8Unorm;
       break;
     case FormatType::kR8G8B8A8_UINT:
-      dawn_format = ::dawn::TextureFormat::RGBA8Uint;
+      dawn_format = wgpu::TextureFormat::RGBA8Uint;
       break;
     case FormatType::kR8G8_UINT:
-      dawn_format = ::dawn::TextureFormat::RG8Uint;
+      dawn_format = wgpu::TextureFormat::RG8Uint;
       break;
     case FormatType::kR8_UINT:
-      dawn_format = ::dawn::TextureFormat::R8Uint;
+      dawn_format = wgpu::TextureFormat::R8Uint;
       break;
     case FormatType::kB8G8R8A8_UNORM:
-      dawn_format = ::dawn::TextureFormat::BGRA8Unorm;
+      dawn_format = wgpu::TextureFormat::BGRA8Unorm;
       break;
     case FormatType::kD32_SFLOAT_S8_UINT:
-      dawn_format = ::dawn::TextureFormat::Depth24PlusStencil8;
+      dawn_format = wgpu::TextureFormat::Depth24PlusStencil8;
       break;
     default:
       return Result(
@@ -555,31 +548,31 @@ Result GetDawnTextureFormat(const ::amber::Format& amber_format,
 // Converts an Amber format to a Dawn Vertex format, and sends the result out
 // through |dawn_format_ptr|.  If the conversion fails, return an error
 // result.
-// TODO(sarahM0): support other ::dawn::VertexFormat
+// TODO(sarahM0): support other wgpu::VertexFormat
 Result GetDawnVertexFormat(const ::amber::Format& amber_format,
-                           ::dawn::VertexFormat* dawn_format_ptr) {
-  ::dawn::VertexFormat& dawn_format = *dawn_format_ptr;
+                           wgpu::VertexFormat* dawn_format_ptr) {
+  wgpu::VertexFormat& dawn_format = *dawn_format_ptr;
   switch (amber_format.GetFormatType()) {
     case FormatType::kR32_SFLOAT:
-      dawn_format = ::dawn::VertexFormat::Float;
+      dawn_format = wgpu::VertexFormat::Float32;
       break;
     case FormatType::kR32G32_SFLOAT:
-      dawn_format = ::dawn::VertexFormat::Float2;
+      dawn_format = wgpu::VertexFormat::Float32x2;
       break;
     case FormatType::kR32G32B32_SFLOAT:
-      dawn_format = ::dawn::VertexFormat::Float3;
+      dawn_format = wgpu::VertexFormat::Float32x3;
       break;
     case FormatType::kR32G32B32A32_SFLOAT:
-      dawn_format = ::dawn::VertexFormat::Float4;
+      dawn_format = wgpu::VertexFormat::Float32x4;
       break;
     case FormatType::kR8G8_SNORM:
-      dawn_format = ::dawn::VertexFormat::Char2Norm;
+      dawn_format = wgpu::VertexFormat::Snorm8x2;
       break;
     case FormatType::kR8G8B8A8_UNORM:
-      dawn_format = ::dawn::VertexFormat::UChar4Norm;
+      dawn_format = wgpu::VertexFormat::Unorm8x4;
       break;
     case FormatType::kR8G8B8A8_SNORM:
-      dawn_format = ::dawn::VertexFormat::Char4Norm;
+      dawn_format = wgpu::VertexFormat::Snorm8x4;
       break;
     default:
       return Result(
@@ -594,14 +587,14 @@ Result GetDawnVertexFormat(const ::amber::Format& amber_format,
 // through |dawn_format_ptr|.  If the conversion fails, return an error
 // result.
 Result GetDawnIndexFormat(const ::amber::Format& amber_format,
-                          ::dawn::IndexFormat* dawn_format_ptr) {
-  ::dawn::IndexFormat& dawn_format = *dawn_format_ptr;
+                          wgpu::IndexFormat* dawn_format_ptr) {
+  wgpu::IndexFormat& dawn_format = *dawn_format_ptr;
   switch (amber_format.GetFormatType()) {
     case FormatType::kR16_UINT:
-      dawn_format = ::dawn::IndexFormat::Uint16;
+      dawn_format = wgpu::IndexFormat::Uint16;
       break;
     case FormatType::kR32_UINT:
-      dawn_format = ::dawn::IndexFormat::Uint32;
+      dawn_format = wgpu::IndexFormat::Uint32;
       break;
     default:
       return Result(
@@ -615,23 +608,23 @@ Result GetDawnIndexFormat(const ::amber::Format& amber_format,
 // Converts an Amber topology to a Dawn topology, and sends the result out
 // through |dawn_topology_ptr|. It the conversion fails, return an error result.
 Result GetDawnTopology(const ::amber::Topology& amber_topology,
-                       ::dawn::PrimitiveTopology* dawn_topology_ptr) {
-  ::dawn::PrimitiveTopology& dawn_topology = *dawn_topology_ptr;
+                       wgpu::PrimitiveTopology* dawn_topology_ptr) {
+  wgpu::PrimitiveTopology& dawn_topology = *dawn_topology_ptr;
   switch (amber_topology) {
     case Topology::kPointList:
-      dawn_topology = ::dawn::PrimitiveTopology::PointList;
+      dawn_topology = wgpu::PrimitiveTopology::PointList;
       break;
     case Topology::kLineList:
-      dawn_topology = ::dawn::PrimitiveTopology::LineList;
+      dawn_topology = wgpu::PrimitiveTopology::LineList;
       break;
     case Topology::kLineStrip:
-      dawn_topology = ::dawn::PrimitiveTopology::LineStrip;
+      dawn_topology = wgpu::PrimitiveTopology::LineStrip;
       break;
     case Topology::kTriangleList:
-      dawn_topology = ::dawn::PrimitiveTopology::TriangleList;
+      dawn_topology = wgpu::PrimitiveTopology::TriangleList;
       break;
     case Topology::kTriangleStrip:
-      dawn_topology = ::dawn::PrimitiveTopology::TriangleStrip;
+      dawn_topology = wgpu::PrimitiveTopology::TriangleStrip;
       break;
     default:
       return Result("Amber PrimitiveTopology " +
@@ -641,135 +634,133 @@ Result GetDawnTopology(const ::amber::Topology& amber_topology,
   return {};
 }
 
-::dawn::CompareFunction GetDawnCompareOp(::amber::CompareOp op) {
+wgpu::CompareFunction GetDawnCompareOp(::amber::CompareOp op) {
   switch (op) {
     case CompareOp::kNever:
-      return ::dawn::CompareFunction::Never;
+      return wgpu::CompareFunction::Never;
     case CompareOp::kLess:
-      return ::dawn::CompareFunction::Less;
+      return wgpu::CompareFunction::Less;
     case CompareOp::kEqual:
-      return ::dawn::CompareFunction::Equal;
+      return wgpu::CompareFunction::Equal;
     case CompareOp::kLessOrEqual:
-      return ::dawn::CompareFunction::LessEqual;
+      return wgpu::CompareFunction::LessEqual;
     case CompareOp::kGreater:
-      return ::dawn::CompareFunction::Greater;
+      return wgpu::CompareFunction::Greater;
     case CompareOp::kNotEqual:
-      return ::dawn::CompareFunction::NotEqual;
+      return wgpu::CompareFunction::NotEqual;
     case CompareOp::kGreaterOrEqual:
-      return ::dawn::CompareFunction::GreaterEqual;
+      return wgpu::CompareFunction::GreaterEqual;
     case CompareOp::kAlways:
-      return ::dawn::CompareFunction::Always;
+      return wgpu::CompareFunction::Always;
     default:
-      return ::dawn::CompareFunction::Never;
+      return wgpu::CompareFunction::Never;
   }
 }
 
-::dawn::StencilOperation GetDawnStencilOp(::amber::StencilOp op) {
+wgpu::StencilOperation GetDawnStencilOp(::amber::StencilOp op) {
   switch (op) {
     case StencilOp::kKeep:
-      return ::dawn::StencilOperation::Keep;
+      return wgpu::StencilOperation::Keep;
     case StencilOp::kZero:
-      return ::dawn::StencilOperation::Zero;
+      return wgpu::StencilOperation::Zero;
     case StencilOp::kReplace:
-      return ::dawn::StencilOperation::Replace;
+      return wgpu::StencilOperation::Replace;
     case StencilOp::kIncrementAndClamp:
-      return ::dawn::StencilOperation::IncrementClamp;
+      return wgpu::StencilOperation::IncrementClamp;
     case StencilOp::kDecrementAndClamp:
-      return ::dawn::StencilOperation::DecrementClamp;
+      return wgpu::StencilOperation::DecrementClamp;
     case StencilOp::kInvert:
-      return ::dawn::StencilOperation::Invert;
+      return wgpu::StencilOperation::Invert;
     case StencilOp::kIncrementAndWrap:
-      return ::dawn::StencilOperation::IncrementWrap;
+      return wgpu::StencilOperation::IncrementWrap;
     case StencilOp::kDecrementAndWrap:
-      return ::dawn::StencilOperation::DecrementWrap;
+      return wgpu::StencilOperation::DecrementWrap;
     default:
-      return ::dawn::StencilOperation::Keep;
+      return wgpu::StencilOperation::Keep;
   }
 }
 
-::dawn::BlendFactor GetDawnBlendFactor(::amber::BlendFactor factor) {
+wgpu::BlendFactor GetDawnBlendFactor(::amber::BlendFactor factor) {
   switch (factor) {
     case BlendFactor::kZero:
-      return ::dawn::BlendFactor::Zero;
+      return wgpu::BlendFactor::Zero;
     case BlendFactor::kOne:
-      return ::dawn::BlendFactor::One;
+      return wgpu::BlendFactor::One;
     case BlendFactor::kSrcColor:
-      return ::dawn::BlendFactor::SrcColor;
+      return wgpu::BlendFactor::Src;
     case BlendFactor::kOneMinusSrcColor:
-      return ::dawn::BlendFactor::OneMinusSrcColor;
+      return wgpu::BlendFactor::OneMinusSrc;
     case BlendFactor::kDstColor:
-      return ::dawn::BlendFactor::DstColor;
+      return wgpu::BlendFactor::Dst;
     case BlendFactor::kOneMinusDstColor:
-      return ::dawn::BlendFactor::OneMinusDstColor;
+      return wgpu::BlendFactor::OneMinusDst;
     case BlendFactor::kSrcAlpha:
-      return ::dawn::BlendFactor::SrcAlpha;
+      return wgpu::BlendFactor::SrcAlpha;
     case BlendFactor::kOneMinusSrcAlpha:
-      return ::dawn::BlendFactor::OneMinusSrcAlpha;
+      return wgpu::BlendFactor::OneMinusSrcAlpha;
     case BlendFactor::kDstAlpha:
-      return ::dawn::BlendFactor::DstAlpha;
+      return wgpu::BlendFactor::DstAlpha;
     case BlendFactor::kOneMinusDstAlpha:
-      return ::dawn::BlendFactor::OneMinusDstAlpha;
+      return wgpu::BlendFactor::OneMinusDstAlpha;
     case BlendFactor::kSrcAlphaSaturate:
-      return ::dawn::BlendFactor::SrcAlphaSaturated;
+      return wgpu::BlendFactor::SrcAlphaSaturated;
     default:
       assert(false && "Dawn::Unknown BlendFactor");
-      return ::dawn::BlendFactor::One;
+      return wgpu::BlendFactor::One;
   }
 }
 
-::dawn::BlendOperation GetDawnBlendOperation(BlendOp op) {
+wgpu::BlendOperation GetDawnBlendOperation(BlendOp op) {
   switch (op) {
     case BlendOp::kAdd:
-      return ::dawn::BlendOperation::Add;
+      return wgpu::BlendOperation::Add;
     case BlendOp::kSubtract:
-      return ::dawn::BlendOperation::Subtract;
+      return wgpu::BlendOperation::Subtract;
     case BlendOp::kReverseSubtract:
-      return ::dawn::BlendOperation::ReverseSubtract;
+      return wgpu::BlendOperation::ReverseSubtract;
     case BlendOp::kMin:
-      return ::dawn::BlendOperation::Min;
+      return wgpu::BlendOperation::Min;
     case BlendOp::kMax:
-      return ::dawn::BlendOperation::Max;
+      return wgpu::BlendOperation::Max;
     default:
       assert(false && "Dawn::Unknown BlendOp");
-      return ::dawn::BlendOperation::Add;
+      return wgpu::BlendOperation::Add;
   }
 }
 
-::dawn::ColorWriteMask GetDawnColorWriteMask(uint8_t amber_color_write_mask) {
-  if (amber_color_write_mask == 0x00000000) {
-    return ::dawn::ColorWriteMask::None;
-  } else if (amber_color_write_mask == 0x00000001) {
-    return ::dawn::ColorWriteMask::Red;
-  } else if (amber_color_write_mask == 0x00000002) {
-    return ::dawn::ColorWriteMask::Green;
-  } else if (amber_color_write_mask == 0x00000004) {
-    return ::dawn::ColorWriteMask::Blue;
-  } else if (amber_color_write_mask == 0x00000008) {
-    return ::dawn::ColorWriteMask::Alpha;
-  } else if (amber_color_write_mask == 0x0000000F) {
-    return ::dawn::ColorWriteMask::All;
-  } else {
-    assert(false && "Dawn::Unknown ColorWriteMask");
+wgpu::ColorWriteMask GetDawnColorWriteMask(uint8_t amber_color_write_mask) {
+  wgpu::ColorWriteMask result = wgpu::ColorWriteMask::None;
+  if (amber_color_write_mask & 0x00000001) {
+    result |= wgpu::ColorWriteMask::Red;
   }
-  return ::dawn::ColorWriteMask::All;
+  if (amber_color_write_mask & 0x00000002) {
+    result |= wgpu::ColorWriteMask::Green;
+  }
+  if (amber_color_write_mask & 0x00000004) {
+    result |= wgpu::ColorWriteMask::Blue;
+  }
+  if (amber_color_write_mask & 0x00000008) {
+    result |= wgpu::ColorWriteMask::Alpha;
+  }
+  return result;
 }
 
-::dawn::FrontFace GetDawnFrontFace(FrontFace amber_front_face) {
-  return amber_front_face == FrontFace::kClockwise ? ::dawn::FrontFace::CW
-                                                   : ::dawn::FrontFace::CCW;
+wgpu::FrontFace GetDawnFrontFace(FrontFace amber_front_face) {
+  return amber_front_face == FrontFace::kClockwise ? wgpu::FrontFace::CW
+                                                   : wgpu::FrontFace::CCW;
 }
 
-::dawn::CullMode GetDawnCullMode(CullMode amber_cull_mode) {
+wgpu::CullMode GetDawnCullMode(CullMode amber_cull_mode) {
   switch (amber_cull_mode) {
     case CullMode::kNone:
-      return ::dawn::CullMode::None;
+      return wgpu::CullMode::None;
     case CullMode::kFront:
-      return ::dawn::CullMode::Front;
+      return wgpu::CullMode::Front;
     case CullMode::kBack:
-      return ::dawn::CullMode::Back;
+      return wgpu::CullMode::Back;
     default:
       assert(false && "Dawn::Unknown CullMode");
-      return ::dawn::CullMode::None;
+      return wgpu::CullMode::None;
   }
 }
 
@@ -779,6 +770,7 @@ EngineDawn::~EngineDawn() = default;
 
 Result EngineDawn::Initialize(EngineConfig* config,
                               Delegate*,
+                              const std::vector<std::string>&,
                               const std::vector<std::string>&,
                               const std::vector<std::string>&,
                               const std::vector<std::string>&) {
@@ -794,6 +786,7 @@ Result EngineDawn::Initialize(EngineConfig* config,
     return Result("Dawn:Initialize device is a null pointer");
   }
 
+  instance_ = dawn_config->instance;
   device_ = dawn_config->device;
 
   return {};
@@ -803,18 +796,21 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
   if (!device_) {
     return Result("Dawn::CreatePipeline: device is not created");
   }
-  std::unordered_map<ShaderType, ::dawn::ShaderModule, CastHash<ShaderType>>
+  std::unordered_map<ShaderType, wgpu::ShaderModule, CastHash<ShaderType>>
       module_for_type;
-  ::dawn::ShaderModuleDescriptor descriptor;
-  descriptor.nextInChain = nullptr;
 
   for (const auto& shader_info : pipeline->GetShaders()) {
     ShaderType type = shader_info.GetShaderType();
     const std::vector<uint32_t>& code = shader_info.GetData();
-    descriptor.code = code.data();
-    descriptor.codeSize = uint32_t(code.size());
 
-    auto shader = device_->CreateShaderModule(&descriptor);
+    wgpu::ShaderSourceSPIRV spirv_desc;
+    spirv_desc.codeSize = uint32_t(code.size());
+    spirv_desc.code = code.data();
+
+    wgpu::ShaderModuleDescriptor descriptor = {};
+    descriptor.nextInChain = &spirv_desc;
+
+    auto shader = device_.CreateShaderModule(&descriptor);
     if (!shader) {
       return Result("Dawn::CreatePipeline: failed to create shader");
     }
@@ -866,6 +862,8 @@ Result EngineDawn::CreatePipeline(::amber::Pipeline* pipeline) {
 
       break;
     }
+    case PipelineType::kRayTracing:
+      return Result("Dawn::CreatePipeline: ray tracing not supported");
   }
 
   return {};
@@ -877,7 +875,7 @@ Result EngineDawn::DoClearColor(const ClearColorCommand* command) {
     return Result("ClearColor invoked on invalid or missing render pipeline");
   }
 
-  render_pipeline->clear_color_value = ::dawn::Color{
+  render_pipeline->clear_color_value = wgpu::Color{
       command->GetR(), command->GetG(), command->GetB(), command->GetA()};
 
   return {};
@@ -911,29 +909,30 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
   }
 
   DawnPipelineHelper helper;
-  result = helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_,
+  result = helper.CreateRenderPipelineDescriptor(*render_pipeline, device_,
                                                  false, nullptr);
   if (!result.IsSuccess()) {
     return result;
   }
   result = helper.CreateRenderPassDescriptor(
-      *render_pipeline, *device_, texture_views_, ::dawn::LoadOp::Clear);
+      *render_pipeline, device_, texture_views_, wgpu::LoadOp::Clear);
   if (!result.IsSuccess()) {
     return result;
   }
 
-  ::dawn::RenderPassDescriptor* renderPassDescriptor =
+  wgpu::RenderPassDescriptor* renderPassDescriptor =
       &helper.renderPassDescriptor;
-  ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
-  ::dawn::RenderPassEncoder pass =
-      encoder.BeginRenderPass(renderPassDescriptor);
-  pass.EndPass();
+  wgpu::CommandEncoderDescriptor encoder_desc = {};
+  wgpu::CommandEncoder encoder = device_.CreateCommandEncoder(&encoder_desc);
+  wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(renderPassDescriptor);
+  pass.End();
 
-  ::dawn::CommandBuffer commands = encoder.Finish();
-  ::dawn::Queue queue = device_->CreateQueue();
+  wgpu::CommandBufferDescriptor command_buffer_desc = {};
+  wgpu::CommandBuffer commands = encoder.Finish(&command_buffer_desc);
+  wgpu::Queue queue = device_.GetQueue();
   queue.Submit(1, &commands);
 
-  result = MapDeviceTextureToHostBuffer(*render_pipeline, *device_);
+  result = MapDeviceTextureToHostBuffer(*render_pipeline, device_);
 
   return result;
 }
@@ -945,7 +944,7 @@ Result EngineDawn::DoClear(const ClearCommand* command) {
 // of Float4 and input stride of 4*sizeof(float)
 Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     const RenderPipelineInfo& render_pipeline,
-    const ::dawn::Device& device,
+    const wgpu::Device& device,
     const bool ignore_vertex_and_Index_buffers,
     const PipelineData* pipeline_data) {
   Result result;
@@ -955,14 +954,14 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   if (!amber_format) {
     return Result("Color attachment 0 has no format!");
   }
-  ::dawn::TextureFormat fb_format{};
+  wgpu::TextureFormat fb_format{};
   result = GetDawnTextureFormat(*amber_format, &fb_format);
   if (!result.IsSuccess()) {
     return result;
   }
 
-  ::dawn::TextureFormat depth_stencil_format{};
-  auto* depthBuffer = render_pipeline.pipeline->GetDepthBuffer().buffer;
+  wgpu::TextureFormat depth_stencil_format{};
+  auto* depthBuffer = render_pipeline.pipeline->GetDepthStencilBuffer().buffer;
   if (depthBuffer) {
     auto* amber_depth_stencil_format = depthBuffer->GetFormat();
     if (!amber_depth_stencil_format) {
@@ -974,15 +973,16 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
       return result;
     }
   } else {
-    depth_stencil_format = ::dawn::TextureFormat::Depth24PlusStencil8;
+    depth_stencil_format = wgpu::TextureFormat::Depth24PlusStencil8;
   }
 
   renderPipelineDescriptor.layout =
       MakeBasicPipelineLayout(device, render_pipeline.bind_group_layouts);
 
-  renderPipelineDescriptor.primitiveTopology =
-      ::dawn::PrimitiveTopology::TriangleList;
-  renderPipelineDescriptor.sampleCount = 1;
+  primitiveState.topology = wgpu::PrimitiveTopology::TriangleList;
+  renderPipelineDescriptor.primitive = primitiveState;
+  multisampleState.count = 1;
+  renderPipelineDescriptor.multisample = multisampleState;
 
   // Lookup shaders' entrypoints
   for (const auto& shader_info : render_pipeline.pipeline->GetShaders()) {
@@ -998,30 +998,30 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
   }
   // Fill the default values for vertexInput (buffers and attributes).
   // assuming #buffers == #attributes
-  vertexInputDescriptor.bufferCount =
+  vertexInputDescriptor.state.bufferCount =
       render_pipeline.pipeline->GetVertexBuffers().size();
 
   for (uint32_t i = 0; i < kMaxVertexInputs; ++i) {
     if (ignore_vertex_and_Index_buffers) {
       if (i == 0) {
-        vertexInputDescriptor.bufferCount = 1;
+        vertexInputDescriptor.state.bufferCount = 1;
         vertexInputDescriptor.cBuffers[0].attributeCount = 1;
-        vertexInputDescriptor.cBuffers[0].stride = 4 * sizeof(float);
+        vertexInputDescriptor.cBuffers[0].arrayStride = 4 * sizeof(float);
         vertexInputDescriptor.cBuffers[0].attributes =
             &vertexInputDescriptor.cAttributes[0];
 
         vertexInputDescriptor.cAttributes[0].shaderLocation = 0;
         vertexInputDescriptor.cAttributes[0].format =
-            ::dawn::VertexFormat::Float4;
+            wgpu::VertexFormat::Float32x4;
       }
     } else {
       if (i < render_pipeline.pipeline->GetVertexBuffers().size()) {
         vertexInputDescriptor.cBuffers[i].attributeCount = 1;
-        vertexInputDescriptor.cBuffers[i].stride =
+        vertexInputDescriptor.cBuffers[i].arrayStride =
             render_pipeline.pipeline->GetVertexBuffers()[i]
                 .buffer->GetElementStride();
         vertexInputDescriptor.cBuffers[i].stepMode =
-            ::dawn::InputStepMode::Vertex;
+            wgpu::VertexStepMode::Vertex;
         vertexInputDescriptor.cBuffers[i].attributes =
             &vertexInputDescriptor.cAttributes[i];
 
@@ -1037,87 +1037,64 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     }
   }
 
-  // set index buffer format
-  if (render_pipeline.pipeline->GetIndexBuffer()) {
-    auto* amber_index_format =
-        render_pipeline.pipeline->GetIndexBuffer()->GetFormat();
-    GetDawnIndexFormat(*amber_index_format, &vertexInputDescriptor.indexFormat);
-    if (!result.IsSuccess()) {
-      return result;
-    }
-  }
-
-  renderPipelineDescriptor.vertexInput =
-      reinterpret_cast<::dawn::VertexInputDescriptor*>(&vertexInputDescriptor);
+  renderPipelineDescriptor.vertex = vertexInputDescriptor.state;
 
   // Set defaults for the vertex stage descriptor.
-  vertexStage.module = render_pipeline.vertex_shader;
-  vertexStage.entryPoint = vertexEntryPoint.c_str();
-  renderPipelineDescriptor.vertexStage = vertexStage;
+  renderPipelineDescriptor.vertex.module = render_pipeline.vertex_shader;
+  renderPipelineDescriptor.vertex.entryPoint = vertexEntryPoint.c_str();
 
   // Set defaults for the fragment stage descriptor.
-  fragmentStage.module = render_pipeline.fragment_shader;
-  fragmentStage.entryPoint = fragmentEntryPoint.c_str();
-  renderPipelineDescriptor.fragmentStage = std::move(&fragmentStage);
+  fragmentState.module = render_pipeline.fragment_shader;
+  fragmentState.entryPoint = fragmentEntryPoint.c_str();
+  renderPipelineDescriptor.fragment = &fragmentState;
 
-  // Set defaults for the rasterization state descriptor.
-  if (pipeline_data == nullptr) {
-    rasterizationState.frontFace = ::dawn::FrontFace::CCW;
-    rasterizationState.cullMode = ::dawn::CullMode::None;
-    rasterizationState.depthBias = 0;
-    rasterizationState.depthBiasSlopeScale = 0.0;
-    rasterizationState.depthBiasClamp = 0.0;
-    renderPipelineDescriptor.rasterizationState = &rasterizationState;
-  } else {
-    rasterizationState.frontFace =
-        GetDawnFrontFace(pipeline_data->GetFrontFace());
-    rasterizationState.cullMode = GetDawnCullMode(pipeline_data->GetCullMode());
-    rasterizationState.depthBias = pipeline_data->GetEnableDepthBias();
-    rasterizationState.depthBiasSlopeScale =
-        pipeline_data->GetDepthBiasSlopeFactor();
-    rasterizationState.depthBiasClamp = pipeline_data->GetDepthBiasClamp();
-    renderPipelineDescriptor.rasterizationState = &rasterizationState;
+  // Set defaults for the primitive state descriptor.
+  if (pipeline_data != nullptr) {
+    primitiveState.frontFace = GetDawnFrontFace(pipeline_data->GetFrontFace());
+    primitiveState.cullMode = GetDawnCullMode(pipeline_data->GetCullMode());
+    renderPipelineDescriptor.primitive = primitiveState;
   }
 
   // Set defaults for the color state descriptors.
   if (pipeline_data == nullptr) {
-    renderPipelineDescriptor.colorStateCount =
+    fragmentState.targetCount =
         render_pipeline.pipeline->GetColorAttachments().size();
-    alpha_blend.operation = ::dawn::BlendOperation::Add;
-    alpha_blend.srcFactor = ::dawn::BlendFactor::One;
-    alpha_blend.dstFactor = ::dawn::BlendFactor::Zero;
-    colorStateDescriptor.writeMask = ::dawn::ColorWriteMask::All;
-    colorStateDescriptor.format = fb_format;
-    colorStateDescriptor.alphaBlend = alpha_blend;
-    colorStateDescriptor.colorBlend = alpha_blend;
+    colorBlends[0].color.operation = wgpu::BlendOperation::Add;
+    colorBlends[0].color.srcFactor = wgpu::BlendFactor::One;
+    colorBlends[0].color.dstFactor = wgpu::BlendFactor::Zero;
+    colorBlends[0].alpha.operation = wgpu::BlendOperation::Add;
+    colorBlends[0].alpha.srcFactor = wgpu::BlendFactor::One;
+    colorBlends[0].alpha.dstFactor = wgpu::BlendFactor::Zero;
+    colorTargetStates[0].writeMask = wgpu::ColorWriteMask::All;
+    colorTargetStates[0].format = fb_format;
+    colorTargetStates[0].blend = &colorBlends[0];
   } else {
-    renderPipelineDescriptor.colorStateCount =
+    fragmentState.targetCount =
         render_pipeline.pipeline->GetColorAttachments().size();
 
-    alpha_blend.operation =
-        GetDawnBlendOperation(pipeline_data->GetColorBlendOp());
-    alpha_blend.srcFactor =
-        GetDawnBlendFactor(pipeline_data->GetSrcAlphaBlendFactor());
-    alpha_blend.dstFactor =
-        GetDawnBlendFactor(pipeline_data->GetDstAlphaBlendFactor());
-
-    color_blend.operation =
+    colorBlends[0].alpha.operation =
         GetDawnBlendOperation(pipeline_data->GetAlphaBlendOp());
-    color_blend.srcFactor =
-        GetDawnBlendFactor(pipeline_data->GetSrcColorBlendFactor());
-    color_blend.dstFactor =
+    colorBlends[0].alpha.srcFactor =
+        GetDawnBlendFactor(pipeline_data->GetSrcAlphaBlendFactor());
+    colorBlends[0].alpha.dstFactor =
         GetDawnBlendFactor(pipeline_data->GetDstAlphaBlendFactor());
 
-    colorStateDescriptor.writeMask =
+    colorBlends[0].color.operation =
+        GetDawnBlendOperation(pipeline_data->GetColorBlendOp());
+    colorBlends[0].color.srcFactor =
+        GetDawnBlendFactor(pipeline_data->GetSrcColorBlendFactor());
+    colorBlends[0].color.dstFactor =
+        GetDawnBlendFactor(pipeline_data->GetDstColorBlendFactor());
+
+    colorTargetStates[0].writeMask =
         GetDawnColorWriteMask(pipeline_data->GetColorWriteMask());
 
-    colorStateDescriptor.format = fb_format;
-    colorStateDescriptor.alphaBlend = alpha_blend;
-    colorStateDescriptor.colorBlend = color_blend;
+    colorTargetStates[0].format = fb_format;
+    colorTargetStates[0].blend = &colorBlends[0];
   }
 
   for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
-    ::dawn::TextureFormat fb_format{};
+    wgpu::TextureFormat fb_format{};
     {
       if (i < render_pipeline.pipeline->GetColorAttachments().size()) {
         auto* amber_format = render_pipeline.pipeline->GetColorAttachments()[i]
@@ -1132,50 +1109,51 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
           return result;
         }
       } else {
-        fb_format = ::dawn::TextureFormat::RGBA8Unorm;
+        fb_format = wgpu::TextureFormat::RGBA8Unorm;
       }
     }
-    colorStatesDescriptor[i] = colorStateDescriptor;
-    colorStates[i] = &colorStatesDescriptor[i];
-    colorStates[i]->format = fb_format;
+    colorTargetStates[i] = colorTargetStates[0];
+    colorTargetStates[i].format = fb_format;
   }
-  renderPipelineDescriptor.colorStates = colorStates[0];
+  fragmentState.targets = colorTargetStates;
 
   // Set defaults for the depth stencil state descriptors.
-  if (pipeline_data == nullptr) {
-    stencil_front.compare = ::dawn::CompareFunction::Always;
-    stencil_front.failOp = ::dawn::StencilOperation::Keep;
-    stencil_front.depthFailOp = ::dawn::StencilOperation::Keep;
-    stencil_front.passOp = ::dawn::StencilOperation::Keep;
-    depthStencilState.depthWriteEnabled = false;
-    depthStencilState.depthCompare = ::dawn::CompareFunction::Always;
-    depthStencilState.stencilBack = stencil_front;
-    depthStencilState.stencilFront = stencil_front;
-    depthStencilState.stencilReadMask = 0xff;
-    depthStencilState.stencilWriteMask = 0xff;
-    depthStencilState.format = depth_stencil_format;
-    renderPipelineDescriptor.depthStencilState = &depthStencilState;
-  } else {
-    stencil_front.compare =
+  depthStencilState.format = depth_stencil_format;
+  depthStencilState.depthWriteEnabled = wgpu::OptionalBool::False;
+  depthStencilState.depthCompare = wgpu::CompareFunction::Always;
+  depthStencilState.stencilBack.compare = wgpu::CompareFunction::Always;
+  depthStencilState.stencilBack.failOp = wgpu::StencilOperation::Keep;
+  depthStencilState.stencilBack.depthFailOp = wgpu::StencilOperation::Keep;
+  depthStencilState.stencilBack.passOp = wgpu::StencilOperation::Keep;
+  depthStencilState.stencilFront = depthStencilState.stencilBack;
+  depthStencilState.stencilReadMask = 0xff;
+  depthStencilState.stencilWriteMask = 0xff;
+
+  if (pipeline_data != nullptr) {
+    depthStencilState.stencilFront.compare =
         GetDawnCompareOp(pipeline_data->GetFrontCompareOp());
-    stencil_front.failOp = GetDawnStencilOp(pipeline_data->GetFrontFailOp());
-    stencil_front.depthFailOp =
+    depthStencilState.stencilFront.failOp =
+        GetDawnStencilOp(pipeline_data->GetFrontFailOp());
+    depthStencilState.stencilFront.depthFailOp =
         GetDawnStencilOp(pipeline_data->GetFrontDepthFailOp());
-    stencil_front.passOp = GetDawnStencilOp(pipeline_data->GetFrontPassOp());
+    depthStencilState.stencilFront.passOp =
+        GetDawnStencilOp(pipeline_data->GetFrontPassOp());
 
-    stencil_back.compare = GetDawnCompareOp(pipeline_data->GetBackCompareOp());
-    stencil_back.failOp = GetDawnStencilOp(pipeline_data->GetBackFailOp());
-    stencil_back.depthFailOp =
+    depthStencilState.stencilBack.compare =
+        GetDawnCompareOp(pipeline_data->GetBackCompareOp());
+    depthStencilState.stencilBack.failOp =
+        GetDawnStencilOp(pipeline_data->GetBackFailOp());
+    depthStencilState.stencilBack.depthFailOp =
         GetDawnStencilOp(pipeline_data->GetBackDepthFailOp());
-    stencil_back.passOp = GetDawnStencilOp(pipeline_data->GetBackPassOp());
+    depthStencilState.stencilBack.passOp =
+        GetDawnStencilOp(pipeline_data->GetBackPassOp());
 
-    depthStencilState.depthWriteEnabled = pipeline_data->GetEnableDepthWrite();
+    depthStencilState.depthWriteEnabled = pipeline_data->GetEnableDepthWrite()
+                                              ? wgpu::OptionalBool::True
+                                              : wgpu::OptionalBool::False;
     depthStencilState.depthCompare =
         GetDawnCompareOp(pipeline_data->GetDepthCompareOp());
-    depthStencilState.stencilFront = stencil_front;
-    depthStencilState.stencilBack = stencil_back;
-    // WebGPU doesn't support separate front and back stencil mask, they has to
-    // be the same
+
     depthStencilState.stencilReadMask =
         (pipeline_data->GetFrontCompareMask() ==
          pipeline_data->GetBackCompareMask())
@@ -1185,46 +1163,51 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
                                           pipeline_data->GetFrontWriteMask())
                                              ? pipeline_data->GetBackWriteMask()
                                              : 0xff;
-    depthStencilState.format = depth_stencil_format;
-    renderPipelineDescriptor.depthStencilState = &depthStencilState;
+
+    depthStencilState.depthBias = pipeline_data->GetEnableDepthBias();
+    depthStencilState.depthBiasSlopeScale =
+        pipeline_data->GetDepthBiasSlopeFactor();
+    depthStencilState.depthBiasClamp = pipeline_data->GetDepthBiasClamp();
   }
+  renderPipelineDescriptor.depthStencil = &depthStencilState;
 
   return {};
 }
 
 Result DawnPipelineHelper::CreateRenderPassDescriptor(
     const RenderPipelineInfo& render_pipeline,
-    const ::dawn::Device& device,
-    const std::vector<::dawn::TextureView>& texture_view,
-    const ::dawn::LoadOp load_op) {
+    const wgpu::Device& device,
+    const std::vector<wgpu::TextureView>& texture_view,
+    const wgpu::LoadOp load_op) {
   for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
     colorAttachmentsInfo[i].loadOp = load_op;
-    colorAttachmentsInfo[i].storeOp = ::dawn::StoreOp::Store;
-    colorAttachmentsInfo[i].clearColor = render_pipeline.clear_color_value;
+    colorAttachmentsInfo[i].storeOp = wgpu::StoreOp::Store;
+    colorAttachmentsInfo[i].clearValue = render_pipeline.clear_color_value;
+    colorAttachmentsInfo[i].depthSlice = wgpu::kDepthSliceUndefined;
   }
 
-  depthStencilAttachmentInfo.clearDepth = render_pipeline.clear_depth_value;
-  depthStencilAttachmentInfo.clearStencil = render_pipeline.clear_stencil_value;
+  depthStencilAttachmentInfo.depthClearValue =
+      render_pipeline.clear_depth_value;
+  depthStencilAttachmentInfo.stencilClearValue =
+      render_pipeline.clear_stencil_value;
   depthStencilAttachmentInfo.depthLoadOp = load_op;
-  depthStencilAttachmentInfo.depthStoreOp = ::dawn::StoreOp::Store;
+  depthStencilAttachmentInfo.depthStoreOp = wgpu::StoreOp::Store;
   depthStencilAttachmentInfo.stencilLoadOp = load_op;
-  depthStencilAttachmentInfo.stencilStoreOp = ::dawn::StoreOp::Store;
+  depthStencilAttachmentInfo.stencilStoreOp = wgpu::StoreOp::Store;
 
   renderPassDescriptor.colorAttachmentCount =
       render_pipeline.pipeline->GetColorAttachments().size();
   uint32_t colorAttachmentIndex = 0;
-  for (const ::dawn::TextureView& colorAttachment : texture_view) {
-    if (colorAttachment.Get() != nullptr) {
-      colorAttachmentsInfo[colorAttachmentIndex].attachment = colorAttachment;
-      colorAttachmentsInfoPtr[colorAttachmentIndex] =
-          colorAttachmentsInfo[colorAttachmentIndex];
+  for (const wgpu::TextureView& colorAttachment : texture_view) {
+    if (colorAttachment != nullptr) {
+      colorAttachmentsInfo[colorAttachmentIndex].view = colorAttachment;
     }
     ++colorAttachmentIndex;
   }
-  renderPassDescriptor.colorAttachments = colorAttachmentsInfoPtr;
+  renderPassDescriptor.colorAttachments = colorAttachmentsInfo;
 
-  ::dawn::TextureFormat depth_stencil_format{};
-  auto* depthBuffer = render_pipeline.pipeline->GetDepthBuffer().buffer;
+  wgpu::TextureFormat depth_stencil_format{};
+  auto* depthBuffer = render_pipeline.pipeline->GetDepthStencilBuffer().buffer;
   if (depthBuffer) {
     auto* amber_depth_stencil_format = depthBuffer->GetFormat();
     if (!amber_depth_stencil_format) {
@@ -1236,26 +1219,25 @@ Result DawnPipelineHelper::CreateRenderPassDescriptor(
       return result;
     }
   } else {
-    depth_stencil_format = ::dawn::TextureFormat::Depth24PlusStencil8;
+    depth_stencil_format = wgpu::TextureFormat::Depth24PlusStencil8;
   }
 
-  depthStencilDescriptor.dimension = ::dawn::TextureDimension::e2D;
   depthStencilDescriptor.size.width =
       render_pipeline.pipeline->GetFramebufferWidth();
   depthStencilDescriptor.size.height =
       render_pipeline.pipeline->GetFramebufferHeight();
-  depthStencilDescriptor.size.depth = 1;
-  depthStencilDescriptor.arrayLayerCount = 1;
+  depthStencilDescriptor.size.depthOrArrayLayers = 1;
   depthStencilDescriptor.sampleCount = 1;
   depthStencilDescriptor.format = depth_stencil_format;
-  depthStencilDescriptor.mipLevelCount = 1;
   depthStencilDescriptor.usage =
-      ::dawn::TextureUsage::OutputAttachment | ::dawn::TextureUsage::CopySrc;
+      wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::CopySrc;
   depthStencilTexture = device.CreateTexture(&depthStencilDescriptor);
-  depthStencilView = depthStencilTexture.CreateView();
 
-  if (depthStencilView.Get() != nullptr) {
-    depthStencilAttachmentInfo.attachment = depthStencilView;
+  wgpu::TextureViewDescriptor depth_view_desc = {};
+  depthStencilView = depthStencilTexture.CreateView(&depth_view_desc);
+
+  if (depthStencilView != nullptr) {
+    depthStencilAttachmentInfo.view = depthStencilView;
     renderPassDescriptor.depthStencilAttachment = &depthStencilAttachmentInfo;
   } else {
     renderPassDescriptor.depthStencilAttachment = nullptr;
@@ -1295,7 +1277,7 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
       0, 1, 2, 0, 2, 3,
   };
   auto index_buffer = CreateBufferFromData(
-      *device_, indexData, sizeof(indexData), ::dawn::BufferUsage::Index);
+      device_, indexData, sizeof(indexData), wgpu::BufferUsage::Index);
 
   const float vertexData[4 * 4] = {
       // Bottom left
@@ -1321,43 +1303,45 @@ Result EngineDawn::DoDrawRect(const DrawRectCommand* command) {
   };
 
   auto vertex_buffer = CreateBufferFromData(
-      *device_, vertexData, sizeof(vertexData), ::dawn::BufferUsage::Vertex);
+      device_, vertexData, sizeof(vertexData), wgpu::BufferUsage::Vertex);
   DawnPipelineHelper helper;
-  helper.CreateRenderPipelineDescriptor(*render_pipeline, *device_, true,
+  helper.CreateRenderPipelineDescriptor(*render_pipeline, device_, true,
                                         command->GetPipelineData());
-  helper.CreateRenderPassDescriptor(*render_pipeline, *device_, texture_views_,
-                                    ::dawn::LoadOp::Load);
-  ::dawn::RenderPipelineDescriptor* renderPipelineDescriptor =
+  helper.CreateRenderPassDescriptor(*render_pipeline, device_, texture_views_,
+                                    wgpu::LoadOp::Load);
+  wgpu::RenderPipelineDescriptor* renderPipelineDescriptor =
       &helper.renderPipelineDescriptor;
-  ::dawn::RenderPassDescriptor* renderPassDescriptor =
+  wgpu::RenderPassDescriptor* renderPassDescriptor =
       &helper.renderPassDescriptor;
 
-  const ::dawn::RenderPipeline pipeline =
-      device_->CreateRenderPipeline(renderPipelineDescriptor);
-  ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
-  ::dawn::RenderPassEncoder pass =
-      encoder.BeginRenderPass(renderPassDescriptor);
+  const wgpu::RenderPipeline pipeline =
+      device_.CreateRenderPipeline(renderPipelineDescriptor);
+  wgpu::CommandEncoderDescriptor encoder_desc = {};
+  wgpu::CommandEncoder encoder = device_.CreateCommandEncoder(&encoder_desc);
+  wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(renderPassDescriptor);
   pass.SetPipeline(pipeline);
   for (uint32_t i = 0; i < render_pipeline->bind_groups.size(); i++) {
     if (render_pipeline->bind_groups[i]) {
       pass.SetBindGroup(i, render_pipeline->bind_groups[i], 0, nullptr);
     }
   }
-  pass.SetVertexBuffer(0, vertex_buffer, 0);
-  pass.SetIndexBuffer(index_buffer, 0);
+  pass.SetVertexBuffer(0, vertex_buffer, 0, sizeof(vertexData));
+  pass.SetIndexBuffer(index_buffer, wgpu::IndexFormat::Uint32, 0,
+                      sizeof(indexData));
   pass.DrawIndexed(6, 1, 0, 0, 0);
-  pass.EndPass();
+  pass.End();
 
-  ::dawn::CommandBuffer commands = encoder.Finish();
-  ::dawn::Queue queue = device_->CreateQueue();
+  wgpu::CommandBufferDescriptor command_buffer_desc = {};
+  wgpu::CommandBuffer commands = encoder.Finish(&command_buffer_desc);
+  wgpu::Queue queue = device_.GetQueue();
   queue.Submit(1, &commands);
 
-  Result result = MapDeviceTextureToHostBuffer(*render_pipeline, *device_);
+  Result result = MapDeviceTextureToHostBuffer(*render_pipeline, device_);
 
   return result;
 }
 
-Result EngineDawn::DoDrawGrid(const DrawGridCommand* command) {
+Result EngineDawn::DoDrawGrid(const DrawGridCommand* /* command */) {
   return Result("DRAW_GRID not implemented on Dawn");
 }
 
@@ -1380,8 +1364,8 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
       indexData.emplace_back(i);
     }
     render_pipeline->index_buffer = CreateBufferFromData(
-        *device_, indexData.data(), indexData.size() * sizeof(uint32_t),
-        ::dawn::BufferUsage::Index);
+        device_, indexData.data(), indexData.size() * sizeof(uint32_t),
+        wgpu::BufferUsage::Index);
   }
 
   uint32_t instance_count = command->GetInstanceCount();
@@ -1391,32 +1375,32 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
 
   DawnPipelineHelper helper;
   result = helper.CreateRenderPipelineDescriptor(
-      *render_pipeline, *device_, false, command->GetPipelineData());
+      *render_pipeline, device_, false, command->GetPipelineData());
   if (!result.IsSuccess()) {
     return result;
   }
   result = helper.CreateRenderPassDescriptor(
-      *render_pipeline, *device_, texture_views_, ::dawn::LoadOp::Load);
+      *render_pipeline, device_, texture_views_, wgpu::LoadOp::Load);
   if (!result.IsSuccess()) {
     return result;
   }
 
-  ::dawn::RenderPipelineDescriptor* renderPipelineDescriptor =
+  wgpu::RenderPipelineDescriptor* renderPipelineDescriptor =
       &helper.renderPipelineDescriptor;
-  ::dawn::RenderPassDescriptor* renderPassDescriptor =
+  wgpu::RenderPassDescriptor* renderPassDescriptor =
       &helper.renderPassDescriptor;
 
   result = GetDawnTopology(command->GetTopology(),
-                           &renderPipelineDescriptor->primitiveTopology);
+                           &renderPipelineDescriptor->primitive.topology);
   if (!result.IsSuccess()) {
     return result;
   }
 
-  const ::dawn::RenderPipeline pipeline =
-      device_->CreateRenderPipeline(renderPipelineDescriptor);
-  ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
-  ::dawn::RenderPassEncoder pass =
-      encoder.BeginRenderPass(renderPassDescriptor);
+  const wgpu::RenderPipeline pipeline =
+      device_.CreateRenderPipeline(renderPipelineDescriptor);
+  wgpu::CommandEncoderDescriptor encoder_desc = {};
+  wgpu::CommandEncoder encoder = device_.CreateCommandEncoder(&encoder_desc);
+  wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(renderPassDescriptor);
   pass.SetPipeline(pipeline);
   for (uint32_t i = 0; i < render_pipeline->bind_groups.size(); i++) {
     if (render_pipeline->bind_groups[i]) {
@@ -1427,23 +1411,31 @@ Result EngineDawn::DoDrawArrays(const DrawArraysCommand* command) {
   for (uint32_t i = 0; i < render_pipeline->vertex_buffers.size(); i++) {
     pass.SetVertexBuffer(i,                                  /* slot */
                          render_pipeline->vertex_buffers[i], /* buffer */
-                         0);                                 /* offsets */
+                         0,                                  /* offset */
+                         wgpu::kWholeSize);
   }
   // TODO(sarahM0): figure out what this offset means
+  wgpu::IndexFormat indexFormat =
+      renderPipelineDescriptor->primitive.stripIndexFormat;
+  if (indexFormat == wgpu::IndexFormat::Undefined) {
+    indexFormat = wgpu::IndexFormat::Uint32;
+  }
   pass.SetIndexBuffer(render_pipeline->index_buffer, /* buffer */
-                      0);                            /* offset*/
-  pass.DrawIndexed(command->GetVertexCount(),        /* indexCount */
-                   instance_count,                   /* instanceCount */
-                   0,                                /* firstIndex */
-                   command->GetFirstVertexIndex(),   /* baseVertex */
+                      indexFormat, 0,                /* offset*/
+                      wgpu::kWholeSize);
+  pass.DrawIndexed(command->GetVertexCount(),      /* indexCount */
+                   instance_count,                 /* instanceCount */
+                   0,                              /* firstIndex */
+                   command->GetFirstVertexIndex(), /* baseVertex */
                    0 /* firstInstance */);
 
-  pass.EndPass();
-  ::dawn::CommandBuffer commands = encoder.Finish();
-  ::dawn::Queue queue = device_->CreateQueue();
+  pass.End();
+  wgpu::CommandBufferDescriptor command_buffer_desc = {};
+  wgpu::CommandBuffer commands = encoder.Finish(&command_buffer_desc);
+  wgpu::Queue queue = device_.GetQueue();
   queue.Submit(1, &commands);
 
-  result = MapDeviceTextureToHostBuffer(*render_pipeline, *device_);
+  result = MapDeviceTextureToHostBuffer(*render_pipeline, device_);
 
   return result;
 }
@@ -1456,35 +1448,40 @@ Result EngineDawn::DoCompute(const ComputeCommand* command) {
     return Result("DoComput: invoked on invalid or missing compute pipeline");
   }
 
-  ::dawn::ComputePipelineDescriptor computePipelineDescriptor;
-  computePipelineDescriptor.layout = MakeBasicPipelineLayout(
-      device_->Get(), compute_pipeline->bind_group_layouts);
+  wgpu::ComputePipelineDescriptor computePipelineDescriptor = {};
+  computePipelineDescriptor.layout =
+      MakeBasicPipelineLayout(device_, compute_pipeline->bind_group_layouts);
 
-  ::dawn::ProgrammableStageDescriptor pipelineStageDescriptor;
-  pipelineStageDescriptor.module = compute_pipeline->compute_shader;
-  pipelineStageDescriptor.entryPoint = "main";
-  computePipelineDescriptor.computeStage = pipelineStageDescriptor;
-  ::dawn::ComputePipeline pipeline =
-      device_->CreateComputePipeline(&computePipelineDescriptor);
-  ::dawn::CommandEncoder encoder = device_->CreateCommandEncoder();
-  ::dawn::ComputePassEncoder pass = encoder.BeginComputePass();
+  computePipelineDescriptor.compute.module = compute_pipeline->compute_shader;
+  computePipelineDescriptor.compute.entryPoint = "main";
+  wgpu::ComputePipeline pipeline =
+      device_.CreateComputePipeline(&computePipelineDescriptor);
+  wgpu::CommandEncoderDescriptor encoder_desc = {};
+  wgpu::CommandEncoder encoder = device_.CreateCommandEncoder(&encoder_desc);
+  wgpu::ComputePassDescriptor pass_desc = {};
+  wgpu::ComputePassEncoder pass = encoder.BeginComputePass(&pass_desc);
   pass.SetPipeline(pipeline);
   for (uint32_t i = 0; i < compute_pipeline->bind_groups.size(); i++) {
     if (compute_pipeline->bind_groups[i]) {
       pass.SetBindGroup(i, compute_pipeline->bind_groups[i], 0, nullptr);
     }
   }
-  pass.Dispatch(command->GetX(), command->GetY(), command->GetZ());
-  pass.EndPass();
+  pass.DispatchWorkgroups(command->GetX(), command->GetY(), command->GetZ());
+  pass.End();
   // Finish recording the command buffer.  It only has one command.
-  auto command_buffer = encoder.Finish();
+  wgpu::CommandBufferDescriptor command_buffer_desc = {};
+  auto command_buffer = encoder.Finish(&command_buffer_desc);
   // Submit the command.
-  auto queue = device_->CreateQueue();
+  auto queue = device_.GetQueue();
   queue.Submit(1, &command_buffer);
   // Copy result back
-  result = MapDeviceBufferToHostBuffer(*compute_pipeline, *device_);
+  result = MapDeviceBufferToHostBuffer(*compute_pipeline, device_);
 
   return result;
+}
+
+Result EngineDawn::DoTraceRays(const RayTracingCommand* /* command */) {
+  return Result("Dawn: Trace Rays not yet implemented");
 }
 
 Result EngineDawn::DoEntryPoint(const EntryPointCommand*) {
@@ -1499,7 +1496,7 @@ Result EngineDawn::DoPatchParameterVertices(
 Result EngineDawn::DoBuffer(const BufferCommand* command) {
   Result result;
 
-  ::dawn::Buffer* dawn_buffer = nullptr;
+  wgpu::Buffer* dawn_buffer = nullptr;
 
   const auto descriptor_set = command->GetDescriptorSet();
   const auto binding = command->GetBinding();
@@ -1538,8 +1535,9 @@ Result EngineDawn::DoBuffer(const BufferCommand* command) {
   if (amber_buffer) {
     amber_buffer->SetDataWithOffset(command->GetValues(), command->GetOffset());
 
-    dawn_buffer->SetSubData(0, amber_buffer->GetMaxSizeInBytes(),
-                            amber_buffer->ValuePtr()->data());
+    wgpu::Queue queue = device_.GetQueue();
+    queue.WriteBuffer(*dawn_buffer, 0, amber_buffer->ValuePtr()->data(),
+                      amber_buffer->GetMaxSizeInBytes());
   }
 
   return {};
@@ -1568,7 +1566,7 @@ Result EngineDawn::AttachBuffersAndTextures(
 
   if (textures_.size() == 0) {
     for (uint32_t i = 0; i < kMaxColorAttachments; i++) {
-      ::dawn::TextureFormat fb_format{};
+      wgpu::TextureFormat fb_format{};
 
       if (i < render_pipeline->pipeline->GetColorAttachments().size()) {
         auto* amber_format = render_pipeline->pipeline->GetColorAttachments()[i]
@@ -1583,17 +1581,19 @@ Result EngineDawn::AttachBuffersAndTextures(
           return result;
         }
       } else {
-        fb_format = ::dawn::TextureFormat::RGBA8Unorm;
+        fb_format = wgpu::TextureFormat::RGBA8Unorm;
       }
 
       textures_.emplace_back(
-          MakeDawnTexture(*device_, fb_format, width, height));
-      texture_views_.emplace_back(textures_.back().CreateView());
+          MakeDawnTexture(device_, fb_format, width, height));
+
+      wgpu::TextureViewDescriptor view_desc = {};
+      texture_views_.emplace_back(textures_.back().CreateView(&view_desc));
     }
   }
 
   // Attach depth-stencil texture
-  auto* depthBuffer = render_pipeline->pipeline->GetDepthBuffer().buffer;
+  auto* depthBuffer = render_pipeline->pipeline->GetDepthStencilBuffer().buffer;
   if (depthBuffer) {
     if (!depth_stencil_texture_) {
       auto* amber_depth_stencil_format = depthBuffer->GetFormat();
@@ -1602,14 +1602,14 @@ Result EngineDawn::AttachBuffersAndTextures(
             "AttachBuffersAndTextures: The depth/stencil attachment has no "
             "format!");
       }
-      ::dawn::TextureFormat depth_stencil_format{};
+      wgpu::TextureFormat depth_stencil_format{};
       result = GetDawnTextureFormat(*amber_depth_stencil_format,
                                     &depth_stencil_format);
       if (!result.IsSuccess()) {
         return result;
       }
 
-      result = MakeTexture(*device_, depth_stencil_format, width, height,
+      result = MakeTexture(device_, depth_stencil_format, width, height,
                            &depth_stencil_texture_);
       if (!result.IsSuccess()) {
         return result;
@@ -1623,17 +1623,17 @@ Result EngineDawn::AttachBuffersAndTextures(
   // Attach index buffer
   if (render_pipeline->pipeline->GetIndexBuffer()) {
     render_pipeline->index_buffer = CreateBufferFromData(
-        *device_,
+        device_,
         render_pipeline->pipeline->GetIndexBuffer()->ValuePtr()->data(),
         render_pipeline->pipeline->GetIndexBuffer()->GetSizeInBytes(),
-        ::dawn::BufferUsage::Index);
+        wgpu::BufferUsage::Index);
   }
 
   // Attach vertex buffers
   for (auto& vertex_info : render_pipeline->pipeline->GetVertexBuffers()) {
     render_pipeline->vertex_buffers.emplace_back(CreateBufferFromData(
-        *device_, vertex_info.buffer->ValuePtr()->data(),
-        vertex_info.buffer->GetSizeInBytes(), ::dawn::BufferUsage::Vertex));
+        device_, vertex_info.buffer->ValuePtr()->data(),
+        vertex_info.buffer->GetSizeInBytes(), wgpu::BufferUsage::Vertex));
   }
 
   // Do not attach pushConstants
@@ -1642,19 +1642,18 @@ Result EngineDawn::AttachBuffersAndTextures(
         "AttachBuffersAndTextures: Dawn does not support push constants!");
   }
 
-  ::dawn::ShaderStage kAllStages =
-      ::dawn::ShaderStage::Vertex | ::dawn::ShaderStage::Fragment;
+  wgpu::ShaderStage kAllStages =
+      wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
   std::vector<std::vector<BindingInitializationHelper>> bindingInitalizerHelper(
       kMaxDawnBindGroup);
-  std::vector<std::vector<::dawn::BindGroupLayoutBinding>> layouts_info(
+  std::vector<std::vector<wgpu::BindGroupLayoutEntry>> layouts_info(
       kMaxDawnBindGroup);
   uint32_t max_descriptor_set = 0;
 
   // Attach storage/uniform buffers
-  ::dawn::BindGroupLayoutBinding empty_layout_info = {};
+  wgpu::BindGroupLayoutEntry empty_layout_info = {};
 
   if (!render_pipeline->pipeline->GetBuffers().empty()) {
-    std::vector<uint32_t> max_binding_seen(kMaxDawnBindGroup, -1);
     for (auto& buf_info : render_pipeline->pipeline->GetBuffers()) {
       while (layouts_info[buf_info.descriptor_set].size() <= buf_info.binding) {
         layouts_info[buf_info.descriptor_set].push_back(empty_layout_info);
@@ -1663,17 +1662,17 @@ Result EngineDawn::AttachBuffersAndTextures(
   }
 
   for (const auto& buf_info : render_pipeline->pipeline->GetBuffers()) {
-    ::dawn::BufferUsage bufferUsage;
-    ::dawn::BindingType bindingType;
+    wgpu::BufferUsage bufferUsage;
+    wgpu::BufferBindingType bindingType;
     switch (buf_info.type) {
       case BufferType::kStorage: {
-        bufferUsage = ::dawn::BufferUsage::Storage;
-        bindingType = ::dawn::BindingType::StorageBuffer;
+        bufferUsage = wgpu::BufferUsage::Storage;
+        bindingType = wgpu::BufferBindingType::Storage;
         break;
       }
       case BufferType::kUniform: {
-        bufferUsage = ::dawn::BufferUsage::Uniform;
-        bindingType = ::dawn::BindingType::UniformBuffer;
+        bufferUsage = wgpu::BufferUsage::Uniform;
+        bindingType = wgpu::BufferBindingType::Uniform;
         break;
       }
       default: {
@@ -1688,22 +1687,21 @@ Result EngineDawn::AttachBuffersAndTextures(
                     std::to_string(kMaxDawnBindGroup) + " (descriptor sets)");
     }
 
-    render_pipeline->buffers.emplace_back(
-        CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
-                             buf_info.buffer->GetMaxSizeInBytes(),
-                             bufferUsage | ::dawn::BufferUsage::CopySrc |
-                                 ::dawn::BufferUsage::CopyDst));
+    render_pipeline->buffers.emplace_back(CreateBufferFromData(
+        device_, buf_info.buffer->ValuePtr()->data(),
+        buf_info.buffer->GetMaxSizeInBytes(),
+        bufferUsage | wgpu::BufferUsage::CopySrc | wgpu::BufferUsage::CopyDst));
 
     render_pipeline->buffer_map[{buf_info.descriptor_set, buf_info.binding}] =
-        render_pipeline->buffers.size() - 1;
+        static_cast<uint32_t>(render_pipeline->buffers.size() - 1);
 
     render_pipeline->used_descriptor_set.insert(buf_info.descriptor_set);
     max_descriptor_set = std::max(max_descriptor_set, buf_info.descriptor_set);
 
-    ::dawn::BindGroupLayoutBinding layout_info;
+    wgpu::BindGroupLayoutEntry layout_info = empty_layout_info;
     layout_info.binding = buf_info.binding;
     layout_info.visibility = kAllStages;
-    layout_info.type = bindingType;
+    layout_info.buffer.type = bindingType;
     layouts_info[buf_info.descriptor_set][buf_info.binding] = layout_info;
 
     BindingInitializationHelper tempBinding = BindingInitializationHelper(
@@ -1714,21 +1712,20 @@ Result EngineDawn::AttachBuffersAndTextures(
 
   for (uint32_t i = 0; i < kMaxDawnBindGroup; i++) {
     if (layouts_info[i].size() > 0 && bindingInitalizerHelper[i].size() > 0) {
-      ::dawn::BindGroupLayout bindGroupLayout =
-          MakeBindGroupLayout(*device_, layouts_info[i]);
+      wgpu::BindGroupLayout bindGroupLayout =
+          MakeBindGroupLayout(device_, layouts_info[i]);
       render_pipeline->bind_group_layouts.push_back(bindGroupLayout);
 
-      ::dawn::BindGroup bindGroup =
-          MakeBindGroup(*device_, render_pipeline->bind_group_layouts[i],
+      wgpu::BindGroup bindGroup =
+          MakeBindGroup(device_, render_pipeline->bind_group_layouts.back(),
                         bindingInitalizerHelper[i]);
       render_pipeline->bind_groups.push_back(bindGroup);
     } else if (i < max_descriptor_set) {
-      ::dawn::BindGroupLayout bindGroupLayout =
-          MakeBindGroupLayout(*device_, {});
+      wgpu::BindGroupLayout bindGroupLayout = MakeBindGroupLayout(device_, {});
       render_pipeline->bind_group_layouts.push_back(bindGroupLayout);
 
-      ::dawn::BindGroup bindGroup =
-          MakeBindGroup(*device_, render_pipeline->bind_group_layouts[i],
+      wgpu::BindGroup bindGroup =
+          MakeBindGroup(device_, render_pipeline->bind_group_layouts.back(),
                         bindingInitalizerHelper[i]);
       render_pipeline->bind_groups.push_back(bindGroup);
     }
@@ -1746,15 +1743,14 @@ Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
 
   std::vector<std::vector<BindingInitializationHelper>> bindingInitalizerHelper(
       kMaxDawnBindGroup);
-  std::vector<std::vector<::dawn::BindGroupLayoutBinding>> layouts_info(
+  std::vector<std::vector<wgpu::BindGroupLayoutEntry>> layouts_info(
       kMaxDawnBindGroup);
   uint32_t max_descriptor_set = 0;
 
   // Attach storage/uniform buffers
-  ::dawn::BindGroupLayoutBinding empty_layout_info = {};
+  wgpu::BindGroupLayoutEntry empty_layout_info = {};
 
   if (!compute_pipeline->pipeline->GetBuffers().empty()) {
-    std::vector<uint32_t> max_binding_seen(kMaxDawnBindGroup, -1);
     for (auto& buf_info : compute_pipeline->pipeline->GetBuffers()) {
       while (layouts_info[buf_info.descriptor_set].size() <= buf_info.binding) {
         layouts_info[buf_info.descriptor_set].push_back(empty_layout_info);
@@ -1763,17 +1759,17 @@ Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
   }
 
   for (const auto& buf_info : compute_pipeline->pipeline->GetBuffers()) {
-    ::dawn::BufferUsage bufferUsage;
-    ::dawn::BindingType bindingType;
+    wgpu::BufferUsage bufferUsage;
+    wgpu::BufferBindingType bindingType;
     switch (buf_info.type) {
       case BufferType::kStorage: {
-        bufferUsage = ::dawn::BufferUsage::Storage;
-        bindingType = ::dawn::BindingType::StorageBuffer;
+        bufferUsage = wgpu::BufferUsage::Storage;
+        bindingType = wgpu::BufferBindingType::Storage;
         break;
       }
       case BufferType::kUniform: {
-        bufferUsage = ::dawn::BufferUsage::Uniform;
-        bindingType = ::dawn::BindingType::UniformBuffer;
+        bufferUsage = wgpu::BufferUsage::Uniform;
+        bindingType = wgpu::BufferBindingType::Uniform;
         break;
       }
       default: {
@@ -1788,22 +1784,21 @@ Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
                     std::to_string(kMaxDawnBindGroup) + " (descriptor sets)");
     }
 
-    compute_pipeline->buffers.emplace_back(
-        CreateBufferFromData(*device_, buf_info.buffer->ValuePtr()->data(),
-                             buf_info.buffer->GetMaxSizeInBytes(),
-                             bufferUsage | ::dawn::BufferUsage::CopySrc |
-                                 ::dawn::BufferUsage::CopyDst));
+    compute_pipeline->buffers.emplace_back(CreateBufferFromData(
+        device_, buf_info.buffer->ValuePtr()->data(),
+        buf_info.buffer->GetMaxSizeInBytes(),
+        bufferUsage | wgpu::BufferUsage::CopySrc | wgpu::BufferUsage::CopyDst));
 
     compute_pipeline->buffer_map[{buf_info.descriptor_set, buf_info.binding}] =
-        compute_pipeline->buffers.size() - 1;
+        static_cast<uint32_t>(compute_pipeline->buffers.size() - 1);
 
     compute_pipeline->used_descriptor_set.insert(buf_info.descriptor_set);
     max_descriptor_set = std::max(max_descriptor_set, buf_info.descriptor_set);
 
-    ::dawn::BindGroupLayoutBinding layout_info;
+    wgpu::BindGroupLayoutEntry layout_info = empty_layout_info;
     layout_info.binding = buf_info.binding;
-    layout_info.visibility = ::dawn::ShaderStage::Compute;
-    layout_info.type = bindingType;
+    layout_info.visibility = wgpu::ShaderStage::Compute;
+    layout_info.buffer.type = bindingType;
     layouts_info[buf_info.descriptor_set][buf_info.binding] = layout_info;
 
     BindingInitializationHelper tempBinding = BindingInitializationHelper(
@@ -1814,21 +1809,20 @@ Result EngineDawn::AttachBuffers(ComputePipelineInfo* compute_pipeline) {
 
   for (uint32_t i = 0; i < kMaxDawnBindGroup; i++) {
     if (layouts_info[i].size() > 0 && bindingInitalizerHelper[i].size() > 0) {
-      ::dawn::BindGroupLayout bindGroupLayout =
-          MakeBindGroupLayout(*device_, layouts_info[i]);
+      wgpu::BindGroupLayout bindGroupLayout =
+          MakeBindGroupLayout(device_, layouts_info[i]);
       compute_pipeline->bind_group_layouts.push_back(bindGroupLayout);
 
-      ::dawn::BindGroup bindGroup =
-          MakeBindGroup(*device_, compute_pipeline->bind_group_layouts[i],
+      wgpu::BindGroup bindGroup =
+          MakeBindGroup(device_, compute_pipeline->bind_group_layouts.back(),
                         bindingInitalizerHelper[i]);
       compute_pipeline->bind_groups.push_back(bindGroup);
     } else if (i < max_descriptor_set) {
-      ::dawn::BindGroupLayout bindGroupLayout =
-          MakeBindGroupLayout(*device_, {});
+      wgpu::BindGroupLayout bindGroupLayout = MakeBindGroupLayout(device_, {});
       compute_pipeline->bind_group_layouts.push_back(bindGroupLayout);
 
-      ::dawn::BindGroup bindGroup =
-          MakeBindGroup(*device_, compute_pipeline->bind_group_layouts[i],
+      wgpu::BindGroup bindGroup =
+          MakeBindGroup(device_, compute_pipeline->bind_group_layouts.back(),
                         bindingInitalizerHelper[i]);
       compute_pipeline->bind_groups.push_back(bindGroup);
     }

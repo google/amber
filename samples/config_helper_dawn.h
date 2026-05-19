@@ -15,14 +15,14 @@
 #ifndef SAMPLES_CONFIG_HELPER_DAWN_H_
 #define SAMPLES_CONFIG_HELPER_DAWN_H_
 
+#include <webgpu/webgpu_cpp.h>
+
 #include <limits>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "amber/amber.h"
 #include "amber/amber_dawn.h"
-#include "dawn_native/DawnNative.h"
 #include "samples/config_helper.h"
 
 namespace sample {
@@ -49,8 +49,8 @@ class ConfigHelperDawn : public ConfigHelperImpl {
       std::unique_ptr<amber::EngineConfig>* config) override;
 
  private:
-  ::dawn_native::Instance dawn_instance_;
-  ::dawn::Device dawn_device_;
+  wgpu::Instance dawn_instance_;
+  wgpu::Device dawn_device_;
 };
 
 }  // namespace sample

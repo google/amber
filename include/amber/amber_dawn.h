@@ -15,8 +15,8 @@
 #ifndef AMBER_AMBER_DAWN_H_
 #define AMBER_AMBER_DAWN_H_
 
+#include <webgpu/webgpu_cpp.h>
 #include "amber/amber.h"
-#include "dawn/dawncpp.h"
 
 namespace amber {
 
@@ -24,8 +24,11 @@ namespace amber {
 struct DawnEngineConfig : public EngineConfig {
   ~DawnEngineConfig() override;
 
+  /// The Dawn Instance to use.
+  wgpu::Instance instance;
+
   /// The Dawn Device to use for running tests.
-  ::dawn::Device* device;
+  wgpu::Device device;
 };
 
 }  // namespace amber

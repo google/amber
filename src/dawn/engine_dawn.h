@@ -15,13 +15,14 @@
 #ifndef SRC_DAWN_ENGINE_DAWN_H_
 #define SRC_DAWN_ENGINE_DAWN_H_
 
+#include <webgpu/webgpu_cpp.h>
+
 #include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include "dawn/dawncpp.h"
 #include "src/cast_hash.h"
 #include "src/command.h"
 #include "src/dawn/pipeline_info.h"
@@ -41,6 +42,7 @@ class EngineDawn : public Engine {
   Result Initialize(EngineConfig* config,
                     Delegate*,
                     const std::vector<std::string>& features,
+                    const std::vector<std::string>& properties,
                     const std::vector<std::string>& instance_extensions,
                     const std::vector<std::string>& device_extensions) override;
 
@@ -58,6 +60,7 @@ class EngineDawn : public Engine {
   Result DoDrawGrid(const DrawGridCommand* cmd) override;
   Result DoDrawArrays(const DrawArraysCommand* cmd) override;
   Result DoCompute(const ComputeCommand* cmd) override;
+  Result DoTraceRays(const RayTracingCommand* cmd) override;
   Result DoEntryPoint(const EntryPointCommand* cmd) override;
   Result DoPatchParameterVertices(
       const PatchParameterVerticesCommand* cmd) override;
@@ -86,20 +89,21 @@ class EngineDawn : public Engine {
   // Creates and submits a command to copy dawn textures back to amber color
   // attachments.
   Result MapDeviceTextureToHostBuffer(const RenderPipelineInfo& render_pipeline,
-                                      const ::dawn::Device& device);
+                                      wgpu::Device device);
   // Creates and submits a command to copy dawn buffers back to amber buffers
   Result MapDeviceBufferToHostBuffer(
       const ComputePipelineInfo& compute_pipeline,
-      const ::dawn::Device& device);
+      wgpu::Device device);
 
   // Borrowed from the engine config
-  ::dawn::Device* device_ = nullptr;
+  wgpu::Instance instance_;
+  wgpu::Device device_;
   // Dawn color attachment textures
-  std::vector<::dawn::Texture> textures_;
+  std::vector<wgpu::Texture> textures_;
   // Views into Dawn color attachment textures
-  std::vector<::dawn::TextureView> texture_views_;
+  std::vector<wgpu::TextureView> texture_views_;
   // Dawn depth/stencil texture
-  ::dawn::Texture depth_stencil_texture_;
+  wgpu::Texture depth_stencil_texture_;
   // Mapping from the generic engine's Pipeline object to our own Dawn-specific
   // pipelines.
   std::unordered_map<amber::Pipeline*, ::amber::dawn::Pipeline> pipeline_map_;

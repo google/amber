@@ -324,15 +324,16 @@ A Vulkan implementation is found by CMake in the following priority order:
 ### Using Dawn as a backend
 
 We assume you have built [Dawn][Dawn] from source, and have access to both the
-source and build trees. To build a Dawn backend for Amber, set the following
-CMake variables when configuring Amber:
+source and build trees. To build a Dawn backend for Amber, build Dawn
+as a monolithic shared library with `-DDAWN_BUILD_MONOLITHIC_LIBRARY=ON`. Then
+when configuring Amber, set the following CMake variables:
 
-  * `Dawn_INCLUDE_DIR`: The directory containing `dawn/dawn_export.h`
-    (in the source tree).
-  * `Dawn_GEN_INCLUDE_DIR`: The directory containing generated header
-    `dawn/dawncpp.h` (in the build output tree).
-  * `Dawn_LIBRARY_DIR`: The directory containing the `dawn_native` library (in
-    the build output tree).
+  * `Dawn_INCLUDE_DIR`: The directory containing `webgpu/webgpu.h`
+    (e.g., `<dawn_src>/include`).
+  * `Dawn_GEN_INCLUDE_DIR`: The directory containing generated headers like
+    `dawn/webgpu_cpp.h` (e.g., `<dawn_out>/gen/include`).
+  * `Dawn_LIBRARY_DIR`: The directory containing the `webgpu_dawn` library
+    (e.g., `<dawn_out>`).
 
 ### Using SwiftShader as a backend
 

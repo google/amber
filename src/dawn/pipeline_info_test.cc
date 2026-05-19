@@ -14,9 +14,10 @@
 
 #include "src/dawn/pipeline_info.h"
 
+#include <webgpu/webgpu_cpp.h>
+
 #include <cstdint>
 
-#include "dawn/dawncpp.h"
 #include "gmock/gmock.h"
 
 namespace amber {

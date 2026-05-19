@@ -239,9 +239,11 @@ class TestRunner:
     cmd += [tc.GetInputPath()]
 
     try:
-      err = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-      if len(err) != 0 and not tc.IsExpectedFail() and not tc.IsSuppressed():
-        sys.stdout.write(err.decode('utf-8'))
+      out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+      # Dawn backend may print some warnings to stdout that don't indicate a test failure, so just
+      # rely on the subprocess exit code to indicate success/failure.
+      if not tc.IsUseDawn() and len(out) != 0 and not tc.IsExpectedFail() and not tc.IsSuppressed():
+        sys.stdout.write(out.decode('utf-8'))
         return False
 
     except Exception as e:

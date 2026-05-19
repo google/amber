@@ -15,6 +15,7 @@
 #include "samples/config_helper_dawn.h"
 
 #include <iostream>
+#include <utility>
 
 namespace sample {
 
@@ -24,26 +25,52 @@ ConfigHelperDawn::~ConfigHelperDawn() = default;
 namespace {
 
 // Callback which prints a message from a Dawn device operation.
-void PrintDeviceError(DawnErrorType errorType, const char* message, void*) {
+void PrintDeviceError(wgpu::Device const& /* device */,
+                      wgpu::ErrorType errorType,
+                      wgpu::StringView message) {
   switch (errorType) {
-    case DAWN_ERROR_TYPE_VALIDATION:
+    case wgpu::ErrorType::Validation:
       std::cout << "Validation ";
       break;
-    case DAWN_ERROR_TYPE_OUT_OF_MEMORY:
+    case wgpu::ErrorType::OutOfMemory:
       std::cout << "Out of memory ";
       break;
-    case DAWN_ERROR_TYPE_UNKNOWN:
-    case DAWN_ERROR_TYPE_FORCE32:
-      std::cout << "Unknown ";
+    case wgpu::ErrorType::Internal:
+      std::cout << "Internal ";
       break;
-    case DAWN_ERROR_TYPE_DEVICE_LOST:
-      std::cout << "Device lost ";
+    case wgpu::ErrorType::Unknown:
+      std::cout << "Unknown ";
       break;
     default:
       std::cout << "Unreachable";
       return;
   }
-  std::cout << "error: " << message << std::endl;
+  std::cout << "error: " << (message.data ? message.data : "unknown error")
+            << std::endl;
+}
+
+// Callback which prints a message when the Dawn device is lost.
+void HandleDeviceLost(wgpu::Device const& /* device */,
+                      wgpu::DeviceLostReason reason,
+                      wgpu::StringView message) {
+  std::cout << "Device lost ";
+  switch (reason) {
+    case wgpu::DeviceLostReason::Destroyed:
+      std::cout << "(Destroyed) ";
+      break;
+    case wgpu::DeviceLostReason::CallbackCancelled:
+      std::cout << "(Callback Cancelled) ";
+      break;
+    case wgpu::DeviceLostReason::FailedCreation:
+      std::cout << "(Failed Creation) ";
+      break;
+    case wgpu::DeviceLostReason::Unknown:
+    default:
+      std::cout << "(Unknown) ";
+      break;
+  }
+  std::cout << "error: " << (message.data ? message.data : "unknown error")
+            << std::endl;
 }
 
 }  // namespace
@@ -59,31 +86,74 @@ amber::Result ConfigHelperDawn::CreateConfig(
     bool,
     bool,
     std::unique_ptr<amber::EngineConfig>* config) {
-  // Set procedure table and error callback.
-  DawnProcTable backendProcs = dawn_native::GetProcs();
-  dawnSetProcs(&backendProcs);
-  dawn_instance_.DiscoverDefaultAdapters();
+  const char* allow_unsafe_apis = "allow_unsafe_apis";
+  wgpu::DawnTogglesDescriptor toggles;
+  toggles.enabledToggleCount = 1;
+  toggles.enabledToggles = &allow_unsafe_apis;
 
-  for (dawn_native::Adapter& adapter : dawn_instance_.GetAdapters()) {
-#if AMBER_DAWN_METAL
-    ::dawn_native::BackendType backendType = ::dawn_native::BackendType::Metal;
-#else  // assuming VULKAN
-    ::dawn_native::BackendType backendType = ::dawn_native::BackendType::Vulkan;
-#endif
+  wgpu::InstanceFeatureName required_features[] = {
+      wgpu::InstanceFeatureName::ShaderSourceSPIRV};
+  wgpu::InstanceDescriptor instance_desc;
+  instance_desc.nextInChain = &toggles;
+  instance_desc.requiredFeatureCount = 1;
+  instance_desc.requiredFeatures = required_features;
+  dawn_instance_ = wgpu::CreateInstance(&instance_desc);
 
-    if (adapter.GetBackendType() == backendType) {
-      dawn_device_ = ::dawn::Device::Acquire(adapter.CreateDevice());
-    }
+  if (!dawn_instance_) {
+    return amber::Result("could not create Dawn instance");
   }
 
-  if (!dawn_device_) {
+  wgpu::RequestAdapterOptions adapter_options;
+#if AMBER_DAWN_METAL
+  adapter_options.backendType = wgpu::BackendType::Metal;
+#else  // assuming VULKAN
+  adapter_options.backendType = wgpu::BackendType::Vulkan;
+#endif
+
+  struct RequestAdapterData {
+    wgpu::Adapter adapter = nullptr;
+    bool completed = false;
+  } adapter_data;
+
+  dawn_instance_.RequestAdapter(
+      &adapter_options, wgpu::CallbackMode::AllowProcessEvents,
+      [](wgpu::RequestAdapterStatus status, wgpu::Adapter adapter,
+         wgpu::StringView message, RequestAdapterData* data) {
+        if (status == wgpu::RequestAdapterStatus::Success) {
+          data->adapter = std::move(adapter);
+        } else {
+          std::cerr << "RequestAdapter failed: "
+                    << (message.data ? message.data : "unknown error")
+                    << std::endl;
+        }
+        data->completed = true;
+      },
+      &adapter_data);
+
+  while (!adapter_data.completed) {
+    dawn_instance_.ProcessEvents();
+  }
+
+  if (!adapter_data.adapter) {
     return amber::Result("could not find Vulkan or Metal backend for Dawn");
   }
 
-  backendProcs.deviceSetUncapturedErrorCallback(dawn_device_.Get(),
-                                                PrintDeviceError, nullptr);
+  wgpu::DeviceDescriptor device_desc;
+  device_desc.nextInChain = &toggles;
+  device_desc.SetUncapturedErrorCallback(PrintDeviceError);
+  device_desc.SetDeviceLostCallback(wgpu::CallbackMode::AllowProcessEvents,
+                                    HandleDeviceLost);
+
+  // Use synchronous CreateDevice extension in Dawn
+  dawn_device_ = adapter_data.adapter.CreateDevice(&device_desc);
+
+  if (!dawn_device_) {
+    return amber::Result("could not create Dawn device");
+  }
+
   auto* dawn_config = new amber::DawnEngineConfig;
-  dawn_config->device = &dawn_device_;
+  dawn_config->instance = dawn_instance_;
+  dawn_config->device = dawn_device_;
   config->reset(dawn_config);
 
   return {};

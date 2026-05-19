@@ -15,6 +15,8 @@
 #ifndef SRC_DAWN_PIPELINE_INFO_H_
 #define SRC_DAWN_PIPELINE_INFO_H_
 
+#include <webgpu/webgpu_cpp.h>
+
 #include <cstdint>
 #include <memory>
 #include <set>
@@ -23,7 +25,6 @@
 #include <vector>
 
 #include "amber/result.h"
-#include "dawn/dawncpp.h"
 #include "src/command.h"
 #include "src/format.h"
 
@@ -43,29 +44,29 @@ struct hash_pair {
 struct RenderPipelineInfo {
   RenderPipelineInfo() {}
   RenderPipelineInfo(::amber::Pipeline* the_pipeline,
-                     ::dawn::ShaderModule vert,
-                     ::dawn::ShaderModule frag)
+                     wgpu::ShaderModule vert,
+                     wgpu::ShaderModule frag)
       : pipeline(the_pipeline), vertex_shader(vert), fragment_shader(frag) {}
 
   ::amber::Pipeline* pipeline = nullptr;
 
-  ::dawn::ShaderModule vertex_shader;
-  ::dawn::ShaderModule fragment_shader;
-  ::dawn::Color clear_color_value = {0.f, 0.f, 0.f, 0.f};
+  wgpu::ShaderModule vertex_shader;
+  wgpu::ShaderModule fragment_shader;
+  wgpu::Color clear_color_value = {0.0, 0.0, 0.0, 0.0};
   float clear_depth_value = 1.0f;
   uint32_t clear_stencil_value = 0;
 
   // Depth-stencil target.  This resides on the GPU.
-  ::dawn::Texture depth_stencil_texture;
+  wgpu::Texture depth_stencil_texture;
   // Vertex buffers
-  std::vector<::dawn::Buffer> vertex_buffers;
+  std::vector<wgpu::Buffer> vertex_buffers;
   // Index buffer
-  ::dawn::Buffer index_buffer;
+  wgpu::Buffer index_buffer;
   // Storage and uniform buffers
-  std::vector<::dawn::Buffer> buffers;
+  std::vector<wgpu::Buffer> buffers;
   // Binding info
-  std::vector<::dawn::BindGroup> bind_groups;
-  std::vector<::dawn::BindGroupLayout> bind_group_layouts;
+  std::vector<wgpu::BindGroup> bind_groups;
+  std::vector<wgpu::BindGroupLayout> bind_group_layouts;
 
   // Mapping from the <descriptor_set, binding> to dawn buffer index in buffers
   std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, hash_pair>
@@ -76,18 +77,17 @@ struct RenderPipelineInfo {
 /// Stores information relating to a compute pipeline in Dawn.
 struct ComputePipelineInfo {
   ComputePipelineInfo() {}
-  ComputePipelineInfo(::amber::Pipeline* the_pipeline,
-                      ::dawn::ShaderModule comp)
+  ComputePipelineInfo(::amber::Pipeline* the_pipeline, wgpu::ShaderModule comp)
       : pipeline(the_pipeline), compute_shader(comp) {}
 
   ::amber::Pipeline* pipeline = nullptr;
-  ::dawn::ShaderModule compute_shader;
+  wgpu::ShaderModule compute_shader;
 
   // storage and uniform buffers
-  std::vector<::dawn::Buffer> buffers;
+  std::vector<wgpu::Buffer> buffers;
 
-  std::vector<::dawn::BindGroup> bind_groups;
-  std::vector<::dawn::BindGroupLayout> bind_group_layouts;
+  std::vector<wgpu::BindGroup> bind_groups;
+  std::vector<wgpu::BindGroupLayout> bind_group_layouts;
 
   // Mapping from the <descriptor_set, binding> to dawn buffer index in buffers
   std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, hash_pair>
