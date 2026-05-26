@@ -219,12 +219,12 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
         pool_.get(), shader_group_create_info);
   } else if (pipeline->GetType() == PipelineType::kCompute) {
     vk_pipeline = std::make_unique<ComputePipeline>(
-        device_.get(), engine_data.fence_timeout_ms,
+        device_.get(), &blases_, &tlases_, engine_data.fence_timeout_ms,
         engine_data.pipeline_runtime_layer_enabled, stage_create_info);
     r = vk_pipeline->AsCompute()->Initialize(pool_.get());
   } else {
     vk_pipeline = std::make_unique<GraphicsPipeline>(
-        device_.get(), pipeline->GetColorAttachments(),
+        device_.get(), &blases_, &tlases_, pipeline->GetColorAttachments(),
         pipeline->GetDepthStencilBuffer(), pipeline->GetResolveTargets(),
         engine_data.fence_timeout_ms,
         engine_data.pipeline_runtime_layer_enabled, stage_create_info);
@@ -341,17 +341,15 @@ Result EngineVulkan::CreatePipeline(amber::Pipeline* pipeline) {
     }
   }
 
-  if (info.vk_pipeline->IsRayTracing()) {
-    for (const auto& tlas_info : pipeline->GetTLASes()) {
-      auto cmd = std::make_unique<TLASCommand>(pipeline);
-      cmd->SetDescriptorSet(tlas_info.descriptor_set);
-      cmd->SetBinding(tlas_info.binding);
-      cmd->SetTLAS(tlas_info.tlas);
+  for (const auto& tlas_info : pipeline->GetTLASes()) {
+    auto cmd = std::make_unique<TLASCommand>(pipeline);
+    cmd->SetDescriptorSet(tlas_info.descriptor_set);
+    cmd->SetBinding(tlas_info.binding);
+    cmd->SetTLAS(tlas_info.tlas);
 
-      r = info.vk_pipeline->AddTLASDescriptor(cmd.get());
-      if (!r.IsSuccess()) {
-        return r;
-      }
+    r = info.vk_pipeline->AddTLASDescriptor(cmd.get());
+    if (!r.IsSuccess()) {
+      return r;
     }
   }
 

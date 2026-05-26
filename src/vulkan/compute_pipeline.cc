@@ -23,6 +23,8 @@ namespace vulkan {
 
 ComputePipeline::ComputePipeline(
     Device* device,
+    BlasesMap* blases,
+    TlasesMap* tlases,
     uint32_t fence_timeout_ms,
     bool pipeline_runtime_layer_enabled,
     const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info)
@@ -30,7 +32,9 @@ ComputePipeline::ComputePipeline(
                device,
                fence_timeout_ms,
                pipeline_runtime_layer_enabled,
-               shader_stage_info) {}
+               shader_stage_info),
+      blases_(blases),
+      tlases_(tlases) {}
 
 ComputePipeline::~ComputePipeline() = default;
 

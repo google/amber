@@ -41,6 +41,8 @@ class GraphicsPipeline : public Pipeline {
  public:
   GraphicsPipeline(
       Device* device,
+      BlasesMap* blases,
+      TlasesMap* tlases,
       const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
       amber::Pipeline::BufferInfo depth_stencil_buffer,
       const std::vector<amber::Pipeline::BufferInfo>& resolve_targets,
@@ -68,6 +70,9 @@ class GraphicsPipeline : public Pipeline {
 
   uint32_t GetWidth() const { return frame_width_; }
   uint32_t GetHeight() const { return frame_height_; }
+
+  BlasesMap* GetBlases() override { return blases_; }
+  TlasesMap* GetTlases() override { return tlases_; }
 
   void SetPatchControlPoints(uint32_t points) {
     patch_control_points_ = points;
@@ -106,6 +111,8 @@ class GraphicsPipeline : public Pipeline {
   uint32_t clear_stencil_ = 0;
   float clear_depth_ = 1.0f;
   uint32_t patch_control_points_ = 3;
+  BlasesMap* blases_;
+  TlasesMap* tlases_;
 };
 
 }  // namespace vulkan

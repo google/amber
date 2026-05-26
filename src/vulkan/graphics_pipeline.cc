@@ -387,6 +387,8 @@ class RenderPassGuard {
 
 GraphicsPipeline::GraphicsPipeline(
     Device* device,
+    BlasesMap* blases,
+    TlasesMap* tlases,
     const std::vector<amber::Pipeline::BufferInfo>& color_buffers,
     amber::Pipeline::BufferInfo depth_stencil_buffer,
     const std::vector<amber::Pipeline::BufferInfo>& resolve_targets,
@@ -398,7 +400,9 @@ GraphicsPipeline::GraphicsPipeline(
                fence_timeout_ms,
                pipeline_runtime_layer_enabled,
                shader_stage_info),
-      depth_stencil_buffer_(depth_stencil_buffer) {
+      depth_stencil_buffer_(depth_stencil_buffer),
+      blases_(blases),
+      tlases_(tlases) {
   for (const auto& info : color_buffers) {
     color_buffers_.push_back(&info);
   }

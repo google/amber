@@ -109,6 +109,7 @@ const char kBufferDeviceAddress[] =
     "BufferDeviceAddressFeatures.bufferDeviceAddress";
 const char kRayTracingPipeline[] =
     "RayTracingPipelineFeaturesKHR.rayTracingPipeline";
+const char kRayQuery[] = "RayQueryFeaturesKHR.rayQuery";
 
 struct BaseOutStructure {
   VkStructureType sType;
@@ -583,6 +584,7 @@ Result Device::Initialize(
   VkPhysicalDeviceBufferDeviceAddressFeatures* bda_ptrs = nullptr;
   VkPhysicalDeviceRayTracingPipelineFeaturesKHR* ray_tracing_pipeline_ptrs =
       nullptr;
+  VkPhysicalDeviceRayQueryFeaturesKHR* ray_query_ptrs = nullptr;
 
   void* ptr = available_features2.pNext;
   while (ptr != nullptr) {
@@ -638,6 +640,9 @@ Result Device::Initialize(
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR:
         ray_tracing_pipeline_ptrs =
             static_cast<VkPhysicalDeviceRayTracingPipelineFeaturesKHR*>(ptr);
+        break;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR:
+        ray_query_ptrs = static_cast<VkPhysicalDeviceRayQueryFeaturesKHR*>(ptr);
         break;
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES:
         vulkan11_ptrs = static_cast<VkPhysicalDeviceVulkan11Features*>(ptr);
@@ -771,6 +776,9 @@ Result Device::Initialize(
             "vkGetRayTracingShaderGroupHandlesKHR is required, but not "
             "provided");
       }
+    }
+    if (feature == kRayQuery && ray_query_ptrs == nullptr) {
+      return amber::Result("Ray query requested but feature not returned");
     }
 
     // Next check the fields of the feature structures.
@@ -936,6 +944,9 @@ Result Device::Initialize(
     if (feature == kCooperativeMatrix &&
         cooperative_matrix_ptrs->cooperativeMatrix != VK_TRUE) {
       return amber::Result("Missing cooperative matrix feature");
+    }
+    if (feature == kRayQuery && ray_query_ptrs->rayQuery != VK_TRUE) {
+      return amber::Result("Missing ray query feature");
     }
   }
 

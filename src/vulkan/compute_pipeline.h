@@ -29,6 +29,8 @@ class ComputePipeline : public Pipeline {
  public:
   ComputePipeline(
       Device* device,
+      BlasesMap* blases,
+      TlasesMap* tlases,
       uint32_t fence_timeout_ms,
       bool pipeline_runtime_layer_enabled,
       const std::vector<VkPipelineShaderStageCreateInfo>& shader_stage_info);
@@ -38,9 +40,15 @@ class ComputePipeline : public Pipeline {
 
   Result Compute(uint32_t x, uint32_t y, uint32_t z, bool is_timed_execution);
 
+  BlasesMap* GetBlases() override { return blases_; }
+  TlasesMap* GetTlases() override { return tlases_; }
+
  private:
   Result CreateVkComputePipeline(const VkPipelineLayout& pipeline_layout,
                                  VkPipeline* pipeline);
+
+  BlasesMap* blases_;
+  TlasesMap* tlases_;
 };
 
 }  // namespace vulkan
