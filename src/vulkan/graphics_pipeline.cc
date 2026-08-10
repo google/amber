@@ -18,8 +18,10 @@
 #include <cmath>
 
 #include "src/command.h"
+#include "src/vulkan/blas.h"
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
+#include "src/vulkan/tlas.h"
 
 namespace amber {
 namespace vulkan {
@@ -925,6 +927,13 @@ Result GraphicsPipeline::Draw(const DrawArraysCommand* command,
     CommandBufferGuard cmd_buf_guard(GetCommandBuffer());
     if (!cmd_buf_guard.IsRecording()) {
       return cmd_buf_guard.GetResult();
+    }
+
+    for (auto& i : *blases_) {
+      i.second->BuildBLAS(GetCommandBuffer());
+    }
+    for (auto& i : *tlases_) {
+      i.second->BuildTLAS(GetCommandBuffer()->GetVkCommandBuffer());
     }
 
     r = SendVertexBufferDataIfNeeded(vertex_buffer);

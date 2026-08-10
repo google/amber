@@ -15,8 +15,10 @@
 #include "src/vulkan/compute_pipeline.h"
 #include <cstdint>
 
+#include "src/vulkan/blas.h"
 #include "src/vulkan/command_pool.h"
 #include "src/vulkan/device.h"
+#include "src/vulkan/tlas.h"
 
 namespace amber {
 namespace vulkan {
@@ -102,6 +104,13 @@ Result ComputePipeline::Compute(uint32_t x,
     CommandBufferGuard guard(GetCommandBuffer());
     if (!guard.IsRecording()) {
       return guard.GetResult();
+    }
+
+    for (auto& i : *blases_) {
+      i.second->BuildBLAS(GetCommandBuffer());
+    }
+    for (auto& i : *tlases_) {
+      i.second->BuildTLAS(GetCommandBuffer()->GetVkCommandBuffer());
     }
 
     BindVkDescriptorSets(pipeline_layout);
