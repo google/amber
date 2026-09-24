@@ -458,6 +458,8 @@ Result GraphicsPipeline::CreateRenderPass() {
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     attachment_desc.back().finalLayout =
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    attachment_desc.back().samples = static_cast<VkSampleCountFlagBits>(
+        depth_stencil_buffer_.buffer->GetSamples());
 
     depth_refer.attachment = static_cast<uint32_t>(attachment_desc.size() - 1);
     depth_refer.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -653,14 +655,24 @@ Result GraphicsPipeline::CreateVkGraphicsPipeline(
       VK_FALSE,                       /* sampleShadingEnable */
       0,                              /* minSampleShading */
       &kSampleMask,                   /* pSampleMask */
-      VK_FALSE,                       /* alphaToCoverageEnable */
-      VK_FALSE,                       /* alphaToOneEnable */
+      pipeline_data->GetEnableAlphaToCoverage()
+          ? VK_TRUE
+          : VK_FALSE, /* alphaToCoverageEnable */
+      VK_FALSE,       /* alphaToOneEnable */
   };
 
   // Search for multisampled color buffers and adjust the rasterization samples
   // to match.
   for (const auto& cb : color_buffers_) {
     uint32_t samples = cb->buffer->GetSamples();
+    assert(static_cast<VkSampleCountFlagBits>(samples) >=
+           multisampleInfo.rasterizationSamples);
+    multisampleInfo.rasterizationSamples =
+        static_cast<VkSampleCountFlagBits>(samples);
+  }
+  if (depth_stencil_buffer_.buffer &&
+      depth_stencil_buffer_.buffer->GetFormat()->IsFormatKnown()) {
+    uint32_t samples = depth_stencil_buffer_.buffer->GetSamples();
     assert(static_cast<VkSampleCountFlagBits>(samples) >=
            multisampleInfo.rasterizationSamples);
     multisampleInfo.rasterizationSamples =

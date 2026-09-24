@@ -744,6 +744,8 @@ Result Parser::ParsePipelineBody(const std::string& cmd_name,
       r = ParsePipelinePatchControlPoints(pipeline.get());
     } else if (tok == "BLEND") {
       r = ParsePipelineBlend(pipeline.get());
+    } else if (tok == "ALPHA_TO_COVERAGE") {
+      r = ParsePipelineAlphaToCoverage(pipeline.get());
     } else if (tok == "SHADER_GROUP") {
       r = ParsePipelineShaderGroup(pipeline.get());
     } else if (tok == "SHADER_BINDING_TABLE") {
@@ -2326,6 +2328,24 @@ Result Parser::ParsePipelineBlend(Pipeline* pipeline) {
   }
 
   return ValidateEndOfStatement("BLEND command");
+}
+
+Result Parser::ParsePipelineAlphaToCoverage(Pipeline* pipeline) {
+  auto token = tokenizer_->NextToken();
+  if (!token->IsIdentifier()) {
+    return Result("missing mode in ALPHA_TO_COVERAGE command");
+  }
+
+  auto mode = token->AsString();
+  if (mode == "on") {
+    pipeline->GetPipelineData()->SetEnableAlphaToCoverage(true);
+  } else if (mode == "off") {
+    pipeline->GetPipelineData()->SetEnableAlphaToCoverage(false);
+  } else {
+    return Result("invalid value for ALPHA_TO_COVERAGE: " + mode);
+  }
+
+  return ValidateEndOfStatement("ALPHA_TO_COVERAGE command");
 }
 
 Result Parser::ParsePipelineShaderGroup(Pipeline* pipeline) {

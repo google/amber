@@ -623,5 +623,176 @@ END
   EXPECT_EQ(pipelines[1]->GetPipelineData()->GetPatchControlPoints(), 4u);
 }
 
+TEST_F(AmberScriptParserTest, PipelineAlphaToCoverageDefault) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  EXPECT_FALSE(pipelines[0]->GetPipelineData()->GetEnableAlphaToCoverage());
+}
+
+TEST_F(AmberScriptParserTest, PipelineAlphaToCoverageOn) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  ALPHA_TO_COVERAGE on
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  EXPECT_TRUE(pipelines[0]->GetPipelineData()->GetEnableAlphaToCoverage());
+}
+
+TEST_F(AmberScriptParserTest, PipelineAlphaToCoverageOff) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  ALPHA_TO_COVERAGE on
+  ALPHA_TO_COVERAGE off
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(1U, pipelines.size());
+
+  EXPECT_FALSE(pipelines[0]->GetPipelineData()->GetEnableAlphaToCoverage());
+}
+
+TEST_F(AmberScriptParserTest, PipelineDeriveAlphaToCoverage) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  ALPHA_TO_COVERAGE on
+END
+
+DERIVE_PIPELINE child_pipeline FROM my_pipeline
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_TRUE(r.IsSuccess()) << r.Error();
+
+  auto script = parser.GetScript();
+  const auto& pipelines = script->GetPipelines();
+  ASSERT_EQ(2U, pipelines.size());
+
+  EXPECT_TRUE(pipelines[0]->GetPipelineData()->GetEnableAlphaToCoverage());
+  EXPECT_TRUE(pipelines[1]->GetPipelineData()->GetEnableAlphaToCoverage());
+}
+
+TEST_F(AmberScriptParserTest, PipelineAlphaToCoverageMissingMode) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  ALPHA_TO_COVERAGE
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("12: missing mode in ALPHA_TO_COVERAGE command", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, PipelineAlphaToCoverageInvalidMode) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  ALPHA_TO_COVERAGE invalid
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("11: invalid value for ALPHA_TO_COVERAGE: invalid", r.Error());
+}
+
+TEST_F(AmberScriptParserTest, PipelineAlphaToCoverageExtraParams) {
+  std::string in = R"(
+SHADER vertex my_shader PASSTHROUGH
+SHADER fragment my_fragment GLSL
+# GLSL Shader
+END
+
+PIPELINE graphics my_pipeline
+  ATTACH my_shader
+  ATTACH my_fragment
+
+  ALPHA_TO_COVERAGE on EXTRA
+END
+)";
+
+  Parser parser;
+  Result r = parser.Parse(in);
+  ASSERT_FALSE(r.IsSuccess());
+  EXPECT_EQ("11: extra parameters after ALPHA_TO_COVERAGE command: EXTRA",
+            r.Error());
+}
+
 }  // namespace amberscript
 }  // namespace amber

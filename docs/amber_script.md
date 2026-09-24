@@ -803,6 +803,11 @@ when using a Vulkan backend.
 ```
 
 ```groovy
+  # Enable or disable alpha-to-coverage for the pipeline. Defaults to off.
+  ALPHA_TO_COVERAGE {on | off}
+```
+
+```groovy
   # Set the size of the render buffers. |width| and |height| are integers and
   # default to 250x250.
   FRAMEBUFFER_SIZE _width_ _height_

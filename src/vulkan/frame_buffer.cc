@@ -99,7 +99,8 @@ Result FrameBuffer::Initialize(VkRenderPass render_pass) {
 
     depth_stencil_image_ = std::make_unique<TransferImage>(
         device_, *depth_stencil_attachment_.buffer->GetFormat(), aspect,
-        VK_IMAGE_TYPE_2D, usage_flags, width_, height_, depth_, 1u, 0u, 1u, 1u);
+        VK_IMAGE_TYPE_2D, usage_flags, width_, height_, depth_, 1u, 0u, 1u,
+        depth_stencil_attachment_.buffer->GetSamples());
 
     Result r = depth_stencil_image_->Initialize();
     if (!r.IsSuccess()) {

@@ -69,6 +69,7 @@ std::unique_ptr<Pipeline> Pipeline::Clone() const {
   auto clone = std::make_unique<Pipeline>(pipeline_type_);
   clone->shaders_ = shaders_;
   clone->color_attachments_ = color_attachments_;
+  clone->resolve_targets_ = resolve_targets_;
   clone->vertex_buffers_ = vertex_buffers_;
   clone->buffers_ = buffers_;
   clone->depth_stencil_buffer_ = depth_stencil_buffer_;

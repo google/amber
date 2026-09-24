@@ -132,6 +132,9 @@ class PipelineData {
   void SetEnableDepthBoundsTest(bool v) { enable_depth_bounds_test_ = v; }
   bool GetEnableDepthBoundsTest() const { return enable_depth_bounds_test_; }
 
+  void SetEnableAlphaToCoverage(bool v) { enable_alpha_to_coverage_ = v; }
+  bool GetEnableAlphaToCoverage() const { return enable_alpha_to_coverage_; }
+
   void SetDepthBiasConstantFactor(float f) { depth_bias_constant_factor_ = f; }
   float GetDepthBiasConstantFactor() const {
     return depth_bias_constant_factor_;
@@ -228,6 +231,7 @@ class PipelineData {
   bool enable_primitive_restart_ = false;
   bool enable_rasterizer_discard_ = false;
   bool enable_logic_op_ = false;
+  bool enable_alpha_to_coverage_ = false;
 
   float line_width_ = 1.0f;
   float depth_bias_constant_factor_ = 0.0f;

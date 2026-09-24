@@ -1053,6 +1053,10 @@ Result DawnPipelineHelper::CreateRenderPipelineDescriptor(
     primitiveState.frontFace = GetDawnFrontFace(pipeline_data->GetFrontFace());
     primitiveState.cullMode = GetDawnCullMode(pipeline_data->GetCullMode());
     renderPipelineDescriptor.primitive = primitiveState;
+
+    multisampleState.alphaToCoverageEnabled =
+        pipeline_data->GetEnableAlphaToCoverage();
+    renderPipelineDescriptor.multisample = multisampleState;
   }
 
   // Set defaults for the color state descriptors.

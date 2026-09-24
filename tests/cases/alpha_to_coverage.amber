@@ -1,0 +1,101 @@
+#!amber
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SHADER vertex vert_shader GLSL
+#version 440
+layout(location = 0) in vec3 in_pos;
+layout(location = 1) in vec4 in_color;
+layout(location = 0) out vec4 frag_color;
+
+void main(void) {
+  gl_Position = vec4(in_pos, 1.0);
+  frag_color = in_color;
+}
+END
+
+SHADER fragment frag_shader GLSL
+#version 440
+layout(location = 0) in vec4 frag_color;
+layout(location = 0) out vec4 out_color;
+
+void main(void) {
+  out_color = frag_color;
+}
+END
+
+BUFFER position_buf DATA_TYPE R32G32B32_SFLOAT DATA
+# Near quad at z = 0.2
+-1.0 -1.0 0.2
+ 1.0 -1.0 0.2
+-1.0  1.0 0.2
+-1.0  1.0 0.2
+ 1.0 -1.0 0.2
+ 1.0  1.0 0.2
+# Far quad at z = 0.8
+-1.0 -1.0 0.8
+ 1.0 -1.0 0.8
+-1.0  1.0 0.8
+-1.0  1.0 0.8
+ 1.0 -1.0 0.8
+ 1.0  1.0 0.8
+END
+
+BUFFER color_buf DATA_TYPE R32G32B32A32_SFLOAT DATA
+# Near quad: red with alpha = 0.5 (covers 2 of 4 MSAA samples)
+1.0 0.0 0.0 0.5
+1.0 0.0 0.0 0.5
+1.0 0.0 0.0 0.5
+1.0 0.0 0.0 0.5
+1.0 0.0 0.0 0.5
+1.0 0.0 0.0 0.5
+# Far quad: green with alpha = 1.0 (covers all 4 MSAA samples, passes depth on uncovered 2)
+0.0 1.0 0.0 1.0
+0.0 1.0 0.0 1.0
+0.0 1.0 0.0 1.0
+0.0 1.0 0.0 1.0
+0.0 1.0 0.0 1.0
+0.0 1.0 0.0 1.0
+END
+
+IMAGE framebuffer_ms FORMAT R8G8B8A8_UNORM DIM_2D WIDTH 64 HEIGHT 64 SAMPLES 4
+IMAGE depth_ms FORMAT D32_SFLOAT DIM_2D WIDTH 64 HEIGHT 64 SAMPLES 4
+IMAGE framebuffer FORMAT R8G8B8A8_UNORM DIM_2D WIDTH 64 HEIGHT 64
+
+PIPELINE graphics pipeline
+  ATTACH vert_shader
+  ATTACH frag_shader
+  FRAMEBUFFER_SIZE 64 64
+  VERTEX_DATA position_buf LOCATION 0
+  VERTEX_DATA color_buf LOCATION 1
+  BIND BUFFER framebuffer_ms AS color LOCATION 0
+  BIND BUFFER depth_ms AS depth_stencil
+  BIND BUFFER framebuffer AS resolve
+  ALPHA_TO_COVERAGE on
+  DEPTH
+    TEST on
+    WRITE on
+    COMPARE_OP less
+  END
+END
+
+CLEAR_COLOR pipeline 0 0 0 0
+CLEAR_DEPTH pipeline 1.0
+CLEAR pipeline
+
+# Draw near red quad (vertices 0..5, z = 0.2, alpha = 0.5) followed by
+# far green quad (vertices 6..11, z = 0.8, alpha = 1.0) in the same pipeline.
+RUN pipeline DRAW_ARRAY AS TRIANGLE_LIST START_IDX 0 COUNT 12
+
+EXPECT framebuffer IDX 0 0 SIZE 64 64 EQ_RGBA 128 128 0 191 TOLERANCE 5%

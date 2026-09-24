@@ -76,6 +76,7 @@ class Parser : public amber::Parser {
   Result ParsePipelineDepth(Pipeline* pipeline);
   Result ParsePipelineStencil(Pipeline* pipeline);
   Result ParsePipelineBlend(Pipeline* pipeline);
+  Result ParsePipelineAlphaToCoverage(Pipeline* pipeline);
   Result ParsePipelineShaderGroup(Pipeline* pipeline);
   Result ParseRun();
   Result ParseClear();
